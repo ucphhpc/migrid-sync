@@ -1,0 +1,1 @@
+This directory is for storing internal state data for a MiG server. It is completely optional to use this particular directory, but it is just an easy way to get all the required directories auto initialized.
