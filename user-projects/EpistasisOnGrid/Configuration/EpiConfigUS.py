@@ -19,7 +19,7 @@ geneFirstIndex = 74 #74
 geneLastIndex = 75 #103
 
 traitFirstIndex = 7 #7
-traitLastIndex = 8 #37
+traitLastIndex = 8 #37 
 selectionVariableIndex = 2
 #selectionVariableName = "Gender"
 #selectionVariableValues = [1,2]
@@ -31,7 +31,7 @@ selectionVariableIndex = 2
 
 EpiProgramPath = "/home/benjamin/Dokumenter/CSPBuilder/myCSPBuilderPrj/epistatis/Epistasis/" 
 #EpiWorkingDir = "MiGepistasis/"
-EpiWorkingDir = "tmp/"
+EpiWorkingDir = "Epistasis_tmp/"
 if executionMode == "local":
     EpiWorkingDir = "/home/benjamin/Dokumenter/CSPBuilder/myCSPBuilderPrj/fakeMiGDir/"+EpiWorkingDir
 outputDir = "epifiles/"

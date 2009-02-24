@@ -85,11 +85,13 @@ def uploadFilesToMiG(inputfiles, tempDir, remoteDir):
 
 def getOutput(filename, destinationDir):
     success = ScriptsWrapper.get(filename, destinationDir)
-    if success:
-        return destinationDir+filename.split("/")[-1]
-    else: 
-        print "Can't get file : "+filename
-        return ""
+    #if success:
+    #  
+    #else: 
+    #    print "Can't get file : "+filename
+    #    return ""
+    return destinationDir+filename.split("/")[-1]
+
 
 def parseStatus(statusMsg):
     #import time
