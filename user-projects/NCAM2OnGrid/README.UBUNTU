@@ -1,0 +1,107 @@
+= Building on Ubuntu with OpenMPI =
+
+== Building with GCC ==
+These instructions are known to work on Ubuntu Hardy Heron with the distribution 
+openmpi-bin, libopenmpi-dev and gfortran packages installed.
+
+Extract amber and ambertools tarballs in the same location to create a shared amber10/ dir.
+Switch to the src subdirectory and configure amber for openmpi and gfortran (i.e. fortran 95) use:
+cd amber10
+export AMBERHOME=`pwd`
+export PATH=$PATH:`pwd`/exe
+export MPI_HOME=/usr
+cd $AMBERHOME/src
+./configure_amber -openmpi gfortran
+[... output ...]
+
+The make step needs to be slightly modified on ubuntu with openmpi where mpi headeres 
+are installed in/usr/include/mpi instead of directly in /usr/include:
+make -e AMBERBUILDFLAGS="-I/usr/include/mpi" parallel
+[... output ...]
+
+Now run tests:
+cd $AMBERHOME/test
+export DO_PARALLEL="mpirun -np 4"
+make test.parallel.MM < /dev/null
+[... output ...]
+
+Please note that mpirun may spew OpenIB warnings if no InfiniBand interfaces 
+are available, but that the tests should still proceed with the fallback transport.
+
+To disable the InfiniBand transport and warnings we can modify the DO_PARALLEL setting:
+export DO_PARALLEL="mpirun -mca btl tcp,self -np 4"
+before running the make test stuff.
+
+For parallel performance we also need to build the pmemd component, but there is no 
+built-in support for all platforms so we may need to add a 
+$AMBERHOME/src/pmemd/config_data/linux_emt64.gfortran.mpi file or similar
+before we can continue with the instructions and run:
+cd $AMBERHOME/src/pmemd
+make clean
+./configure linux_em64t gfortran mpi
+make install
+
+It may be necessary to tweak the config_data/X file and repeat the pmemd build process 
+before it succeeds.
+
+On amigos50 the hints at:
+http://structbio.vanderbilt.edu/archives/amber-archive/2008/1325.php
+were helpful in getting the working config:
+$AMBERHOME/src/pmemd/config_data/linux_emt64.gfortran.mpi
+
+
+If everything goes as expected this far we should now be able to use Amber.
+
+
+== Building with ICC ==
+These instructions are known to work on Ubuntu Hardy Heron with Intel 10 compilers
+and matching openmpi builds.
+
+Extract amber and ambertools tarballs in the same location to create a shared amber10/ dir.
+Switch to the src subdirectory and configure amber for openmpi and gfortran (i.e. fortran 95) use:
+cd amber10
+export AMBERHOME=`pwd`
+export PATH=$PATH:`pwd`/exe
+export MPI_HOME=/pack/openmpi-intel
+export MKL_HOME=/pack/intel_mkl
+cd $AMBERHOME/src
+nice ./configure_amber -openmpi ifort
+[... output ...]
+Build the parallel version by the book:
+nice make parallel
+[... output ...]
+
+Now run tests - please submit as a job to respect any local queue policies:
+cd $AMBERHOME/test
+export DO_PARALLEL="mpirun -np 4"
+nice make test.parallel.MM < /dev/null
+[... output ...]
+
+Please note that mpirun may spew OpenIB warnings if no InfiniBand interfaces 
+are available, but that the tests should still proceed with the fallback transport.
+
+To disable the InfiniBand transport and warnings we can modify the DO_PARALLEL setting:
+export DO_PARALLEL="mpirun -mca btl tcp,self -np 4"
+before running the make test stuff.
+
+For parallel performance we also need to build the pmemd component, but there is no 
+built-in support for all platforms so we may need to add a 
+$AMBERHOME/src/pmemd/config_data/linux_emt64.gfortran.mpi file or similar
+before we can continue with the instructions and run:
+cd $AMBERHOME/src/pmemd
+nice make clean
+nice ./configure linux_em64t ifortran openmpi
+nice make install
+
+It may be necessary to tweak the config_data/X file and repeat the pmemd build process 
+before it succeeds.
+
+On amigos50 the hints at:
+http://structbio.vanderbilt.edu/archives/amber-archive/2008/1325.php
+were helpful in getting the working config:
+$AMBERHOME/src/pmemd/config_data/linux_emt64.ifort.openmpi
+
+
+If everything goes as expected this far we should now be able to use Amber.
+
+-Jonas
