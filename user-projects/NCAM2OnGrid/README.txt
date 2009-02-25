@@ -1,10 +1,14 @@
 = Introduction =
-The NCAM2 project is driven by Farma at University of Copenhagen and it
-investigates structure and dynamics of neural cell adhesion molecule 2 (NCAM2).
+The NCAM2 project is driven by a group of people from Biostructural
+Research, Department of Medicinal Chemistry, Faculty of Pharmaceutical
+Sciences at the University of Copenhagen.
+It investigates structure and dynamics of neural cell adhesion molecule 2 (NCAM2).
 As Farma are the experts on the molecular dynamics they take care of all the
 work in that domain and only rely on us for the actual Grid execution.
 The investigation mainly uses the AMBER software (http://ambermd.org/) to
 simulate the molecular dynamics.
+A more detailed description of the project is available in
+DCSC-NCAM2.doc in this folder.
 
 
 = Grid preparations =
@@ -33,15 +37,23 @@ AMBER installed with the Farma-BR VGrid.
 
 
 == Building AMBER ==
-Please refer to the install docs in README.UBUNTU in this folder for details
-about the actual installation.
+Please refer to the amber directory for details about the actual installation.
 
 
 == Running AMBER jobs ==
+Jobs must specify the AMBER10 and OPENMPI runtime environments to run on
+suitable resources. For this particular setup they additionally need to
+be sent to the Farma-BR VGrid.
+Apart from that it is just a matter of specifying input and output along
+with resource hardware requirements and walltime.
+
+The examples folder holds examples of MiG jobs with input files. These
+files are simply submittet to MiG through the web interface and the
+results are then analysed as they come in.
 
 
 = Contacts =
-Technical reference at Farma is Patrik Rydberg <pry@farma.ku.dk>
-Technical reference from MiG is Jonas Bardino <bardino@diku.dk>
+Our technical reference at Farma is Patrik Rydberg <pry AT farma.ku.dk>
+and Jonas Bardino <bardino AT diku.dk> is the MiG representative.
 
  
