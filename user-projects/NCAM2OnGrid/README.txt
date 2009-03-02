@@ -41,15 +41,46 @@ Please refer to the amber directory for details about the actual installation.
 
 
 == Running AMBER jobs ==
-Jobs must specify the AMBER10 and OPENMPI runtime environments to run on
-suitable resources. For this particular setup they additionally need to
-be sent to the Farma-BR VGrid.
+In genereal jobs must specify the AMBER10 and OPENMPI runtime
+environments to run on suitable resources. For this particular setup
+they additionally need to be sent to the Farma-BR VGrid.
 Apart from that it is just a matter of specifying input and output along
 with resource hardware requirements and walltime.
 
-The examples folder holds examples of MiG jobs with input files. These
-files are simply submittet to MiG through the web interface and the
-results are then analysed as they come in.
+Jobs are prepared by creating input files just like if the execution was
+not on Grid. First generate topology and coordinate files using tleap
+(or xleap, sleap) on your local system. 
+Create an input file for sander or pmemd using your favourite text
+editor.
+
+MiG execution requires upload of these three files to your MiG home.
+When you submit the job make sure to include the following in your mRSL
+(replace all file names with your file names).
+The execute line is for a 8 cpu job with sander, replace sander.MPI with
+pmemd when using pmemd. Pmemd scales much better with multiple cpu's.
+
+::EXECUTE::
+$MPI_HOME/bin/mpirun -np 8 $AMBER_BIN_DIR/sander.MPI -i inputfile -o outputfile -r restartfile -c coordinatefile
+
+::INPUTFILES::
+inputfile
+coordinatefile
+topologyfile
+
+::OUTPUTFILES::
+outputfile
+restartfile
+
+::RUNTIMEENVIRONMENT::
+AMBER10
+OPENMPI
+
+
+With few jobs to run these mRSL contents are simply submitted to MiG
+through the web interface and the results are then analysed one by one
+as they come in. For projects with a lot of jobs the command line
+scripts combined with scripted pre and post processing may be more
+suitable.
 
 
 = Contacts =
