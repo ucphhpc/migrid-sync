@@ -1,0 +1,26 @@
+::EXECUTE::
+HelloMiGOneClickWorld infile outfile
+
+::NOTIFY::
+jabber: you@jabber.dk
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+
+::EXECUTABLES::
+
+::MEMORY::
+10
+
+::DISK::
+1
+
+::CPUTIME::
+100
+
+::RUNTIMEENVIRONMENT::
+JVM_BYTECODE
+
+::SANDBOX::
+1
