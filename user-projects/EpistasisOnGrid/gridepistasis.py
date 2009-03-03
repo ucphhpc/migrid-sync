@@ -5,7 +5,7 @@ import sys
 
 sys.path.append("Configuration/")
 import epistasisconfiguration as epistasis_configuration
-sys.path.append("GridInterface/")
+sys.path.append("Gridinterface/")
 import migsession
 
 class GridEpistasis: 
