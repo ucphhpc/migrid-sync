@@ -1,9 +1,8 @@
-import  EpistasisGUI as viewer
+
 import sys
-sys.path.append(sys.path[0]+"/../")
-#print sys.path[0]#"../EpistasisOnGrid/")
-#import runEpiStasisOnMigClass as EpiModel
-import GridEpistasis as EpiModel
+sys.path.append("GUI/")
+import  epistasisviewer as viewer
+import gridepistasis as EpiModel
 import wx
 import time
 import os
@@ -75,7 +74,7 @@ def start():
         
    # model = EpiModel.EpistasisProcess()
     #timeout = 5000
-    jobs = model.startEpistasis(c1,c2,g1,g2,t1,t2,sv,datafile,outputdir)
+    jobs = model.start_epistasis(c1,c2,g1,g2,t1,t2,sv,datafile,outputdir)
     model.status="executing"
     # fake response
     #dlg = wx.MessageDialog(frame_1,
@@ -89,7 +88,7 @@ def start():
   # x100 milliseconds
 
 def stop():
-    model.stopEpistasis()
+    model.stop_epistasis()
     model.__init__()
     EnableControls(True)
 
@@ -157,7 +156,8 @@ def OnBtnBrowseDir(event=None):
     frame_1.outputdir.write(dd.GetPath())
 
 def OnMenuQuit(event=None):
-    model.stopEpistasis()
+    if model.status == "executing":
+        model.stop_epistasis()
     frame_1.Destroy()
 
 def OnTimer(event=None):
@@ -168,7 +168,7 @@ def OnTimer(event=None):
         stop()
     #return
     
-    status, progress = model.epiStatusSummary()
+    status, progress = model.get_epistasis_status()
     frame_1.statusfeed.Clear()
     frame_1.statusfeed.write(status)
     frame_1.progress.Clear()
@@ -208,7 +208,7 @@ app = wx.PySimpleApp(0)
 wx.InitAllImageHandlers()
 frame_1 = viewer.MyEpiFrame(None, -1, "")
 timeout = 5000
-model = EpiModel.EpistasisProcess()
+model = EpiModel.GridEpistasis()
 app.SetTopWindow(frame_1)
 bindViewerEvents()
 frame_1.Show()

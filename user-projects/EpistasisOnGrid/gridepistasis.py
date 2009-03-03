@@ -19,13 +19,13 @@ class GridEpistasis:
                
 ########### UPDATE / STATUS ############### 
 
-    def get_job_status(self):
-        self.mig_session.updateJobs(self.epistasis_jobs)
+    def get_epistasis_status(self):
+        self.mig_session.update_jobs(self.epistasis_jobs)
         for j in self.epistasis_jobs:
             if j["status"]["STATUS"] == "FINISHED":
                 self.jobs_done.append(j)
                 self.epistasis_jobs.remove(j)
-                self.mig_session.handleOutput(j)
+                self.mig_session.handle_output(j)
                 
         if self.num_jobs == len(self.jobs_done):
                     #mylogger.logprint(logfile, "All jobs completed")
