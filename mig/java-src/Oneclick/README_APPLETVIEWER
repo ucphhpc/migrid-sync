@@ -1,0 +1,8 @@
+For creating SSLStore download the MiG server cert file and issue the following
+command:
+
+keytool -import -alias SSLCertificate -keystore SSLStore -file mig_server.crt
+
+To check the entry:
+
+keytool -list -keystore SSLStore
