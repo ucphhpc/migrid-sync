@@ -19,9 +19,8 @@ class MyEpiFrame(wx.Frame):
         self.frame_1_menubar.Append(wxglade_tmp_menu, "File")
         self.SetMenuBar(self.frame_1_menubar)
         # Menu Bar end
-        self.frame_1_statusbar = self.CreateStatusBar(4, 0)
         self.label_1 = wx.StaticText(self, -1, "Data file")
-        self.datafile = wx.TextCtrl(self, -1, "Inter99All290606.sav")
+        self.datafile = wx.TextCtrl(self, -1, "RfilesAndscripts/Inter99All290606.sav")
         self.button_1 = wx.Button(self, -1, "Browse")
         self.label_2 = wx.StaticText(self, -1, "First gene index")
         self.g1 = wx.TextCtrl(self, -1, "74", style=wx.TE_CENTRE)
@@ -39,7 +38,7 @@ class MyEpiFrame(wx.Frame):
         self.c2 = wx.TextCtrl(self, -1, "2")
         self.runlocal = wx.CheckBox(self, -1, "Run on local host")
         self.label_6 = wx.StaticText(self, -1, "Output directory")
-        self.outputdir = wx.TextCtrl(self, -1, "/home/benjamin/Dokumenter/CSPBuilder/myCSPBuilderPrj/epistatis/Epistasis/epifiles")
+        self.outputdir = wx.TextCtrl(self, -1, "epifiles/")
         self.button_2 = wx.Button(self, -1, "Browse")
         self.label_4 = wx.StaticText(self, -1, "Status:")
         self.statusfeed = wx.TextCtrl(self, -1, "Status feed from MiG jobs", style=wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
@@ -57,11 +56,6 @@ class MyEpiFrame(wx.Frame):
         # begin wxGlade: MyEpiFrame.__set_properties
         self.SetTitle("Epistasis on MiG")
         self.SetSize((519, 784))
-        self.frame_1_statusbar.SetStatusWidths([-1, 0, 0, 0])
-        # statusbar fields
-        frame_1_statusbar_fields = ["Awaiting user action", "Executing", "Stopping execution", "Done"]
-        for i in range(len(frame_1_statusbar_fields)):
-            self.frame_1_statusbar.SetStatusText(frame_1_statusbar_fields[i], i)
         self.c1.SetMinSize((30, 27))
         self.c2.SetMinSize((30, 27))
         self.runlocal.Hide()

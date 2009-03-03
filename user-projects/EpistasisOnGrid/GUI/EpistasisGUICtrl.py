@@ -1,7 +1,9 @@
 import  EpistasisGUI as viewer
 import sys
-sys.path.append("/home/benjamin/Dokumenter/CSPBuilder/myCSPBuilderPrj/epistatis/Epistasis")
-import runEpiStasisOnMigClass as EpiModel
+sys.path.append(sys.path[0]+"/../")
+#print sys.path[0]#"../EpistasisOnGrid/")
+#import runEpiStasisOnMigClass as EpiModel
+import GridEpistasis as EpiModel
 import wx
 import time
 import os
@@ -14,7 +16,7 @@ def validateInput():
         t2 = int(frame_1.t2.GetValue())
         sv = int(frame_1.sv.GetValue())
         c1 = int(frame_1.c1.GetValue())
-        c2 = int(frame_1.c2.GetValue())
+        c2 = int(frame_1.c2.GetValue()) 
     except ValueError:
         return False, "Index values must be integers"
 #if type(g1) != type(1) and type(g2) != type(1):
@@ -137,6 +139,7 @@ def OnBtnStop(event=None):
     #model.stopEpistasis()
     
 def OnBtnBrowseFile(event=None):
+    path = os.curdir
     fd = wx.FileDialog(frame_1, message="Choose file")
     fd.ShowModal()
     fd.Destroy()

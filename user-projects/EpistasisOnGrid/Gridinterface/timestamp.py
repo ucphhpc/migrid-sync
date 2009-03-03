@@ -1,12 +1,12 @@
-def generateName():
-    timestamp = generateTimestamp()
+def generate_name():
+    timestamp = generate_timestamp()
     return timestamp+".mRSL"
 
-def generateFolderName():
-    timestamp = generateTimestamp()
+def generate_folder_name():
+    timestamp = generate_timestamp()
     return timestamp
 
-def generateTimestamp():
+def generate_timestamp():
     import time
     (y,mo,d,h,m,s,_,_,_)= time.localtime()
     timestamp = "%i_%i_%i_%i_%i_%i" % (h,m,s,d,mo,y)
@@ -14,7 +14,7 @@ def generateTimestamp():
 
 
 
-def timeDiff(t0, t1):
+def time_diff(t0, t1):
     import time
     #t1 = time.strptime("Finished: Tue Apr 29 08:28:48 2008","Finished: %a %b %d %H:%M:%S %Y")
     #t2 = time.strptime("Finished: Tue Apr 29 08:35:46 2008","Finished: %a %b %d %H:%M:%S %Y")

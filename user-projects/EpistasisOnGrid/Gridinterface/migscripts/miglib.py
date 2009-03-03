@@ -10,7 +10,6 @@ import getopt
 def version():
 	print "MiG User Scripts: $Revision: 2506 $,$Revision: 2506 $"
 
-
 def check_var(name, var):
 
         if not var:
@@ -716,7 +715,7 @@ def job_status(job_list):
            timeout += "--max-time %s" % (max_time)
         if connect_timeout:
            timeout += " --connect-timeout %s" % (connect_timeout)
-
+	max_job_count  = 100
         if not max_job_count:
            max_jobs = ''
         else:
