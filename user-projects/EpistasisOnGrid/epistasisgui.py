@@ -68,14 +68,15 @@ def start():
     c2 = frame_1.c2.GetValue()
     datafile = frame_1.datafile.GetValue()
     outputdir = frame_1.outputdir.GetValue()
+    local_mode = frame_1.runlocal.GetValue()
     if outputdir[-1] != "/":
         outputdir += "/"
 
         
    # model = EpiModel.EpistasisProcess()
     #timeout = 5000
-    jobs = model.start_epistasis(c1,c2,g1,g2,t1,t2,sv,datafile,outputdir)
-    model.status="executing"
+    jobs = model.start_epistasis(c1,c2,g1,g2,t1,t2,sv,datafile,outputdir,local_mode)
+    model.epistasis_status="executing"
     # fake response
     #dlg = wx.MessageDialog(frame_1,
     #                           message='Executing epistasis',
@@ -110,7 +111,7 @@ def EnableControls(enable):
 
 # event handlers
 def OnBtnStart(event=None):
-    model.status = "pending"
+    model.epistasis_status = "pending"
     frame_1.statusfeed.Clear()
     frame_1.statusfeed.write("Starting epistasis...")
     EnableControls(False)
@@ -120,7 +121,7 @@ def OnBtnStart(event=None):
     frame_1.timer.Start(shorttime) 
 
 def OnBtnStop(event=None):
-    if model.status == "executing":
+    if model.epistasis_status == "executing":
         print "stopping epistasis"
         #model.stopbs(self.epijobs)
             #epiCleanUp(self.epijobs)
@@ -128,7 +129,7 @@ def OnBtnStop(event=None):
             # else: 
             #   print "Not executing..."
         
-        model.status = "stopping"
+        model.epistasis_status = "stopping"
         shorttime= 100
         frame_1.statusfeed.Clear()
         frame_1.statusfeed.write("Stopping epistasis...")
@@ -156,15 +157,15 @@ def OnBtnBrowseDir(event=None):
     frame_1.outputdir.write(dd.GetPath())
 
 def OnMenuQuit(event=None):
-    if model.status == "executing":
+    if model.epistasis_status == "executing":
         model.stop_epistasis()
     frame_1.Destroy()
 
 def OnTimer(event=None):
-    if model.status == "pending":
+    if model.epistasis_status == "pending":
         start()
         return
-    if model.status == "stopping":
+    if model.epistasis_status == "stopping":
         stop()
     #return
     
@@ -175,7 +176,7 @@ def OnTimer(event=None):
     frame_1.progress.write(progress)
     #print "timer event"
    
-    if model.status == "finished":
+    if model.epistasis_status == "finished":
         #frame_1.button_2.Label("Go to output")
         dlg = wx.MessageDialog(frame_1,
                                message='Epistasis is complete',
@@ -187,7 +188,7 @@ def OnTimer(event=None):
         frame_1.Stop.Enable(False)
         frame_1.timer.Stop()
         frame_1.button_2.Enable(True)
-    
+        frame_1.Destroy()
     else: 
         frame_1.timer.Start(timeout)  
 

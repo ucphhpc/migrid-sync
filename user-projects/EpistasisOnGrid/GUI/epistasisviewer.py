@@ -58,7 +58,6 @@ class MyEpiFrame(wx.Frame):
         self.SetSize((519, 784))
         self.c1.SetMinSize((30, 27))
         self.c2.SetMinSize((30, 27))
-        self.runlocal.Hide()
         self.statusfeed.SetFont(wx.Font(9, wx.MODERN, wx.NORMAL, wx.NORMAL, 0, "Sans"))
         self.progress.Enable(False)
         # end wxGlade

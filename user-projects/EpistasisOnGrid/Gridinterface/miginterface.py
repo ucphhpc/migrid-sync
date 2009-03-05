@@ -7,7 +7,10 @@ import sys
 sys.path.append("Gridinterface/migscripts/")
 import miglib
 import string 
-def create_job(exec_commands, input_files, executables, local_working_dir, mig_working_dir, output_files, static_files=[], vgrid="Generic", resource_specs={}, args=[]):
+
+####### CREATE JOBS / SUBMIT ############
+
+def create_job(exec_commands, input_files, executables, local_working_dir, mig_working_dir, output_files, static_files=[], resource_specs={}, args=[]):
 
     job_files = [] 
     job_files.extend(input_files)
@@ -23,49 +26,41 @@ def create_job(exec_commands, input_files, executables, local_working_dir, mig_w
     expected_output = [mig_working_dir+output_files[0]]
         
     # make MRSL
-    mrsl_file = createmrsl.generate_mrsl(exec_commands, files_to_upload, expected_output, local_working_dir, executables, resource_specs_dict=resource_specs, vgrid=vgrid)
+    mrsl_file = createmrsl.generate_mrsl(exec_commands, files_to_upload, expected_output, local_working_dir, executables, resource_specs_dict=resource_specs)
     files_to_upload.append(mrsl_file)
     archive = create_archive(files_to_upload, local_working_dir, mig_working_dir)
     #(code, out) = miglib.submit_file(mrslfile,local_working_dir,True,False)
     #out = mig_function_wrapper(miglib.submit_file,mrslfile,local_working_dir,True,False)
-    out = mig_function_wrapper(miglib.submit_file,archive,archive.split("/")[-1],True,True) # upload job archive and submit mrsl
+    mig_archive_dest = archive.split("/")[-1]
+    out = mig_function_wrapper(miglib.submit_file,archive,mig_archive_dest,True,True) # upload job archive and submit mrsl
     
     job_id = out[-1].split("'")[-2]
-    clean_up_locally([mrsl_file]) # delete generated mrsl file
+    #clean_up_locally([mrsl_file]) # delete generated mrsl file
     #cleanUpInputFiles(files_to_upload) # delete job input files 
+    remove_files([mig_archive_dest, mrsl_file])
+    remove_files_local(files_to_upload)
+    remove_files_local([archive])
     return job_id
 
-def prepare_job(exec_commands, input_files, executables, local_working_dir, mig_working_dir, output_files, static_files=[], vgrid="Generic", resource_specs={}, args=[]):
 
+def prepare_job(exec_commands, input_files, executables, local_working_dir, mig_working_dir, output_files, static_files=[], vgrid="Generic", resource_specs={}, args=[]):
     job_files = [] 
     job_files.extend(input_files)
-
     if static_files != []:
         job_files.extend(static_files)
-        
+    
     files_to_upload = copy_files_to_working_dir(job_files, local_working_dir)
     if args !=[]:
         arg_files = write_args_to_files(args, local_working_dir)
         files_to_upload.extend(arg_files)
 
     expected_output = [mig_working_dir+output_files[0]]
-        
     # make MRSL
-    mrsl_file = createmrsl.generate_mrsl(exec_commands, files_to_upload, expected_output, local_working_dir, executables, resource_specs_dict=resource_specs, vgrid=vgrid)
+    mrsl_file = createmrsl.generate_mrsl(exec_commands, files_to_upload, expected_output, local_working_dir, executables, resource_specs_dict=resource_specs)
     files_to_upload.append(mrsl_file)
-    #archive = create_job_archive(files_to_upload, local_working_dir, mig_working_dir)
-    #(code, out) = miglib.submit_file(mrslfile,local_working_dir,True,False)
-    #out = mig_function_wrapper(miglib.submit_file,mrslfile,local_working_dir,True,False)
-    #out = mig_function_wrapper(miglib.submit_file,archive,archive.split("/")[-1],True,True) # upload job archive and submit mrsl
-    
+        
     return mrsl_file
 
-  #  migJobId = out[-1].split("'")[-2]
-#migJobId = string.split(string.strip(out[-1][0]["job_id"]), " ")[0]
-   # jobId = migJobId #ScriptsWrapper.submitToMiG(mrslfile)
-    #cleanUpLocally([mrsl_file]) # delete generated mrsl file
-    #cleanUpInputFiles(files_to_upload) # delete job input files 
-    #return jobId
 
 def submit_job(job_file, dest_dir):
     print job_file
@@ -80,10 +75,35 @@ def submit_job(job_file, dest_dir):
 #append
     return job_id
 
+
+def write_args_to_files(args, dest_dir):
+    import pickle
+    num = 0
+    arg_files = []
+    for arg in args:
+        fname = dest_dir+"arg"+str(num)+".pkl"
+        output = open(fname, 'w')
+        pickle.dump(arg, output)
+        output.close()
+        arg_files.append(fname)
+        num +=1
+    return arg_files
+
+
+def copy_files_to_working_dir(input_files, dest_dir):
+    files = []
+    for f in input_files: 
+        cp_filename = dest_dir+f.split("/")[-1]
+        shutil.copyfile(f ,cp_filename)
+        files.append(cp_filename)
+        
+    return files    
+   
+
 def create_archive(input_files, temp_dir, remote_dir):
         #ScriptsWrapper.makeDir(remoteDir, recursive=True)
     #makeDirTree(remoteDir)
-    timestamp = str(time.time())
+    timestamp = str(time.time()*100)
     tar_name = "inputfiles"+timestamp+".tar.gz"
     tar_path = temp_dir+tar_name
     tar = tarfile.open(tar_path,"w:gz")
@@ -92,16 +112,8 @@ def create_archive(input_files, temp_dir, remote_dir):
         filename = f.split("/")[-1]
         tar.add(f, remote_dir+filename) 
     tar.close()
-    print "uploading"
-    #outStrs = ScriptsWrapper.put(tarpath, tarName)
-    #output = mig_function_wrapper(miglib.put_file, tarpath, tarName, False, True)
-    #print output
-    print "uploading done"
+
     return tar_path# delete the tar file in the mig server when it has been extracted
-    #ScriptsWrapper.removeFile(tarName)
-    #miglib.rm_file(tarName)
-    # delete the locally staged files
-    #cleanUpLocally([tarpath])
 
 def upload_files(input_files, dest_dir, is_archive=True):
         #ScriptsWrapper.makeDir(remoteDir, recursive=True)
@@ -132,6 +144,17 @@ def upload_files(input_files, dest_dir, is_archive=True):
     #cleanUpLocally([tarpath])
 
 
+def make_dir_tree(path):
+    dirs = path.split("/")
+    subdirs = ""
+    for d in dirs:
+        #ScriptsWrapper.makeDir(subdirs+d)
+        #print subdirs
+        subdirs += d + "/"
+
+
+###### OUTPUT ##########
+
 def get_output(filename, destination_dir):
     #success = ScriptsWrapper.get(filename, destinationDir)
     out = mig_function_wrapper(miglib.get_file,filename, filename)
@@ -146,61 +169,12 @@ def get_output(filename, destination_dir):
     #allfiles.extend(job["outputfiles"])  # output
     return filename
 
-def write_args_to_files(args, dest_dir):
-    import pickle
-    num = 0
-    arg_files = []
-    for arg in args:
-        fname = dest_dir+"arg"+str(num)+".pkl"
-        output = open(fname, 'w')
-        pickle.dump(arg, output)
-        output.close()
-        arg_files.append(fname)
-        num +=1
-    return arg_files
-
-def remove_files(filenames):
-    files_str = ""
-    for f in filenames:
-        files_str += f + " "
-    #return ScriptsWrapper.removeFile(filesStr)
-    return mig_function_wrapper(miglib.rm_file,files_str)
-
-def remove_dir(dirname):
-    #return ScriptsWrapper.removeDir(dirname)
-    return mig_function_wrapper(miglib.rm_dir,dirname)
-
-#mvd = "/home/benja/Documents/speciale/kode/molecular_docking/MVD"
-#createdirOnMig(mvd,"MVD")
-# copies files to an intermediary dir
-def copy_files_to_working_dir(input_files, dest_dir):
-    #name = "EpistasisJobFiles.tar"
-    #jobfilesArchivePath = EpiConfig.preMiGDir+name
-    #if executionMode == "local":
-        
-    #tar = tarfile.open(jobfilesArchivePath,"w")
-    #jobfilesPath = EpiConfig.EpiProgramPath
-    """for f in workdata["programFiles"]:
-        jobfile = jobfilesPath+f
-        print "adding ", jobfile
-        tar.add(jobfile, arcname=f)
-    tar.close()
-    """
-    files = []
-    for f in input_files: 
-        cp_filename = dest_dir+f.split("/")[-1]
-        shutil.copyfile(f ,cp_filename)
-        files.append(cp_filename)
-        
-    return files    
-    #workdata["jobfilesArchive"] = name
-    # copy the episcript to working dir
-    #shutil.copyfile(jobfilesPath+workdata["mainScript"],jobDir+workdata["mainScript"]) 
+####### STATUS / UPDATE ########
 
 def get_status(job_id):
     #statusStr = ScriptsWrapper.status(jobId)
     #print job_ids
-    job_id_list = "job_id=%s" % ";job_id=".join(job_id)
+    job_id_list = "job_id=%s" % ";job_id=".join(job_id) # necessary format for miglib.rm_file()
     job_status_list = mig_function_wrapper(miglib.job_status,job_id_list)
     #print statusStr
     job_info = parse_job_info( job_status_list)
@@ -229,10 +203,35 @@ def parse_job_info(status_list):
         job_info_list.append(status)
     return job_info_list
 
+
+####### CANCEL ################
+
 def cancel_job(job_id):
     #out = ScriptsWrapper.cancel(jobid)
     out = mig_function_wrapper(miglib.cancel_job,job_id)
     return out 
+
+
+#### CLEAN UP / DELETE ##########
+
+def remove_files(filenames):
+    files_str = ""
+    path_list = "path=%s" % ";path=".join(filenames) # necessary format for miglib.rm_file()
+    #for f in filenames:
+    #    files_str += f + " "
+        
+    #return ScriptsWrapper.removeFile(filesStr)
+    return mig_function_wrapper(miglib.rm_file,path_list)
+
+#def remove_file(filename):
+     #return ScriptsWrapper.removeFile(filesStr)
+ #   return mig_function_wrapper(miglib.rm_file,filename)
+
+def remove_dir(dirname):
+    #return ScriptsWrapper.removeDir(dirname)
+    path_list = "path=%s" % ";path=".join([dirname]) # necessary format for miglib.rm_dir()
+    return mig_function_wrapper(miglib.rm_dir,path_list)
+
 
 def dir_cleanup(job_files, directory):
     for f in job_files:
@@ -241,7 +240,7 @@ def dir_cleanup(job_files, directory):
         #ScriptsWrapper.removeFile(filename)
         #print out
 
-def clean_up_locally(files):
+def remove_files_local(files):
       #clean up
     for f in files:
         try: 
@@ -249,14 +248,6 @@ def clean_up_locally(files):
             os.remove(f)
         except OSError:
             print "Can't delete : "+f
-
-def make_dir_tree(path):
-    dirs = path.split("/")
-    subdirs = ""
-    for d in dirs:
-        #ScriptsWrapper.makeDir(subdirs+d)
-        #print subdirs
-        subdirs += d + "/"
 
 def clean_up_input_files(files):
     #filepaths = []
@@ -290,8 +281,21 @@ def clean_up_input_files(files):
 def mig_function_wrapper(func,*args):
     print args
     #funct = "miglib."+func
+    print func, args
     code, out = func(*args)
-    print "exit code", code
-    if code != 0:
-        raise Exception("Error on MiG: "+"".join(out))
+    print out
+    exit_code = get_exit_code(out)
+    
+    print "exit code", exit_code
+    if exit_code != 0:
+        raise Exception("MiG Error: \n"+str(func)+":"+str(args)+"\n"+"".join(out))
     return out
+
+def get_exit_code(output_lines):
+    if len(output_lines) > 0:
+        exit_code_str = output_lines[0]
+        code = exit_code_str.strip("'Exit code: ").split()[0]
+        print code
+    else:
+        code = 0
+    return int(code)

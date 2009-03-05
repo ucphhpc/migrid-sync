@@ -12,6 +12,13 @@ def generate_timestamp():
     timestamp = "%i_%i_%i_%i_%i_%i" % (h,m,s,d,mo,y)
     return timestamp
 
+def get_time():
+    import time
+    (y,mo,d,h,m,s,ms,_,_)= time.localtime()
+    timestamp = "%i%i:%i_%i_%i_%i" % (h,m,s,d,mo,y)
+    timestamp = "%i%i:%i_%i_%i_%i" % (d,mo,y,h,m,s)
+    return timestamp
+
 
 
 def time_diff(t0, t1):

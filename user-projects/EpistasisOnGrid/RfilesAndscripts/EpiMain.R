@@ -20,15 +20,6 @@
 #OUTputtet til videre behandling (se working files) skal ændres til en blok hvor al tekst er på engelsk!!
 
 
-#"convertToMatrix"<-function(arg)
-#{
-#  mat <- matrix(0,length(arg[[1]]), length(arg))
-#  for(i in 1:length(arg)){
-#    mat[,i]<-smplt[[i]]
-#  }
-#  mat
-#}
-
 "writeToFile"<-function(data,filename)
 {
 write.table(data, filename, sep="\t", append=T, quote=F, col.names=F, row.names=F)
@@ -295,13 +286,8 @@ smplt<-read.spss(file=fileimp, to.data.frame=TRUE)
 
 #write.table(smplt,"datafile.txt",sep=";",append=F,quote=F, col.names=T,row.names=F)
 
-#stop("stop")
-#RunEpistasisForClass(class=2, smplt=smplt, selVar=2,
-#selName="Gender", geneIndex1=74, geneIndex2=103, traitIndex1=7,
-#traitIndex2=37)
 
 RunEpistasisForClass(valueRange=range, smplt=smplt, selVar=selVar, geneIndex1=gIndex1, geneIndex2=gIndex2, traitIndex1=tIndex1,traitIndex2=tIndex2)
 
-#RunEpistasisForClass(valueRange=c(1,2), smplt=smplt, selVar=2,selName="Gender", geneIndex1=74, geneIndex2=103, traitIndex1=7,traitIndex2=37)
 
-#warnings()
+warnings()

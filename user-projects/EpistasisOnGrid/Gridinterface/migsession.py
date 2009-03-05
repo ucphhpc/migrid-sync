@@ -1,5 +1,6 @@
 #import MiGuserscriptsInterface as Mig
 import os
+import time 
 
 class MigSession:
     def __init__(self, results_dir, local=False):
@@ -14,14 +15,18 @@ class MigSession:
         #self.Mig.makeDirTree(self.workingDir)
         self.jobs = []
 
+    def get_time(self):
+        return time.strftime('%d/%m/%Y %H:%M:%S')
+
+
 ###### CREATE JOB ###############
 
     def create_mig_job(self,job):
         job["id"]= self.mig.create_job(exec_commands=job["commands"], input_files=job["input_files"], 
                                       executables=[], local_working_dir=job["job_dir"], mig_working_dir=job["job_dir"], 
-                                      output_files=job["output_files"], static_files=[], vgrid=job["vgrid"], 
+                                      output_files=job["output_files"], static_files=[], 
                                       resource_specs=job["resource_specs"], args=[job])
-        #return jobid 
+        job["started"] = self.get_time()
 
     def create_mig_jobs(self,jobs, deploy_multiple=False):
         if deploy_multiple:
@@ -32,7 +37,7 @@ class MigSession:
                                             input_files=job["input_files"], executables=[], 
                                             local_working_dir=job["job_dir"], mig_working_dir=job["job_dir"], 
                                             output_files=job["output_files"], static_files=[], 
-                                            vgrid=job["vgrid"], resource_specs=job["resource_specs"], 
+                                                 resource_specs=job["resource_specs"], 
                                             args=[job])
                 job["mrsl_file"] = mrsl_file
             self.submit_prepared_jobs(jobs)
@@ -104,6 +109,10 @@ class MigSession:
         job_info_list = self.mig.get_status(job_ids)
         for i in range(len(jobs)):
             jobs[i]["status"] = job_info_list[i]
+            
+            if jobs[i]["status"]['STATUS'] == 'FINISHED':
+                jobs[i]["finished"] = self.get_time()
+            
             #print jobs[i]["id"], job_info_list[i]["ID"]
         #        map(lambda x : x["id"]=)
         
@@ -148,17 +157,17 @@ class MigSession:
         self.mig.remove_dir(job["job_dir"]) # directory
 
         # locally
-        for f in job_files:
-            try:
-                os.remove(f)
-            except OSError:
-                print "Could not delete file : "+f
-            except IOError:
-                print "Could not delete file : "+f
+   #     for f in job_files:
+    #        try:
+    #            os.remove(f)
+     #       except OSError:
+      #          print "Could not delete file : "+f
+       #     except IOError:
+       #         print "Could not delete file : "+f
 
         try:
             os.rmdir(job["job_dir"])
         except OSError:
             print "Could not delete dir : "+job["job_dir"]
         except IOError:
-                print "Could not delete file : "+f
+            print "Could not delete file : "+f
