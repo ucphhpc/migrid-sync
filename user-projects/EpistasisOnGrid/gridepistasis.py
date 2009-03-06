@@ -256,8 +256,12 @@ def create_epistasis_jobs(
         input_files = list(configuration.program_files)
         input_files.append(data_file)
         job['input_files'] = input_files
-        
         job['resource_specs'] = configuration.resource_specs
+
+        # job test DELETE
+       # job['output_files'] = ["testfil.txt"]
+        #job['commands'] =  ['cd ' + job['job_dir'], "echo testinhold > testfil.txt"]
+        
 
         os.mkdir(job['job_dir'])
         if run_local:

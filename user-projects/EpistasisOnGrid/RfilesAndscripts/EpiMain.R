@@ -272,7 +272,7 @@ selVar <- as.numeric(args[6])
 #selVarName <- args[7]
 # range
 range <- as.numeric(args[7: length(args)])
-
+print(paste("range", range))
 #print(paste(fileimp, " ",gIndex1," ",gIndex2,  " ", selVar, " ", args))
 print(selVar)
 #fileimp<-"../Inter99All290606.sav"

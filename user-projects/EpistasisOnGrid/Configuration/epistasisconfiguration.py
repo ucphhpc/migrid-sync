@@ -21,9 +21,9 @@ resource_specs = {}
 #resource_specs["ARCHITECTURE"] ="AMD64"
 resource_specs["RUNTIMEENVIRONMENT"] = "GNU_R"
 resource_specs["VGRID"] = "DCSC"
-resource_specs["CPUTIME"] = 120
+resource_specs["CPUTIME"] = 600
 resource_specs["MEMORY"] = 100
-resource_specs["DISK"] = 10
+resource_specs["DISK"] = 1
 
 default_user_output_dir = "epifiles/"
 

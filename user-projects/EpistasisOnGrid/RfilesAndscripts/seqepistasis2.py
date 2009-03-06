@@ -14,11 +14,11 @@ def main():
 # this method is used when running the script alone
 def epistasis(args):
     g1 = "74"#"85" # 74
-    g2 = "103"#"90" # 103
+    g2 = "75"#"90" # 103
     t1 = "7" # 7 
-    t2 = "37" # 37
+    t2 = "8" # 37
 #    selectname = "Gender"
-    selectindex = "5"
+    selectindex = "2"
     values = selectionvalues[selectindex]
     files = ["EpiCRnew_R_edit.R","DistrPost07_R_edit.R", "EpiPS_R_edit.R", "HWEwigNew_R_edit.R"]
     mainfile = "EpiMain.R"
