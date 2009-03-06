@@ -30,9 +30,9 @@ def run_epistasis_job(job):
     
     #archiveOutput(job["workingDir"]+job["outputDir"], job["workingDir"]+archiveName) # achive output dir
     os.chdir("../")
-    archive_output(target_dir="epifiles", dest_dir="./",arc_name=archive_name) # archive output dir
+    archive_output(target_dir=job["output_dir"], dest_dir="./",arc_name=archive_name) # archive output dir
     print "Done executing job ", job
-#cleanUpEpistasis(job["workingDir"], [archiveName, job["jobfilesArchive"], job["mainScript"]]) # delete all excess files
+    clean_up_epistasis(job["output_dir"], [archive_name, job["main_script"]]) # delete all excess files
 
 
 def extract_job_files(filepath, dest_dir):
@@ -69,6 +69,8 @@ def clean_up_epistasis(working_dir_path, exceptions_list):
             direct = os.path.join(root,dirs[0])
             os.rmdir(direct)
             print "removed "+direct
+        
+    os.rmdir(working_dir_path)
                     
 def execute_epistasis(r_files, path, arg_str, r_bin): 
     # go to working dir
@@ -119,7 +121,7 @@ def generate_args(job, data_file_dir):
 def load_job_data():
     import pickle
     
-    pkl_file = open('arg0.pkl', 'rb')
+    pkl_file = open('job_file.pkl', 'rb')
     data1 = pickle.load(pkl_file)
      #pprint.pprint(data1)
     

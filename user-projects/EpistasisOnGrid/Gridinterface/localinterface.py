@@ -31,7 +31,7 @@ def create_job(exec_commands, input_files, executables, local_working_dir, mig_w
     #     #print filename
     #     shutil.copy(file,userMiGDir+"/"+filename)
     print input_files
-    copy_files_to_working_dir(input_files, local_working_dir)
+    #copy_files_to_working_dir(input_files, local_working_dir)
     
     if args !=[]:
         arg_files = write_args_to_files(args, local_working_dir)
@@ -53,7 +53,7 @@ def create_job(exec_commands, input_files, executables, local_working_dir, mig_w
     if olddir != "": # restore to initial working dir
         os.chdir(olddir)
 
-    clean_up(local_working_dir,exceptions_list=output_files)
+#    clean_up(local_working_dir,exceptions_list=output_files)
     return job_id
 
 def cancel_job(job_id):

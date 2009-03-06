@@ -12,22 +12,26 @@ import string
 
 def create_job(exec_commands, input_files, executables, local_working_dir, mig_working_dir, output_files, static_files=[], resource_specs={}, args=[]):
 
-    job_files = [] 
-    job_files.extend(input_files)
+    #job_files = [] 
+   # job_files.extend(input_files)
 
-    if static_files != []:
-        job_files.extend(static_files)
+    #if static_files != []:
+    #    job_files.extend(static_files)
         
-    files_to_upload = copy_files_to_working_dir(job_files, local_working_dir)
-    if args !=[]:
-        arg_files = write_args_to_files(args, local_working_dir)
-        files_to_upload.extend(arg_files)
-
+   #copy_files_to_working_dir(job_files, local_working_dir)
+   # if args !=[]:
+   #     arg_files = write_args_to_files(args, local_working_dir)
+    #    files_to_upload.extend(arg_files)
+    
     expected_output = [mig_working_dir+output_files[0]]
         
     # make MRSL
-    mrsl_file = createmrsl.generate_mrsl(exec_commands, files_to_upload, expected_output, local_working_dir, executables, resource_specs_dict=resource_specs)
+    mrsl_file = createmrsl.generate_mrsl(exec_commands, input_files, expected_output, local_working_dir, executables, resource_specs_dict=resource_specs)
+    
+    files_to_upload = []
     files_to_upload.append(mrsl_file)
+    files_to_upload.extend(input_files)
+    
     archive = create_archive(files_to_upload, local_working_dir, mig_working_dir)
     #(code, out) = miglib.submit_file(mrslfile,local_working_dir,True,False)
     #out = mig_function_wrapper(miglib.submit_file,mrslfile,local_working_dir,True,False)
@@ -38,8 +42,8 @@ def create_job(exec_commands, input_files, executables, local_working_dir, mig_w
     #clean_up_locally([mrsl_file]) # delete generated mrsl file
     #cleanUpInputFiles(files_to_upload) # delete job input files 
     remove_files([mig_archive_dest, mrsl_file])
-    remove_files_local(files_to_upload)
-    remove_files_local([archive])
+    #remove_files_local(files_to_upload)
+    remove_files_local([archive, mrsl_file])
     return job_id
 
 

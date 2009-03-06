@@ -22,7 +22,7 @@ class GridEpistasis:
         self.all_jobs = []
         self.epistasis_status = 'idle'
         self.num_jobs = 0
-        self.mig_session = ""
+        #self.mig_session = ""
 
 # ########## UPDATE / STATUS ###############
 

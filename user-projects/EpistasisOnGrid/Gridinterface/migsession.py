@@ -1,6 +1,7 @@
 #import MiGuserscriptsInterface as Mig
 import os
 import time 
+import shutil 
 
 class MigSession:
     def __init__(self, results_dir, local=False):
@@ -14,7 +15,7 @@ class MigSession:
         self.main_results_dir = results_dir #destDir+EpiConfig.resultsdirPrefixName+job["projectTag"]+"/"
         #self.Mig.makeDirTree(self.workingDir)
         self.jobs = []
-
+        
     def get_time(self):
         return time.strftime('%d/%m/%Y %H:%M:%S')
 
@@ -22,10 +23,17 @@ class MigSession:
 ###### CREATE JOB ###############
 
     def create_mig_job(self,job):
+        self.validate_job(job)
+        input_files = self.copy_files_to_local_working_dir(job["input_files"], job["job_dir"])
+        job_file = self.write_job_to_file(job, job["job_dir"])
+        input_files.append(job_file)
+        
+        job["input_files"] = input_files
+        #print input_files
         job["id"]= self.mig.create_job(exec_commands=job["commands"], input_files=job["input_files"], 
                                       executables=[], local_working_dir=job["job_dir"], mig_working_dir=job["job_dir"], 
                                       output_files=job["output_files"], static_files=[], 
-                                      resource_specs=job["resource_specs"], args=[job])
+                                      resource_specs=job["resource_specs"])
         job["started"] = self.get_time()
 
     def create_mig_jobs(self,jobs, deploy_multiple=False):
@@ -72,6 +80,27 @@ class MigSession:
         tar.close()
         return tar_path
             
+
+    def write_job_to_file(self,job, dest_dir):
+        import pickle
+        #num = 0
+        filename = dest_dir+"job_file.pkl"#"job"+str(num)+".pkl"
+        output = open(filename, 'w')
+        pickle.dump(job, output)
+        output.close()
+        
+        return filename#arg_files
+
+    def copy_files_to_local_working_dir(self,input_files, dest_dir):
+        files = []
+        for f in input_files: 
+            cp_filename = dest_dir+f.split("/")[-1]
+            shutil.copyfile(f ,cp_filename)
+            files.append(cp_filename)
+        
+        return files    
+    
+
     ######## OUTPUT ##########
 
     def handle_output(self,job):
@@ -123,6 +152,15 @@ class MigSession:
         #    self.PrintStatus(jobs)
         return jobs
 
+    def wait_for_jobs(self, jobs):
+        done = False
+        while not done: 
+            self.update_jobs(jobs)
+            done = True
+            for j in jobs :
+                new_state = j["status"]['STATUS'] == 'FINISHED'
+                done = done and new_state 
+        
     ########## STOP/CANCEL #########
 
     def cancel_jobs(self,jobs):
@@ -149,13 +187,38 @@ class MigSession:
         #filepaths = []
         job_files = []
         job_files.extend(job["input_files"]) # r files
-        job_files.append("arg0.pkl") #r arguments file
-        job_files.extend(job["output_files"])  # output
-        job_files = map(lambda x : job["job_dir"]+x.split("/")[-1], job_files)
-       
+        if job["status"]["STATUS"] == "FINISHED":
+            outputfile = job["job_dir"]+job["output_files"][0]
+            job_files.append(outputfile)
+        
         self.mig.remove_files(job_files)
+        self.remove_local_files(job_files)
+               
+        # locally 
+#        if job["status"]["STATUS"] == "FINISHED":
+ #           os.remove(job["output_files"][0])
+        
         self.mig.remove_dir(job["job_dir"]) # directory
+        os.rmdir(job["job_dir"])
+        
 
+    def remove_local_files(self,files):
+      #clean up
+        for f in files:
+            #try: 
+            os.remove(f)
+            print "removed local file "+f
+ #except OSError:
+             #   print "Can't delete : "+f
+                
+
+
+    def validate_job(self,job):
+        required_keys = ["input_files", "output_files", "commands", "job_dir", "results_dir"]
+        for key in required_keys:
+            if not key in job.keys():
+                raise Exception("Job error. MiG job dictionary must contain key "+key)
+        
         # locally
    #     for f in job_files:
     #        try:
@@ -165,9 +228,11 @@ class MigSession:
        #     except IOError:
        #         print "Could not delete file : "+f
 
-        try:
-            os.rmdir(job["job_dir"])
-        except OSError:
-            print "Could not delete dir : "+job["job_dir"]
-        except IOError:
-            print "Could not delete file : "+f
+#        try:
+#            os.rmdir(job["job_dir"])
+#        except OSError:
+#            print "Could not delete dir : "+job["job_dir"]
+#        except IOError:
+#            print "Could not delete file :"
+
+

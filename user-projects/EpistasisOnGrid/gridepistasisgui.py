@@ -7,6 +7,11 @@ import wx
 import time
 import os
 
+stop_state = "stopping"
+exec_state = "executing"
+pending_state = "pending"
+
+
 def validateInput():
     try: 
         g1 = int(frame_1.g1.GetValue())
@@ -76,7 +81,7 @@ def start():
    # model = EpiModel.EpistasisProcess()
     #timeout = 5000
     jobs = model.start_epistasis(c1,c2,g1,g2,t1,t2,sv,datafile,outputdir,local_mode)
-    model.epistasis_status="executing"
+    model.epistasis_status=exec_state
     # fake response
     #dlg = wx.MessageDialog(frame_1,
     #                           message='Executing epistasis',
@@ -92,6 +97,8 @@ def stop():
     model.stop_epistasis()
     model.__init__()
     EnableControls(True)
+    frame_1.timer.Stop()
+    
 
 def EnableControls(enable):
     frame_1.datafile.Enable(enable)
@@ -111,7 +118,7 @@ def EnableControls(enable):
 
 # event handlers
 def OnBtnStart(event=None):
-    model.epistasis_status = "pending"
+    model.epistasis_status = pending_state
     frame_1.statusfeed.Clear()
     frame_1.statusfeed.write("Starting epistasis...")
     EnableControls(False)
@@ -121,7 +128,7 @@ def OnBtnStart(event=None):
     frame_1.timer.Start(shorttime) 
 
 def OnBtnStop(event=None):
-    if model.epistasis_status == "executing":
+    if model.epistasis_status == exec_state:
         print "stopping epistasis"
         #model.stopbs(self.epijobs)
             #epiCleanUp(self.epijobs)
@@ -129,7 +136,7 @@ def OnBtnStop(event=None):
             # else: 
             #   print "Not executing..."
         
-        model.epistasis_status = "stopping"
+        model.epistasis_status = stop_state
         shorttime= 100
         frame_1.statusfeed.Clear()
         frame_1.statusfeed.write("Stopping epistasis...")
@@ -157,17 +164,17 @@ def OnBtnBrowseDir(event=None):
     frame_1.outputdir.write(dd.GetPath())
 
 def OnMenuQuit(event=None):
-    if model.epistasis_status == "executing":
+    if model.epistasis_status == exec_state:
         model.stop_epistasis()
     frame_1.Destroy()
 
 def OnTimer(event=None):
-    if model.epistasis_status == "pending":
+    if model.epistasis_status == pending_state:
         start()
         return
-    if model.epistasis_status == "stopping":
+    if model.epistasis_status == stop_state:
         stop()
-    #return
+        return
     
     status, progress = model.get_epistasis_status()
     frame_1.statusfeed.Clear()
@@ -192,8 +199,8 @@ def OnTimer(event=None):
     else: 
         frame_1.timer.Start(timeout)  
 
-def OnLocal(event=None):
-    model.localmode = not model.localmode
+#def OnLocal(event=None):
+ #   model.localmode = not model.localmode
     #print model.localmode
 
 def bindViewerEvents():
@@ -203,7 +210,7 @@ def bindViewerEvents():
     frame_1.Stop.Bind(wx.EVT_BUTTON, OnBtnStop)
     frame_1.Bind(wx.EVT_MENU, OnMenuQuit)
     frame_1.Bind(wx.EVT_TIMER, OnTimer)
-    frame_1.runlocal.Bind(wx.EVT_CHECKBOX, OnLocal)
+#    frame_1.runlocal.Bind(wx.EVT_CHECKBOX, OnLocal)
     
 app = wx.PySimpleApp(0)
 wx.InitAllImageHandlers()
