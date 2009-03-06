@@ -1,0 +1,35 @@
+::EXECUTE::
+echo "MiG server:"
+sleep 100
+host mig-1.imada.sdu.dk
+sleep 100
+echo "Resource:"
+sleep 100
+host `hostname -f`
+
+::NOTIFY::
+jabber: jonasbardino@jabber.dk
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+
+::EXECUTABLES::
+
+::MEMORY::
+1024
+
+::DISK::
+10
+
+::CPUTIME::
+600
+
+::CPUCOUNT::
+1
+
+::ARCHITECTURE::
+i386
+
+::RUNTIMEENVIRONMENT::
+

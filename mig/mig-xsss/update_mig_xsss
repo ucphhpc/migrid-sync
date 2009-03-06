@@ -1,0 +1,13 @@
+#!/bin/bash
+rm -f /usr/local/mig_xsss/*.py  
+rm -f /usr/local/mig_xsss/*.sh
+rm -f /etc/imada/scripts/mig_xsss.sh
+
+cp /tmp/mig_xsss/*.py /usr/local/mig_xsss
+cp /tmp/mig_xsss/*.sh /usr/local/mig_xsss
+cp /tmp/mig_xsss/mig_xsss.sh /etc/imada/scripts
+
+chmod 700 /usr/local/mig_xsss/*.py
+chmod 700 /usr/local/mig_xsss/*.sh
+chmod 700 /etc/imada/scripts/mig_xsss.sh
+

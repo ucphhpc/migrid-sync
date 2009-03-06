@@ -1,0 +1,29 @@
+::EXECUTE::
+echo "MiG server:"
+host mig-1.imada.sdu.dk
+cat myinput.txt >> myoutput.txt
+echo "Resource:"
+host `hostname -f`
+
+::NOTIFY::
+jabber: jonasbardino@jabber.dk
+
+::INPUTFILES::
+myinput.txt
+
+::OUTPUTFILES::
+myoutput.txt
+
+::EXECUTABLES::
+
+::MEMORY::
+1
+
+::DISK::
+1
+
+::CPUTIME::
+20
+
+::RUNTIMEENVIRONMENT::
+

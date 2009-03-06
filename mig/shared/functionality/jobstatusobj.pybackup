@@ -1,0 +1,302 @@
+#!/usr/bin/python
+
+"""Show job status"""
+
+import cgi
+import cgitb
+import glob
+import os
+import sys
+import time
+
+from shared.validstring import valid_user_path
+#from shared.html import get_cgi_html_header, get_cgi_html_footer
+from shared.fileio import unpickle
+from shared.cgishared import init_cgi_script_with_cert
+from shared.parseflags import verbose, sorted
+from shared.output import do_output
+
+from shared.cgiinput import validated_string, validated_integer, \
+     initialize_main_variables
+
+from shared.Types import Title, Header, ErrorText, Text, Job, ObjectCollection, OutputObject, Link
+from shared.ReturnValues import ReturnValues, Typ
+import SOAPpy
+
+cgitb.enable()
+
+def sort(paths, new_first=True):
+    """sort list of paths after modification time. The new_first
+    argument specifies if the newest ones should be at the front
+    of the resulting list.
+
+    """
+    mtime = os.path.getmtime
+    if new_first:
+        paths.sort(lambda i, j: cmp(mtime(j), mtime(i)))
+    else:
+        paths.sort(lambda i, j: cmp(mtime(i), mtime(j)))
+    return paths
+
+
+def main(cert_name_no_spaces, user_arguments_dict):
+    configuration, logger, o = initialize_main_variables()
+ 
+    flags, err = validated_string(user_arguments_dict, "flags", "")
+    if err:
+        o.client("Warning: illegal flags argument: %s" % err)
+        #o.client_html("<br>", printhtml)
+    max_entries, err = validated_integer(user_arguments_dict, "max_jobs", 1000000)
+    if err:
+        o.client("Warning: illegal max_jobs argument: %s" % err)
+        #o.client_html("<br>", printhtml)
+        
+    patterns = user_arguments_dict["job_id"]
+    
+    status = o.OK
+    
+    order = "unsorted "
+    if sorted(flags):
+        order = "sorted "
+        
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+    base_dir = os.path.abspath(configuration.mrsl_files_dir + os.sep + \
+       cert_name_no_spaces) + os.sep
+                               
+#def main(flags):
+    output_objects = []
+    #o.client_html(get_cgi_html_header("MiG job status",
+    #                                  "MiG %sjob status for: %s" % \
+    #                                  (order, ', '.join(patterns))),
+    #              printhtml)
+    
+    output_objects.append({"Type":"Title", "Value":"MiG job status"})
+#    output_objects.append({"Type":Typ.TITLE, "Value":"MiG job status"})
+    output_objects.append(Header("MiG %sjob status for: %s" % (order, ', '.join(patterns))))
+    #o.client_html("<div class='migcontent'>", printhtml)
+    if not patterns:
+        #o.out("No job_id specified!")
+        #o.client_html(get_cgi_html_footer(
+        #    "<p><a href='../'>Back to main page</a>"), printhtml)
+        #o.reply_and_exit(o.CLIENT_ERROR)
+        output_objects.append(ErrorText("No job_id specified!"))
+        return (output_objects, ReturnValues.NO_SUCH_JOB_ID)
+
+    
+    for flag in flags:
+        #o.internal("%s using flag: %s" % (op_name, flag))
+        output_objects.append(Text("%s using flag: %s" % (op_name, flag)))
+    
+    if not os.path.isdir(base_dir):
+        #o.out("You have not been created as a user on the MiG server!" + \
+        #" Please contact the MiG team.")
+        output_objects.append(ErrorText("You have not been created as a user on the MiG server!" + \
+        " Please contact the MiG team."))
+        return (output_objects, ReturnValues.USER_NOT_CREATED)
+
+    #o.client("\nBack to main page__\n\n__ ..\n")
+    # o.client_html(get_cgi_html_footer(
+    #    "<p><a href='../'>Back to main page</a>"), printhtml)
+    
+    #o.reply_and_exit(o.ERROR)
+    
+    try:
+        max_jobs = int(max_entries)
+        if max_jobs < 1:
+            raise
+    except Exception:
+        #o.out("invalid max_jobs argument, '%s', must a positive integer!" % \
+        #      max_entries)
+        output_objects.append(ErrorText("invalid max_jobs argument, '%s', must be a positive integer!" % \
+        max_entries))
+        #o.client_html("</div>", printhtml)
+        #o.client_html(get_cgi_html_footer(
+        #    "<p><a href='../'>Back to main page</a>"), printhtml)
+        #o.reply_and_exit(o.CLIENT_ERROR)
+        return (output_objects, ReturnValues.INVALID_ARGUMENT)
+
+    filelist = []
+    for pattern in patterns:
+        pattern = pattern.strip()
+        
+        # Backward compatibility - keyword ALL should match all jobs
+        if pattern == "ALL":
+            pattern = "*"
+
+        # Check directory traversal attempts before actual handling to
+        # avoid leaking information about file system layout while
+        # allowing consistent error messages
+        unfiltered_match = glob.glob(base_dir + pattern + ".mRSL")
+        match = []
+        for server_path in unfiltered_match:
+            real_path = os.path.abspath(server_path)
+            if not valid_user_path(real_path, base_dir, True):
+                # out of bounds - save user warning for later to allow
+                # partial match:
+                # ../*/* is technically allowed to match own files.
+                    
+                #o.internal(
+                #log this("Warning: %s tried to %s %s outside own home! (pattern %s)" % \
+                #(cert_name_no_spaces, op_name, real_path,pattern))
+                continue
+
+            # Insert valid job files in filelist for later treatment
+            match.append(real_path)
+
+        # Now actually treat list of allowed matchings and notify if
+        # no (allowed) match	
+        if not match:	
+            output_objects.append(ErrorText("%s: You do not have any matching job IDs!" % pattern))
+            #o.out("%s: You do not have any matching job IDs!" % pattern)
+            #o.client_html("<br>", printhtml)
+            status = o.CLIENT_ERROR
+        else:
+            filelist += match
+
+    if sorted(flags):
+        sort(filelist)
+
+    if max_jobs < len(filelist):
+        #o.client("Only showing first %d of the %d matching jobs as requested" % \
+        #         (max_jobs, len(filelist)))
+        output_objects.append(Text("Only showing first %d of the %d matching jobs as requested" % \
+        (max_jobs, len(filelist))))
+        #o.client_html("<br>", printhtml)
+        filelist = filelist[:max_jobs]
+    # Iterate through jobs and print details for each
+    jobcollection = ObjectCollection()
+
+    for filepath in filelist:
+        # Extract jo_id from filepath (replace doesn't modify filepath)
+        mrsl_file = filepath.replace(base_dir, "")
+        job_id = mrsl_file.replace(".mRSL", "")
+        job_dict = unpickle(filepath, logger)
+        if not job_dict:
+            #o.out("You can only list status of your own jobs." + \
+            #" Please verify that you submitted the mRSL file " + \
+            #"with job id '%s' (Could not unpickle mRSL file %s)" % \
+            #(job_id, filepath))
+            #o.client_html("<br>", printhtml)
+            status = o.CLIENT_ERROR
+            
+            output_objects.append(ErrorText("You can only list status of your own jobs." + \
+            " Please verify that you submitted the mRSL file " + \
+            "with job id '%s' (Could not unpickle mRSL file %s)" % \
+            (job_id, filepath)))
+            continue
+
+        # Check that file belongs to the user requesting the status
+        if not cert_name_no_spaces == job_dict["USER_CERT"]:
+            #o.out("The job you are trying to get status for does" + \
+            # "not belong to you!")
+            # o.client_html("<br>", printhtml)
+            output_objects.append(ErrorText("The job you are trying to get status for does not belong to you!"))
+            status = o.CLIENT_ERROR
+            continue
+
+        job_obj = Job(job_id)
+        #o.client("Job ID: %s" % job_id)
+        #o.client_html("<br>", printhtml)
+        o.client("Status: %s" % job_dict["STATUS"])
+        job_obj.status = job_dict["STATUS"]
+        #o.client_html("<br>", printhtml)
+        
+        if job_dict.has_key("VERIFIED"):
+            #o.client("Verified: %s" % job_dict["VERIFIED"])
+            job_obj.verified = job_dict["VERIFIED"]
+            #o.client_html("<br>", printhtml)
+            
+        if job_dict.has_key("VERIFIED_TIMESTAMP"):
+            #o.client(" at %s" % \
+            job_obj.verified_timestamp = time.asctime(job_dict["VERIFIED_TIMESTAMP"])
+            #o.client_html("<br>", printhtml)
+    
+        if job_dict.has_key("RECEIVED_TIMESTAMP"):
+            #o.client("Received: %s" % \
+            job_obj.received_timestamp = time.asctime(job_dict["RECEIVED_TIMESTAMP"])
+            #o.client_html("<br>", printhtml)
+        
+        if job_dict.has_key("QUEUED_TIMESTAMP"):
+            #o.client("Queued: %s" % \
+            job_obj.queued_timestamp = time.asctime(job_dict["QUEUED_TIMESTAMP"])
+            #o.client_html("<br>", printhtml)
+            
+        if job_dict.has_key("EXECUTING_TIMESTAMP"):
+            #o.client("Executing: %s" % \
+            job_obj.executing_timestamp = time.asctime(job_dict["EXECUTING_TIMESTAMP"])
+            #o.client_html("<br>", printhtml)
+       
+        if job_dict.has_key("FINISHED_TIMESTAMP"):
+            #o.client("Finished: %s" % \
+            job_obj.finished_timestamp = time.asctime(job_dict["FINISHED_TIMESTAMP"])
+            #o.client_html("<br>", printhtml)
+            
+        if job_dict.has_key("FAILED_TIMESTAMP"):
+            #o.client("Failed: %s" % \
+            job_obj.failed_timestamp = time.asctime(job_dict["FAILED_TIMESTAMP"])
+            #o.client_html("<br>", printhtml)
+        
+        if job_dict.has_key("CANCELED_TIMESTAMP"):
+            #o.client("Canceled: %s" % \
+            job_obj.canceled_timestamp = time.asctime(job_dict["CANCELED_TIMESTAMP"])
+            #o.client_html("<br>", printhtml)
+            
+        if verbose(flags):
+            if job_dict.has_key("EXECUTION_HISTORY"):
+                counter = 0
+                for history_dict in job_dict["EXECUTION_HISTORY"]:
+                    #o.client_html("<br>", printhtml)
+                    o.client("Queued#%i: %s" % \
+                       (counter,
+                       time.asctime(history_dict["QUEUED_TIMESTAMP"])))
+                    #o.client_html("<br>", printhtml)
+                    o.client("Executing#%i: %s" % \
+                       (counter,
+                       time.asctime(history_dict["EXECUTING_TIMESTAMP"])))
+                    #o.client_html("<br>", printhtml)
+                    o.client("Failed#%i: %s" % \
+                       (counter,
+                       time.asctime(history_dict["FAILED_TIMESTAMP"])))
+                    #o.client_html("<br>", printhtml)
+                    o.client("Message#%i: %s" % \
+                       (counter, history_dict["FAILED_MESSAGE"]))
+                    #o.client_html("<br>", printhtml)
+                    counter += 1
+                    #o.client_html("<br>", printhtml)
+                    
+    # o.client_html("<br>", printhtml)
+    #o.client_html(
+    output_objects.append(Link("/cgi-bin/ls.py?path=%s.*" % job_id, "View status files"))
+    output_objects.append(Text('(may not be available)'))
+    #o.client_html("<br>", printhtml)
+    if job_dict.has_key("OUTPUTFILES") and job_dict["OUTPUTFILES"]:
+        # Create a single ls with all supplied outputfiles
+        path_string = ""
+        for path in job_dict["OUTPUTFILES"]:
+            path_string += "path=%s;" % path
+            
+        output_objects.append({"Type":"link", "text":"View output files", "destination":"/cgi-bin/ls.py?%s" % path_string})
+        output_objects.append(Link(
+          "/cgi-bin/ls.py?%s" % path_string ,"View output files"))
+        output_objects.append(Text('(may not be available)'))
+        #o.client_html("<br>", printhtml)
+    output_objects.append(Link(
+       "/cgi-bin/resubmit.py?job_id=%s" % job_id, "Resubmit job"))
+       
+    #o.client_html("<br>", printhtml)
+    output_objects.append(Link(
+       "/cgi-bin/canceljob.py?job_id=%s" % job_id, "Cancel job"))
+    # o.client_html("<br>", printhtml)
+
+    #o.client_html("<br>", printhtml)
+    #  o.client("\n")
+    jobcollection.add(job_obj)
+    #o.client_html("</div>", printhtml)
+    #o.client_html(get_cgi_html_footer(
+    #"<p><a href='../'>Back to main page</a>"), printhtml)
+    
+    output_objects.append(jobcollection)    
+    return (output_objects, ReturnValues.OK)
+#o.reply_and_exit(status)
+

@@ -1,0 +1,40 @@
+::SCRIPTLANGUAGE::
+sh
+
+::ARCHITECTURE::
+i386
+
+::MEMORY::
+512
+
+::DISK::
+500
+
+::CPUCOUNT::
+1
+
+::NODECOUNT::
+1
+
+::MINPRICE::
+0
+
+::HOSTURL::
+tmp.imada.sdu.dk
+
+::MIGUSER::
+jones
+
+::RESOURCEHOME::
+/home/jones/MiG-resource
+
+::HOSTKEY::
+tmp.imada.sdu.dk,130.225.128.79 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAstGbT3sFyRZIB14pfpEtCYj4nOHXmPj3rM4V92YSXTSi3DA5JLOH2ahQNizxwOWP9ys4c6MXKbUGwuRafbzgS+qc3nYf47kjDS/05IS8DO4tshp2jGlxdstI+fdiG4T9FjD4GuXIvmgHxYMxhMEO2L+BZSZE8KUq88/EbDJb2Ps=
+
+::RUNTIMEENVIRONMENT::
+name: POVRAY3.6
+name: HKTEST
+bla=/home/mig
+name: LOCALDISK
+
+

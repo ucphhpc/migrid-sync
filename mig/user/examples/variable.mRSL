@@ -1,0 +1,22 @@
+::EXECUTE::
+bash -c "while [ 1 ]; do echo 1; sleep 10; done"
+
+::NOTIFY::
+
+::EXECUTABLES::
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+
+::MEMORY::
+8
+
+::DISK::
+0
+
+::MAXPRICE::
+10 + 10 * sin(exec_delay)
+
+::CPUTIME::
+50

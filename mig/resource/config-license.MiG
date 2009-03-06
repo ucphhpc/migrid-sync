@@ -1,0 +1,38 @@
+::SCRIPTLANGUAGE::
+sh
+
+::ARCHITECTURE::
+i386
+
+::MEMORY::
+512
+
+::DISK::
+4000
+
+::CPUCOUNT::
+2
+
+::NODECOUNT::
+1
+
+::MINPRICE::
+GENERECON-2.1.3 * 100 + 42 * (hour / 12)
+
+::HOSTURL::
+license.imada.sdu.dk
+
+::MIGUSER::
+karlsen
+
+::RESOURCEHOME::
+/home/karlsen/mig/resource/
+
+::HOSTKEY::
+license.imada.sdu.dk,127.0.0.1 ssh-rsa AAAAB3NzbC1yd2EAAAABIwAAAIEA5Zhqwotml1RaqcKzhzTwOW4rY8u2+8wO15fuMK1uNJaikVNf2cjEGXSw/Aicgm+4A0qN3+Q2n8vmDkdCzQs3iiEedRxQgMuiQYrd4g/lXTOKoS9kkaECDq/Kop0kN87fmLGEwcKc4HES22hMbjXPceNdARyvsxFDZ8ZlUTU3ECc=
+
+::RUNTIMEENVIRONMENT::
+name: GENERECON-2.1.3
+name: LOCALDISK
+
+

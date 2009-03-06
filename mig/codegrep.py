@@ -49,4 +49,5 @@ code_files += ["cgi-sid/%s" % name for name in ["requestnewjob",
 code_files += ["cgi-bin/%s" % name for name in ["listdir", "mkdir",
                "put", "remove", "rename", "rmdir", "stat", "walk"]]
 
-os.system("grep -E '%s' %s" % (pattern, (' ').join(code_files)))
+if "__main__" == __name__:
+    os.system("grep -E '%s' %s" % (pattern, (' ').join(code_files)))

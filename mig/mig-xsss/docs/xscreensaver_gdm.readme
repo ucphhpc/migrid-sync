@@ -1,0 +1,34 @@
+1) 
+Edit the file '/etc/X11/gdm/Init/Default'
+
+Add the following lines to the bottom of the file, just above the line containing 'exit 0'
+
+/usr/X11R6/bin/xscreensaver-command -exit
+sudo -u gdm /usr/X11R6/bin/xscreensaver -nosplash &
+
+2)
+Edit the file '/etc/X11/gdm/Xsession'
+
+Add the following lines to the top of the file
+
+/usr/X11R6/bin/xscreensaver-command -exit
+/usr/X11R6/bin/xscreensaver -nosplash & 
+
+Second line is only added if the xscreensaver is to be startet as the user logges in
+
+3)
+Be sure user gdm has homedir '/var/lib/gdm'
+
+Change dir to '/var/lib/gdm'
+
+do: 
+
+'ln -s :0.Xauth .Xauthority'
+
+To make sure gdm user has access to the display.
+
+4) Setup a .xscreensaver file in '/var/lib/gdm'
+   which will be the config file for the screensaver
+   when the loginscreen is active.
+
+5) restart gdm

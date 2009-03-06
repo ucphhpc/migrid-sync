@@ -1,0 +1,26 @@
+This is where we store raw svn checkouts for use by "anonymous"
+developers.
+
+The restricted versions that these developers have access to are
+stored in ~mig/public/. 
+The create_anonymous_checkout.sh script is used to maintain both the
+raw checkouts and the restricted versions.  
+If run without arguments the script will create or update the HEAD
+revision of the mig module in ./mig and create a restricted version in
+~/mig/public/mig.
+If a tag name is passed to the script it will instead create or update
+that revision of mig in ./mig-TAG and create a restricted version of
+that tag in ~mig/public/mig-TAG.
+
+Thus to create a restricted version of the latest version of mig run:
+create_anonymous_checkout.sh
+
+To create a restricted version of mig in the version tagged
+'MiG-0_0_4' run:
+create_anonymous_checkout.sh MiG-0_0_4
+
+It may be necessary to change the user in ~mig/.ssh/config to actually
+access the cvs repository.
+
+Please check that none of the files listed in the script output are
+too sensible to include in the restricted version.

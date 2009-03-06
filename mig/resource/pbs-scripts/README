@@ -1,0 +1,8 @@
+This directory contains PBS helper scripts that can be 'installed' at the PBS
+resources in order to simplify the commands used in the LRMSX fields of the
+resource configuration.
+They should preferably be copied to and used from a read-only location on the
+resource, because they should be auto executed as a part of
+master_node_script.
+
+-Jonas

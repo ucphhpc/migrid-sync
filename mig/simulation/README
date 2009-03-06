@@ -1,0 +1,20 @@
+To run the simulation using the MiG scheduling modules directly it is necessary 
+to have symlinks to modules from the server directory. In recent code checkouts they should already exist, but if not create them like this:
+cd mig/simulation
+ln -s ../shared .
+ln -s ../shared/configuration.py .
+ln -s ../shared/logger.py . 
+ln -s ../server/jobqueue.py .
+ln -s ../shared/safeeval.py .
+ln -s ../server/scheduler.py .
+ln -s ../server/bestfitscheduler.py .
+ln -s ../server/fairfitscheduler.py .
+ln -s ../server/firstfitscheduler.py .
+
+Additionally you should make sure that ../server/MiGserver.conf exists.
+If you don't have a local server configuration you can simply:
+cd ../server
+ln -s ../simulation/dummy.conf MiGserver.conf
+cd ../simulation
+
+-Jonas

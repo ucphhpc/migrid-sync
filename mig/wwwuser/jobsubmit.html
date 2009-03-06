@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<link rel="stylesheet" type="text/css" href="/images/migcss.css" media="screen"/>
+<Title>
+MiG Submit job
+</title>
+</head>
+<body>
+<div id="toplogo">
+<img src="/images/logo.jpg" id="logoimage" alt=""/>
+</div>
+<div id="mignavmenu">
+<ul id="mignavlist">
+<li class="jobsubmit">
+<a href="/jobsubmit.html">Job Submit</a>
+</li>
+<li class="files">
+<a href="/cgi-bin/ls.py?flags=a">Files</a>
+</li>
+<li class="jobstatus">
+<a href="/jobmanage.html">Job Status</a>
+</li>
+<li class="vgrids">
+<a href="/cgi-bin/vgridadmin.py">VGrids</a>
+</li>
+<li class="resources">
+<a href="/cgi-bin/resadmin.py">Resources</a>
+</li>
+<li class="downloads">
+<a href="/download.html">Downloads</a>
+</li>
+<li class="runtimeenvs">
+<a href="/cgi-bin/redb.py">Runtime Envs</a>
+</li>
+<li class="settings">
+<a href="/cgi-bin/settings.py">Settings</a>
+</li>
+<li class="shell">
+<a href="/cgi-bin/shell.py">Shell</a>
+</li>
+</ul>
+</div>
+<br>
+<hr>
+<br>
+<div id="migheader">Welcome to the MiG web interface</div>
+<br>
+<div id="content">
+<div class="subsection">
+Please type your mRSL job description in the text area below:</div><BR>
+<div class="migcontent">
+<div class="smallcontent">
+Example mRSL job descriptions: 
+
+<a href=example.mRSL>example 1</a>,
+<a href=example2.mRSL>example 2</a>,
+<a href=example3.mRSL>example 3</a>,
+<a href=example4.mRSL>example 4</a>, and
+<a href=example5.mRSL>example 5</a>
+<br>
+<a href="/cgi-bin/docs.py?show=job">mRSL Documentation</a>
+</div>
+
+<br><br>
+<!-- 
+Please note that textarea.py chokes if no nonempty KEYWORD_X_Y_Z fields 
+are supplied: thus we simply send a bogus jobname which does nothing
+-->
+<form method="post" action="/cgi-bin/textarea.py" id="miginput">
+<input type=hidden name=jobname_0_0_0 value=" ">
+<textarea cols="82" rows="25" name="mrsltextarea_0">
+::EXECUTE::
+echo 'hello grid!'
+echo '...each line here is executed'
+
+::NOTIFY::
+email: SETTINGS
+jabber: SETTINGS
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+
+::EXECUTABLES::
+
+::MEMORY::
+1
+
+::DISK::
+1
+
+::CPUTIME::
+30
+
+::RUNTIMEENVIRONMENT::
+
+</textarea>
+<BR><BR>
+
+<input type="submit" value="Submit">
+</form>
+</div>
+<div class="subsection">Upload file / .mRSL</div>
+<div class="migcontent">
+Upload file to your personal grid directory. <br>
+<form enctype="multipart/form-data" action="/cgi-bin/textarea.py"
+      method="post" id="miginput">
+<div class="container">
+			<table class="migtable">
+<tr><td>
+Extract package files (.zip, .tar.gz, .tgz, .tar.bz2)
+</td><td><input type=checkbox name="extract_0"></td></tr>
+<tr><td width="80%">
+Submit mRSL files to parser (also .mRSL files included in packages)
+
+</td><td><input type=checkbox name="submitmrsl_0" CHECKED></td></tr>
+
+<tr><td>File</td><td>
+<input name="fileupload_0_0_0" type="file" size="70"/>
+</td></tr>
+<tr><td>Remote filename</td><td>
+<input name="remotefilename_0" type="text" size="70"/>
+</td></tr>
+</table>
+<input type="submit" value="Submit" name="sendfile">
+</div>
+</form>
+</div>
+
+<br>
+<div class="subsection">Create/edit file</div>
+<div class="content">
+Fill in the path of a file to edit and press 'edit' to open that file in the
+online file editor. Alternatively a file can be selected for editing
+through the listing of personal files. 
+<form name='editor' method='post' action='/cgi-bin/editor.py'>
+<input type='hidden' name='output_format' value='html'>
+<input type='text' name='path' value=''><br>
+<input type='submit' value='edit'>
+</form>
+
+<BR><HR>
+
+<p><a href='../'>Back to main page</a>
+</div>
+</div>
+<br><br>
+<div id="credits">This page is made for
+  the <a href="http://www.migrid.org">MiG project</a>
+  all rights reserved
+</div>
+</body>
+</html>

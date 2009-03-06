@@ -1,0 +1,35 @@
+::EXECUTE::
+echo "Resource:"
+hostname
+echo "Running fib:"
+./fib.sh 13 >> fib-benedict.out
+cat fib-benedict.out
+
+::NOTIFY::
+jabber: jonasbardino@jabber.dk
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+fib-benedict.out
+
+::EXECUTABLES::
+fib.sh
+
+::MEMORY::
+2048
+
+::DISK::
+10
+
+::CPUTIME::
+300
+
+::CPUCOUNT::
+1
+
+::ARCHITECTURE::
+i386
+
+::RUNTIMEENVIRONMENT::
+

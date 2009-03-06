@@ -1,0 +1,41 @@
+::EXECUTE::
+echo 'input files:'
+pwd
+ls -l
+cat fib.out
+echo 'running fib ...'
+./fib.sh 6 >> fib-sun.out
+echo 'done'
+echo 'output file'
+ls -l fib-sun.out
+cat fib-sun.out
+
+::NOTIFY::
+jabber: jonasbardino@jabber.dk
+
+::INPUTFILES::
+fib.out
+
+::OUTPUTFILES::
+fib-sun.out
+
+::EXECUTABLES::
+fib.sh
+
+::MEMORY::
+1024
+
+::DISK::
+10
+
+::CPUTIME::
+60
+
+::CPUCOUNT::
+2
+
+::ARCHITECTURE::
+sun4u
+
+::RUNTIMEENVIRONMENT::
+

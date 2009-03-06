@@ -1,0 +1,54 @@
+::MIGUSER::
+mig_sss
+
+::HOSTURL::
+hostname.domainname
+
+::RESOURCEHOME::
+/home/mig_sss/mig_frontend/hostname.domainname.0
+
+::SCRIPTLANGUAGE::
+sh
+
+::MEMORY::
+256
+
+::DISK::
+10
+
+::CPUCOUNT::
+1
+
+::NODECOUNT::
+1
+
+::ARCHITECTURE::
+i386
+
+::RUNTIMEENVIRONMENT::
+name: POVRAY3.1
+name: SCREENSAVER
+
+::HOSTKEY::
+hostname.domainname,ip ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAqER1aI8QQr8EceykPYl9gS79Xe2H5YSNmhuaZQuAwf6KUAFRAi3A7yvRBXvZS1IPrIg1axc71AyJvozcnGDPUrT52ayufB8lYHGh1ZXD+sNw32elFnZAf/jSSAdT3dlf+lHXOIW+hxXcgm3sE3MIpNg0akI/hbA0YUKyUoXmRVE=
+
+::FRONTENDNODE::
+hostname
+
+::FRONTENDLOG::
+/home/mig_sss/mig_frontend/hostname.domainname.0/frontendlog
+
+::EXECONFIG::
+exe #name
+1 #nodecount
+100 #cputime
+"nice -19" #prepend_execute
+/home/mig_sss/mig_exe/hostname.domainname.0/exehostlog #exehostlog
+/home/mig_sss/mig_exe/hostname.domainname.0/joblog #joblog
+mig_sss #execution_user
+host #execution_node 
+/home/mig_sss/mig_exe/hostname.domainname.0/ #execution_dir
+cd /home/mig_sss/mig_exe/hostname.domainname.0/; chmod 700 master_node_script_exe.sh #start_exe 
+not available #status_exe
+pkill -9 master #stop_exe
+False #continuous

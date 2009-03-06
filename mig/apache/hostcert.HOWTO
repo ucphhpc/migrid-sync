@@ -1,0 +1,275 @@
+Creating MiG host certificates:
+===============================
+
+Host certificates + keys can be created almost like user certificates.
+This example creates a host key for mig-1.imada.sdu.dk .
+Please change names accordingly if You want to create a host keypair for 
+another host.
+
+[root@amigos19 root]# cd /usr/lib/ssl/misc
+
+[root@amigos19 root]# ./mig_gen_hostcert.sh 'mig-1.imada.sdu.dk' 'DK' \
+	'IMADA, SDU' 'NA' 'MiG-Server' 'bardino@brok.diku.dk'
+copy target password to clipboard and paste, it is needed several times!
+Generating a 1024 bit RSA private key
+........++++++
+..........................................................++++++
+writing new private key to 'cert060306-101728.15015_priv.pem'
+Enter PEM pass phrase:
+Verifying - Enter PEM pass phrase:
+-----
+Using configuration from /usr/lib/ssl/openssl.cnf
+Enter pass phrase for ./demoCA/private/cakey.pem:
+Check that the request matches the signature
+Signature ok
+Certificate Details:
+        Serial Number: 79 (0x4f)
+	Validity
+		Not Before: Mar  6 09:17:37 2006 GMT
+		Not After : Mar  5 09:17:37 2008 GMT
+	Subject:
+		countryName               = DK
+		stateOrProvinceName       = NA
+		localityName              = NA
+		organizationName          = IMADA, SDU
+		organizationalUnitName    = NA
+		commonName                = mig-1.imada.sdu.dk
+	X509v3 extensions:
+		X509v3 Basic Constraints: 
+			CA:FALSE
+		Netscape Comment: 
+			OpenSSL Generated Certificate
+		X509v3 Subject Key Identifier: 
+			3D:6F:95:6F:6D:66:27:EB:D8:F1:1D:8D:9B:DB:99:97:3F:85:F1:33
+		X509v3 Authority Key Identifier: 
+			keyid:FA:74:8F:4C:1D:2B:9A:14:AC:93:D7:41:55:E3:01:BC:4C:ED:2B:87
+			DirName:/C=DK/ST=Denmark/O=IMADA/OU=MiG/CN=MiGCA
+			serial:00
+
+Certificate is to be certified until Mar  5 09:17:37 2008 GMT (730 days)
+Sign the certificate? [y/n]:y
+
+1 out of 1 certificate requests certified, commit? [y/n]y
+Write out database with 1 new entries
+Data Base Updated
+Enter pass phrase for cert060306-101728.15015_priv.pem:
+writing RSA key
+jones@dido.imada.sdu.dk's password: 
+cert060306-101728.15015_pub.pem                         100% 3261    19.3MB/s   00:00    
+cert060306-101728.15015_priv.pem                        100% 1610    16.3MB/s   00:00    
+apache060306-101728.15015_pub.pem                       100% 1094     4.1MB/s   00:00    
+apache060306-101728.15015_priv.pem                      100%  887     9.5MB/s   00:00    
+Command to scp files from dest to local machine: scp jones@dido.imada.sdu.dk:'{apache,cert
+}060306-101728.15015*' .
+
+Renewing MiG host certificates:
+===============================
+When existing certificates expire, a new certificate can be generated from the 
+original key.
+This example creates a new certificate for mig-1.imada.sdu.dk from the existing key.
+Please change names accordingly if You want to create a host keypair for
+another host.
+
+amigos19:~# cd /usr/lib/ssl/misc
+
+amigos19:/usr/lib/ssl/misc# ./mig_renew_hostcert.sh mig-1.imada.sdu.dk-hostcerts.old/key.pem mig-1.imada.sdu.dk 'bardino@brok.diku.dk'
+copy target password to clipboard and paste, it is needed several times!
+Using configuration from /usr/lib/ssl/openssl.cnf
+Enter pass phrase for ./demoCA/private/cakey.pem:
+Check that the request matches the signature
+Signature ok
+Certificate Details:
+        Serial Number: 202 (0xca)
+        Validity
+            Not Before: Mar  6 12:26:30 2008 GMT
+            Not After : May 23 12:26:30 2016 GMT
+        Subject:
+            countryName               = DK
+            stateOrProvinceName       = NA
+	    localityName              = NA
+	    organizationName          = IMADA, SDU
+	    organizationalUnitName    = MiG-Server
+	    commonName                = mig-1.imada.sdu.dk
+	X509v3 extensions:
+	    X509v3 Basic Constraints: 
+	        CA:FALSE
+	    Netscape Comment: 
+		OpenSSL Generated Certificate
+	    X509v3 Subject Key Identifier: 
+	        15:05:C6:A2:60:27:EC:8D:71:4C:9A:30:57:E3:5B:54:FC:E5:07:35
+	    X509v3 Authority Key Identifier: 
+		keyid:FA:74:8F:4C:1D:2B:9A:14:AC:93:D7:41:55:E3:01:BC:4C:ED:2B:87
+
+Certificate is to be certified until May 23 12:26:30 2016 GMT (3000 days)
+Sign the certificate? [y/n]:y
+
+
+1 out of 1 certificate requests certified, commit? [y/n]y
+Write out database with 1 new entries
+Data Base Updated
+Enter pass phrase for cert060308-132628.24388_priv.pem:
+writing RSA key
+  adding: mig-1.imada.sdu.dk-hostcerts/ (stored 0%)
+  adding: mig-1.imada.sdu.dk-hostcerts/cert.pem (deflated 44%)
+  adding: mig-1.imada.sdu.dk-hostcerts/key.pem (deflated 24%)
+  adding: mig-1.imada.sdu.dk-hostcerts/server.key (deflated 22%)
+  adding: mig-1.imada.sdu.dk-hostcerts/server.crt (deflated 28%)
+  adding: mig-1.imada.sdu.dk-hostcerts/cacert.pem (deflated 40%)
+bardino@brok.diku.dk's password: 
+mig-1.imada.sdu.dk-hostcerts.zip                        100% 6076     5.9KB/s   00:00    
+Command to scp packed file from dest to local machine: scp bardino@brok.diku.dk:'mig-1.imada.sdu.dk-hostcerts.zip' .
+
+
+
+
+#################################################################################
+# IMPORTANT NOTE: the rest of this text describes the low level step by step 	#
+# procedure which has by now been automated in the mig_X_hostcert.sh scripts	#
+#################################################################################
+
+Generate new key:
+[root@amigos19 misc]# ./CA.sh -newreq
+Generating a 1024 bit RSA private key
+....++++++
+...++++++
+writing new private key to 'newreq.pem'
+Enter PEM pass phrase:
+Verifying - Enter PEM pass phrase:
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:.
+State or Province Name (full name) [Some-State]:.
+Locality Name (eg, city) []:
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:IMADA, SDU
+Organizational Unit Name (eg, section) []:
+Common Name (eg, YOUR name) []:tmp.imada.sdu.dk
+Email Address []:
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:
+Request (and private key) is in newreq.pem
+
+
+Now sign the certificate using the local CA certificate:
+[root@amigos19 misc]# ./CA.sh -sign
+Using configuration from /usr/lib/ssl/openssl.cnf
+Enter pass phrase for ./demoCA/private/cakey.pem:
+Check that the request matches the signature
+Signature ok
+Certificate Details:
+        Serial Number: 27 (0x1b)
+        Validity
+            Not Before: Feb 25 13:43:23 2005 GMT
+            Not After : Feb 25 13:43:23 2006 GMT
+        Subject:
+            organizationName          = IMADA, SDU
+            commonName                = tmp.imada.sdu.dk
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                OpenSSL Generated Certificate
+            X509v3 Subject Key Identifier: 
+                DC:08:92:21:16:34:4E:4E:02:58:4E:96:F4:83:3E:3F:BD:07:C0:80
+            X509v3 Authority Key Identifier: 
+                keyid:FA:74:8F:4C:1D:2B:9A:14:AC:93:D7:41:55:E3:01:BC:4C:ED:2B:87
+                DirName:/C=DK/ST=Denmark/O=IMADA/OU=MiG/CN=MiGCA
+                serial:00
+
+Certificate is to be certified until Feb 25 13:43:23 2006 GMT (365 days)
+Sign the certificate? [y/n]:y
+
+
+1 out of 1 certificate requests certified, commit? [y/n]y
+Write out database with 1 new entries
+Data Base Updated
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 27 (0x1b)
+        Signature Algorithm: md5WithRSAEncryption
+        Issuer: C=DK, ST=Denmark, O=IMADA, OU=MiG, CN=MiGCA
+        Validity
+            Not Before: Feb 25 13:43:23 2005 GMT
+            Not After : Feb 25 13:43:23 2006 GMT
+        Subject: O=IMADA, SDU, CN=host/tmp.imada.sdu.dk
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+            RSA Public Key: (1024 bit)
+                Modulus (1024 bit):
+                    00:bb:5e:d2:9b:7e:2e:f3:4e:e4:8e:15:2d:88:e7:
+                    5a:7f:0c:c1:3d:fd:29:92:6b:3d:8d:46:ca:6f:bc:
+                    d0:04:ce:53:e0:25:4f:66:84:0c:00:64:08:24:51:
+                    18:92:36:62:5f:c3:b7:52:d0:02:6c:b5:7f:50:36:
+                    88:68:86:c3:c8:af:1f:af:b1:30:12:e9:ff:85:76:
+                    d1:b0:4d:5a:70:c8:ed:d1:c5:87:c6:ad:77:9c:2e:
+                    65:92:61:1f:60:99:74:f5:4b:b3:7f:de:fe:85:14:
+                    b4:ba:e1:18:90:e1:3e:c7:74:38:1e:6d:eb:76:d6:
+                    68:21:7a:c1:01:fb:0f:0e:97
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                OpenSSL Generated Certificate
+            X509v3 Subject Key Identifier: 
+                DC:08:92:21:16:34:4E:4E:02:58:4E:96:F4:83:3E:3F:BD:07:C0:80
+            X509v3 Authority Key Identifier: 
+                keyid:FA:74:8F:4C:1D:2B:9A:14:AC:93:D7:41:55:E3:01:BC:4C:ED:2B:87
+                DirName:/C=DK/ST=Denmark/O=IMADA/OU=MiG/CN=MiGCA
+                serial:00
+
+    Signature Algorithm: md5WithRSAEncryption
+        74:16:72:3d:6a:a4:c6:34:45:92:a5:81:f4:db:7a:40:e5:db:
+        fe:c8:27:50:22:30:24:d3:68:4a:af:77:9f:d9:f6:16:06:11:
+        bd:32:bb:7f:83:50:b4:13:0e:49:a9:1a:a8:9f:eb:f5:74:b5:
+        54:29:1f:02:f2:8c:0b:0b:04:9e:e6:25:7a:c8:36:57:0c:35:
+        fc:8d:2a:98:9e:c1:32:9c:88:a1:9f:45:7e:b2:a1:30:c1:7b:
+        17:21:fd:ff:e4:85:5b:54:20:a9:b8:29:a8:6e:b7:0d:1c:43:
+        cb:29:e8:1d:80:1b:74:58:d3:f5:79:89:c1:59:58:81:e5:d0:
+        3b:3b
+-----BEGIN CERTIFICATE-----
+MIICyzCCAjSgAwIBAgIBGzANBgkqhkiG9w0BAQQFADBNMQswCQYDVQQGEwJESzEQ
+MA4GA1UECBMHRGVubWFyazEOMAwGA1UEChMFSU1BREExDDAKBgNVBAsTA01pRzEO
+MAwGA1UEAxMFTWlHQ0EwHhcNMDUwMjI1MTM0MzIzWhcNMDYwMjI1MTM0MzIzWjA1
+MRMwEQYDVQQKEwpJTUFEQSwgU0RVMR4wHAYDVQQDExVob3N0L3RtcC5pbWFkYS5z
+ZHUuZGswgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALte0pt+LvNO5I4VLYjn
+Wn8MwT39KZJrPY1Gym+80ATOU+AlT2aEDABkCCRRGJI2Yl/Dt1LQAmy1f1A2iGiG
+w8ivH6+xMBLp/4V20bBNWnDI7dHFh8atd5wuZZJhH2CZdPVLs3/e/oUUtLrhGJDh
+Psd0OB5t63bWaCF6wQH7Dw6XAgMBAAGjgdIwgc8wCQYDVR0TBAIwADAsBglghkgB
+hvhCAQ0EHxYdT3BlblNTTCBHZW5lcmF0ZWQgQ2VydGlmaWNhdGUwHQYDVR0OBBYE
+FNwIkiEWNE5OAlhOlvSDPj+9B8CAMHUGA1UdIwRuMGyAFPp0j0wdK5oUrJPXQVXj
+AbxM7SuHoVGkTzBNMQswCQYDVQQGEwJESzEQMA4GA1UECBMHRGVubWFyazEOMAwG
+A1UEChMFSU1BREExDDAKBgNVBAsTA01pRzEOMAwGA1UEAxMFTWlHQ0GCAQAwDQYJ
+KoZIhvcNAQEEBQADgYEAdBZyPWqkxjRFkqWB9Nt6QOXb/sgnUCIwJNNoSq93n9n2
+FgYRvTK7f4NQtBMOSakaqJ/r9XS1VCkfAvKMCwsEnuYlesg2Vww1/I0qmJ7BMpyI
+oZ9FfrKhMMF7FyH9/+SFW1QgqbgpqG63DRxDyynoHYAbdFjT9XmJwVlYgeXQOzs=
+-----END CERTIFICATE-----
+Signed certificate is in newcert.pem
+
+
+
+Now You have a signed host certificate and a key for it.
+rename the created certificate and key to more descriptive names 
+like tmp.imada.sdu.dk-servercert.pem and tmp.imada.sdu.dk-serverkey.pem
+
+To use the same key for an Apache webserver:
+Create a webserver key from the original key and without passphrase:
+openssl rsa -in tmp.imada.sdu.dk-serverkey.pem -out server.key
+[Enter passphrase]
+Similarly create a pure RSA certificate from the X509 certificate.
+openssl x509 -in tmp.imada.sdu.dk-servercert.pem -out server.crt
+
+Move the generated Apache server.key and server.crt to a suitable 
+location and change the Apache configuration to use those locations
+(SSLCACertificateFile and SSLCertificateKeyFile).
+Please note that keyfiles in general should not be readbale by anyone 
+but the owner! So remember to set some reasonable permissions.

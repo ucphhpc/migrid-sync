@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# Clean up stale job files and links
+#
+# PLEASE NOTE: all mRSL files should be saved for auditing purposes
+#
+# IMPORTANT: if placed in /etc/cron.X the script filename must be 
+# changed to something consisting entirely of upper and lower case 
+# letters, digits, underscores, and hyphens. I.e. if the script name 
+# contains e.g. a period, '.', it will be silently ignored! 
+# This is a limitation on the run-parts wrapper used by cron 
+# (see man run-parts for the rationale behind this).
+
+# Clean up after jobs if they haven't done so themselves within a month
+max_days=30
+for name in cache/mig_system_files cache/sessid_to_mrsl_link_home cache/webserver_home; do
+	echo "Deleting files older than $max_days days from $name"
+	su - mig -c "find $name -maxdepth 1 -ctime +${max_days} | xargs -n1 rm -f "
+done
+
+# Empty job cruft can be removed within a week
+max_days=7
+for name in mig/wwwuser/no_grid_jobs_in_grid_scheduler; do
+	echo "Deleting files older than $max_days days from $name"
+	su - mig -c "find $name -maxdepth 1 -ctime +${max_days} | xargs -n1 rm -f " 
+done

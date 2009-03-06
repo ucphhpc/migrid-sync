@@ -1,0 +1,33 @@
+::EXECUTE::
+echo "Resource:"
+host `hostname -f`
+./fib.sh 26 >> fib.out
+
+::NOTIFY::
+jabber: jonasbardino@jabber.dk
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+fib.out
+
+::EXECUTABLES::
+fib.sh
+
+::MEMORY::
+1024
+
+::DISK::
+10
+
+::CPUTIME::
+600
+
+::CPUCOUNT::
+1
+
+::ARCHITECTURE::
+i386
+
+::RUNTIMEENVIRONMENT::
+

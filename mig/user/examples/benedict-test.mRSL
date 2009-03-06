@@ -1,0 +1,34 @@
+::EXECUTE::
+echo "Resource:"
+hostname
+echo "MiG user:"
+id
+echo "pwd:"
+pwd
+
+::NOTIFY::
+jabber: jonasbardino@jabber.dk
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+
+::EXECUTABLES::
+
+::MEMORY::
+2048
+
+::DISK::
+10
+
+::CPUTIME::
+300
+
+::CPUCOUNT::
+1
+
+::ARCHITECTURE::
+i386
+
+::RUNTIMEENVIRONMENT::
+

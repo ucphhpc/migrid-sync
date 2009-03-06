@@ -1,0 +1,23 @@
+::RUNTIMEENVIRONMENT::
+GENERECON-2.1.3
+
+::EXECUTE::
+$GENERECON_HOME/generecon run-1304.scm
+
+::JOBNAME::
+GeneRecon-1304
+
+::INPUTFILES::
+run-1304.scm
+
+::OUTPUTFILES::
+locus.txt +JOBID+/locus.txt
+cluster.txt +JOBID+/cluster.txt
+connectedness.txt +JOBID+/connectedness.txt
+likelihood.txt +JOBID+/likelihood.txt
+
+::CPUTIME::
+345600
+
+::MAXPRICE::
+100000

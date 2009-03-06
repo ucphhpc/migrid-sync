@@ -1,0 +1,734 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+<META NAME="generator" CONTENT="http://txt2tags.sf.net">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+<TITLE>MiG User Scripts</TITLE>
+</HEAD><BODY BGCOLOR="white" TEXT="black">
+<P ALIGN="center"><CENTER><H1>MiG User Scripts</H1>
+<FONT SIZE="4">
+Last updated 19-01-2006 15:53
+</FONT></CENTER>
+
+<P></P>
+<HR NOSHADE SIZE=1>
+<P></P>
+  <OL>
+  <LI><A HREF="#toc1">Introduction</A>
+  <LI><A HREF="#toc2">Prerequisites</A>
+  <LI><A HREF="#toc3">Obtaining the scripts</A>
+  <LI><A HREF="#toc4">Configuration</A>
+  <LI><A HREF="#toc5">Using the scripts</A>
+    <UL>
+    <LI><A HREF="#toc6">5.1. submit a job</A>
+    <LI><A HREF="#toc7">5.2. show the status of a job</A>
+    <LI><A HREF="#toc8">5.3. show the status of all submitted MiG jobs</A>
+    <LI><A HREF="#toc9">5.4. cancel a job</A>
+    <LI><A HREF="#toc10">5.5. list the contents of your MiG home directory</A>
+    <LI><A HREF="#toc11">5.6. concatenate and print file contents</A>
+    <LI><A HREF="#toc12">5.7. download files</A>
+    <LI><A HREF="#toc13">5.8. upload files</A>
+    <LI><A HREF="#toc14">5.9. print first lines of files</A>
+    <LI><A HREF="#toc15">5.10. print last lines of files</A>
+    <LI><A HREF="#toc16">5.11. delete files</A>
+    <LI><A HREF="#toc17">5.12. show online documentation</A>
+    <LI><A HREF="#toc18">5.13. flags</A>
+    </UL>
+  <LI><A HREF="#toc19">Changing key/certificate passphrase</A>
+  <LI><A HREF="#toc20">Feedback</A>
+  </OL>
+
+<P></P>
+<HR NOSHADE SIZE=1>
+<P></P>
+<A NAME="toc1"></A>
+<H1>1. Introduction</H1>
+<P>
+MiG provides two user interfaces for all user interaction with MiG: The
+non-intrusive web interface most appropriate when handling a limited number
+of jobs and files, and a set of scripts that are more suitable for big
+projects with too many jobs and files to handle manually.
+</P>
+<P>
+This document focuses on the MiG scripts, and includes examples of the
+basic usage.
+</P>
+<A NAME="toc2"></A>
+<H1>2. Prerequisites</H1>
+<P>
+In order to access MiG you need a MiG key/certificate pair: please
+contact us if you haven't already been handed one.
+</P>
+<P>
+The user scripts rely heavily on <A HREF="http://curl.haxx.se">curl</A> for communication
+with the MiG servers. Any recent version of curl should work without problems,
+as long as ssl/tls support is included. Old curl versions prior to 7.10,
+didn't support the <I>--insecure</I> flag, which is used if no MiG CA certificate
+is available. Similarly the <I>--create-dirs</I> flag wasn't available back
+then. Any problems related to those two flags not being available can be
+circumvented by using a simple wrapper that just filters out the flags,
+since they are already implicitly set in those old versions. Please contact us
+for more details if needed.
+</P>
+<P>
+Currently the scripts are available in two scripting languages - <I>python</I>
+and <I>sh</I>. The python scripts provide platform independent script access
+to MiG, but may require the user to install 
+<A HREF="http://www.python.org">python</A>
+ if not already available. The sh scripts on the
+other hand are un*x only, but seldom require anything to be installed
+as an sh-interpreter is normally readily available.
+The sh-scripts are intended to be <I>pure</I> sh, but our testing is somewhat
+limited to bash and zsh, so we may have missed some bash'isms. Again,
+please feel free to report any problems. 
+</P>
+<A NAME="toc3"></A>
+<H1>3. Obtaining the scripts</H1>
+<P>
+All MiG scripts are provided on a <I>on demand</I> basis through a generator cgi
+script. To obtain the latest version, simply point your browser to
+<A HREF="https://mig-1.imada.sdu.dk/cgi-bin/scripts.py?flavor=user">user-scripts</A>
+. It is possible to pass options to the generator in order to change the
+generated script languages and default application paths.
+Go to the 
+<A HREF="https://mig-1.imada.sdu.dk/cgi-bin/scripts.py?flags=h">usage-help</A>
+to get help on using these options.
+After running the generator successfully, the output will include links
+to the location of the generated scripts. Simply select the zip link to
+download a zip archive of the scripts.
+Unpack the archive and you're ready to start using the scripts.
+</P>
+<A NAME="toc4"></A>
+<H1>4. Configuration</H1>
+<P>
+You receive information about the address of the MiG server that you
+should use along with the key/certificate pair. In order to use the
+scripts you need to create a configuration file including the server
+address and paths to your key and certificate. The default configuration
+is location is ~/.mig/miguser.conf, but you can override it with the -c
+flag to all user scripts. After saving the certificate and key in
+~/.mig/cert.pem and ~/.mig/key.pem an example configuration could look
+like:
+</P>
+<PRE>
+  migserver https://MIG-SERVER
+  certfile /home/LOGIN/.mig/cert.pem
+  keyfile /home/LOGIN/.mig/key.pem
+</PRE>
+<P>
+With that configuration each mig user script execution will ask for your
+passphrase. If you wish to avoid typing the passphrase you can add a
+password line to your configuration:
+</P>
+<PRE>
+  password MYPASSPHRASE
+</PRE>
+<P>
+IMPORTANT NOTICE: this will allow anybody with read access to the
+configuration file to read your password!!
+Please make sure to protect the configuration file with suitable read
+permission if you choose to include the password.
+</P>
+<P>
+Additionally it is possible to verify the identity of the MiG server by
+providing a CA certificate path in the configuration:
+</P>
+<PRE>
+  cacertfile /home/LOGIN/.mig/MiG-CA.pem
+</PRE>
+<P>
+Please contact us if you haven't been given a copy of the CA certificate.
+</P>
+<A NAME="toc5"></A>
+<H1>5. Using the scripts</H1>
+<P>
+First of all change directory to the unpacked MiG-user-scripts
+directory.
+In general all MiG scripts include a short usage help which is shown if
+the script is called with the <I>-h</I> flag or if incorrect syntax is used.
+In the following sections each of the MiG user scripts are shown in
+action. Each section contains examples using both the sh and python
+version. The two versions work in a very similar way under the hood, so
+the example output can be expected to be identical or very similar. Thus
+only one output example is shown for each operation.
+</P>
+<A NAME="toc6"></A>
+<H2>5.1. submit a job</H2>
+<P>
+This example uses a very simple job described in the file
+hellogrid.mRSL:
+</P>
+<PRE>
+  cat hellogrid.mRSL
+  ::EXECUTE::
+  echo "Hello grid"
+</PRE>
+<P>
+After creating the job description file it can be submitted:
+</P>
+<UL>
+<LI>python
+<PRE>
+  python migsubmit.py hellogrid.mRSL
+</PRE>
+<P></P>
+<LI>sh
+<PRE>
+  ./migsubmit.sh hellogrid.mRSL
+</PRE>
+</UL>
+
+<P>
+Example output:
+</P>
+<PRE>
+  0
+  
+  2452_11_15_2005__15_54_23_mig-1.imada.sdu.dk.0 is the job id assigned.
+</PRE>
+<P>
+Now the job can be referenced by the unique string 
+2452_11_15_2005__15_54_23_mig-1.imada.sdu.dk.0 in status and cancel
+requests.
+</P>
+<A NAME="toc7"></A>
+<H2>5.2. show the status of a job</H2>
+<UL>
+<LI>python
+<PRE>
+  python migstatus.py 2452_11_15_2005__15_54_23_mig-1.imada.sdu.dk.0
+</PRE>
+<P></P>
+<LI>sh
+<PRE>
+  ./migstatus.sh 2452_11_15_2005__15_54_23_mig-1.imada.sdu.dk.0
+</PRE>
+</UL>
+
+<P>
+Example output:
+</P>
+<PRE>
+  0
+  
+  
+  Status: EXECUTING
+  Received: Tue Nov 15 15:59:19 2005
+  Queued: Tue Nov 15 15:59:19 2005
+  Executing: Tue Nov 15 15:59:21 2005
+</PRE>
+<P>
+In this case the job has moved to the EXECUTING state meaning that it
+has been sent to a resource for execution.
+</P>
+<A NAME="toc8"></A>
+<H2>5.3. show the status of all submitted MiG jobs</H2>
+<UL>
+<LI>python
+<PRE>
+  python migstatus.py
+</PRE>
+<P></P>
+<LI>sh
+<PRE>
+  ./migstatus.sh
+</PRE>
+</UL>
+
+<P>
+Example output:
+</P>
+<PRE>
+  0
+  
+  Status: FINISHED
+  Verified: NO
+  Received: Tue Nov 15 15:59:19 2005
+  Queued: Tue Nov 15 15:59:19 2005
+  Executing: Tue Nov 15 15:59:21 2005
+  Finished: Tue Nov 15 15:59:55 2005
+</PRE>
+<P>
+In this case the job is FINISHED executing so any results are now
+available in the home directory. The 'NO' in the Verified field of the
+job indicates that the job didn't include any templates to verify the
+output and exit values against.
+</P>
+<A NAME="toc9"></A>
+<H2>5.4. cancel a job</H2>
+<UL>
+<LI>python
+<PRE>
+  python migcancel.py 2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0
+</PRE>
+<P></P>
+<LI>sh
+<PRE>
+  ./migcancel.sh 2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0
+</PRE>
+</UL>
+
+<P>
+Example output:
+</P>
+<PRE>
+  1
+  
+  Trying to cancel job with job
+  id:2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0
+  
+  You can only cancel jobs with QUEUED or RETRY status, status of job
+  you are trying to cancel: FINISHED
+  
+</PRE>
+<P>
+As seen above the cancel failed with exit code 1 since the job already
+finished. Furthermore the output indicates that only jobs that are
+queued can be cancelled. Executing jobs can not be cancelled
+either. Please refer to the kill section for information about stopping
+jobs during execution.
+</P>
+<A NAME="toc10"></A>
+<H2>5.5. list the contents of your MiG home directory</H2>
+<UL>
+<LI>python
+<PRE>
+  python migls.py
+</PRE>
+<P></P>
+<LI>sh
+<PRE>
+  ./migls.sh
+</PRE>
+</UL>
+
+<P>
+Example output:
+</P>
+<PRE>
+  0
+  
+  .:
+  .
+  ..
+  hellogrid.mRSL
+  2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0.stdout
+  2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0.status
+</PRE>
+<P>
+The zero tells us that the operation succeeded and the rest are
+the actual contents of the MiG home directory. hellogrid.mRSL is the job
+description file we implicitly uploaded in the submit script. he other
+two files contain the stdout and exit codes of that job.
+</P>
+<A NAME="toc11"></A>
+<H2>5.6. concatenate and print file contents</H2>
+<UL>
+<LI>python
+<PRE>
+  python migcat.py '*'
+</PRE>
+<P></P>
+<LI>sh
+<PRE>
+  ./migcat.sh '*'
+</PRE>
+</UL>
+
+<P>
+Example output:
+</P>
+<PRE>
+  ::EXECUTE::
+  echo "Hello grid"
+  "Hello grid"
+  echo "Hello grid" 0
+</PRE>
+<P>
+The first two lines are from the job description, while the two last
+lines are from the stdout and status files respectively. In the status
+file it is indicated that the exit code of the echo command was 0.
+</P>
+<A NAME="toc12"></A>
+<H2>5.7. download files</H2>
+<UL>
+<LI>python
+<PRE>
+  python migget.py '2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0*' .
+</PRE>
+<P></P>
+<LI>sh
+<PRE>
+  ./migget.sh '2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0*' .
+</PRE>
+</UL>
+
+<P>
+Example output:
+</P>
+<PRE>
+</PRE>
+<P>
+Now the two files with output and exit codes from the previous job are
+locally available. Please note that file operation like migget support
+wild cards in remote filenames, but that it may be necessary to escape or
+quote the names with wild cards in them to avoid local shell wild card
+expansion. 
+</P>
+<A NAME="toc13"></A>
+<H2>5.8. upload files</H2>
+<P>
+In this example we create a local file and upload it to the MiG home.
+</P>
+<PRE>
+  touch somefile
+  for i in `seq 1 100`; do
+      echo "test line $i" &gt;&gt; somefile;
+  done
+</PRE>
+<P></P>
+<UL>
+<LI>python
+<PRE>
+  python migput.py somefile .
+</PRE>
+<P></P>
+<LI>sh
+<PRE>
+  ./migput.sh somefile .
+</PRE>
+</UL>
+
+<P>
+Example output:
+</P>
+<PRE>
+  0
+  
+  A 'normal' file was uploaded (/./somefile). It can now be used as an
+  inputfile in your .mRSL files.
+</PRE>
+<P></P>
+<A NAME="toc14"></A>
+<H2>5.9. print first lines of files</H2>
+<UL>
+<LI>python
+<PRE>
+  python mighead.py somefile
+</PRE>
+<P></P>
+<LI>sh
+<PRE>
+  ./mighead.sh somefile
+</PRE>
+</UL>
+
+<P>
+Example output:
+</P>
+<PRE>
+  0
+  
+  test line 1
+  test line 2
+  test line 3
+  test line 4
+  test line 5
+  test line 6
+  test line 7
+  test line 8
+  test line 9
+  test line 10
+  test line 11
+  test line 12
+  test line 13
+  test line 14
+  test line 15
+  test line 16
+  test line 17
+  test line 18
+  test line 19
+  test line 20
+  
+</PRE>
+<P>
+The output contains the first 20 lines of the uploaded file, somefile.
+</P>
+<A NAME="toc15"></A>
+<H2>5.10. print last lines of files</H2>
+<UL>
+<LI>python
+<PRE>
+  python migtail.py somefile
+</PRE>
+<P></P>
+<LI>sh
+<PRE>
+  ./migtail.sh somefile
+</PRE>
+</UL>
+
+<P>
+Example output:
+</P>
+<PRE>
+  0
+  
+  test line 81
+  test line 82
+  test line 83
+  test line 84
+  test line 85
+  test line 86
+  test line 87
+  test line 88
+  test line 89
+  test line 90
+  test line 91
+  test line 92
+  test line 93
+  test line 94
+  test line 95
+  test line 96
+  test line 97
+  test line 98
+  test line 99
+  test line 100
+  
+</PRE>
+<P>
+The output contains the last 20 lines of the uploaded file, somefile.
+</P>
+<A NAME="toc16"></A>
+<H2>5.11. delete files</H2>
+<UL>
+<LI>python
+<PRE>
+  python migrm.py somefile
+</PRE>
+<P></P>
+<LI>sh
+<PRE>
+  ./migrm.sh somefile
+</PRE>
+</UL>
+
+<P>
+Example output:
+</P>
+<PRE>
+  0
+  
+  
+</PRE>
+<P>
+A subsequent migls will show that somefile is no longer available in the
+MiG home directory.
+</P>
+<A NAME="toc17"></A>
+<H2>5.12. show online documentation</H2>
+<P>
+Run migdoc without arguments to get a list of available topics:
+</P>
+<UL>
+<LI>python
+<PRE>
+  python migdoc.py
+</PRE>
+<P></P>
+<LI>sh
+<PRE>
+  ./migdoc.sh
+</PRE>
+</UL>
+
+<P>
+Example output:
+</P>
+<PRE>
+  Documentation topics:
+  Resource configuration
+  Job description: mRSL
+  
+</PRE>
+<P></P>
+<P>
+To see the documentation for one or more of the topics, run the script
+with some part of those topic titles as argument(s).
+</P>
+<UL>
+<LI>python
+<PRE>
+  python migdoc.py mrsl conf
+</PRE>
+<P></P>
+<LI>sh
+<PRE>
+  ./migdoc.sh mrsl conf
+</PRE>
+</UL>
+
+<P>
+Example output:
+</P>
+<PRE>
+  Documentation:
+  Job description: mRSL
+  
+  ARCHITECTURE
+  Required: False
+  Type: string
+  Description: i386/.., 64bit
+  Value: 
+  Example: i386
+  
+  CPUCOUNT
+  Required: False
+  Type: int
+  Description: Number of CPU's the job requires on each node.
+  Value: 1
+  Example: 4
+  
+  CPUTIME
+  Required: False
+  Type: int
+  Description: The time required to execute the job. The time is specified
+  in !!
+  Value: 0
+  Example: 60
+  
+  [ ...  ]
+  
+  
+  Documentation:
+  Resource configuration
+  
+  ARCHITECTURE
+  Required: True
+  Type: string
+  Description: The resource's architecture (eg. i386).
+  Value: 
+  Example: i386
+  
+  CPUCOUNT
+  Required: True
+  Type: int
+  Description: Number of CPU's on each node.
+  Value: 1
+  Example: 4
+  
+  [ ... ]
+  
+</PRE>
+<P></P>
+<A NAME="toc18"></A>
+<H2>5.13. flags</H2>
+<P>
+All the scripts support a few common flags in order to provide a more
+flexible operation. In addition to those flags some of the scripts
+support a number of extra flags only relevant to that particular script.
+All the available flags for a particular script are shown when the
+script is run with the <I>-h</I> flag:
+</P>
+<UL>
+<LI>python
+<PRE>
+  python migls.py -h
+</PRE>
+<LI>sh
+<PRE>
+  ./migls.sh -h
+</PRE>
+</UL>
+
+<P>
+To use a configuration in a non-standard location
+use the <I>-c</I> flag:
+</P>
+<UL>
+<LI>python
+<PRE>
+  python migls.py -c my-mig.conf 
+</PRE>
+<LI>sh
+<PRE>
+  ./migls.sh -c my-mig.conf 
+</PRE>
+</UL>
+
+<P>
+The <I>-s</I> flag can be used to override the <I>migserver</I> line in the configuration:
+</P>
+<UL>
+<LI>python
+<PRE>
+  python migls.py -s "https://mig-2.imada.sdu.dk"
+</PRE>
+<LI>sh
+<PRE>
+  ./migls.sh -s "https://mig-2.imada.sdu.dk"
+</PRE>
+</UL>
+
+<P>
+Use the <I>-V</I> flag to find out which version of the scripts you have:
+</P>
+<UL>
+<LI>python
+<PRE>
+  python migls.py -V
+</PRE>
+<LI>sh
+<PRE>
+  ./migls.sh -V
+</PRE>
+<P></P>
+Use the <I>-v</I> flag to turn on more verbose output:
+<LI>python
+<PRE>
+  python migls.py -v
+</PRE>
+<LI>sh
+<PRE>
+  ./migls.sh -v
+</PRE>
+</UL>
+
+<A NAME="toc19"></A>
+<H1>6. Changing key/certificate passphrase</H1>
+<P>
+You need <A HREF="http://www.openssl.org">openssl</A> in order to change the passphrase on your key and certificates. 
+</P>
+<P>
+To create a copy of the key with a new passphrase:
+</P>
+<PRE>
+  openssl rsa -in myMiGkey.pem -des3 -out myMiGkey.pem.new
+  [enter old passphrase]
+  [enter new passphrase]
+  [verify new passphrase]
+</PRE>
+<P>
+Now you can use the new key (and thus the new passphrase) along with the original pem certificate for the MiG scripts.
+</P>
+<P>
+To create a copy of the P12 certificate with a new import password:
+</P>
+<PRE>
+  openssl pkcs12 -export -in myMiGcert.pem -inkey myMiGkey.pem -out myMiGcert.p12.new
+  [enter key passphrase]
+  [enter new export password]
+  [verify new export password]
+</PRE>
+<P>
+Now you can import the new P12 certificate using the new password. In case you wish to change both the key and P12 passwords, you should replace the -inkey argument in the latter command with the path to the newly created key.
+</P>
+<A NAME="toc20"></A>
+<H1>7. Feedback</H1>
+<P>
+Please send any feedback to the MiG mailing list at <A HREF="mailto:mig@imada.sdu.dk">mig@imada.sdu.dk</A>
+</P>
+
+<!-- html code generated by txt2tags 2.0 (http://txt2tags.sf.net) -->
+<!-- cmdline: txt2tags -t html -o MiG-user-scripts.html MiG-user-scripts.txt -->
+</BODY></HTML>

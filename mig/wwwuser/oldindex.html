@@ -1,0 +1,213 @@
+<HTML>
+<HEAD>
+<TITLE>
+MiG Submit job
+</TITLE>
+</HEAD>
+<BODY bgcolor="#CCCCCC">
+<img src=MiG_red.jpg>
+<BR><BR>
+<BIG><B>Welcome to the MiG web interface</B></BIG>
+<hr>
+<h2>MiG user facilities</h2>
+<B>List, download and remove personal files</B>
+<form method='post' action='/cgi-bin/ls.py'>
+<input type='hidden' name='with_html' value='true'>
+<input type='submit' value='Show'>
+</form>
+
+<BR><BR>
+<B>View status of all submitted jobs</B>
+<form method="post" action="/cgi-bin/allstatus.py">
+<input type="submit" value="Show">
+</form>
+
+<BR><BR>
+<B>View status of a single job</B>
+<form method="post" action="/cgi-bin/jobstatus.py">
+Job id: <input type="text" name="job_id" size="30"><BR>
+<input type="submit" value="Show">
+</form>
+
+<BR><BR>
+<B>Resubmit job</B>
+<form method="post" action="/cgi-bin/resubmit.py">
+Job id: <input type="text" name="job_id" size="30"><BR>
+<input type="submit" value="Submit">
+</form>
+
+<BR><BR>
+<B>Cancel pending job</B>
+<form method="post" action="/cgi-bin/canceljob.py">
+Job id: <input type="text" name="job_id" size="30"><BR>
+<input type="submit" value="Show">
+</form>
+
+<BR><BR>
+<B>Kill job (not implemented yet)</B>
+<form method="post" action="/cgi-bin/jobstatus.py">
+	Job id: <input type="text" name="job_id" size="30"><BR>
+<input type="submit" value="Submit">
+</form>
+
+<BR><BR>
+Please type your mRSL job description in the text area below:<BR>
+<small>Example mRSL job description 
+<a href=example.mRSL>here</a>, 
+<a href=example2.mRSL>here</a>,
+<a href=example3.mRSL>here</a>,
+<a href=example4.mRSL>here</a>, and
+<a href=example5.mRSL>here</a>
+</small>
+<BR><BR>
+<form method="post" action="/cgi-bin/textarea.py">
+<input type=hidden name=vgrid_0_0_0 value="Generic">
+<textarea cols="82" rows="25" name="mrsltextarea_0">
+::EXECUTE::
+one or more strings needed
+
+::NOTIFY::
+your@email.com
+jabber: you@jabber.com
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+
+::EXECUTABLES::
+
+::MEMORY::
+1
+
+::DISK::
+1
+
+::CPUTIME::
+100
+
+::RUNTIMEENVIRONMENT::
+
+</textarea>
+<BR><BR>
+<input type="submit" value="Submit">
+</form>
+
+
+<form enctype="multipart/form-data" action="/cgi-bin/textarea.py" method="post">
+<BR>
+<B>Upload file / .mRSL</B>
+<BR>Upload file to your personal grid directory. 
+<BR>
+<BR>
+<table border=0>
+<tr><td>
+Extract package files (.zip, .tar.gz, .tar.bz2)
+</td><td><input type=checkbox name="extract_0"></td></tr>
+<tr><td>
+Submit mRSL files to parser (also .mRSL files included in packages)
+</td><td><input type=checkbox name="submitmrsl_0" CHECKED></td></tr>
+
+<tr><td>File</td><td>
+<input name="fileupload_0_0_0" type="file" size="70"/>
+</td></tr>
+<tr><td>Remote filename</td><td>
+<input name="remotefilename_0" type="text" size="70"/>
+</td><td></td></tr>
+<tr><td>
+<input type="submit" value="Submit" name="sendfile">
+</td><td></td><td></td></tr>
+</table>
+</form>
+
+
+<BR>
+<B>Create/edit file</B><BR>
+Fill in the path of a file to edit and press 'edit' to open that file in the
+online file editor. Alternatively a file can be selected for editing
+through the listing of personal files. 
+<form name='editor' method='post' action='/cgi-bin/editor.py'>
+<input type='hidden' name='with_html' value='true'>
+<input type='text' name='path' value=''>
+<input type='submit' name='edit' value='edit'>
+</form>
+<BR><BR><HR>
+<BR>
+<BR>
+<B>MiG user scripts</B><BR>
+Generate MiG user scripts in your MiG home:<BR>
+<table>
+<tr>
+<td>
+<form method='get' action='/cgi-bin/scripts.py'>
+<input type='hidden' name='with_html' value='true'>
+<input type='hidden' name='lang' value='python'>
+<input type='submit' value='python version'>
+</form>
+</td>
+<td>
+<form method='get' action='/cgi-bin/scripts.py'>
+<input type='hidden' name='with_html' value='true'>
+<input type='hidden' name='lang' value='sh'>
+<input type='submit' value='sh version'>
+</form>
+</td>
+<td>
+<form method='get' action='/cgi-bin/scripts.py'>
+<input type='hidden' name='with_html' value='true'>
+<input type='submit' value='all versions'>
+</form>
+</td>
+</tr>
+</table>
+<BR><BR>
+<B>MiG resource scripts</B><BR>
+Generate MiG resource scripts in your MiG home:<BR>
+<table>
+<tr>
+<td>
+<form method='get' action='/cgi-bin/scripts.py'>
+<input type='hidden' name='with_html' value='true'>
+<input type='hidden' name='lang' value='python'>
+<input type='hidden' name='flavor' value='resource'>
+<input type='submit' value='python version'>
+</form>
+</td>
+<td>
+<form method='get' action='/cgi-bin/scripts.py'>
+<input type='hidden' name='with_html' value='true'>
+<input type='hidden' name='lang' value='sh'>
+<input type='hidden' name='flavor' value='resource'>
+<input type='submit' value='sh version'>
+</form>
+</td>
+<td>
+<form method='get' action='/cgi-bin/scripts.py'>
+<input type='hidden' name='with_html' value='true'>
+<input type='hidden' name='flavor' value='resource'>
+<input type='submit' value='all versions'>
+</form>
+</td>
+</tr>
+</table>
+
+
+
+<hr>
+<h2>MiG resource owner facilities</h2>
+<B>Resource Administration</B><BR>
+<form method='get' action='/cgi-bin/resadmin.py'>
+<input type='hidden' name='with_html' value='true'>
+<input type='submit' value='Show'>
+</form>
+
+<hr>
+<h2>MiG VGRID facilities</h2>
+<B>VGRID Administration</B><BR>
+<form method='get' action='/cgi-bin/vgridadmin.py'>
+<input type='hidden' name='with_html' value='true'>
+<input type='submit' value='Show'>
+</form>
+
+</body>
+
+</html>

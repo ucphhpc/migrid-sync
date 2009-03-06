@@ -1,0 +1,38 @@
+::SCRIPTLANGUAGE::
+sh
+
+::ARCHITECTURE::
+i386
+
+::MEMORY::
+512
+
+::DISK::
+400
+
+::CPUCOUNT::
+1
+
+::NODECOUNT::
+1
+
+::MINPRICE::
+2.0
+
+::HOSTURL::
+cheap.imada.sdu.dk
+
+::MIGUSER::
+karlsen
+
+::RESOURCEHOME::
+/home/karlsen/mig/resource/
+
+::HOSTKEY::
+cheap.imada.sdu.dk,127.0.0.1 ssh-rsa AAAAB3NzaC1Ad2EAAAABIwAAAIEA5Zhqwotml1RaqcKzhzTwOW4rY8u2+8wO15fuMK1uNJaikVNf2cjEGXSw/Aicgm+4A0qN3+Q2n8vmDkdCzQs3iiEedRxQgMuiQYrd4g/lXTOKoS9kkaECDq/Kop0kN87fmLGEwcKc4HES22hMbjXPceNdATyvsxFDZ8ZlUTU3ECc=
+
+::RUNTIMEENVIRONMENT::
+name: POVRAY3.6
+name: LOCALDISK
+
+

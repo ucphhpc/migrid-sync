@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# apache-mig-devs	Start the personal MiG developer apache HTTP servers.
+#
+# The variables below are NOT to be changed.  They are there to make the
+# script more readable.
+
+NAME=apache
+# Keep this list in sync with the list of active developers
+DEVS="vinter rehr jaws lars lynet fhantho karlsendevel di060199 brask"
+
+case "$1" in
+  start | stop | reload | restart)
+    echo "${1}ing web server $NAME for developers: $DEVS"
+    for login in $DEVS; do
+    	if [ -x /etc/apache-$login/apache-$login ]; then
+	    /etc/apache-$login/apache-$login $1
+	else
+	    logger 'Error: apache-$login init script is not executable!'
+	fi
+    done
+    ;;
+
+  *)
+    echo "Usage: $0 {start|stop|reload|restart}"
+    exit 1
+    ;;
+esac
+
+if [ $? -eq 0 ]; then
+	echo .
+	exit 0
+else
+	echo " failed"
+	exit 1
+fi

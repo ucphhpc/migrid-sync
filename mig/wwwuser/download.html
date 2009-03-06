@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<link rel="stylesheet" type="text/css" href="/images/migcss.css" media="screen"/>
+<title>
+MiG Download
+</title>
+</head>
+<body>
+<div id="toplogo">
+<img src="/images/logo.jpg" id="logoimage" alt=""/>
+</div>
+<div id="mignavmenu">
+<ul id="mignavlist">
+<li class="jobsubmit">
+<a href="/jobsubmit.html">Job Submit</a>
+</li>
+<li class="files">
+<a href="/cgi-bin/ls.py?flags=a">Files</a>
+</li>
+<li class="jobstatus">
+<a href="/jobmanage.html">Job Status</a>
+</li>
+<li class="vgrids">
+<a href="/cgi-bin/vgridadmin.py">VGrids</a>
+</li>
+<li class="resources">
+<a href="/cgi-bin/resadmin.py">Resources</a>
+</li>
+<li class="downloads">
+<a href="/download.html">Downloads</a>
+</li>
+<li class="runtimeenvs">
+<a href="/cgi-bin/redb.py">Runtime Envs</a>
+</li>
+<li class="settings">
+<a href="/cgi-bin/settings.py">Settings</a>
+</li>
+<li class="shell">
+<a href="/cgi-bin/shell.py">Shell</a>
+</li>
+</ul>
+</div>
+<br>
+<hr>
+<br>
+<div id="migheader">Download interface</div>
+<div id="content">
+<div class="subsection">MiG user scripts</div>
+<div class="migcontent">
+Generate MiG user scripts:<br>
+
+<div class="container">
+<table class="migtable">
+
+<tr>
+<td>
+<form method='get' action='/cgi-bin/scripts.py'>
+<input type='hidden' name='output_format' value='html'>
+<input type='hidden' name='lang' value='python'>
+<input type='submit' value='python version'>
+</form>
+</td>
+<td>
+<form method='get' action='/cgi-bin/scripts.py'>
+<input type='hidden' name='output_format' value='html'>
+<input type='hidden' name='lang' value='sh'>
+<input type='submit' value='sh version'>
+</form>
+</td>
+<td>
+<form method='get' action='/cgi-bin/scripts.py'>
+
+<input type='hidden' name='output_format' value='html'>
+<input type='submit' value='all versions'>
+</form>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<br/><br/>
+<div class="subsection">MiG resource scripts</div><br/>
+<div class="migcontent">
+Generate MiG scripts to administrate resources and vgrids:<br/>
+<div class="container">
+<table class="migtable">
+<tr>
+<td>
+<form method='get' action='/cgi-bin/scripts.py'>
+<input type='hidden' name='output_format' value='html'>
+<input type='hidden' name='lang' value='python'>
+
+<input type='hidden' name='flavor' value='resource'>
+<input type='submit' value='python version'>
+</form>
+</td>
+<td>
+<form method='get' action='/cgi-bin/scripts.py'>
+<input type='hidden' name='output_format' value='html'>
+<input type='hidden' name='lang' value='sh'>
+<input type='hidden' name='flavor' value='resource'>
+<input type='submit' value='sh version'>
+</form>
+</td>
+<td>
+<form method='get' action='/cgi-bin/scripts.py'>
+<input type='hidden' name='output_format' value='html'>
+<input type='hidden' name='flavor' value='resource'>
+<input type='submit' value='all versions'>
+
+</form>
+</td>
+</tr>
+</table>
+
+<p><a href='../'>Back to main page</a>
+
+</div>
+</div>
+</div>
+<br>
+<br>
+<div id="credits">This page is made for
+  the <a href="http://www.migrid.org">MiG project</a>
+  all rights reserved
+</div>
+<BR><HR>
+
+</body>
+
+</html>

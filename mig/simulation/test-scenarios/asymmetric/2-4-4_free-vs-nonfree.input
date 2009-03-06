@@ -1,0 +1,58 @@
+[general]
+timesteps = 40
+topology = linear
+migrate_cost = 10.0
+
+[server-0]
+type = server
+
+[server-1]
+type = server
+
+[resource-0]
+type = resource
+server = server-0
+minprice = 0.0
+request_probability = 0.8
+
+[resource-1]
+type = resource
+server = server-0
+minprice = 56.0
+request_probability = 0.8
+
+[resource-2]
+type = resource
+server = server-1
+minprice = 56.0
+request_probability = 0.8
+
+[resource-3]
+type = resource
+server = server-1
+minprice = 56.0
+request_probability = 0.8
+
+[user-0]
+type = user
+server = server-0
+maxprice = 57.0
+submit_probability = 0.3
+
+[user-1]
+type = user
+server = server-0
+maxprice = 57.0
+submit_probability = 0.3
+
+[user-2]
+type = user
+server = server-1
+maxprice = 57.0
+submit_probability = 0.3
+
+[user-3]
+type = user
+server = server-1
+maxprice = 57.0
+submit_probability = 0.3

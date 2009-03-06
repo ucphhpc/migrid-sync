@@ -1,0 +1,27 @@
+::EXECUTE::
+echo "MiG server:"
+host mig-1.imada.sdu.dk
+echo "Resource:"
+host `hostname -f`
+cat /proc/cpuinfo >> ResourceCPUInfo.txt
+
+::NOTIFY::
+user@host.com
+jabber: jabber@jabbernet.com
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+ResourceCPUInfo.txt
+
+::EXECUTABLES::
+
+::MEMORY::
+1
+
+::DISK::
+1
+
+::CPUTIME::
+10
+

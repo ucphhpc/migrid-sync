@@ -1,0 +1,18 @@
+::EXECUTE::
+echo "Hello World"
+
+::NOTIFY::
+karlsen@jabbernet.dk
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+
+::MEMORY::
+1
+
+::DISK::
+1
+
+::CPUTIME::
+100

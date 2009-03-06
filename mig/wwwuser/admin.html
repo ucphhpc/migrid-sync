@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<link rel="stylesheet" type="text/css" href="migcss.css" media="screen"/>
+<title>
+MiG resource administration
+</title>
+</head>
+<body>
+<div>
+<img src="/images/logo.jpg" id="logoimage" alt=""/>
+</div>
+<br>
+<div id="migheader">Welcome to the MiG resource administration page</div>
+<div id="content">
+<BR><BR>
+<div class="subsection">Upload resource configuration</div>
+<div class="migcontent">
+The file should be called UNIQUE_NAME.config where UNIQUE_NAME is replaced by the unique name of the resource.
+<BR>
+<form enctype="text/resourceconf" action="/cgi-bin/put" method="post">
+<input name="userfile" type="file" size="85"/>
+<input type="hidden" name="output_format" value="html">
+<input type="submit" value="Upload" name="sendfile">
+</form>
+
+<BR><HR>
+<p><a href="/">Back to main page</a>
+
+</div>
+</div>
+<div id="credits">This page is made for
+  the <a href="http://www.migrid.org">MiG project</a>
+  all rights reserved
+</div>
+</body>
+
+</html>

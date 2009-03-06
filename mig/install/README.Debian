@@ -1,0 +1,240 @@
+This document contains some random notes about the installation of a MiG server on
+a Debian box. Most of it probably applies to most other linux distributions.
+
+Installation and configuration of Apache:
+=========================================
+First of all install apache and mod-ssl:
+# apt-get install apache libapache-mod-ssl
+
+Stop the apache server for now
+# /etc/init.d/apache stop
+
+Obtain a signed MiG certificate+key the usual way...
+Create the apache formatted certificate and key as described in hostcert.HOWTO
+
+Enable the apache ssl module:
+# apache-modconf apache enable mod_ssl
+Enable the apache actions module:
+# apache-modconf apache enable mod_actions
+We also need the rewrite module, but it's already enabled by default.
+
+There's no reason to allow user dirs, so we might as well remove the module:
+# apache-modconf apache disable mod_userdir
+
+Test that the basic HTTP server works after starting it with:
+# /etc/init.d/apache start
+
+(Make sure that apache is actually running and binding to port 80 in case you
+have problems connecting to the webserver. Try to connect from the server first
+to avoid firewall issues.)
+
+The firewall is usually configured from the shell script 
+/root/scripts/firewall.
+Simply copy/paste the ssh line to add access to other ports. Run the 
+script afterwards to update the firewall.
+The HTTPS and cgi stuff is all handled by the MiG apache configuration added later.
+
+
+Installation and configuration of the MiG server software:
+==========================================================
+Create an ordinary user for running the MiG server (mig):
+# groupadd mig
+# useradd -m -g mig mig 
+
+Setup and checkout the mig cvs module:
+# su - mig
+Either set the following environment variables manually or configure them in
+your shell configuration (.bashrc, .tcshrc, .zshrc, etc)
+# export CVSROOT=":ext:bach.imada.sdu.dk:/home/jones/cvs"
+# export CVS_RSH="ssh"
+# export CVSUMASK=007
+Configure ssh access to 'bach' for example by adding your IMADA username to 
+the CVSROOT variable above (shown for jones here):
+# export CVSROOT=":ext:jones@bach.imada.sdu.dk:/home/jones/cvs"
+or create an entry for bach in ~/.ssh/config .
+
+Now check out the mig module:
+# cvs checkout mig
+
+At this point it may be comfortable to copy some of the basic configuration files from mig/install/mig-user to the ~mig/ .
+
+Create and edit the server configuration to fit the particular server:
+# cd ~/mig/server
+# cp MiGserver-template.conf MiGserver-tmp.conf
+# ln -s MiGserver-tmp.conf MiGserver.conf
+# $EDITOR MiGserver-tmp.conf
+Now change options like server_fqdn and paths to fit your installation.
+
+You can check that the configuration is ok by running the CheckServerConf.py script.
+
+Log out the MiG user
+# logout
+
+
+It is not necessary to update the apache configuration (/etc/apache/httpd.conf)
+to use the MiG software. It should be sufficient to copy the MiG specific
+configuration to the conf.d dir:
+# cp ~mig/mig/apache/MiG.conf.Debian /etc/apache/conf.d/MiG.conf
+In that way it should automatically be included in the apache configuration.
+If it doesn't, please make sure that httpd.conf contains the line:
+Include /etc/apache/conf.d
+Always check that this MiG.conf actually fits your setup.
+Restart apache to activate the changes.
+
+
+Users and resources note:
+=========================
+Please note that the next two sections on adding users and resources have been more 
+or less obsoleted by the CreateMiGUser and CreateMiGResource scripts by now. Thus
+the description are only kept for the ppurpose of background information.
+
+
+Adding MiG users to the server:
+===============================
+IMPORTANT: read the Users and resources note above first!
+Each MiG user needs a MiG home which is created as a directory with the CN of 
+the user certificate in mig/wwwuser. With the addition of the CreateUser.py script in mig/server adding users is quite easy.
+For example to create a home for 'Jonas Bardino' do as the mig user:
+# cd ~/mig/server
+# ./CreateMiGUser.py [MiGserver.conf]
+using configuration: MiGserver.conf
+logging to: MiGserver.log ; level: info
+running in test mode (server distribution + job migration)!
+Please enter the Common Name from the certificate belonging to the new user:
+--- Now type the name ---
+Jonas Bardino
+--- ..and press enter ---
+Creating dirs and files for new user: Jonas B
+User name with spaces replaced by underscores: Jonas_B
+
+User Jonas B was successfully created!
+
+The above creates the home directory and puts a suitable .htaccess file there 
+to limit web-access to the directory to only the specific user.
+Please note that changes to .htaccess files in general may take some time to 
+get propagated to apache server child processes. So it may be a good idea to 
+restart apache upon changes to avoid synchronization problems.
+Similarly the script creates a user directory in the mRSL_files_dir (specified
+in mig/server/MiGserver.conf)
+
+At this point it should be possible for the user to start doing file operations 
+with the MiG. 
+For the MiG server to actually accept jobs it is necessary to start the main MiG
+script as the mig user:
+# cd ~/mig/server
+# ./grid_script.sh
+(grid_script.sh by default uses MiGserver.conf for configuration, but if another
+file is supplied as the first argument to ./gridscript.sh it will be used instead). 
+
+Adding MiG resources to the server:
+===================================
+IMPORTANT: read the Users and resources note above first!
+Adding resources to a MiG server resembles adding users. Each resource requires a
+directory in resource_home.
+CreateMiGResource.py can be used for that.
+This directory is not read accessible from the webserver so it does not require
+a '.htaccess' file.
+
+
+VGrid wiki:
+===========
+# TODO: how to install moinmoin and set it up for vgrids
+
+Adding restricted developer accounts:
+=====================================
+# TODO: update to match createdevaccount renaming
+This section applies in case the server should provide accounts for external
+MiG developers. First of all make sure that all home directories with the MiG code
+are not publicly accessible. 
+Use the AddRestrictedDeveloper.py script to add restricted accounts. It handles
+most of the setup automatically and prints commands to do the remaining parts.
+Principally it could do it all, but some of the commands may be slightly
+dangerous to auto-execute. The script relies on the availability of a limited
+local 'mig' cvs checkout in ~mig/public/ . In mig/install/mig-user/cvs you can
+find the create_anonymous_checkout.sh script to assist in creating that
+restricted checkout. Create a mig user with a publicly readable 'public'
+directory if you haven't already done so.
+Make a cvs checkout in the home directory:
+sudo su - mig
+cvs checkout mig
+Copy at least the cvs directory of the mig/install/mig-user/ to ~mig/:
+cp -r mig/install/mig-user/cvs ~mig/
+Make sure to either remove public access to or completely delete the checkout before giving the external developers access.
+
+Use the script to create private checkouts in cvs/ and limited versions in public/ :
+cd ~/cvs
+./create_anonymous_checkout.sh [CVS_TAG]
+
+At this point you should make sure that other users can access the public directory but not the cvs direcory.
+
+Log out from the mig user.
+
+Now account creation can continue as your own user:
+cd MIG_CHECKOUT/install
+sudo ./AddRestrictedDeveloper.py DEVELOPER_LOGIN
+Make sure that all steps succeeded and follow the printed instructions.
+Inform the developer about the login and port details and that should be it!
+
+
+Unrestricted developer accounts:
+================================
+# TODO: this is outdated - update to use svn repo
+Unrestricted developers simply use the full cvs repository. Access is given by setting up an IMADA account, and by adding the login to the mig IMADA group:
+# > ssh bach.imada.sdu.dk
+(jones@bach) ~ > addToGroup mig newdeveloperlogin
+Please wait...
+The user "newdeveloperlogin" has been added to the group "mig"
+it now contains the following persons: jones,karlsen,hhh,anden,kristen,vinter,mig,newdeveloperlogin
+Afterwards the developer should be able to do a:
+cvs -d newdeveloperlogin@bach.imada.sdu.dk:/home/jones/cvs checkout mig
+to get a local cvs checkout.
+
+
+Server backup:
+==============
+This section is about a method to backup user and system specific data to a
+remote backup server. It is currently used by mig-2 and mig-42 so that each
+server holds backup for the other one on local disk.
+The actual backup is done using the 'faubackup' package. All backups are stored
+under the home directory of the 'backup' user (/home/backup/faubackup). The
+subdirectories each hold the incremental data for a single server. Faubackup
+minimizes the space requirements by hardlinking unchanged files and only
+creating new files upon changes. In that way the backups from a particular date
+appear to be a full backup even though it often is mostly incremental.
+
+Faubackup is generally configured in /etc/faubackup.conf and the actual backup
+targets are specified in /etc/cron.daily/faubackup . Both files should be
+rather self-explanatory.
+The latter file ensures that local backups are created nightly and that expired ones
+are automatically expunged. 
+The actual transfer of the local backups at BACKUP_CLIENT to the remote
+BACKUP_SERVER is also done in here. It uses rsync over an ssh connection with a
+passphraseless key. To avoid making that a great security risk, the key is
+severely restricted. So in fact it can only be used for that particular rsync
+operation and only from a certain host. In /etc/sshd_config on the
+BACKUP_SERVER root login is restricted to restricted keys by the option: 
+PermitRootLogin forced-commands-only
+In case the AllowUser option is set, it should also include root@BACKUP_CLIENT .
+The key is created on the BACKUP_CLIENT with:
+ssh-keygen -t dsa -b 2048
+[ select default location and no passphrase ]
+The public key is then copied to the BACKUP_SERVER where it is stored as
+/root/.ssh/authorized_keys, but with the limitations prefixed. On mig-42 it
+looks like this:
+mig-42:~# cat .ssh/authorized_keys 
+no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty,from="mig-2.imada.sdu.dk",command="/usr/local/bin/authprogs" ssh-dss AAAAB3NzaC1kc3MAAAEBAPA9mq1F5rs9LJIjaZNvHchSw41jrY3VUHxA1bL7uPE8ivqM4jAYmT32NT23SCvAXlAS61GS/fhLZxGSlXABrlXHhx57VKnDfWum9HAYsZdcEv+L6Tfg0sSSkFqBOO+VD1BhTzAAXVGX411/Mm8hohHFxfg2tL001tdAuqZTi3r2lnhBBCNe33n3+CluZgDo3yShiplHRM2ZAQHDK7K9yG2Xs48wXTZirzUjI2/JZCXHcHnVWmHI8l8Yzcd91YWbvtOV2y7Efg5qBO9ziteQLIlE6pnkzFYRtOJ8IUDWTDX+BPMR1RLK5UAU8ZygwG+M4WLUPSwXAX+PFC+5yNT39yUAAAAVANylJZpBDlBWm2GoIjqGRAGOZQZPAAABAQC4ZrzhXPbNod2vjFIMf+o7mVfchCIq4Emhr3B+sF92OyUYGgZbakRGVxGkjqQyUfoTvP3mnAi7Ad9kVZVdw/A+r1iOVKmeeklqFwR9RQQNV0jcvZUoVyD7pq9re/5HpU+25+Ue/Ql1C8GyKlcTsP1l/8ryMhpUsVCcgA+J7py1qfMDiMUc5AyxEjEpC0BrN7+pbhgM9O62vEgP/MgiR/+oVT/LspjKM+pGVH77oOeIgQsWrUvDlDYNbbiegU+YpwTVABDL18j0ptUx90riDQOGcL63p7MJ+c3N7222OukAdpTnQMILjMK7t2B7FvIe3v4Fgq9hPPjw/QNRIdKp4NAkAAABAQCCg8KkTYYFra70Ua6+Krh3KygVb8gu7fTErAX5BXkb7UAzJPEbu0kNo2LSPjisT/4LWnIWExdZALcryIUAKgPxIG8dQTCJp79qnH4fFvgPHs1kjS+sVZy3tNls7Htolu8bC+XmNbbk8rbVAAi2dE0fkzgc14stzEMhm2yVDVuoNYYJlPW0bBYF6XAxGzozD07UM9CkA+wiqcAQtRNayI8hRiQ+eL8sDmN90MmXEvFtJL4W4sftUNJDYXWblmyLYl24Whbmp2QTpV5xfTCkcUbyo745a2jyqNmy5qEaeuxjZbjdCR+0GHiyTFUpaspaq3WoYpoZohvQixeVXT5m0Pyr backup@mig-2
+
+The authprogs script mentioned in the command option can either be fetched from
+one of the MiG servers or downloaded from:
+http://www.hackinglinuxexposed.com/tools/authprogs/
+Put it in /usr/local/bin directly or by using 'stow'.
+The accepted client commands are specified in /root/.ssh/authprogs.conf at
+the BACKUP_SERVER. To allow the specific rsync operation used in the faubackup
+cron.daily script at mig-2 and mig-42 insert the two lines: 
+[ ::ffff:130.225.128.254 ]
+        rsync --server -ulKHogDtprz --timeout=999 --delete --temp-dir /home/backup/faubackup/tmpdir . /home/backup/faubackup/mig-42
+in the authprogs.conf file.
+Now restart the ssh server if you haven't done so already, and everything should be ready for automatic backup of the directories you specified in the cron.daily script.
+Simply run the script to test it:
+mig-42:~# /etc/cron.daily/faubackup
+Depending on the size of the specified directories it may take seconds or minutes.

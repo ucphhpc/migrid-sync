@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<link rel="stylesheet" type="text/css" href="/images/migcss.css" media="screen"/>
+<title>
+MiG Job Management
+</title>
+</head>
+<body>
+<div id="toplogo">
+<img src="/images/logo.jpg" id="logoimage" alt=""/>
+</div>
+<div id="mignavmenu">
+<ul id="mignavlist">
+<li class="jobsubmit">
+<a href="/jobsubmit.html">Job Submit</a>
+</li>
+<li class="files">
+<a href="/cgi-bin/ls.py?flags=a">Files</a>
+</li>
+<li class="jobstatus">
+<a href="/jobmanage.html">Job Status</a>
+</li>
+<li class="vgrids">
+<a href="/cgi-bin/vgridadmin.py">VGrids</a>
+</li>
+<li class="resources">
+<a href="/cgi-bin/resadmin.py">Resources</a>
+</li>
+<li class="downloads">
+<a href="/download.html">Downloads</a>
+</li>
+<li class="runtimeenvs">
+<a href="/cgi-bin/redb.py">Runtime Envs</a>
+</li>
+<li class="settings">
+<a href="/cgi-bin/settings.py">Settings</a>
+</li>
+<li class="shell">
+<a href="/cgi-bin/shell.py">Shell</a>
+</li>
+</ul>
+</div>
+<br>
+<hr>
+<br>
+<div id="migheader">Welcome to the MiG job management interface</div>
+<div id="content">
+<br>
+<br>
+
+<div class="subsection">View status of all submitted jobs<div>
+<div class="migcontent">
+<form method="post" action="/cgi-bin/jobstatus.py">
+Sort by modification time: <input type="radio" name="flags" value="sv">yes
+<input type="radio" name="flags" checked="checked" value="v">no<BR>
+<input type="hidden" name="job_id" value="*">
+<input type="hidden" name="output_format" value="html">
+<input type="submit" value="Show">
+</form></div>
+
+<BR><BR>
+<div class="subsection">View status of one or more jobs (* and ?
+wildcards are supported)<div>
+<div class="migcontent">
+<form method="post" action="/cgi-bin/jobstatus.py">
+Job id: <input type="text" name="job_id" value="*" size="30"><BR>
+Show only <input type="text" name="max_jobs" size="6" value=5> first matching jobs<BR>
+Sort by modification time: <input type="radio" name="flags" checked="checked" value="vs">yes
+<input type="radio" name="flags" value="v">no<BR>
+<input type="hidden" name="output_format" value="html">
+<input type="submit" value="Show">
+</form></div>
+
+<BR><BR>
+<div class="subsection">Resubmit job</div>
+<div class="migcontent">
+<form method="post" action="/cgi-bin/resubmit.py">
+Job id: <input type="text" name="job_id" size="30"><BR>
+<input type="hidden" name="output_format" value="html">
+<input type="submit" value="Submit">
+</form></div>
+
+<BR><BR>
+<div class="subsection">Cancel pending or executing job</div>
+<div class="migcontent">
+<form method="post" action="/cgi-bin/canceljob.py">
+Job id: <input type="text" name="job_id" size="30"><BR>
+<input type="hidden" name="output_format" value="html">
+<input type="submit" value="Cancel job">
+</form></div>
+
+<BR><BR>
+<div class="subsection">Request live output</div>
+<div class="migcontent">
+<form method="post" action="/cgi-bin/liveoutput.py">
+Job id: <input type="text" name="job_id" size="30"><BR>
+<input type="hidden" name="output_format" value="html">
+<input type="submit" value="Request">
+</form></div>
+
+<BR><HR>
+<p><a href="../">Back to main page</a>
+
+</form></div>
+<br><br>
+<div id="credits">This page is made for
+  the <a href="http://www.migrid.org">MiG project</a>
+  all rights reserved
+</div>
+</body>
+
+</html>

@@ -1,0 +1,35 @@
+::EXECUTE::
+echo "Resource:"
+hostname
+echo "Find available system binaries:"
+find /bin
+find /usr/bin
+find /sbin
+find /usr/sbin
+
+::NOTIFY::
+jabber: jonasbardino@jabber.dk
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+
+::EXECUTABLES::
+
+::MEMORY::
+10
+
+::DISK::
+1
+
+::CPUTIME::
+300
+
+::CPUCOUNT::
+1
+
+::ARCHITECTURE::
+i386
+
+::RUNTIMEENVIRONMENT::
+

@@ -1,0 +1,24 @@
+::EXECUTE::
+echo "The next command should fail:"
+nosuchcommandonanysystemiknow
+
+::NOTIFY::
+jabber: jonasbardino@jabber.dk
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+
+::EXECUTABLES::
+
+::MEMORY::
+1
+
+::DISK::
+1
+
+::CPUTIME::
+20
+
+::RUNTIMEENVIRONMENT::
+

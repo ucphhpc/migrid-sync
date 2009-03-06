@@ -1,0 +1,26 @@
+::EXECUTE::
+echo "Hello World"
+uname -a
+echo +JOBNAME+
+
+::NOTIFY::
+jabber: jonasbardino@jabber.dk
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+
+::MEMORY::
+1
+
+::DISK::
+1
+
+::MAXPRICE::
+0
+
+::CPUTIME::
+1
+
+::JOBNAME::
+myjobname

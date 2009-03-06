@@ -1,0 +1,196 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# mount.migfs - A mount helper for the remote MiG home file system
+# Copyright (C) 2006-2009  Jonas Bardino <bardino at diku dot dk>
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+#
+# Thanks to the authors of GMailFS and FlickrFS - both projects
+# were used as inspiration for this module.
+#
+# This script in particular is very much a /GMail/MiG/ replacement of
+# mount.gmailfs
+
+"""
+This utility allows MiG filesystems to be mounted with the regular
+'mount' command, or even to be listed in /etc/fstab
+
+Usage:
+     1.  mount.migfs none /path/of/mount/point [options]
+     2.  in /etc/fstab, add:
+           none /path/of/mount/point migfs noauto[,options]
+"""
+
+import sys
+import os
+import time
+import optparse
+import getpass
+import re
+import tempfile
+import signal
+
+#DEFAULT_MiGFS_LOCATION     = '/usr/share/migfs/migfs.py'
+DEFAULT_MiGFS_LOCATION     = 'migfs.py'
+# delay (in seconds) after which we consider migfs could not mount, and
+# we abort.
+MiGFS_MOUNTING_MAX_DELAY   = 12 
+# delay (in seconds) between two consecutive checks for encfs still being
+# mounted.                                
+ENCFS_MOUNTPOINT_CHECK_DELAY = 5  # in seconds
+
+def parseCommandLineArgs(args):
+  usage = "usage: %prog none mountpoint [options]"
+
+  parser = optparse.OptionParser(usage=usage)
+  parser.add_option("-p", "--prompt-for-password", dest="promptForPasswd",
+                    action="store_true", default=False,
+                    help="Prompt for the MiG key/certificate password" )
+  parser.add_option("-e", "--use-transparent-encryption", dest="useEncfs",
+                    action="store_true", default=False,
+                    help="Use transparent encryption" )
+  parser.add_option("-o", "--options", dest="migfsOptions",
+                    help="Use those options", metavar="option1=value1,[option2=value2,...]",
+                    default="")
+
+  options, args = parser.parse_args(args)
+
+  if len(args) != 2:
+    parser.error("Wrong number of arguments")
+  else:
+    pyfile, mountpoint = args
+    
+  odata = options.migfsOptions
+
+  namedOptions = {}
+  if odata:
+    for o in odata.split(","):
+      try:
+        k, v = o.split("=", 1)
+        namedOptions[k] = v
+      except:
+        parser.error("The format of '%s' isn't 'option1=value1,[option2=value2,...]'" % (odata,))
+
+  if options.promptForPasswd:
+    namedOptions['password'] = getpass.getpass("MiG password: ")
+    
+  # pyfile sanitation
+  if pyfile == 'none':
+    pyfile = DEFAULT_MiGFS_LOCATION
+  else:
+    pyfile = os.path.abspath(pyfile)
+  if not os.path.isfile(pyfile):
+    log.error("file %s doesn't exist, or is not a file" % pyfile)
+    sys.exit(1)
+
+  return pyfile, mountpoint, namedOptions, options.useEncfs
+
+def main(mountpoint, namedOptions, useEncfs):
+  if useEncfs: # create a temp. dir to mount the encrypted migfs volume
+    clearMountPoint = mountpoint
+    mountpoint = tempfile.mkdtemp()
+
+  migfsPID = os.fork()
+  if migfsPID == 0:
+    # this is the child process. We register a log-and-exit handler for
+    # SIGHUP, then we start the actual child task: mounting the migfs
+    childPID = os.getpid()
+    log.info('Starting migfs in child process (PID %s)' % childPID)
+
+    def handlerHUP(signum, frame):
+      log.warning("Child process %s received SIGHUP, exiting..." % childPID)
+      os._exit(1)
+    signal.signal(signal.SIGHUP, handlerHUP)
+
+    sys.argv = [] # blank the command-line params for this child
+    migfs.main(mountpoint, namedOptions)
+    log.info('migfs terminated')
+  else:
+    # this is the parent process. First we wait for migfs to become mounted
+    # within MiGFS_MOUNTING_MAX_DELAY seconds.
+    # If this doesn't happen, we cleanup and exit.
+    log.info('waiting for %s to become a mountpoint' % mountpoint)
+    for i in range(MiGFS_MOUNTING_MAX_DELAY): # give our child some time
+      if not os.path.ismount(mountpoint): # not yet mounted
+        # let's check our child is still alive, without blocking
+        pid, status = os.waitpid(migfsPID, os.WNOHANG)
+        if not pid == 0: # it died, let's exit
+          log.error('migfs child died, exiting...')
+          sys.exit(1)
+      else: # success, migfs got mounted
+        break
+      time.sleep(1)
+
+    if os.path.ismount(mountpoint):
+      log.info('%s is now a mountpoint' % mountpoint)
+    else: # migfs wasn't mounted in the allocated time frame, abort
+      log.error("migfs did not connect in less than %s seconds, aborting..." % MiGFS_MOUNTING_MAX_DELAY)
+      os.kill(migfsPID, signal.SIGHUP) # send SIGHUP to our child
+      os.waitpid(migfsPID, 0) # upon receiving SIGHUP, it should exit, so we block-wait on it
+      log.info('Successfully reaped child %s' % migfsPID)
+      sys.exit(3)
+      
+    if useEncfs:
+      # encfs was requested. The first thing we do is define a cleanup()
+      # function to unmount the actual migfs volume and remove the temporary
+      # mountpoint.
+      # We then spawn a child to run encfs, and wait for the encfs process
+      # to either return an error (in which case we cleanup and
+      # exit), or background itself (in which case we fork a child that
+      # periodically checks if encfs is still mounted, and deos the cleanup
+      # when it's not anymore.
+      
+      def cleanup(exitCode):
+        log.info('encfs hook: running fusermount -u %s' % mountpoint)
+        os.spawnvp(os.P_WAIT, 'fusermount', ('fusermount', '-u', mountpoint))
+	log.info('encfs hook: removing intermediate mountpoint %s' % mountpoint)
+        os.rmdir(mountpoint)
+	log.info('encfs hook: cleanup complete, exiting')
+        sys.exit(exitCode)
+
+      rc = os.spawnvp(os.P_WAIT, 'encfs', ('encfs', mountpoint, clearMountPoint))
+      if not rc == 0:
+	log.error('encfs error (RC = %s), exiting...' % rc)
+	cleanup(2)
+      else:
+        log.info('encfs backgrounded')
+
+      if os.fork() == 0:
+        # this is the child that will periodically monitor encfs
+        while os.path.ismount(clearMountPoint):
+          log.debug('waiting for %s to become unmounted' % clearMountPoint)
+          time.sleep(ENCFS_MOUNTPOINT_CHECK_DELAY)
+        log.info('%s is not a mountpoint anymore, which means encfs has exited' % clearMountPoint)
+        cleanup(0)
+      else: # let the parent exit
+        pass
+    else: # encfs not requested, let the parent exit
+      pass
+
+if __name__ == '__main__':
+  pyfile, mountpoint, namedOptions, useEncfs = parseCommandLineArgs(sys.argv[1:])
+
+  # import migfs from the pyfile location
+  sys.path.append(os.path.abspath(os.path.dirname(pyfile)))
+  import migfs
+
+  # use the migfs log facility
+  log = migfs.log
+
+  main(mountpoint, namedOptions, useEncfs)

@@ -1,0 +1,37 @@
+::EXECUTE::
+./exescript.sh
+cat getMe.txt >> outfile
+ls $newenv >> outfile2
+hostname >> hostname
+curl http://www.whatismyip.com/ | grep "Your" >> ipout
+cat /home/karlsen/logo >> MiGlogo
+put_something_in_stderr
+
+::NOTIFY::
+user@host.com
+jabber: jabber@jabbernet.com
+
+::INPUTFILES::
+getMe.txt
+
+::OUTPUTFILES::
+outfile
+outfile2
+hostname
+ipout
+MiGlogo
+
+::EXECUTABLES::
+exescript.sh
+
+::MEMORY::
+1
+
+::DISK::
+1
+
+::CPUTIME::
+100
+
+::ENVIRONMENT::
+newenv=/home/karlsen

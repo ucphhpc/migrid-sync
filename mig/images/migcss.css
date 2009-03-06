@@ -1,0 +1,199 @@
+/* tags */
+
+body {
+	background: #ccc;
+	color: #000;
+	font-family: "Trebuchet MS", "Bitstream Vera Serif", Utopia, "Times New Roman", times, serif;
+	margin: 0;
+	padding: 5px 0;
+	text-align: center;
+	font-weight: lighter; 
+}
+
+a {
+	color: #0b76AE;
+	text-decoration: none;
+}
+
+a:hover, a:active {
+	color: #000;
+	text-decoration: underline;
+}
+
+img {
+	border:  0;
+}
+
+tr, td {
+	text-align: left;
+}
+
+
+h1{
+	padding: 4px;
+	/* border-top: 1px solid #000;
+	border-bottom: 1 px solid #000; */
+	color: #000;
+	text-align: center;
+}
+div.container {
+	width: 98%;
+	margin: 1%;
+}
+
+
+/* Id and class style*/
+#centertext {
+	text-align: center;
+}
+
+#centerall {
+	margin: 0;
+	text-align: center;
+}
+
+#middlevalign {
+        vertical-align: middle;
+}
+
+/* MiG logo */
+#toplogo {
+	background: #eee;
+	heigth: 200px;
+	margin:  0;
+	padding:  0;
+}
+
+/* Horizontal Menu */
+#mignavmenu {
+	font-size: 16px;
+	background: #eee;
+}
+
+ul#mignavlist {
+	white-space: nowrap;
+	font-weight: bold;
+}
+
+#mignavlist li {
+	display: inline;
+	list-style-type: none;
+	float: center;
+}
+
+#mignavlist a {
+	padding: 4px 6px;
+}
+
+#mignavlist a:link, #navlist a:visited {
+	color: #246;
+	text-decoration: none;
+}
+
+#mignavlist a:hover {
+	color: #eee;
+	background-color: #369;
+	text-decoration: none;
+}
+
+#migheader {
+	font-size:30px;
+	letter-spacing:0.2em;
+	margin:0;
+	/*padding:  20px 10px 10px 10px;*/
+	width: 96%;
+	text-align: center;
+}
+
+
+#header {
+	background: #ccc url(/images/logo.jpg) no-repeat;
+	heigth: 200px;
+	width: 90%;
+	margin:  0;
+	padding:  0;
+	
+}
+
+.migtable {
+	border-width:0;
+	margin-right: auto;
+	margin-left: auto;
+	width: 98%;
+	text-align: center;
+	padding-left: 0px
+}
+
+#credits {
+	background: #eee;
+	font-family: Small Fonts, VT100, Arial, Helvetica;
+	font-size: 9px;
+	margin: 0;
+	padding:  3px 10px;
+	text-align: center;
+}
+
+
+
+
+#content {
+	background: #ccc;
+	border: 0;
+	padding: 0px;
+	width: 98%;
+	text-align: center;
+}
+.migcontent {
+	background: #ccc;
+	border: 0;
+	padding: 5px;
+	width: 96%;
+	text-align: center;
+}
+
+.rawtext {
+	background: #fff;
+	border: 0;
+	padding: 5px;
+	text-align: left;
+}
+
+.smallcontent{
+	font-size: 10px;
+}
+
+.subsection{
+	background: #ccc;
+	padding: 0px 0px 5px 0px;
+	border:  0px;
+	width: 98%;
+	text-align: center;
+	font-size:17px;
+	font-weight:bold;
+}
+
+#logoimage {
+	z-index:1;
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
+}
+
+#miginput {
+	background: #ccc;
+	border: 0px solid #d8d8dd8;
+	padding: 0px 0px;
+	width: 98%;
+	text-align: center;
+}
+
+#miginput input, #miginput textarea{
+	background: #fff;
+	border: 0px solid #b8d4ff;
+	font-size: 12px;
+	padding:  0;
+}
+
+#miginput input:focus, #miginput textarea:focus{
+	background: #eef5ff;
+}

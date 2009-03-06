@@ -1,0 +1,73 @@
+Requirements:
+
+xscreensaver (http://www.jwz.org/xscreensaver)
+python (http://www.python.org)
+
+Step 1:
+Make sure python is executable from '/usr/bin'
+
+Step 2: 
+Make sure xscreensaver-command is executable from '/usr/X11R6/bin'
+
+Step 3:
+tar xvfz mig_xsss_release.tgz -C /usr/local
+
+Contents:
+mig_xsss/docs/INSTALL.readme ( This file )
+mig_xsss/docs/mig_xsss/docs/resource.config.sample ( Sample of a MiG SSS ressorce configuration file )
+mih_xsss/docs/xscreensaver_gdm.readme ( Configuration of the xscreensaver with gdm )
+mig_xsss/log ( Used to place activation log of the screensaver )
+mig_xsss/data/weekdict.dat ( Contains estimates of the amount of time the screensaver is going to be active, when activated )
+mig_xsss/data/activeresources.dat ( If the hostname of the current machine is present in this file, MiG SSS is started when 'mig_xsss.sh start' is executed ) 
+mig_xsss/mig_xsss.sh ( Initscript which is going to be executed at boottime )
+mig_xsss/mig_xsss.py ( Main program that uses the xscreensaver application to detect when the screensaver is activated/deactivated )
+mig_xsss/jobexecuter.py ( Manages execution and killing of the MiG jobs )
+mig_xsss/jobmanager.py ( Manages logging of screensaver activations, and calculations of new estimates of the time the screensaver going to be active. )
+mig_xsss_execution_script.sh ( Helper script used by jobexecuter.py when executing MiG jobs )
+mig_xsss/start_resource_frontend.sh ( MiG script used to start MiG frontend node )
+mig_xsss/start_resource_exe.sh ( MiG script used to start the execution of a MiG job )
+
+Step 4:
+Configure the MiG SSS resource at the corresponding MiG server, an example
+of an MiG SSS resource configuration file can be found at
+mig_xsss/docs/resource.config.sample
+
+It's crucial for the MiG SSS application to work that the '#continuous' parameter is set
+to 'false' and the '#start_exe' parameter only chmod's the
+'master_node_script_exe.sh' file and doesn't invoke an execution of it.
+
+Refer to the MiG resource configuration manual for general information
+about configuring a MiG resource. 
+
+Step 5:
+The resource must have the MiG resource administration certificate in it's
+root's homedir, as it's nessesary for the resource to have access to start and stop
+both the frontend and executing part of MiG. 
+
+Step 6:
+A user named 'mig_sss' has to be created on the resource and subdirectories named 'mig_frontend' and
+'mig_exe' must be created in the users homedir. 
+In both subdirectories a directory named 'hostname.domainname:identifier' must be created.
+Where identifier is 0 as default, check the MiG resource documentation for
+further details.
+
+If the frontend node is choosen to be a machine different from the MiG SSS
+resource, the 'mig_frontend' directory can be ommitted.
+
+Step 7:
+Make sure the resource's 'hostname.domainname' is present in the file 'mig_xsss/data/activeresources.dat'
+
+Step 8:
+Link 'mig_xsss/mig_xsss.sh' to your default runlevel to make sure MiG SSS
+gets started at bootup and stopped at shutdown.
+
+If the resource is not it's own frontend node, uncomment line 46-49 and
+line 53 in 'mig_xsss/mig_xsss.sh'
+
+Step 9: 
+Configure the xscreensaver to be started at the login manager, 
+for setup with the gdm login manager see 'mig_xsss/docs/xscreensaver_gdm.readme'.
+The setup for the loginmanagers xdm and kdm is simulare.
+
+Step 10: 
+reboot, and wait for the screensaver to activate.

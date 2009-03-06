@@ -1,0 +1,55 @@
+<html>
+<head>
+<title>MiG SSS</title>
+</head>
+
+<body>
+<center><h1>Generate MiG Linux boot iso</h1></center>
+
+<form action="cgi-bin/sandbox-create_image.py" method="POST">
+
+<table border="0" width="" align="center">
+  <TR>
+    <TD align="" colspan="">User name:</TD>
+    <TD>
+      <input type="TEXT" name="username" size="10">
+    </TD>
+  </TR>
+  <TR>
+    <TD align="" colspan="">Password</TD>
+    <TD>
+      <input type="TEXT" name="password" size="10">
+    </TD>
+  </TR>
+
+  <TR>
+    <TD align="" colspan="">HD SIZE:</TD>
+    <TD>
+      <select name="hd_size">
+      <option value="10">10</option>
+      </select>
+    </TD>
+  </TR>
+
+  <TR>
+    <TD align="" colspan="">MEMORY:</TD>
+    <TD>
+      <select name="memory">
+      <option value="128">128 M</option>
+      <option value="256">256 M</option>
+      <option value="512">512 M</option>
+      <option value="1024">1 G</option>
+      <option value="2048">2 G</option>
+      <option value="4096">4 G</option>
+      </select>
+    </TD>
+  </TR>
+
+  <TR>
+    <TD align="center" colspan="2"><input type="SUBMIT" value="Send"></TD>
+  </TR>
+</table>
+
+</form>
+
+</body> </html>

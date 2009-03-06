@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+# Simple shell script to add seq function where not available
+#
+# Copy this script to somewhere inside the MiG dir at the resource frontend host
+# and set up environment for login shells (like 'ssh host command') to use this
+# script whenever 'seq' is invoked:
+# E.g. copy this file to ~/MiG/bin/seq and add 'export PATH=$HOME/MiG/bin:$PATH"
+# to ~/.bashrc or similar.
+
+if [ $# -lt 1 ]; then
+	echo "seq: too few arguments"
+	exit 1
+fi
+if [ $# -gt 3 ]; then
+	echo "seq: too many arguments"
+	exit 1
+fi
+
+INC=1
+if [ $# -eq 3 ]; then
+	FIRST=$1
+	shift
+	INC=$1
+	shift
+fi
+if [ $# -eq 2 ]; then
+	FIRST=$1
+	shift
+fi
+
+LAST=$1
+
+# echo $FIRST $INC $LAST
+i=$FIRST
+if [ $INC -ge 0 ]; then 
+	while [ $i -le $LAST ]; do
+		echo "$i" 
+		i=$((i+INC))
+	done	
+else
+	while [ $i -ge $LAST ]; do
+		echo "$i" 
+		i=$((i+INC))
+	done	
+fi	

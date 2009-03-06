@@ -1,0 +1,45 @@
+#!/bin/sh
+#
+# Wrapper to remove "--insecure" and "--create-dirs" from curl calls since those
+# options are implicit and thus not allowed for curl versions prior to 7.10
+#
+# Copy this wrapper to somewhere inside the MiG dir at the resource frontend host
+# and set up environment for login shells (like 'ssh host command') to use this
+# wrapper instead of curl whenever 'curl' is invoked:
+# E.g. copy this file to ~/MiG/bin/curl and add 'export PATH=$HOME/MiG/bin:$PATH" 
+# to ~/.bashrc or similar. 
+
+CURL="/usr/bin/curl"
+GREP="/bin/grep"
+SED="/bin/sed"
+
+MAJOR_VERSION=`$CURL -V|$SED 's/curl \([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\) .*/\1/g'`
+MINOR_VERSION=`$CURL -V|$SED 's/curl \([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\) .*/\2/g'`
+
+# echo "Major $MAJOR_VERSION, minor $MINOR_VERSION"
+FILTER=1
+if [ $MAJOR_VERSION -gt 7 ]; then 
+	if [ $MINOR_VERSION -gt 9 ]; then 
+		# This version of curl supports --insecure flag - don't filter args
+		FILTER=0
+	fi
+fi
+
+if [ $FILTER -eq 1 ]; then
+	ARGS=""
+	for i in $@; do
+		if [ $i == "--insecure" ]; then
+			continue
+		elif [ $i == "--create-dirs" ]; then
+			continue
+		else
+			ARGS="$ARGS $i"
+		fi
+	done
+	# echo "filtered args: $ARGS"
+else
+	ARGS="$@"
+fi
+
+$CURL $ARGS
+

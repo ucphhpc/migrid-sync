@@ -1,0 +1,30 @@
+#!/bin/bash
+#
+# Wrapper to translate a few standard cp options to Solaris equivalents
+#
+# Copy this wrapper to somewhere inside the MiG dir at the resource frontend host
+# and set up environment for login shells (like 'ssh host command') to use this
+# wrapper instead of cp whenever 'cp' is invoked:
+# E.g. copy this file to ~/MiG/bin/cp and add 'export PATH=$HOME/MiG/bin:$PATH" 
+# to ~/.bashrc or similar. 
+
+CP="/bin/cp"
+ARGS=""
+
+while getopts dfhiLpPrR opt; do
+    case "$opt" in
+          d) ARGS="$ARGS -P";;
+          R) ARGS="$ARGS -r";;
+          *) ARGS="$ARGS -$opt";;
+    esac
+done
+# Drop options
+shift `expr $OPTIND - 1`
+
+# ) ARGS="$ARGS ";;
+
+#echo "filtered args: $ARGS"
+#echo "args: $@"
+
+$CP $ARGS $@
+

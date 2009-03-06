@@ -1,0 +1,22 @@
+::EXECUTE::
+cat inputfile
+echo "This is the test output" >> outputfile
+cat inputfile >> outputfile
+
+::NOTIFY::
+
+::INPUTFILES::
+inputfile
+
+::OUTPUTFILES::
+outputfile
+
+::MEMORY::
+1
+
+::DISK::
+1
+
+::CPUTIME::
+100
+

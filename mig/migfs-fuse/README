@@ -1,0 +1,90 @@
+This is a simple FUSE (http://fuse.sourceforge.net/) based MiG file system,
+which enables you to access and manipulate files in your MiG home directory as
+if they were local files.
+In addition to this directory (migfs-fuse) you need to download miglib which is included
+in the MiG python user scripts (https://www.migrid.org/download.html) before you can 
+mount your MiG home.
+
+
+Prerequisites
+-------------
+FUSE:
+(more details at the FUSE page)
+-Install and load the fuse kernel module
+-Install the fuse utilities
+
+MiG:
+Download a snapshot or a checkout of the MiG code or at least the migfs-fuse directory 
+(if you're reading this file locally you've probably already done that :-) . 
+Generate and download the python MiG user scripts from your MiG Downloads page:
+https://MIGSERVER/cgi-bin/downloads.py
+Create a ~/.mig/miguser.conf and test that it works with the downloaded MiG
+user scripts:
+cd /path/to/MiG-user-scripts
+./migstat.py .
+[should give you output looking similar to this, but with other numbers]
+0
+device  2054
+inode   10240001
+mode    16877
+nlink   17
+uid     1002
+gid     1002
+rdev    0
+size    12288
+atime   1142867222
+mtime   1142866997
+ctime   1142866997
+
+
+Setting up MiGFS
+----------------
+Symlink or copy the miglib module from the user scripts to the migfs-fuse directory:
+cd /path/to/migfs-fuse
+
+ln -s /path/to/MiG-user-scripts/miglib.py .
+or
+cp /path/to/MiG-user-scripts/miglib.py .
+
+# Create a mount point directory and mount your home on it
+mkdir /path/to/local/mig-mountpoint
+./mount.migfs -p none /path/to/local/mig-mountpoint
+[Enter your MiG key/certificate password when prompted]
+
+... and you're ready to use your home directory mounted on /path/to/local/mig-mountpoint .
+
+To unmount simply run:
+fusermount -u /path/to/local/mig-mountpoint
+
+In case you include your MiG password in your ~/.mig/miguser.conf you
+don't have to specify the '-p' flag to the mount.migfs command, but it
+won't hurt if you do.
+
+
+Debug and development
+---------------------
+It is possible to change a few settings in migfs.conf. For debugging purposes
+it may be useful to change log_level to DEBUG. 
+In case you wish to further test or develop migfs you may also prefer to run
+migfs in the foreground by replacing the mount.migfs command with: 
+./migfs.py /path/to/local/mig-mountpoint -f
+or for the old version just:
+./migfs.py /path/to/local/mig-mountpoint
+
+API changes
+-----------
+MiGfs was originally developed and tested with python-2.4 and the python-fuse 
+available at that time. Later on the python-fuse developers changed the API in 
+ways that are incompatible with older versions. This may or may not cause 
+problems with our particular installation. 
+The default mount.migfs and migfs.py now points to the version using the new 
+0.2 API. It has only been quickly tested after the upgrades to the new API, but 
+at least the basics *do* work. 
+In case you are stuck on an older platform you should still be able to use the old
+migfs-fuse_python_api_0.1.py interactively as described for migfs.py above.
+Please refer to the following pages to find your way through the jungle if you 
+experience errors when running MiGfs:
+http://fuse4bsd.creo.hu/README.new_fusepy_api.html
+http://apps.sourceforge.net/mediawiki/fuse/index.php?title=FUSE_Python_Reference
+
+Feed back to me (bardino AT diku DOT dk) is also welcome.

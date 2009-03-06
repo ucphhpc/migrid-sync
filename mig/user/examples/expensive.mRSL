@@ -1,0 +1,22 @@
+::EXECUTE::
+bash -c "while [ 1 ]; do echo 1; sleep 10; done"
+
+::NOTIFY::
+
+::EXECUTABLES::
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+
+::MEMORY::
+11
+
+::DISK::
+1
+
+::MAXPRICE::
+100000
+
+::CPUTIME::
+5600

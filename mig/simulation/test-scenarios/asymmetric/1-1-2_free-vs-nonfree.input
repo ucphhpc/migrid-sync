@@ -1,0 +1,24 @@
+[DEFAULT]
+timesteps = 40
+topology = linear
+
+[server-0]
+type = server
+
+[resource-0]
+type = resource
+server = server-0
+minprice = 52.0
+request_probability = 0.8
+
+[user-0]
+type = user
+server = server-0
+maxprice = 57.0
+submit_probability = 0.3
+
+[user-1]
+type = user
+server = server-0
+maxprice = 56.0
+submit_probability = 0.3
