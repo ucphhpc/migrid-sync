@@ -9,6 +9,10 @@ Installation and configuration of Apache (PART 1):
 MiG works with Apache 1.3 or 2.x, so instructions for both are included.
 If in doubt you should use the 2.x version.
 
+The apache configuration commands require administrator privileges so
+you will have to switch to the root user or prepend sudo to all the
+commands in this section.
+
 Apache 1.3
 ----------
 If you already are familiar with apache 1.3 and want to stick with that
@@ -72,26 +76,31 @@ We recommend creating a new user account on the system for running the
 MiG daemons. This is not strictly required so you can skip this step if
 you like, but then the apache configuration must be updated accordingly.
 
-Create an ordinary user for running the MiG server (mig):
-# sudo su -
+As root create an ordinary user, mig, for running the MiG server:
 # groupadd mig
 # useradd -m -g mig mig 
 
-Download and unpack the MiG source to the home directory of the mig user.
+Login as the new user:
+# su - mig
+
+Download and unpack the MiG source to the home directory of this user.
 At this point it may be comfortable to copy some of the basic
 configuration files from mig/install/mig-user to ~mig/ but this is
-not required. 
+not required.
 
 Create and edit the server configuration to fit the particular server:
 # cd ~/mig-x.y.z/mig/server
-# cp MiGserver-template.conf MiGserver-myserver.conf
-# ln -s MiGserver-myserver.conf MiGserver.conf
+# cp MiGserver-localhost.conf MiGserver-MYSERVER.conf
+# ln -s MiGserver-MYSERVER.conf MiGserver.conf
 # $EDITOR MiGserver.conf
 Now change options like server_fqdn and paths to fit your installation.
 
-You can check that the configuration is ok by running the checkconf.py script.
+You can check that the configuration is ok by running the checkconf.py
+script:
+python checkconf.py
+
 If any paths are missing it will offer to help you creating them. 
-Please note that all the 'Xstdin' paths must be created as pipes.
+Please note that all the 'Xstdin' paths *must* be created as pipes.
 
 Log out the MiG user
 # logout
@@ -109,7 +118,6 @@ apache formatted certificate and key in hostcert.HOWTO
 It is not necessary to update the main apache configuration
 (/etc/apache/httpd.conf) to use the MiG software. It should be
 sufficient to copy the MiG specific configuration to the conf.d dir:
-# sudo su -
 # cp mig/apache/MiG.conf.Debian /etc/apache/conf.d/MiG.conf
 In that way it should automatically be included in the apache configuration.
 If it doesn't, please make sure that httpd.conf contains the line:
@@ -119,14 +127,15 @@ Always check that this MiG.conf actually fits your setup. Especially the
 server certificate and key lines may need modification to fit your setup.
 
 Finally restart apache to activate the changes and check that you can
-access the https pages on the server by pointing a browser to:
+access the https pages on the server by pointing a browser with your
+user certificate installed to:
 https://YOURSERVER/cgi-bin/submitjob.py
 and
 https://YOURSERVER/cgi-sid/reqcert.py
 
 
-Users and resources note:
-=========================
+Users and resources:
+====================
 Once your server is running you may add users and resources through the
 wen interface (/cgi-sid/reqcert.py). Please make sure to configure the
 admin_email option in the MiGserver.conf before you proceed as that
