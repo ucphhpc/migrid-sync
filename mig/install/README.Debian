@@ -143,23 +143,39 @@ Apache 2.x:
 Copy the configuration to the sites-available dir:
 # cp ~mig/path/to/migbase/mig/apache/MiG.conf.Debian /etc/apache2/sites-available/MiG
 
+Edit /etc/apache2/sites-available/MiG and comment out the two Listen
+directives (Listen 80 and Listen 443) that are already handled in
+/etc/apache2/ports.conf for apache2. 
+
 Add the new site to your enabled sites:
 # a2ensite MiG
 
-Optionally disbale the default test site:
+Optionally disable the default test site:
 # a2dissite default
 -----------
 
-Always check that this MiG.conf actually fits your setup. Especially the
-server certificate and key lines may need modification to fit your
-particular setup.
+Always check that the apache configuration actually fits your
+setup. Especially the server certificate, key and CA lines may need
+modification to fit your particular setup. Unless you checked out or
+unpacked the MiG code directly in ~/ the paths to the MiG dirs also need
+to be updated.
+
+You can use the MiG CA certificate bundle from
+mig/apache/MiG-ca-bundle.crt for the SSLCACertificateFile in the apache
+configuration, to allow users with our MiG certificates to connect. They
+will still need to be added as users on your particular server to be
+able to do anything, however.
 
 Finally restart apache (use the init.d scripts as above) to activate the
 changes and check that you can access the https pages on the server by
 pointing a browser with your user certificate installed to:
-https://YOURSERVER/cgi-bin/submitjob.py
-and
 https://YOURSERVER/cgi-sid/reqcert.py
+and 
+https://YOURSERVER/cgi-bin/submitjob.py
+
+The former should work with any server certificate and key, but the
+latter will yield an error unless you have a valid CA and user certificate
+setup.
 
 
 Users and resources:
