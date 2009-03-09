@@ -132,12 +132,16 @@ version, so use the same as you chose above.
 Apache 1.3:
 -----------
 Copy the configuration to the conf.d dir:
-# cp mig/apache/MiG.conf.Debian /etc/apache/conf.d/MiG.conf
+# cp ~mig/path/to/migbase/mig/apache/MiG.conf.Debian /etc/apache/conf.d/MiG.conf
+
+In that way it should automatically be included in the apache configuration.
+If it doesn't, please make sure that httpd.conf contains the line:
+Include /etc/apache/conf.d
 
 Apache 2.x:
 -----------
 Copy the configuration to the sites-available dir:
-# cp mig/apache/MiG.conf.Debian /etc/apache2/sites-available/MiG
+# cp ~mig/path/to/migbase/mig/apache/MiG.conf.Debian /etc/apache2/sites-available/MiG
 
 Add the new site to your enabled sites:
 # a2ensite MiG
@@ -146,16 +150,13 @@ Optionally disbale the default test site:
 # a2dissite default
 -----------
 
-In that way it should automatically be included in the apache configuration.
-If it doesn't, please make sure that httpd.conf contains the line:
-Include /etc/apache/conf.d
-
 Always check that this MiG.conf actually fits your setup. Especially the
-server certificate and key lines may need modification to fit your setup.
+server certificate and key lines may need modification to fit your
+particular setup.
 
-Finally restart apache to activate the changes and check that you can
-access the https pages on the server by pointing a browser with your
-user certificate installed to:
+Finally restart apache (use the init.d scripts as above) to activate the
+changes and check that you can access the https pages on the server by
+pointing a browser with your user certificate installed to:
 https://YOURSERVER/cgi-bin/submitjob.py
 and
 https://YOURSERVER/cgi-sid/reqcert.py

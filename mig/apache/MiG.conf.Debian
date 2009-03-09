@@ -163,44 +163,12 @@ MaxRequestsPerChild 10000
 
 </IfModule>
 
-# proxy directives for zope forward
-<IfModule mod_proxy.c>
-    #
-    # Enable/disable the handling of HTTP/1.1 "Via:" headers.
-    # ("Full" adds the server version; "Block" removes all outgoing Via: headers)
-    # Set to one of: Off | On | Full | Block
-    #
-    ProxyVia Off
-</IfModule>
-
 # Configure ordinary virtual host
 <VirtualHost _default_:80>
    # General setup for the virtual host
    DocumentRoot "/home/mig/mig/wwwpublic"
    #ErrorLog /var/log/apache/error.log
    #TransferLog /var/log/apache/access.log
-
-   RewriteEngine On
-   RewriteRule ^/MiG(/)*$ /MiG/index.html [R]
-
-   # always HTTPS for manage (NE is important!)
-   RewriteRule ^/(.*)manage https://mig-1.imada.sdu.dk/$1manage [NE,L]
-   RewriteRule ^/(.*)login_form https://mig-1.imada.sdu.dk/$1login_form [NE,L]
-
-   # Forward ordinary WWW except monitor and images to zope:
-   # We dont want Zope etc on the actual MiG servers. Redirect requests to the 
-   # location of the public project page, except monitor, vgrid and images that 
-   # should be taken locally from the server.
-   # PLEASE NOTE: these next 4 rules will override forwarding below!
-   RewriteCond %{REQUEST_URI} !^/public
-   RewriteCond %{REQUEST_URI} !^/images
-   RewriteCond %{REQUEST_URI} !^/monitor.html
-   RewriteCond %{REQUEST_URI} !^/vgrid
-   #RewriteRule ^/(.*) http://mig-2.imada.sdu.dk:8092/VirtualHostBase/http/mig-1.imada.sdu.dk:80/$1 [L,P]
-   RewriteRule ^/(.*) http://mig-2.imada.sdu.dk:8092/VirtualHostBase/http/www.migrid.org:80/$1 [L,P]
-   #RewriteRule (.*)$ http://mig-2.imada.sdu.dk:8092/MiG/$1 [L,R]
-   # Reverse proxy for zope pages (keep original URL host)
-   ProxyPassReverse / http://mig-2.imada.sdu.dk:8092/
 
    # Public images shared by http and https pages and scripts
    Alias /images/ /home/mig/mig/images/
@@ -309,17 +277,6 @@ MaxRequestsPerChild 10000
    # server dramatically! 
    # Use the rewriting logfile at a Level greater than 2 only for debugging!
    RewriteLogLevel 0
-
-   # Logs user out of https upon logout
-   RewriteRule ^/(.*)logged_out http://mig-1.imada.sdu.dk/$1logged_out [NE,L]
-  
-   # Forward mangement request directly to zope without virtual host rewrite
-   RewriteRule ^/manage http://mig-2.imada.sdu.dk:8092/manage [L,P]
-
-   # Forward ordinary WWW requests to zope
-   RewriteRule ^/MiG(/)*$ /MiG/index.html [R]
-   RewriteRule ^/MiG/(.*) http://mig-2.imada.sdu.dk:8092/VirtualHostBase/https/mig-1.imada.sdu.dk:443/MiG/$1 [L,P]
-   RewriteRule ^/test_plone(.*) http://mig-2.imada.sdu.dk:8092/VirtualHostBase/https/mig-1.imada.sdu.dk:443/test_plone$1 [L,P]
 
    # Redirect to file in vgrid
    RewriteCond %{REQUEST_URI} ^/vgrid/*/*
@@ -445,33 +402,5 @@ MaxRequestsPerChild 10000
    ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/private_base/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/mig/wwwuser/$1/private_base/$2/.vgridwiki/cgi-bin/$3
    ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/vgrid_shared/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/mig/wwwuser/$1/$2/.vgridwiki/cgi-bin/$3
 # END FOR MiG VGrid MOIN MOIN
-
-# BEGIN AWSTATS
-   Alias /awicons /usr/share/awstats/icon
-   <Location /awicons>
-         Order allow,deny
-         Allow from all
-   </Location>
-# END AWSTATS
-
-# BEGIN WEBDAV
-   <IfModule mod_dav.c>
-      DAVLockDB       /var/lock/DAV/apache
-      Alias /dav /DAVTEST
-      <Location /dav>
-         SSLVerifyClient require
-	 DAV On
-	 Options Indexes
-	 <Limit GET POST OPTIONS>
-	    Order allow,deny
-	    Allow from all
-	 </Limit>
-	 <Limit PUT POST DELETE PROPFIND PROPPATCH MKCOL COPY MOVE LOCK UNLOCK>
-	    Order allow,deny
-	    Allow from all
-	 </Limit>
-      </Location>
-   </IfModule>
-# END WEBDAV
 
 </VirtualHost>             
