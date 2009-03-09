@@ -267,7 +267,7 @@ MaxRequestsPerChild 10000
    #   o OptRenegotiate:
    #     This enables optimized SSL connection renegotiation handling when SSL
    #     directives are used in per-directory context. 
-   #SSLOptions +FakeBasicAuth +ExportCertData +CompatEnvVars +StrictRequire
+   #SSLOptions +FakeBasicAuth +ExportCertData +StrictRequire
    <Files ~ "\.(cgi|shtml|phtml|php3?)$">
       SSLOptions +StdEnvVars
    </Files>
@@ -363,7 +363,7 @@ MaxRequestsPerChild 10000
    <Directory "/home/mig/mig/wwwuser">
       SSLVerifyClient require
       # The next line is crucial for cert_redirect to work!!!
-      SSLOptions +StdEnvVars +FakeBasicAuth +ExportCertData +CompatEnvVars
+      SSLOptions +StdEnvVars +FakeBasicAuth +ExportCertData
       # This dir is used for a number of public images and templates
       # Access to user home dirs is limited in .htaccess files there.
       Order allow,deny
@@ -373,7 +373,7 @@ MaxRequestsPerChild 10000
       SSLVerifyClient require
       # Allow .htaccess files for auth
       AllowOverride All
-      SSLOptions +StdEnvVars +FakeBasicAuth +ExportCertData +CompatEnvVars +StrictRequire
+      SSLOptions +StdEnvVars +FakeBasicAuth +ExportCertData +StrictRequire
    </Directory>
 
    # SID access
