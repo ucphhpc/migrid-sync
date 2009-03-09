@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# unit - [insert a few words of module description on this line]
+# unit - some simple unit tests against migfs
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 # 
 # This file is part of MiG.

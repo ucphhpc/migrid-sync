@@ -1,3 +1,5 @@
+Introduction
+------------
 This is a simple FUSE (http://fuse.sourceforge.net/) based MiG file system,
 which enables you to access and manipulate files in your MiG home directory as
 if they were local files.
