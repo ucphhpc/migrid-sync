@@ -2,11 +2,52 @@ Introduction:
 =============
 This document contains some notes about the installation of a MiG server on
 a Debian box. Most of it probably applies to most other UNIX/Linux distributions.
+MiG relies on the Apache web server for all web interfaces and
+optionally the MoinMoin wiki, but apart from that you will only need a
+Python interpreter to run your own grid using the MiG software. 
 
 
-Installation and configuration of Apache (PART 1):
-==================================================
-MiG works with Apache 1.3 or 2.x, so instructions for both are included.
+Installation and configuration of the MiG server software:
+==========================================================
+We recommend creating a new user account on the system for running the
+MiG daemons. This is not strictly required so you can skip this step if
+you like, but then the apache configuration must be updated accordingly.
+
+As root create an ordinary user, mig, for running the MiG server:
+# su -
+# useradd -m -U mig 
+
+Login as the new user:
+# su - mig
+
+Download and unpack the MiG source or make a checkout from svn as described on:
+http://code.google.com/p/migrid/source/checkout
+
+At this point it may be comfortable to copy some of the basic
+account configuration files from mig/install/mig-user to ~/ but this is
+not required.
+
+Create and edit the server configuration to fit the particular server:
+# cd ~/path/to/migbase/mig/server
+# cp MiGserver-localhost.conf MiGserver-MYSERVER.conf
+# ln -s MiGserver-MYSERVER.conf MiGserver.conf
+# $EDITOR MiGserver.conf
+Now change options like server_fqdn and paths to fit your installation.
+
+You can check that the configuration is ok by running the checkconf.py
+script:
+python checkconf.py
+
+If any paths are missing it will offer to help you creating them. 
+Please note that all the 'Xstdin' paths *must* be created as pipes.
+
+Log out the MiG user
+# logout
+
+
+Installation and configuration of Apache:
+=========================================
+MiG works with Apache 1.3 or 2.x, so instructions for both are included here.
 If in doubt you should use the 2.x version.
 
 The apache configuration commands require administrator privileges so
@@ -17,7 +58,7 @@ Apache 1.3
 ----------
 If you already are familiar with apache 1.3 and want to stick with that
 simply install apache 1.3 and mod-ssl: 
-# apt-get install apache libapache-mod-ssl
+# aptitude install apache libapache-mod-ssl
 
 Stop the apache server for now
 # /etc/init.d/apache stop
@@ -37,10 +78,10 @@ Test that the basic HTTP server works after starting it with:
 
 Apache 2.x
 ----------
-If you prefer apache 2.X the install command is simply:
-# apt-get install apache2-mpm-prefork
+If you prefer apache 2.x the install command is simply:
+# aptitude install apache2-mpm-prefork
 
-The other apache 2 flavors may work but they are untested with MiG.
+The other apache2 flavors *may* work, but they are untested with MiG.
 
 Stop the apache server for now
 # /etc/init.d/apache2 stop
@@ -57,68 +98,54 @@ Test that the basic HTTP server works after starting it with:
 # /etc/init.d/apache2 start
 ----------
 
-(Make sure that apache is actually running and binding to port 80 in case you
-have problems connecting to the web server. Try to connect from the
-server itself first to avoid firewall issues.)
+Test that the basic configuration works by pointing a browser to 
+http://YOURSERVER/
+Make sure that apache is actually running and binding to port 80 in case you
+have problems connecting to the web server. 
+If you still can't connect, try connecting to 
+http://localhost/
+from the server itself to avoid firewall issues.
 
 On our own MiG servers we use a simple shell script to configure the
 firewall, but you may use whatever firewall setup you want as long as
 you keep at least tcp port 443 open for https access by your users and
 resources. In most cases you will also want to open for port 22 and 80
 to allow ssh and plain http access. 
-The MiG specific apache configuration is all handled by the MiG apache
-configuration added in PART 2 below because it expects a 'mig' system user.
 
+When you've made sure that your apache installation works you can move
+on with the MiG specific configuration.
 
-Installation and configuration of the MiG server software:
-==========================================================
-We recommend creating a new user account on the system for running the
-MiG daemons. This is not strictly required so you can skip this step if
-you like, but then the apache configuration must be updated accordingly.
-
-As root create an ordinary user, mig, for running the MiG server:
-# groupadd mig
-# useradd -m -g mig mig 
-
-Login as the new user:
-# su - mig
-
-Download and unpack the MiG source to the home directory of this user.
-At this point it may be comfortable to copy some of the basic
-configuration files from mig/install/mig-user to ~mig/ but this is
-not required.
-
-Create and edit the server configuration to fit the particular server:
-# cd ~/mig-x.y.z/mig/server
-# cp MiGserver-localhost.conf MiGserver-MYSERVER.conf
-# ln -s MiGserver-MYSERVER.conf MiGserver.conf
-# $EDITOR MiGserver.conf
-Now change options like server_fqdn and paths to fit your installation.
-
-You can check that the configuration is ok by running the checkconf.py
-script:
-python checkconf.py
-
-If any paths are missing it will offer to help you creating them. 
-Please note that all the 'Xstdin' paths *must* be created as pipes.
-
-Log out the MiG user
-# logout
-
-
-Installation and configuration of Apache (PART 2):
-==================================================
-You will need a signed server certificate for your web server. You can
-create your own self-signed certificate or buy a signed one from one of
-the SSL certificate providers. It is also possible to set up your own
-Certificate Authority (CA) and use it to sign your server certificates.
-If you set up you own CA you can find instructions for creating the
-apache formatted certificate and key in hostcert.HOWTO 
+You will need a signed server certificate for your web server to allow
+secure communication between the server and the grid participants.
+You can create your own self-signed certificate or get/buy a signed one
+from one of the SSL certificate providers. It is also possible to set up
+your own Certificate Authority (CA) and use it to sign your server
+certificates. If you set up you own CA you can find instructions for
+creating the apache formatted certificate and key in hostcert.HOWTO 
 
 It is not necessary to update the main apache configuration
 (/etc/apache/httpd.conf) to use the MiG software. It should be
-sufficient to copy the MiG specific configuration to the conf.d dir:
+sufficient to copy the MiG specific configuration to the apache
+configuration directory. The actual details depend on the Apache
+version, so use the same as you chose above.
+
+Apache 1.3:
+-----------
+Copy the configuration to the conf.d dir:
 # cp mig/apache/MiG.conf.Debian /etc/apache/conf.d/MiG.conf
+
+Apache 2.x:
+-----------
+Copy the configuration to the sites-available dir:
+# cp mig/apache/MiG.conf.Debian /etc/apache2/sites-available/MiG
+
+Add the new site to your enabled sites:
+# a2ensite MiG
+
+Optionally disbale the default test site:
+# a2dissite default
+-----------
+
 In that way it should automatically be included in the apache configuration.
 If it doesn't, please make sure that httpd.conf contains the line:
 Include /etc/apache/conf.d
@@ -157,7 +184,7 @@ email.
 VGrid wiki:
 ===========
 In order to support VGrid wikis you will need to install the MoinMoin package:
-# apt-get install python-moinmoin
+# aptitude install python-moinmoin
 
 Now make sure that the paths match those in the
 mig/cgi-bin/createvgrid.py CGI script so that creating a new VGrid succeeds.
