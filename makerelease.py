@@ -43,7 +43,7 @@ tar_path = "%s.tgz" % archive_base
 
 if "__main__" == __name__:
     print "Creating release of %s in %s" % (target, tar_path)
-    print " - ignoring all %s dirs -" % ', '.join(exclude_dirs)
+    print "--- ignoring all %s dirs ---" % ', '.join(exclude_dirs)
     tar_ball = tarfile.open(tar_path, "w:gz")
     for (root, dirs, files) in os.walk(target):
         for exclude in exclude_dirs:
@@ -56,4 +56,5 @@ if "__main__" == __name__:
             print "Adding %s" % archive_path
             tar_ball.add(rel_path, archive_path, recursive=False)
     tar_ball.close()
+    print "Wrote release of %s in %s" % (target, tar_path)
     

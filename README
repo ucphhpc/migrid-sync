@@ -1,0 +1,74 @@
+= Introduction =
+This is the full MiG project code released at the MiGrid project at
+Google Code:
+
+http://code.google.com/p/migrid/
+
+MiG is Free Software and it is developed by the MiG Project lead by
+Brian Vinter. 
+Please refer to the COPYING file in this directory for further information
+about the GPL v2 license which MiG is distributed under.
+
+
+= Getting Started =
+Please refer to the information available at the aforementioned URL
+especially the wiki pages including:
+
+http://code.google.com/p/migrid/wiki/GettingStarted
+
+
+= Running a MiG Server =
+If you want to run your own MiG server for your own grid or to develop
+MiG you should setup an apache server as described in the mig/apache
+directory and run the MiG daemons from the mig/server directory.
+
+Before you run the MiG daemons you need to create a configuration for
+your daemons in mig/server/MiGserver.conf .
+You can use the localhost example configuration MiGserver-localhost.conf
+there as a template for your own configuration.
+At any time you can verify the validity of your configuration with the
+checkconf.py script in the same directory.
+
+The central daemon is grid_script.py which takes care of all job
+management on the server. If you want to include grid monitor web pages you
+should additionally run the grid_monitor.py daemon. The optional job
+notifications and ssh multiplexing daemons are available as im_notify.py
+and ssh_multiplex.py in the same location. In case you don't know what
+they do, you can most likely safely ignore them and just run
+grid_script.py daemon
+
+All the daemons can be launched from inside the mig/server directory:
+cd /path/to/unpacked/mig/source/mig/server
+python grid_script.py
+
+Each one will keep running until you actively stop it, so you need
+individual shell sessions for each daemon.
+
+For testing purposes this interactive execution is fine, but in more
+permanent setups you will probably want to run the MiG daemons as true
+daemons so that you can disconnect from the server and leave them
+running. The easiest solution to that problem is to run the daemons
+inside a GNU Screen session:
+screen -S MiG
+cd /path/to/unpacked/mig/source/mig/server
+python grid_script.py
+[ctrl-a d to disconnect]
+
+Then you can disconnect from the server and resume the session any time
+later by reattaching the screen session:
+screen -S MiG -R
+
+Please refer to 'man screen' or other screen documentation for further
+details.
+
+
+= Stopping a MiG server =
+All the daemons can be stopped with ctrl-c but if you run grid_script.py
+in a real grid you should avoid this immediate interrupt as it will
+result in the internal state not being saved and the resulting long
+rebuild on next run.
+The recommended way to stop grid_script in that situation is to send it
+the SHUTDOWN message through the named input pipe defined in the
+configuration file:
+echo SHUTDOWN >> server.stdin
+
