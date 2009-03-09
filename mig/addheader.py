@@ -101,12 +101,11 @@ for (root, dirs, files) in os.walk(target):
         if os.path.islink(path):
             continue
         print "Inspecting %s" % path
-        #for pattern in code_files:
-        for pattern in ['*.py']:
+        for pattern in code_files:
             pattern = os.path.join(target, pattern)
 
             # print "Testing %s against %s" % (path, pattern)
-            if fnmatch.fnmatch(path, pattern):
+            if path == pattern or fnmatch.fnmatch(path, pattern):
                 print "Matched %s against %s" % (path, pattern)
                 var_dict["module_name"] = name.replace('.py', '')
                 var_dict["authors"] = "The MiG Project lead by Brian Vinter"
