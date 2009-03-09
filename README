@@ -16,12 +16,33 @@ especially the wiki pages including:
 
 http://code.google.com/p/migrid/wiki/GettingStarted
 
-
-= Running a MiG Server =
+= Installing MiG =
 If you want to run your own MiG server for your own grid or to develop
-MiG you should setup an apache server as described in the mig/apache
-directory and run the MiG daemons from the mig/server directory.
+MiG you should download and unpack the source code (including this
+file) on a UNIX compatible computer.
 
+The MiG core services are provided by the MiG daemons from the mig/server
+directory and they can simply be run directly from the unpacked source
+code directory.
+
+For the web interfaces to work you will need to run an apache server as
+described in the mig/apache directory. MiG does not include the actual
+Apache web server so you will need to install that using either packages
+provided by your distribution or install it from source. 
+
+MiG is tested on Debian and Redhat Linux using Apache 1.3 or 2.X with mod-ssl
+respectively but other distribution and apache combinations should also work. 
+MiG relies on apache's mod-ssl for automatic certificate validation and access
+control. Furthermore quite a bit of rewrite rules are used for access
+and convenience so the mod-rewrite apache module is required too.
+
+The server documentation expects the MiG code to run as a separate 'mig'
+user on the UNIX system, but this is not a requirement. Just modify your
+apache and MiG configurations appropriately if you want to run MiG as a
+different user.
+
+
+== Running a MiG Server ==
 Before you run the MiG daemons you need to create a configuration for
 your daemons in mig/server/MiGserver.conf .
 You can use the localhost example configuration MiGserver-localhost.conf
@@ -62,7 +83,7 @@ Please refer to 'man screen' or other screen documentation for further
 details.
 
 
-= Stopping a MiG server =
+== Stopping a MiG server ==
 All the daemons can be stopped with ctrl-c but if you run grid_script.py
 in a real grid you should avoid this immediate interrupt as it will
 result in the internal state not being saved and the resulting long
@@ -72,3 +93,14 @@ the SHUTDOWN message through the named input pipe defined in the
 configuration file:
 echo SHUTDOWN >> server.stdin
 
+To completely stop MiG you need to stop all the MiG daemons and the
+apache server.
+
+
+= Uninstalling MiG =
+The default server configuration template keeps all MiG files installed
+under the single directory where the MiG source code is unpacked, so
+uninstalling is simply a matter of deleting that directory. If you
+change your server configuration to save e.g. state files outside this
+directory you will have to manually clean up those directories as well
+to completely uninstall MiG.
