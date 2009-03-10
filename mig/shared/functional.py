@@ -91,10 +91,8 @@ def validate_input_and_cert(
 
     if not is_user(cert_name_no_spaces, configuration.user_home):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Invalid certificate (common name)'})
+                              : 'Invalid certificate or no such MiG user (common name)'})
         return (False, output_objects)
     (status, retval) = validate_input(user_arguments_dict, defaults,
             output_objects, allow_rejects)
     return (status, retval)
-
-
