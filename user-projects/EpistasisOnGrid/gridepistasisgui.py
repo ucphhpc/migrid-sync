@@ -6,6 +6,7 @@ import gridepistasis as EpiModel
 import wx
 import time
 import os
+sys.path.append("RfilesAndscripts/")
 import readdata
 
 exec_state = "executing"
