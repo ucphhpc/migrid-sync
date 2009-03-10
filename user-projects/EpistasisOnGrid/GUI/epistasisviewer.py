@@ -150,7 +150,7 @@ class MyEpiFrame(wx.Frame):
         self.notebook_1_pane_3.SetSizer(sizer_9)
         self.notebook_1.AddPage(self.notebook_1_pane_1, "General")
         self.notebook_1.AddPage(self.notebook_1_pane_2, "Gene selector")
-        self.notebook_1.AddPage(self.notebook_1_pane_3, "Custom code")
+        self.notebook_1.AddPage(self.notebook_1_pane_3, "User commands")
         sizer_1.Add(self.notebook_1, 1, wx.EXPAND, 0)
         self.SetSizer(sizer_1)
         self.Layout()
