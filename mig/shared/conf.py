@@ -5,19 +5,19 @@
 #
 # conf - [insert a few words of module description on this line]
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
-# 
+#
 # This file is part of MiG.
-# 
+#
 # MiG is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -32,43 +32,55 @@ from shared.fileio import unpickle
 
 def get_configuration_object():
     from shared.configuration import Configuration
-    config_file = "../server/MiGserver.conf"
+    config_file = '../server/MiGserver.conf'
     configuration = Configuration(config_file, False)
     return configuration
 
-def get_resource_configuration(resource_home, unique_resource_name, logger):
+
+def get_resource_configuration(resource_home, unique_resource_name,
+                               logger):
+
     # open the configuration file
-    resource_config_file = resource_home + "/" + \
-                           unique_resource_name + "/config"
+
+    resource_config_file = resource_home + '/' + unique_resource_name\
+         + '/config'
     resource_config = unpickle(resource_config_file, logger)
     if not resource_config:
-        msg = "could not unpickle %s" % resource_config_file
+        msg = 'could not unpickle %s' % resource_config_file
         logger.error(msg)
         return (False, msg)
     else:
         return (True, resource_config)
-                                    
+
+
 def get_resource_exe(resource_config, exe_name, logger):
-    for exe in resource_config["EXECONFIG"]:
+    for exe in resource_config['EXECONFIG']:
+
         # find the right exe entry
-        if exe["name"] == exe_name:
-            logger.debug("The configuration for %s was found" % \
-                         exe_name)
+
+        if exe['name'] == exe_name:
+            logger.debug('The configuration for %s was found'
+                          % exe_name)
             return (True, exe)
+
     # not found
-    msg = "Error: The configuration for %s was not found!" % exe_name
+
+    msg = 'Error: The configuration for %s was not found!' % exe_name
     logger.error(msg)
     return (False, msg)
-        
+
+
 def get_resource_all_exes(resource_config, logger):
-    msg = ""
-    if not resource_config.has_key("EXECONFIG"):
-        msg = "No exe hosts configured!"
+    msg = ''
+    if not resource_config.has_key('EXECONFIG'):
+        msg = 'No exe hosts configured!'
         logger.error(msg)
         return (False, msg)
-    return (True, resource_config["EXECONFIG"])
+    return (True, resource_config['EXECONFIG'])
+
 
 # TODO: retire CamelCase versions once they're no longer used
+
 GetResourceConfiguration = get_resource_configuration
 GetResourceExe = get_resource_exe
 GetResourceAllExes = get_resource_all_exes

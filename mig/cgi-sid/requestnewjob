@@ -5,19 +5,19 @@
 #
 # requestnewjob - [insert a few words of module description on this line]
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
-# 
+#
 # This file is part of MiG.
-# 
+#
 # MiG is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -37,138 +37,171 @@ from shared.validstring import valid_dir_input
 from shared.cgishared import init_cgiscript_possibly_with_cert
 from shared.findtype import is_resource
 
+# ## Main ###
 
-### Main ###
-(logger, configuration, cert_name_no_spaces, o) = init_cgiscript_possibly_with_cert()
-if str(os.getenv("REQUEST_METHOD")) != "GET":
-    o.out("Please use HTTP GET")
+(logger, configuration, cert_name_no_spaces, o) = \
+    init_cgiscript_possibly_with_cert()
+if str(os.getenv('REQUEST_METHOD')) != 'GET':
+    o.out('Please use HTTP GET')
     o.reply_and_exit(o.ERROR)
 
 # Make sure that we're actually called by an authenticated resource!
-if str(os.getenv("HTTPS")) != "on":
-    o.out("Please use HTTPS with session id for authenticating job requests!")
+
+if str(os.getenv('HTTPS')) != 'on':
+    o.out('Please use HTTPS with session id for authenticating job requests!'
+          )
     o.reply_and_exit(o.ERROR)
 
 # TODO: add session ID check here
 
-remote_ip = str(os.getenv("REMOTE_ADDR"))
+remote_ip = str(os.getenv('REMOTE_ADDR'))
 
 fieldstorage = cgi.FieldStorage()
-exe = fieldstorage.getfirst("exe", "")
-unique_resource_name = fieldstorage.getfirst("unique_resource_name", "")
-cputime = fieldstorage.getfirst("cputime", "10000")
-nodecount = fieldstorage.getfirst("nodecount", "1")
-localjobname = fieldstorage.getfirst("localjobname", "")
-sandboxkey = fieldstorage.getfirst("sandboxkey", "")
-execution_delay = fieldstorage.getfirst("execution_delay", "0")
-exe_pgid = fieldstorage.getfirst("exe_pgid", "0")
-o.out("job request from '%s;%s;%s;%s;%s;%s;%s;%s" % \
-      (remote_ip, exe, unique_resource_name, cputime, nodecount,
-       localjobname, execution_delay, exe_pgid))
+exe = fieldstorage.getfirst('exe', '')
+unique_resource_name = fieldstorage.getfirst('unique_resource_name', '')
+cputime = fieldstorage.getfirst('cputime', '10000')
+nodecount = fieldstorage.getfirst('nodecount', '1')
+localjobname = fieldstorage.getfirst('localjobname', '')
+sandboxkey = fieldstorage.getfirst('sandboxkey', '')
+execution_delay = fieldstorage.getfirst('execution_delay', '0')
+exe_pgid = fieldstorage.getfirst('exe_pgid', '0')
+o.out("job request from '%s;%s;%s;%s;%s;%s;%s;%s" % (
+    remote_ip,
+    exe,
+    unique_resource_name,
+    cputime,
+    nodecount,
+    localjobname,
+    execution_delay,
+    exe_pgid,
+    ))
 
 # if the server is under heavy usage, requestjobs might come
 # too fast and thereby make the usage even heavier. The resource request a new job again
 # because the requestjob process is finished, resulting in more load. A resource should not be able to
-# have more than one job request at a time. A "jobrequest_pending" file in the resource's home 
+# have more than one job request at a time. A "jobrequest_pending" file in the resource's home
 # directory means that a requestnewjob is processed. The file is also deleted when a resource is started.
 # This locking by file is not good if the MiG server runs on a NFS machine.
-# The lock file contains a timestamp used to autoexpire old locks if a job wasn't handed out within the requested cputime. 
+# The lock file contains a timestamp used to autoexpire old locks if a job wasn't handed out within the requested cputime.
 
 # Please note that base_dir must end in slash to avoid access to other
 # resource dirs when own name is a prefix of another resource name
-base_dir = os.path.abspath(configuration.resource_home + os.sep + unique_resource_name) + os.sep
+
+base_dir = os.path.abspath(configuration.resource_home + os.sep
+                            + unique_resource_name) + os.sep
 
 # No owner check here so we need to specifically check for illegal
 # directory traversals
-if not valid_dir_input(configuration.resource_home, unique_resource_name):
+
+if not valid_dir_input(configuration.resource_home,
+                       unique_resource_name):
+
     # out of bounds - rogue resource!?!?
-    o.out("invalid unique_resource_name! %s" % unique_resource_name)
-    o.internal("requestnewjob called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, cert_name_no_spaces %s" % (unique_resource_name, exe, cert_name_no_spaces))
+
+    o.out('invalid unique_resource_name! %s' % unique_resource_name)
+    o.internal('requestnewjob called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, cert_name_no_spaces %s'
+                % (unique_resource_name, exe, cert_name_no_spaces))
     o.reply_and_exit(o.CLIENT_ERROR)
 
-lock_file = os.path.abspath(base_dir + "jobrequest_pending." + exe)
+lock_file = os.path.abspath(base_dir + 'jobrequest_pending.' + exe)
 filehandle = None
 now = time.time()
 try:
     lock_until = now + min(300.0, float(cputime))
 except Exception:
-    o.out("invalid cputime - must be an integer or floating point number! %s" % cputime)
+    o.out('invalid cputime - must be an integer or floating point number! %s'
+           % cputime)
     o.reply_and_exit(o.CLIENT_ERROR)
 
 try:
-    filehandle = open(lock_file, "r+")
+    filehandle = open(lock_file, 'r+')
 except IOError, ioe:
-    o.out("No jobrequest_pending.%s lock found - creating one" % (exe))
-    
+    o.out('No jobrequest_pending.%s lock found - creating one' % exe)
+
 if filehandle:
     try:
-	fcntl.flock(filehandle.fileno(), fcntl.LOCK_EX)
-	filehandle.seek(0, 0)
+        fcntl.flock(filehandle.fileno(), fcntl.LOCK_EX)
+        filehandle.seek(0, 0)
 
         lock_content = filehandle.read()
-	if lock_content:
+        if lock_content:
             try:
                 expire_time = float(lock_content)
             except Exception:
+
                 # Old expire file - force lock to expire
+
                 expire_time = 0.0
-                
+
             if now < expire_time:
-                o.out("requestnewjob is locked until last requestnewjob for this exe (%s) has returned." % (exe))
+                o.out('requestnewjob is locked until last requestnewjob for this exe (%s) has returned.'
+                       % exe)
                 o.reply_and_exit(o.CLIENT_ERROR)
             else:
-                o.internal("requestnewjob found expired lock (%.2f < %.2f) - allowing new request." % (now, expire_time))
-	filehandle.seek(0, 0)
-	filehandle.write("%.2f" % lock_until)
-	filehandle.close()
-				
+                o.internal('requestnewjob found expired lock (%.2f < %.2f) - allowing new request.'
+                            % (now, expire_time))
+        filehandle.seek(0, 0)
+        filehandle.write('%.2f' % lock_until)
+        filehandle.close()
     except IOError, ioe:
-	o.out("Could not get exclusive lock")
-	o.client("Your last job request for %s has been received on the MiG server. The job should be available shortly." % (exe))
-	o.client("If you recieve this message often, please increase the timeout for job requests.")
-	o.reply_and_exit(o.CLIENT_ERROR)
-else:
-    # create file
-    try:
-	filehandle = open(lock_file, "w")
-	fcntl.flock(filehandle.fileno(), fcntl.LOCK_EX)
-	filehandle.seek(0, 0)
-	filehandle.write("%.2f" % lock_until)
-	filehandle.close()
 
+        o.out('Could not get exclusive lock')
+        o.client('Your last job request for %s has been received on the MiG server. The job should be available shortly.'
+                  % exe)
+        o.client('If you recieve this message often, please increase the timeout for job requests.'
+                 )
+        o.reply_and_exit(o.CLIENT_ERROR)
+else:
+
+    # create file
+
+    try:
+        filehandle = open(lock_file, 'w')
+        fcntl.flock(filehandle.fileno(), fcntl.LOCK_EX)
+        filehandle.seek(0, 0)
+        filehandle.write('%.2f' % lock_until)
+        filehandle.close()
     except IOError, ioe:
-	o.out("Failed to create jobrequest_pending lock!", ioe)
-	o.reply_and_exit(o.ERROR)
+
+        o.out('Failed to create jobrequest_pending lock!', ioe)
+        o.reply_and_exit(o.ERROR)
 
 # Resource must specify localjobname
+
 if localjobname == None:
-    o.out("REQUESTNEWJOB error! Localjobname was not specified in the query string. Looks like a mis-configured resource!")
+    o.out('REQUESTNEWJOB error! Localjobname was not specified in the query string. Looks like a mis-configured resource!'
+          )
     o.reply_and_exit(o.ERROR)
 
-if exe == "":
-    o.out("REQUESTNEWJOB error! exe was not specified in the query string. Looks like a mis-configured resource!")
+if exe == '':
+    o.out('REQUESTNEWJOB error! exe was not specified in the query string. Looks like a mis-configured resource!'
+          )
     o.reply_and_exit(o.ERROR)
-    
-if unique_resource_name == "":
-    o.out("REQUESTNEWJOB error! unique_resource_name was not specified in the query string. Looks like a mis-configured resource!")
+
+if unique_resource_name == '':
+    o.out('REQUESTNEWJOB error! unique_resource_name was not specified in the query string. Looks like a mis-configured resource!'
+          )
     o.reply_and_exit(o.ERROR)
 
 try:
     test = int(cputime)
 except:
-    o.out("REQUESTNEWJOB error! Specified cputime is not an integer (%s)" % cputime)
+    o.out('REQUESTNEWJOB error! Specified cputime is not an integer (%s)'
+           % cputime)
     o.reply_and_exit(o.ERROR)
 
 try:
     test = int(nodecount)
 except:
-    o.out("REQUESTNEWJOB error! Specified nodecount is not an integer (%s)" % nodecount)
+    o.out('REQUESTNEWJOB error! Specified nodecount is not an integer (%s)'
+           % nodecount)
     o.reply_and_exit(o.ERROR)
-    
+
 try:
     test = int(exe_pgid)
 except:
-    o.out("REQUESTNEWJOB error! Specified exe_pgid is not an integer (%s)" % exe_pgid)
+    o.out('REQUESTNEWJOB error! Specified exe_pgid is not an integer (%s)'
+           % exe_pgid)
     o.reply_and_exit(o.ERROR)
 
 # Check that resource address matches request source
@@ -179,34 +212,47 @@ except:
 #    print "Warning: job request not sent from expected resource address!"
 #    logger.warning("job request not issued from address of resource! (%s != %s)", remote_ip, resource_ip)
 
-
 if not is_resource(unique_resource_name, configuration.resource_home):
-    o.out("REQUESTNEWJOB error! Your unique_resource_name is not recognized as a MiG resource!")
+    o.out('REQUESTNEWJOB error! Your unique_resource_name is not recognized as a MiG resource!'
+          )
     o.reply_and_exit(o.ERROR)
 
-(status, resource_conf) = get_resource_configuration(configuration.resource_home, unique_resource_name, logger)
+(status, resource_conf) = \
+    get_resource_configuration(configuration.resource_home,
+                               unique_resource_name, logger)
 if not status:
-    o.out("No resouce_config for: '" +  unique_resource_name + "'\n")
-    o.reply_and_exit(o.ERROR)   
-    
-if resource_conf["SANDBOX"] == 1:
-    if sandboxkey == "":
-	o.out("Error, sandbox must submit sandboxkey in requestnewjob!")
-	o.reply_and_exit(o.ERROR)
-    else:
-	# resource is a sandbox and a sandboxkey was received
-	if resource_conf["SANDBOXKEY"] <> sandboxkey:
-	    o.out("Error, sandbox provided an invalid sandboxkey!")
-	    o.reply_and_exit(o.ERROR)
-	    
-    
-# Tell "grid_script" that the resource requests a job
-message = "RESOURCEREQUEST %s %s %s %s %s %s %s\n" % \
-          (exe, unique_resource_name, cputime, nodecount,
-           localjobname, execution_delay, exe_pgid)
-if not send_message_to_grid_script(message, logger, configuration):
-    o.out("Fatal error: could not write resourcerequest to grid_stdin! %s" % unique_resource_name)
+    o.out("No resouce_config for: '" + unique_resource_name + "'\n")
     o.reply_and_exit(o.ERROR)
 
-o.out("REQUESTNEWJOB OK. The job will be sent to the resource: %s.%s %s %s (sandboxkey: %s)" %(unique_resource_name, exe, str(exe_pgid), os.getenv("REMOTE_ADDR"), sandboxkey))
+if resource_conf['SANDBOX'] == 1:
+    if sandboxkey == '':
+        o.out('Error, sandbox must submit sandboxkey in requestnewjob!')
+        o.reply_and_exit(o.ERROR)
+    else:
+
+    # resource is a sandbox and a sandboxkey was received
+
+        if resource_conf['SANDBOXKEY'] != sandboxkey:
+            o.out('Error, sandbox provided an invalid sandboxkey!')
+            o.reply_and_exit(o.ERROR)
+
+# Tell "grid_script" that the resource requests a job
+
+message = 'RESOURCEREQUEST %s %s %s %s %s %s %s\n' % (
+    exe,
+    unique_resource_name,
+    cputime,
+    nodecount,
+    localjobname,
+    execution_delay,
+    exe_pgid,
+    )
+if not send_message_to_grid_script(message, logger, configuration):
+    o.out('Fatal error: could not write resourcerequest to grid_stdin! %s'
+           % unique_resource_name)
+    o.reply_and_exit(o.ERROR)
+
+o.out('REQUESTNEWJOB OK. The job will be sent to the resource: %s.%s %s %s (sandboxkey: %s)'
+       % (unique_resource_name, exe, str(exe_pgid),
+      os.getenv('REMOTE_ADDR'), sandboxkey))
 o.reply_and_exit(o.OK)

@@ -5,19 +5,19 @@
 #
 # editor - [insert a few words of module description on this line]
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
-# 
+#
 # This file is part of MiG.
-# 
+#
 # MiG is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -25,16 +25,18 @@
 # -- END_HEADER ---
 #
 
-
 # Minimum Intrusion Grid
+
+# Script version (automagically updated by cvs)
+
 """ Simple web based file editor to edit files in MiG home
 
 Enable users to make (limited) changes to their files without the
 need to download, edit and upload the files.
 """
 
-# Script version (automagically updated by cvs)
-__version__ = "$Revision: 2296 $"
+__version__ = '$Revision: 2296 $'
+
 # $Id: editor.py 2296 2007-11-30 14:02:24Z karlsendevel $
 
 import os
@@ -48,19 +50,24 @@ from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
 
+
 def signature():
-    defaults = {'path':[""], 'current_dir':[""]}
-    return ["html_form", defaults]
+    defaults = {'path': [''], 'current_dir': ['']}
+    return ['html_form', defaults]
+
 
 def lock_info(real_path, time_left):
+
     # This function generates javascript similar to that used in Moin Moin Wiki
     # (http://moinmoin.wikiwikiweb.de)
+
     lock_timeout = time_left / 60
-    lock_expire = "Your edit lock on __file__ has expired!"
-    lock_mins = "Your edit lock on __file__ will expire in # minutes."
-    lock_secs = "Your edit lock on __file__ will expire in # seconds."
-                    
-    script = '''
+    lock_expire = 'Your edit lock on __file__ has expired!'
+    lock_mins = 'Your edit lock on __file__ will expire in # minutes.'
+    lock_secs = 'Your edit lock on __file__ will expire in # seconds.'
+
+    script = \
+        '''
 <!-- javascript borrowed from Moin Moin Wiki (http://moinmoin.wikiwikiweb.de) -->
 <script type="text/javascript">
 var lock_file = "this file"
@@ -117,35 +124,41 @@ function newcountdown(path, minutes) {
     setTimeout("countdown()", delay)
 }
 </script>
-''' % {'lock_timeout': lock_timeout,
-       'lock_expire': lock_expire,
-       'lock_mins': lock_mins,
-       'lock_secs': lock_secs,
-       }
+'''\
+         % {
+        'lock_timeout': lock_timeout,
+        'lock_expire': lock_expire,
+        'lock_mins': lock_mins,
+        'lock_secs': lock_secs,
+        }
     return script
-    
+
+
 def edit_file(path, real_path):
     """Format and return the contents of a given file"""
-    
+
     text = ['']
     if os.path.isfile(real_path):
         try:
-            fd = open(real_path, "rb")
+            fd = open(real_path, 'rb')
             text = fd.readlines()
             fd.close()
         except Exception, e:
             return 'Failed to open file %s: %s' % (path, e)
 
-    html = '''Select file:<br>
+    html = \
+        '''Select file:<br>
 <form method="post" action="/cgi-bin/editfile.py">
 <input type="text" size='120' name="path" value="%s">
 <p>
 Edit contents:<br>
-<textarea cols="120" rows="25" wrap="off" name="editarea">''' % path
+<textarea cols="120" rows="25" wrap="off" name="editarea">'''\
+         % path
     for line in text:
         html += line
 
-    html +='''</textarea>
+    html += \
+        '''</textarea>
 <br>
 Newline mode:
 <select name="newline">
@@ -192,63 +205,98 @@ Type:
 <input type="submit" value="Check">
 </form>
 <p>
-''' % {'path':path, 'lock_suffix':get_edit_lock_suffix()}
+'''\
+         % {'path': path, 'lock_suffix': get_edit_lock_suffix()}
     return html
+
 
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
-    configuration, logger, output_objects, op_name = initialize_main_variables(op_title = False, op_header = False)
+
+    (configuration, logger, output_objects, op_name) = \
+        initialize_main_variables(op_title=False, op_header=False)
     defaults = signature()[1]
-    (validate_status, accepted) = validate_input_and_cert(user_arguments_dict, defaults, output_objects, cert_name_no_spaces, configuration, allow_rejects = False)
+    (validate_status, accepted) = validate_input_and_cert(
+        user_arguments_dict,
+        defaults,
+        output_objects,
+        cert_name_no_spaces,
+        configuration,
+        allow_rejects=False,
+        )
+
     # TODO: if validator is too tight we should accept rejects here
     #   and then make sure that such rejected fields are never printed
+
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-    path = (accepted['path'])[-1]
-    current_dir = (accepted['current_dir'])[-1]
-    
+    path = accepted['path'][-1]
+    current_dir = accepted['current_dir'][-1]
+
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
-    base_dir = os.path.abspath(configuration.user_home + os.sep + cert_name_no_spaces) + os.sep
+
+    base_dir = os.path.abspath(configuration.user_home + os.sep
+                                + cert_name_no_spaces) + os.sep
 
     # !!! IMPORTANT !!!
     # This is a (dynamic) user interface so we expect html to be used.
     # We don't use CGIOutput for printing since we neither need a
     # status nor like to wait for all data before printing
     # !!!
-    
-    # the client can choose to specify the path of the target directory with 
-    # current_dir + "/" + path, instead of specifying the complete path in 
+
+    # the client can choose to specify the path of the target directory with
+    # current_dir + "/" + path, instead of specifying the complete path in
     # subdirs. This is usefull from ls.py where a hidden html control makes it
     # possible to target the directory from the current dir.
-    output_objects.append({"object_type":"title", "text": "MiG file web editor", "javascript":lock_info("this file", -1)})
-    output_objects.append({"object_type":"header", "text": "Editing file in MiG home directory"})
-    #addMiGhtmlHeader( "MiG file web editor",  "Editing file in MiG home directory of %s " % cert_name_no_spaces , printhtml, scripts=lock_info("this file", -1))lock_info("this file", -1)
+
+    output_objects.append({'object_type': 'title', 'text'
+                          : 'MiG file web editor', 'javascript'
+                          : lock_info('this file', -1)})
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Editing file in MiG home directory'})
+
+    # addMiGhtmlHeader( "MiG file web editor",  "Editing file in MiG home directory of %s " % cert_name_no_spaces , printhtml, scripts=lock_info("this file", -1))lock_info("this file", -1)
 
     if not path:
         now = time.gmtime()
-        path = "noname-%s.txt" % (time.strftime('%d%m%y-%H%M%S', now))
-        output_objects.append({"object_type":"text", "text": 'No path supplied - creating new file in %s' % path})
+        path = 'noname-%s.txt' % time.strftime('%d%m%y-%H%M%S', now)
+        output_objects.append({'object_type': 'text', 'text'
+                              : 'No path supplied - creating new file in %s'
+                               % path})
 
     path = os.path.normpath(current_dir + path)
     real_path = os.path.abspath(base_dir + current_dir + path)
     if not valid_user_path(real_path, base_dir):
+
         # out of bounds!
-        output_objects.append({"object_type":"error_text", "text": "You're only allowed to edit your own files! (%s expands to an illegal path)" % path})
+
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : "You're only allowed to edit your own files! (%s expands to an illegal path)"
+                               % path})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    
-    owner, time_left = acquire_edit_lock(real_path, cert_name_no_spaces)
+
+    (owner, time_left) = acquire_edit_lock(real_path,
+            cert_name_no_spaces)
     if owner == cert_name_no_spaces:
-        javascript = '''<script type="text/javascript">
+        javascript = \
+            '''<script type="text/javascript">
 setTimeout("newcountdown('%s', %d)", 1)
 </script>
-''' % (path, time_left / 60)
-        output_objects.append({"object_type":"html_form", "text": javascript}) 
+'''\
+             % (path, time_left / 60)
+        output_objects.append({'object_type': 'html_form', 'text'
+                              : javascript})
 
         html = edit_file(path, real_path)
-        output_objects.append({"object_type":"html_form", "text": html})
+        output_objects.append({'object_type': 'html_form', 'text'
+                              : html})
     else:
-        output_objects.append({"object_type":"error_text", "text": "%s has acquired the editing lock for %s! (timeout in %d seconds)" % (owner, path, time_left)})
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : '%s has acquired the editing lock for %s! (timeout in %d seconds)'
+                               % (owner, path, time_left)})
         return (output_objects, returnvalues.CLIENT_ERROR)
-     
+
     return (output_objects, returnvalues.OK)
+
+

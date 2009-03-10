@@ -5,19 +5,19 @@
 #
 # reqcert - [insert a few words of module description on this line]
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
-# 
+#
 # This file is part of MiG.
-# 
+#
 # MiG is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -33,24 +33,33 @@ import sys
 import os
 
 from shared.certreq import valid_password_chars, valid_name_chars, \
-     password_min_len, password_max_len
+    password_min_len, password_max_len
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 import shared.returnvalues as returnvalues
 
+
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
-    configuration, logger, output_objects, op_name = initialize_main_variables(op_header=False, op_title=False, op_menu=False)
-    output_objects.append({"object_type": "title", "text":"MiG certificate request",
-                           "skipmenu":True})
-    output_objects.append({"object_type": "header", "text":"Welcome to the MiG certificate request page"})
-    
+
+    (configuration, logger, output_objects, op_name) = \
+        initialize_main_variables(op_header=False, op_title=False,
+                                  op_menu=False)
+    output_objects.append({'object_type': 'title', 'text'
+                          : 'MiG certificate request', 'skipmenu'
+                          : True})
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Welcome to the MiG certificate request page'
+                          })
+
     defaults = {}
-    (validate_status, accepted) = validate_input(user_arguments_dict, defaults, output_objects, allow_rejects = False)
+    (validate_status, accepted) = validate_input(user_arguments_dict,
+            defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-    
-    output_objects.append({"object_type":"html_form", "text":"""
+
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : """
 Please enter your data below and press the Send button to submit the certificate request to the MiG administrators.<p>
 <b><font color='red'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br>
 That is, if You're a student/employee at DIKU, please type DIKU in the Organization field and use your USER@diku.dk address in the Email field.</font></b><p>
@@ -84,10 +93,14 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <sup>6</sup> optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.<br>
 </font>
 <p>
-""" % {"valid_name_chars":valid_name_chars,
-       "valid_password_chars":valid_password_chars,
-       "password_min_len":password_min_len,
-       "password_max_len":password_max_len}
-                           })
-    
+"""
+                           % {
+        'valid_name_chars': valid_name_chars,
+        'valid_password_chars': valid_password_chars,
+        'password_min_len': password_min_len,
+        'password_max_len': password_max_len,
+        }})
+
     return (output_objects, returnvalues.OK)
+
+

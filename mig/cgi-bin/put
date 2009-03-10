@@ -5,19 +5,19 @@
 #
 # put - [insert a few words of module description on this line]
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
-# 
+#
 # This file is part of MiG.
-# 
+#
 # MiG is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -25,24 +25,25 @@
 # -- END_HEADER ---
 #
 
-
 """HTTP PUT handler"""
 
 import os
 import sys
 import cgi
-import cgitb; cgitb.enable()
+import cgitb
+cgitb.enable()
 import urllib
 import fcntl
 import time
 
 # MiG imports
+
 import shared.confparser as confparser
 from shared.putfuncs import verify_results, migrated_job
 from shared.resadm import start_resource_exe_if_continuous
 from shared.refunctions import create_runtimeenv
 from shared.notification import notify_user, parse_im_relay, \
-     send_resource_create_request_mail, send_instant_message
+    send_resource_create_request_mail, send_instant_message
 from shared.cgishared import init_cgiscript_possibly_with_cert
 from shared.fileio import pickle, unpickle
 from shared.job import new_job, finished_job, failed_restart
@@ -50,394 +51,508 @@ from shared.findtype import is_user, is_server, is_owner
 from shared.upload import handle_package_upload
 from shared.settings import parse_and_save_settings
 
+# ## Main ###
 
-### Main ###
-(logger, configuration, cert_name_no_spaces, o) = init_cgiscript_possibly_with_cert()
+(logger, configuration, cert_name_no_spaces, o) = \
+    init_cgiscript_possibly_with_cert()
+
 # logger.info("put called with cert %s" % cert_name_no_spaces)
 
 # Check we are using a PUT method
-put_methods  = ["PUT", "SIDPUT", "CERTPUT"]
-if not os.getenv("REQUEST_METHOD") in put_methods:
+
+put_methods = ['PUT', 'SIDPUT', 'CERTPUT']
+if not os.getenv('REQUEST_METHOD') in put_methods:
+
     # Request method is not a PUT method
-    o.out("You must use a HTTP PUT method!")
+
+    o.out('You must use a HTTP PUT method!')
     o.reply_and_exit(o.CLIENT_ERROR)
 
 # Check we got a destination filename
-filename_trans = os.getenv("PATH_TRANSLATED")
-if (filename_trans == None):
-    o.out("Destination filename not found - did you specify one?")
+
+filename_trans = os.getenv('PATH_TRANSLATED')
+if filename_trans == None:
+    o.out('Destination filename not found - did you specify one?')
     o.reply_and_exit(o.CLIENT_ERROR)
 
 # Check we got some content
-clength = os.getenv("CONTENT_LENGTH")
-if (clength == None):
-    o.out("Content-Length missing or zero, remember that empty files are not accepted!")
+
+clength = os.getenv('CONTENT_LENGTH')
+if clength == None:
+    o.out('Content-Length missing or zero, remember that empty files are not accepted!'
+          )
     o.reply_and_exit(o.CLIENT_ERROR)
 
-content_type = os.getenv("CONTENT_TYPE")
-if (content_type == None):
-    logger.debug("put: file without Content-Type")
+content_type = os.getenv('CONTENT_TYPE')
+if content_type == None:
+    logger.debug('put: file without Content-Type')
 else:
-    logger.debug("put: file with Content-Type: %s", content_type)
+    logger.debug('put: file with Content-Type: %s', content_type)
 
 # 'urllib.unquote(string)': Replaces urlencode chars "%xx" by their single-character equivalent.
-filename = urllib.unquote(str(os.getenv("REQUEST_URI")))
+
+filename = urllib.unquote(str(os.getenv('REQUEST_URI')))
 
 # Prevent modification of htaccess files, even if apache allows it
+
 if '.htaccess' == os.path.basename(filename):
-    o.out("Upload of .htaccess files is prohibited!")
+    o.out('Upload of .htaccess files is prohibited!')
     o.reply_and_exit(o.CLIENT_ERROR)
 
 # Check cert and decide if it is a user or resource or without cert using the put method
-if cert_name_no_spaces == "None":
+
+if cert_name_no_spaces == 'None':
+
     # o.internal("no certificate found. You must be a resource using /sid_redirect/sessionid/filename.")
-    filename_slash_stripped = filename.replace("/sid_redirect/", "")
-    sessionid = filename_slash_stripped[:filename_slash_stripped.find("/")] 
+
+    filename_slash_stripped = filename.replace('/sid_redirect/', '')
+    sessionid = \
+        filename_slash_stripped[:filename_slash_stripped.find('/')]
 
     # check that the sessionid is ok (does symlink exist?)
+
     if not os.path.islink(configuration.webserver_home + sessionid):
-        o.out("INVALID SESSIONID! %s" % sessionid)
-        o.internal("invalid sessionid from filename %s" % filename)
+        o.out('INVALID SESSIONID! %s' % sessionid)
+        o.internal('invalid sessionid from filename %s' % filename)
         o.reply_and_exit(o.ERROR)
     else:
-        o.internal("Session id OK: %s" % sessionid)
-        
-    dest_dir = configuration.webserver_home + filename_slash_stripped[:filename_slash_stripped.rfind("/")]
-    dest_file = filename_slash_stripped[filename_slash_stripped.rfind("/")+1:]
+        o.internal('Session id OK: %s' % sessionid)
+
+    dest_dir = configuration.webserver_home\
+         + filename_slash_stripped[:filename_slash_stripped.rfind('/')]
+    dest_file = \
+        filename_slash_stripped[filename_slash_stripped.rfind('/') + 1:]
 
     # make sure that path exists
+
     try:
+
         # o.internal("making sure this dir exists, otherwise create:" + dest_dir)
-        os.makedirs(dest_dir,mode=0777)
+
+        os.makedirs(dest_dir, mode=0777)
     except Exception, e:
+
         # An exception is thrown if the leaf exists
-        pass 
+
+        pass
 
     # write file to disk
-    dest_path = dest_dir + "/" + dest_file
+
+    dest_path = dest_dir + '/' + dest_file
     try:
-        fh = open(dest_path, "w")
+        fh = open(dest_path, 'w')
         fh.write(sys.stdin.read())
         fh.close()
     except Exception, err:
-        o.out("Could not write file %s: %s" % (dest_path, err))
-    
+        o.out('Could not write file %s: %s' % (dest_path, err))
+
     # If a .status file is uploaded, then the job has finished and
     # we will clean up and notify (mail or jabber) the job owner
-    str_suffix = filename[len(filename)-7:len(filename)] 
-    if str_suffix == ".status":
-        o.internal(".status file received|")
+
+    str_suffix = filename[len(filename) - 7:len(filename)]
+    if str_suffix == '.status':
+        o.internal('.status file received|')
 
         # open .mRSL file containing all info about the job
-        filepath = configuration.sessid_to_mrsl_link_home + sessionid + ".mRSL"
+
+        filepath = configuration.sessid_to_mrsl_link_home + sessionid\
+             + '.mRSL'
         dict = unpickle(filepath, logger)
-        
-        # TODO: do something if dict could not be unpickled. 
+
+        # TODO: do something if dict could not be unpickled.
+
         if not dict:
-            o.out("put: could not unpickle dict with job info! %s" % filepath)
+            o.out('put: could not unpickle dict with job info! %s'
+                   % filepath)
             o.reply_and_exit(o.ERROR)
-        
-        #if not dict.has_key("EMPTY_JOB"):
+
+        # if not dict.has_key("EMPTY_JOB"):
         # set job status to finished
-        dict["STATUS"] = "FINISHED"
-        dict["FINISHED_TIMESTAMP"] = time.gmtime()
-        
+
+        dict['STATUS'] = 'FINISHED'
+        dict['FINISHED_TIMESTAMP'] = time.gmtime()
+
         # pickle the file again, with the updated status
+
         repickle = pickle(dict, filepath, logger)
         if not repickle:
-            o.out("error changing status!")
-            
+            o.out('error changing status!')
+
         # Write 'finished' to PGID file
-        print "Filepath: %s" % filepath
-        pgid_file = configuration.resource_home + "/"  + dict["UNIQUE_RESOURCE_NAME"] + "/EXE_" + dict["EXE"] + ".PGID"
-        
+
+        print 'Filepath: %s' % filepath
+        pgid_file = configuration.resource_home + '/'\
+             + dict['UNIQUE_RESOURCE_NAME'] + '/EXE_' + dict['EXE']\
+             + '.PGID'
+
         try:
-            fh = open(pgid_file, "r+")
+            fh = open(pgid_file, 'r+')
             fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
             fh.truncate(0)
-            fh.seek(0,0)
-            fh.write("finished\n")
+            fh.seek(0, 0)
+            fh.write('finished\n')
             fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
             fh.close()
-        
         except Exception, err:
-            o.internal("Could not write to pgid_file: '%s'. Failure: %s" % (pgid_file, err))
-        
+
+            o.internal("Could not write to pgid_file: '%s'. Failure: %s"
+                        % (pgid_file, err))
+
         # Tell server that job finished so that it is possible to
         # return results to user even if job migrated
+
         (status, msg) = finished_job(sessionid,
-                                    dict["UNIQUE_RESOURCE_NAME"],
-                                    dict["EXE"],
-                                    dict["JOB_ID"], configuration)
-                                    
-      
-        if dict.has_key("IS_EMPTY_JOB_HELPER_DICT"):        
-            o.internal("%s %s %s is starting a new exe from %s!" % \
-                       (dict["UNIQUE_RESOURCE_NAME"], dict["EXE"],
-                        dict["LOCALJOBNAME"],
-                        os.getenv("REMOTE_ADDR")))
+                dict['UNIQUE_RESOURCE_NAME'], dict['EXE'], dict['JOB_ID'
+                ], configuration)
+
+        if dict.has_key('IS_EMPTY_JOB_HELPER_DICT'):
+            o.internal('%s %s %s is starting a new exe from %s!'
+                        % (dict['UNIQUE_RESOURCE_NAME'], dict['EXE'],
+                       dict['LOCALJOBNAME'], os.getenv('REMOTE_ADDR')))
+
             # This try should not be necessary but log indicates possible
             # uncaught exceptions somewhere in the call
+
             try:
-                (stat, err) = start_resource_exe_if_continuous(
-                    dict["UNIQUE_RESOURCE_NAME"], dict["EXE"],
-                    configuration.resource_home, logger)
+                (stat, err) = \
+                    start_resource_exe_if_continuous(dict['UNIQUE_RESOURCE_NAME'
+                        ], dict['EXE'], configuration.resource_home,
+                        logger)
             except Exception, exc:
-                stat, err = False, "Exception in start exe call: %s" % exc
-                
+                (stat, err) = (False, 'Exception in start exe call: %s'
+                                % exc)
+
             # clean up removed during cvs update 04122006 by henrik
             # Clean up links etc before reply and exit
             # if not server_clean_up(sessionid, dict["LOCALJOBNAME"], True):
             #    logger.error("could not clean up MiG server!")
 
             if stat:
-                o.out("put empty job.status: Restart of resource if continuous: OK!")
+                o.out('put empty job.status: Restart of resource if continuous: OK!'
+                      )
                 o.reply_and_exit(o.OK)
             else:
-                logger.error("could not restart exe after empty job: %s" % err)
+                logger.error('could not restart exe after empty job: %s'
+                              % err)
+
                 # Tell server to try restart again later
-                failed_restart(dict["UNIQUE_RESOURCE_NAME"], dict["EXE"], dict["JOB_ID"],
-                               configuration)
-                o.out("put empty job.status: Error in restart of resource if continuous: %s" % err)
+
+                failed_restart(dict['UNIQUE_RESOURCE_NAME'], dict['EXE'
+                               ], dict['JOB_ID'], configuration)
+                o.out('put empty job.status: Error in restart of resource if continuous: %s'
+                       % err)
                 o.reply_and_exit(o.ERROR)
-                
-        o.internal("starting to verify results!")
+
+        o.internal('starting to verify results!')
         verify_results(dict, logger, configuration)
-                
-        ######## CLEAN UP RESOURCE #########
-                
+
+        # ####### CLEAN UP RESOURCE #########
+
         # TODO: notifications should not be sent until results are
         # actually available at server where user resides (see above)
-        ######## NOTIFY USER ########
-        notify_user(dict, configuration.myfiles_py_location, "SUCCESS", logger, configuration.webserver_home + filename_slash_stripped, configuration.smtp_server, configuration)
+        # ####### NOTIFY USER ########
+
+        notify_user(
+            dict,
+            configuration.myfiles_py_location,
+            'SUCCESS',
+            logger,
+            configuration.webserver_home + filename_slash_stripped,
+            configuration.smtp_server,
+            configuration,
+            )
 
         # This try should not be necessary but log indicates possible
         # uncaught exceptions somewhere in the call
+
         try:
-            (stat, err) = start_resource_exe_if_continuous(
-                dict["UNIQUE_RESOURCE_NAME"], dict["EXE"],
-                configuration.resource_home, logger)
+            (stat, err) = \
+                start_resource_exe_if_continuous(dict['UNIQUE_RESOURCE_NAME'
+                    ], dict['EXE'], configuration.resource_home, logger)
         except Exception, exc:
-            stat, err = False, "Exception in start exe call: %s" % exc
+            (stat, err) = (False, 'Exception in start exe call: %s'
+                            % exc)
 
         if stat:
-            o.out("put normal job.status: Restart of resource if continuous: OK")
+            o.out('put normal job.status: Restart of resource if continuous: OK'
+                  )
             o.reply_and_exit(o.OK)
         else:
-            logger.error("could not restart exe after real job: %s" % err)
+            logger.error('could not restart exe after real job: %s'
+                          % err)
+
             # Tell server to try restart again later
-            failed_restart(dict["UNIQUE_RESOURCE_NAME"], dict["EXE"], dict["JOB_ID"],
-                           configuration)
-            o.out("put normal job.status: Error in restart of resource if continuous: %s" % err)
+
+            failed_restart(dict['UNIQUE_RESOURCE_NAME'], dict['EXE'],
+                           dict['JOB_ID'], configuration)
+            o.out('put normal job.status: Error in restart of resource if continuous: %s'
+                   % err)
             o.reply_and_exit(o.ERROR)
-            
 elif is_user(cert_name_no_spaces, configuration.user_home):
+
     # logger.info("Certificate found as a user cert: " + cert_name_no_spaces)
 
-    if content_type == "text/resourceconf":
-        pending_file = configuration.resource_pending + cert_name_no_spaces + filename + "." + str(time.time()) 
-        o.internal("'%s' sent a resource update file '%s', saving file in '%s'" % (cert_name_no_spaces, filename, pending_file))
+    if content_type == 'text/resourceconf':
+        pending_file = configuration.resource_pending\
+             + cert_name_no_spaces + filename + '.' + str(time.time())
+        o.internal("'%s' sent a resource update file '%s', saving file in '%s'"
+                    % (cert_name_no_spaces, filename, pending_file))
         try:
-            fh = open(pending_file, "w")
+            fh = open(pending_file, 'w')
             fh.write(sys.stdin.read())
             fh.close()
         except Exception, err:
-            o.out("File: %s was not written! %s" % (pending_file,
-                                                    err))
+            o.out('File: %s was not written! %s' % (pending_file, err))
             o.reply_and_exit(o.ERROR)
-                                                                        
+
         # o.internal("Validating file '" + pending_file + "'")
-        (status, msg, config_dict) = confparser.get_resource_config_dict(pending_file)
-        
+
+        (status, msg, config_dict) = \
+            confparser.get_resource_config_dict(pending_file)
+
         if not status:
-            o.out("Failure: Invalid configuration file syntax.%s" % msg)
+            o.out('Failure: Invalid configuration file syntax.%s' % msg)
             o.reply_and_exit(o.CLIENT_ERROR)
 
-        resource_hostname = "%s.%s" % (config_dict["HOSTURL"], config_dict["HOSTIDENTIFIER"])
-        if os.path.exists(configuration.resource_home + resource_hostname):
-            if not is_owner(cert_name_no_spaces, resource_hostname, configuration.resource_home, logger):
-                o.out("Failure: You (%s) must be an owner of %s to submit a new configuration!" % (cert_name_no_spaces, resource_hostname))
+        resource_hostname = '%s.%s' % (config_dict['HOSTURL'],
+                config_dict['HOSTIDENTIFIER'])
+        if os.path.exists(configuration.resource_home
+                           + resource_hostname):
+            if not is_owner(cert_name_no_spaces, resource_hostname,
+                            configuration.resource_home, logger):
+                o.out('Failure: You (%s) must be an owner of %s to submit a new configuration!'
+                       % (cert_name_no_spaces, resource_hostname))
                 o.reply_and_exit(o.CLIENT_ERROR)
-        elif "$HOSTIDENTIFIER" == str(config_dict["HOSTIDENTIFIER"]):
-            (status, msg) = send_resource_create_request_mail(cert_name_no_spaces,  config_dict["HOSTURL"], pending_file, configuration)
+        elif '$HOSTIDENTIFIER' == str(config_dict['HOSTIDENTIFIER']):
+            (status, msg) = \
+                send_resource_create_request_mail(cert_name_no_spaces,
+                    config_dict['HOSTURL'], pending_file, configuration)
             o.internal(msg)
             if not status:
-                o.client("Failed to send an email to the MiG server administrator, your configuration was saved on the server in:\n\n'" + pending_file + "'"\
-                         "\n\nPlease contact the MiG server administrator.")
+                o.client("""Failed to send an email to the MiG server administrator, your configuration was saved on the server in:
+
+'"""
+                          + pending_file
+                          + """'
+
+Please contact the MiG server administrator.""")
                 o.reply_and_exit(o.CLIENT_ERROR)
             else:
-                o.client("Your creation request of the resource: '%s'"
-                         "\nhas been send to the MiG server administration and will be processed as soon as possible." % config_dict['HOSTURL'])
-                o.reply_and_exit(o.OK)          
+                o.client("Your creation request of the resource: '%s'\nhas been send to the MiG server administration and will be processed as soon as possible."
+                          % config_dict['HOSTURL'])
+                o.reply_and_exit(o.OK)
         else:
-            o.out("Failure: '%s' with identifier: '%s' does'nt exist!" % (config_dict["HOSTURL"], config_dict["HOSTIDENTIFIER"]))
+            o.out("Failure: '%s' with identifier: '%s' does'nt exist!"
+                   % (config_dict['HOSTURL'],
+                  config_dict['HOSTIDENTIFIER']))
             o.reply_and_exit(o.CLIENT_ERROR)
-            
+
         (status, msg) = confparser.run(pending_file, resource_hostname)
         if status:
-            accepted_path = configuration.resource_home + "/" + resource_hostname + "/config.MiG"
+            accepted_path = configuration.resource_home + '/'\
+                 + resource_hostname + '/config.MiG'
+
             # truncate old conf with new accepted file
+
             try:
                 os.rename(pending_file, accepted_path)
             except Exception, e:
-                o.out("Accepted config, but failed to save it! Failed: %s" % e)
+                o.out('Accepted config, but failed to save it! Failed: %s'
+                       % e)
                 o.reply_and_exit(o.ERROR)
             o.out(msg)
             o.reply_and_exit(o.OK)
         else:
+
             # leave existing config alone
+
             o.out(msg)
             o.reply_and_exit(o.ERROR)
-    
-    elif content_type == "text/runtimeenvconf":
-        pending_file = configuration.user_home + cert_name_no_spaces + filename + "." + str(time.time())
+    elif content_type == 'text/runtimeenvconf':
+
+        pending_file = configuration.user_home + cert_name_no_spaces\
+             + filename + '.' + str(time.time())
         try:
-            fh = open(pending_file, "w")
+            fh = open(pending_file, 'w')
             fh.write(sys.stdin.read())
             fh.close()
         except Exception, e:
-            o.out("File: %s was not written!" % pending_file, str(e))
+            o.out('File: %s was not written!' % pending_file, str(e))
             o.reply_and_exit(o.ERROR)
-                                                                        
-        (retval, retmsg) = create_runtimeenv(pending_file, cert_name_no_spaces, configuration)
+
+        (retval, retmsg) = create_runtimeenv(pending_file,
+                cert_name_no_spaces, configuration)
         if not retval:
-            o.out("Error during creation of new runtime environment: %s" % retmsg)
+            o.out('Error during creation of new runtime environment: %s'
+                   % retmsg)
             o.reply_and_exit(o.ERROR)
-            
-        o.out("New runtime environment successfuly created!")
+
+        o.out('New runtime environment successfuly created!')
         o.reply_and_exit(o.OK)
-    elif content_type == "text/settings":
-        pending_file = configuration.user_home + cert_name_no_spaces + filename + "." + str(time.time())
+    elif content_type == 'text/settings':
+        pending_file = configuration.user_home + cert_name_no_spaces\
+             + filename + '.' + str(time.time())
         try:
-            fh = open(pending_file, "w")
+            fh = open(pending_file, 'w')
             fh.write(sys.stdin.read())
             fh.close()
         except Exception, e:
-            o.out("File: %s was not written!" % pending_file, str(e))
+            o.out('File: %s was not written!' % pending_file, str(e))
             o.reply_and_exit(o.ERROR)
-                                                                        
-        (retval, retmsg) = parse_and_save_settings(pending_file, cert_name_no_spaces, configuration)
+
+        (retval, retmsg) = parse_and_save_settings(pending_file,
+                cert_name_no_spaces, configuration)
         if not retval:
-            o.out("Error during parsing or saving settings: %s" % retmsg)
+            o.out('Error during parsing or saving settings: %s'
+                   % retmsg)
             o.reply_and_exit(o.ERROR)
-            
-        o.out("New settings saved!")
+
+        o.out('New settings saved!')
         o.reply_and_exit(o.OK)
-                            
-    real_path = os.path.normpath(configuration.user_home + cert_name_no_spaces + filename)
+
+    real_path = os.path.normpath(configuration.user_home
+                                  + cert_name_no_spaces + filename)
     dest_dir = os.path.dirname(real_path)
     dest_file = os.path.basename(real_path)
-        
+
     if os.path.isdir(real_path):
-        msg = "Cannot write file %s: directory in the way!" % filename
-        o.out("%s: please end the destination in a slash if it is a directory!" % msg)
+        msg = 'Cannot write file %s: directory in the way!' % filename
+        o.out('%s: please end the destination in a slash if it is a directory!'
+               % msg)
         o.reply_and_exit(o.CLIENT_ERROR)
     if not os.path.isdir(dest_dir):
-        msg = "You're trying to write to an invalid directory: %s" % os.path.dirname(filename)
-        o.out("%s: please make sure to that the target directory exists!" % msg)
+        msg = "You're trying to write to an invalid directory: %s"\
+             % os.path.dirname(filename)
+        o.out('%s: please make sure to that the target directory exists!'
+               % msg)
         o.reply_and_exit(o.CLIENT_ERROR)
 
     # logger.info("put: %s writing %s" % (cert_name_no_spaces, real_path))
+
     try:
-        fh = open(real_path, "w")
+        fh = open(real_path, 'w')
         fh.write(sys.stdin.read())
         fh.close()
     except Exception, e:
-        o.out("Could not write %s" % filename, str(e))
+        o.out('Could not write %s' % filename, str(e))
         o.reply_and_exit(o.ERROR)
-        
+
     submitmrsl = False
     extractpackage = False
-    
-    if content_type == "submitandextract":
+
+    if content_type == 'submitandextract':
         submitmrsl = True
         extractpackage = True
-    elif content_type == "submitmrsl":
+    elif content_type == 'submitmrsl':
         submitmrsl = True
-    elif content_type == "extractpackage":
+    elif content_type == 'extractpackage':
         extractpackage = True
-    
+
     # handle file package
-    if extractpackage and (filename.upper().endswith(".ZIP") or filename.upper().endswith(".TAR.GZ") or filename.upper().endswith(".TAR.BZ2")):
-        (status, msg) = handle_package_upload(real_path, real_path, cert_name_no_spaces, configuration, submitmrsl)
+
+    if extractpackage and (filename.upper().endswith('.ZIP')
+                            or filename.upper().endswith('.TAR.GZ')
+                            or filename.upper().endswith('.TAR.BZ2')):
+        (status, msg) = handle_package_upload(real_path, real_path,
+                cert_name_no_spaces, configuration, submitmrsl)
         if not status:
-            o.out("Error: %s" % msg)
+            o.out('Error: %s' % msg)
             o.reply_and_exit(o.ERROR)
         else:
             o.client(msg)
             o.reply_and_exit(o.OK)
+
     # if a .mrsl file is uploaded it should be parsed and then send to the job queue
-    if filename.upper().endswith(".MRSL") and submitmrsl:
+
+    if filename.upper().endswith('.MRSL') and submitmrsl:
+
         # logger.info("put: handing over job %s to MiG daemon" % (real_path))
-        (status, msg) =  new_job(real_path, cert_name_no_spaces, configuration, False)
+
+        (status, msg) = new_job(real_path, cert_name_no_spaces,
+                                configuration, False)
         o.out(msg)
         if status:
             o.reply_and_exit(o.OK)
         else:
             o.reply_and_exit(o.ERROR)
-    
     else:
-        o.client("A 'normal' file was uploaded (%s). It can now be used as an inputfile in your .mRSL files" % filename)
+
+        o.client("A 'normal' file was uploaded (%s). It can now be used as an inputfile in your .mRSL files"
+                  % filename)
         o.reply_and_exit(o.OK)
-        
 elif is_server(cert_name_no_spaces, configuration.server_home):
-    logger.info("Certificate found as a server cert: %s" % cert_name_no_spaces)
-    dest_file = configuration.server_home + cert_name_no_spaces + filename
-    dest_file = dest_file.replace("//", "/")
-    dest_dir =  dest_file[:dest_file.rfind("/")]
-    dest_file = dest_file[dest_file.rfind("/")+1:]
-    
-    dest_path = dest_dir + "/" + dest_file
+
+    logger.info('Certificate found as a server cert: %s'
+                 % cert_name_no_spaces)
+    dest_file = configuration.server_home + cert_name_no_spaces\
+         + filename
+    dest_file = dest_file.replace('//', '/')
+    dest_dir = dest_file[:dest_file.rfind('/')]
+    dest_file = dest_file[dest_file.rfind('/') + 1:]
+
+    dest_path = dest_dir + '/' + dest_file
+
     # make sure that path exists
+
     try:
-        os.makedirs(dest_dir,mode=0777)
+        os.makedirs(dest_dir, mode=0777)
     except Exception:
+
         # An exception is thrown if the leaf exists
+
         pass
 
     if not os.path.isdir(dest_dir):
-        msg =  "You're trying to write to an invalid directory: %s" % dest_dir
-        o.client("make sure that you don't have a regular file with same name as DEST!")
+        msg = "You're trying to write to an invalid directory: %s"\
+             % dest_dir
+        o.client("make sure that you don't have a regular file with same name as DEST!"
+                 )
         o.reply_and_exit(o.CLIENT_ERROR)
     try:
-        fh = open(dest_path, "w")
+        fh = open(dest_path, 'w')
         fh.write(sys.stdin.read())
         fh.close()
     except Exception, e:
-        o.out("Could not write %s" % dest_path, str(e))
+        o.out('Could not write %s' % dest_path, str(e))
         o.reply_and_exit(o.ERROR)
-        
+
     # if a .mrsl file is uploaded it should be unpacked and sent to the job queue
-    if filename.upper().endswith(".MRSL"):
-        (status, msg) = migrated_job(dest_path, cert_name_no_spaces, configuration)
+
+    if filename.upper().endswith('.MRSL'):
+        (status, msg) = migrated_job(dest_path, cert_name_no_spaces,
+                configuration)
         o.out(msg)
         if status:
             o.reply_and_exit(o.OK)
         else:
             o.reply_and_exit(o.ERROR)
-    elif filename.upper().endswith(".IMRELAY"):
+    elif filename.upper().endswith('.IMRELAY'):
         (err, protocol, address, header, msg) = \
-              parse_im_relay(dest_path)
+            parse_im_relay(dest_path)
+
         # Clean up - IM relay files should not be permanently saved
+
         try:
             os.remove(dest_path)
         except StandardError, err:
-            logger.error("cleaning up after IM relay failed: %s" % \
-                         err)
+            logger.error('cleaning up after IM relay failed: %s' % err)
         if err:
-            o.out("IM relay parsing failed: %s" % err)
+            o.out('IM relay parsing failed: %s' % err)
             o.reply_and_exit(o.ERROR)
-            
-        if not send_instant_message(address, protocol, header,
-                                    msg, logger):
-            o.out("IM handler not responding!")
+
+        if not send_instant_message(address, protocol, header, msg,
+                                    logger):
+            o.out('IM handler not responding!')
             o.reply_and_exit(o.ERROR)
     else:
-        o.out("A 'normal' file was uploaded (%s). Don't know what to do with it..." % filename)
+        o.out("A 'normal' file was uploaded (%s). Don't know what to do with it..."
+               % filename)
         o.reply_and_exit(o.OK)
 else:
-    o.out("Person with certificate thats neither found as user, server nor resource cert is trying to use http put %s" % cert_name_no_spaces)
+    o.out('Person with certificate thats neither found as user, server nor resource cert is trying to use http put %s'
+           % cert_name_no_spaces)
     o.reply_and_exit(o.ERROR)
-    
+
 # if code gets here everything was ok
+
 o.reply_and_exit(o.OK)

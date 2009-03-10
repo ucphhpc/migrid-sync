@@ -5,19 +5,19 @@
 #
 # sandbox_faq - [insert a few words of module description on this line]
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
-# 
+#
 # This file is part of MiG.
-# 
+#
 # MiG is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -32,18 +32,22 @@ from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 import shared.returnvalues as returnvalues
 
-default_language = "english"
+default_language = 'english'
+
 
 def signature():
-    defaults = {'language':[default_language]}
-    return ["html_form", defaults]
-    
+    defaults = {'language': [default_language]}
+    return ['html_form', defaults]
+
+
 html = {}
-html["maintenance"] = """
+html['maintenance'] = \
+    """
 Sorry we are currently down for maintenance, we'll be back shortly
 """
 
-html["english"] = """
+html['english'] = \
+    """
 <table border='0' width='80%' align='center'>
 <tr><td><h3>What happens when the screen saver deactivates?</h3></td></tr>
 <tr><td>The sandbox is shut down and all hardware resources are given back to you. Any running job within the sandbox is killed and will eventually be scheduled for another resource by the MiG system. Work on suspending the job and sending it to another resource that can continue from where the job was suspended is in progress.</td></tr>
@@ -90,7 +94,8 @@ html["english"] = """
 </table></form>
 """
 
-html["danish"] = """
+html['danish'] = \
+    """
 <table border='0' width='80%' align='center'>
 <tr><td><a href='sandbox_faq.py?language=english'>In English</a></td></tr>
 <tr><td><h3>Intro</h3></td></tr>
@@ -102,22 +107,34 @@ html["danish"] = """
 </table></form>
 """
 
+
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
-    configuration, logger, output_objects, op_name = initialize_main_variables(op_header = False)
-    output_objects.append({"object_type":"header", "text": "MiG Screen Saver Sandbox FAQ"})
-    
+
+    (configuration, logger, output_objects, op_name) = \
+        initialize_main_variables(op_header=False)
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'MiG Screen Saver Sandbox FAQ'})
+
     defaults = signature()[1]
-    (validate_status, accepted) = validate_input(user_arguments_dict, defaults, output_objects, allow_rejects = False)
+    (validate_status, accepted) = validate_input(user_arguments_dict,
+            defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-    language = (accepted['language'])[-1]
-    
+    language = accepted['language'][-1]
+
     if not language in html.keys():
-        output_objects.append({"object_type":"error_text", "text": "Unsupported language: %s, defaulting to %s" % (language, default_language)})
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Unsupported language: %s, defaulting to %s'
+                               % (language, default_language)})
         language = default_language
-        #print "<a href='sandbox_login.py'>Default language</a>"
-        #sys.exit(1)
+
+        # print "<a href='sandbox_login.py'>Default language</a>"
+        # sys.exit(1)
 #    output_objects.append({"object_type":"html_form", "text":html[language]})
-    output_objects.append({"object_type":"html_form", "text":html["english"]})
+
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : html['english']})
     return (output_objects, returnvalues.OK)
+
+

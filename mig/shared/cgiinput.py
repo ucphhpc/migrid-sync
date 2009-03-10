@@ -5,19 +5,19 @@
 #
 # cgiinput - [insert a few words of module description on this line]
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
-# 
+#
 # This file is part of MiG.
-# 
+#
 # MiG is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -34,77 +34,98 @@ user input.
 import cgi
 
 # TODO: remove this backwards compatibility when scripts are updated
+
 from shared.safeinput import validated_boolean, validated_string, \
-     validated_path, validated_fqdn, validated_commonname, \
-     validated_integer, validated_job_id
+    validated_path, validated_fqdn, validated_commonname, \
+    validated_integer, validated_job_id
 from shared.safeinput import InputException as CgiInputException
 
 # Public functions
+
+
 def html_escape(contents):
     """Uses cgi.escape() to encode contents in a html safe way. In that
     way the resulting data can be included in a html page without risk
     of XSS vulnerabilities.
     """
+
     return cgi.escape(contents)
+
 
 def parse_input(user_arguments_dict, fields):
     """A cgi input parser"""
+
     parsed_input = {}
-    error = ""
-    for name, settings in fields.items():
+    error = ''
+    for (name, settings) in fields.items():
         parsed_entry = {}
-        if not settings.has_key("kind"):
-            error += "missing kind for %s in parse_input!\n" % name
+        if not settings.has_key('kind'):
+            error += 'missing kind for %s in parse_input!\n' % name
             continue
-            
-        kind = settings["kind"]
-        if "first" == kind:
-            if settings.has_key("default"):
+
+        kind = settings['kind']
+        if 'first' == kind:
+            if settings.has_key('default'):
                 try:
-                    parsed_entry["raw"] = user_arguments_dict[name][0]
+                    parsed_entry['raw'] = user_arguments_dict[name][0]
                 except:
-                    parsed_entry["raw"] = settings["default"]
+                    parsed_entry['raw'] = settings['default']
             else:
-                parsed_entry["raw"] = user_arguments_dict[name][0]
-        elif "last" == kind:
-            if settings.has_key("default"):
+                parsed_entry['raw'] = user_arguments_dict[name][0]
+        elif 'last' == kind:
+            if settings.has_key('default'):
                 try:
-                    parsed_entry["raw"] = user_arguments_dict[name][len(user_arguments_dict[name])-1]
+                    parsed_entry['raw'] = \
+                        user_arguments_dict[name][len(user_arguments_dict[name])
+                             - 1]
                 except:
-                    parsed_entry["raw"] = settings["default"]
+                    parsed_entry['raw'] = settings['default']
             else:
-                parsed_entry["raw"] = user_arguments_dict[name][len(user_arguments_dict[name])-1]
-        elif "list" == kind:
-            if settings.has_key("default"):
+                parsed_entry['raw'] = \
+                    user_arguments_dict[name][len(user_arguments_dict[name])
+                         - 1]
+        elif 'list' == kind:
+            if settings.has_key('default'):
                 try:
-                    parsed_entry["raw"] = user_arguments_dict[name]
+                    parsed_entry['raw'] = user_arguments_dict[name]
                 except:
-                    parsed_entry["raw"] = settings["default"]
+                    parsed_entry['raw'] = settings['default']
             else:
-                parsed_entry["raw"] = user_arguments_dict[name]
+                parsed_entry['raw'] = user_arguments_dict[name]
         else:
-            error += "unknown kind %s for %s in parse_input!" % (kind, name)
+            error += 'unknown kind %s for %s in parse_input!' % (kind,
+                    name)
             continue
 
         # Check that input is valid
-        if not settings.has_key("check"):
-            error += "missing check for %s in parse_input!" % name
+
+        if not settings.has_key('check'):
+            error += 'missing check for %s in parse_input!' % name
             continue
-            
-        check = settings["check"]
+
+        check = settings['check']
         try:
-            check(parsed_entry["raw"])
+            check(parsed_entry['raw'])
         except ValueError, verr:
-            error += "invalid contents of %s in parse_input! (%s)" % \
-                     (name, verr)
+            error += 'invalid contents of %s in parse_input! (%s)'\
+                 % (name, verr)
             continue
-                
+
         # Finally add to parsed input dictionary if we got this far
+
         parsed_input[name] = parsed_entry
 
-    return parsed_input, error
+    return (parsed_input, error)
 
-def parse_argument(user_arguments_dict, name, kind, check, required=False, default=-1):
+
+def parse_argument(
+    user_arguments_dict,
+    name,
+    kind,
+    check,
+    required=False,
+    default=-1,
+    ):
     """Parse user_arguments_dict for argument(s) with supplied name. The kind
     string defines which strategy to use in the value extraction (select
     first, last or list of all). If required is true, the parse will
@@ -115,34 +136,38 @@ def parse_argument(user_arguments_dict, name, kind, check, required=False, defau
     The result is a 3-tuple of raw data, html escaped data and an error
     string. An empty error string means success.
     """
-    error = ""
-    raw = ""
+
+    error = ''
+    raw = ''
 
     if required and not user_arguments_dict.has_key(name):
-        error = "%s argument required but not found!" % (name)
-        return "", "", error
-            
-    if "first" == kind:
+        error = '%s argument required but not found!' % name
+        return ('', '', error)
+
+    if 'first' == kind:
         raw = user_arguments_dict[name][0]
-    elif "last" == kind:
-        raw = user_arguments_dict[name][len(user_arguments_dict[name]-1)]
-    elif "list" == kind:
+    elif 'last' == kind:
+        raw = user_arguments_dict[name][len(user_arguments_dict[name]
+                 - 1)]
+    elif 'list' == kind:
         raw = user_arguments_dict[name]
     else:
-        error = "unknown kind %s for %s in parse_argument!" % (kind, name)
-        return "", "", error
+        error = 'unknown kind %s for %s in parse_argument!' % (kind,
+                name)
+        return ('', '', error)
 
     try:
         check(raw)
     except ValueError, verr:
-        error = "invalid contents of %s in parse_argument! (%s)" % \
-                 (name, verr)
+        error = 'invalid contents of %s in parse_argument! (%s)'\
+             % (name, verr)
 
-    if "list" == kind:
+    if 'list' == kind:
         safe = [html_escape(item) for item in raw]
     else:
         safe = html_escape(raw)
-    return raw, safe, error
+    return (raw, safe, error)
+
 
 def fieldstorage_to_dict(fieldstorage, fields=[]):
     """Get a plain dictionary, rather than the '.value' system used by
@@ -152,23 +177,29 @@ def fieldstorage_to_dict(fieldstorage, fields=[]):
     This may be necessary in PUT requests where fieldstorage.keys() is
     not supported.
     """
+
     params = {}
     if not fields:
         fields = fieldstorage.keys()
     for key in fields:
         try:
             params[key] = fieldstorage.getlist(key)
-            # Upload forms store the filename in a special way, fetch it 
+
+            # Upload forms store the filename in a special way, fetch it
             # if available!
             # do not overwrite
-            filename_key = key + "filename"
+
+            filename_key = key + 'filename'
             if not params.has_key(filename_key):
                 try:
                     if fieldstorage[key].filename != None:
-                        params[filename_key] = fieldstorage[key].filename
+                        params[filename_key] = \
+                            fieldstorage[key].filename
                 except Exception, exc:
                     pass
         except Exception, err:
-            print "Warning: failed to extract values for %s: %s" % \
-                  (key, err)
+            print 'Warning: failed to extract values for %s: %s'\
+                 % (key, err)
     return params
+
+

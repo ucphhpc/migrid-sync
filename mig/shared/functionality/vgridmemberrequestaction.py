@@ -5,19 +5,19 @@
 #
 # vgridmemberrequestaction - [insert a few words of module description on this line]
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
-# 
+#
 # This file is part of MiG.
-# 
+#
 # MiG is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -28,7 +28,8 @@
 # Minimum Intrusion Grid
 
 import cgi
-import cgitb; cgitb.enable()
+import cgitb
+cgitb.enable()
 import sys
 import os
 
@@ -40,67 +41,123 @@ from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
 
+
 def signature():
-    defaults = {'vgrid_name':REJECT_UNSET, "request_type":REJECT_UNSET, "request_text":REJECT_UNSET}
-    return ["", defaults]
-    
+    defaults = {'vgrid_name': REJECT_UNSET,
+                'request_type': REJECT_UNSET,
+                'request_text': REJECT_UNSET}
+    return ['', defaults]
+
+
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
-    configuration, logger, output_objects, op_name = initialize_main_variables(op_header = False, op_title = False)
-    output_objects.append({"object_type": "header", "text":"MiG VGrid membership request"})
-    output_objects.append({"object_type": "title", "text":"MiG VGrid membership request"})
+
+    (configuration, logger, output_objects, op_name) = \
+        initialize_main_variables(op_header=False, op_title=False)
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'MiG VGrid membership request'})
+    output_objects.append({'object_type': 'title', 'text'
+                          : 'MiG VGrid membership request'})
     defaults = signature()[1]
-    
-    (validate_status, accepted) = validate_input_and_cert(user_arguments_dict, defaults, output_objects, cert_name_no_spaces, configuration, allow_rejects = False)
+
+    (validate_status, accepted) = validate_input_and_cert(
+        user_arguments_dict,
+        defaults,
+        output_objects,
+        cert_name_no_spaces,
+        configuration,
+        allow_rejects=False,
+        )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-    vgrid_name = (accepted['vgrid_name'])[-1]
-    request_type = (accepted['request_type'])[-1].strip().lower()
-    request_text  = (accepted['request_text'])[-1].strip()
-    if vgrid_name.upper() == "GENERIC":
+    vgrid_name = accepted['vgrid_name'][-1]
+    request_type = accepted['request_type'][-1].strip().lower()
+    request_text = accepted['request_text'][-1].strip()
+    if vgrid_name.upper() == 'GENERIC':
+
         # not allowed!
-        output_objects.append({"object_type":"error_text", "text":"Member and owner requests for the GENERIC VGrid are not allowed!"})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-    
 
-    valid_request_types = ["owner", "member"]
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Member and owner requests for the GENERIC VGrid are not allowed!'
+                              })
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    valid_request_types = ['owner', 'member']
     if not request_type.lower() in valid_request_types:
-        output_objects.append({"object_type":"error_text", "text":"%s is not a valid request_type (valid types: %s)!" % (request_type.lower(), valid_request_types)})
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : '%s is not a valid request_type (valid types: %s)!'
+                               % (request_type.lower(),
+                              valid_request_types)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # stop if already an owner                                                                                              
+    # stop if already an owner
+
     if vgrid_is_owner(vgrid_name, cert_name_no_spaces, configuration):
-        output_objects.append({"object_type":"error_text", "text":"You are already an owner of %s or a parent vgrid!" % (vgrid_name)})
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'You are already an owner of %s or a parent vgrid!'
+                               % vgrid_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    
+
     # if already member do not allow a request to become a member (but allow an owner request)
-    if request_type == "member":
-        if vgrid_is_member(vgrid_name, cert_name_no_spaces, configuration):
-            output_objects.append({"object_type":"error_text", "text":"You are already a member of %s or a parent vgrid." % (vgrid_name)})    
+
+    if request_type == 'member':
+        if vgrid_is_member(vgrid_name, cert_name_no_spaces,
+                           configuration):
+            output_objects.append({'object_type': 'error_text', 'text'
+                                  : 'You are already a member of %s or a parent vgrid.'
+                                   % vgrid_name})
             return (output_objects, returnvalues.CLIENT_ERROR)
-        
+
     # Send messages to all VGrid owners
-    (status, msg) = vgrid_list(vgrid_name, "owners", configuration)
+
+    (status, msg) = vgrid_list(vgrid_name, 'owners', configuration)
     if not status:
-        output_objects.append({"object_type":"error_text", "text":"Could not get list of current owners for %s vgrid. Are you sure a vgrid with this name exists?" % (vgrid_name)})
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Could not get list of current owners for %s vgrid. Are you sure a vgrid with this name exists?'
+                               % vgrid_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # TODO: If no owners have mail/IM set in their settings then inform the requester
 
     # msg is list of owners
+
     owner_number = 1
     for owner in msg:
-        output_objects.append({"object_type":"text", "text":"Sending message to owner number %s" % (owner_number)})
+        output_objects.append({'object_type': 'text', 'text'
+                              : 'Sending message to owner number %s'
+                               % owner_number})
         owner_number += 1
+
         # USER_CERT entry is destination
-        jobdict = {"NOTIFY":["jabber: SETTINGS", "msn: SETTINGS", "email: SETTINGS", "icq: SETTINGS", "aol: SETTINGS", "yahoo: SETTINGS"], "JOB_ID":"NOJOBIDVGRIDMEMBERREQUESTMESSAGE", "USER_CERT":owner} 
-    
-        notify_user(jobdict, [cert_name_no_spaces, vgrid_name, request_type, request_text], "VGRIDMEMBERREQUEST", logger, "", configuration.smtp_server, configuration)
-        #if not msg_stat:
-            #o.out("Could not send message to %s. %s" % (owner, msg_text))
-            #o.reply_and_exit(o.ERROR)
-            
-            #for keyword in get_keywords_dict().keys():
-                #pass
-        
+
+        jobdict = {'NOTIFY': [
+            'jabber: SETTINGS',
+            'msn: SETTINGS',
+            'email: SETTINGS',
+            'icq: SETTINGS',
+            'aol: SETTINGS',
+            'yahoo: SETTINGS',
+            ], 'JOB_ID': 'NOJOBIDVGRIDMEMBERREQUESTMESSAGE',
+                'USER_CERT': owner}
+
+        notify_user(
+            jobdict,
+            [cert_name_no_spaces, vgrid_name, request_type,
+             request_text],
+            'VGRIDMEMBERREQUEST',
+            logger,
+            '',
+            configuration.smtp_server,
+            configuration,
+            )
+
+        # if not msg_stat:
+            # o.out("Could not send message to %s. %s" % (owner, msg_text))
+            # o.reply_and_exit(o.ERROR)
+
+            # for keyword in get_keywords_dict().keys():
+                # pass
+
     return (output_objects, returnvalues.OK)
+
+

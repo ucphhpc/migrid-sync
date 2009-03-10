@@ -5,19 +5,19 @@
 #
 # multi_writer - [insert a few words of module description on this line]
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
-# 
+#
 # This file is part of MiG.
-# 
+#
 # MiG is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -25,12 +25,13 @@
 # -- END_HEADER ---
 #
 
-
 import sys
 from docutils.core import publish_string
 
 # Setup a restructured text example
-reST = """
+
+reST = \
+    """
 Example of reST:
 ================
 
@@ -68,55 +69,67 @@ Cheers, Jonas
 """
 
 # Raw reST
-if len(sys.argv) == 1 or "raw" in sys.argv:
-    print "reST:"
+
+if len(sys.argv) == 1 or 'raw' in sys.argv:
+    print 'reST:'
     print reST
 
     print
 
-if len(sys.argv) == 1 or "rest" in sys.argv:
-    # Parsed reST 
+if len(sys.argv) == 1 or 'rest' in sys.argv:
+
+    # Parsed reST
+
     raw = publish_string(reST, writer=None)
 
-    print "RAW:"
+    print 'RAW:'
     print raw
-       
+
     print
 
-if len(sys.argv) == 1 or "html" in sys.argv:
+if len(sys.argv) == 1 or 'html' in sys.argv:
     from docutils.writers.html4css1 import Writer
+
     # Setup a translator writer
+
     html_writer = Writer()
 
     # Translate reST to html
+
     html = publish_string(reST, writer=html_writer)
 
-    print "HTML:"
+    print 'HTML:'
     print html
 
     print
 
-if len(sys.argv) == 1 or "latex" in sys.argv:
+if len(sys.argv) == 1 or 'latex' in sys.argv:
+
     # Setup a translator writer
+
     from docutils.writers.latex2e import Writer
     latex_writer = Writer()
 
     # Translate reST to latex
+
     latex = publish_string(reST, writer=latex_writer)
 
-    print "Latex:"
+    print 'Latex:'
     print latex
 
     print
 
-if len(sys.argv) == 1 or "xml" in sys.argv:
+if len(sys.argv) == 1 or 'xml' in sys.argv:
+
     # Setup a translator writer
+
     from docutils.writers.docutils_xml import Writer
     xml_writer = Writer()
 
     # Translate reST to pdf
+
     xml = publish_string(reST, writer=xml_writer)
 
-    print "XML:"
+    print 'XML:'
     print xml
 

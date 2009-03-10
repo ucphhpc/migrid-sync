@@ -5,19 +5,19 @@
 #
 # rename - [insert a few words of module description on this line]
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
-# 
+#
 # This file is part of MiG.
-# 
+#
 # MiG is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -25,74 +25,93 @@
 # -- END_HEADER ---
 #
 
-
 """Apache handler of the same name which allows direct access to
 this function just like GET and PUT."""
 
 import cgi
-import cgitb; cgitb.enable()
+import cgitb
+cgitb.enable()
 import os
 import sys
 
 # MiG imports
+
 from shared.cgishared import init_cgiscript_possibly_with_cert
-from shared.handlers import correct_handler, get_path, \
-     get_allowed_path
+from shared.handlers import correct_handler, get_path, get_allowed_path
 from shared.cgiinput import validated_string
 import shared.localos as localos
 
-### Main ###
+# ## Main ###
+
 handler_name = os.path.basename(sys.argv[0]).upper()
 
-(logger, configuration, cert_name_no_spaces, o) = init_cgiscript_possibly_with_cert()
+(logger, configuration, cert_name_no_spaces, o) = \
+    init_cgiscript_possibly_with_cert()
 
 # Check we are using matching method
+
 if not correct_handler(handler_name):
+
     # Request method does not match handler
-    o.out("You must use HTTP %s!" % handler_name)
+
+    o.out('You must use HTTP %s!' % handler_name)
     o.reply_and_exit(o.CLIENT_ERROR)
 
 # FieldStorage does not support custom HTTP methods - fake 'GET'
-original_method = os.environ["REQUEST_METHOD"]
-os.environ["REQUEST_METHOD"] = "GET"
+
+original_method = os.environ['REQUEST_METHOD']
+os.environ['REQUEST_METHOD'] = 'GET'
 fieldstorage = cgi.FieldStorage()
+
 # Now restore original method
-os.environ["REQUEST_METHOD"] = original_method
+
+os.environ['REQUEST_METHOD'] = original_method
 
 # Check we got a target filename
+
 path = get_path()
 if not path:
-    o.out("Target filename not found - did you specify one?")
+    o.out('Target filename not found - did you specify one?')
     o.reply_and_exit(o.CLIENT_ERROR)
 
 try:
     target_path = get_allowed_path(configuration, cert_name_no_spaces,
-                               path)
+                                   path)
 except Exception, err:
+
     # invalid certificate or session id - deny access!
-    o.out("Certificate and Session ID verification failed! (%s)" % \
-          cert_name_no_spaces)
-    o.internal("Entity with cert data '%s' was rejected when trying to use http %s %s: %s" % (cert_name_no_spaces, handler_name, path, err))
+
+    o.out('Certificate and Session ID verification failed! (%s)'
+           % cert_name_no_spaces)
+    o.internal("Entity with cert data '%s' was rejected when trying to use http %s %s: %s"
+                % (cert_name_no_spaces, handler_name, path, err))
     o.reply_and_exit(o.ERROR)
 
-dst, err = validated_string(fieldstorage, "dst", "")
+(dst, err) = validated_string(fieldstorage, 'dst', '')
 try:
-    destination_path = get_allowed_path(configuration, cert_name_no_spaces,
-                               dst)
+    destination_path = get_allowed_path(configuration,
+            cert_name_no_spaces, dst)
 except Exception, err:
+
     # invalid certificate or session id - deny access!
-    o.out("Certificate and Session ID verification failed! (%s)" % \
-          cert_name_no_spaces)
-    o.internal("Entity with cert data '%s' was rejected when trying to use http %s %s %s: %s" % (cert_name_no_spaces, handler_name, path, dst, err))
+
+    o.out('Certificate and Session ID verification failed! (%s)'
+           % cert_name_no_spaces)
+    o.internal("Entity with cert data '%s' was rejected when trying to use http %s %s %s: %s"
+                % (cert_name_no_spaces, handler_name, path, dst, err))
     o.reply_and_exit(o.ERROR)
-    
+
 # Now handle actual file (shared for for all situations)
+
 try:
     localos.rename(target_path, destination_path)
 except Exception, err:
-    filtered_err = str(err).replace(target_path, path).replace(destination_path, dst)
-    o.out("Could not %s %s %s: %s" % (handler_name, path, dst, filtered_err))
+    filtered_err = str(err).replace(target_path,
+                                    path).replace(destination_path, dst)
+    o.out('Could not %s %s %s: %s' % (handler_name, path, dst,
+          filtered_err))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 # if we get here everything was ok
+
 o.reply_and_exit(o.OK)
