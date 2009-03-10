@@ -300,4 +300,5 @@ if __name__ == '__main__':
     NEW_EPISTASIS.start_epistasis(local_mode=local)
     NEW_EPISTASIS.monitor_epistasis()
     NEW_EPISTASIS.clean_up_epistasis()
+    
 

@@ -6,11 +6,72 @@ import gridepistasis as EpiModel
 import wx
 import time
 import os
+import readdata
 
-stop_state = "stopping"
 exec_state = "executing"
 pending_state = "pending"
+finished_state = "finished"
+cancelled_state = "cancelled"
 
+gene_selection = set()
+all_genes = list()
+
+def popup_box(comment, caption_title=" "):
+    dlg = wx.MessageDialog(frame_1,
+                           message=comment,
+                           caption=caption_title,
+                           style=wx.OK|wx.ICON_INFORMATION
+                           )
+    dlg.ShowModal()
+    dlg.Destroy()
+
+######## GENE SELECTOR TAB###########
+
+def read_genes():
+
+    datafile = frame_1.datafile.GetValue()
+    if not os.path.exists(datafile):
+        popup_box("Can't find "+datafile)
+        return
+    #print all_genes
+    gene_data = readdata.read_data(datafile)
+    all_genes.extend(gene_data)
+    #all_genes.sort()
+    frame_1.gene_list.Set(all_genes)
+
+def on_gene_selector_tab(event=None):
+    print "event"
+    read_genes()
+
+##### BUTTONS ############                        
+
+def update_selected_genes():
+    frame_1.selected_genes.Set(list(gene_selection))
+
+def on_add_genes(event=None):
+    index = frame_1.gene_list.GetSelections()
+    indexes = list(index)
+    print indexes, all_genes
+    #frame_1.selected_genes.InsertItems(index, 0)
+    for i in indexes: 
+#        gene_name = all_genes[i]
+        #if not gene_name in gene_selection:
+        #gene_selection.append(all_genes[i])
+        gene_selection.add(all_genes[i])
+    update_selected_genes()
+    
+def on_remove_genes(event=None):
+    indexes = list(frame_1.selected_genes.GetSelections())
+    indexes.reverse()
+    print indexes
+    
+    for i in indexes: 
+        gene_selection.remove(list(gene_selection)[i])
+    #gene_selection.remove(genes)
+    update_selected_genes()
+ 
+
+#### GENERAL TAB ############
 
 def validateInput():
     try: 
@@ -42,27 +103,14 @@ def validateInput():
    
     return True, "OK"
     
-def start():
+##### START/ STOP #############
 
+def start():
     valid, comment = validateInput()
     if not valid: 
-        dlg = wx.MessageDialog(frame_1,
-                               message=comment,
-                               caption='Incorrect input',
-                               style=wx.OK|wx.ICON_INFORMATION
-                               )
-        dlg.ShowModal()
-        dlg.Destroy()
+        popup_box(comment, "Incorret input")
         return
 
-
-#    frame_1.statusfeed.Enable(True)
- 
-    #frame_1.frame_1_statusbar.SetStatusText("Executing epistasis")
-    #frame_1.Show()
-    #frame_1.Update()
-#time.sleep(5)
-    
     #collect values
     g1 = frame_1.g1.GetValue()
     g2 = frame_1.g2.GetValue()
@@ -74,31 +122,38 @@ def start():
     datafile = frame_1.datafile.GetValue()
     outputdir = frame_1.outputdir.GetValue()
     local_mode = frame_1.runlocal.GetValue()
+
+    
     if outputdir[-1] != "/":
         outputdir += "/"
 
-        
-   # model = EpiModel.EpistasisProcess()
-    #timeout = 5000
     jobs = model.start_epistasis(c1,c2,g1,g2,t1,t2,sv,datafile,outputdir,local_mode)
     model.epistasis_status=exec_state
-    # fake response
-    #dlg = wx.MessageDialog(frame_1,
-    #                           message='Executing epistasis',
-    #                           caption='Start epistasis',
-    #                           style=wx.OK|wx.ICON_INFORMATION
-    #                           )
-   # dlg.ShowModal()
-    #dlg.Destroy()
-    # set an update timer
-  # x100 milliseconds
-
+    
+   
+            
 def stop():
     model.stop_epistasis()
     model.__init__()
     EnableControls(True)
     frame_1.timer.Stop()
     
+def post_commands():
+    post_exec_str = frame_1.post_exec_cmds.GetValue()
+    post_exec_commands = post_exec_str.split(";\n")
+    for cmd in post_exec_commands:
+        try:
+            proc = os.popen(cmd, "w")
+            proc.close()
+            
+        except OSError:
+            print "Unable to execute command :"+cmd
+            
+    
+def final():
+    model.clean_up_epistasis()
+    post_commands()
+
 
 def EnableControls(enable):
     frame_1.datafile.Enable(enable)
@@ -115,6 +170,8 @@ def EnableControls(enable):
     frame_1.runlocal.Enable(enable)
     frame_1.c1.Enable(enable)
     frame_1.c2.Enable(enable)
+
+##### BUTTONS ############
 
 # event handlers
 def OnBtnStart(event=None):
@@ -136,7 +193,7 @@ def OnBtnStop(event=None):
             # else: 
             #   print "Not executing..."
         
-        model.epistasis_status = stop_state
+        model.epistasis_status = cancelled_state
         shorttime= 100
         frame_1.statusfeed.Clear()
         frame_1.statusfeed.write("Stopping epistasis...")
@@ -152,6 +209,7 @@ def OnBtnBrowseFile(event=None):
     fd.Destroy()
     frame_1.datafile.Clear()
     frame_1.datafile.write(fd.GetPath())
+    read_genes()
 
 def OnBtnBrowseDir(event=None):
     path = frame_1.outputdir.GetValue()
@@ -163,6 +221,7 @@ def OnBtnBrowseDir(event=None):
     frame_1.outputdir.Clear()
     frame_1.outputdir.write(dd.GetPath())
 
+
 def OnMenuQuit(event=None):
     if model.epistasis_status == exec_state:
         model.stop_epistasis()
@@ -171,33 +230,25 @@ def OnMenuQuit(event=None):
 def OnTimer(event=None):
     if model.epistasis_status == pending_state:
         start()
-        return
-    if model.epistasis_status == stop_state:
-        stop()
-        return
-    
-    status, progress = model.get_epistasis_status()
-    frame_1.statusfeed.Clear()
-    frame_1.statusfeed.write(status)
-    frame_1.progress.Clear()
-    frame_1.progress.write(progress)
+    elif model.epistasis_status == exec_state:
+        status, progress = model.get_epistasis_status()
+        frame_1.statusfeed.Clear()
+        frame_1.statusfeed.write(status)
+        frame_1.progress.Clear()
+        frame_1.progress.write(progress)
     #print "timer event"
-   
-    if model.epistasis_status == "finished":
-        #frame_1.button_2.Label("Go to output")
-        dlg = wx.MessageDialog(frame_1,
-                               message='Epistasis is complete',
-                               caption='Epistasis finished',
-                               style=wx.OK|wx.ICON_INFORMATION
-                               )
-        dlg.ShowModal()
-        dlg.Destroy()
+        frame_1.timer.Start(timeout)  
+    elif model.epistasis_status == finished_state:
+        popup_box('Epistasis is complete', 'Epistasis finished')
         frame_1.Stop.Enable(False)
         frame_1.timer.Stop()
         frame_1.button_2.Enable(True)
         frame_1.Destroy()
-    else: 
-        frame_1.timer.Start(timeout)  
+        final()
+    elif model.epistasis_status == cancelled_state:
+        stop()
+        final()
+        #return
 
 #def OnLocal(event=None):
  #   model.localmode = not model.localmode
@@ -208,16 +259,25 @@ def bindViewerEvents():
     frame_1.button_2.Bind(wx.EVT_BUTTON, OnBtnBrowseDir)
     frame_1.Start.Bind(wx.EVT_BUTTON, OnBtnStart)
     frame_1.Stop.Bind(wx.EVT_BUTTON, OnBtnStop)
+    frame_1.add_genes.Bind(wx.EVT_BUTTON,on_add_genes)
+    frame_1.remove_genes.Bind(wx.EVT_BUTTON,  on_remove_genes)
+    #frame_1.notebook_1_pane_2.Bind(wx.EVT_BUTTON,on_gene_selector_tab)
+    frame_1.notebook_1_pane_2.Bind(wx.EVT_KEY_DOWN,on_gene_selector_tab)
+    
     frame_1.Bind(wx.EVT_MENU, OnMenuQuit)
     frame_1.Bind(wx.EVT_TIMER, OnTimer)
+   
+
 #    frame_1.runlocal.Bind(wx.EVT_CHECKBOX, OnLocal)
+if __name__ == '__main__':
+    app = wx.PySimpleApp(0)
+    wx.InitAllImageHandlers()
+    frame_1 = viewer.MyEpiFrame(None, -1, "")
+    timeout = 5000
+    model = EpiModel.GridEpistasis()
+    #read_genes()
     
-app = wx.PySimpleApp(0)
-wx.InitAllImageHandlers()
-frame_1 = viewer.MyEpiFrame(None, -1, "")
-timeout = 5000
-model = EpiModel.GridEpistasis()
-app.SetTopWindow(frame_1)
-bindViewerEvents()
-frame_1.Show()
-app.MainLoop()
+    app.SetTopWindow(frame_1)
+    bindViewerEvents()
+    frame_1.Show()
+    app.MainLoop()
