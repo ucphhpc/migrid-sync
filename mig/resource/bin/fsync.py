@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# valuecheck - [insert a few words of module description on this line]
+# fsync - Simple wrapper for the file sync sys call
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,24 +25,28 @@
 # -- END_HEADER ---
 #
 
-"""This module contains general functions for validating the
-value of input.
+"""Call fsync sys call on provided paths to force buffer sync to disk without requiring general sync of all buffered files as in sync command.
+This is intended as a workaround for delayed writes on NFS.
 """
 
+import os
+import sys
 
-def lines_value_checker(value_string):
-    """Value checker for the lines variables"""
+if len(sys.argv) < 2:
+    print "Usage: %s PATH [PATH ...]" % \
+          os.path.basename((sys.argv)[0])
+    sys.exit(1)
 
-    value = int(value_string)
-    if value < 1 or value > 1000000:
-        raise ValueError('lines: out of range')
-
-
-def max_jobs_value_checker(value_string):
-    """Value checker for the max_jobs variables"""
-
-    value = int(value_string)
-    if value < 1 or value > 1000000:
-        raise ValueError('max_jobs: out of range')
-
-
+for path in (sys.argv)[1:]:
+    # TODO: This is completely untested!
+    # From python library reference:
+    # If you're starting with a Python file object f, first
+    # do f.flush(), and then do os.fsync(f.fileno()), to
+    # ensure that all internal buffers associated with f
+    # are written to disk.
+    #
+    # The question is if this works when the flush was called
+    # by another process.
+    sync_fd = open(path, 'rb+', 0)
+    os.fsync(sync_fd)
+    sync_fd.close()

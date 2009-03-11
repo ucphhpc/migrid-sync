@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# safeinput - [insert a few words of module description on this line]
+# safeinput - user input validation functions
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.

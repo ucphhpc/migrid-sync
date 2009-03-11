@@ -28,7 +28,8 @@
 """Full MiG server:
 This wrapper script handles a full MiG server in the distributed model.
 If this server is the current group leader, the server runs the necessary
-MiG components, including the main script, monitor and notification."""
+MiG components, including the main script, monitor and notification.
+"""
 
 import os
 import sys

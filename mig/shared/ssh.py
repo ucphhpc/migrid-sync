@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# ssh - [insert a few words of module description on this line]
+# ssh - remote command wrappers using ssh/scp
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.

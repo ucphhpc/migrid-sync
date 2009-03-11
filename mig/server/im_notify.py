@@ -343,11 +343,11 @@ while True:
         continue
     if line.upper().find('SENDMESSAGE ') == 0:
 
-    # The received line should be on a format similar to:
-    # SENDMESSAGE PROTOCOL TO MESSAGE ex:
-    # SENDMESSAGE jabber account@jabber.org this is the message
+        # The received line should be on a format similar to:
+        # SENDMESSAGE PROTOCOL TO MESSAGE ex:
+        # SENDMESSAGE jabber account@jabber.org this is the message
 
-    # split string
+        # split string
 
         split_line = line.split(' ', 3)
         if len(split_line) != 4:

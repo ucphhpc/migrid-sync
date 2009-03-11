@@ -25,8 +25,6 @@
 # -- END_HEADER ---
 #
 
-# Minimum intrusion Grid
-
 import time
 
 import shared.mrslkeywords as mrslkeywords
