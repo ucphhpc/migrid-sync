@@ -70,6 +70,7 @@ username = form.getfirst('username', '').strip()
 # password = form.getfirst("password","").strip()
 
 hd_size = form.getfirst('hd_size', '').strip()
+image_format = form.getfirst('image_format', 'raw').strip()
 net_bw = form.getfirst('net_bw', '').strip()
 memory = form.getfirst('memory', '').strip()
 operating_system = form.getfirst('operating_system', '').strip()
@@ -84,6 +85,11 @@ try:
     _ = int(hd_size) + int(memory) + int(net_bw)
 except Exception, err:
     o.client(err)
+    o.reply_and_exit(o.CLIENT_ERROR)
+
+# check that requested image format is valid
+if not image_format in ["raw", "qcow", "cow", "qcow2", "vmdk"]:
+    o.client("requested invalid image format: %s" % cgi.escape(image_format))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 # provide a resource name
@@ -438,6 +444,17 @@ os.system('sync')
 # Convert the hda to vmdk - no longer needed! (04.2008)
 # os.system('/usr/local/bin/qemu-img ' \
 #          'convert MiG-SSS/hda.img -O vmdk MiG-SSS/hda.vmdk')
+
+# Optional conversion to requested disk image format
+if "raw" != image_format:
+    o.internal('Converting disk image to %s format' % image_format)
+    image_path = "MiG-SSS" + os.sep + "hda.img" 
+    tmp_path = image_path + "." + image_format
+    command = "qemu-img convert -f raw " + image_path + \
+              " -O " + image_format + " " + tmp_path
+    os.system(command)
+    os.remove(image_path)
+    os.rename(tmp_path, image_path)
 
 # Copy one of the vmx files according to the specified memory requirement: - no longer needed! (04.2008)
 # command = "cp MiG-SSS" + os.sep + "MiG_" + memory + ".vmx MiG-SSS" + \

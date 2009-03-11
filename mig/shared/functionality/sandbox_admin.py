@@ -52,7 +52,9 @@ def print_hd_selection():
     <TD><select name='hd_size'>
     <option value='100'>100 MB</option>
     <option value='1000'>1 GB</option>
+    <option value='2000'>2 GB</option>
     </select>
+    <input type=hidden name='image_format' value='qcow'>
     </TD></TR>"""
     return html
 
@@ -83,7 +85,7 @@ def print_mem_selection():
           does your PC have?</TD>
     <TD><select name='memory'>
     <option value='256'>256 MB</option>
-    <option value='512'>512 MB</option>
+    <option value='512' selected>512 MB</option>
     <option value='1024'>1 GB</option>
     <option value='2048'>2 GB</option>
     <option value='4096'>4 GB</option>
