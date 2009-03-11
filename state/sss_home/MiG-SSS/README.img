@@ -1,0 +1,25 @@
+= Using the sandbox generator =
+The sandbox generator requires a hard disk image for each of the supported disk sizes.
+At the momet the 100MB, 1G and 2G sizes map to hda_{100,1000,2000}.img files.
+Those files should preferably be created as sparse qemu images with:
+qemu-img create hda-2G-raw.img 2G
+sudo mkfs.ext2 hda-2G-raw.img
+sudo tune2fs -c 100 -i 365 hda-2G-raw.img
+sudo mount -o loop -t ext2 hda-2G-raw.img disk
+sudo tar xvzf mig-hda.tgz -C disk
+sudo umount disk
+rsync -avSP hda-2G-raw.img hda_2000.img
+
+As qemu-img output then shows they only take up a small fraction of the denominal size:
+0|~/sss_home/MiG-SSS > ll hda_2000.img                                                         mig@mig-1
+-rw-r--r-- 1 mig mig 2147483648 Mar 11 13:14 hda_2000.img
+0|~/sss_home/MiG-SSS > qemu-img info hda_2000.img                                              mig@mig-1
+image: hda_2000.img
+file format: raw
+virtual size: 2.0G (2147483648 bytes)
+disk size: 920K
+
+In the sandbox generator they are converted to qcow images on the fly.
+We would prefer to only have them on qcow format but we need raw format to be able
+to mount and modify the image on the fly, so we do that with the raw images and
+convert them just before zip and download.
