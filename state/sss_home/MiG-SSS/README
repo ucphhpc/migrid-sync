@@ -2,13 +2,12 @@
 The sandbox generator requires a hard disk image for each of the supported disk sizes.
 At the momemt the 100MB, 1G and 2G sizes map to hda_{100,1000,2000}.img files.
 Those files should preferably be created as sparse qemu images with:
-qemu-img create hda-2G-raw.img 2G
-sudo mkfs.ext2 hda-2G-raw.img
-sudo tune2fs -c 100 -i 365 hda-2G-raw.img
-sudo mount -o loop -t ext2 hda-2G-raw.img disk
-sudo tar xvzf mig-hda.tgz -C disk
-sudo umount disk
-rsync -avSP hda-2G-raw.img hda_2000.img
+qemu-img create hda_2000.img 2G
+mkfs.ext2 hda_2000.img
+tune2fs -c 100 -i 365 hda_2000.img
+mount -o loop -t ext2 hda_2000.img disk
+tar xvzf mig-hda.tgz -C disk
+umount disk
 
 As qemu-img output then shows they only take up a small fraction of the denominal size:
 0|~/sss_home/MiG-SSS > ll hda_2000.img                                                         mig@mig-1
