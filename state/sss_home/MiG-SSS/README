@@ -14,27 +14,27 @@ additional privileges.
 After adding that line you can proceed to make the images that aren't
 included due to size restrictions. They should preferably be created as
 sparse qemu images with:
-qemu-img create hda.img 2G
-mkfs.ext2 -F hda.img
-tune2fs -c 100 -i 365 hda.img
-mount ../mnt
-tar xvzf mig-hda.tgz -C ../mnt
-umount ../mnt
-mv hda.img hda_2000.img
+for size in 100 1000 2000; do
+    qemu-img create hda.img ${size}M && \
+    mkfs.ext2 -F hda.img && \
+    tune2fs -c 100 -i 365 hda.img && \
+    mount ../mnt && \
+    tar xvzf mig-hda.tgz -C ../mnt && \
+    umount ../mnt && \
+    mv hda.img hda_${size}.img
+done
 
-Please note that you may have to mount and unmount using sudo if the
-corresponding mount points aren't included in /etc/fstab
-On the development servers they should automatically be added during
-account creation.
 
 As qemu-img output then shows they only take up a small fraction of the denominal size:
-0|~/sss_home/MiG-SSS > ll hda_2000.img                                                         mig@mig-1
--rw-r--r-- 1 mig mig 2147483648 Mar 11 13:14 hda_2000.img
-0|~/sss_home/MiG-SSS > qemu-img info hda_2000.img                                              mig@mig-1
+.../state/sss_home/MiG-SSS > ls -l hda_2000.img
+jonesdevel@amigos18
+-rw-r--r-- 1 jonesdevel jonesdevel 2097152000 Mar 13 17:28 hda_2000.img
+.../state/sss_home/MiG-SSS > qemu-img info hda_2000.img
+jonesdevel@amigos18
 image: hda_2000.img
 file format: raw
-virtual size: 2.0G (2147483648 bytes)
-disk size: 920K
+virtual size: 2.0G (2097152000 bytes)
+disk size: 32M
 
 In the sandbox generator they are converted to qcow images on the fly.
 We would prefer to only have them on qcow format but we need raw format to be able
