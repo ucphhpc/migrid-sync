@@ -152,6 +152,7 @@ def create_user(
     extra_port = http_port + 2
 
     mig_dir = home + '/mig'
+    state_dir = home + '/state'
     apache_etc = '/etc/apache'
     apache_dir = apache_etc + '-%s' % user
     apache_run = apache_dir + '/run'
@@ -186,6 +187,7 @@ usermod -c 'INSERT FULL NAME HERE' %s"""\
     user_dict['__EXTRA_PORT__'] = str(extra_port)
     user_dict['__HOME__'] = home
     user_dict['__MIG_HOME__'] = mig_dir
+    user_dict['__MIG_STATE__'] = state_dir
     user_dict['__APACHE_HOME__'] = apache_dir
     user_dict['__APACHE_RUN__'] = apache_run
     user_dict['__APACHE_LOG__'] = apache_log

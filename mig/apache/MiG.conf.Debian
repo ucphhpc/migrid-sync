@@ -168,7 +168,7 @@ MaxRequestsPerChild 10000
 # Configure ordinary virtual host
 <VirtualHost _default_:80>
    # General setup for the virtual host
-   DocumentRoot "/home/mig/mig/wwwpublic"
+   DocumentRoot "/home/mig/state/wwwpublic"
    #ErrorLog /var/log/apache/error.log
    #TransferLog /var/log/apache/access.log
 
@@ -180,8 +180,8 @@ MaxRequestsPerChild 10000
        Allow from all
    </Directory>
    # Other public pages
-   Alias /public/ /home/mig/mig/wwwpublic/
-   <Directory "/home/mig/mig/wwwpublic">
+   Alias /public/ /home/mig/state/wwwpublic/
+   <Directory "/home/mig/state/wwwpublic">
       #Allow everyone here
       AllowOverride All
       Order allow,deny
@@ -193,7 +193,7 @@ MaxRequestsPerChild 10000
 # Configure SSL (with certificates) virtual host
 <VirtualHost _default_:443>
    #  General setup for the virtual host
-   DocumentRoot "/home/mig/mig/wwwuser"
+   DocumentRoot "/home/mig/state/user_home"
    ErrorLog /var/log/apache/ssl-error.log
    TransferLog /var/log/apache/ssl-access.log
    #   Per-Server Logging:
@@ -338,7 +338,7 @@ MaxRequestsPerChild 10000
        Order allow,deny
        Allow from all
    </Directory>
-   # limit access to remaining dirs
+
    <Directory "/home/mig/mig/">
       # Deny all access to base mig dir and only allow on a subdir basis
       Order deny,allow
@@ -360,7 +360,12 @@ MaxRequestsPerChild 10000
       #SSLVerifyClient none
       SSLOptions +StdEnvVars
    </Directory>
-   <Directory "/home/mig/mig/wwwuser">
+   <Directory "/home/mig/state/">
+      # Deny all access to base state dir and only allow on a subdir basis
+      Order deny,allow
+      Deny from all
+   </Directory>
+   <Directory "/home/mig/state/user_home">
       SSLVerifyClient require
       # The next line is crucial for cert_redirect to work!!!
       SSLOptions +StdEnvVars +FakeBasicAuth +ExportCertData
@@ -369,17 +374,15 @@ MaxRequestsPerChild 10000
       Order allow,deny
       Allow from all
    </Directory>
-   <Directory "/home/mig/mig/wwwuser/*">
+   <Directory "/home/mig/state/user_home/*">
       SSLVerifyClient require
       # Allow .htaccess files for auth
       AllowOverride All
       SSLOptions +StdEnvVars +FakeBasicAuth +ExportCertData +StrictRequire
    </Directory>
-
-   # SID access
-   # Resource sessions
-   Alias /sid_redirect/ "/home/mig/cache/webserver_home/"
-   <Directory "/home/mig/cache/webserver_home/">
+   # SID access from resources
+   Alias /sid_redirect/ "/home/mig/state/webserver_home/"
+   <Directory "/home/mig/state/webserver_home/">
       SSLVerifyClient none
       SSLOptions +StdEnvVars
       Options FollowSymLinks
@@ -400,9 +403,9 @@ MaxRequestsPerChild 10000
    Alias /wiki/ "/usr/share/moin/htdocs/"
    
    # Home directory wiki access - we need to avoid catching raw cert_redirect URLs
-   ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/public_base/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/mig/wwwuser/$1/public_base/$2/.vgridwiki/cgi-bin/$3
-   ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/private_base/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/mig/wwwuser/$1/private_base/$2/.vgridwiki/cgi-bin/$3
-   ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/vgrid_shared/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/mig/wwwuser/$1/$2/.vgridwiki/cgi-bin/$3
+   ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/public_base/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/state/user_home/*/$1/public_base/$2/.vgridwiki/cgi-bin/$3
+   ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/private_base/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/state/user_home/$1/private_base/$2/.vgridwiki/cgi-bin/$3
+   ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/vgrid_shared/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/state/user_home/$1/$2/.vgridwiki/cgi-bin/$3
 # END FOR MiG VGrid MOIN MOIN
 
 </VirtualHost>             

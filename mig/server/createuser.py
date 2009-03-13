@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# createuser - [insert a few words of module description on this line]
+# createuser - Create a MiG user with all the necessary directories
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
