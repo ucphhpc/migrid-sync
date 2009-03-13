@@ -9,6 +9,11 @@ mount -o loop -t ext2 hda_2000.img disk
 tar xvzf mig-hda.tgz -C disk
 umount disk
 
+Please note that you may have to mount and unmount using sudo if the
+corresponding mount points aren't included in /etc/fstab
+On the development servers they should automatically be added during
+account creation.
+
 As qemu-img output then shows they only take up a small fraction of the denominal size:
 0|~/sss_home/MiG-SSS > ll hda_2000.img                                                         mig@mig-1
 -rw-r--r-- 1 mig mig 2147483648 Mar 11 13:14 hda_2000.img
