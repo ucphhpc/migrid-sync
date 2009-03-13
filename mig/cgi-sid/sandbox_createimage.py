@@ -28,6 +28,7 @@
 """This script generates a sandbox image"""
 
 import os
+import time
 import cgi
 import cgitb
 cgitb.enable()
@@ -125,7 +126,7 @@ o.internal('Generating MiG linux sandbox dist with hd size ' + hd_size
 o.out(msg)
 
 if status:
-    o.internal('Generated MiG sandbox dist with hd size ' + hd_size)
+    o.internal('Created MiG sandbox resource request')
 else:
     (status2, msg) = remove_resource(configuration.resource_home,
             resource_name, resource_identifier)
@@ -145,6 +146,8 @@ try:
 except Exception, exc:
     o.client('Could not update sandbox database: %s' % exc)
     o.reply_and_exit(o.CLIENT_ERROR)
+
+logger.debug('building resource specific files for %s' % unique_host_name)
 
 sandboxkey = hexlify(open('/dev/urandom').read(32))
 
@@ -263,6 +266,7 @@ try:
     fd = open(conf_file_src, 'w')
     fd.write(res_conf_string)
     fd.close()
+    logger.debug('wrote conf: %s' % res_conf_string)
 except Exception, err:
     o.client(err)
     o.reply_and_exit(o.CLIENT_ERROR)
@@ -271,6 +275,7 @@ except Exception, err:
 
 (status, msg) = confparser.run(conf_file_src, resource_name + '.'
                                 + str(resource_identifier))
+logger.debug('res conf parser returned: %s' % status)
 if not status:
     o.out(msg, conf_file_src)
     o.reply_and_exit(o.ERROR)
@@ -282,6 +287,7 @@ msg = ''
 (status, resource_config) = \
     get_resource_configuration(configuration.resource_home,
                                unique_host_name, logger)
+logger.debug('got resource conf %s' % resource_config)
 if not resource_config:
     msg += "No resouce_config for: '" + unique_host_name + "'\n"
     o.out(msg)
@@ -305,6 +311,7 @@ try:
     fd = open(pgid_file, 'w')
     fd.write('')
     fd.close()
+    logger.debug('wrote fake pgid file %s' % pgid_file)
 except Exception, err:
     o.client(err)
     o.reply_and_exit(o.CLIENT_ERROR)
@@ -317,6 +324,7 @@ try:
     fd = open(pgid_file, 'w')
     fd.write('')
     fd.close()
+    logger.debug('wrote fake pgid file %s' % pgid_file)
 except Exception, err:
     o.client(err)
     o.reply_and_exit(o.CLIENT_ERROR)
@@ -339,7 +347,7 @@ try:
         o.out(msg)
         o.reply_and_exit(o.ERROR)
     os.close(master_node_script_file)
-    logger.debug('wrote master node script %s', mns_fname)
+    logger.debug('wrote master node script %s' % mns_fname)
 except Exception, err:
     o.out('could not write master node script file (%s)' % err)
     o.reply_and_exit(o.ERROR)
@@ -360,13 +368,15 @@ try:
         o.reply_and_exit(o.ERROR)
 
     os.close(fe_script_file)
-    logger.debug('wrote frontend script %s', fes_fname)
+    logger.debug('wrote frontend script %s' % fes_fname)
 except Exception, err:
     o.out('I could could not write frontend script file (%s)' % err)
     o.reply_and_exit(o.ERROR)
 
 # change directory to sss_home and mount hd image in order to copy
 # the FE-script and masternode script to the hd
+
+logger.debug('modifying hda image for this sandbox')
 
 os.chdir(configuration.sss_home)
 
@@ -391,13 +401,15 @@ fcntl.flock(lockfile.fileno(), fcntl.LOCK_EX)
 
 # unmount leftover disk image mounts if any
 
-os.system('sync')
-os.system('umount mnt')
-os.system('sync')
+if os.path.ismount('mnt'):
+    logger.warning('unmounting leftover mount point')
+    os.system('sync')
+    os.system('umount mnt')
+    os.system('sync')
 
 # use a disk of the requested size
 
-command = 'cp MiG-SSS' + os.sep + 'hda_' + hd_size + '.img MiG-SSS'\
+command = 'cp -f MiG-SSS' + os.sep + 'hda_' + hd_size + '.img MiG-SSS'\
      + os.sep + 'hda.img'
 os.system(command)
 
@@ -405,7 +417,15 @@ os.system(command)
 
 os.system('mount mnt')
 
-# time.sleep(120)
+for i in range(60):
+    if not os.path.ismount('mnt'):
+        logger.warning('waiting for mount point to appear...')
+        time.sleep(1)
+
+if not os.path.ismount('mnt'):
+    o.out('Failed to mount sandbox disk image!')
+    o.reply_and_exit(o.CLIENT_ERROR)
+
 
 try:
 
@@ -463,6 +483,13 @@ os.system('sync')
 os.system('umount mnt')
 os.system('sync')
 
+for i in range(60):
+    if os.path.ismount('mnt'):
+        logger.warning('waiting for mount point to disappear...')
+        time.sleep(1)
+
+logger.debug('finished modifying hda image')
+
 # Convert the hda to vmdk - no longer needed! (04.2008)
 # os.system('/usr/local/bin/qemu-img ' \
 #          'convert MiG-SSS/hda.img -O vmdk MiG-SSS/hda.vmdk')
@@ -477,6 +504,7 @@ if "raw" != image_format:
     os.system(command)
     os.remove(image_path)
     os.rename(tmp_path, image_path)
+    logger.debug('converted hda image to %s format' % image_format)
 
 # Copy one of the vmx files according to the specified memory requirement: - no longer needed! (04.2008)
 # command = "cp MiG-SSS" + os.sep + "MiG_" + memory + ".vmx MiG-SSS" + \
@@ -512,6 +540,9 @@ else:
 # ## Leave critical region ###
 
 lockfile.close()  # unlocks lockfile
+
+logger.debug('packed files in zip for download')
+    
 
 file_size = os.stat(dlfilename).st_size
 
