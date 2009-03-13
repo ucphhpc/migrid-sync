@@ -28,7 +28,6 @@
 """This script allows users to administrate their sandboxes"""
 
 import pickle
-import os
 
 from shared.gridstat import GridStat
 
@@ -39,7 +38,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     defaults = {'username': REJECT_UNSET, 'password': REJECT_UNSET,
-                'newuser': ['off'], 'vgrid': 'Generic'}
+                'newuser': ['off'], 'vgrid': ['Generic']}
     return ['html_form', defaults]
 
 
@@ -129,7 +128,7 @@ def count_jobs(resource_name):
     return value
 
 
-def show_info(user, vgrid):
+def show_info(user, vgrid_list):
     """Shows info for given user and passes any vgrid settings on unchanged"""
 
     # Resource Monitor Section
@@ -178,9 +177,16 @@ def show_info(user, vgrid):
 
     html += \
         """<TR><TD>
-        <input type='hidden' name='username' value='%s'>
-        <input type='hidden' name='vgrid' value='%s'>
-</TD></TR>""" % (user, vgrid)
+    <input type='hidden' name='username' value='%s'>
+""" % user
+    for vgrid in vgrid_list:
+        html += \
+             """
+    <input type='hidden' name='vgrid' value='%s'>
+""" % vgrid
+
+    html += \
+        """</TD></TR>"""
     html += \
         """<TR><TD>Press 'Submit' to download - please note that it 
           may<br> take up to 2 minutes to generate your sandbox</TD>
@@ -200,7 +206,7 @@ def show_info(user, vgrid):
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
-    (configuration, logger, output_objects, op_name) = \
+    (configuration, logger, output_objects, _) = \
         initialize_main_variables()
 
     defaults = signature()[1]
@@ -211,7 +217,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     username = accepted['username'][-1].strip()
     password = accepted['password'][-1].strip()
     newuser = accepted['newuser'][-1].strip()
-    vgrid = accepted['vgrid'][-1].strip()
+    vgrid_list = accepted['vgrid']
 
     PW = 0
     global RESOURCES
@@ -274,7 +280,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                          % exc})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
             output_objects.append({'object_type': 'html_form', 'text'
-                                  : show_info(username, vgrid)})
+                                  : show_info(username, vgrid_list)})
     else:
 
     # Otherwise, check that username and password are correct
@@ -297,7 +303,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
             # print "<a href='sandbox_login.py'>Back</a>"....
 
             output_objects.append({'object_type': 'html_form', 'text'
-                                  : show_info(username, vgrid)})
+                                  : show_info(username, vgrid_list)})
 
     return (output_objects, returnvalues.OK)
 
