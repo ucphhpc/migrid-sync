@@ -1,13 +1,26 @@
 = Using the sandbox generator =
 The sandbox generator requires a hard disk image for each of the supported disk sizes.
 At the momemt the 100MB, 1G and 2G sizes map to hda_{100,1000,2000}.img files.
-Those files should preferably be created as sparse qemu images with:
-qemu-img create hda_2000.img 2G
-mkfs.ext2 hda_2000.img
-tune2fs -c 100 -i 365 hda_2000.img
-mount -o loop -t ext2 hda_2000.img disk
-tar xvzf mig-hda.tgz -C disk
-umount disk
+The images must be modified on-the-fly when a sandbox is created so you
+need to provide user level mounting for a particular file, hda.img which
+will be used for these modify mounts. In other words you need to add the
+following line to your /etc/fstab in order to allow sandbox generation:
+/home/mig/state/sss_home/MiG-SSS/hda.img /home/mig/state/sss_home/mnt  auto    user,loop      0       0
+
+..if using the default user and path settings.
+
+This will allow the mig user to mount the hda.img on the mnt dir without
+additional privileges.
+After adding that line you can proceed to make the images that aren't
+included due to size restrictions. They should preferably be created as
+sparse qemu images with:
+qemu-img create hda.img 2G
+mkfs.ext2 -F hda.img
+tune2fs -c 100 -i 365 hda.img
+mount mnt
+tar xvzf mig-hda.tgz -C mnt
+umount mnt
+mv hda.img hda_2000.img
 
 Please note that you may have to mount and unmount using sudo if the
 corresponding mount points aren't included in /etc/fstab
