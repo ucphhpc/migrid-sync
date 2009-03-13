@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# vgrid - [insert a few words of module description on this line]
+# vgrid - helper functions related to VGrid actions
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,10 @@
 # -- END_HEADER ---
 #
 
+"""VGrid specific helper functions"""
+
 import os
+import fnmatch
 
 from shared.listhandling import list_items_in_pickled_list
 from shared.validstring import valid_dir_input
@@ -47,6 +50,7 @@ def vgrid_is_default(vgrid):
 
 def vgrid_is_owner_or_member(vgrid_name, cert_name_no_spaces,
                              configuration):
+    """Combines owner and member check"""
     if vgrid_is_owner(vgrid_name, cert_name_no_spaces, configuration)\
          or vgrid_is_member(vgrid_name, cert_name_no_spaces,
                             configuration):
@@ -63,22 +67,25 @@ def vgrid_is_cert_in_list(
     ):
     """Return True if specified cert_name_no_spaces is in group
     ('owners', 'members', 'resources') of vgrid.
+    Please note that cert_name_no_spaces is a misleading name when
+    called for resources, where it is actually the unique resource ID.
     """
 
-    (status, list) = vgrid_list(vgrid_name, group, configuration)
+    # Get the list of entities of specified type (group) in vgrid (vgrid_name)
+    (status, entries) = vgrid_list(vgrid_name, group, configuration)
 
     if not status:
-
-        # error
-
         configuration.logger.error('status not True in vgrid_is_cert_in_list: %s'
-                                    % list)
+                                    % entries)
         return False
 
-    if cert_name_no_spaces in list:
-        return True
-    else:
-        return False
+    for entry in entries:
+
+        # Use fnmatch to accept direct hits as well as wild card matches
+
+        if fnmatch.fnmatch(cert_name_no_spaces, entry):
+            return True
+    return False
 
 
 def vgrid_is_owner(vgrid_name, cert_name_no_spaces, configuration):
@@ -106,8 +113,9 @@ def vgrid_is_member(vgrid_name, cert_name_no_spaces, configuration):
 
 
 def vgrid_is_resource(vgrid_name, cert_name_no_spaces, configuration):
-
-    # all resources are in default VGrid
+    """Check if cert_name_no_spaces is a resource in vgrid_name. Please note
+    that everyone is a member of the Generic vgrid.
+    """
 
     if vgrid_is_default(vgrid_name):
         return True
@@ -116,8 +124,7 @@ def vgrid_is_resource(vgrid_name, cert_name_no_spaces, configuration):
 
 
 def vgrid_list_subvgrids(vgrid_name, configuration):
-
-    # return list of subvgrids of vgrid_name
+    """Return list of subvgrids of vgrid_name"""
 
     result_list = []
     (status, all_vgrids_list) = vgrid_list_vgrids(configuration)
@@ -130,36 +137,18 @@ def vgrid_list_subvgrids(vgrid_name, configuration):
 
 
 def vgrid_list_vgrids(configuration):
-
-    # list all vgrids and sub-vgrids created on the system
+    """List all vgrids and sub-vgrids created on the system"""
 
     vgrids_list = []
-    for (root, dirs, files) in os.walk(configuration.vgrid_home):
+    for (root, dirs, _) in os.walk(configuration.vgrid_home):
         for directory in dirs:
 
-            # ## old check, can be removed when all vgrids on all MiG servers are created with the new vgrid scripts
-
-            if directory == 'public_base' or directory\
-                 == 'private_base':
-                continue
-
-            # ##
-
-            #  without vgrid_home location, but the entire vgrid name (dalton/dk/imada)
+            # strip vgrid_home prefix to get entire vgrid name (/dalton/dk/imada)
 
             complete_vgrid_location = os.path.join(root, directory)
             vgrid_name_without_location = \
                 complete_vgrid_location.replace(configuration.vgrid_home,
                     '', 1)
-
-            # ## old check, can be removed when all vgrids on all MiG servers are created with the new vgrid scripts
-
-            if vgrid_name_without_location.find('public_base') != -1\
-                 or vgrid_name_without_location.find('private_base')\
-                 != -1:
-                continue
-
-            # ##
 
             vgrids_list.append(vgrid_name_without_location)
     return (True, vgrids_list)
@@ -199,13 +188,9 @@ def init_vgrid_script_add_rem(
             return (False, msg, None)
     elif subject_type == 'resource':
         if not is_resource(subject, configuration.resource_home):
-            msg += \
-                '%s is not a valid MiG resource (OK, if removing or if e.g. the resource creation is pending)'\
-                 % subject
+            msg += '%s is not a valid MiG resource' % subject
+            msg += ' (OK, if removing or if e.g. the resource creation is pending)'
     else:
-
-            # return (False, msg, None)
-
         msg += 'unknown subject type in init_vgrid_script_add_rem'
         return (False, msg, [])
 
@@ -214,9 +199,10 @@ def init_vgrid_script_add_rem(
 
 def init_vgrid_script_list(vgrid_name, cert_name_no_spaces,
                            configuration):
+    """Helper for vgrid scripts"""
     msg = ''
     if not vgrid_name:
-        msg += 'Please specify vgrid_name in the querystring'
+        msg += 'Please specify vgrid_name in the query string'
         return (False, msg, None)
 
     if not valid_dir_input(configuration.vgrid_home, vgrid_name):
@@ -225,31 +211,31 @@ def init_vgrid_script_list(vgrid_name, cert_name_no_spaces,
 
     if not vgrid_is_owner_or_member(vgrid_name, cert_name_no_spaces,
                                     configuration):
-        msg += \
-            'Failure: You must be an owner or member of %s vgrid to get a list of members/owners/resources'\
-             % vgrid_name
+        msg += 'Failure: You must be an owner or member of ' + vgrid_name + \
+               ' vgrid to get a list of members/owners/resources'
         return (False, msg, None)
 
     return (True, msg, [])
 
 
 def vgrid_list(vgrid_name, group, configuration):
+    """Shared helper function to get a list of group entities in vgrid"""
     if group == 'owners':
-        file = 'owners'
+        name = 'owners'
     elif group == 'members':
-        file = 'members'
+        name = 'members'
     elif group == 'resources':
-        file = 'resources'
+        name = 'resources'
     else:
         return (False, "vgrid_list: unknown 'group'")
-    vgrid_list = vgrid_name.split('/')
+    vgrid_parts = vgrid_name.split('/')
     vgrid_dir = ''
     output = []
-    for sub_vgrid in vgrid_list:
+    for sub_vgrid in vgrid_parts:
         vgrid_dir += '/' + sub_vgrid
-        owners_file = configuration.vgrid_home + '/' + vgrid_dir + '/'\
-             + file
-        (status, msg) = list_items_in_pickled_list(owners_file,
+        owners_path = configuration.vgrid_home + '/' + vgrid_dir + '/'\
+             + name
+        (status, msg) = list_items_in_pickled_list(owners_path,
                 configuration.logger)
         if status:
 

@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# sandbox_admin - [insert a few words of module description on this line]
+# sandbox_admin - sandbox generator and monitor for individual users
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -39,7 +39,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     defaults = {'username': REJECT_UNSET, 'password': REJECT_UNSET,
-                'newuser': ['off']}
+                'newuser': ['off'], 'vgrid': 'Generic'}
     return ['html_form', defaults]
 
 
@@ -129,8 +129,8 @@ def count_jobs(resource_name):
     return value
 
 
-def show_info(user):
-    """Shows Info For Given User"""
+def show_info(user, vgrid):
+    """Shows info for given user and passes any vgrid settings on unchanged"""
 
     # Resource Monitor Section
 
@@ -177,9 +177,10 @@ def show_info(user):
     html += print_windows_solution_selection()
 
     html += \
-        """<TR><TD><input type='hidden' name='username' value='%s'>
-          </TD></TR>"""\
-         % user
+        """<TR><TD>
+        <input type='hidden' name='username' value='%s'>
+        <input type='hidden' name='vgrid' value='%s'>
+</TD></TR>""" % (user, vgrid)
     html += \
         """<TR><TD>Press 'Submit' to download - please note that it 
           may<br> take up to 2 minutes to generate your sandbox</TD>
@@ -210,6 +211,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     username = accepted['username'][-1].strip()
     password = accepted['password'][-1].strip()
     newuser = accepted['newuser'][-1].strip()
+    vgrid = accepted['vgrid'][-1].strip()
 
     PW = 0
     global RESOURCES
@@ -268,7 +270,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                          % exc})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
             output_objects.append({'object_type': 'html_form', 'text'
-                                  : show_info(username)})
+                                  : show_info(username, vgrid)})
     else:
 
     # Otherwise, check that username and password are correct
@@ -291,7 +293,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
             # print "<a href='sandbox_login.py'>Back</a>"....
 
             output_objects.append({'object_type': 'html_form', 'text'
-                                  : show_info(username)})
+                                  : show_info(username, vgrid)})
 
     return (output_objects, returnvalues.OK)
 
