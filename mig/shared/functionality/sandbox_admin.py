@@ -226,11 +226,15 @@ def main(cert_name_no_spaces, user_arguments_dict):
         fd = open(sandboxdb_file, 'rb')
         userdb = pickle.load(fd)
         fd.close()
+    except IOError:
+        # First time - create empty dict
+        userdb = {}
     except Exception, exc:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not read sandbox database! %s'
+                               : 'Could not read sandbox database! %s'
                                % exc})
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
     global admin_email
     admin_email = configuration.admin_email
     global gs
