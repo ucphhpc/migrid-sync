@@ -1,6 +1,6 @@
 = Using the sandbox generator =
 The sandbox generator requires a hard disk image for each of the supported disk sizes.
-At the momet the 100MB, 1G and 2G sizes map to hda_{100,1000,2000}.img files.
+At the momemt the 100MB, 1G and 2G sizes map to hda_{100,1000,2000}.img files.
 Those files should preferably be created as sparse qemu images with:
 qemu-img create hda-2G-raw.img 2G
 sudo mkfs.ext2 hda-2G-raw.img
@@ -23,3 +23,10 @@ In the sandbox generator they are converted to qcow images on the fly.
 We would prefer to only have them on qcow format but we need raw format to be able
 to mount and modify the image on the fly, so we do that with the raw images and
 convert them just before zip and download.
+
+The generator needs a MiG.iso base file system iso which can be downloaded from:
+http://mig-1.imada.sdu.dk/public/sandbox/MiG-SSS/MiG.iso
+
+Windows sandboxes additionally need a couple of installers avilable from:
+http://mig-1.imada.sdu.dk/public/sandbox/MiG-SSS/MiG-SSS_Setup.exe
+http://mig-1.imada.sdu.dk/public/sandbox/MiG-SSS/MiG-SSS-Service_Setup.exe
