@@ -181,12 +181,12 @@ def show_info(user, vgrid_list):
 """ % user
     for vgrid in vgrid_list:
         html += \
-             """
-    <input type='hidden' name='vgrid' value='%s'>
+             """<input type='hidden' name='vgrid' value='%s'>
 """ % vgrid
 
     html += \
-        """</TD></TR>"""
+        """</TD></TR>
+        """
     html += \
         """<TR><TD>Press 'Submit' to download - please note that it 
           may<br> take up to 2 minutes to generate your sandbox</TD>

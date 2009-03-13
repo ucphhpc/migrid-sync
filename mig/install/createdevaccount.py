@@ -178,6 +178,8 @@ edquota -u %s -p LOGIN_OF_SIMILAR_USER"""\
     print """# Attach full name of user to login:
 usermod -c 'INSERT FULL NAME HERE' %s"""\
          % user
+    print """# Add mount point for sandbox generator:
+echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  auto    user,loop       0       0' >> /etc/fstab""" % (user, user)
 
     user_dict = {}
     user_dict['__USER__'] = user
