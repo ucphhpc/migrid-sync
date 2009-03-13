@@ -36,7 +36,7 @@ import shutil
 from binascii import hexlify
 import pickle
 import fcntl
-import time
+
 
 import shared.confparser as confparser
 import shared.resadm as resadm
@@ -55,13 +55,6 @@ from shared.vgrid import vgrid_list_vgrids
     init_cgiscript_possibly_with_cert(False, 'application/zip')
 sandboxdb_file = configuration.sandbox_home + os.sep\
      + 'sandbox_users.pkl'
-
-# sandboxdb_file = "sandbox_users.pkl"
-# Load the user file
-
-fd = open(sandboxdb_file, 'rb')
-userdb = pickle.load(fd)
-fd.close()
 
 # initiate form and read hd size and memory values
 
@@ -93,17 +86,30 @@ except Exception, err:
     o.reply_and_exit(o.CLIENT_ERROR)
 
 # check that requested image format is valid
+
 if not image_format in ["raw", "qcow", "cow", "qcow2", "vmdk"]:
     o.client("requested invalid image format: %s" % cgi.escape(image_format))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 # check that requested vgrids are valid - anybody can offer their sandbox for a vgrid
 # but it is still left to the vgrid owners to explicitly accept all resources
+
 all_vgrids = vgrid_list_vgrids(configuration)
 for vgrid in vgrid_list:
     if not vgrid in all_vgrids:
         o.client("requested invalid vgrid: %s" % cgi.escape(vgrid))
         o.reply_and_exit(o.CLIENT_ERROR)
+
+
+# Load the user file
+
+try:
+    fd = open(sandboxdb_file, 'rb')
+    userdb = pickle.load(fd)
+    fd.close()
+except Exception, exc:
+    o.client('Could not read sandbox database: %s' % exc)
+    o.reply_and_exit(o.CLIENT_ERROR)
 
 # provide a resource name
 
@@ -134,9 +140,14 @@ unique_host_name = resource_name + '.' + str(resource_identifier)
 # add the resource to the list of the users resources
 
 userdb[username][1].append(unique_host_name)
-fd = open(sandboxdb_file, 'wb')
-pickle.dump(userdb, fd)
-fd.close()
+
+try:
+    fd = open(sandboxdb_file, 'wb')
+    pickle.dump(userdb, fd)
+    fd.close()
+except Exception, exc:
+    o.client('Could not update sandbox database: %s' % exc)
+    o.reply_and_exit(o.CLIENT_ERROR)
 
 sandboxkey = hexlify(open('/dev/urandom').read(32))
 
