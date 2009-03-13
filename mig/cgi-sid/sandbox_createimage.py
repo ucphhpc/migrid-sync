@@ -37,7 +37,6 @@ from binascii import hexlify
 import pickle
 import fcntl
 
-
 import shared.confparser as confparser
 import shared.resadm as resadm
 from shared.cgishared import init_cgiscript_possibly_with_cert
@@ -46,8 +45,9 @@ from shared.conf import get_resource_configuration, get_resource_exe
 from shared.fileio import make_symlink
 from shared.vgrid import vgrid_list_vgrids
 
-# print "Content-Type: txt/html"
-# print
+# uncomment for debugging
+#print "Content-Type: txt/html"
+#print
 
 # optional certificate
 
@@ -63,7 +63,6 @@ username = form.getfirst('username', '').strip()
 vgrid_list = form.getlist('vgrid')
 if not vgrid_list:
     vgrid_list = ['Generic']
-
 
 # password = form.getfirst("password","").strip()
 
@@ -94,12 +93,12 @@ if not image_format in ["raw", "qcow", "cow", "qcow2", "vmdk"]:
 # check that requested vgrids are valid - anybody can offer their sandbox for a vgrid
 # but it is still left to the vgrid owners to explicitly accept all resources
 
-all_vgrids = vgrid_list_vgrids(configuration)
+(status, all_vgrids) = vgrid_list_vgrids(configuration)
 for vgrid in vgrid_list:
-    if not vgrid in all_vgrids:
-        o.client("requested invalid vgrid: %s" % cgi.escape(vgrid))
+    if not status or not vgrid in all_vgrids:
+        o.client("requested vgrid could not be verified: %s (%s)" % (cgi.escape(vgrid),
+                                                                     all_vgrids))
         o.reply_and_exit(o.CLIENT_ERROR)
-
 
 # Load the user file
 
@@ -126,9 +125,7 @@ o.internal('Generating MiG linux sandbox dist with hd size ' + hd_size
 o.out(msg)
 
 if status:
-    o.client('''
- - you might need to do a SSH to the resource beforestarting the resource to get it in known_hosts!
- (this is because SSH hostkey checking is disabled)''')
+    o.internal('Generated MiG sandbox dist with hd size ' + hd_size)
 else:
     (status2, msg) = remove_resource(configuration.resource_home,
             resource_name, resource_identifier)
@@ -214,7 +211,7 @@ X86
 1
 
 ::RUNTIMEENVIRONMENT::
-name: LIBPYTHON2.4
+
 
 ::HOSTKEY::
 N/A
