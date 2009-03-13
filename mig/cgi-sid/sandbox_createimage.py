@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# sandbox_createimage - [insert a few words of module description on this line]
+# sandbox_createimage - generate a zip with all sandbox components
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""This script generates a sandbox image """
+"""This script generates a sandbox image"""
 
 import os
 import cgi
@@ -44,6 +44,7 @@ from shared.cgishared import init_cgiscript_possibly_with_cert
 from shared.resource import create_resource, remove_resource
 from shared.conf import get_resource_configuration, get_resource_exe
 from shared.fileio import make_symlink
+from shared.vgrid import vgrid_list_vgrids
 
 # print "Content-Type: txt/html"
 # print
@@ -66,6 +67,10 @@ fd.close()
 
 form = cgi.FieldStorage()
 username = form.getfirst('username', '').strip()
+vgrid_list = form.getlist('vgrid')
+if not vgrid_list:
+    vgrid_list = ['Generic']
+
 
 # password = form.getfirst("password","").strip()
 
@@ -91,6 +96,14 @@ except Exception, err:
 if not image_format in ["raw", "qcow", "cow", "qcow2", "vmdk"]:
     o.client("requested invalid image format: %s" % cgi.escape(image_format))
     o.reply_and_exit(o.CLIENT_ERROR)
+
+# check that requested vgrids are valid - anybody can offer their sandbox for a vgrid
+# but it is still left to the vgrid owners to explicitly accept all resources
+all_vgrids = vgrid_list_vgrids(configuration)
+for vgrid in vgrid_list:
+    if not vgrid in all_vgrids:
+        o.client("requested invalid vgrid: %s" % cgi.escape(vgrid))
+        o.reply_and_exit(o.CLIENT_ERROR)
 
 # provide a resource name
 
@@ -218,7 +231,7 @@ stop_command=kill -9 -$mig_exe_pgid
 clean_command=true
 continuous=False
 shared_fs=True
-vgrid=Generic
+vgrid=%s
 
 """\
      % (
@@ -231,6 +244,7 @@ vgrid=Generic
     sandboxkey,
     unique_host_name,
     unique_host_name,
+    ', '.join(vgrid_list),
     )
 
 # write the conf string to a conf file

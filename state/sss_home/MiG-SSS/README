@@ -17,9 +17,9 @@ sparse qemu images with:
 qemu-img create hda.img 2G
 mkfs.ext2 -F hda.img
 tune2fs -c 100 -i 365 hda.img
-mount mnt
-tar xvzf mig-hda.tgz -C mnt
-umount mnt
+mount ../mnt
+tar xvzf mig-hda.tgz -C ../mnt
+umount ../mnt
 mv hda.img hda_2000.img
 
 Please note that you may have to mount and unmount using sudo if the
