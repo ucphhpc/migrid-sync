@@ -36,16 +36,17 @@ from shared.mrslparser import parse
 from shared.fileio import unpickle
 
 
-def get_job_id():
+def get_job_id(configuration):
     """Read current job id from job_id_counter, increment with one 
     and write new value to the file again. Create the file if it 
     does not exist.
     """
 
     filehandle = None
-    job_id_counter_filename = 'job_id_counter'
+    job_id_counter_path = os.path.join(configuration.mig_system_files,
+                                           'job_id_counter')
     try:
-        filehandle = open(job_id_counter_filename, 'r+')
+        filehandle = open(job_id_counter_path, 'r+')
     except IOError, ioe:
         print 'No job id counter found - creating one (first run?)'
 
@@ -64,7 +65,7 @@ def get_job_id():
 
             # Create file if it doesn't exist.
 
-            filehandle = open(job_id_counter_filename, 'w')
+            filehandle = open(job_id_counter_path, 'w')
             fcntl.flock(filehandle.fileno(), fcntl.LOCK_EX)
             val = '0'
             filehandle.write(str(int(val) + 1))
@@ -92,7 +93,7 @@ def new_job(
 
     mig_server_id = configuration.mig_server_id
 
-    counter = get_job_id()
+    counter = get_job_id(configuration)
     gmt = time.gmtime()
     timestamp = str(gmt[1]) + '_' + str(gmt[2]) + '_' + str(gmt[0])\
          + '__' + str(gmt[3]) + '_' + str(gmt[4]) + '_' + str(gmt[5])
