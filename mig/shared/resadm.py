@@ -113,8 +113,8 @@ def put_exe_pgid(
         pgid_file.flush()
         os.fsync(pgid_file.fileno())
 
-        msg = ("pgid: '%s' put for %s %s", pgid, unique_resource_name,
-               exe_name)
+        msg = "pgid: '%s' put for %s %s" % (pgid, unique_resource_name,
+                                            exe_name)
 
         if 'stopped' == old_pgid:
             msg += "Resource: '" + unique_resource_name\
@@ -315,7 +315,7 @@ def fill_frontend_script(
             'Error: could not write frontend script file for some reason %s'\
              % err
 
-        # logger.error("could not write frontend script file (%s)", err)
+        # logger.error("could not write frontend script file (%s)" % err)
 
         return (False, msg)
 

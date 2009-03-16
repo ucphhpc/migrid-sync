@@ -455,6 +455,9 @@ try:
     fd = open('keyfile', 'w')
     fd.write(sandboxkey)
     fd.close()
+    fd = open('serverfile', 'w')
+    fd.write(configuration.migserver_https_url)
+    fd.close()
 except Exception, err:
     o.client(err)
 
@@ -467,6 +470,7 @@ except Exception, err:
 
 try:
     shutil.copyfile('keyfile', 'mnt/mig/etc/keyfile')
+    shutil.copyfile('serverfile', 'mnt/mig/etc/serverfile')
 except Exception, err:
     o.client(err)
 
