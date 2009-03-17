@@ -76,7 +76,7 @@ def check_mrsl_files(
     # We only check files modified since last start if possible
 
     last_start = 0
-    last_start_file = configuration.mig_server_home\
+    last_start_file = configuration.mig_system_files\
          + 'grid_script_laststart'
     if os.path.exists(last_start_file):
         last_start = os.path.getmtime(last_start_file)

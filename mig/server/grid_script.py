@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# grid_script - [insert a few words of module description on this line]
+# grid_script - the core job handling daemon on a MiG server
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -24,9 +24,6 @@
 #
 # -- END_HEADER ---
 #
-
-# Henrik Hoey Karlsen
-# Modified for jobtimeout by Martin Rehr
 
 """Main script running on the MiG server"""
 
@@ -202,8 +199,8 @@ logger.info('Starting MiG server')
 
 # Load queues from file dump if available
 
-job_queue_path = configuration.mig_server_home + 'job_queue.pickle'
-executing_queue_path = configuration.mig_server_home\
+job_queue_path = configuration.mig_system_files + 'job_queue.pickle'
+executing_queue_path = configuration.mig_system_files\
      + 'executing_queue.pickle'
 only_new_jobs = True
 job_queue = load_queue(job_queue_path, logger)
