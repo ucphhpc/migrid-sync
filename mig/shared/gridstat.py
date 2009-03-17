@@ -69,7 +69,10 @@ class GridStat:
             filename = self.__configuration.gridstat_files_dir\
                  + stattype_key + os.sep + stattype_value.upper()\
                  + '.pck'
-            stat_dict = unpickle(filename, self.__logger)
+            if os.path.exists(filename):
+                stat_dict = unpickle(filename, self.__logger)
+            else:
+                stat_dict = None
             if stat_dict:
                 self.__gridstat_dict[stattype_key][stattype_value] = \
                     stat_dict
