@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# docs - [insert a few words of module description on this line]
+# docs - online documentation generator
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -79,10 +79,10 @@ def mrsl_keywords():
         info = keywords_dict[keyword]
         output_objects.append({'object_type': 'header', 'text'
                               : keyword})
-        list = []
+        entries = []
         for (field, val) in info.items():
-            list.append(field + ': ' + str(val))
-        output_objects.append({'object_type': 'list', 'list': list})
+            entries.append(field + ': ' + str(val))
+        output_objects.append({'object_type': 'list', 'list': entries})
 
 
 def config_keywords():
@@ -100,10 +100,10 @@ def config_keywords():
             info = keywords_dict[keyword]
             output_objects.append({'object_type': 'header', 'text'
                                   : keyword})
-            list = []
+            entries = []
             for (field, val) in info.items():
-                list.append(field + ': ' + str(val))
-            output_objects.append({'object_type': 'list', 'list': list})
+                entries.append(field + ': ' + str(val))
+            output_objects.append({'object_type': 'list', 'list': entries})
         output_objects.append({'object_type': 'header', 'text': ''})
 
 
@@ -118,10 +118,10 @@ def valid_outputformats():
                           })
     output_objects.append({'object_type': 'header', 'text'
                           : 'Valid formats'})
-    list = []
+    entries = []
     for outputformat in get_valid_outputformats():
-        list.append(outputformat)
-    output_objects.append({'object_type': 'list', 'list': list})
+        entries.append(outputformat)
+    output_objects.append({'object_type': 'list', 'list': entries})
 
 
 # Topic to generator-function mapping - add new topics here
@@ -211,5 +211,3 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                   : 'No topics matching %s' % show})
 
     return (output_objects, returnvalues.OK)
-
-

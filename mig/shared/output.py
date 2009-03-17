@@ -568,7 +568,7 @@ def html_format(ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'list':
             print '<ul>'
             for list_item in i['list']:
-                print '<li>%s</li>' % list_item
+                print ('<li>%s</li>' % list_item).replace('\n', '<br>')
             print '</ul>'
         elif i['object_type'] == 'linklist':
             links = i['links']

@@ -31,50 +31,92 @@
 def get_keywords_dict(configuration):
     execute = {
         'Description': 'One or more commands to execute',
-        'Example': '''uname -a
+        'Example': '''
+::EXECUTE::
+uname -a
 echo text >> file
-ls''',
+ls
+
+Executes the commands sequentially in a shell script environment on the resource.
+Thus changes to the environment are preserved for the entire job session, so e.g.
+::EXECUTE::
+cd mydir
+pwd
+
+will change to mydir and run the pwd command from there.
+''',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': True,
         }
     inputfiles = {
-        'Description': "Files to be copied to the resource before job execution. Relative paths like plain file names are automatically taken from the user home on the MiG server. External sources are also allowed as long as they can be downloaded with the 'curl' client without user interaction. This means that HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, DICT, TELNET or even LDAP are at least technically supported. External data sources obviously require the executing resource to have outbound network access to the data source. Thus HTTP and HTTPS are the most likely to generally work even on network restricted resources. Inputfiles may be specified as a single name per line or as lines of source and destination path separated by a space. In the single name format the file will be called the same on the destination as on the source.",
-        'Example': '''file
+        'Description': '''Files to be copied to the resource before job execution.
+Relative paths like plain file names are automatically taken from the user home on the MiG server.
+External sources are also allowed as long as they can be downloaded with the "curl" client without user interaction. This means that HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, DICT, TELNET or even LDAP are at least technically supported. External data sources obviously require the executing resource to have outbound network access to the data source. Thus HTTP and HTTPS are the most likely to generally work even on network restricted resources.
+Inputfiles may be specified as a single name per line or as lines of source and destination path separated by a space. In the single name format the file will be called the same on the destination as on the source.
+''',
+        'Example': '''
+::INPUTFILES::
+somefile
 another_file another_file_renamed
- Copies file and another_file to the resource, but another_file is called another_file_renamed on the resource.
 
+Copies somefile and another_file from your MiG home to the resource, but another_file is renamed to another_file_renamed on the resource.
+
+::INPUTFILES::
 some_url some_file
- downloads the contents in some_url to a file called some_file on the resource.''',
+
+Downloads the contents from some_url (e.g. https://myhost.org/inputfile.txt) to a file called some_file on the resource.
+''',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }
     outputfiles = {
-        'Description': "Files to be copied from the resource after job execution. Relative paths like plain file names are automatically sent to the user home on the MiG server. External destinations are also allowed as long as they can be uploaded with the 'curl' client without user interaction. This means that HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, DICT, TELNET or even LDAP are at least technically supported. External data destinations obviously require the executing resource to have outbound network access to the data destination. Thus HTTP or HTTPS are the most likely to be allowed even on network restricted resources. Please note however, that HTTP upload requires the destination HTTP server to support the PUT operation, which is not generally enabled on all servers. Outputfiles may be specified as a single name per line or as lines of source and destination path separated by a space. In the single name format the file will be called the same on the destination as on the source.",
-        'Example': '''file
+        'Description': '''Files to be copied from the resource after job execution.
+Relative paths like plain file names are automatically sent to the user home on the MiG server. External destinations are also allowed as long as they can be uploaded with the "curl" client without user interaction. This means that HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, DICT, TELNET or even LDAP are at least technically supported. External data destinations obviously require the executing resource to have outbound network access to the data destination. Thus HTTP or HTTPS are the most likely to be allowed even on network restricted resources. Please note however, that HTTP upload requires the destination HTTP server to support the PUT operation, which is not generally enabled on all servers.
+Outputfiles may be specified as a single name per line or as lines of source and destination path separated by a space. In the single name format the file will be called the same on the destination as on the source.
+''',
+        'Example': '''
+::OUTPUTFILES::
+file
 another_file_renamed another_file
- Copies file and another_file_renamed to the MiG server, but another_file_renamed is renamed to another_file.
 
+Copies file and another_file_renamed to the MiG server, but another_file_renamed is renamed to another_file on the MiG server.
+
+::OUTPUFILES::
 some_file some_url
- uploads some_file on the resource to some_url.''',
+
+Uploads some_file on the resource to some_url (e.g. ftp://myuser:mypw@myhost.org/outputfile.txt).
+''',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }
     verifyfiles = {
         'Description': 'Files to verify job execution results and output against',
-        'Example': '''EXPECTED.status
+        'Example': '''
+::VERIFYFILES::
+EXPECTED.status
 EXPECTED.stdout
 EXPECTED.stderr
- Compares JOB_ID.status from the job against the file called EXPECTED.status from the MiG home directory and similarly for JOB_ID.stdout and JOB_ID.stderr. For each supplied verify file, EXPECTED.X, the corresponding JOB_ID.X file will be verified line by line using regular expression matching. If any verification fails, the VERIFIED field of the job will be set to FAILURE with the reason appended. If all verification succeeds the VERIFIED field will be set to SUCCESS with a list of the checks appended. If VERIFYFILES is left unset the VERIFIED field will simply be set to NO. In all cases the VERIFIED field is shown as a part of the job status''',
+
+Compares JOB_ID.status from the job against the file called EXPECTED.status from the MiG home directory and similarly for JOB_ID.stdout and JOB_ID.stderr. For each supplied verify file, EXPECTED.X, the corresponding JOB_ID.X file will be verified line by line using regular expression matching. If any verification fails, the VERIFIED field of the job will be set to FAILURE with the reason appended. If all verification succeeds the VERIFIED field will be set to SUCCESS with a list of the checks appended. If VERIFYFILES is left unset the VERIFIED field will simply be set to NO. In all cases the VERIFIED field is shown as a part of the job status.
+''',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }
     executables = {
-        'Description': 'Exactly the same as INPUTFILES, but the files are made executable (chmod +x) after they are copied to the resource',
-        'Example': 'script\nMiGserverScript ResourceScript',
+        'Description': '''Executables to be copied to the resource before the job execution.
+These files are exactly like the INPUTFILES, but the files are made executable (chmod +x) after they are copied to the resource.
+''',
+        'Example': '''
+::EXECUTABLES::
+myscript
+myfile_or_url some_name
+
+Copies myscript and myfile_or_url from your MiG home to the resource, but myfile_or_url is renamed to the executable some_name on the resource.
+''',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
@@ -102,7 +144,12 @@ EXPECTED.stderr
         }
     runtimeenvironment = {
         'Description': 'Software packages the job requires',
-        'Example': 'POVRAY3-6 (the job will only be executed on resources that have ..)',
+        'Example': '''
+::RUNTIMEENVIRONMENT::
+POVRAY3-6
+
+The job will only be executed on resources that advertize the same runtime environment(s).
+''',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
@@ -115,24 +162,38 @@ EXPECTED.stderr
         'Required': False,
         }
     notify = {
-        'Description': "Email and/or Instant Messenger account to notify when the job is done. If you have configured your MiG settings you may leave the address part empty or set it to 'SETTINGS' to use the saved setting.",
-        'Example': '''myemail@mailserver.org
+        'Description': '''Email and/or Instant Messenger account to notify when the job is done.
+If you have configured your MiG settings you may leave the address part empty or set it to "SETTINGS" to use the saved setting.''',
+        'Example': '''
+::NOTIFY::
+myemail@mailserver.org
 jabber: myaccount@jabberserver.org
 yahoo: 
-msn: SETTINGS''',
+msn: SETTINGS
+
+Sends email to myemail@mailserver.org, jabber message to myaccount@jabberserver.org and MSN message to any MSN addresses saved on the Settings page.
+''',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }
     architecture = {
         'Description': 'Cpu architecture',
-        'Example': 'Valid values: %s' % configuration.architectures,
+        'Example': '''
+::ARCHITECTURE::
+X86
+
+This particular MiG server supports the following values:
+%s
+''' % ', '.join(configuration.architectures),
         'Type': 'string',
         'Value': '',
         'Required': False,
         }
     project = {
-        'Description': 'Mark this job as part of a project. This makes is possible to get a total statistic for all jobs in a project.',
+        'Description': '''Mark this job as part of a project.
+This makes is possible to get a total statistic for all jobs in a project.
+''',
         'Example': 'myprojectname',
         'Type': 'string',
         'Value': '',
@@ -167,24 +228,42 @@ msn: SETTINGS''',
         'Required': False,
         }
     jobtype = {
-        'Description': "Specifies the type of a job: A job can be of type 'interactive', 'batch' or 'bulk'. Interactive jobs are executed on a resource but with the graphical display forwarded to the MiG display of the user. Batch jobs are executed in a headless mode and can not use graphical output. Bulk jobs are like batch jobs, but additionally allows concurrent execution of your other jobs on the same resource as long as the resource can provide the requested job resources (cpucpunt, nodecount, memory, disk). Set to 'interactive' for jobs that use a display, set to bulk for high throughput jobs and leave unset or set to batch for the rest. This particular MiG server supports the following jobtypes: %s"\
-             % ', '.join(configuration.jobtypes),
+        'Description': '''Specifies the type of a job:
+A job can be of type "interactive", "batch" or "bulk". Interactive jobs are executed on a resource but with the graphical display forwarded to the MiG display of the user. Batch jobs are executed in a headless mode and can not use graphical output. Bulk jobs are like batch jobs, but additionally allows concurrent execution of your other jobs on the same resource as long as the resource can provide the requested job resources (cpucpunt, nodecount, memory, disk). Set to "interactive" for jobs that use a display, set to bulk for high throughput jobs and leave unset or set to batch for the rest.
+
+This particular MiG server supports the following values:
+%s
+''' % ', '.join(configuration.jobtypes),
         'Example': 'interactive',
         'Type': 'string',
         'Value': 'batch',
         'Required': False,
         }
     maxprice = {
-        'Description': 'Maximum price to pay for the execution of the job. The economy is not yet enforced, so this is a proof of concept option only.',
+        'Description': '''Maximum price to pay for the execution of the job.
+The economy is not yet enforced, so this is a proof of concept option only.
+''',
         'Example': '40',
         'Type': 'string',
         'Value': '0',
         'Required': False,
         }
     vgrid = {
-        'Description': 'A prioritized list of the VGRIDs allowed to execute the job (Default value is Generic). During job submit the keyword ANY is replaced by a list of all the VGrids that you can access.',
-        'Example': 'dalton\nGeneric',
-        'Type': 'multiplestrings',
+        'Description': '''A prioritized list of the VGRIDs allowed to execute the job (Default value is Generic).
+During job submit the keyword ANY is replaced by a list of all the VGrids that you can access.
+''',
+        'Example': '''
+::VGRID::
+Dalton
+
+To submit with execution on the Dalton VGrid only.
+
+::VGRID::
+ANY
+
+To submit with execution on the first suitable and allowed VGrid.
+''',
+        'Type': 'Multiplestrings',
         'Value': [],
         'Required': False,
         }
