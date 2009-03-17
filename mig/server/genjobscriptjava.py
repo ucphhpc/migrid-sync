@@ -59,7 +59,31 @@ class GenJobScriptJava:
     def script_init(self):
         """Initialize script"""
 
-        init = '''#java resource configration file
+        init = '''# Java resource configuration file
+#
+# --- BEGIN_HEADER ---
+#
+# ??? - one of the java helper files used on resources
+# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
 
 '''
         init = init + 'mig_session_id: ' + job_dict['MIGSESSIONID']\
@@ -147,7 +171,7 @@ class GenJobScriptJava:
         cmd = ''
         for name in files:
 
-            # todo: place files in "job_output"/job_id/
+            # TODO: place files in "job_output"/job_id/
 
             if name.count('stdout') > 0:
                 cmd += 'stdout: ' + migserver_https_url_arg\
@@ -168,7 +192,7 @@ class GenJobScriptJava:
         for name in files:
             if name.count('status') > 0:
 
-                # todo: place files in "job_output"/job_id/
+                # TODO: place files in "job_output"/job_id/
 
                 cmd += 'status: ' + migserver_https_url_arg\
                      + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\

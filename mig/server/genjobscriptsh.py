@@ -131,7 +131,7 @@ def curl_cmd_request_interactive(migserver_https_url_arg):
          + resource_conf['RESOURCE_ID'] + '&localjobname='\
          + localjobname + "'\n"
     int_command += '# wait until interactive command is done\n'
-    int_command += 'while [ /bin/true ]; do\n'
+    int_command += 'while [ 1 ]; do\n'
     int_command += '   if [ -f .interactivejobfinished ]; then\n'
     int_command += '        break\n'
     int_command += '   else\n'
@@ -198,6 +198,29 @@ class GenJobScriptSh:
         # breaks e.g. $localjobname.inputfiles generation
 
         return '''#!/bin/bash
+#
+# --- BEGIN_HEADER ---
+#
+# ??? - one of the shell scripts running on resources
+# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
 #
 ### Strict fill LRMS resources need actual resource requests for submit - insert
 ### them as MiG clauses here and extract and set environment for submit to use.

@@ -34,8 +34,6 @@ import datetime
 
 from shared.fileio import pickle, unpickle, touch
 
-# from shared.vgrid import vgrid_list, vgrid_list_vgrids
-
 
 class GridStat:
 
