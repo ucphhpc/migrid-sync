@@ -50,6 +50,8 @@ if '__main__' == __name__:
             if exclude in dirs:
                 dirs.remove(exclude)
         for name in files:
+            if name == tar_path:
+                continue
             path = os.path.normpath(os.path.join(root, name))
             rel_path = path.replace(os.path.dirname(target), '')
             archive_path = os.path.join(archive_base, rel_path)
