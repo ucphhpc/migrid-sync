@@ -141,6 +141,13 @@ def vgrid_list_vgrids(configuration):
 
     vgrids_list = []
     for (root, dirs, _) in os.walk(configuration.vgrid_home):
+
+        # skip all dot dirs - they are from repos etc and _not_ vgrids
+            
+        if root.find(os.sep + '.') != -1:
+                continue
+        dirs = [name for name in dirs if not name.startswith('.')]
+        
         for directory in dirs:
 
             # strip vgrid_home prefix to get entire vgrid name (/dalton/dk/imada)
