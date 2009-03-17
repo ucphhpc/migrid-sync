@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# MiGOneClickApplet - applet wrapper
+# MiGOneClickApplet - One-Click applet wrapper for execution outside a browser
 # Copyright (C) 2007  Martin Rehr
 # 
 # This file is part of MiG.

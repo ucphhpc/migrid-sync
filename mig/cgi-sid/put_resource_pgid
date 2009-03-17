@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# put_resource_pgid - [insert a few words of module description on this line]
+# put_resource_pgid - upload script PGID's to allow kill in clean up
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -98,14 +98,14 @@ if not valid_dir_input(base_dir, 'EXE_' + exe_name + '.PGID'):
 
 if 'FE' == res_type:
     (status, msg) = put_fe_pgid(configuration.resource_home,
-                                unique_resource_name, pgid)
+                                unique_resource_name, pgid, logger, True)
     if status:
         msg += '(%s) (%s)' % (remote_ip, res_type)
 elif 'EXE' == res_type:
 
     (status, msg) = put_exe_pgid(configuration.resource_home,
                                  unique_resource_name, exe_name, pgid,
-                                 logger)
+                                 logger, True)
     if status:
         msg += '(%s) (%s)' % (remote_ip, res_type)
 

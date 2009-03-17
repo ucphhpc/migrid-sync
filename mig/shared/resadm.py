@@ -41,8 +41,9 @@ from shared.ssh import execute_on_resource, execute_on_exe, \
     copy_file_to_exe, copy_file_to_resource
 
 
-def put_fe_pgid(resource_home, unique_resource_name, pgid):
-
+def put_fe_pgid(resource_home, unique_resource_name, pgid, logger, sandbox=False):
+    """Write front end PGID in resource home"""
+    
     # Please note that base_dir must end in slash to avoid access to other
     # resource dirs when own name is a prefix of another resource name
 
@@ -77,7 +78,8 @@ def put_exe_pgid(
     exe_name,
     pgid,
     logger,
-    ):
+    sandbox=False):
+    """Write exe PGID file in resource home and stop exe if requested"""
 
     # Please note that base_dir must end in slash to avoid access to other
     # resource dirs when own name is a prefix of another resource name
@@ -85,7 +87,7 @@ def put_exe_pgid(
     base_dir = os.path.abspath(resource_home + os.sep
                                 + unique_resource_name) + os.sep
 
-    # The master_script has already been startet on resource, so we
+    # The exe node script has already been started on resource, so we
     # better get the PGID no matter what.
     # If resource EXE PGID has status stopped, we must write PGID and
     # then call the resource EXE stop command to make sure the EXE
@@ -116,7 +118,7 @@ def put_exe_pgid(
         msg = "pgid: '%s' put for %s %s" % (pgid, unique_resource_name,
                                             exe_name)
 
-        if 'stopped' == old_pgid:
+        if not sandbox and 'stopped' == old_pgid:
             msg += "Resource: '" + unique_resource_name\
                  + "' EXE node: '" + exe_name\
                  + "' has been stopped, kill EXE script."

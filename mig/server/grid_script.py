@@ -407,10 +407,23 @@ while True:
         exe_pgid = linelist[7]
         last_job_failed = False
 
+        # read resource config file
+
+        resource_config = unpickle(configuration.resource_home
+                                    + unique_resource_name + '/config',
+                                   logger)
+        if resource_config == False:
+            logger.error('error unpickling resource config for %s' % \
+                         unique_resource_name)
+            continue
+
+        sandboxed = resource_config.get("SANDBOX", 0)
+
         # Write the PGID of EXE to PGID file
 
         (status, msg) = put_exe_pgid(configuration.resource_home,
-                unique_resource_name, exe, exe_pgid, logger)
+                unique_resource_name, exe, exe_pgid, logger,
+                                     (sandboxed == 0))
         if status:
             logger.info(msg)
         else:
@@ -537,16 +550,7 @@ while True:
                     print 'OK, last job %s was done' % job_dict['JOB_ID'
                             ]
 
-        # read resource config file
-
-        resource_config = unpickle(configuration.resource_home
-                                    + unique_resource_name + '/config',
-                                   logger)
-        if resource_config == False:
-            logger.error('error unpickling resource config')
-            continue
-
-        # overwrite cputime attribute
+        # Now update resource config fields with requested attributes
 
         resource_config['CPUTIME'] = cputime
 
@@ -740,7 +744,7 @@ while True:
             expired_jobs = []
 
             # Schedule and create appropriate job script
-            # loop until a non canceled job is scheduled (fixes small
+            # loop until a non-cancelled job is scheduled (fixes small
             # race condition if a job has not been dequeued after the
             # status in the mRSL file has been changed to CANCELED)
 
