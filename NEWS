@@ -1,0 +1,48 @@
+= Introduction =
+This file contains sporadic news entries and changelog entries for the
+individual releases of the MiG project code.
+
+
+== News ==
+A short description of changes 
+
+=== March 17, 2009 ===
+Added this file for easier tracking of changes. Another bugfixing
+release (1.0.2), so we recommend that everyone upgrades to this version.
+
+
+=== March 06, 2009 ===
+After a long time in planning we finally released the project under the
+GPL v2 today. The project started all the way back in 2003, so there's
+already quite a bit of code and the setup is not trivial. Over the
+coming months we will improve the code and instructions to ease setup
+for other users.
+
+
+== Changelogs ==
+More detailed changelogs for the public releases.
+
+== 1.0.3 ==
+-added NEWS (this file) for tracking changes
+-...
+
+== 1.0.2 ==
+-another minor bugfix and doc release
+-overhauled the sandbox generator to make it work everywhere
+-Moved some internal state files out of the code directories
+-cleaned up a leftover ssh to sandboxes the and corresponding log errors
+-cleaned up vgrid finder to remove irrelevant/annoying log error entries
+-added some missing license headers
+-fixed a bug in job handout
+-general tidying of all python code
+
+== 1.0.1 ==
+-verified install instructions
+-updated confs and tested complete install with apache2
+-added some missing license headers
+-more server documentation
+-merged One-Click source
+
+== 1.0.0 ==
+-first public release
+-rearranged old directory layout and added required license information
