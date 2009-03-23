@@ -67,11 +67,11 @@ def prepare_job(exec_commands, input_files, executables, local_working_dir, mig_
 
 
 def submit_job(job_file, dest_dir):
-    print job_file
+    #print job_file
     out = mig_function_wrapper(miglib.submit_file,job_file,dest_dir,True,False) 
 #out = mig_function_wrapper(miglib.submit_file,mrslfile,local_working_dir,True,False)
 #(code, out) = miglib.submit_file(mrslfile,local_working_dir,True,False)
-    print out
+    #print out
     #exit(0)
     job_id = out[-1].split(" ")[0]
     
@@ -131,8 +131,8 @@ def upload_files(input_files, dest_dir, is_archive=True):
     #    filename = f.split("/")[-1]
     #    tar.add(f, remoteDir+filename) 
     #tar.close()
-    print "uploading"
-    print input_files
+    #print "uploading"
+    #print input_files
     #outStrs = ScriptsWrapper.put(tarpath, tarName)
     for f in input_files:
         output = mig_function_wrapper(miglib.put_file, f, dest_dir, False, is_archive)
@@ -140,7 +140,7 @@ def upload_files(input_files, dest_dir, is_archive=True):
         mig_function_wrapper(miglib.rm_file, dest_dir+f.split("/")[-1])
 
 #print output
-    print "uploading done"
+    #print "uploading done"
     #return "hej"# delete the tar file in the mig server when it has been extracted
     #ScriptsWrapper.removeFile(tarName)
     #miglib.rm_file(tarName)
@@ -148,15 +148,28 @@ def upload_files(input_files, dest_dir, is_archive=True):
     #cleanUpLocally([tarpath])
 
 
-def make_dir_tree(path):
-    dirs = path.split("/")
-    subdirs = ""
-    for d in dirs:
-        #ScriptsWrapper.makeDir(subdirs+d)
-        #print subdirs
-        subdirs += d + "/"
+def mk_dir(dirname):
+    #path_str = ""
+    path_str = "path="+dirname
 
+    return mig_function_wrapper(miglib.mk_dir,path_str)
+  
 
+def ls(path):
+    
+    path_str = "path="+path
+    out = mig_function_wrapper(miglib.ls_file,path_str)
+    files = map(lambda x : x.strip("\t\n"), out)
+    #print files
+    return files 
+
+def path_exists(path):
+    files = ls(".")
+    exists = path.strip("/") in files
+    #print exists
+    #exit(0)
+    return exists
+   
 ###### OUTPUT ##########
 
 def get_output(filename, destination_dir):
@@ -182,7 +195,7 @@ def get_status(job_id):
     job_status_list = mig_function_wrapper(miglib.job_status,job_id_list)
     #print statusStr
     job_info = parse_job_info( job_status_list)
-    print job_info
+    #print job_info
     
     return job_info
 
@@ -240,7 +253,7 @@ def remove_dir(dirname):
 def dir_cleanup(job_files, directory):
     for f in job_files:
         filename = directory+f.split("/")[-1]
-        print "removing ", filename
+        #print "removing ", filename
         #ScriptsWrapper.removeFile(filename)
         #print out
 
@@ -248,49 +261,21 @@ def remove_files_local(files):
       #clean up
     for f in files:
         try: 
-            print "removing "+f+" locally"
+            #print "removing "+f+" locally"
             os.remove(f)
         except OSError:
             print "Can't delete : "+f
 
-def clean_up_input_files(files):
-    #filepaths = []
-    #allfiles = []
-    #allfiles.extend(job["programFiles"]) # r files
-    #allfiles.append("arg0.pkl") #r arguments file
-    #allfiles.extend(job["outputfiles"])  # output
-    #for f in allfiles:
-    #    filepaths.append(job["workingDir"]+f) # add path
-    
-    remove_files(files)
-    #ScriptsWrapper.removeDir(job["jobDir"]) # directory
-    
-    # locally
-    for f in files:
-        try:
-            os.remove(f)
-        except OSError:
-            print "Could not delete file : "+f
-        except IOError:
-            print "Could not delete file : "+f
-            
-            """try:
-            os.rmdir(job["workingDir"])
-            except OSError:
-            print "Could not delete dir : "+job["workingDir"]
-            except IOError:
-            print "Could not delete file : "+f
-            """
 
 def mig_function_wrapper(func,*args):
-    print args
+    #print args
     #funct = "miglib."+func
-    print func, args
+    #print func, args
     code, out = func(*args)
-    print out
+    #print out
     exit_code = get_exit_code(out)
     
-    print "exit code", exit_code
+    #print "exit code", exit_code
     if exit_code != 0:
         raise Exception("MiG Error: \n"+str(func)+":"+str(args)+"\n"+"".join(out))
     return out
@@ -299,7 +284,7 @@ def get_exit_code(output_lines):
     if len(output_lines) > 0:
         exit_code_str = output_lines[0]
         code = exit_code_str.strip("'Exit code: ").split()[0]
-        print code
+        #print code
     else:
         code = 0
     return int(code)

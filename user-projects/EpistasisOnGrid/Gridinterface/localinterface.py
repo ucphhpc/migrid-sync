@@ -165,6 +165,24 @@ def make_dir_tree(path):
     print "(fake) make mig dir : "+path 
 
 
+def mk_dir(path):
+    if not os.path.exists(path):
+        os.mkdir(path)
+#whatever
+    #print "(fake) make mig dir : "+path 
+
+def ls(path):
+    files = os.listdir(path) 
+#print files
+    return files 
+
+def path_exists(path):
+    files = ls(".")
+    exists = path.strip("/") in files
+    #print exists
+    #exit(0)
+    return exists
+
 def prepare_job(exec_commands, input_files, executables, local_working_dir, mig_working_dir, output_files, static_files=[], vgrid="Generic", resource_specs={}, args=[]):
 
     job_files = [] 

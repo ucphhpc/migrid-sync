@@ -12,16 +12,18 @@ sys.path.append('Configuration/')
 import epistasisconfiguration as configuration
 sys.path.append('Gridinterface/')
 import migsession
-
+from mylogger import log
 
 class GridEpistasis:
     """Start an epistasis procedure either executed on grid og locally."""
-    def __init__(self):
+    def __init__(self, debug_mode=False):
         self.jobs_done = []
         self.epistasis_jobs = []
         self.all_jobs = []
         self.epistasis_status = 'idle'
         self.num_jobs = 0
+        self.logfile = ""
+        self.debug_mode = debug_mode
         #self.mig_session = ""
 
 # ########## UPDATE / STATUS ###############
@@ -36,7 +38,7 @@ class GridEpistasis:
                 self.mig_session.handle_output(j)
 
         if self.num_jobs == len(self.jobs_done):
-            print 'all jobs completed'
+            log(self.logfile, 'All jobs completed', self.debug_mode)
             self.epistasis_status = 'finished'
 
         progress_str = str(len(self.jobs_done)) + '/'\
@@ -75,17 +77,17 @@ class GridEpistasis:
         while True:
             try:
                 self.mig_session.update_jobs(jobs)
-                
                 for j in jobs:
                     if j['status']['STATUS'] == 'FINISHED':
                         self.mig_session.handle_output(j)
                         jobs_done.append(j)
                         jobs.remove(j)
+                        
+                        #log(self.logfile, 'Job ' + j['id'] + ' done.', self.debug_mode)
                         print 'Job ' + j['id'] + ' done.'
                 if jobs == []:
 
                 # mylogger.logprint(logfile, "All jobs completed")
-
                     self.print_status(jobs_done)
                     print 'all jobs completed'
                     return
@@ -102,51 +104,53 @@ class GridEpistasis:
 
     def start_epistasis( 
         self,
-        class1=0,
-        class2=0,
-        gene1=configuration.gene_first_index,
-        gene2=configuration.gene_last_index,
-        trait1=configuration.trait_first_index,
-        trait2=configuration.trait_last_index,
-        select_variable=configuration.selection_variable_index,
+        selection_variable_values = configuration.default_variable_values,
+        genelist=configuration.default_gene_list,
+        traitlist=configuration.default_trait_list,
+        selection_variable=configuration.default_selection_variable_label,
         data=configuration.data_file,
         output_dir=configuration.output_dir,
-        local_mode=False
+        local_mode=False,
         ):
         """Start the epistasis procedure."""
-                
-        selection_variable_index = str(select_variable)
-        if class2 == 0:
-            selection_variable_values = \
-                configuration.selection_variable_range[selection_variable_index]
-        else:
-            selection_variable_values = range(int(class1), int(class2) + 1, 1)
-        job_size = 1  
-        print 'SVvals: ' + str(selection_variable_values)
-        print 'JS: ' + str(job_size)
 
-        epi_jobs = create_epistasis_jobs(
+        #selection_variable_index = str(select_variable)
+ 
+            #    selection_variable_values = \
+        #        configuration.selection_variable_range[selection_variable_index]
+        #else:
+        #    selection_variable_values = range(int(class1), int(class2) + 1, 1)
+        #selection_variable_values = classlist
+        job_size = 1  
+        #print 'SVvals: ' + str(selection_variable_values)
+        #print 'JS: ' + str(job_size)
+
+        epi_jobs, project_dir = create_epistasis_jobs(
             job_size,
-            gene1=gene1,
-            gene2=gene2,
-            trait1=trait1,
-            trait2=trait2,
-            selection_var=select_variable,
+            genelist=genelist,
+            traitlist=traitlist,
+            selection_var=selection_variable,
             variable_values=selection_variable_values,
             data_file=data,
             output_dir=output_dir,
             run_local=local_mode,
             )
 
-        self.print_jobs(epi_jobs)
+        #self.print_jobs(epi_jobs)
         
+        if not output_dir[-1] == "/":
+            output_dir += "/"
+        output_dir = output_dir+project_dir
+        self.logfile = output_dir+configuration.logfile_name
+            
+        os.mkdir(output_dir)
         self.mig_session = \
-            migsession.MigSession(configuration.main_results_dir,
-                                  local_mode)
-        self.mig_session.create_mig_jobs(epi_jobs)
+            migsession.MigSession(output_dir, self.logfile, local_mode, self.debug_mode)
+        self.mig_session.create_mig_jobs(epi_jobs, configuration.Epistasis_working_dir)
         self.epistasis_jobs.extend(epi_jobs)
         self.all_jobs.extend(epi_jobs)
         self.num_jobs = len(epi_jobs)
+
 
 # ######### STOP /CANCEL ##############
 
@@ -189,7 +193,7 @@ def fragment_epistasis(job_size, values):
     current_size = 0
     job_classes = []
     for i in range(len(values)):
-        value_range.append(values[i])
+        value_range.append(str(values[i]))
         current_size += 1
         if current_size == job_size:
             job_classes.append(value_range)
@@ -197,20 +201,18 @@ def fragment_epistasis(job_size, values):
             current_size = 0
     if value_range != []:
         job_classes.append(value_range)
-    print job_classes
+    #print job_classes
 
     return job_classes
 
 def create_epistasis_jobs(
     job_size,
-    gene1=configuration.gene_first_index,
-    gene2=configuration.gene_last_index,
-    trait1=configuration.trait_first_index,
-    trait2=configuration.trait_last_index,
-    selection_var=configuration.selection_variable_index,
-    variable_values=configuration.default_variable_values,
-    data_file=configuration.data_file,
-    output_dir=configuration.output_dir,
+    genelist,
+    traitlist,
+    selection_var,
+    variable_values,
+    data_file,
+    output_dir,
     run_local=False,
     ):
     """Return epistasis jobs that execute the epistasis procedure."""
@@ -226,13 +228,17 @@ def create_epistasis_jobs(
          + str(time_list[4]) + str(time_list[5])
 
     for j in job_classes:
+       
         job = create_init_job()
         job['project_tag'] = project_tag
         job['class'] = j
-        job['gene_index_1'] = gene1
-        job['gene_index_2'] = gene2
-        job['trait_index_1'] = trait1
-        job['trait_index_2'] = trait2
+        #job['gene_index_1'] = gene1
+        #job['gene_index_2'] = gene2
+        #job['trait_index_1'] = trait1
+        #job['trait_index_2'] = trait2
+               #job["input_args_file"] = job_args_file
+        job['gene_list'] = genelist
+        job['trait_list'] = traitlist
         job['user_output_dir'] = output_dir
         job['data_file'] = data_file.split('/')[-1]
         job['selection_variable'] = selection_var
@@ -243,9 +249,8 @@ def create_epistasis_jobs(
         job['job_dir'] = configuration.Epistasis_working_dir\
              + job_directory
         job['output_files'] = [output_filename]
-        job['results_dir'] = \
-            configuration.resultsdir_prefix_name + project_tag\
-             + '/'
+        job_results_dir = configuration.resultsdir_prefix_name + project_tag +"/"
+        job['results_dir'] = job_results_dir+"/"
 
         job_cmds = ['cd ' + job['job_dir'], 'python '
                      + job['main_script']]
@@ -262,22 +267,23 @@ def create_epistasis_jobs(
        # job['output_files'] = ["testfil.txt"]
         #job['commands'] =  ['cd ' + job['job_dir'], "echo testinhold > testfil.txt"]
         
-
-        os.mkdir(job['job_dir'])
+        #os.mkdir(job_results_dir)
+        #os.mkdir(job['job_dir'])
         if run_local:
             job['r_bin'] = 'R'
         else:
             job['r_bin'] = '$R_HOME/bin/R'
 
-        print job
+        #print job
         jobs.append(job)
         ser_number += 1
-    return jobs
+    return jobs, job_results_dir
 
 
 def create_init_job():
     """Return an initial epistasis job."""
     init_job = {}
+    init_job["main_r_file"] = configuration.main_r_file
     init_job['r_files'] = configuration.r_files
     init_job['main_script'] = configuration.main_script
     init_job['output_dir'] = configuration.output_dir
@@ -292,13 +298,13 @@ def create_init_job():
 
 if __name__ == '__main__':
     local = False
+    debug = False
     if '-local' in sys.argv or '-l' in sys.argv:
         local = True
+    if '-debug' in sys.argv or '-d' in sys.argv:
+        debug = True
 
-
-    NEW_EPISTASIS = GridEpistasis()
+    NEW_EPISTASIS = GridEpistasis(debug_mode=debug)
     NEW_EPISTASIS.start_epistasis(local_mode=local)
     NEW_EPISTASIS.monitor_epistasis()
     NEW_EPISTASIS.clean_up_epistasis()
-    
-

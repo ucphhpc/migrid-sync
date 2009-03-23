@@ -1,6 +1,7 @@
 main_script = "epistasis.py"
 data_file = "RfilesAndscripts/Inter99All290606.sav"
 
+main_r_file = "EpiMain.R"
 r_files = ["EpiCRnew_R_edit.R","DistrPost07_R_edit.R", "EpiPS_R_edit.R", "HWEwigNew_R_edit.R"]
 
 program_files = ["RfilesAndscripts/EpiMain.R", "RfilesAndscripts/EpiCRnew_R_edit.R","RfilesAndscripts/DistrPost07_R_edit.R", "RfilesAndscripts/EpiPS_R_edit.R", "RfilesAndscripts/HWEwigNew_R_edit.R", "RfilesAndscripts/epistasis.py"]
@@ -11,7 +12,13 @@ gene_last_index = 75 #103
 
 trait_first_index = 7 #7 
 trait_last_index = 8 #37 
-selection_variable_index = 2
+
+default_gene_list = ["rhnf4a2", "rhnf4a1", "rkir62"]
+default_trait_list = ["Heigth","Alder","Omliv"] # height is misspelled purposely
+
+default_selection_variable_index = 2
+default_selection_variable_label = "Gender"
+
 default_variable_values = [1,2]
 Epistasis_working_dir = "Epistasis_tmp/"
 
@@ -21,7 +28,7 @@ resource_specs = {}
 #resource_specs["ARCHITECTURE"] ="AMD64"
 resource_specs["RUNTIMEENVIRONMENT"] = "GNU_R"
 resource_specs["VGRID"] = "DCSC"
-resource_specs["CPUTIME"] = 600
+resource_specs["CPUTIME"] = 6000
 resource_specs["MEMORY"] = 100
 resource_specs["DISK"] = 1
 
@@ -32,3 +39,5 @@ selection_variable_range = {'2':[1,2], '5':range(1,20)}
 resultsdir_prefix_name = "EpistasisFiles"
 tmp_local_job_dir = "EpiMigJobFiles"
 main_results_dir = "epifiles/"
+
+logfile_name = "logfile.txt"

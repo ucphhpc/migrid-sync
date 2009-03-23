@@ -25,25 +25,27 @@
 write.table(data, filename, sep="\t", append=T, quote=F, col.names=F, row.names=F)
 }
 
-
-"RunEpistasisForClass" <- function(valueRange, smplt, selVar, geneIndex1, geneIndex2, traitIndex1, traitIndex2)
+"RunEpistasisForClass" <- function(valueRange, smplt, selVar, genelist, traitnamelist)
 {
 hnames<-names(smplt)
-
-
 #Choose selection variable
 selectvar<<-selVar #2
 #Name selectionvariabel
-nselvar<<-hnames[selVar]#selName#"Gender"
-#Select gene1
-genenr1 = geneIndex1#74
-#Select gene2
-genenr2 = geneIndex2#103
-#First trait
-trait1<<-traitIndex1#7
-#Last trait
-trait2<<-traitIndex2#37
+nselvar<<-selVar
 
+#nselvar<<-hnames[selVar]#selName#"Gender"
+
+#Select gene1
+#genenr1 = geneIndex1#74
+#Select gene2
+#genenr2 = geneIndex2#103
+
+#First trait
+#trait1<<-traitIndex1#7
+#Last trait
+#trait2<<-traitIndex2#37
+traits <<- traitnamelist
+genes <- genelist
 #SIGNIFICANCE LEVELS
 #Signifcans level for epistasis
 epistsign<<-0.05
@@ -74,15 +76,22 @@ evalext<<-".txt"
 ################DONT WRITE ANYTHING BELOW THIS LINE#############################
 
 #Number of classes
-levmax<<-max(smplt[c(selectvar)],na.rm=T)
+#levmax<<-max(smplt[c(selectvar)],na.rm=T)
 
+print(selectvar)
+print(names(smplt))
+levmax<<-max(smplt[selectvar],na.rm=T) # selectvar is now a string
+#stop("stop here")
 #Bonferoni corrections for genes
-numgene<<-abs(genenr2-genenr1)+1
+#benja edit: gene indexes no longer present
+#numgene<<-abs(genenr2-genenr1)+1
+numgene <<-length(genes)
 numtest<-numgene*(numgene-1)/2
 
 #Bonferoni corrections for epistasis
-
-numtr<-abs(as.numeric(trait2)-as.numeric(trait1)+1)
+#benja edit: trait indexes no longer present
+#numtr<-abs(as.numeric(trait2)-as.numeric(trait1)+1)
+numtr<-length(traits)
 if(boncorT=="T")
 	{epistsign<-epistsign/(numtest*levmax*numtr)} else{epistsign=epistsign}
 
@@ -93,7 +102,8 @@ logsave<-paste("Log progress of Epistasis")
 
 logtitel<-matrix(c("EPISTASIS"),nrow=1)
 studyfile<-matrix(c("File:","",fileimp),nrow=1)
-studyvar<-matrix(c("Classification variable:"," ",names(smplt[c(selectvar)])),nrow=1)
+#studyvar<-matrix(c("Classification variable:"," ",names(smplt[c(selectvar)])),nrow=1)
+studyvar<-matrix(c("Classification variable:"," ",names(smplt[selectvar])),nrow=1) # selectvar is a string
 tablehead<-matrix(c("Test number","","Class","Gene1","Gene2","Action","Time"),nrow=1)
 
 # Redit : Default write.table() writes to file differently than in S, so we need to add flags "quote=F, col.names=F,row.names=F"
@@ -137,37 +147,53 @@ print(valueRange)
 # edit : Only execute a selected range
 for(lev in valueRange) {
 	sval<<-lev
-if(sval>levmax || sval<1)stop("Levels out of bounce")
-	tfilt <- paste(names(smplt[c(selectvar)]), "=", sval)
-        
+#if(sval>levmax || sval<1)stop("Levels out of bounce")
+	#tfilt <- paste(names(smplt[c(selectvar)]), "=", sval)
+        tfilt <- paste(names(smplt[selectvar]), "=", sval) # selectvar is type string
+
 	# importer alle rækker med pågældende filter ("gender = 1")
 	#Redit: smpl <- importData(file=fileimp, filter = tfilt)
-	selectvec <- smplt[,c(selectvar)]==sval # lav en logical vector over filtret
+	#selectvec <- smplt[,c(selectvar)]==sval # lav en logical vector over filtret
+        selectvec <- smplt[,selectvar]==sval 
         #boolist <- smplt[,"GENDER"]==1
 	#smpl <- read.spss(file=fileimp)
         smpl<<-smplt[selectvec,] # lav ny dataframe med udvalgte rækker (note: efterfølgende ',' )
-        svarn <- names(smpl[c(selectvar)])
+        svarn <- names(smpl[selectvar])
+      
+# benja edit: gene indexes are no longer used        
+#if (genenr1==genenr2){
+#    stop ("No range of genes has been selected")}
+#	else {if (genenr1>genenr2)
+#		     {gene1r<-genenr2
+ #			  gene2r<-genenr1}
+#			  else
+#			 {gene1r<-genenr1
+# 			  gene2r<-genenr2}
+ #}#end if(sval>levmax ....
 
-        
-if (genenr1==genenr2){
-    stop ("No range of genes has been selected")}
-	else {if (genenr1>genenr2)
-		     {gene1r<-genenr2
- 			  gene2r<-genenr1}
-			  else
-			 {gene1r<-genenr1
- 			  gene2r<-genenr2}
- }#end if(sval>levmax ....
-
+if (length(genes)<2){
+stop ("No range of genes has been selected")
+}
 ###
-
-geneend<-	gene2r
+# benja edit : gene indexes no longer used
+#geneend<-	gene2r
 
 #Start test of all gene-combinations in thje selected class.
-while(gene1r <gene2r) {
-repeat{	
-  gname1<<-names(smplt[c(gene1r)])
-  gname2<<-names(smplt[c(gene2r)])
+
+for(gene1 in genes){
+  for(gene2 in genes[length(genes):0]){ # loop through the genes in reverse order
+    if(gene1 == gene2){
+      break
+    }
+
+  gname1<<- gene1
+  gname2<<- gene2
+    
+# benja edit: gene indexes are no longer used. Instead a list of gene names are in the "genes" vector 
+#while(gene1r <gene2r) {
+#repeat{	
+#  gname1<<-names(smplt[c(gene1r)])
+#  gname2<<-names(smplt[c(gene2r)])
   
   # alle gname1 og gname2 gener for en klasse(GENDER) 
 
@@ -176,12 +202,10 @@ repeat{
   # blank spaces must be removed (gsub) in order for "exclude" to match "?"
   # benja note: "factor" gør at geneVector1-2 kun indeholder 1 level for hver gen værdi
   geneVector1 <<- factor(gsub(" ", "",as.character(smpl[, c(gname1)])), exclude=misv)
-  
   # Redit : geneVector2 <- factor(as.character(smpl[, c(gname2)]), exclude=misv)
   # alternate: geneVector2 <- factor(as.character(smpl[c(gname2)]), exclude=misv)
   # blank spaces must be removed (gsub) in order for "exclude" to match "?"
   geneVector2 <<- factor(gsub(" ", "",as.character(smpl[, c(gname2)])), exclude=misv)
-
   #vec <- as.character(strtrim(smpl[, c(gname2)], 2))
   #print(vec)
   #print(class(vec))
@@ -222,18 +246,19 @@ else{
   print(updatescreen)
   testno<-testno+1
   
-  gene2r <- gene2r - 1	
+#  gene2r <- gene2r - 1	
 
-  print(paste("new gene2: ",gene2r))
-  
-  if(gene2r==gene1r) 
-    break
-
+#  print(paste("new gene2: ",gene2r))
+    print(paste("new gene2: ",gname2))
+    
+#  if(gene2r==gene1r) 
+#    break
   
 }# end repeat statement
-gene2r<-geneend
-gene1r<-gene1r+1
-print(paste("new gene1: ",gene1r))
+#gene2r<-geneend
+#gene1r<-gene1r+1
+#print(paste("new gene1: ",gene1r))
+print(paste("new gene1: ",gname1))
 }# end calculations for all gene combinations in one class.
  #while statement:
 
@@ -253,28 +278,45 @@ writeToFile(endcalc,paste(logsave,logext,sep=""))
 
 }
 
-
 args <- commandArgs(TRUE)
-
+print(args)
 library('foreign')
 
 # data source
 fileimp <- args[1] # R indexes from 1...n
-# genes
-gIndex1 <- as.numeric(args[2]) 
-gIndex2 <- as.numeric(args[3])
+inputfile <- args[2] 
+selectionvar <- scan(inputfile, what = "", nlines=1) # selection variable index
+selrange <- scan(inputfile, nlines=1, what = "", skip= 1,sep=" ") # selection variable classes  
+genevector <- scan(inputfile, what = "", nlines=1, skip=2, sep=" ") # gene column names
+traitvector <- scan(inputfile, what = "", nlines=1, skip=3, sep=" ") # trait column names
+
+#genes <- input[2]
+#traits <-  input[3]
+
+
+#print(paste(selrange,genes,traits))
+print(selrange)
+print(genevector)
+print(traitvector)
+
+print(genevector[length(genevector):0])
+        
+#stop("test")
+                                        # genes
+#gIndex1 <- as.numeric(args[2]) 
+#gIndex2 <- as.numeric(args[3])
 # traits
-tIndex1 <- as.numeric(args[4])
-tIndex2 <- as.numeric(args[5])
+#tIndex1 <- as.numeric(args[4])
+#tIndex2 <- as.numeric(args[5])
 # selection variable  
-selVar <- as.numeric(args[6])
+#selVar <- as.numeric(args[6])
 # selection variable name 
 #selVarName <- args[7]
 # range
-range <- as.numeric(args[7: length(args)])
-print(paste("range", range))
+#range <- as.numeric(args[7: length(args)])
+#print(paste("range", range))
 #print(paste(fileimp, " ",gIndex1," ",gIndex2,  " ", selVar, " ", args))
-print(selVar)
+print(selectionvar)
 #fileimp<-"../Inter99All290606.sav"
 #Redit: smplt<-importData(file=fileimp)
 smplt<-read.spss(file=fileimp, to.data.frame=TRUE)
@@ -284,10 +326,13 @@ smplt<-read.spss(file=fileimp, to.data.frame=TRUE)
 #file.realpath(names(smplt))
 #print(smplt)
 
+#print(smplt[,"LDL"])
+#print(smplt[,c(2)])
 #write.table(smplt,"datafile.txt",sep=";",append=F,quote=F, col.names=T,row.names=F)
+#stop("stop")
 
+#RunEpistasisForClass(valueRange=range, smplt=smplt, selVar=selVar, geneIndex1=gIndex1, geneIndex2=gIndex2, traitIndex1=tIndex1,traitIndex2=tIndex2)
 
-RunEpistasisForClass(valueRange=range, smplt=smplt, selVar=selVar, geneIndex1=gIndex1, geneIndex2=gIndex2, traitIndex1=tIndex1,traitIndex2=tIndex2)
-
+RunEpistasisForClass(valueRange=selrange, smplt=smplt, selVar=selectionvar, genelist=genevector, traitnamelist=traitvector)
 
 warnings()

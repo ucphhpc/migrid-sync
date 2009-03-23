@@ -10,38 +10,47 @@
 {
 
 #Priming list for significant traits
-traitlist<-rep(0,abs(trait2-trait1+1))
-trnr<-1
+# benja edit : trait2 and trait1 no longer present
+ # traitlist<-rep(0,abs(trait2-trait1+1))
+  traitlist<-rep(0,length(traits))
+  trnr<-1
 
-for(trt in trait1:trait2)
-  {traitch<-trt #Omvej nødvendig for at få navn og ikke nummer i output (vistnok)
+# Benja edit: trait indexes are no longer used. Instead traits are in the "traits" vector .
+#for(trt in trait1:trait2)
+ # {traitch<-trt #Omvej nødvendig for at få navn og ikke nummer i output (vistnok)
                 #der skal importeres som en data-frame, se EpiEval mm
-     trait<-names(smplt[c(traitch)])
+
+#   trait<-names(smplt[c(traitch)])
+
+for(trait in traits){
      #print(paste("trait ",trait))
      #if(trait=="LDL"){
        
      #}
      # Redit : traitVector <- as.numeric(smpl[, c(trait)])
-     traitVector <<- as.numeric(smpl[, c(trait)]) # we need to make traitVector global ("<<-" instead of "<-")
-     qtrait<-data.frame(geneVector1,geneVector2,traitVector)
-     dimdf<-dim(qtrait)
-     #print("traitVector")
-     #print(traitVector)
-     
+
+  traitVector <<- as.numeric(smpl[, c(trait)]) # we need to make traitVector global ("<<-" instead of "<-")
+
+  
+  qtrait<-data.frame(geneVector1,geneVector2,traitVector)
+  dimdf<-dim(qtrait)
+   
 #Delete all missing variables
-#print("qtrait:")
-#print(qtrait)
+
 #print(length(qtrait[,1]))
 # Redit: traittrimpre<-as.data.frame(qtrait[(qtrait[1] !='NA' & qtrait[2] !='NA' & qtrait[3] !=misvt),(1:3)]) 
 traittrimpre<-as.data.frame(qtrait[(!is.na(qtrait[1]) & !is.na(qtrait[2]) & qtrait[3] !=misvt),(1:3)]) # cannot use "!=" operator for 'NA'
 
-       
+  
 # Redit : traittrim<-as.data.frame(traittrimpre[(traittrimpre[1] !='NA' & traittrimpre[2] !='NA' & traittrimpre[3] !='NA'),(1:3)])
 traittrim<-as.data.frame(traittrimpre[(!is.na(traittrimpre[1]) & !is.na(traittrimpre[2]) & !is.na(traittrimpre[3])),(1:3)]) # cannot use "!=" operator for 'NA'
                                         #print("traittrim:")
 
                                        #Trait mean
+
+  
 meantrait<-mean(traittrim[3])
+
 #This is the working data frame. Variables are centered! NB necessary??Variance should be the same irrespective of centering
 #Also, meantrait should only be used as a population value. It is not the weighted genotypic mean!!
      traittrim1<-cbind(traittrim,(traittrim[3]-meantrait))
@@ -85,7 +94,6 @@ writeToFile(" ",paste(eSave,epiext,sep=""))
 }
 
 ##############
-
 #Selection of cases according to haplotype. Non-valid traits excluded. 
 #The actual traitvalues are included, not the mean-corrected.OK!!
 #for(tsel in 1:dimdf[1]){
@@ -138,6 +146,7 @@ GenoTypes<-matrix(c("aa","ab","bb"),nrow=1)
 
 #Dette er counts EFTER missing traits er deleted.
 GenoCounts<-matrix(as.numeric(c(AAgeno,Aageno,aageno,BBgeno,Bbgeno,bbgeno)),nrow=1)
+
 #Gene1 OK
 HWEtest1<-HWEwigNew(sumcases,GenoCounts[1],GenoCounts[2],GenoCounts[3])
 #Gene2 OK

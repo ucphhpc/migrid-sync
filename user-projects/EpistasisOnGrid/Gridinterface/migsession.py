@@ -2,9 +2,12 @@
 import os
 import time 
 import shutil 
+from mylogger import log
+
 
 class MigSession:
-    def __init__(self, results_dir, local=False):
+    def __init__(self, local_project_results_dir, logfile, local=False, debugging=False):
+        self.debug_mode = debugging
         if local:
             import localinterface as mig
         else:
@@ -12,8 +15,9 @@ class MigSession:
             import miginterface as mig
         self.mig = mig
         #self.workingDir = workingDir
-        self.main_results_dir = results_dir #destDir+EpiConfig.resultsdirPrefixName+job["projectTag"]+"/"
-        #self.Mig.makeDirTree(self.workingDir)
+        self.main_results_dir = local_project_results_dir #destDir+EpiConfig.resultsdirPrefixName+job["projectTag"]+"/"
+        self.logfile = logfile
+#self.Mig.makeDirTree(self.workingDir)
         self.jobs = []
         
     def get_time(self):
@@ -24,6 +28,7 @@ class MigSession:
 
     def create_mig_job(self,job):
         self.validate_job(job)
+        os.mkdir(job['job_dir'])
         input_files = self.copy_files_to_local_working_dir(job["input_files"], job["job_dir"])
         job_file = self.write_job_to_file(job, job["job_dir"])
         input_files.append(job_file)
@@ -35,8 +40,13 @@ class MigSession:
                                       output_files=job["output_files"], static_files=[], 
                                       resource_specs=job["resource_specs"])
         job["started"] = self.get_time()
+        log(self.logfile,"Job created. Id :"+job["id"])
 
-    def create_mig_jobs(self,jobs, deploy_multiple=False):
+    def create_mig_jobs(self,jobs, working_dir, deploy_multiple=False):
+        log(self.logfile, "Creating "+str(len(jobs))+" jobs", self.debug_mode)
+        
+        if not self.mig.path_exists(working_dir):
+            self.mig.mk_dir(working_dir)
         if deploy_multiple:
             prepared_jobs = []
             for job in jobs:
@@ -108,17 +118,19 @@ class MigSession:
         for f in job["output_files"]:
             output_filename =  job["job_dir"]+f
             outputfile = self.mig.get_output(output_filename, job["job_dir"])
-        #mylogger.logprint(logfile, "Retrieved output file for job "+job["id"])
+            log(self.logfile, "Retrieved output file for job "+job["id"],self.debug_mode)
               #print "opening ", destDir+filepath, "to", destDir
         
-            job_results_dir = self.main_results_dir+job["results_dir"]
-            if not os.path.exists(job_results_dir):
-                os.mkdir(job_results_dir)
+            job_results_dir = self.main_results_dir#+job["results_dir"]
+            #if not os.path.exists(job_results_dir):
+            #    os.mkdir(job_results_dir)
+            log(self.logfile,"Extracting job output "+job["id"]+") to "+job_results_dir, self.debug_mode)
             self.extract_output(outputfile, job_results_dir) # extract the downloaded archive file
             #self.cleanUpJob(job) # delete job files locally and on the MiG server
 
     def extract_output(self,file_path, dest_dir):
         import tarfile
+       
         new_dir = dest_dir+file_path.split("/")[-1][:-7]
         if not os.path.exists(new_dir):
             os.mkdir(new_dir)
@@ -126,6 +138,7 @@ class MigSession:
 
         prog_files.extractall(path=new_dir)
         prog_files.close()
+        
 
     ####### UPDATE/STATUS #########
   
@@ -134,7 +147,7 @@ class MigSession:
         job_ids = map(lambda x : x["id"], jobs)
         #for j in jobs:
             #print j["id"]if j
-        print job_ids
+        #print job_ids
         job_info_list = self.mig.get_status(job_ids)
         for i in range(len(jobs)):
             jobs[i]["status"] = job_info_list[i]
@@ -170,10 +183,10 @@ class MigSession:
     def cancel_job(self,job):
         success = self.mig.cancel_job(job["id"])
         if success: 
-            print "Cancelled job : "+job["id"]
-            #mylogger.logprint(logfile,"Cancelled job : "+job["id"])
+            #print "Cancelled job : "+job["id"]
+            log(self.logfile,"Cancelled job : "+job["id"],self.debug_mode)
         else:
-            print "Unsuccesful cancellation of job :"+job["id"]
+            log(self.logfile,"Unsuccesful cancellation of job :"+job["id"],self.debug_mode)
             #mylogger.logprint(logfile,"Unsuccesful cancellation of job :"+job["id"])
         #self.cleanUpJob(job)
 
@@ -191,6 +204,7 @@ class MigSession:
             outputfile = job["job_dir"]+job["output_files"][0]
             job_files.append(outputfile)
         
+        log(self.logfile, "Cleaning up for job (id:"+job["id"]+")")
         self.mig.remove_files(job_files)
         self.remove_local_files(job_files)
                
@@ -201,13 +215,15 @@ class MigSession:
         self.mig.remove_dir(job["job_dir"]) # directory
         os.rmdir(job["job_dir"])
         
+        
 
     def remove_local_files(self,files):
       #clean up
         for f in files:
             #try: 
             os.remove(f)
-            print "removed local file "+f
+            
+        log(self.logfile, "Removed files locally : "+str(files), self.debug_mode)
  #except OSError:
              #   print "Can't delete : "+f
                 
