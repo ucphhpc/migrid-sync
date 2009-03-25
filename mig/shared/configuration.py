@@ -346,7 +346,7 @@ class Configuration:
             self.smtp_sender = '%s@%s' % (os.environ.get('USER', 'mig'),
                                           self.server_fqdn)
 
-        logger.debug('starting scheduler options')
+        # logger.debug('starting scheduler options')
         if config.has_option('SCHEDULER', 'algorithm'):
             self.sched_alg = config.get('SCHEDULER', 'algorithm')
         else:

@@ -347,7 +347,7 @@ def notify_user_thread(
                                      args=(jobdict, myfiles_py_location,
                                            status, logger, statusfile,
                                            configuration,))
-    notify_thread.isDaemon(True)
+    notify_thread.setDaemon(True)
     notify_thread.start()
 
 def send_resource_create_request_mail(
