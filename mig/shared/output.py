@@ -861,7 +861,12 @@ def json_format(ret_val, ret_msg, out_obj):
 
     try:
         import json
-        print json.dumps(out_obj)
+        try:
+            # python >=2.6 includes native json module with loads/dumps methods 
+            print json.dumps(out_obj)
+        except AttributeError:
+            # python <2.6 + python-json module with read/write methods
+            print json.write(out_obj)
     except Exception, exc:
         print 'json not available on server! Defaulting to .txt output. (%s)'\
              % exc
