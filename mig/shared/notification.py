@@ -53,7 +53,7 @@ def notify_user(
 
     jobid = jobdict['JOB_ID']
     for notify_line in jobdict['NOTIFY']:
-        logger.debug('notify line: %s', notify_line)
+        logger.debug('notify line: %s' % notify_line)
         (header, message) = create_notify_message(jobid,
                 myfiles_py_location, status, statusfile, configuration)
 
@@ -64,12 +64,12 @@ def notify_user(
 
         if notify_line_colon_split[0].strip() in supported_protocols:
             protocol = notify_line_colon_split[0]
-            to = notify_line.replace('%s: ' % protocol, '').strip()
+            recipients = notify_line.replace('%s: ' % protocol, '').strip()
             all_dest = []
 
             # Empty or
 
-            if to.strip().upper() in ['SETTINGS', '']:
+            if recipients.strip().upper() in ['SETTINGS', '']:
 
         # read from personal settings
 
@@ -85,7 +85,7 @@ def notify_user(
 
                 all_dest = settings_dict[protocol.upper()]
             else:
-                all_dest.append(to)
+                all_dest.append(recipients)
             for single_dest in all_dest:
 
         # NOTE: Check removed because icq addresses are numbers and not "emails"
@@ -95,20 +95,20 @@ def notify_user(
 
                 if send_instant_message(single_dest, protocol, header,
                         message, logger):
-                    logger.info('Instant message sent to %s protocol: %s telling that %s %s'
-                                , single_dest, protocol, jobid, status)
+                    logger.info('Instant message sent to %s protocol: %s telling that %s %s' % \
+                                (single_dest, protocol, jobid, status))
                 else:
-                    logger.error('Instant message NOT sent to %s protocol %s jobid: %s'
-                                 , single_dest, protocol, jobid)
+                    logger.error('Instant message NOT sent to %s protocol %s jobid: %s' % \
+                                 (single_dest, protocol, jobid))
         else:
             notify_line_first_part = notify_line_colon_split[0].strip()
             all_dest = []
             if notify_line_first_part in email_keyword_list:
                 logger.info("'%s' notify_line_first_part found in email_keyword_list"
                              % notify_line_first_part)
-                to = notify_line.replace('%s: '
+                recipients = notify_line.replace('%s: '
                          % notify_line_first_part, '').strip()
-                if to.strip().upper() in ['SETTINGS', '']:
+                if recipients.strip().upper() in ['SETTINGS', '']:
 
             # read from personal settings
 
@@ -118,13 +118,12 @@ def notify_user(
                                      % settings_dict_file)
                         continue
                     if not settings_dict.has_key('EMAIL'):
-                        logger.info('Settings dict does not have EMAIL key'
-                                    )
+                        logger.info('Settings dict does not have EMAIL key')
                         continue
 
                     all_dest = settings_dict['EMAIL']
                 else:
-                    all_dest.append(to)
+                    all_dest.append(recipients)
             elif is_valid_email_address(notify_line, logger):
                 all_dest.append(notify_line)
 
@@ -144,18 +143,18 @@ def notify_user(
                     continue
 
         # elif is_valid_email_address(notify_line, logger):
-            # to = notify_line
+            # recipients = notify_line
             # else:
             # not a valid email address
             # continue
 
                 if send_email(single_dest, header, message,
                               logger, configuration):
-                    logger.info('email sent to %s telling that %s %s',
-                                single_dest, jobid, status)
+                    logger.info('email sent to %s telling that %s %s' % \
+                                (single_dest, jobid, status))
                 else:
-                    logger.error('email NOT sent to %s, jobid: %s',
-                                 single_dest, jobid)
+                    logger.error('email NOT sent to %s, jobid: %s' % \
+                                 (single_dest, jobid))
 
 
     # logger.info("notify_user end")
@@ -172,47 +171,55 @@ def create_notify_message(
     header = ''
     txt = ''
 
+    var_dict = {'url': configuration.migserver_https_url, 'jobid': jobid,
+                'retries': configuration.job_retries}
+
     if status == 'SUCCESS':
         header = 'MiG JOB finished'
-        txt += \
-            'Your MiG job with JOB ID %s has finished. Outputfiles can be found here: %s'\
-             % (jobid, myfiles_py_location)
         txt += '''
-The commands and exit codes:
-'''
+Your MiG job with JOB ID %(jobid)s has finished and full status is available at:
+%(url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
+
+The job commands and their exit codes:
+''' % var_dict
         try:
-            fh = open(statusfile, 'r')
-            txt += str(fh.read())
-            fh.close()
+            status_fd = open(statusfile, 'r')
+            txt += str(status_fd.read())
+            status_fd.close()
         except Exception, err:
             txt += 'Could not be read. (Internal MiG error?)%s' % err
-        txt += \
-            '\nLink to stdout file: https://%s/cert_redirect/job_output/%s/%s.stdout (might not be available)'\
-             % (configuration.server_fqdn, jobid, jobid)
-        txt += \
-            '\nLink to stderr file: https://%s/cert_redirect/job_output/%s/%s.stderr (might not be available)'\
-             % (configuration.server_fqdn, jobid, jobid)
-        txt += '\nReplies to this message will not be read!'
+        txt += '''
+Link to stdout file:
+%(url)s/cert_redirect/job_output/%(jobid)s/%(jobid)s.stdout (might not be available)
+
+Link to stderr file:
+%(url)s/cert_redirect/job_output/%(jobid)s/%(jobid)s.stderr (might not be available)
+
+Replies to this message will not be read!
+''' % var_dict
     elif status == 'FAILED':
 
         header = 'MiG JOB Failed'
-        txt += \
-            'The job with JOB ID %s has failed after %s retries, due to internal errors.'\
-             % (jobid, configuration.job_retries)
-        txt += '\nFor details use migstatus -v %s' % jobid
-        txt += \
-            '\nPlease contact the MiG team if the problem occurs multiple times.'
         txt += '''
+The job with JOB ID %(jobid)s has failed after %(retries)s retries!
+This may be due to internal errors, but full status is available at:
+%(url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
+
+Please contact the MiG team if the problem occurs multiple times.
 
 Replies to this message will not be read!!!
-'''
+''' % var_dict
     elif status == 'EXPIRED':
         header = 'MiG JOB Expired'
-        txt += \
-            'Your MiG job with JOB ID %s has expired, after remaining in the queue for too long. Please contact the '\
-             % jobid
-        txt += ' MiG team for details about expire policies.\n'
-        txt += 'Replies to this message will not be read!!!\n'
+        txt += '''
+Your MiG job with JOB ID %(jobid)s has expired, after remaining in the queue for too long.
+This may be due to internal errors, but full status is available at:
+%(url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
+
+Please contact the MiG team for details about expire policies.
+
+Replies to this message will not be read!!!
+''' % var_dict
     elif status == 'VGRIDMEMBERREQUEST':
         from_cert = myfiles_py_location[0]
         vgrid_name = myfiles_py_location[1]
@@ -269,11 +276,11 @@ def send_instant_message(
                 message)
         configuration = Configuration('../server/MiGserver.conf')
         stdin_path = configuration.im_notify_stdin
-        fh = open(stdin_path, 'a')
-        fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
-        fh.write(message + '\n')
+        stdin_fd = open(stdin_path, 'a')
+        fcntl.flock(stdin_fd.fileno(), fcntl.LOCK_EX)
+        stdin_fd.write(message + '\n')
         logger.info('%s written to %s' % (message, stdin_path))
-        fh.close()
+        stdin_fd.close()
         return True
     except Exception, err:
         print 'could not get exclusive access or write to %s!'\
@@ -305,14 +312,14 @@ def send_email(
         errors = server.sendmail(configuration.smtp_sender, recipients_list, txt)
         server.quit()
         if errors:
-            logger.warning('Partial error(s) sending email: %s', errors)
+            logger.warning('Partial error(s) sending email: %s' % errors)
             return False
         else:
-            logger.debug('Email was sent to %s', recipients)
+            logger.debug('Email was sent to %s' % recipients)
             return True
     except Exception, err:
-        logger.error('Sending email to %s through %s failed!: %s', recipients,
-                     configuration.smtp_server, str(err))
+        logger.error('Sending email to %s through %s failed!: %s' % \
+                     (recipients, configuration.smtp_server, str(err)))
         return False
 
 

@@ -342,6 +342,9 @@ class Configuration:
                     'public_key_file')
         if config.has_option('GLOBAL', 'smtp_sender'):
             self.smtp_sender = config.get('GLOBAL', 'smtp_sender')
+        else:
+            self.smtp_sender = '%s@%s' % (os.environ.get('USER', 'mig'),
+                                          self.server_fqdn)
 
         logger.debug('starting scheduler options')
         if config.has_option('SCHEDULER', 'algorithm'):
