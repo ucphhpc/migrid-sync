@@ -724,7 +724,6 @@ while True:
                     'EXPIRED',
                     logger,
                     False,
-                    configuration.smtp_server,
                     configuration,
                     )
                 expired_file = configuration.mrsl_files_dir\

@@ -654,7 +654,7 @@ if (form.has_key('new_resource') or form.has_key('apply_changes'))\
 
         (status, msg) = \
             send_resource_create_request_mail(cert_name_no_spaces,
-                form['hosturl'].value, pending_file, configuration)
+                form['hosturl'].value, pending_file, logger, configuration)
         logger.info(msg)
         if not status:
             o.client("<BR>Failed to send an email to the MiG server administrator(s), your configuration was saved on the server in:<BR><BR> '"

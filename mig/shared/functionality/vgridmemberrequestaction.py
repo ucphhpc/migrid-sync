@@ -147,7 +147,6 @@ def main(cert_name_no_spaces, user_arguments_dict):
             'VGRIDMEMBERREQUEST',
             logger,
             '',
-            configuration.smtp_server,
             configuration,
             )
 

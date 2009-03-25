@@ -153,20 +153,22 @@ def main(cert_name_no_spaces, user_arguments_dict):
     user_dict['tmp_id'] = tmp_id
 
     dest = 'karlsen@erda.imada.sdu.dk'
+    mig_user = os.environ.get('USER', 'mig')
     command_cert_create = \
         """
-on amigos19.diku.dk:
+on CA host (amigos19.diku.dk):
 sudo su - mig-ca
-rsync mig@mig-1.imada.sdu.dk:mig/server/MiG-users.db ~/
+rsync %s@%s:mig/server/MiG-users.db ~/
 ./ca-scripts/createusercert.py -a '%s' -d ~/MiG-users.db -s '%s' -u '%s'"""\
-         % (configuration.admin_email, configuration.server_fqdn,
+         % (mig_user, configuration.server_fqdn,
+            configuration.admin_email, configuration.server_fqdn,
             user_id)
     command_cert_create_old = \
         """
 Copy password:
 %s
-to the clipboard (needed several times). As 'root'
-on amigos19.diku.dk:
+to the clipboard (needed several times).
+As 'root' on amigos19.diku.dk:
 cd /usr/lib/ssl/misc
 ./mig_gen_cert.sh '%s' '%s' '%s' '%s' '%s' '%s'"""\
          % (
@@ -180,38 +182,45 @@ cd /usr/lib/ssl/misc
         )
     command_user_create = \
         """
-As 'mig' on mig-1.imada.sdu.dk:
-cd /home/mig/mig/server
+As '%s' on %s:
+cd ~/mig/server
 ./createuser.py -u '%s'"""\
-         % req_path
+         % (mig_user,
+            configuration.server_fqdn,
+             req_path,
+            )
     command_user_create_old = \
         """
-As 'mig' on mig-1.imada.sdu.dk:
-cd /home/mig/mig/server
+As '%s' user on %s:
+cd ~/mig/server
 ./createuser.py '%s' '%s' '%s' '%s' '%s' '%s' '%s'"""\
          % (
-        cert_name,
-        org,
-        state,
-        country,
-        email,
-        comment,
-        password,
+             mig_user,
+             configuration.server_fqdn,
+             cert_name,
+             org,
+             state,
+             country,
+             email,
+             comment,
+             password,
         )
     command_user_delete = \
         """
-As 'mig' on mig-1.imada.sdu.dk:
-cd /home/mig/mig/server
+As '%s' user on %s:
+cd ~/mig/server
 ./deleteuser.py '%s' '%s' '%s' '%s' '%s' '%s' '%s'"""\
          % (
-        cert_name,
-        org,
-        state,
-        country,
-        email,
-        comment,
-        password,
-        )
+             mig_user,
+             configuration.server_fqdn,
+             cert_name,
+             org,
+             state,
+             country,
+             email,
+             comment,
+             password,
+             )
 
     email_header = 'MiG certificate request for %s' % cert_name
     email_msg = \
@@ -337,7 +346,7 @@ Command to delete user again on MiG server:
          % user_dict
 
     if not send_email(admin_email, email_header, server_req
-                       + email_msg, smtp_server, logger):
+                       + email_msg, logger, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'An error occured trying to send the email requesting the MiG administrators to create a new certificate. Please email the MiG administrators (%s) manually and include the session ID: %s'
                                % (admin_email, tmp_id)})

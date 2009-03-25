@@ -42,7 +42,6 @@ def notify_user(
     status,
     logger,
     statusfile,
-    smtp_server,
     configuration,
     ):
     """Send notification messages about job to user. User settings are
@@ -151,7 +150,7 @@ def notify_user(
             # continue
 
                 if send_email(single_dest, header, message,
-                              smtp_server, logger):
+                              logger, configuration):
                     logger.info('email sent to %s telling that %s %s',
                                 single_dest, jobid, status)
                 else:
@@ -251,12 +250,13 @@ Replies to this message will not be read!!!
 
 
 def send_instant_message(
-    to,
+    recipients,
     protocol,
     header,
     message,
     logger,
     ):
+    """Send message to recipients by IM"""
 
     try:
 
@@ -265,7 +265,7 @@ def send_instant_message(
         # TODO: Is <BR> a good symbol?.
 
         message = message.replace('\n', '<BR>')
-        message = 'SENDMESSAGE %s %s %s: %s' % (protocol, to, header,
+        message = 'SENDMESSAGE %s %s %s: %s' % (protocol, recipients, header,
                 message)
         configuration = Configuration('../server/MiGserver.conf')
         stdin_path = configuration.im_notify_stdin
@@ -284,39 +284,35 @@ def send_instant_message(
 
 
 def send_email(
-    to,
-    header,
+    recipients,
+    subject,
     message,
-    smtp_server,
     logger,
+    configuration,
     ):
+    """Send message to recipients by email"""
 
-    txt = 'To: %s\n' % to
-    txt += 'From: MiG_no_reply@imada.sdu.dk\n'
-    txt += 'Subject: %s\n' % header
+    txt = 'To: %s\n' % recipients
+    txt += 'From: %s\n' % configuration.smtp_sender
+    txt += 'Subject: %s\n\n' % subject
     txt += message
-    sender = 'MiG_no_reply@imada.sdu.dk'
 
-    if -1 != to.find(', '):
-        to = to.split(', ')
+    recipients_list = recipients.split(', ')
 
     try:
-
-        # This does not work on vcr atm (the line below throws an exception). It should work on mig-1?
-
-        server = smtplib.SMTP(smtp_server)
+        server = smtplib.SMTP(configuration.smtp_server)
         server.set_debuglevel(0)
-        errors = server.sendmail(sender, to, txt)
+        errors = server.sendmail(configuration.smtp_sender, recipients_list, txt)
         server.quit()
         if errors:
             logger.warning('Partial error(s) sending email: %s', errors)
             return False
         else:
-            logger.debug('Email was sent to %s', to)
+            logger.debug('Email was sent to %s', recipients)
             return True
     except Exception, err:
-        logger.error('Sending email to %s through %s failed!: %s', to,
-                     smtp_server, str(err))
+        logger.error('Sending email to %s through %s failed!: %s', recipients,
+                     configuration.smtp_server, str(err))
         return False
 
 
@@ -324,57 +320,35 @@ def send_resource_create_request_mail(
     cert_name_no_spaces,
     hosturl,
     pending_file,
+    logger,
     configuration,
     ):
 
-    # ## TODO: Change this function to use the framework above!!
-
     recipients = configuration.admin_email
-    smtp_server = configuration.smtp_server
 
     msg = "Sending the resource creation information for '%s' to '%s'"\
          % (hosturl, recipients)
 
-    txt = 'To: ' + recipients + '\n'
-    txt = txt + 'From: MiG_no_reply@imada.sdu.dk\n'
+    
+    subject = 'MiG resource creation request on %s' % configuration.server_fqdn
+    txt = """
+Cert. name: '%s'
 
-    txt = txt + 'Subject: MiG resource creation request.\n'
-    txt = txt + """Cert. name: '%s'
+Hosturl: '%s'
 
-""" % cert_name_no_spaces
-    txt = txt + """Hosturl: '%s'
+Configfile: '%s'
 
-""" % hosturl
-    txt = txt + """Configfile: '%s'
+Resource creation command:
+./createresource.py %s %s %s
+""" % (cert_name_no_spaces, hosturl, pending_file, hosturl, cert_name_no_spaces,
+       os.path.basename(pending_file))
 
-""" % pending_file
-    txt = txt\
-         + 'Resource creation command:\n./createresource.py %s %s %s'\
-         % (hosturl, cert_name_no_spaces,
-            pending_file[pending_file.rindex('/') + 1:])
-
-    if -1 != recipients.find(', '):
-        reciepients = recipients.split(', ')
-    else:
-        reciepients = recipients
-
-    sender = 'MiG_no_reply@imada.sdu.dk'
-    try:
-        server = smtplib.SMTP(smtp_server)
-        server.set_debuglevel(0)
-        errors = server.sendmail(sender, reciepients, txt)
-        server.quit()
-        if errors:
-            msg += '\nPartial error(s) sending email: %s' % errors
-            return (False, msg)
-        else:
-            msg += "\nEmail was sent to '%s'" % recipients
-            return (True, msg)
-    except Exception, err:
-        msg += "Sending email to '%s' through %s failed!: %s"\
-             % (recipients, smtp_server, err)
-        return (False, msg)
-
+    status = send_email(recipients, subject, txt, logger, configuration)
+    if status:
+        msg += "\nEmail was sent to admins"
+    else:        
+        msg += "\nEmail could not be sent to one or more recipients!"
+    return (status, msg)
 
 def parse_im_relay(path):
     """Parse path name and contents in order to generate

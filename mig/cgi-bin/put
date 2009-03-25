@@ -258,7 +258,6 @@ if cert_name_no_spaces == 'None':
             'SUCCESS',
             logger,
             configuration.webserver_home + filename_slash_stripped,
-            configuration.smtp_server,
             configuration,
             )
 

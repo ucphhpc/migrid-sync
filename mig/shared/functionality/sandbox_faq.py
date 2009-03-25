@@ -71,7 +71,7 @@ html['english'] = \
 <tr><td>No. By default, sandboxes will only download jobs and input files at max 256 kB/s and upload result files at max 128 kB/s, and you can set these appropriately when you download the sandbox. Further, the sandbox model only applies to small jobs that don't need to access big files.</td></tr>
 
 <tr><td><h3>How do I see how many jobs I've executed?</h3></td></tr>
-<tr><td>If you login to the download site, you'll see a list of your resources and the number of jobs executed by each of them. There is a public sandbox monitor <a href='https://mig-1.imada.sdu.dk/cgi-bin/sandboxmonitor.py'>here</a>. Work is in progress on a credential system which will give a better presentation of user credits. </td></tr>
+<tr><td>If you login to the download site, you'll see a list of your resources and the number of jobs executed by each of them. There is a public sandbox monitor <a href='https://%s/cgi-bin/sandboxmonitor.py'>here</a>. Work is in progress on a credential system which will give a better presentation of user credits. </td></tr>
 
 <tr><td><h3>Can the sandbox function behind a firewall/router/switch?</h3></td></tr>
 <tr><td>Yes, however, some firewalls block individual applications in which case it is necessary to unblock VMWare Player. Apart from that, the sandbox only uses standard protocols (http+https) that are normally open for outbound access, and all communication is initiated by the sandbox, i.e. the Grid system never contacts the sandbox, since this would not be possible had the sandbox resided behind an NAT router.</td></tr>
@@ -134,7 +134,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 #    output_objects.append({"object_type":"html_form", "text":html[language]})
 
     output_objects.append({'object_type': 'html_form', 'text'
-                          : html['english']})
+                          : html['english'] % configuration.server_fqdn})
     return (output_objects, returnvalues.OK)
 
 

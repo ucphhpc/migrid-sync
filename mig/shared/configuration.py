@@ -80,6 +80,7 @@ def fix_missing(config_file, verbose=True):
         'mig_server_id': '%s.0' % fqdn,
         'empty_job_name': 'no_suitable_job-',
         'smtp_server': fqdn,
+        'smtp_sender': '%s@%s' % (os.environ.get('USER', 'mig'), fqdn),
         'logfile': 'server.log',
         'loglevel': 'info',
         'sleep_period_for_empty_jobs': '80',
@@ -156,6 +157,7 @@ class Configuration:
     sandbox_home = ''
     javabin_home = ''
     smtp_server = ''
+    smtp_sender = ''
     server_home = ''
     sessid_to_mrsl_link_home = ''
     mig_system_files = ''
@@ -338,6 +340,8 @@ class Configuration:
         if config.has_option('GLOBAL', 'public_key_file'):
             self.public_key_file = config.get('GLOBAL',
                     'public_key_file')
+        if config.has_option('GLOBAL', 'smtp_sender'):
+            self.smtp_sender = config.get('GLOBAL', 'smtp_sender')
 
         logger.debug('starting scheduler options')
         if config.has_option('SCHEDULER', 'algorithm'):

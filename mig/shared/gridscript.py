@@ -422,7 +422,6 @@ def requeue_job(
                 'FAILED',
                 logger,
                 False,
-                configuration.smtp_server,
                 configuration,
                 )
 
