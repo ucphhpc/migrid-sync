@@ -84,6 +84,11 @@ def check_mrsl_files(
     check_mrsl_files_start_time = time.time()
 
     for (root, dirs, files) in os.walk(configuration.mrsl_files_dir):
+
+        # skip all dot dirs - they are from repos etc and _not_ jobs
+            
+        if root.find(os.sep + '.') != -1:
+                continue
         for name in files:
             filename = root + '/' + name
             if os.path.getmtime(filename) < last_start:
