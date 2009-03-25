@@ -179,7 +179,7 @@ def copy_file_to_exe(
         # We do not have exe host keys and don't really care about auth there
         ssh_command = 'scp -o ConnectTimeout=15 -o ConnectionAttempts=2 ' + \
                       ' ' + os.path.join(resource_config['RESOURCEHOME'],
-                                         dest_path) ' ' + \
+                                         dest_path) + ' ' + \
                                          exe['execution_user'] + '@' + \
                                          + exe['execution_node'] + ':' + \
                                          exe['execution_dir']
