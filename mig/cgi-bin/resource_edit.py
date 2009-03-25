@@ -28,11 +28,17 @@
 # Minimum Intrusion Grid
 # Martin Rehr martin@rehr.dk August 2005
 
-# TODO: fix a number of directory traversal vulnerabilities!!!
+# TODO: input validation!!!
+#  fix a number of directory traversal vulnerabilities:
 #  - *must* check that user input used in filenames doesn't use
 #    '..' or similar that can cause writes in illegal locations!
 #  - take a look at head.py for an example:
 #    i.e. 'real_path.startswith(base)'
+#  valid values in general and some format issues:
+#  - generally only accept valid input strings to avoid bad side
+#    effects of using variables
+#  - must strip input of extra space to avoid problems in e.g.
+#    resource creation commands
 
 import cgi
 import cgitb
@@ -640,9 +646,9 @@ if (form.has_key('new_resource') or form.has_key('apply_changes'))\
             try:
                 pass
                 os.rename(pending_file, conf_file)
-            except Exception, e:
+            except Exception, exc:
                 o.out('Accepted config, but failed to save it! Failed:'
-                       + str(e))
+                       + str(exc))
                 o.reply_and_exit(o.ERROR)
         else:
             o.out(msg)
