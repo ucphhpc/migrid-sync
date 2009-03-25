@@ -1073,13 +1073,13 @@ while True:
                 ):
                 logger.error('could not clean up MiG server')
 
-            if not job_dict.has_key('EMPTY_JOB'):
+            if configuration.enable_server_dist and not job_dict.has_key('EMPTY_JOB'):
 
                 # TODO: we should probably support resources migrating and
                 # handing back job as first contact with new server
                 # Still not sure if we need finished handling at all, though...
 
-                scheduler.finished_job(res_name, job_dict['SESSIONID'])
+                scheduler.finished_job(res_name, job_dict)
 
             executing_queue.dequeue_job_by_id(job_id)
             msg += '%s removed from executing queue.' % job_id
