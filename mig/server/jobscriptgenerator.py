@@ -248,14 +248,14 @@ def create_job_script(
          + '.sendupdatefiles'
     make_symlink(linkdest5, linkloc5, logger)
 
-    filename_without_extension = configuration.resource_home\
+    path_without_extension = configuration.resource_home\
          + unique_resource_name + '/' + localjobname
     job = gen_job_script(
         job_dict,
         resource_config,
         configuration,
         localjobname,
-        filename_without_extension,
+        path_without_extension,
         user_cert,
         exe,
         logger,
@@ -267,7 +267,7 @@ def create_job_script(
         logger.error(msg)
         return (msg, None)
 
-    inputfiles_filename = filename_without_extension + '.getinputfiles'
+    inputfiles_path = path_without_extension + '.getinputfiles'
 
     # hack to ensure that a resource has a sandbox keyword
 
@@ -277,7 +277,7 @@ def create_job_script(
             # Copy file to webserver_home
 
             try:
-                src = open(inputfiles_filename, 'r')
+                src = open(inputfiles_path, 'r')
 
                 # RA TODO: change filename to something that
                 # includes sessionid
@@ -351,7 +351,7 @@ def create_job_script(
                     # ######### End JVM SANDBOX HACK ###########
 
                 msg = "File '%s' was not copied to the webserver home."\
-                     % inputfiles_filename
+                     % inputfiles_path
                 print '\nERROR: ' + str(err)
                 logger.error(msg)
                 return (msg, None)
@@ -360,19 +360,19 @@ def create_job_script(
 
     # Copy file to the resource
 
-    if not copy_file_to_resource(inputfiles_filename,
-                                 inputfiles_filename, resource_config,
-                                 logger):
-        logger.error('File was not copied to the resource.'
-                      + inputfiles_filename)
+    if not copy_file_to_resource(inputfiles_path,
+                                 os.path.basename(inputfiles_path),
+                                 resource_config, logger):
+        logger.error('File was not copied to the resource: '
+                      + inputfiles_path)
     else:
 
         # file was sent, delete it
 
         try:
-            os.remove(inputfiles_filename)
+            os.remove(inputfiles_path)
         except:
-            logger.error('could not remove ' + inputfiles_filename)
+            logger.error('could not remove ' + inputfiles_path)
     return (sessionid, iosessionid)
 
 
@@ -381,7 +381,7 @@ def gen_job_script(
     resource_config,
     configuration,
     localjobname,
-    filename_without_extension,
+    path_without_extension,
     user_cert,
     exe,
     logger,
@@ -400,7 +400,7 @@ def gen_job_script(
             exe,
             configuration.migserver_https_url,
             localjobname,
-            filename_without_extension,
+            path_without_extension,
             )
     elif script_language == 'sh':
         generator = genjobscriptsh.GenJobScriptSh(
@@ -409,12 +409,12 @@ def gen_job_script(
             exe,
             configuration.migserver_https_url,
             localjobname,
-            filename_without_extension,
+            path_without_extension,
             )
     elif script_language == 'java':
         generator = genjobscriptjava.GenJobScriptJava(job_dictionary,
                 resource_config, configuration.migserver_https_url,
-                localjobname, filename_without_extension)
+                localjobname, path_without_extension)
     else:
         print 'Unknown script language! (is in configuration.scriptlanguages but not in jobscriptgenerator) %s '\
              % script_language
@@ -643,7 +643,7 @@ def gen_job_script(
                     + job_dictionary['JOB_ID'] + '.job', logger)
 
     write_file('\n'.join(getinputfiles_array),
-               filename_without_extension + '.getinputfiles', logger)
+               path_without_extension + '.getinputfiles', logger)
     write_file('\n'.join(sendoutputfiles_array),
                configuration.mig_system_files + job_dictionary['JOB_ID']
                 + '.sendoutputfiles', logger)

@@ -35,17 +35,28 @@ from shared.conf import get_resource_exe, get_configuration_object
 
 def copy_file_to_resource(
     filename,
-    dest_filename,
+    dest_path,
     resource_config,
     logger,
     ):
-    """Copy filename to dest_filename on resource using scp"""
+    """Copy filename to dest_path relative to resource home on resource
+    using scp.
+    """
 
-    dest_filenamewithoutpath = os.path.basename(dest_filename)
+    multiplex = '0'
+    if resource_config.has_key('SSHMULTIPLEX'):
+        multiplex = str(resource_config['SSHMULTIPLEX'])
+    hostkey = resource_config['HOSTKEY'])
+    identifier = resource_config['HOSTIDENTIFIER']
+    unique_id = '%s.%s' % (host, identifier)
+    res_dir = configuration.resource_home + os.sep + unique_id
+    host = resource_config['HOSTURL']
+    port = resource_config['SSHPORT']
+    user = resource_config['MIGUSER']
 
-    # resource_dir implicitly given as dir part of filename
-
-    resource_dir = os.path.dirname(filename)
+    if dest_path.startswith(os.sep):
+        logger.warning('copy_file_to_resource: force relative dest path!')
+        dest_path = dest_path.lstrip(os.sep)
 
     # create known-hosts file with only the resources hostkey (could
     # this be avoided and just passed as an argument?)
@@ -56,66 +67,65 @@ def copy_file_to_resource(
         # Please note that mkstemp uses os.open() style rather
         # than open()
 
-        (filehandle, tmpfile) = tempfile.mkstemp(dir=resource_dir,
+        (filehandle, key_path) = tempfile.mkstemp(dir=res_dir,
                 text=True)
-        os.write(filehandle, str(resource_config['HOSTKEY']))
+        os.write(filehandle, hostkey)
         os.close(filehandle)
         logger.debug('single_known_hosts for %s written in %s'
-                      % (resource_config['HOSTURL'], tmpfile))
-        logger.debug('value %s' % resource_config['HOSTKEY'])
+                      % (host, key_path))
+        logger.debug('value %s' % hostkey)
     except Exception, err:
         logger.error('could not write single_known_hosts %s (%s)'
-                      % (resource_config['HOSTURL'], err))
+                      % (host, err))
 
-    if resource_config.has_key('SSHPORT'):
-        ssh_port = ' -P %s' % resource_config['SSHPORT']
-    else:
-        ssh_port = ''
+    options = []
+    if '0' != multiplex:
+        options.append('-o ControlPath=%s/ssh-multiplexing' % res_dir)
+    options.append('-o Port=%s' % port)
+    options.append('-o StrictHostKeyChecking=yes')
+    options.append('-o BatchMode=yes')
+    options.append('-o CheckHostIP=yes')
+    # We need fault tolerance but can't block e.g. grid_script for long
+    options.append('-o ConnectionAttempts=2')
+    options.append('-o ConnectTimeout=30')
+    options.append('-o UserKnownHostsFile=' + key_path)
 
-    command = 'scp %s -o StrictHostKeyChecking=yes ' % ssh_port
-    command += '-o BatchMode=yes -o CheckHostIp=yes '
-    command += '-o UserKnownHostsFile=' + tmpfile + ' ' + filename + ' '\
-         + str(resource_config['MIGUSER']) + '@'\
-         + str(resource_config['HOSTURL'])
-    command += ':' + str(resource_config['RESOURCEHOME']) + '/'\
-         + dest_filenamewithoutpath
+    command = 'scp %s %s %s@%s:%s >> /dev/null 2>> %s/last-scp.err' % \
+              (' '.join(options), filename, user, host,
+               os.path.join(resource_config['RESOURCEHOME'], dest_path),
+               os.environ['HOME'])
 
-    # command += "  >> /dev/null"
-
-    command += ' >> /dev/null 2>> %s/last-scp.err' % os.environ['HOME']
     logger.debug(command)
     status = os.system(command) >> 8
 
     # Remove temp file no matter what command returned
 
     try:
-        os.remove(tmpfile)
+        os.remove(key_path)
     except Exception, err:
-        logger.error('could not remove %s (%s)' % (tmpfile, err))
+        logger.error('could not remove %s (%s)' % (key_path, err))
 
     if status != 0:
 
         # File was not sent!! Take action
 
         logger.error(command)
-        logger.error('scp return code: %s %s' % (status,
-                     resource_config['HOSTURL']))
+        logger.error('scp return code: %s %s' % (status, host))
         return False
 
-    logger.info('scp ok %s' % resource_config['HOSTURL'])
+    logger.info('scp ok %s' % host)
     return True
-
 
 def copy_file_to_exe(
     local_filename,
-    dest_filename,
+    dest_path,
     resource_config,
     exe_name,
     logger,
     ):
-    """Copy local_filename to dest_filename on exe_name. This
-    needs to go through the resource front end using scp and the
-    copy method to the exe depends on the shared fs setting.
+    """Copy local_filename to dest_path relative to execution_dir on
+    exe_name. This needs to go through the resource front end using scp
+    and the copy method to the exe depends on the shared fs setting.
     """
 
     msg = ''
@@ -127,12 +137,16 @@ def copy_file_to_exe(
              + exe_name + "'"
         return (False, msg)
 
+    if dest_path.startswith(os.sep):
+        logger.warning('copy_file_to_exe: force relative dest path!')
+        dest_path = dest_path.lstrip(os.sep)
+
     # copy file to frontend
 
     copy_attempts = 5
     for attempt in range(copy_attempts):
         copy_status = copy_file_to_resource(local_filename,
-                dest_filename, resource_config, logger)
+                dest_path, resource_config, logger)
         if not copy_status:
             logger.warning('scp of file failed in attempt %d of %d'
                             % (attempt, copy_attempts))
@@ -157,12 +171,17 @@ def copy_file_to_exe(
     # copy file to exe
 
     if exe.has_key('shared_fs') and exe['shared_fs']:
-        ssh_command = 'cp ' + resource_config['RESOURCEHOME'] + '/'\
-             + dest_filename + ' ' + exe['execution_dir']
+        ssh_command = 'cp ' + os.path.join(resource_config['RESOURCEHOME'],
+                                           dest_path) + ' ' + \
+                                           exe['execution_dir']
     else:
-        ssh_command = 'scp ' + resource_config['RESOURCEHOME'] + '/'\
-             + dest_filename + ' ' + exe['execution_user'] + '@'\
-             + exe['execution_node'] + ':' + exe['execution_dir']
+        # We do not have exe host keys and don't really care about auth there
+        ssh_command = 'scp -o ConnectTimeout=15 -o ConnectionAttempts=2 ' + \
+                      ' ' + os.path.join(resource_config['RESOURCEHOME'],
+                                         dest_path) ' ' + \
+                                         exe['execution_user'] + '@' + \
+                                         + exe['execution_node'] + ':' + \
+                                         exe['execution_dir']
 
     copy_attempts = 5
     for attempt in range(copy_attempts):
@@ -204,7 +223,7 @@ def execute_on_resource(
         job_type = resource_config['JOBTYPE']
     multiplex = '0'
     if resource_config.has_key('SSHMULTIPLEX'):
-        multiplex = resource_config['SSHMULTIPLEX']
+        multiplex = str(resource_config['SSHMULTIPLEX'])
 
     # Use manually added SSHMULTIPLEXMASTER variable to only run master
     # from sessions initiated by ssh_multiplex.py: There's a race in the
@@ -225,7 +244,7 @@ def execute_on_resource(
 
     try:
 
-        # Securely open a temporary file in resource_dir
+        # Securely open a temporary file in resource dir
         # Please note that mkstemp uses os.open() style rather
         # than open()
 
@@ -245,25 +264,23 @@ def execute_on_resource(
 
     if 'batch' != job_type.lower():
         options.append('-X')
-    options.append('-p %s' % port)
-    options.append('-oBatchMode=yes')
-    options.append('-oCheckHostIP=yes')
-    options.append('-oStrictHostKeyChecking=yes')
-    options.append('-oConnectionAttempts=5')
+    options.append('-o Port=%s' % port)
+    options.append('-o BatchMode=yes')
+    options.append('-o CheckHostIP=yes')
+    options.append('-o StrictHostKeyChecking=yes')
+    # We need fault tolerance but can't block e.g. grid_script for long
+    options.append('-o ConnectionAttempts=2')
+    options.append('-o ConnectTimeout=30')
+    options.append("-o UserKnownHostsFile=%s" % key_path)
 
-    # TODO: UserKnownHostsFile is not being checked ATM!
-    # It makes the script hang :-S
-    # options.append("-o UserKnownHostsFile=%s" % key_path)
-
-    if '0' != str(multiplex):
-        control_socket = '%s/ssh-multiplexing' % res_dir
-        options.append('-oControlPath=%s' % control_socket)
+    if '0' != multiplex:
+        options.append('-o ControlPath=%s/ssh-multiplexing' % res_dir)
 
         # Only open a new control socket if explicitly told so:
         # All other invocations will reuse it if possible.
 
         if multiplex_master:
-            options.append('-oControlMaster=yes')
+            options.append('-o ControlMaster=yes')
 
     batch = []
     batch.append('1> /dev/null')
@@ -309,8 +326,10 @@ def execute_on_exe(
     user = exe_config['execution_user']
     options = []
     options.append('-X')
-    options.append('-oBatchMode=yes')
-    options.append('-oConnectionAttempts=5')
+    options.append('-o BatchMode=yes')
+    # We need fault tolerance but can't block e.g. grid_script for long
+    options.append('-o ConnectionAttempts=2')
+    options.append('-o ConnectTimeout=30')
     batch = []
     batch.append('1> /dev/null')
     batch.append('2> /dev/null')
