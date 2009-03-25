@@ -46,7 +46,7 @@ def copy_file_to_resource(
     multiplex = '0'
     if resource_config.has_key('SSHMULTIPLEX'):
         multiplex = str(resource_config['SSHMULTIPLEX'])
-    hostkey = resource_config['HOSTKEY'])
+    hostkey = resource_config['HOSTKEY']
     identifier = resource_config['HOSTIDENTIFIER']
     unique_id = '%s.%s' % (host, identifier)
     res_dir = configuration.resource_home + os.sep + unique_id
