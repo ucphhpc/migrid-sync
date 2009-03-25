@@ -88,7 +88,8 @@ def copy_file_to_resource(
     # We need fault tolerance but can't block e.g. grid_script for long
     options.append('-o ConnectionAttempts=2')
     options.append('-o ConnectTimeout=30')
-    options.append('-o UserKnownHostsFile=' + key_path)
+    if hostkey:
+        options.append('-o UserKnownHostsFile=' + key_path)
 
     command = 'scp %s %s %s@%s:%s >> /dev/null 2>> %s/last-scp.err' % \
               (' '.join(options), filename, user, host,
@@ -271,7 +272,8 @@ def execute_on_resource(
     # We need fault tolerance but can't block e.g. grid_script for long
     options.append('-o ConnectionAttempts=2')
     options.append('-o ConnectTimeout=30')
-    options.append("-o UserKnownHostsFile=%s" % key_path)
+    if hostkey:
+        options.append("-o UserKnownHostsFile=%s" % key_path)
 
     if '0' != multiplex:
         options.append('-o ControlPath=%s/ssh-multiplexing' % res_dir)
