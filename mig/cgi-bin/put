@@ -42,8 +42,9 @@ import shared.confparser as confparser
 from shared.putfuncs import verify_results, migrated_job
 from shared.resadm import start_resource_exe_if_continuous
 from shared.refunctions import create_runtimeenv
-from shared.notification import notify_user, parse_im_relay, \
-    send_resource_create_request_mail, send_instant_message
+from shared.notification import notify_user_thread,\
+     parse_im_relay, send_resource_create_request_mail, \
+     send_instant_message
 from shared.cgishared import init_cgiscript_possibly_with_cert
 from shared.fileio import pickle, unpickle
 from shared.job import new_job, finished_job, failed_restart
@@ -248,19 +249,6 @@ if cert_name_no_spaces == 'None':
 
         # ####### CLEAN UP RESOURCE #########
 
-        # TODO: notifications should not be sent until results are
-        # actually available at server where user resides (see above)
-        # ####### NOTIFY USER ########
-
-        notify_user(
-            dict,
-            configuration.myfiles_py_location,
-            'SUCCESS',
-            logger,
-            configuration.webserver_home + filename_slash_stripped,
-            configuration,
-            )
-
         # This try should not be necessary but log indicates possible
         # uncaught exceptions somewhere in the call
 
@@ -287,6 +275,17 @@ if cert_name_no_spaces == 'None':
             o.out('put normal job.status: Error in restart of resource if continuous: %s'
                    % err)
             o.reply_and_exit(o.ERROR)
+
+        # ####### NOTIFY USER ########
+        notify_user_thread(
+            dict,
+            configuration.myfiles_py_location,
+            'SUCCESS',
+            logger,
+            configuration.webserver_home + filename_slash_stripped,
+            configuration,
+            )
+
 elif is_user(cert_name_no_spaces, configuration.user_home):
 
     # logger.info("Certificate found as a user cert: " + cert_name_no_spaces)

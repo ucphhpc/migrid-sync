@@ -39,7 +39,7 @@ import copy
 import jobscriptgenerator
 from jobqueue import JobQueue
 from shared.configuration import Configuration
-from shared.notification import notify_user
+from shared.notification import notify_user_thread
 from shared.fileio import pickle, unpickle, unpickle_and_change_status, \
     send_message_to_grid_script
 from shared.conf import get_resource_exe
@@ -718,7 +718,7 @@ while True:
 
                 # tell the user about the expired job
 
-                notify_user(
+                notify_user_thread(
                     expired,
                     configuration.myfiles_py_location,
                     'EXPIRED',

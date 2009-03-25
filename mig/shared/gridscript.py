@@ -32,7 +32,7 @@ import pickle
 import time
 
 import shared.fileio as io
-from shared.notification import notify_user
+from shared.notification import notify_user_thread
 
 
 def clean_grid_stdin(stdin):
@@ -416,7 +416,7 @@ def requeue_job(
                  % (job_dict['JOB_ID'], job_retries)
             logger.error(msg)
             print msg
-            notify_user(
+            notify_user_thread(
                 job_dict,
                 configuration.myfiles_py_location,
                 'FAILED',
