@@ -43,14 +43,15 @@ def copy_file_to_resource(
     using scp.
     """
 
+    configuration = get_configuration_object()
     multiplex = '0'
     if resource_config.has_key('SSHMULTIPLEX'):
         multiplex = str(resource_config['SSHMULTIPLEX'])
     hostkey = resource_config['HOSTKEY']
+    host = resource_config['HOSTURL']
     identifier = resource_config['HOSTIDENTIFIER']
     unique_id = '%s.%s' % (host, identifier)
     res_dir = configuration.resource_home + os.sep + unique_id
-    host = resource_config['HOSTURL']
     port = resource_config['SSHPORT']
     user = resource_config['MIGUSER']
 
@@ -63,7 +64,7 @@ def copy_file_to_resource(
 
     try:
 
-        # Securely open a temporary file in resource_dir
+        # Securely open a temporary file in resource dir
         # Please note that mkstemp uses os.open() style rather
         # than open()
 
