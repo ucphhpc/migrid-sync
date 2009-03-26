@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# configuration - [insert a few words of module description on this line]
+# configuration - Configuration wrapper
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -38,6 +38,7 @@ from shared.logger import Logger
 
 
 def fix_missing(config_file, verbose=True):
+    """Add missing configuration options - used by checkconf script"""
     config = ConfigParser()
     config.read([config_file])
 
@@ -80,7 +81,7 @@ def fix_missing(config_file, verbose=True):
         'mig_server_id': '%s.0' % fqdn,
         'empty_job_name': 'no_suitable_job-',
         'smtp_server': fqdn,
-        'smtp_sender': '%s@%s' % (os.environ.get('USER', 'mig'), fqdn),
+        'smtp_sender': 'MiG Server <%s@%s>' % (user, fqdn),
         'logfile': 'server.log',
         'loglevel': 'info',
         'sleep_period_for_empty_jobs': '80',
@@ -343,10 +344,12 @@ class Configuration:
         if config.has_option('GLOBAL', 'smtp_sender'):
             self.smtp_sender = config.get('GLOBAL', 'smtp_sender')
         else:
-            self.smtp_sender = '%s@%s' % (os.environ.get('USER', 'mig'),
-                                          self.server_fqdn)
+            self.smtp_sender = 'MiG Server <%s@%s>' % \
+                               (os.environ.get('USER', 'mig'),
+                                self.server_fqdn)
 
         # logger.debug('starting scheduler options')
+
         if config.has_option('SCHEDULER', 'algorithm'):
             self.sched_alg = config.get('SCHEDULER', 'algorithm')
         else:
@@ -445,3 +448,5 @@ class Configuration:
         return peers_dict
 
 
+if "__main__" == __name__:
+    conf = Configuration(os.path.expanduser('~/mig/server/MiGserver.conf'), True)

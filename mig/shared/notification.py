@@ -179,10 +179,12 @@ def send_email(
     ):
     """Send message to recipients by email"""
 
-    txt = 'To: %s\n' % recipients
-    txt += 'From: %s\n' % configuration.smtp_sender
-    txt += 'Subject: %s\n\n' % subject
-    txt += message
+    txt = '''From: %s
+To: %s
+Subject: %s
+
+%s
+''' % (configuration.smtp_sender, recipients, subject, message)
 
     recipients_list = recipients.split(', ')
 
@@ -410,5 +412,3 @@ def parse_im_relay(path):
         status += 'IM relay parsing failed: %s' % err
 
     return (status, protocol, address, header, msg)
-
-
