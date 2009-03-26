@@ -263,7 +263,7 @@ ANY
 
 To submit with execution on the first suitable and allowed VGrid.
 ''',
-        'Type': 'Multiplestrings',
+        'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }

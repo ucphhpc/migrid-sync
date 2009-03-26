@@ -670,7 +670,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                         value.append(env_vars)
                     else:
 
-                # sub level parsing error
+                        # sub level parsing error
 
                         status = False
                         msg += print_type_error(job_keyword,
@@ -683,8 +683,10 @@ def check_types(parse_output, external_keyword_dict, configuration):
                             'Error getting RE_environmentvariable value.'
                             , keyword_dict, keyword_data)
             else:
+                status = False
                 msg += \
-                    'Internal error. A keyword with an unknown type was accepted'
+                    'Internal error: Keyword %s with unknown type %s was accepted!' % \
+                    (job_keyword, keyword_type)
 
             # print str(value)
             # Keyword was found. Change required to False meaning that the keyword is no longer required

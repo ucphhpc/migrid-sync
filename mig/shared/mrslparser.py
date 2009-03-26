@@ -45,6 +45,7 @@ def parse(
     ):
 
     configuration = get_configuration_object()
+    logger = configuration.logger
 
     # return a tuple (bool status, str msg). This is done because cgi-scripts are not allowed to print anything
     # before 'the first two special lines' are printed
@@ -53,13 +54,16 @@ def parse(
 
     external_dict = mrslkeywords.get_keywords_dict(configuration)
 
-    # The mRSL has the right structure
-    # Check if the types are correct too
+    # The mRSL has the right structure check if the types are correct too
+    # and inline update the default external_dict entries with the ones
+    # from the actual job specification
 
     (status, msg) = parser.check_types(result, external_dict,
             configuration)
     if not status:
         return (False, 'Parse failed (typecheck) %s' % msg)
+
+    logger.debug('check_types updated job dict to: %s' % external_dict)
 
     global_dict = {}
 
@@ -171,7 +175,7 @@ def parse(
     else:
         filename = outfile
 
-    if not pickle(replaced_dict, filename, configuration.logger):
+    if not pickle(replaced_dict, filename, logger):
         return (False, 'Fatal error: Could not write %s' % filename)
 
     if not outfile == 'not_specified':
@@ -184,7 +188,7 @@ def parse(
 
     message = 'USERJOBFILE %s/%s\n' % (cert_name_no_spaces, job_id)
 
-    if not send_message_to_grid_script(message, configuration.logger,
+    if not send_message_to_grid_script(message, logger,
             configuration):
         return (False,
                 'Fatal error: Could not get exclusive access or write to %s'
@@ -203,9 +207,9 @@ def parse(
         # open resource config
 
         resource_config = unpickle(resource_config_filename,
-                                   configuration.logger)
+                                   logger)
         if not resource_config:
-            configuration.logger.error('error unpickling resource config'
+            logger.error('error unpickling resource config'
                     )
             return False
 
@@ -226,7 +230,7 @@ def parse(
         # save dict with added entry
 
         if not pickle(resource_config, resource_config_filename,
-                      configuration.logger):
+                      logger):
             return (False,
                     'Fatal error pickling resource config: Could not write %s'
                      % filename)
@@ -235,8 +239,8 @@ def parse(
          == 'interactive':
         from shared.cgioutput import CGIOutput
         import shared.vncfunctions as vncfunctions
-        o = CGIOutput(configuration.logger)
-        vncfunctions.main(configuration.logger, configuration,
+        o = CGIOutput(logger)
+        vncfunctions.main(logger, configuration,
                           cert_name_no_spaces, o)
 
     # print global_dict
