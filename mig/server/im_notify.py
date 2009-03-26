@@ -403,3 +403,5 @@ while keep_running:
         print 'Caught unexpected exception: %s' % exc
         irc = None
         
+print 'Real IM daemon shutting down'
+sys.exit(0)
