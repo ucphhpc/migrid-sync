@@ -56,9 +56,9 @@ The central daemon is grid_script.py which takes care of all job
 management on the server. If you want to include grid monitor web pages you
 should additionally run the grid_monitor.py daemon. The optional job
 notifications and ssh multiplexing daemons are available as im_notify.py
-and ssh_multiplex.py in the same location. In case you don't know what
-they do, you can most likely safely ignore them and just run
-grid_script.py daemon
+/ im_notify_stdout.py and ssh_multiplex.py in the same location. In case
+you don't know what they do, you can most likely safely ignore them and
+just run the grid_script.py daemon.
 
 All the daemons can be launched from inside the mig/server directory:
 cd /path/to/unpacked/mig/source/mig/server
