@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# im_notify - [insert a few words of module description on this line]
+# im_notify - IM notifier daemon
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,15 +25,22 @@
 # -- END_HEADER ---
 #
 
-#
+# This module was inspired by an example program by Joel Rosdahl with the
+# following license header:
 # Example program using irclib.py.
 # # This program is free without restrictions; do anything you like with
 # it.
 # Joel Rosdahl <joel@rosdahl.net>
 
+
 # MiG: This script makes it easy to interact with a bitlbee irc server
 # Call the send_msg function to send a message to an IM user
-# todo: better online/offline detection and handling?
+# TODO: better online/offline detection and handling?
+
+"""IM daemon actually passing requested messages to a suitable
+notification handler: At the moment this is an IRC server with
+multiprotocol transports.
+"""
 
 import sys
 import time
@@ -42,7 +49,7 @@ import datetime
 import irclib
 import os
 
-from shared.configuration import Configuration
+from shared.conf import get_configuration_object
 
 nick_counter = 1
 getting_buddy_list = False
@@ -62,6 +69,7 @@ def send_msg(
     im_network,
     msg,
     ):
+    """Send IM request through connection"""
 
     print 'send msg called'
     global getting_buddy_list
@@ -70,28 +78,38 @@ def send_msg(
     global protocol_online_dict
     global nick_and_id_dict
     dest = dest.lower()
-    while not protocol_online_dict[im_network]:
+    # try going online
+    got_online = False
+    for _ in range(30):
+        if not protocol_online_dict[im_network]:
+            print 'waiting for protocol %s to get online (status for all protocols: %s)'\
+                  % (im_network, protocol_online_dict)
+            time.sleep(2)
+        else:
+            got_online = True
+            break
 
-    # block until online
+    if not got_online:
+        raise Exception("gave up waiting to get online")
 
-        print 'waiting for protocol %s to get online (status for all protocols: %s)'\
-             % (im_network, protocol_online_dict)
-        time.sleep(1)
-
+    # Fetch buddy list and let any exceptions pass to caller
+    
     getting_buddy_list = True
+    got_buddy_list = False
     nick_and_id_dict = {}
-    try:
+    for _ in range(3):
+        if not getting_buddy_list:
+            got_buddy_list = True
+            break
         connection.privmsg('root', 'blist all')
-    except Exception, se:
-        print 'NOT CONNECTED!!'
-        try:
-            connection.connect(server, port, nickname)
-        except Exception, x:
-            print 'exception in untested reconnect code!!'
-
-    while getting_buddy_list:
-        print 'waiting while buddy list is generated'
-        time.sleep(3)
+        for _ in range(30):
+            if not getting_buddy_list:
+                break
+            print 'waiting while buddy list is generated'
+            time.sleep(2)
+            
+    if not got_buddy_list:
+        raise Exception("gave up waiting for buddy list")
 
     replaced_im_network = im_network
     if replaced_im_network == 'aol':
@@ -107,20 +125,20 @@ def send_msg(
             nick_and_id_dict)
     if nick_and_id_dict.has_key('%s_%s' % (replaced_im_network, dest)):
 
-    # nick was found in buddy dict. Get the nickname.
+        # nick was found in buddy dict. Get the nickname.
 
         id_dict = nick_and_id_dict['%s_%s' % (replaced_im_network,
                                    dest)]
         nickname = id_dict['nick']
     else:
 
-    # nick was not found in buddy dict, add user
+        # nick was not found in buddy dict, add user
 
         print 'account %s_%s not found in buddy list, adding..'\
              % (im_network, dest)
         account_number = get_account_number(im_network)
 
-    # find highest "integer" nick
+        # find highest "integer" nick
 
         for ele in nick_and_id_dict.keys():
             dict = nick_and_id_dict[ele]
@@ -128,38 +146,35 @@ def send_msg(
                 if int(dict['nick']) > nick_counter:
                     print 'found: %s' % int(dict['nick'])
                     nick_counter = int(dict['nick'])
-            except Exception, e:
+            except Exception:
 
-        # not integer? doesnt matter, we're looking for a unique id
-        # and the highest id+1 should be unique even though some contacts
-        # have a non-integer nickname
+                # not integer? doesnt matter, we're looking for a unique id
+                # and the highest id+1 should be unique even though some contacts
+                # have a non-integer nickname
 
                 pass
+        
         nick_counter += 1
         nickname = 'nick%s' % nick_counter
 
-    # give contact a second to get online
+        # give contact a second to get online
 
         time.sleep(3)
 
-    # add contact
+        # add contact
 
         print 'add %s %s %s' % (account_number, dest, nickname)
         connection.privmsg('root', 'add %s %s %s' % (account_number,
                            dest, nickname))
 
-    # send the message
+    # actually send the message
 
     for m in msg.split('<BR>'):
         connection.privmsg(nickname, m)
 
-    # sleep a bit to keep messages in correct order
+        # sleep a bit to keep messages in correct order
 
         time.sleep(0.3)
-
-    # somehow detect and notify the user if the message could not be delivered? By email?
-
-    print 'done sending message'
 
 
 def on_connect(connection, event):
@@ -192,7 +207,7 @@ def on_privmsg(connection, event):
 
     if event.source() != 'root!root@%s' % server:
 
-    # message should never be accepted if it is not sent by "root"
+        # message should never be accepted if it is not sent by "root"
 
         return
 
@@ -214,9 +229,9 @@ def on_privmsg(connection, event):
         protocol_online_dict['aol'] = True
     elif len(recvd_split) >= 4 and recvd_split[1].find('@') >= 0:
 
-    # "blist all" reply. Create a small dict containing info about this single contact
-    # TODO: make the if check more specific to be sure wrong messages are never accepted
-    # recvd_split[2] is on the form: jabber(mig_daemon@jab
+        # "blist all" reply. Create a small dict containing info about this single contact
+        # TODO: make the if check more specific to be sure wrong messages are never accepted
+        # recvd_split[2] is on the form: jabber(mig_daemon@jab
 
         im_network_tmp_split = recvd_split[2].split('(')  # rstrip(")").lstrip("(").lower() # (YAHOO) -> yahoo
         im_network = im_network_tmp_split[0]
@@ -227,7 +242,7 @@ def on_privmsg(connection, event):
         id_dict['nick'] = recvd_split[0]  # henrik_karlsen
         id_dict['status'] = recvd_split[3]  # (Online) (verify format)
 
-    # unique id is im_network_im_id, eg. msn_henrik_karlsen@hotmail.com
+        # unique id is im_network_im_id, eg. msn_henrik_karlsen@hotmail.com
 
         nick_and_id_dict['%s_%s' % (im_network, im_id.lower())] = \
             id_dict
@@ -236,7 +251,7 @@ def on_privmsg(connection, event):
 
         if recvd_split[1] == 'buddies':
 
-        # end of buddy list
+            # end of buddy list
 
             global getting_buddy_list
             getting_buddy_list = False
@@ -255,7 +270,7 @@ def on_join(connection, event):
 
     if irclib.nm_to_n(event.source()) == nickname:
 
-    # login to bitlbee
+        # login to bitlbee
 
         login_msg = 'identify %s' % bitlbee_password
         print login_msg
@@ -273,15 +288,22 @@ def irc_process_forever(*args):
     irc.process_forever()
 
 
-print 'This script should only be started by MiG admins and only on the main MiG server. Multiple running instances - even on separate servers - results in conflicts!'
-if len(sys.argv) != 2:
-    print 'start script with:'
-    print 'im_notify.py i_am_admin_and_on_main_mig_server'
-    sys.exit(1)
+# ## MAIN ###
+print '''This script should only be started by MiG admins and only on the main
+MiG server. Multiple running instances - even on separate servers - results in
+conflicts!
 
-if sys.argv[1] != 'i_am_admin_and_on_main_mig_server':
-    print 'start script with:'
-    print 'im_notify.py i_am_admin_and_on_main_mig_server'
+Please use dummy IM deamon in im_notify_stdout.py instead if *not* running on
+main MiG server!
+'''
+if len(sys.argv) < 2 or sys.argv[1] != 'i_am_admin_and_on_main_mig_server':
+    print '''
+To start dummy deamon run:
+python im_notify_stdout.py
+
+To really start this daemon run:
+python im_notify.py i_am_admin_and_on_main_mig_server
+'''
     sys.exit(1)
 
 port = 6667
@@ -289,30 +311,9 @@ server = 'im.bitlbee.org'
 nickname = 'migdaemon'
 target = '#bitlbee'
 bitlbee_password = 'klapHaT1'
-irc = irclib.IRC()
-try:
-    c = irc.server().connect(server, port, nickname)
-except irclib.ServerConnectionError, x:
-    print x
-    sys.exit(1)
-
-c.add_global_handler('connect', on_connect)
-c.add_global_handler('join', on_join)
-c.add_global_handler('disconnect', on_disconnect)
-c.add_global_handler('privmsg', on_privmsg)
-c.add_global_handler('pubmsg', on_pubmsg)
-thread.start_new_thread(irc_process_forever, ())
-
-# send_msg(c, "henrik_karlsen@hotmail.com", "msn", "hej du")
-# send_msg(c, "karlsen@jabbernet.dk", "jabber", "hej du")
-# send_msg(c, "karlsenslet@jabber.dk", "jabber", "hej du")
-# send_msg(c, "henrik_karlsen@hotmail.com", "msn", "hej du")
-# send_msg(c, "migtestaccount@YAHOO", "yahoo", "hej du")
-# send_msg(c, "8961036", "icq", "hej du")
-# send_msg(c, "henrikkarlsen2@login.oscar.aol.com", "aol", "hej du")
-
-configuration = Configuration('MiGserver.conf')
+configuration = get_configuration_object()
 stdin_path = configuration.im_notify_stdin
+irc = None
 
 try:
     if not os.path.exists(stdin_path):
@@ -320,46 +321,85 @@ try:
         try:
             os.mkfifo(stdin_path, mode=0600)
         except Exception, err:
-            print 'Could not create missing grid_stdin fifo: %s exception: %s '\
+            print 'Could not create missing IM stdin fifo: %s exception: %s '\
                  % (stdin_path, err)
 except:
-    print 'error opening grid_stdin! %s' % sys.exc_info()[0]
+    print 'error opening IM stdin! %s' % sys.exc_info()[0]
     sys.exit(1)
+
+keep_running = True
+
+print 'Starting Real IM daemon - Ctrl-C to quit'
 
 print 'Reading commands from %s' % stdin_path
 try:
     im_notify_stdin = open(stdin_path, 'r')
+except KeyboardInterrupt:
+    keep_running = False
 except Exception, err:
-    print 'could not open im_notify_stdin %s, exception: %s'\
-         % (stdin_path, err)
+    print 'could not open IM stdin %s, exception: %s'\
+          % (stdin_path, err)
     sys.exit(1)
 
-# never exit
+while keep_running:
+    try:
+        if not irc:
+            print 'Initialising IRC access to %s' % server
+            irc = irclib.IRC()
+            try:
+                irc_server = irc.server().connect(server, port, nickname)
+            except irclib.ServerConnectionError, exc:
+                print "Could not connect to irc server: %s" % exc
+                irc = None
+                time.sleep(30)
+                continue
 
-while True:
-    line = im_notify_stdin.readline()
-    if line == '':
+            irc_server.add_global_handler('connect', on_connect)
+            irc_server.add_global_handler('join', on_join)
+            irc_server.add_global_handler('disconnect', on_disconnect)
+            irc_server.add_global_handler('privmsg', on_privmsg)
+            irc_server.add_global_handler('pubmsg', on_pubmsg)
+            thread.start_new_thread(irc_process_forever, ())
+            
+        # Handle messages
+
+        # Examples:
+        # send_msg(irc_server, "henrik_karlsen@hotmail.com", "msn", "hej du")
+        # send_msg(irc_server, "karlsen@jabbernet.dk", "jabber", "hej du")
+        # send_msg(irc_server, "henrik_karlsen@hotmail.com", "msn", "hej du")
+        # send_msg(irc_server, "migtestaccount@YAHOO", "yahoo", "hej du")
+        # send_msg(irc_server, "8961036", "icq", "hej du")
+        # send_msg(irc_server, "henrikkarlsen2@login.oscar.aol.com", "aol", "hej du")
+
+        line = im_notify_stdin.readline()
+        if line.upper().startswith('SENDMESSAGE '):
+
+            # The received line should be on a format similar to:
+            # SENDMESSAGE PROTOCOL TO MESSAGE ex:
+            # SENDMESSAGE jabber account@jabber.org this is the message
+            
+            # split string
+
+            split_line = line.split(' ', 3)
+            if len(split_line) != 4:
+                print 'received SENDMESSAGE not on correct format %s' % line
+                continue
+
+            protocol = split_line[1]
+            recipient = split_line[2]
+            message = split_line[3]
+
+            print 'Sending message: protocol: %s to: %s message: %s'\
+                  % (protocol, recipient, message)
+            send_msg(irc_server, recipient, protocol, message)
+        elif line:
+            print 'unknown message received: %s' % line
+
+        # Throttle down
         time.sleep(1)
-        continue
-    if line.upper().find('SENDMESSAGE ') == 0:
-
-        # The received line should be on a format similar to:
-        # SENDMESSAGE PROTOCOL TO MESSAGE ex:
-        # SENDMESSAGE jabber account@jabber.org this is the message
-
-        # split string
-
-        split_line = line.split(' ', 3)
-        if len(split_line) != 4:
-            print 'received SENDMESSAGE not on correct format %s' % line
-            continue
-
-        protocol = split_line[1]
-        to = split_line[2]
-        message = split_line[3]
-
-        print 'Sending message: protocol: %s to: %s message: %s'\
-             % (protocol, to, message)
-        send_msg(c, to, protocol, message)
-    else:
-        print 'unknown message received: %s' % line
+    except KeyboardInterrupt:
+        keep_running = False
+    except Exception, exc:
+        print 'Caught unexpected exception: %s' % exc
+        irc = None
+        

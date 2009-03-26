@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# im_notify_stdout - [insert a few words of module description on this line]
+# im_notify_stdout - Dummy IM daemon
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,27 +25,66 @@
 # -- END_HEADER ---
 #
 
-# Write im messages to stdout instead of sending them
+"""Dummy IM daemon writing requests to stdout instead of sending them"""
 
-import string
+import os
+import sys
 import time
 
-im_msg_stdin_filename = 'im_msg_stdin'
+from shared.conf import get_configuration_object
+
+
+# ## MAIN ###
+print '''This is a dummy MiG IM notification daemon which just prints requests.
+
+The real notification daemon, im_notify.py, hard codes accounts and thus
+does not support multiple instances. So please only run this dummy daemon and
+*not* the real daemon anywhere but on the main official MiG server.
+'''
+
+configuration = get_configuration_object()
+stdin_path = configuration.im_notify_stdin
 
 try:
-    im_msg_stdin = open(im_msg_stdin_filename, 'r')
-except Exception, e:
-    print 'could not open im_msg_stdin %s, exception: %s'\
-         % (im_msg_stdin_filename, e)
+    if not os.path.exists(stdin_path):
+        print 'IM stdin %s does not exist, creating it with mkfifo!'
+        try:
+            os.mkfifo(stdin_path, mode=0600)
+        except Exception, err:
+            print 'Could not create missing IM stdin fifo: %s exception: %s '\
+                 % (stdin_path, err)
+except:
+    print 'error opening IM stdin! %s' % sys.exc_info()[0]
+    sys.exit(1)
 
-# never exit
+keep_running = True
 
-while True:
-    line = im_msg_stdin.readline()
-    if line == '':
+print 'Starting Dummy IM daemon - Ctrl-C to quit'
+
+print 'Reading commands from %s' % stdin_path
+try:
+    im_notify_stdin = open(stdin_path, 'r')
+except KeyboardInterrupt:
+    keep_running = False
+except Exception, exc:
+    print 'could not open IM stdin %s: %s'\
+         % (stdin_path, exc)
+
+while keep_running:
+    try:
+        line = im_notify_stdin.readline()
+        if line.upper().startswith('SENDMESSAGE '):
+            print line
+        elif line:
+            print 'unknown message received: %s' % line
+            
+        # Throttle down
         time.sleep(1)
-        continue
-    if string.find(line.upper(), 'SENDMESSAGE ') == 0:
-        print line
-    else:
-        print 'unknown message received: %s' % line
+
+    except KeyboardInterrupt:
+        keep_running = False
+    except Exception, exc:
+        print 'Caught unexpected exception: %s' % exc
+
+print 'Dummy IM daemon shutting down'
+sys.exit(0)
