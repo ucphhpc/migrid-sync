@@ -66,7 +66,7 @@ def create_oneclick_resource(sandboxkey, cputime):
 N/A
 
 ::HOSTURL::
-N/A
+oneclick
 
 ::HOSTIDENTIFIER::
 %s

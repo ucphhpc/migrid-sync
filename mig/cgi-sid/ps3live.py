@@ -50,7 +50,7 @@ import shared.confparser as confparser
 def create_ps3_resource(sandboxkey):
     resource_name = 'ps3live'
     mig_user = 'mig'
-    hosturl = 'N/A'
+    hosturl = 'ps3live'
     resource_home = '/opt/mig/data/MiG/mig_frontend/'
     script_language = 'sh'
     ssh_port = -1
