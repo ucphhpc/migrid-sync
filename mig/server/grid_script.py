@@ -423,7 +423,7 @@ while True:
 
         (status, msg) = put_exe_pgid(configuration.resource_home,
                 unique_resource_name, exe, exe_pgid, logger,
-                                     (sandboxed == 0))
+                                     (sandboxed == 1))
         if status:
             logger.info(msg)
         else:
@@ -1268,8 +1268,7 @@ while True:
 
             # Restart non-sandbox resources for all timed out jobs
 
-            if not job_dict.has_key('SANDBOX') or job_dict['SANDBOX']\
-                 == 0:
+            if job_dict.get('SANDBOX', 0) == 0:
 
                 # TODO: atomic_resource_exe_restart is not always effective
                 # The imada resources have been seen to hang in wait for input files loop
