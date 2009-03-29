@@ -107,22 +107,24 @@ def main(cert_name_no_spaces, user_arguments_dict):
                           : 'MiG Submit Job'})
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Submit Job'})
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Please type your mRSL job description in the text area below:'
-                          })
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <div class='smallcontent'>
-Example mRSL job descriptions:
-<a href=example.mRSL>example 1</a>,
-<a href=example2.mRSL>example 2</a>,
-<a href=example3.mRSL>example 3</a>,
-<a href=example4.mRSL>example 4</a>, and
-<a href=example5.mRSL>example 5</a>
-<br>
-<a href='/cgi-bin/docs.py?show=job'>mRSL Documentation</a>
+Job descriptions can use a wide range of keywords to specify job requirements and actions.<br>
+Each keyword accepts one or more values of a particular type.<br>
+The full list of keywords with their default values and format is available in the on-demand <a href='/cgi-bin/docs.py?show=job'>mRSL Documentation</a>.
+<p>
+Actual examples for inspiration:
+<a href=/cpuinfo.mRSL>CPU Info</a>,
+<a href=/basic-io.mRSL>Basic I/O</a>,
+<a href=/notification.mRSL>Job Notification</a>,
+<a href=/povray.mRSL>Povray</a> and
+<a href=/vcr.mRSL>VCR</a>
 </div>
     """})
+    output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Please enter your mRSL job description below:'
+                          })
     default_mrsl = get_default_mrsl(mrsl_template)
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
@@ -130,15 +132,22 @@ Example mRSL job descriptions:
 Please note that textarea.py chokes if no nonempty KEYWORD_X_Y_Z fields 
 are supplied: thus we simply send a bogus jobname which does nothing
 -->
+<table class="migtable">
+<tr><td>
 <form method="post" action="/cgi-bin/textarea.py" id="miginput">
 <input type=hidden name=jobname_0_0_0 value=" ">
 <textarea cols="82" rows="25" name="mrsltextarea_0">
 %s
 </textarea>
-<br><br>
-
-<input type="submit" value="Submit">
+</td></tr>
+<tr><td>
+<br>
+</td></tr>
+<tr><td>
+<center><input type="submit" value="Submit Job"></center>
 </form>
+</td></tr>
+</table>
     """
                            % default_mrsl})
     output_objects.append({'object_type': 'sectionheader', 'text'
@@ -161,7 +170,7 @@ Submit mRSL files to parser (also .mRSL files included in packages)
 </td></tr>
 <tr><td>Remote filename</td><td>
 <input name="remotefilename_0" type="text" size="70"/>
-<input type="submit" value="Submit" name="sendfile">
+<input type="submit" value="Send file" name="sendfile">
 </td></tr>
 </form>
 </table>
