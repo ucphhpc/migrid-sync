@@ -5,18 +5,10 @@ set_options(RHOME='/usr/local/lib64/R-2.8.0')
 from rpy import r
 
 def read_data(spss_data_file):
-#file=fileimp, to.data.frame=TRUE)
-    
     r("library('foreign')")
-    #r("library('stats')")
-    r("hejse = 8")
-    print r("hejse")
-    #print r("data")
+
     r("data = read.spss(file='"+spss_data_file+"',to.data.frame=TRUE)")
     data_sheet = r("data")
-
-    
-#r("cols<-- names(data)")
     num_columns = len(data_sheet.keys())
     
     column_labels = []
@@ -27,17 +19,7 @@ def read_data(spss_data_file):
         label = column.keys()[0] # only has one key 
         column_labels.append(label) 
         data_list.append(column[label])
-        
 
-    print column_labels
-    #exit(0)
-    #column_labels = data_sheet.keys()
-    
-    #exit(0)
-#for label, values in data_sheet.items():
-    #    new_vals = map(lambda x:if not is.str(x) : str(x), values)
-     #   data_sheet[label] = new_vals
-    
     return data_list, column_labels
 
 def read_data_old(spss_data_file):
