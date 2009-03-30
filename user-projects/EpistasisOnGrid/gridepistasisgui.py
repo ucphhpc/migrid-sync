@@ -95,7 +95,7 @@ def update_selected_traits():
 def on_add_traits(event=None):
     indexes = frame_1.trait_list.GetSelections()
     #indexes = list(index)
-    print indexes, all_genes_and_traits
+    
     #frame_1.selected_genes.InsertItems(index, 0)
     for i in indexes: 
         trait_name = all_genes_and_traits[i]
@@ -110,7 +110,7 @@ def on_add_traits(event=None):
 def on_remove_traits(event=None):
     indexes = list(frame_1.selected_traits.GetSelections())
     indexes.reverse()
-    print indexes
+    
     
     for i in indexes: 
         trait_name = list(trait_selection)[i] # list converts set 
@@ -363,7 +363,7 @@ def on_use_indexes(event=None):
     
 def on_choice(event=None):
     sel_var = frame_1.selection_variable_list.GetSelection()
-    print sel_var
+    
     #value_list = data_sheet[all_genes_and_traits[sel_var]]
     value_list = data_sheet[sel_var]
     
