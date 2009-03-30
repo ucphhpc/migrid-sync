@@ -89,6 +89,23 @@ def parseCommandLineArgs(args):
         metavar='option1=value1,[option2=value2,...]',
         default='',
         )
+    # FUSE options
+    parser.add_option(
+        '-f',
+        '--foreground',
+        dest='runInforeground',
+        action='store_true',
+        default=False,
+        help='Run fuse mount as a foreground process',
+        )
+    parser.add_option(
+        '-d',
+        '--debug',
+        dest='withDebug',
+        action='store_true',
+        default=False,
+        help='Run fuse mount in debug mode',
+        )
 
     (options, args) = parser.parse_args(args)
 
@@ -99,6 +116,7 @@ def parseCommandLineArgs(args):
 
     odata = options.migfsOptions
 
+    fuseFlags = []
     namedOptions = {}
     if odata:
         for o in odata.split(','):
@@ -111,6 +129,12 @@ def parseCommandLineArgs(args):
 
     if options.promptForPasswd:
         namedOptions['password'] = getpass.getpass('MiG password: ')
+    if options.withDebug:
+        # Debug implies foreground mode
+        fuseFlags.append('-d')
+        fuseFlags.append('-f')
+    elif options.runInforeground:
+        fuseFlags.append('-f')
 
   # pyfile sanitation
 
@@ -122,15 +146,19 @@ def parseCommandLineArgs(args):
         log.error("file %s doesn't exist, or is not a file" % pyfile)
         sys.exit(1)
 
-    return (pyfile, mountpoint, namedOptions, options.useEncfs)
+    return (pyfile, mountpoint, fuseFlags, namedOptions, options.useEncfs)
 
 
-def main(mountpoint, namedOptions, useEncfs):
+def main(mountpoint, fuseFlags, namedOptions, useEncfs):
     if useEncfs:  # create a temp. dir to mount the encrypted migfs volume
         clearMountPoint = mountpoint
         mountpoint = tempfile.mkdtemp()
 
-    migfsPID = os.fork()
+    if '-f' in fuseFlags:
+        # Fake fork to avoid backgrounding
+        migfsPID = 0
+    else:
+        migfsPID = os.fork()
     if migfsPID == 0:
 
     # this is the child process. We register a log-and-exit handler for
@@ -147,7 +175,7 @@ def main(mountpoint, namedOptions, useEncfs):
         signal.signal(signal.SIGHUP, handlerHUP)
 
         sys.argv = []  # blank the command-line params for this child
-        migfs.main(mountpoint, namedOptions)
+        migfs.main(mountpoint, fuseFlags, namedOptions)
         log.info('migfs terminated')
     else:
 
@@ -239,7 +267,7 @@ def main(mountpoint, namedOptions, useEncfs):
 
 
 if __name__ == '__main__':
-    (pyfile, mountpoint, namedOptions, useEncfs) = \
+    (pyfile, mountpoint, fuseFlags, namedOptions, useEncfs) = \
         parseCommandLineArgs(sys.argv[1:])
 
   # import migfs from the pyfile location
@@ -251,4 +279,4 @@ if __name__ == '__main__':
 
     log = migfs.log
 
-    main(mountpoint, namedOptions, useEncfs)
+    main(mountpoint, fuseFlags, namedOptions, useEncfs)

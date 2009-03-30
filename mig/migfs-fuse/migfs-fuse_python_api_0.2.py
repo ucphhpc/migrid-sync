@@ -86,6 +86,10 @@ class DummyStat(fuse.Stat):
 
     """A dummy stat object to fit the API"""
 
+    st_blksize = default_block_size
+    st_rdev = None
+    st_blocks = 0
+    
     def __init__(self, stat_tuple):
         fuse.Stat.__init__(self)
         self.st_mode = stat_tuple[0]
@@ -1322,7 +1326,7 @@ except Exception, fs_err:
                  % (migfs_config, fs_err))
 
 
-def main(mount_point, main_options):
+def main(mount_point, fuse_flags=None, main_options=None):
     """Main: set up mount and handle requests"""
 
     usage = """
@@ -1332,7 +1336,16 @@ Userspace MiG file system
 
     # Must set mount point implicitly to fuse
 
+    
     sys.argv = ['migfs.py', mount_point]
+    if fuse_flags:
+        # -d for debug implies -f for foreground mode
+        if '-d' in fuse_flags and not '-f' in fuse_flags:
+            fuse_flags.append('-f')
+        sys.argv += fuse_flags
+    if not main_options:
+        main_options = {}
+        
     main_options['version'] = '%prog ' + fuse.__version__
     main_options['usage'] = usage
     main_options['dash_s_do'] = 'setsingle'
@@ -1346,4 +1359,4 @@ Userspace MiG file system
 
 
 if __name__ == '__main__':
-    main(sys.argv[1], dict(sys.argv[2:]))
+    main(sys.argv[1], sys.argv[2:])

@@ -68,10 +68,17 @@ Debug and development
 It is possible to change a few settings in migfs.conf. For debugging purposes
 it may be useful to change log_level to DEBUG. 
 In case you wish to further test or develop migfs you may also prefer to run
-migfs in the foreground by replacing the mount.migfs command with: 
+migfs in the foreground by adding '-f' to the mount.migfs command:
+./mount.migfs.py none /path/to/local/mig-mountpoint -f
+
+or by using migfs directly without the mount wrapper:
 ./migfs.py /path/to/local/mig-mountpoint -f
 or for the old version just:
 ./migfs.py /path/to/local/mig-mountpoint
+
+There's also a low level debug mode available with the '-d' flag:
+./mount.migfs.py none /path/to/local/mig-mountpoint -d
+it automatically implies the foreground mode.
 
 API changes
 -----------
