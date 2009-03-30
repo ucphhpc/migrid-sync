@@ -578,6 +578,7 @@ class MiGfs(Fuse):
 
     def __init__(self, *args, **kw):
         blocksize = -1
+        #print "DEBUG: got args and kwargs in MiGFS: %s, %s" % (args, kw)
         if kw.has_key('blocksize'):
             blocksize = kw['blocksize']
 
@@ -593,6 +594,7 @@ class MiGfs(Fuse):
             # Fuse does and should not know about password - so remove it
 
             del kw['password']
+        #print "DEBUG: passing args and kwargs to Fuse: %s, %s" % (args, kw)
         Fuse.__init__(self, *args, **kw)
 
         # self.mount_point = mount_point
