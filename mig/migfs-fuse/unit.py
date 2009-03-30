@@ -61,11 +61,14 @@ def show_diff(result, expected):
 def clean_test(test_dir):
     """Clean up everything in test_dir"""
 
+    name = 'clean up'
+    print 'Starting %s test' % name
     for (root, dirs, files) in os.walk(test_dir, topdown=False):
         for name in files:
             os.remove(os.path.join(root, name))
         for name in dirs:
             os.rmdir(os.path.join(root, name))
+    os.rmdir(test_dir)
     success = not os.path.exists(test_dir)
     print 'Got expected result:\t\t%s' % success
 
