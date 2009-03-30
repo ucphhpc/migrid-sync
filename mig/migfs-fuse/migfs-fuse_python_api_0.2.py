@@ -31,7 +31,7 @@ which at the time of this writing uses curl as a HTTPS transport
 with client certificate support.
 """
 
-__version__ = '0.5.1'
+__version__ = '0.5.2'
 
 import ConfigParser
 import array
@@ -49,7 +49,7 @@ import thread
 import time
 import traceback
 from threading import Thread
-from fuse import Fuse
+from fuse import Fuse, Stat, StatVfs
 from errno import EINVAL, ENOENT, ENOSPC, EPERM, ENOTEMPTY, ENOSYS
 from stat import S_ISREG
 
@@ -80,28 +80,6 @@ def _log_exception(msg):
     sys.stderr.write('MiG FS exception: ')
     traceback.print_exc(file=sys.stderr)
     log.exception(msg)
-
-
-class DummyStat(fuse.Stat):
-
-    """A dummy stat object to fit the API"""
-
-    st_blksize = default_block_size
-    st_rdev = None
-    st_blocks = 0
-    
-    def __init__(self, stat_tuple):
-        fuse.Stat.__init__(self)
-        self.st_mode = stat_tuple[0]
-        self.st_ino = stat_tuple[1]
-        self.st_dev = stat_tuple[2]
-        self.st_nlink = stat_tuple[3]
-        self.st_uid = stat_tuple[4]
-        self.st_gid = stat_tuple[5]
-        self.st_size = stat_tuple[6]
-        self.st_atime = stat_tuple[7]
-        self.st_mtime = stat_tuple[8]
-        self.st_ctime = stat_tuple[9]
 
 
 class MiGAccess:
@@ -697,22 +675,27 @@ class MiGfs(Fuse):
         if inode:
             if log.isEnabledFor(logging.DEBUG):
                 log.debug('inode %s' % inode)
-            stat_tuple = (
-                inode['mode'],
-                inode['ino'],
-                inode['dev'],
-                inode['nlink'],
-                inode['uid'],
-                inode['gid'],
-                inode['size'],
-                inode['atime'],
-                inode['mtime'],
-                inode['ctime'],
-                )
+            blocks = inode['size'] / default_block_size + \
+                     (inode['size'] % default_block_size != 0)
+            stat_dict = {
+                'st_blksize':default_block_size,
+                'st_rdev':inode['dev'],
+                'st_blocks':blocks,
+                'st_mode':inode['mode'],
+                'st_ino':inode['ino'],
+                'st_dev':inode['dev'],
+                'st_nlink':inode['nlink'],
+                'st_uid':inode['uid'],
+                'st_gid':inode['gid'],
+                'st_size':inode['size'],
+                'st_atime':inode['atime'],
+                'st_mtime':inode['mtime'],
+                'st_ctime':inode['ctime'],
+                }
             if log.isEnabledFor(logging.DEBUG):
-                log.debug('stat_tuple: %s' % (stat_tuple, ))
-            st = DummyStat(stat_tuple)
-            return st
+                log.debug('stat_dict: %s' % stat_dict)
+            stats = Stat(**stat_dict)
+            return stats
         else:
             err = OSError('No such file: %s' % path)
             err.errno = ENOENT
@@ -1094,16 +1077,17 @@ class MiGfs(Fuse):
             blocks_free_user = blocks_free
             log.debug('total blocks: %s' % total_blocks)
             log.debug('blocks_free: %s' % blocks_free)
-        fs_stats = (
-            block_size,
-            total_blocks,
-            blocks_free,
-            blocks_free_user,
-            files,
-            files_free,
-            namelen,
-            )
-        return fs_stats
+        fs_dict = {
+            'f_bsize':block_size,
+            'f_blocks':total_blocks,
+            'f_bfree':blocks_free,
+            'f_bavail':blocks_free_user,
+            'f_files':files,
+            'f_ffree':files_free,
+            'f_favail':files_free_user,
+            'f_namemax':namelen,
+            }
+        return StatVfs(**fs_dict)
 
     def fsync(self, path, isfsyncfile):
         """Sync buffers to file"""
