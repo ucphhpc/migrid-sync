@@ -10,7 +10,10 @@ def run_epistasis_job(job):
     create_dir(job["output_dir"], True) # create and enter output dir
     
     job_args_file = "job_arguments.dat"
-    create_job_arguments_file(filename=job_args_file, selection_variable_index=job["selection_variable"], sel_variable_values= job["class"], genes=job["gene_list"], traits=job["trait_list"])
+    gene_list = map(str,job["gene_list"])
+    trait_list = map(str,job["trait_list"])
+    select_var = str(job["selection_variable"])
+    create_job_arguments_file(filename=job_args_file, selection_variable=select_var, sel_variable_values= job["class"], genes=gene_list, traits=trait_list)
     argstr = "../"+job["data_file"]+" "+job_args_file
     execute_epistasis(job["r_files"], "../", argstr, job["r_bin"], job["main_r_file"]) # execute program
     archive_name = job["output_files"][0]
@@ -91,9 +94,9 @@ def generate_args(job, data_file_dir):
     return arg_str
 
 
-def create_job_arguments_file(filename, selection_variable_index, sel_variable_values, genes, traits):
+def create_job_arguments_file(filename, selection_variable, sel_variable_values, genes, traits):
     f = open(filename,"w")
-    f.write(selection_variable_index+"\n")
+    f.write(selection_variable+"\n")
     f.write(" ".join(sel_variable_values)+"\n")
     f.write(" ".join(genes)+"\n")
     f.write(" ".join(traits)+"\n")

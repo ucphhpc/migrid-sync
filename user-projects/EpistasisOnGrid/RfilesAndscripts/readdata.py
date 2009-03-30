@@ -9,6 +9,42 @@ def read_data(spss_data_file):
     
     r("library('foreign')")
     #r("library('stats')")
+    r("hejse = 8")
+    print r("hejse")
+    #print r("data")
+    r("data = read.spss(file='"+spss_data_file+"',to.data.frame=TRUE)")
+    data_sheet = r("data")
+
+    
+#r("cols<-- names(data)")
+    num_columns = len(data_sheet.keys())
+    
+    column_labels = []
+    data_list = []
+    for i in range(1,num_columns+1):
+        #column_label = 
+        column = r("data["+str(i)+"]")
+        label = column.keys()[0] # only has one key 
+        column_labels.append(label) 
+        data_list.append(column[label])
+        
+
+    print column_labels
+    #exit(0)
+    #column_labels = data_sheet.keys()
+    
+    #exit(0)
+#for label, values in data_sheet.items():
+    #    new_vals = map(lambda x:if not is.str(x) : str(x), values)
+     #   data_sheet[label] = new_vals
+    
+    return data_list, column_labels
+
+def read_data_old(spss_data_file):
+#file=fileimp, to.data.frame=TRUE)
+    
+    r("library('foreign')")
+    #r("library('stats')")
     data_sheet = r("read.spss(file='"+spss_data_file+"',to.data.frame=TRUE)")
     #print data_sheet
     #exit(0)
@@ -22,6 +58,9 @@ def read_data(spss_data_file):
     return data_sheet #column_labels
 
 
+
+
+
 def get_by_index(spss_data_file, gene_index_1, gene_index_2, trait_index_1, trait_index_2):
     r("data = read.spss(file='"+spss_data_file+"',to.data.frame=TRUE)")
     gene_index = str(gene_index_1)+":"+ str(gene_index_2)
@@ -32,4 +71,3 @@ def get_by_index(spss_data_file, gene_index_1, gene_index_2, trait_index_1, trai
     #print traits
 
     return genes, traits
-    

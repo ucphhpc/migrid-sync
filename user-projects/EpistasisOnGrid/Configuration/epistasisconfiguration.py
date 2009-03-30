@@ -13,13 +13,18 @@ gene_last_index = 75 #103
 trait_first_index = 7 #7 
 trait_last_index = 8 #37 
 
-default_gene_list = ["rhnf4a2", "rhnf4a1", "rkir62"]
-default_trait_list = ["Heigth","Alder","Omliv"] # height is misspelled purposely
+
+default_job_size = 1
+
+default_gene_list = range(gene_first_index,gene_first_index+3,1)#["rhnf4a2", "rhnf4a1", "rkir62"]
+default_trait_list = range(trait_first_index,trait_first_index+3,1)#["Heigth","Alder","Omliv"] # height is misspelled purposely
+
+
 
 default_selection_variable_index = 2
 default_selection_variable_label = "Gender"
 
-default_variable_values = [1,2]
+default_variable_values = ["1","2"]
 Epistasis_working_dir = "Epistasis_tmp/"
 
 output_dir = "epifiles/"

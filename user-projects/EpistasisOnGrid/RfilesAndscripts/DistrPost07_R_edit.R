@@ -22,12 +22,15 @@
 
 #   trait<-names(smplt[c(traitch)])
 
-for(trait in traits){
+for(traitn in traits){
      #print(paste("trait ",trait))
      #if(trait=="LDL"){
        
      #}
-     # Redit : traitVector <- as.numeric(smpl[, c(trait)])
+
+  trait<-names(smplt[c(traitn)])
+  
+                                        # Redit : traitVector <- as.numeric(smpl[, c(trait)])
 
   traitVector <<- as.numeric(smpl[, c(trait)]) # we need to make traitVector global ("<<-" instead of "<-")
 

@@ -19,6 +19,22 @@
 #NBNB F-test has min p-value of 1.1e-16. Upto e-14 it is heavely rounded. Thats in S6.2. what about S7.0 and byond??64BIT??
 #OUTputtet til videre behandling (se working files) skal ændres til en blok hvor al tekst er på engelsk!!
 
+"convertToInt"<-function(stringlist)
+{
+ 
+  if(is.integer(as.integer(stringlist[1]))){
+    new = T
+    newlist = seq(length=length(stringlist),from=0, to=0)
+    for(s in 1:length(newlist)){
+      newlist[s] = as.integer(stringlist[s])
+      print (newlist[s])
+    }
+    newlist
+  }else{
+      stringlist
+  }
+}
+
 
 "writeToFile"<-function(data,filename)
 {
@@ -31,9 +47,7 @@ hnames<-names(smplt)
 #Choose selection variable
 selectvar<<-selVar #2
 #Name selectionvariabel
-nselvar<<-selVar
-
-#nselvar<<-hnames[selVar]#selName#"Gender"
+nselvar<<-hnames[selVar]#selName#"Gender"
 
 #Select gene1
 #genenr1 = geneIndex1#74
@@ -80,7 +94,7 @@ evalext<<-".txt"
 
 print(selectvar)
 print(names(smplt))
-levmax<<-max(smplt[selectvar],na.rm=T) # selectvar is now a string
+levmax<<-max(smplt[c(selectvar)],na.rm=T)
 #stop("stop here")
 #Bonferoni corrections for genes
 #benja edit: gene indexes no longer present
@@ -102,8 +116,7 @@ logsave<-paste("Log progress of Epistasis")
 
 logtitel<-matrix(c("EPISTASIS"),nrow=1)
 studyfile<-matrix(c("File:","",fileimp),nrow=1)
-#studyvar<-matrix(c("Classification variable:"," ",names(smplt[c(selectvar)])),nrow=1)
-studyvar<-matrix(c("Classification variable:"," ",names(smplt[selectvar])),nrow=1) # selectvar is a string
+studyvar<-matrix(c("Classification variable:"," ",names(smplt[c(selectvar)])),nrow=1)
 tablehead<-matrix(c("Test number","","Class","Gene1","Gene2","Action","Time"),nrow=1)
 
 # Redit : Default write.table() writes to file differently than in S, so we need to add flags "quote=F, col.names=F,row.names=F"
@@ -148,8 +161,8 @@ print(valueRange)
 for(lev in valueRange) {
 	sval<<-lev
 #if(sval>levmax || sval<1)stop("Levels out of bounce")
-	#tfilt <- paste(names(smplt[c(selectvar)]), "=", sval)
-        tfilt <- paste(names(smplt[selectvar]), "=", sval) # selectvar is type string
+	tfilt <- paste(names(smplt[c(selectvar)]), "=", sval)
+        
 
 	# importer alle rækker med pågældende filter ("gender = 1")
 	#Redit: smpl <- importData(file=fileimp, filter = tfilt)
@@ -186,8 +199,8 @@ for(gene1 in genes){
       break
     }
 
-  gname1<<- gene1
-  gname2<<- gene2
+  gname1<<- names(smplt[c(gene1)])
+  gname2<<- names(smplt[c(gene2)])
     
 # benja edit: gene indexes are no longer used. Instead a list of gene names are in the "genes" vector 
 #while(gene1r <gene2r) {
@@ -239,7 +252,7 @@ else{
 }
 #signtraits bruges ikke pt(DistrPost kaldes dog!!)
 
-  updatescreen<-c(testno,"of",totaltest,sval,gname1,gname2,action,date(),sep="")
+   updatescreen<-c(testno,"of",totaltest,sval,gname1,gname2,action,date(),sep="")
 #Redit: print(c("Test No:",updatescreen)) # udskrifter
 # Redit: added flags for printing format
   writeToFile(matrix(updatescreen,nrow=1),paste(logsave,logext,sep=""))
@@ -300,9 +313,17 @@ print(genevector)
 print(traitvector)
 
 print(genevector[length(genevector):0])
-        
+
+if(is.integer(as.integer(selectionvar))){
+  selectionvar = as.integer(selectionvar)
+}
+
+genevector = convertToInt(genevector)
+traitvector  = convertToInt(traitvector)
 #stop("test")
-                                        # genes
+print(genevector)
+print(traitvector)
+#stop("")                                        # genes
 #gIndex1 <- as.numeric(args[2]) 
 #gIndex2 <- as.numeric(args[3])
 # traits

@@ -11,8 +11,12 @@ import sys
 sys.path.append('Configuration/')
 import epistasisconfiguration as configuration
 sys.path.append('Gridinterface/')
+
 import migsession
+sys.path.append('misc/')
+
 from mylogger import log
+from jobfragmentation import fragment_epistasis, get_job_specs
 
 class GridEpistasis:
     """Start an epistasis procedure either executed on grid og locally."""
@@ -60,11 +64,16 @@ class GridEpistasis:
 
     def create_status_str(self, job):
         """Return a status string for a job"""
-        status_str = 'Epistasis for class '
+        status_str = 'Epistasis \t - class '
         for val in job['class']:
             status_str += str(val) + ' ' 
-        status_str += '\t' + '\t' + job['status']['STATUS']
-        status_str += '\t started:'+job["started"]+'\t ended:'+job["finished"]
+        status_str += '\t - genes  '
+        for gene in job["gene_list"]:
+            status_str += str(gene) + ' ' 
+        status_str += '-'+ '\t' + job['status']['STATUS']
+        if job['status']['STATUS'] != "EXECUTING":
+            status_str += "\t"
+        status_str += ' \t started:'+job["started"]+'\t \t ended:'+job["finished"]
         return status_str
 
     def monitor_epistasis(self):
@@ -107,9 +116,10 @@ class GridEpistasis:
         selection_variable_values = configuration.default_variable_values,
         genelist=configuration.default_gene_list,
         traitlist=configuration.default_trait_list,
-        selection_variable=configuration.default_selection_variable_label,
+        selection_variable=configuration.default_selection_variable_index,
         data=configuration.data_file,
         output_dir=configuration.output_dir,
+        job_size=configuration.default_job_size,
         local_mode=False,
         ):
         """Start the epistasis procedure."""
@@ -121,10 +131,11 @@ class GridEpistasis:
         #else:
         #    selection_variable_values = range(int(class1), int(class2) + 1, 1)
         #selection_variable_values = classlist
-        job_size = 1  
+        #job_size = 1  
         #print 'SVvals: ' + str(selection_variable_values)
         #print 'JS: ' + str(job_size)
 
+        #job_size = 1
         epi_jobs, project_dir = create_epistasis_jobs(
             job_size,
             genelist=genelist,
@@ -181,29 +192,7 @@ class GridEpistasis:
         """Delete files used in the epistasis procedure that are no longer needed."""
         self.mig_session.clean_up(self.all_jobs)
 
-
 # ##### CREATE JOBS#############
-
-# fragments the epistasis procedure into jobs of classes
-
-
-def fragment_epistasis(job_size, values):
-    """Return a list of sub jobs of size job_size."""
-    value_range = []
-    current_size = 0
-    job_classes = []
-    for i in range(len(values)):
-        value_range.append(str(values[i]))
-        current_size += 1
-        if current_size == job_size:
-            job_classes.append(value_range)
-            value_range = []
-            current_size = 0
-    if value_range != []:
-        job_classes.append(value_range)
-    #print job_classes
-
-    return job_classes
 
 def create_epistasis_jobs(
     job_size,
@@ -217,7 +206,8 @@ def create_epistasis_jobs(
     ):
     """Return epistasis jobs that execute the epistasis procedure."""
     #values = configuration.selection_variable_range[str(selection_var)]
-    job_classes = fragment_epistasis(job_size, variable_values)
+    #job_fragments = fragment_epistasis(classes=variable_values, genes=genelist, traits=traitlist, job_size=job_size)
+    job_fragments = fragment_epistasis(job_size, values=variable_values)
     #print 'classes ' + str(job_classes), job_size, vals
     jobs = []
     ser_number = 1
@@ -227,11 +217,16 @@ def create_epistasis_jobs(
          + str(time_list[0]) + '_' + str(time_list[3])\
          + str(time_list[4]) + str(time_list[5])
 
-    for j in job_classes:
+    for j in job_fragments:
        
         job = create_init_job()
+        classes = j
+        #genes = 
+        #, traits 
+        #= j #get_job_specs(j)
+        #print  classes, genes, traits 
         job['project_tag'] = project_tag
-        job['class'] = j
+        job['class'] = classes
         #job['gene_index_1'] = gene1
         #job['gene_index_2'] = gene2
         #job['trait_index_1'] = trait1
@@ -277,6 +272,7 @@ def create_epistasis_jobs(
         #print job
         jobs.append(job)
         ser_number += 1
+    
     return jobs, job_results_dir
 
 

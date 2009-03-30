@@ -14,10 +14,12 @@ finished_state = "finished"
 cancelled_state = "cancelled"
 
 gene_selection = set()
+gene_selection_dict = {}
 trait_selection = set()
+trait_selection_dict = {}
 class_selection = list()
 all_genes_and_traits = list()
-data_sheet = {}
+data_sheet = []
 
 def popup_box(comment, caption_title=" "):
     dlg = wx.MessageDialog(frame_1,
@@ -37,8 +39,10 @@ def read_data_sheet():
         popup_box("Can't find "+datafile)
         return
     #print all_genes_and_traits
-    data_sheet.update(readdata.read_data(datafile))
-    column_labels = data_sheet.keys()
+    #data_sheet.update(readdata.read_data(datafile))
+    data_list, column_labels = readdata.read_data(datafile)
+    data_sheet.extend(data_list)
+    #column_labels = data_sheet.keys()
     all_genes_and_traits.extend(column_labels)
     #print "all", all_genes_and_traits
     #all_genes_and_traits.sort()
@@ -52,15 +56,18 @@ def update_selected_genes():
     frame_1.selected_genes.Set(list(gene_selection))
 
 def on_add_genes(event=None):
-    index = frame_1.gene_list.GetSelections()
-    indexes = list(index)
+    indexes = frame_1.gene_list.GetSelections()
+    #indexes = list(index)
     #print indexes, all_genes_and_traits
     #frame_1.selected_genes.InsertItems(index, 0)
     for i in indexes: 
 #        gene_name = all_genes_and_traits[i]
         #if not gene_name in gene_selection:
         #gene_selection.append(all_genes_and_traits[i])
-        gene_selection.add(all_genes_and_traits[i])
+        gene_name = all_genes_and_traits[i]
+        gene_selection.add(gene_name)
+        if not gene_selection_dict.has_key(gene_name):
+            gene_selection_dict[gene_name] = i
     update_selected_genes()
     
 def on_remove_genes(event=None):
@@ -69,7 +76,9 @@ def on_remove_genes(event=None):
     #print indexes
     
     for i in indexes: 
-        gene_selection.remove(list(gene_selection)[i])
+        gene_name = list(gene_selection)[i] # list converts from set to list
+        gene_selection.remove(gene_name)
+        del(gene_selection_dict[gene_name])
     #gene_selection.remove(genes)
     update_selected_genes()
  
@@ -84,15 +93,18 @@ def update_selected_traits():
     frame_1.selected_traits.Set(list(trait_selection))
 
 def on_add_traits(event=None):
-    index = frame_1.trait_list.GetSelections()
-    indexes = list(index)
+    indexes = frame_1.trait_list.GetSelections()
+    #indexes = list(index)
     print indexes, all_genes_and_traits
     #frame_1.selected_genes.InsertItems(index, 0)
     for i in indexes: 
-#        gene_name = all_genes_and_traits[i]
+        trait_name = all_genes_and_traits[i]
         #if not gene_name in gene_selection:
         #gene_selection.append(all_genes_and_traits[i])
-        trait_selection.add(all_genes_and_traits[i])
+        trait_selection.add(trait_name)
+        if not trait_selection_dict.has_key(trait_name):
+            trait_selection_dict[trait_name] = i
+            
     update_selected_traits()
     
 def on_remove_traits(event=None):
@@ -101,7 +113,9 @@ def on_remove_traits(event=None):
     print indexes
     
     for i in indexes: 
-        trait_selection.remove(list(trait_selection)[i])
+        trait_name = list(trait_selection)[i] # list converts set 
+        trait_selection.remove(trait_name)
+        del(trait_selection_dict[trait_name])
     #gene_selection.remove(genes)
     update_selected_traits()
 
@@ -160,22 +174,24 @@ def start():
 
 
     if frame_1.use_indexes.GetValue():
-        g1 = frame_1.g1.GetValue()
-        g2 = frame_1.g2.GetValue()
-        t1 = frame_1.t1.GetValue()
-        t2 = frame_1.t2.GetValue()
+        g1 = int(frame_1.g1.GetValue())
+        g2 = int(frame_1.g2.GetValue())
+        t1 = int(frame_1.t1.GetValue())
+        t2 = int(frame_1.t2.GetValue())
         #sv = frame_1.sv.GetValue()
         #c1 = frame_1.c1.GetValue()
         #c2 = frame_1.c2.GetValue()
-        genes, traits = readdata.get_by_index(datafile,g1,g2,t1,t2)
+        genes = range(g1,g2+1)
+        traits = range(t1,t2+1)
+        #, traits = readdata.get_by_index(datafile,g1,g2,t1,t2)
         
     else:
-        genes = gene_selection
-        traits = trait_selection
+        genes = gene_selection_dict.values()
+        traits = trait_selection_dict.values()
 
-    list_pos = frame_1.selection_variable_list.GetSelection()
+    list_pos = frame_1.selection_variable_list.GetSelection()+1 # indexes start at 1 in R
     #print sel_var
-    selection_variable = all_genes_and_traits[list_pos]
+    selection_variable = list_pos
     #select_variable_values = data_sheet[selection_variable]
     i = frame_1.start_class.GetSelection()
     j = frame_1.end_class.GetSelection()
@@ -347,8 +363,9 @@ def on_use_indexes(event=None):
     
 def on_choice(event=None):
     sel_var = frame_1.selection_variable_list.GetSelection()
-    #print sel_var
-    value_list = data_sheet[all_genes_and_traits[sel_var]]
+    print sel_var
+    #value_list = data_sheet[all_genes_and_traits[sel_var]]
+    value_list = data_sheet[sel_var]
     
     values = list(set(value_list))
     
