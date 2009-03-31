@@ -90,12 +90,12 @@ def main(cert_name_no_spaces, user_arguments_dict):
                 'destination': '/cgi-bin/showvgridmonitor.py?vgrid_name=%s'\
                  % vgrid_name, 'text': 'Private'}
         vgrid_obj['enterpubliclink'] = {'object_type': 'link',
-                'destination': 'http://%s/vgrid/%s/'\
-                 % (configuration.server_fqdn, vgrid_name),
+                'destination': '%s/vgrid/%s/'\
+                 % (configuration.migserver_http_url, vgrid_name),
                 'text': 'Enter'}
         vgrid_obj['publicwikilink'] = {'object_type': 'link',
-                'destination': 'http://%s/vgridpublicwiki/%s'\
-                 % (configuration.server_fqdn, vgrid_name),
+                'destination': '%s/vgridpublicwiki/%s'\
+                 % (configuration.migserver_http_url, vgrid_name),
                 'text': 'Public'}
         if vgrid_is_owner(vgrid_name, cert_name_no_spaces,
                           configuration):

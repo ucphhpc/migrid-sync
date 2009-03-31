@@ -291,8 +291,8 @@ def main(
 
     o.client_html('Opening embedded vnc applet here.<br><b>This will only work if your browser includes a java plugin!</b>'
                   )
-    o.client_html('<APPLET CODE="vncviewer" ARCHIVE="vncviewer.jar" CODEBASE="http://%s/vgrid/"'
-                   % configuration.server_fqdn)
+    o.client_html('<APPLET CODE="vncviewer" ARCHIVE="vncviewer.jar" CODEBASE="%s/vgrid/"'
+                   % configuration.migserver_http_url)
     o.client_html('WIDTH=' + repr(int(width) + 50) + ' HEIGHT='
                    + repr(int(height) + 50) + '>')
     o.client_html('<param name="PORT" value=' + repr(vnc_port) + '>')

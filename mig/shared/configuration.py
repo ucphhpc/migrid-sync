@@ -76,6 +76,7 @@ def fix_missing(config_file, verbose=True):
         'sandbox_home': '~/state/sandbox_home',
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
+        'migserver_http_url': 'http://%%(server_fqdn)s',
         'migserver_https_url': 'https://%%(server_fqdn)s',
         'myfiles_py_location': 'https://%%(server_fqdn)s/cgi-bin/ls.py',
         'mig_server_id': '%s.0' % fqdn,
@@ -163,6 +164,7 @@ class Configuration:
     sessid_to_mrsl_link_home = ''
     mig_system_files = ''
     empty_job_name = ''
+    migserver_http_url = ''
     migserver_https_url = ''
     sleep_period_for_empty_jobs = ''
     min_seconds_between_live_update_requests = 0
@@ -310,6 +312,8 @@ class Configuration:
             self.mig_system_files = config.get('GLOBAL',
                     'mig_system_files')
             self.empty_job_name = config.get('GLOBAL', 'empty_job_name')
+            self.migserver_http_url = config.get('GLOBAL',
+                    'migserver_http_url')
             self.migserver_https_url = config.get('GLOBAL',
                     'migserver_https_url')
             self.sleep_period_for_empty_jobs = config.get('GLOBAL',

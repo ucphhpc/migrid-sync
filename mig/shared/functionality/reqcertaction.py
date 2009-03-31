@@ -244,7 +244,7 @@ Command to create certificate:
 %s
 
 Finally add the user to any relevant VGrids from:
-https://%s/cgi-bin/vgridadmin.py
+%s/cgi-bin/vgridadmin.py
 
 Use the text below as a template for the email to the new certificate
 holder.
@@ -263,7 +263,7 @@ the 'user scripts' (bash and python scripts available at the moment). The
 easiest way to get started is to use your browser. The attached .p12
 certificate must be imported in your browser, then you can access MiG
 by pointing a browser to your personal entry page at:
-https://%s
+%s
     
 A few more features are available in the 'user scripts', and handling
 large amounts of jobs may be easier with the scripts than through the
@@ -285,7 +285,7 @@ http://www.migrid.org/MiG/Mig/user_introduction/user_scripts_intro.html/
 
 Jobs are specified in the 'mRSL' language. Online, on-demand documentation
 can be found at:
-https://%s/cgi-bin/docs.py
+%s/cgi-bin/docs.py
      
 If you have any questions or problems, please don't hesitate to contact
 the MiG team by sending an email to one of the following persons:
@@ -300,10 +300,10 @@ the MiG team by sending an email to one of the following persons:
         comment,
         command_user_create_old,
         command_cert_create_old,
-        configuration.server_fqdn,
+        configuration.migserver_https_url,
         email,
-        configuration.server_fqdn,
-        configuration.server_fqdn,
+        configuration.migserver_https_url,
+        configuration.migserver_https_url,
         admin_email,
         )
 
@@ -312,7 +312,7 @@ the MiG team by sending an email to one of the following persons:
     user_dict['command_user_create'] = command_user_create
     user_dict['command_user_delete'] = command_user_delete
     user_dict['command_cert_create'] = command_cert_create
-    user_dict['server_fqdn'] = configuration.server_fqdn
+    user_dict['migserver_https_url'] = configuration.migserver_https_url
     server_req = \
         """
 Received a certificate request with certificate data
@@ -331,7 +331,7 @@ Command to create certificate:
 %(command_cert_create)s
 
 Finally add the user to any relevant VGrids from:
-https://%(server_fqdn)s/cgi-bin/vgridadmin.py
+%(migserver_https_url)s/cgi-bin/vgridadmin.py
 
 ---
 Command to delete user again on MiG server:

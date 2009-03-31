@@ -58,12 +58,12 @@ def main(cert_name_no_spaces, user_arguments_dict):
         if os.path.exists(os.path.join(vgrid_public_base,
                           public_vgrid_dir, '.enable_public_page')):
 
-            # public project listing is ebabled, link to the vgrid's public page
+            # public project listing is enabled, link to the vgrid's public page
 
             new_link = {'object_type': 'link',
                         'text': public_vgrid_dir,
-                        'destination': 'http://%s/vgrid/%s'\
-                         % (configuration.server_fqdn,
+                        'destination': '%s/vgrid/%s'\
+                         % (configuration.migserver_http_url,
                         public_vgrid_dir)}
             linklist.append(new_link)
     output_objects.append({'object_type': 'linklist', 'links'

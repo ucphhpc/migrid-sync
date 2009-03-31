@@ -114,8 +114,8 @@ def valid_outputformats():
                           : 'The outputformat is specified with the output_format parameter.'
                           })
     output_objects.append({'object_type': 'text', 'text'
-                          : 'Example: https://%s/cgi-bin/ls.py?output_format=txt' % \
-                           configuration.server_fqdn
+                          : 'Example: %s/cgi-bin/ls.py?output_format=txt' % \
+                           configuration.migserver_https_url
                           })
     output_objects.append({'object_type': 'header', 'text'
                           : 'Valid formats'})
