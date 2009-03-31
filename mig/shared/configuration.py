@@ -77,7 +77,9 @@ def fix_missing(config_file, verbose=True):
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
         'migserver_http_url': 'http://%%(server_fqdn)s',
+        'backup_http_urls': '',
         'migserver_https_url': 'https://%%(server_fqdn)s',
+        'backup_https_urls': '',
         'myfiles_py_location': 'https://%%(server_fqdn)s/cgi-bin/ls.py',
         'mig_server_id': '%s.0' % fqdn,
         'empty_job_name': 'no_suitable_job-',
@@ -165,7 +167,9 @@ class Configuration:
     mig_system_files = ''
     empty_job_name = ''
     migserver_http_url = ''
+    backup_http_urls = ''
     migserver_https_url = ''
+    backup_https_urls = ''
     sleep_period_for_empty_jobs = ''
     min_seconds_between_live_update_requests = 0
     cputime_for_empty_jobs = 0
@@ -314,8 +318,16 @@ class Configuration:
             self.empty_job_name = config.get('GLOBAL', 'empty_job_name')
             self.migserver_http_url = config.get('GLOBAL',
                     'migserver_http_url')
+            self.backup_http_urls = config.get('GLOBAL',
+                    'backup_http_urls')
             self.migserver_https_url = config.get('GLOBAL',
                     'migserver_https_url')
+            self.backup_https_urls = config.get('GLOBAL',
+                    'backup_https_urls')
+            self.failover_http_urls = [self.migserver_http_url] + \
+                                     self.backup_http_urls.split()
+            self.failover_https_urls = [self.migserver_https_url] + \
+                                     self.backup_https_urls.split()
             self.sleep_period_for_empty_jobs = config.get('GLOBAL',
                     'sleep_period_for_empty_jobs')
             self.min_seconds_between_live_update_requests = \
