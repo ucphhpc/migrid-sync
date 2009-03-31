@@ -132,7 +132,7 @@ Actual examples for inspiration:
 Please note that textarea.py chokes if no nonempty KEYWORD_X_Y_Z fields 
 are supplied: thus we simply send a bogus jobname which does nothing
 -->
-<table class="migtable">
+<table class="submitjob">
 <tr><td>
 <form method="post" action="/cgi-bin/textarea.py" id="miginput">
 <input type=hidden name=jobname_0_0_0 value=" ">
@@ -154,7 +154,7 @@ are supplied: thus we simply send a bogus jobname which does nothing
                           : 'Upload file to MiG home directory'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<table class="migtable">
+<table class='files'>
 <form enctype="multipart/form-data" action="/cgi-bin/textarea.py"
       method="post" id="miginput">
 <tr><td>
@@ -171,22 +171,31 @@ Submit mRSL files to parser (also .mRSL files included in packages)
 <tr><td>Remote filename</td><td>
 <input name="remotefilename_0" type="text" size="70"/>
 <input type="submit" value="Send file" name="sendfile">
-</td></tr>
 </form>
+</td></tr>
 </table>
     """})
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Create/edit file'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
+<table class='files'>
+<tr><td colspan=2>
 Fill in the path of a file to edit and press 'edit' to open that file in the
 online file editor. Alternatively a file can be selected for editing
 through the listing of personal files. 
+</td><td>
+<br>
+</td><td>
 <form name='editor' method='post' action='/cgi-bin/editor.py'>
 <input type='hidden' name='output_format' value='html'>
-<input type='text' name='path' value=''><br>
+<input type='text' name='path' size=50 value=''><br>
+</td><td>
 <input type='submit' value='edit'>
 </form>
+</td></tr>
+</table>
+<br>
     """})
     return (output_objects, status)
 

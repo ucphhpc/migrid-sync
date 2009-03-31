@@ -58,6 +58,16 @@ def main(cert_name_no_spaces, user_arguments_dict):
                           : 'MiG Downloads'})
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Downloads'})
+    output_objects.append({'object_type': 'text', 'text'
+                           :"""
+<div class="migcontent">
+This page provides access to on-demand downloads of the MiG user scripts in all available formats.<br>
+Simply pick your flavor of choice to generate the latest user scripts in your MiG home directory and as a zip file for easy download.<p>
+In order to use the scripts your need the interpreter of choice (bash or python at the moment) and the
+<a href="http://curl.haxx.se">cURL</a> command line client.<br>
+There's a tutorial with examples of all the commands available on the MiG page. The python version of the user scripts additionally include a miglib python module, which may be used to incorporate MiG commands in your python applications.
+</div>
+"""})
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'MiG User Scripts'})
     output_objects.append({'object_type': 'html_form', 'text'
@@ -65,7 +75,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 <div class="migcontent">
 Generate MiG user scripts to manage jobs and files:<br/>
 <div class="container">
-<table class="migtable">
+<table class="downloads">
 <tr>
 <td>
 <form method='get' action='/cgi-bin/scripts.py'>
@@ -91,6 +101,7 @@ Generate MiG user scripts to manage jobs and files:<br/>
 </table>
 </div>
 </div>
+<br>
     """})
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'MiG Resource Scripts'})
@@ -99,7 +110,7 @@ Generate MiG user scripts to manage jobs and files:<br/>
 <div class="migcontent">
 Generate MiG scripts to administrate resources and vgrids:<br/>
 <div class="container">
-<table class="migtable">
+<table class="downloads">
 <tr>
 <td>
 <form method='get' action='/cgi-bin/scripts.py'>
@@ -127,6 +138,7 @@ Generate MiG scripts to administrate resources and vgrids:<br/>
 </td>
 </tr>
 </table>
+<br>
 </div>
 </div>
     """})

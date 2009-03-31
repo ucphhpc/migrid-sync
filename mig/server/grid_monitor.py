@@ -77,7 +77,7 @@ def create_monitor(vgrid_name):
 </head>
 <body bgcolor="#CCCCCC"><a href="/"><img src="%(logo_url)s" border=0></a><br>
 <!-- end of raw header: this line is used by showvgridmonitor -->
-This is statistics/monitor details for VGrid %(vgrid_name)s<br>
+<h3>Statistics/monitor for the %(vgrid_name)s VGrid</h3>
 This page was generated %(now)s<br>
 Automatic refresh every %(sleep_secs)s secs.<br>
 <br>'''\
@@ -190,8 +190,8 @@ Automatic refresh every %(sleep_secs)s secs.<br>
         }
 
     html += \
-        """<table border=0><tr><td valign=top>
-<table border=1><tr><td><b>State</b></td><td><b>Number of jobs</b></td></tr>
+        """<table class=monitorstats><tr><td valign=top>
+<table class=monitorjobs><tr class=title><td>State</td><td>Number of jobs</td></tr>
 <tr><td>Parse</td><td>%(parse_count)s</td></tr>
 <tr><td>Queued</td><td>%(queued_count)s</td></tr>
 <tr><td>Executing</td><td>%(executing_count)s</td></tr>
@@ -203,8 +203,8 @@ Automatic refresh every %(sleep_secs)s secs.<br>
 <tr><td>Total</td><td>%(number_of_jobs)s</td></tr>
 </table>
 </td><td valign=top>
-<table border=1>
-<tr><td><b>Item</b></td><td><b>Requested</b></td><td><b>Done</b></td></tr>
+<table class=monitorresreq>
+<tr class=title><td>Item</td><td>Requested</td><td>Done</td></tr>
 <tr><td>Cpucount</td><td>%(cpucount_requested)s</td><td>%(cpucount_done)s</td></tr>
 <tr><td>Nodecount</td><td>%(nodecount_requested)s</td><td>%(nodecount_done)s</td></tr>
 <tr><td>Cputime</td><td>%(cputime_requested)s</td><td>%(cputime_done)s</td></tr>
@@ -212,7 +212,7 @@ Automatic refresh every %(sleep_secs)s secs.<br>
 <tr><td>MB Memory</td><td>%(memory_requested)s</td><td>%(memory_done)s</td></tr>
 </table><br>
 </td><td valign=top>
-<table border=1><tr><td><b>Runtimeenvironment</b></td><td></td></tr>"""\
+<table class=monitorruntimeenvreq><tr class=title><td>Runtimeenvironment</td><td></td></tr>"""\
          % html_vars
 
     if len(runtimeenv_dict.keys()) < 1:
@@ -231,14 +231,14 @@ Automatic refresh every %(sleep_secs)s secs.<br>
 </table><br>
 <br>
 <hr><br>
-<b>Resource job request</b><br>
+<h2>Resource job request</h2>
 Listing the last request from each resource<br>
 <br>
-<table border=1>
-<tr><td><b>Resource and last seen</b></td><td><b>Time ago</b></td><td><b>VGrid</b></td><td><b>CPU time</b></td>
-<td><b>Node count</b></td><td><b>CPU count</b></td><td><b>GB Disk</b></td>
-<td><b>MB Memory</b></td><td><b>Arch</b></td><td><b>Status</b></td>
-<td><b>Time</b></td><td><b>Time remaining</b></td></tr>"""
+<table class=monitor>
+<tr class=title><td>Resource and last seen</td><td>Time ago</td><td>VGrid</td><td>CPU time</td>
+<td>Node count</td><td>CPU count</td><td>GB Disk</td>
+<td>MB Memory</td><td>Arch</td><td>Status</td>
+<td>Time</td><td>Time remaining</td></tr>"""
 
     total_number_of_resources = 0
     total_number_of_cpus = 0
@@ -394,7 +394,7 @@ Listing the last request from each resource<br>
 
     html += '</table>'
 
-    html += '<br><hr><br><b>VGrid Totals</b><br><br>A total of <b>'\
+    html += '<br><hr><br><h3>VGrid Totals</h3>A total of <b>'\
          + str(total_number_of_resources) + '</b> resources ('\
          + str(total_number_of_cpus) + " cpu's) joined this VGrid ("\
          + str(up_count) + ' up, ' + str(down_count) + ' down?, '\

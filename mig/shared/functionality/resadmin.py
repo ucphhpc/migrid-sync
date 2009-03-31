@@ -98,14 +98,14 @@ def display_resource(
 
     html += '<a name="%s"></a>' % resourcename
     html += '<h1>%s</h1>\n' % resourcename
-    html += '<B>Configuration</B><br>'
+    html += '<h3>Configuration</h3>'
     html += \
         'Use the <a href="resource_edit.py?hosturl=%s;hostidentifier=%s">editing interface</a> '\
          % (hosturl, identifier)
     html += 'or make any changes manually in the text box below.<br>'
     html += \
         '<a href="docs.py?show=Resource">Resource configuration docs</a>'
-    html += '<table>\n<tr><td>'
+    html += '<table class=resources>\n<tr><td>'
     html += \
         '''
 <form method="post" action="/cgi-bin/updateresconfig.py">
@@ -125,14 +125,12 @@ def display_resource(
     html += '</td></tr></table><p>'
 
     html += \
-        '<table><tr><td colspan="5" id=centertext><B>Front End</B></td></tr>\n'
-
-    # html += '<B>Front End</B>\n<table>'
+        '<table class=resources><tr class=title><td colspan="5">Front End</td></tr>\n'
 
     if not frontend:
         html += '<tr><td>Not specified</td><tr>'
     else:
-        html += '<tr class=middlevalign><td>' + frontend + '</td>'
+        html += '<tr><td>' + frontend + '</td>'
 
         for action in ['restart', 'status', 'stop', 'clean']:
             if action == 'restart':
@@ -154,7 +152,7 @@ def display_resource(
     # html += '</tr></table><p>'
 
     html += \
-        '<tr><td colspan=5 id=centertext><B>Execution Units</B></td></tr>\n'
+        '<tr class=title><td colspan=5>Execution Units</td></tr>\n'
 
     # html += '<B>Execution Units</B>\n<table>'
 
@@ -204,12 +202,12 @@ def display_resource(
 
     html += '</table><p>'
 
-    html += '<B>Owners</B><br>'
+    html += '<h3>Owners</h3>'
     html += \
         '''
 Owners are specified with the Common Name (CN)
 from the certificate.<br> 
-<table>
+<table class=resources>
 '''
 
     html += \
@@ -221,7 +219,8 @@ from the certificate.<br>
 </td><td>
 <input type="submit" value=" Add ">
 </form>
-</td></tr></table><br><table>
+</td></tr></table><br>
+<table class=resources>
 '''\
          % resourcename
 
@@ -242,10 +241,12 @@ from the certificate.<br>
 
     # create html to select and execute a runtime environment testprocedure
 
-    html += '<BR><B>Runtime environments</B><br>'
+    html += '<h3>Runtime environments</h3>'
 
     html += \
-        """Verify that resource supports the selected runtime environment.<table><tr><td>
+        """Verify that resource supports the selected runtime environment.
+    <table class=resources>
+    <tr><td>
     <form method="get" action="/cgi-bin/testresupport.py">
     <input type="hidden" name="with_html" value="true">
     <input type="hidden" name="unique_resource_name" value="%s">
@@ -268,7 +269,9 @@ from the certificate.<br>
     # create html to select and call script to display testprocedure history
 
     html += \
-        """Show testprocedure history for the selected runtime environment and the resource with its current configuration.<table><tr><td>
+        """Show testprocedure history for the selected runtime environment and the resource with its current configuration.
+    <table class=resources>
+    <tr><td>
     <form method="get" action="/cgi-bin/showresupporthistory.py">
     <input type="hidden" name="unique_resource_name" value="%s">
     <select name="re_name">"""\
@@ -285,7 +288,7 @@ from the certificate.<br>
 
     html += """</select></td>"""
     html += '<td><input type=submit name=submit value=Show>'
-    html += '</form></table><p><hr>'
+    html += '</form></table><p>'
     return html
 
 

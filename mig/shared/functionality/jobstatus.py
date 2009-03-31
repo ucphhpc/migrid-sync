@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# jobstatus - [insert a few words of module description on this line]
+# jobstatus - Display status of jobs
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -302,6 +302,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         job_list['jobs'].append(job_obj)
 
     output_objects.append(job_list)
+    output_objects.append({'object_type': 'text', 'text':''})
 
     return (output_objects, status)
 

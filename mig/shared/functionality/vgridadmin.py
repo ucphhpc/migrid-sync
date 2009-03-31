@@ -146,7 +146,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
     <input type="text" size=40 name="vgrid_name">
     <input type="hidden" name="output_format" value="html">
     <input type="submit" value="Create vgrid">
-    </form>'''})
+    </form>
+    <br>
+    '''})
 
     # print "DEBUG: %s" % output_objects
 

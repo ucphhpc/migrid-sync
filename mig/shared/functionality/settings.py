@@ -114,6 +114,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     html += '</form>'
 
     output_objects.append({'object_type': 'html_form', 'text': html})
+    output_objects.append({'object_type': 'text', 'text':''})
     return (output_objects, returnvalues.OK)
 
 

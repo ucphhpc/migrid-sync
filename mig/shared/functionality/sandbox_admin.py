@@ -46,15 +46,15 @@ def print_hd_selection():
     """Returns html section where a user chooses disc space"""
 
     html = \
-        """<TR><TD align='' colspan=''>How much disc space can 
-    you allow the sandbox to use?</TD>
-    <TD><select name='hd_size'>
+        """<tr><td align='' colspan=''>How much disc space can 
+    you allow the sandbox to use?</td>
+    <td><select name='hd_size'>
     <option value='100'>100 MB</option>
     <option value='1000'>1 GB</option>
     <option value='2000'>2 GB</option>
     </select>
     <input type=hidden name='image_format' value='qcow'>
-    </TD></TR>"""
+    </td></tr>"""
     return html
 
 
@@ -62,9 +62,9 @@ def print_net_selection():
     """Returns html section where a user chooses max download and upload speed"""
 
     html = \
-        """<TR><TD align='' colspan=''>What is the max download/upload bandwidth in kB/s
-    you will allow the sandbox to use?</TD>
-    <TD><select name='net_bw'>
+        """<tr><td align='' colspan=''>What is the max download/upload bandwidth in kB/s
+    you will allow the sandbox to use?</td>
+    <td><select name='net_bw'>
     <option value='0'>No limit</option>
     <option value='2048'>2048/1024</option>
     <option value='1024'>1024/512</option>
@@ -72,7 +72,7 @@ def print_net_selection():
     <option value='256' selected>256/128</option>
     <option value='128'>128/64</option>
     </select>
-    </TD></TR>"""
+    </td></tr>"""
     return html
 
 
@@ -80,15 +80,15 @@ def print_mem_selection():
     """Prints html section where a user amount of physical memory"""
 
     html = \
-        """<TR><TD align='' colspan=''>How much physical memory
-          does your PC have?</TD>
-    <TD><select name='memory'>
+        """<tr><td align='' colspan=''>How much physical memory
+          does your PC have?</td>
+    <td><select name='memory'>
     <option value='256'>256 MB</option>
     <option value='512' selected>512 MB</option>
     <option value='1024'>1 GB</option>
     <option value='2048'>2 GB</option>
     <option value='4096'>4 GB</option>
-    </select></TD></TR>"""
+    </select></td></tr>"""
     return html
 
 
@@ -96,12 +96,12 @@ def print_os_selection():
     """Prints html section where a user chooses which OS he uses"""
 
     html = \
-        """<TR><TD align='' colspan=''>Which operating system 
-          are you using?</TD>
-    <TD><select name='operating_system'>
+        """<tr><td align='' colspan=''>Which operating system 
+          are you using?</td>
+    <td><select name='operating_system'>
     <option value='win'>Windows XP/Vista</option>
     <option value='linux'>Linux</option>
-    </select></TD></TR>"""
+    </select></td></tr>"""
     return html
 
 
@@ -110,12 +110,12 @@ def print_windows_solution_selection():
     the screensaver or the windows service model"""
 
     html = \
-        """<TR><TD align='' colspan=''>If Windows, do you want 
-          the screensaver <break> or the service model? If unsure, choose screensaver</TD>
-    <TD><select name='win_solution'>
+        """<tr><td align='' colspan=''>If Windows, do you want 
+          the screensaver <break> or the service model? If unsure, choose screensaver</td>
+    <td><select name='win_solution'>
     <option value='screensaver'>Screensaver</option>
     <option value='service'>Windows Service</option>
-    </select></TD></TR>"""
+    </select></td></tr>"""
     return html
 
 
@@ -134,14 +134,11 @@ def show_info(user, vgrid_list):
     # Resource Monitor Section
 
     html = \
-        """<TABLE border='1' align='center'>
-    <TR><TD align='center' colspan='2'>
-    <H1>Resource Monitor</H1>
-    </TD></TR>
-    <TR><TD align='center' colspan='2'>
-    <H3>List of resources and number of jobs successfully 
-          executed by the resource</H3>
-    </TD></TR>"""
+        """<H1>Sandbox Administration and Monitor</H1>
+    <table class=monitor>
+    <tr class=title><td align='center' colspan='2'>
+    Your SSS sandbox resources and their finished job counters
+    </td></tr>"""
 
     for resource in userdb[user][RESOURCES]:
 
@@ -149,14 +146,14 @@ def show_info(user, vgrid_list):
 
         jobs = count_jobs(resource)
         html += \
-            """<TR><TD align='center'>%s</TD><TD align='center'> %s jobs</TD></TR>"""\
+            """<tr><td align='center'>%s</td><td align='center'> %s jobs</td></tr>"""\
              % (resource, jobs)
     if len(userdb[user][RESOURCES]) == 0:
         html += \
-            """<TR><TD align='center'>You haven't downloaded any
-              sandbox resources yet</TD></TR>"""
+            """<tr><td align='center'>You haven't downloaded any
+              sandbox resources yet</td></tr>"""
     html += """
-    </TABLE>
+    </table>
     <br>"""
 
     # Download sandbox section
@@ -164,10 +161,10 @@ def show_info(user, vgrid_list):
     html += \
         """<form action='sandbox_createimage.py?MiG-SSS.zip' 
           method='POST'>
-    <TABLE border='2' align=center>
-    <TR><TD align='center' colspan='2'>
-    <H1>Download new sandbox</H1>
-    </TD></TR>"""
+    <table class=sandboxcreateimg>
+    <tr class=title><td align='center' colspan='2'>
+    Download new sandbox
+    </td></tr>"""
 
     html += print_hd_selection()
     html += print_mem_selection()
@@ -176,7 +173,7 @@ def show_info(user, vgrid_list):
     html += print_windows_solution_selection()
 
     html += \
-        """<TR><TD>
+        """<tr><td>
     <input type='hidden' name='username' value='%s'>
 """ % user
     for vgrid in vgrid_list:
@@ -185,19 +182,19 @@ def show_info(user, vgrid_list):
 """ % vgrid
 
     html += \
-        """</TD></TR>
+        """</td></tr>
         """
     html += \
-        """<TR><TD>Press 'Submit' to download - please note that it 
-          may<br> take up to 2 minutes to generate your sandbox</TD>
-          <TD align='center'><input type='SUBMIT' value='Submit'>
-          </TD></TR>
+        """<tr><td>Press 'Submit' to download - please note that it 
+          may<br> take up to 2 minutes to generate your sandbox</td>
+          <td align='center'><input type='SUBMIT' value='Submit'>
+          </td></tr>
 
-    </TABLE>
+    </table>
     <br>
-    <TABLE align='center'><TR><TD align='center'>If you have 
+    <table class=sandboxadmin><tr><td align='center'>If you run into 
           any problems, please contact the MiG administrators (%s)
-          </TD></TR></TABLE> 
+          </td></tr></table> 
     </form>"""\
          % admin_email.replace('<', '&lt;').replace('>', '&gt;')
     return html
@@ -207,7 +204,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, _) = \
-        initialize_main_variables()
+        initialize_main_variables(op_header=False)
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
@@ -304,7 +301,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
             output_objects.append({'object_type': 'html_form', 'text'
                                   : show_info(username, vgrid_list)})
-
+    output_objects.append({'object_type': 'text', 'text':''})
     return (output_objects, returnvalues.OK)
 
 

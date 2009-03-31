@@ -62,7 +62,18 @@ def main(cert_name_no_spaces, user_arguments_dict):
                           : 'MiG Runtime Environments'})
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Runtime Environments'})
-
+    output_objects.append({'object_type': 'text', 'text'
+                           :"""
+<div class="migcontent">
+Runtime environments work as a kind of contract between users and resources. The user can not as such expect a given resource to provide any particular software or execution environment.<br>However, jobs can request one or more runtime environments listed here in order to only get scheduled to resources advertising that environment.
+<p>
+Anyone can create new runtime environments but it is up to the resource owners to actually advertise the environments that their resources provide.<br>
+For example a resource with the Python interpreter installed could advertise a corresponding python runtime environment, so that all jobs that depend on python to run can request that runtime environment and only end up on resources with python.
+<p>
+Runtime environments can be quite flexible in order to support many kinds of software or hardware environments.
+</div>
+<p>
+"""})
     output_objects.append({'object_type': 'link', 'destination'
                           : 'adminre.py', 'text'
                           : 'Create a new runtime environment'})
@@ -86,6 +97,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
         runtimeenvironments.append(build_reitem_object_from_re_dict(re_dict))
     output_objects.append({'object_type': 'runtimeenvironments',
                           'runtimeenvironments': runtimeenvironments})
+    output_objects.append({'object_type': 'text', 'text':''})
+    
     return (output_objects, returnvalues.OK)
 
 

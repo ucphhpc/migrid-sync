@@ -111,6 +111,7 @@ Job ID: <input type="text" name="job_id" size="30"><br>
 <input type="hidden" name="output_format" value="html">
 <input type="submit" value="Request">
 </form>
+<br>
     """})
     return (output_objects, status)
 

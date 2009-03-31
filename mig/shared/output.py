@@ -135,8 +135,6 @@ def txt_format(ret_val, ret_msg, out_obj):
             if len(i['jobs']) > 0:
                 jobs = i['jobs']
 
-                # print "<table border=1>"
-
                 for obj in jobs:
                     print 'Job Id: %s' % obj['job_id']
                     print 'Status: %s' % obj['status']
@@ -318,7 +316,7 @@ def html_format(ret_val, ret_msg, out_obj):
 
             if len(i['jobs']) > 0:
                 jobs = i['jobs']
-                print "<table class='migtable' border=1>"
+                print "<table class='jobs'>"
 
                 # <tr><td>Job ID</td><td>Status</td><td>Queued timestamp</td></tr>"
 
@@ -383,14 +381,14 @@ def html_format(ret_val, ret_msg, out_obj):
                     if obj.has_key('outputfileslink'):
                         print '<br>%s' % html_link(obj['outputfileslink'
                                 ])
-                    print '</td></tr>'
+                    print '</td></tr><tr><td><br></td></tr>'
 
                 print '</table>'
         elif i['object_type'] == 'resubmitobjs':
             resubmitobjs = i['resubmitobjs']
             if len(resubmitobjs) == 0:
                 continue
-            print "<table class='migtable' border=1><tr><th>Job ID</th><th>Resubmit status</th><th>New jobid</th><th>Message</th></tr>"
+            print "<table class='resubmit'><tr><th>Job ID</th><th>Resubmit status</th><th>New jobid</th><th>Message</th></tr>"
             for resubmitobj in resubmitobjs:
                 print '<tr>%s</tr>'\
                      % html_table_if_have_keys(resubmitobj, ['job_id',
@@ -400,7 +398,7 @@ def html_format(ret_val, ret_msg, out_obj):
             changedstatusjobs = i['changedstatusjobs']
             if len(changedstatusjobs) == 0:
                 continue
-            print "<table class='migtable' border=1><tr><th>Job ID</th><th>Old status</th><th>New status</th><th>Message</th></tr>"
+            print "<table class='changedjobstatus'><tr><th>Job ID</th><th>Old status</th><th>New status</th><th>Message</th></tr>"
             for changedstatus in changedstatusjobs:
                 print '<tr>%s</tr>'\
                      % html_table_if_have_keys(changedstatus, ['job_id'
@@ -410,7 +408,7 @@ def html_format(ret_val, ret_msg, out_obj):
             stats = i['stats']
             if len(stats) == 0:
                 continue
-            print "<table class='migtable' border=1><tr><th>Filename</th><th>Device</th><th>Inode</th><th>Mode</th><th>Nlink</th><th>User ID</th><th>Group ID</th><th>RDEV</th><th>Size</th><th>Last accessed</th><th>Modified time</th><th>Created time</th></tr>"
+            print "<table class='stats'><tr><th>Filename</th><th>Device</th><th>Inode</th><th>Mode</th><th>Nlink</th><th>User ID</th><th>Group ID</th><th>RDEV</th><th>Size</th><th>Last accessed</th><th>Modified time</th><th>Created time</th></tr>"
             for stat in stats:
                 print '<tr>%s</tr>' % html_table_if_have_keys(stat, [
                     'name',
@@ -432,7 +430,7 @@ def html_format(ret_val, ret_msg, out_obj):
             if len(fileuploadobjs) == 0:
                 print 'No jobs submitted!'
             else:
-                print "<table class='migtable' border=1><tr><th>Filename</th><th>Saved</th><th>Extract packages</th><th>Submit flag</th><th>File size</th><th>Message</th></tr>"
+                print "<table class='fileupload'><tr><th>Filename</th><th>Saved</th><th>Extract packages</th><th>Submit flag</th><th>File size</th><th>Message</th></tr>"
                 for fileuploadobj in fileuploadobjs:
                     print '<tr>%s</tr>'\
                          % html_table_if_have_keys(fileuploadobj, [
@@ -452,25 +450,25 @@ def html_format(ret_val, ret_msg, out_obj):
             print '<hr>'
             columns = 6
             print "<div class='container'>"
-            print "<TABLE border=1 class='migtable'>"
-            print '<TR>'
+            print "<table class='files'>"
+            print '<tr>'
             cols = 0
-            print '<TD>Info</TD>'
+            print '<td>Info</td>'
             cols += 1
-            print "<TD><input type='checkbox' name='allbox' value='allbox' onclick='un_check()'></TD>"
+            print "<td><input type='checkbox' name='allbox' value='allbox' onclick='un_check()'></td>"
             cols += 1
 
-            # print "<TD><br></TD>"
+            # print "<td><br></td>"
             # cols += 1
 
-            print '<TD colspan=%d>Select/deselect all files</TD>'\
+            print '<td colspan=%d>Select/deselect all files</td>'\
                  % (columns - cols)
-            print '</TR>'
-            print '<TR>'
+            print '</tr>'
+            print '<tr>'
             cols = 0
-            print '<TD colspan=%d><hr width=100%%></TD>' % (columns
+            print '<td colspan=%d><hr width=100%%></td>' % (columns
                      - cols)
-            print '</TR>'
+            print '</tr>'
 
             for dir_listing in i['dir_listings']:
                 for entry in dir_listing['entries']:
@@ -478,73 +476,74 @@ def html_format(ret_val, ret_msg, out_obj):
                     if 'directory' == entry['type']:
                         directory = entry
                         if directory == dir_listing['entries'][0]:
-                            print '<TR>'
-                            print '<TD>%s:<br>total %s</TD>'\
+                            print '<tr>'
+                            print '<td>%s:<br>total %s</td>'\
                                  % (dir_listing['relative_path'],
                                     len(dir_listing['entries']))
                             cols += 1
-                            print '<TD><br></TD>' * (columns - cols)\
-                                 + '</TR>'
+                            print '<td><br></td>' * (columns - cols)\
+                                 + '</tr>'
                             cols = columns
 
-                        print '<TR>'
+                        print '<tr>'
                         cols = 0
-                        print '<TD><br></TD>'
+                        print '<td><br></td>'
                         cols += 1
-                        print "<TD><input type='checkbox' name='path' value='%s'></TD>"\
+                        print "<td><input type='checkbox' name='path' value='%s'></td>"\
                              % directory['dirname_with_dir']
                         cols += 1
                         if directory.has_key('actual_dir'):
-                            print '<TD>%s</TD>' % directory['actual_dir'
+                            print '<td>%s</td>' % directory['actual_dir'
                                     ]
                         else:
-                            print '<TD><br></TD>'
+                            print '<td><br></td>'
                         cols += 1
-                        print "<TD><a href='ls.py?path=%s;flags=%s;output_format=html'>show</a></TD><TD>DIR</TD>"\
+                        print "<td><a href='ls.py?path=%s;flags=%s;output_format=html'>show</a></td><td>DIR</td>"\
                              % (directory['dirname_with_dir'],
                                 dir_listing['flags'])
                         cols += 2
-                        print '<TD>%s</TD>' % directory['name']
+                        print '<td>%s</td>' % directory['name']
                         cols += 1
-                        print '<TD><br></TD>' * (columns - cols)\
-                             + '</TR>'
+                        print '<td><br></td>' * (columns - cols)\
+                             + '</tr>'
                         cols = columns
-                        print '</TR>'
+                        print '</tr>'
                     elif 'file' == entry['type']:
                         this_file = entry
-                        print '<TR>'
+                        print '<tr>'
                         cols = 0
-                        print '<TD><br></TD>'
+                        print '<td><br></td>'
                         cols += 1
-                        print "<TD><input type='checkbox' name='path' value='%s'></TD>"\
+                        print "<td><input type='checkbox' name='path' value='%s'></td>"\
                              % this_file['file_with_dir']
                         cols += 1
                         if this_file.has_key('long_format'):
-                            print '<TD>%s</TD>'\
+                            print '<td>%s</td>'\
                                  % this_file['long_format']
                         else:
-                            print '<TD><br></TD>'
+                            print '<td><br></td>'
                         cols += 1
-                        print "<TD><a href='/%s/%s'>show</a></TD>"\
+                        print "<td><a href='/%s/%s'>show</a></td>"\
                              % ('cert_redirect',
                                 this_file['file_with_dir'])
                         cols += 1
-                        print "<TD><a href='editor.py?path=%s;output_format=html'>edit</a></TD>"\
+                        print "<td><a href='editor.py?path=%s;output_format=html'>edit</a></td>"\
                              % this_file['file_with_dir']
                         cols += 1
-                        print '<TD>%s</TD>' % this_file['name']
+                        print '<td>%s</td>' % this_file['name']
                         cols += 1
-                        print '<TD><br></TD>' * (columns - cols)\
-                             + '</TR>'
+                        print '<td><br></td>' * (columns - cols)\
+                             + '</tr>'
                         cols = columns
-                        print '</TR>'
-            print '</TABLE></form><HR><BR>'
+                        print '</tr>'
+            print '</table></form><hr><br>'
+            print "</div>"
         elif i['object_type'] == 'filewcs':
             filewcs = i['filewcs']
             if len(filewcs) == 0:
                 print 'No files to run wc on'
             else:
-                print '<table><tr><th>File</th><th>Lines</th><th>Words</th><th>Bytes</th></tr>'
+                print '<table class="wc"><tr><th>File</th><th>Lines</th><th>Words</th><th>Bytes</th></tr>'
                 for filewc in filewcs:
                     print '<tr><td>%s</td>' % filewc['name']
                     print '<td>'
@@ -563,8 +562,8 @@ def html_format(ret_val, ret_msg, out_obj):
             print 'File %s was <B>not</B> found!' % i['name']
         elif i['object_type'] == 'file_output':
             if i.has_key('path'):
-                print 'File: %s<BR>' % i['path']
-            print '<BR>'.join(i['lines']) + '<BR>'
+                print 'File: %s<br>' % i['path']
+            print '<br>'.join(i['lines']) + '<br>'
         elif i['object_type'] == 'list':
             print '<ul>'
             for list_item in i['list']:
@@ -575,7 +574,7 @@ def html_format(ret_val, ret_msg, out_obj):
             if len(links) == 0:
                 print 'No links found!'
             else:
-                print '<table border=1><th>Name</th><th>Link</th></tr>'
+                print '<table class="links"><th>Name</th><th>Link</th></tr>'
                 for link in links:
                     print '<tr><td>%s</td><td>%s</td></tr>'\
                          % (link['text'], html_link(link))
@@ -593,7 +592,7 @@ def html_format(ret_val, ret_msg, out_obj):
             if len(submitstatuslist) == 0:
                 print 'No job submit status found!'
             else:
-                print '<table border=1><th>File</th><th>Status</th><th>Job Id</th><th>Message</th></tr>'
+                print '<table class="submitstatus"><th>File</th><th>Status</th><th>Job Id</th><th>Message</th></tr>'
                 for submitstatus in submitstatuslist:
                     print '<tr>%s</tr>'\
                          % html_table_if_have_keys(submitstatus, ['name'
@@ -604,7 +603,7 @@ def html_format(ret_val, ret_msg, out_obj):
             if len(objects) == 0:
                 print 'No objects found!'
             else:
-                print '<table border=1><th>Object</th><th>Info</th></tr>'
+                print '<table class="objects"><th>Object</th><th>Info</th></tr>'
                 for (name, val) in objects:
                     print '<tr><td>%s</td><td>%s</td></tr>' % (name,
                             val)
@@ -614,7 +613,7 @@ def html_format(ret_val, ret_msg, out_obj):
             if len(sandboxinfos) == 0:
                 print 'No sandboxes found!'
             else:
-                print '<table border=1><th>Username</th><th>Resource</th><th>Jobs</th></tr>'
+                print '<table class="sandboxinfo"><th>Username</th><th>Resource</th><th>Jobs</th></tr>'
                 for sandboxinfo in sandboxinfos:
                     print '<tr>%s</tr>'\
                          % html_table_if_have_keys(sandboxinfo,
@@ -625,9 +624,9 @@ def html_format(ret_val, ret_msg, out_obj):
             if len(runtimeenvironments) == 0:
                 print 'No runtime environments found!'
             else:
-                print '<table border=1><th>Name</th><th>Description</th><th>Details</th><th>Creator</th></tr>'
+                print '<table class="runtimeenvs"><th>Name</th><th>Description</th><th>Details</th><th>Creator</th></tr>'
                 for single_re in runtimeenvironments:
-                    print '<tr><td>%s</td><td>%s</td><td><a href=showre.py?re_name=%s>click</a></td><td>%s</td></tr>'\
+                    print '<tr><td>%s</td><td>%s</td><td><a href=showre.py?re_name=%s>View</a></td><td>%s</td></tr>'\
                          % (single_re['name'], single_re['description'
                             ], single_re['name'], single_re['creator'])
                 print '</table>'
@@ -635,7 +634,7 @@ def html_format(ret_val, ret_msg, out_obj):
             software_html = ''
             for software in i['software']:
                 software_html += \
-                    '<table border=1 frame=hsides rules=none cellpadding=5>'
+                    '<table class="runtimeenvsw" frame=hsides rules=none cellpadding=5>'
                 software_html += \
                     '<tr><td><img src=%s width=80 height=80></td><td></td></tr>'\
                      % software['icon']
@@ -653,7 +652,7 @@ def html_format(ret_val, ret_msg, out_obj):
             environment_html = ''
             for environment in i['environments']:
                 environment_html += \
-                    '<table border=1 frame=hsides rules=none cellpadding=5>'
+                    '<table class="runtimenvvars" frame=hsides rules=none cellpadding=5>'
                 environment_html += '<tr><td>Name:</td><td>%s</td></tr>'\
                      % environment['name']
                 environment_html += \
@@ -664,7 +663,7 @@ def html_format(ret_val, ret_msg, out_obj):
                      % environment['description']
                 environment_html += '</table>'
 
-            print '<table border=1>'
+            print '<table class="runtimeenvdetails">'
             print '<tr><td>Name</td><td>%s</td></tr>' % i['name']
             print '<tr><td>Description</td><td>%s</td></tr>'\
                  % i['description']
@@ -690,8 +689,8 @@ def html_format(ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'vgrid_list':
             if len(i['vgrids']) > 0:
                 vgrids = i['vgrids']
-                print "<table class='migtable' border=1>"
-                print '<tr><td><B>Name</B></td><td><B>Actions</B></td><td colspan=2><b>Private page</b></td><td colspan=2><b>Public page</b></td><td colspan=2><b>Wiki</b></td><td colspan=2><b>Monitor</b></td></tr>'
+                print "<table class='vgrids'>"
+                print '<tr class="title"><td>Name</td><td>Actions</td><td class=centertext colspan=2>Private page</td><td class=centertext colspan=2>Public page</td><td class=centertext colspan=2>Wiki</td><td class=centertext colspan=2>Monitor</td></tr>'
                 for obj in vgrids:
                     print '<tr>'
                     print '<td>%s</td>' % obj['name']
@@ -699,57 +698,57 @@ def html_format(ret_val, ret_msg, out_obj):
                     if obj.has_key('administratelink'):
                         print '%s' % html_link(obj['administratelink'])
                     else:
-                        print '-'
+                        print '-----'
                     print '</td>'
-                    print '<td>'
+                    print '<td class=centertext>'
                     if obj.has_key('editprivatelink'):
                         print '%s ' % html_link(obj['editprivatelink'])
                     else:
-                        print '-'
+                        print '-----'
                     print '</td>'
-                    print '<td>'
+                    print '<td class=centertext>'
                     if obj.has_key('enterprivatelink'):
                         print '%s ' % html_link(obj['enterprivatelink'])
                     else:
-                        print '-'
+                        print '-----'
                     print '</td>'
-                    print '<td>'
+                    print '<td class=centertext>'
                     if obj.has_key('editpubliclink'):
                         print '%s ' % html_link(obj['editpubliclink'])
                     else:
-                        print '-'
+                        print '-----'
                     print '</td>'
-                    print '<td>'
+                    print '<td class=centertext>'
                     if obj.has_key('enterpubliclink'):
                         print '%s ' % html_link(obj['enterpubliclink'])
                     else:
-                        print '-'
+                        print '-----'
                     print '</td>'
-                    print '<td>'
+                    print '<td class=centertext>'
                     if obj.has_key('privatewikilink'):
                         print '%s ' % html_link(obj['privatewikilink'])
                     else:
-                        print '-'
+                        print '-----'
                     print '</td>'
-                    print '<td>'
+                    print '<td class=centertext>'
                     if obj.has_key('publicwikilink'):
                         print '%s ' % html_link(obj['publicwikilink'])
                     else:
-                        print '-'
+                        print '-----'
                     print '</td>'
-                    print '<td>'
+                    print '<td class=centertext>'
                     if obj.has_key('privatemonitorlink'):
                         print '%s ' % html_link(obj['privatemonitorlink'
                                 ])
                     else:
-                        print '-'
+                        print '-----'
                     print '</td>'
-                    print '<td>'
+                    print '<td class=centertext>'
                     if obj.has_key('publicmonitorlink'):
                         print '%s ' % html_link(obj['publicmonitorlink'
                                 ])
                     else:
-                        print '-'
+                        print '-----'
                     print '</td>'
                     print '</tr>'
                 print '</table>'
@@ -757,14 +756,16 @@ def html_format(ret_val, ret_msg, out_obj):
                 print 'No matching VGrids found'
         else:
             print 'unknown object %s' % i
-    print """</div><br>Exit code: %s Description: %s<br>
-<SCRIPT TYPE="text/javascript">
+    print """</div>
+<br>
+Exit code: %s Description: %s<br>
+<script TYPE="text/javascript">
 <!--
 var gb = new backlink();
 gb.text = "Back";
 gb.write();
 //-->
-</SCRIPT><br><br>
+</script><br><br>
     <div id="credits">
 This page is made for the <a href="http://www.migrid.org">MiG project</a>.<br>
 All rights reserved.

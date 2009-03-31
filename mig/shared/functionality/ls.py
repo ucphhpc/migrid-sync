@@ -51,7 +51,7 @@ def select_all_javascript():
     """ return javascript to select all html checkboxes """
 
     return """
-<SCRIPT LANGUAGE='JavaScript'>
+<script LANGUAGE='JavaScript'>
 document.fileform.allbox.onclick = un_check;
 function un_check() {
    for(var i = 0; i < document.fileform.elements.length; i++) {
@@ -61,7 +61,7 @@ function un_check() {
       }
    }
 }
-</SCRIPT>
+</script>
 """
 
 
@@ -69,7 +69,7 @@ def selected_file_actions_javascript():
     """ return javascript """
 
     return """
-<SCRIPT language='JavaScript'>
+<script language='JavaScript'>
 function selectedFilesAction() {
     if (document.pressed == 'cat') {
        document.fileform.action = 'cat.py';
@@ -105,7 +105,7 @@ function selectedFilesAction() {
     }
     return true;
 }
-</SCRIPT>
+</script>
 """
 
 
@@ -341,7 +341,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
     <div class='subsection'>
-    <BR>Filter (using *,? etc.)
+    <br>Filter (using *,? etc.)
     </div>
     <div class='migcontent'>
     <form method='post' action='ls.py'>
@@ -357,9 +357,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # Short/long format buttons
 
     htmlform = \
-        """<TABLE BORDER=1 class='migtable'><TR><TD>Parameter</TD><TD>Setting</TD><TD>Enable</TD><TD>Disable</TD></TR>
-    <TR><TD>Long format</TD><TD>
-    %s</TD><TD>"""\
+        """<table class='files'><tr class=title><td>Parameter</td><td>Setting</td><td>Enable</td><td>Disable</td></tr>
+    <tr><td>Long format</td><td>
+    %s</td><td>"""\
          % long_list(flags)\
          + """
     <form method='post' action='ls.py'>
@@ -372,9 +372,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
              % entry
     htmlform += \
         """
-    <input type='submit' value='On'><BR>
+    <input type='submit' value='On'><br>
     </form>
-    </TD><TD>
+    </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html'>
     <input type='hidden' name='flags' value='%s'>"""\
@@ -385,13 +385,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     htmlform += \
         """
-    <input type='submit' value='Off'><BR>
+    <input type='submit' value='Off'><br>
     </form>
-    </TD></TR>
+    </td></tr>
 
     <!-- Non-/recursive list buttons -->
-    <TR><TD>Recursion</TD><TD>
-    %s</TD><TD>"""\
+    <tr><td>Recursion</td><td>
+    %s</td><td>"""\
          % recursive(flags)
     htmlform += \
         """
@@ -404,9 +404,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
              % entry
     htmlform += \
         """
-    <input type='submit' value='On'><BR>
+    <input type='submit' value='On'><br>
     </form>
-    </TD><TD>
+    </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html'>
     <input type='hidden' name='flags' value='%s'>"""\
@@ -416,13 +416,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
              % entry
     htmlform += \
         """
-    <input type='submit' value='Off'><BR>
+    <input type='submit' value='Off'><br>
     </form>
-    </TD></TR>
+    </td></tr>
 
     <!-- Show dot files buttons -->
-    <TR><TD>Show dot files</TD><TD>
-    %s</TD><TD>"""\
+    <tr><td>Show dot files</td><td>
+    %s</td><td>"""\
          % all(flags)
     htmlform += \
         """
@@ -435,9 +435,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
              % entry
     htmlform += \
         """
-    <input type='submit' value='On'><BR>
+    <input type='submit' value='On'><br>
     </form>
-    </TD><TD>
+    </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html'>
     <input type='hidden' name='flags' value='%s'>"""\
@@ -447,10 +447,10 @@ def main(cert_name_no_spaces, user_arguments_dict):
              % entry
     htmlform += \
         """
-    <input type='submit' value='Off'><BR>
+    <input type='submit' value='Off'><br>
     </form>
-    </TD></TR>
-    </TABLE><BR>"""
+    </td></tr>
+    </table><br>"""
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : htmlform})
@@ -483,6 +483,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
         "<input type='submit' name='delete' onClick='document.pressed=this.value' value='rm' title='DELETE! (rm)'>"
     more_html += \
         "<input type='submit' name='rmdir' onClick='document.pressed=this.value' value='rmdir' title='Remove directory (rmdir)'>"
+    more_html += \
+        "</div>"
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : more_html})
@@ -556,41 +558,42 @@ def main(cert_name_no_spaces, user_arguments_dict):
         output_objects.append({'object_type': 'html_form', 'text'
                               : """<div class='migcontent'>
             <form action="/cgi-bin/editor.py" method=post>
-            <BR>
-            <B>Edit file</B><BR>
+            <br>
+            <B>Edit file</B><br>
             Name of new or existing file in current directory to be edited ("""
                                + relative_dir + os.sep
-                               + """):<BR>
-            <input name="path" size=50><BR><BR>
+                               + """):<br>
+            <input name="path" size=50><br><br>
             <input name="current_dir" type="hidden" value="""
                                + relative_dir + os.sep
                                + """/>
-            <input type="submit" value="Edit"><BR>
-            </form></div>
+            <input type="submit" value="Edit"><br>
+            </form>
+            </div>
             <div class='migcontent'>
             <form action="/cgi-bin/mkdir.py" method=post>
-            <BR>
-            <B>Create directory</B><BR>
+            <br>
+            <B>Create directory</B><br>
             Name of new directory to be created in current directory ("""
                                + relative_dir + os.sep
-                               + """):<BR>
-            <input name="path" size=50><BR><BR>
+                               + """):<br>
+            <input name="path" size=50><br><br>
             <input name="current_dir" type="hidden" value="""
                                + relative_dir + os.sep
                                + """/>
-            <input type="submit" value="Create" name="mkdirbutton"><BR>
-            </form></div>
+            <input type="submit" value="Create" name="mkdirbutton"><br>
+            </form>
+            </div>
             <div class='migcontent'>
             <form enctype="multipart/form-data" action="/cgi-bin/textarea.py" method="post">
-            <BR>
+            <br>
             <B>Upload file</B>
-            <BR>Upload file to current directory ("""
+            <br>Upload file to current directory ("""
                                + relative_dir + os.sep
                                + """)
-            <BR>
-            <BR>
-            <div class='container'>
-            <table border=0 class='migtable'>
+            <br>
+            <br>
+            <table class='files'>
             <tr><td>
             Extract package files (.zip, .tar.gz, .tar.bz2)
             </td><td><input type=checkbox name="extract_0"></td></tr>
@@ -606,19 +609,17 @@ def main(cert_name_no_spaces, user_arguments_dict):
             <input name="remotefilename_0" type="input" size="65" value="""
                                + relative_dir
                                + """/>
-            </td></tr>
-            <tr><td>
             <input type="submit" value="Upload" name="sendfile">
-            </td><td></td><td></td></tr>
-            </table>
-            </div>
             <input name="default_remotefilename_0" type="hidden" value="""
                                + relative_dir + os.sep
                                + """/>
             </form>
+            </td></tr><tr><td><br></td></tr>
+            </table>
             </div>
             """})
 
+    output_objects.append({'object_type': 'text', 'text':''})
     return (output_objects, status)
 
 

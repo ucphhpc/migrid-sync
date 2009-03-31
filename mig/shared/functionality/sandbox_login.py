@@ -50,7 +50,7 @@ html['english'] = \
     """
 <form action='sandbox_admin.py' method='POST'>
 
-<table border='0' width='80%' align='center'>
+<table class='sandboxlogintext'>
 <tr><td><a href='sandbox_login.py?language=danish'>P&aring; dansk</a></td></tr>
 <tr><td><h3>Intro</h3></td></tr>
 <tr><td>Welcome to the MiG-SSS download site. By downloading and installing this software, your computer will be participating in solving scientific problems whenever the screen saver is on. All you have to do is log in below, download the sandbox, and follow the instructions during the install procedure.<td><tr>
@@ -66,7 +66,7 @@ html['english'] = \
 <tr><td>Please check the <a href='sandbox_faq.py?language=danish'>FAQ</a>, or send us an email.</td></tr>
 </table>
 <br>
-<table border='0' width='' align='center'>
+<table class='sandboxlogin'>
 <TR><TD align='' colspan=''>Choose a user name:</TD>
 <TD><input type='TEXT' name='username' size='10'></TD></TR>
 
@@ -85,7 +85,7 @@ html['danish'] = \
     """
 <form action='sandbox_admin.py' method='POST'>
 
-<table border='0' width='80%' align='center'>
+<table class='sandboxlogintext'>
 <tr><td><a href='sandbox_login.py?language=english'>In English</a></td></tr>
 <tr><td><h3>Intro</h3></td></tr>
 <tr><td>Velkommen til MiG-SSS. Ved at downloade og installere denne software vil din PC, n&aring;r den er i screen saver mode, donere den ubrugte CPU-tid til at bidrage med at l&oslash;se videnskabelige problemer. Det eneste, der kr&aelig;ves er, at man logger ind nedenfor, downloader softwaren og f&oslash;lger installationsproceduren.<td><tr>
@@ -104,7 +104,7 @@ html['danish'] = \
 </table>
 
 <br>
-<table border='0' width='' align='center'>
+<table class='sandboxlogin'>
 <TR><TD align='' colspan=''>V&aelig;lg et brugernavn:</TD>
 <TD><input type='TEXT' name='username' size='10'></TD></TR>
 
