@@ -1,10 +1,5 @@
-#UDVILKLING Summariske tabeller skal være mere overskuelige. Formentlig vil df-fil være OK,
-#med passende spørgsmåls-dialog
-#beregning af fraktion af epistasis er i forhold til mulige når moinogene er udelukket.
-#bør være mod antal potentielle interaktioner dvs gen*(gen-1). eller begge dele.
-#der er en pæn discrepans mellem Var-decom og SS i pak-sham beregningerne
-#Når der ikke er sign epistasis for en klasse udskrives denne ikke. Bør udskrives med None e.lign.
-#Faktisk bør alt vel udskrives og først efterfølgende bør der sorteres på baggrund af valgt significans.
+#Revised by MF 18.march 2009 
+#
 
 "DistrPost"<-function()
 {
@@ -47,70 +42,83 @@ traittrimpre<-as.data.frame(qtrait[(!is.na(qtrait[1]) & !is.na(qtrait[2]) & qtra
   
 # Redit : traittrim<-as.data.frame(traittrimpre[(traittrimpre[1] !='NA' & traittrimpre[2] !='NA' & traittrimpre[3] !='NA'),(1:3)])
 traittrim<-as.data.frame(traittrimpre[(!is.na(traittrimpre[1]) & !is.na(traittrimpre[2]) & !is.na(traittrimpre[3])),(1:3)]) # cannot use "!=" operator for 'NA'
-                                        #print("traittrim:")
 
-                                       #Trait mean
+#Can the above be done in instead of tw procedures?????
 
-  
-meantrait<-mean(traittrim[3])
+#Create a cross-table of two-gene counts to test for valid input for further calculations.
+#A full table has 3x3 entries as each SNP (mutation, polymorphism) has three values: aa, ab, and bb
+#The table is used ensure valid entries into the next calculations. Basically, this means that none of
+#the two genes must be monomorphic e.g. only aa. 
+#The entries in the table are not used anymore, except for the above purpose (however see below).
+#Would it be more economical to use the union-function in C or C++ e.g union(gene1) and skip if the size =1??
+#The procedure to only process genes witha at least two values e.g. aa and ab, is mandatory for two reaosns:
+#epistasis do not have any meaning for monomorphic genes, and aov breaks down
 
-#This is the working data frame. Variables are centered! NB necessary??Variance should be the same irrespective of centering
-#Also, meantrait should only be used as a population value. It is not the weighted genotypic mean!!
-     traittrim1<-cbind(traittrim,(traittrim[3]-meantrait))
+crosst<-table(traittrim[,1],traittrim[,2])
 
-#Indsæt crosstab til at se om dim er mindre end 2 for både rækker og kolloner! Hvis så, da skip! og next
-#Pt flyttes det til to-vejs anova for ikke at komme i kambolage med div tabel-opdateringer.
-
-
-#Trait variance
-   #Redit: vartrait<-var(traittrim1[4],unbiased=T)[1]
-   vartrait<-var(traittrim1[4])[1] # "...unbiased arguement unused..."
-     # alternative #vartrait<-var(traittrim1[4], na.rm=TRUE, use = "pairwise.complete.obs")[1] # Umiddelbart den indstilling der virkede. Korrekt??
-
-#Epistasis output: general table, compile all data for each two-genes, all classes CR and PS
-
-eSave<-paste("Epistasis",names(smplt[c(selectvar)]),trait, gname1,"-",gname2) 
-etitel<-matrix(c("EPISTASIS"),nrow=1)
-eheadfile<-matrix(c("File:","",fileimp),nrow=1)
-eheadclvar<-matrix(c("Classification variable:"," ",names(smplt[c(selectvar)])),nrow=1)
-eheadgene<-matrix(c("Gene A:",gname1,"Gene B:",gname2),nrow=1)
-eheadtrait<-matrix(c("Trait:"," ",trait),nrow=1)
-
-# Benja note : strengen "paste(eSave,epiext,sep="")" er filnavnet
-   
-if(tblnum==0){#kun overskrifter een gang nbnb VIRKER IKKE HELT. hVAD MED if.exist elign.
-#General
-writeToFile(" ",paste(eSave,epiext,sep=""))
-writeToFile(etitel,paste(eSave,epiext,sep=""))
-writeToFile(" ",paste(eSave,epiext,sep=""))
-writeToFile(date(),paste(eSave,epiext,sep=""))
-writeToFile(" ",paste(eSave,epiext,sep=""))
-writeToFile(eheadfile,paste(eSave,epiext,sep=""))
-writeToFile(" ",paste(eSave,epiext,sep=""))
-writeToFile(eheadclvar,paste(eSave,epiext,sep=""))
-writeToFile(" ",paste(eSave,epiext,sep=""))
-writeToFile(eheadtrait,paste(eSave,epiext,sep=""))
-writeToFile(" ",paste(eSave,epiext,sep=""))
-writeToFile(eheadgene,paste(eSave,epiext,sep=""))
-writeToFile(" ",paste(eSave,epiext,sep=""))
-
+#Check for monomorphic genes and to secure validity of ANOVA(aov)
+#aov fails if only one row or one column has entries different from zeros
+if(dim(crosst)[1]==1){next}
+if(dim(crosst)[1]==2){
+	a1<-sum(crosst[1,])
+	a2<-sum(crosst[2,])
+	if(a1==0 || a2==0){next}	
+}
+if(dim(crosst)[1]==3){
+	a1<-sum(crosst[1,])
+	a2<-sum(crosst[2,])
+	a3<-sum(crosst[3,])
+	if((a1==0 & a2==0) || (a1==0 & a3==0) || (a2==0 & a3==0))
+	{next}	
+}
+if(dim(crosst)[2]==1){next}
+if(dim(crosst)[2]==2){
+	b1<-sum(crosst[,1])
+	b2<-sum(crosst[,2])
+	if(b1==0 || b2==0){next}	
+}
+if(dim(crosst)[2]==3){
+	b1<-sum(crosst[,1])
+	b2<-sum(crosst[,2])
+	b3<-sum(crosst[,3])
+	if((b1==0 & b2==0) || (b1==0 & b3==0) || (b2==0 & b3==0))
+	{next}	
 }
 
+#first and second moments of the trait in the popultion; maybe one procedure??
+#Trait mean 
+meantrait<-mean(traittrim[3])#NB This is grand mean
+
+#Trait variance
+   #Redit: vartrait<-var(traittrim[4],unbiased=T)[1]
+   vartrait<-var(traittrim[3])[1] # "...unbiased arguement unused..."
+     # alternative #vartrait<-var(traittrim[4], na.rm=TRUE, use = "pairwise.complete.obs")[1] # Umiddelbart den indstilling der virkede. Korrekt??
+##CHECK var komandoen i R: Unbiased at der divideres med N-1, dvs sample var, men division med N betyder populations var
+
+#Output sval = selcted class;
+eheadtrait2<-matrix(c(sval,meantrait,vartrait),nrow=1)
+
+
 ##############
+
 #Selection of cases according to haplotype. Non-valid traits excluded. 
 #The actual traitvalues are included, not the mean-corrected.OK!!
-#for(tsel in 1:dimdf[1]){
-gdfAABB<-traittrim1[(traittrim1[1]=="aa" & traittrim1[2]=="aa"),3]
-gdfAABb<-traittrim1[(traittrim1[1]=="aa" & traittrim1[2]=="ab"),3]
-gdfAAbb<-traittrim1[(traittrim1[1]=="aa" & traittrim1[2]=="bb"),3]
-gdfAaBB<-traittrim1[(traittrim1[1]=="ab" & traittrim1[2]=="aa"),3]
-gdfAaBb<-traittrim1[(traittrim1[1]=="ab" & traittrim1[2]=="ab"),3]
-gdfAabb<-traittrim1[(traittrim1[1]=="ab" & traittrim1[2]=="bb"),3]
-gdfaaBB<-traittrim1[(traittrim1[1]=="bb" & traittrim1[2]=="aa"),3]
-gdfaaBb<-traittrim1[(traittrim1[1]=="bb" & traittrim1[2]=="ab"),3]
-gdfaabb<-traittrim1[(traittrim1[1]=="bb" & traittrim1[2]=="bb"),3]
-#}
+#Can this be done by using the cross-tab above??I think however, that the cpu-time may not
+#be reduced, but the benefit is that other types of gene-variations may be included, particular
+#microsatelites witch may have 10 or more values. This is not an issue right now, the issue is to 
+#reduce computing time
 
+gdfAABB<-traittrim[(traittrim[1]=="aa" & traittrim[2]=="aa"),3]
+gdfAABb<-traittrim[(traittrim[1]=="aa" & traittrim[2]=="ab"),3]
+gdfAAbb<-traittrim[(traittrim[1]=="aa" & traittrim[2]=="bb"),3]
+gdfAaBB<-traittrim[(traittrim[1]=="ab" & traittrim[2]=="aa"),3]
+gdfAaBb<-traittrim[(traittrim[1]=="ab" & traittrim[2]=="ab"),3]
+gdfAabb<-traittrim[(traittrim[1]=="ab" & traittrim[2]=="bb"),3]
+gdfaaBB<-traittrim[(traittrim[1]=="bb" & traittrim[2]=="aa"),3]
+gdfaaBb<-traittrim[(traittrim[1]=="bb" & traittrim[2]=="ab"),3]
+gdfaabb<-traittrim[(traittrim[1]=="bb" & traittrim[2]=="bb"),3]
+
+#number of haplotypes
 ltr1<-length(gdfAABB)
 ltr2<-length(gdfAABb)
 ltr3<-length(gdfAAbb)
@@ -124,95 +132,36 @@ ltr9<-length(gdfaabb)
 #Usefull vectors and values
 trlength<-c(ltr1,ltr2,ltr3,ltr4,ltr5,ltr6,ltr7,ltr8,ltr9)
 trcontent<-list(gdfAABB,gdfAABb,gdfAAbb,gdfAaBB,gdfAaBb,gdfAabb,gdfaaBB,gdfaaBb,gdfaabb)	
-
-htype<-c("AABB","AABb","AAbb","AaBB","AaBb","Aabb","aaBB","aaBb","aabb")
+#trcontent list all the values for each two-gene haplotype, which is exported to EpiCR.
 
 
 #Number of cases
 sumcases<-sum(trlength)
 
-AAgeno<-ltr1 + ltr2 + ltr3
-Aageno<-ltr4 + ltr5 + ltr6
-aageno<-ltr7 + ltr8 + ltr9
-BBgeno<-ltr1 + ltr4 + ltr7
-Bbgeno<-ltr2 + ltr5 + ltr8
-bbgeno<-ltr3 + ltr6 + ltr9
-allelA<-(2*sum(AAgeno) + sum(Aageno))/(2*sumcases)
-allela<-(2*sum(aageno) + sum(Aageno))/(2*sumcases)
-allelB<-(2*sum(BBgeno) + sum(Bbgeno))/(2*sumcases)
-allelb<-(2*sum(bbgeno) + sum(Bbgeno))/(2*sumcases)
 
-#Dette er counts EFTER missing traits er deleted! Delete og inkorp her!allfreq ORDET BRUGES I Epi-scripts
-allfreq<-matrix(as.numeric(c(allelA,allela,allelB,allelb)),nrow=1)
+################
 
-GenoTypes<-matrix(c("aa","ab","bb"),nrow=1)
-
-#Dette er counts EFTER missing traits er deleted.
-GenoCounts<-matrix(as.numeric(c(AAgeno,Aageno,aageno,BBgeno,Bbgeno,bbgeno)),nrow=1)
-
-#Gene1 OK
-HWEtest1<-HWEwigNew(sumcases,GenoCounts[1],GenoCounts[2],GenoCounts[3])
-#Gene2 OK
-HWEtest2<-HWEwigNew(sumcases,GenoCounts[4],GenoCounts[5],GenoCounts[6])
-
-#Haplotype OK
-GenoChi<-chisq.test(matrix(trlength,3,3))$p.value
-
-
-#Headings
-
-#Epistasis output: summary; compile genotypes, haplotypes, hwe, ld, and epi sign, PS vardecomp
-#in one line for each two-gene combination. 
-#The txt-version is the WORKING FILE FOPR ALL SUCCESIVE EVALUATIONS.
-traitcont<-paste(nselvar,trait,sep="") 
-traitsavelog<-paste("Log trait epistasis",names(smplt[c(selectvar)]),trait) 
-traitsavelogSig<-paste("Log trait epistasis Sign.",names(smplt[c(selectvar)]),trait) 
-tlogana1<-matrix(c("HERITABILITIES AND EPISTASIS."),nrow=1)
+#Headings for outputs
+#Necesary to do here, as traits are accessed succesively in this script, not in main script
+traitsavelogSig<-paste("Log trait epistasis ",names(smplt[c(selectvar)]),trait) 
+tlogana1<-matrix(c("EPISTASIS calculations."),nrow=1)
 tlogana2<-matrix(c("Only haplotypes with significant epistasis of the trait are printed."),nrow=1)
-tlogana2a<-matrix(c("Monogenic genotypes are not included."),nrow=1)
-tlogana3<-matrix(c("Significance level:","",epistsign),nrow=1)
-tlogfile<-matrix(c("File:","",fileimp),nrow=1)
-tloghead1<-matrix(c("Classification variable:","",names(smplt[c(selectvar)])),nrow=1)
-tloghead2<-matrix(c("Number of classes:","",levmax),nrow=1)
-tloghead3<-matrix(c("Number of genes:","",numgene),nrow=1)
-trheadtrait<-matrix(c("Trait:"," ",trait),nrow=1)
-tupdates1<-matrix(c("","","","Genotypes Gene1","","","","Genotypes Gene2","","","","","Haplotypes","","","","","","","","",
-					 "Significant epistasis", "", "","","PS variance extended","","","","","","","PS var. extended actual","","","","","","",
-					"PS SS-variance decomposition","","","","PS SS-var. actual"),nrow=1)
-tupdates2<-matrix(c("Class","Gene 1","Gene 2", GenoTypes,"pG1", GenoTypes,"pG2",htype,"pLD", "F-CR", "pCR", "F-Anova","pAnova",
-			"Total genetic variance","Additive","Dominance","Add-Add","Add-Dom","Dom-Dom","Epistasis",
-			"Total genetic variance","Additive","Dominance","Add-Add","Add-Dom","Dom-Dom","Epistasis",
-			"Total genetic variance","Additive","Dominance","Epistasis",
-			"Total genetic variance","Additive","Dominance","Epistasis"),nrow=1)
+tlogana3<-matrix(c("Significance level:","","",epistsign),nrow=1)
+tlogfile<-matrix(c("File:","","",fileimp),nrow=1)
+tloghead1<-matrix(c("Classification variable:","","",names(smplt[c(selectvar)])),nrow=1)
+trheadtrait<-matrix(c("Trait:"," ","",trait),nrow=1)
+tloghead2<-matrix(c("Number of classes:","","",levmax),nrow=1)
+tloghead3<-matrix(c("Number of genes:","","",numgene),nrow=1)
+tupdates1<-matrix(c("","","","","","","","","", "Significant epistasis"),nrow=1)
+tupdates2<-matrix(c("Class","Mean","","","Total variance","","Gene 1","Gene 2", "pCR", "pAnova"),nrow=1)
+
+#MF comment eventually cut HWE and Haplotype stat if it consumes time!Interesting stuff but may be calculated separately for positiv epi-pairs
 
 if(lognum==0){
 #kun overskrifter een gang
 
-#Output to evaluations,txt-file
-writeToFile(tupdates2,paste(traitcont,evalext,sep=""))
-
-#summary
-writeToFile(" ",paste(traitsavelog,hepiexts))
-writeToFile(tlogana1,paste(traitsavelog,hepiexts))
-writeToFile(tlogana2a,paste(traitsavelog,hepiexts))
-writeToFile(" ",paste(traitsavelog,hepiexts))
-writeToFile(date(),paste(traitsavelog,hepiexts))
-writeToFile(" ",paste(traitsavelog,hepiexts))
-writeToFile(tlogfile,paste(traitsavelog,hepiexts))
-writeToFile(" ",paste(traitsavelog,hepiexts))
-writeToFile(tloghead1,paste(traitsavelog,hepiexts))
-writeToFile(" ",paste(traitsavelog,hepiexts))
-writeToFile(trheadtrait,paste(traitsavelog,hepiexts))
-writeToFile(" ",paste(traitsavelog,hepiexts))
-writeToFile(tloghead2,paste(traitsavelog,hepiexts))
-writeToFile(tloghead3,paste(traitsavelog,hepiexts))
-writeToFile(" ",paste(traitsavelog,hepiexts))
-writeToFile(tupdates1,paste(traitsavelog,hepiexts))
-writeToFile(tupdates2,paste(traitsavelog,hepiexts))
-
 #summary signifcant only
-#This file only contains the bonferoni correctedsignificant epistasis.
-#This is later selected in epieval from the major file above. Drop this??
+#This file only contains the bonferoni corrected significant epistasis.
 writeToFile(" ",paste(traitsavelogSig,hepiexts))
 writeToFile(tlogana1,paste(traitsavelogSig,hepiexts))
 writeToFile(tlogana2,paste(traitsavelogSig,hepiexts))
@@ -225,48 +174,37 @@ writeToFile(tloghead1,paste(traitsavelogSig,hepiexts))
 writeToFile(" ",paste(traitsavelogSig,hepiexts))
 writeToFile(trheadtrait,paste(traitsavelogSig,hepiexts))
 writeToFile(" ",paste(traitsavelogSig,hepiexts))
-writeToFile(tlogana3,paste(traitsavelogSig,hepiexts))
-writeToFile(" ",paste(traitsavelogSig,hepiexts))
 writeToFile(tloghead2,paste(traitsavelogSig,hepiexts))
 writeToFile(tloghead3,paste(traitsavelogSig,hepiexts))
+writeToFile(" ",paste(traitsavelogSig,hepiexts))
+writeToFile(tlogana3,paste(traitsavelogSig,hepiexts))
 writeToFile(" ",paste(traitsavelogSig,hepiexts))
 writeToFile(tupdates1,paste(traitsavelogSig,hepiexts))
 writeToFile(tupdates2,paste(traitsavelogSig,hepiexts))
 
 }
 
-#fortsæt uden overskrifter
-eheadtrait1<-matrix(c("Class","Mean","Variance"),nrow=1)
-eheadtrait2<-matrix(c(sval,meantrait,vartrait),nrow=1)
-esheadtrait1<-matrix(c("Class","Gene A","Gene B","Trait","F-CR","pCR","F-Anova","pAnova"),nrow=1)
-esheadsign<-matrix(c("Significance level","",epistsign), nrow=1)
-     
-writeToFile(eheadtrait1,paste(eSave,epiext,sep=""))
-writeToFile(eheadtrait2,paste(eSave,epiext,sep=""))
-writeToFile(" ",paste(eSave,epiext,sep=""))
 
-
-#print("before EpiCR")
 #Overall signifcans of epistasis is determined in EpiCR
-signval<-EpiCR(trcontent,meantrait,trlength,sumcases,traittrim1,allfreq,vartrait,eSave,htype,trait,acccrit)
-#print("before EpiPS")
-heritPS<-EpiPS(traittrim1,allfreq,vartrait,trlength,eSave,esSave)
-
-#Save summary epistatic data, general	
-trlogsum<-matrix(c(signval[4],gname1,gname2,GenoCounts[1:3],HWEtest1[1],GenoCounts[4:6],HWEtest1[2], trlength, GenoChi,
-			signval[5:8],heritPS[1:22]),nrow=1)
-writeToFile(trlogsum,paste(traitsavelog,hepiexts))
-writeToFile(trlogsum,paste(traitcont,evalext,sep=""))
+signval<-EpiCR(trcontent,meantrait,trlength,sumcases,traittrim,vartrait,trait)
 
 
-if(as.numeric(signval[1])<epistsign){
-writeToFile(trlogsum,paste(traitsavelogSig,hepiexts))}
+trlogsum<-matrix(c(eheadtrait2,gname1,gname2,signval),nrow=1)
 
-traitlist[trnr]<-signval[3]
-#bruges ikke pt, da det også skal omformuleres. Koster ikke noget pt.
+##
+if(as.numeric(signval[1])<epistsign || as.numeric(signval[2])<epistsign){
+writeToFile(trlogsum,paste(traitsavelogSig,hepiexts))
+#Updating counters
+calcno<-calcno+1
 trnr<-trnr+1	
+}
+else{#formetnlig overflødigNB NBNBNBmost probably not necessary
+trnr<-trnr+1	
+next}
 }# end of for(trt in trait1:trait2)
 
-return(traitlist)
+
+return(calcno)
+
 
 }#function end

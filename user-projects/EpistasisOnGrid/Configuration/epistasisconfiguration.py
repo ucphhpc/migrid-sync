@@ -2,9 +2,9 @@ main_script = "epistasis.py"
 data_file = "RfilesAndscripts/Inter99All290606.sav"
 
 main_r_file = "EpiMain.R"
-r_files = ["EpiCRnew_R_edit.R","DistrPost07_R_edit.R", "EpiPS_R_edit.R", "HWEwigNew_R_edit.R"]
+r_files = ["EpiCRnew_R_edit.R","DistrPost07_R_edit.R"]
 
-program_files = ["RfilesAndscripts/EpiMain.R", "RfilesAndscripts/EpiCRnew_R_edit.R","RfilesAndscripts/DistrPost07_R_edit.R", "RfilesAndscripts/EpiPS_R_edit.R", "RfilesAndscripts/HWEwigNew_R_edit.R", "RfilesAndscripts/epistasis.py"]
+program_files = ["RfilesAndscripts/EpiMain.R", "RfilesAndscripts/EpiCRnew_R_edit.R","RfilesAndscripts/DistrPost07_R_edit.R", "RfilesAndscripts/epistasis.py"]
 
 monitor_polling_frequency = 5
 gene_first_index = 74 #74
