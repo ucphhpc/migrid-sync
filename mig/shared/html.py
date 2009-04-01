@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# html - [insert a few words of module description on this line]
+# html - html helper functions
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -108,7 +108,7 @@ def get_cgi_html_header(
  </head>
 <body %s>
 <div id="toplogo">
-<img src="/images/MiG-logo.png" id="logoimage" alt=""/>
+<img src="/images/MiG-logo.png" id="logoimage" alt="MiG logo"/>
 </div>
 %s
 <div id="migheader">
@@ -130,12 +130,13 @@ def get_cgi_html_footer(footer='', html=True):
     out = footer
     out += \
         '''
-</div>
-<br><br>
-<div id="credits">This page is made for
-  the <a href="http://www.migrid.org">MiG project</a><br>
-  All rights reserved.
-</div>
+        <div id="bottomlogo">
+        <table id="credits">
+        <tr><td>
+        Copyright 2009 - <a href="http://www.migrid.org">The MiG project</a>
+        </td></tr>
+        </table>
+        </div>
         </body>
 </html>
 '''

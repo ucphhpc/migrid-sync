@@ -31,7 +31,7 @@ specified by the client."""
 import pickle
 
 import shared.returnvalues as returnvalues
-from shared.html import get_cgi_html_header
+from shared.html import get_cgi_html_header, get_cgi_html_footer
 from shared.objecttypes import validate
 from shared.prettyprinttable import pprint_table
 
@@ -756,24 +756,14 @@ def html_format(ret_val, ret_msg, out_obj):
                 print 'No matching VGrids found'
         else:
             print 'unknown object %s' % i
-    print """</div>
-<br>
+    footer = """</div>
+    <div id="exitcode">
 Exit code: %s Description: %s<br>
-<script TYPE="text/javascript">
-<!--
-var gb = new backlink();
-gb.text = "Back";
-gb.write();
-//-->
-</script><br><br>
-    <div id="credits">
-This page is made for the <a href="http://www.migrid.org">MiG project</a>.<br>
-All rights reserved.
-     </div>
-  </body>
-</html>
-    """\
-         % (ret_val, ret_msg)
+    </div>
+<br>    
+""" % (ret_val, ret_msg)
+
+    print get_cgi_html_footer(footer)
     return True
 
 

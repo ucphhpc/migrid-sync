@@ -78,8 +78,18 @@ div.container {
 	background:	url('/images/background-top.png')	repeat-x;
 	/* background: #eee; */
 	margin:  0;
-	padding:  16px 0px;
+	height: 160px
+	/* padding:  16px 0px;*/
 }
+#logoimage {
+	opacity: 0.9;
+	z-index: 1;
+	margin-left: auto;
+	margin-right: auto;
+	padding: 15px;
+	display: block;
+}
+
 
 /* Horizontal Menu */
 #mignavmenu {
@@ -259,15 +269,20 @@ table.monitorruntimeenvreq {
 }
 
 /* MiG credits footer */
-#credits {
+#bottomlogo {
 	background:	url('/images/background-bottom.png')	repeat-x	bottom;
+	height: 80px;
+}
+#credits {
+        background: none;
 	font-family: Small Fonts, VT100, Arial, Helvetica;
 	font-size: 9px;
-	height: 100%;
-	padding: 30px;
 	text-align: center;
+        vertical-align: middle;
+	height: 100%;
+	width: 96%;
+	border: 0px solid #000;
 }
-
 
 #content {
 	/* background: #ccc; */
@@ -304,14 +319,6 @@ table.monitorruntimeenvreq {
 	text-align: center;
 	font-size:17px;
 	font-weight:bold;
-}
-
-#logoimage {
-	/* opacity: 0.9; */
-	z-index: 1;
-	margin-left: auto;
-	margin-right: auto;
-	display: block;
 }
 
 #miginput {
