@@ -651,7 +651,7 @@ def html_format(ret_val, ret_msg, out_obj):
             environment_html = ''
             for environment in i['environments']:
                 environment_html += \
-                    '<table class="runtimenvvars" frame=hsides rules=none cellpadding=5>'
+                    '<table class="runtimeenvvars" frame=hsides rules=none cellpadding=5>'
                 environment_html += '<tr><td>Name:</td><td>%s</td></tr>'\
                      % environment['name']
                 environment_html += \
