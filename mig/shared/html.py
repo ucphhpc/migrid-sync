@@ -130,6 +130,7 @@ def get_cgi_html_footer(footer='', html=True):
     out = footer
     out += \
         '''
+        </div>
         <div id="bottomlogo">
         <table id="credits">
         <tr><td>

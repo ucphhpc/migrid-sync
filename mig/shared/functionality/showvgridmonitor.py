@@ -83,12 +83,14 @@ def main(cert_name_no_spaces, user_arguments_dict):
                 continue
             if not past_header:
                 continue
+            if -1 != line.find('begin raw footer:'):
+                break
             html += str(line)
         monitor_fd.close()
-    except Exception, e:
+    except Exception, exc:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Error reading VGrid monitor page (%s)'
-                               % e})
+                               % exc})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'html_form', 'text': html})

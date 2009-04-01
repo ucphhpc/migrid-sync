@@ -37,6 +37,7 @@ from shared.configuration import Configuration
 from shared.gridstat import GridStat
 from shared.fileio import unpickle
 from shared.vgrid import vgrid_list_vgrids
+from shared.html import get_cgi_html_header, get_cgi_html_footer
 
 configuration = Configuration('MiGserver.conf')
 logger = configuration.logger
@@ -70,18 +71,22 @@ def create_monitor(vgrid_name):
         }
 
     html = \
-        '''<html>
-<head>
-<meta http-equiv="refresh" content="%(sleep_secs)s">
-<title>MiG Monitor, VGrid %(vgrid_name)s</title>
-</head>
-<body bgcolor="#CCCCCC"><a href="/"><img src="%(logo_url)s" border=0></a><br>
+         get_cgi_html_header(
+        'MiG Monitor, VGrid %(vgrid_name)s' % html_vars,
+        '',
+        True,
+        '<meta http-equiv="refresh" content="%(sleep_secs)s">',
+        '',
+        False,
+        )
+    html += '''
 <!-- end of raw header: this line is used by showvgridmonitor -->
 <h3>Statistics/monitor for the %(vgrid_name)s VGrid</h3>
 This page was generated %(now)s<br>
 Automatic refresh every %(sleep_secs)s secs.<br>
 <br>'''\
          % html_vars
+
 
     # loop and get totals
 
@@ -400,8 +405,9 @@ Listing the last request from each resource<br>
          + str(up_count) + ' up, ' + str(down_count) + ' down?, '\
          + str(slack_count) + ' slack)<br>'
     html += str(job_assigned) + ' resources (' + str(job_assigned_cpus)\
-         + " cpu's) seems to be executing a job<br><br>"
-    html += '</body></html>'
+         + " cpu's) seems to be executing a job<br><br>\n"
+    html += '<!-- begin raw footer: this line is used by showvgridmonitor -->'
+    html += get_cgi_html_footer('')
 
     file_handle = open(html_file, 'w')
     file_handle.write(html)
