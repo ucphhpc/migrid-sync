@@ -39,6 +39,11 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.job import new_job
 
 
+def signature():
+    defaults = {'path': REJECT_UNSET, 'flags': ['']}
+    return ['', defaults]
+
+
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
@@ -46,7 +51,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         initialize_main_variables()
 
     status = returnvalues.OK
-    defaults = {'path': REJECT_UNSET, 'flags': ['']}
+    defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -110,14 +115,15 @@ def main(cert_name_no_spaces, user_arguments_dict):
             submitstatus = {'object_type': 'submitstatus',
                             'name': relative_path}
 
-            (status, newmsg, job_id) = new_job(real_path,
+            (job_status, newmsg, job_id) = new_job(real_path,
                     cert_name_no_spaces, configuration, False, True)
-            if not status:
+            if not job_status:
 
                 # output_objects.append({"object_type":"error_text", "text":"%s" % newmsg})
 
                 submitstatus['status'] = False
                 submitstatus['message'] = newmsg
+                status = returnvalues.CLIENT_ERROR
             else:
 
                 # return (output_objects, returnvalues.CLIENT_ERROR)

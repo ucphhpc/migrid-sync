@@ -38,7 +38,7 @@ import sys
 import glob
 
 import shared.returnvalues as returnvalues
-from shared.parseflags import byte_count, line_count, word_count
+from shared.parseflags import byte_count, line_count, word_count, verbose
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.validstring import valid_user_path

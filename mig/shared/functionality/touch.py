@@ -25,13 +25,7 @@
 # -- END_HEADER ---
 #
 
-# cgi version (automagically updated by cvs)
-
 """Emulate the un*x function with the same name."""
-
-__version__ = '$Revision: 1910 $'
-
-# $Id: wc.py 1910 2007-06-01 13:08:03Z jones $
 
 import os
 import sys

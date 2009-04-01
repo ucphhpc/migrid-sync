@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# ls - [insert a few words of module description on this line]
+# ls - emulate ls command
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -457,32 +457,22 @@ def main(cert_name_no_spaces, user_arguments_dict):
                           : htmlform})
 
     more_html = \
-        'Action on selected files (please hold mouse cursor over button for a description):'
-    more_html += \
-        "<form method='post' name='fileform' onSubmit='return selectedFilesAction();'>"
-    more_html += \
-        "<input type='hidden' name='output_format' value='html'>"
-    more_html += "<input type='hidden' name='flags' value='v'>"
-    more_html += \
-        "<input type='submit' name='cat' title='Show concatenated contents (cat)' onClick='document.pressed=this.value' value='cat'>"
-    more_html += \
-        "<input type='submit' name='head' onClick='document.pressed=this.value' value='head' title='Show first lines (head)'>"
-    more_html += \
-        "<input type='submit' name='tail' onClick='document.pressed=this.value' value='tail' title='Show last lines (tail)'>"
-    more_html += \
-        "<input type='submit' name='wc' onClick='document.pressed=this.value' value='wc' title='Count lines/words/chars (wc)'>"
-    more_html += \
-        "<input type='submit' name='stat' onClick='document.pressed=this.value' value='stat' title='Show details (stat)'>"
-    more_html += \
-        "<input type='submit' name='submit' title='Submit file (submit)' onClick='document.pressed=this.value' value='submit'>"
-    more_html += \
-        "<input type='submit' name='touch' onClick='document.pressed=this.value' value='touch' title='Update timestamp (touch)'>"
-    more_html += \
-        "<input type='submit' name='truncate' onClick='document.pressed=this.value' value='truncate' title='TRUNCATE! (truncate)'>"
-    more_html += \
-        "<input type='submit' name='delete' onClick='document.pressed=this.value' value='rm' title='DELETE! (rm)'>"
-    more_html += \
-        "<input type='submit' name='rmdir' onClick='document.pressed=this.value' value='rmdir' title='Remove directory (rmdir)'>\n"
+                  """
+Action on selected files (please hold mouse cursor over button for a description):
+<form method='post' name='fileform' onSubmit='return selectedFilesAction();'>
+<input type='hidden' name='output_format' value='html'>
+<input type='hidden' name='flags' value='v'>
+<input type='submit' title='Show concatenated contents (cat)' onClick='document.pressed=this.value' value='cat'>
+<input type='submit' onClick='document.pressed=this.value' value='head' title='Show first lines (head)'>
+<input type='submit' onClick='document.pressed=this.value' value='tail' title='Show last lines (tail)'>
+<input type='submit' onClick='document.pressed=this.value' value='wc' title='Count lines/words/chars (wc)'>
+<input type='submit' onClick='document.pressed=this.value' value='stat' title='Show details (stat)'>
+<input type='submit' onClick='document.pressed=this.value' value='touch' title='Update timestamp (touch)'>
+<input type='submit' onClick='document.pressed=this.value' value='truncate' title='TRUNCATE! (truncate)'>
+<input type='submit' onClick='document.pressed=this.value' value='rm' title='DELETE! (rm)'>
+<input type='submit' onClick='document.pressed=this.value' value='rmdir' title='Remove directory (rmdir)'>
+<input type='submit' onClick='document.pressed=this.value' value='submit' title='Submit file (submit)'>
+"""
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : more_html})
