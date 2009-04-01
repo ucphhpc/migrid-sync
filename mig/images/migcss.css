@@ -287,7 +287,7 @@ table.monitorruntimeenvreq {
 #content {
 	/* background: #ccc; */
 	background: #fff;
-	border: 1px solid #000;
+	border: 2px ridge #63a4f0;
 	margin: 2%;
 	padding: 5px 5px;
 	text-align: center;
