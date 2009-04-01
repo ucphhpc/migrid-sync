@@ -449,7 +449,6 @@ def html_format(ret_val, ret_msg, out_obj):
                 continue
             print '<hr>'
             columns = 6
-            print "<div class='container'>"
             print "<table class='files'>"
             print '<tr>'
             cols = 0
@@ -537,7 +536,7 @@ def html_format(ret_val, ret_msg, out_obj):
                         cols = columns
                         print '</tr>'
             print '</table></form><hr><br>'
-            print "</div>"
+            print ""
         elif i['object_type'] == 'filewcs':
             filewcs = i['filewcs']
             if len(filewcs) == 0:

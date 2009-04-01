@@ -55,7 +55,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     output_objects.append({'object_type': 'title', 'text': 'MiG Jobs'})
-    output_objects.append({'object_type': 'header', 'text': 'MiG Jobs'})
+    output_objects.append({'object_type': 'header', 'text': 'Manage Jobs'})
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'View status of all submitted jobs'})
     output_objects.append({'object_type': 'html_form', 'text'
@@ -69,7 +69,7 @@ Sort by modification time: <input type="radio" name="flags" value="sv">yes
 </form>
     """})
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'View status of one or more jobs'})
+                          : 'View status of individual jobs'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 Filter job IDs (* and ? wildcards are supported)<br>

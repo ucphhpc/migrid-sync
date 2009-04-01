@@ -351,13 +351,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
     <input type='submit' value='Filter'>
     </form>
     </div>
-    """
-                           % flags})
+    """% flags})
 
     # Short/long format buttons
 
     htmlform = \
-        """<table class='files'><tr class=title><td>Parameter</td><td>Setting</td><td>Enable</td><td>Disable</td></tr>
+        """<table class='files'>
+    <tr class=title><td>Parameter</td><td>Setting</td><td>Enable</td><td>Disable</td></tr>
     <tr><td>Long format</td><td>
     %s</td><td>"""\
          % long_list(flags)\
@@ -450,13 +450,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
     <input type='submit' value='Off'><br>
     </form>
     </td></tr>
-    </table><br>"""
+    </table>
+    """
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : htmlform})
 
-    more_html = "<div class='migcontent'>"
-    more_html += \
+    more_html = \
         'Action on selected files (please hold mouse cursor over button for a description):'
     more_html += \
         "<form method='post' name='fileform' onSubmit='return selectedFilesAction();'>"
@@ -482,9 +482,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     more_html += \
         "<input type='submit' name='delete' onClick='document.pressed=this.value' value='rm' title='DELETE! (rm)'>"
     more_html += \
-        "<input type='submit' name='rmdir' onClick='document.pressed=this.value' value='rmdir' title='Remove directory (rmdir)'>"
-    more_html += \
-        "</div>"
+        "<input type='submit' name='rmdir' onClick='document.pressed=this.value' value='rmdir' title='Remove directory (rmdir)'>\n"
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : more_html})
@@ -556,68 +554,80 @@ def main(cert_name_no_spaces, user_arguments_dict):
             relative_dir = dir_path.replace(base_dir, '')
 
         output_objects.append({'object_type': 'html_form', 'text'
-                              : """<div class='migcontent'>
-            <form action="/cgi-bin/editor.py" method=post>
-            <br>
-            <B>Edit file</B><br>
-            Name of new or existing file in current directory to be edited ("""
-                               + relative_dir + os.sep
-                               + """):<br>
-            <input name="path" size=50><br><br>
-            <input name="current_dir" type="hidden" value="""
-                               + relative_dir + os.sep
-                               + """/>
-            <input type="submit" value="Edit"><br>
-            </form>
-            </div>
-            <div class='migcontent'>
-            <form action="/cgi-bin/mkdir.py" method=post>
-            <br>
-            <B>Create directory</B><br>
-            Name of new directory to be created in current directory ("""
-                               + relative_dir + os.sep
-                               + """):<br>
-            <input name="path" size=50><br><br>
-            <input name="current_dir" type="hidden" value="""
-                               + relative_dir + os.sep
-                               + """/>
-            <input type="submit" value="Create" name="mkdirbutton"><br>
-            </form>
-            </div>
-            <div class='migcontent'>
-            <form enctype="multipart/form-data" action="/cgi-bin/textarea.py" method="post">
-            <br>
-            <B>Upload file</B>
-            <br>Upload file to current directory ("""
-                               + relative_dir + os.sep
-                               + """)
-            <br>
-            <br>
-            <table class='files'>
-            <tr><td>
-            Extract package files (.zip, .tar.gz, .tar.bz2)
-            </td><td><input type=checkbox name="extract_0"></td></tr>
-            <tr><td>
-            Submit mRSL files (also .mRSL files included in packages)
-            </td><td><input type=checkbox name="submitmrsl_0" CHECKED></td></tr>
-            <tr><td>    
-            File to upload</td><td>
-            <input name="fileupload_0_0_0" type="file" size="65"/>
-            </td></tr>
-            <tr><td>
-            Optional remote filename (extra useful in windows)</td><td>
-            <input name="remotefilename_0" type="input" size="65" value="""
-                               + relative_dir
-                               + """/>
-            <input type="submit" value="Upload" name="sendfile">
-            <input name="default_remotefilename_0" type="hidden" value="""
-                               + relative_dir + os.sep
-                               + """/>
-            </form>
-            </td></tr><tr><td><br></td></tr>
-            </table>
-            </div>
-            """})
+                           : """
+<table class='files'>
+<tr class=title><td class=centertext colspan=4>
+Edit file
+</td></tr>
+<tr><td>
+Fill in the path of a file to edit and press 'edit' to open that file in the
+online file editor. Alternatively a file can be selected for editing
+through the listing of personal files. 
+</td><td>
+<br>
+</td><td>
+<form name='editor' method='post' action='/cgi-bin/editor.py'>
+<input type='hidden' name='output_format' value='html'>
+<input type='text' name='path' size=50 value=''>
+<input name='current_dir' type='hidden' value='%(dest_dir)s'>
+</td><td>
+<input type='submit' value='edit'>
+</form>
+</td></tr>
+</table>
+<br>
+<table class='files'>
+<tr class=title><td class=centertext colspan=4>
+Create directory
+</td></tr>
+<tr><td>
+Name of new directory to be created in current directory (%(dest_dir)s)
+</td><td>
+<br>
+</td><td>
+<form action='/cgi-bin/mkdir.py' method=post>
+<input name='path' size=50>
+<input name='current_dir' type='hidden' value='%(dest_dir)s'/>
+</td><td>
+<input type='submit' value='Create' name='mkdirbutton'>
+</form>
+</td></tr>
+</table>
+<br>
+<table class='files'>
+<tr class=title><td class=centertext colspan=4>
+Upload file
+</td></tr>
+<tr><td colspan=4>
+Upload file to current directory (%(dest_dir)s)
+</td></tr>
+<tr><td colspan=2>
+<form enctype='multipart/form-data' action='/cgi-bin/textarea.py' method='post'>
+Extract package files (.zip, .tar.gz, .tar.bz2)
+</td><td colspan=2>
+<input type=checkbox name='extract_0'>
+</td></tr>
+<tr><td colspan=2>
+Submit mRSL files (also .mRSL files included in packages)
+</td><td colspan=2>
+<input type=checkbox name='submitmrsl_0' CHECKED>
+</td></tr>
+<tr><td>    
+File to upload
+</td><td colspan=3>
+<input name='fileupload_0_0_0' type='file' size='65'/>
+</td></tr>
+<tr><td>
+Optional remote filename (extra useful in windows)
+</td><td colspan=2>
+<input name='default_remotefilename_0' type='hidden' value='%(dest_dir)s'/>
+<input name='remotefilename_0' type='input' size='65' value='%(dest_dir)s'/>
+</td><td>
+<input type='submit' value='Upload' name='sendfile'>
+</form>
+</td></tr>
+</table>
+    """ % {'dest_dir':(relative_dir + os.sep)}})
 
     output_objects.append({'object_type': 'text', 'text':''})
     return (output_objects, status)

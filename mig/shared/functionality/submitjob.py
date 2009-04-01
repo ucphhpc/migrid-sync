@@ -137,66 +137,36 @@ are supplied: thus we simply send a bogus jobname which does nothing
 <form method="post" action="/cgi-bin/textarea.py" id="miginput">
 <input type=hidden name=jobname_0_0_0 value=" ">
 <textarea cols="82" rows="25" name="mrsltextarea_0">
-%s
+%(default_mrsl)s
 </textarea>
-</td></tr>
-<tr><td>
-<br>
 </td></tr>
 <tr><td>
 <center><input type="submit" value="Submit Job"></center>
 </form>
 </td></tr>
 </table>
-    """
-                           % default_mrsl})
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Upload file to MiG home directory'})
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
-<table class='files'>
-<form enctype="multipart/form-data" action="/cgi-bin/textarea.py"
-      method="post" id="miginput">
-<tr><td>
-Extract package files (.zip, .tar.gz, .tgz, .tar.bz2)
-</td><td><input type=checkbox name="extract_0"></td></tr>
-<tr><td width="80%">
-Submit mRSL files to parser (also .mRSL files included in packages)
-
-</td><td><input type=checkbox name="submitmrsl_0" CHECKED></td></tr>
-
-<tr><td>File</td><td>
-<input name="fileupload_0_0_0" type="file" size="70"/>
-</td></tr>
-<tr><td>Remote filename</td><td>
-<input name="remotefilename_0" type="text" size="70"/>
-<input type="submit" value="Send file" name="sendfile">
-</form>
-</td></tr>
-</table>
-    """})
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Create/edit file'})
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
-<table class='files'>
-<tr><td colspan=2>
-Fill in the path of a file to edit and press 'edit' to open that file in the
-online file editor. Alternatively a file can be selected for editing
-through the listing of personal files. 
-</td><td>
 <br>
-</td><td>
-<form name='editor' method='post' action='/cgi-bin/editor.py'>
-<input type='hidden' name='output_format' value='html'>
-<input type='text' name='path' size=50 value=''><br>
-</td><td>
-<input type='submit' value='edit'>
+<table class='files'>
+<tr class=title><td class=centertext colspan=6>
+Upload job file or archive of job files to submit
+</td></tr>
+<tr><td colspan=1>
+File to upload
+</td><td class=centertext colspan=4>
+<form enctype='multipart/form-data' action='/cgi-bin/textarea.py' method='post'>
+<input name='extract_0' type='hidden' value='True'>
+<input name='submitmrsl_0' type='hidden' value='True'>
+<input name='fileupload_0_0_0' type='file' size='65'/>
+<input name='default_remotefilename_0' type='hidden' value='%(dest_dir)s'/>
+<input name='remotefilename_0' type='hidden' size='65' value='%(dest_dir)s'/>
+</td><td class=centertext>
+<input type='submit' value='Upload' name='sendfile'>
 </form>
 </td></tr>
 </table>
 <br>
-    """})
+""" % {'default_mrsl':default_mrsl, 'dest_dir':('.' + os.sep)}})
+
     return (output_objects, status)
 
 

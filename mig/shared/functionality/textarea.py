@@ -153,7 +153,6 @@ def main(cert_name_no_spaces, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG submit job/file'})
 
-    uploaddir = configuration.user_home + cert_name_no_spaces + os.sep
     submitstatuslist = []
     fileuploadobjs = []
     filenumber = 0
@@ -205,7 +204,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                          % filename_key})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
-            local_filename = uploaddir\
+            local_filename = base_dir\
                  + convert_control_value_to_line(filename_key)
 
             if not valid_user_path(local_filename, base_dir):
@@ -389,7 +388,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
             # mrsl file created by html controls. create filename. Loop until a filename that do not exits is created
 
-            html_generated_mrsl_dir = uploaddir + 'html_generated_mrsl'
+            html_generated_mrsl_dir = base_dir + 'html_generated_mrsl'
             if os.path.exists(html_generated_mrsl_dir)\
                  and not os.path.isdir(html_generated_mrsl_dir):
 
@@ -436,7 +435,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
             # do not reveal full path of mrsl file to client
 
-            relative_filename = os.sep + mrslfile.replace(uploaddir, '')
+            relative_filename = os.sep + mrslfile.replace(base_dir, '')
             submitstatus = {'object_type': 'submitstatus',
                             'name': relative_filename}
 
