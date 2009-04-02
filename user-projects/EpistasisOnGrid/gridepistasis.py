@@ -28,10 +28,11 @@ class GridEpistasis:
         self.num_jobs = 0
         self.logfile = ""
         self.debug_mode = debug_mode
+        self.main_output_dir = ""
         #self.mig_session = ""
 
 # ########## UPDATE / STATUS ###############
-
+    
     def get_epistasis_status(self):
         """Return the status of the jobs and a progress indicator to be displayed in GUI."""
         self.mig_session.update_jobs(self.epistasis_jobs)
@@ -39,7 +40,10 @@ class GridEpistasis:
             if j['status']['STATUS'] == 'FINISHED':
                 self.jobs_done.append(j)
                 self.epistasis_jobs.remove(j)
-                self.mig_session.handle_output(j)
+                #self.mig_session.handle_output(j)
+                output_files = self.mig_session.handle_output(j)
+                for f in output_files:
+                    self.extract_output(f,  self.main_output_dir+j['results_dir'])
 
         if self.num_jobs == len(self.jobs_done):
             log(self.logfile, 'All jobs completed', self.debug_mode)
@@ -88,7 +92,10 @@ class GridEpistasis:
                 self.mig_session.update_jobs(jobs)
                 for j in jobs:
                     if j['status']['STATUS'] == 'FINISHED':
-                        self.mig_session.handle_output(j)
+                        output_files = self.mig_session.handle_output(j)
+                        for f in output_files:
+                            self.extract_output(f,  self.main_output_dir+j['results_dir'])
+                        
                         jobs_done.append(j)
                         jobs.remove(j)
                         
@@ -108,6 +115,19 @@ class GridEpistasis:
                 self.mig_session.cancel_jobs(jobs)
                 return
         return jobs_done
+
+
+    def extract_output(self,tar_file_path, dest_dir):
+        import tarfile
+        
+        new_dir = dest_dir+tar_file_path.split("/")[-1].strip(".tar.gz")
+        if not os.path.exists(new_dir):
+            os.mkdir(new_dir)
+        prog_files = tarfile.open(tar_file_path, "r")
+            
+        prog_files.extractall(path=new_dir)
+        prog_files.close()
+
 
 # ######### START EPISTASIS ############
 
@@ -134,7 +154,7 @@ class GridEpistasis:
         #job_size = 1  
         #print 'SVvals: ' + str(selection_variable_values)
         #print 'JS: ' + str(job_size)
-
+        
         #job_size = 1
         epi_jobs, project_dir = create_epistasis_jobs(
             job_size,
@@ -148,10 +168,13 @@ class GridEpistasis:
             )
 
         #self.print_jobs(epi_jobs)
+
+        self.main_output_dir = output_dir
         
         if not output_dir[-1] == "/":
             output_dir += "/"
         output_dir = output_dir+project_dir
+
         self.logfile = output_dir+configuration.logfile_name
             
         os.mkdir(output_dir)
@@ -245,10 +268,9 @@ def create_epistasis_jobs(
              + job_directory
         job['output_files'] = [output_filename]
         job_results_dir = configuration.resultsdir_prefix_name + project_tag +"/"
-        job['results_dir'] = job_results_dir+"/"
+        job['results_dir'] = job_results_dir
 
-        job_cmds = ['cd ' + job['job_dir'], 'python '
-                     + job['main_script']]
+        job_cmds = ['python '+ job['main_script']]
 
         # mig settings
 
@@ -286,6 +308,27 @@ def create_init_job():
     init_job["started"] = "---"
     init_job["finished"] = "---"
     return init_job
+
+"""
+def mig_call(func,*args):
+    #print args
+    #funct = "miglib."+func
+    #print func, args
+    try:
+        out = func(*args)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        raise
+        
+
+        return out
+#print out
+    #exit_code = get_exit_code(out)
+    
+    #print "exit code", exit_code
+    #if exit_code != 0:
+    #   raise Exception("MiG Error: \n"+str(func)+":"+str(args)+"\n"+"".join(out))
+"""
 
 
 # ##### MAIN ###############

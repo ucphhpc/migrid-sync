@@ -9,16 +9,21 @@ class MigSession:
     def __init__(self, local_project_results_dir, logfile, local=False, debugging=False):
         self.debug_mode = debugging
         if local:
-            import localinterface as mig
+            import localinterface
+            self.mig = localinterface
         else:
             #import MiGuserscriptsInterface as Mig
-            import miginterface as mig
-        self.mig = mig
+            import miginterface
+            self.mig = miginterface
+            self.check_connection()
+            
+        
         #self.workingDir = workingDir
         self.main_results_dir = local_project_results_dir #destDir+EpiConfig.resultsdirPrefixName+job["projectTag"]+"/"
         self.logfile = logfile
 #self.Mig.makeDirTree(self.workingDir)
         self.jobs = []
+        
         
     def get_time(self):
         return time.strftime('%d/%m/%Y %H:%M:%S')
@@ -35,6 +40,7 @@ class MigSession:
         
         job["input_files"] = input_files
         #print input_files
+        job["commands"].insert(0,"cd "+job["job_dir"])
         job["id"]= self.mig.create_job(exec_commands=job["commands"], input_files=job["input_files"], 
                                       executables=[], local_working_dir=job["job_dir"], mig_working_dir=job["job_dir"], 
                                       output_files=job["output_files"], static_files=[], 
@@ -47,6 +53,10 @@ class MigSession:
         
         if not self.mig.path_exists(working_dir):
             self.mig.mk_dir(working_dir)
+            
+        if not os.path.exists(working_dir):
+            os.mkdir(working_dir)
+               
         if deploy_multiple:
             prepared_jobs = []
             for job in jobs:
@@ -77,7 +87,6 @@ class MigSession:
         
     def archive_job_dirs(self,job_dirs):
         import tarfile
-        import time 
         tmp_dir = "/tmp/"
         timestamp = str(time.time())
         tar_name = "inputfiles"+timestamp+".tar.gz"
@@ -115,32 +124,22 @@ class MigSession:
 
     def handle_output(self,job):
         #import resultHandle
+        files = []
         for f in job["output_files"]:
             output_filename =  job["job_dir"]+f
             outputfile = self.mig.get_output(output_filename, job["job_dir"])
             log(self.logfile, "Retrieved output file for job "+job["id"],self.debug_mode)
               #print "opening ", destDir+filepath, "to", destDir
-        
-            job_results_dir = self.main_results_dir#+job["results_dir"]
+            files.append(outputfile)
+        return files
+            #job_results_dir = self.main_results_dir#+job["results_dir"]
             #if not os.path.exists(job_results_dir):
             #    os.mkdir(job_results_dir)
-            log(self.logfile,"Extracting job output "+job["id"]+") to "+job_results_dir, self.debug_mode)
-            self.extract_output(outputfile, job_results_dir) # extract the downloaded archive file
+            #log(self.logfile,"Extracting job output "+job["id"]+") to "+job_results_dir, self.debug_mode)
+            #self.extract_output(outputfile, job_results_dir) # extract the downloaded archive file
             #self.cleanUpJob(job) # delete job files locally and on the MiG server
 
-    def extract_output(self,file_path, dest_dir):
-        import tarfile
-       
-        new_dir = dest_dir+file_path.split("/")[-1][:-7]
-        if not os.path.exists(new_dir):
-            os.mkdir(new_dir)
-        prog_files = tarfile.open(file_path, "r")
-
-        prog_files.extractall(path=new_dir)
-        prog_files.close()
-        
-
-    ####### UPDATE/STATUS #########
+      ####### UPDATE/STATUS #########
   
     def update_jobs(self,jobs):
         new_status = False
@@ -168,9 +167,12 @@ class MigSession:
     def wait_for_jobs(self, jobs):
         done = False
         while not done: 
+            time.sleep(5)
             self.update_jobs(jobs)
             done = True
+            
             for j in jobs :
+                print j["status"]['STATUS']
                 new_state = j["status"]['STATUS'] == 'FINISHED'
                 done = done and new_state 
         
@@ -216,7 +218,6 @@ class MigSession:
         os.rmdir(job["job_dir"])
         
         
-
     def remove_local_files(self,files):
       #clean up
         for f in files:
@@ -227,14 +228,20 @@ class MigSession:
  #except OSError:
              #   print "Can't delete : "+f
                 
-
-
     def validate_job(self,job):
         required_keys = ["input_files", "output_files", "commands", "job_dir", "results_dir"]
         for key in required_keys:
             if not key in job.keys():
                 raise Exception("Job error. MiG job dictionary must contain key "+key)
         
+
+    def check_connection(self):
+        success, func = self.mig.command_test()
+        if not success:
+            raise Exception("MiG connection error. Could not execute remote test command :"+str(func)+". You are propably not connected to MiG.")
+    
+
+
         # locally
    #     for f in job_files:
     #        try:

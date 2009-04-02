@@ -4,8 +4,9 @@ import time
 import tarfile
 import createmrsl
 import sys 
-sys.path.append("Gridinterface/migscripts/")
-import miglib
+#sys.path.append("Gridinterface/migscripts/")
+#import miglib
+import migscripts.miglib as miglib
 import string 
 
 ####### CREATE JOBS / SUBMIT ############
@@ -278,8 +279,16 @@ def mig_function_wrapper(func,*args):
     #print "exit code", exit_code
     if exit_code != 0:
         raise Exception("MiG Error: \n"+str(func)+":"+str(args)+"\n"+"".join(out))
+    
+    
+
     return out
 
+def command_test():
+    (code, out) = miglib.ls_file(".")
+    success = out != []
+    return success, miglib.ls_file
+    
 def get_exit_code(output_lines):
     if len(output_lines) > 0:
         exit_code_str = output_lines[0]

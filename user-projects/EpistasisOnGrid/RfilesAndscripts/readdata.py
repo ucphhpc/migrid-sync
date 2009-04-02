@@ -1,5 +1,5 @@
-from rpy_options import set_options
-set_options(RHOME='/usr/local/lib64/R-2.8.0')
+#from rpy_options import set_options
+#set_options(RHOME='/usr/local/lib64/R-2.8.0')
 #from rpy import *
 
 from rpy import r
@@ -38,8 +38,6 @@ def read_data_old(spss_data_file):
      #   data_sheet[label] = new_vals
     
     return data_sheet #column_labels
-
-
 
 
 

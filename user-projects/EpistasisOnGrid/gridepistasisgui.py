@@ -49,7 +49,7 @@ def read_data_sheet():
     frame_1.gene_list.Set(all_genes_and_traits)
     frame_1.trait_list.Set(all_genes_and_traits)
     frame_1.selection_variable_list.SetItems(all_genes_and_traits)
-
+    #frame_1.selection_variable_list.Select(1)
 ##### BUTTONS ############                        
 
 def update_selected_genes():
@@ -151,15 +151,16 @@ def validateInput():
     if not os.path.exists(outputdir):
         return False, "Can't find output directory : "+outputdir
    
+    if frame_1.selection_variable_list.GetSelection() == -1:
+        return False, "Choose a selection variable."
+
+
     return True, "OK"
     
 ##### START/ STOP #############
 
 def start():
-    valid, comment = validateInput()
-    if not valid: 
-        popup_box(comment, "Incorret input")
-        return
+  
 
 
     #collect values
@@ -192,7 +193,7 @@ def start():
     list_pos = frame_1.selection_variable_list.GetSelection()+1 # indexes start at 1 in R
     #print sel_var
     selection_variable = list_pos
-    #select_variable_values = data_sheet[selection_variable]
+    #print selection_variable#_values = data_sheet[selection_variable]
     i = frame_1.start_class.GetSelection()
     j = frame_1.end_class.GetSelection()
     #frame_1.end_class.
@@ -260,6 +261,11 @@ def EnableControls(enable):
 
 # event handlers
 def OnBtnStart(event=None):
+    valid, comment = validateInput()
+    if not valid: 
+        popup_box(comment, "Incorret input")
+        return
+
     model.epistasis_status = pending_state
     frame_1.statusfeed.Clear()
     frame_1.statusfeed.write("Starting epistasis...")
