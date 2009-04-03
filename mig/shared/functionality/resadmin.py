@@ -109,7 +109,7 @@ def display_resource(
     html += \
         '''
 <form method="post" action="/cgi-bin/updateresconfig.py">
-<textarea cols="120" rows="25" wrap="off" name="resconfig">'''
+<textarea cols="100" rows="25" wrap="off" name="resconfig">'''
     for line in raw_conf:
         html += '%s\n' % line.strip()
     html += \
