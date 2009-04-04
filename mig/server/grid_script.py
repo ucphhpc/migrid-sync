@@ -281,6 +281,8 @@ logger.info(msg)
 check_mrsl_files(configuration, job_queue, executing_queue,
                  only_new_jobs, logger)
 
+msg = 'Cleaning up after pending job requests'
+print msg
 remove_jobrequest_pending_files(configuration)
 
 msg = 'Starting main loop'
@@ -1146,6 +1148,12 @@ while True:
         unique_resource_name = linelist[3]
         exe = linelist[4]
 
+        # read resource config file
+
+        resource_config = unpickle(configuration.resource_home
+                                    + unique_resource_name + '/config',
+                                   logger)
+
         just_dequeue_status_list = ['QUEUED', 'RETRY']
         kill_executing_status_list = ['EXECUTING']
 
@@ -1181,8 +1189,7 @@ while True:
                 # TODO: Do what? nothing?
 
                 logger.info('Cancel job: Could not get job_dict')
-            elif not job_dict.has_key('SANDBOX') or job_dict['SANDBOX']\
-                 == 0:
+            elif resource_config.get('SANDBOX', 0) == 0:
                 logger.info('Killing running job with atomic_resource_exe_restart'
                             )
                 (status, msg) = \
@@ -1212,6 +1219,12 @@ while True:
         msg = 'JOBTIMEOUT: %s timed out.' % jobid
         print msg
         logger.info(msg)
+
+        # read resource config file
+
+        resource_config = unpickle(configuration.resource_home
+                                    + unique_resource_name + '/config',
+                                   logger)
 
         # Retrieve job_dict
 
@@ -1268,8 +1281,8 @@ while True:
 
             # Restart non-sandbox resources for all timed out jobs
 
-            if job_dict.get('SANDBOX', 0) == 0:
-
+            if resource_config.get('SANDBOX', 0) == 0:
+                
                 # TODO: atomic_resource_exe_restart is not always effective
                 # The imada resources have been seen to hang in wait for input files loop
                 # across an atomic_resource_exe_restart run (server PGID was 'starting').
