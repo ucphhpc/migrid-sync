@@ -181,7 +181,7 @@ setup.
 Users and resources:
 ====================
 Once your server is running you may add users and resources through the
-wen interface (/cgi-sid/reqcert.py). Please make sure to configure the
+web interface (/cgi-sid/reqcert.py). Please make sure to configure the
 admin_email option in the MiGserver.conf before you proceed as that
 address is used for instruction emails when adding users and resources.
 
