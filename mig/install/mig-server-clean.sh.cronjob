@@ -11,16 +11,19 @@
 # This is a limitation on the run-parts wrapper used by cron 
 # (see man run-parts for the rationale behind this).
 
-# Clean up after jobs if they haven't done so themselves within a month
+# Modify this base dir variable to fit actual state dir location in your setup
+state_dir="~/state"
+
+# Clean up after jobs if they haven't done so themselves within a month.
 max_days=30
-for name in cache/mig_system_files cache/sessid_to_mrsl_link_home cache/webserver_home; do
+for name in $state_dir/mig_system_files $state_dir/sessid_to_mrsl_link_home $state_dir/webserver_home; do
 	echo "Deleting files older than $max_days days from $name"
 	su - mig -c "find $name -maxdepth 1 -ctime +${max_days} | xargs -n1 rm -f "
 done
 
 # Empty job cruft can be removed within a week
 max_days=7
-for name in mig/wwwuser/no_grid_jobs_in_grid_scheduler; do
+for name in $state_dir/user_home/no_grid_jobs_in_grid_scheduler; do
 	echo "Deleting files older than $max_days days from $name"
 	su - mig -c "find $name -maxdepth 1 -ctime +${max_days} | xargs -n1 rm -f " 
 done
