@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# server - [insert a few words of module description on this line]
+# server - Failover server wrapper script
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -26,7 +26,7 @@
 #
 
 """Full MiG server:
-This wrapper script handles a full MiG server in the distributed model.
+This wrapper script handles a full MiG server in the failover model.
 If this server is the current group leader, the server runs the necessary
 MiG components, including the main script, monitor and notification.
 """
@@ -64,11 +64,11 @@ def stop_component(pid):
     pgid = os.getpgid(pid)
     print 'Sending INT to pgid %d' % pgid
     os.killpg(pgid, signal.SIGINT)
-    for i in range(3):
-        time.sleep(1)
+    for i in range(15):
         (id, status) = os.waitpid(pid, os.WNOHANG)
         if (id, status) != (0, 0):
             break
+        time.sleep(2)
     if (id, status) == (0, 0):
 
         # Still alive

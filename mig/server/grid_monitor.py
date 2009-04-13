@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# grid_monitor - [insert a few words of module description on this line]
+# grid_monitor - Monitor page generator
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -24,8 +24,6 @@
 #
 # -- END_HEADER ---
 #
-
-# Henrik Hoey Karlsen
 
 """Creating the MiG monitor page"""
 

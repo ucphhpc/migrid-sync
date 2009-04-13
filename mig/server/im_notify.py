@@ -392,6 +392,9 @@ while keep_running:
             print 'Sending message: protocol: %s to: %s message: %s'\
                   % (protocol, recipient, message)
             send_msg(irc_server, recipient, protocol, message)
+        elif line.upper().startswith('SHUTDOWN'):
+            print '--- SAFE SHUTDOWN INITIATED ---'
+            break
         elif line:
             print 'unknown message received: %s' % line
 

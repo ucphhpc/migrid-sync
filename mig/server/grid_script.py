@@ -152,16 +152,18 @@ def time_out_jobs(stop_event):
         logger.error('time_out_jobs: unexpected exception: %s' % err)
     logger.info('time_out_jobs: time out thread terminating')
 
+def clean_shutdown(signum, frame):
+    """Request clean shutdown when pending requests are handled"""
+    print '--- REQUESTING SAFE SHUTDOWN ---'
+    shutdown_msg = 'SHUTDOWN\n'
+    send_message_to_grid_script(shutdown_msg, logger, configuration)
 
-def graceful_shutdown(signum, frame):
-    """This function is responsible for shutting down the 
-    system in a graceful way"""
 
-    # TODO: This is *not* graceful at all (from signal handler)!
-    # Prevent active handling of msg's from being interrupted
-    # perhaps by inserting a SHUTDOWN message in front of
-    # grid_stdin (requires locking!) so that on-going iteration is
-    # finished before shutdown
+def graceful_shutdown():
+    """This function is responsible for shutting down the server in a
+    graceful way. It should only be called by the SHUTDOWN request
+    handler to avoid interfering with other active requests.
+    """
 
     print 'graceful_shutdown called'
     try:
@@ -181,9 +183,9 @@ def graceful_shutdown(signum, frame):
 
 
 # ## Main ###
-# register ctrl+c signal handler to shutdown system gracefully
+# register ctrl+c signal handler to shutdown system cleanly
 
-signal.signal(signal.SIGINT, graceful_shutdown)
+signal.signal(signal.SIGINT, clean_shutdown)
 
 # Use first argument (if given) as path to config file
 
@@ -1334,11 +1336,11 @@ while True:
     elif cap_line.find('SHUTDOWN') == 0:
         logger.info('--- SAFE SHUTDOWN INITIATED ---')
         print '--- SAFE SHUTDOWN INITIATED ---'
-        graceful_shutdown('', '')
-        break
+        graceful_shutdown()
     else:
         print 'not understood: %s' % cap_line
         logger.error('not understood: %s' % cap_line)
+        time.sleep(1)
 
     # Experimental distributed server code
 

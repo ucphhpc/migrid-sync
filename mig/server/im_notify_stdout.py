@@ -75,6 +75,9 @@ while keep_running:
         line = im_notify_stdin.readline()
         if line.upper().startswith('SENDMESSAGE '):
             print line
+        elif line.upper().startswith('SHUTDOWN'):
+            print '--- SAFE SHUTDOWN INITIATED ---'
+            break
         elif line:
             print 'unknown message received: %s' % line
             
