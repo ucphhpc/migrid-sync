@@ -338,12 +338,84 @@ def main(cert_name_no_spaces, user_arguments_dict):
         output_objects.append({'object_type': 'multilinkline', 'links'
                               : links})
 
+    output_objects.append({'object_type': 'text', 'text': ''})
+    
+    more_html = \
+                  """
+Action on selected files (please hold mouse cursor over button for a description):
+<form method='post' name='fileform' onSubmit='return selectedFilesAction();'>
+<input type='hidden' name='output_format' value='html'>
+<input type='hidden' name='flags' value='v'>
+<input type='submit' title='Show concatenated contents (cat)' onClick='document.pressed=this.value' value='cat'>
+<input type='submit' onClick='document.pressed=this.value' value='head' title='Show first lines (head)'>
+<input type='submit' onClick='document.pressed=this.value' value='tail' title='Show last lines (tail)'>
+<input type='submit' onClick='document.pressed=this.value' value='wc' title='Count lines/words/chars (wc)'>
+<input type='submit' onClick='document.pressed=this.value' value='stat' title='Show details (stat)'>
+<input type='submit' onClick='document.pressed=this.value' value='touch' title='Update timestamp (touch)'>
+<input type='submit' onClick='document.pressed=this.value' value='truncate' title='TRUNCATE! (truncate)'>
+<input type='submit' onClick='document.pressed=this.value' value='rm' title='DELETE! (rm)'>
+<input type='submit' onClick='document.pressed=this.value' value='rmdir' title='Remove directory (rmdir)'>
+<input type='submit' onClick='document.pressed=this.value' value='submit' title='Submit file (submit)'>
+"""
+
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : more_html})
+    dir_listings = []
+    output_objects.append({'object_type': 'dir_listings', 'dir_listings'
+                          : dir_listings, 'flags': flags})
+
+    first_match = None
+    for pattern in pattern_list:
+
+        # Check directory traversal attempts before actual handling to avoid leaking
+        # information about file system layout while allowing consistent error messages
+
+        unfiltered_match = glob.glob(base_dir + pattern)
+        match = []
+        for server_path in unfiltered_match:
+            real_path = os.path.abspath(server_path)
+            if not valid_user_path(real_path, base_dir, True):
+
+                # out of bounds - save user warning for later to allow partial match:
+                # ../*/* is technically allowed to match own files.
+
+                logger.error('Warning: %s tried to %s %s outside own home! (using pattern %s)'
+                              % (cert_name_no_spaces, op_name,
+                             real_path, pattern))
+                continue
+            match.append(real_path)
+            if not first_match:
+                first_match = real_path
+
+        # Now actually treat list of allowed matchings and notify if no (allowed) match
+
+        if not match:
+            output_objects.append({'object_type': 'file_not_found',
+                                  'name': pattern})
+            status = returnvalues.FILE_NOT_FOUND
+
+        for real_path in match:
+            if real_path + os.sep == base_dir:
+                relative_path = '.'
+            else:
+                relative_path = real_path.replace(base_dir, '')
+            entries = []
+            dir_listing = {
+                'object_type': 'dir_listing',
+                'relative_path': relative_path,
+                'entries': entries,
+                'flags': flags,
+                }
+
+            handle_ls(output_objects, entries, real_path, flags)
+            dir_listings.append(dir_listing)
+
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-    <div class='subsection'>
+    <div class='files'>
     <br>Filter (using *,? etc.)
     </div>
-    <div class='migcontent'>
+    <div class='files'>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html'>
     <input type='hidden' name='flags' value='%s'>
@@ -453,76 +525,6 @@ def main(cert_name_no_spaces, user_arguments_dict):
     </table>
     """
 
-    more_html = \
-                  """
-Action on selected files (please hold mouse cursor over button for a description):
-<form method='post' name='fileform' onSubmit='return selectedFilesAction();'>
-<input type='hidden' name='output_format' value='html'>
-<input type='hidden' name='flags' value='v'>
-<input type='submit' title='Show concatenated contents (cat)' onClick='document.pressed=this.value' value='cat'>
-<input type='submit' onClick='document.pressed=this.value' value='head' title='Show first lines (head)'>
-<input type='submit' onClick='document.pressed=this.value' value='tail' title='Show last lines (tail)'>
-<input type='submit' onClick='document.pressed=this.value' value='wc' title='Count lines/words/chars (wc)'>
-<input type='submit' onClick='document.pressed=this.value' value='stat' title='Show details (stat)'>
-<input type='submit' onClick='document.pressed=this.value' value='touch' title='Update timestamp (touch)'>
-<input type='submit' onClick='document.pressed=this.value' value='truncate' title='TRUNCATE! (truncate)'>
-<input type='submit' onClick='document.pressed=this.value' value='rm' title='DELETE! (rm)'>
-<input type='submit' onClick='document.pressed=this.value' value='rmdir' title='Remove directory (rmdir)'>
-<input type='submit' onClick='document.pressed=this.value' value='submit' title='Submit file (submit)'>
-"""
-
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : more_html})
-    dir_listings = []
-    output_objects.append({'object_type': 'dir_listings', 'dir_listings'
-                          : dir_listings, 'flags': flags})
-
-    first_match = None
-    for pattern in pattern_list:
-
-        # Check directory traversal attempts before actual handling to avoid leaking
-        # information about file system layout while allowing consistent error messages
-
-        unfiltered_match = glob.glob(base_dir + pattern)
-        match = []
-        for server_path in unfiltered_match:
-            real_path = os.path.abspath(server_path)
-            if not valid_user_path(real_path, base_dir, True):
-
-                # out of bounds - save user warning for later to allow partial match:
-                # ../*/* is technically allowed to match own files.
-
-                logger.error('Warning: %s tried to %s %s outside own home! (using pattern %s)'
-                              % (cert_name_no_spaces, op_name,
-                             real_path, pattern))
-                continue
-            match.append(real_path)
-            if not first_match:
-                first_match = real_path
-
-        # Now actually treat list of allowed matchings and notify if no (allowed) match
-
-        if not match:
-            output_objects.append({'object_type': 'file_not_found',
-                                  'name': pattern})
-            status = returnvalues.FILE_NOT_FOUND
-
-        for real_path in match:
-            if real_path + os.sep == base_dir:
-                relative_path = '.'
-            else:
-                relative_path = real_path.replace(base_dir, '')
-            entries = []
-            dir_listing = {
-                'object_type': 'dir_listing',
-                'relative_path': relative_path,
-                'entries': entries,
-                'flags': flags,
-                }
-
-            handle_ls(output_objects, entries, real_path, flags)
-            dir_listings.append(dir_listing)
-
     # show flag buttons after contents to avoid  
     output_objects.append({'object_type': 'html_form', 'text'
                           : htmlform})
@@ -546,6 +548,7 @@ Action on selected files (please hold mouse cursor over button for a description
 
         output_objects.append({'object_type': 'html_form', 'text'
                            : """
+<br>
 <table class='files'>
 <tr class=title><td class=centertext colspan=4>
 Edit file
