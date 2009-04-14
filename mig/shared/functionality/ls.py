@@ -246,7 +246,7 @@ def handle_ls(
         # Filter out dot files unless '-a' is used
 
         if not all(flags):
-            contents = filter(lambda c: not c.startswith('.'), contents)
+            contents = [i for i in contents if not i.startswith('.')]
         contents.sort()
 
         if not recursive(flags) or depth < 0:

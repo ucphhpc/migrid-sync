@@ -121,7 +121,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     if not os.path.isdir(base_dir):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'You have not been created'
-                               + 'as a user on the MiG server!'
+                               + ' as a user on the MiG server!'
                                + ' Please contact the MiG team.'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
