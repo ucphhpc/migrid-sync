@@ -453,9 +453,6 @@ def main(cert_name_no_spaces, user_arguments_dict):
     </table>
     """
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : htmlform})
-
     more_html = \
                   """
 Action on selected files (please hold mouse cursor over button for a description):
@@ -525,6 +522,10 @@ Action on selected files (please hold mouse cursor over button for a description
 
             handle_ls(output_objects, entries, real_path, flags)
             dir_listings.append(dir_listing)
+
+    # show flag buttons after contents to avoid  
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : htmlform})
 
     # create upload file form
 
