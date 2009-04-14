@@ -1,19 +1,17 @@
 # This is the MiG specific apache configuration.
 # It overrides some settings from the main configuration to be able to simply include
 # this configuration from any 'vanilla' httpd.conf.
-# Only tested with debian + apache 1.3 but should work with others.
+# Only tested with RedHat + Apache 2.x but should work with others.
 
 # Server name - commented out to just use hostname for now
-#ServerName tmp.imada.sdu.dk
+#ServerName localhost
 
 # Point users in the right direction on errors
 ServerAdmin mig@imada.sdu.dk
 
 # We need to run as MiG user for access to scripts and user files
 User mig
-# Weird group sync prevents consistent mig group - use apache
-#Group mig
-Group apache
+Group mig
 
 # Performance Tuning
 StartServers 16
@@ -43,6 +41,7 @@ LoadModule ssl_module modules/mod_ssl.so
 <IfModule mod_ssl.c>
 	# These will make apache listen to port 443 in addition to the
 	# standard port 80. HTTPS requests use port 443.
+	#Listen 80
 	Listen 443
 
 	# Some MIME-types for downloading Certificates and CRLs
@@ -68,6 +67,17 @@ LoadModule ssl_module modules/mod_ssl.so
 	SSLRandomSeed startup file:/dev/urandom 512
 	SSLRandomSeed connect file:/dev/urandom 512
 
+	# Logging:
+	#   The home of the dedicated SSL protocol logfile. Errors are
+	#   additionally duplicated in the general error log file.  Put
+	#   this somewhere where it cannot be used for symlink attacks on
+	#   a real server (i.e. somewhere where only root can write).
+	#   Log levels are (ascending order: higher ones include lower ones):
+	#   none, error, warn, info, trace, debug.
+	#SSLLog /var/log/apache/ssl_engine.log
+	#SSLLogLevel warn
+
+	#
 	#   SSL Cipher Suite:
 	#   List the ciphers that the client is permitted to negotiate.
 	#   See the mod_ssl documentation for a complete list.
@@ -110,7 +120,8 @@ LoadModule ssl_module modules/mod_ssl.so
 	#SSLCACertificatePath /etc/httpd/ssl.crt/ssl.crt
 	#SSLCACertificateFile /etc/httpd/ssl.crt/ca-bundle.crt
 	#SSLCACertificateFile /etc/httpd/MiG-certificates/both.pem
-	SSLCACertificateFile /etc/httpd/MiG-certificates/cacert.pem
+	#SSLCACertificateFile /etc/httpd/MiG-certificates/cacert.pem
+	SSLCACertificateFile /etc/httpd/MiG-certificates/MiG-ca-bundle.crt
 
 	#   Certificate Revocation Lists (CRL):
 	#   Set the CA revocation path where to find CA CRLs for client
@@ -153,20 +164,10 @@ LoadModule ssl_module modules/mod_ssl.so
 
 </IfModule>
 
-# proxy directives for zope forward
-<IfModule mod_proxy.c>
-    #
-    # Enable/disable the handling of HTTP/1.1 "Via:" headers.
-    # ("Full" adds the server version; "Block" removes all outgoing Via: headers)
-    # Set to one of: Off | On | Full | Block
-    #
-    ProxyVia On
-</IfModule>
-
 # Configure ordinary virtual host
 <VirtualHost _default_:80>
    # General setup for the virtual host
-   DocumentRoot "/home/mig/mig/wwwpublic"
+   DocumentRoot "/home/mig/state/wwwpublic"
    #ErrorLog /var/log/httpd/error.log
    #TransferLog /var/log/httpd/access.log common
 
@@ -177,51 +178,28 @@ LoadModule ssl_module modules/mod_ssl.so
        Order allow,deny
        Allow from all
    </Directory>
-
-   RewriteEngine On
-   RewriteRule ^/MiG(/)*$ /MiG/index.html [R]
-
-   # always HTTPS for manage (NE is important!)
-   RewriteRule ^/(.*)manage https://mig-1.imada.sdu.dk/$1manage [NE,L]
-   RewriteRule ^/(.*)login_form https://mig-1.imada.sdu.dk/$1login_form [NE,L]
-
-   # Forward ordinary WWW except monitor and images to zope
-   # PLEASE NOTE: these next 2 rules will override forwarding below!
-   RewriteCond %{REQUEST_URI} !^/images
-   RewriteCond %{REQUEST_URI} !^/monitor.html
-   RewriteCond %{REQUEST_URI} !^/vgrid
-   #RewriteRule ^/(.*) http://mig-2.imada.sdu.dk:8092/VirtualHostBase/http/mig-1.imada.sdu.dk:80/$1 [L,P]
-   RewriteRule (.*)$ http://mig-2.imada.sdu.dk:8092/MiG/$1 [L,R]
-
-   # we dont want Zope etc on the MiG servers. Redirect requests to the 
-   # location of the public project page, except monitor and images that 
-   # should be taken locally from the server.
-   <Directory "/home/mig/mig/wwwpublic">
+   # Other public pages
+   Alias /public/ /home/mig/state/wwwpublic/
+   <Directory "/home/mig/state/wwwpublic">
       #Allow everyone here
+      AllowOverride All
       Order allow,deny
       Allow from all
    </Directory>
+
 </VirtualHost>
 	
 # Configure SSL (with certificates) virtual host
 <VirtualHost _default_:443>
    #  General setup for the virtual host
-   DocumentRoot "/home/mig/mig/wwwuser"
-   #ErrorLog /var/log/httpd/error.log
-   #TransferLog /var/log/httpd/access.log common
+   DocumentRoot "/home/mig/state/user_home"
+   #ErrorLog /var/log/httpd/ssl-error.log
+   #TransferLog /var/log/httpd/ssl-access.log
    #   Per-Server Logging:
    #   The home of a custom SSL log file. Use this when you want a
    #   compact non-error SSL logfile on a virtual host basis.
    #CustomLog /var/log/httpd/ssl_request_log \
    #	"%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %b"
-
-   # Public images shared by http and https pages and scripts
-   Alias /images/ /home/mig/mig/images/
-   <Directory /home/mig/mig/images>
-       AllowOverride None
-       Order allow,deny
-       Allow from all
-   </Directory>
 
    # Keep cgi-cert name for backwards compatibility but point it
    # to cgi-bin
@@ -284,7 +262,7 @@ LoadModule ssl_module modules/mod_ssl.so
    #   o OptRenegotiate:
    #     This enables optimized SSL connection renegotiation handling when SSL
    #     directives are used in per-directory context. 
-   #SSLOptions +FakeBasicAuth +ExportCertData +CompatEnvVars +StrictRequire
+   #SSLOptions +FakeBasicAuth +ExportCertData +StrictRequire
    <Files ~ "\.(cgi|shtml|phtml|php3?)$">
       SSLOptions +StdEnvVars
    </Files>
@@ -295,18 +273,7 @@ LoadModule ssl_module modules/mod_ssl.so
    # Notice: Using a high value for RewriteLogLevel will slow down your Apache 
    # server dramatically! 
    # Use the rewriting logfile at a Level greater than 2 only for debugging!
-   RewriteLogLevel 1
-
-   # Logs user out of https upon logout
-   RewriteRule ^/(.*)logged_out http://mig-1.imada.sdu.dk/$1logged_out [NE,L]
-  
-   # Forward mangement request directly to zope without virtual host rewrite
-   RewriteRule ^/manage http://mig-2.imada.sdu.dk:8092/manage [L,P]
-
-   # Forward ordinary WWW requests to zope
-   RewriteRule ^/MiG(/)*$ /MiG/index.html [R]
-   RewriteRule ^/MiG/(.*) http://mig-2.imada.sdu.dk:8092/VirtualHostBase/https/mig-1.imada.sdu.dk:443/MiG/$1 [L,P]
-   RewriteRule ^/test_plone(.*) http://mig-2.imada.sdu.dk:8092/VirtualHostBase/https/mig-1.imada.sdu.dk:443/test_plone$1 [L,P]
+   RewriteLogLevel 0
 
    # Redirect to file in vgrid
    RewriteCond %{REQUEST_URI} ^/vgrid/*/*
@@ -321,6 +288,10 @@ LoadModule ssl_module modules/mod_ssl.so
    # Redirect to owner wiki in vgrid
    RewriteCond %{REQUEST_URI} ^/vgridownerwiki/*
    RewriteRule ^/vgridownerwiki/(.*) /cert_redirect/private_base/$1/.vgridwiki/cgi-bin/moin.cgi [L,R]
+	
+   # Redirect to public wiki in vgrid
+   RewriteCond %{REQUEST_URI} ^/vgridpublicwiki/*
+   RewriteRule ^/vgridpublicwiki/(.*) /cert_redirect/public_base/$1/.vgridwiki/cgi-bin/moin.cgi [L,R]
 	
    # Redirect server status requests to /SERVER_NAME/SERVERNAME.status
    RewriteCond %{REQUEST_URI} ^/server_status
@@ -351,9 +322,18 @@ LoadModule ssl_module modules/mod_ssl.so
    #################################################################################
    # We need to let vgrid wiki cgi requests pass through to ScriptAlias* handlers
    # NB: first regex group *must* match CNs only - not '.*'!
+   RewriteRule ^/([A-Z][a-z]*[^/]*)/public_base/(.*)/.vgridwiki/cgi-bin(.*)$ /$1/public_base/$2/.vgridwiki/cgi-bin$3 [L,PT]
    RewriteRule ^/([A-Z][a-z]*[^/]*)/private_base/(.*)/.vgridwiki/cgi-bin(.*)$ /$1/private_base/$2/.vgridwiki/cgi-bin$3 [L,PT]
    RewriteRule ^/([A-Z][a-z]*[^/]*)/vgrid_shared/(.*)/.vgridwiki/cgi-bin(.*)$ /$1/vgrid_shared/$2/.vgridwiki/cgi-bin$3 [L,PT]
 	
+   # Public images shared by http and https pages and scripts
+   Alias /images/ /home/mig/mig/images/
+   <Directory /home/mig/mig/images>
+       AllowOverride None
+       Order allow,deny
+       Allow from all
+   </Directory>
+
    <Directory "/home/mig/mig/">
       # Deny all access to base mig dir and only allow on a subdir basis
       Order deny,allow
@@ -375,7 +355,12 @@ LoadModule ssl_module modules/mod_ssl.so
       #SSLVerifyClient none
       SSLOptions +StdEnvVars
    </Directory>
-   <Directory "/home/mig/mig/wwwuser">
+   <Directory "/home/mig/state/">
+      # Deny all access to base state dir and only allow on a subdir basis
+      Order deny,allow
+      Deny from all
+   </Directory>
+   <Directory "/home/mig/state/user_home">
       SSLVerifyClient require
       # The next line is crucial for cert_redirect to work!!!
       SSLOptions +StdEnvVars +FakeBasicAuth +ExportCertData
@@ -384,17 +369,15 @@ LoadModule ssl_module modules/mod_ssl.so
       Order allow,deny
       Allow from all
    </Directory>
-   <Directory "/home/mig/mig/wwwuser/*">
+   <Directory "/home/mig/state/user_home/*">
       SSLVerifyClient require
       # Allow .htaccess files for auth
       AllowOverride All
       SSLOptions +StdEnvVars +FakeBasicAuth +ExportCertData +StrictRequire
    </Directory>
-
-   # SID access
-   # Resource sessions
-   Alias /sid_redirect/ "/home/mig/webserver_home/"
-   <Directory "/home/mig/webserver_home/">
+   # SID access from resources
+   Alias /sid_redirect/ "/home/mig/state/webserver_home/"
+   <Directory "/home/mig/state/webserver_home/">
       SSLVerifyClient none
       SSLOptions +StdEnvVars
       Options FollowSymLinks
@@ -415,28 +398,9 @@ LoadModule ssl_module modules/mod_ssl.so
    Alias /wiki/ "/usr/share/moin/htdocs/"
    
    # Home directory wiki access - we need to avoid catching raw cert_redirect URLs
-   ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/private_base/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/mig/wwwuser/$1/private_base/$2/.vgridwiki/cgi-bin/$3
-   ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/vgrid_shared/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/mig/wwwuser/$1/$2/.vgridwiki/cgi-bin/$3
+   ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/public_base/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/state/user_home/*/$1/public_base/$2/.vgridwiki/cgi-bin/$3
+   ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/private_base/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/state/user_home/$1/private_base/$2/.vgridwiki/cgi-bin/$3
+   ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/vgrid_shared/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/state/user_home/$1/$2/.vgridwiki/cgi-bin/$3
 # END FOR MiG VGrid MOIN MOIN
-
-# BEGIN WEBDAV
-   <IfModule mod_dav.c>
-      DAVLockDB       /var/lock/DAV/apache
-      Alias /dav /DAVTEST
-      <Location /dav>
-         SSLVerifyClient require
-	 DAV On
-	 Options Indexes
-	 <Limit GET POST OPTIONS>
-	    Order allow,deny
-	    Allow from all
-	 </Limit>
-	 <Limit PUT POST DELETE PROPFIND PROPPATCH MKCOL COPY MOVE LOCK UNLOCK>
-	    Order allow,deny
-	    Allow from all
-	 </Limit>
-      </Location>
-   </IfModule>
-# END WEBDAV
 
 </VirtualHost>             

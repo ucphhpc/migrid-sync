@@ -1,15 +1,23 @@
+##
+## httpd.conf -- Apache HTTP server configuration file
+##
+
+#
+# Based upon the NCSA server configuration files originally by Rob McCool.
 #
 # This is the main Apache server configuration file.  It contains the
 # configuration directives that give the server its instructions.
-# See <URL:http://httpd.apache.org/docs/2.2/> for detailed information.
-# In particular, see
-# <URL:http://httpd.apache.org/docs/2.2/mod/directives.html>
-# for a discussion of each configuration directive.
-#
+# See <URL:http://www.apache.org/docs/> for detailed information about
+# the directives.
 #
 # Do NOT simply read the instructions in here without understanding
 # what they do.  They're here only as hints or reminders.  If you are unsure
 # consult the online docs. You have been warned.  
+#
+# After this file is processed, the server will look for and process
+# /etc/apache/srm.conf and then /etc/apache/access.conf
+# unless you have overridden these with ResourceConfig and/or
+# AccessConfig directives here.
 #
 # The configuration directives are grouped into three basic sections:
 #  1. Directives that control the operation of the Apache server process as a
@@ -65,13 +73,13 @@ PidFile run/httpd.pid
 #
 # Timeout: The number of seconds before receives and sends time out.
 #
-Timeout 120
+Timeout 300
 
 #
 # KeepAlive: Whether or not to allow persistent connections (more than
 # one request per connection). Set to "Off" to deactivate.
 #
-KeepAlive Off
+KeepAlive On
 
 #
 # MaxKeepAliveRequests: The maximum number of requests to allow
