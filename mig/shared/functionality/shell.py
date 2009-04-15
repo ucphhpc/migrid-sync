@@ -44,7 +44,7 @@ from shared.functionality import canceljob, cat, cp, docs, find, grep, \
 def shell_usage():
     out = []
     out.append({'object_type': 'text', 'text'
-               : 'Most commands from the MiG user scripts translates directly to this shell.'
+               : 'Most commands from the MiG user scripts translate directly to this shell.'
                })
     out.append({'object_type': 'text', 'text'
                : "The biggest difference is that the 'mig' prefix is removed."

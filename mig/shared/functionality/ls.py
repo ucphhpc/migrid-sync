@@ -338,10 +338,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
         output_objects.append({'object_type': 'multilinkline', 'links'
                               : links})
 
-    output_objects.append({'object_type': 'text', 'text': ''})
-    
     more_html = \
                   """
+<br>
 Action on selected files (please hold mouse cursor over button for a description):
 <form method='post' name='fileform' onSubmit='return selectedFilesAction();'>
 <input type='hidden' name='output_format' value='html'>
