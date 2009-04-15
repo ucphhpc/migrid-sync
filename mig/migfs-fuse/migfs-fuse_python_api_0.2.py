@@ -556,6 +556,7 @@ class MiGfs(Fuse):
     __threads = None
     __open_files = None
     __inode_cache = None
+    # TODO: we should parse MiG output instead of just skipping head_lines
     head_lines = 5
 
     def __init__(self, *args, **kw):
