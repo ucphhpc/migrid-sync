@@ -6,6 +6,11 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
+=== April 17, 2009 ===
+We finally got the old grey web pages completely overhauled. Thanks to those of you 
+that contributed to this often overlooked area.
+
+
 === March 17, 2009 ===
 Added this file for easier tracking of changes. Another bugfixing
 release (1.0.2), so we recommend that everyone upgrades to this version.
@@ -22,9 +27,18 @@ for other users.
 == Changelogs ==
 More detailed changelogs for the public releases.
 
+== 1.0.4 ==
+-complete reworking of web layout
+-minor bugfixes and code clean up
+-updated RedHat compatible server configurations
+-java notes for One-click resources (IcedTea Java does not work)
+
 == 1.0.3 ==
 -added NEWS (this file) for tracking changes
--...
+-Fixes to VGrid parsing and job notification
+-move job notifications to background threads to avoid blocking server
+-added experimental JSON output support
+-reworked ssh/scp helpers to prevent blocking of server
 
 == 1.0.2 ==
 -another minor bugfix and doc release
