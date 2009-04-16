@@ -281,9 +281,9 @@ def html_format(ret_val, ret_msg, out_obj):
         if i['object_type'] == 'start':
             pass  # for now
         elif i['object_type'] == 'error_text':
-            print '<FONT COLOR=red>%s</FONT>' % i['text']
+            print '<p><FONT COLOR=red>%s</FONT></p>' % i['text']
         elif i['object_type'] == 'warning':
-            print '<FONT COLOR=yellow>%s</FONT>' % i['text']
+            print '<<p><FONT COLOR=yellow>%s</FONT></p>' % i['text']
         elif i['object_type'] == 'header':
             print '<h1>%s</h1>' % i['text']
         elif i['object_type'] == 'sectionheader':

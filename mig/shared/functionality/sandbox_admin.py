@@ -210,6 +210,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
+        output_objects.append({'object_type': 'link', 'destination':
+                               '/cgi-sid/sandbox_login.py', 'text':
+                               'Retry login'})
         return (accepted, returnvalues.CLIENT_ERROR)
     username = accepted['username'][-1].strip()
     password = accepted['password'][-1].strip()
@@ -250,6 +253,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Username is already taken - please go back and choose another one...'
                                   })
+            output_objects.append({'object_type': 'link', 'destination':
+                                   '/cgi-sid/sandbox_login.py', 'text':
+                                   'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         elif len(username) < 3:
 
@@ -258,6 +264,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Please choose a username with 3 or more characters.'
                                   })
+            output_objects.append({'object_type': 'link', 'destination':
+                                   '/cgi-sid/sandbox_login.py', 'text':
+                                   'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:
 
@@ -286,6 +295,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Wrong username - please go back and try again...'
                                   })
+            output_objects.append({'object_type': 'link', 'destination':
+                                   '/cgi-sid/sandbox_login.py', 'text':
+                                   'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         elif userdb[username][PW] != password:
 
@@ -294,6 +306,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Wrong password - please go back and try again...'
                                   })
+            output_objects.append({'object_type': 'link', 'destination':
+                                   '/cgi-sid/sandbox_login.py', 'text':
+                                   'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:
 
