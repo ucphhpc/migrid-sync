@@ -1,1 +1,6 @@
-Ignore sessid_to_mrsl_link_home/* webserver_home/* resource_home/**/tmp*
+# Only one filter per line
+Ignore sessid_to_mrsl_link_home/*
+Ignore webserver_home/*
+Ignore mig_system_files/no_grid_jobs_in_grid_scheduler.*
+Ignore mig_system_files/tmp*
+Ignore resource_home/*/tmp*
