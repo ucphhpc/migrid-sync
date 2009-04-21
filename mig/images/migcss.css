@@ -1,17 +1,15 @@
-/* tags */
-
 body {
-	background: #63a4f0;
+	background: #ccc;
+  background: transparent url('../images/pattern.png');
 	color: #000;
-	font-family: "Trebuchet MS", "Bitstream Vera Serif", Utopia, "Times New Roman", times, serif;
-	margin: 0%;
-	/* padding: 5px 5px; */
-	text-align: center;
-	font-weight: lighter; 
+	font-family: verdana, helvetica, serif, times;
+	margin: 0;
+	padding: 0;
+	font-size: 13px;
 }
 
 a {
-	color: #369;
+	color: #0b76AE;
 	text-decoration: none;
 }
 
@@ -21,285 +19,213 @@ a:hover, a:active {
 }
 
 img {
-	border:  0px;
+	border:  0;
 }
 
-tr, td {
-	padding: 2px;
+h1 {
+  border: 1px solid darkgrey;
+  -moz-border-radius: 4px;
+  margin-top: 0;
+  
+  color: #eee;
+  background: #eee url('../images/background.png');
+  font-size: 16px;  
+
+  padding: 4px;
 }
 
-tr.centertext {
-	text-align: center;
+h2 {
+  border-bottom: 1px solid darkgrey;
+  font-size: 14px;  
+  padding: 2px;
 }
 
-tr.title {
-	font-weight: bold;
+h3 {
+  border-bottom: 1px solid darkgrey;
+  font-size: 16px;  
+  padding: 3px;
 }
 
-td.centertext {
-	text-align: center;
-}
-
-
-h1{
-	padding: 4px;
-	border-top: 0px solid #000;
-	border-bottom: 1px solid #000;
-	color: #000;
-	text-align: center;
-}
 div.container {
 	width: 98%;
 	margin: 1%;
 }
 
+th {
 
-/* Id and class style*/
-#centertext {
-	text-align: center;
 }
 
-#centerall {
-	margin: 0;
-	text-align: center;
+thead {
+
 }
 
-#middlevalign {
-        vertical-align: middle;
+tbody {
+
 }
 
-#lefttext {
-	text-align: left;
+tfoot {
+
 }
 
-
-/* MiG logo */
-#toplogo {
-	background:	url('/images/background-top.png')	repeat-x;
-	/* background: #eee; */
-	margin:  0;
-	height: 160px
-	/* padding:  16px 0px;*/
-}
-#logoimage {
-	opacity: 0.9;
-	z-index: 1;
-	margin-left: auto;
-	margin-right: auto;
-	padding: 15px;
-	display: block;
+table {
+				background: #eee;
+				border: 1px solid #000;
+				width: 100%;
 }
 
+table.submitstatus { }
 
-/* Horizontal Menu */
+table.files { }
+table.fileupload { }
+table.stats { }
+table.wc { }
+table.jobs { padding: 2px; }
+table.resubmit { }
+table.changedjobstatus { }
+
+table.vgrids { padding: 2px; }
+
+table.resources { padding: 2px; }
+table.sandboxlogintext { border: 0; background: #fff; }
+table.sandboxlogin { background: #fff; width: auto; }
+table.sandboxinfo { background: #fff; }
+table.sandboxcreateimg { }
+
+table.downloads { }
+
+table.runtimeenvs { padding: 2px; }
+
+table.runtimeenvdetails { padding: 2px; }
+table.runtimeenvsw { border: 0; }
+table.runtimeenventry { border: 0; }
+table.runtimeenvvars { border: 0; }
+
+table.monitor { font-size: 10px; }
+table.monitorstats { }
+table.monitorjobs { border: 0; }
+table.monitorresreq { border: 0; }
+
+table.monitorruntimeenvreq { border: 0; }
+
+/* Navigational menu... */
 #mignavmenu {
-	font-size: 16px;
-	/* background: #bdf; */
-	background: #fff;
+  background: #aaa url('../images/background_greypattern.png');
+  width: 150px;
+  float: left;
+
+  -moz-border-radius-bottomright: 5px;
 }
 
 ul#mignavlist {
-	white-space: nowrap;
-	font-weight: bold;
+	margin: 0;
+	padding: 0px 0px 9px 7px;
 }
 
 #mignavlist li {
-	display: inline;
+
+	/*display: inline;*/
+	margin-top: 10px;	
 	list-style-type: none;
-	float: center;
 }
 
-#mignavlist a {
-	padding: 0px 6px;
-}
+#mignavlist li.dashboard a {  background-image: url('../images/icons/application.png'); }
+#mignavlist li.submitjob a {  background-image: url('../images/icons/cog_add.png'); }
+#mignavlist li.files a {  background-image: url('../images/icons/drive.png'); }
+#mignavlist li.jobs a {  background-image: url('../images/icons/cog.png'); }
+#mignavlist li.vgrids a {  background-image: url('../images/icons/folder.png'); }
+#mignavlist li.vmachines a {  background-image: url('../images/icons/computer.png'); }
+#mignavlist li.resources a {  background-image: url('../images/icons/server.png'); }
+#mignavlist li.downloads a {  background-image: url('../images/icons/download.png'); }
+#mignavlist li.runtimeenvs a {  background-image: url('../images/icons/database.png'); }
+#mignavlist li.settings a {  background-image: url('../images/icons/wrench.png'); }
+#mignavlist li.shell a {  background-image: url('../images/icons/application_osx_terminal.png'); }
 
-#mignavlist a:link, #navlist a:visited {
-	color: #246;
-	text-decoration: none;
-}
-
-#mignavlist a:hover {
-	color: #fff;
+#mignavlist li a:hover {	
 	background-color: #369;
-	text-decoration: none;
+	color: white;
 }
 
+#mignavlist li a.selected {	
+	background-color: #369;
+	color: white;
+}
+
+#mignavlist li a {
+	-moz-border-radius:4px;
+  display: block;
+	
+	background-repeat: no-repeat;
+  background-image: url('../images/icons/bullet_black.png');
+  background-position: 5px 50%;
+  
+  border:1px solid darkgrey;
+  color: white;
+  font-size:13px;
+  font-weight:bold;
+  padding:3px 5px 3px 24px;
+  text-decoration:none;
+	background-color: rgb(100,100,100);
+
+	color: white;
+  margin-right: 10px;
+}
+
+/* Used in one place... maybe that place should be fixed? to use h1 instead */
 #migheader {
-	font-size:30px;
-	letter-spacing:0.2em;
-	margin:0;
-	/*padding:  20px 10px 10px 10px;*/
-	width: 96%;
-	text-align: center;
+	font-size:28px;
+	border: 0;
+  -moz-border-radius: 4px;
+  margin-top: 5px;
+  
+  color: #eee;
+  background: #eee url('../images/background.png');
 }
 
-
-table {
-        background: #fff;
-       	color: #000;
-	margin-right: auto;
-	margin-left: auto;
-	text-align: left;
+/* MiG logo */
+#toplogo {
+	background: url('../images/background.png');
+  background-position: left;
+  
+  padding: 3px 0 3px 5px;
+  font-size: 20px;
+	font-weight: bold;
+  font-variant: small-caps;
+	color: white;
 }
 
-table.submitstatus {
-	width: 98%;
-        background: #eee;
-	border: 1px solid #000;
+.migtable {
+  border: 1px solid darkgrey;
+	width: 100%;
+	border-spacing: 0;
 }
 
-table.files {
-	width: 98%;
-        background: #eee;
-	border: 1px solid #000;
-}
-table.fileupload {
-	width: 98%;
-        background: #eee;
-	border: 1px solid #000;
-}
-table.stats {
-	width: 98%;
-        background: #eee;
-	border: 1px solid #000;
-}
-table.wc {
-	width: 98%;
-        background: #eee;
-	border: 1px solid #000;
-}
-
-table.jobs {
-        background: #eee;
-	border: 1px solid #000;
-	width: 98%;
-	padding: 2px;
-}
-table.resubmit {
-	width: 98%;
-        background: #eee;
-	border: 1px solid #000;
-}
-table.changedjobstatus {
-	width: 98%;
-        background: #eee;
-	border: 1px solid #000;
-}
-
-
-table.vgrids {
-        background: #eee;
-	border: 1px solid #000;
-	width: 98%;
-	padding: 2px;
-}
-
-table.resources {
-	padding: 2px;
-	text-align: left;
-}
-table.sandboxlogintext {
-	width: 80%;
-}
-table.sandboxlogin {
-}
-table.sandboxinfo {
-	width: 98%;
-        background: #eee;
-	border: 1px solid #000;
-}
-table.sandboxcreateimg {
-	width: 98%;
-        background: #eee;
-	border: 1px solid #000;
-}
-
-
-table.downloads {
-	width: 98%;
-	text-align: center;
-}
-
-table.runtimeenvs {
-        background: #eee;
-	border: 1px solid #000;
-	width: 98%;
-	padding: 2px;
-}
-
-table.runtimeenvdetails {
-        background: #eee;
-	border: 1px solid #000;
-	padding: 2px;
-}
-table.runtimeenvsw {
-        background: #eee;
-	border: 0px solid #000;
-}
-table.runtimeenventry {
-        background: #eee;
-	border: 0px solid #000;
-}
-table.runtimeenvvars {
-        background: #eee;
-	border: 0px solid #000;
-}
-
-table.monitor {
-	width: 98%;
-        background: #eee;
-	border: 1px solid #000;
-	font-size: 10px;
-}
-table.monitorstats {
-	width: 98%;
-        background: #eee;
-	border: 1px solid #000;
-}
-table.monitorjobs {
-        background: #eee;
-	border: 0px solid #000;
-}
-table.monitorresreq {
-        background: #eee;
-	border: 0px solid #000;
-}
-table.monitorruntimeenvreq {
-        background: #eee;
-	border: 0px solid #000;
-}
-
-/* MiG credits footer */
-#bottomlogo {
-	background:	url('/images/background-bottom.png')	repeat-x	bottom;
-	height: 80px;
-}
 #credits {
-        background: none;
-	font-family: Small Fonts, VT100, Arial, Helvetica;
-	font-size: 9px;
-	text-align: center;
-        vertical-align: middle;
-	height: 100%;
-	width: 96%;
-	border: 0px solid #000;
+	background: #eee url('../images/background.png');
+	/*font-family: Small Fonts, VT100, Arial, Helvetica;*/
+	font-size: 10px;
+	
+	padding: 4px;
+	text-align: right;
+	margin: 0;
+	border: 0;
+	width: auto;
+	color: white;
+}
+
+#credits a {
+	color: white;
 }
 
 #content {
-	/* background: #ccc; */
-	background: #fff;
-	border: 2px ridge #63a4f0;
-	margin: 2%;
-	padding: 5px 5px;
-	text-align: center;
+	background: white;
+	border: 1px solid black;
+	-moz-border-radius: 4px;
+  margin: 5px;
+  margin-left: 155px;
+  padding: 3px; 
 }
-.migcontent {
-	background: #fff;
-	border: 0;
-	padding: 5px;
-	width: 96%;
-	text-align: center;
-}
+
+.migcontent { }
 
 .rawtext {
 	background: #fff;
@@ -313,30 +239,11 @@ table.monitorruntimeenvreq {
 }
 
 .subsection{
-	background: #fff;
-	padding: 0px 0px 5px 0px;
-	border:  0px;
-	width: 98%;
-	text-align: center;
+	background: #ccc;
+	padding: 5px;
+	border:  0;
 	font-size:17px;
 	font-weight:bold;
-}
-
-#miginput {
-	background: #fff;
-	border: 0px solid #000;
-	padding: 0px 0px;
-	width: 98%;
-	text-align: center;
-}
-
-#miginput input, #miginput textarea{
-	background: #fff;
-	border: 1px solid #999;
-	font-size: 12px;
-	padding:  0;
-}
-
-#miginput input:focus, #miginput textarea:focus{
-	background: #eef5ff;
+  color: red;
+	-moz-border-radius: 4px;
 }

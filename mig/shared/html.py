@@ -24,6 +24,8 @@
 #
 # -- END_HEADER ---
 #
+import os
+import sys
 
 """HTML formatting functions"""
 
@@ -60,31 +62,84 @@ def get_cgi_html_header(
         return ''
     menu_lines = ''
     if menu:
+        
+        current_page = os.path.basename(sys.argv[0]).replace('.py', '')
+        menu_items  = (
+                        {
+                        'class'    : 'dashboard',
+                        'url'       : '/cgi-bin/dashboard.py',
+                        'title'     : 'Dashboard'
+                        },
+                        {
+                        'class'    : 'submitjob',
+                        'url'       : '/cgi-bin/submitjob.py',
+                        'title'     : 'Submit Job'
+                        },
+                        {
+                        'class'    : 'files',
+                        'url'       : '/cgi-bin/ls.py?flags=a',
+                        'title'     : 'Files'
+                        },
+                        {
+                        'class'    : 'jobs',
+                        'url'       : '/cgi-bin/managejobs.py',
+                        'title'     : 'Jobs'
+                        },
+                        {
+                        'class'    : 'vgrids',
+                        'url'       : '/cgi-bin/vgridadmin.py',
+                        'title'     : 'VGrids'
+                        },
+                        {
+                        'class'    : 'vmachines',
+                        'url'       : '/cgi-bin/vmachines.py',
+                        'title'     : 'VMachines'
+                        },
+                        {
+                        'class'    : 'resources',
+                        'url'       : '/cgi-bin/resadmin.py',
+                        'title'     : 'Resources'
+                        },
+                        {
+                        'class'    : 'downloads',
+                        'url'       : '/cgi-bin/downloads.py',
+                        'title'     : 'Downloads'
+                        },
+                        {
+                        'class'    : 'runtimeenvs',
+                        'url'       : '/cgi-bin/redb.py',
+                        'title'     : 'Runtime Envs'
+                        },
+                        {
+                        'class'    : 'settings',
+                        'url'       : '/cgi-bin/settings.py',
+                        'title'     : 'Settings'
+                        },
+                        {
+                        'class'    : 'shell',
+                        'url'       : '/cgi-bin/shell.py',
+                        'title'     : 'Shell'
+                        },
+                        
+        )
+        
+        menu_lines = '<div id="mignavmenu">' +\
+                     '<ul id="mignavlist">'
+        
+        for menu_line in menu_items:
+            selected = ''
+            if menu_line['url'].find(current_page) > -1:
+                selected = ' class="selected" '+current_page
+            menu_lines += '<li class="%s"><a href="%s" %s>%s</a></li>' % (menu_line['class'], menu_line['url'], selected, menu_line['title'])
+            
+        menu_lines += '</ul>'
+        menu_lines += '</div>'
+        """
         menu_lines = \
             '''
 <div id="mignavmenu">
 <ul id="mignavlist">
-<li class="submitjob">
-<a href="/cgi-bin/submitjob.py">Submit Job</a>
-</li>
-<li class="files">
-<a href="/cgi-bin/ls.py?flags=a">Files</a>
-</li>
-<li class="jobs">
-<a href="/cgi-bin/managejobs.py">Jobs</a>
-</li>
-<li class="vgrids">
-<a href="/cgi-bin/vgridadmin.py">VGrids</a>
-</li>
-<li class="resources">
-<a href="/cgi-bin/resadmin.py">Resources</a>
-</li>
-<li class="downloads">
-<a href="/cgi-bin/downloads.py">Downloads</a>
-</li>
-<li class="runtimeenvs">
-<a href="/cgi-bin/redb.py">Runtime Envs</a>
-</li>
+
 <li class="settings">
 <a href="/cgi-bin/settings.py">Settings</a>
 </li>
@@ -94,6 +149,8 @@ def get_cgi_html_header(
 </ul>
 </div>
 '''
+
+"""
 
     return '''<?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -107,9 +164,7 @@ def get_cgi_html_header(
  <SCRIPT TYPE="text/javascript" SRC="/images/backlink.js"></SCRIPT>
  </head>
 <body %s>
-<div id="toplogo">
-<img src="/images/MiG-logo.png" id="logoimage" alt="MiG logo"/>
-</div>
+<div id="toplogo">Minimum Intrusion Grid</div>
 %s
 <div id="migheader">
 %s
@@ -130,15 +185,11 @@ def get_cgi_html_footer(footer='', html=True):
     out = footer
     out += \
         '''
-        </div>
-        <div id="bottomlogo">
-        <table id="credits">
-        <tr><td>
-        Copyright 2009 - <a href="http://www.migrid.org">The MiG project</a>
-        </td></tr>
-        </table>
-        </div>
-        </body>
+        
+<div id="credits">
+Copyright 2009 - <a href="http://www.migrid.org">The MiG project</a>
+</div>
+</body>
 </html>
 '''
     return out
