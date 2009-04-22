@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# reqcertaction - [insert a few words of module description on this line]
+# reqcertaction - handle certificate requests and send email to admins
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.

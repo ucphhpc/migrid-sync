@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# reqcert - [insert a few words of module description on this line]
+# reqcert - Certificte request backend
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -73,7 +73,7 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <tr><td>Organization</td><td><input type=text name=org></td></tr>
 <tr><td>Email address</td><td><input type=text name=email></td></tr>
 <tr><td>State</td><td><input type=text name=state> <sup>2</sup></td></tr>
-<tr><td>Two letter country-code</td><td><input type=text name=country> <sup>3</sup></td></tr>
+<tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2> <sup>3</sup></td></tr>
 <tr><td>Password</td><td><input type=password name=password maxlength=%(password_max_len)s> <sup>4, 5</sup></td></tr>
 <tr><td>Verify password</td><td><input type=password name=verifypassword maxlength=%(password_max_len)s></td></tr>
 <tr><td>Comment or reason why you should<br>be granted a MiG certificate:</td><td><textarea rows=4 cols=%(password_max_len)s name=comment></textarea> <sup>6</sup></td></tr>
