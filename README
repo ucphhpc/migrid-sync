@@ -38,6 +38,9 @@ MiG relies on apache's mod-ssl for automatic certificate validation and access
 control. Furthermore quite a bit of rewrite rules are used for access
 and convenience so the mod-rewrite apache module is required too.
 
+You can read more about the apache configuration in
+the provided mig/install/README.Debian file.
+
 The server documentation expects the MiG code to run as a separate 'mig'
 user on the UNIX system, but this is not a requirement. Just modify your
 apache and MiG configurations appropriately if you want to run MiG as a
@@ -83,6 +86,71 @@ screen -S MiG -R
 
 Please refer to 'man screen' or other screen documentation for further
 details.
+
+
+== Adding users ==
+You need a MiG certificate+key to fully interact with any MiG
+server as a user. If you don't want to set up your on Certificate
+Authority (CA) you can use e.g. our certificates.
+Please use the certificate request link from http://www.migrid.org if
+you haven't got a certificate yet.
+
+If you run your own CA you can simply use the certificate request
+mechanism included in MiG (https://server/cgi-sid/reqcert.py) to combine
+certificate and user creation. Certificate requests will automatically
+result in an email with full certificate and MiG user creation
+instructions to the configured MiG admins. 
+
+Otherwise you can either still use the certificate request mechanism and
+ignore the certificate specific instructions or simply run the MiG user
+creation commands directly as described below.
+
+To manually add a user to your MiG server you need to look up the certificate
+fields and run the createuser script:
+
+cd ~/mig/server
+
+./createuser.py
+
+You will be prompted for user details one by one before the user is
+added to the local MiG user database. Any user added to this database
+can access your MiG server and manage his/her MiG jobs and files. The
+user must present a MiG certificate with the exact same Full Name field
+to get access, however.
+
+Example: adding myself as a user on a MiG server:
+
+# ./createuser.py
+Please enter the details for the new user:
+Full Name: Jonas Bardino
+Organization: DIKU
+State: 
+2-letter Country Code: DK
+Email: bardino@diku.dk
+Comment: This is my own MiG user
+Password: 
+using user dict: {'comment': 'This is my own MiG user', 'country': 'DK',
+'state': '', 'full_name': 'Jonas Bardino', 'organization': 'DIKU',
+'password': '*****==', 'email': 'bardino@diku.dk'}
+logging to: server.log ; level: info
+Creating dirs and files for new user: Jonas Bardino
+User name without spaces: Jonas_Bardino
+
+User Jonas Bardino was successfully added to user DB!
+DB entry and dirs for Jonas Bardino were created or updated
+
+My MiG certificate with Full Name Jonas Bardino and so on will now give
+me access to this development server.
+
+You can find the field details using openssl or by viewing the
+certificate imported in a browser.
+
+
+== Adding resources ==
+When you have added yourself as a user on your MiG server, you can open
+your personal Resources page on the corresponding web interface and add
+resources of all kinds there. Please refer to the wiki pages online for
+explanations on each kind of resource and some examples of setups.
 
 
 == Stopping a MiG server ==
