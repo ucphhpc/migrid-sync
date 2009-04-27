@@ -78,6 +78,17 @@ def get_resource_all_exes(resource_config, logger):
         return (False, msg)
     return (True, resource_config['EXECONFIG'])
 
+def get_all_exe_names(unique_resource_name):
+    exe_names = []
+    conf = get_configuration_object()
+    (status, resource_config) = get_resource_configuration(conf.resource_home,
+                                                           unique_resource_name,
+                                                           conf.logger)
+    if not status:
+        return exe_names
+    exe_units = resource_config.get('EXECONFIG', [])
+    return [exe['name'] for exe in exe_units]
+
 
 # TODO: retire CamelCase versions once they're no longer used
 

@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# resadm - [insert a few words of module description on this line]
+# resadm - Resource administration functions mostly for remote command execution
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -35,7 +35,7 @@ import time
 # MiG imports
 
 from shared.conf import get_resource_configuration, get_resource_exe, \
-    get_resource_all_exes, get_configuration_object
+     get_configuration_object
 from shared.fileio import unpickle
 from shared.ssh import execute_on_resource, execute_on_exe, \
     copy_file_to_exe, copy_file_to_resource
@@ -697,40 +697,6 @@ def start_resource_exe(
     return (True, msg)
 
 
-def start_resource_all_exes(
-    unique_resource_name,
-    resource_home,
-    cputime,
-    logger,
-    ):
-    """Start all attached exe nodes"""
-
-    msg = ''
-    (status, resource_config) = \
-        get_resource_configuration(resource_home, unique_resource_name,
-                                   logger)
-    if not status:
-        msg += "No resouce_config for: '" + unique_resource_name + "'\n"
-        return (False, msg)
-
-    # Get list og exe hosts from config
-
-    (status, exelist) = get_resource_all_exes(resource_config, logger)
-    if not status:
-        msg += "Could not get exelist for '" + unique_resource_name\
-             + "'\n"
-        return (False, msg)
-
-    for exe in exelist:
-        exe_name = exe['name']
-        msg += "\nStarting: '" + exe_name + " at '"\
-             + unique_resource_name + "'\n"
-        (status, start_msg) = start_resource_exe(unique_resource_name,
-                exe_name, resource_home, cputime, logger)
-        msg += start_msg + '\n'
-    return (True, msg)
-
-
 def start_resource_frontend(unique_resource_name, configuration,
                             logger):
     """Start resource front end"""
@@ -1183,97 +1149,6 @@ def restart_resource_exe(
             start_msg))
 
 
-def clean_resource_all_exes(unique_resource_name, resource_home,
-                            logger):
-    """Run clean up command for all attached exe nodes"""
-
-    msg = ''
-    (status, resource_config) = \
-        get_resource_configuration(resource_home, unique_resource_name,
-                                   logger)
-    if not status:
-        msg += "No resouce_config for: '" + unique_resource_name + "'\n"
-        return (False, msg)
-
-    # Get list og exe hosts from config
-
-    (status, exelist) = get_resource_all_exes(resource_config, logger)
-    if not status:
-        msg += "No resouce_config for: '" + unique_resource_name + "'\n"
-        return (False, msg)
-
-    for exe in exelist:
-        exe_name = exe['name']
-        msg += "\nClean up of: '" + exe_name + "' at '"\
-             + unique_resource_name + '\n'
-        (status, status_msg) = clean_resource_exe(unique_resource_name,
-                exe_name, resource_home, logger)
-        msg += status_msg + '\n'
-
-    return (True, msg)
-
-
-def status_resource_all_exes(unique_resource_name, resource_home,
-                             logger):
-    """Get status for all attached exe nodes"""
-
-    msg = ''
-    (status, resource_config) = \
-        get_resource_configuration(resource_home, unique_resource_name,
-                                   logger)
-    if not status:
-        msg += "No resouce_config for: '" + unique_resource_name + "'\n"
-        return (False, msg)
-
-    # Get list og exe hosts from config
-
-    (status, exelist) = get_resource_all_exes(resource_config, logger)
-    if not status:
-        msg += "No resouce_config for: '" + unique_resource_name + "'\n"
-        return (False, msg)
-
-    for exe in exelist:
-        exe_name = exe['name']
-        msg += "\nStatus of: '" + exe_name + "' at '"\
-             + unique_resource_name + '\n'
-        (status, status_msg) = \
-            status_resource_exe(unique_resource_name, exe_name,
-                                resource_home, logger)
-        msg += status_msg + '\n'
-
-    return (True, msg)
-
-
-def stop_resource_all_exes(unique_resource_name, resource_home, logger):
-    """Stop all attached exes"""
-
-    msg = ''
-    (status, resource_config) = \
-        get_resource_configuration(resource_home, unique_resource_name,
-                                   logger)
-    if not status:
-        msg += "No resouce_config for: '" + unique_resource_name + "'\n"
-        return (False, msg)
-
-    # Get list of exe hosts from config
-
-    (status, exelist) = get_resource_all_exes(resource_config, logger)
-    if not status:
-        msg += "Could not get exelist for '" + unique_resource_name\
-             + "'\n"
-        return (False, msg)
-
-    for exe in exelist:
-        exe_name = exe['name']
-        msg += "\nStopping: '" + exe_name + "' at '"\
-             + unique_resource_name + "'\n"
-        (status, stop_msg) = stop_resource_exe(unique_resource_name,
-                exe_name, resource_home, logger)
-        msg += stop_msg + '\n'
-
-    return (True, msg)
-
-
 def get_sandbox_exe_stop_command(
     sandbox_home,
     sandboxkey,
@@ -1317,27 +1192,9 @@ def get_sandbox_exe_stop_command(
         return (False, msg)
 
 
-def restart_resource_all_exes(
-    unique_resource_name,
-    resource_home,
-    cputime,
-    logger,
-    ):
-    """Restart all attached exe nodes"""
-
-    (stop_status, stop_msg) = \
-        stop_resource_all_exes(unique_resource_name, resource_home,
-                               logger)
-    (start_status, start_msg) = \
-        start_resource_all_exes(unique_resource_name, resource_home,
-                                cputime, logger)
-    return (stop_status and start_status, '%s; %s' % (stop_msg,
-            start_msg))
-
-
 def status_resource_frontend(unique_resource_name, configuration,
                              logger):
-    """Get status for all attached exe nodes"""
+    """Get status for resource front end"""
 
     return status_resource(unique_resource_name,
                            configuration.resource_home, logger)
