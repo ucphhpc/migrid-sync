@@ -35,6 +35,7 @@ from shared.resadm import start_resource_exe, stop_resource_exe
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.worker import Worker
 
 
 def signature():
@@ -43,7 +44,7 @@ def signature():
         'cputime': ['-1'],
         'exe_name': [],
         'all': [''],        
-        'parallel': ['1'],
+        'parallel': [''],
         }
     return ['text', defaults]
 
@@ -72,7 +73,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
     unique_resource_name = accepted['unique_resource_name'][-1]
     cputime = accepted['cputime'][-1]
     exe_name_list = accepted['exe_name']
-    all = accepted['all'][-1]
+    all = (accepted['all'][-1].lower() == 'true')
+    parallel = (accepted['parallel'][-1].lower() == 'true')
 
     if not is_owner(cert_name_no_spaces, unique_resource_name,
                     configuration.resource_home, logger):
@@ -84,7 +86,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     exit_status = returnvalues.OK
 
-    if all.upper() == 'TRUE':
+    if all:
         exe_name_list = get_all_exe_names(unique_resource_name)
 
     # take action based on supplied list of exes
@@ -94,9 +96,32 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                : "No exes specified and 'all' argument not set to true: Nothing to do!"
                                })
 
+    workers = []
     for exe_name in exe_name_list:
-        (status, msg) = stop_resource_exe(unique_resource_name,
-                                          exe_name, configuration.resource_home, logger)
+        task = Worker(target=stop_resource_exe, args=(unique_resource_name,
+                                                      exe_name,
+                                                      configuration.resource_home,
+                                                      logger))
+        workers.append((exe_name, [task]))
+        task.start()
+        if not parallel:
+            task.join()
+    # Complete each stop thread before launching corresponding start threads
+    for (exe_name, task_list) in workers:
+        # We could optimize with non-blocking join here but keep it simple for now
+        # as final result will need to wait for slowest member anyway
+        task_list[0].join()
+        task = Worker(target=start_resource_exe, args=(unique_resource_name,
+                                                       exe_name,
+                                                       configuration.resource_home,
+                                                       int(cputime), logger))
+        task_list.append(task)
+        task.start()
+        if not parallel:
+            task.join()
+    
+    for (exe_name, task_list) in workers:
+        (status, msg) = task_list[0].finish()
         output_objects.append({'object_type': 'header', 'text'
                                : 'Restart exe output:'})
         if not status:
@@ -105,9 +130,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                    : 'Problems stopping exe during restart: %s'
                                    % msg})
 
-        (status2, msg2) = start_resource_exe(unique_resource_name,
-                                             exe_name, configuration.resource_home,
-                                             int(cputime), logger)
+        (status2, msg2) = task_list[1].finish()
         if not status2:
             output_objects.append({'object_type': 'error_text',
                                    'text'
@@ -116,7 +139,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
             exit_status = returnvalues.SYSTEM_ERROR
         if status and status2:
             output_objects.append({'object_type': 'text', 'text'
-                                   : 'Restart exe success: Stop output: %s Start output %s'
+                                   : 'Restart exe success: Stop output: %s ; Start output: %s'
                                    % (msg, msg2)})
 
     return (output_objects, exit_status)

@@ -164,19 +164,16 @@ def display_resource(
             html += \
                 '''<td>
             <form method="get" action="/cgi-bin/%sexe.py">
-            <input type="hidden" name="unique_resource_name" value="%s">'''\
+            <input type="hidden" name="unique_resource_name" value="%s">
+            <input type="hidden" name="all" value="true">
+            <input type="hidden" name="parallel" value="true">'''\
                  % (action, resourcename)
-            for exe in exe_units:
-                html += \
-                    '''<input type="hidden" name="exe_name" value="%s">'''\
-                     % exe
             if action == 'restart':
                 action_str = '(Re)Start'
             else:
                 action_str = action.capitalize()
             html += \
                 '''
-            <input type="hidden" name="parallel" value="1">
             <input type="submit" value="%s">
             </form>
             </td>
