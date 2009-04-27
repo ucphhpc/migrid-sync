@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# restartexe - [insert a few words of module description on this line]
+# restartexe - Back end to restart one or more resource exe units
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -29,9 +29,9 @@ import cgi
 import os
 import sys
 
+from shared.conf import get_all_exe_names
 from shared.findtype import is_owner
-from shared.resadm import start_resource_exe, stop_resource_exe, \
-    start_resource_all_exes, stop_resource_all_exes
+from shared.resadm import start_resource_exe, stop_resource_exe
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
@@ -42,7 +42,8 @@ def signature():
         'unique_resource_name': REJECT_UNSET,
         'cputime': ['-1'],
         'exe_name': [],
-        'all': [''],
+        'all': [''],        
+        'parallel': ['1'],
         }
     return ['text', defaults]
 
@@ -70,8 +71,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     unique_resource_name = accepted['unique_resource_name'][-1]
     cputime = accepted['cputime'][-1]
-    all = accepted['all'][-1]
     exe_name_list = accepted['exe_name']
+    all = accepted['all'][-1]
 
     if not is_owner(cert_name_no_spaces, unique_resource_name,
                     configuration.resource_home, logger):
@@ -82,62 +83,41 @@ def main(cert_name_no_spaces, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     exit_status = returnvalues.OK
+
     if all.upper() == 'TRUE':
+        exe_name_list = get_all_exe_names(unique_resource_name)
 
-        # all exes
+    # take action based on supplied list of exes
 
-        (status, msg) = stop_resource_all_exes(unique_resource_name,
-                configuration.resource_home, logger)
+    if len(exe_name_list) == 0:
+        output_objects.append({'object_type': 'text', 'text'
+                               : "No exes specified and 'all' argument not set to true: Nothing to do!"
+                               })
+
+    for exe_name in exe_name_list:
+        (status, msg) = stop_resource_exe(unique_resource_name,
+                                          exe_name, configuration.resource_home, logger)
+        output_objects.append({'object_type': 'header', 'text'
+                               : 'Restart exe output:'})
         if not status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Problems stopping exe(s) during restart: %s'
+            output_objects.append({'object_type': 'error_text',
+                                   'text'
+                                   : 'Problems stopping exe during restart: %s'
                                    % msg})
-            o.client(o.CLIENT_ERROR)
 
-        (status2, msg2) = start_resource_all_exes(unique_resource_name,
-                configuration.resource_home, int(cputime), logger)
+        (status2, msg2) = start_resource_exe(unique_resource_name,
+                                             exe_name, configuration.resource_home,
+                                             int(cputime), logger)
         if not status2:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Problems starting exe(s) during restart: %s'
+            output_objects.append({'object_type': 'error_text',
+                                   'text'
+                                   : 'Problems starting exe during restart: %s'
                                    % msg2})
             exit_status = returnvalues.SYSTEM_ERROR
         if status and status2:
             output_objects.append({'object_type': 'text', 'text'
-                                  : 'Restart all exes success: Stop output: %s Start output %s'
+                                   : 'Restart exe success: Stop output: %s Start output %s'
                                    % (msg, msg2)})
-    else:
-
-        # take action based on supplied list of exes
-
-        if len(exe_name_list) == 0:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : "No exes specified and 'all' argument not set to true: Nothing to do!"
-                                  })
-
-        for exe_name in exe_name_list:
-            (status, msg) = stop_resource_exe(unique_resource_name,
-                    exe_name, configuration.resource_home, logger)
-            output_objects.append({'object_type': 'header', 'text'
-                                  : 'Restart exe output:'})
-            if not status:
-                output_objects.append({'object_type': 'error_text',
-                        'text'
-                        : 'Problems stopping exe during restart: %s'
-                         % msg})
-
-            (status2, msg2) = start_resource_exe(unique_resource_name,
-                    exe_name, configuration.resource_home,
-                    int(cputime), logger)
-            if not status2:
-                output_objects.append({'object_type': 'error_text',
-                        'text'
-                        : 'Problems starting exe during restart: %s'
-                         % msg2})
-                exit_status = returnvalues.SYSTEM_ERROR
-            if status and status2:
-                output_objects.append({'object_type': 'text', 'text'
-                        : 'Restart exe success: Stop output: %s Start output %s'
-                         % (msg, msg2)})
 
     return (output_objects, exit_status)
 

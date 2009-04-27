@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# statusexe - [insert a few words of module description on this line]
+# statusexe - Back end to get status for one or more resource exe units
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -29,16 +29,21 @@ import cgi
 import os
 import sys
 
+from shared.conf import get_all_exe_names
 from shared.findtype import is_owner
-from shared.resadm import status_resource_exe, status_resource_all_exes
+from shared.resadm import status_resource_exe
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
 
 
 def signature():
-    defaults = {'unique_resource_name': REJECT_UNSET, 'exe_name': [],
-                'all': ['']}
+    defaults = {
+        'unique_resource_name': REJECT_UNSET,
+        'exe_name': [],
+        'all': [''],
+        'parallel': ['1'],
+        }
     return ['text', defaults]
 
 
@@ -77,37 +82,27 @@ def main(cert_name_no_spaces, user_arguments_dict):
     exit_status = returnvalues.OK
 
     if all.upper() == 'TRUE':
+        exe_name_list = get_all_exe_names(unique_resource_name)
 
-        # all exes
+    # take action based on supplied list of exes
 
-        (status, msg) = status_resource_all_exes(unique_resource_name,
-                configuration.resource_home, logger)
+    if len(exe_name_list) == 0:
+        output_objects.append({'object_type': 'text', 'text'
+                              : "No exes specified and 'all' argument not set to true: Nothing to do!"
+                              })
+
+    for exe_name in exe_name_list:
+        (status, msg) = status_resource_exe(unique_resource_name,
+                exe_name, configuration.resource_home, logger)
+        output_objects.append({'object_type': 'header', 'text'
+                              : 'Status exe'})
         if not status:
             output_objects.append({'object_type': 'text', 'text'
-                                  : 'Problems getting exe status: %s'
-                                   % msg})
+                    : 'Problems getting exe status: %s' % msg})
             exit_status = returnvalues.SYSTEM_ERROR
-    else:
-
-        # take action based on supplied list of exes
-
-        if len(exe_name_list) == 0:
+        else:
             output_objects.append({'object_type': 'text', 'text'
-                                  : "No exes specified and 'all' argument not set to true: Nothing to do!"
-                                  })
-
-        for exe_name in exe_name_list:
-            (status, msg) = status_resource_exe(unique_resource_name,
-                    exe_name, configuration.resource_home, logger)
-            output_objects.append({'object_type': 'header', 'text'
-                                  : 'Status exe'})
-            if not status:
-                output_objects.append({'object_type': 'text', 'text'
-                        : 'Problems getting exe status: %s' % msg})
-                exit_status = returnvalues.SYSTEM_ERROR
-            else:
-                output_objects.append({'object_type': 'text', 'text'
-                        : 'Status command run, output: %s' % msg})
+                    : 'Status command run, output: %s' % msg})
     return (output_objects, exit_status)
 
 

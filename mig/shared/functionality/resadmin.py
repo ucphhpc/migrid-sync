@@ -176,6 +176,7 @@ def display_resource(
                 action_str = action.capitalize()
             html += \
                 '''
+            <input type="hidden" name="parallel" value="1">
             <input type="submit" value="%s">
             </form>
             </td>
