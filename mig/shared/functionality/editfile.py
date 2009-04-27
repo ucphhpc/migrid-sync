@@ -152,13 +152,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
         output_objects.append({'object_type': 'text', 'text'
                               : 'Saved changes to %s.' % path})
         release_edit_lock(real_path, cert_name_no_spaces)
-    except Exception, e:
+    except Exception, exc:
 
         # Don't give away information about actual fs layout
 
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s could not be written! (%s)'
-                               % (path, str(e).replace(base_dir, ''))})
+                               % (path, str(exc).replace(base_dir, ''))})
         return (output_objects, returnvalues.SYSTEM_ERROR)
     if submitjob:
         output_objects.append({'object_type': 'text', 'text'

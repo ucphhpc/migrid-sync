@@ -34,6 +34,7 @@ from shared.fileio import unpickle
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.settings import mrsl_template, get_default_mrsl
 
 
 def signature():
@@ -86,7 +87,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         html += '<BR><B>%s</B><BR>' % keyword
         if keywords_dict[keyword]['Type'] == 'multiplestrings':
             html += \
-                """<textarea cols="40" rows="5" wrap="off" name="%s">"""\
+                """<textarea cols="40" rows="2" wrap="off" name="%s">"""\
                  % keyword
             if current_settings_dict.has_key(keyword):
                 html += '<BR>'.join(current_settings_dict[keyword])
@@ -112,6 +113,31 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     html += """<BR><BR><input type="submit" value="Save">"""
     html += '</form>'
+
+    base_dir = os.path.abspath(configuration.user_home + os.sep
+                                + cert_name_no_spaces) + os.sep
+
+    template_path = os.path.join(base_dir, '.default.mrsl')
+    
+    default_mrsl = get_default_mrsl(template_path)
+    html += '''<BR><B>Default job on submit page</B><BR>
+<table class="defaultjob">
+<tr><td>
+<form method="post" action="/cgi-bin/editfile.py">
+<input type="hidden" name="path" value="%(mrsl_template)s">
+<input type="hidden" name="newline" value="unix">
+<textarea cols="82" rows="25" wrap="off" name="editarea">
+%(default_mrsl)s
+</textarea>
+</td></tr>
+<tr><td>
+<center>
+<input type="submit" value="Save template">
+<input type="reset" value="Forget changes">
+<center>
+</form>
+</td></tr>
+</table>''' % {'default_mrsl': default_mrsl, 'mrsl_template': mrsl_template}
 
     output_objects.append({'object_type': 'html_form', 'text': html})
     output_objects.append({'object_type': 'text', 'text':''})

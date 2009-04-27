@@ -32,6 +32,9 @@ from shared.fileio import pickle
 import os
 
 
+mrsl_template = ".default.mrsl"
+
+
 def parse_and_save_settings(filename, cert_name_no_spaces,
                             configuration):
     result = parser.parse(filename)
@@ -73,4 +76,43 @@ def parse_and_save_settings(filename, cert_name_no_spaces,
 
     return (True, '')
 
+def get_default_mrsl(template_path):
+    """Return the default mRSL template for user with supplied certificate"""
+
+    try:
+        template_fd = open(template_path, 'rb')
+        default_mrsl = template_fd.read()
+        template_fd.close()
+    except:
+
+        # Use default hello grid example
+
+        default_mrsl = \
+            """::EXECUTE::
+echo 'hello grid!'
+echo '...each line here is executed'
+
+::NOTIFY::
+email: SETTINGS
+jabber: SETTINGS
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+
+::EXECUTABLES::
+
+::MEMORY::
+1
+
+::DISK::
+1
+
+::CPUTIME::
+30
+
+::RUNTIMEENVIRONMENT::
+
+"""
+    return default_mrsl
 

@@ -33,47 +33,7 @@ import sys
 import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-
-
-def get_default_mrsl(template_path):
-    """Return the default mRSL template for user with supplied certificate"""
-
-    try:
-        template_fd = open(template_path, 'rb')
-        default_mrsl = template_fd.read()
-        template_fd.close()
-    except:
-
-        # Use default hello grid example
-
-        default_mrsl = \
-            """::EXECUTE::
-echo 'hello grid!'
-echo '...each line here is executed'
-
-::NOTIFY::
-email: SETTINGS
-jabber: SETTINGS
-
-::INPUTFILES::
-
-::OUTPUTFILES::
-
-::EXECUTABLES::
-
-::MEMORY::
-1
-
-::DISK::
-1
-
-::CPUTIME::
-30
-
-::RUNTIMEENVIRONMENT::
-
-"""
-    return default_mrsl
+from shared.settings import mrsl_template, get_default_mrsl
 
 
 def main(cert_name_no_spaces, user_arguments_dict):
@@ -101,7 +61,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     base_dir = os.path.abspath(configuration.user_home + os.sep
                                 + cert_name_no_spaces) + os.sep
 
-    mrsl_template = os.path.join(base_dir, '.default.mrsl')
+    template_path = os.path.join(base_dir, mrsl_template)
 
     output_objects.append({'object_type': 'title', 'text'
                           : 'MiG Submit Job'})
@@ -125,7 +85,7 @@ Actual examples for inspiration:
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Please enter your mRSL job description below:'
                           })
-    default_mrsl = get_default_mrsl(mrsl_template)
+    default_mrsl = get_default_mrsl(template_path)
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <!-- 
