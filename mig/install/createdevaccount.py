@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# createdevaccount - [insert a few words of module description on this line]
+# createdevaccount - create a MiG server development account
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
