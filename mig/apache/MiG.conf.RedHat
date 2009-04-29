@@ -120,8 +120,8 @@ LoadModule ssl_module modules/mod_ssl.so
 	#SSLCACertificatePath /etc/httpd/ssl.crt/ssl.crt
 	#SSLCACertificateFile /etc/httpd/ssl.crt/ca-bundle.crt
 	#SSLCACertificateFile /etc/httpd/MiG-certificates/both.pem
-	#SSLCACertificateFile /etc/httpd/MiG-certificates/cacert.pem
-	SSLCACertificateFile /etc/httpd/MiG-certificates/MiG-ca-bundle.crt
+	SSLCACertificateFile /etc/httpd/MiG-certificates/cacert.pem
+	#SSLCACertificateFile /etc/httpd/MiG-certificates/MiG-ca-bundle.crt
 
 	#   Certificate Revocation Lists (CRL):
 	#   Set the CA revocation path where to find CA CRLs for client
@@ -299,6 +299,7 @@ LoadModule ssl_module modules/mod_ssl.so
 
    #################  PLEASE, FOR THE GOOD OF YOUR OWN MENTAL CONDITION, DO _NOT_
    ################# CHANGE THE LINES IN THIS BLOCK UNLESS IT IS STRICTLY NECESSARY!
+
    # Redirect user GET file with cert_redirect in request to users home dir.
    # Get the CN from the "logged in" user
    RewriteRule ^/cert_redirect/(.*) %{LA-U:ENV:SSL_CLIENT_S_DN}/$1 [NE]
@@ -320,6 +321,7 @@ LoadModule ssl_module modules/mod_ssl.so
 	
    #################################################################################
    #################################################################################
+
    # We need to let vgrid wiki cgi requests pass through to ScriptAlias* handlers
    # NB: first regex group *must* match CNs only - not '.*'!
    RewriteRule ^/([A-Z][a-z]*[^/]*)/public_base/(.*)/.vgridwiki/cgi-bin(.*)$ /$1/public_base/$2/.vgridwiki/cgi-bin$3 [L,PT]
@@ -384,21 +386,13 @@ LoadModule ssl_module modules/mod_ssl.so
       Order deny,allow
       Allow from all
    </Directory>
-   # Dist storage
-#   ScriptAlias /storage/ "/home/mig/mig/storage/cgi-bin/"
-#   <Directory "/home/mig/mig/storage/cgi-bin">
-#      SSLVerifyClient optional
-#      SSLOptions +StdEnvVars
-#      Order deny,allow
-#      Allow from all
-#   </Directory>
 
 
 # BEGIN FOR MiG VGrid MOIN MOIN
    Alias /wiki/ "/usr/share/moin/htdocs/"
    
    # Home directory wiki access - we need to avoid catching raw cert_redirect URLs
-   ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/public_base/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/state/user_home/*/$1/public_base/$2/.vgridwiki/cgi-bin/$3
+   ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/public_base/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/state/user_home/$1/public_base/$2/.vgridwiki/cgi-bin/$3
    ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/private_base/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/state/user_home/$1/private_base/$2/.vgridwiki/cgi-bin/$3
    ScriptAliasMatch ^/([A-Z][a-z]*[^/]*)/vgrid_shared/(.*)/.vgridwiki/cgi-bin/(.*) /home/mig/state/user_home/$1/$2/.vgridwiki/cgi-bin/$3
 # END FOR MiG VGrid MOIN MOIN

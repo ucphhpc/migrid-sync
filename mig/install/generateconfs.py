@@ -65,7 +65,7 @@ def fill_template(template_file, output_file, dictionary):
     return True
 
 
-def generate_confs(server_fqdn, user, group, apache_etc, apache_run, apache_log, mig_base, mig_state, mig_certs, http_port, https_port, source, destination):
+def generate_confs(source='.', destination='.', server_fqdn='localhost', user='mig', group='mig', apache_etc='/etc/apache', apache_run='/var/run/apache', apache_log='/var/log/apache', mig_base='/home/mig', mig_state='/home/mig/state', mig_certs='/home/mig/certs', http_port=80, https_port=443):
     """Generate Apache and MiG server confs with specified variables"""
     mig_dir = os.path.join(mig_base, 'mig')
 
@@ -78,7 +78,7 @@ def generate_confs(server_fqdn, user, group, apache_etc, apache_run, apache_log,
     user_dict['__MIG_HOME__'] = mig_dir
     user_dict['__MIG_STATE__'] = mig_state
     user_dict['__MIG_CERTS__'] = mig_certs
-    user_dict['__APACHE_ETC'] = apache_etc
+    user_dict['__APACHE_ETC__'] = apache_etc
     user_dict['__APACHE_RUN__'] = apache_run
     user_dict['__APACHE_LOG__'] = apache_log
 
@@ -107,16 +107,20 @@ def generate_confs(server_fqdn, user, group, apache_etc, apache_run, apache_log,
 if "__main__" == __name__:
     # ## Main ###
 
-    if len(sys.argv) <= 10:
-        print 'Usage: %s SERVER_FQDN USER GROUP APACHE_ETC APACHE_RUN APACHE_LOG MIG_BASE MIG_STATE MIG_CERTS HTTP_PORT HTTPS_PORT SOURCE DESTINATION' % sys.argv[0]
-        sys.exit(1)
+    names = ('source', 'destination', 'server_fqdn', 'user', 'group', 'apache_etc', 'apache_run', 'apache_log', 'mig_base', 'mig_state', 'mig_certs', 'http_port', 'https_port')
+    if '-h' in sys.argv or '--help' in sys.argv:
+        print 'Usage:\n%s\nor\n%s %s' % (sys.argv[0], sys.argv[0], ' '.join([i.upper() for i in names]))
+        sys.exit(0)
 
-    names = ('server_fqdn', 'user', 'group', 'apache_etc', 'apache_run', 'apache_log', 'mig_base', 'mig_state', 'mig_certs', 'http_port', 'https_port', 'source', 'destination')
     values = tuple(sys.argv[1:14])
     pairs = zip(names, values)
     settings = dict(pairs)
-    print settings
+    for i in names:
+        if not settings.has_key(i):
+            settings[i] = "DEFAULT"
     print '''# Creating confs with:
+source: %(source)s
+destination: %(destination)s
 server_fqdn: %(server_fqdn)s
 user: %(user)s
 group: %(group)s
@@ -128,8 +132,6 @@ mig_state: %(mig_state)s
 mig_certs: %(mig_certs)s
 http_port: %(http_port)s
 https_port: %(https_port)s
-source: %(source)s
-destination: %(destination)s
 ''' % settings
     generate_confs(*values)
 
