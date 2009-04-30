@@ -1,5 +1,6 @@
 #from rpy_options import set_options
 #set_options(RHOME='/usr/local/lib64/R-2.8.0')
+#set_options(RHOME='/home/benjamin/Skrivebord/roy/R-2.8.0')
 #from rpy import *
 
 from rpy import r
