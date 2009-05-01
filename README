@@ -25,7 +25,7 @@ file) on a UNIX compatible computer.
 
 The MiG core services are provided by the MiG daemons from the mig/server
 directory and they can simply be run directly from the unpacked source
-code directory.
+code directory when a suitable server configuration is added.
 
 For the web interfaces to work you will need to run an apache server as
 described in the mig/apache directory. MiG does not include the actual
@@ -44,14 +44,46 @@ the provided mig/install/README.Debian file.
 The server documentation expects the MiG code to run as a separate 'mig'
 user on the UNIX system, but this is not a requirement. Just modify your
 apache and MiG configurations appropriately if you want to run MiG as a
-different user.
+different user or with other paths.
+The easiest way to do that is to use the configuration generator in 
+mig/install/generateconfs.py to create configurations that match your
+setup.
+For the default settings it could jsut be done as:
+cd mig/install/
+./generateconfs.py
+
+If your setup uses custom paths or settings just provide them on the
+commandline like the command help indicates:
+./generateconfs.py -h
+Usage:
+./generateconfs.py
+or
+./generateconfs.py SOURCE DESTINATION SERVER_FQDN USER GROUP APACHE_ETC
+APACHE_RUN APACHE_LOG MIG_CODE MIG_STATE MIG_CERTS HTTP_PORT HTTPS_PORT
+
+For one of our servers running MiG as the 'mig' user with the code
+checked out directly in the home directory and with Debian apache
+defaults, this could be:
+python generateconfs.py . generated-confs mig-1.imada.sdu.dk mig mig \
+       /etc/apache /var/run/apache /var/log/apache /home/mig/mig \
+       /home/mig/state /home/mig/MiG-certificates 80 443
+
+Most of the arguments should be relatively straight forward, but you
+need to provide the MIG_CERTS path where your apache server key and
+certificates are available along with optional MiG x509 server
+certificates (used for MiG server to server communication).
+The actual keys and certificates can be added later, so you can just
+choose a suitable directory path at first.
+
+The generator will inform you about the steps to install your
+configuration files in the right locations.
 
 
 == Running a MiG Server ==
-Before you run the MiG daemons you need to create a configuration for
+Before you run the MiG daemons you need to have a working configuration for
 your daemons in mig/server/MiGserver.conf .
-You can use the localhost example configuration MiGserver-localhost.conf
-there as a template for your own configuration.
+You can use the generator as mentioned above or manually modify e.g. the
+localhost example configuration in MiGserver-localhost.conf.
 At any time you can verify the validity of your configuration with the
 checkconf.py script in the same directory.
 

@@ -6,6 +6,10 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
+=== May 1st, 2009 ===
+Updated setup helpers to make custom install locations easier.
+
+
 === April 17, 2009 ===
 We finally got the old grey web pages completely overhauled. Thanks to those of you 
 that contributed to this often overlooked area.
@@ -26,6 +30,12 @@ for other users.
 
 == Changelogs ==
 More detailed changelogs for the public releases.
+
+== 1.0.5 ==
+-fixed a number of install issues
+-updated install helper scripts to ease custom install
+-parallel resource admin scripts
+-clean up
 
 == 1.0.4 ==
 -complete reworking of web layout
