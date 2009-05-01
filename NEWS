@@ -7,12 +7,9 @@ individual releases of the MiG project code.
 A short description of changes 
 
 === May 1st, 2009 ===
-Updated setup helpers to make custom install locations easier.
-
-
-=== April 17, 2009 ===
 We finally got the old grey web pages completely overhauled. Thanks to those of you 
 that contributed to this often overlooked area.
+Updated setup helpers to make custom install locations easier.
 
 
 === March 17, 2009 ===
@@ -31,17 +28,14 @@ for other users.
 == Changelogs ==
 More detailed changelogs for the public releases.
 
-== 1.0.5 ==
--fixed a number of install issues
--updated install helper scripts to ease custom install
--parallel resource admin scripts
--clean up
-
 == 1.0.4 ==
 -complete reworking of web layout
 -minor bugfixes and code clean up
 -updated RedHat compatible server configurations
 -java notes for One-click resources (IcedTea Java does not work)
+-fixed a number of install issues
+-updated install helper scripts to ease custom install
+-parallel resource admin scripts
 
 == 1.0.3 ==
 -added NEWS (this file) for tracking changes
