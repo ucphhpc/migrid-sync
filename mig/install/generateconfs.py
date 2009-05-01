@@ -65,7 +65,11 @@ def fill_template(template_file, output_file, dictionary):
     return True
 
 
-def generate_confs(source=os.path.basename(sys.argv[0]), destination='.', server_fqdn='localhost', user='mig', group='mig', apache_etc='/etc/apache', apache_run='/var/run/apache', apache_log='/var/log/apache', mig_code='/home/mig/mig', mig_state='/home/mig/state', mig_certs='/home/mig/certs', http_port=80, https_port=443):
+def generate_confs(source=os.path.dirname(sys.argv[0]), destination=os.path.dirname(sys.argv[0]),
+                   server_fqdn='localhost', user='mig', group='mig', apache_etc='/etc/apache',
+                   apache_run='/var/run/apache', apache_log='/var/log/apache',
+                   mig_code='/home/mig/mig', mig_state='/home/mig/state',
+                   mig_certs='/home/mig/certs', http_port=80, https_port=443):
     """Generate Apache and MiG server confs with specified variables"""
 
     user_dict = {}

@@ -27,7 +27,7 @@
 
 # IMPORTANT: Run script with sudo or as root
 
-"""Add a non-privileged user with access to a personal MiG server.
+"""Add a unprivileged user with access to a personal MiG server.
 Still needs some manual setup of apache, sudo and iptables
 afterwards...
 """
@@ -37,6 +37,7 @@ import os
 import re
 import random
 import crypt
+import socket
 
 from generateconfs import generate_confs
 
@@ -124,6 +125,7 @@ def create_user(
     extra_port = http_port + 2
 
     mig_dir = os.path.join(home, 'mig')
+    server_dir = os.path.join(mig_dir, 'server')
     state_dir = os.path.join(home, 'state')
     apache_etc = '/etc/apache'
     apache_dir = apache_etc + '-%s' % user
@@ -153,7 +155,7 @@ usermod -c 'INSERT FULL NAME HERE' %s"""\
     print """# Add mount point for sandbox generator:
 echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  auto    user,loop       0       0' >> /etc/fstab""" % (user, user)
 
-    src = os.path.basename(sys.argv[0])
+    src = os.path.abspath(os.path.dirname(sys.argv[0]))
     dst = os.path.join(src, '%s-confs' % user)
     
     generate_confs(src, dst, socket.getfqdn(), user, group, apache_dir, apache_run, apache_log,
@@ -185,17 +187,17 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
          % (user, home)
     print "sudo su - %s -c 'ssh -o StrictHostKeyChecking=no \\\n\t%s@`hostname -f` pwd >/dev/null'"\
          % (user, user)
-    print "sudo su - %s -c 'svn checkout http://migrid.googlecode.com/svn/trunk/ %s" % (user, home)
+    print "sudo su - %s -c 'svn checkout http://migrid.googlecode.com/svn/trunk/ %s'" % (user, home)
     print 'sudo chown %s:%s %s' % (user, group, server_conf)
     print 'sudo cp -f -p %s %s/' % (server_conf, server_dir)
 
     # Only add non-directory paths manually and leave the rest to
     # checkconf.py below
 
-    print "sudo su - %s -c 'mkfifo -m 600 \\\n\t%s/mig/server/server.stdin'"\
-         % (user, home)
-    print "sudo su - %s -c 'mkfifo -m 600 \\\n\t%s/mig/server/notify.stdin'"\
-         % (user, home)
+    print "sudo su - %s -c 'mkfifo -m 600 \\\n\t%s/server.stdin'"\
+         % (user, server_dir)
+    print "sudo su - %s -c 'mkfifo -m 600 \\\n\t%s/notify.stdin'"\
+         % (user, server_dir)
     print "sudo su - %s -c '%s/mig/server/checkconf.py'" % (user, home)
 
     print """
@@ -222,7 +224,7 @@ sudo %s/%s start
         https_port,
         extra_port,
         apache_dir,
-        apache_initd_script,
+        os.path.basename(apache_initd_script),
         )
     return True
 
@@ -236,7 +238,7 @@ if argc <= 1:
     sys.exit(1)
 
 for login in sys.argv[1:]:
-    print '# Creating a non-privileged account for %s' % login
+    print '# Creating a unprivileged account for %s' % login
     create_user(login, login, debug=debug_mode)
 
 sys.exit(0)
