@@ -35,38 +35,10 @@ afterwards...
 import sys
 import os
 import re
-import whrandom
+import random
 import crypt
 
-
-def fill_template(template_file, output_file, dictionary):
-    try:
-        template = open(template_file, 'r')
-        contents = template.read()
-        template.close()
-    except Exception, err:
-        print 'Error: reading template file %s: %s' % (template_file,
-                err)
-        return False
-
-    # print "template read:\n", output
-
-    for (variable, value) in dictionary.items():
-        contents = re.sub(variable, value, contents)
-
-    # print "output:\n", contents
-
-    # print "writing specific contents to %s" % (output_file)
-
-    try:
-        output = open(output_file, 'w')
-        output.write(contents)
-        output.close()
-    except Exception, err:
-        print 'Error: writing output file %s: %s' % (output_file, err)
-        return False
-
-    return True
+from generateconfs import generate_confs
 
 
 def create_user(
@@ -95,14 +67,14 @@ def create_user(
     pwlen = 8
     pw = ''
     for idx in range(pwlen):
-        pw += whrandom.choice(valid_chars)
+        pw += random.choice(valid_chars)
 
     # TODO: python does not support md5 passwords - using DES ones
     # from crypt for now
 
     shell = '/bin/bash'
-    enc_pw = crypt.crypt(pw, whrandom.choice(valid_chars)
-                          + whrandom.choice(valid_chars))
+    enc_pw = crypt.crypt(pw, random.choice(valid_chars)
+                          + random.choice(valid_chars))
     print 'useradd -m -s %s -p %s -g %s %s' % (shell, enc_pw, group,
             user)
     status = os.system('useradd -m -s %s -p %s -g %s %s' % (shell,
@@ -151,8 +123,8 @@ def create_user(
     https_port = http_port + 1
     extra_port = http_port + 2
 
-    mig_dir = home + '/mig'
-    state_dir = home + '/state'
+    mig_dir = os.path.join(home, 'mig')
+    state_dir = os.path.join(home, 'state')
     apache_etc = '/etc/apache'
     apache_dir = apache_etc + '-%s' % user
     apache_run = apache_dir + '/run'
@@ -181,30 +153,16 @@ usermod -c 'INSERT FULL NAME HERE' %s"""\
     print """# Add mount point for sandbox generator:
 echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  auto    user,loop       0       0' >> /etc/fstab""" % (user, user)
 
-    user_dict = {}
-    user_dict['__USER__'] = user
-    user_dict['__GROUP__'] = group
-    user_dict['__HTTP_PORT__'] = str(http_port)
-    user_dict['__HTTPS_PORT__'] = str(https_port)
-    user_dict['__EXTRA_PORT__'] = str(extra_port)
-    user_dict['__HOME__'] = home
-    user_dict['__MIG_HOME__'] = mig_dir
-    user_dict['__MIG_STATE__'] = state_dir
-    user_dict['__APACHE_HOME__'] = apache_dir
-    user_dict['__APACHE_RUN__'] = apache_run
-    user_dict['__APACHE_LOG__'] = apache_log
-    user_dict['__CERT_HOME__'] = cert_dir
+    src = os.path.basename(sys.argv[0])
+    dst = os.path.join(src, '%s-confs' % user)
+    
+    generate_confs(src, dst, socket.getfqdn(), user, group, apache_dir, apache_run, apache_log,
+                   mig_dir, state_dir, cert_dir, http_port, https_port)
+    apache_httpd_conf = os.path.join(dst, 'httpd.conf')
+    apache_mig_conf = os.path.join(dst, 'MiG.conf')
+    server_conf = os.path.join(dst, 'MiGserver.conf')
+    apache_initd_script = os.path.join(dst, 'apache-%s' % user)
 
-    apache_mig_template = './apache-MiG-template.conf'
-    apache_mig_conf = './MiG-%s.conf' % user
-    fill_template(apache_mig_template, apache_mig_conf, user_dict)
-    apache_httpd_template = './apache-httpd-template.conf'
-    apache_httpd_conf = './httpd-%s.conf' % user
-    fill_template(apache_httpd_template, apache_httpd_conf, user_dict)
-    apache_initd_template = './apache-init.d-template'
-    apache_initd_script = 'apache-%s' % user
-    fill_template(apache_initd_template, apache_initd_script, user_dict)
-    os.chmod(apache_initd_script, 0700)
     print '# Clone %s to %s and put config files there:' % (apache_etc,
             apache_dir)
     print 'sudo cp -r -u -d -x %s %s' % (apache_etc, apache_dir)
@@ -227,24 +185,9 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
          % (user, home)
     print "sudo su - %s -c 'ssh -o StrictHostKeyChecking=no \\\n\t%s@`hostname -f` pwd >/dev/null'"\
          % (user, user)
-    print "sudo su - %s -c 'cp -r -u -d -x ~mig/public/mig \\\n\t%s/'"\
-         % (user, home)
-
-    server_template = 'MiGserver-template.conf'
-    server_conf = 'MiGserver-%s.conf' % user
-    server_dir = mig_dir + '/server'
-    fill_template(server_template, server_conf, user_dict)
-    try:
-        os.chown(server_conf, uid, gid)
-    except Exception, err:
-        print 'Error: %s' % err
-        if not debug:
-            return False
-
+    print "sudo su - %s -c 'svn checkout http://migrid.googlecode.com/svn/trunk/ %s" % (user, home)
+    print 'sudo chown %s:%s %s' % (user, group, server_conf)
     print 'sudo cp -f -p %s %s/' % (server_conf, server_dir)
-    print "sudo su - %s -c 'ln -s \\\n\t%s \\\n\t%s'" % (user,
-            server_dir + '/' + server_conf, server_dir
-             + '/MiGserver.conf')
 
     # Only add non-directory paths manually and leave the rest to
     # checkconf.py below

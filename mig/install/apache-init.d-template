@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# apache-__USER:	Start the apache HTTP server for __USER__.
+# apache-__USER__:	Start the apache HTTP server for __USER__.
 #
 # The variables below are NOT to be changed.  They are there to make the
 # script more readable.
@@ -8,7 +8,7 @@
 NAME=apache
 DAEMON=/usr/sbin/$NAME
 PIDFILE=__APACHE_RUN__/$NAME.pid
-SERVERROOT=__APACHE_HOME__
+SERVERROOT=__APACHE_ETC__
 CONF=${SERVERROOT}/httpd.conf
 # Don't use apachectl as it is hardcoded to /etc/apache configuration
 #APACHECTL=/usr/sbin/${NAME}ctl
@@ -103,7 +103,7 @@ case "$1" in
     ;;
 
   *)
-    echo "Usage: __APACHE_HOME__/$NAME-__USER__ {start|stop|reload|reload-modules|force-reload|restart}"
+    echo "Usage: __APACHE_ETC__/$NAME-__USER__ {start|stop|reload|reload-modules|force-reload|restart}"
     exit 1
     ;;
 esac

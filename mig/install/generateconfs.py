@@ -65,9 +65,8 @@ def fill_template(template_file, output_file, dictionary):
     return True
 
 
-def generate_confs(source='.', destination='.', server_fqdn='localhost', user='mig', group='mig', apache_etc='/etc/apache', apache_run='/var/run/apache', apache_log='/var/log/apache', mig_base='/home/mig', mig_state='/home/mig/state', mig_certs='/home/mig/certs', http_port=80, https_port=443):
+def generate_confs(source=os.path.basename(sys.argv[0]), destination='.', server_fqdn='localhost', user='mig', group='mig', apache_etc='/etc/apache', apache_run='/var/run/apache', apache_log='/var/log/apache', mig_code='/home/mig/mig', mig_state='/home/mig/state', mig_certs='/home/mig/certs', http_port=80, https_port=443):
     """Generate Apache and MiG server confs with specified variables"""
-    mig_dir = os.path.join(mig_base, 'mig')
 
     user_dict = {}
     user_dict['__SERVER_FQDN__'] = server_fqdn
@@ -75,7 +74,7 @@ def generate_confs(source='.', destination='.', server_fqdn='localhost', user='m
     user_dict['__GROUP__'] = group
     user_dict['__HTTP_PORT__'] = str(http_port)
     user_dict['__HTTPS_PORT__'] = str(https_port)
-    user_dict['__MIG_HOME__'] = mig_dir
+    user_dict['__MIG_HOME__'] = mig_code
     user_dict['__MIG_STATE__'] = mig_state
     user_dict['__MIG_CERTS__'] = mig_certs
     user_dict['__APACHE_ETC__'] = apache_etc
@@ -94,7 +93,7 @@ def generate_confs(source='.', destination='.', server_fqdn='localhost', user='m
     apache_httpd_conf = os.path.join(destination, 'httpd.conf')
     fill_template(apache_httpd_template, apache_httpd_conf, user_dict)
     apache_initd_template = os.path.join(source, 'apache-init.d-template')
-    apache_initd_script = os.path.join(source, 'apache')
+    apache_initd_script = os.path.join(destination, 'apache-%s' % user)
     fill_template(apache_initd_template, apache_initd_script, user_dict)
     os.chmod(apache_initd_script, 0755)
 
@@ -107,7 +106,7 @@ def generate_confs(source='.', destination='.', server_fqdn='localhost', user='m
 if "__main__" == __name__:
     # ## Main ###
 
-    names = ('source', 'destination', 'server_fqdn', 'user', 'group', 'apache_etc', 'apache_run', 'apache_log', 'mig_base', 'mig_state', 'mig_certs', 'http_port', 'https_port')
+    names = ('source', 'destination', 'server_fqdn', 'user', 'group', 'apache_etc', 'apache_run', 'apache_log', 'mig_code', 'mig_state', 'mig_certs', 'http_port', 'https_port')
     if '-h' in sys.argv or '--help' in sys.argv:
         print 'Usage:\n%s\nor\n%s %s' % (sys.argv[0], sys.argv[0], ' '.join([i.upper() for i in names]))
         sys.exit(0)
@@ -127,12 +126,21 @@ group: %(group)s
 apache_etc: %(apache_etc)s
 apache_run: %(apache_run)s
 apache_log: %(apache_log)s
-mig_base: %(mig_base)s
+mig_code: %(mig_code)s
 mig_state: %(mig_state)s
 mig_certs: %(mig_certs)s
 http_port: %(http_port)s
 https_port: %(https_port)s
 ''' % settings
     generate_confs(*values)
+
+    print '''Configurations for MiG and Apache were generated in %(destination)s/
+You need to copy them to their final destinations like this:
+cp %(destination)s/httpd.conf %(apache_etc)s/
+cp %(destination)s/MiG.conf %(apache_etc)s/conf.d/
+cp %(destination)s/MiGserver.conf %(mig_code)s/server/
+and optionally
+cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
+''' % settings
 
     sys.exit(0)
