@@ -1,0 +1,5 @@
+= MiG web page style =
+The migcss.css file is used by all MiG web pages, so site wide style can easily be modified by simply 
+changing the symlink to another css file.
+
+We may want to add user selectable styles at some point and maybe even custom skin support.
