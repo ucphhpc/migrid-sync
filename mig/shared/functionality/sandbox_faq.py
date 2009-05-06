@@ -48,7 +48,7 @@ Sorry we are currently down for maintenance, we'll be back shortly
 
 html['english'] = \
     """
-<table border='0' width='80%' align='center'>
+<table border='0' width='80%%' align='center'>
 <tr><td><h3>What happens when the screen saver deactivates?</h3></td></tr>
 <tr><td>The sandbox is shut down and all hardware resources are given back to you. Any running job within the sandbox is killed and will eventually be scheduled for another resource by the MiG system. Work on suspending the job and sending it to another resource that can continue from where the job was suspended is in progress.</td></tr>
 
@@ -131,7 +131,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         # print "<a href='sandbox_login.py'>Default language</a>"
         # sys.exit(1)
-#    output_objects.append({"object_type":"html_form", "text":html[language]})
+   # output_objects.append({"object_type":"html_form", "text":html[language]})
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : html['english'] % configuration.migserver_https_url})
