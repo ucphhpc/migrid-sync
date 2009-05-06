@@ -107,8 +107,13 @@ def get_cgi_html_header(
  <SCRIPT TYPE="text/javascript" SRC="/images/backlink.js"></SCRIPT>
  </head>
 <body %s>
+<div id="topspace">
+</div>
 <div id="toplogo">
-<img src="/images/MiG-logo.png" id="logoimage" alt="MiG logo"/>
+<img src="/images/MiG-logo-small.png" id="logoimage" alt="MiG logo"/>
+<span id="logotitle">
+Minimum intrusion Grid
+</span>
 </div>
 %s
 <div id="migheader">
@@ -132,11 +137,11 @@ def get_cgi_html_footer(footer='', html=True):
         '''
         </div>
         <div id="bottomlogo">
-        <table id="credits">
-        <tr><td>
+        <span id="credits">
         Copyright 2009 - <a href="http://www.migrid.org">The MiG project</a>
-        </td></tr>
-        </table>
+        </span>
+        </div>
+        <div id="bottomspace">
         </div>
         </body>
 </html>

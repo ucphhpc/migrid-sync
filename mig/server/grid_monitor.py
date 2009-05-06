@@ -79,7 +79,7 @@ def create_monitor(vgrid_name):
         )
     html += '''
 <!-- end of raw header: this line is used by showvgridmonitor -->
-<h3>Statistics/monitor for the %(vgrid_name)s VGrid</h3>
+<h1>Statistics/monitor for the %(vgrid_name)s VGrid</h1>
 This page was generated %(now)s<br>
 Automatic refresh every %(sleep_secs)s secs.<br>
 <br>'''\

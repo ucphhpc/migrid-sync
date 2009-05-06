@@ -105,7 +105,7 @@ def display_resource(
     html += 'or make any changes manually in the text box below.<br>'
     html += \
         '<a href="docs.py?show=Resource">Resource configuration docs</a>'
-    html += '<table class=resources>\n<tr><td>'
+    html += '<table class=resources>\n<tr><td class=centertext>'
     html += \
         '''
 <form method="post" action="/cgi-bin/updateresconfig.py">

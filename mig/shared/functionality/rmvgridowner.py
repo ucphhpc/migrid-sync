@@ -233,8 +233,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
                               : '%s of owners of %s' % (msg,
                               vgrid_name)})
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '(If Vgrid has sub-vgrids then removal must be performed from the most significant VGrid possible.)'
-                               % cert_name})
+                              : '(If Vgrid %s has sub-vgrids then removal must be performed from the most significant VGrid possible.)'
+                               % vgrid_name})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'

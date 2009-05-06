@@ -28,18 +28,6 @@ tr, td {
 	padding: 2px;
 }
 
-tr.centertext {
-	text-align: center;
-}
-
-tr.title {
-	font-weight: bold;
-}
-
-td.centertext {
-	text-align: center;
-}
-
 
 h1{
 	padding: 4px;
@@ -51,25 +39,6 @@ h1{
 div.container {
 	width: 98%;
 	margin: 1%;
-}
-
-
-/* Id and class style*/
-#centertext {
-	text-align: center;
-}
-
-#centerall {
-	margin: 0;
-	text-align: center;
-}
-
-#middlevalign {
-        vertical-align: middle;
-}
-
-#lefttext {
-	text-align: left;
 }
 
 
@@ -299,3 +268,35 @@ table.monitorruntimeenvreq {
 #miginput input:focus, #miginput textarea:focus{
 	background: #eef5ff;
 }
+
+.lefttext {
+	text-align: left;
+}
+
+.centertext {
+	text-align: center;
+}
+
+.righttext {
+	text-align: right;
+}
+
+.centerall {
+	margin: 0;
+	text-align: center;
+}
+
+.title {
+	font-weight: bold;
+}
+
+.errortext {
+	color: red;
+}
+
+.warningtext {
+	color: orange;
+}
+
+
+

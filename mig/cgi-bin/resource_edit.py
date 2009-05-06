@@ -1044,9 +1044,10 @@ else:
                 vgrid_fields += 1
                 vgrid_list.append('')
     print get_cgi_html_header('MiG Resource administration',
-                              'Welcome to the MiG resource administration.'
+                              ''
                               )
-
+    print '<h1>MiG resource editor</h1>'
+    print "Please fill in or edit the fields below to fit your MiG resource reservation. Most fields will work with their default values. So if you are still in doubt after reading the help description, you can likely just leave the field alone."
     print """<form name="resource_edit" method='post' action='./resource_edit.py' onSubmit='return submit_check(this);'>"""
     if form.has_key('new_resource'):
         print """            <input type="hidden" name="new_resource" value="true">"""

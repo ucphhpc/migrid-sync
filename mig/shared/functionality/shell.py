@@ -232,8 +232,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
                           })
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-    <div class='subsection'>
-    <BR>This page gives direct access to most MiG commands.
+    <div class='title'>
+    This page gives direct access to most MiG commands.
     </div>
     <div class='migcontent'>
     <BR>It supports wildcard expansion but no input/output redirection or pipes.

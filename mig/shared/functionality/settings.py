@@ -64,11 +64,6 @@ def main(cert_name_no_spaces, user_arguments_dict):
                           : 'MiG Settings'})
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Settings'})
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Change your MiG settings'})
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'Multiple addresses and accounts must be separated with new lines, not commas.'
-                          })
 
     # unpickle current settings
 
@@ -81,13 +76,32 @@ def main(cert_name_no_spaces, user_arguments_dict):
         current_settings_dict = {}
 
     html = \
-        """<form method="post" action="/cgi-bin/settingsaction.py">"""
+        """
+        <div id=settings>
+        <table class=settings>
+        <tr class=title><td class=centertext>
+        Select your MiG settings
+        </td></tr>
+        <tr><td>
+        </td></tr>
+        <tr><td>
+        <form method='post' action='/cgi-bin/settingsaction.py'>
+        Please note that if you want to set multiple values (e.g. addresses) in the same field, you must write each value on a separate line.
+        </td></tr>
+        <tr><td>
+        </td></tr>
+        """
     keywords_dict = get_keywords_dict()
     for keyword in keywords_dict.keys():
-        html += '<BR><B>%s</B><BR>' % keyword
+        html += """
+        <tr class=title><td>
+        %s
+        </td></tr>
+        <tr><td>
+        """ % keyword
         if keywords_dict[keyword]['Type'] == 'multiplestrings':
             html += \
-                """<textarea cols="40" rows="2" wrap="off" name="%s">"""\
+                """<textarea cols="40" rows="1" wrap="off" name="%s">"""\
                  % keyword
             if current_settings_dict.has_key(keyword):
                 html += '<BR>'.join(current_settings_dict[keyword])
@@ -110,9 +124,19 @@ def main(cert_name_no_spaces, user_arguments_dict):
                     html += '<option %s value=%s>%s</option>'\
                          % (selected, choice, choice)
                 html += '</select><BR>'
+        html += """
+        </td></tr>
+        """
 
-    html += """<BR><BR><input type="submit" value="Save">"""
-    html += '</form>'
+
+    html += """
+    <tr><td>
+    <input type="submit" value="Save">
+    </form>
+    </td></tr>
+    </table>
+    </div>
+    """
 
     base_dir = os.path.abspath(configuration.user_home + os.sep
                                 + cert_name_no_spaces) + os.sep
@@ -120,9 +144,20 @@ def main(cert_name_no_spaces, user_arguments_dict):
     template_path = os.path.join(base_dir, '.default.mrsl')
     
     default_mrsl = get_default_mrsl(template_path)
-    html += '''<BR><B>Default job on submit page</B><BR>
+    html += '''
+<div id=defaultmrsl>
 <table class="defaultjob">
+<tr class=title><td class=centertext>
+Default job on submit page
+</td></tr>
 <tr><td>
+</td></tr>
+<tr><td>
+If you use the same fields and values in mony of your jobs, you can save your preferred job description here to always start out with that description on your submit job page.
+</td></tr>
+<tr><td>
+</td></tr>
+<tr><td class=centertext>
 <form method="post" action="/cgi-bin/editfile.py">
 <input type="hidden" name="path" value="%(mrsl_template)s">
 <input type="hidden" name="newline" value="unix">
@@ -137,7 +172,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
 <center>
 </form>
 </td></tr>
-</table>''' % {'default_mrsl': default_mrsl, 'mrsl_template': mrsl_template}
+</table>
+</div>
+''' % {'default_mrsl': default_mrsl, 'mrsl_template': mrsl_template}
 
     output_objects.append({'object_type': 'html_form', 'text': html})
     output_objects.append({'object_type': 'text', 'text':''})

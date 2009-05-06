@@ -46,10 +46,10 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False, op_title=False)
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Request VGrid member or ownership'})
     output_objects.append({'object_type': 'title', 'text'
                           : 'MiG VGrid membership request'})
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Request VGrid member or ownership'})
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(

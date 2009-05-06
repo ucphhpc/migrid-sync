@@ -325,6 +325,16 @@ def main(cert_name_no_spaces, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text': 'MiG Files'
                           })
 
+    location_pre_html = """
+<div class='files'>
+<table class='files'>
+<tr class=title><td class=centertext colspan=2>
+Working directory:
+</td></tr>
+<tr><td class=centertext>
+"""
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : location_pre_html})
     for pattern in pattern_list:
         links = []
         links.append({'object_type': 'link', 'text': 'MiG HOME',
@@ -338,10 +348,27 @@ def main(cert_name_no_spaces, user_arguments_dict):
         output_objects.append({'object_type': 'multilinkline', 'links'
                               : links})
 
+    location_post_html = """
+</td></tr>
+</table>
+</div>
+<br>
+"""
+
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : location_post_html})
     more_html = \
                   """
-<br>
-Action on selected files (please hold mouse cursor over button for a description):
+<div class='files'>
+<table class='files'>
+<tr class=title><td class=centertext colspan=2>
+File actions
+</td></tr>
+<tr><td>
+Action on paths selected below
+(please hold mouse cursor over button for a description):
+</td>
+<td class=centertext>
 <form method='post' name='fileform' onSubmit='return selectedFilesAction();'>
 <input type='hidden' name='output_format' value='html'>
 <input type='hidden' name='flags' value='v'>
@@ -355,6 +382,9 @@ Action on selected files (please hold mouse cursor over button for a description
 <input type='submit' onClick='document.pressed=this.value' value='rm' title='DELETE! (rm)'>
 <input type='submit' onClick='document.pressed=this.value' value='rmdir' title='Remove directory (rmdir)'>
 <input type='submit' onClick='document.pressed=this.value' value='submit' title='Submit file (submit)'>
+</td></tr>
+</table>    
+</div>
 """
 
     output_objects.append({'object_type': 'html_form', 'text'
@@ -412,15 +442,17 @@ Action on selected files (please hold mouse cursor over button for a description
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
     <div class='files'>
-    <br>Filter (using *,? etc.)
-    </div>
-    <div class='files'>
+    <table class='files'>
+    <tr class=title><td class=centertext>
+    Filter paths (wildcards like * and ? are allowed)
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html'>
     <input type='hidden' name='flags' value='%s'>
     <input type='text' name='path' value=''>
     <input type='submit' value='Filter'>
     </form>
+    </td></tr>
+    </table>    
     </div>
     """% flags})
 
@@ -428,6 +460,10 @@ Action on selected files (please hold mouse cursor over button for a description
 
     htmlform = \
         """<table class='files'>
+    <tr class=title><td class=centertext colspan=4>
+    File view options
+    </td></tr>
+    <tr><td><br></td></tr>
     <tr class=title><td>Parameter</td><td>Setting</td><td>Enable</td><td>Disable</td></tr>
     <tr><td>Long format</td><td>
     %s</td><td>"""\
@@ -549,21 +585,18 @@ Action on selected files (please hold mouse cursor over button for a description
                            : """
 <br>
 <table class='files'>
-<tr class=title><td class=centertext colspan=4>
+<tr class=title><td class=centertext colspan=3>
 Edit file
 </td></tr>
 <tr><td>
-Fill in the path of a file to edit and press 'edit' to open that file in the
-online file editor. Alternatively a file can be selected for editing
-through the listing of personal files. 
-</td><td>
-<br>
-</td><td>
+Fill in the path of a file to edit and press 'edit' to open that file in the<br>
+online file editor. Alternatively a file can be selected for editing through<br>
+the listing of personal files. 
+</td><td colspan=2 class=righttext>
 <form name='editor' method='post' action='/cgi-bin/editor.py'>
 <input type='hidden' name='output_format' value='html'>
-<input type='text' name='path' size=50 value=''>
 <input name='current_dir' type='hidden' value='%(dest_dir)s'>
-</td><td>
+<input type='text' name='path' size=50 value=''>
 <input type='submit' value='edit'>
 </form>
 </td></tr>
@@ -575,13 +608,10 @@ Create directory
 </td></tr>
 <tr><td>
 Name of new directory to be created in current directory (%(dest_dir)s)
-</td><td>
-<br>
-</td><td>
+</td><td class=righttext colspan=3>
 <form action='/cgi-bin/mkdir.py' method=post>
 <input name='path' size=50>
 <input name='current_dir' type='hidden' value='%(dest_dir)s'/>
-</td><td>
 <input type='submit' value='Create' name='mkdirbutton'>
 </form>
 </td></tr>
@@ -607,16 +637,15 @@ Submit mRSL files (also .mRSL files included in packages)
 </td></tr>
 <tr><td>    
 File to upload
-</td><td colspan=3>
-<input name='fileupload_0_0_0' type='file' size='65'/>
+</td><td class=righttext colspan=3>
+<input name='fileupload_0_0_0' type='file' size='50'/>
 </td></tr>
 <tr><td>
 Optional remote filename (extra useful in windows)
-</td><td colspan=2>
+</td><td class=righttext colspan=3>
 <input name='default_remotefilename_0' type='hidden' value='%(dest_dir)s'/>
-<input name='remotefilename_0' type='input' size='65' value='%(dest_dir)s'/>
-</td><td>
-<input type='submit' value='Upload' name='sendfile'>
+<input name='remotefilename_0' type='input' size='50' value='%(dest_dir)s'/>
+<input type='submit' value='Upload' name='sendfile'/>
 </form>
 </td></tr>
 </table>

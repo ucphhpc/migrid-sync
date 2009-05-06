@@ -281,9 +281,9 @@ def html_format(ret_val, ret_msg, out_obj):
         if i['object_type'] == 'start':
             pass  # for now
         elif i['object_type'] == 'error_text':
-            print '<p><FONT COLOR=red>%s</FONT></p>' % i['text']
+            print '<p class=errortext>%s</p>' % i['text']
         elif i['object_type'] == 'warning':
-            print '<<p><FONT COLOR=yellow>%s</FONT></p>' % i['text']
+            print '<p class=warningtext>%s</p>' % i['text']
         elif i['object_type'] == 'header':
             print '<h1>%s</h1>' % i['text']
         elif i['object_type'] == 'sectionheader':
@@ -447,7 +447,6 @@ def html_format(ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'dir_listings':
             if len(i['dir_listings']) == 0:
                 continue
-            print '<hr>'
             columns = 6
             print "<table class='files'>"
             print '<tr>'
@@ -476,7 +475,7 @@ def html_format(ret_val, ret_msg, out_obj):
                         directory = entry
                         if directory == dir_listing['entries'][0]:
                             print '<tr>'
-                            print '<td>%s:<br>total %s</td>'\
+                            print '<td width=20%%>%s:<br>total %s</td>'\
                                  % (dir_listing['relative_path'],
                                     len(dir_listing['entries']))
                             cols += 1
@@ -535,7 +534,7 @@ def html_format(ret_val, ret_msg, out_obj):
                              + '</tr>'
                         cols = columns
                         print '</tr>'
-            print '</table></form><hr><br>'
+            print '</form></table>'
             print ""
         elif i['object_type'] == 'filewcs':
             filewcs = i['filewcs']

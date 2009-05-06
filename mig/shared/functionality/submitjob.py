@@ -93,7 +93,7 @@ Please note that textarea.py chokes if no nonempty KEYWORD_X_Y_Z fields
 are supplied: thus we simply send a bogus jobname which does nothing
 -->
 <table class="submitjob">
-<tr><td>
+<tr><td class=centertext>
 <form method="post" action="/cgi-bin/textarea.py" id="miginput">
 <input type=hidden name=jobname_0_0_0 value=" ">
 <textarea cols="82" rows="25" name="mrsltextarea_0">
@@ -107,24 +107,37 @@ are supplied: thus we simply send a bogus jobname which does nothing
 </table>
 <br>
 <table class='files'>
-<tr class=title><td class=centertext colspan=6>
-Upload job file or archive of job files to submit
+<tr class=title><td class=centertext colspan=4>
+Upload file
 </td></tr>
-<tr><td colspan=1>
-File to upload
-</td><td class=centertext colspan=4>
+<tr><td colspan=4>
+Upload file to current directory (%(dest_dir)s)
+</td></tr>
+<tr><td colspan=2>
 <form enctype='multipart/form-data' action='/cgi-bin/textarea.py' method='post'>
-<input name='extract_0' type='hidden' value='True'>
-<input name='submitmrsl_0' type='hidden' value='True'>
-<input name='fileupload_0_0_0' type='file' size='65'/>
+Extract package files (.zip, .tar.gz, .tar.bz2)
+</td><td colspan=2>
+<input type=checkbox name='extract_0'>
+</td></tr>
+<tr><td colspan=2>
+Submit mRSL files (also .mRSL files included in packages)
+</td><td colspan=2>
+<input type=checkbox name='submitmrsl_0' CHECKED>
+</td></tr>
+<tr><td>    
+File to upload
+</td><td class=righttext colspan=3>
+<input name='fileupload_0_0_0' type='file' size='50'/>
+</td></tr>
+<tr><td>
+Optional remote filename (extra useful in windows)
+</td><td class=righttext colspan=3>
 <input name='default_remotefilename_0' type='hidden' value='%(dest_dir)s'/>
-<input name='remotefilename_0' type='hidden' size='65' value='%(dest_dir)s'/>
-</td><td class=centertext>
-<input type='submit' value='Upload' name='sendfile'>
+<input name='remotefilename_0' type='input' size='50' value='%(dest_dir)s'/>
+<input type='submit' value='Upload' name='sendfile'/>
 </form>
 </td></tr>
 </table>
-<br>
 """ % {'default_mrsl':default_mrsl, 'dest_dir':('.' + os.sep)}})
 
     return (output_objects, status)
