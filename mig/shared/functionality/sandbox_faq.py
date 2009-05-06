@@ -72,7 +72,7 @@ html['english'] = \
 <tr><td>No. By default, sandboxes will only download jobs and input files at max 256 kB/s and upload result files at max 128 kB/s, and you can set these appropriately when you download the sandbox. Further, the sandbox model only applies to small jobs that don't need to access big files.</td></tr>
 
 <tr><td><h3>How do I see how many jobs I've executed?</h3></td></tr>
-<tr><td>If you login to the download site, you'll see a list of your resources and the number of jobs executed by each of them. There is a public sandbox monitor <a href='%s/cgi-sid/sandboxmonitor.py'>here</a>. Work is in progress on a credential system which will give a better presentation of user credits. </td></tr>
+<tr><td>If you login to the download site, you'll see a list of your resources and the number of jobs executed by each of them. There is a public sandbox monitor <a href='%(https_url)s/cgi-sid/sandboxmonitor.py'>here</a>. Work is in progress on a credential system which will give a better presentation of user credits. </td></tr>
 
 <tr><td><h3>Can the sandbox function behind a firewall/router/switch?</h3></td></tr>
 <tr><td>Yes, however, some firewalls block individual applications in which case it is necessary to unblock the sandbox application, Qemu. Apart from that, the sandbox only uses standard protocols (HTTP and HTTPS) that are normally open for outbound access, and all communication is initiated by the sandbox, i.e. the Grid system never contacts the sandbox, since this would not be possible had the sandbox resided behind an NAT router.</td></tr>
@@ -127,7 +127,7 @@ html['danish'] = \
 <tr><td>Nej, som udgangspunkt henter sandkasser kun job- og input-filer med op til 256 kB/s og sender resultatfiler med op til 128 kB/s, og du kan skrue yderlige ned eller op p&aring; disse v&aelig;rdier n&aring;r du genererer og henter din sandkasse. Selv med de mindste ADSL l&oslash;sninger p&aring; markedet skulle standard-indstillingerne dog v&aelig;re uproblematiske. Yderligere er sandkasse-modellen hovedsageligt henvendt til sm&aring; jobs, der kan klare sig uden store datafiler, s&aring; overf&oslash;rslerne tager ikke lang tid.</td></tr>
 
 <tr><td><h3>Hvordan ser jeg hvor mange jobs min sandkasse har k&oslash;rt?</h3></td></tr>
-<tr><td>Hvis du &aring;bner sandkasse startsiden og logger ind, n&aring;r du frem til en monitor side med en liste over dine sandkasse-resurser og deres k&oslash;rte jobs. Du kan ogs&aring; se hvor meget dine sandkasser har ydet sammenlignet med andre brugeres  p&aring; den <a href='%s/cgi-sid/sandboxmonitor.py'>samlede sandkasse monitor</a>. Der arbejdes p&aring; at lave et mere finkornet opregning af hvad de enkelte resurser har leveret s&aring; det er lettere at sammenligne.</td></tr>
+<tr><td>Hvis du &aring;bner sandkasse startsiden og logger ind, n&aring;r du frem til en monitor side med en liste over dine sandkasse-resurser og deres k&oslash;rte jobs. Du kan ogs&aring; se hvor meget dine sandkasser har ydet sammenlignet med andre brugeres  p&aring; den <a href='%(https_url)s/cgi-sid/sandboxmonitor.py'>samlede sandkasse monitor</a>. Der arbejdes p&aring; at lave et mere finkornet opregning af hvad de enkelte resurser har leveret s&aring; det er lettere at sammenligne.</td></tr>
 
 <tr><td><h3>Kan sandkasser fungere bag en firewall/router/switch?</h3></td></tr>
 <tr><td>Ja, men nogle firewalls blokkerer individuelle applikationer, hvorfor det kan v&aelig;re n&oslash;dvendigt at tillade sandkasse applikationen, Qemu, at tilg&aring; internettet. Bortset fra det, benytter sandkassen kun standard protokoller (HTTP og HTTPS), som normalt i forvejen er tilladt for udg&aring;ende trafik, og al kommunikation initieres fra sandkassen. D.v.s. Grid systemet kontakter aldrig sandkassen men kun omvendt, da det ellers ikke ville v&aelig;re muligt at k&oslash;re sandkassen bag f.eks. en NAT router.</td></tr>
@@ -173,7 +173,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
    # output_objects.append({"object_type":"html_form", "text":html[language]})
 
     output_objects.append({'object_type': 'html_form', 'text'
-                          : html[language] % configuration.migserver_https_url})
+                          : html[language] % {'https_url': configuration.migserver_https_url}})
     return (output_objects, returnvalues.OK)
 
 

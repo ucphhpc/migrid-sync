@@ -62,6 +62,9 @@ html['english'] = \
 <tr><td><h3>What About Security?</h3></td></tr>
 <tr><td>The applications that will be running on your PC when you leave it in screen saver mode are all executed in a so-called 'sandbox'. A sandbox provides a secure execution environment, in which untrusted programs can run. Programs running in the sandbox can neither compromise nor gain access to your PC.</td></tr>
 
+<tr><td><h3>Sandbox monitor</h3></td></tr>
+<tr><td>After logging in you will be presented with a list of statistics for your own sandboxes. In case you want to compare your donations to those from other sandbox resource owners, you can take a look at the general <a href='%(https_url)s/cgi-sid/sandboxmonitor.py'>sandbox monitor</a>.</td></tr>
+
 <tr><td><h3>More Questions?</h3></td></tr>
 <tr><td>Please check the <a href='sandbox_faq.py?language=english'>FAQ</a>, or send us an email.</td></tr>
 </table>
@@ -97,7 +100,10 @@ html['danish'] = \
 <tr><td>De programmer der kommer til at k&oslash;re n&aring;r din PC er i screen saver mode, vil alle blive afviklet i en s&aring;kaldt 'sandkasse'. En sandkasse stiller et sikkert milj&oslash; tilr&aring;dighed, hvori det er sikkert at k&oslash;re ukendte programmer. Programmer k&oslash;rende i sandkassen kan hverken kompromittere eller f&aring; tilgang til din PC.</td></tr>
 
 <tr><td><h3>Installationsvejledning</h3></td></tr>
-<tr><td>Programmet findes b&aring;de i en version til Windows XP og Linux. Windowsbrugere downloader en installationsfil, som g&oslash;r installationen meget simpel. En trin-for-trin guide kan findes her: <a href='http://mig-2.imada.sdu.dk:8092/MiG//MiG/Mig_danish/MiG-SSS%20installationsprocedure'>Installationsguide til Windows</a><td></tr>
+<tr><td>Programmet findes b&aring;de i en version til Windows XP og Linux. Windowsbrugere downloader en installationsfil, som g&oslash;r installationen meget simpel. En trin-for-trin guide kan findes her: <a href='http://www.migrid.org/MiG/MiG/Mig_danish/MiG-SSS installationsprocedure'>Installationsguide til Windows</a><td></tr>
+
+<tr><td><h3>Job monitor</h3></td></tr>
+<tr><td>N&aring;r du logger ind f&aring;r du en oversigt over jobs k&oslash;rt p&aring; dine sandkasse resurser. Hvis du gerne vil sammenligne med andres sandkasse donationer, kan du se p&aring; den generelle <a href='%(https_url)s/cgi-sid/sandboxmonitor.py'>sandkasse monitor</a>.</td></tr>
 
 <tr><td><h3>Flere sp&oslash;rgsm&aring;l?</h3></td></tr>
 <tr><td>Check om det skulle findes i <a href='sandbox_faq.py?language=danish'>FAQ'en</a>, ellers send os en email.</td></tr>
@@ -145,7 +151,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         # sys.exit(1)
 
     output_objects.append({'object_type': 'html_form', 'text'
-                          : html[language]})
+                           : html[language] % {'https_url':configuration.migserver_https_url}})
     return (output_objects, returnvalues.OK)
 
 
