@@ -63,7 +63,7 @@ html['english'] = \
 <tr><td>The applications that will be running on your PC when you leave it in screen saver mode are all executed in a so-called 'sandbox'. A sandbox provides a secure execution environment, in which untrusted programs can run. Programs running in the sandbox can neither compromise nor gain access to your PC.</td></tr>
 
 <tr><td><h3>More Questions?</h3></td></tr>
-<tr><td>Please check the <a href='sandbox_faq.py?language=danish'>FAQ</a>, or send us an email.</td></tr>
+<tr><td>Please check the <a href='sandbox_faq.py?language=english'>FAQ</a>, or send us an email.</td></tr>
 </table>
 <br>
 <table class='sandboxlogin'>

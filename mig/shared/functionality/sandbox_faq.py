@@ -49,6 +49,7 @@ Sorry we are currently down for maintenance, we'll be back shortly
 html['english'] = \
     """
 <table border='0' width='80%%' align='center'>
+<tr><td><a href='sandbox_faq.py?language=danish'>P&aring; dansk</a></td></tr>
 <tr><td><h3>What happens when the screen saver deactivates?</h3></td></tr>
 <tr><td>The sandbox is shut down and all hardware resources are given back to you. Any running job within the sandbox is killed and will eventually be scheduled for another resource by the MiG system. Work on suspending the job and sending it to another resource that can continue from where the job was suspended is in progress.</td></tr>
 
@@ -62,7 +63,7 @@ html['english'] = \
 <tr><td>Your computer acts as a host system for the guest system that runs grid applications. The guest system runs in a sandbox, a virtual machine. There is no way for the two to interact; the grid job running in the guest system is not even aware of the fact that it is not running natively on a real physical machine, and the host system sees the virtual machine as any other user process. Hence, the screen saver which runs on the host system cannot know what is running inside the guest system. </td></tr>
 
 <tr><td><h3>Which job is currently running on my machine?</h3></td></tr>
-<tr><td>Anonymity between the users who submit jobs and the resource providers who donate the computing power is a key issue in the MiG design. Users do not know where their jobs will be executed, and resource owners do not know any details about the jobs their computer will execute.</td></tr>
+<tr><td>Anonymity between the users who submit jobs and the resource providers who donate the computing power is a key issue in the MiG design. Users do not know where their jobs will be executed, and resource owners do not know any details about the jobs their computer will execute. MiG keeps track of all jobs and resources, however, so in the event of abuse we can and will hold the misbehaving individuals responsible</td></tr>
 
 <tr><td><h3>How much time do the jobs need to complete?</h3></td></tr>
 <tr><td>It varies. It is up to the user to make sure that the jobs are suited for the screen saver model. We recommend below 60 minutes.</td></tr>
@@ -71,10 +72,10 @@ html['english'] = \
 <tr><td>No. By default, sandboxes will only download jobs and input files at max 256 kB/s and upload result files at max 128 kB/s, and you can set these appropriately when you download the sandbox. Further, the sandbox model only applies to small jobs that don't need to access big files.</td></tr>
 
 <tr><td><h3>How do I see how many jobs I've executed?</h3></td></tr>
-<tr><td>If you login to the download site, you'll see a list of your resources and the number of jobs executed by each of them. There is a public sandbox monitor <a href='%s/cgi-bin/sandboxmonitor.py'>here</a>. Work is in progress on a credential system which will give a better presentation of user credits. </td></tr>
+<tr><td>If you login to the download site, you'll see a list of your resources and the number of jobs executed by each of them. There is a public sandbox monitor <a href='%s/cgi-sid/sandboxmonitor.py'>here</a>. Work is in progress on a credential system which will give a better presentation of user credits. </td></tr>
 
 <tr><td><h3>Can the sandbox function behind a firewall/router/switch?</h3></td></tr>
-<tr><td>Yes, however, some firewalls block individual applications in which case it is necessary to unblock VMWare Player. Apart from that, the sandbox only uses standard protocols (http+https) that are normally open for outbound access, and all communication is initiated by the sandbox, i.e. the Grid system never contacts the sandbox, since this would not be possible had the sandbox resided behind an NAT router.</td></tr>
+<tr><td>Yes, however, some firewalls block individual applications in which case it is necessary to unblock the sandbox application, Qemu. Apart from that, the sandbox only uses standard protocols (HTTP and HTTPS) that are normally open for outbound access, and all communication is initiated by the sandbox, i.e. the Grid system never contacts the sandbox, since this would not be possible had the sandbox resided behind an NAT router.</td></tr>
 
 <tr><td><h3>What's the difference between the screen saver and the Windows service model?</h3></td></tr>
 <tr><td>The screen saver model ensures that the computer is only working on Grid jobs when the screen saver is activated. This model is installed by default. In the Windows Service model, the sandbox is running constantly in the background whenever the computer is on. Note that this model requires administrator privileges to install the service. If you choose to install the Service model, the screen saver will not be activated. </td></tr>
@@ -88,6 +89,8 @@ html['english'] = \
 <tr><td></td></tr>
 -->
 
+<tr><td><a href='sandbox_login.py?language=english'>Back to Sandbox login page</a></td></tr>
+
 </table>
 <br>
 
@@ -96,10 +99,46 @@ html['english'] = \
 
 html['danish'] = \
     """
-<table border='0' width='80%' align='center'>
+<table border='0' width='80%%' align='center'>
 <tr><td><a href='sandbox_faq.py?language=english'>In English</a></td></tr>
 <tr><td><h3>Intro</h3></td></tr>
-<tr><td>Velkommen til MiG-SSS. Ved at downloade og installere denne software vil din PC, n&aring;r den er i screen saver mode, donere den ubrugte CPU-tid til at bidrage med at l&oslash;se videnskabelige problemer. Det eneste, der kr&aelig;ves er, at man logger ind nedenfor, downloader softwaren og f&oslash;lger installationsproceduren.<td><tr>
+<tr><td>Velkommen til MiG-SSS. Ved at downloade og installere denne software vil din PC, n&aring;r screensaveren er aktiv, donere overskydende regnekraft til l&oslash;sning af videnskabelige problemer. Det eneste, der kr&aelig;ves er, at man logger ind, downloader softwaren og f&oslash;lger installationsproceduren.<td><tr>
+
+<tr><td>
+<tr><td><h3>Hvad sker der n&aring; screen-saveren stopper?</h3></td></tr>
+<tr><td>Sandkassen stoppes og alle de hardware resurser den har reserveret frigives til dig igen n&aring;r screen-saveren stopper. Eventuelt igangv&aelig;rende jobs i sandkassen lukkes ned og bliver med tiden sendt ud til en ny resurse og k&oslash;rt forfra af MiG systemet. Arbejde p&aring; at suspendere/pause jobs s&aring; de direkte kan k&oslash;re videre p&aring; en anden resurse er igang.</td></tr>
+
+<tr><td><h3>K&oslash;rer sandkassen kkorrekt?</h3></td></tr>
+<tr><td>Medmindre du f&aring;r fejlbeskeder, kan du regne med at sandkassen fungerer som den skal. N&aring;r sandkassen har k&oslash;rt et stykke tid kan du g&aring; ind p&aring; sandkasse login-siden og f&oslash;lge med i hvor mange jobs den har k&oslash;rt.</td></tr>
+
+<tr><td><h3>Hvilken slags jobs k&oslash;rer p&aring; min computer?</h3></td></tr>
+<tr><td>Dybest set ved vi det ikke. Hvem som helst med et gyldigt MiG bruger certifikat kan indsende jobs til at k&oslash;re p&aring; en vilk&aring;rlig sandkasse resurse, og mindre forskningsprojekter er typisk ret kortvarige. Mange forskere fra mange forskellige forskningsomr&aring;der benytter systemet til deres forskning. Vi uddeler ikke MiG bruger certifikater til hvem som helst, s&aring; du kan v&aelig;re sikker p&aring; at jobs i hvert fald bruges til samfundsgavnlig forskning. Vi h&aring;ber snarest at f&aring; nogle af de aktive grupper til at lave projektsider p&aring; nettet med yderligere informationer om - og baggrund for deres forskning, s&aring; den noget uklare beskrivelse kan konkretiseres.</td></tr>
+
+<tr><td><h3>Kan screen-saveren vise hvilken slags job den k&oslash;rer i sandkassen?</h3></td></tr>
+<tr><td>Din computer fungerer som et v&aelig;rtssystem for det g&aelig;stesystem, der k&oslash;rer grid applikationer. G&aelig;stesystemet k&oslash;rer i en sandkasse, en virtuel maskine. De to systemer har derfor ingen m&aring;de at interagere p&aring;; grid applikationen, som k&oslash;rer under g&aelig;stesystemet er faktisk slet ikke klar over at den ikke k&oslash;rer direkte p&aring; en fysisk computer, og v&aelig;rtssystemet ser bare den virtuelle maskine som en vilk&aring;lig anden program-process. Derfor kan screen-saveren p&aring; v&aelig;rtssystemet ikke vide hvad der k&oslash;rer inde i g&aelig;stesystemet.</td></tr>
+
+<tr><td><h3>Hvilket job k&oslash;rer i &oslash;jeblikket p&aring; min computer?</h3></td></tr>
+<tr><td>Anonymitet mellem brugere der indsender jobs og resurser der k&oslash;rer dem med deres overskydende regnekraft er et overordnet designvalg i MiG. S&aring; brugere ved som udgangspunkt ikke hvor deres jobs faktisk k&oslash;res og resurseejere kender ikke til ejerskabet for de enkelte jobs. MiG holder dog styr p&aring; alle jobs og resurser, s&aring; hvis nogen misbruger tilliden kan og vil de blive holdt til ansvar.</td></tr>
+
+<tr><td><h3>Hvor l&aelig;nge tager jobs om at k&oslash;re f&aelig;rdige?</h3></td></tr>
+<tr><td>Kort sagt er det meget forskelligt. Det overlades til den enkelte bruger at sikre at hendes jobs er egnede til at k&oslash;re i sandkasse-resurser, som kan komme og g&aring; uden varsel. Vi anbefaler derfor at brugere s&oslash;rger for at deres sandkassejobs g&oslash;r sig f&aelig;rdige indenfor 60 minutter. Hvis ikke de kan blive helt f&aelig;rdige p&aring; den tid, kan forskellige check pointing l&oslash;sninger overvejes, s&aring; et delresultat gemmes til at arbejde videre p&aring; senere .</td></tr>
+
+<tr><td><h3>Vil sandkassen &aelig;de hele min internetforbindelse?</h3></td></tr>
+<tr><td>Nej, som udgangspunkt henter sandkasser kun job- og input-filer med op til 256 kB/s og sender resultatfiler med op til 128 kB/s, og du kan skrue yderlige ned eller op p&aring; disse v&aelig;rdier n&aring;r du genererer og henter din sandkasse. Selv med de mindste ADSL l&oslash;sninger p&aring; markedet skulle standard-indstillingerne dog v&aelig;re uproblematiske. Yderligere er sandkasse-modellen hovedsageligt henvendt til sm&aring; jobs, der kan klare sig uden store datafiler, s&aring; overf&oslash;rslerne tager ikke lang tid.</td></tr>
+
+<tr><td><h3>Hvordan ser jeg hvor mange jobs min sandkasse har k&oslash;rt?</h3></td></tr>
+<tr><td>Hvis du &aring;bner sandkasse startsiden og logger ind, n&aring;r du frem til en monitor side med en liste over dine sandkasse-resurser og deres k&oslash;rte jobs. Du kan ogs&aring; se hvor meget dine sandkasser har ydet sammenlignet med andre brugeres  p&aring; den <a href='%s/cgi-sid/sandboxmonitor.py'>samlede sandkasse monitor</a>. Der arbejdes p&aring; at lave et mere finkornet opregning af hvad de enkelte resurser har leveret s&aring; det er lettere at sammenligne.</td></tr>
+
+<tr><td><h3>Kan sandkasser fungere bag en firewall/router/switch?</h3></td></tr>
+<tr><td>Ja, men nogle firewalls blokkerer individuelle applikationer, hvorfor det kan v&aelig;re n&oslash;dvendigt at tillade sandkasse applikationen, Qemu, at tilg&aring; internettet. Bortset fra det, benytter sandkassen kun standard protokoller (HTTP og HTTPS), som normalt i forvejen er tilladt for udg&aring;ende trafik, og al kommunikation initieres fra sandkassen. D.v.s. Grid systemet kontakter aldrig sandkassen men kun omvendt, da det ellers ikke ville v&aelig;re muligt at k&oslash;re sandkassen bag f.eks. en NAT router.</td></tr>
+
+<tr><td><h3>Hvad er forskellen mellem screen-saver - og Windows service modellen?</h3></td></tr>
+<tr><td>Screen-saver modellen sikrer at computeren kun tilbyder regnekraft til Grid jobs n&aring;r screen-saveren er aktiv. Det er den almindelige model, da det generer brugeren mindst muligt. I Windows Service modellen, k&oslash;rer sandkassen altid i baggrunden n&aring;r computeren er t&aelig;ndt. Det giver en mere effektiv resurse, da jobs s&aring; sj&aelig;ldent afbrydes, men det kr&aelig;ver administrator rettigheder at installere som en service og kan is&aelig;r p&aring; &aelig;ldre og mindre computere genere det daglige brug. Hvis du v&aelig;lger at installere Service modellen, vil screen-saveren ikke blive brugt.</td></tr>
+
+<tr><td><h3>Hvordan adskiller MiG projektet sig fra andre projekter som seti@home, folding@home, o.s.v.?</h3></td></tr>
+<tr><td>De eksisterende @home projekter er ikke &aelig;gte grid computing, men derimod 'kun' envejs systemer hvori du kan donere din overskydende regnekraft til et specifikt forskningsprojekt, som f&oslash;rst har tilpasset sin applikation til systemet. Det betyder bl.a. at det er mere arbejdskr&aelig;vende for en forsker at komme igang med at f&aring; sin forskningsapplikation k&oslash;rt. Med MiG kan en vilk&aring;rlig bruger derimod indsende jobs uden f&oslash;rst at skulle omskrive sit program til et givet system. Ydermere k&oslash;rer @home programmerne direkte p&aring; din computer, hvormed de teoretisk kan misbruge din computer.<td><tr>
+
+<tr><td><a href='sandbox_login.py?language=danish'>Tilbage til sandkasse login siden</a></td></tr>
 
 </table>
 <br>
@@ -134,7 +173,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
    # output_objects.append({"object_type":"html_form", "text":html[language]})
 
     output_objects.append({'object_type': 'html_form', 'text'
-                          : html['english'] % configuration.migserver_https_url})
+                          : html[language] % configuration.migserver_https_url})
     return (output_objects, returnvalues.OK)
 
 
