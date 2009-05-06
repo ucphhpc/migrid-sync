@@ -44,6 +44,26 @@ def html_add(formatted_text, html=True):
         return ''
 
 
+def renderMenu(menu_class='navmenu', menu_items='', current_element='Unknown'):
+  
+  menu_lines  = '<div class="%s">' % menu_class +\
+                ' <ul>'
+        
+  for menu_line in menu_items:
+    selected = ''
+    
+    attr = ''
+    if (menu_line.has_key('attr')):
+      attr = menu_line['attr']
+    if menu_line['url'].find(current_element) > -1:
+      selected = ' class="selected" '+current_element
+    menu_lines += '   <li %s class="%s"><a href="%s" %s>%s</a></li>' % (attr, menu_line['class'], menu_line['url'], selected, menu_line['title'])
+            
+  menu_lines += ' </ul>'
+  menu_lines += '</div>'
+  
+  return menu_lines
+
 # TODO: scripts variable is only last in var list for
 # backward-compatibility
 
@@ -123,8 +143,10 @@ def get_cgi_html_header(
                         
         )
         
-        menu_lines = '<div id="mignavmenu">' +\
-                     '<ul id="mignavlist">'
+        menu_lines = renderMenu('navmenu', menu_items, current_page)
+        
+        """'<div class="navmenu">' +\
+                     '<ul>'
         
         for menu_line in menu_items:
             selected = ''
@@ -133,24 +155,7 @@ def get_cgi_html_header(
             menu_lines += '<li class="%s"><a href="%s" %s>%s</a></li>' % (menu_line['class'], menu_line['url'], selected, menu_line['title'])
             
         menu_lines += '</ul>'
-        menu_lines += '</div>'
-        """
-        menu_lines = \
-            '''
-<div id="mignavmenu">
-<ul id="mignavlist">
-
-<li class="settings">
-<a href="/cgi-bin/settings.py">Settings</a>
-</li>
-<li class="shell">
-<a href="/cgi-bin/shell.py">Shell</a>
-</li>
-</ul>
-</div>
-'''
-
-"""
+        menu_lines += '</div>'"""
 
     return '''<?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -165,6 +170,7 @@ def get_cgi_html_header(
  </head>
 <body %s>
 <div id="toplogo">Minimum Intrusion Grid</div>
+<!--<div id="toplogo"><div>&nbsp;</div></div>-->
 %s
 <div id="migheader">
 %s

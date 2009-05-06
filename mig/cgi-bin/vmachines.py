@@ -33,6 +33,7 @@ import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.cgiscriptstub import run_cgi_script
+from shared.html import renderMenu
 
 #from shared.functionality.submitjob import main
 
@@ -56,6 +57,36 @@ def main(cert_name_no_spaces, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+
+    menu_items  = (
+                        {
+                        'class'    : 'vmachines add',
+                        'url'       : 'vmachines_create.py',
+                        'title'     : 'Create VMachine',
+                        'attr' : ''
+                        
+                        },
+                        {
+                        'class'    : 'vmachines connect',
+                        'url'       : '#',
+                        'title'     : 'Connect to remote access service',
+                        'attr'  : 'onClick="vncClientPopup(); return false;"'
+                        },
+                  )
+
+    # Html fragments
+    submenu = renderMenu('navsubmenu', menu_items)
+
+    welcomeText     = 'Welcome to MiG virtual machine management!'
+    descriptionText = '<p>In this part of MiG you can: <ul>'+\
+                      '<li>See the virtual machines available to you in the list below.</li>'+\
+                      '<li>Create new virtual machines (see above)</li>'+\
+                      '<li>Connect to virtual machines (see above)</li>'+\
+                      '</ul></p>'+\
+                      '<p>You can also create and deploy virtual machines to MiG by downloading and installing the MiGified version of VirtualBox.</p>'+\
+                      '<p>The remote access service is available to you in either way.'
+                      
+
     applet = """<APPLET CODE="VncViewer" ARCHIVE="VncViewer.jar" CODEBASE="http://amigos18.diku.dk:8114/tightvnc/" WIDTH="1024" HEIGHT="800"><PARAM NAME="PORT" VALUE="8111"><PARAM NAME="Encoding" VALUE="Raw"></APPLET>"""
     
     popup = """
@@ -68,20 +99,25 @@ def main(cert_name_no_spaces, user_arguments_dict):
     win.document.close();
     }
     </script>""" % applet
-
+    
     output_objects.append({'object_type': 'title', 'text'
                           : 'MiG Virtual Machines'})
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Virtual Machines'})
-    output_objects.append({'object_type': 'sectionheader', 'text': ''})
-    output_objects.append({'object_type': 'text',
-                           'text' : '<a href="#" onClick="vncClientPopup(); return false;">Connect to virtual machine</a>'}
-                          )
+    output_objects.append({'object_type': 'text', 'text': submenu })
+    output_objects.append({'object_type': 'text', 'text'
+                              : '<p>&nbsp;</p>'
+                              })
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Your machines:' + popup
+                          : welcomeText
+                          })    
+    output_objects.append({'object_type': 'text', 'text': descriptionText + popup})
+    
+    output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Your machines:'
                           })
     output_objects.append({'object_type': 'text', 'text'
-                              : 'Not implemented yet'
+                              : 'Not yet implemented.'
                               })
 
     return (output_objects, status)

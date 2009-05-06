@@ -108,7 +108,7 @@ table.monitorresreq { border: 0; }
 table.monitorruntimeenvreq { border: 0; }
 
 /* Navigational menu... */
-#mignavmenu {
+.navmenu {
   background: #aaa url('../images/background_greypattern.png');
   width: 150px;
   float: left;
@@ -116,41 +116,45 @@ table.monitorruntimeenvreq { border: 0; }
   -moz-border-radius-bottomright: 5px;
 }
 
-ul#mignavlist {
+.navmenu ul {
 	margin: 0;
 	padding: 0px 0px 9px 7px;
 }
 
-#mignavlist li {
+.navsubmenu ul {
+	margin: 0;
+	padding: 0;
+	margin-top: -10px;
+}
 
-	/*display: inline;*/
+.navmenu ul li, .navsubmenu ul li {
 	margin-top: 10px;	
 	list-style-type: none;
 }
 
-#mignavlist li.dashboard a {  background-image: url('../images/icons/application.png'); }
-#mignavlist li.submitjob a {  background-image: url('../images/icons/cog_add.png'); }
-#mignavlist li.files a {  background-image: url('../images/icons/drive.png'); }
-#mignavlist li.jobs a {  background-image: url('../images/icons/cog.png'); }
-#mignavlist li.vgrids a {  background-image: url('../images/icons/folder.png'); }
-#mignavlist li.vmachines a {  background-image: url('../images/icons/computer.png'); }
-#mignavlist li.resources a {  background-image: url('../images/icons/server.png'); }
-#mignavlist li.downloads a {  background-image: url('../images/icons/download.png'); }
-#mignavlist li.runtimeenvs a {  background-image: url('../images/icons/database.png'); }
-#mignavlist li.settings a {  background-image: url('../images/icons/wrench.png'); }
-#mignavlist li.shell a {  background-image: url('../images/icons/application_osx_terminal.png'); }
+.navmenu ul li.dashboard a {  background-image: url('../images/icons/application.png'); }
+.navmenu ul li.submitjob a {  background-image: url('../images/icons/cog_add.png'); }
+.navmenu ul li.files a {  background-image: url('../images/icons/drive.png'); }
+.navmenu ul li.jobs a {  background-image: url('../images/icons/cog.png'); }
+.navmenu ul li.vgrids a {  background-image: url('../images/icons/folder.png'); }
+.navmenu ul li.vmachines a {  background-image: url('../images/icons/computer.png'); }
+.navmenu ul li.resources a {  background-image: url('../images/icons/server.png'); }
+.navmenu ul li.downloads a {  background-image: url('../images/icons/download.png'); }
+.navmenu ul li.runtimeenvs a {  background-image: url('../images/icons/database.png'); }
+.navmenu ul li.settings a {  background-image: url('../images/icons/wrench.png'); }
+.navmenu ul li.shell a {  background-image: url('../images/icons/application_osx_terminal.png'); }
 
-#mignavlist li a:hover {	
+.navmenu ul li a:hover, .navsubmenu ul li a:hover {	
 	background-color: #369;
 	color: white;
 }
 
-#mignavlist li a.selected {	
+.navmenu ul  li a.selected {	
 	background-color: #369;
 	color: white;
 }
 
-#mignavlist li a {
+.navmenu ul li a, .navsubmenu ul li a {
 	-moz-border-radius:4px;
   display: block;
 	
@@ -170,6 +174,11 @@ ul#mignavlist {
   margin-right: 10px;
 }
 
+.navsubmenu ul li a {
+	display: inline;
+	float: left;
+}
+
 /* Used in one place... maybe that place should be fixed? to use h1 instead */
 #migheader {
 	font-size:28px;
@@ -187,10 +196,17 @@ ul#mignavlist {
   background-position: left;
   
   padding: 3px 0 3px 5px;
+
   font-size: 20px;
 	font-weight: bold;
   font-variant: small-caps;
+
 	color: white;
+}
+
+#toplogo div {
+	background: url('../images/logorev2.gif') no-repeat;
+	height: 100px;
 }
 
 .migtable {
