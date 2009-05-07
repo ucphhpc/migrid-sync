@@ -83,80 +83,67 @@ def get_cgi_html_header(
         
         current_page = os.path.basename(sys.argv[0]).replace('.py', '')
         menu_items  = (
-# TODO: add dashboard and vmachines when ready
-#                        {
-#                        'class'    : 'dashboard',
-#                        'url'       : '/cgi-bin/dashboard.py',
-#                        'title'     : 'Dashboard'
-#                        },
-                        {
-                        'class'    : 'submitjob',
-                        'url'       : '/cgi-bin/submitjob.py',
-                        'title'     : 'Submit Job'
-                        },
-                        {
-                        'class'    : 'files',
-                        'url'       : '/cgi-bin/ls.py?flags=a',
-                        'title'     : 'Files'
-                        },
-                        {
-                        'class'    : 'jobs',
-                        'url'       : '/cgi-bin/managejobs.py',
-                        'title'     : 'Jobs'
-                        },
-                        {
-                        'class'    : 'vgrids',
-                        'url'       : '/cgi-bin/vgridadmin.py',
-                        'title'     : 'VGrids'
-                        },
-#                        {
-#                        'class'    : 'vmachines',
-#                        'url'       : '/cgi-bin/vmachines.py',
-#                        'title'     : 'VMachines'
-#                        },
-                        {
-                        'class'    : 'resources',
-                        'url'       : '/cgi-bin/resadmin.py',
-                        'title'     : 'Resources'
-                        },
-                        {
-                        'class'    : 'downloads',
-                        'url'       : '/cgi-bin/downloads.py',
-                        'title'     : 'Downloads'
-                        },
-                        {
-                        'class'    : 'runtimeenvs',
-                        'url'       : '/cgi-bin/redb.py',
-                        'title'     : 'Runtime Envs'
-                        },
-                        {
-                        'class'    : 'settings',
-                        'url'       : '/cgi-bin/settings.py',
-                        'title'     : 'Settings'
-                        },
-                        {
-                        'class'    : 'shell',
-                        'url'       : '/cgi-bin/shell.py',
-                        'title'     : 'Shell'
-                        },
-                        
+            # TODO: add dashboard and vmachines when ready
+            #{
+            #'class'    : 'dashboard',
+            #'url'       : '/cgi-bin/dashboard.py',
+            #'title'     : 'Dashboard'
+            #},
+            {
+            'class'    : 'submitjob',
+            'url'       : '/cgi-bin/submitjob.py',
+            'title'     : 'Submit Job'
+            },
+            {
+            'class'    : 'files',
+            'url'       : '/cgi-bin/ls.py?flags=a',
+            'title'     : 'Files'
+            },
+            {
+            'class'    : 'jobs',
+            'url'       : '/cgi-bin/managejobs.py',
+            'title'     : 'Jobs'
+            },
+            {
+            'class'    : 'vgrids',
+            'url'       : '/cgi-bin/vgridadmin.py',
+            'title'     : 'VGrids'
+            },
+            #{
+            #'class'    : 'vmachines',
+            #'url'       : '/cgi-bin/vmachines.py',
+            #'title'     : 'VMachines'
+            #},
+            {
+            'class'    : 'resources',
+            'url'       : '/cgi-bin/resadmin.py',
+            'title'     : 'Resources'
+            },
+            {
+            'class'    : 'downloads',
+            'url'       : '/cgi-bin/downloads.py',
+            'title'     : 'Downloads'
+            },
+            {
+            'class'    : 'runtimeenvs',
+            'url'       : '/cgi-bin/redb.py',
+            'title'     : 'Runtime Envs'
+            },
+            {
+            'class'    : 'settings',
+            'url'       : '/cgi-bin/settings.py',
+            'title'     : 'Settings'
+            },
+            {
+            'class'    : 'shell',
+            'url'       : '/cgi-bin/shell.py',
+            'title'     : 'Shell'
+            },
         )
         
         menu_lines = render_menu('navmenu', menu_items, current_page)
         
-        """'<div class="navmenu">' +\
-                     '<ul>'
-        
-        for menu_line in menu_items:
-            selected = ''
-            if menu_line['url'].find(current_page) > -1:
-                selected = ' class="selected" '+current_page
-            menu_lines += '<li class="%s"><a href="%s" %s>%s</a></li>' % (menu_line['class'], menu_line['url'], selected, menu_line['title'])
-            
-        menu_lines += '</ul>'
-        menu_lines += '</div>'"""
-
-    return '''<?xml version="1.0" encoding="iso-8859-1"?>
+    return '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
