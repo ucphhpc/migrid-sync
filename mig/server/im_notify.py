@@ -51,7 +51,6 @@ import os
 
 from shared.conf import get_configuration_object
 
-nick_counter = 1
 getting_buddy_list = False
 protocol_online_dict = {
     'jabber': False,
@@ -73,7 +72,6 @@ def send_msg(
 
     print 'send msg called'
     global getting_buddy_list
-    global nick_counter
     global latest_contact_online
     global protocol_online_dict
     global nick_and_id_dict
@@ -136,26 +134,17 @@ def send_msg(
 
         print 'account %s_%s not found in buddy list, adding..'\
              % (im_network, dest)
+
+        # Get protocol ID (called account)
+        
         account_number = get_account_number(im_network)
 
-        # find highest "integer" nick
+        # assign unique local nick
 
-        for ele in nick_and_id_dict.keys():
-            dict = nick_and_id_dict[ele]
-            try:
-                if int(dict['nick']) > nick_counter:
-                    print 'found: %s' % int(dict['nick'])
-                    nick_counter = int(dict['nick'])
-            except Exception:
-
-                # not integer? doesnt matter, we're looking for a unique id
-                # and the highest id+1 should be unique even though some contacts
-                # have a non-integer nickname
-
-                pass
+        nickname = 'nick%d' % len(nick_and_id_dict)
         
-        nick_counter += 1
-        nickname = 'nick%s' % nick_counter
+        print 'assigned local nick %s to new user %s with %d nicks' % \
+              (nickname, dest, len(nick_and_id_dict))
 
         # give contact a second to get online
 
@@ -392,6 +381,11 @@ while keep_running:
             print 'Sending message: protocol: %s to: %s message: %s'\
                   % (protocol, recipient, message)
             send_msg(irc_server, recipient, protocol, message)
+        elif line.upper().startswith('SHOWBUDDIES'):
+            print 'Buddy list:'
+            for (key, val) in nick_and_id_dict.items():
+                print '%s:\n\t%s' % (key, val)
+            print '-----' 
         elif line.upper().startswith('SHUTDOWN'):
             print '--- SAFE SHUTDOWN INITIATED ---'
             break
