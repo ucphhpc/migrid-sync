@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# deleteuser - [insert a few words of module description on this line]
+# deleteuser - Remove a MiG user
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Remove MiG user"""
+"""Remove MiG user from user database and file system"""
 
 import sys
 import time
@@ -40,7 +40,7 @@ from shared.configuration import Configuration
 def usage(name='deleteuser.py'):
     print """Usage:
 %(name)s [OPTIONS] FULL_NAME [ORGANIZATION] [STATE] [COUNTRY] \
-    [EMAIL] [COMMENT] [PASSWORD]
+    [EMAIL]
 or
 %(name)s -u USER_FILE
 Where OPTIONS may be one or more of:
@@ -124,8 +124,6 @@ if args:
         user_dict['state'] = args[2]
         user_dict['country'] = args[3]
         user_dict['email'] = args[4]
-        user_dict['comment'] = args[5]
-        user_dict['password'] = args[6]
     except IndexError:
 
         # Ignore missing optional arguments

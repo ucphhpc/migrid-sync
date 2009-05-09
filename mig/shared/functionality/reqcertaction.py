@@ -209,7 +209,7 @@ cd ~/mig/server
         """
 As '%s' user on %s:
 cd ~/mig/server
-./deleteuser.py '%s' '%s' '%s' '%s' '%s' '%s' '%s'"""\
+./deleteuser.py '%s' '%s' '%s' '%s' '%s'"""\
          % (
              mig_user,
              configuration.server_fqdn,
@@ -218,8 +218,6 @@ cd ~/mig/server
              state,
              country,
              email,
-             comment,
-             password,
              )
 
     email_header = 'MiG certificate request for %s' % cert_name
