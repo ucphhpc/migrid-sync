@@ -215,22 +215,24 @@ Automatic refresh every %(sleep_secs)s secs.<br>
 <tr><td>MB Memory</td><td>%(memory_requested)s</td><td>%(memory_done)s</td></tr>
 </table><br>
 </td><td valign=top>
-<table class=monitorruntimeenvreq><tr class=title><td>Runtimeenvironment</td><td></td></tr>"""\
+<table class=monitorruntimeenvreq>
+<tr class=title><td>Runtimeenvironment</td><td></td></tr>
+"""\
          % html_vars
 
     if len(runtimeenv_dict.keys()) < 1:
 
         # No runtimeenv requests
 
-        html += '<tr><td></td><td>-</td></tr>'
+        html += '<tr><td></td><td>-</td></tr>\n'
     else:
         for entry in runtimeenv_dict.keys():
             if not entry == '':
                 html += '<tr><td>' + entry + '</td><td>'\
-                     + str(runtimeenv_dict[entry]) + '</td></tr>'
+                     + str(runtimeenv_dict[entry]) + '</td></tr>\n'
     html += \
         """</table>
-</td></tr>
+</td></tr>\n
 </table><br>
 <br>
 <hr><br>
@@ -241,13 +243,16 @@ Listing the last request from each resource<br>
 <tr class=title><td>Resource and last seen</td><td>Time ago</td><td>VGrid</td><td>CPU time</td>
 <td>Node count</td><td>CPU count</td><td>GB Disk</td>
 <td>MB Memory</td><td>Arch</td><td>Status</td>
-<td>Time</td><td>Time remaining</td></tr>"""
+<td>Time</td><td>Time remaining</td></tr>
+"""
 
     total_number_of_resources = 0
     total_number_of_cpus = 0
 
     vgrid_name_list = vgrid_name.split('/')
     current_dir = ''
+    row_number = 0
+    row_name = ('even_row', 'odd_row')
 
     for vgrid_name_part in vgrid_name_list:
         current_dir += '/' + vgrid_name_part
@@ -325,7 +330,9 @@ Listing the last request from each resource<br>
                 else:
                     unique_res_name_and_exe_list = \
                         filename.split('monitor_last_request_', 1)
-                    html += '<tr><td> '\
+                    row_class = row_name[row_number % 2]
+                    row_number += 1
+                    html += '<tr class=%s><td>' % row_class \
                          + unique_res_name_and_exe_list[1] + '<br>'\
                          + time.asctime(last_request_dict['CREATED_TIME'
                             ].timetuple()) + '</td>'
@@ -352,7 +359,7 @@ Listing the last request from each resource<br>
                             ]) + '</td>'
 
                     if cpusec == 0:
-                        html += '<td>-'
+                        html += '<td class=status_unavailable>-'
                     elif time_remaining.days < 0:
 
                         # time_remaining.days < 0 means that we have passed the specified time
@@ -361,24 +368,24 @@ Listing the last request from each resource<br>
                         if time_rem_abs.days == 0\
                              and int(time_rem_abs.seconds)\
                              < int(slackperiod):
-                            html += '<td>Within slack period ('\
+                            html += '<td class=status_slack>Within slack period ('\
                                  + str(int(time_rem_abs.seconds)) + '<'\
                                  + str(int(slackperiod))\
                                  + ' secs).</td>'
                             slack_count = slack_count + 1
                         else:
-                            html += '<td>down?</td>'
+                            html += '<td class=status_offline>down?</td>'
                             down_count = down_count + 1
                     else:
 
                             # count number of res with jobs assigned
 
-                        html += '<td>' + days_rem + ' days, '\
+                        html += '<td class=status_online>' + days_rem + ' days, '\
                              + hours_rem + ' hours, ' + minutes_rem\
                              + ' min, ' + seconds_rem + 'secs</td>'
                         up_count = up_count + 1
 
-                    html += '</tr>'
+                    html += '</tr>\n'
                     if last_request_dict['STATUS'] == 'Job assigned':
                         job_assigned = job_assigned + 1
                         job_assigned_cpus = job_assigned_cpus\
@@ -395,15 +402,15 @@ Listing the last request from each resource<br>
                          * int(last_request_dict['RESOURCE_CONFIG'
                                ]['CPUCOUNT'])
 
-    html += '</table>'
+    html += '</table>\n'
 
-    html += '<br><hr><br><h3>VGrid Totals</h3>A total of <b>'\
+    html += '<br>\n<hr>\n<br>\n<h3>VGrid Totals</h3>\nA total of <b>'\
          + str(total_number_of_resources) + '</b> resources ('\
          + str(total_number_of_cpus) + " cpu's) joined this VGrid ("\
          + str(up_count) + ' up, ' + str(down_count) + ' down?, '\
          + str(slack_count) + ' slack)<br>'
     html += str(job_assigned) + ' resources (' + str(job_assigned_cpus)\
-         + " cpu's) seems to be executing a job<br><br>\n"
+         + " cpu's) appear to be executing a job<br>\n<br>\n"
     html += '<!-- begin raw footer: this line is used by showvgridmonitor -->'
     html += get_cgi_html_footer('')
 
