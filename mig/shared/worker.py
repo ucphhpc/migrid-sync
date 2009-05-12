@@ -46,15 +46,21 @@ class Worker(Thread):
         self.__args = args
         self.__kwargs = kwargs
         self.__result = None
+        self.__exception = None
         Thread.__init__(self, group=group, target=target, args=args, kwargs=kwargs)
 
     def run(self):
         """Start execution of this worker thread"""
-        self.__result = self.__target(*(self.__args), **(self.__kwargs))
+        try:
+            self.__result = self.__target(*(self.__args), **(self.__kwargs))
+        except Exception, exc:
+            self.__exception = exc
 
     def finish(self):
         """Wait for the worker thread and return result"""
         self.join()
+        if self.__exception:
+            raise self.__exception
         return self.__result
 
 if "__main__" == __name__:
