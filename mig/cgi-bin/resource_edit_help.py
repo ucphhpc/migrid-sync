@@ -60,6 +60,11 @@ print resource_keywords['HOSTIDENTIFIER']['Description']
 print """		<BR><BR>Example:&nbsp;"""
 print resource_keywords['HOSTIDENTIFIER']['Example']
 print """		<BR><BR>
+			<B><A NAME="publicname">Public name:</A></B><BR>"""
+print resource_keywords['PUBLICNAME']['Description']
+print """		<BR><BR>Example:&nbsp;"""
+print resource_keywords['PUBLICNAME']['Example']
+print """		<BR><BR>
 			<B><A NAME="mig_user">MiG user:</A></B><BR>"""
 print resource_keywords['MIGUSER']['Description']
 print """		<BR><BR>Example:&nbsp;"""

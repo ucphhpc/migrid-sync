@@ -364,6 +364,11 @@ if (form.has_key('new_resource') or form.has_key('apply_changes'))\
             fd.write(form['hostidentifier'].value + '\n')
         fd.write('\n')
 
+        if form.has_key('publicname') and form['publicname'].value:
+            fd.write('::PUBLICNAME::\n')
+            fd.write(form['publicname'].value + '\n')
+            fd.write('\n')
+
         fd.write('::RESOURCEHOME::\n')
         if form.has_key('mig_home') and form.has_key('hosturl')\
              and form.has_key('hostidentifier'):
@@ -731,6 +736,7 @@ else:
     mig_home = '/home/mig'
     hostkey = ''
     hostip = ''
+    publicname = ''
     sshport = '22'
     sshmultiplex = ''
     scriptlanguage = '0'
@@ -838,9 +844,14 @@ else:
                     hostip = str((conf_dict['HOSTKEY'])[ip_start_index
                                   + 1:hostkey_start_index - 1])
 
-            sshport = str(conf_dict['SSHPORT'])
+            if conf_dict.has_key('PUBLICNAME'):
+                publicname = str(conf_dict['PUBLICNAME'])
 
-            sshmultiplex = str(conf_dict['SSHMULTIPLEX'])
+            if conf_dict.has_key('SSHPORT'):
+                sshport = str(conf_dict['SSHPORT'])
+
+            if conf_dict.has_key('SSHMULTIPLEX'):
+                sshmultiplex = str(conf_dict['SSHMULTIPLEX'])
 
             if hostkey_start_index != -1:
                 hostkey = str((conf_dict['HOSTKEY'])[hostkey_start_index
@@ -1071,6 +1082,12 @@ else:
     print """                   <input type="hidden" name="hostidentifier" size="30" value='"""\
          + hostidentifier\
          + """'> 
+                                <BR><BR>
+                                <B>Public name:</B>&nbsp<A HREF="./resource_edit_help.py#publicname">help</A>
+                                <BR>
+                                <input type="text" name="publicname" size="30" value='"""\
+         + html_encode(publicname)\
+         + """'>
                                 <BR><BR>
                                 <B>MiG user:</B>&nbsp;<A HREF="./resource_edit_help.py#mig_user">help</A>
                                 <BR>

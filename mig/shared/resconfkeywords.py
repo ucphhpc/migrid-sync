@@ -273,6 +273,13 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         'Value': '',
         'Required': False,
         }
+    publicname = {
+        'Description': 'Specifies a public name or alias to display as the resource identity in monitors. This _may_ eventually be allowed as a job field to target in order to direct jobs to a specific resource.',
+        'Example': 'EightByEight',
+        'Type': 'string',
+        'Value': '',
+        'Required': False,
+        }
 
     # create the keywords in a single dictionary
 
@@ -308,6 +315,7 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         'MAXDOWNLOADBANDWIDTH': maxdownloadbandwidth,
         'MAXUPLOADBANDWIDTH': maxuploadbandwidth,
         'PLATFORM': platform,
+        'PUBLICNAME': publicname,
         }
     return keywords_dict
 
