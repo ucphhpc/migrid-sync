@@ -38,7 +38,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     defaults = {'username': REJECT_UNSET, 'password': REJECT_UNSET,
-                'newuser': ['off'], 'vgrid': ['Generic']}
+                'newuser': ['off'], 'expert':['false']}
     return ['html_form', defaults]
 
 
@@ -46,14 +46,13 @@ def print_hd_selection():
     """Returns html section where a user chooses disc space"""
 
     html = \
-        """<tr><td align='' colspan=''>How much disc space can 
+        """<tr><td>How much disc space can 
     you allow the sandbox to use?</td>
     <td><select name='hd_size'>
     <option value='100'>100 MB</option>
     <option value='1000'>1 GB</option>
     <option value='2000'>2 GB</option>
     </select>
-    <input type=hidden name='image_format' value='qcow'>
     </td></tr>"""
     return html
 
@@ -62,7 +61,7 @@ def print_net_selection():
     """Returns html section where a user chooses max download and upload speed"""
 
     html = \
-        """<tr><td align='' colspan=''>What is the max download/upload bandwidth in kB/s
+        """<tr><td>What is the max download/upload bandwidth in kB/s
     you will allow the sandbox to use?</td>
     <td><select name='net_bw'>
     <option value='0'>No limit</option>
@@ -80,7 +79,7 @@ def print_mem_selection():
     """Prints html section where a user amount of physical memory"""
 
     html = \
-        """<tr><td align='' colspan=''>How much physical memory
+        """<tr><td>How much physical memory
           does your PC have?</td>
     <td><select name='memory'>
     <option value='256'>256 MB</option>
@@ -110,12 +109,37 @@ def print_windows_solution_selection():
     the screensaver or the windows service model"""
 
     html = \
-        """<tr><td align='' colspan=''>If Windows, do you want 
+        """<tr><td>If Windows, do you want 
           the screensaver <break> or the service model? If unsure, choose screensaver</td>
     <td><select name='win_solution'>
     <option value='screensaver'>Screensaver</option>
     <option value='service'>Windows Service</option>
     </select></td></tr>"""
+    return html
+
+def print_expert_settings(display):
+    """Prints html section where a user chooses whether he wants
+    the advanced settings like image format and vgrid"""
+
+    if display:
+        html = \
+             """<tr><td align='' colspan=''>Which kind of disk image would you like?</td>
+    <td><select name='image_format'>
+    <option value='qcow'>qcow</option>
+    <option value='raw'>raw</option>
+    </select></td></tr>
+    <tr><td align='' colspan=''>Which VGrid do you want the sandbox to work for?</td>
+    <td><select name='vgrid'>
+    <option value='Generic'>Generic</option>
+    </select></td></tr>
+"""
+    else:
+        html = \
+             """
+             <input type=hidden name='image_format' value='qcow'>
+             <input type='hidden' name='vgrid' value='Generic'>
+"""
+
     return html
 
 
@@ -128,8 +152,8 @@ def count_jobs(resource_name):
     return value
 
 
-def show_info(user, vgrid_list):
-    """Shows info for given user and passes any vgrid settings on unchanged"""
+def show_info(user, passwd, expert):
+    """Shows info for given user"""
 
     # Resource Monitor Section
 
@@ -171,16 +195,12 @@ def show_info(user, vgrid_list):
     html += print_net_selection()
     html += print_os_selection()
     html += print_windows_solution_selection()
-
+    html += print_expert_settings(expert)
+        
     html += \
         """<tr><td>
     <input type='hidden' name='username' value='%s'>
 """ % user
-    for vgrid in vgrid_list:
-        html += \
-             """<input type='hidden' name='vgrid' value='%s'>
-""" % vgrid
-
     html += \
         """</td></tr>
         """
@@ -188,15 +208,30 @@ def show_info(user, vgrid_list):
         """<tr><td>Press 'Submit' to download - please note that it 
           may<br> take up to 2 minutes to generate your sandbox</td>
           <td align='center'><input type='SUBMIT' value='Submit'>
+          </form>
           </td></tr>
 
     </table>
     <br>
-    <table class=sandboxadmin><tr><td align='center'>If you run into 
-          any problems, please contact the MiG administrators (%s)
-          </td></tr></table> 
-    </form>"""\
-         % admin_email.replace('<', '&lt;').replace('>', '&gt;')
+    <table class=sandboxadmin>
+    <tr><td align='center'>
+    Advanced users may want to fine tune the sandbox to download by switching to expert mode:
+    <form action='sandbox_admin.py' method='POST'>
+    <input type='hidden' name='username' value='%s'>
+    <input type='hidden' name='password' value='%s'>
+    <input type='hidden' name='expert' value='%s'>
+    <input type='submit' value='Toggle expert mode'>
+    </form>
+    </td></tr>    
+    <tr><td align='center'>
+    <br>
+    </td></tr>    
+    <tr><td align='center'>
+    If you run into any problems, please contact the MiG administrators (%s)
+    </td></tr>
+    </table> 
+    """\
+    % (user, passwd, not expert, admin_email.replace('<', '&lt;').replace('>', '&gt;'))
     return html
 
 
@@ -217,7 +252,10 @@ def main(cert_name_no_spaces, user_arguments_dict):
     username = accepted['username'][-1].strip()
     password = accepted['password'][-1].strip()
     newuser = accepted['newuser'][-1].strip()
-    vgrid_list = accepted['vgrid']
+    expert_string = accepted['expert'][-1].strip()
+    expert = False
+    if "true" == expert_string.lower():
+        expert = True
 
     PW = 0
     global RESOURCES
@@ -286,7 +324,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                          % exc})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
             output_objects.append({'object_type': 'html_form', 'text'
-                                  : show_info(username, vgrid_list)})
+                                  : show_info(username, password, expert)})
     else:
 
     # Otherwise, check that username and password are correct
@@ -315,7 +353,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
             # print "<a href='sandbox_login.py'>Back</a>"....
 
             output_objects.append({'object_type': 'html_form', 'text'
-                                  : show_info(username, vgrid_list)})
+                                  : show_info(username, password, expert)})
     output_objects.append({'object_type': 'text', 'text':''})
     return (output_objects, returnvalues.OK)
 
