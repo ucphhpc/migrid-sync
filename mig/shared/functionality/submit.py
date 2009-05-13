@@ -40,6 +40,7 @@ from shared.job import new_job
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'path': REJECT_UNSET, 'flags': ['']}
     return ['', defaults]
 

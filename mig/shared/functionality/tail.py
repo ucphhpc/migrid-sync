@@ -25,14 +25,7 @@
 # -- END_HEADER ---
 #
 
-# cgi version (automagically updated by cvs)
-
-"""Emulate the un*x function with the same name."""
-
-__version__ = '$Revision: 1910 $'
-__revision__ = __version__
-
-# $Id: tail.py 1910 2007-06-01 13:08:03Z jones $
+"""Emulate the un*x function with the same name"""
 
 import os
 import sys
@@ -46,6 +39,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'flags': [''], 'lines': [20], 'path': REJECT_UNSET}
     return ['file_output', defaults]
 

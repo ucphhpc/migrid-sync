@@ -34,13 +34,13 @@ import cgi
 from shared.gridstat import GridStat
 import shared.cgishared
 from shared.conf import get_configuration_object
-
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'show_all': ['']}
     return ['sandboxinfos', defaults]
 

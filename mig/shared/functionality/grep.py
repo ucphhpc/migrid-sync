@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Emulate the un*x function with the same name."""
+"""Emulate the un*x function with the same name"""
 
 import os
 import sys
@@ -39,6 +39,12 @@ from shared.parseflags import verbose
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 
+
+def signature():
+    """Signature of the main function"""
+    defaults = {'path': REJECT_UNSET, 'flags': [''],
+                'pattern': REJECT_UNSET}
+    return ['file_output', defaults]
 
 def pattern_match_file(pattern, filename, allowed_time=5.0):
     """Return lines in file which match the provided pattern"""
@@ -73,8 +79,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         initialize_main_variables()
 
     status = returnvalues.OK
-    defaults = {'path': REJECT_UNSET, 'flags': [''],
-                'pattern': REJECT_UNSET}
+    defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,

@@ -251,7 +251,7 @@ Listing the last request from each resource<br>
 
     vgrid_name_list = vgrid_name.split('/')
     current_dir = ''
-    row_number = 0
+    row_number = 1
     row_name = ('even_row', 'odd_row')
 
     for vgrid_name_part in vgrid_name_list:

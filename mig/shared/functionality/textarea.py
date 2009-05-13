@@ -36,10 +36,6 @@ This is the form handler called by html pages
 import cgi
 import os
 import time
-
-# TODO: is xmlrpclib used at all?
-
-import xmlrpclib
 import base64
 
 import shared.returnvalues as returnvalues
@@ -53,6 +49,7 @@ from shared.validstring import valid_user_path
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {}
     return ['todo: signature', defaults]
 

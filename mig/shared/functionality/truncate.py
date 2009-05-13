@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Emulate the un*x function with the same name."""
+"""Emulate the un*x function with the same name"""
 
 import os
 import sys
@@ -39,6 +39,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'flags': [''], 'size': [0], 'path': REJECT_UNSET}
     return ['', defaults]
 

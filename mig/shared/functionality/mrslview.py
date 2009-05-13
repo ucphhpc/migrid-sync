@@ -40,6 +40,12 @@ from shared.fileio import unpickle
 from shared.mrslkeywords import get_keywords_dict
 
 
+def signature():
+    """Signature of the main function"""
+    defaults = {'job_id': REJECT_UNSET, 'flags': ['']}
+    return ['text', defaults]
+
+
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
@@ -47,7 +53,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         initialize_main_variables()
 
     status = returnvalues.OK
-    defaults = {'job_id': REJECT_UNSET, 'flags': ['']}
+    defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,

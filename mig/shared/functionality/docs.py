@@ -41,6 +41,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'show': [''], 'search': ['']}
     return ['text', defaults]
 

@@ -25,6 +25,8 @@
 # -- END_HEADER ---
 #
 
+"""Stop exe unit"""
+
 import cgi
 import os
 import sys
@@ -39,6 +41,7 @@ from shared.worker import Worker
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {
         'unique_resource_name': REJECT_UNSET,
         'exe_name': [],

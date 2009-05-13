@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-""" Resubmit a job
+"""Resubmit a job
 The idea is to reuse the existing job submit code (new_job()) and
 make a resubmit like any other job submission (textarea, mRSL file upload). 
 
@@ -48,6 +48,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'job_id': REJECT_UNSET}
     return ['resubmitobjs', defaults]
 

@@ -30,13 +30,13 @@
 import pickle
 
 from shared.gridstat import GridStat
-
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'username': REJECT_UNSET, 'password': REJECT_UNSET,
                 'newuser': ['off'], 'expert':['false']}
     return ['html_form', defaults]

@@ -42,6 +42,7 @@ from shared.job import get_job_ids_with_specified_project_name
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {
         'job_id': [],
         'max_jobs': ['1000000'],
@@ -217,6 +218,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
             'VERIFIED_TIMESTAMP',
             'RECEIVED_TIMESTAMP',
             'QUEUED_TIMESTAMP',
+            'SCHEDULE_TIMESTAMP',
             'EXECUTING_TIMESTAMP',
             'FINISHED_TIMESTAMP',
             'FAILED_TIMESTAMP',
@@ -268,6 +270,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
                     execution_histories.append({'execution_history'
                             : execution_history, 'count': counter})
                     counter += 1
+            if job_dict.has_key('SCHEDULE_HINT'):
+                job_obj['schedule_hint'] = job_dict['SCHEDULE_HINT']
+
         job_obj['execution_histories'] = execution_histories
 
         job_obj['statuslink'] = {'object_type': 'link',
@@ -296,6 +301,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
         job_obj['cancellink'] = {'object_type': 'link',
                                  'destination': '/cgi-bin/canceljob.py?job_id=%s'\
                                   % job_id, 'text': 'Cancel job'}
+        job_obj['jobschedulelink'] = {'object_type': 'link',
+                'destination': '/cgi-bin/jobschedule.py?job_id=%s'\
+                 % job_id, 'text': 'Request schedule information'}
         job_obj['liveoutputlink'] = {'object_type': 'link',
                 'destination': '/cgi-bin/liveoutput.py?job_id=%s'\
                  % job_id, 'text': 'Request live update'}
@@ -305,5 +313,3 @@ def main(cert_name_no_spaces, user_arguments_dict):
     output_objects.append({'object_type': 'text', 'text':''})
 
     return (output_objects, status)
-
-

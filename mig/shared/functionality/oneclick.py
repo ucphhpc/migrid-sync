@@ -35,12 +35,14 @@ import os
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 from shared.sandbox import get_resource
-
 import shared.returnvalues as returnvalues
 
+
 def signature():
+    """Signature of the main function"""
     defaults = {'debug': ["false"]}
     return ['html_form', defaults]
+
 
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""

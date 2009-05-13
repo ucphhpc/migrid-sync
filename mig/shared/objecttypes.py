@@ -93,6 +93,8 @@ runtimeenvironment = {
     }
 changedstatusjob = {'object_type': 'changedstatusjob',
                     'required': ['job_id'], 'optional': []}
+saveschedulejob = {'object_type': 'saveschedulejob',
+                    'required': ['job_id'], 'optional': []}
 resubmitobj = {'object_type': 'resubmitobj', 'required': ['job_id'],
                'optional': []}
 submitstatus = {'object_type': 'submitstatus', 'required': ['name',
@@ -138,6 +140,9 @@ runtimeenvironments = {'object_type': 'runtimeenvironments',
 changedstatusjobs = {'object_type': 'changedstatusjobs',
                      'required_list': [('changedstatusjobs',
                      'changedstatusjob')]}
+saveschedulejobs = {'object_type': 'saveschedulejobs',
+                     'required_list': [('saveschedulejobs',
+                     'saveschedulejob')]}
 submitstatuslist = {'object_type': 'submitstatuslist',
                     'required_list': [('submitstatuslist',
                     'submitstatus')]}
@@ -182,6 +187,8 @@ valid_types_list = [
     filewcs,
     changedstatusjobs,
     changedstatusjob,
+    saveschedulejobs,
+    saveschedulejob,
     resubmitobj,
     resubmitobjs,
     submitstatuslist,

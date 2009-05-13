@@ -25,9 +25,7 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
-""" List owners, members, res's and show html controls to administrate a vgrid """
+"""List owners, members, res's and show html controls to administrate a vgrid"""
 
 from shared.validstring import valid_dir_input
 from shared.vgrid import vgrid_list
@@ -37,11 +35,13 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'vgrid_name': REJECT_UNSET}
     return ['html_form', defaults]
 
 
 def create_html(vgrid_name, configuration):
+    """HTML format"""
     out = '<H3>Owners</H3>'
 
     # list owners

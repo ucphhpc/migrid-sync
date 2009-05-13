@@ -40,6 +40,7 @@ from shared.vgrid import vgrid_list_vgrids, vgrid_is_owner, \
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {}
     return ['vgrids', defaults]
 
@@ -131,6 +132,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
                           : 'List of vgrids where you are registered as member:'
                           })
     output_objects.append(member_list)
+
+    output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'VGrid Totals'})
+    output_objects.append({'object_type': 'link', 'text'
+                          : 'View a multi VGrid monitor with all the resources you can access'
+                          , 'destination'
+                          : '/cgi-bin/showvgridmonitor.py?vgrid_name=ALL'})
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'VGrid request'})

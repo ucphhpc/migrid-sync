@@ -39,6 +39,7 @@ from shared.worker import Worker
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {
         'unique_resource_name': REJECT_UNSET,
         'cputime': ['-1'],

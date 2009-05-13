@@ -36,6 +36,7 @@ default_language = 'english'
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'language': [default_language]}
     return ['html_form', defaults]
 

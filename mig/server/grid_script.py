@@ -385,6 +385,44 @@ while True:
         # put job in queue
 
         job_queue.enqueue_job(dict_serverjob, job_queue.queue_length())
+    elif cap_line.find('JOBSCHEDULE ') == 0:
+
+        # *********                     *********
+        # *********     SCHEDULE DUMP   *********
+        # *********                     *********
+
+        print cap_line
+        logger.info(cap_line)
+
+        if len(linelist) != 2:
+            logger.error('Invalid job schedule request %s' % linelist)
+            continue
+
+        # read values
+
+        job_id = linelist[1]
+
+        # find job in queue and dump schedule values to mRSL for job status
+
+        job_dict = job_queue.get_job_by_id(job_id)
+        if not job_dict:
+            logger.info('Job is not in waiting queue - no schedule to update')
+            continue
+
+        file_serverjob = configuration.mrsl_files_dir\
+             + job_dict['USER_CERT'] + os.sep + job_id + '.mRSL'
+        dict_serverjob = unpickle(file_serverjob, logger)
+        if dict_serverjob == False:
+            logger.error('Could not unpickle job - not updating schedule!')
+            continue
+
+        # update and save schedule
+        for field in ['SCHEDULE_TIMESTAMP', 'SCHEDULE_HINT']:
+            if job_dict.has_key(field):
+                dict_serverjob[field] = job_dict[field]
+                logger.info('Job %s updated to %s' % (field, dict_serverjob[field]))
+        pickle(dict_serverjob, file_serverjob, logger)
+
     elif cap_line.find('RESOURCEREQUEST ') == 0:
 
         # *********                       *********
@@ -566,7 +604,7 @@ while True:
         # want a job for all nodes)
 
         resource_config['NODECOUNT'] = nodecount
-        resource_config['RESOURCE_ID'] = unique_resource_name
+        resource_config['RESOURCE_ID'] = "%s_%s" % (unique_resource_name, exe)
 
         # specify vgrid
 

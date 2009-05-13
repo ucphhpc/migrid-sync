@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# canceljob - Request cancel of a job
+# jobschedule - Request schedule for a job
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,9 +25,7 @@
 # -- END_HEADER ---
 #
 
-# Initial version: Henrik Hoey Karlsen karlsen@imada.sdu.dk 2005
-
-"""Forward valid cancel requests to grid_script for consistent job status changes"""
+"""Forward valid schedule requests to grid_script for consistent job schedule data"""
 
 import cgi
 import cgitb
@@ -37,19 +35,18 @@ import sys
 import time
 import glob
 
+import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.validstring import valid_user_path
 from shared.fileio import unpickle, unpickle_and_change_status, \
     send_message_to_grid_script
 
-import shared.returnvalues as returnvalues
-
 
 def signature():
     """Signature of the main function"""
     defaults = {'job_id': REJECT_UNSET}
-    return ['changedstatusjobs', defaults]
+    return ['saveschedulejobs', defaults]
 
 
 def main(cert_name_no_spaces, user_arguments_dict):
@@ -120,7 +117,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         else:
             filelist += match
 
-    # job cancel is hard on the server, limit
+    # job schedule is hard on the server, limit
 
     if len(filelist) > 100:
         output_objects.append({'object_type': 'error_text', 'text'
@@ -128,7 +125,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                % len(filelist)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    changedstatusjobs = []
+    saveschedulejobs = []
 
     for filepath in filelist:
 
@@ -137,78 +134,54 @@ def main(cert_name_no_spaces, user_arguments_dict):
         mrsl_file = filepath.replace(base_dir, '')
         job_id = mrsl_file.replace('.mRSL', '')
 
-        changedstatusjob = {'object_type': 'changedstatusjob',
+        saveschedulejob = {'object_type': 'saveschedulejob',
                             'job_id': job_id}
 
         dict = unpickle(filepath, logger)
         if not dict:
-            changedstatusjob['message'] = \
-                'The file containing the information for job id %s could not be opened! You can only cancel your own jobs!'\
+            saveschedulejob['message'] = \
+                'The file containing the information for job id %s could not be opened! You can only read schedule for your own jobs!'\
                  % job_id
-            changedstatusjobs.append(changedstatusjob)
+            saveschedulejobs.append(saveschedulejob)
             status = returnvalues.CLIENT_ERROR
             continue
 
-        # Check that file belongs to the user requesting the job cancel
+        # Check that file belongs to the user requesting the job schedule
 
         if not cert_name_no_spaces == dict['USER_CERT']:
-            changedstatusjob['message'] = \
-                '%s the job you are trying to cancel does not belong to you!'\
+            saveschedulejob['message'] = \
+                '%s the job you are trying to modify does not belong to you!'\
                  % cert_name_no_spaces
             status = returnvalues.CLIENT_ERROR
-            changedstatusjobs.append(changedstatusjob)
+            saveschedulejobs.append(saveschedulejob)
             continue
 
-        changedstatusjob['oldstatus'] = dict['STATUS']
+        saveschedulejob['oldstatus'] = dict['STATUS']
 
         # Is the job status QUEUED or RETRY?
 
-        possible_cancel_states = ['QUEUED', 'RETRY', 'EXECUTING']
-        if not dict['STATUS'] in possible_cancel_states:
-            changedstatusjob['message'] = \
-                'You can only cancel jobs with status: %s.'\
-                 % ' or '.join(possible_cancel_states)
+        possible_schedule_states = ['QUEUED', 'RETRY']
+        if not dict['STATUS'] in possible_schedule_states:
+            saveschedulejob['message'] = \
+                'You can only read schedule for jobs with status: %s.'\
+                 % ' or '.join(possible_schedule_states)
             status = returnvalues.CLIENT_ERROR
-            changedstatusjobs.append(changedstatusjob)
+            saveschedulejobs.append(saveschedulejob)
             continue
-
-        # job cancel is handled by changing the STATUS field to CANCELED, notifying
-        # the job queue and making sure the server never submits a job with status
-        # CANCELED.
-
-        # file is repickled to ensure newest information is used, "dict" might be
-        # old if  another script has modified the file.
-
-        if not unpickle_and_change_status(filepath, 'CANCELED', logger):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Job status could not be changed!'})
-            status = returnvalues.SYSTEM_ERROR
-
-        # Avoid keyerror and make sure grid_script gets
-        # expected number of arguments
-
-        if not dict.has_key('UNIQUE_RESOURCE_NAME'):
-            dict['UNIQUE_RESOURCE_NAME'] = \
-                'UNIQUE_RESOURCE_NAME_NOT_FOUND'
-        if not dict.has_key('EXE'):
-            dict['EXE'] = 'EXE_NAME_NOT_FOUND'
 
         # notify queue
 
-        if not send_message_to_grid_script('CANCELJOB ' + job_id + ' '
-                 + dict['STATUS'] + ' ' + dict['UNIQUE_RESOURCE_NAME']
-                 + ' ' + dict['EXE'] + '\n', logger, configuration):
+        if not send_message_to_grid_script('JOBSCHEDULE ' + job_id + '\n', logger, configuration):
             output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Error sending message to grid_script, job may still be in the job queue.'
+                                  : 'Error sending message to grid_script, job may not be updated.'
                                   })
             status = returnvalues.SYSTEM_ERROR
             continue
 
-        changedstatusjob['newstatus'] = 'CANCELED'
-        changedstatusjobs.append(changedstatusjob)
+        saveschedulejobs.append(saveschedulejob)
 
-    output_objects.append({'object_type': 'changedstatusjobs',
-                          'changedstatusjobs': changedstatusjobs})
+    output_objects.append({'object_type': 'saveschedulejobs',
+                          'saveschedulejobs': saveschedulejobs})
     return (output_objects, status)
 
 

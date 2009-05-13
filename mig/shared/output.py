@@ -115,6 +115,13 @@ def txt_format(ret_val, ret_msg, out_obj):
             pprint_table(txt_table_if_have_keys(header,
                          changedstatusjobs, ['job_id', 'oldstatus',
                          'newstatus', 'message']))
+        elif i['object_type'] == 'saveschedulejobs':
+            saveschedulejobs = i['saveschedulejobs']
+            if len(saveschedulejobs) == 0:
+                continue
+            header = [['Job ID', 'Message']]
+            pprint_table(txt_table_if_have_keys(header,
+                         saveschedulejobs, ['job_id', 'message']))
         elif i['object_type'] == 'stats':
             stats = i['stats']
             if len(stats) == 0:
@@ -148,6 +155,10 @@ def txt_format(ret_val, ret_msg, out_obj):
                         print 'Received: %s' % obj['received_timestamp']
                     if obj.has_key('queued_timestamp'):
                         print 'Queued: %s' % obj['queued_timestamp']
+                    if obj.has_key('schedule_timestamp'):
+                        print 'Scheduled: %s' % obj['schedule_timestamp']
+                    if obj.has_key('schedule_hint'):
+                        print 'Schedule hint: %s' % obj['schedule_hint']
                     if obj.has_key('executing_timestamp'):
                         print 'Executing: %s'\
                              % obj['executing_timestamp']
@@ -340,6 +351,12 @@ def html_format(ret_val, ret_msg, out_obj):
                     if obj.has_key('queued_timestamp'):
                         print '<tr><td>Queued</td><td>%s</td></tr>'\
                              % obj['queued_timestamp']
+                    if obj.has_key('schedule_timestamp'):
+                        print '<tr><td>Scheduled</td><td>%s</td></tr>'\
+                             % obj['schedule_timestamp']
+                    if obj.has_key('schedule_hint'):
+                        print '<tr><td>Schedule result</td><td>%s</td></tr>'\
+                             % obj['schedule_hint']
                     if obj.has_key('executing_timestamp'):
                         print '<tr><td>Executing</td><td>%s</td></tr>'\
                              % obj['executing_timestamp']
@@ -377,6 +394,7 @@ def html_format(ret_val, ret_msg, out_obj):
                     print '%s<br>' % html_link(obj['mrsllink'])
                     print '%s<br>' % html_link(obj['resubmitlink'])
                     print '%s<br>' % html_link(obj['cancellink'])
+                    print '%s<br>' % html_link(obj['jobschedulelink'])
                     print '%s<br>' % html_link(obj['liveoutputlink'])
                     if obj.has_key('outputfileslink'):
                         print '<br>%s' % html_link(obj['outputfileslink'
@@ -398,11 +416,20 @@ def html_format(ret_val, ret_msg, out_obj):
             changedstatusjobs = i['changedstatusjobs']
             if len(changedstatusjobs) == 0:
                 continue
-            print "<table class='changedjobstatus'><tr><th>Job ID</th><th>Old status</th><th>New status</th><th>Message</th></tr>"
+            print "<table class='changedstatusjobs'><tr><th>Job ID</th><th>Old status</th><th>New status</th><th>Message</th></tr>"
             for changedstatus in changedstatusjobs:
                 print '<tr>%s</tr>'\
                      % html_table_if_have_keys(changedstatus, ['job_id'
                         , 'oldstatus', 'newstatus', 'message'])
+            print '</table>'
+        elif i['object_type'] == 'saveschedulejobs':
+            saveschedulejobs = i['saveschedulejobs']
+            if len(saveschedulejobs) == 0:
+                continue
+            print "<table class='saveschedulejobs'><tr><th>Job ID</th><th>Message</th></tr>"
+            for saveschedule in saveschedulejobs:
+                print '<tr>%s</tr>'\
+                     % html_table_if_have_keys(saveschedule, ['job_id', 'message'])
             print '</table>'
         elif i['object_type'] == 'stats':
             stats = i['stats']

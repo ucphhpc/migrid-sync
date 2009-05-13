@@ -43,6 +43,7 @@ python_cmd_def = 'python'
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {
         'flags': [''],
         'lang': [],
@@ -59,6 +60,7 @@ def usage(
     valid_langs,
     valid_flavors,
     ):
+    """Script usage help"""
 
     output_objects.append({'object_type': 'section_header', 'text'
                           : 'Generator usage'})

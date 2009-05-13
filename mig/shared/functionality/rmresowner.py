@@ -25,8 +25,6 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
 """Add a CN to the list of administrators for a given resource. The CN is
 not required to be that of an existing MiG user.
 """
@@ -43,6 +41,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'unique_resource_name': REJECT_UNSET,
                 'cert_name': REJECT_UNSET}
     return ['text', defaults]

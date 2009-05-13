@@ -28,6 +28,7 @@
 """General Scheduler framework"""
 
 import time
+import calendar
 import re
 
 # Exponential delay penalty
@@ -250,7 +251,7 @@ class Scheduler:
                                  % entity)
             return True
 
-        now = self.__now()
+        now = time.time()
 
         if timestamp + self.conf.expire_peer < now:
             return True
@@ -322,7 +323,7 @@ class Scheduler:
         server['EXPIRE_AFTER'] = str(self.conf.expire_after)
         server['DISTANCE'] = str(0)
         server['MIGRATE_COST'] = str(0.0)
-        server['LAST_SEEN'] = repr(self.__now())
+        server['LAST_SEEN'] = repr(time.time())
         server['TYPE'] = 'server'
         return self.update_servers(server)
 
@@ -368,32 +369,22 @@ class Scheduler:
         self.servers[server_id] = server
         return server
 
-    def __now(self):
-
-        # Return the current UTC time as a float.
-        # Note: gmtime() does not provide precision below
-        # seconds so we add the decimals from time()
-        # This is only important in simulations where times
-        # may not differ in full seconds.
-
-        return time.mktime(time.gmtime()) + time.time() % 1
-
     def update_seen(self, entity):
 
         # Update entity timestamp
 
         if entity.has_key('QUEUED'):
             server = self.find_server(entity)
-            server['LAST_SEEN'] = self.__now()
+            server['LAST_SEEN'] = time.time()
             server['TYPE'] = 'server'
         elif entity.has_key('USER_ID'):
             user = self.find_user(entity)
-            user['LAST_SEEN'] = self.__now()
+            user['LAST_SEEN'] = time.time()
             user['SERVER'] = self.conf.mig_server_id
             user['TYPE'] = 'user'
         elif entity.has_key('CPUCOUNT'):
             resource = self.find_resource(entity)
-            resource['LAST_SEEN'] = self.__now()
+            resource['LAST_SEEN'] = time.time()
             resource['SERVER'] = self.conf.mig_server_id
             resource['TYPE'] = 'resource'
             resource['LAST_LOAD'] = resource['LOAD']
@@ -1572,9 +1563,9 @@ class Scheduler:
             request_res['EXPECTED_DELAY'] += schedule_chance\
                  * float(job['CPUTIME'])
 
-            # self.logger.info("requesting resource %s updated expected delay to (%d)" % (res_id, request_res["EXPECTED_DELAY"]))
+            # self.logger.info("requesting resource %s updated expected delay to (%d)" % (res_id, request_res.get("EXPECTED_DELAY", -1)))
 
-        # self.logger.info("returning best resource %s (%s, %s)" % (best["id"], best["price"], request_res["JOB_PRICE"]))
+        # self.logger.info("returning best resource %s (%s, %s)" % (best["id"], best["price"], request_res.get("JOB_PRICE", None)))
 
         return best
 
@@ -1595,7 +1586,7 @@ class Scheduler:
         resource for migration.
         """
 
-        self.logger.info('running price filter on queue')
+        self.logger.info('running price filter on queue (%s)' % resource_conf)
         local_jobs = self.job_queue.queue_length()
 
         # Find current resource once and for all
@@ -1619,9 +1610,12 @@ class Scheduler:
             job = self.job_queue.get_job(i)
             job_id = job['JOB_ID']
 
-            if job.has_key('SCHEDULE_TIMESTAMP')\
-                 and job['SCHEDULE_TIMESTAMP']\
-                 + self.reschedule_interval > self.__now():
+            # backwards compatible timestamp extraction (was float before)
+            last_scheduled = job.get('SCHEDULE_TIMESTAMP', 0.0)
+            if isinstance(last_scheduled, float):
+                last_scheduled = time.gmtime(0)
+            if time.time() - calendar.timegm(last_scheduled)\
+                 < self.reschedule_interval:
 
                 # self.logger.info("cached schedule %s for %s" % \
                 #                 (job["SCHEDULE_HINT"], job_id))
@@ -1634,7 +1628,7 @@ class Scheduler:
 
             # Now mark job to use best resource
 
-            job['SCHEDULE_TIMESTAMP'] = self.__now()
+            job['SCHEDULE_TIMESTAMP'] = time.gmtime()
             if not best['res']:
 
                 # self.logger.info("no resource offers a suitable price for %s (%s)" % \

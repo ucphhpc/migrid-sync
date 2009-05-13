@@ -25,8 +25,6 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
 import os
 import base64
 import tempfile
@@ -39,6 +37,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {
         're_name': REJECT_UNSET,
         'redescription': ['Not available'],

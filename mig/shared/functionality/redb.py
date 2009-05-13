@@ -25,15 +25,7 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
-# Script version (automagically updated by cvs)
-
-""" Show all available runtime environments """
-
-__version__ = '$Revision: 1548 $'
-
-# $Id: redb.py 1548 2006-10-12 10:51:53Z karlsen $
+""" Show all available runtime environments"""
 
 from shared.refunctions import list_runtime_environments, get_re_dict
 from shared.functionality.showre import build_reitem_object_from_re_dict
@@ -43,6 +35,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {}
     return ['runtimeenvironments', defaults]
 

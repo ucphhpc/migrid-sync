@@ -25,10 +25,9 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
 import sys
 import os
+
 from shared.settingskeywords import get_keywords_dict
 from shared.fileio import unpickle
 from shared.init import initialize_main_variables
@@ -38,6 +37,7 @@ from shared.settings import mrsl_template, get_default_mrsl
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {}
     return ['html_form', defaults]
 

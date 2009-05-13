@@ -25,8 +25,6 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
 """Request VGrid membership back end"""
 
 import sys
@@ -37,6 +35,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {}
     return ['html_form', defaults]
 

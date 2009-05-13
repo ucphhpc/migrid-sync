@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# editor - [insert a few words of module description on this line]
+# editor - Online editor back end
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,19 +25,11 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
-# Script version (automagically updated by cvs)
-
 """ Simple web based file editor to edit files in MiG home
 
 Enable users to make (limited) changes to their files without the
 need to download, edit and upload the files.
 """
-
-__version__ = '$Revision: 2296 $'
-
-# $Id: editor.py 2296 2007-11-30 14:02:24Z karlsendevel $
 
 import os
 import sys
@@ -52,6 +44,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'path': [''], 'current_dir': ['']}
     return ['html_form', defaults]
 

@@ -42,6 +42,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {
         'path': REJECT_UNSET,
         'newline': ['unix'],

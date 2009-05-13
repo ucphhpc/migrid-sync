@@ -89,7 +89,8 @@ table.jobs {
 	padding: 2px;
 }
 table.resubmit {}
-table.changedjobstatus {}
+table.changedstatusjobs {}
+table.saveschedulejobs {}
 
 table.vgrids {
 	padding: 2px;
@@ -130,6 +131,7 @@ table.runtimeenvvars {
 
 table.monitor {
 	font-size: 10px;
+	border-collapse: collapse;
 }
 table.monitorstats {}
 table.monitorjobs {
@@ -374,7 +376,7 @@ table.monitorruntimeenvreq {
 }
 
 .odd_row {
-	background: white;
+	background: #ddf;
 }
 
 .status_unavailable {

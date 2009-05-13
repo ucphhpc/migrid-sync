@@ -25,13 +25,7 @@
 # -- END_HEADER ---
 #
 
-# cgi version (automagically updated by cvs)
-
-"""Emulate the un*x function with the same name."""
-
-__version__ = '$Revision: 1910 $'
-
-# $Id: wc.py 1910 2007-06-01 13:08:03Z jones $
+"""Emulate the un*x function with the same name"""
 
 import os
 import sys
@@ -44,6 +38,7 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'path': REJECT_UNSET, 'current_dir': [''], 'flags': [''
                 ]}
     return ['', defaults]

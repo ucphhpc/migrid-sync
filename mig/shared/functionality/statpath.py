@@ -25,13 +25,7 @@
 # -- END_HEADER ---
 #
 
-# cgi version (automagically updated by cvs)
-
-"""Emulate the un*x function with the same name."""
-
-__version__ = '$Revision: 1910 $'
-
-# $Id: stat.py 1910 2007-06-01 13:08:03Z jones $
+"""Emulate the un*x function with the same name"""
 
 import os
 import sys
@@ -46,11 +40,13 @@ from shared.parseflags import verbose
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'path': REJECT_UNSET, 'flags': ['']}
     return ['stats', defaults]
 
 
 def stat_path(real_path):
+    """Call OS stat on provided path"""
     if os.path.basename(real_path) == '.htaccess':
 
         # Always hide .htaccess files from user
@@ -82,9 +78,6 @@ def stat_path(real_path):
     except Exception, exc:
         return (False, 'Could not get all stat info: %s' % exc)
     return (True, stat)
-
-
-# end display_file
 
 
 def main(cert_name_no_spaces, user_arguments_dict):

@@ -25,8 +25,6 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
 """Request certificate action back end"""
 
 import cgi
@@ -45,6 +43,21 @@ from shared.notification import send_email
 import shared.returnvalues as returnvalues
 
 
+def signature():
+    """Signature of the main function"""
+    defaults = {
+        'cert_name': REJECT_UNSET,
+        'org': REJECT_UNSET,
+        'email': REJECT_UNSET,
+        'country': REJECT_UNSET,
+        'state': [''],
+        'password': REJECT_UNSET,
+        'verifypassword': REJECT_UNSET,
+        'comment': [''],
+        }
+    return ['text', defaults]
+
+
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
@@ -57,16 +70,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG certificate request'})
 
-    defaults = {
-        'cert_name': REJECT_UNSET,
-        'org': REJECT_UNSET,
-        'email': REJECT_UNSET,
-        'country': REJECT_UNSET,
-        'state': [''],
-        'password': REJECT_UNSET,
-        'verifypassword': REJECT_UNSET,
-        'comment': [''],
-        }
+    defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:

@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Request job live output from resource  """
+"""Request job live output from resource"""
 
 import glob
 import os
@@ -41,6 +41,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'job_id': REJECT_UNSET}
     return ['text', defaults]
 

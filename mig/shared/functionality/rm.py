@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-""" Module that enables a user to delete files and directories
+"""Module that enables a user to delete files and directories
 in his home directory.
 It is possible to supply a recursive flag to enable recursive deletes.
 """
@@ -42,6 +42,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {
         'flags': [''],
         'iosessionid': [''],

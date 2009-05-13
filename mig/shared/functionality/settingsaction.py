@@ -25,11 +25,10 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
 import sys
 import os
 import tempfile
+
 from shared.settingskeywords import get_keywords_dict
 from shared.fileio import pickle
 from shared.settings import parse_and_save_settings
@@ -39,6 +38,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {}
     keywords_dict = get_keywords_dict()
     for keyword in keywords_dict.keys():

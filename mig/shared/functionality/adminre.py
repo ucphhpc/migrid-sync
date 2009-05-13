@@ -25,8 +25,6 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
 import sys
 import base64
 
@@ -39,6 +37,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {
         're_template': [''],
         'software_entries': [1],

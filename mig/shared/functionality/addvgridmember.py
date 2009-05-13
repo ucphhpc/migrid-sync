@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# addvgridmember - [insert a few words of module description on this line]
+# addvgridmember - Add a VGrid member
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
+"""Add VGrid member"""
 
 import os
 
@@ -40,6 +40,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'vgrid_name': REJECT_UNSET, 'cert_name': REJECT_UNSET}
     return ['text', defaults]
 

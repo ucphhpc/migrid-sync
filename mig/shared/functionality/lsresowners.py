@@ -25,10 +25,7 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
-"""List all CNs in the list of administrators for a given resource.
-"""
+"""List all CNs in the list of administrators for a given resource"""
 
 import os
 import sys
@@ -41,6 +38,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'unique_resource_name': REJECT_UNSET}
     return ['list', defaults]
 

@@ -41,7 +41,14 @@ from shared.functionality import canceljob, cat, cp, docs, find, grep, \
     spell, statpath, submit, tail, touch, truncate, wc
 
 
+def signature():
+    """Signature of the main function"""
+    defaults = {'cmd': ['help']}
+    return ['html_form', defaults]
+
+
 def shell_usage():
+    """Script usage help"""
     out = []
     out.append({'object_type': 'text', 'text'
                : 'Most commands from the MiG user scripts translate directly to this shell.'
@@ -207,7 +214,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         initialize_main_variables(op_header=False, op_title=False)
 
     status = returnvalues.OK
-    defaults = {'cmd': ['help']}
+    defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,

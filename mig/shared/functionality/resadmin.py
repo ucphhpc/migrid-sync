@@ -25,10 +25,6 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
-# Script version (automagically updated by cvs)
-
 """Enable resource administrators to manage their own resources
 through a web interface. Management includes adding new
 resources, tweaking the configuration of existing resources,
@@ -36,13 +32,10 @@ starting, stopping and getting status of resources, and
 administrating owners.
 """
 
-__version__ = '$Revision: 2291 $'
-
-# $Id: resadmin.py 2291 2007-11-26 20:13:34Z karlsendevel $
-
 import os
 import sys
 import glob
+
 from shared.conf import get_resource_configuration
 from shared.refunctions import get_re_dict, list_runtime_environments
 from shared.fileio import unpickle
@@ -52,6 +45,7 @@ import shared.returnvalues as returnvalues
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {}
     return ['html_form', defaults]
 

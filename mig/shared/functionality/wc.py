@@ -25,13 +25,7 @@
 # -- END_HEADER ---
 #
 
-# cgi version (automagically updated by cvs)
-
 """Word count back end functionality"""
-
-__version__ = '$Revision: 1910 $'
-
-# $Id: wc.py 1910 2007-06-01 13:08:03Z jones $
 
 import os
 import sys
@@ -45,6 +39,7 @@ from shared.validstring import valid_user_path
 
 
 def signature():
+    """Signature of the main function"""
     defaults = {'path': REJECT_UNSET, 'flags': ['']}
     return ['filewcs', defaults]
 

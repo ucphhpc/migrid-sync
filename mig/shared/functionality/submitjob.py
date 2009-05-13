@@ -36,6 +36,12 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.settings import mrsl_template, get_default_mrsl
 
 
+def signature():
+    """Signature of the main function"""
+    defaults = {}
+    return ['', defaults]
+
+
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
@@ -43,7 +49,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         initialize_main_variables(op_header=False, op_title=False)
 
     status = returnvalues.OK
-    defaults = {}
+    defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,

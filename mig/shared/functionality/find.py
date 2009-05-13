@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Emulate the un*x function with the same name."""
+"""Emulate the un*x function with the same name"""
 
 import os
 import sys
@@ -39,6 +39,12 @@ from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 
 
+def signature():
+    """Signature of the main function"""
+    defaults = {'path': ['.'], 'flags': [''], 'name': ['*']}
+    return ['', defaults]
+
+
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
@@ -46,7 +52,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         initialize_main_variables()
 
     status = returnvalues.OK
-    defaults = {'path': ['.'], 'flags': [''], 'name': ['*']}
+    defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,

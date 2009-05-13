@@ -25,8 +25,6 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
 """Request certificate back end"""
 
 import sys
@@ -37,6 +35,12 @@ from shared.certreq import valid_password_chars, valid_name_chars, \
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 import shared.returnvalues as returnvalues
+
+
+def signature():
+    """Signature of the main function"""
+    defaults = {}
+    return ['html_form', defaults]
 
 
 def main(cert_name_no_spaces, user_arguments_dict):
@@ -52,7 +56,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                           : 'Welcome to the MiG certificate request page'
                           })
 
-    defaults = {}
+    defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
