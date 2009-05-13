@@ -79,7 +79,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Problems stopping front end during clean: %s'
                                % msg})
-        o.client(o.CLIENT_ERROR)
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     (status2, msg2) = clean_resource_frontend(unique_resource_name,
             configuration.resource_home, logger)

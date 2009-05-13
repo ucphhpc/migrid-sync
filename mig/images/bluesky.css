@@ -355,5 +355,26 @@ table.monitorruntimeenvreq {
 	color: orange;
 }
 
+.even_row {
+        background: #eef;
+}
 
+.odd_row {
+	background: white;
+}
 
+.status_unavailable {
+	color: grey;
+}
+
+.status_online {
+	color: green;
+}
+
+.status_slack {
+	color: orange;
+}
+
+.status_offline {
+	color: red;
+}
