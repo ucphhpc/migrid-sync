@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# xmlrpcinterface - [insert a few words of module description on this line]
+# xmlrpcinterface - Provides the entire XMLRPC interface over CGI
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -188,6 +188,10 @@ def scripts(user_arguments_dict):
 
 def canceljob(user_arguments_dict):
     return stub('shared.functionality.canceljob', user_arguments_dict)
+
+
+def submit(user_arguments_dict):
+    return stub('shared.functionality.submit', user_arguments_dict)
 
 
 def resubmit(user_arguments_dict):
@@ -397,6 +401,7 @@ server.register_function(redb)
 server.register_function(wc)
 server.register_function(scripts)
 server.register_function(canceljob)
+server.register_function(submit)
 server.register_function(resubmit)
 server.register_function(textarea)
 server.register_function(restartexe)
