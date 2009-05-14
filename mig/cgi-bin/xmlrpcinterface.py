@@ -38,13 +38,27 @@ from shared.objecttypes import get_object_type_info
 class migCGIXMLRPCRequestHandler(CGIXMLRPCRequestHandler):
 
     def system_methodSignature(self, method_name):
-        method = None
         try:
             exec compile('from shared.functionality.%s import signature'
                           % method_name, '', 'single')
-            return str(signature())
+            signature_string = str(signature())
         except:
-            return 'none, array'
+            signature_string = 'none, array'
+        return signature_string
+
+    def system_methodHelp(self, method_name):
+        try:
+            exec compile('from shared.functionality.%s import usage'
+                          % method_name, '', 'single')
+            help_string = str(usage())
+        except:
+            try:
+                exec compile('from shared.functionality.%s import __doc__ as method_help'
+                             % method_name, '', 'single')
+                help_string =  str(method_help)
+            except:
+                help_string = ''
+        return help_string
 
 
 def object_type_info(object_type):

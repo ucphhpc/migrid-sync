@@ -39,7 +39,7 @@ from shared.settings import mrsl_template, get_default_mrsl
 def signature():
     """Signature of the main function"""
     defaults = {}
-    return ['', defaults]
+    return ['html_form', defaults]
 
 
 def main(cert_name_no_spaces, user_arguments_dict):

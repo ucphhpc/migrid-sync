@@ -378,7 +378,7 @@ Listing the last request from each resource<br>
                             down_count = down_count + 1
                     else:
 
-                            # count number of res with jobs assigned
+                        # count number of res with jobs assigned
 
                         html += '<td class=status_online>' + days_rem + ' days, '\
                              + hours_rem + ' hours, ' + minutes_rem\

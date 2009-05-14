@@ -51,7 +51,7 @@ from shared.validstring import valid_user_path
 def signature():
     """Signature of the main function"""
     defaults = {}
-    return ['todo: signature', defaults]
+    return ['TODO: signature', defaults]
 
 
 def convert_control_value_to_line(form_key, user_arguments_dict):
