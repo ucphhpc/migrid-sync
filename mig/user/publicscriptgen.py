@@ -91,9 +91,10 @@ def read_conf_function(lang):
     elif lang == 'python':
         s += \
             """
+        '''Extract a value from the user conf file: format is KEY and VALUE separated by whitespace'''
         try:
             conf_file = open(conf, 'r')
-            for line in conf_file.readlines():
+            for line in conf_file:
                 line = line.strip()
                 # split on any whitespace and assure at least two parts
                 parts = line.split() + ['', '']
@@ -101,7 +102,7 @@ def read_conf_function(lang):
                 if opt == option:
                     return val
             conf_file.close()
-        except Exception, e:
+        except Exception:
             return ''
 """
     else:
