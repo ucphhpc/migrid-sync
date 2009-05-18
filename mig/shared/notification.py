@@ -344,6 +344,7 @@ def notify_user_thread(
     ):
     """Run notification in a separate thread to avoid delays or hangs
     in caller. Launches a new daemon thread to avoid waiting issues.
+    We still must join thread if we want to assure delivery.
     """
     notify_thread = threading.Thread(target=notify_user,
                                      args=(jobdict, myfiles_py_location,
@@ -351,6 +352,7 @@ def notify_user_thread(
                                            configuration,))
     notify_thread.setDaemon(True)
     notify_thread.start()
+    return notify_thread
 
 def send_resource_create_request_mail(
     cert_name_no_spaces,

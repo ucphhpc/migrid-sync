@@ -758,7 +758,8 @@ while True:
             expired_jobs = scheduler.expire_jobs()
             for expired in expired_jobs:
 
-                # tell the user about the expired job
+                # tell the user about the expired job - we do not wait for notification
+                # to finish but hope for the best since this script is long running
 
                 notify_user_thread(
                     expired,
@@ -1103,7 +1104,7 @@ while True:
                  % (job_dict['UNIQUE_RESOURCE_NAME'], job_dict['EXE'])
         else:
 
-            # Clean up the server for files assosiated with the finished
+            # Clean up the server for files associated with the finished job
 
             if not server_cleanup(
                 job_dict['SESSIONID'],
