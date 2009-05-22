@@ -239,7 +239,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, _) = \
-        initialize_main_variables(op_header=False)
+        initialize_main_variables(op_header=False, op_menu=(cert_name_no_spaces != "None"))
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
