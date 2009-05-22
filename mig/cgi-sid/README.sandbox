@@ -1,0 +1,6 @@
+= SSS Sandbox links =
+We are switching from the old sandbox_X.py script names to the new style compliatn sssX.py form but keep a few links to the old names to avoid breaking published and active links.
+The SSS sandbox uses the old sandbox-getresourcescript.py in the image, so it it difficult to fix especially for existing sandboxes. 
+The old SSS login link is published in multiple locations, so we use a symlink to preserve the validity of the old URL.
+
+Once those issues have been permanently fixed, we can remove the legacy links.
