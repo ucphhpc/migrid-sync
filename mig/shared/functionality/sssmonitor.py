@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# sandboxmonitor - [insert a few words of module description on this line]
+# sssmonitor - [insert a few words of module description on this line]
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -132,7 +132,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         total_jobs += jobs_per_user
 
         # print "Total jobs run by sandboxes: ", total_jobs, "jobs"............
-        # print "<form action='sandbox-monitor.py' method='POST'>"
+        # print "<form action='sssmonitor.py' method='POST'>"
 
     output_objects.append({'object_type': 'sandboxinfos', 'sandboxinfos'
                           : sandboxinfos})

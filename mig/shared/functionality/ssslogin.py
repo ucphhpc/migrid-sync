@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# sandbox_login - SSS welcome and login backend
+# ssslogin - SSS welcome and login backend
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -49,10 +49,10 @@ Sorry we are currently down for maintenance, we'll be back shortly
 
 html['english'] = \
     """
-<form action='sandbox_admin.py' method='POST'>
+<form action='sssadmin.py' method='POST'>
 
 <table class='sandboxlogintext'>
-<tr><td><a href='sandbox_login.py?language=danish'>P&aring; dansk</a></td></tr>
+<tr><td><a href='ssslogin.py?language=danish'>P&aring; dansk</a></td></tr>
 <tr><td><h3>Intro</h3></td></tr>
 <tr><td>Welcome to the MiG-SSS download site. By downloading and installing this software, your computer will be participating in solving scientific problems whenever the screen saver is on. All you have to do is log in below, download the sandbox, and follow the instructions during the install procedure.<td><tr>
 
@@ -64,10 +64,10 @@ html['english'] = \
 <tr><td>The applications that will be running on your PC when you leave it in screen saver mode are all executed in a so-called 'sandbox'. A sandbox provides a secure execution environment, in which untrusted programs can run. Programs running in the sandbox can neither compromise nor gain access to your PC.</td></tr>
 
 <tr><td><h3>Sandbox monitor</h3></td></tr>
-<tr><td>After logging in you will be presented with a list of statistics for your own sandboxes. In case you want to compare your donations to those from other sandbox resource owners, you can take a look at the general <a href='%(https_url)s/cgi-sid/sandboxmonitor.py'>sandbox monitor</a>.</td></tr>
+<tr><td>After logging in you will be presented with a list of statistics for your own sandboxes. In case you want to compare your donations to those from other sandbox resource owners, you can take a look at the <a href='%(https_url)s/cgi-sid/sssmonitor.py'>overall sandbox monitor</a>.</td></tr>
 
 <tr><td><h3>More Questions?</h3></td></tr>
-<tr><td>Please check the <a href='sandbox_faq.py?language=english'>FAQ</a>, or send us an email.</td></tr>
+<tr><td>Please check the <a href='sssfaq.py?language=english'>FAQ</a>, or send us an email.</td></tr>
 </table>
 <br>
 <table class='sandboxlogin'>
@@ -87,10 +87,10 @@ html['english'] = \
 
 html['danish'] = \
     """
-<form action='sandbox_admin.py' method='POST'>
+<form action='sssadmin.py' method='POST'>
 
 <table class='sandboxlogintext'>
-<tr><td><a href='sandbox_login.py?language=english'>In English</a></td></tr>
+<tr><td><a href='ssslogin.py?language=english'>In English</a></td></tr>
 <tr><td><h3>Intro</h3></td></tr>
 <tr><td>Velkommen til MiG-SSS. Ved at downloade og installere denne software vil din PC, n&aring;r den er i screen saver mode, donere den ubrugte CPU-tid til at bidrage med at l&oslash;se videnskabelige problemer. Det eneste, der kr&aelig;ves er, at man logger ind nedenfor, downloader softwaren og f&oslash;lger installationsproceduren.<td><tr>
 
@@ -104,10 +104,10 @@ html['danish'] = \
 <tr><td>Programmet findes b&aring;de i en version til Windows XP og Linux. Windowsbrugere downloader en installationsfil, som g&oslash;r installationen meget simpel. En trin-for-trin guide kan findes her: <a href='http://www.migrid.org/MiG/MiG/Mig_danish/MiG-SSS installationsprocedure'>Installationsguide til Windows</a><td></tr>
 
 <tr><td><h3>Job monitor</h3></td></tr>
-<tr><td>N&aring;r du logger ind f&aring;r du en oversigt over jobs k&oslash;rt p&aring; dine sandkasse resurser. Hvis du gerne vil sammenligne med andres sandkasse donationer, kan du se p&aring; den generelle <a href='%(https_url)s/cgi-sid/sandboxmonitor.py'>sandkasse monitor</a>.</td></tr>
+<tr><td>N&aring;r du logger ind f&aring;r du en oversigt over jobs k&oslash;rt p&aring; dine sandkasse resurser. Hvis du gerne vil sammenligne med andres sandkasse donationer, kan du se p&aring; den <a href='%(https_url)s/cgi-sid/sssmonitor.py'>samlede sandkasse monitor</a>.</td></tr>
 
 <tr><td><h3>Flere sp&oslash;rgsm&aring;l?</h3></td></tr>
-<tr><td>Check om det skulle findes i <a href='sandbox_faq.py?language=danish'>FAQ'en</a>, ellers send os en email.</td></tr>
+<tr><td>Check om det skulle findes i <a href='sssfaq.py?language=danish'>FAQ'en</a>, ellers send os en email.</td></tr>
 </table>
 
 <br>
@@ -148,7 +148,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                % (language, default_language)})
         language = default_language
 
-        # print "<a href='sandbox_login.py'>Default language</a>"
+        # print "<a href='ssslogin.py'>Default language</a>"
         # sys.exit(1)
 
     output_objects.append({'object_type': 'html_form', 'text'

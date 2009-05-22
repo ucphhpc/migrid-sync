@@ -316,13 +316,14 @@ def main(cert_name_no_spaces, user_arguments_dict):
                           : 'Create a new MiG resource', 'destination'
                           : 'resource_edit.py?new_resource=true'})
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
+    # Use cgi-bin links to sandboxes here to preserve menu
     output_objects.append({'object_type': 'link', 'text'
                           : 'Create a sandbox MiG resource',
-                          'destination': '/cgi-sid/sandbox_login.py'})
+                          'destination': '/cgi-bin/ssslogin.py'})
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
     output_objects.append({'object_type': 'link', 'text'
                           : 'Use this computer as One-click MiG resource'
-                          , 'destination': '/cgi-sid/oneclick.py'})
+                          , 'destination': '/cgi-bin/oneclick.py'})
 
     quick_links = [{'object_type': 'sectionheader', 'text'
                    : 'Quick links to existing resources:'}]

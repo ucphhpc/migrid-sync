@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# sandbox_admin - sandbox generator and monitor for individual users
+# sssadmin - SSS sandbox generator and monitor for individual users
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -183,7 +183,7 @@ def show_info(user, passwd, expert):
     # Download sandbox section
 
     html += \
-        """<form action='sandbox_createimage.py?MiG-SSS.zip' 
+        """<form action='ssscreateimg.py?MiG-SSS.zip' 
           method='POST'>
     <table class=sandboxcreateimg>
     <tr class=title><td align='center' colspan='2'>
@@ -216,7 +216,7 @@ def show_info(user, passwd, expert):
     <table class=sandboxadmin>
     <tr><td align='center'>
     Advanced users may want to fine tune the sandbox to download by switching to expert mode:
-    <form action='sandbox_admin.py' method='POST'>
+    <form action='sssadmin.py' method='POST'>
     <input type='hidden' name='username' value='%s'>
     <input type='hidden' name='password' value='%s'>
     <input type='hidden' name='expert' value='%s'>
@@ -246,7 +246,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
         output_objects.append({'object_type': 'link', 'destination':
-                               '/cgi-sid/sandbox_login.py', 'text':
+                               '/cgi-sid/ssslogin.py', 'text':
                                'Retry login'})
         return (accepted, returnvalues.CLIENT_ERROR)
     username = accepted['username'][-1].strip()
@@ -292,23 +292,23 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                   : 'Username is already taken - please go back and choose another one...'
                                   })
             output_objects.append({'object_type': 'link', 'destination':
-                                   '/cgi-sid/sandbox_login.py', 'text':
+                                   '/cgi-sid/ssslogin.py', 'text':
                                    'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         elif len(username) < 3:
 
-            # print "<a href='sandbox_login.py'>Back</a>"
+            # print "<a href='ssslogin.py'>Back</a>"
 
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Please choose a username with 3 or more characters.'
                                   })
             output_objects.append({'object_type': 'link', 'destination':
-                                   '/cgi-sid/sandbox_login.py', 'text':
+                                   '/cgi-sid/ssslogin.py', 'text':
                                    'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:
 
-            # print "<a href='sandbox_login.py'>Back</a>"
+            # print "<a href='ssslogin.py'>Back</a>"
             # Create new user with empty resource list
 
             try:
@@ -334,23 +334,23 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                   : 'Wrong username - please go back and try again...'
                                   })
             output_objects.append({'object_type': 'link', 'destination':
-                                   '/cgi-sid/sandbox_login.py', 'text':
+                                   '/cgi-sid/ssslogin.py', 'text':
                                    'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         elif userdb[username][PW] != password:
 
-            # print "<a href='sandbox_login.py'>Back</a>"....
+            # print "<a href='ssslogin.py'>Back</a>"....
 
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Wrong password - please go back and try again...'
                                   })
             output_objects.append({'object_type': 'link', 'destination':
-                                   '/cgi-sid/sandbox_login.py', 'text':
+                                   '/cgi-sid/ssslogin.py', 'text':
                                    'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:
 
-            # print "<a href='sandbox_login.py'>Back</a>"....
+            # print "<a href='ssslogin.py'>Back</a>"....
 
             output_objects.append({'object_type': 'html_form', 'text'
                                   : show_info(username, password, expert)})
