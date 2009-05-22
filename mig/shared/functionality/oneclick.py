@@ -48,7 +48,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_menu=False)
+        initialize_main_variables(op_header=False, op_menu=(cert_name_no_spaces != "None"))
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG One-click resource'})
 

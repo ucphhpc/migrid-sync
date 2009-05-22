@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# sandbox_createimage - generate a zip with all sandbox components
+# ssscreateimg - generate a zip with all sandbox components
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
