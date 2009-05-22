@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# sandbox-getresourcescript - [insert a few words of module description on this line]
+# sssgetresscript - For updating resource scripts inside SSS
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
