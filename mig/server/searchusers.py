@@ -33,12 +33,32 @@ import getopt
 import pickle
 import fnmatch
 
+def usage(name='searchusers.py'):
+    print """Usage:
+%(name)s [SEARCH_OPTIONS]
+Where SEARCH_OPTIONS may be one or more of:
+   -c COUNTRY          Search for country
+   -d DB_PATH          Use DB_PATH as user data base file path
+   -e EMAIL            Search for email
+   -f FULLNAME         Search for full name
+   -n                  Show only name
+   -h                  Show this help
+   -o ORGANIZATION     Search for organization
+   -s STATE            Search for state
+
+Each search value can be a string or a pattern with * and ? as wildcards.
+"""\
+         % {'name': name}
+
+
+# ## Main ###
+
 args = sys.argv[1:]
 app_dir = os.path.dirname(sys.argv[0])
 db_file = app_dir + os.sep + 'MiG-users.db'
 user_db = {}
 user_dict = {}
-opt_args = 'c:d:e:f:no:s:'
+opt_args = 'c:d:e:f:hno:s:'
 search_filter = {
     'country': '*',
     'email': '*',
@@ -63,6 +83,9 @@ for (opt, val) in opts:
         search_filter['email'] = val
     elif opt == '-f':
         search_filter['full_name'] = val
+    elif opt == '-h':
+        usage()
+        sys.exit(0)
     elif opt == '-n':
         name_only = True
     elif opt == '-o':
@@ -71,6 +94,8 @@ for (opt, val) in opts:
         search_filter['state'] = val
     else:
         print 'Error: %s not supported!' % opt
+        usage()
+        sys.exit(0)
 
 try:
     db_fd = open(db_file, 'rb')
@@ -92,4 +117,4 @@ for (uid, user_dict) in user_db.items():
     if name_only:
         print user_dict['full_name']
     else:
-        print uid
+        print '%s : %s' % (uid, user_dict)

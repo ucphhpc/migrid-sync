@@ -78,7 +78,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     admin_email = configuration.admin_email
     smtp_server = configuration.smtp_server
-    user_pending = configuration.user_pending
+    user_pending = os.path.abspath(configuration.user_pending)
 
     # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
 
@@ -167,23 +167,6 @@ rsync %s@%s:mig/server/MiG-users.db ~/
          % (mig_user, configuration.server_fqdn,
             configuration.admin_email, configuration.server_fqdn,
             user_id)
-    command_cert_create_old = \
-        """
-Copy password:
-%s
-to the clipboard (needed several times).
-As 'root' on amigos19.diku.dk:
-cd /usr/lib/ssl/misc
-./mig_gen_cert.sh '%s' '%s' '%s' '%s' '%s' '%s'"""\
-         % (
-        password,
-        cert_name,
-        country,
-        org,
-        state,
-        email,
-        dest,
-        )
     command_user_create = \
         """
 As '%s' on %s:
@@ -193,22 +176,6 @@ cd ~/mig/server
             configuration.server_fqdn,
              req_path,
             )
-    command_user_create_old = \
-        """
-As '%s' user on %s:
-cd ~/mig/server
-./createuser.py '%s' '%s' '%s' '%s' '%s' '%s' '%s'"""\
-         % (
-             mig_user,
-             configuration.server_fqdn,
-             cert_name,
-             org,
-             state,
-             country,
-             email,
-             comment,
-             password,
-        )
     command_user_delete = \
         """
 As '%s' user on %s:
@@ -224,98 +191,12 @@ cd ~/mig/server
              email,
              )
 
-    email_header = 'MiG certificate request for %s' % cert_name
-    email_msg = \
-        """
-Certificate data
-Common Name: %s
-Country: %s
-State: %s
-Org: %s
-Email: %s
-Comment: %s
-
-#####
-Remember to verify that we really do trust the person with the
-specified email address!!
-
-Command to create user on MiG server:
-%s
-
-Command to create certificate:
-%s
-
-Finally add the user to any relevant VGrids from:
-%s/cgi-bin/vgridadmin.py
-
-Use the text below as a template for the email to the new certificate
-holder.
-
-Attach: packed file with cert.pem, key.pem, cert.p12 and cacert.pem
-#####
-
-To: %s
-Subject: Your new MiG certificate 
-    
-Your new MiG certificate has been created with the pass phrase that you
-chose during the certificate request. 
-
-You can access the MiG system in two ways - either by using a browser or
-the 'user scripts' (bash and python scripts available at the moment). The
-easiest way to get started is to use your browser. The attached .p12
-certificate must be imported in your browser, then you can access MiG
-by pointing a browser to your personal entry page at:
-%s
-    
-A few more features are available in the 'user scripts', and handling
-large amounts of jobs may be easier with the scripts than through the
-web interface.
-
-The bash version of the user scripts is limited to unix compatible
-installations including curl (http://curl.haxx.se/), whereas the python
-version runs on the wider array of platforms supporting python and curl.
-If you miss any features on the web page or simply prefer to use the
-scripts, it is possible to dynamically generate the latest version from
-the Download section on your personal MiG entry page mentioned above.
-User scripts rely on the availability of the attached certificate and
-key file.
-
-General documentation and information about MiG can be found at:
-http://www.migrid.org/
-while specific documentation on the 'user scripts' is available from:
-http://www.migrid.org/MiG/Mig/user_introduction/user_scripts_intro.html/
-
-Jobs are specified in the 'mRSL' language. Online, on-demand documentation
-can be found at:
-%s/cgi-bin/docs.py
-     
-If you have any questions or problems, please don't hesitate to contact
-the MiG team by sending an email to one of the following persons:
-%s
-"""\
-         % (
-        cert_name,
-        country,
-        state,
-        org,
-        email,
-        comment,
-        command_user_create_old,
-        command_cert_create_old,
-        configuration.migserver_https_url,
-        email,
-        configuration.migserver_https_url,
-        configuration.migserver_https_url,
-        admin_email,
-        )
-
-    logger.info('Sending email: to: %s, header: %s, msg: %s, smtp_server: %s'
-                 % (admin_email, email_header, email_msg, smtp_server))
     user_dict['command_user_create'] = command_user_create
     user_dict['command_user_delete'] = command_user_delete
     user_dict['command_cert_create'] = command_cert_create
     user_dict['migserver_https_url'] = configuration.migserver_https_url
-    server_req = \
+    email_header = 'MiG certificate request for %s' % cert_name
+    email_msg = \
         """
 Received a certificate request with certificate data
  * Full Name: %(full_name)s
@@ -340,15 +221,12 @@ Command to delete user again on MiG server:
 %(command_user_delete)s
 ---
 
-####################################################
-# DISCLAIMER: the rest of this mail is obsolete!   #
-# - please ignore it unless serious problems arise #
-####################################################
 """\
          % user_dict
 
-    if not send_email(admin_email, email_header, server_req
-                       + email_msg, logger, configuration):
+    logger.info('Sending email: to: %s, header: %s, msg: %s, smtp_server: %s'
+                 % (admin_email, email_header, email_msg, smtp_server))
+    if not send_email(admin_email, email_header, email_msg, logger, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'An error occured trying to send the email requesting the MiG administrators to create a new certificate. Please email the MiG administrators (%s) manually and include the session ID: %s'
                                % (admin_email, tmp_id)})

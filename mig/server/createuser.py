@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# createuser - Create a MiG user with all the necessary directories
+# createuser - Create or renew a MiG user with all the necessary directories
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Add MiG user"""
+"""Add or renew MiG user in user DB and in file system"""
 
 import sys
 import time
@@ -61,9 +61,10 @@ Where OPTIONS may be one or more of:
 
 args = sys.argv[1:]
 app_dir = os.path.dirname(sys.argv[0])
-conf = app_dir + os.sep + 'MiGserver.conf'
-db_file = app_dir + os.sep + 'MiG-users.db'
+conf_path = os.path.join(app_dir, 'MiGserver.conf')
+db_path = os.path.join(app_dir, 'MiG-users.db')
 verbose = False
+renew = False
 force = False
 user_file = None
 user_db = {}
@@ -78,9 +79,9 @@ except getopt.GetoptError, err:
 
 for (opt, val) in opts:
     if opt == '-c':
-        conf = val
+        conf_path = val
     elif opt == '-d':
-        db_file = val
+        db_path = val
     elif opt == '-f':
         force = True
     elif opt == '-h':
@@ -93,12 +94,12 @@ for (opt, val) in opts:
     else:
         print 'Error: %s not supported!' % opt
 
-if not os.path.isfile(conf):
-    print 'Failed to read configuration file: %s' % conf
+if not os.path.isfile(conf_path):
+    print 'Failed to read configuration file: %s' % conf_path
     sys.exit(1)
 
 if verbose:
-    print 'using configuration in %s' % conf
+    print 'using configuration in %s' % conf_path
 
 if user_file and args:
     print 'Only one kind of user specification allowed at a time'
@@ -137,6 +138,10 @@ else:
     user_dict['comment'] = raw_input('Comment: ')
     user_dict['password'] = base64.b64encode(getpass('Password: '))
 
+# Default to one year of certificate validity (only used by CA scripts)
+if not user_dict.has_key('expire'):
+    user_dict['expire'] = int(time.time() + (((2 * 365.25) * 24) * 60) * 60)
+
 # Now all user fields are set and we can begin adding the user
 
 print 'using user dict: %s' % user_dict
@@ -149,66 +154,77 @@ if not full_name:
     print 'Missing Full Name!'
     sys.exit(1)
 
-configuration = Configuration(conf)
-print 'Creating dirs and files for new user: %s' % full_name
+configuration = Configuration(conf_path)
 print 'User name without spaces: %s\n' % full_name_without_spaces
 
 # Update user data base
 
-if os.path.exists(db_file):
+if os.path.exists(db_path):
     try:
-        db_fd = open(db_file, 'rb')
+        db_fd = open(db_path, 'rb')
         user_db = pickle.load(db_fd)
         db_fd.close()
-        print 'Loaded existing user DB from: %s' % db_file
+        print 'Loaded existing user DB from: %s' % db_path
     except Exception, err:
         print 'Failed to load user DB!'
         if not force:
             sys.exit(1)
 
     if user_db.has_key(user_id):
-        print 'Error: User DB entry already exists'
-        if not force:
+        renew_answer = raw_input('User DB entry already exists - renew? [Y/n] ')
+        renew = (not renew_answer.lower().startswith('n'))
+        if renew:
+            print 'Renewing existing user'
+        elif not force:
+            print 'Nothing more to do for existing user'
             sys.exit(1)
 
 try:
     user_db[user_id] = user_dict
-    db_fd = open(db_file, 'wb')
+    db_fd = open(db_path, 'wb')
     pickle.dump(user_db, db_fd)
     db_fd.close()
-    print 'User %s was successfully added to user DB!' % full_name
+    print 'User %s was successfully added/updated in user DB!' % full_name
 except Exception, err:
     print 'Error: Failed to add %s to user DB: %s' % (full_name, err)
     if not force:
         sys.exit(1)
 
-if os.path.exists(configuration.user_home + full_name_without_spaces):
-    print 'Error: User dir already exists'
-    if not force:
-        sys.exit(1)
+home_dir = os.path.join(configuration.user_home, full_name_without_spaces)
+mrsl_dir = os.path.join(configuration.mrsl_files_dir, full_name_without_spaces)
+pending_dir = os.path.join(configuration.resource_pending, full_name_without_spaces)
+htaccess_path = os.path.join(home_dir, '.htaccess')
+if not renew:
+    print 'Creating dirs and files for new user: %s' % full_name
 
-# Update user dirs
+    try:
+        os.mkdir(home_dir)
+    except:
+        print 'Error: could not create home dir: %s' % home_dir
+        if not force:
+            sys.exit(1)
+
+    try:
+        os.mkdir(mrsl_dir)
+    except:
+        print 'Error: could not create mrsl dir: %s' % mrsl_dir
+        if not force:
+            sys.exit(1)
+
+    try:
+        os.mkdir(pending_dir)
+    except:
+        print 'Error: could not create resource dir: %s' % pending_dir
+        if not force:
+            sys.exit(1)
+else:
+    # Allow temporary write access
+    os.chmod(htaccess_path, 0644)
+
+# Always write htaccess to catch any updates
 
 try:
-    os.mkdir(configuration.user_home + full_name_without_spaces)
-except:
-    print 'Error: could not create home dir: %s'\
-         % configuration.user_home + full_name_without_spaces
-    if not force:
-        sys.exit(1)
-
-try:
-    os.mkdir(configuration.mrsl_files_dir + full_name_without_spaces)
-except:
-    print 'Error: could not create mrsl dir: %s'\
-         % configuration.mrsl_files_dir + full_name_without_spaces
-    if not force:
-        sys.exit(1)
-
-try:
-    htaccessfilename = configuration.user_home\
-         + full_name_without_spaces + '/.htaccess'
-    filehandle = open(htaccessfilename, 'w')
+    filehandle = open(htaccess_path, 'w')
 
     # Match all known fields
 
@@ -229,23 +245,15 @@ try:
     user_dict['state'] = real_state
     filehandle.close()
 
-    # try to prevent user modification
+    # try to prevent further user modification
 
-    os.chmod(htaccessfilename, 0444)
+    os.chmod(htaccess_path, 0444)
 except:
-    print 'Error: could not create htaccess file: %s' % htaccessfilename
+    print 'Error: could not create htaccess file: %s' % htaccess_path
     if not force:
         sys.exit(1)
 
-try:
-    os.mkdir(configuration.resource_pending + full_name_without_spaces)
-except:
-    print 'Error: could not create resource dir: %s'\
-         % configuration.resource_pending + full_name_without_spaces
-    if not force:
-        sys.exit(1)
-
-print 'DB entry and dirs for %s were created or updated' % full_name
+print 'DB entry and dirs for %s were created or updated' % user_id
 if user_file:
     print 'Cleaning up tmp file: %s' % user_file
     os.remove(user_file)
