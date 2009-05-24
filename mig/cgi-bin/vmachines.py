@@ -28,12 +28,15 @@ import os
 import sys
 import cgi
 import cgitb
+import glob
 
 import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.cgiscriptstub import run_cgi_script
+from shared.validstring import valid_user_path
 from shared.html import renderMenu
+from shared import vms # Yeah this is the shit!
 
 #from shared.functionality.submitjob import main
 
@@ -62,16 +65,16 @@ def main(cert_name_no_spaces, user_arguments_dict):
                         {
                         'class'    : 'vmachines add',
                         'url'       : 'vmachines_create.py',
-                        'title'     : 'Create VMachine',
+                        'title'     : 'Request Virtual Machine',
                         'attr' : ''
                         
-                        },
-                        {
-                        'class'    : 'vmachines connect',
-                        'url'       : '#',
-                        'title'     : 'Connect to remote access service',
-                        'attr'  : 'onClick="vncClientPopup(); return false;"'
-                        },
+                        }             ,
+                        #{
+                        #'class'    : 'vmachines connect',
+                        #'url'       : '#',
+                        #'title'     : 'Connect to remote access service',
+                        #'attr'  : 'onClick="vncClientPopup(); return false;"'
+                        #},
                   )
 
     # Html fragments
@@ -79,27 +82,11 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     welcomeText     = 'Welcome to MiG virtual machine management!'
     descriptionText = '<p>In this part of MiG you can: <ul>'+\
-                      '<li>See the virtual machines available to you in the list below.</li>'+\
-                      '<li>Create new virtual machines (see above)</li>'+\
-                      '<li>Connect to virtual machines (see above)</li>'+\
-                      '</ul></p>'+\
-                      '<p>You can also create and deploy virtual machines to MiG by downloading and installing the MiGified version of VirtualBox.</p>'+\
-                      '<p>The remote access service is available to you in either way.'
-                      
-
-    applet = """<APPLET CODE="VncViewer" ARCHIVE="VncViewer.jar" CODEBASE="http://amigos18.diku.dk:8114/tightvnc/" WIDTH="1024" HEIGHT="800"><PARAM NAME="PORT" VALUE="8111"><PARAM NAME="Encoding" VALUE="Raw"></APPLET>"""
-    
-    popup = """
-    <script>
-    function vncClientPopup() {
-    var win = window.open("", "win", "menubar=no,toolbar=no");
-    
-    win.document.open("text/html", "replace");
-    win.document.write('<HTML><HEAD><TITLE>MiG Remote Access</TITLE></HEAD><BODY>%s</BODY></HTML>');
-    win.document.close();
-    }
-    </script>""" % applet
-    
+                      '<li>See your virtual machines in the list below.</li>'+\
+                      '<li>Start, stop and connect to your Virtual Machine</li>'+\
+                      '<li>Request Virtual Machines, by clicking on the button above</li>'+\
+                      '</ul></p>'
+                          
     output_objects.append({'object_type': 'title', 'text'
                           : 'MiG Virtual Machines'})
     output_objects.append({'object_type': 'header', 'text'
@@ -111,16 +98,52 @@ def main(cert_name_no_spaces, user_arguments_dict):
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : welcomeText
                           })    
-    output_objects.append({'object_type': 'text', 'text': descriptionText + popup})
+    output_objects.append({'object_type': 'text', 'text': descriptionText})
     
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Your machines:'
                           })
-    output_objects.append({'object_type': 'text', 'text'
-                              : 'Not yet implemented.'
+    
+    # List the machines here
+    
+    # Grab the vms available for the user
+    machines = vms.vms_list(configuration, cert_name_no_spaces)
+        
+    if len(machines)>0:
+        
+        # Create a pretty list with start/stop/connect links
+        pretty_machines = '<table style="border: 0; background: none;"><tr>'
+        side_by_side = 3 # How many machines should be shown in a row?
+                
+        col = 0;
+        for machine in machines:
+            
+            # Machines on a row
+            if col % side_by_side == 0:
+                pretty_machines += "</tr><tr>"
+            col += 1;
+                        
+            # Html format machine specifications in a fieldset
+            specs = "<fieldset><legend>Specs:</legend><ul><li>Ram: %s</li><li>State: %s</li></ul></fieldset>" % (machine['specs'], machine['state'])
+
+            # Smack all the html together
+            pretty_machines += "<td style=\"vertical-align: top;\"><fieldset><legend>%s</legend><img src=\"/images/vms/vm_off.jpg\"> %s </fieldset></td>" % (machine['name'], specs)
+        
+        pretty_machines += "</tr></table>"
+        
+        output_objects.append({'object_type': 'text', 'text'
+                              : pretty_machines
                               })
+    else:        
+        output_objects.append({'object_type': 'text', 'text'
+                              : "You don't have any virtual machines! Click 'Request Virtual Machine' to become a proud owner :)"
+                              })
+        
+    #output_objects.append({'object_type': 'text', 'text'
+    #                          : vms.popup_snippet() + vms.vnc_applet('amigos18.diku.dk', 8111, 8114, 1024, 768, 'leela')
+    #                          })
 
     return (output_objects, status)
-  
+
 cgitb.enable()
 run_cgi_script(main)
