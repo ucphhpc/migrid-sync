@@ -759,7 +759,10 @@ while True:
             for expired in expired_jobs:
 
                 # tell the user about the expired job - we do not wait for notification
-                # to finish but hope for the best since this script is long running
+                # to finish but hope for the best since this script is long running.
+                # the thread only writes a message to the notify pipe so it finishes
+                # immediately if the notify daemon is listening and blocks indefinitely
+                # otherwise.
 
                 notify_user_thread(
                     expired,
