@@ -82,14 +82,14 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
 
-    cert_name = accepted['cert_name'][-1].title()
-    country = accepted['country'][-1].upper()
-    state = accepted['state'][-1].title()
-    org = accepted['org'][-1]
+    cert_name = accepted['cert_name'][-1].strip().title()
+    country = accepted['country'][-1].strip().upper()
+    state = accepted['state'][-1].strip().title()
+    org = accepted['org'][-1].strip()
 
     # lower case email address
 
-    email = accepted['email'][-1].lower()
+    email = accepted['email'][-1].strip().lower()
     password = accepted['password'][-1]
     verifypassword = accepted['verifypassword'][-1]
 
@@ -120,11 +120,12 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     if is_diku_org != is_diku_email:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Illegal email and organization combination'
-                              })
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Please read and follow the instructions in red!'
-                              })
+                              : '''Illegal email and organization combination:
+Please read and follow the instructions in red on the request page!
+If you are a DIKU student with only a @*.ku.dk address please just use KU as organization.
+As long as you state that you want the certificate for DIKU purposes in the comment field, you
+will be given access to the necessary resources anyway.
+''' })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     user_dict = {
