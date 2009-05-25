@@ -238,7 +238,7 @@ def notify_user(
 
         if notify_line_colon_split[0].strip() in supported_protocols:
             protocol = notify_line_colon_split[0]
-            recipients = notify_line.replace('%s: ' % protocol, '').strip()
+            recipients = notify_line_colon_split[1].strip()
             all_dest = []
 
             # Empty or

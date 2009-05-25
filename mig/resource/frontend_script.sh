@@ -694,8 +694,18 @@ while [ 1 ]; do
             for old_file in `find . -name "*.${extension}" -mtime +30| xargs`; do
                 # No matching expansion results in no loop because of 'find' 
                 # execution so no need to check for raw pattern 
-                $clean_command "${old_file}";
+                $clean_command "${old_file}"
             done
+        done
+        echo "rotating any big logs" 1>> $frontendlog 2>> $frontendlog
+	for log_file in `find . -name "$(basename frontendlog)" -size +32M| xargs`; do
+            # No matching expansion results in no loop because of 'find' 
+            # execution so no need to check for raw pattern 
+	    echo "rotating $log_file" 1>> $frontendlog 2>> $frontendlog
+	    for i in `seq 7 -1 0`; do
+		[ -e "$log_file.$i" ] && mv "$log_file.$i" "$log_file.$((i+1))"
+	    done
+	    mv "${log_file}" "${log_file}.0";
         done
         echo "finished clean up" 1>> $frontendlog 2>> $frontendlog
         clean_up_counter=0

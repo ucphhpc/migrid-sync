@@ -139,9 +139,17 @@ def send_msg(
         
         account_number = get_account_number(im_network)
 
-        # assign unique local nick
+        all_nicks = [i['nick'] for i in nick_and_id_dict.values()]
 
-        nickname = 'nick%d' % len(nick_and_id_dict)
+        # assign unique local nick: len does not always yield highest
+        # nickname index as e.g. illegal addresses won't get
+        # permanently inserted. Increment index until unique!
+
+        id_index = len(nick_and_id_dict)
+        nickname = 'nick%d' % id_index
+        while nickname in all_nicks:
+            id_index += 1
+            nickname = 'nick%d' % id_index
         
         print 'assigned local nick %s to new user %s with %d nicks' % \
               (nickname, dest, len(nick_and_id_dict))
