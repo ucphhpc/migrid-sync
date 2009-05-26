@@ -1065,16 +1065,11 @@ def resource_exe_action(
             msg += ssh_error_msg
             return (False, msg)
         else:
-            status = False
+            msg += ssh_status_msg
+            status = True
             if 'stop' == action:
                 pgid_file.seek(0, 0)
                 pgid_file.write('stopped\n')
-                status = True
-            elif 'status' == action:
-                msg += ssh_status_msg
-                status = True
-            elif 'clean' == action:
-                status = True
 
         pgid_file.flush()
         if lock_pgid_file:
