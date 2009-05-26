@@ -680,7 +680,7 @@ clean_leader() {
     stop_leader $@
     script=`basename $0`
     echo "leader node stopping all $script scripts" >> $exehostlog
-    killall -9 -g "$script"
+    killall -9 -g -e "$script"
 }
 
 ### Main ###

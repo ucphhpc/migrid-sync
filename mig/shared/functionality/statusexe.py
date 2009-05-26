@@ -110,7 +110,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         output_objects.append({'object_type': 'header', 'text'
                               : 'Status exe'})
         if not status:
-            output_objects.append({'object_type': 'text', 'text'
+            output_objects.append({'object_type': 'error_text', 'text'
                     : 'Problems getting exe status: %s' % msg})
             exit_status = returnvalues.SYSTEM_ERROR
         else:

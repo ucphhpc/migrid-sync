@@ -40,6 +40,11 @@ from shared.fileio import unpickle
 from shared.ssh import execute_on_resource, execute_on_exe, \
     copy_file_to_exe, copy_file_to_resource
 
+ssh_error_code = 255
+ssh_error_msg = ''' (%d means that an error occurred in the ssh login to the
+resource - this is typically a matter of problems with the ssh host key or login
+with the MiG server ssh key)''' % ssh_error_code
+ssh_status_msg = ' (0 indicates a running frontend, 1 indicates a stopped or killed frontend)'
 
 def put_fe_pgid(resource_home, unique_resource_name, pgid, logger, sandbox=False):
     """Write front end PGID in resource home"""
@@ -842,12 +847,12 @@ def resource_fe_action(
         msg = executed_command + '\n' + command + ' returned '\
              + str(exit_code)
 
-        # exit_code 255 is SSH Connection error
-
-        if exit_code != 255:
-            return (True, msg)
-        else:
+        if exit_code == ssh_error_code:
+            msg += ssh_error_msg
             return (False, msg)
+        else:
+            msg += ssh_status_msg
+            return (True, msg)
 
     try:
         pgid_file = open(pgid_path)
@@ -861,15 +866,14 @@ def resource_fe_action(
                 execute_on_resource(command, False, resource_config,
                                     logger)
             msg = executed_command + '\n' + command\
-                 + ' (0 indicates a running frontend, 1 indicates a stopped or killed frontend)'\
                  + ' returned ' + str(exit_code)
 
-            # exit_code 255 is SSH Connection error
-
-            if exit_code != 255:
-                return (True, msg)
-            else:
+            if exit_code == ssh_error_code:
+                msg += ssh_error_msg
                 return (False, msg)
+            else:
+                msg += ssh_status_msg
+                return (True, msg)
         elif action == 'stop':
 
             # Try pkill if ordinary kill doesn't work (-PGID not
@@ -1057,26 +1061,19 @@ def resource_exe_action(
         msg = executed_command + '\n --- (command: ' + command\
              + ') returned ' + str(exit_code)
 
-        # exit_code 255 is SSH Connection error
-
-        status = False
-        if 255 != exit_code:
+        if exit_code == ssh_error_code:
+            msg += ssh_error_msg
+            return (False, msg)
+        else:
+            status = False
             if 'stop' == action:
                 pgid_file.seek(0, 0)
                 pgid_file.write('stopped\n')
                 status = True
             elif 'status' == action:
-
-                # Status test returns number of active processes
-                # if 0 < exit_code:
-
-                msg += \
-                    ' (0 indicates a running exe, 1 indicates a stopped or killed exe)'
+                msg += ssh_status_msg
                 status = True
             elif 'clean' == action:
-
-                # if 0 == exit_code:
-
                 status = True
 
         pgid_file.flush()
