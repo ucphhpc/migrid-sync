@@ -32,16 +32,20 @@ if len(sys.argv) < 2:
 
 pattern = sys.argv[1]
 code_files = [
-    'shared/*.py',
-    'shared/*/*.py',
-    'server/*.py',
+    '*.py',
     'cgi-bin/*.py',
     'cgi-sid/*.py',
-    'user/*.py',
-    'simulation/*.py',
+    'install/*.py',
     'migfs-fuse/*.py',
+    'server/*.py',
+    'shared/*.py',
+    'shared/functionality/*.py',
+    'shared/distos/*.py',
+    'simulation/*.py',
     'resource/frontend_script.sh',
     'resource/master_node_script.sh',
+    'user/*.py',
+    'webserver/*.py',
     ]
 code_files += ['cgi-sid/%s' % name for name in ['requestnewjob',
                'get_resource_pgid', 'put_resource_pgid']]

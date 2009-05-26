@@ -43,12 +43,16 @@ from shared.ssh import execute_on_resource, execute_on_exe, \
 ssh_error_code = 255
 ssh_error_msg = ''' (%d means that an error occurred in the ssh login to the
 resource - this is typically a matter of problems with the ssh host key or login
-with the MiG server ssh key)''' % ssh_error_code
-ssh_status_msg = ' (0 indicates a running frontend, 1 indicates a stopped or killed frontend)'
+with ssh key from the MiG server to the resource frontend or from the resource frontend
+to the execution node. Please check that you can login all the way through to the execution
+node without interactive input)''' % ssh_error_code
+ssh_status_msg = ' (0 means OK, 1 or other positive values generally indicate a problem)'
 
 def put_fe_pgid(resource_home, unique_resource_name, pgid, logger, sandbox=False):
     """Write front end PGID in resource home"""
     
+    msg = ''
+
     # Please note that base_dir must end in slash to avoid access to other
     # resource dirs when own name is a prefix of another resource name
 
@@ -85,6 +89,8 @@ def put_exe_pgid(
     logger,
     sandbox=False):
     """Write exe PGID file in resource home and stop exe if requested"""
+
+    msg = ''
 
     # Please note that base_dir must end in slash to avoid access to other
     # resource dirs when own name is a prefix of another resource name
@@ -283,6 +289,8 @@ def fill_frontend_script(
     ):
     """Fill in frontend template"""
 
+    msg = ''
+
     try:
         os.write(filehandle, '#!/bin/bash\n')
         os.write(filehandle, 'migserver=' + https_sid_url + '\n')
@@ -442,6 +450,8 @@ def fill_master_node_script(
 def get_frontend_script(unique_resource_name, logger):
     """Create frontend_script"""
 
+    msg = ''
+
     configuration = get_configuration_object()
 
     (status, resource_config) = \
@@ -485,6 +495,8 @@ def get_frontend_script(unique_resource_name, logger):
 
 def get_master_node_script(unique_resource_name, exe_name, logger):
     """Create master_node_script"""
+
+    msg = ''
 
     configuration = get_configuration_object()
 
@@ -692,15 +704,18 @@ def start_resource_exe(
     # execute start command
 
     command = exe['start_command']
-    (status, executed_command) = execute_on_resource(command, True,
+    (exit_code, executed_command) = execute_on_resource(command, True,
             resource_config, logger)
 
-    msg += executed_command + '\n'
+    msg += executed_command + '\n' + command + ' returned '\
+          + str(exit_code)
 
-    if 0 != status:
+    if exit_code == ssh_error_code:
+        msg += ssh_error_msg
         return (False, msg)
-    return (True, msg)
-
+    else:
+        msg += ssh_status_msg
+        return (True, msg)
 
 def start_resource_frontend(unique_resource_name, configuration,
                             logger):
@@ -787,21 +802,18 @@ def start_resource(
 
     command = 'cd %s; chmod +x frontend_script.sh; ./frontend_script.sh'\
          % resource_config['RESOURCEHOME']
-    (status, executed_command) = execute_on_resource(command, False,
+    (exit_code, executed_command) = execute_on_resource(command, False,
             resource_config, logger)
 
-    msg += executed_command + '\n'
-    msg += command + '  returned ' + str(status) + '\n'
+    msg += executed_command + '\n' + command + ' returned '\
+          + str(exit_code)
 
-    if 0 != status:
-        logger.error('frontend_script.sh not started!')
-        msg += 'frontend_script.sh not started!\n'
+    if exit_code == ssh_error_code:
+        msg += ssh_error_msg
         return (False, msg)
     else:
-        logger.info('frontend_script.sh started')
-        msg += 'frontend_script.sh started\n'
+        msg += ssh_status_msg
         return (True, msg)
-
 
 def resource_fe_action(
     unique_resource_name,
@@ -811,6 +823,8 @@ def resource_fe_action(
     logger,
     ):
     """This function handles status and stop for resource FE's"""
+
+    msg = ''
 
     if not action in ['status', 'stop', 'clean']:
         msg = 'Unknown action: %s' % action
@@ -844,8 +858,9 @@ def resource_fe_action(
         command = 'rm -rf %s' % resource_config['RESOURCEHOME']
         (exit_code, executed_command) = execute_on_resource(command,
                 False, resource_config, logger)
-        msg = executed_command + '\n' + command + ' returned '\
-             + str(exit_code)
+
+        msg += executed_command + '\n' + command + ' returned '\
+               + str(exit_code)
 
         if exit_code == ssh_error_code:
             msg += ssh_error_msg
@@ -890,16 +905,18 @@ def resource_fe_action(
             # 0 Means FE killed, 1 means process' with PGID not
             # found, which means FE already dead.
 
-            if 0 == exit_code or 1 == exit_code:
+            if exit_code == ssh_error_code:
+                msg += ssh_error_msg
+                return (False, msg)
+            else:
                 try:
                     os.remove(pgid_path)
                 except Exception, err:
                     logger.error("Could not remove pgid file: '"
                                   + pgid_path + "'")
 
+                msg += ssh_status_msg
                 return (True, msg)
-            else:
-                return (False, msg)
     except Exception, err:
 
         # msg = "FE.PGID could not be read and the status of the frontend is therefore unknown. Could not perform requested action, try (re)starting the frontend"
@@ -923,6 +940,8 @@ def resource_exe_action(
     If then parameter lock_pgid_file is False, the calling function
     must handle locking of the 'pgid_path'.
     """
+
+    msg = ''
 
     if not action in ['status', 'stop', 'clean']:
         msg = 'Unknown action: %s' % action
@@ -1058,8 +1077,9 @@ def resource_exe_action(
         command = command.replace('$mig_exe_pgid', pgid)
         (exit_code, executed_command) = execute_on_resource(command,
                 False, resource_config, logger)
-        msg = executed_command + '\n --- (command: ' + command\
-             + ') returned ' + str(exit_code)
+
+        msg = executed_command + '\n' + command + ' returned '\
+             + str(exit_code)
 
         if exit_code == ssh_error_code:
             msg += ssh_error_msg
