@@ -87,7 +87,7 @@ def create_empty_job(
     job_dict['RUNTIMEENVIRONMENT'] = []
     job_dict['MAXPRICE'] = '0'
     job_dict['JOBNAME'] = 'empty job'
-    user_cert = 'no_grid_jobs_in_grid_scheduler'
+    user_cert = configuration.empty_job_name
     job_dict['USER_CERT'] = user_cert
 
     # create mRSL file only containing the unique_resource_name.
@@ -195,7 +195,7 @@ def create_job_script(
 
     # if not job:
 
-    if user_cert == 'no_grid_jobs_in_grid_scheduler':
+    if user_cert == configuration.empty_job_name:
 
         # create link to empty job
 
@@ -319,7 +319,7 @@ def create_job_script(
                     linkintermediate = configuration.webserver_home\
                          + sessionid + '.jvm'
 
-                    if user_cert == 'no_grid_jobs_in_grid_scheduler':
+                    if user_cert == configuration.empty_job_name:
                         linkdest = \
                             os.path.abspath(configuration.javabin_home)
                     else:
@@ -453,8 +453,9 @@ def gen_job_script(
     getinputfiles_array.append(generator.print_on_error('get_executables_status'
                                , '0',
                                'failed to fetch executable files!'))
-    getinputfiles_array.append(generator.generate_output_filelists(user_cert,
-                               'generate_output_filelists'))
+    # user_cert equals empty_job_name for sleep jobs
+    getinputfiles_array.append(generator.generate_output_filelists(
+        (user_cert == configuration.empty_job_name), 'generate_output_filelists'))
     getinputfiles_array.append(generator.print_on_error('generate_output_filelists'
                                , '0',
                                'failed to generate output filelists!'))

@@ -472,7 +472,7 @@ class GenJobScriptSh:
         cmd += '%s=$?\n' % result
         return cmd
 
-    def generate_output_filelists(self, user_cert,
+    def generate_output_filelists(self, real_job,
                                   result='generate_output_filelists'):
         """Generate filelists (user/system) of which files
         should be transfered from EXE to FE upon job finish."""
@@ -510,9 +510,9 @@ class GenJobScriptSh:
         cmd += '&& echo -n "" > %s.system.outputfiles\\\n'\
              % localjobname
 
-        # Sleep jobs only generates .status
+        # Sleep jobs only generate .status
 
-        if not user_cert == 'no_grid_jobs_in_grid_scheduler':
+        if real_job':
             cmd += \
                 '&& echo -n "%s.stderr " >> %s.system.outputfiles\\\n'\
                  % (job_dict['JOB_ID'], localjobname)
