@@ -512,7 +512,7 @@ class GenJobScriptSh:
 
         # Sleep jobs only generate .status
 
-        if real_job':
+        if real_job:
             cmd += \
                 '&& echo -n "%s.stderr " >> %s.system.outputfiles\\\n'\
                  % (job_dict['JOB_ID'], localjobname)
