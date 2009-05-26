@@ -311,6 +311,9 @@ bitlbee_password = 'klapHaT1'
 configuration = get_configuration_object()
 stdin_path = configuration.im_notify_stdin
 irc = None
+line = None
+attempt = 0
+max_retries = 2
 
 try:
     if not os.path.exists(stdin_path):
@@ -368,7 +371,10 @@ while keep_running:
         # send_msg(irc_server, "8961036", "icq", "hej du")
         # send_msg(irc_server, "henrikkarlsen2@login.oscar.aol.com", "aol", "hej du")
 
-        line = im_notify_stdin.readline()
+        # If last delivery failed we still have request line set
+        if not line or attempt >= max_retries:
+            line = im_notify_stdin.readline()
+            attempt = 0
         if line.upper().startswith('SENDMESSAGE '):
 
             # The received line should be on a format similar to:
@@ -389,6 +395,7 @@ while keep_running:
             print 'Sending message: protocol: %s to: %s message: %s'\
                   % (protocol, recipient, message)
             send_msg(irc_server, recipient, protocol, message)
+            print 'Message sent to %s' % recipient
         elif line.upper().startswith('SHOWBUDDIES'):
             print 'Buddy list:'
             for (key, val) in nick_and_id_dict.items():
@@ -399,7 +406,7 @@ while keep_running:
             break
         elif line:
             print 'unknown message received: %s' % line
-
+        line = None
         # Throttle down
         time.sleep(1)
     except KeyboardInterrupt:
@@ -407,6 +414,7 @@ while keep_running:
     except Exception, exc:
         print 'Caught unexpected exception: %s' % exc
         irc = None
+        attempt += 1
         
 print 'Real IM daemon shutting down'
 sys.exit(0)
