@@ -261,8 +261,8 @@ scheduler.attach_done_queue(done_queue)
 
 try:
     if not os.path.exists(configuration.grid_stdin):
-        logger.info('grid_stdin %s does not exists, creating it with mkfifo!'
-                    )
+        logger.info('creating grid_script input pipe %s' % \
+                    configuration.grid_stdin)
         try:
             os.mkfifo(configuration.grid_stdin, mode=0600)
         except StandardError, err:
@@ -271,12 +271,22 @@ try:
                           % (configuration.grid_stdin, err))
     grid_stdin = open(configuration.grid_stdin, 'r')
 except StandardError:
-    logger.error('error opening grid_stdin! %s' % sys.exc_info()[0])
+    logger.error('failed to open grid_stdin! %s' % sys.exc_info()[0])
     sys.exit(1)
 
 logger.info('cleaning pipe')
 clean_grid_stdin(grid_stdin)
 
+# Make sure empty job home exists
+empty_home = os.path.join(configuration.user_home, configuration.empty_job_name)
+if not os.path.exists(empty_home):
+    logger.info('creating empty job home dir %s' % empty_home)
+    try:
+        os.mkdir(empty_home)
+    except Exception, exc:
+        logger.error('failed to create empty job home dir %s: %s' % \
+                     (empty_home, exc))
+            
 msg = 'Checking for mRSL files with status parse or queued'
 print msg
 logger.info(msg)

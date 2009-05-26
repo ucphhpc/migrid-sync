@@ -314,12 +314,12 @@ irc = None
 
 try:
     if not os.path.exists(stdin_path):
-        print 'im_notify_stdin %s does not exists, creating it with mkfifo!'
+        print 'creating im_notify input pipe %s' % stdin_path
         try:
             os.mkfifo(stdin_path, mode=0600)
         except Exception, err:
-            print 'Could not create missing IM stdin fifo: %s exception: %s '\
-                 % (stdin_path, err)
+            print 'Could not create missing IM stdin pipe %s: %s' % \
+                  (stdin_path, err)
 except:
     print 'error opening IM stdin! %s' % sys.exc_info()[0]
     sys.exit(1)
