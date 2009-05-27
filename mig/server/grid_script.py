@@ -1228,6 +1228,14 @@ while True:
                          % (num_executing_jobs_before,
                         num_executing_jobs_after))
 
+            if not job_dict:
+
+                # We are seeing a race in the handling of executing jobs - do nothing
+                # Job timeout must have just killed the job we are trying to cancel
+
+                logger.info('Cancel job: Could not get job_dict for executing job')
+                continue
+            
             if not server_cleanup(
                 job_dict['SESSIONID'],
                 job_dict['IOSESSIONID'],
@@ -1238,12 +1246,7 @@ while True:
                 ):
                 logger.error('could not clean up MiG server')
 
-            if not job_dict:
-
-                # TODO: Do what? nothing?
-
-                logger.info('Cancel job: Could not get job_dict')
-            elif resource_config.get('SANDBOX', 0) == 0:
+            if resource_config.get('SANDBOX', 0) == 0:
                 logger.info('Killing running job with atomic_resource_exe_restart'
                             )
                 (status, msg) = \
