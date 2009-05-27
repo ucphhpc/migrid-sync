@@ -37,13 +37,18 @@ uname -a
 echo text >> file
 ls
 
-Executes the commands sequentially in a shell script environment on the resource.
+Executes the commands sequentially in a simple shell script environment on the resource.
 Thus changes to the environment are preserved for the entire job session, so e.g.
 ::EXECUTE::
 cd mydir
 pwd
 
 will change to mydir and run the pwd command from there.
+
+Please note that our command exit code extraction for the JOBID.status file may interfere
+with some advanced shell features. Thus if you experience problems with e.g. Job Control
+(also known as backgrounding of processes), you should wrap up your commands in your own
+script instead of putting them directly in the EXECUTE field.
 ''',
         'Type': 'multiplestrings',
         'Value': [],
