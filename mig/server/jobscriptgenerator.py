@@ -455,7 +455,7 @@ def gen_job_script(
                                'failed to fetch executable files!'))
     # user_cert equals empty_job_name for sleep jobs
     getinputfiles_array.append(generator.generate_output_filelists(
-        (user_cert == configuration.empty_job_name), 'generate_output_filelists'))
+        (user_cert != configuration.empty_job_name), 'generate_output_filelists'))
     getinputfiles_array.append(generator.print_on_error('generate_output_filelists'
                                , '0',
                                'failed to generate output filelists!'))
