@@ -640,6 +640,8 @@ class GenJobScriptSh:
         JOB_ID.stdout and JOB_ID.stderr
         """
 
+        # TODO: job_log is different from exe job log in parent dir
+        
         exe_dict = {'job_id': job_dict['JOB_ID'], 'job_log': 'joblog'}
         cmd = ''
 
@@ -653,21 +655,28 @@ class GenJobScriptSh:
 
         for exe in job_dict['EXECUTE']:
             exe_dict['job_id'] = job_dict['JOB_ID']
-            exe_dict['exe'] = exe
 
             # Make sure any apostrophes in EXECUTE do not interfere
-            # with our own
+            # with our own in logging
 
-            exe = exe.replace("'", "\\'")
+            exe_dict['exe_escaped'] = exe.replace("'", "`")
+
+            exe_dict['exe'] = exe
+
+            # Prevent missing quotes from interfering with our exit code extraction
+
+            exe_dict['exe'] += '\n    # MiG caught stray quotes in a command!'
+            exe_dict['exe'] += ' #"; (exit 255)'
+            exe_dict['exe'] += " #'; (exit 255)"
 
             # Please note that the 'EXECUTING: sleep' string is used to detect empty jobs
             # in resource scripts: Please propagate any changes!
 
             cmd += \
                 """
-    echo 'EXECUTING: %(exe)s' >> %(job_log)s
+    echo 'EXECUTING: %(exe_escaped)s' >> %(job_log)s
     echo -n '--Exit code: ' >> %(job_log)s
-    echo -n '%(exe)s ' >> %(job_id)s.status
+    echo -n '%(exe_escaped)s ' >> %(job_id)s.status
     (exit $__MiG_LAST_RET)
     %(exe)s
     __MiG_LAST_RET=$?
