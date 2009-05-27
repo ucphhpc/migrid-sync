@@ -33,6 +33,7 @@ import os
 
 
 mrsl_template = ".default.mrsl"
+css_template = ".default.css"
 
 
 def parse_and_save_settings(filename, cert_name_no_spaces,
@@ -77,7 +78,7 @@ def parse_and_save_settings(filename, cert_name_no_spaces,
     return (True, '')
 
 def get_default_mrsl(template_path):
-    """Return the default mRSL template for user with supplied certificate"""
+    """Return the default mRSL template from template_path"""
 
     try:
         template_fd = open(template_path, 'rb')
@@ -115,4 +116,19 @@ jabber: SETTINGS
 
 """
     return default_mrsl
+
+def get_default_css(template_path):
+    """Return the default css template template_path"""
+
+    try:
+        template_fd = open(template_path, 'rb')
+        default_css = template_fd.read()
+        template_fd.close()
+    except:
+        
+        # Use default style - i.e. do not override anything
+
+        default_css = '/* No changes - use default */'
+
+    return default_css
 

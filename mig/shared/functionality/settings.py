@@ -33,7 +33,8 @@ from shared.fileio import unpickle
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
-from shared.settings import mrsl_template, get_default_mrsl
+from shared.settings import mrsl_template, css_template, get_default_mrsl, \
+     get_default_css
 
 
 def signature():
@@ -141,9 +142,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
     base_dir = os.path.abspath(configuration.user_home + os.sep
                                 + cert_name_no_spaces) + os.sep
 
-    template_path = os.path.join(base_dir, '.default.mrsl')
+    mrsl_path = os.path.join(base_dir, mrsl_template)
     
-    default_mrsl = get_default_mrsl(template_path)
+    default_mrsl = get_default_mrsl(mrsl_path)
+    css_path = os.path.join(base_dir, css_template)
+
+    default_css = get_default_css(css_path)
+
     html += '''
 <div id=defaultmrsl>
 <table class="defaultjob">
@@ -153,7 +158,7 @@ Default job on submit page
 <tr><td>
 </td></tr>
 <tr><td>
-If you use the same fields and values in mony of your jobs, you can save your preferred job description here to always start out with that description on your submit job page.
+If you use the same fields and values in many of your jobs, you can save your preferred job description here to always start out with that description on your submit job page.
 </td></tr>
 <tr><td>
 </td></tr>
@@ -174,9 +179,45 @@ If you use the same fields and values in mony of your jobs, you can save your pr
 </td></tr>
 </table>
 </div>
-''' % {'default_mrsl': default_mrsl, 'mrsl_template': mrsl_template}
+<div id=defaultcss>
+<table class="defaultstyle">
+<tr class=title><td class=centertext>
+Default CSS (style) for all pages
+</td></tr>
+<tr><td>
+</td></tr>
+<tr><td>
+If you want to customize the look and feel of the MiG web interfaces you can override default values here. If you leave the style file blank you will just use the default style.<br>
+You can copy paste from the available style file links below if you want to override specific parts.<br>
+Please note that you can not save an empty style file, but must at least leave a blank line to use defaults.
+</td></tr>
+<tr><td class=centertext>
+<a href="/images/default.css">default</a> , <a href="/images/bluesky.css">bluesky</a>
+</td></tr>
+<tr><td>
+</td></tr>
+<tr><td class=centertext>
+<form method="post" action="/cgi-bin/editfile.py">
+<input type="hidden" name="path" value="%(css_template)s">
+<input type="hidden" name="newline" value="unix">
+<textarea cols="82" rows="25" wrap="off" min_len=1 name="editarea">
+%(default_css)s
+</textarea>
+</td></tr>
+<tr><td>
+<center>
+<input type="submit" value="Save style">
+<input type="reset" value="Forget changes">
+<center>
+</form>
+</td></tr>
+</table>
+</div>
+''' % {'default_mrsl': default_mrsl, 'mrsl_template': mrsl_template,
+       'default_css': default_css, 'css_template': css_template}
 
     output_objects.append({'object_type': 'html_form', 'text': html})
+
     output_objects.append({'object_type': 'text', 'text':''})
     return (output_objects, returnvalues.OK)
 

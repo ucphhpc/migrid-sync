@@ -31,11 +31,27 @@ tr, td {
 
 h1{
 	padding: 4px;
-	border-top: 0px solid #000;
+	border-top: px solid #000;
 	border-bottom: 1px solid #000;
+	font-size: 16px;  
 	color: #000;
+	background: #acf;
 	text-align: center;
 }
+
+h2 {
+  border-bottom: 1px solid #000;
+  font-size: 14px;  
+  padding: 2px;
+}
+
+h3 {
+  border-bottom: 1px solid darkgrey;
+  font-size: 16px;  
+  padding: 3px;
+}
+
+
 div.container {
 	width: 98%;
 	margin: 1%;
@@ -44,6 +60,7 @@ div.container {
 
 /* Horizontal Menu */
 .navmenu {
+	width: 98%;
   font-size: 16px;
   background: none;
 }
@@ -271,6 +288,10 @@ table.monitorruntimeenvreq {
   vertical-align: middle;
 
 }
+#credits a {
+	color: #369;
+}
+
 
 #content {
 	/* background: #ccc; */
