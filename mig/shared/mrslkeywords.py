@@ -45,6 +45,8 @@ pwd
 
 will change to mydir and run the pwd command from there.
 
+All string fields including EXECUTE support automatic expansion of the variables +JOBID+ and +JOBNAME+ to the actual ID and name of the job. This may be useful in relation to e.g. Monte Carlo simulations where a lot of identical job descriptions are submitted which need to deliver their unique results without interference from other jobs.
+
 Please note that our command exit code extraction for the JOBID.status file may interfere
 with some advanced shell features. Thus if you experience problems with e.g. Job Control
 (also known as backgrounding of processes), you should wrap up your commands in your own
@@ -71,6 +73,8 @@ Copies somefile and another_file from your MiG home to the resource, but another
 some_url some_file
 
 Downloads the contents from some_url (e.g. https://myhost.org/inputfile.txt) to a file called some_file on the resource.
+
+Supports the same variable expansion as described in the EXECUTE field documentation.
 ''',
         'Type': 'multiplestrings',
         'Value': [],
@@ -92,6 +96,8 @@ Copies file and another_file_renamed to the MiG server, but another_file_renamed
 some_file some_url
 
 Uploads some_file on the resource to some_url (e.g. ftp://myuser:mypw@myhost.org/outputfile.txt).
+
+Supports the same variable expansion as described in the EXECUTE field documentation.
 ''',
         'Type': 'multiplestrings',
         'Value': [],

@@ -110,7 +110,7 @@ def replace_special(global_dict):
             for elem in value[:]:
                 if type(elem) is types.TupleType:
 
-                    # Environement? tuple
+                    # Environment? tuple
 
                     (name, val) = elem
                     name = replace(name, global_dict['JOBNAME'],
