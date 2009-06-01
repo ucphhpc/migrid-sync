@@ -24,7 +24,7 @@
 #
 # -- END_HEADER ---
 #
-import os
+import os, time
 import sys
 import cgi
 import cgitb
@@ -47,7 +47,21 @@ def main(cert_name_no_spaces, user_arguments_dict):
         initialize_main_variables(op_header=False, op_title=False)
 
     status = returnvalues.OK
-    defaults = {}
+    defaults = {'start': [''], 'stop':[''],
+      
+                'machine_name': [''],                
+                'machine_request': ['0'],
+                
+                'machine_type': [''],
+                  
+                'pre_built': [''],
+                'machine_arch': [''],
+                'machine_cpu': [''],
+                'machine_ram': [''],
+                'machine_partition': [''],
+                'machine_software': [''],
+                
+              }
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -60,7 +74,6 @@ def main(cert_name_no_spaces, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-
     menu_items  = (
                         {
                         'class'    : 'vmachines add',
@@ -68,13 +81,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                         'title'     : 'Request Virtual Machine',
                         'attr' : ''
                         
-                        }             ,
-                        #{
-                        #'class'    : 'vmachines connect',
-                        #'url'       : '#',
-                        #'title'     : 'Connect to remote access service',
-                        #'attr'  : 'onClick="vncClientPopup(); return false;"'
-                        #},
+                        },
                   )
 
     # Html fragments
@@ -82,9 +89,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     welcomeText     = 'Welcome to MiG virtual machine management!'
     descriptionText = '<p>In this part of MiG you can: <ul>'+\
-                      '<li>See your virtual machines in the list below.</li>'+\
-                      '<li>Start, stop and connect to your Virtual Machine</li>'+\
                       '<li>Request Virtual Machines, by clicking on the button above</li>'+\
+                      '<li>See your virtual machines in the list below.</li>'+\
+                      '<li>Start, and connect to your Virtual Machine by clicking on it.</li>'+\
                       '</ul></p>'
                           
     output_objects.append({'object_type': 'title', 'text'
@@ -98,50 +105,81 @@ def main(cert_name_no_spaces, user_arguments_dict):
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : welcomeText
                           })    
-    output_objects.append({'object_type': 'text', 'text': descriptionText})
+    output_objects.append({'object_type': 'text', 'text': descriptionText})  
     
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Your machines:'
-                          })
+    # TODO: manage request machine
+    if accepted['machine_request'][0] == '1':
+      #output_objects.append({'object_type': 'text', 'text': accepted})
+      vms.create_vm(cert_name_no_spaces, accepted['machine_name'][0])      
+    
+    just_started_job_id = ''
+    if accepted['start'][0] != '':
+      just_started_job_id = vms.enqueue_vm(cert_name_no_spaces, accepted['start'][0])
+        
+    #TODO: manage stop
+    elif accepted['stop']:
+      pass    
     
     # List the machines here
+    output_objects.append({'object_type': 'sectionheader', 'text' : 'Your machines:' })
     
     # Grab the vms available for the user
-    machines = vms.vms_list(configuration, cert_name_no_spaces)
-        
+    machines = vms.vms_list(cert_name_no_spaces)
+    
+    # Visual representation mapping of the machine state
+    machine_states = {'EXECUTING': 'vm_running.jpg',
+                      'CANCELED' : 'vm_off.jpg',
+                      'FINISHED' : 'vm_off.jpg',
+                      'UNKNOWN'  : 'vm_off.jpg',
+                      'QUEUED'   : 'vm_booting.jpg',
+                      'PARSE'    : 'vm_booting.jpg'}
+      # CANCELED/FINISHED -> Powered Off
+      # QUEUED -> Booting
+    
     if len(machines)>0:
         
-        # Create a pretty list with start/stop/connect links
-        pretty_machines = '<table style="border: 0; background: none;"><tr>'
-        side_by_side = 3 # How many machines should be shown in a row?
-                
-        col = 0;
-        for machine in machines:
-            
-            # Machines on a row
-            if col % side_by_side == 0:
-                pretty_machines += "</tr><tr>"
-            col += 1;
-                        
-            # Html format machine specifications in a fieldset
-            specs = "<fieldset><legend>Specs:</legend><ul><li>Ram: %s</li><li>State: %s</li></ul></fieldset>" % (machine['specs'], machine['state'])
-
-            # Smack all the html together
-            pretty_machines += "<td style=\"vertical-align: top;\"><fieldset><legend>%s</legend><img src=\"/images/vms/vm_off.jpg\"> %s </fieldset></td>" % (machine['name'], specs)
+      # Create a pretty list with start/stop/connect links
+      pretty_machines = '<table style="border: 0; background: none;"><tr>'
+      side_by_side = 3 # How many machines should be shown in a row?
+              
+      col = 0;
+      for machine in machines:
         
-        pretty_machines += "</tr></table>"
-        
-        output_objects.append({'object_type': 'text', 'text'
-                              : pretty_machines
-                              })
-    else:        
+        # Machines on a row
+        if col % side_by_side == 0:
+          pretty_machines += "</tr><tr>"
+        col += 1;
+                    
+        # Html format machine specifications in a fieldset
+        password = 'UNKNOWN'
+        exec_time = 0
+        if machine['job_id'] != 'UNKNOWN' and machine['status'] == 'EXECUTING':
+          # TODO: improve on this time selection, in distributed since there is no such
+          # thing as a global clock!          
+          exec_time = ((time.time()-3600) - time.mktime(machine['execution_time']))
+          password = vms.vnc_jobid(machine['job_id'])
+          
+        specs = "<fieldset><legend>Specs:</legend><ul><li>Memory: %s</li><li>Cpu's: %s</li><li>Arch: %s</li><li>Password: %s</li></ul></fieldset>" % (machine['memory'], machine['cpu_count'], machine['arch'], password)
+        if machine['status'] == 'EXECUTING' and exec_time > 130:
+          machine_image = '<img src="/images/vms/' + machine_states[machine['status']] + '">'
+        elif machine['status'] == 'EXECUTING' and exec_time < 130:
+          machine_image = '<img src="/images/vms/vm_desktop_loading.jpg' + '">'
+        else:
+          machine_image = '<img src="/images/vms/' + machine_states[machine['status']] + '">'
+        machine_link = vms.machine_link(machine_image, machine['job_id'], machine['name'], machine['uuid'], machine['status'])
+                    
+        # Smack all the html together
+        pretty_machines += "<td style=\"vertical-align: top;\"><fieldset><legend>%s</legend> %s %s</fieldset></td>" % ( machine['name'], machine_link, specs )
+      
+      pretty_machines += "</tr></table>"
+      
+      output_objects.append({'object_type': 'text', 'text'
+                            : pretty_machines
+                            })
+    else:
         output_objects.append({'object_type': 'text', 'text'
                               : "You don't have any virtual machines! Click 'Request Virtual Machine' to become a proud owner :)"
                               })
-        
-    #output_objects.append({'object_type': 'text', 'text'
-    #                          : vms.popup_snippet() + vms.vnc_applet('amigos18.diku.dk', 8111, 8114, 1024, 768, 'leela')
-    #                          })
 
     return (output_objects, status)
 
