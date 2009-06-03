@@ -25,17 +25,17 @@
 # -- END_HEADER ---
 #
 
+import os
+import cgi
+import xmlrpclib
 from SimpleXMLRPCServer import CGIXMLRPCRequestHandler
 
-import cgi
-import os
-import xmlrpclib
-from shared.output import validate
 import shared.returnvalues as returnvalues
 from shared.objecttypes import get_object_type_info
+from shared.output import validate
 
 
-class migCGIXMLRPCRequestHandler(CGIXMLRPCRequestHandler):
+class MiGCGIXMLRPCRequestHandler(CGIXMLRPCRequestHandler):
 
     def system_methodSignature(self, method_name):
         try:
@@ -393,7 +393,7 @@ def getjobobj(user_arguments_dict):
 
 # ## Main ###
 
-server = migCGIXMLRPCRequestHandler()
+server = MiGCGIXMLRPCRequestHandler()
 server.register_function(object_type_info)
 server.register_function(mycertname)
 server.register_function(jobstatus)
