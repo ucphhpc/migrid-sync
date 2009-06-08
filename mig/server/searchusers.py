@@ -55,6 +55,8 @@ Each search value can be a string or a pattern with * and ? as wildcards.
 
 args = sys.argv[1:]
 app_dir = os.path.dirname(sys.argv[0])
+if not app_dir:
+    app_dir = '.'
 db_file = app_dir + os.sep + 'MiG-users.db'
 user_db = {}
 user_dict = {}

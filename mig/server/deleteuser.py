@@ -42,13 +42,13 @@ def usage(name='deleteuser.py'):
 %(name)s [OPTIONS] FULL_NAME [ORGANIZATION] [STATE] [COUNTRY] \
     [EMAIL]
 or
-%(name)s -u USER_FILE
+%(name)s -u USER_ID
 Where OPTIONS may be one or more of:
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
    -f                  Force: continue on errors
    -h                  Show this help
-   -u USER_FILE        Read user information from pickle file
+   -u USER_ID          USER_ID is a colon separated list of ID fields matching a key in DB
    -v                  Be verbose
 """\
          % {'name': name}
@@ -73,11 +73,13 @@ def delete_dir(path):
 
 args = sys.argv[1:]
 app_dir = os.path.dirname(sys.argv[0])
+if not app_dir:
+    app_dir = '.'
 conf = app_dir + os.sep + 'MiGserver.conf'
 db_file = app_dir + os.sep + 'MiG-users.db'
 verbose = False
 force = False
-user_file = None
+user_id = None
 user_db = {}
 user_dict = {}
 opt_args = 'c:d:fhu:v'
@@ -99,7 +101,7 @@ for (opt, val) in opts:
         usage()
         sys.exit(0)
     elif opt == '-u':
-        user_file = val
+        user_id = val
     elif opt == '-v':
         verbose = True
     else:
@@ -112,7 +114,7 @@ if not os.path.isfile(conf):
 if verbose:
     print 'using configuration in %s' % conf
 
-if user_file and args:
+if user_id and args:
     print 'Only one kind of user specification allowed at a time'
     usage()
     sys.exit(1)
@@ -129,14 +131,17 @@ if args:
         # Ignore missing optional arguments
 
         pass
-elif user_file:
-    try:
-        user_fd = open(user_file, 'rb')
-        user_dict = pickle.load(user_fd)
-    except Exception, err:
-        print 'Error in user name extraction: %s' % err
+elif user_id:
+    parts = user_id.split(':')
+    if len(parts) != 5:
+        print 'Error in user id extraction: %s' % user_id
         usage()
         sys.exit(1)
+    user_dict['full_name'] = parts[0]
+    user_dict['organization'] = parts[1]
+    user_dict['state'] = parts[2]
+    user_dict['country'] = parts[3]
+    user_dict['email'] = parts[4]
 else:
     print 'Please enter the details for the user to be removed:'
     user_dict['full_name'] = raw_input('Full Name: ').title()
@@ -172,7 +177,7 @@ if os.path.exists(db_file):
             sys.exit(1)
 
     if not user_db.has_key(user_id):
-        print "Error: User DB entry doesn't exist!"
+        print "Error: User DB entry '%s' doesn't exist!" % user_id
         if not force:
             sys.exit(1)
 
@@ -231,6 +236,3 @@ except Exception, err:
         sys.exit(1)
 
 print 'DB entry and dirs for %s were removed' % full_name
-if user_file:
-    print 'Cleaning up tmp file: %s' % user_file
-    os.remove(user_file)

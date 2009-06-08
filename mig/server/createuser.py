@@ -61,6 +61,8 @@ Where OPTIONS may be one or more of:
 
 args = sys.argv[1:]
 app_dir = os.path.dirname(sys.argv[0])
+if not app_dir:
+    app_dir = '.'
 conf_path = os.path.join(app_dir, 'MiGserver.conf')
 db_path = os.path.join(app_dir, 'MiG-users.db')
 verbose = False
