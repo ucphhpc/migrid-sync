@@ -89,11 +89,13 @@ if CACERTFILE and not os.path.isfile(CACERTFILE):
     print 'specified cacertfile %s not found!' % CACERTFILE
     sys.exit(1)
 
-urlparseoutput = urlparse(user_conf_dict['migserver'])
-HOSTNAME = urlparseoutput.hostname
-HOSTPORT = urlparseoutput.port
-if HOSTPORT == None:
-    HOSTPORT = 443
+url_tuple = urlparse(user_conf_dict['migserver'])
+# second item in tuple is network location part with hostname and optional port
+host_port = url_tuple[1].split(':', 1)
+if len(host_port) < 2:
+    host_port.append("443")
+host_port[1] = int(host_port[1])
+(HOSTNAME, HOSTPORT) = host_port 
 
 
 class HTTPSCertTransport(xmlrpclib.Transport):
