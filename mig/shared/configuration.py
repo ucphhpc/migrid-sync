@@ -206,6 +206,9 @@ class Configuration:
     expire_peer = 600
     language = ['English']
 
+    # directory for usage records, initially None (means: do not generate)
+    usage_record_dir = None
+
     # constructor
 
     def __init__(self, config_file, verbose=True):
@@ -424,6 +427,10 @@ class Configuration:
                 else:
                     logger.error('ca_path is neither a file or directory!'
                                  )
+
+        # if usage record dir is configured, generate them:
+        if config.has_option('GLOBAL', 'usage_record_dir'):
+            self.usage_record_dir = config.get('GLOBAL','usage_record_dir')
 
     def parse_peers(self, peerfile):
 

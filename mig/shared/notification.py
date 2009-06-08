@@ -20,7 +20,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,  MA 02110-1301, USA.
 #
 # -- END_HEADER ---
 #
@@ -36,6 +36,13 @@ from shared.validstring import is_valid_email_address
 from shared.configuration import Configuration
 from shared.fileio import unpickle
 
+# might be python 2.4, without xml.etree
+# ...in which case: better not configure usage_record_dir
+
+try:
+    from shared.usagerecord import UsageRecord
+except Exception, err: 
+        pass 
 
 def create_notify_message(
     jobid,
@@ -221,6 +228,20 @@ def notify_user(
     process if blocking is not allowed.
     Please take a look at notify_user_thread() if that is a requirement.
     """
+
+    # Usage records: quickly hacked in here.
+    # later, we might want a general plugin / hook interface
+    
+    # first of all, write out the usage record (if configured)
+    ur_destination = configuration.usage_record_dir
+    if ur_destination:
+
+        logger.debug('XML Usage Record directory %s' % ur_destination)
+        usage_record = UsageRecord(configuration, logger)
+        usage_record.fill_from_dict(jobdict)
+        # we use the job_id as a file name (should be unique)
+        usage_record.write_xml(ur_destination + os.sep
+                               + jobdict['JOB_ID'] + '.xml')
 
     settings_dict_file = configuration.user_home + jobdict['USER_CERT']\
          + os.sep + '.settings'
