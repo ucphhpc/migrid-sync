@@ -35,6 +35,7 @@ import threading
 from shared.validstring import is_valid_email_address
 from shared.configuration import Configuration
 from shared.fileio import unpickle
+from shared.settings import load_settings
 
 # might be python 2.4, without xml.etree
 # ...in which case: better not configure usage_record_dir
@@ -268,16 +269,11 @@ def notify_user(
 
                 # read from personal settings
 
-                settings_dict = unpickle(settings_dict_file, logger)
-                if not settings_dict:
-                    logger.info('Could not unpickle settings_dict %s'
-                                 % settings_dict_file)
-                    continue
-                if not settings_dict.has_key(protocol.upper()):
+                settings_dict = load_settings(configuration, jobdict['USER_CERT'])
+                if not settings_dict or not settings_dict.has_key(protocol.upper()):
                     logger.info('Settings dict does not have %s key'
-                                 % protocol.upper())
+                                % protocol.upper())
                     continue
-
                 all_dest = settings_dict[protocol.upper()]
             else:
                 all_dest.append(recipients)

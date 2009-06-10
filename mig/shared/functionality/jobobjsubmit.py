@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# jobobjsubmit - [insert a few words of module description on this line]
+# jobobjsubmit - Submit a job object/dictionary directly
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -27,14 +27,13 @@
 
 # Minimum Intrusion Grid
 
-"""
-"""
+"""Takes a job object/dictionary, writes the mRSL file and submits it"""
 
 import os
 import sys
 import glob
 import shared.mrslkeywords as mrslkeywords
-from shared.conf import get_resource_configuration
+from shared.conf import get_resource_configuration, get_configuration_object
 from shared.refunctions import get_re_dict, list_runtime_environments
 from shared.fileio import unpickle
 from shared.init import initialize_main_variables
@@ -45,25 +44,29 @@ import tempfile
 
 
 def signature():
-    defaults = {'EXECUTE': REJECT_UNSET}
+    defaults = {}
+    configuration = get_configuration_object()
     external_dict = mrslkeywords.get_keywords_dict(configuration)
 
-    for (key, value_dict) in external_dict.iteritems():
+    for (key, value_dict) in external_dict.items():
         if not defaults.has_key(key):
 
-            # do not overwrite
+            # make sure required fields are set but do not overwrite
 
-            defaults[key] = []
+            if value_dict['Required']:
+                defaults[key] = REJECT_UNSET
+            else:
+                defaults[key] = []
     return ['html_form', defaults]
 
 
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
-    global configuration
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
+                    initialize_main_variables()
 
+    status = returnvalues.OK
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -78,7 +81,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     external_dict = mrslkeywords.get_keywords_dict(configuration)
     spec = []
-    for (key, value_dict) in external_dict.iteritems():
+    for (key, value_dict) in external_dict.items():
         attrName = key
         if user_arguments_dict.has_key(attrName):
             spec.append('::%s::' % attrName)
@@ -100,11 +103,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
             spec.append('')
 
-    mrsl = ''
-    for line in spec:
-        mrsl += line + """
-"""
-    output_objects.append({'object_type': 'text', 'text': '%s' % mrsl})
+    mrsl = '\n'.join(spec)
 
     tmpfile = None
 
@@ -115,18 +114,18 @@ def main(cert_name_no_spaces, user_arguments_dict):
         os.write(filehandle, mrsl)
         os.close(filehandle)
     except Exception, err:
-        status = False
+        submit_status = False
 
-    (status, newmsg, job_id) = new_job(tmpfile, cert_name_no_spaces,
+    # submit it
+
+    (submit_status, newmsg, job_id) = new_job(tmpfile, cert_name_no_spaces,
             configuration, False, True)
-    if not status:
+    if not submit_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : newmsg})
         return (output_objects, returnvalues.CLIENT_ERROR)
     base_dir = os.path.abspath(configuration.mrsl_files_dir + os.sep
                                 + cert_name_no_spaces)
-
-    ret_status = returnvalues.OK
 
     # job = Job()
 
@@ -139,13 +138,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
     if not new_job_obj_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : new_job_obj})
-        ret_status = returnvalues.CLIENT_ERROR
+        status = returnvalues.CLIENT_ERROR
     else:
 
         # return new_job_obj
 
         output_objects.append({'object_type': 'jobobj', 'jobobj'
                               : new_job_obj})
-    return (output_objects, ret_status)
+    return (output_objects, status)
 
 

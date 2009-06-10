@@ -36,6 +36,25 @@ from shared.mrslparser import parse
 from shared.fileio import unpickle
 
 
+class Job:
+
+    # job_id = None
+
+    def __init__(self):
+
+        # self.job_id = "7239472394"
+
+        pass
+
+    def to_dict(self):
+        res = {}
+        for attr in dir(self):
+            # Only CAPITAL ones are job attributes
+            if attr == attr.upper():
+                res[attr] = eval("self.%s" % attr)
+        return res
+
+
 def get_job_id(configuration):
     """Read current job id from job_id_counter, increment with one 
     and write new value to the file again. Create the file if it 
@@ -161,17 +180,6 @@ def finished_job(
         return (False,
                 'Fatal error: Could not write message to grid_script')
     return (True, 'Notified server about finished job')
-
-
-class Job:
-
-    # job_id = None
-
-    def __init__(self):
-
-        # self.job_id = "7239472394"
-
-        pass
 
 
 def create_job_object_from_pickled_mrsl(filepath, logger,

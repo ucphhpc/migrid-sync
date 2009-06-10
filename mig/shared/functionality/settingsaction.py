@@ -84,7 +84,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         (filehandle, tmpsettingsfile) = tempfile.mkstemp(text=True)
         os.write(filehandle, settings_mrsl)
         os.close(filehandle)
-    except Exception, e:
+    except Exception:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Problem writing temporary settings file on server.'
                               })
@@ -97,7 +97,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                 configuration)
     try:
         os.remove(tmpsettingsfile)
-    except Exception, e:
+    except Exception:
         pass  # probably deleted by parser!
 
         # output_objects.append({"object_type":"error_text", "text": "Could not remove temporary settings file %s, exception: %s" % (tmpsettingsfile, e)})

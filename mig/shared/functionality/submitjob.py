@@ -32,8 +32,10 @@ import sys
 
 import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
+from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.settings import mrsl_template, get_default_mrsl
+from shared.mrslkeywords import get_keywords_dict
+from shared.settings import load_settings, mrsl_template, get_default_mrsl
 
 
 def signature():
@@ -88,12 +90,67 @@ Actual examples for inspiration:
 <a href=/vcr.mRSL>VCR</a>
 </div>
     """})
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Please enter your mRSL job description below:'
-                          })
     default_mrsl = get_default_mrsl(template_path)
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
+    settings_dict = load_settings(cert_name_no_spaces, configuration)
+    if not settings_dict or not settings_dict.has_key('SUBMITUI'):
+        logger.info('Settings dict does not have SUBMITUI key - using default')
+        submit_style = configuration.submitui[0]
+    else:
+        submit_style = settings_dict['SUBMITUI']
+            
+    if 'fields' == submit_style:
+        show_fields = get_keywords_dict(configuration)
+        fields = ''
+        for (key, val) in show_fields.items():
+            value = ''
+            if val['Value']:
+                value = val['Value']
+
+            fields += '''
+<tr><td>
+%s
+</td><td class=centertext>
+''' % key.capitalize()
+            if 'multiplestrings' == val['Type']:
+                fields += '''
+<textarea cols="56" rows="4" name="%s">%s</textarea>
+''' % (key, value)
+            else:
+                fields += '''
+<input name="%s" type="input" size="50" value="%s"/>
+''' % (key, value)
+            fields += '''
+</td><td>
+<a href="/cgi-bin/docs.py?show=job#%s">help</a>
+</td></tr>
+''' % key
+
+        fields += '''
+<tr>
+<td><br></td>
+<td class=centertext>
+<input type="submit" value="Submit Job">
+</td>
+<td><br></td>
+</tr>'''
+
+        output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Please fill in your job description in the fields below:'
+                               })
+        output_objects.append({'object_type': 'html_form', 'text'
+                               : """
+<table class="submitjob">
+<form method="post" action="/cgi-bin/jobobjsubmit.py" id="miginput">
+%(fields)s
+</form>
+</table>
+""" % {'default_mrsl':default_mrsl, 'fields':fields}})
+    else:
+        output_objects.append({'object_type': 'sectionheader', 'text'
+                               : 'Please enter your mRSL job description below:'
+                               })
+        output_objects.append({'object_type': 'html_form', 'text'
+                               : """
 <!-- 
 Please note that textarea.py chokes if no nonempty KEYWORD_X_Y_Z fields 
 are supplied: thus we simply send a bogus jobname which does nothing
@@ -111,6 +168,12 @@ are supplied: thus we simply send a bogus jobname which does nothing
 </form>
 </td></tr>
 </table>
+""" % {'default_mrsl':default_mrsl}})
+
+    # Upload form
+    
+    output_objects.append({'object_type': 'html_form', 'text'
+                               : """
 <br>
 <table class='files'>
 <tr class=title><td class=centertext colspan=4>
@@ -144,7 +207,7 @@ Optional remote filename (extra useful in windows)
 </form>
 </td></tr>
 </table>
-""" % {'default_mrsl':default_mrsl, 'dest_dir':('.' + os.sep)}})
+""" % {'dest_dir':('.' + os.sep)}})
 
     return (output_objects, status)
 

@@ -78,6 +78,8 @@ def mrsl_keywords():
     sorted_keys.sort()
     for keyword in sorted_keys:
         info = keywords_dict[keyword]
+        output_objects.append({'object_type': 'html_form', 'text'
+                              : "<a name='%s'></a>" % keyword})
         output_objects.append({'object_type': 'header', 'text'
                               : keyword})
         entries = []

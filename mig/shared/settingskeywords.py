@@ -78,6 +78,13 @@ def get_keywords_dict():
         'Value': 'English',
         'Required': False,
         }
+    submitui = {
+        'Description': 'Your prefered submit job interface',
+        'Example': 'fields',
+        'Type': 'string',
+        'Value': 'textarea',
+        'Required': False,
+        }
 
     # create the keywords in a single dictionary
 
@@ -89,6 +96,7 @@ def get_keywords_dict():
         'AOL': aol,
         'YAHOO': yahoo,
         'LANGUAGE': language,
+        'SUBMITUI': submitui,
         }
 
     return keywords_dict

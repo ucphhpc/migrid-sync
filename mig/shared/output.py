@@ -251,6 +251,11 @@ def txt_format(ret_val, ret_msg, out_obj):
                             line += '\t'
                         line += '%s' % this_file['name']
                         print line
+        elif i['object_type'] == 'jobobj':
+            job_dict = i['jobobj'].to_dict()
+            print "Field\t\tValue"
+            for (key, val) in job_dict.items():
+                print '%s\t\t%s' % (key, val)
         elif i['object_type'] == 'html_form':
             pass
         elif i['object_type'] == 'file_output':
@@ -469,6 +474,12 @@ def html_format(ret_val, ret_msg, out_obj):
                         'message',
                         ])
                 print '</table>'
+        elif i['object_type'] == 'jobobj':
+            job_dict = i['jobobj'].to_dict()
+            print "<table class='jobobj'><tr><th>Field</th><th>Value</th></tr>"
+            for (key, val) in job_dict.items():
+                print '<tr><td>%s</td><td>%s</td></tr>' % (key, val)
+            print '</table>'
         elif i['object_type'] == 'html_form':
             print i['text']
         elif i['object_type'] == 'dir_listings':

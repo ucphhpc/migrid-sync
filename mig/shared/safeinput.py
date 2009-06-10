@@ -757,6 +757,22 @@ def guess_type(name):
         return valid_job_id_pattern
     elif name.find('lang') != -1:
         return valid_job_id
+    elif name.find('EXECUTE') != -1:
+        return valid_plain_text
+    elif name.find('EXECUTABLES') != -1:
+        return valid_plain_text
+    elif name.find('INPUTFILES') != -1:
+        return valid_plain_text
+    elif name.find('OUTPUTFILES') != -1:
+        return valid_plain_text
+    elif name.find('VERIFYFILES') != -1:
+        return valid_plain_text
+    elif name.find('NOTIFY') != -1:
+        return valid_plain_text
+    elif name.find('VGRID') != -1:
+        return valid_plain_text
+    elif name.find('RUNTIMEENVIRONMENT') != -1:
+        return valid_plain_text
     else:
 
     # TODO: extend to include all used variables here

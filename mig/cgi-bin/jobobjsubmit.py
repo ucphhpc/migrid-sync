@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# submitjob - job submit page
+# jobobjsubmit - submit helper to submit job objects directly
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,13 +25,13 @@
 # -- END_HEADER ---
 #
 
-"""Page for submitting jobs"""
+"""Low level frontend for submitting jobs"""
 
 import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.submitjob import main
+from shared.functionality.jobobjsubmit import main
 from shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

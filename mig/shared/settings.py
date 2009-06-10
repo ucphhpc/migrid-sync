@@ -25,16 +25,17 @@
 # -- END_HEADER ---
 #
 
-from settingskeywords import get_keywords_dict
-import parser
-import datetime
-from shared.fileio import pickle
 import os
+import datetime
+
+import parser
+from settingskeywords import get_keywords_dict
+from shared.fileio import pickle, unpickle
 
 
 mrsl_template = ".default.mrsl"
 css_template = ".default.css"
-
+settings_filename = '.settings'
 
 def parse_and_save_settings(filename, cert_name_no_spaces,
                             configuration):
@@ -66,8 +67,7 @@ def parse_and_save_settings(filename, cert_name_no_spaces,
     new_dict['CREATOR'] = cert_name_no_spaces
     new_dict['CREATED_TIMESTAMP'] = datetime.datetime.now()
 
-    pickle_filename = configuration.user_home + cert_name_no_spaces\
-         + os.sep + '.settings'
+    pickle_filename = os.path.join(configuration.user_home, cert_name_no_spaces, settings_filename)
 
     if not pickle(new_dict, pickle_filename, configuration.logger):
         msg = 'Error saving settings!'
@@ -77,6 +77,12 @@ def parse_and_save_settings(filename, cert_name_no_spaces,
 
     return (True, '')
 
+def load_settings(cert_name_no_spaces, configuration):
+    """Load settings from pickled settings file"""
+    settings_path = os.path.join(configuration.user_home, cert_name_no_spaces, settings_filename)
+    settings_dict = unpickle(settings_path, configuration.logger)
+    return settings_dict
+    
 def get_default_mrsl(template_path):
     """Return the default mRSL template from template_path"""
 
