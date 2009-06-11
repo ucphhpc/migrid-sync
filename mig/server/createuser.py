@@ -138,7 +138,13 @@ else:
     user_dict['country'] = raw_input('2-letter Country Code: ')
     user_dict['email'] = raw_input('Email: ')
     user_dict['comment'] = raw_input('Comment: ')
-    user_dict['password'] = base64.b64encode(getpass('Password: '))
+    user_dict['password'] = getpass('Password: ')
+
+# Encode password if not already encoded
+try:
+    base64.b64decode(user_dict['password'])
+except TypeError:
+    user_dict['password'] = base64.b64encode(user_dict['password'])
 
 # Default to one year of certificate validity (only used by CA scripts)
 if not user_dict.has_key('expire'):
