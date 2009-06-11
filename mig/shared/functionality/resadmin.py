@@ -35,6 +35,7 @@ administrating owners.
 import os
 import sys
 import glob
+import time
 
 from shared.conf import get_resource_configuration
 from shared.refunctions import get_re_dict, list_runtime_environments
@@ -46,7 +47,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
-    defaults = {}
+    defaults = {'benchmark':'false'}
     return ['html_form', defaults]
 
 
@@ -301,6 +302,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    benchmark = (accepted['benchmark'][-1].lower() != 'false') 
+    start_time = time.time()
+
     (re_stat, re_list) = list_runtime_environments(configuration)
     if not re_stat:
         output_objects.append({'object_type': 'error_text', 'text'
@@ -354,7 +358,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                     filehandle = open(raw_conf_file, 'r')
                     raw_conf = filehandle.readlines()
                     filehandle.close()
-                except Exception, e:
+                except:
                     raw_conf = ['']
 
                 quick_res[resource_name] = {'object_type': 'link',
@@ -388,6 +392,12 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                : '<br>'})
         output_objects = output_objects[:quick_links_index]\
              + quick_links + output_objects[quick_links_index:]
+        
+    finish_time = time.time()
+    if benchmark:
+        output_objects.append({'object_type': 'text', 'text'
+                              : 'Resource admin back end delivered data in %.2f seconds' % \
+                               (finish_time - start_time)})
 
     return (output_objects, returnvalues.OK)
 

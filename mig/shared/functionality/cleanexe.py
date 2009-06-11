@@ -103,7 +103,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         task.start()
         if not parallel:
             task.join()
-    # Complete each stop thread before launching corresponding start threads
+    # Complete each stop thread before launching corresponding clean threads
     for (exe_name, task_list) in workers:
         # We could optimize with non-blocking join here but keep it simple for now
         # as final result will need to wait for slowest member anyway

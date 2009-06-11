@@ -90,6 +90,8 @@ def txt_format(ret_val, ret_msg, out_obj):
             print 'Title: %s' % i['text']
         elif i['object_type'] == 'text':
             print '%s' % i['text']
+        elif i['object_type'] == 'verbatim':
+            print '%s' % i['text']
         elif i['object_type'] == 'link':
 
             # We do not want link junk in plain text
@@ -324,6 +326,8 @@ def html_format(ret_val, ret_msg, out_obj):
                 )
         elif i['object_type'] == 'text':
             print '<p>%s</p>' % i['text']
+        elif i['object_type'] == 'verbatim':
+            print '%s' % i['text']
         elif i['object_type'] == 'link':
             print html_link(i)
         elif i['object_type'] == 'job_list':

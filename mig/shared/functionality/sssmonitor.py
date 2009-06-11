@@ -41,7 +41,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
-    defaults = {'show_all': ['']}
+    defaults = {'show_all': [''], 'sort':['']}
     return ['sandboxinfos', defaults]
 
 
@@ -58,6 +58,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     show_all = accepted['show_all'][-1]
+    sort = accepted['sort'][-1]
 
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Screen Saver Sandbox Monitor'})
@@ -134,6 +135,28 @@ def main(cert_name_no_spaces, user_arguments_dict):
         # print "Total jobs run by sandboxes: ", total_jobs, "jobs"............
         # print "<form action='sssmonitor.py' method='POST'>"
 
+    if 'username' == sort:
+        # sort by owner: case insensitive
+        sandboxinfos.sort(cmp=(lambda a, b: cmp(a['username'].lower(), b['username'].lower())))
+    elif 'resource' == sort:
+        # sort by numerical resource ID
+        sandboxinfos.sort(cmp=(lambda a, b: cmp(int(a['resource'].lower().replace('sandbox.', '')),
+                                                int(b['resource'].lower().replace('sandbox.', '')))))
+    elif 'jobs' == sort:
+        # sort by most jobs done
+        sandboxinfos.sort(reverse=True)
+    else:
+        # do not sort
+        pass
+    output_objects.append({'object_type': 'verbatim', 'text'
+                          : 'Sort by: '})
+    link_list = []
+    for name in ('username', 'resource', 'jobs'):
+        link_list.append({'object_type': 'link', 'destination': '?sort=%s' % name,
+                               'text': '%s' % name.capitalize()})
+    output_objects.append({'object_type': 'multilinkline', 'links': link_list})
+    output_objects.append({'object_type': 'text', 'text': ''})
+        
     output_objects.append({'object_type': 'sandboxinfos', 'sandboxinfos'
                           : sandboxinfos})
     output_objects.append({'object_type': 'text', 'text'

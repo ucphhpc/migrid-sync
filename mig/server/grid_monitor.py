@@ -240,7 +240,7 @@ Automatic refresh every %(sleep_secs)s secs.<br>
 Listing the last request from each resource<br>
 <br>
 <table class=monitor>
-<tr class=title><td>Resource and last seen</td><td>Time ago</td><td>VGrid</td><td>CPU time</td>
+<tr class=title><td><!-- status icon --></td><td>Resource and last seen</td><td>Time ago</td><td>VGrid</td><td>CPU time</td>
 <td>Node count</td><td>CPU count</td><td>GB Disk</td>
 <td>MB Memory</td><td>Arch</td><td>Status</td>
 <td>Time</td><td>Time remaining</td></tr>
@@ -258,8 +258,10 @@ Listing the last request from each resource<br>
         current_dir += '/' + vgrid_name_part
         print 'dir: ' + configuration.vgrid_home + current_dir
 
-        for filename in os.listdir(configuration.vgrid_home
-                                    + current_dir):
+        sorted_names = os.listdir(configuration.vgrid_home + \
+                                  current_dir)
+        sorted_names.sort()
+        for filename in sorted_names:
             print filename
             if filename.startswith('monitor_last_request_'):
 
@@ -332,10 +334,31 @@ Listing the last request from each resource<br>
                         filename.split('monitor_last_request_', 1)
                     row_class = row_name[row_number % 2]
                     row_number += 1
-                    html += '<tr class=%s><td>' % row_class \
-                         + unique_res_name_and_exe_list[1] + '<br>'\
-                         + time.asctime(last_request_dict['CREATED_TIME'
-                            ].timetuple()) + '</td>'
+                    if cpusec == 0:
+                        resource_status = 'unavailable'
+                    elif time_remaining.days < 0:
+
+                        # time_remaining.days < 0 means that we have passed the specified time
+
+                        time_rem_abs = abs(time_remaining)
+                        if time_rem_abs.days == 0\
+                             and int(time_rem_abs.seconds)\
+                             < int(slackperiod):
+                            resource_status = 'slack'
+                            slack_count = slack_count + 1
+                        else:
+                            resource_status = 'offline'
+                            down_count = down_count + 1
+                    else:
+                        resource_status = 'online'
+                        up_count = up_count + 1
+                        
+                    html += '<tr class=%s>' % row_class
+                    html += '<td><img src=/images/status-icons/%s.png></td>' % \
+                            resource_status
+                    html += '<td>%s<br>%s</td>' % \
+                            (unique_res_name_and_exe_list[1],
+                             time.asctime(last_request_dict['CREATED_TIME'].timetuple()))
                     html += '<td>' + days + ' days, ' + hours\
                          + ' hours, ' + minutes + ' min, ' + seconds\
                          + 'secs</td>'
@@ -358,32 +381,18 @@ Listing the last request from each resource<br>
                          + '</td><td>' + str(last_request_dict['CPUTIME'
                             ]) + '</td>'
 
-                    if cpusec == 0:
-                        html += '<td class=status_unavailable>-'
-                    elif time_remaining.days < 0:
-
-                        # time_remaining.days < 0 means that we have passed the specified time
-
-                        time_rem_abs = abs(time_remaining)
-                        if time_rem_abs.days == 0\
-                             and int(time_rem_abs.seconds)\
-                             < int(slackperiod):
-                            html += '<td class=status_slack>Within slack period ('\
-                                 + str(int(time_rem_abs.seconds)) + '<'\
-                                 + str(int(slackperiod))\
-                                 + ' secs).</td>'
-                            slack_count = slack_count + 1
-                        else:
-                            html += '<td class=status_offline>down?</td>'
-                            down_count = down_count + 1
+                    html += '<td class=status_%s>' % resource_status
+                    if 'unavailable' == resource_status:
+                        html += '-'
+                    elif 'slack' == resource_status:
+                        html += 'Within slack period (%s < %s secs)' % (time_rem_abs.seconds,
+                                                                        slackperiod)
+                    elif 'offline' == resource_status:
+                        html += 'down?'
                     else:
-
-                        # count number of res with jobs assigned
-
-                        html += '<td class=status_online>' + days_rem + ' days, '\
-                             + hours_rem + ' hours, ' + minutes_rem\
-                             + ' min, ' + seconds_rem + 'secs</td>'
-                        up_count = up_count + 1
+                        html += '%s days, %s hours, %s minutes, %s secs' % \
+                                (days_rem, hours_rem, minutes_rem, seconds_rem)
+                    html += '</td>'
 
                     html += '</tr>\n'
                     if last_request_dict['STATUS'] == 'Job assigned':

@@ -31,6 +31,7 @@ start = {'object_type': 'start', 'required': [], 'optional': []}
 title = {'object_type': 'title', 'required': ['text'],
          'optional': ['javascript', 'bodyfunctions']}
 text = {'object_type': 'text', 'required': ['text'], 'optional': []}
+verbatim = {'object_type': 'verbatim', 'required': ['text'], 'optional': []}
 header = {'object_type': 'header', 'required': ['text'], 'optional': []}
 sectionheader = {'object_type': 'sectionheader', 'required': ['text'],
                  'optional': []}
@@ -166,6 +167,7 @@ valid_types_list = [
     start,
     title,
     text,
+    verbatim,
     header,
     sectionheader,
     link,
