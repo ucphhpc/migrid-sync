@@ -96,7 +96,7 @@ def get_cgi_html_header(
             },
             {
             'class'    : 'files',
-            'url'       : '/cgi-bin/ls.py?flags=a',
+            'url'       : '/cgi-bin/ls.py',
             'title'     : 'Files'
             },
             {

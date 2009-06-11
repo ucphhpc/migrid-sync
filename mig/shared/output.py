@@ -489,20 +489,24 @@ def html_format(ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'dir_listings':
             if len(i['dir_listings']) == 0:
                 continue
-            columns = 6
+            if 'full' == i['style']:
+                columns = 6
+            else:
+                columns = 5
             print "<table class='files'>"
             print '<tr>'
             cols = 0
             print '<td>Info</td>'
             cols += 1
-            print "<td><input type='checkbox' name='allbox' value='allbox' onclick='un_check()'></td>"
-            cols += 1
+            if 'full' == i['style']:
+                print "<td><input type='checkbox' name='allbox' value='allbox' onclick='un_check()'></td>"
+                cols += 1
 
-            # print "<td><br></td>"
-            # cols += 1
+                # print "<td><br></td>"
+                # cols += 1
 
-            print '<td colspan=%d>Select/deselect all files</td>'\
-                 % (columns - cols)
+                print '<td colspan=%d>Select/deselect all files</td>'\
+                      % (columns - cols)
             print '</tr>'
             print '<tr>'
             cols = 0
@@ -529,9 +533,10 @@ def html_format(ret_val, ret_msg, out_obj):
                         cols = 0
                         print '<td><br></td>'
                         cols += 1
-                        print "<td><input type='checkbox' name='path' value='%s'></td>"\
-                             % directory['dirname_with_dir']
-                        cols += 1
+                        if 'full' == i['style']:
+                            print "<td><input type='checkbox' name='path' value='%s'></td>"\
+                                  % directory['dirname_with_dir']
+                            cols += 1
                         if directory.has_key('actual_dir'):
                             print '<td>%s</td>' % directory['actual_dir'
                                     ]
@@ -554,9 +559,10 @@ def html_format(ret_val, ret_msg, out_obj):
                         cols = 0
                         print '<td><br></td>'
                         cols += 1
-                        print "<td><input type='checkbox' name='path' value='%s'></td>"\
-                             % this_file['file_with_dir']
-                        cols += 1
+                        if 'full' == i['style']:
+                            print "<td><input type='checkbox' name='path' value='%s'></td>"\
+                                  % this_file['file_with_dir']
+                            cols += 1
                         if this_file.has_key('long_format'):
                             print '<td>%s</td>'\
                                  % this_file['long_format']

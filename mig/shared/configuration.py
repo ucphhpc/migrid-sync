@@ -100,7 +100,8 @@ def fix_missing(config_file, verbose=True):
     monitor_section = {'sleep_secs': '60',
                        'sleep_update_totals': '600',
                        'slackperiod': '600'}
-    settings_section = {'language': 'English', 'submitui': ['fields', 'textarea']}
+    settings_section = {'language': 'English', 'submitui': ['fields', 'textarea'],
+                        'filesui': ['basic', 'full']}
 
     defaults = {
         'GLOBAL': global_section,
@@ -206,6 +207,7 @@ class Configuration:
     expire_peer = 600
     language = ['English']
     submitui = ['fields', 'textarea']
+    filesui = ['basic', 'full']
 
     # directory for usage records, initially None (means: do not generate)
     usage_record_dir = None
@@ -349,6 +351,7 @@ class Configuration:
                     )
             self.submitui = config.get('SETTINGS', 'submitui').split(' '
                     )
+            self.filesui = config.get('SETTINGS', 'filesui').split(' ')
         except Exception, err:
 
             # logger.info("done reading settings from config")

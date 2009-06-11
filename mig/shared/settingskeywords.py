@@ -30,59 +30,66 @@
 
 def get_keywords_dict():
     email = {
-        'Description': 'List of email addresses',
+        'Description': 'List of E-mail addresses',
         'Example': 'my@email.com, my_other@email.com',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }
     jabber = {
-        'Description': 'List of jabber addresses',
+        'Description': 'List of Jabber addresses',
         'Example': 'me@jabber.com, me2@jabber.com',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }
     msn = {
-        'Description': 'List of msn addresses',
+        'Description': 'List of MSN addresses',
         'Example': 'me@hotmail.com, me2@hotmail.com',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }
     icq = {
-        'Description': 'List of icq numbers',
+        'Description': 'List of ICQ numbers',
         'Example': '2364236, 2342342',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }
     aol = {
-        'Description': 'List of aol addresses',
+        'Description': 'List of AOL addresses',
         'Example': 'me@aol.com, me2@aol.com',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }
     yahoo = {
-        'Description': 'List of msn addresses',
+        'Description': 'List of Yahoo! addresses',
         'Example': 'me@yahoo.com, me2@hotmail.com',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }
     language = {
-        'Description': 'Your prefered language',
+        'Description': 'Your preferred interface language',
         'Example': 'English',
         'Type': 'string',
         'Value': 'English',
         'Required': False,
         }
     submitui = {
-        'Description': 'Your prefered submit job interface',
+        'Description': 'Your preferred Submit Job interface',
         'Example': 'fields',
         'Type': 'string',
         'Value': 'textarea',
+        'Required': False,
+        }
+    filesui = {
+        'Description': 'Your preferred Files interface',
+        'Example': 'basic',
+        'Type': 'string',
+        'Value': 'full',
         'Required': False,
         }
 
@@ -97,6 +104,7 @@ def get_keywords_dict():
         'YAHOO': yahoo,
         'LANGUAGE': language,
         'SUBMITUI': submitui,
+        'FILESUI': filesui,
         }
 
     return keywords_dict

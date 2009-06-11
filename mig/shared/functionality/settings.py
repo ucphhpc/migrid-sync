@@ -93,21 +93,24 @@ def main(cert_name_no_spaces, user_arguments_dict):
         </td></tr>
         """
     keywords_dict = get_keywords_dict()
-    for keyword in keywords_dict.keys():
+    for (keyword, val) in keywords_dict.items():
         html += """
         <tr class=title><td>
         %s
         </td></tr>
         <tr><td>
-        """ % keyword
-        if keywords_dict[keyword]['Type'] == 'multiplestrings':
+        %s
+        </td></tr>
+        <tr><td>
+        """ % (keyword, val['Description'])
+        if val['Type'] == 'multiplestrings':
             html += \
                 """<textarea cols="40" rows="1" wrap="off" name="%s">"""\
                  % keyword
             if current_settings_dict.has_key(keyword):
                 html += '<BR>'.join(current_settings_dict[keyword])
             html += '</textarea><BR>'
-        elif keywords_dict[keyword]['Type'] == 'string':
+        elif val['Type'] == 'string':
 
             # get valid choices from conf
 

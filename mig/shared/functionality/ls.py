@@ -40,6 +40,7 @@ from shared.validstring import valid_user_path
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.settings import load_settings
 
 
 def signature():
@@ -314,8 +315,18 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     status = returnvalues.OK
 
-    javascript = '%s\n%s' % (select_all_javascript(),
-                             selected_file_actions_javascript())
+    settings_dict = load_settings(cert_name_no_spaces, configuration)
+    if not settings_dict or not settings_dict.has_key('FILESUI'):
+        logger.info('Settings dict does not have FILESUI key - using default')
+        files_style = configuration.filesui[0]
+    else:
+        files_style = settings_dict['FILESUI']
+
+    if 'full' == files_style:
+        javascript = '%s\n%s' % (select_all_javascript(),
+                                 selected_file_actions_javascript())
+    else:
+        javascript = ''
 
     output_objects.append({
         'object_type': 'title',
@@ -358,12 +369,13 @@ Working directory:
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : location_post_html})
-    more_html = \
+    if 'full' == files_style:
+        more_html = \
                   """
 <div class='files'>
 <table class='files'>
 <tr class=title><td class=centertext colspan=2>
-File actions
+Advanced file actions
 </td></tr>
 <tr><td>
 Action on paths selected below
@@ -388,11 +400,11 @@ Action on paths selected below
 </div>
 """
 
-    output_objects.append({'object_type': 'html_form', 'text'
+        output_objects.append({'object_type': 'html_form', 'text'
                           : more_html})
     dir_listings = []
     output_objects.append({'object_type': 'dir_listings', 'dir_listings'
-                          : dir_listings, 'flags': flags})
+                          : dir_listings, 'flags': flags, 'style': files_style})
 
     first_match = None
     for pattern in pattern_list:
@@ -440,7 +452,8 @@ Action on paths selected below
             handle_ls(output_objects, entries, real_path, flags)
             dir_listings.append(dir_listing)
 
-    output_objects.append({'object_type': 'html_form', 'text'
+    if 'full' == files_style:
+        output_objects.append({'object_type': 'html_form', 'text'
                           : """
     <div class='files'>
     <table class='files'>
@@ -455,7 +468,7 @@ Action on paths selected below
     </td></tr>
     </table>    
     </div>
-    """% flags})
+    """ % flags})
 
     # Short/long format buttons
 
@@ -492,44 +505,52 @@ Action on paths selected below
              % entry
 
     htmlform += \
-        """
+             """
     <input type='submit' value='Off'><br>
     </form>
     </td></tr>
+    """
 
+    if 'full' == files_style:
+        # Recursive output
+        htmlform += \
+                 """
     <!-- Non-/recursive list buttons -->
     <tr><td>Recursion</td><td>
     %s</td><td>"""\
-         % recursive(flags)
-    htmlform += \
-        """
+        % recursive(flags)
+        htmlform += \
+                 """
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html'>
     <input type='hidden' name='flags' value='%s'>"""\
-         % (flags + 'r')
-    for entry in pattern_list:
-        htmlform += " <input type='hidden' name='path' value='%s'>"\
-             % entry
-    htmlform += \
-        """
+        % (flags + 'r')
+        for entry in pattern_list:
+            htmlform += " <input type='hidden' name='path' value='%s'>"\
+                        % entry
+        htmlform += \
+                 """
     <input type='submit' value='On'><br>
     </form>
     </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html'>
     <input type='hidden' name='flags' value='%s'>"""\
-         % flags.replace('r', '')
-    for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s'>"\
-             % entry
-    htmlform += \
-        """
+        % flags.replace('r', '')
+        for entry in pattern_list:
+            htmlform += "<input type='hidden' name='path' value='%s'>"\
+                        % entry
+            htmlform += \
+                     """
     <input type='submit' value='Off'><br>
     </form>
     </td></tr>
+    """
 
+    htmlform += \
+             """
     <!-- Show dot files buttons -->
-    <tr><td>Show dot files</td><td>
+    <tr><td>Show hidden files</td><td>
     %s</td><td>"""\
          % all(flags)
     htmlform += \
