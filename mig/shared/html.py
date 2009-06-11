@@ -162,6 +162,7 @@ def get_cgi_html_header(
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <link rel="stylesheet" type="text/css" href="/images/migcss.css" media="screen"/>
+<link rel="icon" type="image/vnd.microsoft.icon" href="/images/favicon.ico">
 <title>
  %s
  </title>

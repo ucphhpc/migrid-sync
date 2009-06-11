@@ -407,7 +407,7 @@ vms/$NAME/data.vmdk data.vmdk
 data.vmdk vms/$NAME/data.vmdk
 
 ::EXECUTABLES::
-runvm.sh
+vms/runvm.sh runvm.sh
 
 ::MEMORY::
 $MEMORY

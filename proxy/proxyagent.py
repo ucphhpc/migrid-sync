@@ -42,10 +42,17 @@ class ProxyAgent(daemon.Daemon):
   section           = 'daemon'
   section_settings  = 'agent'
 
-  control_socket = None # Life-line to the proxy
-  connections = []      # List of connections to close and cleanup gracefully
-  buffer_size = 4096    # Must be "mod 2", 4096 might be too big for some...
-                        # but it is much faster if it's supported
+  control_socket  = None  # Life-line to the proxy
+  connections     = []    # List of connections to close and cleanup gracefully
+  buffer_size     = 4096  # Must be "mod 2", 4096 might be too big for some...
+                          # but it is much faster if it's supported
+                        
+  retry_count   = -1  # Retry forever: retry_count = -1
+  retry_timeout = 60  # Seconds to wait before trying to retry
+  
+  # Debug variables
+  handshake_count = 0
+  setup_count     = 0
 
   def run(self):
     # Load configuration from file
@@ -54,6 +61,10 @@ class ProxyAgent(daemon.Daemon):
     
     self.proxy_host = cp.get(self.section_settings, 'proxy_host')
     self.proxy_port  = int(cp.get(self.section_settings, 'proxy_port'))
+    
+    self.retry_count    = int(cp.get(self.section_settings, 'retry_count'))
+    self.retry_timeout  = int(cp.get(self.section_settings, 'retry_timeout'))
+    
     self.identifier  = cp.get(self.section_settings, 'identifier')
     
     self.key  = cp.get(self.section_settings, 'key')
@@ -75,38 +86,50 @@ class ProxyAgent(daemon.Daemon):
     logging.debug('Proxy certificate: %s %s' % (cert.get_subject(), ok))
     return ok
   
-  def connect(self, host, port, identity, tls=True):
-      
-    # Connect to proxy and identify
-    self.handshake(host, port, identity)
+  def connect(self, host, port, identity, tls=True):    
     
-    # Handle Setup request forever
-    while 1:
-      
+    initial_retry   = self.retry_count
+    
+    while initial_retry == -1 or initial_retry != 0: # Retry proxy connection when it fails
+              
+      initial_retry -= 1
       try:
         
-        data = self.control_socket.recv(1) # Get the message type
+        # Connect to proxy and identify
+        self.handshake(host, port, identity)
         
-        if (data == mip.messages['SETUP_REQUEST']):
+        # Handle Setup request forever
+        while 1:
           
-          (ticket,) = unpack('!I', self.control_socket.recv(4))        
-          (proxy_host_length,) = unpack('!I', self.control_socket.recv(4))
-          proxy_host = self.control_socket.recv(proxy_host_length)      
-          (proxy_port,) = unpack('!I', self.control_socket.recv(4))
-          
-          (machine_host_length,) = unpack('!I', self.control_socket.recv(4))
-          machine_host = self.control_socket.recv(machine_host_length)
-          (machine_port,) = unpack('!I', self.control_socket.recv(4))
-          
-          self.handle_setup_request(ticket, proxy_host, proxy_port, machine_host, machine_port, tls)
-        else:
-          logging.debug(' Broken data! %s' % repr(data))
-        
+          try:
+            
+            data = self.control_socket.recv(1) # Get the message type
+            
+            if (data == mip.messages['SETUP_REQUEST']):
+              
+              (ticket,) = unpack('!I', self.control_socket.recv(4))        
+              (proxy_host_length,) = unpack('!I', self.control_socket.recv(4))
+              proxy_host = self.control_socket.recv(proxy_host_length)      
+              (proxy_port,) = unpack('!I', self.control_socket.recv(4))
+              
+              (machine_host_length,) = unpack('!I', self.control_socket.recv(4))
+              machine_host = self.control_socket.recv(machine_host_length)
+              (machine_port,) = unpack('!I', self.control_socket.recv(4))
+              
+              self.handle_setup_request(ticket, proxy_host, proxy_port, machine_host, machine_port, tls)
+            else:
+              logging.debug(' Broken data! %s' % repr(data))
+            
+          except:
+            logging.debug(' Unexpected error, shutting down control connection.')
+            logging.exception('%s ' % sys.exc_info()[2])
+            self.control_socket.close()
+            break
+      
       except:
-        logging.debug(' Unexpected error, shutting down control connection.')
-        logging.exception('%s ' % sys.exc_info()[2])
+        logging.error(' Error in control connections, retrying in %d seconds' % self.retry_timeout)
         self.control_socket.close()
-        break
+        time.sleep(self.retry_timeout)  
   
   """
     handshake,
@@ -116,7 +139,9 @@ class ProxyAgent(daemon.Daemon):
   """
   def handshake(self, host, port, identity, tls=True):
     
-    #global control_socket
+    self.handshake_count += 1
+    logging.debug(" Handshake count = %d" % self.handshake_count)
+    
     handshakeMessage = mip.handshake(1, identity)
     
     dir = os.path.dirname(sys.argv[0])
@@ -150,7 +175,8 @@ class ProxyAgent(daemon.Daemon):
   """
   def handle_setup_request(self, ticket, proxy_host, proxy_port, machine_host, machine_port, tls=True):
     
-    #global control_socket
+    self.setup_count += 1
+    logging.debug(" Setup request count = %d" % self.setup_count)
     
     logging.debug('Performing setup (ticket:%s, phost:%s, pport:%s,\n  mhost:%s,mport:%s)' % (ticket, proxy_host, proxy_port, machine_host, machine_port))
     
@@ -223,25 +249,6 @@ if __name__ == '__main__':
     ProxyAgent().main()
   except:
     logging.exception('Unexpected error: %s' % sys.exc_info()[2])
-    
-  #if len(sys.argv) < 5:
-  #  print 'Usage: python[2] mipclient.py HOST PORT IDENTIFIER SSL'
-  #  sys.exit(1)
-  #
-  ## TODO: - Sanitize commandline arguments
-  ##       - Provide cert files as commandline arguments
-  #try:
-  #  connect(sys.argv[1], int(sys.argv[2]), sys.argv[3], (sys.argv[4] == 'SSL'))
-  #except KeyboardInterrupt:
-  #
-  #  logging.debug('CLIENT: User interrupted, shutting down connections.')
-  #  for conn in self.connections:
-  #    logging.debug('%s ' % conn)
-  #    conn.close()
-  #  logging.debug('CLIENT: Shut down control connection.')
-  #  control_socket.close()
-  #  logging.debug('CLIENT: Control connection is down.')
-  #  exit(0)
   
 else:
   pass
