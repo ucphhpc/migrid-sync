@@ -65,11 +65,21 @@ def fill_template(template_file, output_file, dictionary):
     return True
 
 
-def generate_confs(source=os.path.dirname(sys.argv[0]), destination=os.path.dirname(sys.argv[0]),
-                   server_fqdn='localhost', user='mig', group='mig', apache_etc='/etc/apache',
-                   apache_run='/var/run', apache_log='/var/log/apache',
-                   mig_code='/home/mig/mig', mig_state='/home/mig/state',
-                   mig_certs='/home/mig/certs', http_port=80, https_port=443):
+def generate_confs(
+    source=os.path.dirname(sys.argv[0]),
+    destination=os.path.dirname(sys.argv[0]),
+    server_fqdn='localhost',
+    user='mig',
+    group='mig',
+    apache_etc='/etc/apache',
+    apache_run='/var/run',
+    apache_log='/var/log/apache',
+    mig_code='/home/mig/mig',
+    mig_state='/home/mig/state',
+    mig_certs='/home/mig/certs',
+    http_port=80,
+    https_port=443,
+    ):
     """Generate Apache and MiG server confs with specified variables"""
 
     user_dict = {}
@@ -89,14 +99,17 @@ def generate_confs(source=os.path.dirname(sys.argv[0]), destination=os.path.dirn
         os.makedirs(destination)
     except OSError:
         pass
-    
-    apache_mig_template = os.path.join(source, 'apache-MiG-template.conf')
+
+    apache_mig_template = os.path.join(source,
+            'apache-MiG-template.conf')
     apache_mig_conf = os.path.join(destination, 'MiG.conf')
     fill_template(apache_mig_template, apache_mig_conf, user_dict)
-    apache_httpd_template = os.path.join(source, 'apache-httpd-template.conf')
+    apache_httpd_template = os.path.join(source,
+            'apache-httpd-template.conf')
     apache_httpd_conf = os.path.join(destination, 'httpd.conf')
     fill_template(apache_httpd_template, apache_httpd_conf, user_dict)
-    apache_initd_template = os.path.join(source, 'apache-init.d-template')
+    apache_initd_template = os.path.join(source,
+            'apache-init.d-template')
     apache_initd_script = os.path.join(destination, 'apache-%s' % user)
     fill_template(apache_initd_template, apache_initd_script, user_dict)
     os.chmod(apache_initd_script, 0755)
@@ -107,12 +120,32 @@ def generate_confs(source=os.path.dirname(sys.argv[0]), destination=os.path.dirn
 
     return True
 
-if "__main__" == __name__:
+
+if '__main__' == __name__:
+
     # ## Main ###
 
-    names = ('source', 'destination', 'server_fqdn', 'user', 'group', 'apache_etc', 'apache_run', 'apache_log', 'mig_code', 'mig_state', 'mig_certs', 'http_port', 'https_port')
+    names = (
+        'source',
+        'destination',
+        'server_fqdn',
+        'user',
+        'group',
+        'apache_etc',
+        'apache_run',
+        'apache_log',
+        'mig_code',
+        'mig_state',
+        'mig_certs',
+        'http_port',
+        'https_port',
+        )
     if '-h' in sys.argv or '--help' in sys.argv:
-        print 'Usage:\n%s\nor\n%s %s' % (sys.argv[0], sys.argv[0], ' '.join([i.upper() for i in names]))
+        print '''Usage:
+%s
+or
+%s %s''' % (sys.argv[0], sys.argv[0],
+                ' '.join([i.upper() for i in names]))
         sys.exit(0)
 
     values = tuple(sys.argv[1:14])
@@ -120,7 +153,7 @@ if "__main__" == __name__:
     settings = dict(pairs)
     for i in names:
         if not settings.has_key(i):
-            settings[i] = "DEFAULT"
+            settings[i] = 'DEFAULT'
     print '''# Creating confs with:
 source: %(source)s
 destination: %(destination)s
@@ -135,7 +168,8 @@ mig_state: %(mig_state)s
 mig_certs: %(mig_certs)s
 http_port: %(http_port)s
 https_port: %(https_port)s
-''' % settings
+'''\
+         % settings
     generate_confs(*values)
 
     print '''Configurations for MiG and Apache were generated in %(destination)s/
@@ -145,6 +179,7 @@ cp %(destination)s/MiG.conf %(apache_etc)s/conf.d/
 cp %(destination)s/MiGserver.conf %(mig_code)s/server/
 and optionally
 cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
-''' % settings
+'''\
+         % settings
 
     sys.exit(0)

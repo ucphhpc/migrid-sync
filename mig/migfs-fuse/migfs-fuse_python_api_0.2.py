@@ -556,12 +556,16 @@ class MiGfs(Fuse):
     __threads = None
     __open_files = None
     __inode_cache = None
+
     # TODO: we should parse MiG output instead of just skipping head_lines
+
     head_lines = 5
 
     def __init__(self, *args, **kw):
         blocksize = -1
-        #print "DEBUG: got args and kwargs in MiGFS: %s, %s" % (args, kw)
+
+        # print "DEBUG: got args and kwargs in MiGFS: %s, %s" % (args, kw)
+
         if kw.has_key('blocksize'):
             blocksize = kw['blocksize']
 
@@ -577,7 +581,9 @@ class MiGfs(Fuse):
             # Fuse does and should not know about password - so remove it
 
             del kw['password']
-        #print "DEBUG: passing args and kwargs to Fuse: %s, %s" % (args, kw)
+
+        # print "DEBUG: passing args and kwargs to Fuse: %s, %s" % (args, kw)
+
         Fuse.__init__(self, *args, **kw)
 
         # self.mount_point = mount_point
@@ -676,22 +682,22 @@ class MiGfs(Fuse):
         if inode:
             if log.isEnabledFor(logging.DEBUG):
                 log.debug('inode %s' % inode)
-            blocks = inode['size'] / default_block_size + \
-                     (inode['size'] % default_block_size != 0)
+            blocks = inode['size'] / default_block_size + (inode['size']
+                     % default_block_size != 0)
             stat_dict = {
-                'st_blksize':default_block_size,
-                'st_rdev':inode['dev'],
-                'st_blocks':blocks,
-                'st_mode':inode['mode'],
-                'st_ino':inode['ino'],
-                'st_dev':inode['dev'],
-                'st_nlink':inode['nlink'],
-                'st_uid':inode['uid'],
-                'st_gid':inode['gid'],
-                'st_size':inode['size'],
-                'st_atime':inode['atime'],
-                'st_mtime':inode['mtime'],
-                'st_ctime':inode['ctime'],
+                'st_blksize': default_block_size,
+                'st_rdev': inode['dev'],
+                'st_blocks': blocks,
+                'st_mode': inode['mode'],
+                'st_ino': inode['ino'],
+                'st_dev': inode['dev'],
+                'st_nlink': inode['nlink'],
+                'st_uid': inode['uid'],
+                'st_gid': inode['gid'],
+                'st_size': inode['size'],
+                'st_atime': inode['atime'],
+                'st_mtime': inode['mtime'],
+                'st_ctime': inode['ctime'],
                 }
             if log.isEnabledFor(logging.DEBUG):
                 log.debug('stat_dict: %s' % stat_dict)
@@ -1079,14 +1085,14 @@ class MiGfs(Fuse):
             log.debug('total blocks: %s' % total_blocks)
             log.debug('blocks_free: %s' % blocks_free)
         fs_dict = {
-            'f_bsize':block_size,
-            'f_blocks':total_blocks,
-            'f_bfree':blocks_free,
-            'f_bavail':blocks_free_user,
-            'f_files':files,
-            'f_ffree':files_free,
-            'f_favail':files_free_user,
-            'f_namemax':namelen,
+            'f_bsize': block_size,
+            'f_blocks': total_blocks,
+            'f_bfree': blocks_free,
+            'f_bavail': blocks_free_user,
+            'f_files': files,
+            'f_ffree': files_free,
+            'f_favail': files_free_user,
+            'f_namemax': namelen,
             }
         return StatVfs(**fs_dict)
 
@@ -1321,16 +1327,17 @@ Userspace MiG file system
 
     # Must set mount point implicitly to fuse
 
-    
     sys.argv = ['migfs.py', mount_point]
     if fuse_flags:
+
         # -d for debug implies -f for foreground mode
+
         if '-d' in fuse_flags and not '-f' in fuse_flags:
             fuse_flags.append('-f')
         sys.argv += fuse_flags
     if not main_options:
         main_options = {}
-        
+
     main_options['version'] = '%prog ' + fuse.__version__
     main_options['usage'] = usage
     main_options['dash_s_do'] = 'setsingle'

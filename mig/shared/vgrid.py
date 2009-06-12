@@ -51,6 +51,7 @@ def vgrid_is_default(vgrid):
 def vgrid_is_owner_or_member(vgrid_name, cert_name_no_spaces,
                              configuration):
     """Combines owner and member check"""
+
     if vgrid_is_owner(vgrid_name, cert_name_no_spaces, configuration)\
          or vgrid_is_member(vgrid_name, cert_name_no_spaces,
                             configuration):
@@ -72,6 +73,7 @@ def vgrid_is_cert_in_list(
     """
 
     # Get the list of entities of specified type (group) in vgrid (vgrid_name)
+
     (status, entries) = vgrid_list(vgrid_name, group, configuration)
 
     if not status:
@@ -143,11 +145,11 @@ def vgrid_list_vgrids(configuration):
     for (root, dirs, _) in os.walk(configuration.vgrid_home):
 
         # skip all dot dirs - they are from repos etc and _not_ vgrids
-            
+
         if root.find(os.sep + '.') != -1:
-                continue
+            continue
         dirs = [name for name in dirs if not name.startswith('.')]
-        
+
         for directory in dirs:
 
             # strip vgrid_home prefix to get entire vgrid name (/dalton/dk/imada)
@@ -196,7 +198,8 @@ def init_vgrid_script_add_rem(
     elif subject_type == 'resource':
         if not is_resource(subject, configuration.resource_home):
             msg += '%s is not a valid MiG resource' % subject
-            msg += ' (OK, if removing or if e.g. the resource creation is pending)'
+            msg += \
+                ' (OK, if removing or if e.g. the resource creation is pending)'
     else:
         msg += 'unknown subject type in init_vgrid_script_add_rem'
         return (False, msg, [])
@@ -207,6 +210,7 @@ def init_vgrid_script_add_rem(
 def init_vgrid_script_list(vgrid_name, cert_name_no_spaces,
                            configuration):
     """Helper for vgrid scripts"""
+
     msg = ''
     if not vgrid_name:
         msg += 'Please specify vgrid_name in the query string'
@@ -218,8 +222,9 @@ def init_vgrid_script_list(vgrid_name, cert_name_no_spaces,
 
     if not vgrid_is_owner_or_member(vgrid_name, cert_name_no_spaces,
                                     configuration):
-        msg += 'Failure: You must be an owner or member of ' + vgrid_name + \
-               ' vgrid to get a list of members/owners/resources'
+        msg += 'Failure: You must be an owner or member of '\
+             + vgrid_name\
+             + ' vgrid to get a list of members/owners/resources'
         return (False, msg, None)
 
     return (True, msg, [])
@@ -227,6 +232,7 @@ def init_vgrid_script_list(vgrid_name, cert_name_no_spaces,
 
 def vgrid_list(vgrid_name, group, configuration):
     """Shared helper function to get a list of group entities in vgrid"""
+
     if group == 'owners':
         name = 'owners'
     elif group == 'members':

@@ -1586,7 +1586,8 @@ class Scheduler:
         resource for migration.
         """
 
-        self.logger.info('running price filter on queue (%s)' % resource_conf)
+        self.logger.info('running price filter on queue (%s)'
+                          % resource_conf)
         local_jobs = self.job_queue.queue_length()
 
         # Find current resource once and for all
@@ -1611,6 +1612,7 @@ class Scheduler:
             job_id = job['JOB_ID']
 
             # backwards compatible timestamp extraction (was float before)
+
             last_scheduled = job.get('SCHEDULE_TIMESTAMP', 0.0)
             if isinstance(last_scheduled, float):
                 last_scheduled = time.gmtime(0)

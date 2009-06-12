@@ -35,22 +35,32 @@ import time
 # MiG imports
 
 from shared.conf import get_resource_configuration, get_resource_exe, \
-     get_configuration_object
+    get_configuration_object
 from shared.fileio import unpickle
 from shared.ssh import execute_on_resource, execute_on_exe, \
     copy_file_to_exe, copy_file_to_resource
 
 ssh_error_code = 255
-ssh_error_msg = ''' (%d means that an error occurred in the ssh login to the
+ssh_error_msg = \
+    ''' (%d means that an error occurred in the ssh login to the
 resource - this is typically a matter of problems with the ssh host key or login
 with ssh key from the MiG server to the resource frontend or from the resource frontend
 to the execution node. Please check that you can login all the way through to the execution
-node without interactive input)''' % ssh_error_code
-ssh_status_msg = ' (0 means OK, 1 or other positive values generally indicate a problem)'
+node without interactive input)'''\
+     % ssh_error_code
+ssh_status_msg = \
+    ' (0 means OK, 1 or other positive values generally indicate a problem)'
 
-def put_fe_pgid(resource_home, unique_resource_name, pgid, logger, sandbox=False):
+
+def put_fe_pgid(
+    resource_home,
+    unique_resource_name,
+    pgid,
+    logger,
+    sandbox=False,
+    ):
     """Write front end PGID in resource home"""
-    
+
     msg = ''
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -87,7 +97,8 @@ def put_exe_pgid(
     exe_name,
     pgid,
     logger,
-    sandbox=False):
+    sandbox=False,
+    ):
     """Write exe PGID file in resource home and stop exe if requested"""
 
     msg = ''
@@ -127,7 +138,7 @@ def put_exe_pgid(
         os.fsync(pgid_file.fileno())
 
         msg = "pgid: '%s' put for %s %s" % (pgid, unique_resource_name,
-                                            exe_name)
+                exe_name)
 
         if not sandbox and 'stopped' == old_pgid:
             msg += "Resource: '" + unique_resource_name\
@@ -708,7 +719,7 @@ def start_resource_exe(
             resource_config, logger)
 
     msg += executed_command + '\n' + command + ' returned '\
-          + str(exit_code)
+         + str(exit_code)
 
     if exit_code == ssh_error_code:
         msg += ssh_error_msg
@@ -716,6 +727,7 @@ def start_resource_exe(
     else:
         msg += ssh_status_msg
         return (True, msg)
+
 
 def start_resource_frontend(unique_resource_name, configuration,
                             logger):
@@ -806,7 +818,7 @@ def start_resource(
             resource_config, logger)
 
     msg += executed_command + '\n' + command + ' returned '\
-          + str(exit_code)
+         + str(exit_code)
 
     if exit_code == ssh_error_code:
         msg += ssh_error_msg
@@ -814,6 +826,7 @@ def start_resource(
     else:
         msg += ssh_status_msg
         return (True, msg)
+
 
 def resource_fe_action(
     unique_resource_name,
@@ -860,7 +873,7 @@ def resource_fe_action(
                 False, resource_config, logger)
 
         msg += executed_command + '\n' + command + ' returned '\
-               + str(exit_code)
+             + str(exit_code)
 
         if exit_code == ssh_error_code:
             msg += ssh_error_msg
@@ -880,8 +893,8 @@ def resource_fe_action(
             (exit_code, executed_command) = \
                 execute_on_resource(command, False, resource_config,
                                     logger)
-            msg = executed_command + '\n' + command\
-                 + ' returned ' + str(exit_code)
+            msg = executed_command + '\n' + command + ' returned '\
+                 + str(exit_code)
 
             if exit_code == ssh_error_code:
                 msg += ssh_error_msg

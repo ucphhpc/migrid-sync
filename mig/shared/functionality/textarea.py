@@ -50,6 +50,7 @@ from shared.validstring import valid_user_path
 
 def signature():
     """Signature of the main function"""
+
     defaults = {}
     return ['TODO: signature', defaults]
 

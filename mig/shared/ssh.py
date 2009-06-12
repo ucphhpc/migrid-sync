@@ -56,7 +56,8 @@ def copy_file_to_resource(
     user = resource_config['MIGUSER']
 
     if dest_path.startswith(os.sep):
-        logger.warning('copy_file_to_resource: force relative dest path!')
+        logger.warning('copy_file_to_resource: force relative dest path!'
+                       )
         dest_path = dest_path.lstrip(os.sep)
 
     # create known-hosts file with only the resources hostkey (could
@@ -72,8 +73,8 @@ def copy_file_to_resource(
                 text=True)
         os.write(filehandle, hostkey)
         os.close(filehandle)
-        logger.debug('single_known_hosts for %s written in %s'
-                      % (host, key_path))
+        logger.debug('single_known_hosts for %s written in %s' % (host,
+                     key_path))
         logger.debug('value %s' % hostkey)
     except Exception, err:
         logger.error('could not write single_known_hosts %s (%s)'
@@ -86,16 +87,22 @@ def copy_file_to_resource(
     options.append('-o StrictHostKeyChecking=yes')
     options.append('-o BatchMode=yes')
     options.append('-o CheckHostIP=yes')
+
     # We need fault tolerance but can't block e.g. grid_script for long
+
     options.append('-o ConnectionAttempts=2')
     options.append('-o ConnectTimeout=30')
     if hostkey:
         options.append('-o UserKnownHostsFile=' + key_path)
 
-    command = 'scp %s %s %s@%s:%s >> /dev/null 2>> %s/last-scp.err' % \
-              (' '.join(options), filename, user, host,
-               os.path.join(resource_config['RESOURCEHOME'], dest_path),
-               os.environ['HOME'])
+    command = 'scp %s %s %s@%s:%s >> /dev/null 2>> %s/last-scp.err' % (
+        ' '.join(options),
+        filename,
+        user,
+        host,
+        os.path.join(resource_config['RESOURCEHOME'], dest_path),
+        os.environ['HOME'],
+        )
 
     logger.debug(command)
     status = os.system(command) >> 8
@@ -117,6 +124,7 @@ def copy_file_to_resource(
 
     logger.info('scp ok %s' % host)
     return True
+
 
 def copy_file_to_exe(
     local_filename,
@@ -147,8 +155,8 @@ def copy_file_to_exe(
 
     copy_attempts = 5
     for attempt in range(copy_attempts):
-        copy_status = copy_file_to_resource(local_filename,
-                dest_path, resource_config, logger)
+        copy_status = copy_file_to_resource(local_filename, dest_path,
+                resource_config, logger)
         if not copy_status:
             logger.warning('scp of file failed in attempt %d of %d'
                             % (attempt, copy_attempts))
@@ -173,17 +181,18 @@ def copy_file_to_exe(
     # copy file to exe
 
     if exe.has_key('shared_fs') and exe['shared_fs']:
-        ssh_command = 'cp ' + os.path.join(resource_config['RESOURCEHOME'],
-                                           dest_path) + ' ' + \
-                                           exe['execution_dir']
+        ssh_command = 'cp '\
+             + os.path.join(resource_config['RESOURCEHOME'], dest_path)\
+             + ' ' + exe['execution_dir']
     else:
+
         # We do not have exe host keys and don't really care about auth there
-        ssh_command = 'scp -o ConnectTimeout=15 -o ConnectionAttempts=2 ' + \
-                      ' ' + os.path.join(resource_config['RESOURCEHOME'],
-                                         dest_path) + ' ' + \
-                                         exe['execution_user'] + '@' + \
-                                         + exe['execution_node'] + ':' + \
-                                         exe['execution_dir']
+
+        ssh_command = \
+            'scp -o ConnectTimeout=15 -o ConnectionAttempts=2 ' + ' '\
+             + os.path.join(resource_config['RESOURCEHOME'], dest_path)\
+             + ' ' + exe['execution_user'] + '@' + +exe['execution_node'
+                ] + ':' + exe['execution_dir']
 
     copy_attempts = 5
     for attempt in range(copy_attempts):
@@ -270,11 +279,13 @@ def execute_on_resource(
     options.append('-o BatchMode=yes')
     options.append('-o CheckHostIP=yes')
     options.append('-o StrictHostKeyChecking=yes')
+
     # We need fault tolerance but can't block e.g. grid_script for long
+
     options.append('-o ConnectionAttempts=2')
     options.append('-o ConnectTimeout=30')
     if hostkey:
-        options.append("-o UserKnownHostsFile=%s" % key_path)
+        options.append('-o UserKnownHostsFile=%s' % key_path)
 
     if '0' != multiplex:
         options.append('-o ControlPath=%s/ssh-multiplexing' % res_dir)
@@ -330,7 +341,9 @@ def execute_on_exe(
     options = []
     options.append('-X')
     options.append('-o BatchMode=yes')
+
     # We need fault tolerance but can't block e.g. grid_script for long
+
     options.append('-o ConnectionAttempts=2')
     options.append('-o ConnectTimeout=30')
     batch = []

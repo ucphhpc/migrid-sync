@@ -188,8 +188,7 @@ def parse(
 
     message = 'USERJOBFILE %s/%s\n' % (cert_name_no_spaces, job_id)
 
-    if not send_message_to_grid_script(message, logger,
-            configuration):
+    if not send_message_to_grid_script(message, logger, configuration):
         return (False,
                 'Fatal error: Could not get exclusive access or write to %s'
                  % configuration.grid_stdin)
@@ -206,11 +205,9 @@ def parse(
 
         # open resource config
 
-        resource_config = unpickle(resource_config_filename,
-                                   logger)
+        resource_config = unpickle(resource_config_filename, logger)
         if not resource_config:
-            logger.error('error unpickling resource config'
-                    )
+            logger.error('error unpickling resource config')
             return False
 
         dict_entry = (job_id, cert_name_no_spaces)
@@ -240,8 +237,7 @@ def parse(
         from shared.cgioutput import CGIOutput
         import shared.vncfunctions as vncfunctions
         o = CGIOutput(logger)
-        vncfunctions.main(logger, configuration,
-                          cert_name_no_spaces, o)
+        vncfunctions.main(logger, configuration, cert_name_no_spaces, o)
 
     # print global_dict
 

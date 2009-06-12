@@ -133,7 +133,7 @@ Please use Sh as SCRIPTLANGUAGE on your resources if this fails!"""
     def script_init(self):
         """initialize script"""
 
-        return """#!/usr/bin/python
+        return '''#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -163,7 +163,7 @@ Please use Sh as SCRIPTLANGUAGE on your resources if this fails!"""
 import os
 import stat
 from os.path import join, getsize
-"""
+'''
 
     def print_start(self, name='job'):
         """print 'starting new job'"""

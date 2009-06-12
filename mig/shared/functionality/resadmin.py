@@ -47,7 +47,8 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
-    defaults = {'benchmark':'false'}
+
+    defaults = {'benchmark': 'false'}
     return ['html_form', defaults]
 
 
@@ -146,8 +147,7 @@ def display_resource(
 
     # html += '</tr></table><p>'
 
-    html += \
-        '<tr class=title><td colspan=5>Execution Units</td></tr>\n'
+    html += '<tr class=title><td colspan=5>Execution Units</td></tr>\n'
 
     # html += '<B>Execution Units</B>\n<table>'
 
@@ -302,7 +302,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    benchmark = (accepted['benchmark'][-1].lower() != 'false') 
+    benchmark = accepted['benchmark'][-1].lower() != 'false'
     start_time = time.time()
 
     (re_stat, re_list) = list_runtime_environments(configuration)
@@ -320,7 +320,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
                           : 'Create a new MiG resource', 'destination'
                           : 'resource_edit.py?new_resource=true'})
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
+
     # Use cgi-bin links to sandboxes here to preserve menu
+
     output_objects.append({'object_type': 'link', 'text'
                           : 'Create a sandbox MiG resource',
                           'destination': '/cgi-bin/ssslogin.py'})
@@ -392,12 +394,12 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                : '<br>'})
         output_objects = output_objects[:quick_links_index]\
              + quick_links + output_objects[quick_links_index:]
-        
+
     finish_time = time.time()
     if benchmark:
         output_objects.append({'object_type': 'text', 'text'
-                              : 'Resource admin back end delivered data in %.2f seconds' % \
-                               (finish_time - start_time)})
+                              : 'Resource admin back end delivered data in %.2f seconds'
+                               % (finish_time - start_time)})
 
     return (output_objects, returnvalues.OK)
 

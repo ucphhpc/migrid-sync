@@ -40,6 +40,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'re_name': REJECT_UNSET}
     return ['runtimeenvironment', defaults]
 

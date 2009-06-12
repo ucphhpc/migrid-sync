@@ -453,9 +453,12 @@ def gen_job_script(
     getinputfiles_array.append(generator.print_on_error('get_executables_status'
                                , '0',
                                'failed to fetch executable files!'))
+
     # user_cert equals empty_job_name for sleep jobs
-    getinputfiles_array.append(generator.generate_output_filelists(
-        (user_cert != configuration.empty_job_name), 'generate_output_filelists'))
+
+    getinputfiles_array.append(generator.generate_output_filelists(user_cert
+                                != configuration.empty_job_name,
+                               'generate_output_filelists'))
     getinputfiles_array.append(generator.print_on_error('generate_output_filelists'
                                , '0',
                                'failed to generate output filelists!'))
@@ -643,8 +646,8 @@ def gen_job_script(
         write_file('\n'.join(job_array), configuration.mig_system_files
                     + job_dictionary['JOB_ID'] + '.job', logger)
 
-    write_file('\n'.join(getinputfiles_array),
-               path_without_extension + '.getinputfiles', logger)
+    write_file('\n'.join(getinputfiles_array), path_without_extension
+                + '.getinputfiles', logger)
     write_file('\n'.join(sendoutputfiles_array),
                configuration.mig_system_files + job_dictionary['JOB_ID']
                 + '.sendoutputfiles', logger)

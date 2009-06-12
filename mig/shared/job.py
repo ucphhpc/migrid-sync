@@ -49,9 +49,11 @@ class Job:
     def to_dict(self):
         res = {}
         for attr in dir(self):
+
             # Only CAPITAL ones are job attributes
+
             if attr == attr.upper():
-                res[attr] = eval("self.%s" % attr)
+                res[attr] = eval('self.%s' % attr)
         return res
 
 
@@ -63,7 +65,7 @@ def get_job_id(configuration):
 
     filehandle = None
     job_id_counter_path = os.path.join(configuration.mig_system_files,
-                                           'job_id_counter')
+            'job_id_counter')
     try:
         filehandle = open(job_id_counter_path, 'r+')
     except IOError, ioe:

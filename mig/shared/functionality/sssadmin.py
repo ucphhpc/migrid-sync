@@ -37,8 +37,13 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
-    defaults = {'username': REJECT_UNSET, 'password': REJECT_UNSET,
-                'newuser': ['off'], 'expert':['false']}
+
+    defaults = {
+        'username': REJECT_UNSET,
+        'password': REJECT_UNSET,
+        'newuser': ['off'],
+        'expert': ['false'],
+        }
     return ['html_form', defaults]
 
 
@@ -117,13 +122,14 @@ def print_windows_solution_selection():
     </select></td></tr>"""
     return html
 
+
 def print_expert_settings(display):
     """Prints html section where a user chooses whether he wants
     the advanced settings like image format and vgrid"""
 
     if display:
         html = \
-             """<tr><td align='' colspan=''>Which kind of disk image would you like?</td>
+            """<tr><td align='' colspan=''>Which kind of disk image would you like?</td>
     <td><select name='image_format'>
     <option value='qcow'>qcow</option>
     <option value='raw'>raw</option>
@@ -135,7 +141,7 @@ def print_expert_settings(display):
 """
     else:
         html = \
-             """
+            """
              <input type=hidden name='image_format' value='qcow'>
              <input type='hidden' name='vgrid' value='Generic'>
 """
@@ -196,13 +202,13 @@ def show_info(user, passwd, expert):
     html += print_os_selection()
     html += print_windows_solution_selection()
     html += print_expert_settings(expert)
-        
+
     html += \
         """<tr><td>
     <input type='hidden' name='username' value='%s'>
-""" % user
-    html += \
-        """</td></tr>
+"""\
+         % user
+    html += """</td></tr>
         """
     html += \
         """<tr><td>Press 'Submit' to download - please note that it 
@@ -231,7 +237,8 @@ def show_info(user, passwd, expert):
     </td></tr>
     </table> 
     """\
-    % (user, passwd, not expert, admin_email.replace('<', '&lt;').replace('>', '&gt;'))
+         % (user, passwd, not expert, admin_email.replace('<', '&lt;'
+            ).replace('>', '&gt;'))
     return html
 
 
@@ -239,22 +246,23 @@ def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, _) = \
-        initialize_main_variables(op_header=False, op_menu=(cert_name_no_spaces != "None"))
+        initialize_main_variables(op_header=False,
+                                  op_menu=cert_name_no_spaces != 'None')
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
-        output_objects.append({'object_type': 'link', 'destination':
-                               '/cgi-sid/ssslogin.py', 'text':
-                               'Retry login'})
+        output_objects.append({'object_type': 'link', 'destination'
+                              : '/cgi-sid/ssslogin.py', 'text'
+                              : 'Retry login'})
         return (accepted, returnvalues.CLIENT_ERROR)
     username = accepted['username'][-1].strip()
     password = accepted['password'][-1].strip()
     newuser = accepted['newuser'][-1].strip()
     expert_string = accepted['expert'][-1].strip()
     expert = False
-    if "true" == expert_string.lower():
+    if 'true' == expert_string.lower():
         expert = True
 
     PW = 0
@@ -271,11 +279,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
         userdb = pickle.load(fd)
         fd.close()
     except IOError:
+
         # First time - create empty dict
+
         userdb = {}
     except Exception, exc:
         output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Could not read sandbox database! %s'
+                              : 'Could not read sandbox database! %s'
                                % exc})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -291,9 +301,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Username is already taken - please go back and choose another one...'
                                   })
-            output_objects.append({'object_type': 'link', 'destination':
-                                   '/cgi-sid/ssslogin.py', 'text':
-                                   'Retry login'})
+            output_objects.append({'object_type': 'link', 'destination'
+                                  : '/cgi-sid/ssslogin.py', 'text'
+                                  : 'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         elif len(username) < 3:
 
@@ -302,9 +312,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Please choose a username with 3 or more characters.'
                                   })
-            output_objects.append({'object_type': 'link', 'destination':
-                                   '/cgi-sid/ssslogin.py', 'text':
-                                   'Retry login'})
+            output_objects.append({'object_type': 'link', 'destination'
+                                  : '/cgi-sid/ssslogin.py', 'text'
+                                  : 'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:
 
@@ -324,7 +334,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
                          % exc})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
             output_objects.append({'object_type': 'html_form', 'text'
-                                  : show_info(username, password, expert)})
+                                  : show_info(username, password,
+                                  expert)})
     else:
 
     # Otherwise, check that username and password are correct
@@ -333,9 +344,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Wrong username - please go back and try again...'
                                   })
-            output_objects.append({'object_type': 'link', 'destination':
-                                   '/cgi-sid/ssslogin.py', 'text':
-                                   'Retry login'})
+            output_objects.append({'object_type': 'link', 'destination'
+                                  : '/cgi-sid/ssslogin.py', 'text'
+                                  : 'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         elif userdb[username][PW] != password:
 
@@ -344,17 +355,18 @@ def main(cert_name_no_spaces, user_arguments_dict):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Wrong password - please go back and try again...'
                                   })
-            output_objects.append({'object_type': 'link', 'destination':
-                                   '/cgi-sid/ssslogin.py', 'text':
-                                   'Retry login'})
+            output_objects.append({'object_type': 'link', 'destination'
+                                  : '/cgi-sid/ssslogin.py', 'text'
+                                  : 'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:
 
             # print "<a href='ssslogin.py'>Back</a>"....
 
             output_objects.append({'object_type': 'html_form', 'text'
-                                  : show_info(username, password, expert)})
-    output_objects.append({'object_type': 'text', 'text':''})
+                                  : show_info(username, password,
+                                  expert)})
+    output_objects.append({'object_type': 'text', 'text': ''})
     return (output_objects, returnvalues.OK)
 
 

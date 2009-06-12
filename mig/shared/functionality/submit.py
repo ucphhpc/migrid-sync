@@ -41,12 +41,14 @@ from shared.job import new_job
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'path': REJECT_UNSET, 'flags': ['']}
     return ['submitstatuslist', defaults]
 
 
 def usage():
     """Usage help"""
+
     return """submit one or more job description files.
 Takes a list of path entries relative to your MiG home directory and submits each one in turn.
 The result is a structure with submit details for each submit attempt including status and job ID
@@ -54,7 +56,7 @@ upon success.
 The flags parameter can be used to request more verbose output.
 """
 
-        
+
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 

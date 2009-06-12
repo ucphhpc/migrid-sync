@@ -37,6 +37,7 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 
 def signature():
     """Signature of the main function"""
+
     defaults = {}
     return ['html_form', defaults]
 
@@ -61,7 +62,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     output_objects.append({'object_type': 'title', 'text': 'MiG Jobs'})
-    output_objects.append({'object_type': 'header', 'text': 'Manage Jobs'})
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Manage Jobs'})
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'View status of all submitted jobs'})
     output_objects.append({'object_type': 'html_form', 'text'

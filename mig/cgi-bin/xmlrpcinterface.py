@@ -54,8 +54,8 @@ class MiGCGIXMLRPCRequestHandler(CGIXMLRPCRequestHandler):
         except:
             try:
                 exec compile('from shared.functionality.%s import __doc__ as method_help'
-                             % method_name, '', 'single')
-                help_string =  str(method_help)
+                              % method_name, '', 'single')
+                help_string = str(method_help)
             except:
                 help_string = ''
         return help_string

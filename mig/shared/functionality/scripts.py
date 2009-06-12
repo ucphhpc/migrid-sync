@@ -44,6 +44,7 @@ python_cmd_def = 'python'
 
 def signature():
     """Signature of the main function"""
+
     defaults = {
         'flags': [''],
         'lang': [],

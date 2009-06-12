@@ -37,9 +37,12 @@ from urlparse import urlparse
 SCRIPTNAME = '/cgi-bin/xmlrpcinterface.py'
 user_conf_dict = {}
 
+
 def read_user_conf():
     """Read and parse 'KEY VAL' formatted user conf file"""
-    conf_path = os.path.expanduser(os.path.join('~', '.mig', 'miguser.conf'))
+
+    conf_path = os.path.expanduser(os.path.join('~', '.mig',
+                                   'miguser.conf'))
     if not os.path.exists(conf_path):
         print 'mig user configuration not found, %s does not exist'\
              % conf_path
@@ -50,8 +53,10 @@ def read_user_conf():
     try:
         conf_fd = open(conf_path, 'r')
         for thisline in conf_fd:
+
             # ignore comments
-            comment_start = thisline.find("#")
+
+            comment_start = thisline.find('#')
             if comment_start > -1:
                 thisline = thisline[:comment_start]
             thisline = thisline.rstrip()
@@ -84,21 +89,25 @@ if not os.path.isfile(KEYCERTFILE):
     sys.exit(1)
 
 # CA cert is not currently used but we include it for future verification support
+
 CACERTFILE = user_conf_dict.get('cacertfile', None)
 if CACERTFILE and not os.path.isfile(CACERTFILE):
     print 'specified cacertfile %s not found!' % CACERTFILE
     sys.exit(1)
 
 url_tuple = urlparse(user_conf_dict['migserver'])
+
 # second item in tuple is network location part with hostname and optional port
+
 host_port = url_tuple[1].split(':', 1)
 if len(host_port) < 2:
-    host_port.append("443")
+    host_port.append('443')
 host_port[1] = int(host_port[1])
-(HOSTNAME, HOSTPORT) = host_port 
+(HOSTNAME, HOSTPORT) = host_port
 
 
 class HTTPSCertTransport(xmlrpclib.Transport):
+
     """HTTPS with user certificate"""
 
     host = None
@@ -107,7 +116,7 @@ class HTTPSCertTransport(xmlrpclib.Transport):
 
         # TODO: we should try to use supplied password here, but it is difficult!
         # it seems the password handling is passed directly to openssl through console
-        
+
         conn = httplib.HTTPSConnection(HOSTNAME, HOSTPORT,
                 key_file=KEYCERTFILE, cert_file=CERTFILE)
 
@@ -161,21 +170,22 @@ def xmlrpcgetserver():
     return server
 
 
-if "__main__" == __name__:
+if '__main__' == __name__:
     if len(sys.argv) > 1:
         job_id_list = sys.argv[1:]
     else:
         job_id_list = ['*']
-    print "Testing XMLRPC client over HTTPS with user certificates"
-    print "You may get prompted for your MiG key/certificate passphrase before you can continue"
+    print 'Testing XMLRPC client over HTTPS with user certificates'
+    print 'You may get prompted for your MiG key/certificate passphrase before you can continue'
     server = xmlrpcgetserver()
 
     methods = server.system.listMethods()
-    print "supported remote methods:\n%s" % '\n'.join(methods)
+    print 'supported remote methods:\n%s' % '\n'.join(methods)
     print
-    print "checking job status for job(s) with IDs: %s" % ' '.join(job_id_list)
-    (inlist, retval) = server.jobstatus({'job_id': job_id_list,
-                                         'flags': 'vs', 'max_jobs': '5'})
+    print 'checking job status for job(s) with IDs: %s'\
+         % ' '.join(job_id_list)
+    (inlist, retval) = server.jobstatus({'job_id': job_id_list, 'flags'
+            : 'vs', 'max_jobs': '5'})
     (returnval, returnmsg) = retval
     if returnval != 0:
         print 'Error %s:%s ' % (returnval, returnmsg)
@@ -183,10 +193,11 @@ if "__main__" == __name__:
     for ele in inlist:
         if ele['object_type'] == 'job_list':
             for el in ele['jobs']:
-                print 'The job with job_id %s: %s' % (el['job_id'], el['status'])
+                print 'The job with job_id %s: %s' % (el['job_id'],
+                        el['status'])
 
     print
-    print "Listing contents of MiG home directory"
+    print 'Listing contents of MiG home directory'
     (inlist, retval) = server.ls({'path': '.', 'flags': 'v'})
     (returnval, returnmsg) = retval
     if returnval != 0:
@@ -200,7 +211,7 @@ if "__main__" == __name__:
     print
 
     resconfig = \
-                  r"""::MIGUSER::
+        r"""::MIGUSER::
 karlsen
 
 ::HOSTURL::
@@ -291,7 +302,7 @@ vgrid=Generic
     # print server.redb({})
     # print server.scripts({})
     # print server.wc({"path":["%s" % sys.argv[1], "TextAreaAt_6_7_2007__9_21_27.mRSL"], "flags":"v"})
-    
+
     # print server.addvgridmember({"vgrid_name":["%s" % sys.argv[1]], "cert_name":["%s" % sys.argv[2]]})
     # print server.addvgridres({"vgrid_name":["%s" % sys.argv[1]], "unique_resource_name":["%s" % sys.argv[2]]})
     # print server.lsvgridres({"vgrid_name":["%s" % sys.argv[1]]})
@@ -314,20 +325,20 @@ vgrid=Generic
     # (inlist, retval) = server.truncate({"path":["%s" % sys.argv[1]], "flags":"v"})
     # (inlist, retval) = server.rm({"path":["%s" % sys.argv[1]], "flags":"v"})
     # (inlist, retval) = server.stat({"path":["%s" % sys.argv[1]], "flags":"v"})
-    
+
     # (inlist, retval) = server.mkdir({"path":["%s" % sys.argv[1]], "flags":"v"})
     # print "%s : %s" % (retval, inlist)
     # (inlist, retval) = server.rmdir({"path":["%s" % sys.argv[1]], "flags":"v"})
     # print  "%s : %s" % (retval, inlist)
-    
+
     # (inlist, retval) = server.jobstatus({"job_id":["%s" % sys.argv[1]]})
     # (inlist, retval) = server.textarea({"jobname_0_0_0":"abc", "fileupload_0_0_0filename":"nyfil.mrsl", "submitmrsl_0":["ON"], "fileupload_0_0_0":["%s" % mrsl]})
     # print  "%s : %s" % (retval, inlist)
     # (inlist, retval) = server.editfile({"path":["/m2"], "submitjob":["True"], "editarea":["%s" % mrsl]})
     # (inlist, retval) = server.canceljob({"job_id":["%s" % sys.argv[1]]})
 
-    print "testing a basic job flow"
-    mrsl_path = "xmlrpc-test-job.mRSL"
+    print 'testing a basic job flow'
+    mrsl_path = 'xmlrpc-test-job.mRSL'
     mrsl = """::EXECUTE::
 uname -a
 
@@ -337,54 +348,74 @@ uname -a
 ::SANDBOX::
 1
 """
-    print "writing job description to %s file on server" % mrsl_path
-    (inlist, retval) = server.editfile({"path":[mrsl_path], "editarea":["%s" % mrsl]})
-    print "write status: %s" % retval
-    #print "DEBUG: %s\n%s" % (inlist, retval)
-    print "submit job description in %s" % mrsl_path
-    (inlist, retval) = server.submit({"path":[mrsl_path]})
-    #print "DEBUG: %s\n%s" % (inlist, retval)
+    print 'writing job description to %s file on server' % mrsl_path
+    (inlist, retval) = server.editfile({'path': [mrsl_path], 'editarea'
+            : ['%s' % mrsl]})
+    print 'write status: %s' % retval
+
+    # print "DEBUG: %s\n%s" % (inlist, retval)
+
+    print 'submit job description in %s' % mrsl_path
+    (inlist, retval) = server.submit({'path': [mrsl_path]})
+
+    # print "DEBUG: %s\n%s" % (inlist, retval)
+
     job_id = None
     for entry in inlist:
-        if 'submitstatuslist' == entry['object_type'] and entry.has_key('submitstatuslist'):
-            submit_status = entry['submitstatuslist'][0].get('status', False)
+        if 'submitstatuslist' == entry['object_type']\
+             and entry.has_key('submitstatuslist'):
+            submit_status = entry['submitstatuslist'][0].get('status',
+                    False)
             job_id = entry['submitstatuslist'][0].get('job_id', None)
             print 'submit status: %s' % submit_status
     while job_id:
-        print "wait for job %s to finish" % job_id
-        (inlist, retval) = server.jobstatus({"job_id":["%s" % job_id]})
-        #print "DEBUG: %s\n%s" % (inlist, retval)
+        print 'wait for job %s to finish' % job_id
+        (inlist, retval) = server.jobstatus({'job_id': ['%s' % job_id]})
+
+        # print "DEBUG: %s\n%s" % (inlist, retval)
+
         for entry in inlist:
-            if 'job_list' == entry['object_type'] and entry.has_key('jobs'):
+            if 'job_list' == entry['object_type']\
+                 and entry.has_key('jobs'):
                 job_status = entry['jobs'][0].get('status', 'UNKNOWN')
-                print "job name:\t\t%s" % job_id
-                print "job status:\t\t%s" % job_status
+                print 'job name:\t\t%s' % job_id
+                print 'job status:\t\t%s' % job_status
                 for name in ['queued', 'executing', 'finished']:
-                    print "%s date:\t\t%s" % (name, entry['jobs'][0].get('%s_timestamp' % name, ''))
-                print 
+                    print '%s date:\t\t%s' % (name, entry['jobs'
+                            ][0].get('%s_timestamp' % name, ''))
+                print
 
                 if 'FINISHED' == job_status:
-                    print "Read output of job %s" % job_id
+                    print 'Read output of job %s' % job_id
                     for name in ['status', 'stdout', 'stderr']:
-                        (inlist, retval) = server.cat({"path":["job_output/%s/%s.%s" % (job_id, job_id, name)]})
-                        #print "DEBUG: %s\n%s" % (inlist, retval)
+                        (inlist, retval) = server.cat({'path'
+                                : ['job_output/%s/%s.%s' % (job_id,
+                                job_id, name)]})
+
+                        # print "DEBUG: %s\n%s" % (inlist, retval)
+
                         for entry in inlist:
-                            if 'file_output' == entry['object_type'] and entry.has_key('lines'):
+                            if 'file_output' == entry['object_type']\
+                                 and entry.has_key('lines'):
                                 output_lines = entry['lines']
-                                print "job %s contents:\n%s\n" % (name, '\n'.join(output_lines))                        
+                                print '''job %s contents:
+%s
+'''\
+                                     % (name, '\n'.join(output_lines))
                     job_id = None
                 else:
                     time.sleep(2)
-        
+
     # (inlist, retval) = server.resubmit({"job_id":["%s" % sys.argv[1]]})
     # (inlist, retval) = server.liveoutput({"job_id":["%s" % sys.argv[1]]})
 
     # print inlist
-    
+
     print
-    print "all server methods: %s" % ', '.join(server.dirserver())
-    print "submit() signature: %s" % server.system.methodSignature("submit")
-    print "the signature is a tuple of output object type and a list of expected/default input values"
-    print "submit() help: %s" % server.system.methodHelp("submit")
-    print "please note that help is not yet available for all methods"
+    print 'all server methods: %s' % ', '.join(server.dirserver())
+    print 'submit() signature: %s'\
+         % server.system.methodSignature('submit')
+    print 'the signature is a tuple of output object type and a list of expected/default input values'
+    print 'submit() help: %s' % server.system.methodHelp('submit')
+    print 'please note that help is not yet available for all methods'
 

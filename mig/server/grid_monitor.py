@@ -68,8 +68,7 @@ def create_monitor(vgrid_name):
         'now': now,
         }
 
-    html = \
-         get_cgi_html_header(
+    html = get_cgi_html_header(
         'MiG Monitor, VGrid %(vgrid_name)s' % html_vars,
         '',
         True,
@@ -77,14 +76,14 @@ def create_monitor(vgrid_name):
         '',
         False,
         )
-    html += '''
+    html += \
+        '''
 <!-- end of raw header: this line is used by showvgridmonitor -->
 <h1>Statistics/monitor for the %(vgrid_name)s VGrid</h1>
 This page was generated %(now)s<br>
 Automatic refresh every %(sleep_secs)s secs.<br>
 <br>'''\
          % html_vars
-
 
     # loop and get totals
 
@@ -232,7 +231,8 @@ Automatic refresh every %(sleep_secs)s secs.<br>
                      + str(runtimeenv_dict[entry]) + '</td></tr>\n'
     html += \
         """</table>
-</td></tr>\n
+</td></tr>
+
 </table><br>
 <br>
 <hr><br>
@@ -258,8 +258,8 @@ Listing the last request from each resource<br>
         current_dir += '/' + vgrid_name_part
         print 'dir: ' + configuration.vgrid_home + current_dir
 
-        sorted_names = os.listdir(configuration.vgrid_home + \
-                                  current_dir)
+        sorted_names = os.listdir(configuration.vgrid_home
+                                   + current_dir)
         sorted_names.sort()
         for filename in sorted_names:
             print filename
@@ -352,13 +352,15 @@ Listing the last request from each resource<br>
                     else:
                         resource_status = 'online'
                         up_count = up_count + 1
-                        
+
                     html += '<tr class=%s>' % row_class
-                    html += '<td><img src=/images/status-icons/%s.png></td>' % \
-                            resource_status
-                    html += '<td>%s<br>%s</td>' % \
-                            (unique_res_name_and_exe_list[1],
-                             time.asctime(last_request_dict['CREATED_TIME'].timetuple()))
+                    html += \
+                        '<td><img src=/images/status-icons/%s.png></td>'\
+                         % resource_status
+                    html += '<td>%s<br>%s</td>'\
+                         % (unique_res_name_and_exe_list[1],
+                            time.asctime(last_request_dict['CREATED_TIME'
+                            ].timetuple()))
                     html += '<td>' + days + ' days, ' + hours\
                          + ' hours, ' + minutes + ' min, ' + seconds\
                          + 'secs</td>'
@@ -385,13 +387,14 @@ Listing the last request from each resource<br>
                     if 'unavailable' == resource_status:
                         html += '-'
                     elif 'slack' == resource_status:
-                        html += 'Within slack period (%s < %s secs)' % (time_rem_abs.seconds,
-                                                                        slackperiod)
+                        html += 'Within slack period (%s < %s secs)'\
+                             % (time_rem_abs.seconds, slackperiod)
                     elif 'offline' == resource_status:
                         html += 'down?'
                     else:
-                        html += '%s days, %s hours, %s minutes, %s secs' % \
-                                (days_rem, hours_rem, minutes_rem, seconds_rem)
+                        html += '%s days, %s hours, %s minutes, %s secs'\
+                             % (days_rem, hours_rem, minutes_rem,
+                                seconds_rem)
                     html += '</td>'
 
                     html += '</tr>\n'
@@ -413,14 +416,21 @@ Listing the last request from each resource<br>
 
     html += '</table>\n'
 
-    html += '<br>\n<hr>\n<br>\n<h3>VGrid Totals</h3>\nA total of <b>'\
+    html += '''<br>
+<hr>
+<br>
+<h3>VGrid Totals</h3>
+A total of <b>'''\
          + str(total_number_of_resources) + '</b> resources ('\
          + str(total_number_of_cpus) + " cpu's) joined this VGrid ("\
          + str(up_count) + ' up, ' + str(down_count) + ' down?, '\
          + str(slack_count) + ' slack)<br>'
     html += str(job_assigned) + ' resources (' + str(job_assigned_cpus)\
-         + " cpu's) appear to be executing a job<br>\n<br>\n"
-    html += '<!-- begin raw footer: this line is used by showvgridmonitor -->'
+         + """ cpu's) appear to be executing a job<br>
+<br>
+"""
+    html += \
+        '<!-- begin raw footer: this line is used by showvgridmonitor -->'
     html += get_cgi_html_footer('')
 
     file_handle = open(html_file, 'w')

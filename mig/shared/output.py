@@ -158,7 +158,8 @@ def txt_format(ret_val, ret_msg, out_obj):
                     if obj.has_key('queued_timestamp'):
                         print 'Queued: %s' % obj['queued_timestamp']
                     if obj.has_key('schedule_timestamp'):
-                        print 'Scheduled: %s' % obj['schedule_timestamp']
+                        print 'Scheduled: %s' % obj['schedule_timestamp'
+                                ]
                     if obj.has_key('schedule_hint'):
                         print 'Schedule hint: %s' % obj['schedule_hint']
                     if obj.has_key('executing_timestamp'):
@@ -255,7 +256,7 @@ def txt_format(ret_val, ret_msg, out_obj):
                         print line
         elif i['object_type'] == 'jobobj':
             job_dict = i['jobobj'].to_dict()
-            print "Field\t\tValue"
+            print 'Field\t\tValue'
             for (key, val) in job_dict.items():
                 print '%s\t\t%s' % (key, val)
         elif i['object_type'] == 'html_form':
@@ -438,7 +439,8 @@ def html_format(ret_val, ret_msg, out_obj):
             print "<table class='saveschedulejobs'><tr><th>Job ID</th><th>Message</th></tr>"
             for saveschedule in saveschedulejobs:
                 print '<tr>%s</tr>'\
-                     % html_table_if_have_keys(saveschedule, ['job_id', 'message'])
+                     % html_table_if_have_keys(saveschedule, ['job_id',
+                        'message'])
             print '</table>'
         elif i['object_type'] == 'stats':
             stats = i['stats']
@@ -506,7 +508,7 @@ def html_format(ret_val, ret_msg, out_obj):
                 # cols += 1
 
                 print '<td colspan=%d>Select/deselect all files</td>'\
-                      % (columns - cols)
+                     % (columns - cols)
             print '</tr>'
             print '<tr>'
             cols = 0
@@ -535,7 +537,7 @@ def html_format(ret_val, ret_msg, out_obj):
                         cols += 1
                         if 'full' == i['style']:
                             print "<td><input type='checkbox' name='path' value='%s'></td>"\
-                                  % directory['dirname_with_dir']
+                                 % directory['dirname_with_dir']
                             cols += 1
                         if directory.has_key('actual_dir'):
                             print '<td>%s</td>' % directory['actual_dir'
@@ -561,7 +563,7 @@ def html_format(ret_val, ret_msg, out_obj):
                         cols += 1
                         if 'full' == i['style']:
                             print "<td><input type='checkbox' name='path' value='%s'></td>"\
-                                  % this_file['file_with_dir']
+                                 % this_file['file_with_dir']
                             cols += 1
                         if this_file.has_key('long_format'):
                             print '<td>%s</td>'\
@@ -583,7 +585,7 @@ def html_format(ret_val, ret_msg, out_obj):
                         cols = columns
                         print '</tr>'
             print '</form></table>'
-            print ""
+            print ''
         elif i['object_type'] == 'filewcs':
             filewcs = i['filewcs']
             if len(filewcs) == 0:
@@ -802,12 +804,14 @@ def html_format(ret_val, ret_msg, out_obj):
                 print 'No matching VGrids found'
         else:
             print 'unknown object %s' % i
-    footer = """</div>
+    footer = \
+        """</div>
     <div id="exitcode">
 Exit code: %s Description: %s<br>
     </div>
 <br>    
-""" % (ret_val, ret_msg)
+"""\
+         % (ret_val, ret_msg)
 
     print get_cgi_html_footer(footer)
     return True
@@ -899,10 +903,14 @@ def json_format(ret_val, ret_msg, out_obj):
     try:
         import json
         try:
-            # python >=2.6 includes native json module with loads/dumps methods 
+
+            # python >=2.6 includes native json module with loads/dumps methods
+
             print json.dumps(out_obj)
         except AttributeError:
+
             # python <2.6 + python-json module with read/write methods
+
             print json.write(out_obj)
     except Exception, exc:
         print 'json not available on server! Defaulting to .txt output. (%s)'\

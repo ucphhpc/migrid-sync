@@ -69,7 +69,7 @@ def xsl_datetime(timestamp=None):
     iso = timestamp.isoformat()
 
     # add a 'Z' if we do not have a time zone
-    
+
     if timestamp.tzinfo == None:
         iso = iso + 'Z'
     return iso
@@ -113,10 +113,8 @@ def xsl_duration(start, end=None):
     mins = (delta.seconds % 3600) / 60
     secs = delta.seconds % 60
 
-
-    deltastr = sign + \
-        'P%dD' % delta.days + \
-        'T%02dH%02dM%02d.%06dS' % (hours, mins, secs, delta.microseconds)
+    deltastr = sign + 'P%dD' % delta.days + 'T%02dH%02dM%02d.%06dS'\
+         % (hours, mins, secs, delta.microseconds)
 
     return deltastr
 
@@ -255,7 +253,6 @@ class UsageRecord:
         """
 
         def set_element(parent, name, text):
-
             """ utility function, adds a child node with text content"""
 
             element = ET.SubElement(parent, name)
@@ -288,19 +285,19 @@ class UsageRecord:
             job_identity = ET.SubElement(record, 'JobIdentity')
             if self.global_job_id:
                 set_element(job_identity, 'GlobalJobId',
-                           self.global_job_id)
+                            self.global_job_id)
             if self.local_job_id:
                 set_element(job_identity, 'LocalJobId',
-                           self.local_job_id)
+                            self.local_job_id)
 
         if self.global_user_name or self.local_job_id:
             user_identity = ET.SubElement(record, 'UserIdentity')
             if self.global_user_name:
                 set_element(user_identity, 'GlobalUserName',
-                           self.global_user_name)
+                            self.global_user_name)
             if self.local_user_id:
                 set_element(user_identity, 'LocalUserId',
-                           self.local_user_id)
+                            self.local_user_id)
         if self.charge:
             temp = set_element(record, 'Charge', text=self.charge)
             if self.charge_formula:
@@ -330,11 +327,11 @@ class UsageRecord:
             set_element(record, 'WallDuration', text=self.wall_duration)
         if self.cpu_duration_user:
             temp = set_element(record, 'CpuDuration',
-                           text=self.cpu_duration_user)
+                               text=self.cpu_duration_user)
             temp.set('usageType', 'user')
         if self.cpu_duration_system:
             temp = set_element(record, 'CpuDuration',
-                           text=self.cpu_duration_system)
+                               text=self.cpu_duration_system)
             temp.set('usageType', 'system')
 
         return ET.ElementTree(record)
@@ -361,7 +358,8 @@ class UsageRecord:
                 job = unpickle(job_data, self.__logger)
                 self.fill_from_dict(job)
             else:
-                self.__logger.error('file %s does not exist.' % job_data)
+                self.__logger.error('file %s does not exist.'
+                                     % job_data)
         except Exception, err:
             self.__logger.error('while filling in data from %s: %s'
                                  % (job_data, err))
@@ -373,6 +371,7 @@ class UsageRecord:
 
 
         class NotHere(Exception):
+
             """Catching cases where fields are missing"""
 
             def __init__(self, name):
@@ -384,6 +383,7 @@ class UsageRecord:
 
         def lookup(name):
             """search job dict for a given name"""
+
             if job.has_key(name) and job[name] != '':
                 return job[name]
             else:
@@ -406,7 +406,7 @@ class UsageRecord:
 
         # createTime: when the record was written (filled)
 
-        self.create_time = xsl_datetime() # i.e. Now!
+        self.create_time = xsl_datetime()  # i.e. Now!
 
         # more fields directly used:
 
@@ -462,8 +462,8 @@ class UsageRecord:
 
                 charge_delta = self.node_count * (end_time - start_time)
                 self.charge = charge_delta.days * 86400\
-                     + charge_delta.seconds \
-                     + charge_delta.microseconds / 1000000.0
+                     + charge_delta.seconds + charge_delta.microseconds\
+                     / 1000000.0
 
                               # We currently do not get microseconds because
                               # startT and endT only have second precision

@@ -37,8 +37,10 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 
 def signature():
     """Signature of the main function"""
+
     defaults = {}
     return ['text', defaults]
+
 
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
@@ -64,7 +66,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Downloads'})
     output_objects.append({'object_type': 'text', 'text'
-                           :"""
+                          : """
 <div class="migcontent">
 This page provides access to on-demand downloads of the MiG user scripts in all available formats.<br>
 Simply pick your flavor of choice to generate the latest user scripts in your MiG home directory and as a zip file for easy download.<p>

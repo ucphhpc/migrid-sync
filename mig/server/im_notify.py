@@ -32,7 +32,6 @@
 # it.
 # Joel Rosdahl <joel@rosdahl.net>
 
-
 # MiG: This script makes it easy to interact with a bitlbee irc server
 # Call the send_msg function to send a message to an IM user
 # TODO: better online/offline detection and handling?
@@ -76,22 +75,24 @@ def send_msg(
     global protocol_online_dict
     global nick_and_id_dict
     dest = dest.lower()
+
     # try going online
+
     got_online = False
     for _ in range(30):
         if not protocol_online_dict[im_network]:
             print 'waiting for protocol %s to get online (status for all protocols: %s)'\
-                  % (im_network, protocol_online_dict)
+                 % (im_network, protocol_online_dict)
             time.sleep(2)
         else:
             got_online = True
             break
 
     if not got_online:
-        raise Exception("gave up waiting to get online")
+        raise Exception('gave up waiting to get online')
 
     # Fetch buddy list and let any exceptions pass to caller
-    
+
     getting_buddy_list = True
     got_buddy_list = False
     nick_and_id_dict = {}
@@ -105,9 +106,9 @@ def send_msg(
                 break
             print 'waiting while buddy list is generated'
             time.sleep(2)
-            
+
     if not got_buddy_list:
-        raise Exception("gave up waiting for buddy list")
+        raise Exception('gave up waiting for buddy list')
 
     replaced_im_network = im_network
     if replaced_im_network == 'aol':
@@ -136,7 +137,7 @@ def send_msg(
              % (im_network, dest)
 
         # Get protocol ID (called account)
-        
+
         account_number = get_account_number(im_network)
 
         all_nicks = [i['nick'] for i in nick_and_id_dict.values()]
@@ -150,9 +151,9 @@ def send_msg(
         while nickname in all_nicks:
             id_index += 1
             nickname = 'nick%d' % id_index
-        
-        print 'assigned local nick %s to new user %s with %d nicks' % \
-              (nickname, dest, len(nick_and_id_dict))
+
+        print 'assigned local nick %s to new user %s with %d nicks'\
+             % (nickname, dest, len(nick_and_id_dict))
 
         # give contact a second to get online
 
@@ -286,6 +287,7 @@ def irc_process_forever(*args):
 
 
 # ## MAIN ###
+
 print '''This script should only be started by MiG admins and only on the main
 MiG server. Multiple running instances - even on separate servers - results in
 conflicts!
@@ -293,7 +295,8 @@ conflicts!
 Please use dummy IM deamon in im_notify_stdout.py instead if *not* running on
 main MiG server!
 '''
-if len(sys.argv) < 2 or sys.argv[1] != 'i_am_admin_and_on_main_mig_server':
+if len(sys.argv) < 2 or sys.argv[1]\
+     != 'i_am_admin_and_on_main_mig_server':
     print '''
 To start dummy deamon run:
 python im_notify_stdout.py
@@ -321,8 +324,8 @@ try:
         try:
             os.mkfifo(stdin_path, mode=0600)
         except Exception, err:
-            print 'Could not create missing IM stdin pipe %s: %s' % \
-                  (stdin_path, err)
+            print 'Could not create missing IM stdin pipe %s: %s'\
+                 % (stdin_path, err)
 except:
     print 'error opening IM stdin! %s' % sys.exc_info()[0]
     sys.exit(1)
@@ -337,8 +340,8 @@ try:
 except KeyboardInterrupt:
     keep_running = False
 except Exception, err:
-    print 'could not open IM stdin %s, exception: %s'\
-          % (stdin_path, err)
+    print 'could not open IM stdin %s, exception: %s' % (stdin_path,
+            err)
     sys.exit(1)
 
 while keep_running:
@@ -347,9 +350,10 @@ while keep_running:
             print 'Initialising IRC access to %s' % server
             irc = irclib.IRC()
             try:
-                irc_server = irc.server().connect(server, port, nickname)
+                irc_server = irc.server().connect(server, port,
+                        nickname)
             except irclib.ServerConnectionError, exc:
-                print "Could not connect to irc server: %s" % exc
+                print 'Could not connect to irc server: %s' % exc
                 irc = None
                 time.sleep(30)
                 continue
@@ -360,7 +364,7 @@ while keep_running:
             irc_server.add_global_handler('privmsg', on_privmsg)
             irc_server.add_global_handler('pubmsg', on_pubmsg)
             thread.start_new_thread(irc_process_forever, ())
-            
+
         # Handle messages
 
         # Examples:
@@ -372,6 +376,7 @@ while keep_running:
         # send_msg(irc_server, "henrikkarlsen2@login.oscar.aol.com", "aol", "hej du")
 
         # If last delivery failed we still have request line set
+
         if not line or attempt >= max_retries:
             line = im_notify_stdin.readline()
             attempt = 0
@@ -380,12 +385,13 @@ while keep_running:
             # The received line should be on a format similar to:
             # SENDMESSAGE PROTOCOL TO MESSAGE ex:
             # SENDMESSAGE jabber account@jabber.org this is the message
-            
+
             # split string
 
             split_line = line.split(' ', 3)
             if len(split_line) != 4:
-                print 'received SENDMESSAGE not on correct format %s' % line
+                print 'received SENDMESSAGE not on correct format %s'\
+                     % line
                 continue
 
             protocol = split_line[1]
@@ -393,21 +399,23 @@ while keep_running:
             message = split_line[3]
 
             print 'Sending message: protocol: %s to: %s message: %s'\
-                  % (protocol, recipient, message)
+                 % (protocol, recipient, message)
             send_msg(irc_server, recipient, protocol, message)
             print 'Message sent to %s' % recipient
         elif line.upper().startswith('SHOWBUDDIES'):
             print 'Buddy list:'
             for (key, val) in nick_and_id_dict.items():
                 print '%s:\n\t%s' % (key, val)
-            print '-----' 
+            print '-----'
         elif line.upper().startswith('SHUTDOWN'):
             print '--- SAFE SHUTDOWN INITIATED ---'
             break
         elif line:
             print 'unknown message received: %s' % line
         line = None
+
         # Throttle down
+
         time.sleep(1)
     except KeyboardInterrupt:
         keep_running = False
@@ -415,6 +423,6 @@ while keep_running:
         print 'Caught unexpected exception: %s' % exc
         irc = None
         attempt += 1
-        
+
 print 'Real IM daemon shutting down'
 sys.exit(0)

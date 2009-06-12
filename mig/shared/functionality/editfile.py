@@ -43,6 +43,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
+
     defaults = {
         'path': REJECT_UNSET,
         'newline': ['unix'],
@@ -159,7 +160,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s could not be written! (%s)'
-                               % (path, str(exc).replace(base_dir, ''))})
+                               % (path, str(exc).replace(base_dir, ''
+                              ))})
         return (output_objects, returnvalues.SYSTEM_ERROR)
     if submitjob:
         output_objects.append({'object_type': 'text', 'text'

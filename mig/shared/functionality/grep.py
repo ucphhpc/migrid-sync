@@ -42,9 +42,11 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'path': REJECT_UNSET, 'flags': [''],
                 'pattern': REJECT_UNSET}
     return ['file_output', defaults]
+
 
 def pattern_match_file(pattern, filename, allowed_time=5.0):
     """Return lines in file which match the provided pattern"""

@@ -56,7 +56,12 @@ def get_resource_name(sandboxkey, logger):
         return (False, msg)
 
 
-def create_oneclick_resource(sandboxkey, cputime, configuration, logger):
+def create_oneclick_resource(
+    sandboxkey,
+    cputime,
+    configuration,
+    logger,
+    ):
     resource_name = 'oneclick'
 
     result = create_resource(resource_name, sandboxkey,
@@ -163,7 +168,7 @@ vgrid=Generic
                                     + str(resource_identifier))
 
     if not status:
-        return (False, "%s (%s)" % (msg, conf_file_src))
+        return (False, '%s (%s)' % (msg, conf_file_src))
 
     # Create PGID file in resource_home
 
@@ -184,7 +189,7 @@ def get_resource(cert_name_no_spaces, configuration, logger):
     sandboxkey = None
     cputime = 1000000
     log_msg = 'oneclick:'
-    
+
     __MIG_ONECLICK_COOKIE__ = 'MiGOneClickSandboxKey'
 
     # If user with identifing cookie use cookie infomation
@@ -214,7 +219,8 @@ def get_resource(cert_name_no_spaces, configuration, logger):
 
         # Create resource
 
-        (status, msg) = create_oneclick_resource(sandboxkey, cputime, configuration, logger)
+        (status, msg) = create_oneclick_resource(sandboxkey, cputime,
+                configuration, logger)
         if not status:
             return (status, msg)
         resource_name = msg
@@ -242,8 +248,8 @@ def get_resource(cert_name_no_spaces, configuration, logger):
     if os.path.exists(job_pending_file):
         os.remove(job_pending_file)
 
-    log_msg += ', Remote IP: %s, Key: %s'\
-         % (os.getenv('REMOTE_ADDR'), sandboxkey)
+    log_msg += ', Remote IP: %s, Key: %s' % (os.getenv('REMOTE_ADDR'),
+            sandboxkey)
 
     # Make symbolic link from webserver_home to javabin_home
 
@@ -266,3 +272,5 @@ def get_resource(cert_name_no_spaces, configuration, logger):
     logger.info(log_msg)
 
     return (True, (sandboxkey, resource_name, cookie, cputime))
+
+

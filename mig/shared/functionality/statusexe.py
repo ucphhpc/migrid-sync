@@ -40,6 +40,7 @@ from shared.worker import Worker
 
 def signature():
     """Signature of the main function"""
+
     defaults = {
         'unique_resource_name': REJECT_UNSET,
         'exe_name': [],
@@ -71,8 +72,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
     unique_resource_name = accepted['unique_resource_name'][-1]
     exe_name_list = accepted['exe_name']
-    all = (accepted['all'][-1].lower() == 'true')
-    parallel = (accepted['parallel'][-1].lower() == 'true')
+    all = accepted['all'][-1].lower() == 'true'
+    parallel = accepted['parallel'][-1].lower() == 'true'
 
     if not is_owner(cert_name_no_spaces, unique_resource_name,
                     configuration.resource_home, logger):
@@ -96,26 +97,27 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     workers = []
     for exe_name in exe_name_list:
-        task = Worker(target=status_resource_exe, args=(unique_resource_name,
-                                                        exe_name,
-                                                        configuration.resource_home,
-                                                        logger))
+        task = Worker(target=status_resource_exe,
+                      args=(unique_resource_name, exe_name,
+                      configuration.resource_home, logger))
         workers.append((exe_name, [task]))
         task.start()
         if not parallel:
             task.join()
-        
+
     for (exe_name, task_list) in workers:
         (status, msg) = task_list[0].finish()
         output_objects.append({'object_type': 'header', 'text'
                               : 'Status exe'})
         if not status:
             output_objects.append({'object_type': 'error_text', 'text'
-                    : 'Problems getting exe status: %s' % msg})
+                                  : 'Problems getting exe status: %s'
+                                   % msg})
             exit_status = returnvalues.SYSTEM_ERROR
         else:
             output_objects.append({'object_type': 'text', 'text'
-                    : 'Status command run, output: %s' % msg})
+                                  : 'Status command run, output: %s'
+                                   % msg})
     return (output_objects, exit_status)
 
 

@@ -43,6 +43,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
+
     defaults = {
         'flags': [''],
         'iosessionid': [''],

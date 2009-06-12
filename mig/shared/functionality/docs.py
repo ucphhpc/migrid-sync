@@ -42,6 +42,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'show': [''], 'search': ['']}
     return ['text', defaults]
 
@@ -106,7 +107,8 @@ def config_keywords():
             entries = []
             for (field, val) in info.items():
                 entries.append(field + ': ' + str(val))
-            output_objects.append({'object_type': 'list', 'list': entries})
+            output_objects.append({'object_type': 'list', 'list'
+                                  : entries})
         output_objects.append({'object_type': 'header', 'text': ''})
 
 
@@ -117,9 +119,8 @@ def valid_outputformats():
                           : 'The outputformat is specified with the output_format parameter.'
                           })
     output_objects.append({'object_type': 'text', 'text'
-                          : 'Example: %s/cgi-bin/ls.py?output_format=txt' % \
-                           configuration.migserver_https_url
-                          })
+                          : 'Example: %s/cgi-bin/ls.py?output_format=txt'
+                           % configuration.migserver_https_url})
     output_objects.append({'object_type': 'header', 'text'
                           : 'Valid formats'})
     entries = []
@@ -215,3 +216,5 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                   : 'No topics matching %s' % show})
 
     return (output_objects, returnvalues.OK)
+
+

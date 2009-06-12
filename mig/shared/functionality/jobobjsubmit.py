@@ -33,7 +33,8 @@ import os
 import sys
 import glob
 import shared.mrslkeywords as mrslkeywords
-from shared.conf import get_resource_configuration, get_configuration_object
+from shared.conf import get_resource_configuration, \
+    get_configuration_object
 from shared.refunctions import get_re_dict, list_runtime_environments
 from shared.fileio import unpickle
 from shared.init import initialize_main_variables
@@ -64,7 +65,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-                    initialize_main_variables()
+        initialize_main_variables()
 
     status = returnvalues.OK
     defaults = signature()[1]
@@ -118,8 +119,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     # submit it
 
-    (submit_status, newmsg, job_id) = new_job(tmpfile, cert_name_no_spaces,
-            configuration, False, True)
+    (submit_status, newmsg, job_id) = new_job(tmpfile,
+            cert_name_no_spaces, configuration, False, True)
     if not submit_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : newmsg})

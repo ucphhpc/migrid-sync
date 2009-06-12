@@ -59,7 +59,8 @@ class GenJobScriptJava:
     def script_init(self):
         """Initialize script"""
 
-        init = '''# Java resource configuration file
+        init = \
+            '''# Java resource configuration file
 #
 # --- BEGIN_HEADER ---
 #

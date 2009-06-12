@@ -196,7 +196,8 @@ X86
 
 This particular MiG server supports the following values:
 %s
-''' % ', '.join(configuration.architectures),
+'''\
+             % ', '.join(configuration.architectures),
         'Type': 'string',
         'Value': '',
         'Required': False,
@@ -244,7 +245,8 @@ A job can be of type "interactive", "batch" or "bulk". Interactive jobs are exec
 
 This particular MiG server supports the following values:
 %s
-''' % ', '.join(configuration.jobtypes),
+'''\
+             % ', '.join(configuration.jobtypes),
         'Example': 'interactive',
         'Type': 'string',
         'Value': 'batch',

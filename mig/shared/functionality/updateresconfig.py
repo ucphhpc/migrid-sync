@@ -36,6 +36,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'unique_resource_name': REJECT_UNSET,
                 'resconfig': REJECT_UNSET}
     return ['text', defaults]

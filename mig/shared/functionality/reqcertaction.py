@@ -45,6 +45,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
+
     defaults = {
         'cert_name': REJECT_UNSET,
         'org': REJECT_UNSET,
@@ -125,7 +126,7 @@ Please read and follow the instructions in red on the request page!
 If you are a DIKU student with only a @*.ku.dk address please just use KU as organization.
 As long as you state that you want the certificate for DIKU purposes in the comment field, you
 will be given access to the necessary resources anyway.
-''' })
+'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     user_dict = {
@@ -173,24 +174,21 @@ rsync %s@%s:mig/server/MiG-users.db ~/
 As '%s' on %s:
 cd ~/mig/server
 ./createuser.py -u '%s'"""\
-         % (mig_user,
-            configuration.server_fqdn,
-             req_path,
-            )
+         % (mig_user, configuration.server_fqdn, req_path)
     command_user_delete = \
         """
 As '%s' user on %s:
 cd ~/mig/server
 ./deleteuser.py '%s' '%s' '%s' '%s' '%s'"""\
          % (
-             mig_user,
-             configuration.server_fqdn,
-             cert_name,
-             org,
-             state,
-             country,
-             email,
-             )
+        mig_user,
+        configuration.server_fqdn,
+        cert_name,
+        org,
+        state,
+        country,
+        email,
+        )
 
     user_dict['command_user_create'] = command_user_create
     user_dict['command_user_delete'] = command_user_delete
@@ -227,7 +225,8 @@ Command to delete user again on MiG server:
 
     logger.info('Sending email: to: %s, header: %s, msg: %s, smtp_server: %s'
                  % (admin_email, email_header, email_msg, smtp_server))
-    if not send_email(admin_email, email_header, email_msg, logger, configuration):
+    if not send_email(admin_email, email_header, email_msg, logger,
+                      configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'An error occured trying to send the email requesting the MiG administrators to create a new certificate. Please email the MiG administrators (%s) manually and include the session ID: %s'
                                % (admin_email, tmp_id)})

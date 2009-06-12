@@ -41,12 +41,14 @@ from shared.parseflags import verbose
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'path': REJECT_UNSET, 'flags': ['']}
     return ['stats', defaults]
 
 
 def stat_path(real_path):
     """Call OS stat on provided path"""
+
     if os.path.basename(real_path) == '.htaccess':
 
         # Always hide .htaccess files from user

@@ -40,7 +40,8 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
-    defaults = {'debug': ["false"]}
+
+    defaults = {'debug': ['false']}
     return ['html_form', defaults]
 
 
@@ -48,7 +49,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_menu=(cert_name_no_spaces != "None"))
+        initialize_main_variables(op_header=False,
+                                  op_menu=cert_name_no_spaces != 'None')
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG One-click resource'})
 
@@ -58,28 +60,32 @@ def main(cert_name_no_spaces, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    (status, result) = get_resource(cert_name_no_spaces, configuration, logger)
+    (status, result) = get_resource(cert_name_no_spaces, configuration,
+                                    logger)
     if not status:
         output_objects.append({'object_type': 'html_form', 'text'
-                               : result})
+                              : result})
         return (output_objects, returnvalues.CLIENT_ERROR)
-        
-    fields = {'sandboxkey':result[0],
-              'resource_name':result[1],
-              'cookie':result[2],
-              'cputime':result[3],
-              'codebase':'%s/sid_redirect/%s.oneclick/' % \
-              (configuration.migserver_https_url, result[0]),
-              'applet_code':'MiG.oneclick.Applet.class',
-              'resource_code':'MiG.oneclick.Resource.class',
-              'archive':'MiGOneClickCodebase.jar',
-              'server':configuration.migserver_https_url
-              }
+
+    fields = {
+        'sandboxkey': result[0],
+        'resource_name': result[1],
+        'cookie': result[2],
+        'cputime': result[3],
+        'codebase': '%s/sid_redirect/%s.oneclick/'\
+             % (configuration.migserver_https_url, result[0]),
+        'applet_code': 'MiG.oneclick.Applet.class',
+        'resource_code': 'MiG.oneclick.Resource.class',
+        'archive': 'MiGOneClickCodebase.jar',
+        'server': configuration.migserver_https_url,
+        }
 
     if 'false' == accepted['debug'][0].lower():
+
         # Generate applet output
-        
-        body = """
+
+        body = \
+            """
         <Applet codebase='%(codebase)s' code='%(applet_code)s' archive='%(archive)s' width='800' height='600'>
         <PARAM name='server' value='%(server)s'>
         <PARAM name='sandboxkey' value='%(sandboxkey)s'>
@@ -95,8 +101,10 @@ def main(cert_name_no_spaces, user_arguments_dict):
         browser. You can download and install it from
         <a href='http://www.java.com/en/download/manual.jsp'>Sun Java Downloads</a>. The browser
         probably needs to be restarted after the installation before the plugin will be enabled.
-        """ % fields
-        output_objects.append({'object_type': 'html_form', 'text': body})
+        """\
+             % fields
+        output_objects.append({'object_type': 'html_form', 'text'
+                              : body})
     else:
         body = """
 DEBUG input vars:
@@ -105,3 +113,5 @@ DEBUG input vars:
         output_objects.append({'object_type': 'text', 'text': body})
 
     return (output_objects, returnvalues.OK)
+
+

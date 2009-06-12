@@ -141,14 +141,17 @@ else:
     user_dict['password'] = getpass('Password: ')
 
 # Encode password if not already encoded
+
 try:
     base64.b64decode(user_dict['password'])
 except TypeError:
     user_dict['password'] = base64.b64encode(user_dict['password'])
 
 # Default to one year of certificate validity (only used by CA scripts)
+
 if not user_dict.has_key('expire'):
-    user_dict['expire'] = int(time.time() + (((2 * 365.25) * 24) * 60) * 60)
+    user_dict['expire'] = int(time.time() + (((2 * 365.25) * 24) * 60)
+                               * 60)
 
 # Now all user fields are set and we can begin adding the user
 
@@ -179,8 +182,9 @@ if os.path.exists(db_path):
             sys.exit(1)
 
     if user_db.has_key(user_id):
-        renew_answer = raw_input('User DB entry already exists - renew? [Y/n] ')
-        renew = (not renew_answer.lower().startswith('n'))
+        renew_answer = \
+            raw_input('User DB entry already exists - renew? [Y/n] ')
+        renew = not renew_answer.lower().startswith('n')
         if renew:
             print 'Renewing existing user'
         elif not force:
@@ -192,15 +196,19 @@ try:
     db_fd = open(db_path, 'wb')
     pickle.dump(user_db, db_fd)
     db_fd.close()
-    print 'User %s was successfully added/updated in user DB!' % full_name
+    print 'User %s was successfully added/updated in user DB!'\
+         % full_name
 except Exception, err:
     print 'Error: Failed to add %s to user DB: %s' % (full_name, err)
     if not force:
         sys.exit(1)
 
-home_dir = os.path.join(configuration.user_home, full_name_without_spaces)
-mrsl_dir = os.path.join(configuration.mrsl_files_dir, full_name_without_spaces)
-pending_dir = os.path.join(configuration.resource_pending, full_name_without_spaces)
+home_dir = os.path.join(configuration.user_home,
+                        full_name_without_spaces)
+mrsl_dir = os.path.join(configuration.mrsl_files_dir,
+                        full_name_without_spaces)
+pending_dir = os.path.join(configuration.resource_pending,
+                           full_name_without_spaces)
 htaccess_path = os.path.join(home_dir, '.htaccess')
 if not renew:
     print 'Creating dirs and files for new user: %s' % full_name
@@ -226,7 +234,9 @@ if not renew:
         if not force:
             sys.exit(1)
 else:
+
     # Allow temporary write access
+
     os.chmod(htaccess_path, 0644)
 
 # Always write htaccess to catch any updates

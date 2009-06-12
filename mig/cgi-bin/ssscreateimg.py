@@ -47,8 +47,8 @@ from shared.fileio import make_symlink
 from shared.vgrid import vgrid_list_vgrids
 
 # uncomment for debugging
-#print "Content-Type: txt/html"
-#print
+# print "Content-Type: txt/html"
+# print
 
 # optional certificate
 
@@ -87,8 +87,9 @@ except Exception, err:
 
 # check that requested image format is valid
 
-if not image_format in ["raw", "qcow", "cow", "qcow2", "vmdk"]:
-    o.client("requested invalid image format: %s" % cgi.escape(image_format))
+if not image_format in ['raw', 'qcow', 'cow', 'qcow2', 'vmdk']:
+    o.client('requested invalid image format: %s'
+              % cgi.escape(image_format))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 # check that requested vgrids are valid - anybody can offer their sandbox for a vgrid
@@ -97,8 +98,8 @@ if not image_format in ["raw", "qcow", "cow", "qcow2", "vmdk"]:
 (status, all_vgrids) = vgrid_list_vgrids(configuration)
 for vgrid in vgrid_list:
     if not status or not vgrid in all_vgrids:
-        o.client("requested vgrid could not be verified: %s (%s)" % (cgi.escape(vgrid),
-                                                                     all_vgrids))
+        o.client('requested vgrid could not be verified: %s (%s)'
+                  % (cgi.escape(vgrid), all_vgrids))
         o.reply_and_exit(o.CLIENT_ERROR)
 
 # Load the user file
@@ -147,7 +148,8 @@ except Exception, exc:
     o.client('Could not update sandbox database: %s' % exc)
     o.reply_and_exit(o.CLIENT_ERROR)
 
-logger.debug('building resource specific files for %s' % unique_host_name)
+logger.debug('building resource specific files for %s'
+              % unique_host_name)
 
 sandboxkey = hexlify(open('/dev/urandom').read(32))
 
@@ -426,7 +428,6 @@ if not os.path.ismount('mnt'):
     o.out('Failed to mount sandbox disk image!')
     o.reply_and_exit(o.CLIENT_ERROR)
 
-
 try:
 
     # save master_node_script to hd image
@@ -499,12 +500,13 @@ logger.debug('finished modifying hda image')
 #          'convert MiG-SSS/hda.img -O vmdk MiG-SSS/hda.vmdk')
 
 # Optional conversion to requested disk image format
-if "raw" != image_format:
+
+if 'raw' != image_format:
     o.internal('Converting disk image to %s format' % image_format)
-    image_path = "MiG-SSS" + os.sep + "hda.img" 
-    tmp_path = image_path + "." + image_format
-    command = "qemu-img convert -f raw " + image_path + \
-              " -O " + image_format + " " + tmp_path
+    image_path = 'MiG-SSS' + os.sep + 'hda.img'
+    tmp_path = image_path + '.' + image_format
+    command = 'qemu-img convert -f raw ' + image_path + ' -O '\
+         + image_format + ' ' + tmp_path
     os.system(command)
     os.remove(image_path)
     os.rename(tmp_path, image_path)
@@ -546,7 +548,6 @@ else:
 lockfile.close()  # unlocks lockfile
 
 logger.debug('packed files in zip for download')
-    
 
 file_size = os.stat(dlfilename).st_size
 

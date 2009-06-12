@@ -33,6 +33,7 @@ import getopt
 import pickle
 import fnmatch
 
+
 def usage(name='searchusers.py'):
     print """Usage:
 %(name)s [SEARCH_OPTIONS]

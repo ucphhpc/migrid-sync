@@ -42,6 +42,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'vgrid_name': REJECT_UNSET,
                 'request_type': REJECT_UNSET,
                 'request_text': REJECT_UNSET}

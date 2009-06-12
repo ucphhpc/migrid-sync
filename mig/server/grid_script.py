@@ -152,8 +152,10 @@ def time_out_jobs(stop_event):
         logger.error('time_out_jobs: unexpected exception: %s' % err)
     logger.info('time_out_jobs: time out thread terminating')
 
+
 def clean_shutdown(signum, frame):
     """Request clean shutdown when pending requests are handled"""
+
     print '--- REQUESTING SAFE SHUTDOWN ---'
     shutdown_msg = 'SHUTDOWN\n'
     send_message_to_grid_script(shutdown_msg, logger, configuration)
@@ -261,8 +263,8 @@ scheduler.attach_done_queue(done_queue)
 
 try:
     if not os.path.exists(configuration.grid_stdin):
-        logger.info('creating grid_script input pipe %s' % \
-                    configuration.grid_stdin)
+        logger.info('creating grid_script input pipe %s'
+                     % configuration.grid_stdin)
         try:
             os.mkfifo(configuration.grid_stdin, mode=0600)
         except StandardError, err:
@@ -278,15 +280,17 @@ logger.info('cleaning pipe')
 clean_grid_stdin(grid_stdin)
 
 # Make sure empty job home exists
-empty_home = os.path.join(configuration.user_home, configuration.empty_job_name)
+
+empty_home = os.path.join(configuration.user_home,
+                          configuration.empty_job_name)
 if not os.path.exists(empty_home):
     logger.info('creating empty job home dir %s' % empty_home)
     try:
         os.mkdir(empty_home)
     except Exception, exc:
-        logger.error('failed to create empty job home dir %s: %s' % \
-                     (empty_home, exc))
-            
+        logger.error('failed to create empty job home dir %s: %s'
+                      % (empty_home, exc))
+
 msg = 'Checking for mRSL files with status parse or queued'
 print msg
 logger.info(msg)
@@ -416,23 +420,26 @@ while True:
 
         job_dict = job_queue.get_job_by_id(job_id)
         if not job_dict:
-            logger.info('Job is not in waiting queue - no schedule to update')
+            logger.info('Job is not in waiting queue - no schedule to update'
+                        )
             continue
 
         file_serverjob = configuration.mrsl_files_dir\
              + job_dict['USER_CERT'] + os.sep + job_id + '.mRSL'
         dict_serverjob = unpickle(file_serverjob, logger)
         if dict_serverjob == False:
-            logger.error('Could not unpickle job - not updating schedule!')
+            logger.error('Could not unpickle job - not updating schedule!'
+                         )
             continue
 
         # update and save schedule
+
         for field in ['SCHEDULE_TIMESTAMP', 'SCHEDULE_HINT']:
             if job_dict.has_key(field):
                 dict_serverjob[field] = job_dict[field]
-                logger.info('Job %s updated to %s' % (field, dict_serverjob[field]))
+                logger.info('Job %s updated to %s' % (field,
+                            dict_serverjob[field]))
         pickle(dict_serverjob, file_serverjob, logger)
-
     elif cap_line.find('RESOURCEREQUEST ') == 0:
 
         # *********                       *********
@@ -465,17 +472,22 @@ while True:
                                     + unique_resource_name + '/config',
                                    logger)
         if resource_config == False:
-            logger.error('error unpickling resource config for %s' % \
-                         unique_resource_name)
+            logger.error('error unpickling resource config for %s'
+                          % unique_resource_name)
             continue
 
-        sandboxed = resource_config.get("SANDBOX", 0)
+        sandboxed = resource_config.get('SANDBOX', 0)
 
         # Write the PGID of EXE to PGID file
 
-        (status, msg) = put_exe_pgid(configuration.resource_home,
-                unique_resource_name, exe, exe_pgid, logger,
-                                     (sandboxed == 1))
+        (status, msg) = put_exe_pgid(
+            configuration.resource_home,
+            unique_resource_name,
+            exe,
+            exe_pgid,
+            logger,
+            sandboxed == 1,
+            )
         if status:
             logger.info(msg)
         else:
@@ -614,7 +626,8 @@ while True:
         # want a job for all nodes)
 
         resource_config['NODECOUNT'] = nodecount
-        resource_config['RESOURCE_ID'] = "%s_%s" % (unique_resource_name, exe)
+        resource_config['RESOURCE_ID'] = '%s_%s'\
+             % (unique_resource_name, exe)
 
         # specify vgrid
 
@@ -1129,7 +1142,8 @@ while True:
                 ):
                 logger.error('could not clean up MiG server')
 
-            if configuration.enable_server_dist and not job_dict.has_key('EMPTY_JOB'):
+            if configuration.enable_server_dist\
+                 and not job_dict.has_key('EMPTY_JOB'):
 
                 # TODO: we should probably support resources migrating and
                 # handing back job as first contact with new server
@@ -1233,9 +1247,10 @@ while True:
                 # We are seeing a race in the handling of executing jobs - do nothing
                 # Job timeout must have just killed the job we are trying to cancel
 
-                logger.info('Cancel job: Could not get job_dict for executing job')
+                logger.info('Cancel job: Could not get job_dict for executing job'
+                            )
                 continue
-            
+
             if not server_cleanup(
                 job_dict['SESSIONID'],
                 job_dict['IOSESSIONID'],
@@ -1339,7 +1354,7 @@ while True:
             # Restart non-sandbox resources for all timed out jobs
 
             if resource_config.get('SANDBOX', 0) == 0:
-                
+
                 # TODO: atomic_resource_exe_restart is not always effective
                 # The imada resources have been seen to hang in wait for input files loop
                 # across an atomic_resource_exe_restart run (server PGID was 'starting').

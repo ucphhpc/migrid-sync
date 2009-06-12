@@ -42,8 +42,9 @@ from shared.settings import load_settings
 
 try:
     from shared.usagerecord import UsageRecord
-except Exception, err: 
-        pass 
+except Exception, err:
+    pass
+
 
 def create_notify_message(
     jobid,
@@ -56,24 +57,27 @@ def create_notify_message(
     header = ''
     txt = ''
 
-    var_dict = {'url': configuration.migserver_https_url, 'jobid': jobid,
-                'retries': configuration.job_retries}
+    var_dict = {'url': configuration.migserver_https_url,
+                'jobid': jobid, 'retries': configuration.job_retries}
 
     if status == 'SUCCESS':
         header = 'MiG JOB finished'
-        txt += '''
+        txt += \
+            '''
 Your MiG job with JOB ID %(jobid)s has finished and full status is available at:
 %(url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
 
 The job commands and their exit codes:
-''' % var_dict
+'''\
+             % var_dict
         try:
             status_fd = open(statusfile, 'r')
             txt += str(status_fd.read())
             status_fd.close()
         except Exception, err:
             txt += 'Could not be read (Internal MiG error?): %s' % err
-        txt += '''
+        txt += \
+            '''
 Link to stdout file:
 %(url)s/cert_redirect/job_output/%(jobid)s/%(jobid)s.stdout (might not be available)
 
@@ -81,11 +85,13 @@ Link to stderr file:
 %(url)s/cert_redirect/job_output/%(jobid)s/%(jobid)s.stderr (might not be available)
 
 Replies to this message will not be read!
-''' % var_dict
+'''\
+             % var_dict
     elif status == 'FAILED':
 
         header = 'MiG JOB Failed'
-        txt += '''
+        txt += \
+            '''
 The job with JOB ID %(jobid)s has failed after %(retries)s retries!
 This may be due to internal errors, but full status is available at:
 %(url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
@@ -93,10 +99,12 @@ This may be due to internal errors, but full status is available at:
 Please contact the MiG team if the problem occurs multiple times.
 
 Replies to this message will not be read!!!
-''' % var_dict
+'''\
+             % var_dict
     elif status == 'EXPIRED':
         header = 'MiG JOB Expired'
-        txt += '''
+        txt += \
+            '''
 Your MiG job with JOB ID %(jobid)s has expired, after remaining in the queue for too long.
 This may be due to internal errors, but full status is available at:
 %(url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
@@ -104,7 +112,8 @@ This may be due to internal errors, but full status is available at:
 Please contact the MiG team for details about expire policies.
 
 Replies to this message will not be read!!!
-''' % var_dict
+'''\
+             % var_dict
     elif status == 'VGRIDMEMBERREQUEST':
         from_cert = myfiles_py_location[0]
         vgrid_name = myfiles_py_location[1]
@@ -155,16 +164,19 @@ def send_instant_message(
     """
 
     im_in_path = configuration.im_notify_stdin
+
     # <BR> used as symbol for newline, because newlines can not
     # be sent to the named pipe im_in_path directly.
     # TODO: Is <BR> a good symbol?.
 
     message = message.replace('\n', '<BR>')
-    message = 'SENDMESSAGE %s %s %s: %s' % (protocol, recipients, header,
-                                            message)
+    message = 'SENDMESSAGE %s %s %s: %s' % (protocol, recipients,
+            header, message)
     logger.info('sending %s to %s' % (message, im_in_path))
     try:
+
         # This will block if no process is listening to im input pipe!!
+
         im_in_fd = open(im_in_path, 'a')
         im_in_fd.write(message + '\n')
         logger.info('%s written to %s' % (message, im_in_path))
@@ -192,24 +204,28 @@ To: %s
 Subject: %s
 
 %s
-''' % (configuration.smtp_sender, recipients, subject, message)
+'''\
+         % (configuration.smtp_sender, recipients, subject, message)
 
     recipients_list = recipients.split(', ')
 
     try:
         server = smtplib.SMTP(configuration.smtp_server)
         server.set_debuglevel(0)
-        errors = server.sendmail(configuration.smtp_sender, recipients_list, txt)
+        errors = server.sendmail(configuration.smtp_sender,
+                                 recipients_list, txt)
         server.quit()
         if errors:
-            logger.warning('Partial error(s) sending email: %s' % errors)
+            logger.warning('Partial error(s) sending email: %s'
+                            % errors)
             return False
         else:
             logger.debug('Email was sent to %s' % recipients)
             return True
     except Exception, err:
-        logger.error('Sending email to %s through %s failed!: %s' % \
-                     (recipients, configuration.smtp_server, str(err)))
+        logger.error('Sending email to %s through %s failed!: %s'
+                      % (recipients, configuration.smtp_server,
+                     str(err)))
         return False
 
 
@@ -232,17 +248,20 @@ def notify_user(
 
     # Usage records: quickly hacked in here.
     # later, we might want a general plugin / hook interface
-    
+
     # first of all, write out the usage record (if configured)
+
     ur_destination = configuration.usage_record_dir
     if ur_destination:
 
         logger.debug('XML Usage Record directory %s' % ur_destination)
         usage_record = UsageRecord(configuration, logger)
         usage_record.fill_from_dict(jobdict)
+
         # we use the job_id as a file name (should be unique)
+
         usage_record.write_xml(ur_destination + os.sep
-                               + jobdict['JOB_ID'] + '.xml')
+                                + jobdict['JOB_ID'] + '.xml')
 
     settings_dict_file = configuration.user_home + jobdict['USER_CERT']\
          + os.sep + '.settings'
@@ -269,29 +288,40 @@ def notify_user(
 
                 # read from personal settings
 
-                settings_dict = load_settings(configuration, jobdict['USER_CERT'])
-                if not settings_dict or not settings_dict.has_key(protocol.upper()):
+                settings_dict = load_settings(configuration,
+                        jobdict['USER_CERT'])
+                if not settings_dict\
+                     or not settings_dict.has_key(protocol.upper()):
                     logger.info('Settings dict does not have %s key'
-                                % protocol.upper())
+                                 % protocol.upper())
                     continue
                 all_dest = settings_dict[protocol.upper()]
             else:
                 all_dest.append(recipients)
             for single_dest in all_dest:
 
-                logger.debug('notifying %s about %s' % (single_dest, jobid))
+                logger.debug('notifying %s about %s' % (single_dest,
+                             jobid))
+
                 # NOTE: Check removed because icq addresses are numbers and not "emails"
                 # if not is_valid_email_address(single_dest, logger):
                 # not a valid address (IM account names are on standard email format)
                 # continue............................
 
-                if send_instant_message(single_dest, protocol, header,
-                        message, logger, configuration):
-                    logger.info('Instant message sent to %s protocol: %s telling that %s %s' % \
-                                (single_dest, protocol, jobid, status))
+                if send_instant_message(
+                    single_dest,
+                    protocol,
+                    header,
+                    message,
+                    logger,
+                    configuration,
+                    ):
+                    logger.info('Instant message sent to %s protocol: %s telling that %s %s'
+                                 % (single_dest, protocol, jobid,
+                                status))
                 else:
-                    logger.error('Instant message NOT sent to %s protocol %s jobid: %s' % \
-                                 (single_dest, protocol, jobid))
+                    logger.error('Instant message NOT sent to %s protocol %s jobid: %s'
+                                  % (single_dest, protocol, jobid))
         else:
             notify_line_first_part = notify_line_colon_split[0].strip()
             all_dest = []
@@ -310,7 +340,8 @@ def notify_user(
                                      % settings_dict_file)
                         continue
                     if not settings_dict.has_key('EMAIL'):
-                        logger.info('Settings dict does not have EMAIL key')
+                        logger.info('Settings dict does not have EMAIL key'
+                                    )
                         continue
 
                     all_dest = settings_dict['EMAIL']
@@ -340,16 +371,17 @@ def notify_user(
             # not a valid email address
             # continue
 
-                if send_email(single_dest, header, message,
-                              logger, configuration):
-                    logger.info('email sent to %s telling that %s %s' % \
-                                (single_dest, jobid, status))
+                if send_email(single_dest, header, message, logger,
+                              configuration):
+                    logger.info('email sent to %s telling that %s %s'
+                                 % (single_dest, jobid, status))
                 else:
-                    logger.error('email NOT sent to %s, jobid: %s' % \
-                                 (single_dest, jobid))
+                    logger.error('email NOT sent to %s, jobid: %s'
+                                  % (single_dest, jobid))
 
 
     # logger.info("notify_user end")
+
 
 def notify_user_thread(
     jobdict,
@@ -363,13 +395,19 @@ def notify_user_thread(
     in caller. Launches a new daemon thread to avoid waiting issues.
     We still must join thread if we want to assure delivery.
     """
-    notify_thread = threading.Thread(target=notify_user,
-                                     args=(jobdict, myfiles_py_location,
-                                           status, logger, statusfile,
-                                           configuration,))
+
+    notify_thread = threading.Thread(target=notify_user, args=(
+        jobdict,
+        myfiles_py_location,
+        status,
+        logger,
+        statusfile,
+        configuration,
+        ))
     notify_thread.setDaemon(True)
     notify_thread.start()
     return notify_thread
+
 
 def send_resource_create_request_mail(
     cert_name_no_spaces,
@@ -384,9 +422,10 @@ def send_resource_create_request_mail(
     msg = "Sending the resource creation information for '%s' to '%s'"\
          % (hosturl, recipients)
 
-    
-    subject = 'MiG resource creation request on %s' % configuration.server_fqdn
-    txt = """
+    subject = 'MiG resource creation request on %s'\
+         % configuration.server_fqdn
+    txt = \
+        """
 Cert. name: '%s'
 
 Hosturl: '%s'
@@ -395,15 +434,23 @@ Configfile: '%s'
 
 Resource creation command:
 ./createresource.py %s %s %s
-""" % (cert_name_no_spaces, hosturl, pending_file, hosturl, cert_name_no_spaces,
-       os.path.basename(pending_file))
+"""\
+         % (
+        cert_name_no_spaces,
+        hosturl,
+        pending_file,
+        hosturl,
+        cert_name_no_spaces,
+        os.path.basename(pending_file),
+        )
 
     status = send_email(recipients, subject, txt, logger, configuration)
     if status:
-        msg += "\nEmail was sent to admins"
-    else:        
-        msg += "\nEmail could not be sent to one or more recipients!"
+        msg += '\nEmail was sent to admins'
+    else:
+        msg += '\nEmail could not be sent to one or more recipients!'
     return (status, msg)
+
 
 def parse_im_relay(path):
     """Parse path name and contents in order to generate
@@ -431,3 +478,5 @@ def parse_im_relay(path):
         status += 'IM relay parsing failed: %s' % err
 
     return (status, protocol, address, header, msg)
+
+

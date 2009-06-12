@@ -41,6 +41,7 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'path': REJECT_UNSET, 'flags': ['']}
     return ['file_output', defaults]
 

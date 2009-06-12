@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# sssmonitor - [insert a few words of module description on this line]
+# sssmonitor - Global SSS monitor back end
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -26,14 +26,9 @@
 #
 
 import os
-import sys
 import pickle
-import getopt
-import cgi
 
 from shared.gridstat import GridStat
-import shared.cgishared
-from shared.conf import get_configuration_object
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 import shared.returnvalues as returnvalues
@@ -41,7 +36,8 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
-    defaults = {'show_all': [''], 'sort':['']}
+
+    defaults = {'show_all': [''], 'sort': ['']}
     return ['sandboxinfos', defaults]
 
 
@@ -49,7 +45,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_menu=(cert_name_no_spaces != "None"))
+        initialize_main_variables(op_header=False,
+                                  op_menu=cert_name_no_spaces != 'None')
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
@@ -136,27 +133,40 @@ def main(cert_name_no_spaces, user_arguments_dict):
         # print "<form action='sssmonitor.py' method='POST'>"
 
     if 'username' == sort:
+
         # sort by owner: case insensitive
-        sandboxinfos.sort(cmp=(lambda a, b: cmp(a['username'].lower(), b['username'].lower())))
+
+        sandboxinfos.sort(cmp=lambda a, b: cmp(a['username'].lower(),
+                          b['username'].lower()))
     elif 'resource' == sort:
+
         # sort by numerical resource ID
-        sandboxinfos.sort(cmp=(lambda a, b: cmp(int(a['resource'].lower().replace('sandbox.', '')),
-                                                int(b['resource'].lower().replace('sandbox.', '')))))
+
+        sandboxinfos.sort(cmp=lambda a, b: cmp(int(a['resource'
+                          ].lower().replace('sandbox.', '')),
+                          int(b['resource'].lower().replace('sandbox.',
+                          ''))))
     elif 'jobs' == sort:
+
         # sort by most jobs done
+
         sandboxinfos.sort(reverse=True)
     else:
+
         # do not sort
+
         pass
     output_objects.append({'object_type': 'verbatim', 'text'
                           : 'Sort by: '})
     link_list = []
     for name in ('username', 'resource', 'jobs'):
-        link_list.append({'object_type': 'link', 'destination': '?sort=%s' % name,
-                               'text': '%s' % name.capitalize()})
-    output_objects.append({'object_type': 'multilinkline', 'links': link_list})
+        link_list.append({'object_type': 'link', 'destination'
+                         : '?sort=%s' % name, 'text': '%s'
+                          % name.capitalize()})
+    output_objects.append({'object_type': 'multilinkline', 'links'
+                          : link_list})
     output_objects.append({'object_type': 'text', 'text': ''})
-        
+
     output_objects.append({'object_type': 'sandboxinfos', 'sandboxinfos'
                           : sandboxinfos})
     output_objects.append({'object_type': 'text', 'text'

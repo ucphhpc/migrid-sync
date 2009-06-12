@@ -31,7 +31,8 @@ start = {'object_type': 'start', 'required': [], 'optional': []}
 title = {'object_type': 'title', 'required': ['text'],
          'optional': ['javascript', 'bodyfunctions']}
 text = {'object_type': 'text', 'required': ['text'], 'optional': []}
-verbatim = {'object_type': 'verbatim', 'required': ['text'], 'optional': []}
+verbatim = {'object_type': 'verbatim', 'required': ['text'],
+            'optional': []}
 header = {'object_type': 'header', 'required': ['text'], 'optional': []}
 sectionheader = {'object_type': 'sectionheader', 'required': ['text'],
                  'optional': []}
@@ -95,7 +96,7 @@ runtimeenvironment = {
 changedstatusjob = {'object_type': 'changedstatusjob',
                     'required': ['job_id'], 'optional': []}
 saveschedulejob = {'object_type': 'saveschedulejob',
-                    'required': ['job_id'], 'optional': []}
+                   'required': ['job_id'], 'optional': []}
 resubmitobj = {'object_type': 'resubmitobj', 'required': ['job_id'],
                'optional': []}
 submitstatus = {'object_type': 'submitstatus', 'required': ['name',
@@ -142,8 +143,8 @@ changedstatusjobs = {'object_type': 'changedstatusjobs',
                      'required_list': [('changedstatusjobs',
                      'changedstatusjob')]}
 saveschedulejobs = {'object_type': 'saveschedulejobs',
-                     'required_list': [('saveschedulejobs',
-                     'saveschedulejob')]}
+                    'required_list': [('saveschedulejobs',
+                    'saveschedulejob')]}
 submitstatuslist = {'object_type': 'submitstatuslist',
                     'required_list': [('submitstatuslist',
                     'submitstatus')]}

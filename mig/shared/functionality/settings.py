@@ -33,12 +33,13 @@ from shared.fileio import unpickle
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
-from shared.settings import mrsl_template, css_template, get_default_mrsl, \
-     get_default_css
+from shared.settings import mrsl_template, css_template, \
+    get_default_mrsl, get_default_css
 
 
 def signature():
     """Signature of the main function"""
+
     defaults = {}
     return ['html_form', defaults]
 
@@ -94,7 +95,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
         """
     keywords_dict = get_keywords_dict()
     for (keyword, val) in keywords_dict.items():
-        html += """
+        html += \
+            """
         <tr class=title><td>
         %s
         </td></tr>
@@ -102,7 +104,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
         %s
         </td></tr>
         <tr><td>
-        """ % (keyword, val['Description'])
+        """\
+             % (keyword, val['Description'])
         if val['Type'] == 'multiplestrings':
             html += \
                 """<textarea cols="40" rows="1" wrap="off" name="%s">"""\
@@ -132,8 +135,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
         </td></tr>
         """
 
-
-    html += """
+    html += \
+        """
     <tr><td>
     <input type="submit" value="Save">
     </form>
@@ -146,13 +149,14 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                 + cert_name_no_spaces) + os.sep
 
     mrsl_path = os.path.join(base_dir, mrsl_template)
-    
+
     default_mrsl = get_default_mrsl(mrsl_path)
     css_path = os.path.join(base_dir, css_template)
 
     default_css = get_default_css(css_path)
 
-    html += '''
+    html += \
+        '''
 <div id=defaultmrsl>
 <table class="defaultjob">
 <tr class=title><td class=centertext>
@@ -216,12 +220,17 @@ Please note that you can not save an empty style file, but must at least leave a
 </td></tr>
 </table>
 </div>
-''' % {'default_mrsl': default_mrsl, 'mrsl_template': mrsl_template,
-       'default_css': default_css, 'css_template': css_template}
+'''\
+         % {
+        'default_mrsl': default_mrsl,
+        'mrsl_template': mrsl_template,
+        'default_css': default_css,
+        'css_template': css_template,
+        }
 
     output_objects.append({'object_type': 'html_form', 'text': html})
 
-    output_objects.append({'object_type': 'text', 'text':''})
+    output_objects.append({'object_type': 'text', 'text': ''})
     return (output_objects, returnvalues.OK)
 
 

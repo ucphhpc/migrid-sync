@@ -323,6 +323,7 @@ def http_stat(
     path,
     flags,
     ):
+
     arguments = [('flags', flags)]
     return http_no_payload(host, port, 'STAT', path, arguments)
 
@@ -333,6 +334,7 @@ def http_symlink(
     src,
     dst,
     ):
+
     arguments = [('dst', dst)]
     return http_no_payload(host, port, 'SYMLINK', src, arguments)
 

@@ -33,8 +33,8 @@ import time
 
 from shared.conf import get_configuration_object
 
-
 # ## MAIN ###
+
 print '''This is a dummy MiG IM notification daemon which just prints requests.
 
 The real notification daemon, im_notify.py, hard codes accounts and thus
@@ -51,8 +51,8 @@ try:
         try:
             os.mkfifo(stdin_path, mode=0600)
         except Exception, err:
-            print 'Could not create missing IM stdin pipe %s: %s' % \
-                  (stdin_path, err)
+            print 'Could not create missing IM stdin pipe %s: %s'\
+                 % (stdin_path, err)
 except:
     print 'error opening IM stdin! %s' % sys.exc_info()[0]
     sys.exit(1)
@@ -67,8 +67,7 @@ try:
 except KeyboardInterrupt:
     keep_running = False
 except Exception, exc:
-    print 'could not open IM stdin %s: %s'\
-         % (stdin_path, exc)
+    print 'could not open IM stdin %s: %s' % (stdin_path, exc)
 
 while keep_running:
     try:
@@ -80,11 +79,12 @@ while keep_running:
             break
         elif line:
             print 'unknown message received: %s' % line
-            
-        # Throttle down
-        time.sleep(1)
 
+        # Throttle down
+
+        time.sleep(1)
     except KeyboardInterrupt:
+
         keep_running = False
     except Exception, exc:
         print 'Caught unexpected exception: %s' % exc

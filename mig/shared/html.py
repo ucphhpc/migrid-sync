@@ -28,8 +28,6 @@
 import os
 import sys
 
-"""HTML formatting functions"""
-
 
 def html_print(formatted_text, html=True):
     print html_add(formatted_text, html)
@@ -45,26 +43,29 @@ def html_add(formatted_text, html=True):
         return ''
 
 
-def render_menu(menu_class='navmenu', menu_items='', current_element='Unknown'):
-  
-  menu_lines  = '<div class="%s">' % menu_class
-  menu_lines += ' <ul>'
-        
-  for menu_line in menu_items:
-    selected = ''
-    
-    attr = ''
-    if (menu_line.has_key('attr')):
-      attr = menu_line['attr']
-    if menu_line['url'].find(current_element) > -1:
-      selected = ' class="selected" '+current_element
-    menu_lines += '   <li %s class="%s"><a href="%s" %s>%s</a></li>' % \
-                  (attr, menu_line['class'], menu_line['url'], selected, menu_line['title'])
-            
-  menu_lines += ' </ul>'
-  menu_lines += '</div>'
-  
-  return menu_lines
+def render_menu(menu_class='navmenu', menu_items='',
+                current_element='Unknown'):
+
+    menu_lines = '<div class="%s">' % menu_class
+    menu_lines += ' <ul>'
+
+    for menu_line in menu_items:
+        selected = ''
+
+        attr = ''
+        if menu_line.has_key('attr'):
+            attr = menu_line['attr']
+        if menu_line['url'].find(current_element) > -1:
+            selected = ' class="selected" ' + current_element
+        menu_lines += '   <li %s class="%s"><a href="%s" %s>%s</a></li>'\
+             % (attr, menu_line['class'], menu_line['url'], selected,
+                menu_line['title'])
+
+    menu_lines += ' </ul>'
+    menu_lines += '</div>'
+
+    return menu_lines
+
 
 def get_cgi_html_header(
     title,
@@ -80,69 +81,31 @@ def get_cgi_html_header(
         return ''
     menu_lines = ''
     if menu:
-        
+
         current_page = os.path.basename(sys.argv[0]).replace('.py', '')
-        menu_items  = (
-            # TODO: add dashboard and vmachines when ready
-            #{
-            #'class'    : 'dashboard',
-            #'url'       : '/cgi-bin/dashboard.py',
-            #'title'     : 'Dashboard'
-            #},
-            {
-            'class'    : 'submitjob',
-            'url'       : '/cgi-bin/submitjob.py',
-            'title'     : 'Submit Job'
-            },
-            {
-            'class'    : 'files',
-            'url'       : '/cgi-bin/ls.py',
-            'title'     : 'Files'
-            },
-            {
-            'class'    : 'jobs',
-            'url'       : '/cgi-bin/managejobs.py',
-            'title'     : 'Jobs'
-            },
-            {
-            'class'    : 'vgrids',
-            'url'       : '/cgi-bin/vgridadmin.py',
-            'title'     : 'VGrids'
-            },
-            #{
-            #'class'    : 'vmachines',
-            #'url'       : '/cgi-bin/vmachines.py',
-            #'title'     : 'VMachines'
-            #},
-            {
-            'class'    : 'resources',
-            'url'       : '/cgi-bin/resadmin.py',
-            'title'     : 'Resources'
-            },
-            {
-            'class'    : 'downloads',
-            'url'       : '/cgi-bin/downloads.py',
-            'title'     : 'Downloads'
-            },
-            {
-            'class'    : 'runtimeenvs',
-            'url'       : '/cgi-bin/redb.py',
-            'title'     : 'Runtime Envs'
-            },
-            {
-            'class'    : 'settings',
-            'url'       : '/cgi-bin/settings.py',
-            'title'     : 'Settings'
-            },
-            {
-            'class'    : 'shell',
-            'url'       : '/cgi-bin/shell.py',
-            'title'     : 'Shell'
-            },
-        )
-        
+        menu_items = (
+            {'class': 'submitjob', 'url': '/cgi-bin/submitjob.py',
+             'title': 'Submit Job'},
+            {'class': 'files', 'url': '/cgi-bin/ls.py', 'title': 'Files'
+             },
+            {'class': 'jobs', 'url': '/cgi-bin/managejobs.py', 'title'
+             : 'Jobs'},
+            {'class': 'vgrids', 'url': '/cgi-bin/vgridadmin.py', 'title'
+             : 'VGrids'},
+            {'class': 'resources', 'url': '/cgi-bin/resadmin.py',
+             'title': 'Resources'},
+            {'class': 'downloads', 'url': '/cgi-bin/downloads.py',
+             'title': 'Downloads'},
+            {'class': 'runtimeenvs', 'url': '/cgi-bin/redb.py', 'title'
+             : 'Runtime Envs'},
+            {'class': 'settings', 'url': '/cgi-bin/settings.py', 'title'
+             : 'Settings'},
+            {'class': 'shell', 'url': '/cgi-bin/shell.py', 'title'
+             : 'Shell'},
+            )
+
         menu_lines = render_menu('navmenu', menu_items, current_page)
-        
+
     return '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
@@ -224,3 +187,5 @@ def html_encode(raw_string):
     result = raw_string.replace("'", '&#039;')
     result = result.replace('"', '&#034;')
     return result
+
+

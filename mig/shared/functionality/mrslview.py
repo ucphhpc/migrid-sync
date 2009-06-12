@@ -42,6 +42,7 @@ from shared.mrslkeywords import get_keywords_dict
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'job_id': REJECT_UNSET, 'flags': ['']}
     return ['text', defaults]
 

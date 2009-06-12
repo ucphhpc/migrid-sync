@@ -36,12 +36,14 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'vgrid_name': REJECT_UNSET}
     return ['html_form', defaults]
 
 
 def create_html(vgrid_name, configuration):
     """HTML format"""
+
     out = '<H3>Owners</H3>'
 
     # list owners
@@ -99,7 +101,8 @@ def create_html(vgrid_name, configuration):
              % vgrid_name
 
         out += 'Current members of %s:' % vgrid_name
-        out += '<table class="vgridmember"><th>Remove</th><th>Member</th>'
+        out += \
+            '<table class="vgridmember"><th>Remove</th><th>Member</th>'
         for elem in msg:
             out += \
                 "<tr><td><input type=radio name='cert_name' value='%s'></td><td>%s</td></tr>"\
@@ -136,7 +139,8 @@ def create_html(vgrid_name, configuration):
              % vgrid_name
 
         out += 'Current resources of %s:' % vgrid_name
-        out += '<table class="vgridresource"><th>Remove</th><th>Resource</th></tr>'
+        out += \
+            '<table class="vgridresource"><th>Remove</th><th>Resource</th></tr>'
         for elem in msg:
             out += \
                 "<tr><td><input type=radio name='unique_resource_name' value='%s'></td><td>%s</td></tr>"\

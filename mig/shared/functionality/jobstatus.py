@@ -43,6 +43,7 @@ from shared.job import get_job_ids_with_specified_project_name
 
 def signature():
     """Signature of the main function"""
+
     defaults = {
         'job_id': [],
         'max_jobs': ['1000000'],
@@ -310,6 +311,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
         job_list['jobs'].append(job_obj)
 
     output_objects.append(job_list)
-    output_objects.append({'object_type': 'text', 'text':''})
+    output_objects.append({'object_type': 'text', 'text': ''})
 
     return (output_objects, status)
+
+

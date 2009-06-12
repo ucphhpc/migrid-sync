@@ -33,11 +33,11 @@ import os
 import sys
 
 if len(sys.argv) < 2:
-    print "Usage: %s PATH [PATH ...]" % \
-          os.path.basename((sys.argv)[0])
+    print 'Usage: %s PATH [PATH ...]' % os.path.basename(sys.argv[0])
     sys.exit(1)
 
-for path in (sys.argv)[1:]:
+for path in sys.argv[1:]:
+
     # TODO: This is completely untested!
     # From python library reference:
     # If you're starting with a Python file object f, first
@@ -47,6 +47,7 @@ for path in (sys.argv)[1:]:
     #
     # The question is if this works when the flush was called
     # by another process.
+
     sync_fd = open(path, 'rb+', 0)
     os.fsync(sync_fd)
     sync_fd.close()

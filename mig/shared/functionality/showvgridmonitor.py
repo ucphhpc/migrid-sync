@@ -38,6 +38,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'vgrid_name': ['ALL']}
     return ['html_form', defaults]
 
@@ -62,24 +63,26 @@ def main(cert_name_no_spaces, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    allowed_vgrids = user_allowed_vgrids(configuration, cert_name_no_spaces)
+    allowed_vgrids = user_allowed_vgrids(configuration,
+            cert_name_no_spaces)
     vgrid_list = accepted['vgrid_name']
     if 'ALL' in accepted['vgrid_name']:
-        vgrid_list = [i for i in vgrid_list if 'ALL' != i] + allowed_vgrids
+        vgrid_list = [i for i in vgrid_list if 'ALL' != i]\
+             + allowed_vgrids
 
     # Force list to sequence of unique entries
-    
+
     for vgrid_name in set(vgrid_list):
         html = ''
-        if not vgrid_is_owner_or_member(vgrid_name, cert_name_no_spaces,
-                                        configuration):
+        if not vgrid_is_owner_or_member(vgrid_name,
+                cert_name_no_spaces, configuration):
             output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'You must be an owner or member of %s vgrid to access the monitor.'
+                                  : 'You must be an owner or member of %s vgrid to access the monitor.'
                                    % vgrid_name})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        monitor_file = os.path.join(configuration.vgrid_home, vgrid_name,
-                                    'monitor.html')
+        monitor_file = os.path.join(configuration.vgrid_home,
+                                    vgrid_name, 'monitor.html')
         try:
             monitor_fd = open(monitor_file, 'r')
             past_header = False
@@ -95,11 +98,12 @@ def main(cert_name_no_spaces, user_arguments_dict):
             monitor_fd.close()
         except Exception, exc:
             output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Error reading VGrid monitor page (%s)'
+                                  : 'Error reading VGrid monitor page (%s)'
                                    % exc})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        output_objects.append({'object_type': 'html_form', 'text': html})
+        output_objects.append({'object_type': 'html_form', 'text'
+                              : html})
     return (output_objects, returnvalues.OK)
 
 

@@ -45,6 +45,7 @@ from shared.settings import load_settings
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'flags': [''], 'path': ['.']}
     return ['dir_listings', defaults]
 
@@ -317,7 +318,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     settings_dict = load_settings(cert_name_no_spaces, configuration)
     if not settings_dict or not settings_dict.has_key('FILESUI'):
-        logger.info('Settings dict does not have FILESUI key - using default')
+        logger.info('Settings dict does not have FILESUI key - using default'
+                    )
         files_style = configuration.filesui[0]
     else:
         files_style = settings_dict['FILESUI']
@@ -337,7 +339,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text': 'MiG Files'
                           })
 
-    location_pre_html = """
+    location_pre_html = \
+        """
 <div class='files'>
 <table class='files'>
 <tr class=title><td class=centertext colspan=2>
@@ -371,7 +374,7 @@ Working directory:
                           : location_post_html})
     if 'full' == files_style:
         more_html = \
-                  """
+            """
 <div class='files'>
 <table class='files'>
 <tr class=title><td class=centertext colspan=2>
@@ -401,10 +404,14 @@ Action on paths selected below
 """
 
         output_objects.append({'object_type': 'html_form', 'text'
-                          : more_html})
+                              : more_html})
     dir_listings = []
-    output_objects.append({'object_type': 'dir_listings', 'dir_listings'
-                          : dir_listings, 'flags': flags, 'style': files_style})
+    output_objects.append({
+        'object_type': 'dir_listings',
+        'dir_listings': dir_listings,
+        'flags': flags,
+        'style': files_style,
+        })
 
     first_match = None
     for pattern in pattern_list:
@@ -454,7 +461,7 @@ Action on paths selected below
 
     if 'full' == files_style:
         output_objects.append({'object_type': 'html_form', 'text'
-                          : """
+                              : """
     <div class='files'>
     <table class='files'>
     <tr class=title><td class=centertext>
@@ -468,7 +475,8 @@ Action on paths selected below
     </td></tr>
     </table>    
     </div>
-    """ % flags})
+    """
+                               % flags})
 
     # Short/long format buttons
 
@@ -505,50 +513,52 @@ Action on paths selected below
              % entry
 
     htmlform += \
-             """
+        """
     <input type='submit' value='Off'><br>
     </form>
     </td></tr>
     """
 
     if 'full' == files_style:
+
         # Recursive output
+
         htmlform += \
-                 """
+            """
     <!-- Non-/recursive list buttons -->
     <tr><td>Recursion</td><td>
     %s</td><td>"""\
-        % recursive(flags)
+             % recursive(flags)
         htmlform += \
-                 """
+            """
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html'>
     <input type='hidden' name='flags' value='%s'>"""\
-        % (flags + 'r')
+             % (flags + 'r')
         for entry in pattern_list:
             htmlform += " <input type='hidden' name='path' value='%s'>"\
-                        % entry
+                 % entry
         htmlform += \
-                 """
+            """
     <input type='submit' value='On'><br>
     </form>
     </td><td>
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html'>
     <input type='hidden' name='flags' value='%s'>"""\
-        % flags.replace('r', '')
+             % flags.replace('r', '')
         for entry in pattern_list:
             htmlform += "<input type='hidden' name='path' value='%s'>"\
-                        % entry
+                 % entry
             htmlform += \
-                     """
+                """
     <input type='submit' value='Off'><br>
     </form>
     </td></tr>
     """
 
     htmlform += \
-             """
+        """
     <!-- Show dot files buttons -->
     <tr><td>Show hidden files</td><td>
     %s</td><td>"""\
@@ -582,7 +592,8 @@ Action on paths selected below
     </table>
     """
 
-    # show flag buttons after contents to avoid  
+    # show flag buttons after contents to avoid
+
     output_objects.append({'object_type': 'html_form', 'text'
                           : htmlform})
 
@@ -604,7 +615,7 @@ Action on paths selected below
             relative_dir = dir_path.replace(base_dir, '')
 
         output_objects.append({'object_type': 'html_form', 'text'
-                           : """
+                              : """
 <br>
 <table class='files'>
 <tr class=title><td class=centertext colspan=3>
@@ -671,9 +682,10 @@ Optional remote filename (extra useful in windows)
 </form>
 </td></tr>
 </table>
-    """ % {'dest_dir':(relative_dir + os.sep)}})
+    """
+                               % {'dest_dir': relative_dir + os.sep}})
 
-    output_objects.append({'object_type': 'text', 'text':''})
+    output_objects.append({'object_type': 'text', 'text': ''})
     return (output_objects, status)
 
 

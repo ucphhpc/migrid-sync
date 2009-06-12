@@ -99,7 +99,7 @@ var_dict['module_encoding'] = 'utf-8'
 for (root, dirs, files) in os.walk(target):
 
     # skip all dot dirs - they are from repos etc and _not_ jobs
-            
+
     if root.find(os.sep + '.') != -1:
         continue
     for name in files:

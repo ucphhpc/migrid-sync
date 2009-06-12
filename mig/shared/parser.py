@@ -685,8 +685,8 @@ def check_types(parse_output, external_keyword_dict, configuration):
             else:
                 status = False
                 msg += \
-                    'Internal error: Keyword %s with unknown type %s was accepted!' % \
-                    (job_keyword, keyword_type)
+                    'Internal error: Keyword %s with unknown type %s was accepted!'\
+                     % (job_keyword, keyword_type)
 
             # print str(value)
             # Keyword was found. Change required to False meaning that the keyword is no longer required

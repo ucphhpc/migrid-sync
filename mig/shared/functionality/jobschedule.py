@@ -45,6 +45,7 @@ from shared.fileio import unpickle, unpickle_and_change_status, \
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'job_id': REJECT_UNSET}
     return ['saveschedulejobs', defaults]
 
@@ -135,7 +136,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         job_id = mrsl_file.replace('.mRSL', '')
 
         saveschedulejob = {'object_type': 'saveschedulejob',
-                            'job_id': job_id}
+                           'job_id': job_id}
 
         dict = unpickle(filepath, logger)
         if not dict:
@@ -171,7 +172,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         # notify queue
 
-        if not send_message_to_grid_script('JOBSCHEDULE ' + job_id + '\n', logger, configuration):
+        if not send_message_to_grid_script('JOBSCHEDULE ' + job_id
+                 + '\n', logger, configuration):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Error sending message to grid_script, job may not be updated.'
                                   })

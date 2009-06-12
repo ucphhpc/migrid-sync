@@ -39,6 +39,7 @@ from shared.logger import Logger
 
 def fix_missing(config_file, verbose=True):
     """Add missing configuration options - used by checkconf script"""
+
     config = ConfigParser()
     config.read([config_file])
 
@@ -100,8 +101,8 @@ def fix_missing(config_file, verbose=True):
     monitor_section = {'sleep_secs': '60',
                        'sleep_update_totals': '600',
                        'slackperiod': '600'}
-    settings_section = {'language': 'English', 'submitui': ['fields', 'textarea'],
-                        'filesui': ['basic', 'full']}
+    settings_section = {'language': 'English', 'submitui': ['fields',
+                        'textarea'], 'filesui': ['basic', 'full']}
 
     defaults = {
         'GLOBAL': global_section,
@@ -210,6 +211,7 @@ class Configuration:
     filesui = ['basic', 'full']
 
     # directory for usage records, initially None (means: do not generate)
+
     usage_record_dir = None
 
     # constructor
@@ -330,10 +332,10 @@ class Configuration:
                     'migserver_https_url')
             self.backup_https_urls = config.get('GLOBAL',
                     'backup_https_urls')
-            self.failover_http_urls = [self.migserver_http_url] + \
-                                     self.backup_http_urls.split()
-            self.failover_https_urls = [self.migserver_https_url] + \
-                                     self.backup_https_urls.split()
+            self.failover_http_urls = [self.migserver_http_url]\
+                 + self.backup_http_urls.split()
+            self.failover_https_urls = [self.migserver_https_url]\
+                 + self.backup_https_urls.split()
             self.sleep_period_for_empty_jobs = config.get('GLOBAL',
                     'sleep_period_for_empty_jobs')
             self.min_seconds_between_live_update_requests = \
@@ -369,9 +371,8 @@ class Configuration:
         if config.has_option('GLOBAL', 'smtp_sender'):
             self.smtp_sender = config.get('GLOBAL', 'smtp_sender')
         else:
-            self.smtp_sender = 'MiG Server <%s@%s>' % \
-                               (os.environ.get('USER', 'mig'),
-                                self.server_fqdn)
+            self.smtp_sender = 'MiG Server <%s@%s>'\
+                 % (os.environ.get('USER', 'mig'), self.server_fqdn)
 
         # logger.debug('starting scheduler options')
 
@@ -435,8 +436,10 @@ class Configuration:
                                  )
 
         # if usage record dir is configured, generate them:
+
         if config.has_option('GLOBAL', 'usage_record_dir'):
-            self.usage_record_dir = config.get('GLOBAL','usage_record_dir')
+            self.usage_record_dir = config.get('GLOBAL',
+                    'usage_record_dir')
 
     def parse_peers(self, peerfile):
 
@@ -477,5 +480,7 @@ class Configuration:
         return peers_dict
 
 
-if "__main__" == __name__:
-    conf = Configuration(os.path.expanduser('~/mig/server/MiGserver.conf'), True)
+if '__main__' == __name__:
+    conf = \
+        Configuration(os.path.expanduser('~/mig/server/MiGserver.conf'
+                      ), True)

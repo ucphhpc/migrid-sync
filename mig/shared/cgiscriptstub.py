@@ -47,7 +47,7 @@ def run_cgi_script(main):
 
     user_arguments_dict = fieldstorage_to_dict(fieldstorage)
     (out_obj, (ret_code, ret_msg)) = main(cert_name_no_spaces,
-                                          user_arguments_dict)
+            user_arguments_dict)
 
     # default to html
 

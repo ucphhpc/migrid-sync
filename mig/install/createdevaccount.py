@@ -153,13 +153,27 @@ edquota -u %s -p LOGIN_OF_SIMILAR_USER"""\
 usermod -c 'INSERT FULL NAME HERE' %s"""\
          % user
     print """# Add mount point for sandbox generator:
-echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  auto    user,loop       0       0' >> /etc/fstab""" % (user, user)
+echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  auto    user,loop       0       0' >> /etc/fstab"""\
+         % (user, user)
 
     src = os.path.abspath(os.path.dirname(sys.argv[0]))
     dst = os.path.join(src, '%s-confs' % user)
-    
-    generate_confs(src, dst, socket.getfqdn(), user, group, apache_dir, apache_run, apache_log,
-                   mig_dir, state_dir, cert_dir, http_port, https_port)
+
+    generate_confs(
+        src,
+        dst,
+        socket.getfqdn(),
+        user,
+        group,
+        apache_dir,
+        apache_run,
+        apache_log,
+        mig_dir,
+        state_dir,
+        cert_dir,
+        http_port,
+        https_port,
+        )
     apache_httpd_conf = os.path.join(dst, 'httpd.conf')
     apache_mig_conf = os.path.join(dst, 'MiG.conf')
     server_conf = os.path.join(dst, 'MiGserver.conf')
@@ -187,7 +201,8 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
          % (user, home)
     print "sudo su - %s -c 'ssh -o StrictHostKeyChecking=no \\\n\t%s@`hostname -f` pwd >/dev/null'"\
          % (user, user)
-    print "sudo su - %s -c 'svn checkout http://migrid.googlecode.com/svn/trunk/ %s'" % (user, home)
+    print "sudo su - %s -c 'svn checkout http://migrid.googlecode.com/svn/trunk/ %s'"\
+         % (user, home)
     print 'sudo chown %s:%s %s' % (user, group, server_conf)
     print 'sudo cp -f -p %s %s/' % (server_conf, server_dir)
 

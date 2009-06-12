@@ -37,6 +37,7 @@ default_language = 'english'
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'language': [default_language]}
     return ['html_form', defaults]
 
@@ -152,7 +153,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_menu=(cert_name_no_spaces != "None"))
+        initialize_main_variables(op_header=False,
+                                  op_menu=cert_name_no_spaces != 'None')
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Screen Saver Sandbox FAQ'})
 
@@ -174,7 +176,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
    # output_objects.append({"object_type":"html_form", "text":html[language]})
 
     output_objects.append({'object_type': 'html_form', 'text'
-                          : html[language] % {'https_url': configuration.migserver_https_url}})
+                          : html[language] % {'https_url'
+                          : configuration.migserver_https_url}})
     return (output_objects, returnvalues.OK)
 
 

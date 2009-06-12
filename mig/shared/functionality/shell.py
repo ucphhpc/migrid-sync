@@ -43,12 +43,14 @@ from shared.functionality import canceljob, cat, cp, docs, find, grep, \
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'cmd': ['help']}
     return ['html_form', defaults]
 
 
 def shell_usage():
     """Script usage help"""
+
     out = []
     out.append({'object_type': 'text', 'text'
                : 'Most commands from the MiG user scripts translate directly to this shell.'

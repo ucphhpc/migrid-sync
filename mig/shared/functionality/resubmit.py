@@ -49,6 +49,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
+
     defaults = {'job_id': REJECT_UNSET}
     return ['resubmitobjs', defaults]
 

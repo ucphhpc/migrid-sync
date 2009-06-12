@@ -36,6 +36,7 @@ import shared.returnvalues as returnvalues
 
 def signature():
     """Signature of the main function"""
+
     defaults = {}
     return ['runtimeenvironments', defaults]
 
@@ -56,7 +57,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Runtime Environments'})
     output_objects.append({'object_type': 'text', 'text'
-                           :"""
+                          : """
 <div class="migcontent">
 Runtime environments work as a kind of contract between users and resources. The user can not as such expect a given resource to provide any particular software or execution environment.<br>However, jobs can request one or more runtime environments listed here in order to only get scheduled to resources advertising that environment.
 <p>
@@ -90,8 +91,8 @@ Runtime environments can be quite flexible in order to support many kinds of sof
         runtimeenvironments.append(build_reitem_object_from_re_dict(re_dict))
     output_objects.append({'object_type': 'runtimeenvironments',
                           'runtimeenvironments': runtimeenvironments})
-    output_objects.append({'object_type': 'text', 'text':''})
-    
+    output_objects.append({'object_type': 'text', 'text': ''})
+
     return (output_objects, returnvalues.OK)
 
 
