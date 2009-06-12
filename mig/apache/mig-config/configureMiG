@@ -1,0 +1,28 @@
+#! /bin/bash
+
+MIG_PATH=/home/berthold/MiG
+MIG_USER=berthold
+HOST=portal.grid.dk
+MIG_CONFIG=/etc/mig.conf
+
+echo "Configuring MiG in $MIG_PATH on host $HOST, run by user $MIG_USER."
+
+# write configuration file:
+if [ -f ${MIG_CONFIG} ] ; then 
+   mv ${MIG_CONFIG} ${MIG_CONFIG}~
+fi
+
+echo "MIG_PATH=${MIG_PATH}" > ${MIG_CONFIG}
+echo "MIG_USER=${MIG_USER}" >> ${MIG_CONFIG}
+
+###############################
+# do the replacements:
+
+sed -e "s|__SERVERNAME_REPLACE__|${HOST}|" \
+    -e "s|__MIGLOCATION_REPLACE__|${MIG_PATH}|" \
+    < MiGserver.conf.in > MiGserver.conf
+
+sed -e "s|__SERVERNAME_REPLACE__|${HOST}|" \
+    -e "s|__MIGLOCATION_REPLACE__|${MIG_PATH}|" \
+    < MiG.conf.in > MiG.conf
+

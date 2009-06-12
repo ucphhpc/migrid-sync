@@ -1,0 +1,104 @@
+#!/bin/sh 
+#
+#    MIG init script
+#
+#	Reconized arguments:
+#	    start   - start MiG system components
+#	    stop    - terminate MiG system components
+#	    restart - terminate and start MiG system 
+#	    status  - report MiG system component's status
+#
+#
+# chkconfig: - 90 10
+# description: MiG is a Grid solution with minimal installation requirements
+#
+# 
+#
+#############################
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+conf=${MIG_CONFIG:-/etc/mig.conf}
+
+if [ -f "${conf}" ] ; then
+  . "${conf}"
+else
+  echo "***"
+  echo "*** Cannot find MiG configuration file: ${conf}"
+  echo "***"
+  exit 1
+fi
+
+
+start_mig() {
+     echo "Starting MiG server daemons"
+
+#	/etc/init.d/httpd start
+  
+        echo -n "Starting MiG server and monitor: "
+	# weird hack-around!!!
+	daemon --user ${MIG_USER} $MIG_PATH/startMiG.sh $MIG_PATH
+	RET=$?
+        echo
+	# provide some input for server... 
+	[ $RET ] && echo "" >> $MIG_PATH/mig/server/server.stdin
+	return $RET
+}
+
+stop_mig() {
+         echo "Stopping MiG monitor"
+	 killproc grid_monitor.py
+	 echo
+	 pid="$(__pids_pidof "grid_script.py")"
+	 if [ -z "$pid" ]; then
+	     echo -n "MiG server is not running..."
+	     failure
+	     echo
+	    else
+             # try a shutdown before killing it
+	     echo "5 sec. shutdown delay for MiG server (pid $pid)"
+	     echo SHUTDOWN >> $MIG_PATH/mig/server/server.stdin
+	     sleep 5
+	     # 5 sec should be enough...
+	     if checkpid $PID ; 
+	        then 
+		  echo "Killing MiG server"
+		  killproc grid_script.py
+	        else 
+		 echo -n "Server has stopped" 
+		 success
+	     fi
+	     echo
+	 fi
+#	 service httpd stop
+	 return 0
+}
+
+status_mig() {
+    status grid_script.py
+    status grid_monitor.py
+#    service httpd status
+}
+
+# main code
+
+case "$1" in
+  status)
+     status_mig
+     ;;
+  start)
+     start_mig
+     ;;
+  stop)
+     stop_mig
+     ;;
+  restart)
+     echo "Restarting MiG system"
+     stop_mig
+     start_mig
+     ;;
+  *) echo "Usage: `basename $0` {start|stop|restart|status}" 
+     exit 1 
+     ;;
+esac
