@@ -194,6 +194,8 @@ signal.signal(signal.SIGINT, clean_shutdown)
 argc = len(sys.argv)
 if argc > 1:
     config_file = sys.argv[1]
+elif os.environ.get('MIG_CONF', None):
+    config_file = os.environ['MIG_CONF']
 else:
     config_file = 'MiGserver.conf'
 print 'using configuration: ' + config_file
