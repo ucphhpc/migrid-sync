@@ -828,6 +828,11 @@ while True:
 
                 # The job status should be "QUEUED" at this point
 
+                if dummy_dict == False:
+                    logger.error('error unpickling mrsl in %s' % \
+                         mrsl_filename)
+                    continue
+
                 if dummy_dict['STATUS'] == 'QUEUED':
                     break
 
