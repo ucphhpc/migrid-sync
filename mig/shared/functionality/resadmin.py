@@ -324,7 +324,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # Use cgi-bin links to sandboxes here to preserve menu
 
     output_objects.append({'object_type': 'link', 'text'
-                          : 'Create a sandbox MiG resource',
+                          : 'Administrate MiG sandbox resources',
                           'destination': '/cgi-bin/ssslogin.py'})
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
     output_objects.append({'object_type': 'link', 'text'

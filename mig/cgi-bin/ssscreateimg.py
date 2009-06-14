@@ -38,12 +38,13 @@ from binascii import hexlify
 import pickle
 import fcntl
 
-import shared.confparser as confparser
-import shared.resadm as resadm
 from shared.cgishared import init_cgiscript_possibly_with_cert
-from shared.resource import create_resource, remove_resource
 from shared.conf import get_resource_configuration, get_resource_exe
+import shared.confparser as confparser
 from shared.fileio import make_symlink
+import shared.resadm as resadm
+from shared.resource import create_resource, remove_resource
+from shared.sandbox import load_sandbox_db, save_sandbox_db
 from shared.vgrid import vgrid_list_vgrids
 
 # uncomment for debugging
@@ -54,8 +55,6 @@ from shared.vgrid import vgrid_list_vgrids
 
 (logger, configuration, cert_name_no_spaces, o) = \
     init_cgiscript_possibly_with_cert(False, 'application/zip')
-sandboxdb_file = configuration.sandbox_home + os.sep\
-     + 'sandbox_users.pkl'
 
 # initiate form and read hd size and memory values
 
@@ -105,9 +104,7 @@ for vgrid in vgrid_list:
 # Load the user file
 
 try:
-    fd = open(sandboxdb_file, 'rb')
-    userdb = pickle.load(fd)
-    fd.close()
+    userdb = load_sandbox_db(configuration)
 except Exception, exc:
     o.client('Could not read sandbox database: %s' % exc)
     o.reply_and_exit(o.CLIENT_ERROR)
@@ -141,9 +138,7 @@ unique_host_name = resource_name + '.' + str(resource_identifier)
 userdb[username][1].append(unique_host_name)
 
 try:
-    fd = open(sandboxdb_file, 'wb')
-    pickle.dump(userdb, fd)
-    fd.close()
+    save_sandbox_db(userdb, configuration)
 except Exception, exc:
     o.client('Could not update sandbox database: %s' % exc)
     o.reply_and_exit(o.CLIENT_ERROR)

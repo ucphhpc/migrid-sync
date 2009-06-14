@@ -29,9 +29,10 @@
 
 import pickle
 
-from shared.gridstat import GridStat
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
+from shared.gridstat import GridStat
+from shared.sandbox import load_sandbox_db, save_sandbox_db
 import shared.returnvalues as returnvalues
 
 
@@ -268,16 +269,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
     PW = 0
     global RESOURCES
     RESOURCES = 1
-    sandboxdb_file = configuration.sandbox_home + 'sandbox_users.pkl'
 
     global userdb
 
-    # Load the user file
+    # Load the user DB
 
     try:
-        fd = open(sandboxdb_file, 'rb')
-        userdb = pickle.load(fd)
-        fd.close()
+        userdb = load_sandbox_db(configuration)
     except IOError:
 
         # First time - create empty dict
@@ -322,11 +320,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
             # Create new user with empty resource list
 
             try:
-                fd = open(sandboxdb_file, 'wb')
                 newuser = {username: (password, [])}
                 userdb.update(newuser)
-                pickle.dump(userdb, fd)
-                fd.close()
+                save_sandbox_db(userdb, configuration)
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text'

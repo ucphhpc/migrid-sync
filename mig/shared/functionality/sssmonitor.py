@@ -28,10 +28,11 @@
 import os
 import pickle
 
-from shared.gridstat import GridStat
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
+from shared.gridstat import GridStat
 import shared.returnvalues as returnvalues
+from shared.sandbox import load_sandbox_db
 
 
 def signature():
@@ -59,10 +60,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Screen Saver Sandbox Monitor'})
-    sandboxdb_file = configuration.sandbox_home + os.sep\
-         + 'sandbox_users.pkl'
 
-    # sandboxdb_file has the format: {username: (password, [list_of_resources])}
+    # sandbox db has the format: {username: (password, [list_of_resources])}
 
     PW = 0
     RESOURCES = 1
@@ -70,9 +69,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # Load the user file
 
     try:
-        fd = open(sandboxdb_file, 'rb')
-        userdb = pickle.load(fd)
-        fd.close()
+        userdb = load_sandbox_db(configuration)
     except Exception, exc:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not read file with sandbox info! (%s)'
