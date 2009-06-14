@@ -194,8 +194,7 @@ class GridStat:
         stattype_key,
         stattype_value,
         key,
-        default_value = 0
-        
+        default_value=0,
         ):
         """Get value from the statistic"""
 
