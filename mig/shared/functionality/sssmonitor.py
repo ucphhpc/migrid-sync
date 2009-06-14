@@ -26,7 +26,7 @@
 #
 
 import os
-
+import datetime
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 from shared.gridstat import GridStat
@@ -86,7 +86,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     total_jobs = 0
     for username in userdb:
-        resources = {}
+        resources_jobs = {}
+        resources_walltime = {}
         jobs_per_resource = 0
         jobs_per_user = 0
 
@@ -100,7 +101,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
                     'FINISHED')
             jobs_per_user += jobs_per_resource
             n = {resource: jobs_per_resource}
-            resources.update(n)
+            resources_jobs.update(n)
+        
+            resource_walltime = grid_stat.get_value(grid_stat.RESOURCE_TOTAL, resource, 
+                                                    'USED_WALLTIME')
+
+            n = {resource: resource_walltime}
+            resources_walltime.update(n)
 
         # if level == "basic":
             # print username,":", jobs_per_user, "jobs"
@@ -111,13 +118,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
             # print "<tr><td colspan='2'><h2>%s</h2></td></tr>" % username
 
-            for res in resources.keys():
-                if resources[res] > 0 or show_all == 'true':
+            for res in resources_jobs.keys():
+                if resources_jobs[res] > 0 or show_all == 'true':
                     sandboxinfo = {'object_type': 'sandboxinfo'}
                     sandboxinfo['username'] = username
                     sandboxinfo['resource'] = res
-                    sandboxinfo['jobs'] = resources[res]
-
+                    sandboxinfo['jobs'] = resources_jobs[res]
+                    sandboxinfo['walltime'] = resources_walltime[res]
                     # print "<tr><td>%s</td><td>%s jobs</td></tr>" % (res, resources[res])
                     # print res,":", resources[res], "jobs"
 
@@ -134,6 +141,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         sandboxinfos.sort(cmp=lambda a, b: cmp(a['username'].lower(),
                           b['username'].lower()))
+                          
     elif 'resource' == sort:
 
         # sort by numerical resource ID
@@ -142,11 +150,21 @@ def main(cert_name_no_spaces, user_arguments_dict):
                           ].lower().replace('sandbox.', '')),
                           int(b['resource'].lower().replace('sandbox.',
                           ''))))
+
     elif 'jobs' == sort:
-
         # sort by most jobs done
-
         sandboxinfos.sort(reverse=True)
+        
+    elif 'walltime' == sort:
+        
+        # sort by most walltime
+        
+        sandboxinfos.sort(cmp=lambda a, b: cmp(
+                         ((a['walltime'].days*86400) +
+                         (a['walltime'].seconds)),
+                         ((b['walltime'].days*86400) +
+                         (b['walltime'].seconds))), reverse=True)
+                         
     else:
 
         # do not sort
@@ -155,7 +173,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     output_objects.append({'object_type': 'verbatim', 'text'
                           : 'Sort by: '})
     link_list = []
-    for name in ('username', 'resource', 'jobs'):
+    for name in ('username', 'resource', 'jobs', 'walltime'):
         link_list.append({'object_type': 'link', 'destination'
                          : '?sort=%s' % name, 'text': '%s'
                           % name.capitalize()})

@@ -103,6 +103,7 @@ Automatic refresh every %(sleep_secs)s secs.<br>
     nodecount_done = 0
     cputime_requested = 0
     cputime_done = 0
+    used_walltime = 0
     disk_requested = 0
     disk_done = 0
     memory_requested = 0
@@ -147,6 +148,8 @@ Automatic refresh every %(sleep_secs)s secs.<br>
             vgrid_name.upper(), 'CPUTIME_REQ')
     cputime_done = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                    'CPUTIME_DONE')
+    used_walltime = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
+                                   'USED_WALLTIME')
     disk_requested = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
             'DISK_REQ')
     disk_done = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
@@ -185,6 +188,7 @@ Automatic refresh every %(sleep_secs)s secs.<br>
         'nodecount_done': nodecount_done,
         'cputime_requested': cputime_requested,
         'cputime_done': cputime_done,
+        'used_walltime': used_walltime,
         'disk_requested': disk_requested,
         'disk_done': disk_done,
         'memory_requested': memory_requested,
@@ -212,6 +216,7 @@ Automatic refresh every %(sleep_secs)s secs.<br>
 <tr><td>Cputime</td><td>%(cputime_requested)s</td><td>%(cputime_done)s</td></tr>
 <tr><td>GB Disk</td><td>%(disk_requested)s</td><td>%(disk_done)s</td></tr>
 <tr><td>MB Memory</td><td>%(memory_requested)s</td><td>%(memory_done)s</td></tr>
+<tr><td>Used Walltime</td><td colspan='2'>%(used_walltime)s</td></tr>
 </table><br>
 </td><td valign=top>
 <table class=monitorruntimeenvreq>

@@ -1,4 +1,4 @@
-1#!/usr/bin/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -42,7 +42,7 @@ class GridStat:
     # Stat types
 
     VGRID = 'VGRID'
-    RESOURCE = 'RESOURCE_TOTAL'
+    RESOURCE_TOTAL = 'RESOURCE_TOTAL'
     RESOURCE_NODE = 'RESOURCE_EXE'
     
     __gridstat_dict = None
@@ -134,7 +134,7 @@ class GridStat:
 
         # Old mRSL files lack the UNIQUE_RESOURCE_NAME field
         if unique_resource_name:
-            self.__add(self.RESOURCE, unique_resource_name, key, value)
+            self.__add(self.RESOURCE_TOTAL, unique_resource_name, key, value)
             
         # Old mRSL files lack the RESOURCE_ID field
         # Old mRSL files has resource_id == unique_resource_name
@@ -194,7 +194,8 @@ class GridStat:
         stattype_key,
         stattype_value,
         key,
-        default_value=0,
+        default_value = 0
+        
         ):
         """Get value from the statistic"""
 
@@ -250,9 +251,6 @@ class GridStat:
                 unique_resource_name = job_dict['UNIQUE_RESOURCE_NAME'
                                                ].upper()
        
-            if unique_resource_name == "DISTLAB3.EKSTRANET.DIKU.DK.0_PS3-01":
-                print str(job_dict)
-                
             if job_dict['RESOURCE_CONFIG'].has_key('RESOURCE_ID'):
                 resource_id = job_dict['RESOURCE_CONFIG'][
                 'RESOURCE_ID'].upper()
@@ -331,13 +329,12 @@ class GridStat:
                 self.__addre(self.VGRID, job_vgrid_name, runtime_env, 1)
                 # Old mRSL files lack the UNIQUE_RESOURCE_NAME field
                 if unique_resource_name:
-                    self.__addre(self.RESOURCE, unique_resource_name,
+                    self.__addre(self.RESOURCE_TOTAL, unique_resource_name,
                                  runtime_env, 1)
             
                 # Old mRSL files lack the RESOURCE_ID field
                 # Old mRSL files has resource_id == unique_resource_name
                 if resource_id and resource_id != unique_resource_name:
-                    #self.__add(self.RESOURCE_NODE, resource_id, key, value)
                     self.__addre(self.RESOURCE_NODE, resource_id,
                                  runtime_env, 1)
                     
