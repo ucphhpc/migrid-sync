@@ -291,7 +291,7 @@ class GridStat:
                 self.__add(self.VGRID, job_vgrid_name, 'EXECUTING', -1)
 
         # Cache current status for use in next iteration.
-        # Note that status: CANCLED, FAILED, EXPIRED or FINISHED are
+        # Note that status: CANCELED, FAILED, EXPIRED or FINISHED are
         # final stages and therefore none of thoose should occur in
         # the cache, as the mRSL file should not be modified once it
         # reaches one of thoose stages.

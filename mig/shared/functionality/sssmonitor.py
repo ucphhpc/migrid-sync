@@ -26,7 +26,6 @@
 #
 
 import os
-import pickle
 
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
@@ -78,8 +77,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     # Load statistics objects
 
-    gs = GridStat(configuration, logger)
-    gs.update()
+    grid_stat = GridStat(configuration, logger)
+    grid_stat.update()
 
     sandboxinfos = []
 
@@ -97,7 +96,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
             # now find number of jobs successfully executed by resource
 
-            jobs_per_resource = gs.get_value(gs.RESOURCE, resource,
+            jobs_per_resource = grid_stat.get_value(grid_stat.RESOURCE, resource,
                     'FINISHED')
             jobs_per_user += jobs_per_resource
             n = {resource: jobs_per_resource}

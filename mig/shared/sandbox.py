@@ -28,6 +28,7 @@
 """Sandbox functions"""
 
 import os
+import pickle
 from binascii import hexlify
 
 # MiG imports

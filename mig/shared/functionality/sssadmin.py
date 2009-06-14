@@ -27,8 +27,6 @@
 
 """This script allows users to administrate their sandboxes"""
 
-import pickle
-
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 from shared.gridstat import GridStat
@@ -153,9 +151,9 @@ def print_expert_settings(display):
 def count_jobs(resource_name):
     """Counts number of jobs executed by given resource"""
 
-    # gs.update()
+    # grid_stat.update()
 
-    value = gs.get_value(gs.RESOURCE, resource_name, 'FINISHED')
+    value = grid_stat.get_value(grid_stat.RESOURCE, resource_name, 'FINISHED')
     return value
 
 
@@ -289,8 +287,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     global admin_email
     admin_email = configuration.admin_email
-    global gs
-    gs = GridStat(configuration, logger)
+    global grid_stat
+    grid_stat = GridStat(configuration, logger)
 
     # If it's a new user, check that the username is free
 

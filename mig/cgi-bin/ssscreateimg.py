@@ -35,7 +35,6 @@ cgitb.enable()
 import tempfile
 import shutil
 from binascii import hexlify
-import pickle
 import fcntl
 
 from shared.cgishared import init_cgiscript_possibly_with_cert
