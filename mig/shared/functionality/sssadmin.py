@@ -153,7 +153,7 @@ def count_jobs(resource_name):
 
     # grid_stat.update()
 
-    value = grid_stat.get_value(grid_stat.RESOURCE, resource_name, 'FINISHED')
+    value = grid_stat.get_value(grid_stat.RESOURCE_TOTAL, resource_name, 'FINISHED')
     return value
 
 

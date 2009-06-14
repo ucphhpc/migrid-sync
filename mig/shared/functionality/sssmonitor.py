@@ -96,7 +96,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
             # now find number of jobs successfully executed by resource
 
-            jobs_per_resource = grid_stat.get_value(grid_stat.RESOURCE, resource,
+            jobs_per_resource = grid_stat.get_value(grid_stat.RESOURCE_TOTAL, resource,
                     'FINISHED')
             jobs_per_user += jobs_per_resource
             n = {resource: jobs_per_resource}

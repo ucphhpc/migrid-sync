@@ -1,4 +1,4 @@
-#!/usr/bin/python
+1#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -42,8 +42,9 @@ class GridStat:
     # Stat types
 
     VGRID = 'VGRID'
-    RESOURCE = 'RESOURCE'
-
+    RESOURCE = 'RESOURCE_TOTAL'
+    RESOURCE_NODE = 'RESOURCE_EXE'
+    
     __gridstat_dict = None
     __logger = None
     __configuration = None
@@ -122,6 +123,24 @@ class GridStat:
             self.__gridstat_dict[stattype_key][stattype_value]['RUNTIMEENVIRONMENT'
                     ][key] = value
 
+    def __add_resource(
+        self,
+        unique_resource_name,
+        resource_id, 
+        key,
+        value,
+        ):
+        """Add resource node to the statistics"""
+
+        # Old mRSL files lack the UNIQUE_RESOURCE_NAME field
+        if unique_resource_name:
+            self.__add(self.RESOURCE, unique_resource_name, key, value)
+            
+        # Old mRSL files lack the RESOURCE_ID field
+        # Old mRSL files has resource_id == unique_resource_name
+        if resource_id and resource_id != unique_resource_name:
+            self.__add(self.RESOURCE_NODE, resource_id, key, value)
+        
     def __set(
         self,
         stattype_key,
@@ -147,6 +166,7 @@ class GridStat:
                 filename = self.__configuration.gridstat_files_dir\
                      + stat_type + os.sep + stat_value + '.pck'
                 filedir = os.path.dirname(filename)
+
                 if not os.path.exists(filedir):
                     os.makedirs(filedir)
                 pickle(self.__gridstat_dict[stat_type][stat_value],
@@ -223,11 +243,19 @@ class GridStat:
             self.__add(self.VGRID, job_vgrid_name, 'MEMORY_REQ',
                        int(job_dict['MEMORY']))
 
+        unique_resource_name = None
         resource_id = None
-        if job_dict.has_key('RESOURCE_CONFIG')\
-             and job_dict['RESOURCE_CONFIG'].has_key('RESOURCE_ID'):
-            resource_id = job_dict['RESOURCE_CONFIG']['RESOURCE_ID'
-                    ].upper()
+        if job_dict.has_key('RESOURCE_CONFIG'):
+            if job_dict.has_key('UNIQUE_RESOURCE_NAME'):
+                unique_resource_name = job_dict['UNIQUE_RESOURCE_NAME'
+                                               ].upper()
+       
+            if unique_resource_name == "DISTLAB3.EKSTRANET.DIKU.DK.0_PS3-01":
+                print str(job_dict)
+                
+            if job_dict['RESOURCE_CONFIG'].has_key('RESOURCE_ID'):
+                resource_id = job_dict['RESOURCE_CONFIG'][
+                'RESOURCE_ID'].upper()
 
         if job_dict['STATUS'] == 'PARSE':
             self.__add(self.VGRID, job_vgrid_name, 'PARSE', 1)
@@ -237,17 +265,39 @@ class GridStat:
             self.__add(self.VGRID, job_vgrid_name, 'EXECUTING', 1)
         elif job_dict['STATUS'] == 'FAILED':
             self.__add(self.VGRID, job_vgrid_name, 'FAILED', 1)
-            if resource_id:
-                self.__add(self.RESOURCE, resource_id, 'FAILED', 1)
+            self.__add_resource(unique_resource_name, 
+                                     resource_id, 'FAILED', 1)
         elif job_dict['STATUS'] == 'RETRY':
             self.__add(self.VGRID, job_vgrid_name, 'RETRY', 1)
-            if resource_id:
-                self.__add(self.RESOURCE, resource_id, 'RETRY', 1)
+            self.__add_resource(unique_resource_name, 
+                                     resource_id, 'RETRY', 1)
         elif job_dict['STATUS'] == 'EXPIRED':
             self.__add(self.VGRID, job_vgrid_name, 'EXPIRED', 1)
         elif job_dict['STATUS'] == 'CANCELED':
             self.__add(self.VGRID, job_vgrid_name, 'CANCELED', 1)
         elif job_dict['STATUS'] == 'FINISHED':
+            # Compute used wall time
+            finished_timestamp = job_dict['FINISHED_TIMESTAMP']
+            finished_datetime = datetime.datetime(
+                        finished_timestamp.tm_year,
+                        finished_timestamp.tm_mon,
+                        finished_timestamp.tm_mday,
+                        finished_timestamp.tm_hour,
+                        finished_timestamp.tm_min,
+                        finished_timestamp.tm_sec,
+                        )                                     
+
+            starting_timestamp = job_dict['EXECUTING_TIMESTAMP']
+            starting_datetime = datetime.datetime(
+                        starting_timestamp.tm_year,
+                        starting_timestamp.tm_mon,
+                        starting_timestamp.tm_mday,
+                        starting_timestamp.tm_hour,
+                        starting_timestamp.tm_min,
+                        starting_timestamp.tm_sec,
+                        )        
+                        
+            used_walltime = finished_datetime - starting_datetime
 
             # Vgrid stats
 
@@ -256,6 +306,10 @@ class GridStat:
                        int(job_dict['NODECOUNT']))
             self.__add(self.VGRID, job_vgrid_name, 'CPUTIME_DONE',
                        int(job_dict['CPUTIME']))
+                       
+            self.__add(self.VGRID, job_vgrid_name, 'USED_WALLTIME',
+                       used_walltime)
+                       
             self.__add(self.VGRID, job_vgrid_name, 'CPUCOUNT_DONE',
                        int(job_dict['CPUCOUNT']))
             self.__add(self.VGRID, job_vgrid_name, 'DISK_DONE',
@@ -263,19 +317,30 @@ class GridStat:
             self.__add(self.VGRID, job_vgrid_name, 'MEMORY_DONE',
                        int(job_dict['MEMORY']))
 
-            if resource_id:
-
-                # Resource stats
-
-                self.__add(self.RESOURCE, resource_id, 'FINISHED', 1)
+            # Resource stats
+            
+            self.__add_resource(unique_resource_name, 
+                                     resource_id, 'FINISHED', 1)
+           
+            self.__add_resource(unique_resource_name, 
+                                     resource_id, 'USED_WALLTIME', used_walltime)
 
             # Re stats
 
             for runtime_env in job_dict['RUNTIMEENVIRONMENT']:
                 self.__addre(self.VGRID, job_vgrid_name, runtime_env, 1)
-                if resource_id:
-                    self.__addre(self.RESOURCE, resource_id,
+                # Old mRSL files lack the UNIQUE_RESOURCE_NAME field
+                if unique_resource_name:
+                    self.__addre(self.RESOURCE, unique_resource_name,
                                  runtime_env, 1)
+            
+                # Old mRSL files lack the RESOURCE_ID field
+                # Old mRSL files has resource_id == unique_resource_name
+                if resource_id and resource_id != unique_resource_name:
+                    #self.__add(self.RESOURCE_NODE, resource_id, key, value)
+                    self.__addre(self.RESOURCE_NODE, resource_id,
+                                 runtime_env, 1)
+                    
         else:
 
             print 'Unknown status: ' + job_dict['STATUS']
