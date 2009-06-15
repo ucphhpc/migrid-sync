@@ -36,6 +36,7 @@ import pickle
 from getpass import getpass
 
 from shared.configuration import Configuration
+from shared.settings import css_template, get_default_css
 
 
 def usage(name='createuser.py'):
@@ -210,6 +211,7 @@ mrsl_dir = os.path.join(configuration.mrsl_files_dir,
 pending_dir = os.path.join(configuration.resource_pending,
                            full_name_without_spaces)
 htaccess_path = os.path.join(home_dir, '.htaccess')
+css_path = os.path.join(home_dir, css_template)
 if not renew:
     print 'Creating dirs and files for new user: %s' % full_name
 
@@ -268,6 +270,17 @@ try:
     os.chmod(htaccess_path, 0444)
 except:
     print 'Error: could not create htaccess file: %s' % htaccess_path
+    if not force:
+        sys.exit(1)
+
+# Always write default css to avoid apache error log entries
+
+try:
+    filehandle = open(css_path, 'w')
+    filehandle.write(get_default_css(css_path))
+    filehandle.close()
+except:
+    print 'Error: could not create custom css file: %s' % css_path
     if not force:
         sys.exit(1)
 

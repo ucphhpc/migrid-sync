@@ -54,7 +54,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    show_all = accepted['show_all'][-1]
+    show_all = accepted['show_all'][-1].lower()
     sort = accepted['sort'][-1]
 
     output_objects.append({'object_type': 'header', 'text'
@@ -94,7 +94,6 @@ def main(cert_name_no_spaces, user_arguments_dict):
         # loop through all resources of each user
 
         for resource in userdb[username][RESOURCES]:
-
             # now find number of jobs successfully executed by resource
 
             jobs_per_resource = grid_stat.get_value(grid_stat.RESOURCE_TOTAL, resource,
