@@ -91,7 +91,7 @@ def copy_file_to_resource(
     # We need fault tolerance but can't block e.g. grid_script for long
 
     options.append('-o ConnectionAttempts=2')
-    options.append('-o ConnectTimeout=30')
+    options.append('-o ConnectTimeout=10')
     if hostkey:
         options.append('-o UserKnownHostsFile=' + key_path)
 
@@ -189,7 +189,7 @@ def copy_file_to_exe(
         # We do not have exe host keys and don't really care about auth there
 
         ssh_command = \
-            'scp -o ConnectTimeout=15 -o ConnectionAttempts=2 ' + ' '\
+            'scp -o ConnectTimeout=10 -o ConnectionAttempts=2 ' + ' '\
              + os.path.join(resource_config['RESOURCEHOME'], dest_path)\
              + ' ' + exe['execution_user'] + '@' + +exe['execution_node'
                 ] + ':' + exe['execution_dir']
@@ -283,7 +283,7 @@ def execute_on_resource(
     # We need fault tolerance but can't block e.g. grid_script for long
 
     options.append('-o ConnectionAttempts=2')
-    options.append('-o ConnectTimeout=30')
+    options.append('-o ConnectTimeout=10')
     if hostkey:
         options.append('-o UserKnownHostsFile=%s' % key_path)
 
@@ -345,7 +345,7 @@ def execute_on_exe(
     # We need fault tolerance but can't block e.g. grid_script for long
 
     options.append('-o ConnectionAttempts=2')
-    options.append('-o ConnectTimeout=30')
+    options.append('-o ConnectTimeout=10')
     batch = []
     batch.append('1> /dev/null')
     batch.append('2> /dev/null')
