@@ -25,6 +25,7 @@
 # -- END_HEADER ---
 #
 
+import os
 import time
 
 import shared.mrslkeywords as mrslkeywords
@@ -123,8 +124,7 @@ def parse(
 
         global_dict['RUNTIMEENVIRONMENT'] = re_entries_uppercase
 
-    if global_dict.has_key('JOBTYPE') and global_dict['JOBTYPE'].lower()\
-         == 'interactive':
+    if global_dict.get('JOBTYPE', 'unset').lower() == 'interactive':
 
         # if jobtype is interactive append command to create the notification file .interactivejobfinished that breaks
         # the infinite loop waiting for the interactive job to finish and send output files to the MiG server
@@ -163,9 +163,36 @@ def parse(
                         'You are not allowed to specify the ::VERIFY:: keyword in a testprocedure, it is done automatically'
                         )
 
+    # normalize any path fields to be taken relative to home
+
+    for field in ('INPUTFILES', 'OUTPUTFILES', 'EXECUTABLES', 'VERIFYFILES'):
+        if not global_dict.has_key(field):
+            continue
+        normalized_field = []
+        for line in global_dict[field]:
+            normalized_parts = []
+            for part in line.split():
+
+                # deny leading slashes i.e. force absolute to relative paths
+
+                part = part.lstrip('/')                
+                if part.find('://') != -1:
+
+                    # keep external targets as is - normpath breaks '://'
+                    
+                    normalized_parts.append(part)
+                else:
+
+                    # normalize path to avoid e.g. './' which breaks dir handling on resource
+                    
+                    normalized_parts.append(os.path.normpath(part))
+            normalized_field.append(' '.join(normalized_parts))
+        global_dict[field] = normalized_field
+
     # replace special keywords
 
     replaced_dict = parser.replace_special(global_dict)
+
 
     # save file
 
@@ -232,8 +259,7 @@ def parse(
                     'Fatal error pickling resource config: Could not write %s'
                      % filename)
 
-    if global_dict.has_key('JOBTYPE') and global_dict['JOBTYPE'].lower()\
-         == 'interactive':
+    if global_dict.get('JOBTYPE', 'unset').lower() == 'interactive':
         from shared.cgioutput import CGIOutput
         import shared.vncfunctions as vncfunctions
         o = CGIOutput(logger)

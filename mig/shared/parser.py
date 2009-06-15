@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# parser - [insert a few words of module description on this line]
+# parser - General parser functions for jobs and resource confs
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -191,8 +191,8 @@ def read_block(input_file):
     while data:
 
         # read a line
-    # readline returns "" string when EOF, to separate EOF and
-    # blank lines .strip must be added later
+        # readline returns "" string when EOF, to separate EOF and
+        # blank lines .strip must be added later
 
         line = input_file.readline().strip()
 
@@ -215,8 +215,8 @@ def parse(mrsl_file):
     while True:
 
         # read a line
-    # readline returns "" string when EOF, to separate EOF and
-    # blank lines .strip must be added later
+        # readline returns "" string when EOF, to separate EOF and
+        # blank lines .strip must be added later
 
         word = input_file.readline()
         if not word:
@@ -227,7 +227,7 @@ def parse(mrsl_file):
         word = word.strip()
         if len(word) == 0:
 
-        # blank line
+            # blank line
 
             continue
 
@@ -286,7 +286,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
         # remove the two colons before and after the keyword
 
-        job_keyword = keyword_block[0].strip('::')
+        job_keyword = keyword_block[0].strip(':')
         keyword_data = keyword_block[1]
 
         if not external_keyword_dict.has_key(job_keyword):
@@ -326,7 +326,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                 if not keyword_data:
 
-            # use default value
+                    # use default value
 
                     keyword_data.append(keyword_dict['Value'])
                 if len(keyword_data) > 1:
@@ -482,7 +482,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                 # field_data = [i for i in keyword_data]
 
-            # read required and optional sublevel keywords from resconfkeywords
+                # read required and optional sublevel keywords from resconfkeywords
 
                 resconfkeywords_dict = \
                     resconf_get_keywords_dict(configuration)
@@ -605,7 +605,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                 try:
 
-            # read required and optional sublevel keywords from rekeywords
+                    # read required and optional sublevel keywords from rekeywords
 
                     rekeywords_dict = get_keywords_dict()
                     software = rekeywords_dict['SOFTWARE']
@@ -638,7 +638,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
             elif keyword_type == 'RE_environmentvariable':
                 try:
 
-            # read required and optional sublevel keywords from rekeywords
+                    # read required and optional sublevel keywords from rekeywords
 
                     rekeywords_dict = get_keywords_dict()
                     environmentvariable = \
