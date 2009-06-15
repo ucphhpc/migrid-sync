@@ -1160,14 +1160,7 @@ class Scheduler:
 
                     return False
 
-                # do not schedule sandbox jobs to ordinary resources
-
-                if job[attr] == 1 and res[attr] == 0:
-
-                    # job is not allowed to run in a sandbox resource
-                    # self.logger.info("sandbox job is not allowed to run on ordinary resource")
-
-                    return False
+                # sandbox jobs on non-sandbox resources are ok, however
 
                 # self.logger.info("SANDBOX DONE")
 

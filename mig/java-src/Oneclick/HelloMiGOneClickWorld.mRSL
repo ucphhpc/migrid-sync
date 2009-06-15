@@ -19,8 +19,8 @@ jabber: you@jabber.dk
 ::CPUTIME::
 100
 
-::RUNTIMEENVIRONMENT::
-JVM_BYTECODE
+::PLATFORM::
+ONE-CLICK
 
 ::SANDBOX::
 1
