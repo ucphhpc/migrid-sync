@@ -492,9 +492,9 @@ def html_format(ret_val, ret_msg, out_obj):
             if len(i['dir_listings']) == 0:
                 continue
             if 'full' == i['style']:
-                columns = 6
+                columns = 7
             else:
-                columns = 5
+                columns = 6
             print "<table class='files'>"
             print '<tr>'
             cols = 0
@@ -548,7 +548,10 @@ def html_format(ret_val, ret_msg, out_obj):
                         print "<td><a href='ls.py?path=%s;flags=%s;output_format=html'>show</a></td><td>DIR</td>"\
                              % (directory['dirname_with_dir'],
                                 dir_listing['flags'])
-                        cols += 2
+                        cols += 1
+                        print "<td><a href='rmdir.py?path=%s;output_format=html'>remove</a></td>"\
+                             % directory['dirname_with_dir']
+                        cols += 1                        
                         print '<td>%s</td>' % directory['name']
                         cols += 1
                         print '<td><br></td>' * (columns - cols)\
@@ -576,6 +579,9 @@ def html_format(ret_val, ret_msg, out_obj):
                                 this_file['file_with_dir'])
                         cols += 1
                         print "<td><a href='editor.py?path=%s;output_format=html'>edit</a></td>"\
+                             % this_file['file_with_dir']
+                        cols += 1
+                        print "<td><a href='rm.py?path=%s;output_format=html'>delete</a></td>"\
                              % this_file['file_with_dir']
                         cols += 1
                         print '<td>%s</td>' % this_file['name']
