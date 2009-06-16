@@ -35,6 +35,7 @@ import base64
 import pickle
 from getpass import getpass
 
+from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.settings import css_template, get_default_css
 
@@ -64,7 +65,7 @@ args = sys.argv[1:]
 app_dir = os.path.dirname(sys.argv[0])
 if not app_dir:
     app_dir = '.'
-conf_path = os.path.join(app_dir, 'MiGserver.conf')
+conf_path = None
 db_path = os.path.join(app_dir, 'MiG-users.db')
 verbose = False
 renew = False
@@ -97,12 +98,15 @@ for (opt, val) in opts:
     else:
         print 'Error: %s not supported!' % opt
 
-if not os.path.isfile(conf_path):
+if conf_path and not os.path.isfile(conf_path):
     print 'Failed to read configuration file: %s' % conf_path
     sys.exit(1)
 
 if verbose:
-    print 'using configuration in %s' % conf_path
+    if conf_path:
+        print 'using configuration in %s' % conf_path
+    else:
+        print 'using configuration from MIG_CONF (or default)'
 
 if user_file and args:
     print 'Only one kind of user specification allowed at a time'
@@ -166,7 +170,12 @@ if not full_name:
     print 'Missing Full Name!'
     sys.exit(1)
 
-configuration = Configuration(conf_path)
+if conf_path:
+    # has been checked for accessibility above...
+    configuration = Configuration(conf_path)
+else:
+    configuration = get_configuration_object()
+
 print 'User name without spaces: %s\n' % full_name_without_spaces
 
 # Update user data base

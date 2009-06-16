@@ -35,7 +35,7 @@ import base64
 import pickle
 
 from shared.configuration import Configuration
-
+from shared.conf import get_configuration_object
 
 def usage(name='deleteuser.py'):
     print """Usage:
@@ -75,7 +75,7 @@ args = sys.argv[1:]
 app_dir = os.path.dirname(sys.argv[0])
 if not app_dir:
     app_dir = '.'
-conf = app_dir + os.sep + 'MiGserver.conf'
+conf = None
 db_file = app_dir + os.sep + 'MiG-users.db'
 verbose = False
 force = False
@@ -107,12 +107,15 @@ for (opt, val) in opts:
     else:
         print 'Error: %s not supported!' % opt
 
-if not os.path.isfile(conf):
+if conf and not os.path.isfile(conf):
     print 'Failed to read configuration file: %s' % conf
     sys.exit(1)
 
 if verbose:
-    print 'using configuration in %s' % conf
+    if conf:
+        print 'using configuration in %s' % conf
+    else:
+        print 'using configuration from MIG_CONF (or default)'
 
 if user_id and args:
     print 'Only one kind of user specification allowed at a time'
@@ -159,7 +162,11 @@ if not full_name:
     print 'Missing Full Name!'
     sys.exit(1)
 
-configuration = Configuration(conf)
+if conf:
+    configuration = Configuration(conf)
+else:
+    configuration = get_configuration_object()
+
 print 'Removing DB entry and dirs for specified user: %s' % full_name
 print 'User name without spaces: %s\n' % full_name_without_spaces
 

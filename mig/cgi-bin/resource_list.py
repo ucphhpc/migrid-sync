@@ -36,7 +36,7 @@ import sys
 import time
 
 from shared.html import get_cgi_html_header
-from shared.configuration import Configuration
+from shared.conf import get_configuration_object
 
 # ## Main ###
 
@@ -45,8 +45,7 @@ cert_no_spaces = cert_name.replace(' ', '_')
 if cert_no_spaces == 'None':
     sys.exit(1)
 
-config_file = '../server/MiGserver.conf'
-configuration = Configuration(config_file)
+configuration = get_configuration_object()
 logger = configuration.logger
 logger.info('Resource list GUI: start')
 

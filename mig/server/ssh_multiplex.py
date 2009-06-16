@@ -41,7 +41,7 @@ import sys
 import threading
 from time import sleep
 
-from shared.conf import get_resource_configuration
+from shared.conf import get_resource_configuration, get_configuration_object
 from shared.configuration import Configuration
 from shared.ssh import execute_on_resource
 
@@ -100,7 +100,7 @@ def graceful_shutdown(signum, frame):
 
 # ## Main ###
 
-configuration = Configuration('MiGserver.conf')
+configuration = get_configuration_object()
 logger = configuration.logger
 
 persistent_hosts = {}

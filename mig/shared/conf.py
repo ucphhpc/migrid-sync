@@ -28,6 +28,7 @@
 """Configuration functions"""
 
 import os
+import sys
 
 from shared.fileio import unpickle
 
@@ -37,7 +38,11 @@ def get_configuration_object():
     if os.environ.get('MIG_CONF', None):
         config_file = os.environ['MIG_CONF']
     else:
-        config_file = '../server/MiGserver.conf'
+        app_dir = os.path.dirname(sys.argv[0])
+        if not app_dir:
+            config_file = '../server/MiGserver.conf'
+        else:
+            config_file = os.path.join(app_dir, '..', 'server', 'MiGserver.conf')
     configuration = Configuration(config_file, False)
     return configuration
 

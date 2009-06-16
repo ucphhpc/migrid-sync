@@ -35,6 +35,7 @@ import sys
 import time
 
 from shared.configuration import Configuration
+from shared.conf import get_configuration_object
 from shared.resource import create_resource, \
     create_new_resource_configuration, remove_resource
 from shared.cgioutput import CGIOutput
@@ -63,8 +64,7 @@ else:
 resource_owner = sys.argv.pop(2).strip()
 resource_name = sys.argv.pop(1).strip().lower()
 
-config_file = 'MiGserver.conf'
-configuration = Configuration(config_file)
+configuration = get_configuration_object()
 logger = configuration.logger
 o = CGIOutput(logger)
 

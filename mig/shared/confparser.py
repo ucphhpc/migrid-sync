@@ -38,9 +38,9 @@ import shared.parser as parser
 import shared.refunctions as refunctions
 from shared.vgrid import vgrid_is_resource
 from shared.configuration import Configuration
+from shared.conf import get_configuration_object
 
-config_file = '../server/MiGserver.conf'
-configuration = Configuration(config_file, False)
+configuration = get_configuration_object()
 
 
 def get_resource_config_dict(config_file):
