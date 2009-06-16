@@ -21,34 +21,59 @@ http://code.google.com/p/migrid/wiki/GettingStarted
 = Installing MiG =
 If you want to run your own MiG server for your own grid or to develop
 MiG you should download and unpack the source code (including this
-file) on a UNIX compatible computer.
+file) on a UNIX compatible computer as described below.
 
 The MiG core services are provided by the MiG daemons from the mig/server
 directory and they can simply be run directly from the unpacked source
 code directory when a suitable server configuration is added.
 
 For the web interfaces to work you will need to run an apache server as
-described in the mig/apache directory. MiG does not include the actual
-Apache web server so you will need to install that using either packages
-provided by your distribution or install it from source. 
+described in the mig/install directory. Grid job handout relies on OpenSSH
+client commands like ssh and scp.
+MiG does not include the actual Apache web server or OpenSSH clients, so
+you will need to install those using either packages provided by your
+distribution or install it from source.
 
 MiG is tested on Debian and Redhat Linux using Apache 1.3 or 2.X with mod-ssl
-respectively but other distribution and apache combinations should also work. 
-MiG relies on apache's mod-ssl for automatic certificate validation and access
-control. Furthermore quite a bit of rewrite rules are used for access
-and convenience so the mod-rewrite apache module is required too.
+respectively but other distribution and apache combinations should also
+work.
+MiG relies on apache's mod-ssl for automatic certificate validation and
+access control. Furthermore quite a bit of rewrite rules are used for
+access and convenience so the mod-rewrite apache module is required
+too.
 
 You can read more about the apache configuration in
 the provided mig/install/README.Debian file.
 
-The server documentation expects the MiG code to run as a separate 'mig'
+This server documentation expects the MiG code to run as a separate 'mig'
 user on the UNIX system, but this is not a requirement. Just modify your
 apache and MiG configurations appropriately if you want to run MiG as a
-different user or with other paths.
+different user or with other paths. 
+It is important to configure apache so that the MiG web interfaces can
+read and write the files created by the MiG daemons and vice versa.
+This may require extra care if the MiG installation and apache runs as
+different system users. If you use the default setup you do not need to
+worry about this.
+
+As root you can create an ordinary user, mig, for running the MiG server:
+# su -
+# useradd -m -U mig 
+
+Login as the new user:
+# su - mig
+
+Download and unpack the MiG source or make a checkout from svn as described on:
+http://code.google.com/p/migrid/source/checkout
+
+At this point it may be comfortable to copy some of the basic
+account configuration files from mig/install/mig-user to ~/ but this is
+not required.
+
+Now you are ready to actually configure your installation.
 The easiest way to do that is to use the configuration generator in 
 mig/install/generateconfs.py to create configurations that match your
 setup.
-For the default settings it could jsut be done as:
+For the default settings it could just be done as:
 cd mig/install/
 ./generateconfs.py
 
@@ -81,7 +106,10 @@ configuration files in the right locations.
 
 == Running a MiG Server ==
 Before you run the MiG daemons you need to have a working configuration for
-your daemons in mig/server/MiGserver.conf .
+your daemons in mig/server/MiGserver.conf or another location you can
+specify in the MIG_CONF environment variable. Please note that if you
+want to use this environment variable, it must be available to *all* MiG
+components to work. 
 You can use the generator as mentioned above or manually modify e.g. the
 localhost example configuration in MiGserver-localhost.conf.
 At any time you can verify the validity of your configuration with the
@@ -99,7 +127,11 @@ All the daemons can be launched from inside the mig/server directory:
 cd /path/to/unpacked/mig/source/mig/server
 python grid_script.py
 
-Each one will keep running until you actively stop it, so you need
+Alternatively they can be launched from other locations as long as the configuration path is provided in the environment:
+export MIG_CONF="/path/to/MiGserver.conf"
+python /path/to/unpacked/mig/source/mig/server/grid_script.py
+
+Each daemon will keep running until you actively stop it, so you need
 individual shell sessions for each daemon.
 
 For testing purposes this interactive execution is fine, but in more
@@ -186,14 +218,10 @@ explanations on each kind of resource and some examples of setups.
 
 
 == Stopping a MiG server ==
-All the daemons can be stopped with ctrl-c but if you run grid_script.py
-in a real grid you should avoid this immediate interrupt as it will
-result in the internal state not being saved and the resulting long
-rebuild on next run.
-The recommended way to stop grid_script in that situation is to send it
-the SHUTDOWN message through the named input pipe defined in the
+All the daemons can be stopped with ctrl-c and most also support a
+SHUTDOWN message through the named input pipe defined in the
 configuration file:
-echo SHUTDOWN >> server.stdin
+echo SHUTDOWN >> /path/to/server.stdin
 
 To completely stop MiG you need to stop all the MiG daemons and the
 apache server.

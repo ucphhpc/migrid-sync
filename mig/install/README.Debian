@@ -2,9 +2,10 @@ Introduction:
 =============
 This document contains some notes about the installation of a MiG server on
 a Debian box. Most of it probably applies to most other UNIX/Linux distributions.
-MiG relies on the Apache web server for all web interfaces and
-optionally the MoinMoin wiki, but apart from that you will only need a
-Python interpreter to run your own grid using the MiG software. 
+MiG relies on the Apache web server for all web interfaces, OpenSSH for the
+job handout and optionally the MoinMoin wiki, but apart from that you
+will only need a Python interpreter to run your own grid using the MiG
+software.
 
 
 Installation and configuration of the MiG server software:

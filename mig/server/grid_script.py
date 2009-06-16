@@ -189,17 +189,14 @@ def graceful_shutdown():
 
 signal.signal(signal.SIGINT, clean_shutdown)
 
-# Use first argument (if given) as path to config file
+print """
+Running main grid 'daemon'.
 
-argc = len(sys.argv)
-if argc > 1:
-    config_file = sys.argv[1]
-elif os.environ.get('MIG_CONF', None):
-    config_file = os.environ['MIG_CONF']
-else:
-    config_file = 'MiGserver.conf'
-print 'using configuration: ' + config_file
-configuration = Configuration(config_file)
+Set the MIG_CONF environment to the server configuration path
+unless it is available in the default path
+mig/server/MiGserver.conf
+"""
+configuration = get_configuration_object()
 logger = configuration.logger
 logger.info('Starting MiG server')
 

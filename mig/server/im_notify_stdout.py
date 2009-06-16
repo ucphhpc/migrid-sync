@@ -40,9 +40,14 @@ print '''This is a dummy MiG IM notification daemon which just prints requests.
 The real notification daemon, im_notify.py, hard codes accounts and thus
 does not support multiple instances. So please only run this dummy daemon and
 *not* the real daemon anywhere but on the main official MiG server.
+
+Set the MIG_CONF environment to the server configuration path
+unless it is available in mig/server/MiGserver.conf
 '''
 
 configuration = get_configuration_object()
+print os.environ.get('MIG_CONF', 'DEFAULT'), configuration.server_fqdn
+
 stdin_path = configuration.im_notify_stdin
 
 try:
@@ -68,6 +73,7 @@ except KeyboardInterrupt:
     keep_running = False
 except Exception, exc:
     print 'could not open IM stdin %s: %s' % (stdin_path, exc)
+    sys.exit(1)
 
 while keep_running:
     try:

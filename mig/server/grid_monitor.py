@@ -28,16 +28,24 @@
 """Creating the MiG monitor page"""
 
 import os
+import sys
 import time
 import datetime
 
-from shared.configuration import Configuration
+from shared.conf import get_configuration_object
 from shared.gridstat import GridStat
 from shared.fileio import unpickle
 from shared.vgrid import vgrid_list_vgrids
 from shared.html import get_cgi_html_header, get_cgi_html_footer
 
-configuration = Configuration('MiGserver.conf')
+print """
+Running grid monitor generator.
+
+Set the MIG_CONF environment to the server configuration path
+unless it is available in mig/server/MiGserver.conf
+"""
+
+configuration = get_configuration_object()
 logger = configuration.logger
 
 # Make sure that the Generic VGrid home used by monitor exists

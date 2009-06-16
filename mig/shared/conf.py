@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# conf - [insert a few words of module description on this line]
+# conf - Server configuration handling
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -27,12 +27,17 @@
 
 """Configuration functions"""
 
+import os
+
 from shared.fileio import unpickle
 
 
 def get_configuration_object():
     from shared.configuration import Configuration
-    config_file = '../server/MiGserver.conf'
+    if os.environ.get('MIG_CONF', None):
+        config_file = os.environ['MIG_CONF']
+    else:
+        config_file = '../server/MiGserver.conf'
     configuration = Configuration(config_file, False)
     return configuration
 
@@ -89,10 +94,3 @@ def get_all_exe_names(unique_resource_name):
         return exe_names
     exe_units = resource_config.get('EXECONFIG', [])
     return [exe['name'] for exe in exe_units]
-
-
-# TODO: retire CamelCase versions once they're no longer used
-
-GetResourceConfiguration = get_resource_configuration
-GetResourceExe = get_resource_exe
-GetResourceAllExes = get_resource_all_exes

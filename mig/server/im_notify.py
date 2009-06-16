@@ -41,12 +41,12 @@ notification handler: At the moment this is an IRC server with
 multiprotocol transports.
 """
 
+import os
 import sys
 import time
 import thread
 import datetime
 import irclib
-import os
 
 from shared.conf import get_configuration_object
 
@@ -303,6 +303,9 @@ python im_notify_stdout.py
 
 To really start this daemon run:
 python im_notify.py i_am_admin_and_on_main_mig_server
+
+Set the MIG_CONF environment to the server configuration path
+unless it is available in mig/server/MiGserver.conf
 '''
     sys.exit(1)
 
@@ -311,6 +314,8 @@ server = 'im.bitlbee.org'
 nickname = 'migdaemon'
 target = '#bitlbee'
 bitlbee_password = 'klapHaT1'
+if len(sys.argv) > 2:
+    os.environ['MIG_CONF'] = sys.argv[2]
 configuration = get_configuration_object()
 stdin_path = configuration.im_notify_stdin
 irc = None
