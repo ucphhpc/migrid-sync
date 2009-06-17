@@ -226,14 +226,6 @@ else:
 
 done_queue = JobQueue(logger)
 
-# start the timer function to check if cputime is exceeded
-
-logger.info('starting time_out_jobs()')
-job_time_out_stop = threading.Event()
-job_time_out_thread = threading.Thread(target=time_out_jobs,
-        args=(job_time_out_stop, ))
-job_time_out_thread.start()
-
 logger.info('starting scheduler ' + configuration.sched_alg)
 if configuration.sched_alg == 'FirstFit':
     from firstfitscheduler import FirstFitScheduler
@@ -303,6 +295,14 @@ check_mrsl_files(configuration, job_queue, executing_queue,
 msg = 'Cleaning up after pending job requests'
 print msg
 remove_jobrequest_pending_files(configuration)
+
+# start the timer function to check if cputime is exceeded
+
+logger.info('starting time_out_jobs()')
+job_time_out_stop = threading.Event()
+job_time_out_thread = threading.Thread(target=time_out_jobs,
+        args=(job_time_out_stop, ))
+job_time_out_thread.start()
 
 msg = 'Starting main loop'
 print msg
