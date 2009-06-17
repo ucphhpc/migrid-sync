@@ -1569,7 +1569,7 @@ for pattern in %s:
             """
         continue
     %s += src_list
-sys.exit(status))
+sys.exit(status)
 """\
              % expanded_list
     else:
