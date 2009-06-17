@@ -54,7 +54,7 @@ try:
     if not os.path.exists(stdin_path):
         print 'creating im_notify input pipe %s' % stdin_path
         try:
-            os.mkfifo(stdin_path, mode=0600)
+            os.mkfifo(stdin_path, 0600)
         except Exception, err:
             print 'Could not create missing IM stdin pipe %s: %s'\
                  % (stdin_path, err)
