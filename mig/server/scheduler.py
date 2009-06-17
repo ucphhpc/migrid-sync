@@ -125,7 +125,7 @@ class Scheduler:
     simple_re = re.compile(simple_expr)
 
     illegal_price = -42.0
-    reschedule_interval = 120
+    reschedule_interval = 600
 
     def __init__(self, logger, config):
         self.conf = config
