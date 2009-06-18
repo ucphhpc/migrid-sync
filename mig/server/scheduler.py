@@ -125,7 +125,7 @@ class Scheduler:
     simple_re = re.compile(simple_expr)
 
     illegal_price = -42.0
-    reschedule_interval = 1800
+    reschedule_interval = 3600
 
     def __init__(self, logger, config):
         self.conf = config
@@ -1617,7 +1617,7 @@ class Scheduler:
             schedule_age = time.time() - schedule_time
 
             # skip (re)schedule if resource isn't new and we recently scheduled job
-            
+
             if schedule_time > request_res.get('FIRST_SEEN', 0) and \
                    schedule_age < self.reschedule_interval:
 
