@@ -1398,6 +1398,12 @@ while True:
         if not details:
             details.append('JOB_ID')
         executing_queue.show_queue(details)
+    elif cap_line.find('DONEQUEUEINFO') == 0:
+        logger.info('--- DISPLAYING DONE QUEUE INFORMATION ---')
+        details = linelist[1:]
+        if not details:
+            details.append('JOB_ID')
+        done_queue.show_queue(details)
     elif cap_line.find('STARTTIMEOUTTHREAD') == 0:
         logger.info('--- STARTING TIME OUT THREAD ---')
         job_time_out_stop.clear()

@@ -1618,7 +1618,7 @@ class Scheduler:
 
             # skip (re)schedule if resource isn't new and we recently scheduled job
             
-            if schedule_time > resource_conf['FIRST_SEEN'] and \
+            if schedule_time > request_res.get('FIRST_SEEN', 0) and \
                    schedule_age < self.reschedule_interval:
 
                 # self.logger.info("cached schedule %s for %s" % \
