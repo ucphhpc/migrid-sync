@@ -46,7 +46,8 @@ from shared.fileio import pickle, unpickle, unpickle_and_change_status, \
 from shared.conf import get_resource_exe
 from shared.gridscript import clean_grid_stdin, \
     remove_jobrequest_pending_files, check_mrsl_files, requeue_job, \
-    server_cleanup, load_queue, save_queue
+    server_cleanup, load_queue, save_queue, load_schedule_cache, \
+    save_schedule_cache
 from shared.resadm import atomic_resource_exe_restart, put_exe_pgid
 from shared.vgrid import default_vgrid
 
@@ -55,6 +56,10 @@ try:
 except ImportError, ime:
     print 'could not import servercomm, probably due to missing pycurl'
     print ime
+
+configuration, logger = None, None
+job_queue, executing_queue, scheduler = None, None, None
+job_time_out_thread, job_time_out_stop = None, None
 
 
 def time_out_jobs(stop_event):
@@ -174,15 +179,19 @@ def graceful_shutdown():
         job_time_out_stop.set()
         # make sure queue gets saved even if timeout thread goes haywire
         job_time_out_thread.join(3)
-        if not save_queue(job_queue, job_queue_path, logger):
+        if job_queue and not save_queue(job_queue, job_queue_path, logger):
             logger.warning('failed to save job queue')
-        if not save_queue(executing_queue, executing_queue_path,
-                          logger):
+        if executing_queue and not save_queue(executing_queue,
+                                              executing_queue_path,
+                                              logger):
             logger.warning('failed to save executing queue')
+        if scheduler and not save_schedule_cache(scheduler.get_cache(),
+                                                 schedule_cache_path,
+                                                 logger):
+            logger.warning('failed to save scheduler cache')
         # Now make sure timeout thread finishes
         job_time_out_thread.join()
-        if configuration.logger_obj:
-            configuration.logger_obj.shutdown()
+        configuration.logger_obj.shutdown()
     except StandardError:
         pass
     sys.exit(0)
@@ -206,9 +215,11 @@ logger.info('Starting MiG server')
 
 # Load queues from file dump if available
 
-job_queue_path = configuration.mig_system_files + 'job_queue.pickle'
-executing_queue_path = configuration.mig_system_files\
-     + 'executing_queue.pickle'
+job_queue_path = os.path.join(configuration.mig_system_files, 'job_queue.pickle')
+executing_queue_path = os.path.join(configuration.mig_system_files,
+                                    'executing_queue.pickle')
+schedule_cache_path = os.path.join(configuration.mig_system_files,
+                                    'schedule_cache.pickle')
 only_new_jobs = True
 job_queue = load_queue(job_queue_path, logger)
 executing_queue = load_queue(executing_queue_path, logger)
@@ -219,12 +230,16 @@ if not job_queue or not executing_queue:
     executing_queue = JobQueue(logger)
 else:
     logger.info('Loaded queues from previous run')
-    job_queue.logger = logger
-    executing_queue.logger = logger
 
 # Always use an empty done queue after restart
 
 done_queue = JobQueue(logger)
+
+schedule_cache = load_schedule_cache(schedule_cache_path, logger)
+if not schedule_cache:
+    logger.warning('Could not load schedule cache from previous run')
+else:
+    logger.info('Loaded schedule cache from previous run')    
 
 logger.info('starting scheduler ' + configuration.sched_alg)
 if configuration.sched_alg == 'FirstFit':
@@ -253,6 +268,8 @@ else:
 
 scheduler.attach_job_queue(job_queue)
 scheduler.attach_done_queue(done_queue)
+if schedule_cache:
+    scheduler.set_cache(schedule_cache)
 
 # redirect grid_stdin to sys.stdin
 

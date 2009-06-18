@@ -83,6 +83,10 @@ class Scheduler:
     resources = None
     res_backlog = 100
 
+    # minimum seconds to keep cache entries after LAST_SEEN (one week)
+
+    cache_ttl = 60 * 60 * 24 * 7
+
     # List of dictionaries representing the known servers.
 
     servers = None
@@ -160,12 +164,31 @@ class Scheduler:
         # Bind supplied job_queue to this scheduler
 
         self.job_queue = job_queue
+        self.update_local_server()
 
     def attach_done_queue(self, done_queue):
 
         # Bind supplied done_queue to this scheduler
 
         self.done_queue = done_queue
+        self.update_local_server()
+
+    def set_cache(self, cache):
+
+        # Bind supplied cache to this scheduler and expire old entries
+
+        (self.servers, self.resources, self.users) = cache
+        for entities in (self.servers, self.resources, self.users):
+            self.expire_entitites(entities)
+        self.update_local_server()
+
+
+    def get_cache(self):
+
+        # Extract cache from this scheduler
+
+        return (self.servers, self.resources, self.users)
+
 
     def server_migrate_cost(self, server_id):
         server_conf = {'SERVER_ID': server_id}
@@ -240,7 +263,7 @@ class Scheduler:
                            % (cur_timestamp, new_timestamp))
         return True
 
-    def outdated_data(self, entity):
+    def outdated_data(self, entity, expire_after):
 
         # Check if entity contains outdated data
 
@@ -253,14 +276,14 @@ class Scheduler:
 
         now = time.time()
 
-        if timestamp + self.conf.expire_peer < now:
+        if timestamp + expire_after < now:
             return True
         elif timestamp > now:
             self.logger.warning('found time in the future! (%f, %f) %s'
                                  % (timestamp, now, entity))
 
-        # self.logger.info("found valid data for entity (%f, %f)" % \
-    #                   timestamp, now)
+        self.logger.info("found valid data for entity (%f, %f)" % \
+                         (timestamp, now))
 
         return False
 
@@ -268,7 +291,7 @@ class Scheduler:
 
         # Never update with outdated data
 
-        if self.outdated_data(new_server):
+        if self.outdated_data(new_server, self.conf.expire_peer):
             self.logger.debug('ignoring stale information for %s'
                                % new_server['SERVER_ID'])
             return False
@@ -326,6 +349,16 @@ class Scheduler:
         server['LAST_SEEN'] = repr(time.time())
         server['TYPE'] = 'server'
         return self.update_servers(server)
+
+    def expire_entitites(self, entities):
+        """Expire entities not seen for a long while"""
+        for (entity_id, entity) in entities.items():
+            if self.outdated_data(entity, self.cache_ttl):
+                self.logger.info('Dropping stale cache data for %s'
+                                 % entity_id)
+                del entities[entity_id]
+            else:
+                self.logger.info("Keeping cache data for %s" % entity_id)
 
     def find_server(self, server_conf):
 
@@ -739,7 +772,7 @@ class Scheduler:
 
             # self.logger.info("remove_stale_data: checking %s" % server_id)
 
-            if self.outdated_data(server):
+            if self.outdated_data(server, self.conf.expire_peer):
                 self.logger.info('Dropping stale data for %s'
                                   % server_id)
                 del self.servers[server_id]
