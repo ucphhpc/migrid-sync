@@ -125,7 +125,7 @@ class Scheduler:
     simple_re = re.compile(simple_expr)
 
     illegal_price = -42.0
-    reschedule_interval = 600
+    reschedule_interval = 1800
 
     def __init__(self, logger, config):
         self.conf = config
@@ -373,18 +373,22 @@ class Scheduler:
 
         # Update entity timestamp
 
+        now = time.time()
         if entity.has_key('QUEUED'):
             server = self.find_server(entity)
-            server['LAST_SEEN'] = time.time()
+            server['FIRST_SEEN'] = server.get('FIRST_SEEN', now)
+            server['LAST_SEEN'] = now
             server['TYPE'] = 'server'
         elif entity.has_key('USER_ID'):
             user = self.find_user(entity)
-            user['LAST_SEEN'] = time.time()
+            user['FIRST_SEEN'] = user.get('FIRST_SEEN', now)
+            user['LAST_SEEN'] = now
             user['SERVER'] = self.conf.mig_server_id
             user['TYPE'] = 'user'
         elif entity.has_key('CPUCOUNT'):
             resource = self.find_resource(entity)
-            resource['LAST_SEEN'] = time.time()
+            resource['FIRST_SEEN'] = resource.get('FIRST_SEEN', now)
+            resource['LAST_SEEN'] = now
             resource['SERVER'] = self.conf.mig_server_id
             resource['TYPE'] = 'resource'
             resource['LAST_LOAD'] = resource['LOAD']
@@ -1302,9 +1306,9 @@ class Scheduler:
     def filter_jobs(self, resource_conf={}):
         """Filter jobs in queue as part of job migration planning"""
 
-        # price_filter includes fitness filter
+        # schedule_filter includes fitness filter
 
-        self.price_filter(resource_conf)
+        self.schedule_filter(resource_conf)
 
     def thrashing_penalty(self, job, res):
         """Penalize already migrated jobs to avoid thrashing"""
@@ -1562,7 +1566,7 @@ class Scheduler:
 
         return best
 
-    def price_filter(self, resource_conf={}):
+    def schedule_filter(self, resource_conf={}):
         """Filter all local jobs and mark any jobs for
         migration if they are better fit for being
         executed somewhere else.
@@ -1609,8 +1613,13 @@ class Scheduler:
             last_scheduled = job.get('SCHEDULE_TIMESTAMP', 0.0)
             if isinstance(last_scheduled, float):
                 last_scheduled = time.gmtime(0)
-            if time.time() - calendar.timegm(last_scheduled)\
-                 < self.reschedule_interval:
+            schedule_time = calendar.timegm(last_scheduled)
+            schedule_age = time.time() - schedule_time
+
+            # skip (re)schedule if resource isn't new and we recently scheduled job
+            
+            if schedule_time > resource_conf['FIRST_SEEN'] and \
+                   schedule_age < self.reschedule_interval:
 
                 # self.logger.info("cached schedule %s for %s" % \
                 #                 (job["SCHEDULE_HINT"], job_id))
