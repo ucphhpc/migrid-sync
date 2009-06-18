@@ -156,6 +156,14 @@ def count_jobs(resource_name):
     value = grid_stat.get_value(grid_stat.RESOURCE_TOTAL, resource_name, 'FINISHED')
     return value
 
+def sum_walltime(resource_name):
+    """Sum total walltime used by jobs executed by given resource"""
+
+    # grid_stat.update()
+
+    value = grid_stat.get_value(grid_stat.RESOURCE_TOTAL, resource_name, 'USED_WALLTIME')
+    return value
+
 
 def show_info(user, passwd, expert):
     """Shows info for given user"""
@@ -165,18 +173,37 @@ def show_info(user, passwd, expert):
     html = \
         """<H1>Sandbox Administration and Monitor</H1>
     <table class=monitor>
-    <tr class=title><td align='center' colspan='2'>
-    Your SSS sandbox resources and their finished job counters
-    </td></tr>"""
+    <tr class=title><td align='center' colspan='3'>
+    Your SSS sandbox resources and their individual job statistics
+    </td>
+    </tr>
+    <tr>
+    <td align='center'>
+    Resource
+    </td>
+    <td align='center'>
+    Jobs
+    </td>
+    <td align='center'>
+    Walltime
+    </td>
+    </tr>
+    
+    """
 
     for resource in userdb[user][RESOURCES]:
 
         # now find number of jobs successfully executed by resource
 
         jobs = count_jobs(resource)
+        walltime = sum_walltime(resource)
         html += \
-            """<tr><td align='center'>%s</td><td align='center'> %s jobs</td></tr>"""\
-             % (resource, jobs)
+            """<tr>
+<td align='center'>%s</td>
+<td align='center'>%s</td>
+<td align='center'>%s</td>
+</tr>"""\
+             % (resource, jobs, walltime)
     if len(userdb[user][RESOURCES]) == 0:
         html += \
             """<tr><td align='center'>You haven't downloaded any
