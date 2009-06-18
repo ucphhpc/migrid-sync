@@ -177,8 +177,10 @@ def graceful_shutdown():
     try:
         logger.info('graceful_shutdown called')
         job_time_out_stop.set()
+        print 'graceful_shutdown: giving time out thread a chance to terminate'
         # make sure queue gets saved even if timeout thread goes haywire
-        job_time_out_thread.join(3)
+        job_time_out_thread.join(5)
+        print 'graceful_shutdown: saving state'
         if job_queue and not save_queue(job_queue, job_queue_path, logger):
             logger.warning('failed to save job queue')
         if executing_queue and not save_queue(executing_queue,
@@ -189,6 +191,7 @@ def graceful_shutdown():
                                                  schedule_cache_path,
                                                  logger):
             logger.warning('failed to save scheduler cache')
+        print 'graceful_shutdown: saved state; now blocking for time out thread'
         # Now make sure timeout thread finishes
         job_time_out_thread.join()
         configuration.logger_obj.shutdown()

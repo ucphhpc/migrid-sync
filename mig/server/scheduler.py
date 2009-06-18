@@ -129,7 +129,7 @@ class Scheduler:
     simple_re = re.compile(simple_expr)
 
     illegal_price = -42.0
-    reschedule_interval = 3600
+    reschedule_interval = 1800
 
     def __init__(self, logger, config):
         self.conf = config
@@ -282,8 +282,8 @@ class Scheduler:
             self.logger.warning('found time in the future! (%f, %f) %s'
                                  % (timestamp, now, entity))
 
-        self.logger.info("found valid data for entity (%f, %f)" % \
-                         (timestamp, now))
+        #self.logger.info("found valid data for entity (%f, %f)" % \
+        #                 (timestamp, now))
 
         return False
 
@@ -1616,7 +1616,7 @@ class Scheduler:
         resource for migration.
         """
 
-        self.logger.info('running price filter on queue (%s)'
+        self.logger.info('running schedule filter on queue (%s)'
                           % resource_conf)
         local_jobs = self.job_queue.queue_length()
 
