@@ -33,6 +33,17 @@ import tempfile
 from shared.conf import get_resource_exe, get_configuration_object
 
 
+def default_ssh_options():
+    """Default list of options for ssh connections"""
+    options = []
+    options.append('-o BatchMode=yes')
+
+    # We need fault tolerance but can't block e.g. grid_script for long
+
+    options.append('-o ConnectionAttempts=2')
+    options.append('-o ConnectTimeout=10')
+    return options
+    
 def copy_file_to_resource(
     filename,
     dest_path,
@@ -80,18 +91,12 @@ def copy_file_to_resource(
         logger.error('could not write single_known_hosts %s (%s)'
                       % (host, err))
 
-    options = []
+    options = default_ssh_options()
     if '0' != multiplex:
         options.append('-o ControlPath=%s/ssh-multiplexing' % res_dir)
     options.append('-o Port=%s' % port)
     options.append('-o StrictHostKeyChecking=yes')
-    options.append('-o BatchMode=yes')
     options.append('-o CheckHostIP=yes')
-
-    # We need fault tolerance but can't block e.g. grid_script for long
-
-    options.append('-o ConnectionAttempts=2')
-    options.append('-o ConnectTimeout=10')
     if hostkey:
         options.append('-o UserKnownHostsFile=' + key_path)
 
@@ -268,7 +273,7 @@ def execute_on_resource(
         logger.error('could not write tmp host key file (%s)' % err)
         return (-1, '')
 
-    options = []
+    options = default_ssh_options()
 
     # Only enable X forwarding for interactive resources (i.e. job_type
     # 'interactive' or 'all')
@@ -276,14 +281,9 @@ def execute_on_resource(
     if 'batch' != job_type.lower():
         options.append('-X')
     options.append('-o Port=%s' % port)
-    options.append('-o BatchMode=yes')
     options.append('-o CheckHostIP=yes')
     options.append('-o StrictHostKeyChecking=yes')
 
-    # We need fault tolerance but can't block e.g. grid_script for long
-
-    options.append('-o ConnectionAttempts=2')
-    options.append('-o ConnectTimeout=10')
     if hostkey:
         options.append('-o UserKnownHostsFile=%s' % key_path)
 
@@ -326,7 +326,6 @@ def execute_on_resource(
     logger.debug('Remote execution ok: %s' % ssh_command)
     return (status, ssh_command)
 
-
 def execute_on_exe(
     command,
     background,
@@ -338,14 +337,8 @@ def execute_on_exe(
 
     node = exe_config['execution_node']
     user = exe_config['execution_user']
-    options = []
+    options = default_ssh_options()
     options.append('-X')
-    options.append('-o BatchMode=yes')
-
-    # We need fault tolerance but can't block e.g. grid_script for long
-
-    options.append('-o ConnectionAttempts=2')
-    options.append('-o ConnectTimeout=10')
     batch = []
     batch.append('1> /dev/null')
     batch.append('2> /dev/null')

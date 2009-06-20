@@ -56,6 +56,7 @@ from shared.refunctions import list_runtime_environments, \
     get_active_re_list
 from shared.cgishared import init_cgi_script_with_cert
 from shared.notification import send_resource_create_request_mail
+from shared.ssh import default_ssh_options
 from shared.vgrid import user_allowed_vgrids
 
 
@@ -69,9 +70,9 @@ def get_local_execute_command(dir, node, name='master'):
 
 
 def get_default_execute_command(execution_dir, execution_node):
-    return r'ssh ' + execution_node + ' \\"'\
-         + get_local_execute_command(execution_dir, execution_node)\
-         + ' \\" '
+    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()), execution_node,
+                                    get_local_execute_command(execution_dir,
+                                                              execution_node))
 
 
 def get_local_status_command(dir, node, name='master'):
@@ -89,8 +90,7 @@ def get_local_status_command(dir, node, name='master'):
 
 def get_default_status_command(execution_dir, execution_node):
     pgid_file = execution_dir + 'job.pgid'
-    return r'ssh ' + execution_node\
-         + r' \"MIG_EXE_PGID=$mig_exe_pgid ; if [ \\\\\\`ps -o pid= -g \\\\\\$MIG_EXE_PGID | wc -l \\\\\\` -eq 0 ]; then exit 1; else exit 0;fi \"'
+    return r'ssh %s %s  \"MIG_EXE_PGID=$mig_exe_pgid ; if [ \\\\\\`ps -o pid= -g \\\\\\$MIG_EXE_PGID | wc -l \\\\\\` -eq 0 ]; then exit 1; else exit 0;fi \"' % (' '.join(default_ssh_options()), execution_node)
 
 
 def get_local_stop_command(dir, node, name='master'):
@@ -107,8 +107,9 @@ def get_local_stop_command(dir, node, name='master'):
 
 
 def get_default_stop_command(execution_dir, execution_node):
-    return r'ssh ' + execution_node + ' \\"'\
-         + get_local_stop_command(execution_dir, execution_node) + '\\"'
+    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()), execution_node,
+                                    get_local_stop_command(execution_dir,
+                                                              execution_node))
 
 
 def get_local_clean_command(dir, node, name='master'):
@@ -125,9 +126,9 @@ def get_local_clean_command(dir, node, name='master'):
 
 
 def get_default_clean_command(execution_dir, execution_node):
-    return r'ssh ' + execution_node + ' \\"'\
-         + get_local_clean_command(execution_dir, execution_node)\
-         + '\\"'
+    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()), execution_node,
+                                    get_local_clean_command(execution_dir,
+                                                              execution_node))
 
 
 def get_default_vgrid():
