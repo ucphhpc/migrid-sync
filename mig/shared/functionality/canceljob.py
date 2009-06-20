@@ -123,7 +123,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     # job cancel is hard on the server, limit
 
-    if len(filelist) > 100:
+    if len(filelist) > 500:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Too many matching jobs (%s)!'
                                % len(filelist)})

@@ -1641,10 +1641,14 @@ class Scheduler:
             job = self.job_queue.get_job(i)
             job_id = job['JOB_ID']
 
+            job['SCHEDULE_TIMESTAMP'] = job.get('SCHEDULE_TIMESTAMP', None)
+            job['SCHEDULE_HINT'] = job.get('SCHEDULE_HINT', 'UNSET')
+            job['SCHEDULE_TARGETS'] = job.get('SCHEDULE_TARGETS', [])
+
             # backwards compatible timestamp extraction (was float before)
 
-            last_scheduled = job.get('SCHEDULE_TIMESTAMP', 0.0)
-            if isinstance(last_scheduled, float):
+            last_scheduled = job['SCHEDULE_TIMESTAMP']
+            if not last_scheduled or isinstance(last_scheduled, float):
                 last_scheduled = time.gmtime(0)
             schedule_time = calendar.timegm(last_scheduled)
             schedule_age = time.time() - schedule_time
@@ -1688,10 +1692,11 @@ class Scheduler:
                 #                  best["equiv"]))
 
                 job['SCHEDULE_HINT'] = 'GO'
-                job['SCHEDULE_TARGETS'] = [best['id']] + best['equiv']
-                job['EXEC_PRICE'] = best['price']
-                job['EXEC_DIFF'] = best['diff']
-                job['EXEC_RAWDIFF'] = best['raw']
+
+            job['SCHEDULE_TARGETS'] = [best['id']] + best['equiv']
+            job['EXEC_PRICE'] = best['price']
+            job['EXEC_DIFF'] = best['diff']
+            job['EXEC_RAWDIFF'] = best['raw']
 
         return True
 

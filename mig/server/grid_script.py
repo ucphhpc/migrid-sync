@@ -457,7 +457,7 @@ while True:
 
         # update and save schedule
 
-        for field in ['SCHEDULE_TIMESTAMP', 'SCHEDULE_HINT']:
+        for field in ['SCHEDULE_TIMESTAMP', 'SCHEDULE_HINT', 'SCHEDULE_TARGETS']:
             if job_dict.has_key(field):
                 dict_serverjob[field] = job_dict[field]
                 logger.info('Job %s updated to %s' % (field,
