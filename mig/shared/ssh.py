@@ -158,7 +158,7 @@ def copy_file_to_exe(
 
     # copy file to frontend
 
-    copy_attempts = 5
+    copy_attempts = 3
     for attempt in range(copy_attempts):
         copy_status = copy_file_to_resource(local_filename, dest_path,
                 resource_config, logger)
@@ -194,12 +194,13 @@ def copy_file_to_exe(
         # We do not have exe host keys and don't really care about auth there
 
         ssh_command = \
-            'scp -o ConnectTimeout=10 -o ConnectionAttempts=2 ' + ' '\
-             + os.path.join(resource_config['RESOURCEHOME'], dest_path)\
-             + ' ' + exe['execution_user'] + '@' + +exe['execution_node'
-                ] + ':' + exe['execution_dir']
+            'scp %s %s %s@%s:%s' % (' '.join(default_ssh_options()),
+                                    os.path.join(resource_config['RESOURCEHOME'],
+                                                 dest_path),
+                                    exe['execution_user'], exe['execution_node'],
+                                    exe['execution_dir'])
 
-    copy_attempts = 5
+    copy_attempts = 3
     for attempt in range(copy_attempts):
         (status, executed_command) = execute_on_resource(ssh_command,
                 False, resource_config, logger)
