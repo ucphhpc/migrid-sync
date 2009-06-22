@@ -1,25 +1,27 @@
+/* MiG default style sheet */
+
 body {
-	background: #ccc;
+  background: #ccc;
   background: transparent url('/images/pattern.png');
-	color: #000;
-	font-family: verdana, helvetica, serif, times;
-	margin: 0;
-	padding: 0;
-	font-size: 13px;
+  color: #000;
+  font-family: verdana, helvetica, serif, times;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
 }
 
 a {
-	color: #0b76AE;
-	text-decoration: none;
+  color: #0b76AE;
+  text-decoration: none;
 }
 
 a:hover, a:active {
-	color: #000;
-	text-decoration: underline;
+  color: #000;
+  text-decoration: underline;
 }
 
 img {
-	border:  0;
+  border:  0;
 }
 
 h1 {
@@ -47,8 +49,8 @@ h3 {
 }
 
 div.container {
-	width: 98%;
-	margin: 1%;
+  width: 98%;
+  margin: 1%;
 }
 
 th {
@@ -69,13 +71,13 @@ tfoot {
 
 
 table {
-        background: #eef;
-       	color: #000;
-	margin-right: auto;
-	margin-left: auto;
-	text-align: left;
-	border: 1px solid #000;
-	width: 100%;
+  background: #eef;
+  color: #000;
+  margin-right: auto;
+  margin-left: auto;
+  text-align: left;
+  border: 1px solid #000;
+  width: 100%;
 }
 
 table.submitstatus {}
@@ -86,22 +88,22 @@ table.stats {}
 table.wc {}
 
 table.jobs {
-	padding: 2px;
+  padding: 2px;
 }
 table.resubmit {}
 table.changedstatusjobs {}
 table.saveschedulejobs {}
 
 table.vgrids {
-	padding: 2px;
+  padding: 2px;
 }
 
 table.resources {
-	padding: 2px;
-	text-align: left;
+  padding: 2px;
+  text-align: left;
 }
 table.sandboxlogintext {
-	width: 80%;
+  width: 80%;
 }
 table.sandboxlogin {}
 table.sandboxinfo {}
@@ -109,39 +111,39 @@ table.sandboxcreateimg {}
 
 
 table.downloads {
-	text-align: center;
+  text-align: center;
 }
 
 table.runtimeenvs {
-	padding: 2px;
+  padding: 2px;
 }
 
 table.runtimeenvdetails {
-	padding: 2px;
+  padding: 2px;
 }
 table.runtimeenvsw {
-	border: 0px solid #000;
+  border: 0px solid #000;
 }
 table.runtimeenventry {
-	border: 0px solid #000;
+  border: 0px solid #000;
 }
 table.runtimeenvvars {
-	border: 0px solid #000;
+  border: 0px solid #000;
 }
 
 table.monitor {
-	font-size: 10px;
-	border-collapse: collapse;
+  font-size: 10px;
+  border-collapse: collapse;
 }
 table.monitorstats {}
 table.monitorjobs {
-	border: 0px solid #000;
+  border: 0px solid #000;
 }
 table.monitorresreq {
-	border: 0px solid #000;
+  border: 0px solid #000;
 }
 table.monitorruntimeenvreq {
-	border: 0px solid #000;
+  border: 0px solid #000;
 }
 
 
@@ -155,19 +157,19 @@ table.monitorruntimeenvreq {
 }
 
 .navmenu ul {
-	margin: 0;
-	padding: 0px 0px 9px 7px;
+  margin: 0;
+  padding: 0px 0px 9px 7px;
 }
 
 .navsubmenu ul {
-        margin: 0;
-        padding: 0;
-        margin-top: -10px;
+  margin: 0;
+  padding: 0;
+  margin-top: -10px;
 }
 
 .navmenu ul li, .navsubmenu ul li {
-        margin-top: 10px;       
-        list-style-type: none;
+  margin-top: 10px;       
+  list-style-type: none;
 }
 
 .navmenu ul li.dashboard a {
@@ -205,20 +207,20 @@ table.monitorruntimeenvreq {
 }
 
 .navmenu ul li a:hover, .navsubmenu ul li a:hover {     
-        background-color: #369;
-        color: white;
+  background-color: #369;
+  color: white;
 }
 
 .navmenu ul  li a.selected {    
-        background-color: #147;
-        color: white;
+  background-color: #147;
+  color: white;
 }
 
 .navmenu ul li a, .navsubmenu ul li a {
-        -moz-border-radius:4px;
+  -moz-border-radius:4px;
   display: block;
-        
-        background-repeat: no-repeat;
+  
+  background-repeat: no-repeat;
   background-image: url('/images/icons/bullet_black.png');
   background-position: 5px 50%;
   
@@ -228,21 +230,21 @@ table.monitorruntimeenvreq {
   font-weight:bold;
   padding:3px 5px 3px 24px;
   text-decoration:none;
-        background-color: rgb(100,100,100);
+  background-color: rgb(100,100,100);
 
   margin-right: 10px;
 }
 
 .navsubmenu ul li a {
-        display: inline;
-        float: left;
+  display: inline;
+  float: left;
 }
 
 
 /* Used in one place... maybe that place should be fixed? to use h1 instead */
 #migheader {
-	font-size:28px;
-	border: 0;
+  font-size:28px;
+  border: 0;
   -moz-border-radius: 4px;
   margin-top: 5px;
   
@@ -283,10 +285,15 @@ table.monitorruntimeenvreq {
 
 .migtable {
   border: 1px solid darkgrey;
-	width: 100%;
-	border-spacing: 0;
+  width: 100%;
+  border-spacing: 0;
 }
 
+#exitcode {
+  font-family: Small Fonts, VT100, Arial, Helvetica;
+  font-size: 8px;
+  color: #333;
+}
 #bottomspace {
   padding: 10px;
 }
@@ -307,13 +314,13 @@ table.monitorruntimeenvreq {
 }
 
 #credits a {
-	color: white;
+  color: white;
 }
 
 #content {
-	background: white;
-	border: 1px solid black;
-	-moz-border-radius: 4px;
+  background: white;
+  border: 1px solid black;
+  -moz-border-radius: 4px;
   margin: 5px;
   margin-left: 155px;
   padding: 8px; 
@@ -322,75 +329,75 @@ table.monitorruntimeenvreq {
 .migcontent {}
 
 .rawtext {
-	background: #fff;
-	border: 0;
-	padding: 5px;
-	text-align: left;
+  background: #fff;
+  border: 0;
+  padding: 5px;
+  text-align: left;
 }
 
 .smallcontent{
-	font-size: 10px;
+  font-size: 10px;
 }
 
 .subsection{
-	background: #ccc;
-	padding: 5px;
-	border:  0;
-	font-size:17px;
-	font-weight:bold;
+  background: #ccc;
+  padding: 5px;
+  border:  0;
+  font-size:17px;
+  font-weight:bold;
   color: red;
-	-moz-border-radius: 4px;
+  -moz-border-radius: 4px;
 }
 
 .lefttext {
-	text-align: left;
+  text-align: left;
 }
 
 .centertext {
-	text-align: center;
+  text-align: center;
 }
 
 .righttext {
-	text-align: right;
+  text-align: right;
 }
 
 .centerall {
-	margin: 0;
-	text-align: center;
+  margin: 0;
+  text-align: center;
 }
 
 .title {
-	font-weight: bold;
+  font-weight: bold;
 }
 
 .errortext {
-	color: red;
+  color: red;
 }
 
 .warningtext {
-	color: orange;
+  color: orange;
 }
 
 .even_row {
-        background: #eef;
+  background: #eef;
 }
 
 .odd_row {
-	background: #ddf;
+  background: #ddf;
 }
 
 .status_unavailable {
-	color: grey;
+  color: grey;
 }
 
 .status_online {
-	color: green;
+  color: green;
 }
 
 .status_slack {
-	color: orange;
+  color: orange;
 }
 
 .status_offline {
-	color: red;
+  color: red;
 }
