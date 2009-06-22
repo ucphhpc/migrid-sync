@@ -667,7 +667,7 @@ def html_format(ret_val, ret_msg, out_obj):
             if len(sandboxinfos) == 0:
                 print 'No sandboxes found!'
             else:
-                print '<table class="sandboxinfo"><th>Username</th><th>Resource</th><th>Jobs</th><th>Walltime</th></tr>'
+                print '<table class="sandboxinfo"><th>Username</th><th>Resource(s)</th><th>Jobs</th><th>Walltime</th></tr>'
                 for sandboxinfo in sandboxinfos:
                     print '<tr>%s</tr>'\
                          % html_table_if_have_keys(sandboxinfo,

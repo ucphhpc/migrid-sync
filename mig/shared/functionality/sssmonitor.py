@@ -37,7 +37,7 @@ from shared.sandbox import load_sandbox_db
 def signature():
     """Signature of the main function"""
 
-    defaults = {'show_all': [''], 'sort': ['']}
+    defaults = {'show_all': [''], 'sort': [''], 'group_by': ['']}
     return ['sandboxinfos', defaults]
 
 
@@ -56,6 +56,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     show_all = accepted['show_all'][-1].lower()
     sort = accepted['sort'][-1]
+    group_by = accepted['group_by'][-1].lower()
 
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Screen Saver Sandbox Monitor'})
@@ -87,9 +88,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
     total_jobs = 0
     for username in userdb:
         resources_jobs = {}
-        resources_walltime = {}
+
         jobs_per_resource = 0
         jobs_per_user = 0
+        
+        resources_walltime = {}
+        walltime_per_resource = datetime.timedelta(0)
+        walltime_per_user = datetime.timedelta(0)
 
         # loop through all resources of each user
 
@@ -102,18 +107,36 @@ def main(cert_name_no_spaces, user_arguments_dict):
             n = {resource: jobs_per_resource}
             resources_jobs.update(n)
         
-            resource_walltime = grid_stat.get_value(grid_stat.RESOURCE_TOTAL, resource, 
+            walltime_per_resource = grid_stat.get_value(grid_stat.RESOURCE_TOTAL, resource, 
                                                     'USED_WALLTIME')
 
-            n = {resource: resource_walltime}
+            if walltime_per_resource != 0:
+                if not walltime_per_user:
+                    walltime_per_user = walltime_per_resource
+                else:
+                    walltime_per_user += walltime_per_resource
+                
+            n = {resource: walltime_per_resource}
             resources_walltime.update(n)
-
+            
+            
         # if level == "basic":
             # print username,":", jobs_per_user, "jobs"
         # else:
             # print "---- ", username, " ----"
 
-        if jobs_per_user > 0 or show_all == 'true':
+        if group_by == 'users' and (jobs_per_user > 0 or show_all == 'true'):
+            sandboxinfo = {'object_type': 'sandboxinfo'}
+            sandboxinfo['username'] = username
+            sandboxinfo['resource'] = len(userdb[username][RESOURCES])
+            sandboxinfo['jobs'] = jobs_per_user
+            sandboxinfo['walltime'] = walltime_per_user 
+            # print "<tr><td>%s</td><td>%s jobs</td></tr>" % (res, resources[res])
+            # print res,":", resources[res], "jobs"
+            
+            sandboxinfos.append(sandboxinfo)
+            
+        elif jobs_per_user > 0 or show_all == 'true':
 
             # print "<tr><td colspan='2'><h2>%s</h2></td></tr>" % username
 
@@ -145,7 +168,12 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         # sort by numerical resource ID
 
-        sandboxinfos.sort(cmp=lambda a, b: cmp(int(a['resource'
+        if group_by == 'users':
+            sandboxinfos.sort(cmp=lambda a, b: cmp(int(b['resource']),
+                                                   int(a['resource'])))
+
+        else:
+            sandboxinfos.sort(cmp=lambda a, b: cmp(int(a['resource'
                           ].lower().replace('sandbox.', '')),
                           int(b['resource'].lower().replace('sandbox.',
                           ''))))
@@ -169,15 +197,35 @@ def main(cert_name_no_spaces, user_arguments_dict):
         # do not sort
 
         pass
+    
+    # Sort
     output_objects.append({'object_type': 'verbatim', 'text'
                           : 'Sort by: '})
+
     link_list = []
     for name in ('username', 'resource', 'jobs', 'walltime'):
         link_list.append({'object_type': 'link', 'destination'
-                         : '?sort=%s' % name, 'text': '%s'
+                         : '?sort=%s&group_by=%s' % (name, group_by), 'text': '%s'
                           % name.capitalize()})
+                          
     output_objects.append({'object_type': 'multilinkline', 'links'
                           : link_list})
+                          
+    # Group                          
+    output_objects.append({'object_type': 'text', 'text': ''})
+    output_objects.append({'object_type': 'verbatim', 'text'
+                          : 'Show: '})
+                          
+    link_list = []
+    for name in ('resources', 'users'):
+        link_list.append({'object_type': 'link', 'destination'
+                         : '?sort=%s&group_by=%s' % (sort, name), 'text': '%s'
+                          % name.capitalize()})
+                          
+    output_objects.append({'object_type': 'multilinkline', 'links'
+                          : link_list})
+
+                          
     output_objects.append({'object_type': 'text', 'text': ''})
 
     output_objects.append({'object_type': 'sandboxinfos', 'sandboxinfos'
