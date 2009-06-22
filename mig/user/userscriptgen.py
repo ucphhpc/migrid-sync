@@ -1098,7 +1098,7 @@ def status_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'job_status', ['job_list'])
+    s += begin_function(lang, 'job_status', ['job_list', 'max_job_count'])
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -2403,7 +2403,7 @@ while [ \"$#\" -gt \"0\" ]; do
     job_id_list=\"$job_id_list;job_id=$1\"
     shift
 done
-job_status $job_id_list
+job_status $job_id_list $max_job_count
 """
     elif lang == 'python':
         s += \
@@ -2411,7 +2411,7 @@ job_status $job_id_list
 # Build the job_id_list string used in wild card expansion:
 # 'job_id="$1";job_id="$2";...;job_id=$N'
 job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[1:])
-(status, out) = job_status(job_id_list)
+(status, out) = job_status(job_id_list, max_job_count)
 for line in out:
     print line.strip()
 sys.exit(status)
