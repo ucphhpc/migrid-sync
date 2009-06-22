@@ -28,12 +28,10 @@
 """Notification functions"""
 
 import os
-import fcntl
 import smtplib
 import threading
 
 from shared.validstring import is_valid_email_address
-from shared.configuration import Configuration
 from shared.fileio import unpickle
 from shared.settings import load_settings
 
@@ -288,8 +286,8 @@ def notify_user(
 
                 # read from personal settings
 
-                settings_dict = load_settings(configuration,
-                        jobdict['USER_CERT'])
+                settings_dict = load_settings(jobdict['USER_CERT'],
+                                              configuration)
                 if not settings_dict\
                      or not settings_dict.has_key(protocol.upper()):
                     logger.info('Settings dict does not have %s key'
@@ -350,26 +348,20 @@ def notify_user(
             elif is_valid_email_address(notify_line, logger):
                 all_dest.append(notify_line)
 
-        # send mails
+            # send mails
 
             for single_dest in all_dest:
                 logger.info('email destination %s' % single_dest)
 
-        # verify specified address is valid
+                # verify specified address is valid
 
                 if not is_valid_email_address(single_dest, logger):
                     logger.info('%s is NOT a valid email address!'
                                  % single_dest)
 
-            # not a valid email address
+                    # not a valid email address
 
                     continue
-
-        # elif is_valid_email_address(notify_line, logger):
-            # recipients = notify_line
-            # else:
-            # not a valid email address
-            # continue
 
                 if send_email(single_dest, header, message, logger,
                               configuration):

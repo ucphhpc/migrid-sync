@@ -290,7 +290,10 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
             path_string = ''
             for path in job_dict['OUTPUTFILES']:
-                path_string += 'path=%s;' % path
+                # OUTPUTFILES is either just combo path or src dst paths
+                parts = path.split()
+                # Always take last part as destination 
+                path_string += 'path=%s;' % parts[-1]
 
             job_obj['outputfileslink'] = {'object_type': 'link',
                     'destination': '/cgi-bin/ls.py?%s' % path_string,
