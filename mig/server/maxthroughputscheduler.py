@@ -58,14 +58,14 @@ class MaxThroughputScheduler(Scheduler):
         for scheduling.
         """
 
-        self.logger.debug('schedule: %s', self.name)
+        self.logger.debug('schedule: %s' % self.name)
 
         qlen = self.job_queue.queue_length()
         if qlen == 0:
             self.logger.info('schedule: no jobs in queue')
             return None
 
-        self.logger.info('schedule: %d job(s) in queue', qlen)
+        self.logger.info('schedule: %d job(s) in queue' % qlen)
 
         # First gather all jobs that fits resource to minimize
         # search space
@@ -80,8 +80,8 @@ class MaxThroughputScheduler(Scheduler):
             for (key, val) in must_match.items():
                 if not job.has_key(key) or val != job[key]:
                     continue
-            self.logger.debug('Schedule treating job %d: %s', i,
-                              job['JOB_ID'])
+            self.logger.debug('Schedule treating job %d: %s' % \
+                              (i, job['JOB_ID']))
             if self.job_fits_resource(job, resource_conf):
                 self.logger.debug('schedule: found suitable job')
                 fit_list.append((i, job))
@@ -90,7 +90,7 @@ class MaxThroughputScheduler(Scheduler):
 
             # No job was found that can be executed on the resource
 
-            self.logger.info('schedule: found no suitable job for %s',
+            self.logger.info('schedule: found no suitable job for %s' % \
                              resource_conf['HOSTURL'])
             return None
 
@@ -98,7 +98,7 @@ class MaxThroughputScheduler(Scheduler):
         best_fitness = -1
         best_i = -1
         for (i, job) in fit_list:
-            self.logger.debug('schedule: %s', job['JOB_ID'])
+            self.logger.debug('schedule: %s' % job['JOB_ID'])
             job_fitness = int(job['CPUTIME'])
             if job_fitness < best_fitness or best_fitness < 0:
                 best_job = job
@@ -108,8 +108,8 @@ class MaxThroughputScheduler(Scheduler):
         self.job_queue.dequeue_job(best_i)
         self.update_history(job, resource_conf)
 
-        self.logger.info('schedule: returning best job: %s %d %f',
-                         best_job['JOB_ID'], best_i, best_fitness)
+        self.logger.info('schedule: returning best job: %s %d %f' % \
+                         (best_job['JOB_ID'], best_i, best_fitness))
         return best_job
 
 

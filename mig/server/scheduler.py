@@ -130,6 +130,8 @@ class Scheduler:
 
     illegal_price = -42.0
     reschedule_interval = 1800
+    __schedule_fields = ("SCHEDULE_TIMESTAMP", "SCHEDULE_HINT",
+                         "SCHEDULE_TARGETS")
 
     def __init__(self, logger, config):
         self.conf = config
@@ -1599,6 +1601,26 @@ class Scheduler:
 
         return best
 
+    def fill_schedule(self, job, default=None):
+        """Fill in any missing scheduling fields in job"""
+        for field in self.__schedule_fields:
+            job[field] = job.get(field, default)
+        return job
+                
+    def copy_schedule(self, src, dst):
+        """Copy schedule fields from src to dst job"""
+        for field in self.__schedule_fields:
+            if src.has_key(field):
+                dst[field] = src[field]
+        return dst
+                
+    def clear_schedule(self, job=None):
+        """Remove any scheduling fields from job - used e.g. after time outs"""
+        for field in self.__schedule_fields:
+            if job.has_key(field):
+                del job[field]
+        return job
+                
     def schedule_filter(self, resource_conf={}):
         """Filter all local jobs and mark any jobs for
         migration if they are better fit for being
@@ -1636,14 +1658,15 @@ class Scheduler:
         # Use previously collected resource statuses for price directed
         # migration
 
+        now = time.time()
+        first_request = request_res.get('FIRST_SEEN', now)
+
         for i in range(local_jobs):
             best = None
             job = self.job_queue.get_job(i)
             job_id = job['JOB_ID']
 
-            job['SCHEDULE_TIMESTAMP'] = job.get('SCHEDULE_TIMESTAMP', None)
-            job['SCHEDULE_HINT'] = job.get('SCHEDULE_HINT', 'UNSET')
-            job['SCHEDULE_TARGETS'] = job.get('SCHEDULE_TARGETS', [])
+            self.fill_schedule(job)
 
             # backwards compatible timestamp extraction (was float before)
 
@@ -1651,11 +1674,13 @@ class Scheduler:
             if not last_scheduled or isinstance(last_scheduled, float):
                 last_scheduled = time.gmtime(0)
             schedule_time = calendar.timegm(last_scheduled)
-            schedule_age = time.time() - schedule_time
+            schedule_age = now - schedule_time
+            
+            # skip (re)schedule if each of these apply:
+            # -resource was included in last scheduling
+            # -we recently scheduled job
 
-            # skip (re)schedule if resource isn't new and we recently scheduled job
-
-            if schedule_time > request_res.get('FIRST_SEEN', 0) and \
+            if schedule_time > first_request and job["SCHEDULE_HINT"] and \
                    schedule_age < self.reschedule_interval:
 
                 # self.logger.info("cached schedule %s for %s" % \

@@ -457,11 +457,7 @@ while True:
 
         # update and save schedule
 
-        for field in ['SCHEDULE_TIMESTAMP', 'SCHEDULE_HINT', 'SCHEDULE_TARGETS']:
-            if job_dict.has_key(field):
-                dict_serverjob[field] = job_dict[field]
-                logger.info('Job %s updated to %s' % (field,
-                            dict_serverjob[field]))
+        scheduler.copy_schedule(job_dict, dict_serverjob)
         pickle(dict_serverjob, file_serverjob, logger)
     elif cap_line.find('RESOURCEREQUEST ') == 0:
 
@@ -616,9 +612,11 @@ while True:
                         print 'YOU ARE NOT DONE WITH %s'\
                              % job_dict['JOB_ID']
 
+                        # Clear any scheduling data for exe_job before requeue
+                        
+                        scheduler.clear_schedule(exe_job)
                         requeue_job(
-                            executing_queue.get_job_by_id(job_dict['JOB_ID'
-                                    ]),
+                            exe_job,
                             'RESOURCE DIED',
                             job_queue,
                             executing_queue,
