@@ -27,14 +27,14 @@
 
 """Find all users with given data base field(s)"""
 
-import os
 import sys
 import getopt
-import pickle
-import fnmatch
+
+from shared.useradm import init_user_adm, search_users, default_search
 
 
 def usage(name='searchusers.py'):
+    """Usage help"""
     print """Usage:
 %(name)s [SEARCH_OPTIONS]
 Where SEARCH_OPTIONS may be one or more of:
@@ -53,71 +53,48 @@ Each search value can be a string or a pattern with * and ? as wildcards.
 
 
 # ## Main ###
-
-args = sys.argv[1:]
-app_dir = os.path.dirname(sys.argv[0])
-if not app_dir:
-    app_dir = '.'
-db_file = app_dir + os.sep + 'MiG-users.db'
-user_db = {}
-user_dict = {}
-opt_args = 'c:d:e:f:hno:s:'
-search_filter = {
-    'country': '*',
-    'email': '*',
-    'full_name': '*',
-    'organization': '*',
-    'state': '*',
-    }
-name_only = False
-try:
-    (opts, args) = getopt.getopt(args, opt_args)
-except getopt.GetoptError, err:
-    print 'Error: ', err.msg
-    usage()
-    sys.exit(1)
-
-for (opt, val) in opts:
-    if opt == '-c':
-        search_filter['country'] = val
-    elif opt == '-d':
-        db_file = val
-    elif opt == '-e':
-        search_filter['email'] = val
-    elif opt == '-f':
-        search_filter['full_name'] = val
-    elif opt == '-h':
+if "__main__" == __name__:
+    (args, app_dir, db_path) = init_user_adm()
+    conf_path = None
+    user_dict = {}
+    opt_args = 'c:C:d:E:F:hnO:S:'
+    search_filter = default_search()
+    name_only = False
+    try:
+        (opts, args) = getopt.getopt(args, opt_args)
+    except getopt.GetoptError, err:
+        print 'Error: ', err.msg
         usage()
-        sys.exit(0)
-    elif opt == '-n':
-        name_only = True
-    elif opt == '-o':
-        search_filter['organization'] = val
-    elif opt == '-s':
-        search_filter['state'] = val
-    else:
-        print 'Error: %s not supported!' % opt
-        usage()
-        sys.exit(0)
+        sys.exit(1)
 
-try:
-    db_fd = open(db_file, 'rb')
-    user_db = pickle.load(db_fd)
-    db_fd.close()
-    print 'Loaded existing user DB from: %s' % db_file
-except Exception, err:
-    print 'Failed to load user DB: %s' % err
-    sys.exit(1)
+    for (opt, val) in opts:
+        if opt == '-c':
+            conf_path = val
+        elif opt == '-d':
+            db_path = val
+        elif opt == '-h':
+            usage()
+            sys.exit(0)
+        elif opt == '-n':
+            name_only = True
+        elif opt == '-C':
+            search_filter['country'] = val
+        elif opt == '-E':
+            search_filter['email'] = val
+        elif opt == '-F':
+            search_filter['full_name'] = val
+        elif opt == '-O':
+            search_filter['organization'] = val
+        elif opt == '-S':
+            search_filter['state'] = val
+        else:
+            print 'Error: %s not supported!' % opt
+            usage()
+            sys.exit(0)
 
-for (uid, user_dict) in user_db.items():
-    match = True
-    for (key, val) in search_filter.items():
-        if not fnmatch.fnmatch(str(user_dict[key]), val):
-            match = False
-            break
-    if not match:
-        continue
-    if name_only:
-        print user_dict['full_name']
-    else:
-        print '%s : %s' % (uid, user_dict)
+    hits = search_users(search_filter, conf_path, db_path)
+    for (uid, user_dict) in hits:
+        if name_only:
+            print '%s' % (user_dict['full_name'])
+        else:
+            print '%s : %s' % (uid, user_dict)
