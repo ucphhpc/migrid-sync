@@ -250,7 +250,7 @@ def create_job_script(
 
     path_without_extension = configuration.resource_home\
          + unique_resource_name + '/' + localjobname
-    job = gen_job_script(
+    gen_res = gen_job_script(
         job_dict,
         resource_config,
         configuration,
@@ -260,7 +260,7 @@ def create_job_script(
         exe,
         logger,
         )
-    if not job:
+    if not gen_res:
         msg = \
             'job scripts were not generated. Perhaps you have specified an invalid SCRIPTLANGUAGE ? '
         print msg

@@ -996,9 +996,9 @@ while True:
                              % executing_queue.queue_length()
                     else:
 
-                        # put job in back in job queue
+                        # put original job in back in job queue
 
-                        job_queue.enqueue_job(mrsl_dict,
+                        job_queue.enqueue_job(job_dict,
                                 job_queue.queue_length())
                         logger.error('error creating new job script')
                 else:
