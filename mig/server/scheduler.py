@@ -131,7 +131,8 @@ class Scheduler:
     illegal_price = -42.0
     reschedule_interval = 1800
     __schedule_fields = ("SCHEDULE_TIMESTAMP", "SCHEDULE_HINT",
-                         "SCHEDULE_TARGETS")
+                         "SCHEDULE_TARGETS", "EXEC_PRICE",
+                         "EXEC_DIFF", "EXEC_RAWDIFF")
 
     def __init__(self, logger, config):
         self.conf = config
@@ -1614,7 +1615,7 @@ class Scheduler:
                 dst[field] = src[field]
         return dst
                 
-    def clear_schedule(self, job=None):
+    def clear_schedule(self, job):
         """Remove any scheduling fields from job - used e.g. after time outs"""
         for field in self.__schedule_fields:
             if job.has_key(field):
