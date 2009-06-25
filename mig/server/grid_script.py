@@ -1437,7 +1437,7 @@ while True:
                      % job_time_out_thread.isAlive())
     elif cap_line.find('RELOADCONFIG') == 0:
         logger.info('--- RELOADING CONFIGURATION ---')
-        configuration.reload_config(config_file, True)
+        configuration.reload_config(True)
     elif cap_line.find('SHUTDOWN') == 0:
         logger.info('--- SAFE SHUTDOWN INITIATED ---')
         print '--- SAFE SHUTDOWN INITIATED ---'

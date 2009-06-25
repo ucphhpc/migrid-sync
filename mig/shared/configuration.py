@@ -213,13 +213,15 @@ class Configuration:
     # directory for usage records, initially None (means: do not generate)
 
     usage_record_dir = None
+    config_file = None
 
     # constructor
 
     def __init__(self, config_file, verbose=True):
-        self.reload_config(config_file, verbose)
+        self.config_file = config_file
+        self.reload_config(verbose)
 
-    def reload_config(self, config_file, verbose):
+    def reload_config(self, verbose):
         """Re-read and parse configuration file"""
 
         try:
@@ -228,14 +230,14 @@ class Configuration:
         except:
             pass
 
-        if not os.path.isfile(config_file):
+        if not os.path.isfile(self.config_file):
             print 'Could not find your configuration file (', \
-                config_file, ').'
+                  self.config_file, ').'
             print 'Are you missing a symlink from server/MiGserver.conf pointing to server/MiGserver-{server}.conf?'
             raise IOError
 
         config = ConfigParser()
-        config.read([config_file])
+        config.read([self.config_file])
 
         # print "expanding config paths"
 
