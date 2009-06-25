@@ -391,8 +391,8 @@ def requeue_job(
 
         unique_resource_name = job_dict['UNIQUE_RESOURCE_NAME']
 
-        mrsl_file = configuration.mrsl_files_dir + job_dict['USER_CERT']\
-             + '/' + job_dict['JOB_ID'] + '.mRSL'
+        mrsl_file = os.path.join(configuration.mrsl_files_dir, job_dict['USER_CERT'],
+                                 job_dict['JOB_ID'] + '.mRSL')
         job_retries = configuration.job_retries
         if job_dict['RETRY_COUNT'] <= job_retries:
             job_dict['STATUS'] = 'QUEUED'

@@ -157,7 +157,7 @@ class BestFitScheduler(Scheduler):
                              resource_conf['RESOURCE_ID'])
             return None
 
-        # self.logger.info('schedule: found best job: %s' % best_job)
+        self.logger.info('schedule: found best job: %s' % best_job)
         best_job['EXEC_RESOURCE'] = resource_conf['RESOURCE_ID']
         self.job_queue.dequeue_job(best_i)
         self.update_history(best_job, resource_conf)

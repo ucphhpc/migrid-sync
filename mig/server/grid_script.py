@@ -1368,6 +1368,9 @@ while True:
 
                 # Real job, requeue job
 
+                # Clear any scheduling data for exe_job before requeue
+                        
+                scheduler.clear_schedule(job_dict)
                 requeue_job(
                     job_dict,
                     'JOB TIMEOUT',
