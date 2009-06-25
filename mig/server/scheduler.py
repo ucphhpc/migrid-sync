@@ -130,9 +130,9 @@ class Scheduler:
 
     illegal_price = -42.0
     reschedule_interval = 1800
-    __schedule_fields = ("SCHEDULE_TIMESTAMP", "SCHEDULE_HINT",
-                         "SCHEDULE_TARGETS", "EXEC_PRICE",
-                         "EXEC_DIFF", "EXEC_RAWDIFF")
+    __schedule_fields = {"SCHEDULE_TIMESTAMP": None, "SCHEDULE_HINT": None,
+                         "SCHEDULE_TARGETS": [], "EXEC_PRICE": None,
+                         "EXEC_DIFF": None, "EXEC_RAWDIFF": None}
 
     def __init__(self, logger, config):
         self.conf = config
@@ -1602,22 +1602,22 @@ class Scheduler:
 
         return best
 
-    def fill_schedule(self, job, default=None):
+    def fill_schedule(self, job):
         """Fill in any missing scheduling fields in job"""
-        for field in self.__schedule_fields:
+        for (field, default) in self.__schedule_fields.items():
             job[field] = job.get(field, default)
         return job
                 
     def copy_schedule(self, src, dst):
         """Copy schedule fields from src to dst job"""
-        for field in self.__schedule_fields:
+        for field in self.__schedule_fields.keys():
             if src.has_key(field):
                 dst[field] = src[field]
         return dst
                 
     def clear_schedule(self, job):
         """Remove any scheduling fields from job - used e.g. after time outs"""
-        for field in self.__schedule_fields:
+        for field in self.__schedule_fields.keys():
             if job.has_key(field):
                 del job[field]
         return job
@@ -1667,6 +1667,8 @@ class Scheduler:
             job = self.job_queue.get_job(i)
             job_id = job['JOB_ID']
 
+            # Fill any missing fields for e.g. new jobs
+
             self.fill_schedule(job)
 
             # backwards compatible timestamp extraction (was float before)
@@ -1688,6 +1690,11 @@ class Scheduler:
                 #                 (job["SCHEDULE_HINT"], job_id))
 
                 continue
+
+            # Reset schedule
+
+            self.clear_schedule(job)
+            self.fill_schedule(job)
 
             # Get a dictionary with details about best resource(s)
 
