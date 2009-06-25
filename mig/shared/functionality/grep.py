@@ -38,7 +38,7 @@ from shared.validstring import valid_user_path
 from shared.parseflags import verbose
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-
+from shared.useradm import client_id_dir
 
 def signature():
     """Signature of the main function"""
@@ -74,19 +74,19 @@ def pattern_match_file(pattern, filename, allowed_time=5.0):
     return fit
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables()
-
+    client_dir = client_id_dir(client_id)
     status = returnvalues.OK
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -100,8 +100,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(configuration.user_home + os.sep
-                                + cert_name_no_spaces) + os.sep
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                            client_dir)) + os.sep
 
     if verbose(flags):
         for flag in flags:
@@ -126,7 +126,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                 # ../*/* is technically allowed to match own files.
 
                 logger.error('Warning: %s tried to %s %s outside own home! (%s)'
-                              % (cert_name_no_spaces, op_name,
+                              % (client_id, op_name,
                              real_path, pattern))
                 continue
             match.append(real_path)

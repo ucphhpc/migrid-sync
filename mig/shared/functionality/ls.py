@@ -41,6 +41,7 @@ from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
 from shared.settings import load_settings
+from shared.useradm import client_id_dir
 
 
 def signature():
@@ -213,6 +214,7 @@ def handle_dir(
 def handle_ls(
     output_objects,
     listing,
+    base_dir,
     real_path,
     flags='',
     depth=0,
@@ -274,29 +276,28 @@ def handle_ls(
 
             # Force pure content listing first by passing a negative depth
 
-            handle_ls(output_objects, listing, real_path, flags, -1)
+            handle_ls(output_objects, listing, base_dir, real_path, flags, -1)
 
             for name in contents:
                 path = real_path + os.sep + name
                 rel_path = path.replace(base_dir, '')
                 if os.path.isdir(path):
-                    handle_ls(output_objects, listing, path, flags,
+                    handle_ls(output_objects, listing, base_dir, path, flags,
                               depth + 1)
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
-
-    global output_objects
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False, op_title=False)
+    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -310,13 +311,12 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    global base_dir
-    base_dir = os.path.abspath(configuration.user_home + os.sep
-                                + cert_name_no_spaces) + os.sep
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                            client_dir)) + os.sep
 
     status = returnvalues.OK
 
-    settings_dict = load_settings(cert_name_no_spaces, configuration)
+    settings_dict = load_settings(client_id, configuration)
     if not settings_dict or not settings_dict.has_key('FILESUI'):
         logger.info('Settings dict does not have FILESUI key - using default'
                     )
@@ -429,7 +429,7 @@ Action on paths selected below
                 # ../*/* is technically allowed to match own files.
 
                 logger.error('Warning: %s tried to %s %s outside own home! (using pattern %s)'
-                              % (cert_name_no_spaces, op_name,
+                              % (client_id, op_name,
                              real_path, pattern))
                 continue
             match.append(real_path)
@@ -456,7 +456,7 @@ Action on paths selected below
                 'flags': flags,
                 }
 
-            handle_ls(output_objects, entries, real_path, flags)
+            handle_ls(output_objects, entries, base_dir, real_path, flags)
             dir_listings.append(dir_listing)
 
     if 'full' == files_style:

@@ -52,7 +52,7 @@ from shared.vgrid import vgrid_list_vgrids
 
 # optional certificate
 
-(logger, configuration, cert_name_no_spaces, o) = \
+(logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert(False, 'application/zip')
 
 # initiate form and read hd size and memory values

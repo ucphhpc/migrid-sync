@@ -49,7 +49,7 @@ def signature():
     return ['', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -64,7 +64,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -92,7 +92,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     # stop if already an owner
 
-    if vgrid_is_owner(vgrid_name, cert_name_no_spaces, configuration):
+    if vgrid_is_owner(vgrid_name, client_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'You are already an owner of %s or a parent vgrid!'
                                % vgrid_name})
@@ -101,7 +101,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # if already member do not allow a request to become a member (but allow an owner request)
 
     if request_type == 'member':
-        if vgrid_is_member(vgrid_name, cert_name_no_spaces,
+        if vgrid_is_member(vgrid_name, client_id,
                            configuration):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'You are already a member of %s or a parent vgrid.'
@@ -130,7 +130,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         # USER_CERT entry is destination
 
-        jobdict = {'NOTIFY': [
+        job_dict = {'NOTIFY': [
             'jabber: SETTINGS',
             'msn: SETTINGS',
             'email: SETTINGS',
@@ -141,8 +141,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
                 'USER_CERT': owner}
 
         notify_user_thread(
-            jobdict,
-            [cert_name_no_spaces, vgrid_name, request_type,
+            job_dict,
+            [client_id, vgrid_name, request_type,
              request_text],
             'VGRIDMEMBERREQUEST',
             logger,

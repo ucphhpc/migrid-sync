@@ -45,11 +45,11 @@ def get_edit_lock_default_timeout():
     return 600
 
 
-def acquire_edit_lock(real_path, cert_name_no_spaces):
+def acquire_edit_lock(real_path, client_id):
     """Try to lock file in real_path for exclusive editing. On success the
-    file is locked and cert_name_no_spaces is returned along with the
+    file is locked and client_id is returned along with the
     default timeout in seconds. In case someone else actively holds the lock,
-    the corresponding cert_name_no_spaces is returned along with the
+    the corresponding client_id is returned along with the
     remaining time in seconds before the current lock will expire.
     If the file is already locked by the requester the lock is updated in order
     to reset the timeout. Stale locks are simply removed before the check.
@@ -88,17 +88,17 @@ def acquire_edit_lock(real_path, cert_name_no_spaces):
             time_left = default_timeout - (now - timestamp)
         except Exception, err:
             print 'Error: %s - taking broken lock' % err
-            owner = cert_name_no_spaces
+            owner = client_id
             time_left = default_timeout
             take_lock = True
 
-        if owner == cert_name_no_spaces or time_left < 0:
+        if owner == client_id or time_left < 0:
             take_lock = True
     else:
         take_lock = True
 
     if take_lock:
-        owner = cert_name_no_spaces
+        owner = client_id
         time_left = default_timeout
 
         # Truncate info file
@@ -107,7 +107,7 @@ def acquire_edit_lock(real_path, cert_name_no_spaces):
             info_fd = open(info_path, 'w')
             info_fd.write('''%s
 %f
-''' % (cert_name_no_spaces, now))
+''' % (client_id, now))
             info_fd.close()
         except Exception, err:
             print 'Error opening or writing to %s, (%s)' % (info_path,
@@ -116,7 +116,7 @@ def acquire_edit_lock(real_path, cert_name_no_spaces):
     return (owner, time_left)
 
 
-def got_edit_lock(real_path, cert_name_no_spaces):
+def got_edit_lock(real_path, client_id):
     """Check that caller actually acquired the required file editing lock. 
     """
 
@@ -153,7 +153,7 @@ def got_edit_lock(real_path, cert_name_no_spaces):
         print 'Error: %s - not accepting invalid lock' % err
         return False
 
-    if owner != cert_name_no_spaces:
+    if owner != client_id:
         print "Error: You don't have the lock for %s - %s does"\
              % (real_path, owner)
         return False
@@ -166,12 +166,12 @@ def got_edit_lock(real_path, cert_name_no_spaces):
         return True
 
 
-def release_edit_lock(real_path, cert_name_no_spaces):
+def release_edit_lock(real_path, client_id):
     """Try to release an acquired file editing lock. Check that owner
     matches release caller.
     """
 
-    if not got_edit_lock(real_path, cert_name_no_spaces):
+    if not got_edit_lock(real_path, client_id):
         return False
 
     # We need atomic operation in locking - remove info file followed by

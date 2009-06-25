@@ -41,6 +41,7 @@ from shared.editing import acquire_edit_lock, get_edit_lock_suffix
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.useradm import client_id_dir
 
 
 def signature():
@@ -204,17 +205,18 @@ Type:
     return html
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_title=False, op_header=False)
+    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -230,8 +232,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(configuration.user_home + os.sep
-                                + cert_name_no_spaces) + os.sep
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                            client_dir)) + os.sep
 
     # !!! IMPORTANT !!!
     # This is a (dynamic) user interface so we expect html to be used.
@@ -250,7 +252,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : 'Editing file in MiG home directory'})
 
-    # addMiGhtmlHeader( "MiG file web editor",  "Editing file in MiG home directory of %s " % cert_name_no_spaces , printhtml, scripts=lock_info("this file", -1))lock_info("this file", -1)
+    # addMiGhtmlHeader( "MiG file web editor",  "Editing file in MiG home directory of %s " % client_id , printhtml, scripts=lock_info("this file", -1))lock_info("this file", -1)
 
     if not path:
         now = time.gmtime()
@@ -271,8 +273,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     (owner, time_left) = acquire_edit_lock(real_path,
-            cert_name_no_spaces)
-    if owner == cert_name_no_spaces:
+            client_id)
+    if owner == client_id:
         javascript = \
             '''<script type="text/javascript">
 setTimeout("newcountdown('%s', %d)", 1)

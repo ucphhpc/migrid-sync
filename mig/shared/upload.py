@@ -35,12 +35,13 @@ import tarfile
 from shared.validstring import valid_user_path
 from shared.fileio import write_file
 from shared.job import new_job
+from shared.useradm import client_id_dir
 
 
 def handle_package_upload(
     file_name,
     remote_filename,
-    cert_name_no_spaces,
+    client_id,
     configuration,
     submit_mrslfiles,
     ):
@@ -48,6 +49,7 @@ def handle_package_upload(
     submit mrsl files if submit_mrsl_files is True
     """
 
+    client_dir = client_id_dir(client_id)
     base_dir = os.path.abspath(os.path.dirname(file_name)) + os.sep
 
     msg = ''
@@ -220,12 +222,16 @@ def handle_package_upload(
 
     submitstatuslist = []
     if submit_mrslfiles:
-        uploaddir = configuration.user_home + cert_name_no_spaces\
-             + os.sep
+        
+        # Please note that base_dir must end in slash to avoid access to other
+        # user dirs when own name is a prefix of another user name
+
+        base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                                client_dir)) + os.sep
         for mrslfile in mrslfiles_to_parse:
             (status, parse_msg, job_id) = new_job(mrslfile,
-                    cert_name_no_spaces, configuration, False, True)
-            relative_filename = os.sep + mrslfile.replace(uploaddir, '')
+                    client_id, configuration, False, True)
+            relative_filename = os.sep + mrslfile.replace(base_dir, '')
             submitstatus = {'object_type': 'submitstatus',
                             'name': relative_filename}
             if not status:

@@ -6,6 +6,22 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
+=== June 25th, 2009 ===
+********************************************************
+*** IMPORTANT * This upgrade requires admin actions! ***
+********************************************************
+With the restructuring of the used database all installations need to
+update their user database before they can use the new version.
+Please backup all your state data and the MiG-users.db and run
+cd mig/server
+./fix_user_db.py CONF_PATH DB_PATH
+to automatically upgrade all your MiG user directories and the database.
+You also need to update your apache MiG configuration to map SSL
+certificates to the new user dirs. 
+Please refer to the example apache conf or use the config generator to
+achieve this.
+
+
 === May 1st, 2009 ===
 We finally got the old grey web pages completely overhauled. Thanks to those of you 
 that contributed to this often overlooked area.
@@ -27,6 +43,13 @@ for other users.
 
 == Changelogs ==
 More detailed changelogs for the public releases.
+
+== 1.1.0 ==
+-reworked user ID structure to avoid collissions when users with same
+full name exist
+-fixed several minor bugs pointed out by pylint
+-adds support for users requesting scheduling information
+-adds support for importing users from external sources
 
 == 1.0.4 ==
 -complete reworking of web layout

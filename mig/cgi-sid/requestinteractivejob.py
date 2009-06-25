@@ -41,7 +41,7 @@ from shared.fileio import unpickle
 
 # ## Main ###
 
-(logger, configuration, cert_name_no_spaces, o) = \
+(logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert()
 
 if str(os.getenv('REQUEST_METHOD')) != 'GET':
@@ -86,8 +86,8 @@ if not valid_dir_input(configuration.resource_home,
     # out of bounds - rogue resource!?!?
 
     o.out('invalid unique_resource_name! %s' % unique_resource_name)
-    o.internal('requestinteractivejob called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, cert_name_no_spaces %s'
-                % (unique_resource_name, exe, cert_name_no_spaces))
+    o.internal('requestinteractivejob called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe_name %s, client_id %s'
+                % (unique_resource_name, exe_name, client_id))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 if exe_name == '':
@@ -129,9 +129,9 @@ if not mrsldict:
     o.out('requestinteractivejob error! Could not open mrsl file')
     o.reply_and_exit(o.ERROR)
 
-job_submitter_cert_name_no_spaces = mrsldict['USER_CERT']
-o.out('job_submitter_cert_name_no_spaces: %s'
-       % job_submitter_cert_name_no_spaces)
+job_submitter_client_id = mrsldict['USER_CERT']
+o.out('job_submitter_client_id: %s'
+       % job_submitter_client_id)
 
 mrsl_jobid = mrsldict['JOB_ID']
 if not jobid == mrsl_jobid:
@@ -171,20 +171,20 @@ if not status:
 # set the correct DISPLAY before calling SSH
 
 display_number = \
-    get_users_display_number(job_submitter_cert_name_no_spaces,
+    get_users_display_number(job_submitter_client_id,
                              configuration, logger)
 
 if not display_number:
     o.out('could not find display number for %s in dict'
-           % job_submitter_cert_name_no_spaces)
+           % job_submitter_client_id)
     o.reply_and_exit(o.ERROR)
 
 if display_number < 0:
     o.out('could not find valid display number for %s in dict'
-           % job_submitter_cert_name_no_spaces)
+           % job_submitter_client_id)
     o.reply_and_exit(o.ERROR)
 
-o.internal('%s has display %s' % (job_submitter_cert_name_no_spaces,
+o.internal('%s has display %s' % (job_submitter_client_id,
            display_number))
 
 # os.putenv("DISPLAY", ":%s" % display_number)

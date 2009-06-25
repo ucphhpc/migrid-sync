@@ -58,6 +58,7 @@ from shared.cgishared import init_cgi_script_with_cert
 from shared.notification import send_resource_create_request_mail
 from shared.ssh import default_ssh_options
 from shared.vgrid import user_allowed_vgrids
+from shared.useradm import client_id_dir
 
 
 def get_regex_non_numeric():
@@ -265,8 +266,9 @@ def generate_execution_node_string(exe_nodes, hide_leader=True):
 
 # ## Main ###
 
-(logger, configuration, cert_name_no_spaces, o) = \
+(logger, configuration, client_id, o) = \
     init_cgi_script_with_cert()
+client_dir = client_id_dir(client_id)
 logger.info('Starting Resource edit GUI.')
 
 form = cgi.FieldStorage()
@@ -276,6 +278,12 @@ form = cgi.FieldStorage()
 
 admin_email = cgi.escape(configuration.admin_email)
 
+# Please note that base_dir must end in slash to avoid access to other
+# user dirs when own name is a prefix of another user name
+
+base_dir = os.path.abspath(os.path.join(configuration.resource_pending,
+                                        client_dir)) + os.sep
+
 RUNTIMEENVIRONMENT_FIELDS = 10
 VGRID_FIELDS = 3
 
@@ -284,24 +292,23 @@ if form.has_key('new_resource'):
     pending_file = ''
 
     if form.has_key('Ok'):
-        pending_file = configuration.resource_pending\
-             + cert_name_no_spaces + os.sep + form['hosturl'].value\
-             + '.' + str(time.time())
+        pending_file = os.path.join(base_dir, form['hosturl'].value\
+                                    + '.' + str(time.time()))
 elif form.has_key('hosturl') and form.has_key('hostidentifier'):
 
     resource_id = form['hosturl'].value + '.' + form['hostidentifier'
             ].value
-    if not is_owner(cert_name_no_spaces, resource_id,
+    if not is_owner(client_id, resource_id,
                     configuration.resource_home, logger):
-        o.out('Failure: You (' + cert_name_no_spaces
+        o.out('Failure: You (' + client_id
                + ') must be an owner of ' + form['hosturl'].value
                + ' to edit it.')
         o.reply_and_exit(o.ERROR)
 
     conf_file = configuration.resource_home + resource_id\
          + '/config.MiG'
-    pending_file = configuration.resource_pending + cert_name_no_spaces\
-         + '/' + form['hosturl'].value + '.' + str(time.time())
+    pending_file = os.path.join(base_dir, form['hosturl'].value\
+                                + '.' + str(time.time()))
 else:
 
     o.out('Failure: hosturl and hostidentifier must be supplied.')
@@ -328,11 +335,11 @@ if (form.has_key('new_resource') or form.has_key('apply_changes'))\
         execution_nodes.append(form['frontend_node'].value)
 
     if form.has_key('apply_changes'):
-        logger.info(cert_name_no_spaces
+        logger.info(client_id
                      + ' is trying to update the configuration for '
                      + form['hosturl'].value)
     elif form.has_key('new_resource'):
-        logger.info(cert_name_no_spaces
+        logger.info(client_id
                      + ' is trying to create a new resource configuration for '
                      + form['hosturl'].value)
 
@@ -665,7 +672,7 @@ if (form.has_key('new_resource') or form.has_key('apply_changes'))\
     elif form.has_key('new_resource'):
 
         (status, msg) = \
-            send_resource_create_request_mail(cert_name_no_spaces,
+            send_resource_create_request_mail(client_id,
                 form['hosturl'].value, pending_file, logger,
                 configuration)
         logger.info(msg)
@@ -1413,7 +1420,7 @@ else:
     print """                   <input type="hidden" name="vgrid_fields" size="30" value='"""\
          + str(vgrid_fields) + """'>"""
 
-    vg_list = user_allowed_vgrids(configuration, cert_name_no_spaces)
+    vg_list = user_allowed_vgrids(configuration, client_id)
 
     for i in range(vgrid_fields):
         if vgrid_list[i] and vgrid_list[i] not in vg_list:

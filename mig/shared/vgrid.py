@@ -48,12 +48,12 @@ def vgrid_is_default(vgrid):
         return False
 
 
-def vgrid_is_owner_or_member(vgrid_name, cert_name_no_spaces,
+def vgrid_is_owner_or_member(vgrid_name, client_id,
                              configuration):
     """Combines owner and member check"""
 
-    if vgrid_is_owner(vgrid_name, cert_name_no_spaces, configuration)\
-         or vgrid_is_member(vgrid_name, cert_name_no_spaces,
+    if vgrid_is_owner(vgrid_name, client_id, configuration)\
+         or vgrid_is_member(vgrid_name, client_id,
                             configuration):
         return True
     else:
@@ -62,13 +62,13 @@ def vgrid_is_owner_or_member(vgrid_name, cert_name_no_spaces,
 
 def vgrid_is_cert_in_list(
     vgrid_name,
-    cert_name_no_spaces,
+    client_id,
     group,
     configuration,
     ):
-    """Return True if specified cert_name_no_spaces is in group
+    """Return True if specified client_id is in group
     ('owners', 'members', 'resources') of vgrid.
-    Please note that cert_name_no_spaces is a misleading name when
+    Please note that client_id is a misleading name when
     called for resources, where it is actually the unique resource ID.
     """
 
@@ -85,24 +85,24 @@ def vgrid_is_cert_in_list(
 
         # Use fnmatch to accept direct hits as well as wild card matches
 
-        if fnmatch.fnmatch(cert_name_no_spaces, entry):
+        if fnmatch.fnmatch(client_id, entry):
             return True
     return False
 
 
-def vgrid_is_owner(vgrid_name, cert_name_no_spaces, configuration):
-    """Check if cert_name_no_spaces is an owner of vgrid_name. Please note
+def vgrid_is_owner(vgrid_name, client_id, configuration):
+    """Check if client_id is an owner of vgrid_name. Please note
     that noone is an owner of the default vgrid.
     """
 
     if vgrid_is_default(vgrid_name):
         return False
-    return vgrid_is_cert_in_list(vgrid_name, cert_name_no_spaces,
+    return vgrid_is_cert_in_list(vgrid_name, client_id,
                                  'owners', configuration)
 
 
-def vgrid_is_member(vgrid_name, cert_name_no_spaces, configuration):
-    """Check if cert_name_no_spaces is a member of vgrid_name. Please note
+def vgrid_is_member(vgrid_name, client_id, configuration):
+    """Check if client_id is a member of vgrid_name. Please note
     that everyone is a member of the Generic vgrid.
     """
 
@@ -110,18 +110,18 @@ def vgrid_is_member(vgrid_name, cert_name_no_spaces, configuration):
 
     if vgrid_is_default(vgrid_name):
         return True
-    return vgrid_is_cert_in_list(vgrid_name, cert_name_no_spaces,
+    return vgrid_is_cert_in_list(vgrid_name, client_id,
                                  'members', configuration)
 
 
-def vgrid_is_resource(vgrid_name, cert_name_no_spaces, configuration):
-    """Check if cert_name_no_spaces is a resource in vgrid_name. Please note
+def vgrid_is_resource(vgrid_name, client_id, configuration):
+    """Check if client_id is a resource in vgrid_name. Please note
     that everyone is a member of the Generic vgrid.
     """
 
     if vgrid_is_default(vgrid_name):
         return True
-    return vgrid_is_cert_in_list(vgrid_name, cert_name_no_spaces,
+    return vgrid_is_cert_in_list(vgrid_name, client_id,
                                  'resources', configuration)
 
 
@@ -165,7 +165,7 @@ def vgrid_list_vgrids(configuration):
 
 def init_vgrid_script_add_rem(
     vgrid_name,
-    cert_name_no_spaces,
+    client_id,
     subject,
     subject_type,
     configuration,
@@ -185,7 +185,7 @@ def init_vgrid_script_add_rem(
         msg += 'Illegal vgrid_name: %s' % vgrid_name
         return (False, msg, None)
 
-    if not vgrid_is_owner(vgrid_name, cert_name_no_spaces,
+    if not vgrid_is_owner(vgrid_name, client_id,
                           configuration):
         msg += 'You must be an owner of the %s vgrid to add/remove %s'\
              % (vgrid_name, subject_type)
@@ -207,7 +207,7 @@ def init_vgrid_script_add_rem(
     return (True, msg, [])
 
 
-def init_vgrid_script_list(vgrid_name, cert_name_no_spaces,
+def init_vgrid_script_list(vgrid_name, client_id,
                            configuration):
     """Helper for vgrid scripts"""
 
@@ -220,7 +220,7 @@ def init_vgrid_script_list(vgrid_name, cert_name_no_spaces,
         msg += 'Illegal vgrid_name: %s' % vgrid_name
         return (False, msg, None)
 
-    if not vgrid_is_owner_or_member(vgrid_name, cert_name_no_spaces,
+    if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                     configuration):
         msg += 'Failure: You must be an owner or member of '\
              + vgrid_name\
@@ -299,9 +299,9 @@ def vgrid_request_and_job_match(resource_vgrid, job_vgrid):
     return True
 
 
-def user_allowed_vgrids(configuration, cert_name_no_spaces):
+def user_allowed_vgrids(configuration, client_id):
     """Return a list of all VGrids that the user with
-    cert_name_no_spaces is allowed to access. I.e. the VGrids
+    client_id is allowed to access. I.e. the VGrids
     that the user is member or owner of.
     """
 
@@ -310,7 +310,7 @@ def user_allowed_vgrids(configuration, cert_name_no_spaces):
     if not status:
         return allowed
     for vgrid in all_vgrids:
-        if vgrid_is_owner_or_member(vgrid, cert_name_no_spaces,
+        if vgrid_is_owner_or_member(vgrid, client_id,
                                     configuration):
             allowed.append(vgrid)
     return allowed

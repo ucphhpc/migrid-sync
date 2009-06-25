@@ -37,6 +37,7 @@ from shared.vgrid import vgrid_is_owner
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.useradm import client_id_dir
 
 
 def signature():
@@ -70,8 +71,8 @@ def create_wiki(vgrid_name, wiki_dir, output_objects):
     cgi_wiki_name = vgrid_name
     cgi_wiki_data = wiki_dir + 'data'
     cgi_wiki_underlay = wiki_dir + 'underlay'
-    cgi_wiki_script = cgi_wiki_bin + os.sep + 'moin.cgi'
-    cgi_wiki_wikiconf = cgi_wiki_etc + os.sep + 'wikiconfig.py'
+    cgi_wiki_script = os.path.join(cgi_wiki_bin, 'moin.cgi')
+    cgi_wiki_wikiconf = os.path.join(cgi_wiki_etc, 'wikiconfig.py')
     try:
 
         # Create wiki directory
@@ -137,18 +138,18 @@ def create_wiki(vgrid_name, wiki_dir, output_objects):
         return False
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables()
-
+    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -163,23 +164,26 @@ def main(cert_name_no_spaces, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Illegal vgrid_name: %s' % vgrid_name})
         logger.warning("createvgrid registered possible illegal directory traversal attempt by '%s': vgrid name '%s'"
-                        % (cert_name_no_spaces, vgrid_name))
+                        % (client_id, vgrid_name))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    base_dir = os.path.abspath(configuration.vgrid_home + os.sep
-                                + vgrid_name) + os.sep
-    public_base_dir = os.path.abspath(configuration.vgrid_public_base
-             + os.sep + vgrid_name) + os.sep
-    public_wiki_dir = os.path.abspath(configuration.vgrid_public_base
-             + os.sep + vgrid_name + os.sep + '.vgridwiki') + os.sep
-    private_base_dir = os.path.abspath(configuration.vgrid_private_base
-             + os.sep + vgrid_name) + os.sep
-    private_wiki_dir = os.path.abspath(configuration.vgrid_private_base
-             + os.sep + vgrid_name + os.sep + '.vgridwiki') + os.sep
-    vgrid_files_dir = os.path.abspath(configuration.vgrid_files_home
-             + os.sep + vgrid_name) + os.sep
-    vgrid_wiki_dir = os.path.abspath(configuration.vgrid_files_home
-             + os.sep + vgrid_name + os.sep + '.vgridwiki') + os.sep
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
+                                            vgrid_name)) + os.sep
+    public_base_dir = os.path.abspath(os.path.join(configuration.vgrid_public_base,
+                                                   vgrid_name)) + os.sep
+    public_wiki_dir = os.path.abspath(os.path.join(configuration.vgrid_public_base,
+                                                   vgrid_name, '.vgridwiki')) + os.sep
+    private_base_dir = os.path.abspath(os.path.join(configuration.vgrid_private_base,
+                                                    vgrid_name)) + os.sep
+    private_wiki_dir = os.path.abspath(os.path.join(configuration.vgrid_private_base,
+                                                    vgrid_name, '.vgridwiki')) + os.sep
+    vgrid_files_dir = os.path.abspath(os.path.join(configuration.vgrid_files_home,
+                                                   vgrid_name)) + os.sep
+    vgrid_wiki_dir = os.path.abspath(os.path.join(configuration.vgrid_files_home,
+                                                  vgrid_name, '.vgridwiki')) + os.sep
 
     # does vgrid exist?
 
@@ -208,7 +212,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         vgrid_name_without_last_fragment = \
             '/'.join(vgrid_name_list[0:vgrid_name_list_length - 1])
         if not vgrid_is_owner(vgrid_name_without_last_fragment,
-                              cert_name_no_spaces, configuration):
+                              client_id, configuration):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'You must be an owner of a parent vgrid to create a sub vgrid'
                                   })
@@ -248,7 +252,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     try:
         os.mkdir(public_base_dir)
-        pub_entry_page = public_base_dir + os.sep + 'index.html'
+        pub_entry_page = os.path.join(public_base_dir, 'index.html')
         if not os.path.exists(pub_entry_page):
             write_file("<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>\n<html><head><title>Public entry page not created yet..</title></head><body>No public entrypage created yet! (If you are owner of the vgrid, overwrite public_base/%s/index.html to place it here)</body></html>"
                         % vgrid_name, pub_entry_page, logger)
@@ -262,7 +266,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     try:
         os.mkdir(private_base_dir)
-        priv_entry_page = private_base_dir + os.sep + 'index.html'
+        priv_entry_page = os.path.join(private_base_dir, 'index.html')
         if not os.path.exists(priv_entry_page):
             write_file("<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>\n<html><head><title>Private entry page not created yet..</title></head><body>No private entrypage created yet! (If you are owner of the vgrid, overwrite private_base/%s/index.html to place it here)<BR>  <p><a href='http://validator.w3.org/check?uri=referer'><img src='http://www.w3.org/Icons/valid-html401' alt='Valid HTML 4.01 Transitional' height='31' width='88'></a> </p></body></html>"
                         % vgrid_name, priv_entry_page, logger)
@@ -290,14 +294,14 @@ def main(cert_name_no_spaces, user_arguments_dict):
         if not create_wiki(vgrid_name, wiki_dir, output_objects):
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    # create pickled owners list with cert_name_no_spaces as owner
+    # create pickled owners list with client_id as owner
     # only add user in owners list if new vgrid is a base vgrid (because symlinks to
     # subdirs are not necessary, and an owner is per definition owner of sub vgrids).
 
     owner_file = base_dir + 'owners'
     owner_list = []
     if new_base_vgrid == True:
-        owner_list.append(cert_name_no_spaces)
+        owner_list.append(client_id)
     else:
         owner_list.append('')
 
@@ -327,11 +331,10 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     if new_base_vgrid:
 
-        # create sym link from creators (cert_name_no_spaces) home directory to directory containing the vgrid files
+        # create sym link from creators (client_id) home directory to directory containing the vgrid files
 
         src = vgrid_files_dir
-        dst = configuration.user_home + os.sep + cert_name_no_spaces\
-             + os.sep + vgrid_name
+        dst = os.path.join(configuration.user_home, client_dir, vgrid_name)
         if not make_symlink(src, dst, logger):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Could not create link to vgrid files!'
@@ -340,8 +343,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         # make sure public_base dir exists in users home dir
 
-        user_public_base = configuration.user_home + os.sep\
-             + cert_name_no_spaces + os.sep + 'public_base' + os.sep
+        user_public_base = os.path.join(configuration.user_home, client_dir, 'public_base')
         try:
             os.mkdir(user_public_base)
         except:
@@ -350,7 +352,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
             pass
 
-        public_base_dst = user_public_base + vgrid_name
+        public_base_dst = os.path.join(user_public_base, vgrid_name)
 
         # create sym link for public_base
 
@@ -362,8 +364,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         # make sure private_base dir exists in users home dir
 
-        user_private_base = configuration.user_home + os.sep\
-             + cert_name_no_spaces + os.sep + 'private_base' + os.sep
+        user_private_base = os.path.join(configuration.user_home, client_dir, 'private_base')
         try:
             os.mkdir(user_private_base)
         except:
@@ -372,7 +373,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
             pass
 
-        private_base_dst = user_private_base + vgrid_name
+        private_base_dst = os.path.join(user_private_base, vgrid_name)
 
         # create sym link for private_base
 
@@ -389,12 +390,12 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         # try:
             # make sure root dir exists
-            # os.mkdir(configuration.user_home + os.sep + "vgrid" + os.sep)
+            # os.mkdir(os.path.join(configuration.user_home, "vgrid"))
             # except:
                 # dir probably exists
                 # pass
 
-                # if not make_symlink(private_base_dir, configuration.user_home + os.sep + "vgrid" + os.sep + vgrid_name, logger):
+                # if not make_symlink(private_base_dir, os.path.join(configuration.user_home, "vgrid", vgrid_name), logger):
                     # o.out("Could not create link in wwwuser/vgrid/%s" % vgrid_name)
                     # o.reply_and_exit(o.ERROR)
 
@@ -404,16 +405,15 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
             # make sure root dir exists
 
-            os.mkdir(configuration.wwwpublic + os.sep + 'vgrid'
-                      + os.sep)
+            os.mkdir(os.path.join(configuration.wwwpublic, 'vgrid'))
         except:
 
             # dir probably exists
 
             pass
 
-        if not make_symlink(public_base_dir, configuration.wwwpublic
-                             + os.sep + 'vgrid' + os.sep + vgrid_name,
+        if not make_symlink(public_base_dir, os.path.join(configuration.wwwpublic, 'vgrid',
+                                                          vgrid_name),
                             logger):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Could not create link in wwwpublic/vgrid/%s'

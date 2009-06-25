@@ -46,7 +46,7 @@ import shared.localos as localos
 
 handler_name = os.path.basename(sys.argv[0]).upper()
 
-(logger, configuration, cert_name_no_spaces, o) = \
+(logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert()
 
 # Check we are using matching method
@@ -66,16 +66,16 @@ if not path:
     o.reply_and_exit(o.CLIENT_ERROR)
 
 try:
-    target_path = get_allowed_path(configuration, cert_name_no_spaces,
+    target_path = get_allowed_path(configuration, client_id,
                                    path)
 except Exception, err:
 
     # invalid certificate or session id - deny access!
 
     o.out('Certificate and Session ID verification failed! (%s)'
-           % cert_name_no_spaces)
+           % client_id)
     o.internal("Entity with cert data '%s' was rejected when trying to use http %s %s: %s"
-                % (cert_name_no_spaces, handler_name, path, err))
+                % (client_id, handler_name, path, err))
     o.reply_and_exit(o.ERROR)
 
 # Now handle actual file (shared for for all situations)

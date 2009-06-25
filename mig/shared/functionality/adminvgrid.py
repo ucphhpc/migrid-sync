@@ -67,7 +67,7 @@ def create_html(vgrid_name, configuration):
         for elem in msg:
             if elem != '':
                 out += \
-                    "<tr><td><input type=radio name='cert_name' value='%s'></td><td>%s</td></tr>"\
+                    "<tr><td><input type=radio name='cert_id' value='%s'></td><td>%s</td></tr>"\
                      % (elem, elem)
         out += '</table>'
         out += \
@@ -78,7 +78,7 @@ def create_html(vgrid_name, configuration):
     out += \
         """<form method="get" action="/cgi-bin/addvgridowner.py">
     <input type="hidden" name="vgrid_name" value="%s">
-    <input type="text" size=40 name="cert_name">
+    <input type="text" size=40 name="cert_id">
     <input type="submit" value="Add vgrid owner">
     </form>
     <HR>
@@ -105,7 +105,7 @@ def create_html(vgrid_name, configuration):
             '<table class="vgridmember"><th>Remove</th><th>Member</th>'
         for elem in msg:
             out += \
-                "<tr><td><input type=radio name='cert_name' value='%s'></td><td>%s</td></tr>"\
+                "<tr><td><input type=radio name='cert_id' value='%s'></td><td>%s</td></tr>"\
                  % (elem, elem)
         out += '</table>'
 
@@ -116,7 +116,7 @@ def create_html(vgrid_name, configuration):
     out += \
         """<form method="get" action="/cgi-bin/addvgridmember.py">
     <input type="hidden" name="vgrid_name" value="%s">
-    <input type="text" size=40 name="cert_name">
+    <input type="text" size=40 name="cert_id">
     <input type="submit" value="Add vgrid member">
     </form>
     <HR>
@@ -163,7 +163,7 @@ def create_html(vgrid_name, configuration):
     return (True, out)
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -173,7 +173,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )

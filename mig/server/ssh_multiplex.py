@@ -67,7 +67,11 @@ def persistent_connection(resource_config, logger):
                 print msg
 
                 # make sure control_socket was cleaned up
-
+                host = resource_config['HOSTURL']
+                identifier = resource_config['HOSTIDENTIFIER']
+                unique_id = '%s.%s' % (host, identifier)
+                control_socket = os.path.join(configuration.resource_home, unique_id,
+                                              'ssh-multiplexing')
                 try:
                     os.remove(control_socket)
                 except:

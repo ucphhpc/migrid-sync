@@ -37,6 +37,8 @@ import time
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.useradm import client_id_dir
+
 
 sh_cmd_def = 'sh'
 python_cmd_def = 'python'
@@ -88,11 +90,12 @@ def usage(
     return output_objects
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False, op_title=False)
+    client_dir = client_id_dir(client_id)
 
     # Change CWD to ../mig/user/ to allow generator access
 
@@ -110,7 +113,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -149,7 +152,12 @@ def main(cert_name_no_spaces, user_arguments_dict):
                           : 'MiG script generator'})
 
     status = returnvalues.OK
-    base = configuration.user_home + cert_name_no_spaces + os.sep
+
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                            client_dir)) + os.sep
 
     if 'h' in flags:
         output_objects = usage(output_objects,
@@ -232,7 +240,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     for flavor in flavors:
         script_dir = 'MiG-%s-scripts-%s' % (flavor, timestamp)
-        dest_dir = '%s%s' % (base, script_dir)
+        dest_dir = '%s%s' % (base_dir, script_dir)
 
         if not os.path.isdir(dest_dir):
             try:
@@ -293,7 +301,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                % flavor})
 
         script_zip = script_dir + '.zip'
-        dest_zip = '%s%s' % (base, script_zip)
+        dest_zip = '%s%s' % (base_dir, script_zip)
         zip_file = zipfile.ZipFile(dest_zip, 'w')
 
         # Directory write is not supported - add each file manually
@@ -329,8 +337,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                % flavor})
         output_objects.append({'object_type': 'link', 'text'
                               : 'Download zip archive', 'destination'
-                              : '..' + os.sep + cert_name_no_spaces
-                               + os.sep + script_zip})
+                              : os.path.join('..', client_dir, script_zip)})
     return (output_objects, status)
 
 

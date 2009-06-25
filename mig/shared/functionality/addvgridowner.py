@@ -29,7 +29,6 @@
 
 import os
 
-from shared.validstring import cert_name_format
 from shared.fileio import make_symlink
 from shared.listhandling import add_item_to_pickled_list
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
@@ -37,16 +36,17 @@ from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.useradm import client_id_dir
 
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'vgrid_name': REJECT_UNSET, 'cert_name': REJECT_UNSET}
+    defaults = {'vgrid_name': REJECT_UNSET, 'cert_id': REJECT_UNSET}
     return ['text', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -56,22 +56,22 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     vgrid_name = accepted['vgrid_name'][-1]
-    cert_name = accepted['cert_name'][-1]
-    cert_name = cert_name_format(cert_name)
+    cert_id = accepted['cert_id'][-1]
+    cert_dir = client_id_dir(cert_id)
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
 
     (ret_val, msg, ret_variables) = \
-        init_vgrid_script_add_rem(vgrid_name, cert_name_no_spaces,
-                                  cert_name, 'owner', configuration)
+        init_vgrid_script_add_rem(vgrid_name, client_id,
+                                  cert_id, 'owner', configuration)
     if not ret_val:
         output_objects.append({'object_type': 'error_text', 'text'
                               : msg})
@@ -79,18 +79,18 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     # don't add if already an owner
 
-    if vgrid_is_owner(vgrid_name, cert_name, configuration):
+    if vgrid_is_owner(vgrid_name, cert_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s is already an owner of %s or a parent vgrid.'
-                               % (cert_name, vgrid_name)})
+                               % (cert_id, vgrid_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't add if already a member
 
-    if vgrid_is_member(vgrid_name, cert_name, configuration):
+    if vgrid_is_member(vgrid_name, cert_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s is already a member of %s or a parent vgrid. Please remove the person first and then try this operation again.'
-                               % (cert_name, vgrid_name)})
+                               % (cert_id, vgrid_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # owner of subvgrid?
@@ -104,33 +104,41 @@ def main(cert_name_no_spaces, user_arguments_dict):
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     for subvgrid in subvgrids:
-        if vgrid_is_owner(subvgrid, cert_name, configuration):
+        if vgrid_is_owner(subvgrid, cert_id, configuration):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : "%s is already an owner of a sub vgrid ('%s'). Please remove the person first and then try this operation again."
-                                   % (cert_name, subvgrid)})
+                                   % (cert_id, subvgrid)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-        if vgrid_is_member(subvgrid, cert_name, configuration):
+        if vgrid_is_member(subvgrid, cert_id, configuration):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : "%s is already a member of a sub vgrid ('%s'). Please remove the person first and then try this operation again."
-                                   % (cert_name, subvgrid)})
+                                   % (cert_id, subvgrid)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # getting here means cert_name is neither owner or member of any parent or sub-vgrids.
+    # getting here means cert_id is neither owner or member of any parent or sub-vgrids.
 
-    base_dir = os.path.abspath(configuration.vgrid_home + os.sep
-                                + vgrid_name) + os.sep
+
+    # Please note that base_dir must end in slash to avoid access to other
+    # vgrid dirs when own name is a prefix of another name
+
+    base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
+                                            vgrid_name)) + os.sep
+    
     owners_file = base_dir + 'owners'
-    public_base_dir = os.path.abspath(configuration.vgrid_public_base
-             + os.sep + vgrid_name) + os.sep
-    private_base_dir = os.path.abspath(configuration.vgrid_private_base
-             + os.sep + vgrid_name) + os.sep
 
-    user_dir = os.path.abspath(configuration.user_home + os.sep
-                                + cert_name) + os.sep
-    user_public_base = os.path.abspath(configuration.user_home + os.sep
-             + cert_name + os.sep + 'public_base') + os.sep
-    user_private_base = os.path.abspath(configuration.user_home + os.sep
-             + cert_name + os.sep + 'private_base') + os.sep
+    public_base_dir = os.path.abspath(os.path.join(
+        configuration.vgrid_public_base, vgrid_name)) + os.sep
+    private_base_dir = os.path.abspath(os.path.join(
+        configuration.vgrid_private_base, vgrid_name)) + os.sep
+
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    user_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                            cert_dir)) + os.sep
+
+    user_public_base = os.path.abspath(os.path.join(user_dir, 'public_base')) + os.sep
+    user_private_base = os.path.abspath(os.path.join(user_dir, 'private_base')) + os.sep
 
     # make sure all dirs can be created (that a file or directory with the same name
     # do not exist prior to adding the owner)
@@ -155,7 +163,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     # Add
 
-    (status, msg) = add_item_to_pickled_list(owners_file, cert_name,
+    (status, msg) = add_item_to_pickled_list(owners_file, cert_id,
             logger)
     if not status:
         output_objects.append({'object_type': 'error_text', 'text'
@@ -165,24 +173,18 @@ def main(cert_name_no_spaces, user_arguments_dict):
     vgrid_name_splitted = vgrid_name.split('/')
     is_subvgrid = len(vgrid_name_splitted) > 1
 
-    # create public_base in cert_names home dir if it does not exists
+    # create public_base in cert_ids home dir if it does not exists
 
     try:
         os.mkdir(user_public_base)
     except Exception, exc:
-
-        # o.out("could not create dir %s. Probably because it already exists." % user_public_base)
-
         pass
 
-    # create private_base in cert_names home dir if it does not exists
+    # create private_base in cert_ids home dir if it does not exists
 
     try:
         os.mkdir(user_private_base)
     except Exception, exc:
-
-        # o.out("could not create dir %s. Probably because it already exists." % user_public_base)
-
         pass
 
     if is_subvgrid:
@@ -257,13 +259,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # create symlink for private_base files
 
     if not make_symlink(private_base_dir, private_base_dst, logger):
-        o.out('Could not create link to private_base dir!',
-              'src: %s dst: %s' % (private_base_dir, private_base_dst))
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : 'Could not create link to private_base dir!'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
                           : 'New owner %s successfully added to %s vgrid!'
-                           % (cert_name, vgrid_name)})
+                           % (cert_id, vgrid_name)})
     return (output_objects, returnvalues.OK)
 
 

@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# lsresowners - [insert a few words of module description on this line]
+# vncstop - Stop a running VNC session
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,23 +25,21 @@
 # -- END_HEADER ---
 #
 
-"""List all CNs in the list of administrators for a given resource"""
+"""Stop running vnc session"""
 
 import os
-import sys
 
-from shared.listhandling import list_items_in_pickled_list
-from shared.findtype import is_owner
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.useradm import client_id_dir
 
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'unique_resource_name': REJECT_UNSET}
-    return ['list', defaults]
+    defaults = {}
+    return ['text', defaults]
 
 
 def main(client_id, user_arguments_dict):
@@ -49,7 +47,7 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables()
-
+    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -61,30 +59,31 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-    unique_resource_name = accepted['unique_resource_name'][-1]
 
-    if not is_owner(client_id, unique_resource_name,
-                    configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'You must be an owner of %s to get the list of owners!'
-                               % unique_resource_name})
-        return (output_objects, returnvalues.CLIENT_ERROR)
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
 
-    # is_owner incorporates unique_resource_name verification - no need to
-    # specifically check for illegal directory traversal
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                            client_dir)) + os.sep
 
-    base_dir = os.path.abspath(configuration.resource_home + os.sep
-                                + unique_resource_name) + os.sep
-    owners_file = base_dir + 'owners'
+    status = returnvalues.OK
 
-    (status, msg) = list_items_in_pickled_list(owners_file, logger)
-    if not status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not get list of owners, reason: %s'
-                               % msg})
-        return (output_objects, returnvalues.SYSTEM_ERROR)
+    pid = 0
+    pidfile = os.path.join(base_dir, '.Xvnc4.pid')
+    try:
+        fd = open(pidfile, 'r')
+        pid = int(fd.readline())
+        fd.close()
+        os.remove(pidfile)
+        os.kill(pid, 9)
+        output_objects.append({'object_type': 'text',
+                           'text': 'stopped vnc'})
+    except Exception, err:
+        logger.error('Unable to extract pid and kill vnc process: %s' % err)
+        status = returnvalues.CLIENT_ERROR
+        output_objects.append({'object_type': 'text',
+                           'text': 'failed to stop vnc'})
 
-    output_objects.append({'object_type': 'list', 'list': msg})
-    return (output_objects, returnvalues.OK)
+    return (output_objects, status)
 
 

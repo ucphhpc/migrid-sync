@@ -46,7 +46,7 @@ def signature():
     return ['text', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """ main """
 
     (configuration, logger, output_objects, op_name) = \
@@ -60,7 +60,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -69,9 +69,9 @@ def main(cert_name_no_spaces, user_arguments_dict):
     unique_resource_name = accepted['unique_resource_name'][-1]
 
     logger.info('%s attempts to stop frontend at %s',
-                cert_name_no_spaces, unique_resource_name)
+                client_id, unique_resource_name)
 
-    if not is_owner(cert_name_no_spaces, unique_resource_name,
+    if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'You must be an owner of '

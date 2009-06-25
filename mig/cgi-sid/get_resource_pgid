@@ -41,7 +41,7 @@ from shared.cgishared import init_cgiscript_possibly_with_cert
 
 # ## Main ###
 
-(logger, configuration, cert_name_no_spaces, o) = \
+(logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert()
 
 if str(os.getenv('REQUEST_METHOD')) != 'GET':
@@ -77,7 +77,7 @@ if unique_resource_name == '':
 base_dir = os.path.abspath(configuration.resource_home + os.sep
                             + unique_resource_name) + os.sep
 
-if not is_owner(cert_name_no_spaces, unique_resource_name,
+if not is_owner(client_id, unique_resource_name,
                 configuration.resource_home, logger):
     o.client("Failure: You must be an owner of '%s' to get the PGID!"
               % unique_resource_name)
@@ -92,8 +92,8 @@ if not valid_dir_input(base_dir, 'EXE_' + exe_name + '.PGID'):
     # out of bounds - rogue resource!?!?
 
     o.out('invalid exe_name! %s' % exe_name)
-    o.internal('get_resource_pgid called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, cert_name_no_spaces %s'
-                % (unique_resource_name, exe_name, cert_name_no_spaces))
+    o.internal('get_resource_pgid called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, client_id %s'
+                % (unique_resource_name, exe_name, client_id))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 if 'FE' == res_type:

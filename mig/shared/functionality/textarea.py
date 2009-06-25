@@ -46,6 +46,7 @@ from shared.upload import handle_package_upload
 from shared.fileio import write_file
 from shared.job import new_job
 from shared.validstring import valid_user_path
+from shared.useradm import client_id_dir
 
 
 def signature():
@@ -143,23 +144,23 @@ def handle_form_input(filenumber, user_arguments_dict, configuration):
     return (output, file_type)
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_title=True, op_header=False)
+    client_dir = client_id_dir(client_id)
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG submit job/file'})
-
     submitstatuslist = []
     fileuploadobjs = []
     filenumber = 0
 
-    # Please note that base_dir must end in slash to avoid access to
-    # other user dirs when own name is a prefix of another user name
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(configuration.user_home + os.sep
-                                + cert_name_no_spaces) + os.sep
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                            client_dir)) + os.sep
 
     while True:
         (content, file_type) = handle_form_input(filenumber,
@@ -292,7 +293,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                 output_objects.append({'object_type': 'error_text',
                         'text'
                         : 'Are you trying to circumvent permissions on the file system? Do not use .. in the path string! This event has been logged! %s'
-                         % cert_name_no_spaces})
+                         % client_id})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             if not os.path.isdir(os.path.dirname(local_filename)):
@@ -349,7 +350,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                        or local_filename.upper().endswith('.TGZ')
                        or local_filename.upper().endswith('.TAR.BZ2')):
                 (status, msg) = handle_package_upload(local_filename,
-                        remote_filename, cert_name_no_spaces,
+                        remote_filename, client_id,
                         configuration, submit_mrslfiles)
                 if not status:
                     output_objects.append({'object_type': 'error_text',
@@ -438,7 +439,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                             'name': relative_filename}
 
             (status, newmsg, job_id) = new_job(mrslfile,
-                    cert_name_no_spaces, configuration, False, True)
+                    client_id, configuration, False, True)
             if not status:
 
                 # output_objects.append({"object_type":"error_text", "text":"%s" % newmsg})

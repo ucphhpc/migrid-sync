@@ -41,6 +41,7 @@ from shared.conf import get_resource_configuration
 from shared.refunctions import get_re_dict, list_runtime_environments
 from shared.fileio import unpickle
 from shared.init import initialize_main_variables
+from shared.findtype import is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
 
@@ -198,7 +199,7 @@ def display_resource(
     html += '<h3>Owners</h3>'
     html += \
         '''
-Owners are specified with the Common Name (CN)
+Owners are specified with the Distinguished Name (DN)
 from the certificate.<br> 
 <table class=resources>
 '''
@@ -208,7 +209,7 @@ from the certificate.<br>
 <form method="get" action="/cgi-bin/addresowner.py">
 <input type="hidden" name="unique_resource_name" value="%s">
 <input type="hidden" name="output_format" value="html">
-<input type="text" name="cert_name" size=30>
+<input type="text" name="cert_id" size=30>
 </td><td>
 <input type="submit" value=" Add ">
 </form>
@@ -217,19 +218,19 @@ from the certificate.<br>
 '''\
          % resourcename
 
-    for cn in owners:
+    for owner_id in owners:
         html += \
             '''<tr><td>
 <form method="get" action="/cgi-bin/rmresowner.py">
 <input type="hidden" name="unique_resource_name" value="%s">
-<input type="hidden" name="cert_name" value="%s">
+<input type="hidden" name="cert_id" value="%s">
 <input type="hidden" name="output_format" value="html">
 <input type="submit" value="Remove">
 </form>
 </td>
 '''\
-             % (resourcename, cn)
-        html += '<td>' + cn + '</td></tr>'
+             % (resourcename, owner_id)
+        html += '<td>' + owner_id + '</td></tr>'
     html += '</table>'
 
     # create html to select and execute a runtime environment testprocedure
@@ -285,7 +286,7 @@ from the certificate.<br>
     return html
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -295,7 +296,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -342,14 +343,15 @@ def main(cert_name_no_spaces, user_arguments_dict):
     owned = 0
     for resource_dir in glob.glob(base + os.sep + '*'):
         if os.path.isdir(resource_dir):
-            resource_name = resource_dir.replace(base, '')
-            raw_conf_file = resource_dir + os.sep + 'config.MiG'
-            owners_file = resource_dir + os.sep + 'owners'
-            owner_list = unpickle(owners_file, logger)
-            if owner_list and cert_name_no_spaces in owner_list:
+            unique_resource_name = resource_dir.replace(base, '')
+            if is_owner(client_id, unique_resource_name,
+                    configuration.resource_home, logger):
+                raw_conf_file = os.path.join(resource_dir, 'config.MiG')
+                owners_file = os.path.join(resource_dir, 'owners')
+                owner_list = unpickle(owners_file, logger)
                 (status, resource_config) = \
                     get_resource_configuration(configuration.resource_home,
-                        resource_name, logger)
+                        unique_resource_name, logger)
                 if not status:
                     output_objects.append({'object_type': 'warning',
                             'text'
@@ -363,11 +365,11 @@ def main(cert_name_no_spaces, user_arguments_dict):
                 except:
                     raw_conf = ['']
 
-                quick_res[resource_name] = {'object_type': 'link',
-                        'text': '%s' % resource_name,
-                        'destination': '#%s' % resource_name}
+                quick_res[unique_resource_name] = {'object_type': 'link',
+                        'text': '%s' % unique_resource_name,
+                        'destination': '#%s' % unique_resource_name}
                 res_html = display_resource(
-                    resource_name,
+                    unique_resource_name,
                     raw_conf,
                     resource_config,
                     owner_list,

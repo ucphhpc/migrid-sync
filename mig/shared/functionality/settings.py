@@ -33,8 +33,9 @@ from shared.fileio import unpickle
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
-from shared.settings import mrsl_template, css_template, \
+from shared.useradm import client_id_dir, mrsl_template, css_template, \
     get_default_mrsl, get_default_css
+
 
 
 def signature():
@@ -44,18 +45,18 @@ def signature():
     return ['html_form', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False, op_title=False)
-
+    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -69,8 +70,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     # unpickle current settings
 
-    current_settings_dict = unpickle(configuration.user_home
-             + cert_name_no_spaces + os.sep + '.settings', logger)
+    current_settings_dict = unpickle(os.path.join(configuration.user_home, client_dir,
+                                                  '.settings'), logger)
     if not current_settings_dict:
 
         # no current settings found
@@ -145,8 +146,11 @@ def main(cert_name_no_spaces, user_arguments_dict):
     </div>
     """
 
-    base_dir = os.path.abspath(configuration.user_home + os.sep
-                                + cert_name_no_spaces) + os.sep
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                            client_dir)) + os.sep
 
     mrsl_path = os.path.join(base_dir, mrsl_template)
 

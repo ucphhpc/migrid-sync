@@ -39,6 +39,7 @@ import ConfigParser
 import pycurl
 
 from shared.fileio import pickle
+from shared.useradm import client_id_dir
 
 server_section = 'serverstatus'
 http_success = 200
@@ -536,7 +537,8 @@ def migrate_job(config, job, peer):
 
         # upload pickled job to server
 
-        mrsl_filename = config.mrsl_files_dir + job['USER_CERT'] + '/'\
+        client_dir = client_id_dir(job['USER_CERT'])
+        mrsl_filename = config.mrsl_files_dir + client_dir + '/'\
              + job['JOB_ID'] + '.mRSL'
         result = pickle(job, mrsl_filename, config.logger)
         if not result:

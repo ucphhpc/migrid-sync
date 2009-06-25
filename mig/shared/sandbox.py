@@ -209,7 +209,7 @@ vgrid=Generic
     return (True, resource_name + '.' + str(resource_identifier))
 
 
-def get_resource(cert_name_no_spaces, configuration, logger):
+def get_resource(client_id, configuration, logger):
     cookie = None
     sandboxkey = None
     cputime = 1000000

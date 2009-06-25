@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# startexe - [insert a few words of module description on this line]
+# httpsclient - Shared functions for all HTTPS clients
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,23 +25,16 @@
 # -- END_HEADER ---
 #
 
-# "redirect" to restart
+"""Common HTTPS client functions for e.g. access control"""
 
-from shared.init import initialize_main_variables
-from shared.functionality.restartexe import main as restartmain
+import os
 
+# All HTTPS clients coming through apache will have their unique
+# certificate distinguished name available in this field
+client_id_field = 'SSL_CLIENT_S_DN'
 
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
-
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables()
-
-    (output_objects_ret, status_res) = restartmain(client_id,
-            user_arguments_dict)
-    output_objects_ret.append({'object_type': 'text', 'text'
-                              : '( exe START is always performed by calling restart! )'
-                              })
-    return (output_objects_ret, status_res)
-
+def extract_client_id():
+    """Extract unique user ID from HTTPS environment"""
+    distinguished_name = os.environ.get(client_id_field, '').strip()
+    return distinguished_name
 

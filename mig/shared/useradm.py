@@ -36,9 +36,11 @@ import fnmatch
 
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
-from shared.settings import css_template, get_default_css
+from shared.fileio import filter_pickled_list, filter_pickled_dict
 
 db_name = "MiG-users.db"
+mrsl_template = '.default.mrsl'
+css_template = '.default.css'
 cert_field_order = [('country', 'C'), ('state', 'ST'), ('locality', 'L'),
                     ('organization', 'O'), ('organizational_unit', 'OU'),
                     ('full_name', 'CN'), ('email', 'emailAddress')]
@@ -53,6 +55,28 @@ def init_user_adm():
     db_path = os.path.join(app_dir, db_name)
     return (args, app_dir, db_path)
 
+def client_id_dir(client_id):
+    """Map client ID to a valid directory name:
+    client_id is a distinguished name on the form /X=ab/Y=cdef ghi/Z=klmn...
+    so we just replace slashes with plus signs and space with underscore
+    to avoid file system problems.
+    """
+    return client_id.replace('/', '+').replace(' ', '_')
+
+# TODO: old_id_format should be eliminated after complete migration to full DN
+
+def old_id_format(client_id):
+    """Map client ID to the old underscore CN only ID:
+    client_id is a distinguished name on the form /X=ab/Y=cdef ghi/CN=klmn...
+    so we just extract the CN field and replace space with underscore.
+    """
+    try:
+        old_id = client_id.split("/CN=", 1)[1]
+        old_id = old_id.split('/', 1)[0]
+        return old_id.replace(' ', '_')
+    except:
+        return client_id
+
 def fill_user(target):
     """Fill target user dictionary with all expected fields"""
     for (key, val) in cert_field_order:
@@ -61,7 +85,10 @@ def fill_user(target):
 
 def fill_distinguished_name(user):
     """Fill distinguished_name field from other fields if not already set"""
-    user['distinguished_name'] = user.get('distinguished_name', '')
+    if user.get('distinguished_name', ''):
+        return user
+    else:
+        user['distinguished_name'] = ''
     for (key, val) in cert_field_order:
         setting = user.get(key, '')
         # Hack: MiG certificates get empty fields set to NA
@@ -127,14 +154,14 @@ def create_user(user, conf_path, db_path, force=False):
     else:
         configuration = get_configuration_object()
 
-    user_id = '%(full_name)s:%(organization)s:' % user
-    user_id += '%(state)s:%(country)s:%(email)s' % user
+    fill_distinguished_name(user)
+    client_id = user['distinguished_name']
+    client_dir = client_id_dir(client_id)
     full_name = user['full_name']
-    full_name_without_spaces = full_name.replace(' ', '_')
 
     renew = False
 
-    print 'User name without spaces: %s\n' % full_name_without_spaces
+    print 'User name without spaces: %s\n' % full_name
     if os.path.exists(db_path):
         try:
             db_fd = open(db_path, 'rb')
@@ -146,7 +173,7 @@ def create_user(user, conf_path, db_path, force=False):
             if not force:
                 sys.exit(1)
 
-        if user_db.has_key(user_id):
+        if user_db.has_key(client_id):
             renew_answer = \
                          raw_input('User DB entry already exists - renew? [Y/n] ')
             renew = not renew_answer.lower().startswith('n')
@@ -157,7 +184,7 @@ def create_user(user, conf_path, db_path, force=False):
                 return
 
     try:
-        user_db[user_id] = user
+        user_db[client_id] = user
         db_fd = open(db_path, 'wb')
         pickle.dump(user_db, db_fd)
         db_fd.close()
@@ -169,11 +196,11 @@ def create_user(user, conf_path, db_path, force=False):
             sys.exit(1)
 
     home_dir = os.path.join(configuration.user_home,
-                            full_name_without_spaces)
+                            client_dir)
     mrsl_dir = os.path.join(configuration.mrsl_files_dir,
-                            full_name_without_spaces)
+                            client_dir)
     pending_dir = os.path.join(configuration.resource_pending,
-                               full_name_without_spaces)
+                               client_dir)
     htaccess_path = os.path.join(home_dir, '.htaccess')
     css_path = os.path.join(home_dir, css_template)
     if not renew:
@@ -246,12 +273,12 @@ def delete_user(user, conf_path, db_path, force=False):
     else:
         configuration = get_configuration_object()
 
-    user_id = '%(full_name)s:%(organization)s:' % user
-    user_id += '%(state)s:%(country)s:%(email)s' % user
+    fill_distinguished_name(user)
+    client_id = user['distinguished_name']
+    client_dir = client_id_dir(client_id)
     full_name = user['full_name']
-    full_name_without_spaces = full_name.replace(' ', '_')
 
-    print 'User name without spaces: %s\n' % full_name_without_spaces
+    print 'User name without spaces: %s\n' % full_name
 
     if os.path.exists(db_path):
         try:
@@ -263,13 +290,13 @@ def delete_user(user, conf_path, db_path, force=False):
             if not force:
                 sys.exit(1)
 
-        if not user_db.has_key(user_id):
-            print "Error: User DB entry '%s' doesn't exist!" % user_id
+        if not user_db.has_key(client_id):
+            print "Error: User DB entry '%s' doesn't exist!" % client_id
             if not force:
                 sys.exit(1)
 
     try:
-        del user_db[user_id]
+        del user_db[client_id]
         save_user_db(user_db, db_path)
         print 'User %s was successfully removed from user DB!' % full_name
     except Exception, err:
@@ -278,38 +305,146 @@ def delete_user(user, conf_path, db_path, force=False):
         if not force:
             sys.exit(1)
 
-    if not os.path.exists(configuration.user_home
-                           + full_name_without_spaces):
-        print "Error: User dir doesn't exist!"
-        if not force:
-            sys.exit(1)
-
     # Remove user dirs recursively
 
-    try:
-        delete_dir(configuration.resource_pending
-                    + full_name_without_spaces)
-    except:
-        print 'Error: could not remove resource dir: %s'\
-             % configuration.resource_pending + full_name_without_spaces
-        if not force:
-            sys.exit(1)
+    for base_dir in (configuration.user_home, configuration.mrsl_files_dir,
+                     configuration.resource_pending):
+
+        user_path = os.path.join(base_dir, client_dir)
+        try:
+            delete_dir(user_path)
+        except Exception, exc:
+            print 'Error: could not remove %s: %s'\
+                  % (user_path, exc)
+            if not force:
+                sys.exit(1)
+
+
+def migrate_user(client_id, conf_path, db_path, force=False):
+    """Migrate all user data for possibly old format user client_id to new format"""
+
+    """
+    Tasks:
+    update entry in user DB
+    move user_home dir and symlink
+    move mrsl_files_dir dir and symlink
+    move resource_pending dir and symlink
+    update USER_CERT field in all jobs
+    update CREATOR field in all REs
+    update owner files for all owned resources
+    update owner files for all owned vgrids
+    update member files for all membership vgrids
+    """
+
+    user_db = {}
+    if conf_path:
+        configuration = Configuration(conf_path)
+    else:
+        configuration = get_configuration_object()
+
+    if os.path.exists(db_path):
+        try:
+            user_db = load_user_db(db_path)
+            print 'Loaded existing user DB from: %s' % db_path
+        except Exception, err:
+            print 'Failed to load user DB!'
+            print err
+            if not force:
+                sys.exit(1)
+
+        if not user_db.has_key(client_id):
+            print "Error: User DB entry '%s' doesn't exist!" % client_id
+            if not force:
+                sys.exit(1)
+
+    user = user_db[client_id]
+    fill_distinguished_name(user)
+    new_id = user['distinguished_name']
+    if client_id == new_id:
+        print "user %s is already updated to new format" % client_id
+        return
+
+    print "updating user %s on old format to %s" % (client_id, new_id)
+
+    full_name = user['full_name']
+    full_name_without_spaces = full_name.replace(' ', '_')
+
+    print 'User name without spaces: %s\n' % full_name_without_spaces
 
     try:
-        delete_dir(configuration.mrsl_files_dir + full_name_without_spaces)
-    except:
-        print 'Error: could not remove mrsl dir: %s'\
-             % configuration.mrsl_files_dir + full_name_without_spaces
-        if not force:
-            sys.exit(1)
-
-    try:
-        delete_dir(configuration.user_home + full_name_without_spaces)
+        del user_db[client_id]
+        user_db[new_id] = user
+        save_user_db(user_db, db_path)
+        print 'User %s was successfully removed from user DB!' % full_name
     except Exception, err:
-        print 'Error: could not remove home dir: %s (%s)'\
-             % (configuration.user_home + full_name_without_spaces, err)
+        print 'Error: Failed to remove %s from user DB: %s' % (full_name,
+                err)
         if not force:
             sys.exit(1)
+
+    old_id = full_name_without_spaces
+    old_name = full_name_without_spaces
+    new_name = client_id_dir(new_id)
+
+    # Move user dirs
+
+    for base_dir in (configuration.user_home, configuration.mrsl_files_dir,
+                     configuration.resource_pending):
+
+        try:
+            old_path = os.path.join(base_dir, old_name)
+            new_path = os.path.join(base_dir, new_name)
+            os.renames(old_path, new_path)
+            # os.symlink(new_path, old_path)
+        except Exception, exc:
+            print 'Error: could not move %s to %s: %s'\
+                  % (old_path, new_path, exc)
+            if not force:
+                sys.exit(1)
+    
+    mrsl_base = os.path.join(configuration.mrsl_files_dir, new_name)
+    for mrsl_name in os.listdir(mrsl_base):
+        try:
+            mrsl_path = os.path.join(mrsl_base, mrsl_name)
+            if not os.path.isfile(mrsl_path):
+                continue
+            filter_pickled_dict(mrsl_path, {old_id: new_id})
+            #print "filtered %s" % mrsl_path
+        except Exception, exc:
+            print 'Error: could not update saved mrsl user in %s: %s' % \
+                  (mrsl_path, exc)
+            if not force:
+                sys.exit(1)
+                
+    re_base = configuration.re_home
+    for re_name in os.listdir(re_base):
+        try:
+            re_path = os.path.join(re_base, re_name)
+            if not os.path.isfile(re_path):
+                continue
+            filter_pickled_dict(re_path, {old_id: new_id})
+            #print "filtered %s" % re_path
+        except Exception, exc:
+            print 'Error: could not update saved mrsl user in %s: %s' % \
+                  (re_path, exc)
+            if not force:
+                sys.exit(1)
+            
+    for base_dir in (configuration.resource_home, configuration.vgrid_home):
+        for entry_name in os.listdir(base_dir):
+            for kind in ('members', 'owners'):
+                kind_path = os.path.join(base_dir, entry_name, kind)
+                if not os.path.isfile(kind_path):
+                    continue
+                try:
+                    filter_pickled_list(kind_path, {old_id: new_id})
+                    #print "filtered %s" % kind_path
+                except Exception, exc:
+                    print 'Error: could not update saved kind in %s: %s' % \
+                          (kind_path, exc)
+                    if not force:
+                        sys.exit(1)
+        
 
 def default_search():
     """Default search filter to match all users"""
@@ -338,3 +473,61 @@ def search_users(search_filter, conf_path, db_path):
             continue
         hits.append((uid, user_dict))
     return hits
+
+
+
+def get_default_mrsl(template_path):
+    """Return the default mRSL template from template_path"""
+
+    try:
+        template_fd = open(template_path, 'rb')
+        default_mrsl = template_fd.read()
+        template_fd.close()
+    except:
+
+        # Use default hello grid example
+
+        default_mrsl = \
+            """::EXECUTE::
+echo 'hello grid!'
+echo '...each line here is executed'
+
+::NOTIFY::
+email: SETTINGS
+jabber: SETTINGS
+
+::INPUTFILES::
+
+::OUTPUTFILES::
+
+::EXECUTABLES::
+
+::MEMORY::
+1
+
+::DISK::
+1
+
+::CPUTIME::
+30
+
+::RUNTIMEENVIRONMENT::
+
+"""
+    return default_mrsl
+
+
+def get_default_css(template_path):
+    """Return the default css template template_path"""
+
+    try:
+        template_fd = open(template_path, 'rb')
+        default_css = template_fd.read()
+        template_fd.close()
+    except:
+
+        # Use default style - i.e. do not override anything
+
+        default_css = '/* No changes - use default */'
+
+    return default_css

@@ -34,7 +34,6 @@ import os
 import sys
 import time
 
-from shared.configuration import Configuration
 from shared.conf import get_configuration_object
 from shared.resource import create_resource, \
     create_new_resource_configuration, remove_resource
@@ -43,10 +42,10 @@ from shared.cgioutput import CGIOutput
 
 def usage(name='createresource.py'):
     return """Usage:
-%(name)s RESOURCE_FQDN OWNER_COMMON_NAME [RESOURCE_CONFIG]
+%(name)s RESOURCE_FQDN OWNER_ID [RESOURCE_CONFIG]
 
 The script adds .COUNTER to the resources unique id"""\
-         % {'name': name}
+        % {'name': name}
 
 
 # ## Main ###
@@ -57,25 +56,25 @@ if not (argc == 3 or argc == 4):
     sys.exit(1)
 
 if argc == 4:
-    resource_configfilename = sys.argv.pop(3).strip()
+    resource_configfilename = sys.argv[3].strip()
 else:
     resource_configfilename = ''
 
-resource_owner = sys.argv.pop(2).strip()
-resource_name = sys.argv.pop(1).strip().lower()
+resource_name = sys.argv[1].strip().lower()
+client_id = sys.argv[2].strip()
 
 configuration = get_configuration_object()
 logger = configuration.logger
 o = CGIOutput(logger)
 
 (status, msg, resource_identifier) = create_resource(resource_name,
-        resource_owner, configuration.resource_home, logger)
+        client_id, configuration.resource_home, logger)
 o.out(msg)
 
 if status and argc == 4:
     (status, msg) = create_new_resource_configuration(
         resource_name,
-        resource_owner,
+        client_id,
         configuration.resource_home,
         configuration.resource_pending,
         resource_identifier,

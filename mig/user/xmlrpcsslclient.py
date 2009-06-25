@@ -134,10 +134,10 @@ class HTTPSCertTransport(xmlrpclib.Transport):
 
         # issue XML-RPC request
 
-        if self.host == None:
+        if not self.host:
             self.host = self.make_connection(host)
         if verbose:
-            h.set_debuglevel(1)
+            self.host.set_debuglevel(1)
 
         self.send_request(self.host, handler, request_body)
 

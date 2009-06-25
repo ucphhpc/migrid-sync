@@ -25,23 +25,13 @@
 # -- END_HEADER ---
 #
 
-import os
-from shared.cgishared import init_cgi_script_with_cert
+"""Front end to stop VNC session"""
 
-(logger, configuration, cert_name_no_spaces, o) = \
-    init_cgi_script_with_cert()
-base_dir = os.path.abspath(configuration.user_home + os.sep
-                            + cert_name_no_spaces) + os.sep
+import cgi
+import cgitb
+cgitb.enable()
 
-pid = ''
-pidfile = base_dir + '.Xvnc4.pid'
-try:
-    fd = open(pidfile, 'r')
-    pid = fd.readline()
-    fd.close()
-    os.remove(pidfile)
-except Exception, e:
-    logger.error('Unable to delete pidfile: %s' % e)
+from shared.functionality.vncstop import main
+from shared.cgiscriptstub import run_cgi_script
 
-if pid != '':
-    os.system('kill %s' % pid)
+run_cgi_script(main)

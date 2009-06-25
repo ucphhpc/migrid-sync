@@ -37,6 +37,7 @@ import genjobscriptjava
 from shared.confparser import get_resource_config_dict
 from shared.ssh import copy_file_to_resource
 from shared.fileio import write_file, pickle, make_symlink
+from shared.useradm import client_id_dir
 
 
 def create_empty_job(
@@ -87,8 +88,8 @@ def create_empty_job(
     job_dict['RUNTIMEENVIRONMENT'] = []
     job_dict['MAXPRICE'] = '0'
     job_dict['JOBNAME'] = 'empty job'
-    user_cert = configuration.empty_job_name
-    job_dict['USER_CERT'] = user_cert
+    client_id = configuration.empty_job_name
+    job_dict['USER_CERT'] = client_id
 
     # create mRSL file only containing the unique_resource_name.
     # This is used when the .status file from the empty job is
@@ -191,11 +192,12 @@ def create_job_script(
         job_dict['MAXPRICE'] = job['MAXPRICE']
     else:
         job_dict['MAXPRICE'] = '0'
-    user_cert = str(job['USER_CERT'])
+    client_id = str(job['USER_CERT'])
+    client_dir = client_id_dir(client_id)
 
     # if not job:
 
-    if user_cert == configuration.empty_job_name:
+    if client_id == configuration.empty_job_name:
 
         # create link to empty job
 
@@ -207,7 +209,7 @@ def create_job_script(
 
         # link sessionid to mrsl file
 
-        linkdest1 = configuration.mrsl_files_dir + user_cert + '/'\
+        linkdest1 = configuration.mrsl_files_dir + client_dir + '/'\
              + str(job_dict['JOB_ID']) + '.mRSL'
         linkloc1 = configuration.sessid_to_mrsl_link_home + sessionid\
              + '.mRSL'
@@ -215,13 +217,13 @@ def create_job_script(
 
     # link sessionid to job owners home directory
 
-    linkdest2 = configuration.user_home + user_cert
+    linkdest2 = configuration.user_home + client_dir
     linkloc2 = configuration.webserver_home + sessionid
     make_symlink(linkdest2, linkloc2, logger)
 
     # link iosessionid to job owners home directory
 
-    linkdest3 = configuration.user_home + user_cert
+    linkdest3 = configuration.user_home + client_dir
     linkloc3 = configuration.webserver_home + iosessionid
     make_symlink(linkdest3, linkloc3, logger)
 
@@ -256,7 +258,7 @@ def create_job_script(
         configuration,
         localjobname,
         path_without_extension,
-        user_cert,
+        client_dir,
         exe,
         logger,
         )
@@ -319,11 +321,11 @@ def create_job_script(
                     linkintermediate = configuration.webserver_home\
                          + sessionid + '.jvm'
 
-                    if user_cert == configuration.empty_job_name:
+                    if client_dir == configuration.empty_job_name:
                         linkdest = \
                             os.path.abspath(configuration.javabin_home)
                     else:
-                        linkdest = configuration.user_home + user_cert\
+                        linkdest = configuration.user_home + client_dir\
                              + os.sep + 'jvm'
 
                     # Make link sessionid.jvm -> USER_HOME/jvm
@@ -382,7 +384,7 @@ def gen_job_script(
     configuration,
     localjobname,
     path_without_extension,
-    user_cert,
+    client_dir,
     exe,
     logger,
     ):
@@ -454,9 +456,9 @@ def gen_job_script(
                                , '0',
                                'failed to fetch executable files!'))
 
-    # user_cert equals empty_job_name for sleep jobs
+    # client_dir equals empty_job_name for sleep jobs
 
-    getinputfiles_array.append(generator.generate_output_filelists(user_cert
+    getinputfiles_array.append(generator.generate_output_filelists(client_dir
                                 != configuration.empty_job_name,
                                'generate_output_filelists'))
     getinputfiles_array.append(generator.print_on_error('generate_output_filelists'

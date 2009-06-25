@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# findtype - [insert a few words of module description on this line]
+# findtype - Detect client entity type
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,43 +25,41 @@
 # -- END_HEADER ---
 #
 
-"""Entity check"""
+"""Entity kind detection"""
 
 import os
 from string import letters, digits
 
 from shared.listhandling import is_item_in_pickled_list
+from shared.useradm import client_id_dir, old_id_format
+from shared.validstring import valid_user_path
 
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
 MIG_SERVER_ID = 'MiG-Server'
 
 
-def is_user(cert_name, user_home):
-    """loop though user_home and find out if a matching directory
-    is found"""
+def is_user(entity_id, user_home):
+    """Check if if a matching user home directory exists"""
 
-    if cert_name.strip() == '':
+    # TODO: lookup in user DB instead?
+
+    if not entity_id:
         return False
-    cert_upper = cert_name.upper()
-    dir_list = os.listdir(user_home)
-    for dir_entry in dir_list:
-        if dir_entry.upper() == cert_upper:
-
-            # print "Cert found as a User cert!"
-
-            return True
+    home_dir = os.path.join(user_home, client_id_dir(entity_id))
+    if os.path.isdir(home_dir):
+        return True
     return False
 
 
-def is_server(cert_name, server_home, local=False):
-    """Check that cert_name is a valid FQDN and make sure that
+def is_server(entity_id, server_home, local=False):
+    """Check that entity_id is a valid FQDN and make sure that
     org_unit matches a predefined MiG server ID string.
     When called from a basic cgi handler all IO must remain local
     to avoid loops. Thus the optional local flag is available.
     """
 
-    cert_lower = cert_name.lower()
-    for char in cert_lower:
+    entity_lower = entity_id.lower()
+    for char in entity_lower:
         if not char in VALID_FQDN_CHARACTERS:
             return False
 
@@ -70,45 +68,43 @@ def is_server(cert_name, server_home, local=False):
     return True
 
 
-def is_resource(cert_name, resource_home):
+def is_resource(entity_id, resource_home):
     """loop though resource_home and find out if a matching
     directory is found"""
 
-    cert_upper = cert_name.upper()
+    entity_upper = entity_id.upper()
     dir_list = os.listdir(resource_home)
     for dir_entry in dir_list:
-
-        # print dir_entry.upper() + "==" + cert_upper
-
-        if dir_entry.upper().strip() == cert_upper.strip():
-
-            # print "Cert found as a Resource cert!"
-
+        if dir_entry.upper().strip() == entity_upper.strip():
             return True
     return False
 
 
 def is_owner(
-    cert_no_spaces,
+    client_id,
     unique_config_name,
     config_home,
     logger,
     ):
-
-    config_file = os.path.abspath(config_home) + os.sep\
-         + unique_config_name + os.sep + 'owners'
+    """Check that client_id is listed in pickled owners file"""
+    config_path = os.path.abspath(os.path.join(config_home, unique_config_name,
+                                               'owners'))
 
     # Check validity of unique_config_name
 
-    if os.path.abspath(config_file) != config_file:
+    if not valid_user_path(config_path, config_home):
 
         # Extract caller information
 
         from traceback import format_stack
         caller = ''.join(format_stack()[:-1]).strip()
-        logger.warning("is_owner registered possible illegal directory traversal attempt by '%s': resource name '%s' (caller: %s)"
-                        % (cert_no_spaces, unique_config_name, caller))
+        logger.warning("""is_owner caught possible illegal directory traversal attempt
+by client: '%s'
+unique name: '%s'
+
+caller: %s""" % (client_id, unique_config_name, caller))
         return False
-    return is_item_in_pickled_list(config_file, cert_no_spaces, logger)
+    return (is_item_in_pickled_list(config_path, client_id, logger) or \
+            is_item_in_pickled_list(config_path, old_id_format(client_id), logger))
 
 

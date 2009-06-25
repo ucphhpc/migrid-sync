@@ -43,7 +43,7 @@ def signature():
     return ['html_form', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -64,7 +64,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     allowed_vgrids = user_allowed_vgrids(configuration,
-            cert_name_no_spaces)
+            client_id)
     vgrid_list = accepted['vgrid_name']
     if 'ALL' in accepted['vgrid_name']:
         vgrid_list = [i for i in vgrid_list if 'ALL' != i]\
@@ -75,7 +75,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     for vgrid_name in set(vgrid_list):
         html = ''
         if not vgrid_is_owner_or_member(vgrid_name,
-                cert_name_no_spaces, configuration):
+                client_id, configuration):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'You must be an owner or member of %s vgrid to access the monitor.'
                                    % vgrid_name})

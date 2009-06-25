@@ -39,6 +39,7 @@ from shared.job import new_job
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.useradm import client_id_dir
 
 
 def signature():
@@ -53,18 +54,18 @@ def signature():
     return ['submitstatuslist', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False)
-
+    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -77,8 +78,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(configuration.user_home + os.sep
-                                + cert_name_no_spaces) + os.sep
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                            client_dir)) + os.sep
 
     # HTML spec dictates newlines in forms to be MS style (\r\n)
     # rather than un*x style (\n): change if requested.
@@ -109,7 +110,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
             # ../*/* is technically allowed to match own files.
 
             logger.error('Warning: %s tried to %s outside own home! (path %s)'
-                          % (cert_name_no_spaces, op_name, path))
+                          % (client_id, op_name, path))
             output_objects.append({'object_type': 'error_text', 'text'
                                   : "You're only allowed to edit your own files! (%s expands to an illegal path)"
                                    % path})
@@ -119,7 +120,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     if '.htaccess' == os.path.basename(real_path):
         logger.error('Warning: %s tried to %s htaccess! (path %s)'
-                      % (cert_name_no_spaces, op_name, path))
+                      % (client_id, op_name, path))
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Access to .htaccess files is prohibited!'
                               })
@@ -129,15 +130,15 @@ def main(cert_name_no_spaces, user_arguments_dict):
         real_path = base_dir + path
         if not valid_user_path(real_path, base_dir, True):
             logger.error('Warning: %s tried to %s outside own home! (path %s)'
-                          % (cert_name_no_spaces, op_name, path))
+                          % (client_id, op_name, path))
             output_objects.append({'object_type': 'error_text', 'text'
                                   : "You're only allowed to edit your own files! (%s expands to an illegal path)"
                                    % path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     (owner, time_left) = acquire_edit_lock(real_path,
-            cert_name_no_spaces)
-    if owner != cert_name_no_spaces:
+            client_id)
+    if owner != client_id:
         output_objects.append({'object_type': 'error_text', 'text'
                               : "You don't have the lock for %s!"
                                % path})
@@ -153,7 +154,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         output_objects.append({'object_type': 'text', 'text'
                               : 'Saved changes to %s.' % path})
-        release_edit_lock(real_path, cert_name_no_spaces)
+        release_edit_lock(real_path, client_id)
     except Exception, exc:
 
         # Don't give away information about actual fs layout
@@ -167,7 +168,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         output_objects.append({'object_type': 'text', 'text'
                               : 'Submitting saved file to parser'})
         submitstatus = {'object_type': 'submitstatus', 'name': path}
-        (status, msg, job_id) = new_job(real_path, cert_name_no_spaces,
+        (status, msg, job_id) = new_job(real_path, client_id,
                 configuration, False, True)
         if not status:
             submitstatus['status'] = False

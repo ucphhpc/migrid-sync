@@ -25,11 +25,13 @@
 # -- END_HEADER ---
 #
 
-import shared.vncfunctions as vncfunctions
-from shared.cgishared import init_cgi_script_with_cert
+"""Front end to VNC session"""
 
-# ## Main ###
+import cgi
+import cgitb
+cgitb.enable()
 
-(logger, configuration, cert_name_no_spaces, o) = \
-    init_cgi_script_with_cert()
-vncfunctions.main(logger, configuration, cert_name_no_spaces, o)
+from shared.functionality.vncsession import main
+from shared.cgiscriptstub import run_cgi_script
+
+run_cgi_script(main)

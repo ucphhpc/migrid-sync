@@ -42,7 +42,7 @@ from shared.cgishared import init_cgiscript_possibly_with_cert, \
 # Get Querystring object
 
 fieldstorage = cgi.FieldStorage()
-(logger, configuration, cert_name_no_spaces, o) = \
+(logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert()
 
 # Check we are using GET method

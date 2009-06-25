@@ -27,6 +27,7 @@
 
 # Minimum Intrusion Grid
 
+import os
 import cgi
 import cgitb
 cgitb.enable()
@@ -38,11 +39,14 @@ from shared.validstring import valid_dir_input
 from shared.fileio import unpickle
 from shared.cgishared import init_cgi_script_with_cert
 from shared.refunctions import is_runtime_environment
+from shared.useradm import client_id_dir
+
 
 # ## Main ###
 
-(logger, configuration, cert_name_no_spaces, o) = \
+(logger, configuration, client_id, o) = \
     init_cgi_script_with_cert()
+client_dir = client_id_dir(client_id)
 
 fieldstorage = cgi.FieldStorage()
 htmlquery = fieldstorage.getfirst('with_html', '')
@@ -70,7 +74,7 @@ if unique_resource_name == '':
 if not valid_dir_input(configuration.re_home, re_name):
     o.out('Illegal re_name: %s' % re_name)
     logger.warning("Registered possible illegal directory traversal attempt by '%s': re_name '%s'"
-                    % (cert_name_no_spaces, re_name))
+                    % (client_id, re_name))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 if '/' in re_name:
@@ -81,13 +85,13 @@ if not valid_dir_input(configuration.resource_home,
                        unique_resource_name):
     o.out('Illegal unique_resource_name: %s' % unique_resource_name)
     logger.warning("Registered possible illegal directory traversal attempt by '%s': unique_resource_name '%s'"
-                    % (cert_name_no_spaces, unique_resource_name))
+                    % (client_id, unique_resource_name))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 # remove the is_owner check to allow vgrid owners to see if a resource (where they know the unique_resoyurce_name)
 # supports a specific runtime environment?
 
-if not is_owner(cert_name_no_spaces, unique_resource_name,
+if not is_owner(client_id, unique_resource_name,
                 configuration.resource_home, logger):
     o.out('You must be an owner of the resource to get history of runtime environment support. (resource %s)'
            % unique_resource_name)
@@ -118,14 +122,21 @@ else:
             o.client('Resource has not executed any testprocedures for the specified runtime environment with its current configuration!'
                      )
         else:
+            
+            # Please note that base_dir must end in slash to avoid access to other
+            # user dirs when own name is a prefix of another user name
+
+            base_dir = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                                                    client_dir)) + os.sep
+
             try:
 
-                for (job_id, submitter_cert_name_no_spaces) in jobs:
+                for (job_id, submitter_client_id) in jobs:
 
-            # print info about the single testjob
+                    # print info about the single testjob
 
-                    mrslfilepath = configuration.mrsl_files_dir\
-                         + cert_name_no_spaces + '/' + job_id + '.mRSL'
+
+                    mrslfilepath = os.path.join(base_dir, job_id + '.mRSL')
                     job_dict = unpickle(mrslfilepath,
                             configuration.logger)
                     if not job_dict:

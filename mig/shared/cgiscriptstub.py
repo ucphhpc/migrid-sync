@@ -41,12 +41,12 @@ from shared.output import do_output
 def run_cgi_script(main):
     """ Get needed information and run the function received as argument """
 
-    (logger, configuration, cert_name_no_spaces, o) = \
+    (logger, configuration, client_id, o) = \
         init_cgi_script_with_cert()
     fieldstorage = cgi.FieldStorage()
 
     user_arguments_dict = fieldstorage_to_dict(fieldstorage)
-    (out_obj, (ret_code, ret_msg)) = main(cert_name_no_spaces,
+    (out_obj, (ret_code, ret_msg)) = main(client_id,
             user_arguments_dict)
 
     # default to html
@@ -65,12 +65,12 @@ def run_cgi_script(main):
 def run_cgi_script_possibly_with_cert(main):
     """ Get needed information and run the function received as argument """
 
-    (logger, configuration, cert_name_no_spaces, o) = \
+    (logger, configuration, client_id, o) = \
         init_cgiscript_possibly_with_cert()
     fieldstorage = cgi.FieldStorage()
 
     user_arguments_dict = fieldstorage_to_dict(fieldstorage)
-    (out_obj, (ret_code, ret_msg)) = main(cert_name_no_spaces,
+    (out_obj, (ret_code, ret_msg)) = main(client_id,
             user_arguments_dict)
 
     # default to html

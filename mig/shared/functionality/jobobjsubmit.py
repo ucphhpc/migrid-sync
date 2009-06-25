@@ -32,6 +32,8 @@
 import os
 import sys
 import glob
+import tempfile
+
 import shared.mrslkeywords as mrslkeywords
 from shared.conf import get_resource_configuration, \
     get_configuration_object
@@ -41,7 +43,7 @@ from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
 from shared.job import new_job, create_job_object_from_pickled_mrsl
-import tempfile
+from shared.useradm import client_id_dir
 
 
 def signature():
@@ -61,19 +63,19 @@ def signature():
     return ['html_form', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables()
-
+    client_dir = client_id_dir(client_id)
     status = returnvalues.OK
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -120,13 +122,17 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # submit it
 
     (submit_status, newmsg, job_id) = new_job(tmpfile,
-            cert_name_no_spaces, configuration, False, True)
+            client_id, configuration, False, True)
     if not submit_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : newmsg})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    base_dir = os.path.abspath(configuration.mrsl_files_dir + os.sep
-                                + cert_name_no_spaces)
+
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                                            client_dir)) + os.sep
 
     # job = Job()
 

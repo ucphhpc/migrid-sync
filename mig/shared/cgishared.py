@@ -32,6 +32,7 @@ import sys
 
 from shared.cgioutput import CGIOutput
 from shared.conf import get_configuration_object
+from shared.httpsclient import extract_client_id
 
 
 def print_cgiscript_init(header_info=None, content_type='text/html'):
@@ -61,18 +62,16 @@ def init_cgi_script_with_cert(print_header=True):
     logger = configuration.logger
     o = CGIOutput(logger)
 
-    # get CN of user currently logged in
+    # get DN of user currently logged in
 
-    common_name = str(os.getenv('SSL_CLIENT_S_DN_CN'))
-    if common_name == 'None':
-        o.out('No client CN available from SSL session - not authenticated?!'
+    client_id = extract_client_id()
+    if not client_id:
+        o.out('No client ID available from SSL session - not authenticated?!'
               )
         o.reply_and_exit(o.ERROR)
 
-    cert_name_no_spaces = common_name.replace(' ', '_')
-    o.internal('script: %s cert: %s' % (sys.argv[0],
-               cert_name_no_spaces))
-    return (logger, configuration, cert_name_no_spaces, o)
+    o.internal('script: %s cert: %s' % (sys.argv[0], client_id))
+    return (logger, configuration, client_id, o)
 
 
 def init_cgiscript_possibly_with_cert(print_header=True,
@@ -88,16 +87,14 @@ def init_cgiscript_possibly_with_cert(print_header=True,
     logger = configuration.logger
     o = CGIOutput(logger)
 
-    # get CN of user currently logged in
+    # get DN of user currently logged in
 
-    common_name = str(os.getenv('SSL_CLIENT_S_DN_CN'))
-    if common_name == 'None':
-        o.internal('(No client CN available in SSL session)')
+    client_id = extract_client_id()
+    if not client_id:
+        o.internal('(No client ID available in SSL session)')
 
-    cert_name_no_spaces = common_name.replace(' ', '_')
-    o.internal('script: %s cert: %s' % (sys.argv[0],
-               cert_name_no_spaces))
+    o.internal('script: %s cert: %s' % (sys.argv[0], client_id))
 
-    return (logger, configuration, cert_name_no_spaces, o)
+    return (logger, configuration, client_id, o)
 
 

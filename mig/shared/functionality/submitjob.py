@@ -35,8 +35,9 @@ from shared.init import initialize_main_variables
 from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.mrslkeywords import get_keywords_dict
-from shared.settings import load_settings, mrsl_template, \
-    get_default_mrsl
+from shared.settings import load_settings
+from shared.useradm import  mrsl_template, get_default_mrsl
+from shared.useradm import client_id_dir
 
 
 def signature():
@@ -46,19 +47,19 @@ def signature():
     return ['html_form', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False, op_title=False)
-
+    client_dir = client_id_dir(client_id)
     status = returnvalues.OK
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -68,8 +69,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(configuration.user_home + os.sep
-                                + cert_name_no_spaces) + os.sep
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                            client_dir)) + os.sep
 
     template_path = os.path.join(base_dir, mrsl_template)
 
@@ -93,7 +94,7 @@ Actual examples for inspiration:
 </div>
     """})
     default_mrsl = get_default_mrsl(template_path)
-    settings_dict = load_settings(cert_name_no_spaces, configuration)
+    settings_dict = load_settings(client_id, configuration)
     if not settings_dict or not settings_dict.has_key('SUBMITUI'):
         logger.info('Settings dict does not have SUBMITUI key - using default'
                     )

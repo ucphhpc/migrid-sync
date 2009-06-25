@@ -45,12 +45,12 @@ def signature():
     return ['html_form', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False,
-                                  op_menu=cert_name_no_spaces != 'None')
+                                  op_menu=client_id)
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG One-click resource'})
 
@@ -60,7 +60,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    (status, result) = get_resource(cert_name_no_spaces, configuration,
+    (status, result) = get_resource(client_id, configuration,
                                     logger)
     if not status:
         output_objects.append({'object_type': 'html_form', 'text'

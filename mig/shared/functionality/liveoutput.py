@@ -38,6 +38,7 @@ from shared.conf import get_resource_exe
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.useradm import client_id_dir
 
 
 def signature():
@@ -47,11 +48,12 @@ def signature():
     return ['text', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_title=False, op_header=False)
+    client_dir = client_id_dir(client_id)
     output_objects.append({
         'object_type': 'title',
         'text': 'MiG live output',
@@ -63,7 +65,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -78,8 +80,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(configuration.mrsl_files_dir + os.sep
-                                + cert_name_no_spaces) + os.sep
+    base_dir = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                                            client_dir)) + os.sep
 
     if not os.path.isdir(base_dir):
         output_objects.append({'object_type': 'error_text', 'text'
@@ -112,9 +114,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                # o.internal(
-                # log this("Warning: %s tried to %s %s outside own home! (pattern %s)" % \
-                # (cert_name_no_spaces, op_name, real_path,pattern))
+                # logger.warning("%s tried to %s %s outside own home! (pattern %s)" % \
+                # (client_id, op_name, real_path,pattern))
 
                 continue
 
@@ -140,7 +141,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         job_id = mrsl_file.replace('.mRSL', '')
         job_dict = unpickle(filepath, logger)
         if not job_dict:
-            status = o.CLIENT_ERROR
+            status = returnvalues.CLIENT_ERROR
 
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'You can only list status of your own jobs.'
@@ -153,11 +154,11 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         # Check that file belongs to the user requesting the status
 
-        if not cert_name_no_spaces == job_dict['USER_CERT']:
+        if client_id != job_dict['USER_CERT']:
             output_objects.append({'object_type': 'text', 'text'
                                   : 'The job you are trying to get status for does not belong to you!'
                                   })
-            status = o.CLIENT_ERROR
+            status = returnvalues.CLIENT_ERROR
             continue
 
         if job_dict['STATUS'] != 'EXECUTING':

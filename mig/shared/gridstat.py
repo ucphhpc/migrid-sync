@@ -421,6 +421,11 @@ class GridStat:
         # Traverse mRSL dir and update cache
 
         for (root, _, files) in os.walk(root_dir, topdown=True):
+
+            # skip all dot dirs - they are from repos etc and _not_ jobs
+
+            if root.find(os.sep + '.') != -1:
+                continue
             for name in files:
                 filename = root + '/' + name
 

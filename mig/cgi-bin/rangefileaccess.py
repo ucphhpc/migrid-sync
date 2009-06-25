@@ -46,6 +46,7 @@ import sys
 
 from shared.cgiinput import fieldstorage_to_dict
 from shared.cgishared import init_cgiscript_possibly_with_cert
+from shared.useradm import client_id_dir
 
 
 def get(o, fileinfo_dict):
@@ -260,8 +261,9 @@ def put(o, fileinfo_dict):
 
 # ## Main ###
 
-(logger, configuration, cert_name_no_spaces, o) = \
+(logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert()
+client_dir = client_id_dir(client_id)
 
 # Debug info
 # logger.debug("REQUEST_METHOD: " + str(os.getenv("REQUEST_METHOD")))
@@ -305,12 +307,13 @@ if not fileinfo_dict.has_key('path'):
 logger.info('rangefileaccess on %s (%s)' % (fileinfo_dict['path'],
             fileinfo_dict))
 
-if cert_name_no_spaces != 'None':
+if client_id:
 
-    # logger.debug("Certificate found as a user cert: " + cert_name_no_spaces)
+    # logger.debug("Certificate found as a user cert: " + client_id)
 
-    fileinfo_dict['base_path'] = configuration.user_home\
-         + cert_name_no_spaces + '/'
+    fileinfo_dict['base_path'] = os.path.normpath(os.path.join(configuration.user_home,
+                                                               client_dir)) + os.sep
+
 elif fileinfo_dict.has_key('iosessionid'):
 
     fileinfo_dict['base_path'] = configuration.webserver_home\

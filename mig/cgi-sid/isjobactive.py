@@ -40,7 +40,7 @@ from shared.fileio import unpickle
 
 # ## Main ###
 
-(logger, configuration, cert_name_no_spaces, o) = \
+(logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert()
 
 # Check we are using correct method

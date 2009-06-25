@@ -49,7 +49,7 @@ def fix_missing(config_file, verbose=True):
         'enable_server_dist': False,
         'server_fqdn': fqdn,
         'admin_email': '%s@%s' % (user, fqdn),
-        'mrsl_files_dir': '~/state/mRSL_files/',
+        'mrsl_files_dir': '~/state/mrsl_files/',
         're_files_dir': '~/state/re_files/',
         're_pending_dir': '~/state/re_pending/',
         're_home': '~/state/re_home/',
@@ -141,8 +141,8 @@ class Configuration:
 
     mig_server_id = None
     mrsl_files_dir = ''
-    RE_files_dir = ''
-    RE_pending_dir = ''
+    re_files_dir = ''
+    re_pending_dir = ''
     re_home = ''
     grid_stdin = ''
     im_notify_stdin = ''
@@ -281,9 +281,9 @@ class Configuration:
 
         try:
             self.mig_server_id = config.get('GLOBAL', 'mig_server_id')
-            self.mrsl_files_dir = config.get('GLOBAL', 'mRSL_files_dir')
-            self.RE_files_dir = config.get('GLOBAL', 'RE_files_dir')
-            self.RE_pending_dir = config.get('GLOBAL', 'RE_pending_dir')
+            self.mrsl_files_dir = config.get('GLOBAL', 'mrsl_files_dir')
+            self.re_files_dir = config.get('GLOBAL', 're_files_dir')
+            self.re_pending_dir = config.get('GLOBAL', 're_pending_dir')
             self.re_home = config.get('GLOBAL', 're_home')
             self.grid_stdin = config.get('GLOBAL', 'grid_stdin')
             self.im_notify_stdin = config.get('GLOBAL',
@@ -407,7 +407,7 @@ class Configuration:
 
             if config.has_option('GLOBAL', 'peerfile'):
                 peerfile = config.get('GLOBAL', 'peerfile')
-                self.peers = self.ParsePeers(peerfile)
+                self.peers = self.parse_peers(peerfile)
 
             if config.has_option('GLOBAL', 'migrate_limit'):
                 self.migrate_limit = config.get('GLOBAL',

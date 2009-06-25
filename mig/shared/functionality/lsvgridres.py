@@ -43,7 +43,7 @@ def signature():
     return ['list', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -53,7 +53,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -65,7 +65,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # no need to worry about illegal directory traversal through variables
 
     (ret_val, msg, ret_variables) = init_vgrid_script_list(vgrid_name,
-            cert_name_no_spaces, configuration)
+            client_id, configuration)
     if not ret_val:
         output_objects.append({'object_type': 'error_text', 'text'
                               : msg})

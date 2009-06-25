@@ -25,16 +25,12 @@
 # -- END_HEADER ---
 #
 
-# todo: lock access to dict since multiple threads can access this lib simultaniously
+# TODO: lock access to dict since multiple threads can access this lib simultaniously
 
 import os
-import os.path
 
-# MiG imports
-
-from fileio import pickle, unpickle
-
-# from shared.fileio import pickle, unpickle
+from shared.fileio import pickle, unpickle
+from shared.conf import get_configuration_object
 
 
 def initialize_and_get_display_dict_filename(configuration, logger):
@@ -53,14 +49,14 @@ def initialize_and_get_display_dict_filename(configuration, logger):
     return (True, filename)
 
 
-def get_users_display_number(cert_name_no_spaces, configuration,
+def get_users_display_number(client_id, configuration,
                              logger):
     (init_ret, filename) = \
         initialize_and_get_display_dict_filename(configuration, logger)
     if not init_ret:
         return (False, 'could not initialize')
 
-    (key, value) = get_users_display_dict(cert_name_no_spaces,
+    (key, value) = get_users_display_dict(client_id,
             configuration, logger)
     logger.error('karlsen debug: %s' % key)
     logger.error('karlsen debug: %s' % value)
@@ -71,7 +67,7 @@ def get_users_display_number(cert_name_no_spaces, configuration,
     return key
 
 
-def get_users_display_dict(cert_name_no_spaces, configuration, logger):
+def get_users_display_dict(client_id, configuration, logger):
     (init_ret, filename) = \
         initialize_and_get_display_dict_filename(configuration, logger)
     if not init_ret:
@@ -82,16 +78,16 @@ def get_users_display_dict(cert_name_no_spaces, configuration, logger):
         return (False, 'could not unpickle %s' % filename)
 
     for (key, value) in dict.items():
-        if value['cert_name_no_spaces'] == cert_name_no_spaces:
+        if value['client_id'] == client_id:
             return (key, value)
 
-    # not found, cert_name_no_spaces does not have a live display
+    # not found, client_id does not have a live display
 
     return (-1, -1)
 
 
 def set_user_display_inactive(
-    cert_name_no_spaces,
+    client_id,
     display_number,
     configuration,
     logger,
@@ -102,22 +98,22 @@ def set_user_display_inactive(
     if not init_ret:
         return (False, 'could not initialize')
 
-    current_display = get_users_display_number(cert_name_no_spaces,
+    current_display = get_users_display_number(client_id,
             configuration, logger)
     if not current_display:
         return (False,
                 'could not remove active display since no entry was found for %s'
-                 % cert_name_no_spaces)
+                 % client_id)
 
     if current_display == -1:
         return (False,
                 'user %s does not have a display registered, unable to inactivate any display'
-                 % cert_name_no_spaces)
+                 % client_id)
 
     if current_display != display_number:
         return (False,
                 'user %s had display %s registered in dict, but specified display_number in set_user_display_inactive was %s'
-                 % (cert_name_no_spaces, current_display,
+                 % (client_id, current_display,
                 display_number))
 
     # remove entry from dict and pickle it
@@ -161,7 +157,7 @@ def get_dict_from_display_number(display_number, configuration, logger):
 
 
 def set_user_display_active(
-    cert_name_no_spaces,
+    client_id,
     display_number,
     vnc_port,
     password,
@@ -179,27 +175,27 @@ def set_user_display_active(
     if not dis_ret:
         return (False, 'dict error, %s' % dis_dict)
     if dis_dict != -1:
-        if dis_dict['cert_name_no_spaces'] != cert_name_no_spaces:
+        if dis_dict['client_id'] != client_id:
 
         # display occupied by another user!
 
             return (False, 'display %s already in use by another user!'
                      % display_number)
 
-    # getting here means display is free or used by cert_name_no_spaces
+    # getting here means display is free or used by client_id
 
     dict = unpickle(filename, logger)
     if dict == False:
         return (False, 'could not unpickle %s' % filename)
 
-    current_display = get_users_display_number(cert_name_no_spaces,
+    current_display = get_users_display_number(client_id,
             configuration, logger)
     if not current_display:
 
     # register display
 
         dict[display_number] = \
-            {'cert_name_no_spaces': cert_name_no_spaces,
+            {'client_id': client_id,
              'vnc_port': vnc_port, 'password': password}
         pickle_status = pickle(dict, filename, logger)
 
@@ -207,7 +203,7 @@ def set_user_display_active(
             return (False, 'could not pickle %s when adding %s'
                      % (filename, dict[display_number]))
         logger.info('successfuly registered that display %s is in use by %s in %s'
-                     % (display_number, cert_name_no_spaces, filename))
+                     % (display_number, client_id, filename))
         return (True, '')
 
     if current_display != display_number and current_display != -1:
@@ -222,7 +218,7 @@ def set_user_display_active(
     # add display to dict
 
         dict[display_number] = \
-            {'cert_name_no_spaces': cert_name_no_spaces,
+            {'client_id': client_id,
              'vnc_port': vnc_port, 'password': password}
         pickle_status = pickle(dict, filename, logger)
 
@@ -231,22 +227,22 @@ def set_user_display_active(
                      % (filename, dict[display_number]))
 
         logger.info('successfuly registered that display %s is in use by %s in %s %s'
-                     % (display_number, cert_name_no_spaces, dict,
+                     % (display_number, client_id, dict,
                     filename))
         return (True, '')
 
 
 # test of functions
 
-test_functions = False
-if test_functions:
+if "__main__" == __name__:
     print '*** Testing livedisplayfunctions ***'
 
     # from shared.cgishared import init_cgiscript_possibly_with_cert
-    # (logger, configuration, cert_name_no_spaces, o) = init_cgiscript_possibly_with_cert()
+    # (logger, configuration, client_id, o) = init_cgiscript_possibly_with_cert()
 
-    cert_name_no_spaces = 'Henrik_Hoey_Karlsen3'
-    (stat, msg) = get_users_display_dict(cert_name_no_spaces,
+    client_id = 'Henrik_Hoey_Karlsen3'
+    configuration = get_configuration_object()
+    logger = configuration.logger
+    (stat, msg) = get_users_display_dict(client_id,
             configuration, logger)
     print 'users_display_dict status: %s, msg: %s' % (stat, msg)
-

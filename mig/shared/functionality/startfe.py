@@ -31,13 +31,13 @@ from shared.init import initialize_main_variables
 from shared.functionality.restartfe import main as restartmain
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables()
 
-    (output_objects_ret, status_res) = restartmain(cert_name_no_spaces,
+    (output_objects_ret, status_res) = restartmain(client_id,
             user_arguments_dict)
     output_objects_ret.append({'object_type': 'text', 'text'
                               : '( START is always performed by calling restart! )'

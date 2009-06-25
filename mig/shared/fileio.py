@@ -83,18 +83,52 @@ def make_symlink(dest, src, logger):
     return True
 
 
+def filter_pickled_list(filename, changes):
+    """Filter pickled list on disk with provided changes where changes is a dictionary
+    mapping existing list entries and the value to replace it with.
+    """
+    filehandle = open(filename, 'r+')
+    saved_list = org_pickle.load(filehandle)
+    saved_list = [changes.get(entry, entry) for entry in saved_list]
+    filehandle.seek(0, 0)
+    org_pickle.dump(saved_list, filehandle)
+    filehandle.close()
+    return saved_list
+
+
+def filter_pickled_dict(filename, changes):
+    """Filter pickled dictionary on disk with provided changes where changes is a
+    dictionary mapping existing dictionary values to a value to replace it with"""
+    filehandle = open(filename, 'r+')
+    saved_dict = org_pickle.load(filehandle)
+    for (key, val) in saved_dict.items():
+        if val in changes.keys():
+            saved_dict[key] = changes[val]
+    filehandle.seek(0, 0)
+    org_pickle.dump(saved_dict, filehandle)
+    filehandle.close()
+    return saved_dict
+
+
+def update_pickled_dict(filename, changes):
+    """Update pickled dictionary on disk with provided changes"""
+    filehandle = open(filename, 'r+')
+    saved_dict = org_pickle.load(filehandle)
+    saved_dict.update(changes)
+    filehandle.seek(0, 0)
+    org_pickle.dump(saved_dict, filehandle)
+    filehandle.close()
+    return saved_dict
+
+
 def unpickle_and_change_status(filename, newstatus, logger):
+    """change status in the MiG server mRSL file"""
+    
+    changes = {}
+    changes['STATUS'] = newstatus
+    changes[newstatus + '_TIMESTAMP'] = time.gmtime()
     try:
-
-        # change status in the MiG server mRSL file
-
-        filehandle = open(filename, 'r+')
-        job_dict = org_pickle.load(filehandle)
-        job_dict['STATUS'] = newstatus
-        job_dict[newstatus + '_TIMESTAMP'] = time.gmtime()
-        filehandle.seek(0, 0)
-        org_pickle.dump(job_dict, filehandle)
-        filehandle.close()
+        job_dict = update_pickled_dict(filename, changes)
         logger.info('job status changed to %s: %s' % (newstatus,
                     filename))
         return job_dict
@@ -102,7 +136,6 @@ def unpickle_and_change_status(filename, newstatus, logger):
         logger.error('could not change job status to %s: %s %s'
                       % (newstatus, filename, err))
         return False
-
 
 def unpickle(filename, logger):
     try:
@@ -161,8 +194,8 @@ def touch(filepath, timestamp=None):
             os.utime(filepath, (timestamp, timestamp))
     except Exception, err:
 
-        logger.error("could not touch file: '%s', Error: %s"
-                      % (filepath, err))
+        print "could not touch file: '%s', Error: %s" % \
+              (filepath, err)
         return False
 
 

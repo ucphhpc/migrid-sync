@@ -228,6 +228,8 @@ def txt_format(ret_val, ret_msg, out_obj):
                 continue
             columns = 6
             cols = 0
+            if i['show_dest']:
+                columns += 1
             for dir_listing in i['dir_listings']:
                 for entry in dir_listing['entries']:
                     line = ''
@@ -253,6 +255,8 @@ def txt_format(ret_val, ret_msg, out_obj):
                         else:
                             line += '\t'
                         line += '%s' % this_file['name']
+                        if this_file.has_key('show_dest'):
+                            line += '%s' % this_file['dest']
                         print line
         elif i['object_type'] == 'jobobj':
             job_dict = i['jobobj'].to_dict()
@@ -491,10 +495,11 @@ def html_format(ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'dir_listings':
             if len(i['dir_listings']) == 0:
                 continue
+            columns = 6
             if 'full' == i['style']:
-                columns = 7
-            else:
-                columns = 6
+                columns += 1
+            if i.get('show_dest', False):
+                columns += 1
             print "<table class='files'>"
             print '<tr>'
             cols = 0
@@ -586,6 +591,9 @@ def html_format(ret_val, ret_msg, out_obj):
                         cols += 1
                         print '<td>%s</td>' % this_file['name']
                         cols += 1
+                        if this_file.get('show_dest', False):
+                            print '<td>%s</td>' % this_file['dest']
+                            cols += 1
                         print '<td><br></td>' * (columns - cols)\
                              + '</tr>'
                         cols = columns

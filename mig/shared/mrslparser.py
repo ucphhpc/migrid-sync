@@ -35,18 +35,20 @@ from shared.vgrid import vgrid_is_owner_or_member, user_allowed_vgrids, \
     vgrid_is_default, any_vgrid, default_vgrid
 from shared.fileio import unpickle, pickle, send_message_to_grid_script
 from shared.conf import get_configuration_object
+from shared.useradm import client_id_dir
 
 
 def parse(
     localfile_spaces,
     job_id,
-    cert_name_no_spaces,
+    client_id,
     forceddestination,
     outfile='not_specified',
     ):
 
     configuration = get_configuration_object()
     logger = configuration.logger
+    client_dir = client_id_dir(client_id)
 
     # return a tuple (bool status, str msg). This is done because cgi-scripts are not allowed to print anything
     # before 'the first two special lines' are printed
@@ -75,7 +77,7 @@ def parse(
 
     vgrid_list = global_dict['VGRID']
     allowed_vgrids = user_allowed_vgrids(configuration,
-            cert_name_no_spaces)
+            client_id)
 
     # Replace ANY wildcard with all allowed vgrids (on time of submit!)
 
@@ -134,7 +136,7 @@ def parse(
     # put job id and name of user in the dictionary
 
     global_dict['JOB_ID'] = job_id
-    global_dict['USER_CERT'] = cert_name_no_spaces
+    global_dict['USER_CERT'] = client_id
 
     # mark job as received
 
@@ -197,8 +199,8 @@ def parse(
     # save file
 
     if outfile == 'not_specified':
-        filename = configuration.mrsl_files_dir + cert_name_no_spaces\
-             + '/' + job_id + '.mRSL'
+        filename = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                                            client_dir, job_id + '.mRSL'))
     else:
         filename = outfile
 
@@ -213,7 +215,7 @@ def parse(
 
     # tell 'grid_script'
 
-    message = 'USERJOBFILE %s/%s\n' % (cert_name_no_spaces, job_id)
+    message = 'USERJOBFILE %s/%s\n' % (client_dir, job_id)
 
     if not send_message_to_grid_script(message, logger, configuration):
         return (False,
@@ -237,7 +239,7 @@ def parse(
             logger.error('error unpickling resource config')
             return False
 
-        dict_entry = (job_id, cert_name_no_spaces)
+        dict_entry = (job_id, client_id)
 
         # add entry to runtime verification history
 
@@ -260,10 +262,8 @@ def parse(
                      % filename)
 
     if global_dict.get('JOBTYPE', 'unset').lower() == 'interactive':
-        from shared.cgioutput import CGIOutput
-        import shared.vncfunctions as vncfunctions
-        o = CGIOutput(logger)
-        vncfunctions.main(logger, configuration, cert_name_no_spaces, o)
+        from shared.functionality.vncsession import main
+        return main(client_id, {})
 
     # print global_dict
 

@@ -50,6 +50,7 @@ from shared.gridscript import clean_grid_stdin, \
     save_schedule_cache
 from shared.resadm import atomic_resource_exe_restart, put_exe_pgid
 from shared.vgrid import default_vgrid
+from shared.useradm import client_id_dir
 
 try:
     import servercomm
@@ -447,8 +448,9 @@ while True:
                         )
             continue
 
+        client_dir = client_id_dir(job_dict['USER_CERT'])
         file_serverjob = configuration.mrsl_files_dir\
-             + job_dict['USER_CERT'] + os.sep + job_id + '.mRSL'
+             + client_dir + os.sep + job_id + '.mRSL'
         dict_serverjob = unpickle(file_serverjob, logger)
         if dict_serverjob == False:
             logger.error('Could not unpickle job - not updating schedule!'
@@ -584,8 +586,9 @@ while True:
             # and check if the status is FINISHED or CANCELED.
 
             last_job_ok_status_list = ['FINISHED', 'CANCELED']
+            client_dir = client_id_dir(last_req['USER_CERT'])
             filenamelast = configuration.mrsl_files_dir\
-                 + last_req['USER_CERT'] + os.sep + last_req['JOB_ID']\
+                 + client_dir + os.sep + last_req['JOB_ID']\
                  + '.mRSL'
             job_dict = unpickle(filenamelast, logger)
             if job_dict:
@@ -816,8 +819,9 @@ while True:
                     False,
                     configuration,
                     )
+                client_dir = client_id_dir(expired['USER_CERT'])
                 expired_file = configuration.mrsl_files_dir\
-                     + expired['USER_CERT'] + os.sep + expired['JOB_ID']\
+                     + client_dir + os.sep + expired['JOB_ID']\
                      + '.mRSL'
 
                 if not unpickle_and_change_status(expired_file,
@@ -842,8 +846,9 @@ while True:
                 if not job_dict:
                     break
 
+                client_dir = client_id_dir(job_dict['USER_CERT'])
                 mrsl_filename = configuration.mrsl_files_dir\
-                     + job_dict['USER_CERT'] + '/' + job_dict['JOB_ID']\
+                     + client_dir + '/' + job_dict['JOB_ID']\
                      + '.mRSL'
                 dummy_dict = unpickle(mrsl_filename, logger)
 
@@ -920,8 +925,9 @@ while True:
                 # a job has been scheduled to be executed on this
                 # resource: change status in the mRSL file
 
+                client_dir = client_id_dir(job_dict['USER_CERT'])
                 mrsl_filename = configuration.mrsl_files_dir\
-                     + job_dict['USER_CERT'] + '/' + job_dict['JOB_ID']\
+                     + client_dir + '/' + job_dict['JOB_ID']\
                      + '.mRSL'
                 mrsl_dict = unpickle(mrsl_filename, logger)
                 if mrsl_dict:

@@ -77,7 +77,7 @@ def shell_usage():
     return out
 
 
-def handle_command(cmd_line, cert_name_no_spaces, output_objects):
+def handle_command(cmd_line, client_id, output_objects):
     """Forward command handling to the appropriate back end"""
 
     parts = cmd_line.split(' ')
@@ -128,74 +128,74 @@ def handle_command(cmd_line, cert_name_no_spaces, output_objects):
 
     try:
         if 'cancel' == cmd:
-            (out, code) = canceljob.main(cert_name_no_spaces, {'job_id'
+            (out, code) = canceljob.main(client_id, {'job_id'
                     : args, 'flags': flags})
         elif 'cat' == cmd:
-            (out, code) = cat.main(cert_name_no_spaces, {'path': args,
+            (out, code) = cat.main(client_id, {'path': args,
                                    'flags': flags})
         elif 'cp' == cmd:
-            (out, code) = cp.main(cert_name_no_spaces, {'src': prefix,
+            (out, code) = cp.main(client_id, {'src': prefix,
                                   'dst': last, 'flags': flags})
         elif 'doc' == cmd:
-            (out, code) = docs.main(cert_name_no_spaces, {'show': args,
+            (out, code) = docs.main(client_id, {'show': args,
                                     'flags': flags})
         elif 'find' == cmd:
-            (out, code) = find.main(cert_name_no_spaces, {'path'
+            (out, code) = find.main(client_id, {'path'
                                     : prefix, 'name': last, 'flags'
                                     : flags})
         elif 'grep' == cmd:
-            (out, code) = grep.main(cert_name_no_spaces, {'path'
+            (out, code) = grep.main(client_id, {'path'
                                     : suffix, 'pattern': first, 'flags'
                                     : flags})
         elif 'head' == cmd:
-            (out, code) = head.main(cert_name_no_spaces, {'path': args,
+            (out, code) = head.main(client_id, {'path': args,
                                     'flags': flags})
         elif 'help' == cmd:
             out = shell_usage()
         elif 'mkdir' == cmd:
-            (out, code) = mkdir.main(cert_name_no_spaces, {'path'
+            (out, code) = mkdir.main(client_id, {'path'
                     : args, 'flags': flags})
         elif 'mv' == cmd:
-            (out, code) = mv.main(cert_name_no_spaces, {'src': prefix,
+            (out, code) = mv.main(client_id, {'src': prefix,
                                   'dst': last, 'flags': flags})
         elif 'liveoutput' == cmd:
-            (out, code) = liveoutput.main(cert_name_no_spaces, {'job_id'
+            (out, code) = liveoutput.main(client_id, {'job_id'
                     : args, 'flags': flags})
         elif 'ls' == cmd:
-            (out, code) = ls.main(cert_name_no_spaces, {'path': args,
+            (out, code) = ls.main(client_id, {'path': args,
                                   'flags': flags})
         elif 'resubmit' == cmd:
-            (out, code) = resubmit.main(cert_name_no_spaces, {'job_id'
+            (out, code) = resubmit.main(client_id, {'job_id'
                     : args, 'flags': flags})
         elif 'rm' == cmd:
-            (out, code) = rm.main(cert_name_no_spaces, {'path': args,
+            (out, code) = rm.main(client_id, {'path': args,
                                   'flags': flags})
         elif 'rmdir' == cmd:
-            (out, code) = rmdir.main(cert_name_no_spaces, {'path'
+            (out, code) = rmdir.main(client_id, {'path'
                     : args, 'flags': flags})
         elif 'spell' == cmd:
-            (out, code) = spell.main(cert_name_no_spaces, {'path'
+            (out, code) = spell.main(client_id, {'path'
                     : suffix, 'lang': first, 'flags': flags})
         elif 'stat' == cmd:
-            (out, code) = statpath.main(cert_name_no_spaces, {'path'
+            (out, code) = statpath.main(client_id, {'path'
                     : args, 'flags': flags})
         elif 'status' == cmd:
-            (out, code) = jobstatus.main(cert_name_no_spaces, {'job_id'
+            (out, code) = jobstatus.main(client_id, {'job_id'
                     : args, 'flags': flags})
         elif 'submit' == cmd:
-            (out, code) = submit.main(cert_name_no_spaces, {'path'
+            (out, code) = submit.main(client_id, {'path'
                     : args, 'flags': flags})
         elif 'tail' == cmd:
-            (out, code) = tail.main(cert_name_no_spaces, {'path': args,
+            (out, code) = tail.main(client_id, {'path': args,
                                     'flags': flags})
         elif 'touch' == cmd:
-            (out, code) = touch.main(cert_name_no_spaces, {'path'
+            (out, code) = touch.main(client_id, {'path'
                     : args, 'flags': flags})
         elif 'truncate' == cmd:
-            (out, code) = truncate.main(cert_name_no_spaces, {'path'
+            (out, code) = truncate.main(client_id, {'path'
                     : args, 'flags': flags})
         elif 'wc' == cmd:
-            (out, code) = wc.main(cert_name_no_spaces, {'path': args,
+            (out, code) = wc.main(client_id, {'path': args,
                                   'flags': flags})
         else:
             raise Exception('command not found')
@@ -209,7 +209,7 @@ def handle_command(cmd_line, cert_name_no_spaces, output_objects):
     return (output_objects, returnvalues.OK)
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -221,7 +221,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -274,18 +274,18 @@ def main(cert_name_no_spaces, user_arguments_dict):
             # ../*/* is technically allowed to match own files.
 
             logger.error('Warning: %s tried to %s %s outside cgi home! (%s)'
-                          % (cert_name_no_spaces, op_name, real_path,
-                         pattern))
+                          % (client_id, op_name, real_path,
+                         cmd))
             output_objects.append({'object_type': 'command_not_found',
                                   'name': cmd})
-            status = returnvalues.COMMAND_NOT_FOUND
+            status = returnvalues.CLIENT_ERROR
             continue
 
         relative_path = real_path.replace(base_dir, '')
 
         output_objects.append({'object_type': 'text', 'text': cmd_line})
         (output_objects, status) = handle_command(cmd_line,
-                cert_name_no_spaces, output_objects)
+                client_id, output_objects)
         output_objects.append({'object_type': 'text', 'text': ''})
 
     return (output_objects, status)

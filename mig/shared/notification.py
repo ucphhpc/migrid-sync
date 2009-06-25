@@ -261,9 +261,6 @@ def notify_user(
         usage_record.write_xml(ur_destination + os.sep
                                 + jobdict['JOB_ID'] + '.xml')
 
-    settings_dict_file = configuration.user_home + jobdict['USER_CERT']\
-         + os.sep + '.settings'
-
     jobid = jobdict['JOB_ID']
     for notify_line in jobdict['NOTIFY']:
         logger.debug('notify line: %s' % notify_line)
@@ -330,12 +327,12 @@ def notify_user(
                          % notify_line_first_part, '').strip()
                 if recipients.strip().upper() in ['SETTINGS', '']:
 
-            # read from personal settings
+                    # read from personal settings
 
-                    settings_dict = unpickle(settings_dict_file, logger)
+                    settings_dict = load_settings(jobdict['USER_CERT'],
+                                                  configuration)
                     if not settings_dict:
-                        logger.info('Could not unpickle settings_dict %s'
-                                     % settings_dict_file)
+                        logger.info('Could not load settings_dict')
                         continue
                     if not settings_dict.has_key('EMAIL'):
                         logger.info('Settings dict does not have EMAIL key'
@@ -402,7 +399,7 @@ def notify_user_thread(
 
 
 def send_resource_create_request_mail(
-    cert_name_no_spaces,
+    client_id,
     hosturl,
     pending_file,
     logger,
@@ -418,21 +415,21 @@ def send_resource_create_request_mail(
          % configuration.server_fqdn
     txt = \
         """
-Cert. name: '%s'
+Cert. ID: '%s'
 
 Hosturl: '%s'
 
 Configfile: '%s'
 
-Resource creation command:
-./createresource.py %s %s %s
+Resource creation command to run from mig/server/ directory:
+./createresource.py '%s' '%s' '%s'
 """\
          % (
-        cert_name_no_spaces,
+        client_id,
         hosturl,
         pending_file,
         hosturl,
-        cert_name_no_spaces,
+        client_id,
         os.path.basename(pending_file),
         )
 

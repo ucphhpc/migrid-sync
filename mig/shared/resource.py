@@ -31,11 +31,12 @@ import os
 
 from shared.fileio import pickle
 from shared.confparser import get_resource_config_dict, run
+from shared.useradm import client_id_dir
 
 
 def create_resource(
     resource_name,
-    resource_owner,
+    client_id,
     resource_home,
     logger,
     ):
@@ -66,9 +67,8 @@ def create_resource(
         msg = 'could not create: %s\n' % newdir
         status = False
 
-    resource_owner = resource_owner.replace(' ', '_')
     owner_list = []
-    owner_list.append(resource_owner)
+    owner_list.append(client_id)
     owner_file = resource_home + unique_resource_name + '/owners'
     status = pickle(owner_list, owner_file, logger)
     if status == False:
@@ -80,7 +80,7 @@ def create_resource(
     if status:
         msg = \
             "Resource '%s' was successfully created (%s added as the owner)"\
-             % (unique_resource_name, resource_owner)
+             % (unique_resource_name, client_id)
     else:
 
         # msg += """\n\n\Tell resource owner: You should also verify that you have the needed directories %s and %s. If not, you can create the
@@ -122,7 +122,7 @@ def remove_resource(resource_home, resource_name, resource_identifier):
 
 def create_new_resource_configuration(
     resource_name,
-    resource_owner,
+    client_id,
     resource_home,
     resource_pending,
     resource_identifier,
@@ -133,13 +133,12 @@ def create_new_resource_configuration(
         "\nTrying to create configuration for new resource: '%s.%s' from file: '%s'"\
          % (resource_name, str(resource_identifier),
             resource_configfile)
+    client_dir = client_id_dir(client_id)
 
-    pending_file = resource_pending + resource_owner + '/'\
-         + resource_configfile
-    tmpfile = resource_pending + resource_owner + '/'\
-         + resource_configfile + '.tmp'
-    new_configfile = resource_home + resource_name + '.'\
-         + str(resource_identifier) + '/config.MiG'
+    pending_file = os.path.join(resource_pending, client_dir, resource_configfile)
+    tmpfile = os.path.join(resource_pending, client_dir, resource_configfile + '.tmp')
+    new_configfile = os.path.join(resource_home, resource_name + '.'\
+         + str(resource_identifier), 'config.MiG')
 
     if not os.path.exists(pending_file):
         msg += """

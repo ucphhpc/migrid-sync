@@ -41,7 +41,7 @@ from shared.vgrid import vgrid_is_owner_or_member
 
 # ## Main ###
 
-(logger, configuration, cert_name_no_spaces, o) = \
+(logger, configuration, client_id, o) = \
     init_cgi_script_with_cert()
 
 fieldstorage = cgi.FieldStorage()
@@ -63,7 +63,7 @@ private_base_dir = os.path.abspath(configuration.vgrid_private_base)\
 if not valid_dir_input(configuration.vgrid_home, vgrid_name):
     o.out('Illegal vgrid_name: %s' % vgrid_name)
     logger.warning("showvgridprivatefile registered possible illegal directory traversal attempt by '%s': vgrid name '%s'"
-                    % (cert_name_no_spaces, vgrid_name))
+                    % (client_id, vgrid_name))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 filename = private_base_dir + vgrid_name + os.sep + specified_filename
@@ -71,14 +71,14 @@ filename = private_base_dir + vgrid_name + os.sep + specified_filename
 if not valid_dir_input(private_base_dir, specified_filename):
     o.out('Illegal file: %s' % specified_filename)
     logger.warning("showvgridprivatefile registered possible illegal directory traversal attempt by '%s': vgrid name '%s', file '%s'"
-                    % (cert_name_no_spaces, vgrid_name,
+                    % (client_id, vgrid_name,
                    specified_filename))
     o.reply_and_exit(o.CLIENT_ERROR)
 
-if not vgrid_is_owner_or_member(vgrid_name, cert_name_no_spaces,
+if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                 configuration):
     o.client('Failure: You (%s) must be an owner or member of %s vgrid to access the entry page.'
-              % (cert_name_no_spaces, vgrid_name))
+              % (client_id, vgrid_name))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 if not os.path.isfile(filename):

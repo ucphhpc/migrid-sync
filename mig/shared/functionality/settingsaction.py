@@ -47,7 +47,7 @@ def signature():
     return ['text', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -60,7 +60,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -94,7 +94,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # Parse settings
 
     (parse_status, parse_msg) = \
-        parse_and_save_settings(tmpsettingsfile, cert_name_no_spaces,
+        parse_and_save_settings(tmpsettingsfile, client_id,
                                 configuration)
     try:
         os.remove(tmpsettingsfile)

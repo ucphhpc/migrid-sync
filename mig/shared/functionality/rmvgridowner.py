@@ -30,22 +30,22 @@
 import os
 import sys
 
-from shared.validstring import cert_name_format
 from shared.listhandling import remove_item_from_pickled_list
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.useradm import client_id_dir
 
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'vgrid_name': REJECT_UNSET, 'cert_name': REJECT_UNSET}
+    defaults = {'vgrid_name': REJECT_UNSET, 'cert_id': REJECT_UNSET}
     return ['text', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -55,22 +55,22 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     vgrid_name = accepted['vgrid_name'][-1]
-    cert_name = accepted['cert_name'][-1]
-    cert_name = cert_name_format(cert_name)
+    cert_id = accepted['cert_id'][-1]
+    cert_dir = client_id_dir(cert_id)
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
 
     (ret_val, msg, ret_variables) = \
-        init_vgrid_script_add_rem(vgrid_name, cert_name_no_spaces,
-                                  cert_name, 'owner', configuration)
+        init_vgrid_script_add_rem(vgrid_name, client_id,
+                                  cert_id, 'owner', configuration)
     if not ret_val:
         output_objects.append({'object_type': 'error_text', 'text'
                               : msg})
@@ -78,21 +78,29 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     # don't add if already an owner
 
-    if not vgrid_is_owner(vgrid_name, cert_name, configuration):
+    if not vgrid_is_owner(vgrid_name, cert_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s is not an owner of %s or a parent vgrid.'
-                               % (cert_name, vgrid_name)})
+                               % (cert_id, vgrid_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    base_dir = configuration.vgrid_home + os.sep + vgrid_name + os.sep
-    owners_file = base_dir + 'owners'
+    # Please note that base_dir must end in slash to avoid access to other
+    # vgrid dirs when own name is a prefix of another name
+
+    base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
+                                            vgrid_name)) + os.sep
+
+    owners_file = os.path.join(base_dir, 'owners')
 
     # remove symlink from users home directory to vgrid directory
 
-    cert_name_home_dir = configuration.user_home + os.sep + cert_name\
-         + os.sep
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
 
-    dst = cert_name_home_dir + vgrid_name
+    user_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                            cert_dir)) + os.sep
+
+    dst = user_dir + vgrid_name
     try:
         os.remove(dst)
     except Exception, exc:
@@ -111,7 +119,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     # remove symlink to public_base
 
-    public_base_dir = cert_name_home_dir + 'public_base' + os.sep\
+    public_base_dir = user_dir + 'public_base' + os.sep\
          + vgrid_name
     try:
         os.remove(public_base_dir)
@@ -133,7 +141,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     # remove symlink to private_base
 
-    private_base_dir = cert_name_home_dir + 'private_base' + os.sep\
+    private_base_dir = user_dir + 'private_base' + os.sep\
          + vgrid_name
     try:
         os.remove(private_base_dir)
@@ -184,8 +192,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         # remove empty placeholder dirs in home dir, private_base and public_base dirs
 
-        base_dirs = [cert_name_home_dir, cert_name_home_dir
-                      + 'private_base' + os.sep, cert_name_home_dir
+        base_dirs = [user_dir, user_dir
+                      + 'private_base' + os.sep, user_dir
                       + 'public_base' + os.sep]
         for base_dir in base_dirs:
             for loop_count in reverse_list:
@@ -227,7 +235,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # remove user from pickled list
 
     (status, msg) = remove_item_from_pickled_list(owners_file,
-            cert_name, logger, False)
+            cert_id, logger, False)
     if not status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s of owners of %s' % (msg,
@@ -239,7 +247,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     output_objects.append({'object_type': 'text', 'text'
                           : '%s successfully removed as owner of %s vgrid!'
-                           % (cert_name, vgrid_name)})
+                           % (cert_id, vgrid_name)})
     return (output_objects, returnvalues.OK)
 
 

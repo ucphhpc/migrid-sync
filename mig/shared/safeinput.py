@@ -37,15 +37,15 @@ from string import letters, digits
 
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
-from shared.validstring import valid_user_path, valid_dir_input, \
-    cert_name_format
+from shared.validstring import valid_user_path, valid_dir_input
+     
 
-VALID_PATH_CHARACTERS = letters + digits + '/.,_-'\
+VALID_PATH_CHARACTERS = letters + digits + '/.,_-+='\
      + ' :;+@%\xe6\xf8\xe5\xc6\xd8\xc5'
 
 # Plain text here only - *no* html tags, i.e. no '<' or '>' !!
 
-VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + '?+!#$\xa4%&()[]{}=*'\
+VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + '?!#$\xa4%&()[]{}*'\
      + '"' + "'`|^~" + '\\' + '\n\r\t'
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
 VALID_JOB_ID_CHARACTERS = VALID_FQDN_CHARACTERS + '_'
@@ -56,14 +56,17 @@ ALLOW_UNSAFE = \
 # Allow these chars in addition to plain letters and digits
 
 name_extras = ' -'
+dn_extras = name_extras + '/=@._'
 password_extras = ' -_#.,:;!@%/()[]{}+=?<>'
 password_min_len = 4
 password_max_len = 64
 
 valid_password_chars = letters + digits + password_extras
 valid_name_chars = letters + digits + name_extras
+valid_dn_chars = letters + digits + dn_extras
 VALID_PASSWORD_CHARACTERS = valid_password_chars
 VALID_NAME_CHARACTERS = valid_name_chars
+VALID_DN_CHARACTERS = valid_dn_chars
 
 # Helper functions
 
@@ -155,11 +158,23 @@ def valid_plain_text(
     max_length=-1,
     extra_chars='',
     ):
-    """Verify that supplied path only contains characters that we consider
+    """Verify that supplied text only contains characters that we consider
     valid"""
 
     valid_chars = VALID_TEXT_CHARACTERS + extra_chars
     __valid_contents(text, valid_chars, min_length, max_length)
+
+
+def valid_free_text(
+    text,
+    min_length=-1,
+    max_length=-1,
+    extra_chars='',
+    ):
+    """Verify that supplied text only contains characters that we consider
+    valid"""
+
+    return True
 
 
 def valid_path(
@@ -202,6 +217,20 @@ def valid_commonname(
 
     valid_chars = VALID_NAME_CHARACTERS + '_' + extra_chars
     __valid_contents(commonname, valid_chars, min_length, max_length)
+
+
+def valid_distinguished_name(
+    distinguished_name,
+    min_length=1,
+    max_length=255,
+    extra_chars='',
+    ):
+    """Verify that supplied distinguished_name only contains
+    characters that we consider valid. 
+    """
+
+    valid_chars = VALID_DN_CHARACTERS + extra_chars
+    __valid_contents(distinguished_name, valid_chars, min_length, max_length)
 
 
 def valid_password(
@@ -681,6 +710,8 @@ def guess_type(name):
         return valid_fqdn
     elif name.find('cert_name') != -1:
         return valid_commonname
+    elif name.find('cert_id') != -1:
+        return valid_distinguished_name
     elif name.find('vgrid_name') != -1:
         return valid_path
     elif name.find('re_name') != -1:
@@ -724,7 +755,7 @@ def guess_type(name):
     elif name.find('verifystatus') != -1:
         return valid_plain_text
     elif name.find('editarea') != -1:
-        return valid_plain_text
+        return valid_free_text
     elif name.find('software_entries') != -1:
         return valid_numeric
     elif name.find('environment_entries') != -1:
@@ -773,6 +804,14 @@ def guess_type(name):
         return valid_plain_text
     elif name.find('RUNTIMEENVIRONMENT') != -1:
         return valid_plain_text
+    elif name.find('width') != -1:
+        return valid_numeric
+    elif name.find('height') != -1:
+        return valid_numeric
+    elif name.find('depth') != -1:
+        return valid_numeric
+    elif name.find('desktopname') != -1:
+        return valid_ascii
     else:
 
     # TODO: extend to include all used variables here

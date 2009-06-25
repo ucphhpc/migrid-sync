@@ -30,6 +30,7 @@
 import os
 import sys
 
+from shared.conf import get_configuration_object
 
 def initialize_main_variables(op_title=True, op_header=True,
                               op_menu=True):
@@ -37,7 +38,6 @@ def initialize_main_variables(op_title=True, op_header=True,
     shared/functionalty. This function should be called in most cases.
     """
 
-    from shared.conf import get_configuration_object
     configuration = get_configuration_object()
     logger = configuration.logger
     output_objects = []

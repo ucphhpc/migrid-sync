@@ -30,22 +30,22 @@
 import os
 import sys
 
-from shared.validstring import cert_name_format
 from shared.listhandling import remove_item_from_pickled_list
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_member
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.useradm import client_id_dir
 
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'vgrid_name': REJECT_UNSET, 'cert_name': REJECT_UNSET}
+    defaults = {'vgrid_name': REJECT_UNSET, 'cert_id': REJECT_UNSET}
     return ['text', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -55,22 +55,22 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     vgrid_name = accepted['vgrid_name'][-1]
-    cert_name = accepted['cert_name'][-1]
-    cert_name = cert_name_format(cert_name)
+    cert_id = accepted['cert_id'][-1]
+    cert_dir = client_id_dir(cert_id)
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
 
     (ret_val, msg, ret_variables) = \
-        init_vgrid_script_add_rem(vgrid_name, cert_name_no_spaces,
-                                  cert_name, 'member', configuration)
+        init_vgrid_script_add_rem(vgrid_name, client_id,
+                                  cert_id, 'member', configuration)
     if not ret_val:
         output_objects.append({'object_type': 'error_text', 'text'
                               : msg})
@@ -78,21 +78,29 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     # don't remove if not a member
 
-    if not vgrid_is_member(vgrid_name, cert_name, configuration):
+    if not vgrid_is_member(vgrid_name, cert_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s is not a member of %s or a parent vgrid.'
-                               % (cert_name, vgrid_name)})
+                               % (cert_id, vgrid_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    base_dir = configuration.vgrid_home + os.sep + vgrid_name + os.sep
-    members_file = base_dir + 'members'
+    # Please note that base_dir must end in slash to avoid access to other
+    # vgrid dirs when own name is a prefix of another name
+
+    base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
+                                            vgrid_name)) + os.sep
+
+    members_file = os.path.join(base_dir, 'members')
 
     # remove symlink from users home directory to vgrid directory
 
-    cert_name_home_dir = configuration.user_home + os.sep + cert_name\
-         + os.sep
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
 
-    dst = cert_name_home_dir + vgrid_name
+    user_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                            cert_dir)) + os.sep
+
+    dst = user_dir + vgrid_name
     try:
         os.remove(dst)
     except Exception, exc:
@@ -140,7 +148,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         # remove empty placeholder dirs in home dir, private_base and public_base dirs
 
-        base_dirs = [cert_name_home_dir]
+        base_dirs = [user_dir]
         for base_dir in base_dirs:
             for loop_count in reverse_list:
 
@@ -181,19 +189,19 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # remove from list
 
     (status, msg) = remove_item_from_pickled_list(members_file,
-            cert_name, logger)
+            cert_id, logger)
     if not status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s of member of %s' % (msg,
                               vgrid_name)})
         output_objects.append({'object_type': 'error_text', 'text'
                               : '(If Vgrid has sub-vgrids then removal must be performed  from the most significant VGrid possible.'
-                               % cert_name})
+                               % cert_id})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
                           : '%s successfully removed as member of %s vgrid!'
-                           % (cert_name, vgrid_name)})
+                           % (cert_id, vgrid_name)})
     return (output_objects, returnvalues.OK)
 
 

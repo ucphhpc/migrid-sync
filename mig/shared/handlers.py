@@ -33,6 +33,7 @@ import os
 import urllib
 
 from shared.findtype import is_user, is_server
+from shared.useradm import client_id_dir
 
 
 def correct_handler(name):
@@ -58,15 +59,17 @@ def get_path():
     return path
 
 
-def get_allowed_path(configuration, cert_name_no_spaces, path):
+def get_allowed_path(configuration, client_id, path):
     """Check certificate data and path for either a valid user/server
     or a resource using a valid session id. If the check succeeds, the
     real path to the file is returned.
     """
 
+    client_dir = client_id_dir(client_id)
+
     # Check cert and decide if it is a user, resource or server
 
-    if 'None' == cert_name_no_spaces:
+    if not client_id:
         path_slash_stripped = path.lstrip('/')
         sessionid = path_slash_stripped[:path_slash_stripped.find('/')]
 
@@ -79,19 +82,19 @@ def get_allowed_path(configuration, cert_name_no_spaces, path):
              + path_slash_stripped[:path_slash_stripped.rfind('/')]
         target_file = path_slash_stripped[path_slash_stripped.rfind('/')
              + 1:]
-    elif is_user(cert_name_no_spaces, configuration.user_home):
-        real_path = os.path.normpath(configuration.user_home
-                 + cert_name_no_spaces + path)
+    elif is_user(client_id, configuration.user_home):
+        real_path = os.path.normpath(os.path.join(configuration.user_home,
+                                                  client_dir, path))
         target_dir = os.path.dirname(real_path)
         target_file = os.path.basename(real_path)
-    elif is_server(cert_name_no_spaces, configuration.server_home):
-        real_path = os.path.normpath(configuration.server_home
-                 + cert_name_no_spaces + path)
+    elif is_server(client_id, configuration.server_home):
+        real_path = os.path.normpath(os.path.join(configuration.server_home,
+                                                  client_dir, path))
         target_dir = os.path.dirname(real_path)
         target_file = os.path.basename(real_path)
     else:
         raise Exception('Invalid credentials %s: no such MiG user or server'
-                         % cert_name_no_spaces)
+                         % client_id)
 
     target_path = target_dir + '/' + target_file
     return target_path

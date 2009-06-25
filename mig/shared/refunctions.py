@@ -82,7 +82,7 @@ def get_re_dict(name, configuration):
         return (dict, '')
 
 
-def create_runtimeenv(filename, cert_name_no_spaces, configuration):
+def create_runtimeenv(filename, client_id, configuration):
     result = parser.parse(filename)
     external_dict = rekeywords.get_keywords_dict()
 
@@ -109,7 +109,7 @@ def create_runtimeenv(filename, cert_name_no_spaces, configuration):
     for (key, value_dict) in external_dict.iteritems():
         new_dict[key] = value_dict['Value']
 
-    new_dict['CREATOR'] = cert_name_no_spaces
+    new_dict['CREATOR'] = client_id
     new_dict['CREATED_TIMESTAMP'] = datetime.datetime.now()
 
     re_name = new_dict['RENAME']

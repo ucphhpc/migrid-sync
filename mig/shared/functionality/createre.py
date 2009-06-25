@@ -52,7 +52,7 @@ def signature():
     return ['text', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -62,7 +62,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -173,7 +173,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                                % err})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    (retval, retmsg) = create_runtimeenv(tmpfile, cert_name_no_spaces,
+    (retval, retmsg) = create_runtimeenv(tmpfile, client_id,
             configuration)
     if not retval:
         output_objects.append({'object_type': 'error_text', 'text'

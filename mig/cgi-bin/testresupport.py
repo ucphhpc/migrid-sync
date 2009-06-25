@@ -41,9 +41,10 @@ from shared.html import get_cgi_html_header, get_cgi_html_footer
 from shared.fileio import unpickle, write_file
 from shared.cgishared import init_cgi_script_with_cert
 from shared.refunctions import get_re_dict
+from shared.useradm import client_id_dir
 
 
-def create_verify_files(types):
+def create_verify_files(types, base_dir):
     for ver_type in types:
         if re_dict.has_key('VERIFY%s' % ver_type.upper()):
             if re_dict['VERIFY%s' % ver_type.upper()] != []:
@@ -52,10 +53,10 @@ def create_verify_files(types):
                     file_content += line + '\n'
                 if not write_file(file_content.strip(),
                                   '%sverify_runtime_env_%s.%s'
-                                   % (user_home_dir, re_name,
+                                   % (base_dir, re_name,
                                   ver_type.lower()), logger):
-                    o.out('Exception writing temporary verify.%s file. Runtime environment support verification job not submitted! %s'
-                           % (ver_type.upper(), e), str(e))
+                    o.out('Exception writing temporary verify.%s file. Runtime environment support verification job not submitted!'
+                           % ver_type.upper())
                     o.reply_and_exit(o.ERROR)
 
 
@@ -78,8 +79,9 @@ def testresource_has_re_specified(unique_resource_name, re_name,
 
 # ## Main ###
 
-(logger, configuration, cert_name_no_spaces, o) = \
+(logger, configuration, client_id, o) = \
     init_cgi_script_with_cert()
+client_dir = client_id_dir(client_id)
 
 fieldstorage = cgi.FieldStorage()
 htmlquery = fieldstorage.getfirst('with_html', '')
@@ -101,7 +103,7 @@ if re_name == '':
 if not valid_dir_input(configuration.re_home, re_name):
     o.out('Illegal re_name: %s' % re_name)
     logger.warning("createre registered possible illegal directory traversal attempt by '%s': re_name '%s'"
-                    % (cert_name_no_spaces, re_name))
+                    % (client_id, re_name))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 if '/' in re_name:
@@ -116,10 +118,10 @@ if not valid_dir_input(configuration.resource_home,
                        unique_resource_name):
     o.out('Illegal unique_resource_name: %s' % unique_resource_name)
     logger.warning("createre registered possible illegal directory traversal attempt by '%s': unique_resource_name '%s'"
-                    % (cert_name_no_spaces, unique_resource_name))
+                    % (client_id, unique_resource_name))
     o.reply_and_exit(o.CLIENT_ERROR)
 
-if not is_owner(cert_name_no_spaces, unique_resource_name,
+if not is_owner(client_id, unique_resource_name,
                 configuration.resource_home, logger):
     o.out('You must be an owner of the resource to validate runtime environment support. (resource %s)'
            % unique_resource_name)
@@ -151,15 +153,18 @@ except Exception, e:
            % e, str(e))
     o.reply_and_exit(o.ERROR)
 
-user_home_dir = configuration.user_home + os.sep + cert_name_no_spaces\
-     + os.sep
+# Please note that base_dir must end in slash to avoid access to other
+# user dirs when own name is a prefix of another user name
+
+base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                                        client_dir)) + os.sep
 
 create_verify_files(['status', 'stdout', 'stderr'])
 
 forceddestination_dict = {'UNIQUE_RESOURCE_NAME': unique_resource_name,
                           'RE_NAME': re_name}
 
-(status, msg) = new_job(mrslfile, cert_name_no_spaces, configuration,
+(status, msg) = new_job(mrslfile, client_id, configuration,
                         forceddestination_dict)
 if not status:
     o.out('%s' % msg)

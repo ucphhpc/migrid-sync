@@ -45,6 +45,7 @@ from shared.validstring import valid_user_path
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.useradm import client_id_dir
 
 
 def signature():
@@ -54,17 +55,18 @@ def signature():
     return ['resubmitobjs', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables()
+    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -76,8 +78,13 @@ def main(cert_name_no_spaces, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'No job_id specified!'})
         return (output_objects, returnvalues.NO_SUCH_JOB_ID)
-    base_dir = os.path.abspath(configuration.mrsl_files_dir + os.sep
-                                + cert_name_no_spaces) + os.sep
+
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                                            client_dir)) + os.sep
+
     filelist = []
     for pattern in patterns:
         pattern = pattern.strip()
@@ -102,7 +109,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                 # ../*/* is technically allowed to match own files.
 
                 logger.error('%s tried to use %s %s outside own home! (pattern %s)'
-                              % (cert_name_no_spaces, op_name,
+                              % (client_id, op_name,
                              real_path, pattern))
                 continue
 
@@ -139,7 +146,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
         resubmitobj = {'object_type': 'resubmitobj', 'job_id': job_id}
 
-        # filename = configuration.mrsl_files_dir + "/" + cert_name_no_spaces + "/" + job_id + ".mRSL"
+        # filename = configuration.mrsl_files_dir + "/" + client_id + "/" + job_id + ".mRSL"
 
         dict = unpickle(filepath, logger)
         if not dict:
@@ -210,7 +217,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         # submit job the usual way
 
         (new_job_status, msg, new_job_id) = new_job(tempfilename,
-                cert_name_no_spaces, configuration, False, True)
+                client_id, configuration, False, True)
         if not new_job_status:
             resubmitobj['status'] = False
             resubmitobj['message'] = msg

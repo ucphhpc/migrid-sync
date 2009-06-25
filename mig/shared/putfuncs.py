@@ -25,12 +25,17 @@
 # -- END_HEADER ---
 #
 
-"""Functions in this file should only be called from 'put'. If other scripts needs it then move the function to another file.
+"""Functions in this file should only be called from 'put'.
+If other scripts needs it then move the function to another file.
 """
 
 import os
 import time
 import re
+import pickle
+
+from shared.fileio import send_message_to_grid_script
+from shared.useradm import client_id_dir
 
 
 def template_fits_file(template, filename, allowed_time=3.0):
@@ -135,13 +140,11 @@ def verify_results(job_dict, logger, configuration):
                 continue
 
             logger.debug('preparing to do %s check', check)
-            if job_dict.has_key('USER_CERT'):
-                owner = job_dict['USER_CERT']
-            else:
-                owner = ''
+            client_id = job_dict.get('USER_CERT', '')
+            client_dir = client_id_dir(client_id)
 
-            logger.debug('owner: %s', owner)
-            verifyname = user_home + os.sep + owner + os.sep + verify
+            logger.debug('owner: %s', client_id)
+            verifyname = os.path.join(user_home, client_dir, verify)
             logger.debug('verify using %s', verifyname)
             if not os.path.isfile(verifyname):
                 logger.warning('no such verifyfile %s! (%s)', verify,
@@ -152,8 +155,7 @@ def verify_results(job_dict, logger, configuration):
                 continue
 
             job_id = job_dict['JOB_ID']
-            filename = user_home + os.sep + owner + os.sep + job_id\
-                 + '.' + check
+            filename = os.path.join(user_home, client_id, job_id + '.' + check)
             logger.debug('Matching %s against %s', verifyname, filename)
             match = template_fits_file(verifyname, filename)
             if match:
@@ -176,15 +178,13 @@ def verify_results(job_dict, logger, configuration):
     logger.info('VERIFIED : %s', job_dict['VERIFIED'])
 
 
-def migrated_job(filename, cert_name_no_spaces, configuration):
+def migrated_job(filename, client_id, configuration):
+    """returns a tuple (bool status, str msg)"""
 
-    # returns a tuple (bool status, str msg)
-
-    server_home = configuration.server_home
-    mrsl_files_dir = configuration.mrsl_files_dir
-    grid_stdin = configuration.grid_stdin
-
-    job_path = server_home + cert_name_no_spaces + '/' + filename
+    logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+    job_path = os.path.abspath(os.path.join(configuration.server_home,
+                                            client_dir, filename))
 
     # unpickle and enqueue received job file
 
@@ -205,8 +205,8 @@ def migrated_job(filename, cert_name_no_spaces, configuration):
 
     # save file with other mRSL files
 
-    mrsl_filename = mrsl_files_dir + cert_name_no_spaces + '/' + job_id\
-         + '.mRSL'
+    mrsl_filename = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                                                 client_dir, job_id + '.mRSL'))
 
     try:
         mrsl_file = open(mrsl_filename, 'w')
@@ -217,15 +217,10 @@ def migrated_job(filename, cert_name_no_spaces, configuration):
 
     # tell 'grid_script'
 
-    grid_stdin = config.get('GLOBAL', 'grid_stdin')
-    try:
-        server = open(grid_stdin, 'a')
-        server.write('SERVERJOBFILE ' + cert_name_no_spaces + '/'
-                      + job_id + '\n')
-        server.close()
-    except:
-        return (False, 'Fatal error: Could not write to %s'
-                 % grid_stdin)
+    message = 'SERVERJOBFILE ' + client_dir + '/' + job_id + '\n'
+
+    if not send_message_to_grid_script(message, logger, configuration):
+        return (False, 'Fatal error: Could not write to grid stdin')
 
     # TODO: do we need to wait for grid_script to ack job reception?
     # ... same question applies to new_job, btw.

@@ -129,12 +129,12 @@ html['danish'] = \
 """
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False,
-                                  op_menu=cert_name_no_spaces != 'None')
+                                  op_menu=client_id)
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Screen Saver Sandbox'})
 

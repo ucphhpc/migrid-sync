@@ -46,7 +46,7 @@ def signature():
     return ['vgrids', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -57,7 +57,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
@@ -78,7 +78,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     member_list = {'object_type': 'vgrid_list', 'vgrids': []}
     for vgrid_name in list:
         if not vgrid_is_owner_or_member(vgrid_name,
-                cert_name_no_spaces, configuration):
+                client_id, configuration):
             continue
 
         vgrid_obj = {'object_type': 'vgrid', 'name': vgrid_name}
@@ -99,7 +99,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                 'destination': '%s/vgridpublicwiki/%s'\
                  % (configuration.migserver_http_url, vgrid_name),
                 'text': 'Public'}
-        if vgrid_is_owner(vgrid_name, cert_name_no_spaces,
+        if vgrid_is_owner(vgrid_name, client_id,
                           configuration):
             vgrid_obj['administratelink'] = {'object_type': 'link',
                     'destination': '/cgi-bin/adminvgrid.py?vgrid_name=%s'\
@@ -111,7 +111,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
                     'destination': '/cgi-bin/editor.py?path=public_base/%s/index.html'\
                      % vgrid_name, 'text': 'Edit'}
             owner_list['vgrids'].append(vgrid_obj)
-        elif vgrid_is_member(vgrid_name, cert_name_no_spaces,
+        elif vgrid_is_member(vgrid_name, client_id,
                              configuration):
 
             member_list['vgrids'].append(vgrid_obj)

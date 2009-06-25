@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# addresowner - [insert a few words of module description on this line]
+# addresowner - Add resource owner
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -27,13 +27,13 @@
 
 # Minimum Intrusion Grid
 
-"""Add a CN to the list of administrators for a given resource. 
+"""Add a user ID to the list of administrators for a given
+resource. 
 """
 
 import os
 import sys
 
-from shared.validstring import cert_name_format
 from shared.listhandling import add_item_to_pickled_list
 from shared.findtype import is_user, is_owner
 from shared.init import initialize_main_variables
@@ -45,11 +45,11 @@ def signature():
     """Signature of the main function"""
 
     defaults = {'unique_resource_name': REJECT_UNSET,
-                'cert_name': REJECT_UNSET}
+                'cert_id': REJECT_UNSET}
     return ['text', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -59,17 +59,16 @@ def main(cert_name_no_spaces, user_arguments_dict):
         user_arguments_dict,
         defaults,
         output_objects,
-        cert_name_no_spaces,
+        client_id,
         configuration,
         allow_rejects=False,
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     unique_resource_name = accepted['unique_resource_name'][-1]
-    cert_name = accepted['cert_name'][-1]
-    cert_name = cert_name_format(cert_name)
+    cert_id = accepted['cert_id'][-1]
 
-    if not is_owner(cert_name_no_spaces, unique_resource_name,
+    if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'You must be an owner of %s to add a new owner!'
@@ -79,19 +78,22 @@ def main(cert_name_no_spaces, user_arguments_dict):
     # is_owner incorporates unique_resource_name verification - no need to
     # specifically check for illegal directory traversal
 
-    if not is_user(cert_name, configuration.user_home):
+    if not is_user(cert_id, configuration.user_home):
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s is not a valid MiG user!'
-                               % cert_name})
+                               % cert_id})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    base_dir = os.path.abspath(configuration.resource_home + os.sep
-                                + unique_resource_name) + os.sep
+    # Please note that base_dir must end in slash to avoid access to other
+    # resource dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.resource_home,
+                                            unique_resource_name)) + os.sep
 
     # Add owner
 
     owners_file = base_dir + 'owners'
-    (status, msg) = add_item_to_pickled_list(owners_file, cert_name,
+    (status, msg) = add_item_to_pickled_list(owners_file, cert_id,
             logger)
 
     if not status:
@@ -102,7 +104,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
 
     output_objects.append({'object_type': 'text', 'text'
                           : 'New owner %s successfully added to %s!'
-                           % (cert_name, unique_resource_name)})
+                           % (cert_id, unique_resource_name)})
     return (output_objects, returnvalues.OK)
 
 

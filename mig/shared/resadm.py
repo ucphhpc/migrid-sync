@@ -1193,8 +1193,8 @@ def get_sandbox_exe_stop_command(
 
     (status, exe) = get_resource_exe(resource_dict, exe_name, logger)
     if not status:
-        msg = "No EXE config for: '" + unique_resource_name + "' EXE: '"\
-             + exe_name + "'"
+        msg = "No EXE config for: '" + resource_dict['UNIQUE_RESOURCE_NAME'] + \
+              "' EXE: '" + exe_name + "'"
         return (False, msg)
 
     stop_command = exe['stop_command']

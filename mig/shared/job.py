@@ -31,9 +31,9 @@ import time
 import fcntl
 import os
 
-from shared.fileio import send_message_to_grid_script
+from shared.fileio import send_message_to_grid_script, unpickle
 from shared.mrslparser import parse
-from shared.fileio import unpickle
+from shared.useradm import client_id_dir
 
 
 class Job:
@@ -100,7 +100,7 @@ def get_job_id(configuration):
 
 def new_job(
     filename,
-    cert_name_no_spaces,
+    client_id,
     configuration,
     forceddestination,
     returnjobid=False,
@@ -126,7 +126,7 @@ def new_job(
     filename_spaces = filename.replace('\\ ', '\\\\\\ ')
 
     (parseresult, parsemsg) = parse(filename_spaces, job_id,
-                                    cert_name_no_spaces,
+                                    client_id,
                                     forceddestination)
 
     if parseresult:
@@ -137,11 +137,11 @@ def new_job(
     else:
         if returnjobid:
             return (False,
-                    'parse failed, Error in mRSL file - or parser - or MiG subsystem :)%s'
+                    'parse failed, Error in mRSL file - or parser - or MiG subsystem :)\n%s'
                      % parsemsg, None)
         else:
             return (False,
-                    'parse failed, Error in mRSL file - or parser - or MiG subsystem :)%s'
+                    'parse failed, Error in mRSL file - or parser - or MiG subsystem :)\n%s'
                      % parsemsg)
 
 
@@ -205,14 +205,19 @@ def create_job_object_from_pickled_mrsl(filepath, logger,
 
 
 def get_job_ids_with_specified_project_name(
-    cert_name_no_spaces,
+    client_id,
     project_name,
     mrsl_files_dir,
     logger,
     ):
 
-    base_dir = os.path.abspath(mrsl_files_dir + os.sep
-                                + cert_name_no_spaces) + os.sep
+    client_dir = client_id_dir(client_id)
+
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(mrsl_files_dir,
+                                            client_dir)) + os.sep
 
     # this is heavy :-/ we must loop all the mrsl files submitted by the user to find the
     # job ids belonging to the specified project

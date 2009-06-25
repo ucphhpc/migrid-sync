@@ -43,7 +43,7 @@ from shared.resadm import put_fe_pgid, put_exe_pgid
 
 # ## Main ###
 
-(logger, configuration, cert_name_no_spaces, o) = \
+(logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert()
 
 if str(os.getenv('REQUEST_METHOD')) != 'GET':
@@ -82,8 +82,8 @@ if not valid_dir_input(configuration.resource_home,
     # out of bounds - rogue resource!?!?
 
     o.out('invalid unique_resource_name! %s' % unique_resource_name)
-    o.internal('put_resource_pgid FE called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, cert_name_no_spaces %s'
-                % (unique_resource_name, exe_name, cert_name_no_spaces))
+    o.internal('put_resource_pgid FE called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, client_id %s'
+                % (unique_resource_name, exe_name, client_id))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 if not valid_dir_input(base_dir, 'EXE_' + exe_name + '.PGID'):
@@ -92,8 +92,8 @@ if not valid_dir_input(base_dir, 'EXE_' + exe_name + '.PGID'):
 
     o.out('invalid unique_resource_name / exe_name! %s / %s'
            % (unique_resource_name, exe_name))
-    o.internal('put_resource_pgid EXE called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, cert_name_no_spaces %s'
-                % (unique_resource_name, exe_name, cert_name_no_spaces))
+    o.internal('put_resource_pgid EXE called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, client_id %s'
+                % (unique_resource_name, exe_name, client_id))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 if 'FE' == res_type:

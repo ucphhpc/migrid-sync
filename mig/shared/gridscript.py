@@ -33,6 +33,8 @@ import time
 
 import shared.fileio as io
 from shared.notification import notify_user_thread
+from shared.fileio import send_message_to_grid_script
+from shared.useradm import client_id_dir
 
 
 def clean_grid_stdin(stdin):
@@ -134,14 +136,10 @@ def check_mrsl_files(
 
                 logger.info('Found a file with PARSE status: %s'
                              % job_dict['JOB_ID'])
-                try:
-                    fsock = open(configuration.grid_stdin, 'a')
-                    fsock.write('USERJOBFILE ' + job_dict['USER_CERT']
-                                 + '/' + job_dict['JOB_ID'] + '\n')
-                    fsock.close()
-                except Exception, err:
-                    print 'Fatal error: Could not write to %s %s'\
-                         % (configuration.grid_stdin, err)
+                relative_path = filename.replace(root, '').lstrip('/')
+                message = 'USERJOBFILE %s\n' % relative_path
+                if not send_message_to_grid_script(message, logger, configuration):
+                    print 'Fatal error: Could not write to grid stdin'
             elif job_dict['STATUS'] == 'QUEUED'\
                  and not job_queue.get_job_by_id(job_dict['JOB_ID']):
 
@@ -357,14 +355,16 @@ def requeue_job(
             logger.error('could not clean up MiG server')
             print 'CLEAN UP FAILED'
 
+        client_dir = client_id_dir(job_dict['USER_CERT'])
+
         # Remove job result files, if they have arrived as the result is not valid
         # This can happen with sandboxes as they can't be stopped serverside
 
-        io.delete_file(configuration.user_home + job_dict['USER_CERT']
+        io.delete_file(configuration.user_home + client_dir
                         + '/' + job_dict['JOB_ID'] + '.status', logger)
-        io.delete_file(configuration.user_home + job_dict['USER_CERT']
+        io.delete_file(configuration.user_home + client_dir
                         + '/' + job_dict['JOB_ID'] + '.stdout', logger)
-        io.delete_file(configuration.user_home + job_dict['USER_CERT']
+        io.delete_file(configuration.user_home + client_dir
                         + '/' + job_dict['JOB_ID'] + '.stderr', logger)
 
         # Generate execution history
@@ -391,7 +391,7 @@ def requeue_job(
 
         unique_resource_name = job_dict['UNIQUE_RESOURCE_NAME']
 
-        mrsl_file = os.path.join(configuration.mrsl_files_dir, job_dict['USER_CERT'],
+        mrsl_file = os.path.join(configuration.mrsl_files_dir, client_dir,
                                  job_dict['JOB_ID'] + '.mRSL')
         job_retries = configuration.job_retries
         if job_dict['RETRY_COUNT'] <= job_retries:

@@ -272,7 +272,7 @@ You supplied: %s
 Keyword example: %s
 Keyword description: %s
 *******************************************************************
--->'''\
+-->\n'''\
          % (keyword_with_colons, msg, keyword_data,
             keyword_dict['Example'], keyword_dict['Description'])
     return out
@@ -291,7 +291,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
         if not external_keyword_dict.has_key(job_keyword):
             status = False
-            msg += 'unknown keyword: %s' % job_keyword
+            msg += 'unknown keyword: %s\n' % job_keyword
         else:
 
             # name of keyword ok, check if the type is correct

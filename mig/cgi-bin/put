@@ -36,8 +36,6 @@ import urllib
 import fcntl
 import time
 
-# MiG imports
-
 import shared.confparser as confparser
 from shared.putfuncs import verify_results, migrated_job
 from shared.resadm import start_resource_exe_if_continuous
@@ -51,13 +49,16 @@ from shared.job import new_job, finished_job, failed_restart
 from shared.findtype import is_user, is_server, is_owner
 from shared.upload import handle_package_upload
 from shared.settings import parse_and_save_settings
+from shared.useradm import client_id_dir
+
 
 # ## Main ###
 
-(logger, configuration, cert_name_no_spaces, o) = \
+(logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert()
+client_dir = client_id_dir(client_id)
 
-# logger.info("put called with cert %s" % cert_name_no_spaces)
+# logger.info("put called with cert %s" % client_id)
 
 # Check we are using a PUT method
 
@@ -102,7 +103,7 @@ if '.htaccess' == os.path.basename(filename):
 
 # Check cert and decide if it is a user or resource or without cert using the put method
 
-if cert_name_no_spaces == 'None':
+if not client_id:
 
     # o.internal("no certificate found. You must be a resource using /sid_redirect/sessionid/filename.")
 
@@ -292,15 +293,15 @@ if cert_name_no_spaces == 'None':
         notifier.join(900)
         o.reply_and_exit(out_status)
 
-elif is_user(cert_name_no_spaces, configuration.user_home):
+elif is_user(client_id, configuration.user_home):
 
-    # logger.info("Certificate found as a user cert: " + cert_name_no_spaces)
+    # logger.info("Certificate found as a user cert: " + client_id)
 
     if content_type == 'text/resourceconf':
-        pending_file = configuration.resource_pending\
-             + cert_name_no_spaces + filename + '.' + str(time.time())
+        pending_file = os.path.join(configuration.resource_pending,
+                                    client_dir, filename + '.' + str(time.time()))
         o.internal("'%s' sent a resource update file '%s', saving file in '%s'"
-                    % (cert_name_no_spaces, filename, pending_file))
+                    % (client_id, filename, pending_file))
         try:
             fh = open(pending_file, 'w')
             fh.write(sys.stdin.read())
@@ -322,14 +323,14 @@ elif is_user(cert_name_no_spaces, configuration.user_home):
                 config_dict['HOSTIDENTIFIER'])
         if os.path.exists(configuration.resource_home
                            + resource_hostname):
-            if not is_owner(cert_name_no_spaces, resource_hostname,
+            if not is_owner(client_id, resource_hostname,
                             configuration.resource_home, logger):
                 o.out('Failure: You (%s) must be an owner of %s to submit a new configuration!'
-                       % (cert_name_no_spaces, resource_hostname))
+                       % (client_id, resource_hostname))
                 o.reply_and_exit(o.CLIENT_ERROR)
         elif '$HOSTIDENTIFIER' == str(config_dict['HOSTIDENTIFIER']):
             (status, msg) = \
-                send_resource_create_request_mail(cert_name_no_spaces,
+                send_resource_create_request_mail(client_id,
                     config_dict['HOSTURL'], pending_file, configuration)
             o.internal(msg)
             if not status:
@@ -373,9 +374,8 @@ Please contact the MiG server administrator.""")
             o.out(msg)
             o.reply_and_exit(o.ERROR)
     elif content_type == 'text/runtimeenvconf':
-
-        pending_file = configuration.user_home + cert_name_no_spaces\
-             + filename + '.' + str(time.time())
+        pending_file = os.path.join(configuration.user_home,
+                                    client_dir, filename + '.' + str(time.time()))
         try:
             fh = open(pending_file, 'w')
             fh.write(sys.stdin.read())
@@ -385,7 +385,7 @@ Please contact the MiG server administrator.""")
             o.reply_and_exit(o.ERROR)
 
         (retval, retmsg) = create_runtimeenv(pending_file,
-                cert_name_no_spaces, configuration)
+                client_id, configuration)
         if not retval:
             o.out('Error during creation of new runtime environment: %s'
                    % retmsg)
@@ -394,8 +394,8 @@ Please contact the MiG server administrator.""")
         o.out('New runtime environment successfuly created!')
         o.reply_and_exit(o.OK)
     elif content_type == 'text/settings':
-        pending_file = configuration.user_home + cert_name_no_spaces\
-             + filename + '.' + str(time.time())
+        pending_file = os.path.join(configuration.user_home,
+                                    client_dir, filename + '.' + str(time.time()))
         try:
             fh = open(pending_file, 'w')
             fh.write(sys.stdin.read())
@@ -405,7 +405,7 @@ Please contact the MiG server administrator.""")
             o.reply_and_exit(o.ERROR)
 
         (retval, retmsg) = parse_and_save_settings(pending_file,
-                cert_name_no_spaces, configuration)
+                client_id, configuration)
         if not retval:
             o.out('Error during parsing or saving settings: %s'
                    % retmsg)
@@ -414,8 +414,9 @@ Please contact the MiG server administrator.""")
         o.out('New settings saved!')
         o.reply_and_exit(o.OK)
 
-    real_path = os.path.normpath(configuration.user_home
-                                  + cert_name_no_spaces + filename)
+        
+    real_path = os.path.normpath(os.path.join(configuration.user_home,
+                                              client_dir, filename))
     dest_dir = os.path.dirname(real_path)
     dest_file = os.path.basename(real_path)
 
@@ -431,7 +432,7 @@ Please contact the MiG server administrator.""")
                % msg)
         o.reply_and_exit(o.CLIENT_ERROR)
 
-    # logger.info("put: %s writing %s" % (cert_name_no_spaces, real_path))
+    # logger.info("put: %s writing %s" % (client_id, real_path))
 
     try:
         fh = open(real_path, 'w')
@@ -458,7 +459,7 @@ Please contact the MiG server administrator.""")
                             or filename.upper().endswith('.TAR.GZ')
                             or filename.upper().endswith('.TAR.BZ2')):
         (status, msg) = handle_package_upload(real_path, real_path,
-                cert_name_no_spaces, configuration, submitmrsl)
+                client_id, configuration, submitmrsl)
         if not status:
             o.out('Error: %s' % msg)
             o.reply_and_exit(o.ERROR)
@@ -472,7 +473,7 @@ Please contact the MiG server administrator.""")
 
         # logger.info("put: handing over job %s to MiG daemon" % (real_path))
 
-        (status, msg) = new_job(real_path, cert_name_no_spaces,
+        (status, msg) = new_job(real_path, client_id,
                                 configuration, False)
         o.out(msg)
         if status:
@@ -484,12 +485,12 @@ Please contact the MiG server administrator.""")
         o.client("A 'normal' file was uploaded (%s). It can now be used as an inputfile in your .mRSL files"
                   % filename)
         o.reply_and_exit(o.OK)
-elif is_server(cert_name_no_spaces, configuration.server_home):
+elif is_server(client_id, configuration.server_home):
 
     logger.info('Certificate found as a server cert: %s'
-                 % cert_name_no_spaces)
-    dest_file = configuration.server_home + cert_name_no_spaces\
-         + filename
+                 % client_id)
+    dest_file = os.path.normpath(os.path.join(configuration.server_home,
+                                              client_dir, filename))
     dest_file = dest_file.replace('//', '/')
     dest_dir = dest_file[:dest_file.rfind('/')]
     dest_file = dest_file[dest_file.rfind('/') + 1:]
@@ -523,7 +524,7 @@ elif is_server(cert_name_no_spaces, configuration.server_home):
     # if a .mrsl file is uploaded it should be unpacked and sent to the job queue
 
     if filename.upper().endswith('.MRSL'):
-        (status, msg) = migrated_job(dest_path, cert_name_no_spaces,
+        (status, msg) = migrated_job(dest_path, client_id,
                 configuration)
         o.out(msg)
         if status:
@@ -554,7 +555,7 @@ elif is_server(cert_name_no_spaces, configuration.server_home):
         o.reply_and_exit(o.OK)
 else:
     o.out('Person with certificate thats neither found as user, server nor resource cert is trying to use http put %s'
-           % cert_name_no_spaces)
+           % client_id)
     o.reply_and_exit(o.ERROR)
 
 # if code gets here everything was ok
