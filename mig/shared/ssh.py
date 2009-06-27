@@ -253,7 +253,7 @@ def execute_on_resource(
         multiplex_master = bool(resource_config['SSHMULTIPLEXMASTER'])
     identifier = resource_config['HOSTIDENTIFIER']
     unique_id = '%s.%s' % (host, identifier)
-    res_dir = configuration.resource_home + os.sep + unique_id
+    res_dir = os.path.join(configuration.resource_home, unique_id)
 
     # fname should be unique to avoid race conditions, since several
     # cgi-scripts may run at the same time due to a multi process

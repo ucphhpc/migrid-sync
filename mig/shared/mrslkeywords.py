@@ -61,6 +61,7 @@ script instead of putting them directly in the EXECUTE field.
 Relative paths like plain file names are automatically taken from the user home on the MiG server.
 External sources are also allowed as long as they can be downloaded with the "curl" client without user interaction. This means that HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, DICT, TELNET or even LDAP are at least technically supported. External data sources obviously require the executing resource to have outbound network access to the data source. Thus HTTP and HTTPS are the most likely to generally work even on network restricted resources.
 Inputfiles may be specified as a single name per line or as lines of source and destination path separated by a space. In the single name format the file will be called the same on the destination as on the source.
+Supports the same variable expansion as described in the EXECUTE field documentation, but neither directories nor wild cards are supported!
 ''',
         'Example': '''
 ::INPUTFILES::
@@ -73,8 +74,6 @@ Copies somefile and another_file from your MiG home to the resource, but another
 some_url some_file
 
 Downloads the contents from some_url (e.g. https://myhost.org/inputfile.txt) to a file called some_file on the resource.
-
-Supports the same variable expansion as described in the EXECUTE field documentation.
 ''',
         'Type': 'multiplestrings',
         'Value': [],
@@ -84,6 +83,7 @@ Supports the same variable expansion as described in the EXECUTE field documenta
         'Description': '''Files to be copied from the resource after job execution.
 Relative paths like plain file names are automatically sent to the user home on the MiG server. External destinations are also allowed as long as they can be uploaded with the "curl" client without user interaction. This means that HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, DICT, TELNET or even LDAP are at least technically supported. External data destinations obviously require the executing resource to have outbound network access to the data destination. Thus HTTP or HTTPS are the most likely to be allowed even on network restricted resources. Please note however, that HTTP upload requires the destination HTTP server to support the PUT operation, which is not generally enabled on all servers.
 Outputfiles may be specified as a single name per line or as lines of source and destination path separated by a space. In the single name format the file will be called the same on the destination as on the source.
+Supports the same variable expansion as described in the EXECUTE field documentation, but neither directories nor wild cards are supported!
 ''',
         'Example': '''
 ::OUTPUTFILES::
@@ -96,8 +96,6 @@ Copies file and another_file_renamed to the MiG server, but another_file_renamed
 some_file some_url
 
 Uploads some_file on the resource to some_url (e.g. ftp://myuser:mypw@myhost.org/outputfile.txt).
-
-Supports the same variable expansion as described in the EXECUTE field documentation.
 ''',
         'Type': 'multiplestrings',
         'Value': [],
@@ -120,6 +118,7 @@ Compares JOB_ID.status from the job against the file called EXPECTED.status from
     executables = {
         'Description': '''Executables to be copied to the resource before the job execution.
 These files are exactly like the INPUTFILES, but the files are made executable (chmod +x) after they are copied to the resource.
+Supports the same variable expansion as described in the EXECUTE field documentation, but neither directories nor wild cards are supported!
 ''',
         'Example': '''
 ::EXECUTABLES::
