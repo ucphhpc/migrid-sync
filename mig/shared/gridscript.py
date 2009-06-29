@@ -64,8 +64,11 @@ def load_queue(path, logger):
     # Load and add current logger
     
     queue = io.unpickle(path, logger)
-    queue.logger = logger
-    return queue
+    if not queue: 
+        return None # unpickle not successful
+    else:
+        queue.logger = logger
+        return queue
 
 def save_schedule_cache(cache, path, logger):
     """Save schedule cache to path for quick loading later"""
