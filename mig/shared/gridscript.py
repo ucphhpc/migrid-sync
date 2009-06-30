@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# gridscript - [insert a few words of module description on this line]
+# gridscript - main script helper functions
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -40,7 +40,6 @@ from shared.useradm import client_id_dir
 def clean_grid_stdin(stdin):
     """Deletes all content from the pipe (used when grid-script is
     started). First content in pipe might be lost!!
-
     """
 
     while True:
@@ -387,16 +386,13 @@ def requeue_job(
 
         # Retry if retries left
 
-        if not job_dict.has_key('RETRY_COUNT'):
-            job_dict['RETRY_COUNT'] = 1
-        else:
-            job_dict['RETRY_COUNT'] += 1
+        job_dict['RETRY_COUNT'] = job_dict.get('RETRY_COUNT', 0) + 1
 
         unique_resource_name = job_dict['UNIQUE_RESOURCE_NAME']
 
         mrsl_file = os.path.join(configuration.mrsl_files_dir, client_dir,
                                  job_dict['JOB_ID'] + '.mRSL')
-        job_retries = configuration.job_retries
+        job_retries = job_dict.get('RETRIES', configuration.job_retries)
         if job_dict['RETRY_COUNT'] <= job_retries:
             job_dict['STATUS'] = 'QUEUED'
             job_dict['QUEUED_TIMESTAMP'] = time.gmtime()

@@ -192,7 +192,7 @@ class Configuration:
     ca_dir = ''
     sched_alg = 'FirstFit'
     expire_after = 86400
-    job_retries = 10
+    job_retries = 4
     logfile = ''
     loglevel = ''
     logger_obj = None

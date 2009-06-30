@@ -286,6 +286,13 @@ To submit with execution on the first suitable and allowed VGrid.
         'Value': '',
         'Required': False,
         }
+    retries = {
+        'Description': 'Specifies the maximum number of automatic retries if the job does not finish within the requested time. E.g. if the resource dies or just does not provide enough speed to results deliver in time. If not set the server default of %s is used. It may be a good idea to increase the number of retries for e.g. long sandbox jobs where the risk of the resource going offline is higher. Similarly it is recommended to lower it for experimental jobs where a broken specification will otherwise cause repeated job failures and resulting forced empty jobs on the resources.' % configuration.job_retries,
+        'Example': '5',
+        'Type': 'int',
+        'Value': configuration.job_retries,
+        'Required': False,
+        }
 
     # create the keywords in a single dictionary
 
@@ -311,6 +318,7 @@ To submit with execution on the first suitable and allowed VGrid.
         'MAXPRICE': maxprice,
         'VGRID': vgrid,
         'PLATFORM': platform,
+        'RETRIES': retries,
         }
     return keywords_dict
 
