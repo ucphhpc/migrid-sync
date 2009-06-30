@@ -35,17 +35,19 @@ from shared.useradm import init_user_adm, search_users, default_search
 
 def usage(name='searchusers.py'):
     """Usage help"""
-    print """Usage:
+    print """Search in MiG user database.
+Usage:
 %(name)s [SEARCH_OPTIONS]
 Where SEARCH_OPTIONS may be one or more of:
-   -c COUNTRY          Search for country
+   -C COUNTRY          Search for country
    -d DB_PATH          Use DB_PATH as user data base file path
-   -e EMAIL            Search for email
-   -f FULLNAME         Search for full name
+   -E EMAIL            Search for email
+   -F FULLNAME         Search for full name
    -n                  Show only name
    -h                  Show this help
-   -o ORGANIZATION     Search for organization
-   -s STATE            Search for state
+   -I                  Search for user ID (distinguished name)
+   -O ORGANIZATION     Search for organization
+   -S STATE            Search for state
 
 Each search value can be a string or a pattern with * and ? as wildcards.
 """\
@@ -57,7 +59,7 @@ if "__main__" == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
     user_dict = {}
-    opt_args = 'c:C:d:E:F:hnO:S:'
+    opt_args = 'c:C:d:E:F:hI:nO:S:'
     search_filter = default_search()
     name_only = False
     try:
@@ -75,6 +77,8 @@ if "__main__" == __name__:
         elif opt == '-h':
             usage()
             sys.exit(0)
+        elif opt == '-I':
+            search_filter['distinguished_name'] = val
         elif opt == '-n':
             name_only = True
         elif opt == '-C':

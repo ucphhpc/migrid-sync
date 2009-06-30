@@ -32,11 +32,12 @@ import sys
 import getopt
 
 from shared.useradm import init_user_adm, delete_user, fill_distinguished_name, \
-     fill_user
+     fill_user, distinguished_name_to_user
 
 def usage(name='deleteuser.py'):
     """Usage help"""
-    print """Usage:
+    print """Delete user from MiG user database and file system.
+Usage:
 %(name)s [OPTIONS] FULL_NAME [ORGANIZATION] [STATE] [COUNTRY] \
     [EMAIL]
 or
@@ -46,7 +47,7 @@ Where OPTIONS may be one or more of:
    -d DB_FILE          Use DB_FILE as user data base file
    -f                  Force: continue on errors
    -h                  Show this help
-   -u USER_ID          USER_ID is a colon separated list of ID fields matching a key in DB
+   -i CERT_DN          Use CERT_DN as user ID no matter what other fields suggest
    -v                  Be verbose
 """\
          % {'name': name}
@@ -61,7 +62,7 @@ if "__main__" == __name__:
     force = False
     user_id = None
     user_dict = {}
-    opt_args = 'c:d:fhu:v'
+    opt_args = 'c:d:fhi:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -79,7 +80,7 @@ if "__main__" == __name__:
         elif opt == '-h':
             usage()
             sys.exit(0)
-        elif opt == '-u':
+        elif opt == '-i':
             user_id = val
         elif opt == '-v':
             verbose = True
@@ -114,16 +115,7 @@ if "__main__" == __name__:
 
             pass
     elif user_id:
-        parts = user_id.split(':')
-        if len(parts) != 5:
-            print 'Error in user id extraction: %s' % user_id
-            usage()
-            sys.exit(1)
-        user_dict['full_name'] = parts[0]
-        user_dict['organization'] = parts[1]
-        user_dict['state'] = parts[2]
-        user_dict['country'] = parts[3]
-        user_dict['email'] = parts[4]
+        user_dict = distinguished_name_to_user(user_id)
     else:
         print 'Please enter the details for the user to be removed:'
         user_dict['full_name'] = raw_input('Full Name: ').title()

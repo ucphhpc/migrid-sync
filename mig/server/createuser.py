@@ -38,10 +38,19 @@ from getpass import getpass
 from shared.useradm import init_user_adm, create_user, fill_distinguished_name, \
      fill_user
 
+cert_warn = """
+Please note that you *must* use either the -i CERT_DN option to createuser
+or use importuser instead if you want to use other certificate DN formats
+than the one expected by MiG (/C=.*/ST=.*/L=NA/O=.*/CN=.*/emailAddress=.*)
+Otherwise those users will not be able to access their MiG interfaces!
+"""
+
 
 def usage(name='createuser.py'):
     """Usage help"""
-    print """Usage:
+    print """Create user in the MiG user database and file system.
+%(warning)s
+Usage:
 %(name)s [OPTIONS] FULL_NAME ORGANIZATION STATE COUNTRY \
     EMAIL COMMENT PASSWORD
 or
@@ -53,6 +62,7 @@ Where OPTIONS may be one or more of:
    -d DB_FILE          Use DB_FILE as user data base file
    -f                  Force: continue on errors
    -h                  Show this help
+   -i CERT_DN          Use CERT_DN as user ID no matter what other fields suggest
    -u USER_FILE        Read user information from pickle file
    -v                  Be verbose
 """\
@@ -66,8 +76,9 @@ if "__main__" == __name__:
     verbose = False
     force = False
     user_file = None
+    user_id = None
     user_dict = {}
-    opt_args = 'c:d:fhu:v'
+    opt_args = 'c:d:fhi:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -85,6 +96,8 @@ if "__main__" == __name__:
         elif opt == '-h':
             usage()
             sys.exit(0)
+        elif opt == '-i':
+            user_id = val
         elif opt == '-u':
             user_file = val
         elif opt == '-v':
@@ -131,6 +144,8 @@ if "__main__" == __name__:
             usage()
             sys.exit(1)
     else:
+        print '''Entering interactive mode
+%s''' % cert_warn
         print 'Please enter the details for the new user:'
         user_dict['full_name'] = raw_input('Full Name: ').title()
         user_dict['organization'] = raw_input('Organization: ')
@@ -152,8 +167,9 @@ if "__main__" == __name__:
     if not user_dict.has_key('expire'):
         user_dict['expire'] = int(time.time() + (((2 * 365.25) * 24) * 60)
                                   * 60)
-
-    if not user_dict.has_key('distinguished_name'):
+    if user_id:
+        user_dict['distinguished_name'] = user_id
+    elif not user_dict.has_key('distinguished_name'):
         fill_distinguished_name(user_dict)
 
     fill_user(user_dict)
