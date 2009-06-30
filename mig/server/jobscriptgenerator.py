@@ -273,92 +273,88 @@ def create_job_script(
 
     # hack to ensure that a resource has a sandbox keyword
 
-    if resource_config.has_key('SANDBOX'):
-        if resource_config['SANDBOX'] == 1:
+    if resource_config.get('SANDBOX', 0) == 1:
 
-            # Copy file to webserver_home
+        # Move file to webserver_home for download as we can't push it to sandboxes
 
-            try:
-                src = open(inputfiles_path, 'r')
+        try:
 
-                # RA TODO: change filename to something that
-                # includes sessionid
+            # RA TODO: change download filename to something that
+            # includes sessionid
 
-                dest = open(configuration.webserver_home + localjobname
-                             + '.getinputfiles', 'w')
-                dest.write(src.read())
-                src.close()
-                dest.close()
+            webserver_path = os.path.join(configuration.webserver_home,
+                                localjobname + '.getinputfiles')
+            os.rename(inputfiles_path, webserver_path)
 
-                # ########## ATTENTION HACK TO MAKE JVM SANDBOXES WORK ########################################
-                # This should be changed to use the (to be developed) RE pre/post processing framework       #
-                # For now the user must have a jvm dir in his home dir where the classfiles is located       #
-                # this should be changed so that the execution homepath can be specified in the mRSL jobfile #
-                #                                                                                            #
-                # Martin Rehr 08/09/06                                                                       #
+            # ########## ATTENTION HACK TO MAKE JVM SANDBOXES WORK ########################################
+            # This should be changed to use the (to be developed) RE pre/post processing framework       #
+            # For now the user must have a jvm dir in his home dir where the classfiles is located       #
+            # this should be changed so that the execution homepath can be specified in the mRSL jobfile #
+            #                                                                                            #
+            # Martin Rehr 08/09/06                                                                       #
 
-                # If this is a oneclick job link the users jvm dir to
-                # webserver_home/sandboxkey.oneclick
-                # This is done because the client applet uses the
-                # codebase from which it is originaly loaded
-                # Therefore the codebase must be dynamicaly changed
-                # for every job
+            # If this is a oneclick job link the users jvm dir to
+            # webserver_home/sandboxkey.oneclick
+            # This is done because the client applet uses the
+            # codebase from which it is originaly loaded
+            # Therefore the codebase must be dynamicaly changed
+            # for every job
 
-                if resource_config.has_key('PLATFORM')\
-                     and resource_config['PLATFORM'] == 'ONE-CLICK':
+            if resource_config.has_key('PLATFORM')\
+                 and resource_config['PLATFORM'] == 'ONE-CLICK':
 
-                    # A two step link is made.
-                    # First sandboxkey.oneclick is made to point to
-                    # sessiondid.jvm
-                    # Second sessionid.jvm is set to point to
-                    # USER_HOME/jvm
-                    # This is done for security and easy cleanup,
-                    # sessionid.jvm is cleaned up
-                    # by the server upon job finish/timeout and
-                    # thereby leaving no open entryes to the users
-                    # jvm dir.
+                # A two step link is made.
+                # First sandboxkey.oneclick is made to point to
+                # sessiondid.jvm
+                # Second sessionid.jvm is set to point to
+                # USER_HOME/jvm
+                # This is done for security and easy cleanup,
+                # sessionid.jvm is cleaned up
+                # by the server upon job finish/timeout and
+                # thereby leaving no open entryes to the users
+                # jvm dir.
 
-                    linkintermediate = configuration.webserver_home\
-                         + sessionid + '.jvm'
+                linkintermediate = configuration.webserver_home\
+                     + sessionid + '.jvm'
 
-                    if client_dir == configuration.empty_job_name:
-                        linkdest = \
-                            os.path.abspath(configuration.javabin_home)
-                    else:
-                        linkdest = configuration.user_home + client_dir\
-                             + os.sep + 'jvm'
+                if client_dir == configuration.empty_job_name:
+                    linkdest = \
+                        os.path.abspath(configuration.javabin_home)
+                else:
+                    linkdest = configuration.user_home + client_dir\
+                         + os.sep + 'jvm'
 
-                    # Make link sessionid.jvm -> USER_HOME/jvm
+                # Make link sessionid.jvm -> USER_HOME/jvm
 
-                    make_symlink(linkdest, linkintermediate, logger)
+                make_symlink(linkdest, linkintermediate, logger)
 
-                    linkloc = configuration.webserver_home\
-                         + resource_config['SANDBOXKEY'] + '.oneclick'
+                linkloc = configuration.webserver_home\
+                     + resource_config['SANDBOXKEY'] + '.oneclick'
 
-                    # Remove previous symlink
-                    # This must be done in a try/catch as the symlink,
-                    # may be a dead link and 'if os.path.exists(linkloc):'
-                    # will then return false, even though the link exists.
+                # Remove previous symlink
+                # This must be done in a try/catch as the symlink,
+                # may be a dead link and 'if os.path.exists(linkloc):'
+                # will then return false, even though the link exists.
 
-                    try:
-                        os.remove(linkloc)
-                    except:
-                        pass
+                try:
+                    os.remove(linkloc)
+                except:
+                    pass
 
-                    # Make link sandboxkey.oneclick -> sessionid.jvm
+                # Make link sandboxkey.oneclick -> sessionid.jvm
 
-                    make_symlink(linkintermediate, linkloc, logger)
-            except Exception, err:
+                make_symlink(linkintermediate, linkloc, logger)
+        except Exception, err:
 
-                    # ######### End JVM SANDBOX HACK ###########
+                # ######### End JVM SANDBOX HACK ###########
 
-                msg = "File '%s' was not copied to the webserver home."\
-                     % inputfiles_path
-                print '\nERROR: ' + str(err)
-                logger.error(msg)
-                return (msg, None)
+            msg = "File '%s' was not copied to the webserver home."\
+                 % inputfiles_path
+            print '\nERROR: ' + str(err)
+            logger.error(msg)
+            return (msg, None)
 
-            return (sessionid, iosessionid)
+        return (sessionid, iosessionid)
 
     # Copy file to the resource
 
