@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# certreq - [insert a few words of module description on this line]
+# certreq - helpers for certificate requests
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -30,4 +30,5 @@
 """This module contains various helper contents for the certificate request CGIs"""
 
 from safeinput import name_extras, password_extras, password_min_len, \
-    password_max_len, valid_password_chars, valid_name_chars
+    password_max_len, valid_password_chars, valid_name_chars, dn_max_len
+

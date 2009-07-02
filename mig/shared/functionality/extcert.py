@@ -30,7 +30,7 @@
 import sys
 import os
 
-from shared.certreq import valid_name_chars, password_max_len
+from shared.certreq import valid_name_chars, dn_max_len
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 import shared.returnvalues as returnvalues
@@ -76,13 +76,15 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <form method=post action=extcertaction.py>
 <input type=hidden commit=true>
 <table>
-<tr><td>Certificate DN</td><td><input type=text size=%(password_max_len)s name=cert_id> <sup>1</sup></td></tr>
+<tr><td>Certificate DN</td>
+<td><input type=text size=%(dn_max_len)s maxlength=%(dn_max_len)s name=cert_id value='%(client_id)s'> <sup>1</sup></td>
+</tr>
 <tr><td>Full name</td><td><input type=text name=cert_name> <sup>2</sup></td></tr>
 <tr><td>Organization</td><td><input type=text name=org></td></tr>
 <tr><td>Email address</td><td><input type=text name=email></td></tr>
 <tr><td>State</td><td><input type=text name=state> <sup>3</sup></td></tr>
 <tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2> <sup>4</sup></td></tr>
-<tr><td>Comment or reason why you should<br>be granted a MiG certificate:</td><td><textarea rows=4 cols=%(password_max_len)s name=comment></textarea> <sup>5</sup></td></tr>
+<tr><td>Comment or reason why you should<br>be granted a MiG certificate:</td><td><textarea rows=4 cols=%(dn_max_len)s name=comment></textarea> <sup>5</sup></td></tr>
 <tr><td><input type=submit value=Send></td><td></td></tr>
 </table>
 </form>
@@ -100,7 +102,8 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 """
                            % {
         'valid_name_chars': valid_name_chars,
-        'password_max_len': password_max_len,
+        'client_id': client_id,
+        'dn_max_len': dn_max_len,
         }})
 
     return (output_objects, returnvalues.OK)

@@ -25,8 +25,6 @@
 # -- END_HEADER ---
 #
 
-# -*- coding: iso-8859-1 -*-
-
 """This module contains general functions for validating input
 to an extent where it can be used in back ends and output
 without worrying about XSS vulnerabilities, etc.
@@ -60,6 +58,7 @@ dn_extras = name_extras + '/=@._'
 password_extras = ' -_#.,:;!@%/()[]{}+=?<>'
 password_min_len = 4
 password_max_len = 64
+dn_max_len = 96
 
 valid_password_chars = letters + digits + password_extras
 valid_name_chars = letters + digits + name_extras
