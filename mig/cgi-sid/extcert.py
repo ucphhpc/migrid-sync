@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# reqcert - Certificate request and sign up front end
+# extcert - External certificate sign up front end
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,13 +25,13 @@
 # -- END_HEADER ---
 #
 
-"""Front end to request certificate and sign up"""
+"""Front end to sign up with external certificate"""
 
 import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.reqcert import main
+from shared.functionality.extcert import main
 from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
 run_cgi_script_possibly_with_cert(main)

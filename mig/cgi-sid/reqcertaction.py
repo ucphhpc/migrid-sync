@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# reqcertaction - [insert a few words of module description on this line]
+# reqcertaction - Handle user input from certificate request
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -24,6 +24,8 @@
 #
 # -- END_HEADER ---
 #
+
+"""Front end to handle input from request certificate"""
 
 import cgi
 import cgitb

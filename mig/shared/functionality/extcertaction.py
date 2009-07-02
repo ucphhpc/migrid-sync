@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# reqcertaction - handle certificate requests and send email to admins
+# extcertaction - handle external certificate sign up and send email to admins
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Request certificate action back end"""
+"""External certificate sign up action back end"""
 
 import cgi
 import cgitb
@@ -47,13 +47,12 @@ def signature():
     """Signature of the main function"""
 
     defaults = {
+        'cert_id': REJECT_UNSET,
         'cert_name': REJECT_UNSET,
         'org': REJECT_UNSET,
         'email': REJECT_UNSET,
         'country': REJECT_UNSET,
         'state': [''],
-        'password': REJECT_UNSET,
-        'verifypassword': REJECT_UNSET,
         'comment': [''],
         }
     return ['text', defaults]
@@ -66,10 +65,10 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(op_header=False, op_title=False,
                                   op_menu=False)
     output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG certificate request', 'skipmenu'
+                          : 'MiG external certificate sign up', 'skipmenu'
                           : True})
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG certificate request'})
+                          : 'MiG external certificate sign up'})
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
@@ -83,6 +82,7 @@ def main(client_id, user_arguments_dict):
 
     # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
 
+    cert_id = accepted['cert_id'][-1].strip()
     cert_name = accepted['cert_name'][-1].strip().title()
     country = accepted['country'][-1].strip().upper()
     state = accepted['state'][-1].strip().title()
@@ -91,8 +91,6 @@ def main(client_id, user_arguments_dict):
     # lower case email address
 
     email = accepted['email'][-1].strip().lower()
-    password = accepted['password'][-1]
-    verifypassword = accepted['verifypassword'][-1]
 
     # keep comment to a single line
 
@@ -101,12 +99,6 @@ def main(client_id, user_arguments_dict):
     # single quotes break command line format - remove
 
     comment = comment.replace("'", ' ')
-
-    if password != verifypassword:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Password and verify password are not identical!'
-                              })
-        return (output_objects, returnvalues.CLIENT_ERROR)
 
     is_diku_email = False
     is_diku_org = False
@@ -130,74 +122,60 @@ will be given access to the necessary resources anyway.
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     user_dict = {
+        'distinguished_name': cert_id,
         'full_name': cert_name,
         'organization': org,
         'state': state,
         'country': country,
         'email': email,
-        'comment': comment,
-        'password': base64.b64encode(password),
+        'password': '',
+        'comment': "%s: %s" % ("External certificate", comment),
         'expire': int(time.time() + (((2 * 365.25) * 24) * 60) * 60),
         }
-    user_id = '%(full_name)s:%(organization)s:' % user_dict
-    user_id += '%(state)s:%(country)s:%(email)s' % user_dict
     req_path = None
     try:
         (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
         os.write(os_fd, pickle.dumps(user_dict))
         os.close(os_fd)
     except Exception, err:
-        logger.error('Failed to write certificate request to %s: %s'
+        logger.error('Failed to write external certificate request to %s: %s'
                       % (req_path, err))
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Request could not be sent to MiG administrators. Please contact the MiG administrators %s if this error persists.'
                                % admin_email})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    logger.info('Wrote certificate request to %s' % req_path)
+    logger.info('Wrote external certificate request to %s' % req_path)
     tmp_id = req_path.replace(user_pending, '')
     user_dict['tmp_id'] = tmp_id
 
     dest = 'karlsen@erda.imada.sdu.dk'
     mig_user = os.environ.get('USER', 'mig')
-    command_cert_create = \
-        """
-on CA host (amigos19.diku.dk):
-sudo su - mig-ca
-rsync %s@%s:mig/server/MiG-users.db ~/
-./ca-scripts/createusercert.py -a '%s' -d ~/MiG-users.db -s '%s' -u '%s'"""\
-         % (mig_user, configuration.server_fqdn,
-            configuration.admin_email, configuration.server_fqdn,
-            user_id)
     command_user_create = \
         """
 As '%s' on %s:
 cd ~/mig/server
-./createuser.py -u '%s'"""\
-         % (mig_user, configuration.server_fqdn, req_path)
+./createuser.py -i '%s' -u '%s'"""\
+         % (mig_user, configuration.server_fqdn, cert_id, req_path)
     command_user_delete = \
         """
 As '%s' user on %s:
 cd ~/mig/server
-./deleteuser.py '%s' '%s' '%s' '%s' '%s'"""\
+./deleteuser.py -i '%s'"""\
          % (
         mig_user,
         configuration.server_fqdn,
-        cert_name,
-        org,
-        state,
-        country,
-        email,
+        cert_id,
         )
 
     user_dict['command_user_create'] = command_user_create
     user_dict['command_user_delete'] = command_user_delete
-    user_dict['command_cert_create'] = command_cert_create
     user_dict['migserver_https_url'] = configuration.migserver_https_url
-    email_header = 'MiG certificate request for %s' % cert_name
+    email_header = 'MiG sign up request for %s' % cert_id
     email_msg = \
         """
-Received a certificate request with certificate data
+Received an external certificate sign up request with certificate data
+ * Distinguished Name: %(distinguished_name)s
  * Full Name: %(full_name)s
  * Organization: %(organization)s
  * State: %(state)s
@@ -208,9 +186,6 @@ Received a certificate request with certificate data
 
 Command to create user on MiG server:
 %(command_user_create)s
-
-Command to create certificate:
-%(command_cert_create)s
 
 Finally add the user to any relevant VGrids from:
 %(migserver_https_url)s/cgi-bin/vgridadmin.py
@@ -228,12 +203,12 @@ Command to delete user again on MiG server:
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'An error occured trying to send the email requesting the MiG administrators to create a new certificate. Please email the MiG administrators (%s) manually and include the session ID: %s'
+                              : 'An error occured trying to send the email requesting the MiG administrators to sign up with an external certificate. Please email the MiG administrators (%s) manually and include the session ID: %s'
                                % (admin_email, tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : "Request sent to MiG administrators: Your certificate request will be verified and handled as soon as possible, so please be patient. Once handled an email will be sent to the account you have specified ('%s') with further information. In case of inquiries about this request, please include the session ID: %s"
+                          : "Request sent to MiG administrators: Your request for a MiG user with the external certificate will be verified and handled as soon as possible, so please be patient. Once handled an email will be sent to the account you have specified ('%s') with further information. In case of inquiries about this request, please include the session ID: %s"
                            % (email, tmp_id)})
     return (output_objects, returnvalues.OK)
 

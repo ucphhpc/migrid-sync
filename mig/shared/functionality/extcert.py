@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# reqcert - Certificate request backend
+# extcert - External certificate sign up backend
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,13 +25,12 @@
 # -- END_HEADER ---
 #
 
-"""Request certificate back end"""
+"""Request sign up with external certificate back end"""
 
 import sys
 import os
 
-from shared.certreq import valid_password_chars, valid_name_chars, \
-    password_min_len, password_max_len
+from shared.certreq import valid_name_chars, password_max_len
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 import shared.returnvalues as returnvalues
@@ -51,10 +50,10 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(op_header=False, op_title=False,
                                   op_menu=False)
     output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG certificate request', 'skipmenu'
+                          : 'MiG external certificate sign up request', 'skipmenu'
                           : True})
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Welcome to the MiG certificate request page'
+                          : 'Welcome to the MiG external certificate sign up page'
                           })
 
     defaults = signature()[1]
@@ -65,44 +64,42 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-Please enter your data below and press the Send button to submit the certificate request to the MiG administrators.<p>
+This page is used to sign up for MiG with an existing certificate from some other Certificate Authority (CA) than MiG.
+You can use it if you already have a x509 certificate from another accepted CA. In this way you can simply use your existing certificate for MiG access instead of requesting a new one.
+                          
+Please enter your data below and press the Send button to submit the external certificate sign up request to the MiG administrators.<p>
 <b><font color='red'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br>
 That is, if You're a student/employee at DIKU, please type DIKU in the Organization field and use your USER@diku.dk address in the Email field.</font></b><p>
 <hr>
 <p>
 <!-- use post here to avoid field contents in URL -->
-<form method=post action=reqcertaction.py>
+<form method=post action=extcertaction.py>
 <input type=hidden commit=true>
 <table>
-<tr><td>Full name</td><td><input type=text name=cert_name> <sup>1</sup></td></tr>
+<tr><td>Certificate DN</td><td><input type=text size=%(password_max_len)s name=cert_id> <sup>1</sup></td></tr>
+<tr><td>Full name</td><td><input type=text name=cert_name> <sup>2</sup></td></tr>
 <tr><td>Organization</td><td><input type=text name=org></td></tr>
 <tr><td>Email address</td><td><input type=text name=email></td></tr>
-<tr><td>State</td><td><input type=text name=state> <sup>2</sup></td></tr>
-<tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2> <sup>3</sup></td></tr>
-<tr><td>Password</td><td><input type=password name=password maxlength=%(password_max_len)s> <sup>4, 5</sup></td></tr>
-<tr><td>Verify password</td><td><input type=password name=verifypassword maxlength=%(password_max_len)s></td></tr>
-<tr><td>Comment or reason why you should<br>be granted a MiG certificate:</td><td><textarea rows=4 cols=%(password_max_len)s name=comment></textarea> <sup>6</sup></td></tr>
+<tr><td>State</td><td><input type=text name=state> <sup>3</sup></td></tr>
+<tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2> <sup>4</sup></td></tr>
+<tr><td>Comment or reason why you should<br>be granted a MiG certificate:</td><td><textarea rows=4 cols=%(password_max_len)s name=comment></textarea> <sup>5</sup></td></tr>
 <tr><td><input type=submit value=Send></td><td></td></tr>
 </table>
 </form>
 <p>
-<font color='red'>Please note that passwords will be visible to the MiG administrators!</font><p>
 <hr>
 <p>
 <font size=-1>
-<sup>1</sup> restricted to the characters in '%(valid_name_chars)s'<br>
-<sup>2</sup> optional<br>
-<sup>3</sup> Country code is on the form GB/DK/.. , <a href=http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html>help</a><br>
-<sup>4</sup> Password is restricted to the characters in '%(valid_password_chars)s'<br>
-<sup>5</sup> Password must be at least %(password_min_len)s and at most %(password_max_len)s characters long<br> 
-<sup>6</sup> optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.<br>
+<sup>1</sup> must be the exact Distinguished Name (DN) of your certificate<br>
+<sup>2</sup> restricted to the characters in '%(valid_name_chars)s'<br>
+<sup>3</sup> optional<br>
+<sup>4</sup> Country code is on the form GB/DK/.. , <a href=http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html>help</a><br>
+<sup>5</sup> optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.<br>
 </font>
 <p>
 """
                            % {
         'valid_name_chars': valid_name_chars,
-        'valid_password_chars': valid_password_chars,
-        'password_min_len': password_min_len,
         'password_max_len': password_max_len,
         }})
 
