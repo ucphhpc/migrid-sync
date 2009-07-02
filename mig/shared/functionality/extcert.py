@@ -34,6 +34,7 @@ from shared.certreq import valid_name_chars, dn_max_len
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.useradm import distinguished_name_to_user, cert_field_order
 
 
 def signature():
@@ -70,6 +71,17 @@ def main(client_id, user_arguments_dict):
         output_objects.append(certreq_link)
         output_objects.append({'object_type': 'warning', 'text':
                                'However, if you do own a suitable certificate you can sign up with it below:'})
+        new_user = {}
+
+    else:
+        new_user = distinguished_name_to_user(client_id)
+
+    def get_if_present(key):
+        t = new_user.get(key)
+        if not t:
+            return ''
+        else:
+            return t
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
@@ -88,11 +100,11 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <tr><td>Certificate DN</td>
 <td><input type=text size=%(dn_max_len)s maxlength=%(dn_max_len)s name=cert_id value='%(client_id)s'> <sup>1</sup></td>
 </tr>
-<tr><td>Full name</td><td><input type=text name=cert_name> <sup>2</sup></td></tr>
-<tr><td>Organization</td><td><input type=text name=org></td></tr>
-<tr><td>Email address</td><td><input type=text name=email></td></tr>
-<tr><td>State</td><td><input type=text name=state> <sup>3</sup></td></tr>
-<tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2> <sup>4</sup></td></tr>
+<tr><td>Full name</td><td><input type=text name=cert_name value='%(common_name)s'> <sup>2</sup></td></tr>
+<tr><td>Organization</td><td><input type=text name=org value='%(org)s'></td></tr>
+<tr><td>Email address</td><td><input type=text name=email value='%(email)s'></td></tr>
+<tr><td>State</td><td><input type=text name=state value='%(state)s'> <sup>3</sup></td></tr>
+<tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2 value='%(country)s'> <sup>4</sup></td></tr>
 <tr><td>Comment or reason why you should<br>be granted a MiG certificate:</td><td><textarea rows=4 cols=%(dn_max_len)s name=comment></textarea> <sup>5</sup></td></tr>
 <tr><td><input type=submit value=Send></td><td></td></tr>
 </table>
@@ -113,6 +125,11 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
         'valid_name_chars': valid_name_chars,
         'client_id': client_id,
         'dn_max_len': dn_max_len,
+        'common_name': get_if_present('full_name'),
+        'org' : get_if_present('organization'),
+        'email' : get_if_present('email'),
+        'state' : get_if_present('state'),
+        'country' : get_if_present('country'),
         }})
 
     return (output_objects, returnvalues.OK)
