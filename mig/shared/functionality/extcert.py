@@ -62,6 +62,15 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    certreq_link = {'object_type': 'link', 'destination': '/cgi-sid/reqcert.py',
+                        'text': 'Request a new MiG certificate'}
+    if not client_id:
+        output_objects.append({'object_type': 'warning', 'text':
+                               'Apparently you do not have a suitable MiG certificate, but you can request one:'})
+        output_objects.append(certreq_link)
+        output_objects.append({'object_type': 'warning', 'text':
+                               'However, if you do own a suitable certificate you can sign up with it below:'})
+
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 This page is used to sign up for MiG with an existing certificate from some other Certificate Authority (CA) than MiG.

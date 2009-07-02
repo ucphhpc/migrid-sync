@@ -90,9 +90,53 @@ def validate_input_and_cert(
     """A wrapper used by most back end functionality"""
 
     if not is_user(client_id, configuration.user_home):
+        title = None
+        header = None
+
+        # Add header if missing
+        for entry in output_objects:
+            if entry.get('title', None):
+                title = entry
+            elif entry.get('header', None):
+                header = entry
+        if not title:
+            title_object = {
+                'object_type': 'title',
+                'text': 'MiG error',
+                'javascript': '',
+                'bodyfunctions': '',
+                'skipmenu': True,
+                }
+            output_objects.append(title_object)
+        if not header:
+            output_objects.append({'object_type': 'header', 'text': 'MiG error'})
+            
+            
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Invalid certificate or no such MiG user (distinguished name)'
                               })
+        certreq_link = {'object_type': 'link', 'destination': '/cgi-sid/reqcert.py',
+                        'text': 'Request a new MiG certificate'}
+        extcert_link = {'object_type': 'link', 'destination': '/cgi-sid/extcert.py',
+                        'text': 'Sign up with existing certificate'}
+        if not client_id:
+            output_objects.append({'object_type': 'text', 'text':
+                                   'Apparently you do not have a suitable MiG certificate, but you can request one:'})
+            output_objects.append(certreq_link)
+            output_objects.append({'object_type': 'text', 'text':
+                                   'However, if you own a suitable certificate you can sign up with it:'})
+            output_objects.append(extcert_link)            
+        else:
+            output_objects.append({'object_type': 'text', 'text':
+                                   'Apparently you already have a suitable certificate you can sign up with:'})
+            output_objects.append(extcert_link)
+            output_objects.append({'object_type': 'text', 'text':
+                                   'However, you can still request a dedicated MiG certificate if you prefer:'})
+            output_objects.append(certreq_link)
+
+        output_objects.append({'object_type': 'text', 'text':
+                               'If you already received a certificate you probably just need to import it in your browser.'})
+        output_objects.append({'object_type': 'text', 'text': ''})
         return (False, output_objects)
     (status, retval) = validate_input(user_arguments_dict, defaults,
             output_objects, allow_rejects)
