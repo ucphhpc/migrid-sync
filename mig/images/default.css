@@ -401,3 +401,11 @@ table.monitorruntimeenvreq {
 .status_offline {
   color: red;
 }
+
+.optional {
+  color: black;
+}
+
+.mandatory {
+  color: blue;
+}

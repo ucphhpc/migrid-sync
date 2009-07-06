@@ -80,8 +80,9 @@ def main(client_id, user_arguments_dict):
                           : """
 This page is used to sign up for MiG with an existing certificate from some other Certificate Authority (CA) than MiG.
 You can use it if you already have a x509 certificate from another accepted CA. In this way you can simply use your existing certificate for MiG access instead of requesting a new one.
-                          
-Please enter your data below and press the Send button to submit the external certificate sign up request to the MiG administrators.<p>
+<br>
+The page tries to auto load any certificate your browser provides and fill in the fields accordingly, but in case it can't guess all <span class=mandatory>mandatory</span> fields, you still need to fill in those. If no suitable certificates are provided you need to enter everything manually.<br>
+Please enter any missing information below and press the Send button to submit the external certificate sign up request to the MiG administrators.<p>
 <b><font color='red'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br>
 That is, if You're a student/employee at DIKU, please type DIKU in the Organization field and use your USER@diku.dk address in the Email field.</font></b><p>
 <hr>
@@ -91,14 +92,14 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <input type=hidden commit=true>
 <table>
 <tr><td>Certificate DN</td>
-<td><input type=text size=%(dn_max_len)s maxlength=%(dn_max_len)s name=cert_id value='%(client_id)s'> <sup>1</sup></td>
+<td><input type=text size=%(dn_max_len)s maxlength=%(dn_max_len)s name=cert_id value='%(client_id)s'> <sup class=mandatory>1</sup></td>
 </tr>
-<tr><td>Full name</td><td><input type=text name=cert_name value='%(common_name)s'> <sup>2</sup></td></tr>
-<tr><td>Organization</td><td><input type=text name=org value='%(org)s'></td></tr>
-<tr><td>Email address</td><td><input type=text name=email value='%(email)s'></td></tr>
-<tr><td>State</td><td><input type=text name=state value='%(state)s'> <sup>3</sup></td></tr>
-<tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2 value='%(country)s'> <sup>4</sup></td></tr>
-<tr><td>Comment or reason why you should<br>be granted a MiG certificate:</td><td><textarea rows=4 cols=%(dn_max_len)s name=comment></textarea> <sup>5</sup></td></tr>
+<tr><td>Full name</td><td><input type=text name=cert_name value='%(common_name)s'> <sup class=mandatory>2</sup></td></tr>
+<tr><td>Organization</td><td><input type=text name=org value='%(org)s'> <sup class=mandatory>3</sup></td></tr>
+<tr><td>Email address</td><td><input type=text name=email value='%(email)s'> <sup class=mandatory>4</sup></td></tr>
+<tr><td>State</td><td><input type=text name=state value='%(state)s'> <sup class=optional>5</sup></td></tr>
+<tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2 value='%(country)s'> <sup class=mandatory>6</sup></td></tr>
+<tr><td>Comment or reason why you should<br>be granted a MiG certificate:</td><td><textarea rows=4 cols=%(dn_max_len)s name=comment></textarea> <sup class=optional>7</sup></td></tr>
 <tr><td><input type=submit value=Send></td><td></td></tr>
 </table>
 </form>
@@ -108,9 +109,11 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <font size=-1>
 <sup>1</sup> must be the exact Distinguished Name (DN) of your certificate<br>
 <sup>2</sup> restricted to the characters in '%(valid_name_chars)s'<br>
-<sup>3</sup> optional (just leave empty if you're not located in e.g the U.S.)<br>
-<sup>4</sup> country code is on the form GB/DK/.. , <a href=http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html>help</a><br>
-<sup>5</sup> optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.<br>
+<sup>3</sup> name or acronym<br>
+<sup>4</sup> address associated with organization if at all possible<br>
+<sup>5</sup> optional (just leave empty if you're not located in e.g the U.S.)<br>
+<sup>6</sup> country code is on the form GB/DK/.. , <a href=http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html>help</a><br>
+<sup>7</sup> optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.<br>
 </font>
 <p>
 """
