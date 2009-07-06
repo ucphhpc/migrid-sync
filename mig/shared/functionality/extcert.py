@@ -34,7 +34,7 @@ from shared.certreq import valid_name_chars, dn_max_len
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 import shared.returnvalues as returnvalues
-from shared.useradm import distinguished_name_to_user, cert_field_order
+from shared.useradm import distinguished_name_to_user
 
 
 def signature():
@@ -76,13 +76,6 @@ def main(client_id, user_arguments_dict):
     else:
         new_user = distinguished_name_to_user(client_id)
 
-    def get_if_present(key):
-        t = new_user.get(key)
-        if not t:
-            return ''
-        else:
-            return t
-
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 This page is used to sign up for MiG with an existing certificate from some other Certificate Authority (CA) than MiG.
@@ -115,8 +108,8 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <font size=-1>
 <sup>1</sup> must be the exact Distinguished Name (DN) of your certificate<br>
 <sup>2</sup> restricted to the characters in '%(valid_name_chars)s'<br>
-<sup>3</sup> optional<br>
-<sup>4</sup> Country code is on the form GB/DK/.. , <a href=http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html>help</a><br>
+<sup>3</sup> optional (just leave empty if you're not located in e.g the U.S.)<br>
+<sup>4</sup> country code is on the form GB/DK/.. , <a href=http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html>help</a><br>
 <sup>5</sup> optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.<br>
 </font>
 <p>
@@ -125,11 +118,11 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
         'valid_name_chars': valid_name_chars,
         'client_id': client_id,
         'dn_max_len': dn_max_len,
-        'common_name': get_if_present('full_name'),
-        'org' : get_if_present('organization'),
-        'email' : get_if_present('email'),
-        'state' : get_if_present('state'),
-        'country' : get_if_present('country'),
+        'common_name': new_user.get('full_name', ''),
+        'org' : new_user.get('organization', ''),
+        'email' : new_user.get('email', ''),
+        'state' : new_user.get('state', ''),
+        'country' : new_user.get('country', ''),
         }})
 
     return (output_objects, returnvalues.OK)

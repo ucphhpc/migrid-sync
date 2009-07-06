@@ -84,14 +84,17 @@ def fill_user(target):
     return target
 
 def fill_distinguished_name(user):
-    """Fill distinguished_name field from other fields if not already set"""
+    """Fill distinguished_name field from other fields if not already set.
+
+    Please note that MiG certificates get empty fields set to NA, so this
+    is translated here, too.
+    """
     if user.get('distinguished_name', ''):
         return user
     else:
         user['distinguished_name'] = ''
     for (key, val) in cert_field_order:
         setting = user.get(key, '')
-        # Hack: MiG certificates get empty fields set to NA
         if not setting:
             setting = 'NA'
         user['distinguished_name'] += '/%s=%s' % (val, setting)
@@ -100,6 +103,9 @@ def fill_distinguished_name(user):
 def distinguished_name_to_user(distinguished_name):
     """Build user dictionary from distinguished_name string on the form:
     /X=abc/Y=def/Z=ghi
+
+    Please note that MiG certificates get empty fields set to NA, so this
+    is translated back here, too.
     """
     user_dict = {'distinguished_name': distinguished_name}
     parts = distinguished_name.split('/')
@@ -107,6 +113,8 @@ def distinguished_name_to_user(distinguished_name):
         if not field:
             continue
         (key, val) = field.split('=', 1)
+        if 'NA' == val:
+            val = ''
         if not key in cert_field_map.values():
             user_dict[key] = val
         else:
