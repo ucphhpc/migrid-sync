@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# searchusers - [insert a few words of module description on this line]
+# searchusers - Search in MiG user database
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.

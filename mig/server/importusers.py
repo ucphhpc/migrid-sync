@@ -39,20 +39,23 @@ def usage(name='importusers.py'):
     print """Usage:
 %(name)s [OPTIONS] URL [URL [...]]
 Where OPTIONS may be one or more of:
+   -C CERT_PATH        Use CERT_PATH as client certificate
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
-   -f                  Force: continue on errors
    -h                  Show this help
-   -v                  Be verbose
+   -K KEY_PATH         Use KEY_PATH as client key
 """\
          % {'name': name}
 
-def dump_contents(url):
-    """dump list of data lines from provided URL"""
+def dump_contents(url, key_path=None, cert_path=None):
+    """dump list of data lines from provided URL.
+    Optional client key and certificate is supported.
+    """
 
     # allow file dump at least until we get certificate based access
 
-    browser = urllib.FancyURLopener({})
+    browser = urllib.FancyURLopener(key_file=key_path,
+                                    cert_file=cert_path)
     pipe = browser.open(url)
     data = pipe.read()
     browser.close()
@@ -77,9 +80,9 @@ def parse_contents(user_data):
 if "__main__" == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
-    verbose = False
-    force = False
-    opt_args = 'c:d:fhu:v'
+    key_path = None
+    cert_path = None
+    opt_args = 'C:c:d:hK:'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -95,6 +98,10 @@ if "__main__" == __name__:
         elif opt == '-h':
             usage()
             sys.exit(0)
+        elif opt == '-C':
+            cert_path = val
+        elif opt == '-K':
+            key_path = val
         else:
             print 'Error: %s not supported!' % opt
             sys.exit(1)
@@ -106,7 +113,7 @@ if "__main__" == __name__:
 
     users = []
     for url in args:
-        url_dump = dump_contents(url)
+        url_dump = dump_contents(url, key_path, cert_path)
         users += parse_contents(url_dump)
 
     new_users = []
