@@ -468,7 +468,7 @@ def search_users(search_filter, conf_path, db_path):
         print 'Loaded existing user DB from: %s' % db_path
     except Exception, err:
         print 'Failed to load user DB: %s' % err
-        sys.exit(1)
+        return []
 
     hits = []
     for (uid, user_dict) in user_db.items():
