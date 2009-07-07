@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# Import all DCSC users from VOMS into MiG
+#
+# Modify install paths below to fit actual installation
+MIGUSER="mig"
+MIGHOME="/home/$MIGUSER"
+MIGCODE="$MIGHOME/mig"
+MIGSTATE="$MIGHOME/state"
+MIGIMPORT="$MIGCODE/server/importusers.py"
+MIGCONF="$MIGCODE/server/MiGserver.conf"
+MIGDB="$MIGCODE/server/MiG-users.db"
+VOMSKEY="$MIGSTATE/MiG-server-certs/vomskey.pem"
+VOMSCERT="$MIGSTATE/MiG-server-certs/vomscert.pem"
+VOMSURL='https://voms.ndgf.org:8443/voms/dcsc.dk/services/VOMSCompatibility?method=getGridmapUsers&container=%2Fdcsc.dk'
+
+su - $MIGUSER -c "$MIGIMPORT -c $MIGCONF -d $MIGDB -K $VOMSKEY -C $VOMSCERT $VOMSURL"
