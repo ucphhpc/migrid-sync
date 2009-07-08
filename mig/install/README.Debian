@@ -14,36 +14,8 @@ We recommend creating a new user account on the system for running the
 MiG daemons. This is not strictly required so you can skip this step if
 you like, but then the apache configuration must be updated accordingly.
 
-As root create an ordinary user, mig, for running the MiG server:
-# su -
-# useradd -m -U mig 
-
-Login as the new user:
-# su - mig
-
-Download and unpack the MiG source or make a checkout from svn as described on:
-http://code.google.com/p/migrid/source/checkout
-
-At this point it may be comfortable to copy some of the basic
-account configuration files from mig/install/mig-user to ~/ but this is
-not required.
-
-Create and edit the server configuration to fit the particular server:
-# cd ~/path/to/migbase/mig/server
-# cp MiGserver-localhost.conf MiGserver-MYSERVER.conf
-# ln -s MiGserver-MYSERVER.conf MiGserver.conf
-# $EDITOR MiGserver.conf
-Now change options like server_fqdn and paths to fit your installation.
-
-You can check that the configuration is ok by running the checkconf.py
-script:
-python checkconf.py
-
-If any paths are missing it will offer to help you creating them. 
-Please note that all the 'Xstdin' paths *must* be created as pipes.
-
-Log out the MiG user
-# logout
+Please refer to the main README file for the instructions to set up the
+basic MiG environment.
 
 
 Installation and configuration of Apache:
