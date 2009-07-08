@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# xmlrpcinterface - Provides the entire XMLRPC interface over CGI
+# migwsgi.py - Provides the entire WSGI interface
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,42 +25,15 @@
 # -- END_HEADER ---
 #
 
-from SimpleXMLRPCServer import CGIXMLRPCRequestHandler
+import os
+import sys
+import cgi
 
 import shared.returnvalues as returnvalues
+from shared.cgiinput import fieldstorage_to_dict
 from shared.httpsclient import extract_client_id
 from shared.objecttypes import get_object_type_info
-from shared.output import validate
-
-
-class MiGCGIXMLRPCRequestHandler(CGIXMLRPCRequestHandler):
-
-    def system_methodSignature(self, method_name):
-        """List method signatures"""
-        signature = id
-        try:
-            exec compile('from shared.functionality.%s import signature'
-                          % method_name, '', 'single')
-            signature_string = str(signature())
-        except:
-            signature_string = 'none, array'
-        return signature_string
-
-    def system_methodHelp(self, method_name):
-        """List method usage"""
-        usage = method_help = id
-        try:
-            exec compile('from shared.functionality.%s import usage'
-                          % method_name, '', 'single')
-            help_string = str(usage())
-        except:
-            try:
-                exec compile('from shared.functionality.%s import __doc__ as method_help'
-                              % method_name, '', 'single')
-                help_string = str(method_help)
-            except:
-                help_string = ''
-        return help_string
+from shared.output import validate, do_output
 
 
 def object_type_info(object_type):
@@ -442,74 +415,59 @@ def getjobobj(user_arguments_dict):
 
 
 # ## Main ###
-if "__main__" == __name__:
-    server = MiGCGIXMLRPCRequestHandler()
-    server.register_function(object_type_info)
-    server.register_function(my_id)
-    server.register_function(jobstatus)
-    server.register_function(ls)
-    server.register_function(liveoutput)
-    server.register_function(tail)
-    server.register_function(head)
-    server.register_function(addresowner)
-    server.register_function(rmresowner)
-    server.register_function(lsresowners)
-    server.register_function(startfe)
-    server.register_function(statusfe)
-    server.register_function(stopfe)
-    server.register_function(restartfe)
-    server.register_function(lsvgridowners)
-    server.register_function(showre)
-    server.register_function(createvgrid)
-    server.register_function(redb)
-    server.register_function(wc)
-    server.register_function(scripts)
-    server.register_function(canceljob)
-    server.register_function(submit)
-    server.register_function(resubmit)
-    server.register_function(textarea)
-    server.register_function(restartexe)
-    server.register_function(stopexe)
+def basic_application(environ, start_response):
+    """Sample app called automatically by wsgi"""
+    status = '200 OK'
+    output = 'Hello World!'
 
-    # server.register_function(resetexe)
+    response_headers = [('Content-type', 'text/plain'),
+                        ('Content-Length', str(len(output)))]
+    start_response(status, response_headers)
 
-    server.register_function(cleanfe)
-    server.register_function(cleanexe)
-    server.register_function(vgridmemberrequest)
-    server.register_function(vgridmemberrequestaction)
-    server.register_function(mkdir)
-    server.register_function(touch)
-    server.register_function(cat)
-    server.register_function(cp)
-    server.register_function(stat)
-    server.register_function(truncate)
-    server.register_function(rm)
-    server.register_function(rmvgridowner)
-    server.register_function(rmvgridmember)
-    server.register_function(addvgridmember)
-    server.register_function(addvgridowner)
-    server.register_function(lsvgridmembers)
-    server.register_function(lsvgridres)
-    server.register_function(addvgridres)
-    server.register_function(rmvgridres)
-    server.register_function(adminvgrid)
-    server.register_function(updateresconfig)
-    server.register_function(createre)
-    server.register_function(docs)
-    server.register_function(spell)
-    server.register_function(startexe)
-    server.register_function(statusexe)
-    server.register_function(adminre)
-    server.register_function(editfile)
-    server.register_function(editor)
-    server.register_function(rmdir)
-    server.register_function(settings)
-    server.register_function(public_vgrid_projects)
-    server.register_function(zip)
-    server.register_function(showvgridmonitor)
-    server.register_function(mv)
-    server.register_function(signature)
-    server.register_function(jobobjsubmit)
-    server.register_function(getjobobj)
-    server.register_introspection_functions()
-    server.handle_request()
+    return [output]
+
+def application(environ, start_response):
+    """MiG app called automatically by wsgi"""
+
+    # pass environment on to sub handlers
+    os.environ = environ
+
+    # make sure print calls do not interfere with wsgi
+    sys.stdout = sys.stderr
+    fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ) 
+    user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+
+    # default to html
+
+    output_format = 'html'
+    if user_arguments_dict.has_key('output_format'):
+        output_format = user_arguments_dict['output_format'][0]
+
+    try:
+        backend = eval(environ['SCRIPT_URL'].replace('/MiG/', '').replace('.py', ''))
+        (output_objs, ret_val) = backend(user_arguments_dict)
+    except:
+        #(output_objs, ret_val) = (my_id(), returnvalues.OK)
+        #(output_objs, ret_val) = (user_arguments_dict, returnvalues.OK)
+        (output_objs, ret_val) = ([{'object_type': 'text', 'text': str(environ)}], returnvalues.OK)
+    if returnvalues.OK == ret_val:
+        status = '200 OK'
+    else:
+        status = '403 ERROR'
+
+    (ret_code, ret_msg) = ret_val
+    output = do_output(ret_code, ret_msg, output_objs, output_format)
+    if not output:
+
+        # Error occured during output print
+    
+        output = 'Return object was _not_ successfully extracted!'
+
+    content = 'text/html'
+    if 'html' !=  output_format:
+        content = 'text/plain'
+    response_headers = [('Content-type', content),
+                        ('Content-Length', str(len(output)))]
+    start_response(status, response_headers)
+
+    return [output]

@@ -55,12 +55,13 @@ def run_cgi_script(main):
     if user_arguments_dict.has_key('output_format'):
         output_format = user_arguments_dict['output_format'][0]
 
-    if not do_output(ret_code, ret_msg, out_obj, output_format):
+    output = do_output(ret_code, ret_msg, out_obj, output_format)
+    if not output:
 
         # Error occured during output print
 
         print 'Return object was _not_ successfully printed!'
-
+    print output
 
 def run_cgi_script_possibly_with_cert(main):
     """ Get needed information and run the function received as argument """
@@ -79,10 +80,10 @@ def run_cgi_script_possibly_with_cert(main):
     if user_arguments_dict.has_key('output_format'):
         output_format = user_arguments_dict['output_format'][0]
 
-    if not do_output(ret_code, ret_msg, out_obj, output_format):
+    output = do_output(ret_code, ret_msg, out_obj, output_format)
+    if not output:
 
         # Error occured during output print
 
         print 'Return object was _not_ successfully printed!'
-
-
+    print output
