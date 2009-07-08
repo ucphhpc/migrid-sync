@@ -87,8 +87,8 @@ def create_user(
 
     home = '/home/%s' % user
 
-    print 'chmod -R o-rwx %s' % home
-    status = os.system('chmod -R o-rwx %s' % home) >> 8
+    print 'chmod -R g-rwx,o-rwx %s' % home
+    status = os.system('chmod -R g-rwx,o-rwx %s' % home) >> 8
     if status != 0:
         print 'Warning: exit code %d' % status
     else:
@@ -209,9 +209,9 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     # Only add non-directory paths manually and leave the rest to
     # checkconf.py below
 
-    print "sudo su - %s -c 'mkfifo -m 600 \\\n\t%s/server.stdin'"\
+    print "sudo su - %s -c 'mkfifo \\\n\t%s/server.stdin'"\
          % (user, server_dir)
-    print "sudo su - %s -c 'mkfifo -m 600 \\\n\t%s/notify.stdin'"\
+    print "sudo su - %s -c 'mkfifo \\\n\t%s/notify.stdin'"\
          % (user, server_dir)
     print "sudo su - %s -c '%s/mig/server/checkconf.py'" % (user, home)
 

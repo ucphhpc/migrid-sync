@@ -66,21 +66,39 @@ def put_fe_pgid(
     # Please note that base_dir must end in slash to avoid access to other
     # resource dirs when own name is a prefix of another resource name
 
-    base_dir = os.path.abspath(resource_home + os.sep
-                                + unique_resource_name) + os.sep
+    base_dir = os.path.abspath(os.path.join(resource_home,
+                                            unique_resource_name)) + os.sep
 
     # There should not be more than one running FE on each resource
     # A "FE.PGID" file in the resource's home directory means that
     # the FE is running.
-    # This locking by file is not good if the MiG server runs on a
-    # NFS machine.
 
-    pgid_path = base_dir + 'FE.PGID'
+    pgid_path = os.path.join(base_dir, 'FE.PGID')
+
+    if not os.path.exists(pgid_path):
+
+        # The pgid_path is only created the first time the FE
+        # is started. Thus the minor race where two such processes
+        # get here at once (race between open+truncate and
+        # locking) can be ignored.
+
+        pgid_file = open(pgid_path, 'w')
+        pgid_file.write('stopped\n')
+        pgid_file.flush()
+        pgid_file.close()
+
     try:
-        pgid_fd = os.open(pgid_path, os.O_CREAT | os.O_WRONLY
-                           | os.O_EXCL, 0600)
-        os.write(pgid_fd, pgid + '\n')
-        os.close(pgid_fd)
+        pgid_file = open(pgid_path, 'r+')
+        fcntl.flock(pgid_file, fcntl.LOCK_EX)
+        old_pgid = pgid_file.readline().strip()
+        pgid_file.seek(0, 0)
+        if not old_pgid.isdigit():
+            pgid_file.write(pgid + '\n')
+            pgid_file.flush()
+        fcntl.flock(pgid_file, fcntl.LOCK_UN)
+        pgid_file.close()
+        if old_pgid.isdigit():
+            raise Exception('FE already started')
         msg = "FE pgid: '%s' wrote for %s" % (pgid,
                 unique_resource_name)
         status = True
@@ -117,7 +135,7 @@ def put_exe_pgid(
     # This is required to avoid 'races', as it is the FE that sends
     # the PGID to us and not the EXE node.
 
-    pgid_path = os.path.abspath(base_dir + 'EXE_' + exe_name + '.PGID')
+    pgid_path = os.path.abspath(os.path.join(base_dir, 'EXE_' + exe_name + '.PGID'))
     status = False
     try:
 
@@ -130,7 +148,6 @@ def put_exe_pgid(
         fcntl.flock(pgid_file, fcntl.LOCK_EX)
         pgid_file.seek(0, 0)
         old_pgid = pgid_file.readline().strip()
-
         pgid_file.truncate(0)
         pgid_file.seek(0, 0)
         pgid_file.write(pgid + '\n')
@@ -246,8 +263,8 @@ def atomic_resource_exe_restart(
 
     resource_home = configuration.resource_home
 
-    pgid_path = resource_home + '/' + unique_resource_name + '/EXE_'\
-         + exe_name + '.PGID'
+    pgid_path = os.path.join(resource_home, unique_resource_name,
+                             'EXE_' + exe_name + '.PGID')
 
     # Lock pgid file
 
@@ -591,8 +608,8 @@ def start_resource_exe(
 
     # write PGID file
 
-    pgid_path = resource_home + '/' + unique_resource_name + '/EXE_'\
-         + exe_name + '.PGID'
+    pgid_path = os.path.join(resource_home, unique_resource_name, 'EXE_'\
+         + exe_name + '.PGID')
 
     try:
         if not os.path.exists(pgid_path):
@@ -850,17 +867,22 @@ def resource_fe_action(
         msg = "No configfile for: '" + unique_resource_name + "'"
         return (False, msg)
 
-    pgid_path = resource_home + unique_resource_name + '/FE.PGID'
+    pgid_path = os.path.join(resource_home, unique_resource_name,
+                             'FE.PGID')
 
     if action == 'clean':
         fe_running = True
         try:
 
-            # determine if fe runs by finding out if pgid exists
+            # determine if fe runs by finding out if pgid is numerical
 
-            pgid_file = open(pgid_path)
+            pgid_file = open(pgid_path, 'r')
+            fcntl.flock(pgid_file, fcntl.LOCK_EX)
             pgid = pgid_file.readline().strip()
+            fcntl.flock(pgid_file, fcntl.LOCK_UN)
             pgid_file.close()
+            if not pgid.isdigit():
+                raise Exception('FE already stopped')
         except:
             fe_running = False
 
@@ -883,10 +905,15 @@ def resource_fe_action(
             return (True, msg)
 
     try:
-        pgid_file = open(pgid_path)
+        pgid_file = open(pgid_path, 'r')
+        fcntl.flock(pgid_file, fcntl.LOCK_EX)
         pgid = pgid_file.readline().strip()
+        fcntl.flock(pgid_file, fcntl.LOCK_UN)
         pgid_file.close()
 
+        if not pgid.isdigit():
+            raise Exception('FE already stopped')
+        
         if action == 'status':
             command = 'if [ \\`ps -o pid= -g ' + pgid\
                  + ' | wc -l \\` -eq 0 ];then exit 1; else exit 0;fi'
@@ -923,9 +950,14 @@ def resource_fe_action(
                 return (False, msg)
             else:
                 try:
-                    os.remove(pgid_path)
+                    pgid_file = open(pgid_path, 'r+')
+                    fcntl.flock(pgid_file, fcntl.LOCK_EX)
+                    pgid_file.write('stopped')
+                    pgid_file.flush()
+                    fcntl.flock(pgid_file, fcntl.LOCK_UN)
+                    pgid_file.close()
                 except Exception, err:
-                    logger.error("Could not remove pgid file: '"
+                    logger.error("Could not update pgid file: '"
                                   + pgid_path + "'")
 
                 msg += ssh_status_msg
@@ -973,8 +1005,8 @@ def resource_exe_action(
              + exe_name + "'"
         return (False, msg)
 
-    pgid_path = resource_home + unique_resource_name + '/EXE_'\
-         + exe_name + '.PGID'
+    pgid_path = os.path.join(resource_home, unique_resource_name, 'EXE_'\
+         + exe_name + '.PGID')
     try:
         pgid_file = open(pgid_path, 'r+')
     except IOError:
@@ -1201,16 +1233,16 @@ def get_sandbox_exe_stop_command(
 
     # Lock pgid file
 
-    pgid_path = sandbox_home + '/' + sandboxkey + '/EXE_' + exe_name\
-         + '.PGID'
+    pgid_path = os.path.join(sandbox_home, sandboxkey, 'EXE_' + exe_name\
+         + '.PGID')
     if os.path.exists(pgid_path):
         pgid_file = open(pgid_path, 'r')
         fcntl.flock(pgid_file, fcntl.LOCK_EX)
         pgid_file.seek(0, 0)
         pgid = pgid_file.readline().strip()
-        stop_command = stop_command.replace('$mig_exe_pgid', pgid)
         fcntl.flock(pgid_file, fcntl.LOCK_UN)
         pgid_file.close()
+        stop_command = stop_command.replace('$mig_exe_pgid', pgid)
         return (True, stop_command)
     else:
         msg = 'No pgid_path found! File %s' % pgid_path

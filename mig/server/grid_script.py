@@ -282,7 +282,7 @@ try:
         logger.info('creating grid_script input pipe %s'
                      % configuration.grid_stdin)
         try:
-            os.mkfifo(configuration.grid_stdin, 0600)
+            os.mkfifo(configuration.grid_stdin)
         except StandardError, err:
             logger.error('Could not create missing grid_stdin fifo: '
                           + '%s exception: %s '
