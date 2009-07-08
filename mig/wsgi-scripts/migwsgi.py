@@ -444,7 +444,8 @@ def application(environ, start_response):
         output_format = user_arguments_dict['output_format'][0]
 
     try:
-        backend = eval(environ['SCRIPT_URL'].replace('/MiG/', '').replace('.py', ''))
+        # This requires apache to have a WSGIScriptAlias for /wsgi
+        backend = eval(environ['SCRIPT_URL'].replace('/wsgi/', '').replace('.py', ''))
         (output_objs, ret_val) = backend(user_arguments_dict)
     except:
         #(output_objs, ret_val) = (my_id(), returnvalues.OK)
