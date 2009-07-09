@@ -6,18 +6,16 @@
 #enable_server_dist = False
 
 # Fully qualified domain name of this MiG server
-server_fqdn = __SERVERNAME_REPLACE__
+server_fqdn = __SERVER_FQDN__
 
 # The Email adresses of the Administrators of this MiG server
-admin_email = berthold@diku.dk
+admin_email = __USER__
 
 # Base paths
 # TODO: tilde in paths is not expanded where configparser is used directly!
-state_path = __MIGLOCATION_REPLACE__/state
-mig_path = __MIGLOCATION_REPLACE__/mig
-
-# as soon as we have certificates, replace this
-certs_path = __MIGLOCATION_REPLACE__/certs
+state_path = __MIG_STATE__
+certs_path = __MIG_CERTS__
+mig_path = __MIG_HOME__
 
 # Code paths
 mig_server_home = %(mig_path)s/server/
@@ -27,12 +25,9 @@ javabin_home = %(mig_path)s/java-bin/
 
 # State paths
 sandbox_home = %(state_path)s/sandbox_home/
-mRSL_files_dir = %(state_path)s/mRSL_files/
-## usage record destination
-usage_record_dir = %(state_path)s/usage_records
-#######
-re_files_dir = %(state_path)s/RE_files/
-re_pending_dir = %(state_path)s/RE_pending/
+mrsl_files_dir = %(state_path)s/mrsl_files/
+re_files_dir = %(state_path)s/re_files/
+re_pending_dir = %(state_path)s/re_pending/
 gridstat_files_dir = %(state_path)s/gridstat_files/
 re_home = %(state_path)s/re_home/
 resource_home = %(state_path)s/resource_home/
@@ -49,19 +44,21 @@ sessid_to_mrsl_link_home = %(state_path)s/sessid_to_mrsl_link_home/
 mig_system_files = %(state_path)s/mig_system_files/
 wwwpublic = %(state_path)s/wwwpublic/
 
+usage_record_dir = %(state_path)s/usage_records
+
 # Optional shared ssh public key presented to resource owners
 public_key_file = ~/.ssh/id_rsa.pub
 
 # x.509 certificate and key used for interserver communication
-server_cert = %(certs_path)s/hostcert.pem
-server_key = %(certs_path)s/hostkey.pem
-ca_cert = %(certs_path)s/ca.crt
+server_cert = %(certs_path)s/MiGservercert.pem
+server_key = %(certs_path)s/MiGserverkey.pem
+ca_cert = %(certs_path)s/cacert.pem
 sss_home = %(state_path)s/sss_home/
 
 # URLs
-migserver_http_url = http://%(server_fqdn)s:80
+migserver_http_url = http://%(server_fqdn)s:__HTTP_PORT__
 backup_http_urls = 
-migserver_https_url = https://%(server_fqdn)s:443
+migserver_https_url = https://%(server_fqdn)s:__HTTPS_PORT__
 backup_https_urls = 
 myfiles_py_location = https://%(server_fqdn)s/cgi-bin/ls.py
 
@@ -69,11 +66,10 @@ myfiles_py_location = https://%(server_fqdn)s/cgi-bin/ls.py
 mig_server_id = %(server_fqdn)s.0
 empty_job_name = no_grid_jobs_in_grid_scheduler
 smtp_server = localhost
-logfile = mig.log
-#loglevel = info
-loglevel = debug
+logfile = %(state_path)s/mig.log
+loglevel = info
 peerfile = MiGpeers.conf
-sleep_period_for_empty_jobs = 80
+sleep_period_for_empty_jobs = 90
 cputime_for_empty_jobs = 120
 min_seconds_between_live_update_requests = 60
 
@@ -89,18 +85,22 @@ jobtypes = batch interactive all
 algorithm = FairFit
 #
 # How long to keep jobs that can not be scheduled in queue
-# Jobs that stay 'expire_after' seconds in the queue can be expired by 
-# the scheduler.
+# Jobs that stay 'expire_after' seconds in the queue can be expired by
+# the scheduler. Setting expire_after to 0 disables expiry and causes
+# FairFit scheduler to increase job fitness linearly with age.
 # 1 day: 86400 seconds
 # 7 days: 604800 seconds
-expire_after = 99999999999
+# 90 days: 7776000 seconds
+expire_after = 7776000
 
-job_retries = 4
+job_retries = 2
 
 [MONITOR]
-sleep_secs = 60
+sleep_secs = 120
 sleep_update_totals = 600
 slackperiod = 600
 
 [SETTINGS]
 language = English
+submitui = textarea fields
+filesui = basic full
