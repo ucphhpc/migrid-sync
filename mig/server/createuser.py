@@ -66,7 +66,7 @@ Where OPTIONS may be one or more of:
    -u USER_FILE        Read user information from pickle file
    -v                  Be verbose
 """\
-         % {'name': name}
+         % {'name': name, 'cert_warn':cert_warn }
 
 
 # ## Main ###
