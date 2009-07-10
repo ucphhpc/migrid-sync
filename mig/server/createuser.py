@@ -49,7 +49,7 @@ Otherwise those users will not be able to access their MiG interfaces!
 def usage(name='createuser.py'):
     """Usage help"""
     print """Create user in the MiG user database and file system.
-%(warning)s
+%(cert_warn)s
 Usage:
 %(name)s [OPTIONS] FULL_NAME ORGANIZATION STATE COUNTRY \
     EMAIL COMMENT PASSWORD
