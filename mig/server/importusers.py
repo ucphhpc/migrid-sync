@@ -36,7 +36,11 @@ from shared.useradm import init_user_adm, fill_user, distinguished_name_to_user,
 
 def usage(name='importusers.py'):
     """Usage help"""
-    print """Usage:
+    print """Import users from an external XML source URL.
+Creates a local MiG user identified by DISTINGUISHED_NAME for each
+<item>DISTINGUISHED_NAME</item> in the XML.
+
+Usage:
 %(name)s [OPTIONS] URL [URL [...]]
 Where OPTIONS may be one or more of:
    -C CERT_PATH        Use CERT_PATH as client certificate

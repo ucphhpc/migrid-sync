@@ -266,8 +266,10 @@ def main(client_id, user_arguments_dict):
 
             base_name = strip_dir(user_arguments_dict[fileupload_key
                                    + 'filename'])
-
-            # print "fileitem: %s" % fileitem
+            if not base_name:
+                output_objects.append({'object_type': 'error_text',
+                        'text': 'No filename found - please make sure you provide a file to upload'})
+                return (output_objects, returnvalues.CLIENT_ERROR)
 
             if not remote_filename:
                 remote_filename = base_name
@@ -277,11 +279,6 @@ def main(client_id, user_arguments_dict):
 
             if remote_filename.strip().endswith(os.sep):
                 remote_filename += base_name
-
-            # else:
-                # remote_filename = fileitem.filename
-
-            # if not fileitem.file:
 
             if not user_arguments_dict.has_key(fileupload_key):
                 output_objects.append({'object_type': 'error_text',
