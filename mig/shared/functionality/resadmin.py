@@ -105,7 +105,7 @@ def display_resource(
     html += '<table class=resources>\n<tr><td class=centertext>'
     html += \
         '''
-<form method="post" action="/cgi-bin/updateresconfig.py">
+<form method="post" action="updateresconfig.py">
 <textarea cols="100" rows="25" wrap="off" name="resconfig">'''
     for line in raw_conf:
         html += '%s\n' % line.strip()
@@ -136,7 +136,7 @@ def display_resource(
                 action_str = action.capitalize()
             html += \
                 '''<td>
-            <form method="get" action="/cgi-bin/%sfe.py">
+            <form method="get" action="%sfe.py">
             <input type="hidden" name="unique_resource_name" value="%s">
             <input type="submit" value="%s">
             </form>
@@ -159,7 +159,7 @@ def display_resource(
         for action in ['restart', 'status', 'stop', 'clean']:
             html += \
                 '''<td>
-            <form method="get" action="/cgi-bin/%sexe.py">
+            <form method="get" action="%sexe.py">
             <input type="hidden" name="unique_resource_name" value="%s">
             <input type="hidden" name="all" value="true">
             <input type="hidden" name="parallel" value="true">'''\
@@ -185,7 +185,7 @@ def display_resource(
                     action_str = action.capitalize()
                 html += \
                     '''<td>
-                <form method="get" action="/cgi-bin/%sexe.py">
+                <form method="get" action="%sexe.py">
                 <input type="hidden" name="unique_resource_name" value="%s">
                 <input type="hidden" name="exe_name" value="%s">
                 <input type="submit" value="%s">
@@ -206,7 +206,7 @@ from the certificate.<br>
 
     html += \
         '''<tr><td>
-<form method="get" action="/cgi-bin/addresowner.py">
+<form method="get" action="addresowner.py">
 <input type="hidden" name="unique_resource_name" value="%s">
 <input type="hidden" name="output_format" value="html">
 <input type="text" name="cert_id" size=30>
@@ -221,7 +221,7 @@ from the certificate.<br>
     for owner_id in owners:
         html += \
             '''<tr><td>
-<form method="get" action="/cgi-bin/rmresowner.py">
+<form method="get" action="rmresowner.py">
 <input type="hidden" name="unique_resource_name" value="%s">
 <input type="hidden" name="cert_id" value="%s">
 <input type="hidden" name="output_format" value="html">
@@ -241,7 +241,7 @@ from the certificate.<br>
         """Verify that resource supports the selected runtime environment.
     <table class=resources>
     <tr><td>
-    <form method="get" action="/cgi-bin/testresupport.py">
+    <form method="get" action="testresupport.py">
     <input type="hidden" name="with_html" value="true">
     <input type="hidden" name="unique_resource_name" value="%s">
     <select name="re_name">"""\
@@ -266,7 +266,7 @@ from the certificate.<br>
         """Show testprocedure history for the selected runtime environment and the resource with its current configuration.
     <table class=resources>
     <tr><td>
-    <form method="get" action="/cgi-bin/showresupporthistory.py">
+    <form method="get" action="showresupporthistory.py">
     <input type="hidden" name="unique_resource_name" value="%s">
     <select name="re_name">"""\
          % resourcename
@@ -326,11 +326,11 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'link', 'text'
                           : 'Administrate MiG sandbox resources',
-                          'destination': '/cgi-bin/ssslogin.py'})
+                          'destination': 'ssslogin.py'})
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
     output_objects.append({'object_type': 'link', 'text'
                           : 'Use this computer as One-click MiG resource'
-                          , 'destination': '/cgi-bin/oneclick.py'})
+                          , 'destination': 'oneclick.py'})
 
     quick_links = [{'object_type': 'sectionheader', 'text'
                    : 'Quick links to existing resources:'}]

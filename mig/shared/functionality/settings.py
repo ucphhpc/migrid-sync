@@ -88,7 +88,7 @@ def main(client_id, user_arguments_dict):
         <tr><td>
         </td></tr>
         <tr><td>
-        <form method='post' action='/cgi-bin/settingsaction.py'>
+        <form method='post' action='settingsaction.py'>
         Please note that if you want to set multiple values (e.g. addresses) in the same field, you must write each value on a separate line.
         </td></tr>
         <tr><td>
@@ -174,7 +174,7 @@ If you use the same fields and values in many of your jobs, you can save your pr
 <tr><td>
 </td></tr>
 <tr><td class=centertext>
-<form method="post" action="/cgi-bin/editfile.py">
+<form method="post" action="editfile.py">
 <input type="hidden" name="path" value="%(mrsl_template)s">
 <input type="hidden" name="newline" value="unix">
 <textarea cols="82" rows="25" wrap="off" name="editarea">
@@ -208,7 +208,7 @@ Please note that you can not save an empty style file, but must at least leave a
 <tr><td>
 </td></tr>
 <tr><td class=centertext>
-<form method="post" action="/cgi-bin/editfile.py">
+<form method="post" action="editfile.py">
 <input type="hidden" name="path" value="%(css_template)s">
 <input type="hidden" name="newline" value="unix">
 <textarea cols="82" rows="25" wrap="off" min_len=1 name="editarea">

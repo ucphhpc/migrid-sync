@@ -85,21 +85,21 @@ Generate MiG user scripts to manage jobs and files:<br/>
 <table class="downloads">
 <tr>
 <td>
-<form method='get' action='/cgi-bin/scripts.py'>
+<form method='get' action='scripts.py'>
 <input type='hidden' name='output_format' value='html'>
 <input type='hidden' name='lang' value='python'>
 <input type='submit' value='python version'>
 </form>
 </td>
 <td>
-<form method='get' action='/cgi-bin/scripts.py'>
+<form method='get' action='scripts.py'>
 <input type='hidden' name='output_format' value='html'>
 <input type='hidden' name='lang' value='sh'>
 <input type='submit' value='sh version'>
 </form>
 </td>
 <td>
-<form method='get' action='/cgi-bin/scripts.py'>
+<form method='get' action='scripts.py'>
 <input type='hidden' name='output_format' value='html'>
 <input type='submit' value='all versions'>
 </form>
@@ -120,7 +120,7 @@ Generate MiG scripts to administrate resources and vgrids:<br/>
 <table class="downloads">
 <tr>
 <td>
-<form method='get' action='/cgi-bin/scripts.py'>
+<form method='get' action='scripts.py'>
 <input type='hidden' name='output_format' value='html'>
 <input type='hidden' name='lang' value='python'>
 
@@ -129,7 +129,7 @@ Generate MiG scripts to administrate resources and vgrids:<br/>
 </form>
 </td>
 <td>
-<form method='get' action='/cgi-bin/scripts.py'>
+<form method='get' action='scripts.py'>
 <input type='hidden' name='output_format' value='html'>
 <input type='hidden' name='lang' value='sh'>
 <input type='hidden' name='flavor' value='resource'>
@@ -137,7 +137,7 @@ Generate MiG scripts to administrate resources and vgrids:<br/>
 </form>
 </td>
 <td>
-<form method='get' action='/cgi-bin/scripts.py'>
+<form method='get' action='scripts.py'>
 <input type='hidden' name='output_format' value='html'>
 <input type='hidden' name='flavor' value='resource'>
 <input type='submit' value='all versions'>

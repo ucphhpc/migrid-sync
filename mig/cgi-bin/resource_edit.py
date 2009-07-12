@@ -713,7 +713,7 @@ if form.has_key('Ok'):
         can SSH to your resource without a passphrase. The MiG server's public key should be in the
         .ssh/authorized_keys in the home directory of the mig user on the resource frontend. %s
         <br>
-        <a href='/cgi-bin/resadmin.py'>View existing resources</a>
+        <a href='resadmin.py'>View existing resources</a>
         </body>
         </html>
         """\

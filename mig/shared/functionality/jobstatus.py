@@ -279,10 +279,10 @@ def main(client_id, user_arguments_dict):
         job_obj['execution_histories'] = execution_histories
 
         job_obj['statuslink'] = {'object_type': 'link',
-                                 'destination': '/cgi-bin/ls.py?path=job_output/%s/*'\
+                                 'destination': 'ls.py?path=job_output/%s/*'\
                                   % job_id, 'text': 'View status files'}
         job_obj['mrsllink'] = {'object_type': 'link',
-                               'destination': '/cgi-bin/mrslview.py?job_id=%s'\
+                               'destination': 'mrslview.py?job_id=%s'\
                                 % job_id,
                                'text': 'View parsed mRSL contents'}
 
@@ -298,20 +298,20 @@ def main(client_id, user_arguments_dict):
                 path_string += 'path=%s;' % parts[-1]
 
             job_obj['outputfileslink'] = {'object_type': 'link',
-                    'destination': '/cgi-bin/ls.py?%s' % path_string,
+                    'destination': 'ls.py?%s' % path_string,
                     'text': 'View output files'}
         job_obj['resubmitlink'] = {'object_type': 'link',
-                                   'destination': '/cgi-bin/resubmit.py?job_id=%s'\
+                                   'destination': 'resubmit.py?job_id=%s'\
                                     % job_id, 'text': 'Resubmit job'}
 
         job_obj['cancellink'] = {'object_type': 'link',
-                                 'destination': '/cgi-bin/canceljob.py?job_id=%s'\
+                                 'destination': 'canceljob.py?job_id=%s'\
                                   % job_id, 'text': 'Cancel job'}
         job_obj['jobschedulelink'] = {'object_type': 'link',
-                'destination': '/cgi-bin/jobschedule.py?job_id=%s'\
+                'destination': 'jobschedule.py?job_id=%s'\
                  % job_id, 'text': 'Request schedule information'}
         job_obj['liveoutputlink'] = {'object_type': 'link',
-                'destination': '/cgi-bin/liveoutput.py?job_id=%s'\
+                'destination': 'liveoutput.py?job_id=%s'\
                  % job_id, 'text': 'Request live update'}
         job_list['jobs'].append(job_obj)
 

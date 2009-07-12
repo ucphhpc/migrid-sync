@@ -68,7 +68,7 @@ def main(client_id, user_arguments_dict):
                           : 'View status of all submitted jobs'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<form method="post" action="/cgi-bin/jobstatus.py">
+<form method="post" action="jobstatus.py">
 Sort by modification time: <input type="radio" name="flags" value="sv">yes
 <input type="radio" name="flags" checked="checked" value="v">no<BR>
 <input type="hidden" name="job_id" value="*">
@@ -81,7 +81,7 @@ Sort by modification time: <input type="radio" name="flags" value="sv">yes
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 Filter job IDs (* and ? wildcards are supported)<br>
-<form method="post" action="/cgi-bin/jobstatus.py">
+<form method="post" action="jobstatus.py">
 Job ID: <input type="text" name="job_id" value="*" size="30"><br>
 Show only <input type="text" name="max_jobs" size="6" value=5> first matching jobs<br>
 Sort by modification time: <input type="radio" name="flags" checked="checked" value="vs">yes
@@ -94,7 +94,7 @@ Sort by modification time: <input type="radio" name="flags" checked="checked" va
                           : 'Resubmit job'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<form method="post" action="/cgi-bin/resubmit.py">
+<form method="post" action="resubmit.py">
 Job ID: <input type="text" name="job_id" size="30"><br>
 <input type="hidden" name="output_format" value="html">
 <input type="submit" value="Submit">
@@ -104,7 +104,7 @@ Job ID: <input type="text" name="job_id" size="30"><br>
                           : 'Cancel pending or executing job'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<form method="post" action="/cgi-bin/canceljob.py">
+<form method="post" action="canceljob.py">
 Job ID: <input type="text" name="job_id" size="30"><br>
 <input type="hidden" name="output_format" value="html">
 <input type="submit" value="Cancel job">
@@ -114,7 +114,7 @@ Job ID: <input type="text" name="job_id" size="30"><br>
                           : 'Request live output'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<form method="post" action="/cgi-bin/liveoutput.py">
+<form method="post" action="liveoutput.py">
 Job ID: <input type="text" name="job_id" size="30"><br>
 <input type="hidden" name="output_format" value="html">
 <input type="submit" value="Request">

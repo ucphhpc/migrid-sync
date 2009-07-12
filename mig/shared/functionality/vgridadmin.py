@@ -89,7 +89,7 @@ def main(client_id, user_arguments_dict):
                 'destination': '/vgridwiki/%s' % vgrid_name,
                 'text': 'Private'}
         vgrid_obj['privatemonitorlink'] = {'object_type': 'link',
-                'destination': '/cgi-bin/showvgridmonitor.py?vgrid_name=%s'\
+                'destination': 'showvgridmonitor.py?vgrid_name=%s'\
                  % vgrid_name, 'text': 'Private'}
         vgrid_obj['enterpubliclink'] = {'object_type': 'link',
                 'destination': '%s/vgrid/%s/'\
@@ -102,13 +102,13 @@ def main(client_id, user_arguments_dict):
         if vgrid_is_owner(vgrid_name, client_id,
                           configuration):
             vgrid_obj['administratelink'] = {'object_type': 'link',
-                    'destination': '/cgi-bin/adminvgrid.py?vgrid_name=%s'\
+                    'destination': 'adminvgrid.py?vgrid_name=%s'\
                      % vgrid_name, 'text': 'Administrate'}
             vgrid_obj['editprivatelink'] = {'object_type': 'link',
-                    'destination': '/cgi-bin/editor.py?path=private_base/%s/index.html'\
+                    'destination': 'editor.py?path=private_base/%s/index.html'\
                      % vgrid_name, 'text': 'Edit'}
             vgrid_obj['editpubliclink'] = {'object_type': 'link',
-                    'destination': '/cgi-bin/editor.py?path=public_base/%s/index.html'\
+                    'destination': 'editor.py?path=public_base/%s/index.html'\
                      % vgrid_name, 'text': 'Edit'}
             owner_list['vgrids'].append(vgrid_obj)
         elif vgrid_is_member(vgrid_name, client_id,
@@ -139,7 +139,7 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'link', 'text'
                           : 'View a multi VGrid monitor with all the resources you can access'
                           , 'destination'
-                          : '/cgi-bin/showvgridmonitor.py?vgrid_name=ALL'
+                          : 'showvgridmonitor.py?vgrid_name=ALL'
                           })
 
     output_objects.append({'object_type': 'sectionheader', 'text'
@@ -147,12 +147,12 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'link', 'text'
                           : 'Request ownership or membership of an existing VGrid'
                           , 'destination'
-                          : '/cgi-bin/vgridmemberrequest.py'})
+                          : 'vgridmemberrequest.py'})
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Create VGrid'})
     output_objects.append({'object_type': 'html_form', 'text'
-                          : '''<form method="get" action="/cgi-bin/createvgrid.py">
+                          : '''<form method="get" action="createvgrid.py">
     <input type="text" size=40 name="vgrid_name">
     <input type="hidden" name="output_format" value="html">
     <input type="submit" value="Create vgrid">

@@ -63,7 +63,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    certreq_link = {'object_type': 'link', 'destination': '/cgi-sid/reqcert.py',
+    certreq_link = {'object_type': 'link', 'destination': 'reqcert.py',
                         'text': 'Request a new MiG certificate'}
     if not client_id:
         output_objects.append({'object_type': 'warning', 'text':

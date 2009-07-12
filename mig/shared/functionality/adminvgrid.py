@@ -57,7 +57,7 @@ def create_html(vgrid_name, configuration):
             'No owners found! This could indicate a problem since it is not allowed to remove the last owner of a vgrid!'
     else:
         out += \
-            """<form method="get" action="/cgi-bin/rmvgridowner.py">
+            """<form method="get" action="rmvgridowner.py">
         <input type="hidden" name="vgrid_name" value="%s">
         """\
              % vgrid_name
@@ -76,7 +76,7 @@ def create_html(vgrid_name, configuration):
         """
 
     out += \
-        """<form method="get" action="/cgi-bin/addvgridowner.py">
+        """<form method="get" action="addvgridowner.py">
     <input type="hidden" name="vgrid_name" value="%s">
     <input type="text" size=40 name="cert_id">
     <input type="submit" value="Add vgrid owner">
@@ -95,7 +95,7 @@ def create_html(vgrid_name, configuration):
         out += 'No members found!<BR>'
     else:
         out += \
-            """<form method="get" action="/cgi-bin/rmvgridmember.py">
+            """<form method="get" action="rmvgridmember.py">
         <input type="hidden" name="vgrid_name" value="%s">
         """\
              % vgrid_name
@@ -114,7 +114,7 @@ def create_html(vgrid_name, configuration):
         </form>
         """
     out += \
-        """<form method="get" action="/cgi-bin/addvgridmember.py">
+        """<form method="get" action="addvgridmember.py">
     <input type="hidden" name="vgrid_name" value="%s">
     <input type="text" size=40 name="cert_id">
     <input type="submit" value="Add vgrid member">
@@ -133,7 +133,7 @@ def create_html(vgrid_name, configuration):
         out += 'No resources found!<BR>'
     else:
         out += \
-            """<form method="get" action="/cgi-bin/rmvgridres.py">
+            """<form method="get" action="rmvgridres.py">
         <input type="hidden" name="vgrid_name" value="%s">
         """\
              % vgrid_name
@@ -152,7 +152,7 @@ def create_html(vgrid_name, configuration):
         </form>
         """
     out += \
-        """<form method="get" action="/cgi-bin/addvgridres.py">
+        """<form method="get" action="addvgridres.py">
     <input type="hidden" name="vgrid_name" value="%s">
     <input type="text" size=40 name="unique_resource_name">
     <input type="submit" value="Add vgrid resource">

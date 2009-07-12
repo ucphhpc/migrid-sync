@@ -63,7 +63,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    extcert_link = {'object_type': 'link', 'destination': '/cgi-sid/extcert.py',
+    extcert_link = {'object_type': 'link', 'destination': 'extcert.py',
                     'text': 'Sign up with existing certificate'}
     if client_id:
         output_objects.append({'object_type': 'warning', 'text':

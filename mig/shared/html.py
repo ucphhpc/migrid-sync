@@ -84,23 +84,23 @@ def get_cgi_html_header(
 
         current_page = os.path.basename(sys.argv[0]).replace('.py', '')
         menu_items = (
-            {'class': 'submitjob', 'url': '/cgi-bin/submitjob.py',
+            {'class': 'submitjob', 'url': 'submitjob.py',
              'title': 'Submit Job'},
-            {'class': 'files', 'url': '/cgi-bin/ls.py', 'title': 'Files'
+            {'class': 'files', 'url': 'ls.py', 'title': 'Files'
              },
-            {'class': 'jobs', 'url': '/cgi-bin/managejobs.py', 'title'
+            {'class': 'jobs', 'url': 'managejobs.py', 'title'
              : 'Jobs'},
-            {'class': 'vgrids', 'url': '/cgi-bin/vgridadmin.py', 'title'
+            {'class': 'vgrids', 'url': 'vgridadmin.py', 'title'
              : 'VGrids'},
-            {'class': 'resources', 'url': '/cgi-bin/resadmin.py',
+            {'class': 'resources', 'url': 'resadmin.py',
              'title': 'Resources'},
-            {'class': 'downloads', 'url': '/cgi-bin/downloads.py',
+            {'class': 'downloads', 'url': 'downloads.py',
              'title': 'Downloads'},
-            {'class': 'runtimeenvs', 'url': '/cgi-bin/redb.py', 'title'
+            {'class': 'runtimeenvs', 'url': 'redb.py', 'title'
              : 'Runtime Envs'},
-            {'class': 'settings', 'url': '/cgi-bin/settings.py', 'title'
+            {'class': 'settings', 'url': 'settings.py', 'title'
              : 'Settings'},
-            {'class': 'shell', 'url': '/cgi-bin/shell.py', 'title'
+            {'class': 'shell', 'url': 'shell.py', 'title'
              : 'Shell'},
             )
 

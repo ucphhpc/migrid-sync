@@ -72,7 +72,7 @@ will not be tolerated!'''})
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-    <form method='post' action='/cgi-bin/vgridmemberrequestaction.py'>
+    <form method='post' action='vgridmemberrequestaction.py'>
 <table align='center'><tr><td>
 VGrid name</td><td><input name=vgrid_name> </td></tr>
 <tr><td>Type</td><td><select name=request_type><option name=member>Member</option><option name=owner>Owner</option></select></td></tr>

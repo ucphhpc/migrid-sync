@@ -119,8 +119,7 @@ def valid_outputformats():
                           : 'The outputformat is specified with the output_format parameter.'
                           })
     output_objects.append({'object_type': 'text', 'text'
-                          : 'Example: %s/cgi-bin/ls.py?output_format=txt'
-                           % configuration.migserver_https_url})
+                          : 'Example: SERVER_URL/ls.py?output_format=txt'})
     output_objects.append({'object_type': 'header', 'text'
                           : 'Valid formats'})
     entries = []
@@ -160,7 +159,7 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG On-demand Documentation'})
     html = '<p>Filter (using *,? etc.)'
-    html += "<form method='post' action='/cgi-bin/docs.py'>"
+    html += "<form method='post' action='docs.py'>"
     html += "<input type='hidden' name='show' value=''>"
     html += "<input type='text' name='search' value=''>"
     html += "<input type='submit' value='Filter'>"

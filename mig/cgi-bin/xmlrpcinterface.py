@@ -81,15 +81,18 @@ def stub(function, user_arguments_dict):
 
     main = id
     client_id = extract_client_id()
+    output_objects = []
     try:
         exec 'from %s import main' % function
     except Exception, err:
-        return ('Could not import module! %s: %s' % (function, err),
-                returnvalues.SYSTEM_ERROR)
+        output_objects.extend([{'object_type': 'error_text', 'text'
+                              : 'Could not import module! %s: %s' % (function, err)}])
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not isinstance(user_arguments_dict, dict):
-        return ('user_arguments_dict is not a dictionary/struct type!',
-                returnvalues.INVALID_ARGUMENT)
+        output_objects.extend([{'object_type': 'error_text', 'text'
+                              : 'user_arguments_dict is not a dictionary/struct type!'}])
+        return (output_objects, returnvalues.INVALID_ARGUMENT)
 
     return_val = returnvalues.OK
     try:

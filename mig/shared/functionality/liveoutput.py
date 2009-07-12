@@ -290,7 +290,7 @@ def main(client_id, user_arguments_dict):
                                   : 'The stdout and stderr files for the job will be uploaded from the executing resource and should become available in a minute using the link below.'
                                   })
             output_objects.append({'object_type': 'link', 'destination'
-                                  : '/cgi-bin/ls.py?path=job_output/%s/*'
+                                  : 'ls.py?path=job_output/%s/*'
                                    % job_id, 'text': 'View status files'
                                   })
 

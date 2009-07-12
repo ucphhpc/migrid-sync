@@ -280,7 +280,7 @@ def main(client_id, user_arguments_dict):
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
         output_objects.append({'object_type': 'link', 'destination'
-                              : '/cgi-sid/ssslogin.py', 'text'
+                              : 'ssslogin.py', 'text'
                               : 'Retry login'})
         return (accepted, returnvalues.CLIENT_ERROR)
     username = accepted['username'][-1].strip()
@@ -325,7 +325,7 @@ def main(client_id, user_arguments_dict):
                                   : 'Username is already taken - please go back and choose another one...'
                                   })
             output_objects.append({'object_type': 'link', 'destination'
-                                  : '/cgi-sid/ssslogin.py', 'text'
+                                  : 'ssslogin.py', 'text'
                                   : 'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         elif len(username) < 3:
@@ -336,7 +336,7 @@ def main(client_id, user_arguments_dict):
                                   : 'Please choose a username with 3 or more characters.'
                                   })
             output_objects.append({'object_type': 'link', 'destination'
-                                  : '/cgi-sid/ssslogin.py', 'text'
+                                  : 'ssslogin.py', 'text'
                                   : 'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:
@@ -366,7 +366,7 @@ def main(client_id, user_arguments_dict):
                                   : 'Wrong username - please go back and try again...'
                                   })
             output_objects.append({'object_type': 'link', 'destination'
-                                  : '/cgi-sid/ssslogin.py', 'text'
+                                  : 'ssslogin.py', 'text'
                                   : 'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         elif userdb[username][PW] != password:
@@ -377,7 +377,7 @@ def main(client_id, user_arguments_dict):
                                   : 'Wrong password - please go back and try again...'
                                   })
             output_objects.append({'object_type': 'link', 'destination'
-                                  : '/cgi-sid/ssslogin.py', 'text'
+                                  : 'ssslogin.py', 'text'
                                   : 'Retry login'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:

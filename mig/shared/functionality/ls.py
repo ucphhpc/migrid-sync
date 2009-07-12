@@ -626,7 +626,7 @@ Fill in the path of a file to edit and press 'edit' to open that file in the<br>
 online file editor. Alternatively a file can be selected for editing through<br>
 the listing of personal files. 
 </td><td colspan=2 class=righttext>
-<form name='editor' method='post' action='/cgi-bin/editor.py'>
+<form name='editor' method='post' action='editor.py'>
 <input type='hidden' name='output_format' value='html'>
 <input name='current_dir' type='hidden' value='%(dest_dir)s'>
 <input type='text' name='path' size=50 value=''>
@@ -642,7 +642,7 @@ Create directory
 <tr><td>
 Name of new directory to be created in current directory (%(dest_dir)s)
 </td><td class=righttext colspan=3>
-<form action='/cgi-bin/mkdir.py' method=post>
+<form action='mkdir.py' method=post>
 <input name='path' size=50>
 <input name='current_dir' type='hidden' value='%(dest_dir)s'/>
 <input type='submit' value='Create' name='mkdirbutton'>
@@ -658,7 +658,7 @@ Upload file
 Upload file to current directory (%(dest_dir)s)
 </td></tr>
 <tr><td colspan=2>
-<form enctype='multipart/form-data' action='/cgi-bin/textarea.py' method='post'>
+<form enctype='multipart/form-data' action='textarea.py' method='post'>
 Extract package files (.zip, .tar.gz, .tar.bz2)
 </td><td colspan=2>
 <input type=checkbox name='extract_0'>

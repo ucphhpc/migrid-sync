@@ -143,7 +143,7 @@ def edit_file(path, real_path):
 
     html = \
         '''Select file:<br>
-<form method="post" action="/cgi-bin/editfile.py">
+<form method="post" action="editfile.py">
 <input type="text" size='120' name="path" value="%s">
 <p>
 Edit contents:<br>
@@ -171,14 +171,14 @@ Submit file as job after saving <input type=checkbox name="submitjob">
 ----------
 <input type="reset" value="Forget changes">
 </form>
-<form method="post" action="/cgi-bin/rm.py">
+<form method="post" action="rm.py">
 <input type="hidden" name="output_format" value="html">
 <input type="hidden" name="flags" value="rf">
 <input type="hidden" name="path" value="%(path)s%(lock_suffix)s">
 <input type="submit" value="Discard changes">
 </form>
 <p>
-<form method="post" action="/cgi-bin/spell.py">
+<form method="post" action="spell.py">
 Spell check (last saved) contents:<br>
 <input type="hidden" name="path" value="%(path)s">
 Language:

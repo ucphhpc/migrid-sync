@@ -83,7 +83,7 @@ def main(client_id, user_arguments_dict):
 <div class='smallcontent'>
 Job descriptions can use a wide range of keywords to specify job requirements and actions.<br>
 Each keyword accepts one or more values of a particular type.<br>
-The full list of keywords with their default values and format is available in the on-demand <a href='/cgi-bin/docs.py?show=job'>mRSL Documentation</a>.
+The full list of keywords with their default values and format is available in the on-demand <a href='docs.py?show=job'>mRSL Documentation</a>.
 <p>
 Actual examples for inspiration:
 <a href=/cpuinfo.mRSL>CPU Info</a>,
@@ -131,7 +131,7 @@ Actual examples for inspiration:
             fields += \
                 '''
 </td><td>
-<a href="/cgi-bin/docs.py?show=job#%s">help</a>
+<a href="docs.py?show=job#%s">help</a>
 </td></tr>
 '''\
                  % key
@@ -152,7 +152,7 @@ Actual examples for inspiration:
         output_objects.append({'object_type': 'html_form', 'text'
                               : """
 <table class="submitjob">
-<form method="post" action="/cgi-bin/jobobjsubmit.py" id="miginput">
+<form method="post" action="jobobjsubmit.py" id="miginput">
 %(fields)s
 </form>
 </table>
@@ -171,7 +171,7 @@ are supplied: thus we simply send a bogus jobname which does nothing
 -->
 <table class="submitjob">
 <tr><td class=centertext>
-<form method="post" action="/cgi-bin/textarea.py" id="miginput">
+<form method="post" action="textarea.py" id="miginput">
 <input type=hidden name=jobname_0_0_0 value=" ">
 <textarea cols="82" rows="25" name="mrsltextarea_0">
 %(default_mrsl)s
@@ -198,7 +198,7 @@ Upload file
 Upload file to current directory (%(dest_dir)s)
 </td></tr>
 <tr><td colspan=2>
-<form enctype='multipart/form-data' action='/cgi-bin/textarea.py' method='post'>
+<form enctype='multipart/form-data' action='textarea.py' method='post'>
 Extract package files (.zip, .tar.gz, .tar.bz2)
 </td><td colspan=2>
 <input type=checkbox name='extract_0'>

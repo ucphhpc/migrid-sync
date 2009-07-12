@@ -55,7 +55,7 @@ def usage(output_objects):
     output_objects.append({'object_type': 'header', 'text': 'zip usage:'
                           })
     output_objects.append({'object_type': 'text', 'text'
-                          : 'SERVER_URL/cgi-bin/zip.py?[output_format=(html|txt|xmlrpc|..);][flags=h;][path=src_path;[...]]path=src_path;dst=dst_path'
+                          : 'SERVER_URL/zip.py?[output_format=(html|txt|xmlrpc|..);][flags=h;][path=src_path;[...]]path=src_path;dst=dst_path'
                           })
     output_objects.append({'object_type': 'text', 'text'
                           : '- output_format specifies how the script should format the output'

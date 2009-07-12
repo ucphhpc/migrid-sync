@@ -68,9 +68,8 @@ def usage(
     output_objects.append({'object_type': 'section_header', 'text'
                           : 'Generator usage'})
     output_objects.append({'object_type': 'text', 'text'
-                          : '%s/cgi-bin/scripts.py?[with_html=(true|false);][lang=(%s);[...]][flags=h;][flavor=(%s);[...]][sh_cmd=sh_path;][python_cmd=python_path;]'
-                           % (migserver_https_url,
-                          '|'.join(valid_langs.keys()),
+                          : 'SERVER_URL/scripts.py?[with_html=(true|false);][lang=(%s);[...]][flags=h;][flavor=(%s);[...]][sh_cmd=sh_path;][python_cmd=python_path;]'
+                           % ('|'.join(valid_langs.keys()),
                           '|'.join(valid_flavors.keys()))})
     output_objects.append({'object_type': 'text', 'text'
                           : '- each occurrence of lang adds the specified scripting language to the list of scripts to be generated.'

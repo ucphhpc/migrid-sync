@@ -233,7 +233,7 @@ def main(client_id, user_arguments_dict):
                         'lines': output_lines})
             htmlform = \
                 '''
-<form method="post" action="/cgi-bin/editor.py">
+<form method="post" action="editor.py">
 <input type="hidden" name="path" value="%s">
 <input type="submit" value="Edit file">
 </form>

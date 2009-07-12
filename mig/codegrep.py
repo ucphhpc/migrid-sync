@@ -35,6 +35,7 @@ code_files = [
     '*.py',
     'cgi-bin/*.py',
     'cgi-sid/*.py',
+    'wsgi-scripts/*.py',
     'install/*.py',
     'migfs-fuse/*.py',
     'server/*.py',

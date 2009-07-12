@@ -102,9 +102,8 @@ def run(localfile_spaces, unique_resource_name, outfile='not_specified'
                     # res conf has envs, but according to the template it should not
 
                     return (False,
-                            "%s should not have any environments and you specified '%s'. Details about the runtime environment <a href=%s/cgi-bin/showre.py?re_name=%s>here</a>"
-                             % (re, value,
-                            configuration.migserver_https_url, name))
+                            "%s should not have any environments and you specified '%s'. Details about the runtime environment <a href=showre.py?re_name=%s>here</a>"
+                             % (re, value, name))
                 else:
                     continue
             re_dict_environments = re_dict['ENVIRONMENTVARIABLE']
@@ -114,10 +113,9 @@ def run(localfile_spaces, unique_resource_name, outfile='not_specified'
 
             if not len(value) == len(re_dict_environments):
                 return (False,
-                        "You have specified %s environments, but the runtime environment '%s' requires %s. Details about the runtime environment <a href='%s/cgi-bin/showre.py?re_name=%s'>here.</a>"
+                        "You have specified %s environments, but the runtime environment '%s' requires %s. Details about the runtime environment <a href='showre.py?re_name=%s'>here.</a>"
                          % (len(value), name,
-                        len(re_dict_environments),
-                        configuration.migserver_https_url, name))
+                        len(re_dict_environments), name))
 
             # we now know that the number of environments are
             # correct, verify that there are no name duplicates
@@ -153,9 +151,8 @@ def run(localfile_spaces, unique_resource_name, outfile='not_specified'
 
                 if not n in used_envnames:
                     return (False,
-                            "You have not specified an environment named '%s' which is required by the '%s' runtime environment. Details about the runtime environment <a href=%s/cgi-bin/showre.py?re_name=%s>here.</a>"
-                             % (n, name,
-                            configuration.migserver_https_url, name))
+                            "You have not specified an environment named '%s' which is required by the '%s' runtime environment. Details about the runtime environment <a href=showre.py?re_name=%s>here.</a>"
+                             % (n, name, name))
 
     for exe in conf['EXECONFIG']:
 

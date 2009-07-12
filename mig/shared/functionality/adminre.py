@@ -117,7 +117,7 @@ def main(client_id, user_arguments_dict):
                           : 'Use existing RE as template'})
 
     html_form = \
-        """<form method="get" action="/cgi-bin/adminre.py">
+        """<form method="get" action="adminre.py">
     <SELECT NAME="re_template">
     <OPTION VALUE="">None
 
@@ -140,7 +140,7 @@ def main(client_id, user_arguments_dict):
                           })
 
     html_form = \
-        """<form method="get" action="/cgi-bin/adminre.py">
+        """<form method="get" action="adminre.py">
     <table border=0>"""
     if template:
         if template.has_key('SOFTWARE'):
@@ -180,7 +180,7 @@ def main(client_id, user_arguments_dict):
         """<tr><td><input type="submit" value="Update fields"></td></tr></table></form><br>"""
 
     html_form += \
-        """<form method="post" action="/cgi-bin/createre.py">
+        """<form method="post" action="createre.py">
     <B>RE Name</B><BR>
     <SMALL>(eg. DALTON-3.0, must be unique):</SMALL><BR>
     <input type="text" size=40 name="re_name"><BR>
