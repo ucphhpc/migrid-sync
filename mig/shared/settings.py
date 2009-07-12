@@ -36,8 +36,7 @@ from shared.useradm import client_id_dir
 settings_filename = '.settings'
 
 
-def parse_and_save_settings(filename, client_id,
-                            configuration):
+def parse_and_save_settings(filename, client_id, configuration):
     client_dir = client_id_dir(client_id)
     result = parser.parse(filename)
     external_dict = get_keywords_dict()
@@ -67,8 +66,7 @@ def parse_and_save_settings(filename, client_id,
     new_dict['CREATOR'] = client_id
     new_dict['CREATED_TIMESTAMP'] = datetime.datetime.now()
 
-    pickle_filename = os.path.join(configuration.user_home,
-                                   client_dir,
+    pickle_filename = os.path.join(configuration.user_home, client_dir,
                                    settings_filename)
 
     if not pickle(new_dict, pickle_filename, configuration.logger):
@@ -84,7 +82,9 @@ def load_settings(client_id, configuration):
     """Load settings from pickled settings file"""
 
     client_dir = client_id_dir(client_id)
-    settings_path = os.path.join(configuration.user_home,
-                                 client_dir, settings_filename)
+    settings_path = os.path.join(configuration.user_home, client_dir,
+                                 settings_filename)
     settings_dict = unpickle(settings_path, configuration.logger)
     return settings_dict
+
+

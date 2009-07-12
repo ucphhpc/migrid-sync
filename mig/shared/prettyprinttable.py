@@ -77,6 +77,7 @@ def pprint_table(table):
     for row in table:
 
         # left col
+
         lines.append(row[0].ljust(col_paddings[0] + 1))
 
         # rest of the cols
@@ -86,4 +87,5 @@ def pprint_table(table):
             lines.append(col)
         lines.append('')
     return lines
+
 

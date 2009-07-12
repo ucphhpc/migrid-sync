@@ -66,11 +66,13 @@ def main(client_id, user_arguments_dict):
     extcert_link = {'object_type': 'link', 'destination': 'extcert.py',
                     'text': 'Sign up with existing certificate'}
     if client_id:
-        output_objects.append({'object_type': 'warning', 'text':
-                               'Apparently you already have a suitable MiG certificate that you may sign up with:'})
+        output_objects.append({'object_type': 'warning', 'text'
+                              : 'Apparently you already have a suitable MiG certificate that you may sign up with:'
+                              })
         output_objects.append(extcert_link)
-        output_objects.append({'object_type': 'warning', 'text':
-                               'However, if you want a dedicated MiG certificate you can still request one below:'})
+        output_objects.append({'object_type': 'warning', 'text'
+                              : 'However, if you want a dedicated MiG certificate you can still request one below:'
+                              })
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : """

@@ -37,7 +37,6 @@ from shared.useradm import client_id_dir, mrsl_template, css_template, \
     get_default_mrsl, get_default_css
 
 
-
 def signature():
     """Signature of the main function"""
 
@@ -70,8 +69,9 @@ def main(client_id, user_arguments_dict):
 
     # unpickle current settings
 
-    current_settings_dict = unpickle(os.path.join(configuration.user_home, client_dir,
-                                                  '.settings'), logger)
+    current_settings_dict = \
+        unpickle(os.path.join(configuration.user_home, client_dir,
+                 '.settings'), logger)
     if not current_settings_dict:
 
         # no current settings found
@@ -150,7 +150,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            client_dir)) + os.sep
+                               client_dir)) + os.sep
 
     mrsl_path = os.path.join(base_dir, mrsl_template)
 

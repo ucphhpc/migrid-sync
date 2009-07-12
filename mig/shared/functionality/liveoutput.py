@@ -80,8 +80,9 @@ def main(client_id, user_arguments_dict):
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                                            client_dir)) + os.sep
+    base_dir = \
+        os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                        client_dir)) + os.sep
 
     if not os.path.isdir(base_dir):
         output_objects.append({'object_type': 'error_text', 'text'

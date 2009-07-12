@@ -70,8 +70,8 @@ def main(client_id, user_arguments_dict):
     # no need to worry about illegal directory traversal through variables
 
     (ret_val, msg, ret_variables) = \
-        init_vgrid_script_add_rem(vgrid_name, client_id,
-                                  cert_id, 'owner', configuration)
+        init_vgrid_script_add_rem(vgrid_name, client_id, cert_id,
+                                  'owner', configuration)
     if not ret_val:
         output_objects.append({'object_type': 'error_text', 'text'
                               : msg})
@@ -117,28 +117,31 @@ def main(client_id, user_arguments_dict):
 
     # getting here means cert_id is neither owner or member of any parent or sub-vgrids.
 
-
     # Please note that base_dir must end in slash to avoid access to other
     # vgrid dirs when own name is a prefix of another name
 
     base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
-                                            vgrid_name)) + os.sep
-    
+                               vgrid_name)) + os.sep
+
     owners_file = base_dir + 'owners'
 
-    public_base_dir = os.path.abspath(os.path.join(
-        configuration.vgrid_public_base, vgrid_name)) + os.sep
-    private_base_dir = os.path.abspath(os.path.join(
-        configuration.vgrid_private_base, vgrid_name)) + os.sep
+    public_base_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_public_base,
+                        vgrid_name)) + os.sep
+    private_base_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_private_base,
+                        vgrid_name)) + os.sep
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
     user_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            cert_dir)) + os.sep
+                               cert_dir)) + os.sep
 
-    user_public_base = os.path.abspath(os.path.join(user_dir, 'public_base')) + os.sep
-    user_private_base = os.path.abspath(os.path.join(user_dir, 'private_base')) + os.sep
+    user_public_base = os.path.abspath(os.path.join(user_dir,
+            'public_base')) + os.sep
+    user_private_base = os.path.abspath(os.path.join(user_dir,
+            'private_base')) + os.sep
 
     # make sure all dirs can be created (that a file or directory with the same name
     # do not exist prior to adding the owner)
@@ -260,7 +263,8 @@ def main(client_id, user_arguments_dict):
 
     if not make_symlink(private_base_dir, private_base_dst, logger):
         output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Could not create link to private_base dir!'})
+                              : 'Could not create link to private_base dir!'
+                              })
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'

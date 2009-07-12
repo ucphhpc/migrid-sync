@@ -87,6 +87,7 @@ def filter_pickled_list(filename, changes):
     """Filter pickled list on disk with provided changes where changes is a dictionary
     mapping existing list entries and the value to replace it with.
     """
+
     filehandle = open(filename, 'r+')
     saved_list = org_pickle.load(filehandle)
     saved_list = [changes.get(entry, entry) for entry in saved_list]
@@ -99,6 +100,7 @@ def filter_pickled_list(filename, changes):
 def filter_pickled_dict(filename, changes):
     """Filter pickled dictionary on disk with provided changes where changes is a
     dictionary mapping existing dictionary values to a value to replace it with"""
+
     filehandle = open(filename, 'r+')
     saved_dict = org_pickle.load(filehandle)
     for (key, val) in saved_dict.items():
@@ -112,6 +114,7 @@ def filter_pickled_dict(filename, changes):
 
 def update_pickled_dict(filename, changes):
     """Update pickled dictionary on disk with provided changes"""
+
     filehandle = open(filename, 'r+')
     saved_dict = org_pickle.load(filehandle)
     saved_dict.update(changes)
@@ -123,7 +126,7 @@ def update_pickled_dict(filename, changes):
 
 def unpickle_and_change_status(filename, newstatus, logger):
     """change status in the MiG server mRSL file"""
-    
+
     changes = {}
     changes['STATUS'] = newstatus
     changes[newstatus + '_TIMESTAMP'] = time.gmtime()
@@ -136,6 +139,7 @@ def unpickle_and_change_status(filename, newstatus, logger):
         logger.error('could not change job status to %s: %s %s'
                       % (newstatus, filename, err))
         return False
+
 
 def unpickle(filename, logger):
     try:
@@ -194,8 +198,7 @@ def touch(filepath, timestamp=None):
             os.utime(filepath, (timestamp, timestamp))
     except Exception, err:
 
-        print "could not touch file: '%s', Error: %s" % \
-              (filepath, err)
+        print "could not touch file: '%s', Error: %s" % (filepath, err)
         return False
 
 

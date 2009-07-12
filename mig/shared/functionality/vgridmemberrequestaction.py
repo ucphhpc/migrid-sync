@@ -101,8 +101,7 @@ def main(client_id, user_arguments_dict):
     # if already member do not allow a request to become a member (but allow an owner request)
 
     if request_type == 'member':
-        if vgrid_is_member(vgrid_name, client_id,
-                           configuration):
+        if vgrid_is_member(vgrid_name, client_id, configuration):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'You are already a member of %s or a parent vgrid.'
                                    % vgrid_name})
@@ -142,8 +141,7 @@ def main(client_id, user_arguments_dict):
 
         notify_user_thread(
             job_dict,
-            [client_id, vgrid_name, request_type,
-             request_text],
+            [client_id, vgrid_name, request_type, request_text],
             'VGRIDMEMBERREQUEST',
             logger,
             '',

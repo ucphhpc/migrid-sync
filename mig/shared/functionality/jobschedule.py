@@ -43,6 +43,7 @@ from shared.fileio import unpickle, unpickle_and_change_status, \
     send_message_to_grid_script
 from shared.useradm import client_id_dir
 
+
 def signature():
     """Signature of the main function"""
 
@@ -72,8 +73,9 @@ def main(client_id, user_arguments_dict):
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                                            client_dir)) + os.sep
+    base_dir = \
+        os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                        client_dir)) + os.sep
 
     status = returnvalues.OK
     filelist = []
@@ -100,8 +102,8 @@ def main(client_id, user_arguments_dict):
                 # ../*/* is technically allowed to match own files.
 
                 logger.error('%s tried to use %s %s outside own home! (pattern %s)'
-                              % (client_id, op_name,
-                             real_path, pattern))
+                              % (client_id, op_name, real_path,
+                             pattern))
                 continue
 
             # Insert valid job files in filelist for later treatment

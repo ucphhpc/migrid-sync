@@ -65,8 +65,8 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(op_header=False, op_title=False,
                                   op_menu=False)
     output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG external certificate sign up', 'skipmenu'
-                          : True})
+                          : 'MiG external certificate sign up',
+                          'skipmenu': True})
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG external certificate sign up'})
 
@@ -129,7 +129,7 @@ will be given access to the necessary resources anyway.
         'country': country,
         'email': email,
         'password': '',
-        'comment': "%s: %s" % ("External certificate", comment),
+        'comment': '%s: %s' % ('External certificate', comment),
         'expire': int(time.time() + (((2 * 365.25) * 24) * 60) * 60),
         }
     req_path = None
@@ -162,11 +162,7 @@ cd ~/mig/server
 As '%s' user on %s:
 cd ~/mig/server
 ./deleteuser.py -i '%s'"""\
-         % (
-        mig_user,
-        configuration.server_fqdn,
-        cert_id,
-        )
+         % (mig_user, configuration.server_fqdn, cert_id)
 
     user_dict['command_user_create'] = command_user_create
     user_dict['command_user_delete'] = command_user_delete

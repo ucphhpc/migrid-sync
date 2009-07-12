@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# importusers - Import users from XML file in provided URL 
+# importusers - Import users from XML file in provided URL
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -31,11 +31,13 @@ import sys
 import getopt
 import urllib
 
-from shared.useradm import init_user_adm, fill_user, distinguished_name_to_user, \
-     create_user, search_users
+from shared.useradm import init_user_adm, fill_user, \
+    distinguished_name_to_user, create_user, search_users
+
 
 def usage(name='importusers.py'):
     """Usage help"""
+
     print """Import users from an external XML source URL.
 Creates a local MiG user identified by DISTINGUISHED_NAME for each
 <item>DISTINGUISHED_NAME</item> in the XML.
@@ -51,6 +53,7 @@ Where OPTIONS may be one or more of:
 """\
          % {'name': name}
 
+
 def dump_contents(url, key_path=None, cert_path=None):
     """dump list of data lines from provided URL.
     Optional client key and certificate is supported.
@@ -63,11 +66,13 @@ def dump_contents(url, key_path=None, cert_path=None):
     pipe = browser.open(url)
     data = pipe.read()
     browser.close()
-    
+
     return data
+
 
 def parse_contents(user_data):
     """Extract users from data dump"""
+
     users = []
     for line in user_data.split('\n'):
         line = line.strip()
@@ -81,7 +86,8 @@ def parse_contents(user_data):
 
 
 # ## Main ###
-if "__main__" == __name__:
+
+if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
     key_path = None
@@ -121,16 +127,17 @@ if "__main__" == __name__:
         users += parse_contents(url_dump)
 
     new_users = []
-    for user_dict in users:    
+    for user_dict in users:
         if search_users(user_dict, conf_path, db_path):
-            print "Not adding existing user: %s" % user_dict['distinguished_name']
+            print 'Not adding existing user: %s'\
+                 % user_dict['distinguished_name']
             continue
         new_users.append(user_dict)
-        
-    for user_dict in new_users:    
+
+    for user_dict in new_users:
         fill_user(user_dict)
         user_dict['comment'] = 'imported from external URL'
-        print "creating user: %s" % user_dict['distinguished_name']
+        print 'creating user: %s' % user_dict['distinguished_name']
         create_user(user_dict, conf_path, db_path, False)
-        
+
     print '%d new users imported' % len(new_users)

@@ -37,6 +37,7 @@ class MiGCGIXMLRPCRequestHandler(CGIXMLRPCRequestHandler):
 
     def system_methodSignature(self, method_name):
         """List method signatures"""
+
         signature = id
         try:
             exec compile('from shared.functionality.%s import signature'
@@ -48,6 +49,7 @@ class MiGCGIXMLRPCRequestHandler(CGIXMLRPCRequestHandler):
 
     def system_methodHelp(self, method_name):
         """List method usage"""
+
         usage = method_help = id
         try:
             exec compile('from shared.functionality.%s import usage'
@@ -65,6 +67,7 @@ class MiGCGIXMLRPCRequestHandler(CGIXMLRPCRequestHandler):
 
 def object_type_info(object_type):
     """Lookup object type"""
+
     return get_object_type_info(object_type)
 
 
@@ -86,12 +89,14 @@ def stub(function, user_arguments_dict):
         exec 'from %s import main' % function
     except Exception, err:
         output_objects.extend([{'object_type': 'error_text', 'text'
-                              : 'Could not import module! %s: %s' % (function, err)}])
+                              : 'Could not import module! %s: %s'
+                               % (function, err)}])
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not isinstance(user_arguments_dict, dict):
         output_objects.extend([{'object_type': 'error_text', 'text'
-                              : 'user_arguments_dict is not a dictionary/struct type!'}])
+                              : 'user_arguments_dict is not a dictionary/struct type!'
+                              }])
         return (output_objects, returnvalues.INVALID_ARGUMENT)
 
     return_val = returnvalues.OK
@@ -99,7 +104,8 @@ def stub(function, user_arguments_dict):
 
         # return (user_arguments_dict)
 
-        (output_objects, return_val) = main(client_id, user_arguments_dict)
+        (output_objects, return_val) = main(client_id,
+                user_arguments_dict)
     except Exception, err:
         return ('Error calling function: %s' % err, returnvalues.ERROR)
 
@@ -119,122 +125,146 @@ def stub(function, user_arguments_dict):
 
 def jobstatus(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.jobstatus', user_arguments_dict)
 
 
 def ls(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.ls', user_arguments_dict)
 
 
 def liveoutput(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.liveoutput', user_arguments_dict)
 
 
 def tail(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.tail', user_arguments_dict)
 
 
 def head(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.head', user_arguments_dict)
 
 
 def addresowner(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.addresowner', user_arguments_dict)
 
 
 def rmresowner(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.rmresowner', user_arguments_dict)
 
 
 def lsresowners(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.lsresowners', user_arguments_dict)
 
 
 def startfe(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.startfe', user_arguments_dict)
 
 
 def statusfe(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.statusfe', user_arguments_dict)
 
 
 def stopfe(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.stopfe', user_arguments_dict)
 
 
 def restartfe(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.restartfe', user_arguments_dict)
 
 
 def lsvgridowners(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.lsvgridowners',
                 user_arguments_dict)
 
 
 def showre(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.showre', user_arguments_dict)
 
 
 def createvgrid(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.createvgrid', user_arguments_dict)
 
 
 def redb(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.redb', user_arguments_dict)
 
 
 def wc(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.wc', user_arguments_dict)
 
 
 def scripts(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.scripts', user_arguments_dict)
 
 
 def canceljob(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.canceljob', user_arguments_dict)
 
 
 def submit(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.submit', user_arguments_dict)
 
 
 def resubmit(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.resubmit', user_arguments_dict)
 
 
 def textarea(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.textarea', user_arguments_dict)
 
 
 def restartexe(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.restartexe', user_arguments_dict)
 
 
 def stopexe(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.stopexe', user_arguments_dict)
 
 
@@ -245,207 +275,246 @@ def stopexe(user_arguments_dict):
 
 def vgridmemberrequest(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.vgridmemberrequest',
                 user_arguments_dict)
 
 
 def vgridmemberrequestaction(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.vgridmemberrequestaction',
                 user_arguments_dict)
 
 
 def mkdir(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.mkdir', user_arguments_dict)
 
 
 def touch(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.touch', user_arguments_dict)
 
 
 def cat(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.cat', user_arguments_dict)
 
 
 def cp(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.cp', user_arguments_dict)
 
 
 def stat(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.statpath', user_arguments_dict)
 
 
 def truncate(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.truncate', user_arguments_dict)
 
 
 def rm(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.rm', user_arguments_dict)
 
 
 def rmvgridowner(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.rmvgridowner',
                 user_arguments_dict)
 
 
 def rmvgridmember(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.rmvgridmember',
                 user_arguments_dict)
 
 
 def addvgridmember(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.addvgridmember',
                 user_arguments_dict)
 
 
 def addvgridowner(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.addvgridowner',
                 user_arguments_dict)
 
 
 def lsvgridmembers(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.lsvgridmembers',
                 user_arguments_dict)
 
 
 def lsvgridres(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.lsvgridres', user_arguments_dict)
 
 
 def addvgridres(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.addvgridres', user_arguments_dict)
 
 
 def rmvgridres(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.rmvgridres', user_arguments_dict)
 
 
 def adminvgrid(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.adminvgrid', user_arguments_dict)
 
 
 def updateresconfig(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.updateresconfig',
                 user_arguments_dict)
 
 
 def createre(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.createre', user_arguments_dict)
 
 
 def docs(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.docs', user_arguments_dict)
 
 
 def spell(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.spell', user_arguments_dict)
 
 
 def startexe(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.startexe', user_arguments_dict)
 
 
 def cleanexe(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.cleanexe', user_arguments_dict)
 
 
 def cleanfe(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.cleanfe', user_arguments_dict)
 
 
 def statusexe(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.statusexe', user_arguments_dict)
 
 
 def adminre(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.adminre', user_arguments_dict)
 
 
 def editfile(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.editfile', user_arguments_dict)
 
 
 def editor(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.editor', user_arguments_dict)
 
 
 def rmdir(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.rmdir', user_arguments_dict)
 
 
 def settings(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.settings', user_arguments_dict)
 
 
 def public_vgrid_projects(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.public_vgrid_projects',
                 user_arguments_dict)
 
 
 def zip(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.zip', user_arguments_dict)
 
 
 def showvgridmonitor(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.showvgridmonitor',
                 user_arguments_dict)
 
 
 def mv(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.mv', user_arguments_dict)
 
 
 def signature(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.signature', user_arguments_dict)
 
 
 def jobobjsubmit(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.jobobjsubmit',
                 user_arguments_dict)
 
 
 def getjobobj(user_arguments_dict):
     """Wrap backend of same name"""
+
     return stub('shared.functionality.getjobobj', user_arguments_dict)
 
 
 # ## Main ###
-if "__main__" == __name__:
+
+if '__main__' == __name__:
     server = MiGCGIXMLRPCRequestHandler()
     server.register_function(object_type_info)
     server.register_function(my_id)

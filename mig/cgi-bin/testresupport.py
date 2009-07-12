@@ -79,8 +79,7 @@ def testresource_has_re_specified(unique_resource_name, re_name,
 
 # ## Main ###
 
-(logger, configuration, client_id, o) = \
-    init_cgi_script_with_cert()
+(logger, configuration, client_id, o) = init_cgi_script_with_cert()
 client_dir = client_id_dir(client_id)
 
 fieldstorage = cgi.FieldStorage()
@@ -157,7 +156,7 @@ except Exception, e:
 # user dirs when own name is a prefix of another user name
 
 base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                        client_dir)) + os.sep
+                           client_dir)) + os.sep
 
 create_verify_files(['status', 'stdout', 'stderr'])
 

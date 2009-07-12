@@ -79,7 +79,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            client_dir)) + os.sep
+                               client_dir)) + os.sep
 
     # HTML spec dictates newlines in forms to be MS style (\r\n)
     # rather than un*x style (\n): change if requested.
@@ -136,8 +136,7 @@ def main(client_id, user_arguments_dict):
                                    % path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-    (owner, time_left) = acquire_edit_lock(real_path,
-            client_id)
+    (owner, time_left) = acquire_edit_lock(real_path, client_id)
     if owner != client_id:
         output_objects.append({'object_type': 'error_text', 'text'
                               : "You don't have the lock for %s!"

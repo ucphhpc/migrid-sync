@@ -61,13 +61,14 @@ def load_queue(path, logger):
     """Load job queue from path"""
 
     # Load and add current logger
-    
+
     queue = io.unpickle(path, logger)
-    if not queue: 
-        return None # unpickle not successful
+    if not queue:
+        return None  # unpickle not successful
     else:
         queue.logger = logger
         return queue
+
 
 def save_schedule_cache(cache, path, logger):
     """Save schedule cache to path for quick loading later"""
@@ -140,7 +141,8 @@ def check_mrsl_files(
                              % job_dict['JOB_ID'])
                 relative_path = filename.replace(root, '').lstrip('/')
                 message = 'USERJOBFILE %s\n' % relative_path
-                if not send_message_to_grid_script(message, logger, configuration):
+                if not send_message_to_grid_script(message, logger,
+                        configuration):
                     print 'Fatal error: Could not write to grid stdin'
             elif job_dict['STATUS'] == 'QUEUED'\
                  and not job_queue.get_job_by_id(job_dict['JOB_ID']):
@@ -362,12 +364,12 @@ def requeue_job(
         # Remove job result files, if they have arrived as the result is not valid
         # This can happen with sandboxes as they can't be stopped serverside
 
-        io.delete_file(configuration.user_home + client_dir
-                        + '/' + job_dict['JOB_ID'] + '.status', logger)
-        io.delete_file(configuration.user_home + client_dir
-                        + '/' + job_dict['JOB_ID'] + '.stdout', logger)
-        io.delete_file(configuration.user_home + client_dir
-                        + '/' + job_dict['JOB_ID'] + '.stderr', logger)
+        io.delete_file(configuration.user_home + client_dir + '/'
+                        + job_dict['JOB_ID'] + '.status', logger)
+        io.delete_file(configuration.user_home + client_dir + '/'
+                        + job_dict['JOB_ID'] + '.stdout', logger)
+        io.delete_file(configuration.user_home + client_dir + '/'
+                        + job_dict['JOB_ID'] + '.stderr', logger)
 
         # Generate execution history
 
@@ -390,8 +392,9 @@ def requeue_job(
 
         unique_resource_name = job_dict['UNIQUE_RESOURCE_NAME']
 
-        mrsl_file = os.path.join(configuration.mrsl_files_dir, client_dir,
-                                 job_dict['JOB_ID'] + '.mRSL')
+        mrsl_file = os.path.join(configuration.mrsl_files_dir,
+                                 client_dir, job_dict['JOB_ID']
+                                  + '.mRSL')
         job_retries = job_dict.get('RETRIES', configuration.job_retries)
         if job_dict['RETRY_COUNT'] <= job_retries:
             job_dict['STATUS'] = 'QUEUED'

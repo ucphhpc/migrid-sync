@@ -283,7 +283,7 @@ def create_job_script(
             # includes sessionid
 
             webserver_path = os.path.join(configuration.webserver_home,
-                                localjobname + '.getinputfiles')
+                    localjobname + '.getinputfiles')
             os.rename(inputfiles_path, webserver_path)
 
             # ########## ATTENTION HACK TO MAKE JVM SANDBOXES WORK ########################################

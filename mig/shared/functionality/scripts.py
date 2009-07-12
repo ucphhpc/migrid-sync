@@ -30,15 +30,15 @@ delivering the user and vgrid/resource scripts.
 """
 
 import os
-import sys
 import zipfile
 import time
 
 from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.functional import validate_input_and_cert
 import shared.returnvalues as returnvalues
 from shared.useradm import client_id_dir
-
+import shared.userscriptgen as usergen
+import shared.vgridscriptgen as vgridgen
 
 sh_cmd_def = 'sh'
 python_cmd_def = 'python'
@@ -57,12 +57,7 @@ def signature():
     return ['link', defaults]
 
 
-def usage(
-    output_objects,
-    migserver_https_url,
-    valid_langs,
-    valid_flavors,
-    ):
+def usage(output_objects, valid_langs, valid_flavors):
     """Script usage help"""
 
     output_objects.append({'object_type': 'section_header', 'text'
@@ -95,14 +90,6 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False, op_title=False)
     client_dir = client_id_dir(client_id)
-
-    # Change CWD to ../mig/user/ to allow generator access
-
-    cgibin_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-    mig_base = os.path.abspath(cgibin_dir + '/../')
-    generator_dir = mig_base + '/user'
-    os.chdir(cgibin_dir)
-    sys.path.append(generator_dir)
 
     valid_langs = {'sh': 'shell', 'python': 'python'}
     valid_flavors = {'user': 'userscriptgen',
@@ -156,12 +143,11 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            client_dir)) + os.sep
+                               client_dir)) + os.sep
 
     if 'h' in flags:
-        output_objects = usage(output_objects,
-                               configuration.migserver_https_url,
-                               valid_langs, valid_flavors)
+        output_objects = usage(output_objects, valid_langs,
+                               valid_flavors)
 
     # Filter out any invalid flavors to avoid illegal filenames, etc.
 
@@ -177,19 +163,6 @@ def main(client_id, user_arguments_dict):
                                   : 'No valid flavors specified - falling back to user scripts'
                                   })
         flavors = ['user']
-
-    # Import everything from script generator module (truncates *_cmd's)
-
-    if 'user' in flavors:
-
-        # from userscriptgen import * (import * not allowed in a function)
-
-        exec 'from userscriptgen import *'
-    if 'resource' in flavors:
-
-        # from vgridscriptgen import * (import * not allowed in a function)
-
-        exec 'from vgridscriptgen import *'
 
     # Generate scripts in a "unique" destination directory
     # gmtime([seconds]) -> (tm_year, tm_mon, tm_day, tm_hour, tm_min,
@@ -209,8 +182,9 @@ def main(client_id, user_arguments_dict):
 
         # Add new languages here
 
-        languages = [(sh_lang, sh_cmd, sh_ext), (python_lang,
-                     python_cmd, python_ext)]
+        languages = [(usergen.sh_lang, sh_cmd, usergen.sh_ext),
+                     (usergen.python_lang, python_cmd,
+                     usergen.python_ext)]
     else:
         languages = []
 
@@ -219,10 +193,10 @@ def main(client_id, user_arguments_dict):
         for lang in langs:
             if lang == 'sh':
                 interpreter = sh_cmd
-                extension = sh_ext
+                extension = usergen.sh_ext
             elif lang == 'python':
                 interpreter = python_cmd
-                extension = python_ext
+                extension = usergen.python_ext
             else:
                 output_objects.append({'object_type': 'warning', 'text'
                         : 'Unknown script language: %s - ignoring!'
@@ -244,15 +218,14 @@ def main(client_id, user_arguments_dict):
         if not os.path.isdir(dest_dir):
             try:
                 os.mkdir(dest_dir)
-            except Exception, e:
+            except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text'
-                        : 'Failed to create destination directory (%s)- aborting script generation'
-                         % e})
+                        : 'Failed to create destination directory (%s) - aborting script generation'
+                         % exc})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
-                continue
 
-        for (lang, cmd, ext) in languages:
+        for (lang, _, _) in languages:
             output_objects.append({'object_type': 'text', 'text'
                                   : 'Generating %s %s scripts in the %s subdirectory of your MiG home directory'
                                    % (lang, flavor, script_dir)})
@@ -260,25 +233,26 @@ def main(client_id, user_arguments_dict):
         # Generate all scripts
 
         if flavor == 'user':
-            for op in script_ops:
-                generator = 'generate_%s' % op
+            for op in usergen.script_ops:
+                generator = 'usergen.generate_%s' % op
                 eval(generator)(languages, dest_dir)
 
-            if shared_lib:
-                generate_lib(script_ops, languages, dest_dir)
+            if usergen.shared_lib:
+                usergen.generate_lib(usergen.script_ops, languages,
+                        dest_dir)
 
-            if test_script:
-                generate_test(languages, dest_dir)
+            if usergen.test_script:
+                usergen.generate_test(languages, dest_dir)
         elif flavor == 'resource':
-            for op in script_ops_single_arg:
-                generate_single_argument(op[0], op[1], languages,
-                        dest_dir)
-            for op in script_ops_single_upload_arg:
-                generate_single_argument_upload(op[0], op[1], op[2],
+            for op in vgridgen.script_ops_single_arg:
+                vgridgen.generate_single_argument(op[0], op[1],
                         languages, dest_dir)
-            for op in script_ops_two_args:
-                generate_two_arguments(op[0], op[1], op[2], languages,
-                        dest_dir)
+            for op in vgridgen.script_ops_single_upload_arg:
+                vgridgen.generate_single_argument_upload(op[0], op[1],
+                        op[2], languages, dest_dir)
+            for op in vgridgen.script_ops_two_args:
+                vgridgen.generate_two_arguments(op[0], op[1], op[2],
+                        languages, dest_dir)
         else:
             output_objects.append({'object_type': 'warning_text', 'text'
                                   : 'Unknown flavor: %s' % flavor})
@@ -336,7 +310,8 @@ def main(client_id, user_arguments_dict):
                                % flavor})
         output_objects.append({'object_type': 'link', 'text'
                               : 'Download zip archive', 'destination'
-                              : os.path.join('..', client_dir, script_zip)})
+                              : os.path.join('..', client_dir,
+                              script_zip)})
     return (output_objects, status)
 
 

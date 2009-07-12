@@ -40,29 +40,36 @@ import shared.confparser as confparser
 
 sandbox_db_name = 'sandbox_users.pkl'
 
+
 def load_sandbox_db(configuration=None):
     """Read in the sandbox DB dictionary:
     Format is {username: (password, [list_of_resources])}
     """
+
     if not configuration:
         configuration = get_configuration_object()
-    sandbox_db_path = os.path.join(configuration.sandbox_home, sandbox_db_name)
+    sandbox_db_path = os.path.join(configuration.sandbox_home,
+                                   sandbox_db_name)
     db_fd = open(sandbox_db_path, 'rb')
     sandbox_db = pickle.load(db_fd)
     db_fd.close()
     return sandbox_db
-    
+
+
 def save_sandbox_db(sandbox_db, configuration=None):
     """Read in the sandbox DB dictionary:
     Format is {username: (password, [list_of_resources])}
     """
+
     if not configuration:
         configuration = get_configuration_object()
-    sandbox_db_path = os.path.join(configuration.sandbox_home, sandbox_db_name)
+    sandbox_db_path = os.path.join(configuration.sandbox_home,
+                                   sandbox_db_name)
     db_fd = open(sandbox_db_path, 'wb')
     pickle.dump(sandbox_db, db_fd)
     db_fd.close()
-    
+
+
 def get_resource_name(sandboxkey, logger):
     configuration = get_configuration_object()
 
@@ -87,6 +94,7 @@ def create_oneclick_resource(
     configuration,
     logger,
     ):
+
     resource_name = 'oneclick'
 
     result = create_resource(resource_name, sandboxkey,

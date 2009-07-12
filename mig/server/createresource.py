@@ -45,7 +45,7 @@ def usage(name='createresource.py'):
 %(name)s RESOURCE_FQDN OWNER_ID [RESOURCE_CONFIG]
 
 The script adds .COUNTER to the resources unique id"""\
-        % {'name': name}
+         % {'name': name}
 
 
 # ## Main ###

@@ -51,8 +51,8 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(op_header=False, op_title=False,
                                   op_menu=False)
     output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG external certificate sign up request', 'skipmenu'
-                          : True})
+                          : 'MiG external certificate sign up request',
+                          'skipmenu': True})
     output_objects.append({'object_type': 'header', 'text'
                           : 'Welcome to the MiG external certificate sign up page'
                           })
@@ -64,16 +64,18 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     certreq_link = {'object_type': 'link', 'destination': 'reqcert.py',
-                        'text': 'Request a new MiG certificate'}
+                    'text': 'Request a new MiG certificate'}
     if not client_id:
-        output_objects.append({'object_type': 'warning', 'text':
-                               'Apparently you do not have a suitable MiG certificate, but you can request one:'})
+        output_objects.append({'object_type': 'warning', 'text'
+                              : 'Apparently you do not have a suitable MiG certificate, but you can request one:'
+                              })
         output_objects.append(certreq_link)
-        output_objects.append({'object_type': 'warning', 'text':
-                               'However, if you do own a suitable certificate you can sign up with it below:'})
+        output_objects.append({'object_type': 'warning', 'text'
+                              : 'However, if you do own a suitable certificate you can sign up with it below:'
+                              })
         new_user = {}
-
     else:
+
         new_user = distinguished_name_to_user(client_id)
 
     output_objects.append({'object_type': 'html_form', 'text'
@@ -122,10 +124,10 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
         'client_id': client_id,
         'dn_max_len': dn_max_len,
         'common_name': new_user.get('full_name', ''),
-        'org' : new_user.get('organization', ''),
-        'email' : new_user.get('email', ''),
-        'state' : new_user.get('state', ''),
-        'country' : new_user.get('country', ''),
+        'org': new_user.get('organization', ''),
+        'email': new_user.get('email', ''),
+        'state': new_user.get('state', ''),
+        'country': new_user.get('country', ''),
         }})
 
     return (output_objects, returnvalues.OK)

@@ -85,7 +85,7 @@ class Scheduler:
 
     # minimum seconds to keep cache entries after LAST_SEEN (one week)
 
-    cache_ttl = 60 * 60 * 24 * 7
+    cache_ttl = ((60 * 60) * 24) * 7
 
     # List of dictionaries representing the known servers.
 
@@ -130,9 +130,14 @@ class Scheduler:
 
     illegal_price = -42.0
     reschedule_interval = 1800
-    __schedule_fields = {"SCHEDULE_TIMESTAMP": None, "SCHEDULE_HINT": None,
-                         "SCHEDULE_TARGETS": [], "EXEC_PRICE": None,
-                         "EXEC_DIFF": None, "EXEC_RAWDIFF": None}
+    __schedule_fields = {
+        'SCHEDULE_TIMESTAMP': None,
+        'SCHEDULE_HINT': None,
+        'SCHEDULE_TARGETS': [],
+        'EXEC_PRICE': None,
+        'EXEC_DIFF': None,
+        'EXEC_RAWDIFF': None,
+        }
 
     def __init__(self, logger, config):
         self.conf = config
@@ -185,13 +190,11 @@ class Scheduler:
             self.expire_entitites(entities)
         self.update_local_server()
 
-
     def get_cache(self):
 
         # Extract cache from this scheduler
 
         return (self.servers, self.resources, self.users)
-
 
     def server_migrate_cost(self, server_id):
         server_conf = {'SERVER_ID': server_id}
@@ -285,7 +288,7 @@ class Scheduler:
             self.logger.warning('found time in the future! (%f, %f) %s'
                                  % (timestamp, now, entity))
 
-        #self.logger.info("found valid data for entity (%f, %f)" % \
+        # self.logger.info("found valid data for entity (%f, %f)" % \
         #                 (timestamp, now))
 
         return False
@@ -355,13 +358,15 @@ class Scheduler:
 
     def expire_entitites(self, entities):
         """Expire entities not seen for a long while"""
+
         for (entity_id, entity) in entities.items():
             if self.outdated_data(entity, self.cache_ttl):
                 self.logger.info('Dropping stale cache data for %s'
-                                 % entity_id)
+                                  % entity_id)
                 del entities[entity_id]
             else:
-                self.logger.info("Keeping cache data for %s" % entity_id)
+                self.logger.info('Keeping cache data for %s'
+                                  % entity_id)
 
     def find_server(self, server_conf):
 
@@ -1604,24 +1609,27 @@ class Scheduler:
 
     def fill_schedule(self, job):
         """Fill in any missing scheduling fields in job"""
+
         for (field, default) in self.__schedule_fields.items():
             job[field] = job.get(field, default)
         return job
-                
+
     def copy_schedule(self, src, dst):
         """Copy schedule fields from src to dst job"""
+
         for field in self.__schedule_fields.keys():
             if src.has_key(field):
                 dst[field] = src[field]
         return dst
-                
+
     def clear_schedule(self, job):
         """Remove any scheduling fields from job - used e.g. after time outs"""
+
         for field in self.__schedule_fields.keys():
             if job.has_key(field):
                 del job[field]
         return job
-                
+
     def schedule_filter(self, resource_conf={}):
         """Filter all local jobs and mark any jobs for
         migration if they are better fit for being
@@ -1678,13 +1686,13 @@ class Scheduler:
                 last_scheduled = time.gmtime(0)
             schedule_time = calendar.timegm(last_scheduled)
             schedule_age = now - schedule_time
-            
+
             # skip (re)schedule if each of these apply:
             # -resource was included in last scheduling
             # -we recently scheduled job
 
-            if schedule_time > first_request and job["SCHEDULE_HINT"] and \
-                   schedule_age < self.reschedule_interval:
+            if schedule_time > first_request and job['SCHEDULE_HINT']\
+                 and schedule_age < self.reschedule_interval:
 
                 # self.logger.info("cached schedule %s for %s" % \
                 #                 (job["SCHEDULE_HINT"], job_id))

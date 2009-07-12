@@ -219,10 +219,10 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     # Only add non-directory paths manually and leave the rest to
     # checkconf.py below
 
-    print "sudo su - %s -c 'mkfifo \\\n\t%s/server.stdin'"\
-         % (user, server_dir)
-    print "sudo su - %s -c 'mkfifo \\\n\t%s/notify.stdin'"\
-         % (user, server_dir)
+    print "sudo su - %s -c 'mkfifo \\\n\t%s/server.stdin'" % (user,
+            server_dir)
+    print "sudo su - %s -c 'mkfifo \\\n\t%s/notify.stdin'" % (user,
+            server_dir)
     print "sudo su - %s -c '%s/mig/server/checkconf.py'" % (user, home)
 
     print """

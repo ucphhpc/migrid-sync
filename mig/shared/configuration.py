@@ -236,7 +236,7 @@ class Configuration:
 
         if not os.path.isfile(self.config_file):
             print 'Could not find your configuration file (', \
-                  self.config_file, ').'
+                self.config_file, ').'
             print 'Are you missing a symlink from server/MiGserver.conf pointing to server/MiGserver-{server}.conf?'
             raise IOError
 

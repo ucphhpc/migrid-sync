@@ -71,9 +71,10 @@ def get_local_execute_command(dir, node, name='master'):
 
 
 def get_default_execute_command(execution_dir, execution_node):
-    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()), execution_node,
+    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()),
+                                    execution_node,
                                     get_local_execute_command(execution_dir,
-                                                              execution_node))
+                                    execution_node))
 
 
 def get_local_status_command(dir, node, name='master'):
@@ -91,7 +92,8 @@ def get_local_status_command(dir, node, name='master'):
 
 def get_default_status_command(execution_dir, execution_node):
     pgid_file = execution_dir + 'job.pgid'
-    return r'ssh %s %s  \"MIG_EXE_PGID=$mig_exe_pgid ; if [ \\\\\\`ps -o pid= -g \\\\\\$MIG_EXE_PGID | wc -l \\\\\\` -eq 0 ]; then exit 1; else exit 0;fi \"' % (' '.join(default_ssh_options()), execution_node)
+    return r'ssh %s %s  \"MIG_EXE_PGID=$mig_exe_pgid ; if [ \\\\\\`ps -o pid= -g \\\\\\$MIG_EXE_PGID | wc -l \\\\\\` -eq 0 ]; then exit 1; else exit 0;fi \"'\
+         % (' '.join(default_ssh_options()), execution_node)
 
 
 def get_local_stop_command(dir, node, name='master'):
@@ -108,9 +110,10 @@ def get_local_stop_command(dir, node, name='master'):
 
 
 def get_default_stop_command(execution_dir, execution_node):
-    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()), execution_node,
+    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()),
+                                    execution_node,
                                     get_local_stop_command(execution_dir,
-                                                              execution_node))
+                                    execution_node))
 
 
 def get_local_clean_command(dir, node, name='master'):
@@ -127,9 +130,10 @@ def get_local_clean_command(dir, node, name='master'):
 
 
 def get_default_clean_command(execution_dir, execution_node):
-    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()), execution_node,
+    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()),
+                                    execution_node,
                                     get_local_clean_command(execution_dir,
-                                                              execution_node))
+                                    execution_node))
 
 
 def get_default_vgrid():
@@ -266,8 +270,7 @@ def generate_execution_node_string(exe_nodes, hide_leader=True):
 
 # ## Main ###
 
-(logger, configuration, client_id, o) = \
-    init_cgi_script_with_cert()
+(logger, configuration, client_id, o) = init_cgi_script_with_cert()
 client_dir = client_id_dir(client_id)
 logger.info('Starting Resource edit GUI.')
 
@@ -282,7 +285,7 @@ admin_email = cgi.escape(configuration.admin_email)
 # user dirs when own name is a prefix of another user name
 
 base_dir = os.path.abspath(os.path.join(configuration.resource_pending,
-                                        client_dir)) + os.sep
+                           client_dir)) + os.sep
 
 RUNTIMEENVIRONMENT_FIELDS = 10
 VGRID_FIELDS = 3
@@ -292,23 +295,22 @@ if form.has_key('new_resource'):
     pending_file = ''
 
     if form.has_key('Ok'):
-        pending_file = os.path.join(base_dir, form['hosturl'].value\
-                                    + '.' + str(time.time()))
+        pending_file = os.path.join(base_dir, form['hosturl'].value
+                                     + '.' + str(time.time()))
 elif form.has_key('hosturl') and form.has_key('hostidentifier'):
 
     resource_id = form['hosturl'].value + '.' + form['hostidentifier'
             ].value
     if not is_owner(client_id, resource_id,
                     configuration.resource_home, logger):
-        o.out('Failure: You (' + client_id
-               + ') must be an owner of ' + form['hosturl'].value
-               + ' to edit it.')
+        o.out('Failure: You (' + client_id + ') must be an owner of '
+               + form['hosturl'].value + ' to edit it.')
         o.reply_and_exit(o.ERROR)
 
     conf_file = configuration.resource_home + resource_id\
          + '/config.MiG'
-    pending_file = os.path.join(base_dir, form['hosturl'].value\
-                                + '.' + str(time.time()))
+    pending_file = os.path.join(base_dir, form['hosturl'].value + '.'
+                                 + str(time.time()))
 else:
 
     o.out('Failure: hosturl and hostidentifier must be supplied.')
@@ -671,8 +673,7 @@ if (form.has_key('new_resource') or form.has_key('apply_changes'))\
             o.reply_and_exit(o.CLIENT_ERROR)
     elif form.has_key('new_resource'):
 
-        (status, msg) = \
-            send_resource_create_request_mail(client_id,
+        (status, msg) = send_resource_create_request_mail(client_id,
                 form['hosturl'].value, pending_file, logger,
                 configuration)
         logger.info(msg)

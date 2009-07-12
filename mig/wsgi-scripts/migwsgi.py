@@ -38,6 +38,7 @@ from shared.output import validate, do_output
 
 def object_type_info(object_type):
     """Lookup object type"""
+
     return get_object_type_info(object_type)
 
 
@@ -58,13 +59,15 @@ def stub(function, user_arguments_dict):
     try:
         exec 'from %s import main' % function
     except Exception, err:
-        output_objects.extend([{'object_type': 'error_text',
-                                'text': 'Could not import module! %s: %s' % (function, err)}])
+        output_objects.extend([{'object_type': 'error_text', 'text'
+                              : 'Could not import module! %s: %s'
+                               % (function, err)}])
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not isinstance(user_arguments_dict, dict):
-        output_objects.extend([{'object_type': 'error_text',
-                  'text': 'user_arguments_dict is not a dictionary/struct type!'}])
+        output_objects.extend([{'object_type': 'error_text', 'text'
+                              : 'user_arguments_dict is not a dictionary/struct type!'
+                              }])
         return (output_objects, returnvalues.INVALID_ARGUMENT)
 
     return_val = returnvalues.OK
@@ -72,10 +75,11 @@ def stub(function, user_arguments_dict):
 
         # return (user_arguments_dict)
 
-        (output_objects, return_val) = main(client_id, user_arguments_dict)
+        (output_objects, return_val) = main(client_id,
+                user_arguments_dict)
     except Exception, err:
-        output_objects.extend([{'object_type': 'error_text', 'text':
-                                'Error calling function: %s' % err}])
+        output_objects.extend([{'object_type': 'error_text', 'text'
+                              : 'Error calling function: %s' % err}])
         return (output_objects, returnvalues.ERROR)
 
     (val_ret, val_msg) = validate(output_objects)
@@ -93,8 +97,11 @@ def stub(function, user_arguments_dict):
 
 
 # ## Main ###
+
+
 def basic_application(environ, start_response):
     """Sample app called automatically by wsgi"""
+
     status = '200 OK'
     output = 'Hello World!'
 
@@ -104,15 +111,22 @@ def basic_application(environ, start_response):
 
     return [output]
 
+
 def application(environ, start_response):
     """MiG app called automatically by wsgi"""
 
+    # TODO: verify security of this environment exposure
+    
     # pass environment on to sub handlers
+
     os.environ = environ
 
+    # TODO: we should avoid print calls completely in backends
     # make sure print calls do not interfere with wsgi
+
     sys.stdout = sys.stderr
-    fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ) 
+    fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
+                                    environ=environ)
     user_arguments_dict = fieldstorage_to_dict(fieldstorage)
 
     # default to html
@@ -122,14 +136,18 @@ def application(environ, start_response):
         output_format = user_arguments_dict['output_format'][0]
 
     try:
-        backend = os.path.basename(environ['SCRIPT_URL']).replace('.py', '')
+        backend = os.path.basename(environ['SCRIPT_URL']).replace('.py'
+                , '')
         module_path = 'shared.functionality.%s' % backend
         (output_objs, ret_val) = stub(module_path, user_arguments_dict)
-    except Exception, exc :
-        #(output_objs, ret_val) = (my_id(), returnvalues.OK)
-        #(output_objs, ret_val) = (user_arguments_dict, returnvalues.OK)
-        (output_objs, ret_val) = ([{'object_type': 'error_text', 'text': exc},
-                                   {'object_type': 'text', 'text': str(environ)}],
+    except Exception, exc:
+
+        # (output_objs, ret_val) = (my_id(), returnvalues.OK)
+        # (output_objs, ret_val) = (user_arguments_dict, returnvalues.OK)
+
+        (output_objs, ret_val) = ([{'object_type': 'error_text', 'text'
+                                  : exc}, {'object_type': 'text', 'text'
+                                  : str(environ)}],
                                   returnvalues.SYSTEM_ERROR)
     if returnvalues.OK == ret_val:
         status = '200 OK'
@@ -141,14 +159,16 @@ def application(environ, start_response):
     if not output:
 
         # Error occured during output print
-    
+
         output = 'Return object was _not_ successfully extracted!'
 
     content = 'text/html'
-    if 'html' !=  output_format:
+    if 'html' != output_format:
         content = 'text/plain'
-    response_headers = [('Content-type', content),
-                        ('Content-Length', str(len(output)))]
+    response_headers = [('Content-type', content), ('Content-Length',
+                        str(len(output)))]
     start_response(status, response_headers)
 
     return [output]
+
+

@@ -276,14 +276,27 @@ def handle_ls(
 
             # Force pure content listing first by passing a negative depth
 
-            handle_ls(output_objects, listing, base_dir, real_path, flags, -1)
+            handle_ls(
+                output_objects,
+                listing,
+                base_dir,
+                real_path,
+                flags,
+                -1,
+                )
 
             for name in contents:
                 path = real_path + os.sep + name
                 rel_path = path.replace(base_dir, '')
                 if os.path.isdir(path):
-                    handle_ls(output_objects, listing, base_dir, path, flags,
-                              depth + 1)
+                    handle_ls(
+                        output_objects,
+                        listing,
+                        base_dir,
+                        path,
+                        flags,
+                        depth + 1,
+                        )
 
 
 def main(client_id, user_arguments_dict):
@@ -312,7 +325,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            client_dir)) + os.sep
+                               client_dir)) + os.sep
 
     status = returnvalues.OK
 
@@ -429,8 +442,8 @@ Action on paths selected below
                 # ../*/* is technically allowed to match own files.
 
                 logger.error('Warning: %s tried to %s %s outside own home! (using pattern %s)'
-                              % (client_id, op_name,
-                             real_path, pattern))
+                              % (client_id, op_name, real_path,
+                             pattern))
                 continue
             match.append(real_path)
             if not first_match:
@@ -456,7 +469,8 @@ Action on paths selected below
                 'flags': flags,
                 }
 
-            handle_ls(output_objects, entries, base_dir, real_path, flags)
+            handle_ls(output_objects, entries, base_dir, real_path,
+                      flags)
             dir_listings.append(dir_listing)
 
     if 'full' == files_style:

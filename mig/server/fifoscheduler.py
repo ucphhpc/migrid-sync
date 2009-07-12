@@ -63,25 +63,27 @@ class FIFOScheduler(Scheduler):
             for (key, val) in must_match.items():
                 if not job.has_key(key) or val != job[key]:
                     continue
-            self.logger.debug('schedule treating job %d: %s' % \
-                              (i, job['JOB_ID']))
+            self.logger.debug('schedule treating job %d: %s' % (i,
+                              job['JOB_ID']))
             if 'GO' == job['SCHEDULE_HINT']\
                  and resource_conf['RESOURCE_ID']\
                  in job['SCHEDULE_TARGETS']:
                 job['EXEC_RESOURCE'] = resource_conf['RESOURCE_ID']
-                self.logger.info('schedule: scheduled %s for execution at %s' % \
-                                 (job['JOB_ID'], resource_conf['RESOURCE_ID']))
+                self.logger.info('schedule: scheduled %s for execution at %s'
+                                  % (job['JOB_ID'],
+                                 resource_conf['RESOURCE_ID']))
                 self.job_queue.dequeue_job(0)
                 self.update_history(job, resource_conf)
                 return job
             else:
-                self.logger.debug('Schedule: job %s marked %s' % \
-                                  (job['JOB_ID'], job['SCHEDULE_HINT']))
+                self.logger.debug('Schedule: job %s marked %s'
+                                   % (job['JOB_ID'], job['SCHEDULE_HINT'
+                                  ]))
 
         # No job was found that can be executed on the resource
 
-        self.logger.info('Schedule: found no suitable job for %s' % \
-                         resource_conf['HOSTURL'])
+        self.logger.info('Schedule: found no suitable job for %s'
+                          % resource_conf['HOSTURL'])
         return None
 
 

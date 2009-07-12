@@ -58,9 +58,9 @@ except ImportError, ime:
     print 'could not import servercomm, probably due to missing pycurl'
     print ime
 
-configuration, logger = None, None
-job_queue, executing_queue, scheduler = None, None, None
-job_time_out_thread, job_time_out_stop = None, None
+(configuration, logger) = (None, None)
+(job_queue, executing_queue, scheduler) = (None, None, None)
+(job_time_out_thread, job_time_out_stop) = (None, None)
 
 
 def time_out_jobs(stop_event):
@@ -179,21 +179,24 @@ def graceful_shutdown():
         logger.info('graceful_shutdown called')
         job_time_out_stop.set()
         print 'graceful_shutdown: giving time out thread a chance to terminate'
+
         # make sure queue gets saved even if timeout thread goes haywire
+
         job_time_out_thread.join(5)
         print 'graceful_shutdown: saving state'
-        if job_queue and not save_queue(job_queue, job_queue_path, logger):
+        if job_queue and not save_queue(job_queue, job_queue_path,
+                logger):
             logger.warning('failed to save job queue')
         if executing_queue and not save_queue(executing_queue,
-                                              executing_queue_path,
-                                              logger):
+                executing_queue_path, logger):
             logger.warning('failed to save executing queue')
         if scheduler and not save_schedule_cache(scheduler.get_cache(),
-                                                 schedule_cache_path,
-                                                 logger):
+                schedule_cache_path, logger):
             logger.warning('failed to save scheduler cache')
         print 'graceful_shutdown: saved state; now blocking for time out thread'
+
         # Now make sure timeout thread finishes
+
         job_time_out_thread.join()
         configuration.logger_obj.shutdown()
     except StandardError:
@@ -219,11 +222,12 @@ logger.info('Starting MiG server')
 
 # Load queues from file dump if available
 
-job_queue_path = os.path.join(configuration.mig_system_files, 'job_queue.pickle')
+job_queue_path = os.path.join(configuration.mig_system_files,
+                              'job_queue.pickle')
 executing_queue_path = os.path.join(configuration.mig_system_files,
                                     'executing_queue.pickle')
 schedule_cache_path = os.path.join(configuration.mig_system_files,
-                                    'schedule_cache.pickle')
+                                   'schedule_cache.pickle')
 only_new_jobs = True
 job_queue = load_queue(job_queue_path, logger)
 executing_queue = load_queue(executing_queue_path, logger)
@@ -243,7 +247,7 @@ schedule_cache = load_schedule_cache(schedule_cache_path, logger)
 if not schedule_cache:
     logger.warning('Could not load schedule cache from previous run')
 else:
-    logger.info('Loaded schedule cache from previous run')    
+    logger.info('Loaded schedule cache from previous run')
 
 logger.info('starting scheduler ' + configuration.sched_alg)
 if configuration.sched_alg == 'FirstFit':
@@ -449,8 +453,8 @@ while True:
             continue
 
         client_dir = client_id_dir(job_dict['USER_CERT'])
-        file_serverjob = configuration.mrsl_files_dir\
-             + client_dir + os.sep + job_id + '.mRSL'
+        file_serverjob = configuration.mrsl_files_dir + client_dir\
+             + os.sep + job_id + '.mRSL'
         dict_serverjob = unpickle(file_serverjob, logger)
         if dict_serverjob == False:
             logger.error('Could not unpickle job - not updating schedule!'
@@ -587,9 +591,8 @@ while True:
 
             last_job_ok_status_list = ['FINISHED', 'CANCELED']
             client_dir = client_id_dir(last_req['USER_CERT'])
-            filenamelast = configuration.mrsl_files_dir\
-                 + client_dir + os.sep + last_req['JOB_ID']\
-                 + '.mRSL'
+            filenamelast = configuration.mrsl_files_dir + client_dir\
+                 + os.sep + last_req['JOB_ID'] + '.mRSL'
             job_dict = unpickle(filenamelast, logger)
             if job_dict:
                 if job_dict['STATUS'] not in last_job_ok_status_list:
@@ -616,7 +619,7 @@ while True:
                              % job_dict['JOB_ID']
 
                         # Clear any scheduling data for exe_job before requeue
-                        
+
                         scheduler.clear_schedule(exe_job)
                         requeue_job(
                             exe_job,
@@ -820,9 +823,8 @@ while True:
                     configuration,
                     )
                 client_dir = client_id_dir(expired['USER_CERT'])
-                expired_file = configuration.mrsl_files_dir\
-                     + client_dir + os.sep + expired['JOB_ID']\
-                     + '.mRSL'
+                expired_file = configuration.mrsl_files_dir + client_dir\
+                     + os.sep + expired['JOB_ID'] + '.mRSL'
 
                 if not unpickle_and_change_status(expired_file,
                         'EXPIRED', logger):
@@ -848,15 +850,14 @@ while True:
 
                 client_dir = client_id_dir(job_dict['USER_CERT'])
                 mrsl_filename = configuration.mrsl_files_dir\
-                     + client_dir + '/' + job_dict['JOB_ID']\
-                     + '.mRSL'
+                     + client_dir + '/' + job_dict['JOB_ID'] + '.mRSL'
                 dummy_dict = unpickle(mrsl_filename, logger)
 
                 # The job status should be "QUEUED" at this point
 
                 if dummy_dict == False:
-                    logger.error('error unpickling mrsl in %s' % \
-                         mrsl_filename)
+                    logger.error('error unpickling mrsl in %s'
+                                  % mrsl_filename)
                     continue
 
                 if dummy_dict['STATUS'] == 'QUEUED':
@@ -927,8 +928,7 @@ while True:
 
                 client_dir = client_id_dir(job_dict['USER_CERT'])
                 mrsl_filename = configuration.mrsl_files_dir\
-                     + client_dir + '/' + job_dict['JOB_ID']\
-                     + '.mRSL'
+                     + client_dir + '/' + job_dict['JOB_ID'] + '.mRSL'
                 mrsl_dict = unpickle(mrsl_filename, logger)
                 if mrsl_dict:
                     (sessionid, iosessionid) = \
@@ -1375,7 +1375,7 @@ while True:
                 # Real job, requeue job
 
                 # Clear any scheduling data for exe_job before requeue
-                        
+
                 scheduler.clear_schedule(job_dict)
                 requeue_job(
                     job_dict,

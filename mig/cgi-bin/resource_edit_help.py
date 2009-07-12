@@ -41,8 +41,7 @@ import shared.resconfkeywords as resconfkeywords
 from shared.cgishared import init_cgi_script_with_cert
 from shared.html import get_cgi_html_header
 
-(logger, configuration, client_id, o) = \
-    init_cgi_script_with_cert()
+(logger, configuration, client_id, o) = init_cgi_script_with_cert()
 resource_keywords = resconfkeywords.get_resource_keywords(configuration)
 exenode_keywords = resconfkeywords.get_exenode_keywords(configuration)
 

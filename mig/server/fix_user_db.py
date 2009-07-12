@@ -28,7 +28,6 @@ import sys
 
 from shared.useradm import search_users, default_search, migrate_user
 
-    
 if '__main__' == __name__:
     if len(sys.argv) < 3:
         print 'Usage: %s CONF_PATH DB_PATH' % sys.argv[0]

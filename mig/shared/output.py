@@ -82,7 +82,7 @@ def txt_format(ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'header':
             lines.append('')
             lines.append('___%s___' % i['text'].upper())
-            lines.append('')            
+            lines.append('')
         elif i['object_type'] == 'sectionheader':
             lines.append('')
             lines.append('___%s___' % i['text'])
@@ -116,15 +116,16 @@ def txt_format(ret_val, ret_msg, out_obj):
             header = [['Job ID', 'Old status', 'New status Message',
                       'Message']]
             lines += pprint_table(txt_table_if_have_keys(header,
-                         changedstatusjobs, ['job_id', 'oldstatus',
-                         'newstatus', 'message']))
+                                  changedstatusjobs, ['job_id',
+                                  'oldstatus', 'newstatus', 'message']))
         elif i['object_type'] == 'saveschedulejobs':
             saveschedulejobs = i['saveschedulejobs']
             if len(saveschedulejobs) == 0:
                 continue
             header = [['Job ID', 'Message']]
             lines += pprint_table(txt_table_if_have_keys(header,
-                         saveschedulejobs, ['job_id', 'message']))
+                                  saveschedulejobs, ['job_id', 'message'
+                                  ]))
         elif i['object_type'] == 'stats':
             stats = i['stats']
             if len(stats) == 0:
@@ -151,33 +152,41 @@ def txt_format(ret_val, ret_msg, out_obj):
                     if obj.has_key('execute'):
                         lines.append('Execute: %s' % obj['execute'])
                     if obj.has_key('verified'):
-                        lines.append('Verified status: %s' % obj['verified'])
+                        lines.append('Verified status: %s'
+                                 % obj['verified'])
                     if obj.has_key('verified_timestamp'):
-                        lines.append('Verified: %s' % obj['verified_timestamp'])
+                        lines.append('Verified: %s'
+                                 % obj['verified_timestamp'])
                     if obj.has_key('received_timestamp'):
-                        lines.append('Received: %s' % obj['received_timestamp'])
+                        lines.append('Received: %s'
+                                 % obj['received_timestamp'])
                     if obj.has_key('queued_timestamp'):
-                        lines.append('Queued: %s' % obj['queued_timestamp'])
+                        lines.append('Queued: %s'
+                                 % obj['queued_timestamp'])
                     if obj.has_key('schedule_timestamp'):
-                        lines.append('Scheduled: %s' % obj['schedule_timestamp'
-                                ])
+                        lines.append('Scheduled: %s'
+                                 % obj['schedule_timestamp'])
                     if obj.has_key('schedule_hint'):
-                        lines.append('Schedule hint: %s' % obj['schedule_hint'])
+                        lines.append('Schedule hint: %s'
+                                 % obj['schedule_hint'])
                     if obj.has_key('executing_timestamp'):
-                        lines.append('Executing: %s'\
-                             % obj['executing_timestamp'])
+                        lines.append('Executing: %s'
+                                 % obj['executing_timestamp'])
                     if obj.has_key('finished_timestamp'):
-                        lines.append('Finished: %s' % obj['finished_timestamp'])
+                        lines.append('Finished: %s'
+                                 % obj['finished_timestamp'])
                     if obj.has_key('failed_timestamp'):
-                        lines.append('Failed: %s' % obj['failed_timestamp'])
+                        lines.append('Failed: %s'
+                                 % obj['failed_timestamp'])
                     if obj.has_key('canceled_timestamp'):
-                        lines.append('Canceled: %s' % obj['canceled_timestamp'])
+                        lines.append('Canceled: %s'
+                                 % obj['canceled_timestamp'])
                     for execution_history in obj['execution_histories']:
                         count = execution_history['count']
                         single_history = \
                             execution_history['execution_history']
-                        lines.append('Execution history</td><td>#%s</td></tr>'\
-                             % count)
+                        lines.append('Execution history</td><td>#%s</td></tr>'
+                                 % count)
                         if single_history.has_key('queued'):
                             lines.append('Queued %s: %s' % (count,
                                     single_history['queued']))
@@ -188,7 +197,8 @@ def txt_format(ret_val, ret_msg, out_obj):
                             lines.append('Failed %s: %s' % (count,
                                     single_history['failed']))
                         if single_history.has_key('failed_message'):
-                            lines.append('Failed message %s: %s' % (count,
+                            lines.append('Failed message %s: %s'
+                                     % (count,
                                     single_history['failed_message']))
 
                     # add newline before next job)
@@ -238,9 +248,9 @@ def txt_format(ret_val, ret_msg, out_obj):
                         directory = entry
                         if directory.has_key('long_format'):
                             if directory == dir_listing['entries'][0]:
-                                lines.append('%s:\ntotal %s'\
-                                     % (dir_listing['relative_path'],
-                                        len(dir_listing['entries'])))
+                                lines.append('%s:\ntotal %s'
+                                         % (dir_listing['relative_path'
+                                        ], len(dir_listing['entries'])))
                         line += '\t\t'
                         if directory.has_key('actual_dir'):
                             line += '%s' % directory['actual_dir']
@@ -300,6 +310,7 @@ def html_table_if_have_keys(dictionary, keywordlist):
 
 def html_format(ret_val, ret_msg, out_obj):
     """Generate output in html format"""
+
     lines = []
     for i in out_obj:
         if i['object_type'] == 'start':
@@ -347,73 +358,81 @@ def html_format(ret_val, ret_msg, out_obj):
                 # <tr><td>Job ID</td><td>Status</td><td>Queued timestamp</td></tr>"
 
                 for obj in jobs:
-                    lines.append('<tr><th>Job Id</th><th>%s</th></tr>'\
-                         % obj['job_id'])
-                    lines.append('<tr><td>Status</td><td>%s</td></tr>'\
-                         % obj['status'])
+                    lines.append('<tr><th>Job Id</th><th>%s</th></tr>'
+                                  % obj['job_id'])
+                    lines.append('<tr><td>Status</td><td>%s</td></tr>'
+                                  % obj['status'])
                     if obj.has_key('execute'):
-                        lines.append('<tr><td>Execute</td><td>%s</td></tr>'\
-                             % obj['execute'])
+                        lines.append('<tr><td>Execute</td><td>%s</td></tr>'
+                                 % obj['execute'])
                     if obj.has_key('verified'):
-                        lines.append('<tr><td>Verified status</td><td>%s</td></tr>'\
-                             % obj['verified'])
+                        lines.append('<tr><td>Verified status</td><td>%s</td></tr>'
+                                 % obj['verified'])
                     if obj.has_key('verified_timestamp'):
-                        lines.append('<tr><td>Verified</td><td>%s</td></tr>'\
-                             % obj['verified_timestamp'])
+                        lines.append('<tr><td>Verified</td><td>%s</td></tr>'
+                                 % obj['verified_timestamp'])
                     if obj.has_key('received_timestamp'):
-                        lines.append('<tr><td>Received</td><td>%s</td></tr>'\
-                             % obj['received_timestamp'])
+                        lines.append('<tr><td>Received</td><td>%s</td></tr>'
+                                 % obj['received_timestamp'])
                     if obj.has_key('queued_timestamp'):
-                        lines.append('<tr><td>Queued</td><td>%s</td></tr>'\
-                             % obj['queued_timestamp'])
+                        lines.append('<tr><td>Queued</td><td>%s</td></tr>'
+                                 % obj['queued_timestamp'])
                     if obj.has_key('schedule_timestamp'):
-                        lines.append('<tr><td>Scheduled</td><td>%s</td></tr>'\
-                             % obj['schedule_timestamp'])
+                        lines.append('<tr><td>Scheduled</td><td>%s</td></tr>'
+                                 % obj['schedule_timestamp'])
                     if obj.has_key('schedule_hint'):
-                        lines.append('<tr><td>Schedule result</td><td>%s</td></tr>'\
-                             % obj['schedule_hint'])
+                        lines.append('<tr><td>Schedule result</td><td>%s</td></tr>'
+                                 % obj['schedule_hint'])
                     if obj.has_key('executing_timestamp'):
-                        lines.append('<tr><td>Executing</td><td>%s</td></tr>'\
-                             % obj['executing_timestamp'])
+                        lines.append('<tr><td>Executing</td><td>%s</td></tr>'
+                                 % obj['executing_timestamp'])
                     if obj.has_key('finished_timestamp'):
-                        lines.append('<tr><td>Finished</td><td>%s</td></tr>'\
-                             % obj['finished_timestamp'])
+                        lines.append('<tr><td>Finished</td><td>%s</td></tr>'
+                                 % obj['finished_timestamp'])
                     if obj.has_key('failed_timestamp'):
-                        lines.append('<tr><td>Failed</td><td>%s</td></tr>'\
-                             % obj['failed_timestamp'])
+                        lines.append('<tr><td>Failed</td><td>%s</td></tr>'
+                                 % obj['failed_timestamp'])
                     if obj.has_key('canceled_timestamp'):
-                        lines.append('<tr><td>Canceled</td><td>%s</td></tr>'\
-                             % obj['canceled_timestamp'])
+                        lines.append('<tr><td>Canceled</td><td>%s</td></tr>'
+                                 % obj['canceled_timestamp'])
                     for execution_history in obj['execution_histories']:
                         count = execution_history['count']
                         single_history = \
                             execution_history['execution_history']
-                        lines.append('<tr><td>Execution history</td><td>#%s</td></tr>'\
-                             % count)
+                        lines.append('<tr><td>Execution history</td><td>#%s</td></tr>'
+                                 % count)
                         if single_history.has_key('queued'):
-                            lines.append('<tr><td>Queued %s</td><td>%s</td></tr>'\
-                                 % (count, single_history['queued']))
+                            lines.append('<tr><td>Queued %s</td><td>%s</td></tr>'
+                                     % (count, single_history['queued'
+                                    ]))
                         if single_history.has_key('executing'):
-                            lines.append('<tr><td>Executing %s</td><td>%s</td></tr>'\
-                                 % (count, single_history['executing']))
+                            lines.append('<tr><td>Executing %s</td><td>%s</td></tr>'
+                                     % (count,
+                                    single_history['executing']))
                         if single_history.has_key('failed'):
-                            lines.append('<tr><td>Failed %s</td><td>%s</td></tr>'\
-                                 % (count, single_history['failed']))
+                            lines.append('<tr><td>Failed %s</td><td>%s</td></tr>'
+                                     % (count, single_history['failed'
+                                    ]))
                         if single_history.has_key('failed_message'):
-                            lines.append('<tr><td>Failed message %s</td><td>%s</td></tr>'\
-                                 % (count,
+                            lines.append('<tr><td>Failed message %s</td><td>%s</td></tr>'
+                                     % (count,
                                     single_history['failed_message']))
 
                     lines.append('<tr><td>Links</td><td>')
-                    lines.append('%s<br>' % html_link(obj['statuslink']))
+                    lines.append('%s<br>' % html_link(obj['statuslink'
+                                 ]))
                     lines.append('%s<br>' % html_link(obj['mrsllink']))
-                    lines.append('%s<br>' % html_link(obj['resubmitlink']))
-                    lines.append('%s<br>' % html_link(obj['cancellink']))
-                    lines.append('%s<br>' % html_link(obj['jobschedulelink']))
-                    lines.append('%s<br>' % html_link(obj['liveoutputlink']))
+                    lines.append('%s<br>' % html_link(obj['resubmitlink'
+                                 ]))
+                    lines.append('%s<br>' % html_link(obj['cancellink'
+                                 ]))
+                    lines.append('%s<br>'
+                                  % html_link(obj['jobschedulelink']))
+                    lines.append('%s<br>'
+                                  % html_link(obj['liveoutputlink']))
                     if obj.has_key('outputfileslink'):
-                        lines.append('<br>%s' % html_link(obj['outputfileslink'
-                                ]))
+                        lines.append('<br>%s'
+                                 % html_link(obj['outputfileslink']))
                     lines.append('</td></tr><tr><td><br></td></tr>')
 
                 lines.append('</table>')
@@ -421,39 +440,46 @@ def html_format(ret_val, ret_msg, out_obj):
             resubmitobjs = i['resubmitobjs']
             if len(resubmitobjs) == 0:
                 continue
-            lines.append("<table class='resubmit'><tr><th>Job ID</th><th>Resubmit status</th><th>New jobid</th><th>Message</th></tr>")
+            lines.append("<table class='resubmit'><tr><th>Job ID</th><th>Resubmit status</th><th>New jobid</th><th>Message</th></tr>"
+                         )
             for resubmitobj in resubmitobjs:
-                lines.append('<tr>%s</tr>'\
-                     % html_table_if_have_keys(resubmitobj, ['job_id',
-                        'status', 'new_job_id', 'message']))
+                lines.append('<tr>%s</tr>'
+                              % html_table_if_have_keys(resubmitobj,
+                             ['job_id', 'status', 'new_job_id',
+                             'message']))
             lines.append('</table>')
         elif i['object_type'] == 'changedstatusjobs':
             changedstatusjobs = i['changedstatusjobs']
             if len(changedstatusjobs) == 0:
                 continue
-            lines.append("<table class='changedstatusjobs'><tr><th>Job ID</th><th>Old status</th><th>New status</th><th>Message</th></tr>")
+            lines.append("<table class='changedstatusjobs'><tr><th>Job ID</th><th>Old status</th><th>New status</th><th>Message</th></tr>"
+                         )
             for changedstatus in changedstatusjobs:
-                lines.append('<tr>%s</tr>'\
-                     % html_table_if_have_keys(changedstatus, ['job_id'
-                        , 'oldstatus', 'newstatus', 'message']))
+                lines.append('<tr>%s</tr>'
+                              % html_table_if_have_keys(changedstatus,
+                             ['job_id', 'oldstatus', 'newstatus',
+                             'message']))
             lines.append('</table>')
         elif i['object_type'] == 'saveschedulejobs':
             saveschedulejobs = i['saveschedulejobs']
             if len(saveschedulejobs) == 0:
                 continue
-            lines.append("<table class='saveschedulejobs'><tr><th>Job ID</th><th>Message</th></tr>")
+            lines.append("<table class='saveschedulejobs'><tr><th>Job ID</th><th>Message</th></tr>"
+                         )
             for saveschedule in saveschedulejobs:
-                lines.append('<tr>%s</tr>'\
-                     % html_table_if_have_keys(saveschedule, ['job_id',
-                        'message']))
+                lines.append('<tr>%s</tr>'
+                              % html_table_if_have_keys(saveschedule,
+                             ['job_id', 'message']))
             lines.append('</table>')
         elif i['object_type'] == 'stats':
             stats = i['stats']
             if len(stats) == 0:
                 continue
-            lines.append("<table class='stats'><tr><th>Filename</th><th>Device</th><th>Inode</th><th>Mode</th><th>Nlink</th><th>User ID</th><th>Group ID</th><th>RDEV</th><th>Size</th><th>Last accessed</th><th>Modified time</th><th>Created time</th></tr>")
+            lines.append("<table class='stats'><tr><th>Filename</th><th>Device</th><th>Inode</th><th>Mode</th><th>Nlink</th><th>User ID</th><th>Group ID</th><th>RDEV</th><th>Size</th><th>Last accessed</th><th>Modified time</th><th>Created time</th></tr>"
+                         )
             for stat in stats:
-                lines.append('<tr>%s</tr>' % html_table_if_have_keys(stat, [
+                lines.append('<tr>%s</tr>'
+                              % html_table_if_have_keys(stat, [
                     'name',
                     'device',
                     'inode',
@@ -473,10 +499,12 @@ def html_format(ret_val, ret_msg, out_obj):
             if len(fileuploadobjs) == 0:
                 lines.append('No jobs submitted!')
             else:
-                lines.append("<table class='fileupload'><tr><th>Filename</th><th>Saved</th><th>Extract packages</th><th>Submit flag</th><th>File size</th><th>Message</th></tr>")
+                lines.append("<table class='fileupload'><tr><th>Filename</th><th>Saved</th><th>Extract packages</th><th>Submit flag</th><th>File size</th><th>Message</th></tr>"
+                             )
                 for fileuploadobj in fileuploadobjs:
-                    lines.append('<tr>%s</tr>'\
-                         % html_table_if_have_keys(fileuploadobj, [
+                    lines.append('<tr>%s</tr>'
+                                  % html_table_if_have_keys(fileuploadobj,
+                                 [
                         'name',
                         'saved',
                         'extract_packages',
@@ -487,9 +515,11 @@ def html_format(ret_val, ret_msg, out_obj):
                 lines.append('</table>')
         elif i['object_type'] == 'jobobj':
             job_dict = i['jobobj'].to_dict()
-            lines.append("<table class='jobobj'><tr><th>Field</th><th>Value</th></tr>")
+            lines.append("<table class='jobobj'><tr><th>Field</th><th>Value</th></tr>"
+                         )
             for (key, val) in job_dict.items():
-                lines.append('<tr><td>%s</td><td>%s</td></tr>' % (key, val))
+                lines.append('<tr><td>%s</td><td>%s</td></tr>' % (key,
+                             val))
             lines.append('</table>')
         elif i['object_type'] == 'html_form':
             lines.append(i['text'])
@@ -507,19 +537,20 @@ def html_format(ret_val, ret_msg, out_obj):
             lines.append('<td>Info</td>')
             cols += 1
             if 'full' == i['style']:
-                lines.append("<td><input type='checkbox' name='allbox' value='allbox' onclick='un_check()'></td>")
+                lines.append("<td><input type='checkbox' name='allbox' value='allbox' onclick='un_check()'></td>"
+                             )
                 cols += 1
 
                 # lines.append("<td><br></td>"
                 # cols += 1
 
-                lines.append('<td colspan=%d>Select/deselect all files</td>'\
-                     % (columns - cols))
+                lines.append('<td colspan=%d>Select/deselect all files</td>'
+                              % (columns - cols))
             lines.append('</tr>')
             lines.append('<tr>')
             cols = 0
-            lines.append('<td colspan=%d><hr width=100%%></td>' % (columns
-                     - cols))
+            lines.append('<td colspan=%d><hr width=100%%></td>'
+                          % (columns - cols))
             lines.append('</tr>')
 
             for dir_listing in i['dir_listings']:
@@ -529,12 +560,12 @@ def html_format(ret_val, ret_msg, out_obj):
                         directory = entry
                         if directory == dir_listing['entries'][0]:
                             lines.append('<tr>')
-                            lines.append('<td width=20%%>%s:<br>total %s</td>'\
-                                 % (dir_listing['relative_path'],
+                            lines.append('<td width=20%%>%s:<br>total %s</td>'
+                                     % (dir_listing['relative_path'],
                                     len(dir_listing['entries'])))
                             cols += 1
-                            lines.append('<td><br></td>' * (columns - cols)\
-                                 + '</tr>')
+                            lines.append('<td><br></td>' * (columns
+                                     - cols) + '</tr>')
                             cols = columns
 
                         lines.append('<tr>')
@@ -542,26 +573,26 @@ def html_format(ret_val, ret_msg, out_obj):
                         lines.append('<td><br></td>')
                         cols += 1
                         if 'full' == i['style']:
-                            lines.append("<td><input type='checkbox' name='path' value='%s'></td>"\
-                                 % directory['dirname_with_dir'])
+                            lines.append("<td><input type='checkbox' name='path' value='%s'></td>"
+                                     % directory['dirname_with_dir'])
                             cols += 1
                         if directory.has_key('actual_dir'):
-                            lines.append('<td>%s</td>' % directory['actual_dir'
-                                    ])
+                            lines.append('<td>%s</td>'
+                                     % directory['actual_dir'])
                         else:
                             lines.append('<td><br></td>')
                         cols += 1
-                        lines.append("<td><a href='ls.py?path=%s;flags=%s;output_format=html'>show</a></td><td>DIR</td>"\
-                             % (directory['dirname_with_dir'],
+                        lines.append("<td><a href='ls.py?path=%s;flags=%s;output_format=html'>show</a></td><td>DIR</td>"
+                                 % (directory['dirname_with_dir'],
                                 dir_listing['flags']))
                         cols += 1
-                        lines.append("<td><a href='rmdir.py?path=%s;output_format=html'>remove</a></td>"\
-                             % directory['dirname_with_dir'])
-                        cols += 1                        
+                        lines.append("<td><a href='rmdir.py?path=%s;output_format=html'>remove</a></td>"
+                                 % directory['dirname_with_dir'])
+                        cols += 1
                         lines.append('<td>%s</td>' % directory['name'])
                         cols += 1
-                        lines.append('<td><br></td>' * (columns - cols)\
-                             + '</tr>')
+                        lines.append('<td><br></td>' * (columns - cols)
+                                 + '</tr>')
                         cols = columns
                         lines.append('</tr>')
                     elif 'file' == entry['type']:
@@ -571,32 +602,33 @@ def html_format(ret_val, ret_msg, out_obj):
                         lines.append('<td><br></td>')
                         cols += 1
                         if 'full' == i['style']:
-                            lines.append("<td><input type='checkbox' name='path' value='%s'></td>"\
-                                 % this_file['file_with_dir'])
+                            lines.append("<td><input type='checkbox' name='path' value='%s'></td>"
+                                     % this_file['file_with_dir'])
                             cols += 1
                         if this_file.has_key('long_format'):
-                            lines.append('<td>%s</td>'\
-                                 % this_file['long_format'])
+                            lines.append('<td>%s</td>'
+                                     % this_file['long_format'])
                         else:
                             lines.append('<td><br></td>')
                         cols += 1
-                        lines.append("<td><a href='/%s/%s'>show</a></td>"\
-                             % ('cert_redirect',
+                        lines.append("<td><a href='/%s/%s'>show</a></td>"
+                                 % ('cert_redirect',
                                 this_file['file_with_dir']))
                         cols += 1
-                        lines.append("<td><a href='editor.py?path=%s;output_format=html'>edit</a></td>"\
-                             % this_file['file_with_dir'])
+                        lines.append("<td><a href='editor.py?path=%s;output_format=html'>edit</a></td>"
+                                 % this_file['file_with_dir'])
                         cols += 1
-                        lines.append("<td><a href='rm.py?path=%s;output_format=html'>delete</a></td>"\
-                             % this_file['file_with_dir'])
+                        lines.append("<td><a href='rm.py?path=%s;output_format=html'>delete</a></td>"
+                                 % this_file['file_with_dir'])
                         cols += 1
                         lines.append('<td>%s</td>' % this_file['name'])
                         cols += 1
                         if this_file.get('show_dest', False):
-                            lines.append('<td>%s</td>' % this_file['dest'])
+                            lines.append('<td>%s</td>'
+                                     % this_file['dest'])
                             cols += 1
-                        lines.append('<td><br></td>' * (columns - cols)\
-                             + '</tr>')
+                        lines.append('<td><br></td>' * (columns - cols)
+                                 + '</tr>')
                         cols = columns
                         lines.append('</tr>')
             lines.append('</form></table>')
@@ -606,7 +638,8 @@ def html_format(ret_val, ret_msg, out_obj):
             if len(filewcs) == 0:
                 lines.append('No files to run wc on')
             else:
-                lines.append('<table class="wc"><tr><th>File</th><th>Lines</th><th>Words</th><th>Bytes</th></tr>')
+                lines.append('<table class="wc"><tr><th>File</th><th>Lines</th><th>Words</th><th>Bytes</th></tr>'
+                             )
                 for filewc in filewcs:
                     lines.append('<tr><td>%s</td>' % filewc['name'])
                     lines.append('<td>')
@@ -630,24 +663,27 @@ def html_format(ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'list':
             lines.append('<ul>')
             for list_item in i['list']:
-                lines.append(('<li>%s</li>' % list_item).replace('\n', '<br>'))
+                lines.append(('<li>%s</li>' % list_item).replace('\n',
+                             '<br>'))
             lines.append('</ul>')
         elif i['object_type'] == 'linklist':
             links = i['links']
             if len(links) == 0:
                 lines.append('No links found!')
             else:
-                lines.append('<table class="links"><th>Name</th><th>Link</th></tr>')
+                lines.append('<table class="links"><th>Name</th><th>Link</th></tr>'
+                             )
                 for link in links:
-                    lines.append('<tr><td>%s</td><td>%s</td></tr>'\
-                         % (link['text'], html_link(link)))
+                    lines.append('<tr><td>%s</td><td>%s</td></tr>'
+                                  % (link['text'], html_link(link)))
                 lines.append('</table>')
         elif i['object_type'] == 'multilinkline':
             links = i['links']
             if len(links) == 0:
                 lines.append('No links found!')
             else:
-                lines.append(' / '.join([html_link(link) for link in links]))
+                lines.append(' / '.join([html_link(link) for link in
+                             links]))
         elif i['object_type'] == 'file':
             lines.append(i['name'])
         elif i['object_type'] == 'submitstatuslist':
@@ -655,43 +691,51 @@ def html_format(ret_val, ret_msg, out_obj):
             if len(submitstatuslist) == 0:
                 lines.append('No job submit status found!')
             else:
-                lines.append('<table class="submitstatus"><th>File</th><th>Status</th><th>Job Id</th><th>Message</th></tr>')
+                lines.append('<table class="submitstatus"><th>File</th><th>Status</th><th>Job Id</th><th>Message</th></tr>'
+                             )
                 for submitstatus in submitstatuslist:
-                    lines.append('<tr>%s</tr>'\
-                         % html_table_if_have_keys(submitstatus, ['name'
-                            , 'status', 'job_id', 'message']))
+                    lines.append('<tr>%s</tr>'
+                                  % html_table_if_have_keys(submitstatus,
+                                 ['name', 'status', 'job_id', 'message'
+                                 ]))
                 lines.append('</table>')
         elif i['object_type'] == 'objects':
             objects = i['objects']
             if len(objects) == 0:
                 lines.append('No objects found!')
             else:
-                lines.append('<table class="objects"><th>Object</th><th>Info</th></tr>')
+                lines.append('<table class="objects"><th>Object</th><th>Info</th></tr>'
+                             )
                 for (name, val) in objects:
-                    lines.append('<tr><td>%s</td><td>%s</td></tr>' % (name,
-                            val))
+                    lines.append('<tr><td>%s</td><td>%s</td></tr>'
+                                  % (name, val))
                 lines.append('</table>')
         elif i['object_type'] == 'sandboxinfos':
             sandboxinfos = i['sandboxinfos']
             if len(sandboxinfos) == 0:
                 lines.append('No sandboxes found!')
             else:
-                lines.append('<table class="sandboxinfo"><th>Username</th><th>Resource(s)</th><th>Jobs</th><th>Walltime</th></tr>')
+                lines.append('<table class="sandboxinfo"><th>Username</th><th>Resource(s)</th><th>Jobs</th><th>Walltime</th></tr>'
+                             )
                 for sandboxinfo in sandboxinfos:
-                    lines.append('<tr>%s</tr>'\
-                         % html_table_if_have_keys(sandboxinfo,
-                            ['username', 'resource', 'jobs', 'walltime']))
+                    lines.append('<tr>%s</tr>'
+                                  % html_table_if_have_keys(sandboxinfo,
+                                 ['username', 'resource', 'jobs',
+                                 'walltime']))
                 lines.append('</table>')
         elif i['object_type'] == 'runtimeenvironments':
             runtimeenvironments = i['runtimeenvironments']
             if len(runtimeenvironments) == 0:
                 lines.append('No runtime environments found!')
             else:
-                lines.append('<table class="runtimeenvs"><th>Name</th><th>Description</th><th>Details</th><th>Creator</th></tr>')
+                lines.append('<table class="runtimeenvs"><th>Name</th><th>Description</th><th>Details</th><th>Creator</th></tr>'
+                             )
                 for single_re in runtimeenvironments:
-                    lines.append('<tr><td>%s</td><td>%s</td><td><a href=showre.py?re_name=%s>View</a></td><td>%s</td></tr>'\
-                         % (single_re['name'], single_re['description'
-                            ], single_re['name'], single_re['creator']))
+                    lines.append('<tr><td>%s</td><td>%s</td><td><a href=showre.py?re_name=%s>View</a></td><td>%s</td></tr>'
+                                  % (single_re['name'],
+                                 single_re['description'],
+                                 single_re['name'], single_re['creator'
+                                 ]))
                 lines.append('</table>')
         elif i['object_type'] == 'runtimeenvironment':
             software_html = ''
@@ -727,89 +771,100 @@ def html_format(ret_val, ret_msg, out_obj):
                 environment_html += '</table>'
 
             lines.append('<table class="runtimeenvdetails">')
-            lines.append('<tr><td>Name</td><td>%s</td></tr>' % i['name'])
-            lines.append('<tr><td>Description</td><td>%s</td></tr>'\
-                 % i['description'])
-            lines.append('<tr><td>Creator</td><td>%s</td></tr>' % i['creator'])
-            lines.append('<tr><td>Created</td><td>%s</td></tr>' % i['created'])
-            lines.append('<tr><td>Job count</td><td>%s</td></tr>'\
-                 % i['job_count'])
-            lines.append('<tr><td>Resource count</td><td>%s</td></tr>'\
-                 % i['resource_count'])
-            lines.append('<tr><td>Needed software</td><td>%s</td></tr>'\
-                 % software_html)
-            lines.append("<tr><td>Testprocedure</td><td valign='top'>%s</td></tr>"\
-                 % i['testprocedure'])
-            lines.append("<tr><td>Verifystdout</td><td valign='top'>%s</td></tr>"\
-                 % i['verifystdout'])
-            lines.append("<tr><td>Verifystderr</td><td valign='top'>%s</td></tr>"\
-                 % i['verifystderr'])
-            lines.append("<tr><td>Verifystatus</td><td valign='top'>%s</td></tr>"\
-                 % i['verifystatus'])
-            lines.append('<tr><td>Environments</td><td>%s</td></tr>'\
-                 % environment_html)
+            lines.append('<tr><td>Name</td><td>%s</td></tr>' % i['name'
+                         ])
+            lines.append('<tr><td>Description</td><td>%s</td></tr>'
+                          % i['description'])
+            lines.append('<tr><td>Creator</td><td>%s</td></tr>'
+                          % i['creator'])
+            lines.append('<tr><td>Created</td><td>%s</td></tr>'
+                          % i['created'])
+            lines.append('<tr><td>Job count</td><td>%s</td></tr>'
+                          % i['job_count'])
+            lines.append('<tr><td>Resource count</td><td>%s</td></tr>'
+                          % i['resource_count'])
+            lines.append('<tr><td>Needed software</td><td>%s</td></tr>'
+                          % software_html)
+            lines.append("<tr><td>Testprocedure</td><td valign='top'>%s</td></tr>"
+                          % i['testprocedure'])
+            lines.append("<tr><td>Verifystdout</td><td valign='top'>%s</td></tr>"
+                          % i['verifystdout'])
+            lines.append("<tr><td>Verifystderr</td><td valign='top'>%s</td></tr>"
+                          % i['verifystderr'])
+            lines.append("<tr><td>Verifystatus</td><td valign='top'>%s</td></tr>"
+                          % i['verifystatus'])
+            lines.append('<tr><td>Environments</td><td>%s</td></tr>'
+                          % environment_html)
             lines.append('</table>')
         elif i['object_type'] == 'vgrid_list':
             if len(i['vgrids']) > 0:
                 vgrids = i['vgrids']
                 lines.append("<table class='vgrids'>")
-                lines.append('<tr class="title"><td>Name</td><td>Actions</td><td class=centertext colspan=2>Private page</td><td class=centertext colspan=2>Public page</td><td class=centertext colspan=2>Wiki</td><td class=centertext colspan=2>Monitor</td></tr>')
+                lines.append('<tr class="title"><td>Name</td><td>Actions</td><td class=centertext colspan=2>Private page</td><td class=centertext colspan=2>Public page</td><td class=centertext colspan=2>Wiki</td><td class=centertext colspan=2>Monitor</td></tr>'
+                             )
                 for obj in vgrids:
                     lines.append('<tr>')
                     lines.append('<td>%s</td>' % obj['name'])
                     lines.append('<td>')
                     if obj.has_key('administratelink'):
-                        lines.append('%s' % html_link(obj['administratelink']))
+                        lines.append('%s'
+                                 % html_link(obj['administratelink']))
                     else:
                         lines.append('-----')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('editprivatelink'):
-                        lines.append('%s ' % html_link(obj['editprivatelink']))
+                        lines.append('%s '
+                                 % html_link(obj['editprivatelink']))
                     else:
                         lines.append('-----')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('enterprivatelink'):
-                        lines.append('%s ' % html_link(obj['enterprivatelink']))
+                        lines.append('%s '
+                                 % html_link(obj['enterprivatelink']))
                     else:
                         lines.append('-----')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('editpubliclink'):
-                        lines.append('%s ' % html_link(obj['editpubliclink']))
+                        lines.append('%s '
+                                 % html_link(obj['editpubliclink']))
                     else:
                         lines.append('-----')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('enterpubliclink'):
-                        lines.append('%s ' % html_link(obj['enterpubliclink']))
+                        lines.append('%s '
+                                 % html_link(obj['enterpubliclink']))
                     else:
                         lines.append('-----')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('privatewikilink'):
-                        lines.append('%s ' % html_link(obj['privatewikilink']))
+                        lines.append('%s '
+                                 % html_link(obj['privatewikilink']))
                     else:
                         lines.append('-----')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('publicwikilink'):
-                        lines.append('%s ' % html_link(obj['publicwikilink']))
+                        lines.append('%s '
+                                 % html_link(obj['publicwikilink']))
                     else:
                         lines.append('-----')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('privatemonitorlink'):
-                        lines.append('%s ' % html_link(obj['privatemonitorlink'
-                                ]))
+                        lines.append('%s '
+                                 % html_link(obj['privatemonitorlink']))
                     else:
                         lines.append('-----')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('publicmonitorlink'):
-                        lines.append('%s ' % html_link(obj['publicmonitorlink'
-                                ]))
+                        lines.append('%s '
+                                 % html_link(obj['publicmonitorlink']))
                     else:
                         lines.append('-----')
                     lines.append('</td>')

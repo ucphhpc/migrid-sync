@@ -81,8 +81,7 @@ def main(client_id, user_arguments_dict):
 
         output_objects.append({'object_type': 'warning', 'text': msg})
 
-    if not vgrid_is_owner(vgrid_name, client_id,
-                          configuration):
+    if not vgrid_is_owner(vgrid_name, client_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'You must be an owner of the vgrid to remove a vgrid resource!'
                               })

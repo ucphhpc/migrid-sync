@@ -75,9 +75,9 @@ class FirstFitScheduler(Scheduler):
                 job['EXEC_RESOURCE'] = resource_conf['RESOURCE_ID']
                 self.job_queue.dequeue_job(i)
                 self.update_history(job, resource_conf)
-                self.logger.info('schedule: scheduling job %s for %s' % \
-                                 (job['JOB_ID'], resource_conf['HOSTURL'
-                                 ]))
+                self.logger.info('schedule: scheduling job %s for %s'
+                                  % (job['JOB_ID'],
+                                 resource_conf['HOSTURL']))
 
                 # PrintJob(job)
 
@@ -91,8 +91,8 @@ class FirstFitScheduler(Scheduler):
 
         # No job was found that can be executed on the resource
 
-        self.logger.info('schedule: found no suitable job for %s' % \
-                         resource_conf['HOSTURL'])
+        self.logger.info('schedule: found no suitable job for %s'
+                          % resource_conf['HOSTURL'])
 
         return None
 

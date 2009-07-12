@@ -76,8 +76,7 @@ def parse(
         global_dict[key] = value_dict['Value']
 
     vgrid_list = global_dict['VGRID']
-    allowed_vgrids = user_allowed_vgrids(configuration,
-            client_id)
+    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
 
     # Replace ANY wildcard with all allowed vgrids (on time of submit!)
 
@@ -167,7 +166,8 @@ def parse(
 
     # normalize any path fields to be taken relative to home
 
-    for field in ('INPUTFILES', 'OUTPUTFILES', 'EXECUTABLES', 'VERIFYFILES'):
+    for field in ('INPUTFILES', 'OUTPUTFILES', 'EXECUTABLES',
+                  'VERIFYFILES'):
         if not global_dict.has_key(field):
             continue
         normalized_field = []
@@ -177,16 +177,16 @@ def parse(
 
                 # deny leading slashes i.e. force absolute to relative paths
 
-                part = part.lstrip('/')                
+                part = part.lstrip('/')
                 if part.find('://') != -1:
 
                     # keep external targets as is - normpath breaks '://'
-                    
+
                     normalized_parts.append(part)
                 else:
 
                     # normalize path to avoid e.g. './' which breaks dir handling on resource
-                    
+
                     normalized_parts.append(os.path.normpath(part))
             normalized_field.append(' '.join(normalized_parts))
         global_dict[field] = normalized_field
@@ -195,12 +195,12 @@ def parse(
 
     replaced_dict = parser.replace_special(global_dict)
 
-
     # save file
 
     if outfile == 'not_specified':
-        filename = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                                            client_dir, job_id + '.mRSL'))
+        filename = \
+            os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                            client_dir, job_id + '.mRSL'))
     else:
         filename = outfile
 

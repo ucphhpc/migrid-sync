@@ -87,8 +87,9 @@ def is_owner(
     logger,
     ):
     """Check that client_id is listed in pickled owners file"""
-    config_path = os.path.abspath(os.path.join(config_home, unique_config_name,
-                                               'owners'))
+
+    config_path = os.path.abspath(os.path.join(config_home,
+                                  unique_config_name, 'owners'))
 
     # Check validity of unique_config_name
 
@@ -102,9 +103,11 @@ def is_owner(
 by client: '%s'
 unique name: '%s'
 
-caller: %s""" % (client_id, unique_config_name, caller))
+caller: %s"""
+                        % (client_id, unique_config_name, caller))
         return False
-    return (is_item_in_pickled_list(config_path, client_id, logger) or \
-            is_item_in_pickled_list(config_path, old_id_format(client_id), logger))
+    return is_item_in_pickled_list(config_path, client_id, logger)\
+         or is_item_in_pickled_list(config_path,
+                                    old_id_format(client_id), logger)
 
 

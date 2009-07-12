@@ -89,8 +89,8 @@ def main(client_id, user_arguments_dict):
     # Add owner
 
     owners_file = base_dir + 'owners'
-    (status, msg) = remove_item_from_pickled_list(owners_file,
-            cert_id, logger, False)
+    (status, msg) = remove_item_from_pickled_list(owners_file, cert_id,
+            logger, False)
 
     if not status:
         output_objects.append({'object_type': 'error_text', 'text'

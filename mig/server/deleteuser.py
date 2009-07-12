@@ -31,11 +31,13 @@ import os
 import sys
 import getopt
 
-from shared.useradm import init_user_adm, delete_user, fill_distinguished_name, \
-     fill_user, distinguished_name_to_user
+from shared.useradm import init_user_adm, delete_user, \
+    fill_distinguished_name, fill_user, distinguished_name_to_user
+
 
 def usage(name='deleteuser.py'):
     """Usage help"""
+
     print """Delete user from MiG user database and file system.
 Usage:
 %(name)s [OPTIONS] FULL_NAME [ORGANIZATION] [STATE] [COUNTRY] \
@@ -53,9 +55,9 @@ Where OPTIONS may be one or more of:
          % {'name': name}
 
 
-
 # ## Main ###
-if "__main__" == __name__:
+
+if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
     verbose = False
@@ -136,6 +138,6 @@ if "__main__" == __name__:
     # Update user data base
 
     delete_user(user_dict, conf_path, db_path, force)
-    
-    print 'DB entry and dirs for %s were removed' % \
-          user_dict['distinguished_name']
+
+    print 'DB entry and dirs for %s were removed'\
+         % user_dict['distinguished_name']

@@ -222,15 +222,16 @@ def handle_package_upload(
 
     submitstatuslist = []
     if submit_mrslfiles:
-        
+
         # Please note that base_dir must end in slash to avoid access to other
         # user dirs when own name is a prefix of another user name
 
-        base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                                client_dir)) + os.sep
+        base_dir = \
+            os.path.abspath(os.path.join(configuration.user_home,
+                            client_dir)) + os.sep
         for mrslfile in mrslfiles_to_parse:
-            (status, parse_msg, job_id) = new_job(mrslfile,
-                    client_id, configuration, False, True)
+            (status, parse_msg, job_id) = new_job(mrslfile, client_id,
+                    configuration, False, True)
             relative_filename = os.sep + mrslfile.replace(base_dir, '')
             submitstatus = {'object_type': 'submitstatus',
                             'name': relative_filename}

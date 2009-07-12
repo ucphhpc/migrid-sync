@@ -43,8 +43,12 @@ from shared.useradm import client_id_dir
 def signature():
     """Signature of the main function"""
 
-    defaults = {'width': ['800'], 'height': ['600'], 'depth': ['16'],
-                'desktopname': ['X11']}
+    defaults = {
+        'width': ['800'],
+        'height': ['600'],
+        'depth': ['16'],
+        'desktopname': ['X11'],
+        }
     return ['html_form', defaults]
 
 
@@ -75,7 +79,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            client_dir)) + os.sep
+                               client_dir)) + os.sep
 
     status = returnvalues.OK
 
@@ -137,8 +141,8 @@ def main(client_id, user_arguments_dict):
         'javascript': script,
         'bodyfunctions': 'onUnLoad="endVNC()"',
         })
-    output_objects.append({'object_type': 'header', 'text': 'Session for: %s' % \
-                           client_id})
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Session for: %s' % client_id})
 
     error = ''
 
@@ -152,16 +156,16 @@ def main(client_id, user_arguments_dict):
     password = ''
 
     valid_display_found = False
-    (stat, msg) = get_users_display_dict(client_id,
-            configuration, logger)
+    (stat, msg) = get_users_display_dict(client_id, configuration,
+            logger)
     if stat == False:
-        output_objects.append({'object_type': 'error_text',
-                               'text': 'Error getting dictionary of live displays %s' % msg})
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Error getting dictionary of live displays %s'
+                               % msg})
         status = returnvalues.CLIENT_ERROR
         return (output_objects, status)
     if stat == -1:
-        logger.info('did not find a display number for %s'
-                     % client_id)
+        logger.info('did not find a display number for %s' % client_id)
         baseVNCport = 8087
         VNC_port_count = 15
         display_number = 1
@@ -189,8 +193,9 @@ def main(client_id, user_arguments_dict):
                         logger)
                 if disp_numb_stat == False:
                     output_objects.append({'object_type': 'error_text',
-                                           'text': 'Error getting dictionary for display %s'
-                                           % disp_numb_ret})
+                            'text'
+                            : 'Error getting dictionary for display %s'
+                             % disp_numb_ret})
                     status = returnvalues.CLIENT_ERROR
                     return (output_objects, status)
                 if disp_numb_ret != -1:
@@ -204,8 +209,8 @@ def main(client_id, user_arguments_dict):
 
                     (passstat, passmsg) = create_vnc_password()
                     if passstat == False:
-                        output_objects.append({'object_type': 'error_text',
-                                               'text': passmsg})
+                        output_objects.append({'object_type'
+                                : 'error_text', 'text': passmsg})
                         status = returnvalues.CLIENT_ERROR
                         logger.error('%s' % passmsg)
                         return (output_objects, status)
@@ -222,9 +227,10 @@ def main(client_id, user_arguments_dict):
                         logger,
                         )
                     if not stat:
-                        output_objects.append({'object_type': 'error_text',
-                                               'text': 'could not set user display active: %s'
-                               % msg})
+                        output_objects.append({'object_type'
+                                : 'error_text', 'text'
+                                : 'could not set user display active: %s'
+                                 % msg})
                         status = returnvalues.CLIENT_ERROR
                         return (output_objects, status)
                     break
@@ -238,8 +244,9 @@ def main(client_id, user_arguments_dict):
                     display_number))
 
     if not valid_display_found:
-        output_objects.append({'object_type': 'error_text',
-                               'text': 'Display unavailable. Click back and try again later.'})
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Display unavailable. Click back and try again later.'
+                              })
         status = returnvalues.CLIENT_ERROR
         logger.error('No available ports for vnc: %s' % error)
         return (output_objects, status)
@@ -268,8 +275,9 @@ def main(client_id, user_arguments_dict):
     result = os.system(launch) >> 8
 
     if result != 0:
-        output_objects.append({'object_type': 'error_text',
-                               'text': 'VNC-server could not start. Read ".vncserver.log" log file in your home dir for specifications.'})
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'VNC-server could not start. Read ".vncserver.log" log file in your home dir for specifications.'
+                              })
         status = returnvalues.CLIENT_ERROR
         logger.error('VNC-server could not start! Result = %d' % result)
         (stat, ret) = set_user_display_inactive(client_id,
@@ -280,8 +288,8 @@ def main(client_id, user_arguments_dict):
         return (output_objects, status)
 
     if not os.path.exists(pidfile):
-        output_objects.append({'object_type': 'error_text',
-                               'text': 'PID file of VNC server not found!'})
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'PID file of VNC server not found!'})
         status = returnvalues.CLIENT_ERROR
         (stat, ret) = set_user_display_inactive(client_id,
                 display_number, configuration, logger)
@@ -289,7 +297,8 @@ def main(client_id, user_arguments_dict):
             logger.error('%s' % ret)
             return (output_objects, status)
 
-        html = '''Opening embedded vnc applet here:<br>
+        html = \
+            '''Opening embedded vnc applet here:<br>
 <b>This will only work if your browser includes a java plugin!</b><br>
 <applet code="vncviewer" archive="vncviewer.jar" codebase="%s/vgrid/" width="%s" height="%s">
 <param name="PORT" value="%s">
@@ -298,17 +307,21 @@ def main(client_id, user_arguments_dict):
 <br>
 VNC port: %s<br>
 Display number: %s<p>
-''' % (configuration.migserver_http_url, repr(int(width) + 50), repr(int(height) + 50),
-           repr(vnc_port), password, vnc_port, display_number)
-    output_objects.append({'object_type': 'html_form',
-                               'text': html})
+'''\
+             % (
+            configuration.migserver_http_url,
+            repr(int(width) + 50),
+            repr(int(height) + 50),
+            repr(vnc_port),
+            password,
+            vnc_port,
+            display_number,
+            )
+    output_objects.append({'object_type': 'html_form', 'text': html})
 
     # TODO: remove temp passwdfile. This should be done when the display has been left.
     # It can't be removed now, since Xvnc reads the password when clients connects again.
 
     return (output_objects, status)
-
-
-
 
 

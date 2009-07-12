@@ -35,6 +35,7 @@ from shared.conf import get_resource_exe, get_configuration_object
 
 def default_ssh_options():
     """Default list of options for ssh connections"""
+
     options = []
     options.append('-o BatchMode=yes')
 
@@ -43,7 +44,8 @@ def default_ssh_options():
     options.append('-o ConnectionAttempts=2')
     options.append('-o ConnectTimeout=10')
     return options
-    
+
+
 def copy_file_to_resource(
     filename,
     dest_path,
@@ -193,12 +195,11 @@ def copy_file_to_exe(
 
         # We do not have exe host keys and don't really care about auth there
 
-        ssh_command = \
-            'scp %s %s %s@%s:%s' % (' '.join(default_ssh_options()),
-                                    os.path.join(resource_config['RESOURCEHOME'],
-                                                 dest_path),
-                                    exe['execution_user'], exe['execution_node'],
-                                    exe['execution_dir'])
+        ssh_command = 'scp %s %s %s@%s:%s'\
+             % (' '.join(default_ssh_options()),
+                os.path.join(resource_config['RESOURCEHOME'],
+                dest_path), exe['execution_user'], exe['execution_node'
+                ], exe['execution_dir'])
 
     copy_attempts = 3
     for attempt in range(copy_attempts):
@@ -326,6 +327,7 @@ def execute_on_resource(
 
     logger.debug('Remote execution ok: %s' % ssh_command)
     return (status, ssh_command)
+
 
 def execute_on_exe(
     command,

@@ -48,13 +48,11 @@ def vgrid_is_default(vgrid):
         return False
 
 
-def vgrid_is_owner_or_member(vgrid_name, client_id,
-                             configuration):
+def vgrid_is_owner_or_member(vgrid_name, client_id, configuration):
     """Combines owner and member check"""
 
     if vgrid_is_owner(vgrid_name, client_id, configuration)\
-         or vgrid_is_member(vgrid_name, client_id,
-                            configuration):
+         or vgrid_is_member(vgrid_name, client_id, configuration):
         return True
     else:
         return False
@@ -97,8 +95,8 @@ def vgrid_is_owner(vgrid_name, client_id, configuration):
 
     if vgrid_is_default(vgrid_name):
         return False
-    return vgrid_is_cert_in_list(vgrid_name, client_id,
-                                 'owners', configuration)
+    return vgrid_is_cert_in_list(vgrid_name, client_id, 'owners',
+                                 configuration)
 
 
 def vgrid_is_member(vgrid_name, client_id, configuration):
@@ -110,8 +108,8 @@ def vgrid_is_member(vgrid_name, client_id, configuration):
 
     if vgrid_is_default(vgrid_name):
         return True
-    return vgrid_is_cert_in_list(vgrid_name, client_id,
-                                 'members', configuration)
+    return vgrid_is_cert_in_list(vgrid_name, client_id, 'members',
+                                 configuration)
 
 
 def vgrid_is_resource(vgrid_name, client_id, configuration):
@@ -121,8 +119,8 @@ def vgrid_is_resource(vgrid_name, client_id, configuration):
 
     if vgrid_is_default(vgrid_name):
         return True
-    return vgrid_is_cert_in_list(vgrid_name, client_id,
-                                 'resources', configuration)
+    return vgrid_is_cert_in_list(vgrid_name, client_id, 'resources',
+                                 configuration)
 
 
 def vgrid_list_subvgrids(vgrid_name, configuration):
@@ -185,8 +183,7 @@ def init_vgrid_script_add_rem(
         msg += 'Illegal vgrid_name: %s' % vgrid_name
         return (False, msg, None)
 
-    if not vgrid_is_owner(vgrid_name, client_id,
-                          configuration):
+    if not vgrid_is_owner(vgrid_name, client_id, configuration):
         msg += 'You must be an owner of the %s vgrid to add/remove %s'\
              % (vgrid_name, subject_type)
         return (False, msg, None)
@@ -207,8 +204,7 @@ def init_vgrid_script_add_rem(
     return (True, msg, [])
 
 
-def init_vgrid_script_list(vgrid_name, client_id,
-                           configuration):
+def init_vgrid_script_list(vgrid_name, client_id, configuration):
     """Helper for vgrid scripts"""
 
     msg = ''
@@ -310,8 +306,7 @@ def user_allowed_vgrids(configuration, client_id):
     if not status:
         return allowed
     for vgrid in all_vgrids:
-        if vgrid_is_owner_or_member(vgrid, client_id,
-                                    configuration):
+        if vgrid_is_owner_or_member(vgrid, client_id, configuration):
             allowed.append(vgrid)
     return allowed
 

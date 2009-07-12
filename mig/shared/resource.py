@@ -135,10 +135,13 @@ def create_new_resource_configuration(
             resource_configfile)
     client_dir = client_id_dir(client_id)
 
-    pending_file = os.path.join(resource_pending, client_dir, resource_configfile)
-    tmpfile = os.path.join(resource_pending, client_dir, resource_configfile + '.tmp')
-    new_configfile = os.path.join(resource_home, resource_name + '.'\
-         + str(resource_identifier), 'config.MiG')
+    pending_file = os.path.join(resource_pending, client_dir,
+                                resource_configfile)
+    tmpfile = os.path.join(resource_pending, client_dir,
+                           resource_configfile + '.tmp')
+    new_configfile = os.path.join(resource_home, resource_name + '.'
+                                   + str(resource_identifier),
+                                  'config.MiG')
 
     if not os.path.exists(pending_file):
         msg += """

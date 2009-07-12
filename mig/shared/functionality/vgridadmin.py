@@ -77,8 +77,8 @@ def main(client_id, user_arguments_dict):
     owner_list = {'object_type': 'vgrid_list', 'vgrids': []}
     member_list = {'object_type': 'vgrid_list', 'vgrids': []}
     for vgrid_name in list:
-        if not vgrid_is_owner_or_member(vgrid_name,
-                client_id, configuration):
+        if not vgrid_is_owner_or_member(vgrid_name, client_id,
+                configuration):
             continue
 
         vgrid_obj = {'object_type': 'vgrid', 'name': vgrid_name}
@@ -99,8 +99,7 @@ def main(client_id, user_arguments_dict):
                 'destination': '%s/vgridpublicwiki/%s'\
                  % (configuration.migserver_http_url, vgrid_name),
                 'text': 'Public'}
-        if vgrid_is_owner(vgrid_name, client_id,
-                          configuration):
+        if vgrid_is_owner(vgrid_name, client_id, configuration):
             vgrid_obj['administratelink'] = {'object_type': 'link',
                     'destination': 'adminvgrid.py?vgrid_name=%s'\
                      % vgrid_name, 'text': 'Administrate'}
@@ -111,8 +110,7 @@ def main(client_id, user_arguments_dict):
                     'destination': 'editor.py?path=public_base/%s/index.html'\
                      % vgrid_name, 'text': 'Edit'}
             owner_list['vgrids'].append(vgrid_obj)
-        elif vgrid_is_member(vgrid_name, client_id,
-                             configuration):
+        elif vgrid_is_member(vgrid_name, client_id, configuration):
 
             member_list['vgrids'].append(vgrid_obj)
 
@@ -139,15 +137,13 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'link', 'text'
                           : 'View a multi VGrid monitor with all the resources you can access'
                           , 'destination'
-                          : 'showvgridmonitor.py?vgrid_name=ALL'
-                          })
+                          : 'showvgridmonitor.py?vgrid_name=ALL'})
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'VGrid request'})
     output_objects.append({'object_type': 'link', 'text'
                           : 'Request ownership or membership of an existing VGrid'
-                          , 'destination'
-                          : 'vgridmemberrequest.py'})
+                          , 'destination': 'vgridmemberrequest.py'})
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Create VGrid'})

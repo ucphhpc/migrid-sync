@@ -87,8 +87,9 @@ def main(client_id, user_arguments_dict):
     # Please note that base_dir must end in slash to avoid access to other
     # resource dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(os.path.join(configuration.resource_home,
-                                            unique_resource_name)) + os.sep
+    base_dir = \
+        os.path.abspath(os.path.join(configuration.resource_home,
+                        unique_resource_name)) + os.sep
 
     # Add owner
 

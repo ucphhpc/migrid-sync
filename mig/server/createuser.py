@@ -35,10 +35,11 @@ import base64
 import pickle
 from getpass import getpass
 
-from shared.useradm import init_user_adm, create_user, fill_distinguished_name, \
-     fill_user
+from shared.useradm import init_user_adm, create_user, \
+    fill_distinguished_name, fill_user
 
-cert_warn = """
+cert_warn = \
+    """
 Please note that you *must* use either the -i CERT_DN option to createuser
 or use importuser instead if you want to use other certificate DN formats
 than the one expected by MiG (/C=.*/ST=.*/L=NA/O=.*/CN=.*/emailAddress=.*)
@@ -48,6 +49,7 @@ Otherwise those users will not be able to access their MiG interfaces!
 
 def usage(name='createuser.py'):
     """Usage help"""
+
     print """Create user in the MiG user database and file system.
 %(cert_warn)s
 Usage:
@@ -66,11 +68,12 @@ Where OPTIONS may be one or more of:
    -u USER_FILE        Read user information from pickle file
    -v                  Be verbose
 """\
-         % {'name': name, 'cert_warn':cert_warn }
+         % {'name': name, 'cert_warn': cert_warn}
 
 
 # ## Main ###
-if "__main__" == __name__:
+
+if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
     verbose = False
@@ -132,7 +135,7 @@ if "__main__" == __name__:
             user_dict['password'] = args[6]
         except IndexError:
             print 'Error: too few arguments given (expected 7 got %d)'\
-                  % len(args)
+                 % len(args)
             usage()
             sys.exit(1)
     elif user_file:
@@ -156,7 +159,7 @@ if "__main__" == __name__:
         user_dict['password'] = getpass('Password: ')
 
     # Encode password if not already encoded
-    
+
     try:
         base64.b64decode(user_dict['password'])
     except TypeError:
@@ -165,8 +168,8 @@ if "__main__" == __name__:
     # Default to one year of certificate validity (only used by CA scripts)
 
     if not user_dict.has_key('expire'):
-        user_dict['expire'] = int(time.time() + (((2 * 365.25) * 24) * 60)
-                                  * 60)
+        user_dict['expire'] = int(time.time() + (((2 * 365.25) * 24)
+                                   * 60) * 60)
     if user_id:
         user_dict['distinguished_name'] = user_id
     elif not user_dict.has_key('distinguished_name'):
@@ -182,8 +185,8 @@ if "__main__" == __name__:
 
     create_user(user_dict, conf_path, db_path, force)
 
-    print 'DB entry and dirs for %s were created or updated' % \
-          user_dict['distinguished_name']
+    print 'DB entry and dirs for %s were created or updated'\
+         % user_dict['distinguished_name']
     if user_file:
         print 'Cleaning up tmp file: %s' % user_file
         os.remove(user_file)

@@ -345,7 +345,7 @@ def main(client_id, user_arguments_dict):
         if os.path.isdir(resource_dir):
             unique_resource_name = resource_dir.replace(base, '')
             if is_owner(client_id, unique_resource_name,
-                    configuration.resource_home, logger):
+                        configuration.resource_home, logger):
                 raw_conf_file = os.path.join(resource_dir, 'config.MiG')
                 owners_file = os.path.join(resource_dir, 'owners')
                 owner_list = unpickle(owners_file, logger)
@@ -365,9 +365,10 @@ def main(client_id, user_arguments_dict):
                 except:
                     raw_conf = ['']
 
-                quick_res[unique_resource_name] = {'object_type': 'link',
-                        'text': '%s' % unique_resource_name,
-                        'destination': '#%s' % unique_resource_name}
+                quick_res[unique_resource_name] = \
+                    {'object_type': 'link', 'text': '%s'\
+                      % unique_resource_name, 'destination': '#%s'\
+                      % unique_resource_name}
                 res_html = display_resource(
                     unique_resource_name,
                     raw_conf,

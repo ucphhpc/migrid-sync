@@ -41,8 +41,7 @@ from shared.vgrid import vgrid_is_owner_or_member
 
 # ## Main ###
 
-(logger, configuration, client_id, o) = \
-    init_cgi_script_with_cert()
+(logger, configuration, client_id, o) = init_cgi_script_with_cert()
 
 fieldstorage = cgi.FieldStorage()
 if not fieldstorage.getfirst('vgrid_name', '') == '':
@@ -71,12 +70,10 @@ filename = private_base_dir + vgrid_name + os.sep + specified_filename
 if not valid_dir_input(private_base_dir, specified_filename):
     o.out('Illegal file: %s' % specified_filename)
     logger.warning("showvgridprivatefile registered possible illegal directory traversal attempt by '%s': vgrid name '%s', file '%s'"
-                    % (client_id, vgrid_name,
-                   specified_filename))
+                    % (client_id, vgrid_name, specified_filename))
     o.reply_and_exit(o.CLIENT_ERROR)
 
-if not vgrid_is_owner_or_member(vgrid_name, client_id,
-                                configuration):
+if not vgrid_is_owner_or_member(vgrid_name, client_id, configuration):
     o.client('Failure: You (%s) must be an owner or member of %s vgrid to access the entry page.'
               % (client_id, vgrid_name))
     o.reply_and_exit(o.CLIENT_ERROR)

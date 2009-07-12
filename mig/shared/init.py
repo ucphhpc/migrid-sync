@@ -32,6 +32,7 @@ import sys
 
 from shared.conf import get_configuration_object
 
+
 def initialize_main_variables(op_title=True, op_header=True,
                               op_menu=True):
     """Script initialization is identical for most scripts in 

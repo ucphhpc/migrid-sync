@@ -49,15 +49,14 @@ def initialize_and_get_display_dict_filename(configuration, logger):
     return (True, filename)
 
 
-def get_users_display_number(client_id, configuration,
-                             logger):
+def get_users_display_number(client_id, configuration, logger):
     (init_ret, filename) = \
         initialize_and_get_display_dict_filename(configuration, logger)
     if not init_ret:
         return (False, 'could not initialize')
 
-    (key, value) = get_users_display_dict(client_id,
-            configuration, logger)
+    (key, value) = get_users_display_dict(client_id, configuration,
+            logger)
     logger.error('karlsen debug: %s' % key)
     logger.error('karlsen debug: %s' % value)
 
@@ -113,8 +112,7 @@ def set_user_display_inactive(
     if current_display != display_number:
         return (False,
                 'user %s had display %s registered in dict, but specified display_number in set_user_display_inactive was %s'
-                 % (client_id, current_display,
-                display_number))
+                 % (client_id, current_display, display_number))
 
     # remove entry from dict and pickle it
 
@@ -194,9 +192,9 @@ def set_user_display_active(
 
     # register display
 
-        dict[display_number] = \
-            {'client_id': client_id,
-             'vnc_port': vnc_port, 'password': password}
+        dict[display_number] = {'client_id': client_id,
+                                'vnc_port': vnc_port,
+                                'password': password}
         pickle_status = pickle(dict, filename, logger)
 
         if not pickle_status:
@@ -217,9 +215,9 @@ def set_user_display_active(
 
     # add display to dict
 
-        dict[display_number] = \
-            {'client_id': client_id,
-             'vnc_port': vnc_port, 'password': password}
+        dict[display_number] = {'client_id': client_id,
+                                'vnc_port': vnc_port,
+                                'password': password}
         pickle_status = pickle(dict, filename, logger)
 
         if not pickle_status:
@@ -227,14 +225,13 @@ def set_user_display_active(
                      % (filename, dict[display_number]))
 
         logger.info('successfuly registered that display %s is in use by %s in %s %s'
-                     % (display_number, client_id, dict,
-                    filename))
+                     % (display_number, client_id, dict, filename))
         return (True, '')
 
 
 # test of functions
 
-if "__main__" == __name__:
+if '__main__' == __name__:
     print '*** Testing livedisplayfunctions ***'
 
     # from shared.cgishared import init_cgiscript_possibly_with_cert
@@ -243,6 +240,6 @@ if "__main__" == __name__:
     client_id = 'Henrik_Hoey_Karlsen3'
     configuration = get_configuration_object()
     logger = configuration.logger
-    (stat, msg) = get_users_display_dict(client_id,
-            configuration, logger)
+    (stat, msg) = get_users_display_dict(client_id, configuration,
+            logger)
     print 'users_display_dict status: %s, msg: %s' % (stat, msg)

@@ -68,8 +68,8 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
     unique_resource_name = accepted['unique_resource_name'][-1]
 
-    logger.info('%s attempts to stop frontend at %s',
-                client_id, unique_resource_name)
+    logger.info('%s attempts to stop frontend at %s', client_id,
+                unique_resource_name)
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):

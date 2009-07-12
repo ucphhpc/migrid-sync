@@ -164,8 +164,8 @@ class BestFitScheduler(Scheduler):
 
         # self.ShowHistory()
 
-        self.logger.info('schedule: returning best job: %s %d %f' % \
-                         (best_job['JOB_ID'], best_i, best_fitness))
+        self.logger.info('schedule: returning best job: %s %d %f'
+                          % (best_job['JOB_ID'], best_i, best_fitness))
         return best_job
 
 

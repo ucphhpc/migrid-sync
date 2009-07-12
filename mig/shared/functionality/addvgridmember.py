@@ -70,8 +70,8 @@ def main(client_id, user_arguments_dict):
     # no need to worry about illegal directory traversal through variables
 
     (ret_val, msg, ret_variables) = \
-        init_vgrid_script_add_rem(vgrid_name, client_id,
-                                  cert_id, 'member', configuration)
+        init_vgrid_script_add_rem(vgrid_name, client_id, cert_id,
+                                  'member', configuration)
     if not ret_val:
         output_objects.append({'object_type': 'error_text', 'text'
                               : msg})
@@ -121,7 +121,7 @@ def main(client_id, user_arguments_dict):
     # vgrid dirs when own name is a prefix of another name
 
     base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
-                                            vgrid_name)) + os.sep
+                               vgrid_name)) + os.sep
 
     members_file = base_dir + 'members'
 
@@ -129,7 +129,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     user_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            cert_dir)) + os.sep
+                               cert_dir)) + os.sep
 
     # make sure all dirs can be created (that a file or directory with the same name
     # do not exist prior to adding the member)

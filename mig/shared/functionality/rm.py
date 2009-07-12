@@ -86,8 +86,9 @@ def main(client_id, user_arguments_dict):
         base_dir_no_sessionid = \
             os.path.realpath(configuration.webserver_home) + os.sep
 
-        base_dir = os.path.realpath(os.path.join(configuration.webserver_home,
-                                                 iosessionid)) + os.sep
+        base_dir = \
+            os.path.realpath(os.path.join(configuration.webserver_home,
+                             iosessionid)) + os.sep
         if not os.path.isdir(base_dir):
 
             # deny
@@ -109,9 +110,9 @@ def main(client_id, user_arguments_dict):
         # Please note that base_dir must end in slash to avoid access to other
         # user dirs when own name is a prefix of another user name
 
-        base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            client_dir)) + os.sep
-
+        base_dir = \
+            os.path.abspath(os.path.join(configuration.user_home,
+                            client_dir)) + os.sep
 
     if verbose(flags):
         for flag in flags:
@@ -134,8 +135,8 @@ def main(client_id, user_arguments_dict):
                 # ../*/* is technically allowed to match own files.
 
                 logger.error('Warning: %s tried to %s %s outside own home! (using pattern %s)'
-                              % (client_id, op_name,
-                             real_path, pattern))
+                              % (client_id, op_name, real_path,
+                             pattern))
                 continue
             match.append(real_path)
 

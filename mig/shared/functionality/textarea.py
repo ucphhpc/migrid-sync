@@ -160,7 +160,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            client_dir)) + os.sep
+                               client_dir)) + os.sep
 
     while True:
         (content, file_type) = handle_form_input(filenumber,
@@ -268,7 +268,9 @@ def main(client_id, user_arguments_dict):
                                    + 'filename'])
             if not base_name:
                 output_objects.append({'object_type': 'error_text',
-                        'text': 'No filename found - please make sure you provide a file to upload'})
+                        'text'
+                        : 'No filename found - please make sure you provide a file to upload'
+                        })
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             if not remote_filename:
@@ -347,8 +349,8 @@ def main(client_id, user_arguments_dict):
                        or local_filename.upper().endswith('.TGZ')
                        or local_filename.upper().endswith('.TAR.BZ2')):
                 (status, msg) = handle_package_upload(local_filename,
-                        remote_filename, client_id,
-                        configuration, submit_mrslfiles)
+                        remote_filename, client_id, configuration,
+                        submit_mrslfiles)
                 if not status:
                     output_objects.append({'object_type': 'error_text',
                             'text': 'Error: %s' % msg})
@@ -435,8 +437,8 @@ def main(client_id, user_arguments_dict):
             submitstatus = {'object_type': 'submitstatus',
                             'name': relative_filename}
 
-            (status, newmsg, job_id) = new_job(mrslfile,
-                    client_id, configuration, False, True)
+            (status, newmsg, job_id) = new_job(mrslfile, client_id,
+                    configuration, False, True)
             if not status:
 
                 # output_objects.append({"object_type":"error_text", "text":"%s" % newmsg})

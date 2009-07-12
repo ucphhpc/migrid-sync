@@ -311,9 +311,9 @@ if client_id:
 
     # logger.debug("Certificate found as a user cert: " + client_id)
 
-    fileinfo_dict['base_path'] = os.path.normpath(os.path.join(configuration.user_home,
-                                                               client_dir)) + os.sep
-
+    fileinfo_dict['base_path'] = \
+        os.path.normpath(os.path.join(configuration.user_home,
+                         client_dir)) + os.sep
 elif fileinfo_dict.has_key('iosessionid'):
 
     fileinfo_dict['base_path'] = configuration.webserver_home\

@@ -64,7 +64,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            client_dir)) + os.sep
+                               client_dir)) + os.sep
 
     status = returnvalues.OK
 
@@ -76,13 +76,14 @@ def main(client_id, user_arguments_dict):
         fd.close()
         os.remove(pidfile)
         os.kill(pid, 9)
-        output_objects.append({'object_type': 'text',
-                           'text': 'stopped vnc'})
+        output_objects.append({'object_type': 'text', 'text'
+                              : 'stopped vnc'})
     except Exception, err:
-        logger.error('Unable to extract pid and kill vnc process: %s' % err)
+        logger.error('Unable to extract pid and kill vnc process: %s'
+                      % err)
         status = returnvalues.CLIENT_ERROR
-        output_objects.append({'object_type': 'text',
-                           'text': 'failed to stop vnc'})
+        output_objects.append({'object_type': 'text', 'text'
+                              : 'failed to stop vnc'})
 
     return (output_objects, status)
 

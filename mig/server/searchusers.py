@@ -35,6 +35,7 @@ from shared.useradm import init_user_adm, search_users, default_search
 
 def usage(name='searchusers.py'):
     """Usage help"""
+
     print """Search in MiG user database.
 Usage:
 %(name)s [SEARCH_OPTIONS]
@@ -55,7 +56,8 @@ Each search value can be a string or a pattern with * and ? as wildcards.
 
 
 # ## Main ###
-if "__main__" == __name__:
+
+if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
     user_dict = {}
@@ -99,6 +101,6 @@ if "__main__" == __name__:
     hits = search_users(search_filter, conf_path, db_path)
     for (uid, user_dict) in hits:
         if name_only:
-            print '%s' % (user_dict['full_name'])
+            print '%s' % user_dict['full_name']
         else:
             print '%s : %s' % (uid, user_dict)

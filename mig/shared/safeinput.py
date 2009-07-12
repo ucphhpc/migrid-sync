@@ -36,7 +36,6 @@ from string import letters, digits
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
 from shared.validstring import valid_user_path, valid_dir_input
-     
 
 VALID_PATH_CHARACTERS = letters + digits + '/.,_-+='\
      + ' :;+@%\xe6\xf8\xe5\xc6\xd8\xc5'
@@ -229,7 +228,8 @@ def valid_distinguished_name(
     """
 
     valid_chars = VALID_DN_CHARACTERS + extra_chars
-    __valid_contents(distinguished_name, valid_chars, min_length, max_length)
+    __valid_contents(distinguished_name, valid_chars, min_length,
+                     max_length)
 
 
 def valid_password(

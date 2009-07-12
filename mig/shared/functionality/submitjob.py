@@ -36,7 +36,7 @@ from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.mrslkeywords import get_keywords_dict
 from shared.settings import load_settings
-from shared.useradm import  mrsl_template, get_default_mrsl
+from shared.useradm import mrsl_template, get_default_mrsl
 from shared.useradm import client_id_dir
 
 
@@ -70,7 +70,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            client_dir)) + os.sep
+                               client_dir)) + os.sep
 
     template_path = os.path.join(base_dir, mrsl_template)
 

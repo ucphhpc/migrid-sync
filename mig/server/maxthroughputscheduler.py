@@ -80,8 +80,8 @@ class MaxThroughputScheduler(Scheduler):
             for (key, val) in must_match.items():
                 if not job.has_key(key) or val != job[key]:
                     continue
-            self.logger.debug('Schedule treating job %d: %s' % \
-                              (i, job['JOB_ID']))
+            self.logger.debug('Schedule treating job %d: %s' % (i,
+                              job['JOB_ID']))
             if self.job_fits_resource(job, resource_conf):
                 self.logger.debug('schedule: found suitable job')
                 fit_list.append((i, job))
@@ -90,8 +90,8 @@ class MaxThroughputScheduler(Scheduler):
 
             # No job was found that can be executed on the resource
 
-            self.logger.info('schedule: found no suitable job for %s' % \
-                             resource_conf['HOSTURL'])
+            self.logger.info('schedule: found no suitable job for %s'
+                              % resource_conf['HOSTURL'])
             return None
 
         best_job = None
@@ -108,8 +108,8 @@ class MaxThroughputScheduler(Scheduler):
         self.job_queue.dequeue_job(best_i)
         self.update_history(job, resource_conf)
 
-        self.logger.info('schedule: returning best job: %s %d %f' % \
-                         (best_job['JOB_ID'], best_i, best_fitness))
+        self.logger.info('schedule: returning best job: %s %d %f'
+                          % (best_job['JOB_ID'], best_i, best_fitness))
         return best_job
 
 

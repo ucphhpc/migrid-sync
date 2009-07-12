@@ -69,8 +69,8 @@ def main(client_id, user_arguments_dict):
     # no need to worry about illegal directory traversal through variables
 
     (ret_val, msg, ret_variables) = \
-        init_vgrid_script_add_rem(vgrid_name, client_id,
-                                  cert_id, 'owner', configuration)
+        init_vgrid_script_add_rem(vgrid_name, client_id, cert_id,
+                                  'owner', configuration)
     if not ret_val:
         output_objects.append({'object_type': 'error_text', 'text'
                               : msg})
@@ -88,7 +88,7 @@ def main(client_id, user_arguments_dict):
     # vgrid dirs when own name is a prefix of another name
 
     base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
-                                            vgrid_name)) + os.sep
+                               vgrid_name)) + os.sep
 
     owners_file = os.path.join(base_dir, 'owners')
 
@@ -98,7 +98,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     user_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            cert_dir)) + os.sep
+                               cert_dir)) + os.sep
 
     dst = user_dir + vgrid_name
     try:
@@ -119,8 +119,7 @@ def main(client_id, user_arguments_dict):
 
     # remove symlink to public_base
 
-    public_base_dir = user_dir + 'public_base' + os.sep\
-         + vgrid_name
+    public_base_dir = user_dir + 'public_base' + os.sep + vgrid_name
     try:
         os.remove(public_base_dir)
     except Exception, exc:
@@ -141,8 +140,7 @@ def main(client_id, user_arguments_dict):
 
     # remove symlink to private_base
 
-    private_base_dir = user_dir + 'private_base' + os.sep\
-         + vgrid_name
+    private_base_dir = user_dir + 'private_base' + os.sep + vgrid_name
     try:
         os.remove(private_base_dir)
     except Exception, exc:
@@ -192,9 +190,8 @@ def main(client_id, user_arguments_dict):
 
         # remove empty placeholder dirs in home dir, private_base and public_base dirs
 
-        base_dirs = [user_dir, user_dir
-                      + 'private_base' + os.sep, user_dir
-                      + 'public_base' + os.sep]
+        base_dirs = [user_dir, user_dir + 'private_base' + os.sep,
+                     user_dir + 'public_base' + os.sep]
         for base_dir in base_dirs:
             for loop_count in reverse_list:
 
@@ -234,8 +231,8 @@ def main(client_id, user_arguments_dict):
 
     # remove user from pickled list
 
-    (status, msg) = remove_item_from_pickled_list(owners_file,
-            cert_id, logger, False)
+    (status, msg) = remove_item_from_pickled_list(owners_file, cert_id,
+            logger, False)
     if not status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s of owners of %s' % (msg,

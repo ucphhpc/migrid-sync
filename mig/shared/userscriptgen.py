@@ -1098,7 +1098,8 @@ def status_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'job_status', ['job_list', 'max_job_count'])
+    s += begin_function(lang, 'job_status', ['job_list', 'max_job_count'
+                        ])
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1565,12 +1566,10 @@ for pattern in %s:
         # output warning/error message(s) from expand
         print sys.argv[0] + ": " + ' '.join(src_list)
 """
-        s += \
-            """
+        s += """
         continue
     %s += src_list
-"""\
-             % expanded_list
+""" % expanded_list
     else:
         print 'Error: %s not supported!' % lang
         return ''

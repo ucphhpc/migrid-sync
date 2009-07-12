@@ -155,7 +155,8 @@ def verify_results(job_dict, logger, configuration):
                 continue
 
             job_id = job_dict['JOB_ID']
-            filename = os.path.join(user_home, client_id, job_id + '.' + check)
+            filename = os.path.join(user_home, client_id, job_id + '.'
+                                     + check)
             logger.debug('Matching %s against %s', verifyname, filename)
             match = template_fits_file(verifyname, filename)
             if match:
@@ -184,7 +185,7 @@ def migrated_job(filename, client_id, configuration):
     logger = configuration.logger
     client_dir = client_id_dir(client_id)
     job_path = os.path.abspath(os.path.join(configuration.server_home,
-                                            client_dir, filename))
+                               client_dir, filename))
 
     # unpickle and enqueue received job file
 
@@ -205,8 +206,9 @@ def migrated_job(filename, client_id, configuration):
 
     # save file with other mRSL files
 
-    mrsl_filename = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                                                 client_dir, job_id + '.mRSL'))
+    mrsl_filename = \
+        os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                        client_dir, job_id + '.mRSL'))
 
     try:
         mrsl_file = open(mrsl_filename, 'w')

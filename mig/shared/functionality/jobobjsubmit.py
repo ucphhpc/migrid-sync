@@ -121,8 +121,8 @@ def main(client_id, user_arguments_dict):
 
     # submit it
 
-    (submit_status, newmsg, job_id) = new_job(tmpfile,
-            client_id, configuration, False, True)
+    (submit_status, newmsg, job_id) = new_job(tmpfile, client_id,
+            configuration, False, True)
     if not submit_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : newmsg})
@@ -131,8 +131,9 @@ def main(client_id, user_arguments_dict):
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                                            client_dir)) + os.sep
+    base_dir = \
+        os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                        client_dir)) + os.sep
 
     # job = Job()
 

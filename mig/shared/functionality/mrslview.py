@@ -73,8 +73,9 @@ def main(client_id, user_arguments_dict):
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                                            client_dir)) + os.sep
+    base_dir = \
+        os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                        client_dir)) + os.sep
 
     mrsl_keywords_dict = get_keywords_dict(configuration)
 
@@ -105,8 +106,8 @@ def main(client_id, user_arguments_dict):
                 # ../*/* is technically allowed to match own files.
 
                 logger.error('Warning: %s tried to %s %s outside own home! (%s)'
-                              % (client_id, op_name,
-                             real_path, pattern))
+                              % (client_id, op_name, real_path,
+                             pattern))
                 continue
             match.append(real_path)
 

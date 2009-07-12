@@ -84,7 +84,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            client_dir)) + os.sep
+                               client_dir)) + os.sep
 
     if verbose(flags):
         for flag in flags:
@@ -109,8 +109,8 @@ def main(client_id, user_arguments_dict):
                 # ../*/* is technically allowed to match own files.
 
                 logger.error('Warning: %s tried to %s %s outside own home! (%s)'
-                              % (client_id, op_name,
-                             real_path, pattern))
+                              % (client_id, op_name, real_path,
+                             pattern))
                 continue
             match.append(real_path)
 
@@ -131,17 +131,15 @@ def main(client_id, user_arguments_dict):
 
             try:
                 (job_status, newmsg, job_id) = new_job(real_path,
-                                                       client_id,
-                                                       configuration,
-                                                       False, True)
+                        client_id, configuration, False, True)
             except Exception, exc:
                 logger.error("%s: failed on '%s': %s" % (op_name,
                              relative_path, exc))
                 job_status = False
-                newmsg = "%s failed on '%s' (is it a valid mRSL file?)" % \
-                         (op_name, relative_path)
+                newmsg = "%s failed on '%s' (is it a valid mRSL file?)"\
+                     % (op_name, relative_path)
                 job_id = None
-                
+
             if not job_status:
 
                 # output_objects.append({"object_type":"error_text", "text":"%s" % newmsg})

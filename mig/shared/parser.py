@@ -272,7 +272,8 @@ You supplied: %s
 Keyword example: %s
 Keyword description: %s
 *******************************************************************
--->\n'''\
+-->
+'''\
          % (keyword_with_colons, msg, keyword_data,
             keyword_dict['Example'], keyword_dict['Description'])
     return out

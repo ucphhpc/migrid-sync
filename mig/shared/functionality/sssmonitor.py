@@ -45,8 +45,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False,
-                                  op_menu=client_id)
+        initialize_main_variables(op_header=False, op_menu=client_id)
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
@@ -91,7 +90,7 @@ def main(client_id, user_arguments_dict):
 
         jobs_per_resource = 0
         jobs_per_user = 0
-        
+
         resources_walltime = {}
         walltime_per_resource = datetime.timedelta(0)
         walltime_per_user = datetime.timedelta(0)
@@ -99,43 +98,46 @@ def main(client_id, user_arguments_dict):
         # loop through all resources of each user
 
         for resource in userdb[username][RESOURCES]:
+
             # now find number of jobs successfully executed by resource
 
-            jobs_per_resource = grid_stat.get_value(grid_stat.RESOURCE_TOTAL, resource,
-                    'FINISHED')
+            jobs_per_resource = \
+                grid_stat.get_value(grid_stat.RESOURCE_TOTAL, resource,
+                                    'FINISHED')
             jobs_per_user += jobs_per_resource
             n = {resource: jobs_per_resource}
             resources_jobs.update(n)
-        
-            walltime_per_resource = grid_stat.get_value(grid_stat.RESOURCE_TOTAL, resource, 
-                                                    'USED_WALLTIME')
+
+            walltime_per_resource = \
+                grid_stat.get_value(grid_stat.RESOURCE_TOTAL, resource,
+                                    'USED_WALLTIME')
 
             if walltime_per_resource != 0:
                 if not walltime_per_user:
                     walltime_per_user = walltime_per_resource
                 else:
                     walltime_per_user += walltime_per_resource
-                
+
             n = {resource: walltime_per_resource}
             resources_walltime.update(n)
-            
-            
+
         # if level == "basic":
             # print username,":", jobs_per_user, "jobs"
         # else:
             # print "---- ", username, " ----"
 
-        if group_by == 'users' and (jobs_per_user > 0 or show_all == 'true'):
+        if group_by == 'users' and (jobs_per_user > 0 or show_all
+                                     == 'true'):
             sandboxinfo = {'object_type': 'sandboxinfo'}
             sandboxinfo['username'] = username
             sandboxinfo['resource'] = len(userdb[username][RESOURCES])
             sandboxinfo['jobs'] = jobs_per_user
-            sandboxinfo['walltime'] = walltime_per_user 
+            sandboxinfo['walltime'] = walltime_per_user
+
             # print "<tr><td>%s</td><td>%s jobs</td></tr>" % (res, resources[res])
             # print res,":", resources[res], "jobs"
-            
+
             sandboxinfos.append(sandboxinfo)
-            
         elif jobs_per_user > 0 or show_all == 'true':
 
             # print "<tr><td colspan='2'><h2>%s</h2></td></tr>" % username
@@ -147,6 +149,7 @@ def main(client_id, user_arguments_dict):
                     sandboxinfo['resource'] = res
                     sandboxinfo['jobs'] = resources_jobs[res]
                     sandboxinfo['walltime'] = resources_walltime[res]
+
                     # print "<tr><td>%s</td><td>%s jobs</td></tr>" % (res, resources[res])
                     # print res,":", resources[res], "jobs"
 
@@ -163,69 +166,66 @@ def main(client_id, user_arguments_dict):
 
         sandboxinfos.sort(cmp=lambda a, b: cmp(a['username'].lower(),
                           b['username'].lower()))
-                          
     elif 'resource' == sort:
 
         # sort by numerical resource ID
 
         if group_by == 'users':
             sandboxinfos.sort(cmp=lambda a, b: cmp(int(b['resource']),
-                                                   int(a['resource'])))
-
+                              int(a['resource'])))
         else:
-            sandboxinfos.sort(cmp=lambda a, b: cmp(int(a['resource'
-                          ].lower().replace('sandbox.', '')),
-                          int(b['resource'].lower().replace('sandbox.',
-                          ''))))
 
+            sandboxinfos.sort(cmp=lambda a, b: cmp(int(a['resource'
+                              ].lower().replace('sandbox.', '')),
+                              int(b['resource'
+                              ].lower().replace('sandbox.', ''))))
     elif 'jobs' == sort:
+
         # sort by most jobs done
+
         sandboxinfos.sort(reverse=True)
-        
     elif 'walltime' == sort:
-        
+
         # sort by most walltime
-        
-        sandboxinfos.sort(cmp=lambda a, b: cmp(
-                         ((a['walltime'].days*86400) +
-                         (a['walltime'].seconds)),
-                         ((b['walltime'].days*86400) +
-                         (b['walltime'].seconds))), reverse=True)
-                         
+
+        sandboxinfos.sort(cmp=lambda a, b: cmp(a['walltime'].days
+                           * 86400 + a['walltime'].seconds, b['walltime'
+                          ].days * 86400 + b['walltime'].seconds),
+                          reverse=True)
     else:
 
         # do not sort
 
         pass
-    
+
     # Sort
+
     output_objects.append({'object_type': 'verbatim', 'text'
                           : 'Sort by: '})
 
     link_list = []
     for name in ('username', 'resource', 'jobs', 'walltime'):
         link_list.append({'object_type': 'link', 'destination'
-                         : '?sort=%s&group_by=%s' % (name, group_by), 'text': '%s'
-                          % name.capitalize()})
-                          
-    output_objects.append({'object_type': 'multilinkline', 'links'
-                          : link_list})
-                          
-    # Group                          
-    output_objects.append({'object_type': 'text', 'text': ''})
-    output_objects.append({'object_type': 'verbatim', 'text'
-                          : 'Show: '})
-                          
-    link_list = []
-    for name in ('resources', 'users'):
-        link_list.append({'object_type': 'link', 'destination'
-                         : '?sort=%s&group_by=%s' % (sort, name), 'text': '%s'
-                          % name.capitalize()})
-                          
+                         : '?sort=%s&group_by=%s' % (name, group_by),
+                         'text': '%s' % name.capitalize()})
+
     output_objects.append({'object_type': 'multilinkline', 'links'
                           : link_list})
 
-                          
+    # Group
+
+    output_objects.append({'object_type': 'text', 'text': ''})
+    output_objects.append({'object_type': 'verbatim', 'text': 'Show: '})
+
+    link_list = []
+    for name in ('resources', 'users'):
+        link_list.append({'object_type': 'link', 'destination'
+                         : '?sort=%s&group_by=%s' % (sort, name), 'text'
+                         : '%s' % name.capitalize()})
+
+    output_objects.append({'object_type': 'multilinkline', 'links'
+                          : link_list})
+
     output_objects.append({'object_type': 'text', 'text': ''})
 
     output_objects.append({'object_type': 'sandboxinfos', 'sandboxinfos'

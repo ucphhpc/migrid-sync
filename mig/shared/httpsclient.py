@@ -31,10 +31,14 @@ import os
 
 # All HTTPS clients coming through apache will have their unique
 # certificate distinguished name available in this field
+
 client_id_field = 'SSL_CLIENT_S_DN'
+
 
 def extract_client_id():
     """Extract unique user ID from HTTPS environment"""
+
     distinguished_name = os.environ.get(client_id_field, '').strip()
     return distinguished_name
+
 

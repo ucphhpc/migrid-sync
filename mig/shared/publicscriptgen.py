@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# publicscriptgen - [insert a few words of module description on this line]
+# publicscriptgen - Basic script generator functions
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.

@@ -43,7 +43,8 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
 from shared.settings import load_settings
 from shared.useradm import client_id_dir
-from shared.functionality.ls import select_all_javascript, selected_file_actions_javascript
+from shared.functionality.ls import select_all_javascript, \
+    selected_file_actions_javascript
 
 
 def signature():
@@ -60,7 +61,7 @@ def handle_file(
     actual_file,
     flags='',
     dest='',
-    show_dest=False
+    show_dest=False,
     ):
     """handle a file"""
 
@@ -118,7 +119,15 @@ def handle_expand(
         relative_path = real_path.replace(base_dir, '')
 
     if os.path.isfile(real_path):
-        handle_file(listing, base_name, relative_path, real_path, flags, dest, show_dest)
+        handle_file(
+            listing,
+            base_name,
+            relative_path,
+            real_path,
+            flags,
+            dest,
+            show_dest,
+            )
     else:
         try:
             contents = os.listdir(real_path)
@@ -140,19 +149,44 @@ def handle_expand(
                 path = real_path + os.sep + name
                 rel_path = path.replace(base_dir, '')
                 if os.path.isfile(path):
-                    handle_file(listing, name, rel_path, path, flags, dest, show_dest)
+                    handle_file(
+                        listing,
+                        name,
+                        rel_path,
+                        path,
+                        flags,
+                        dest,
+                        show_dest,
+                        )
         else:
 
             # Force pure content listing first by passing a negative depth
 
-            handle_expand(output_objects, listing, base_dir, real_path, flags, dest, -1, show_dest)
+            handle_expand(
+                output_objects,
+                listing,
+                base_dir,
+                real_path,
+                flags,
+                dest,
+                -1,
+                show_dest,
+                )
 
             for name in contents:
                 path = real_path + os.sep + name
                 rel_path = path.replace(base_dir, '')
                 if os.path.isdir(path):
-                    handle_expand(output_objects, listing, base_dir, path, flags, dest,
-                              depth + 1, show_dest)
+                    handle_expand(
+                        output_objects,
+                        listing,
+                        base_dir,
+                        path,
+                        flags,
+                        dest,
+                        depth + 1,
+                        show_dest,
+                        )
 
 
 def main(client_id, user_arguments_dict):
@@ -175,14 +209,14 @@ def main(client_id, user_arguments_dict):
 
     flags = ''.join(accepted['flags'])
     pattern_list = accepted['path']
-    show_dest = (accepted['with_dest'][0].lower() == 'true')
+    show_dest = accepted['with_dest'][0].lower() == 'true'
     listing = []
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            client_dir)) + os.sep
+                               client_dir)) + os.sep
 
     status = returnvalues.OK
 
@@ -300,8 +334,8 @@ Action on paths selected below
                 # ../*/* is technically allowed to match own files.
 
                 logger.error('Warning: %s tried to %s %s outside own home! (using pattern %s)'
-                              % (client_id, op_name,
-                             real_path, pattern))
+                              % (client_id, op_name, real_path,
+                             pattern))
                 continue
             match.append(real_path)
             if not first_match:
@@ -343,7 +377,16 @@ Action on paths selected below
 
                         dest = os.path.basename(real_path) + os.sep
 
-            handle_expand(output_objects, entries, base_dir, real_path, flags, dest, 0, show_dest)
+            handle_expand(
+                output_objects,
+                entries,
+                base_dir,
+                real_path,
+                flags,
+                dest,
+                0,
+                show_dest,
+                )
             dir_listings.append(dir_listing)
 
     if 'full' == files_style:

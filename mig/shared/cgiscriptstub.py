@@ -41,8 +41,7 @@ from shared.output import do_output
 def run_cgi_script(main):
     """ Get needed information and run the function received as argument """
 
-    (logger, configuration, client_id, o) = \
-        init_cgi_script_with_cert()
+    (logger, configuration, client_id, o) = init_cgi_script_with_cert()
     fieldstorage = cgi.FieldStorage()
 
     user_arguments_dict = fieldstorage_to_dict(fieldstorage)
@@ -62,6 +61,7 @@ def run_cgi_script(main):
 
         print 'Return object was _not_ successfully printed!'
     print output
+
 
 def run_cgi_script_possibly_with_cert(main):
     """ Get needed information and run the function received as argument """
@@ -87,3 +87,5 @@ def run_cgi_script_possibly_with_cert(main):
 
         print 'Return object was _not_ successfully printed!'
     print output
+
+

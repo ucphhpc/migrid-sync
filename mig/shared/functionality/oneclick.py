@@ -49,8 +49,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False,
-                                  op_menu=client_id)
+        initialize_main_variables(op_header=False, op_menu=client_id)
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG One-click resource'})
 
@@ -60,8 +59,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    (status, result) = get_resource(client_id, configuration,
-                                    logger)
+    (status, result) = get_resource(client_id, configuration, logger)
     if not status:
         output_objects.append({'object_type': 'html_form', 'text'
                               : result})

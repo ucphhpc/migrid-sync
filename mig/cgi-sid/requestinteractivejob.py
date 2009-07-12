@@ -130,8 +130,7 @@ if not mrsldict:
     o.reply_and_exit(o.ERROR)
 
 job_submitter_client_id = mrsldict['USER_CERT']
-o.out('job_submitter_client_id: %s'
-       % job_submitter_client_id)
+o.out('job_submitter_client_id: %s' % job_submitter_client_id)
 
 mrsl_jobid = mrsldict['JOB_ID']
 if not jobid == mrsl_jobid:
@@ -170,9 +169,8 @@ if not status:
 
 # set the correct DISPLAY before calling SSH
 
-display_number = \
-    get_users_display_number(job_submitter_client_id,
-                             configuration, logger)
+display_number = get_users_display_number(job_submitter_client_id,
+        configuration, logger)
 
 if not display_number:
     o.out('could not find display number for %s in dict'

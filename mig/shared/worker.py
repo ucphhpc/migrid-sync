@@ -50,6 +50,7 @@ class Worker(Thread):
         args=(),
         kwargs={},
         ):
+
         self.__target = target
         self.__args = args
         self.__kwargs = kwargs

@@ -41,11 +41,9 @@ from shared.cgishared import init_cgi_script_with_cert
 from shared.refunctions import is_runtime_environment
 from shared.useradm import client_id_dir
 
-
 # ## Main ###
 
-(logger, configuration, client_id, o) = \
-    init_cgi_script_with_cert()
+(logger, configuration, client_id, o) = init_cgi_script_with_cert()
 client_dir = client_id_dir(client_id)
 
 fieldstorage = cgi.FieldStorage()
@@ -122,12 +120,13 @@ else:
             o.client('Resource has not executed any testprocedures for the specified runtime environment with its current configuration!'
                      )
         else:
-            
+
             # Please note that base_dir must end in slash to avoid access to other
             # user dirs when own name is a prefix of another user name
 
-            base_dir = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                                                    client_dir)) + os.sep
+            base_dir = \
+                os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                                client_dir)) + os.sep
 
             try:
 
@@ -135,8 +134,8 @@ else:
 
                     # print info about the single testjob
 
-
-                    mrslfilepath = os.path.join(base_dir, job_id + '.mRSL')
+                    mrslfilepath = os.path.join(base_dir, job_id
+                             + '.mRSL')
                     job_dict = unpickle(mrslfilepath,
                             configuration.logger)
                     if not job_dict:

@@ -47,13 +47,18 @@ def signature():
     return ['text', defaults]
 
 
-def create_wiki(configuration, vgrid_name, wiki_dir, output_objects):
+def create_wiki(
+    configuration,
+    vgrid_name,
+    wiki_dir,
+    output_objects,
+    ):
     """Create new Moin Moin wiki"""
 
-    cgi_template_script = os.path.join(configuration.moin_share, 'server',
-                                       'moin.cgi')
-    cgi_template_wikiconf = os.path.join(configuration.moin_share, 'config',
-                                         'wikiconfig.py')
+    cgi_template_script = os.path.join(configuration.moin_share,
+            'server', 'moin.cgi')
+    cgi_template_wikiconf = os.path.join(configuration.moin_share,
+            'config', 'wikiconfig.py')
 
     # Depending on the MoinMoin installation some of the
     # configuration strings may vary slightly
@@ -66,7 +71,8 @@ def create_wiki(configuration, vgrid_name, wiki_dir, output_objects):
     cgi_template_underlay_str = './underlay/'
     cgi_template_underlay_str_alternative = '../underlay/'
     cgi_template_data = os.path.join(configuration.moin_share, 'data')
-    cgi_template_underlay = os.path.join(configuration.moin_share, 'underlay')
+    cgi_template_underlay = os.path.join(configuration.moin_share,
+            'underlay')
 
     cgi_wiki_bin = wiki_dir + 'cgi-bin'
     cgi_wiki_etc = wiki_dir + 'etc'
@@ -173,19 +179,25 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
-                                            vgrid_name)) + os.sep
-    public_base_dir = os.path.abspath(os.path.join(configuration.vgrid_public_base,
-                                                   vgrid_name)) + os.sep
-    public_wiki_dir = os.path.abspath(os.path.join(configuration.vgrid_public_base,
-                                                   vgrid_name, '.vgridwiki')) + os.sep
-    private_base_dir = os.path.abspath(os.path.join(configuration.vgrid_private_base,
-                                                    vgrid_name)) + os.sep
-    private_wiki_dir = os.path.abspath(os.path.join(configuration.vgrid_private_base,
-                                                    vgrid_name, '.vgridwiki')) + os.sep
-    vgrid_files_dir = os.path.abspath(os.path.join(configuration.vgrid_files_home,
-                                                   vgrid_name)) + os.sep
-    vgrid_wiki_dir = os.path.abspath(os.path.join(configuration.vgrid_files_home,
-                                                  vgrid_name, '.vgridwiki')) + os.sep
+                               vgrid_name)) + os.sep
+    public_base_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_public_base,
+                        vgrid_name)) + os.sep
+    public_wiki_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_public_base,
+                        vgrid_name, '.vgridwiki')) + os.sep
+    private_base_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_private_base,
+                        vgrid_name)) + os.sep
+    private_wiki_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_private_base,
+                        vgrid_name, '.vgridwiki')) + os.sep
+    vgrid_files_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_files_home,
+                        vgrid_name)) + os.sep
+    vgrid_wiki_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_files_home,
+                        vgrid_name, '.vgridwiki')) + os.sep
 
     # does vgrid exist?
 
@@ -291,11 +303,13 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if configuration.moin_share and configuration.moin_etc:
-        
+
         # create public, member, owner wiki's in the vgrid dirs
 
-        for wiki_dir in [public_wiki_dir, private_wiki_dir, vgrid_wiki_dir]:
-            if not create_wiki(configuration, vgrid_name, wiki_dir, output_objects):
+        for wiki_dir in [public_wiki_dir, private_wiki_dir,
+                         vgrid_wiki_dir]:
+            if not create_wiki(configuration, vgrid_name, wiki_dir,
+                               output_objects):
                 return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # create pickled owners list with client_id as owner
@@ -338,7 +352,8 @@ def main(client_id, user_arguments_dict):
         # create sym link from creators (client_id) home directory to directory containing the vgrid files
 
         src = vgrid_files_dir
-        dst = os.path.join(configuration.user_home, client_dir, vgrid_name)
+        dst = os.path.join(configuration.user_home, client_dir,
+                           vgrid_name)
         if not make_symlink(src, dst, logger):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Could not create link to vgrid files!'
@@ -347,7 +362,8 @@ def main(client_id, user_arguments_dict):
 
         # make sure public_base dir exists in users home dir
 
-        user_public_base = os.path.join(configuration.user_home, client_dir, 'public_base')
+        user_public_base = os.path.join(configuration.user_home,
+                client_dir, 'public_base')
         try:
             os.mkdir(user_public_base)
         except:
@@ -368,7 +384,8 @@ def main(client_id, user_arguments_dict):
 
         # make sure private_base dir exists in users home dir
 
-        user_private_base = os.path.join(configuration.user_home, client_dir, 'private_base')
+        user_private_base = os.path.join(configuration.user_home,
+                client_dir, 'private_base')
         try:
             os.mkdir(user_private_base)
         except:
@@ -416,9 +433,9 @@ def main(client_id, user_arguments_dict):
 
             pass
 
-        if not make_symlink(public_base_dir, os.path.join(configuration.wwwpublic, 'vgrid',
-                                                          vgrid_name),
-                            logger):
+        if not make_symlink(public_base_dir,
+                            os.path.join(configuration.wwwpublic,
+                            'vgrid', vgrid_name), logger):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Could not create link in wwwpublic/vgrid/%s'
                                    % vgrid_name})

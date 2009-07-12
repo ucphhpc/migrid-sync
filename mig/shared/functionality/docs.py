@@ -119,7 +119,8 @@ def valid_outputformats():
                           : 'The outputformat is specified with the output_format parameter.'
                           })
     output_objects.append({'object_type': 'text', 'text'
-                          : 'Example: SERVER_URL/ls.py?output_format=txt'})
+                          : 'Example: SERVER_URL/ls.py?output_format=txt'
+                          })
     output_objects.append({'object_type': 'header', 'text'
                           : 'Valid formats'})
     entries = []

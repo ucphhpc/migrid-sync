@@ -105,8 +105,9 @@ def main(client_id, user_arguments_dict):
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                                            client_dir)) + os.sep
+    base_dir = \
+        os.path.abspath(os.path.join(configuration.mrsl_files_dir,
+                        client_dir)) + os.sep
 
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG %s job status' % order})
@@ -153,8 +154,8 @@ def main(client_id, user_arguments_dict):
                 # ../*/* is technically allowed to match own files.
 
                 logger.error('%s tried to use %s %s outside own home! (pattern %s)'
-                              % (client_id, op_name,
-                             real_path, pattern))
+                              % (client_id, op_name, real_path,
+                             pattern))
                 continue
 
             # Insert valid job files in filelist for later treatment
@@ -292,9 +293,13 @@ def main(client_id, user_arguments_dict):
 
             path_string = ''
             for path in job_dict['OUTPUTFILES']:
+
                 # OUTPUTFILES is either just combo path or src dst paths
+
                 parts = path.split()
-                # Always take last part as destination 
+
+                # Always take last part as destination
+
                 path_string += 'path=%s;' % parts[-1]
 
             job_obj['outputfileslink'] = {'object_type': 'link',
@@ -308,11 +313,11 @@ def main(client_id, user_arguments_dict):
                                  'destination': 'canceljob.py?job_id=%s'\
                                   % job_id, 'text': 'Cancel job'}
         job_obj['jobschedulelink'] = {'object_type': 'link',
-                'destination': 'jobschedule.py?job_id=%s'\
-                 % job_id, 'text': 'Request schedule information'}
+                'destination': 'jobschedule.py?job_id=%s' % job_id,
+                'text': 'Request schedule information'}
         job_obj['liveoutputlink'] = {'object_type': 'link',
-                'destination': 'liveoutput.py?job_id=%s'\
-                 % job_id, 'text': 'Request live update'}
+                'destination': 'liveoutput.py?job_id=%s' % job_id,
+                'text': 'Request live update'}
         job_list['jobs'].append(job_obj)
 
     output_objects.append(job_list)

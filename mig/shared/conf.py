@@ -42,7 +42,8 @@ def get_configuration_object():
         if not app_dir:
             config_file = '../server/MiGserver.conf'
         else:
-            config_file = os.path.join(app_dir, '..', 'server', 'MiGserver.conf')
+            config_file = os.path.join(app_dir, '..', 'server',
+                    'MiGserver.conf')
     configuration = Configuration(config_file, False)
     return configuration
 
@@ -99,3 +100,5 @@ def get_all_exe_names(unique_resource_name):
         return exe_names
     exe_units = resource_config.get('EXECONFIG', [])
     return [exe['name'] for exe in exe_units]
+
+

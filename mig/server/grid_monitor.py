@@ -157,7 +157,7 @@ Automatic refresh every %(sleep_secs)s secs.<br>
     cputime_done = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                    'CPUTIME_DONE')
     used_walltime = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
-                                   'USED_WALLTIME')
+                                    'USED_WALLTIME')
     disk_requested = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
             'DISK_REQ')
     disk_done = gstat.get_value(gstat.VGRID, vgrid_name.upper(),

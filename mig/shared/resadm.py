@@ -67,7 +67,7 @@ def put_fe_pgid(
     # resource dirs when own name is a prefix of another resource name
 
     base_dir = os.path.abspath(os.path.join(resource_home,
-                                            unique_resource_name)) + os.sep
+                               unique_resource_name)) + os.sep
 
     # There should not be more than one running FE on each resource
     # A "FE.PGID" file in the resource's home directory means that
@@ -135,7 +135,8 @@ def put_exe_pgid(
     # This is required to avoid 'races', as it is the FE that sends
     # the PGID to us and not the EXE node.
 
-    pgid_path = os.path.abspath(os.path.join(base_dir, 'EXE_' + exe_name + '.PGID'))
+    pgid_path = os.path.abspath(os.path.join(base_dir, 'EXE_' + exe_name
+                                 + '.PGID'))
     status = False
     try:
 
@@ -263,8 +264,8 @@ def atomic_resource_exe_restart(
 
     resource_home = configuration.resource_home
 
-    pgid_path = os.path.join(resource_home, unique_resource_name,
-                             'EXE_' + exe_name + '.PGID')
+    pgid_path = os.path.join(resource_home, unique_resource_name, 'EXE_'
+                              + exe_name + '.PGID')
 
     # Lock pgid file
 
@@ -608,8 +609,8 @@ def start_resource_exe(
 
     # write PGID file
 
-    pgid_path = os.path.join(resource_home, unique_resource_name, 'EXE_'\
-         + exe_name + '.PGID')
+    pgid_path = os.path.join(resource_home, unique_resource_name, 'EXE_'
+                              + exe_name + '.PGID')
 
     try:
         if not os.path.exists(pgid_path):
@@ -913,7 +914,7 @@ def resource_fe_action(
 
         if not pgid.isdigit():
             raise Exception('FE already stopped')
-        
+
         if action == 'status':
             command = 'if [ \\`ps -o pid= -g ' + pgid\
                  + ' | wc -l \\` -eq 0 ];then exit 1; else exit 0;fi'
@@ -1005,8 +1006,8 @@ def resource_exe_action(
              + exe_name + "'"
         return (False, msg)
 
-    pgid_path = os.path.join(resource_home, unique_resource_name, 'EXE_'\
-         + exe_name + '.PGID')
+    pgid_path = os.path.join(resource_home, unique_resource_name, 'EXE_'
+                              + exe_name + '.PGID')
     try:
         pgid_file = open(pgid_path, 'r+')
     except IOError:
@@ -1225,16 +1226,17 @@ def get_sandbox_exe_stop_command(
 
     (status, exe) = get_resource_exe(resource_dict, exe_name, logger)
     if not status:
-        msg = "No EXE config for: '" + resource_dict['UNIQUE_RESOURCE_NAME'] + \
-              "' EXE: '" + exe_name + "'"
+        msg = "No EXE config for: '"\
+             + resource_dict['UNIQUE_RESOURCE_NAME'] + "' EXE: '"\
+             + exe_name + "'"
         return (False, msg)
 
     stop_command = exe['stop_command']
 
     # Lock pgid file
 
-    pgid_path = os.path.join(sandbox_home, sandboxkey, 'EXE_' + exe_name\
-         + '.PGID')
+    pgid_path = os.path.join(sandbox_home, sandboxkey, 'EXE_' + exe_name
+                              + '.PGID')
     if os.path.exists(pgid_path):
         pgid_file = open(pgid_path, 'r')
         fcntl.flock(pgid_file, fcntl.LOCK_EX)

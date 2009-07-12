@@ -233,7 +233,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                                            client_dir)) + os.sep
+                               client_dir)) + os.sep
 
     # !!! IMPORTANT !!!
     # This is a (dynamic) user interface so we expect html to be used.
@@ -272,8 +272,7 @@ def main(client_id, user_arguments_dict):
                                % path})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    (owner, time_left) = acquire_edit_lock(real_path,
-            client_id)
+    (owner, time_left) = acquire_edit_lock(real_path, client_id)
     if owner == client_id:
         javascript = \
             '''<script type="text/javascript">

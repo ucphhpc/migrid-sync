@@ -128,75 +128,73 @@ def handle_command(cmd_line, client_id, output_objects):
 
     try:
         if 'cancel' == cmd:
-            (out, code) = canceljob.main(client_id, {'job_id'
-                    : args, 'flags': flags})
+            (out, code) = canceljob.main(client_id, {'job_id': args,
+                    'flags': flags})
         elif 'cat' == cmd:
-            (out, code) = cat.main(client_id, {'path': args,
-                                   'flags': flags})
+            (out, code) = cat.main(client_id, {'path': args, 'flags'
+                                   : flags})
         elif 'cp' == cmd:
-            (out, code) = cp.main(client_id, {'src': prefix,
-                                  'dst': last, 'flags': flags})
+            (out, code) = cp.main(client_id, {'src': prefix, 'dst'
+                                  : last, 'flags': flags})
         elif 'doc' == cmd:
-            (out, code) = docs.main(client_id, {'show': args,
-                                    'flags': flags})
+            (out, code) = docs.main(client_id, {'show': args, 'flags'
+                                    : flags})
         elif 'find' == cmd:
-            (out, code) = find.main(client_id, {'path'
-                                    : prefix, 'name': last, 'flags'
-                                    : flags})
+            (out, code) = find.main(client_id, {'path': prefix, 'name'
+                                    : last, 'flags': flags})
         elif 'grep' == cmd:
-            (out, code) = grep.main(client_id, {'path'
-                                    : suffix, 'pattern': first, 'flags'
-                                    : flags})
+            (out, code) = grep.main(client_id, {'path': suffix,
+                                    'pattern': first, 'flags': flags})
         elif 'head' == cmd:
-            (out, code) = head.main(client_id, {'path': args,
-                                    'flags': flags})
+            (out, code) = head.main(client_id, {'path': args, 'flags'
+                                    : flags})
         elif 'help' == cmd:
             out = shell_usage()
         elif 'mkdir' == cmd:
-            (out, code) = mkdir.main(client_id, {'path'
-                    : args, 'flags': flags})
+            (out, code) = mkdir.main(client_id, {'path': args, 'flags'
+                    : flags})
         elif 'mv' == cmd:
-            (out, code) = mv.main(client_id, {'src': prefix,
-                                  'dst': last, 'flags': flags})
+            (out, code) = mv.main(client_id, {'src': prefix, 'dst'
+                                  : last, 'flags': flags})
         elif 'liveoutput' == cmd:
-            (out, code) = liveoutput.main(client_id, {'job_id'
-                    : args, 'flags': flags})
+            (out, code) = liveoutput.main(client_id, {'job_id': args,
+                    'flags': flags})
         elif 'ls' == cmd:
-            (out, code) = ls.main(client_id, {'path': args,
-                                  'flags': flags})
+            (out, code) = ls.main(client_id, {'path': args, 'flags'
+                                  : flags})
         elif 'resubmit' == cmd:
-            (out, code) = resubmit.main(client_id, {'job_id'
-                    : args, 'flags': flags})
+            (out, code) = resubmit.main(client_id, {'job_id': args,
+                    'flags': flags})
         elif 'rm' == cmd:
-            (out, code) = rm.main(client_id, {'path': args,
-                                  'flags': flags})
+            (out, code) = rm.main(client_id, {'path': args, 'flags'
+                                  : flags})
         elif 'rmdir' == cmd:
-            (out, code) = rmdir.main(client_id, {'path'
-                    : args, 'flags': flags})
+            (out, code) = rmdir.main(client_id, {'path': args, 'flags'
+                    : flags})
         elif 'spell' == cmd:
-            (out, code) = spell.main(client_id, {'path'
-                    : suffix, 'lang': first, 'flags': flags})
+            (out, code) = spell.main(client_id, {'path': suffix, 'lang'
+                    : first, 'flags': flags})
         elif 'stat' == cmd:
-            (out, code) = statpath.main(client_id, {'path'
-                    : args, 'flags': flags})
+            (out, code) = statpath.main(client_id, {'path': args,
+                    'flags': flags})
         elif 'status' == cmd:
-            (out, code) = jobstatus.main(client_id, {'job_id'
-                    : args, 'flags': flags})
+            (out, code) = jobstatus.main(client_id, {'job_id': args,
+                    'flags': flags})
         elif 'submit' == cmd:
-            (out, code) = submit.main(client_id, {'path'
-                    : args, 'flags': flags})
+            (out, code) = submit.main(client_id, {'path': args, 'flags'
+                    : flags})
         elif 'tail' == cmd:
-            (out, code) = tail.main(client_id, {'path': args,
-                                    'flags': flags})
+            (out, code) = tail.main(client_id, {'path': args, 'flags'
+                                    : flags})
         elif 'touch' == cmd:
-            (out, code) = touch.main(client_id, {'path'
-                    : args, 'flags': flags})
+            (out, code) = touch.main(client_id, {'path': args, 'flags'
+                    : flags})
         elif 'truncate' == cmd:
-            (out, code) = truncate.main(client_id, {'path'
-                    : args, 'flags': flags})
+            (out, code) = truncate.main(client_id, {'path': args,
+                    'flags': flags})
         elif 'wc' == cmd:
-            (out, code) = wc.main(client_id, {'path': args,
-                                  'flags': flags})
+            (out, code) = wc.main(client_id, {'path': args, 'flags'
+                                  : flags})
         else:
             raise Exception('command not found')
     except Exception, exc:
@@ -274,8 +272,7 @@ def main(client_id, user_arguments_dict):
             # ../*/* is technically allowed to match own files.
 
             logger.error('Warning: %s tried to %s %s outside cgi home! (%s)'
-                          % (client_id, op_name, real_path,
-                         cmd))
+                          % (client_id, op_name, real_path, cmd))
             output_objects.append({'object_type': 'command_not_found',
                                   'name': cmd})
             status = returnvalues.CLIENT_ERROR
@@ -284,8 +281,8 @@ def main(client_id, user_arguments_dict):
         relative_path = real_path.replace(base_dir, '')
 
         output_objects.append({'object_type': 'text', 'text': cmd_line})
-        (output_objects, status) = handle_command(cmd_line,
-                client_id, output_objects)
+        (output_objects, status) = handle_command(cmd_line, client_id,
+                output_objects)
         output_objects.append({'object_type': 'text', 'text': ''})
 
     return (output_objects, status)

@@ -125,8 +125,7 @@ def new_job(
 
     filename_spaces = filename.replace('\\ ', '\\\\\\ ')
 
-    (parseresult, parsemsg) = parse(filename_spaces, job_id,
-                                    client_id,
+    (parseresult, parsemsg) = parse(filename_spaces, job_id, client_id,
                                     forceddestination)
 
     if parseresult:
@@ -216,8 +215,8 @@ def get_job_ids_with_specified_project_name(
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(os.path.join(mrsl_files_dir,
-                                            client_dir)) + os.sep
+    base_dir = os.path.abspath(os.path.join(mrsl_files_dir, client_dir))\
+         + os.sep
 
     # this is heavy :-/ we must loop all the mrsl files submitted by the user to find the
     # job ids belonging to the specified project

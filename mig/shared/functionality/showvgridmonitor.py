@@ -63,8 +63,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    allowed_vgrids = user_allowed_vgrids(configuration,
-            client_id)
+    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
     vgrid_list = accepted['vgrid_name']
     if 'ALL' in accepted['vgrid_name']:
         vgrid_list = [i for i in vgrid_list if 'ALL' != i]\
@@ -74,8 +73,8 @@ def main(client_id, user_arguments_dict):
 
     for vgrid_name in set(vgrid_list):
         html = ''
-        if not vgrid_is_owner_or_member(vgrid_name,
-                client_id, configuration):
+        if not vgrid_is_owner_or_member(vgrid_name, client_id,
+                configuration):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'You must be an owner or member of %s vgrid to access the monitor.'
                                    % vgrid_name})
