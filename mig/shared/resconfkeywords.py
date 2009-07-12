@@ -203,6 +203,29 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
             ],
         'Sublevel_optional': [],
         }
+    storeconfig = {
+        'Description': 'Configuration for the storage resources: please refer to the Storage node section.',
+        'Example': 'Example not available',
+        'Type': 'storeconfig',
+        'Value': [],
+        'Required': False,
+        'Sublevel': True,
+        'Sublevel_required': [
+            'name',
+            'disk',
+            'protocol',
+            'storage_user',
+            'storage_node',
+            'storage_dir',
+            'start_command',
+            'status_command',
+            'stop_command',
+            'clean_command',
+            'shared_fs',
+            'vgrid',
+            ],
+        'Sublevel_optional': [],
+        }
     sshport = {
         'Description': 'The SSH port on the frontend.',
         'Example': '22',
@@ -305,6 +328,7 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         'CURLLOG': curllog,
         'FRONTENDLOG': frontendlog,
         'EXECONFIG': execonfig,
+        'STORECONFIG': storeconfig,
         'SSHPORT': sshport,
         'SSHMULTIPLEX': sshmultiplex,
         'LRMSTYPE': lrmstype,
@@ -473,4 +497,107 @@ def get_exenode_keywords(configuration):
         }
     return keywords_dict
 
+def get_storenode_keywords(configuration):
+    name = {
+        'Description': 'Storage node names are symbolic names to identify MiG storage nodes. This can be any text string as long as it is unique among the storage nodes of the resource. The MiG storage nodes do not necessarily have to map to physical hosts in a one-to-one way.',
+        'Example': 'store0',
+        'Type': 'string',
+        'Value': 'localhost',
+        'Required': True,
+        } 
+    disk = {
+        'Description': 'Amount of disk space available on the storage node. The amount is specified in gigabytes and the default is 10.',
+        'Example': '1000',
+        'Type': 'int',
+        'Value': 10,
+        'Required': True,
+        }
+    protocol = {
+        'Description': 'Which protocol to use for accessing the storage on the node. Currently only supports sftp.',
+        'Example': 'sftp',
+        'Type': 'string',
+        'Value': 'sftp',
+        'Required': True,
+        }
+    storage_user = {
+        'Description': 'The local user to login as on the node(s) associated with this MiG storage node. In most cases this is identical to the global resource MiG user.',
+        'Example': 'miguser',
+        'Type': 'string',
+        'Value': '${MIG_USER}',
+        'Required': True,
+        }
+    storage_node = {
+        'Description': 'The local user to login as on the node(s) associated with this MiG storage node. In most cases this is identical to the global resource MiG user.',
+        'Example': 'miguser',
+        'Type': 'string',
+        'Value': '${MIG_USER}',
+        'Required': True,
+        }
+    storage_dir = {
+        'Description': 'Path to the working directory of the storage node.',
+        'Example': '/home/miguser/MiG/mig_exe/myresource.org.0/localhost/',
+        'Type': 'string',
+        'Value': '~${MIG_USER}/MiG/${MIG_RESOURCE}/${MIG_STORENODE}/',
+        'Required': True,
+        }
+    start_command = {
+        'Description': "The command which is used to start the resource storage node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the storage node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the storage node management process is executed through ssh to the host specified in the storage node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
+        'Example': 'local',
+        'Type': 'string',
+        'Value': 'default',
+        'Required': True,
+        }
+    status_command = {
+        'Description': "The command which is used to query status of the resource storage node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the storage node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the storage node management process is executed through ssh to the host specified in the storage node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
+        'Example': 'local',
+        'Type': 'string',
+        'Value': 'default',
+        'Required': True,
+        }
+    stop_command = {
+        'Description': "The command which is used to stop the resource storage node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the storage node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the storage node management process is executed through ssh to the host specified in the storage node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
+        'Example': 'local',
+        'Type': 'string',
+        'Value': 'default',
+        'Required': True,
+        }
+    clean_command = {
+        'Description': "The command which is used to clean the resource storage node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the storage node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the storage node management process is executed through ssh to the host specified in the storage node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
+        'Example': 'local',
+        'Type': 'string',
+        'Value': 'default',
+        'Required': True,
+        }
+    shared_fs = {
+        'Description': 'If the frontend and storage node shares the same file system (i.e. True), so that frontend and storage management processes can communicate directly through files in the MiG user home directory. If this is not the case (i.e. False) the communication will use ssh to communicate, but this is slightly less efficient and requires additional setup of local login access without password. To be more precise the frontend must be able to login as the storage user on the storage node and vice versa without any user input (e.g. by using ssh keys with an empty passphrase).',
+        'Example': 'False',
+        'Type': 'boolean',
+        'Value': 'True',
+        'Required': True,
+        }
+    vgrid = {
+        'Description': 'Which VGrids should the resource accept jobs from? Please note that the corresponding VGrid owners must add the resource to the VGrid first. The raw format is a comma separated list of VGrid names.',
+        'Example': 'Generic, MyVGrid',
+        'Type': 'list of strings',
+        'Value': 'Generic',
+        'Required': True,
+        }
+
+    # create the keywords in a single dictionary
+
+    keywords_dict = {
+        'NAME': name,
+        'DISK': disk,
+        'PROTOCOL': protocol,
+        'STORAGE_USER': storage_user,
+        'STORAGE_NODE': storage_node,
+        'STORAGE_DIR': storage_dir,
+        'START_COMMAND': start_command,
+        'STATUS_COMMAND': status_command,
+        'STOP_COMMAND': stop_command,
+        'CLEAN_COMMAND': clean_command,
+        'SHARED_FS': shared_fs,
+        'VGRID': vgrid,
+        }
+    return keywords_dict
 

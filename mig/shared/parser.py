@@ -544,6 +544,63 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     msg += print_type_error(job_keyword,
                             'Error getting execonfig value',
                             keyword_dict, keyword_data)
+            elif keyword_type == 'storeconfig':
+
+                # field_data = [i for i in keyword_data]
+
+                # read required and optional sublevel keywords from resconfkeywords
+
+                resconfkeywords_dict = \
+                    resconf_get_keywords_dict(configuration)
+                storekeywords = resconfkeywords_dict['STORECONFIG']
+                sublevel_required = []
+                sublevel_optional = []
+
+                if storekeywords.has_key('Sublevel')\
+                     and storekeywords['Sublevel']:
+                    sublevel_required = storekeywords['Sublevel_required']
+                    sublevel_optional = storekeywords['Sublevel_optional']
+                (stat, store_dict) = \
+                    get_config_sub_level_dict(keyword_data, {},
+                        sublevel_required, sublevel_optional)
+                if not stat:
+                    status = False
+                    msg += print_type_error(job_keyword,
+                            'Error in sub level parsing: %s'
+                             % store_dict, keyword_dict, keyword_data)
+
+                supported_protocols = ['sftp']
+                try:
+                    protocol = store_dict['protocol']
+                    if protocol not in supported_protocols:
+                        status = False
+                        msg += print_type_error(job_keyword,
+                                'protocol must be in %s' % supported_protocols,
+                                keyword_dict, keyword_data)
+
+                    shared_fs = store_dict['shared_fs']
+                    if shared_fs == 'False':
+                        store_dict['shared_fs'] = False
+                    elif shared_fs == 'True':
+                        store_dict['shared_fs'] = True
+                    else:
+                        status = False
+                        msg += print_type_error(job_keyword,
+                                'shared_fs must be True or False',
+                                keyword_dict, keyword_data)
+
+                    vgrid_value = store_dict['vgrid']
+
+                        # Split between comma and remove extra whitespace
+
+                    store_dict['vgrid'] = [i.strip() for i in
+                            vgrid_value.split(',')]
+                    value.append(store_dict)
+                except Exception, err:
+                    status = False
+                    msg += print_type_error(job_keyword,
+                            'Error getting storeconfig value',
+                            keyword_dict, keyword_data)
             elif keyword_type == 'configruntimeenvironment':
 
                 # When successful, the result is on the form:

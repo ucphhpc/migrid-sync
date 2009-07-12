@@ -66,6 +66,7 @@ def display_resource(
     """
 
     exe_units = []
+    store_units = []
     frontend = None
     hosturl = None
     html = ''
@@ -74,6 +75,9 @@ def display_resource(
         if resource_config.has_key('EXECONFIG'):
             for exe in resource_config['EXECONFIG']:
                 exe_units.append(exe['name'])
+        if resource_config.has_key('STORECONFIG'):
+            for store in resource_config['STORECONFIG']:
+                store_units.append(store['name'])
         if resource_config.has_key('FRONTENDNODE'):
             frontend = resource_config['FRONTENDNODE']
         if resource_config.has_key('HOSTURL'):
@@ -150,8 +154,6 @@ def display_resource(
 
     html += '<tr class=title><td colspan=5>Execution Units</td></tr>\n'
 
-    # html += '<B>Execution Units</B>\n<table>'
-
     if not exe_units:
         html += '<tr><td>Not specified</td><tr>'
     else:
@@ -175,6 +177,7 @@ def display_resource(
             </td>
             '''\
                  % action_str
+        html += '</tr>'
 
         for unit in exe_units:
             html += '<tr><td>' + unit + '</td>'
@@ -193,6 +196,53 @@ def display_resource(
                 </td>
                 '''\
                      % (action, resourcename, unit, action_str)
+            html += '</tr>'
+
+    html += '<tr class=title><td colspan=5>Storage Units</td></tr>\n'
+
+    if not store_units:
+        html += '<tr><td>Not specified</td><tr>'
+    else:
+        html += '<tr><td>ALL UNITS</td>'
+        for action in ['restart', 'status', 'stop', 'clean']:
+            html += \
+                '''<td>
+            <form method="get" action="%sstore.py">
+            <input type="hidden" name="unique_resource_name" value="%s">
+            <input type="hidden" name="all" value="true">
+            <input type="hidden" name="parallel" value="true">'''\
+                 % (action, resourcename)
+            if action == 'restart':
+                action_str = '(Re)Start'
+            else:
+                action_str = action.capitalize()
+            html += \
+                '''
+            <input type="submit" value="%s">
+            </form>
+            </td>
+            '''\
+                 % action_str
+        html += '</tr>'
+
+        for unit in store_units:
+            html += '<tr><td>' + unit + '</td>'
+            for action in ['restart', 'status', 'stop', 'clean']:
+                if action == 'restart':
+                    action_str = '(Re)Start'
+                else:
+                    action_str = action.capitalize()
+                html += \
+                    '''<td>
+                <form method="get" action="%sstore.py">
+                <input type="hidden" name="unique_resource_name" value="%s">
+                <input type="hidden" name="store_name" value="%s">
+                <input type="submit" value="%s">
+                </form>
+                </td>
+                '''\
+                     % (action, resourcename, unit, action_str)
+            html += '</tr>'
 
     html += '</table><p>'
 

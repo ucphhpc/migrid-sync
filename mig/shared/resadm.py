@@ -28,6 +28,7 @@
 """Resource administration - mostly remote command execution"""
 
 import os
+import subprocess
 import tempfile
 import fcntl
 import time
@@ -35,7 +36,7 @@ import time
 # MiG imports
 
 from shared.conf import get_resource_configuration, get_resource_exe, \
-    get_configuration_object
+    get_resource_store, get_configuration_object
 from shared.fileio import unpickle
 from shared.ssh import execute_on_resource, execute_on_exe, \
     copy_file_to_exe, copy_file_to_resource
@@ -747,6 +748,100 @@ def start_resource_exe(
         return (True, msg)
 
 
+def start_resource_store(
+    unique_resource_name,
+    store_name,
+    resource_home,
+    cputime,
+    logger,
+    lock_pgid_file=True,
+    ):
+    """Start store node"""
+
+    msg = ''
+
+    configuration = get_configuration_object()
+    (status, resource_config) = \
+        get_resource_configuration(resource_home, unique_resource_name,
+                                   logger)
+    if not status:
+        msg += "No resouce_config for: '" + unique_resource_name + "'\n"
+        return (False, msg)
+
+    (status, store) = get_resource_store(resource_config, store_name, logger)
+    if not status:
+        msg = "No EXE config for: '" + unique_resource_name + "' EXE: '"\
+             + store_name + "'"
+        return (False, msg)
+
+    # create needed dirs on resource frontend and store
+
+    create_dirs = 'mkdir -p %s' % store['storage_dir']
+    if store.has_key('shared_fs') and store['shared_fs']:
+        (create_status, create_err) = execute_on_resource(create_dirs,
+                True, resource_config, logger)
+    else:
+        (create_status, create_err) = execute_on_store(create_dirs, True,
+                resource_config, store, logger)
+
+    if 0 != create_status:
+        msg += '\ncreate store node dirs returned %s (command %s): %s'\
+             % (create_status, create_dirs, create_err)
+        logger.error('failed to create storage dir on resource: %s'
+                      % create_err)
+
+    status = True
+    if 'sftp' == store['protocol']:
+        setup = {'mount_point': os.path.join(resource_home, unique_resource_name, store_name)}
+        try:
+            os.mkdir(setup['mount_point'])
+        except:
+            pass
+
+        for vgrid in store['vgrid']:
+            vgrid_link = os.path.join(configuration.vgrid_files_home, vgrid, "%s_%s" % \
+                                      (unique_resource_name, store_name))
+            try:
+                os.symlink(setup['mount_point'], vgrid_link)
+            except Exception, exc:
+                status = False
+                msg += ' failed to link %s into %s: %s. ' % (setup['mount_point'], vgrid_link, exc)
+
+        if not store['shared_fs']:
+
+            # execute start command to prepare remote tunnel or mount
+
+            command = store['start_command']
+            (exit_code, executed_command) = execute_on_resource(command, True,
+                                                                resource_config, logger)
+            if exit_code == ssh_error_code:
+                status = False
+                msg += ssh_error_msg
+            else:
+                msg += ssh_status_msg
+
+        setup.update(store)
+        command = 'sshfs %(storage_user)s@%(storage_node)s:%(storage_dir)s %(mount_point)s' % \
+                  setup
+
+        msg += 'mounting with %s. ' % command
+        proc = subprocess.Popen(command, shell=True, bufsize=0, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        exit_code = proc.wait()
+        output =  proc.stdout.read()
+        msg += '%s returned %s ' % (command, exit_code)
+        if exit_code > 0:
+            status = False
+            msg += '(non-zero indicates error during mount). %s . ' % output
+        else:
+            msg += '(0 means success). '
+    else:
+        status = False
+        msg += 'unsupported protocol: %s' % protocol
+
+    return (status, msg)
+
+
 def start_resource_frontend(unique_resource_name, configuration,
                             logger):
     """Start resource front end"""
@@ -1202,6 +1297,147 @@ def restart_resource_exe(
             exe_name, resource_home, logger)
     (start_status, start_msg) = \
         start_resource_exe(unique_resource_name, exe_name,
+                           resource_home, cputime, logger)
+    return (stop_status and start_status, '%s; %s' % (stop_msg,
+            start_msg))
+
+
+def resource_store_action(
+    unique_resource_name,
+    store_name,
+    resource_home,
+    action,
+    logger,
+    lock_pgid_file=True,
+    ):
+    """This function handles status and stop for stores"""
+
+    msg = ''
+
+    if not action in ['status', 'stop', 'clean']:
+        msg = 'Unknown action: %s' % action
+        return (False, msg)
+
+    configuration = get_configuration_object()
+    (status, resource_config) = \
+        get_resource_configuration(resource_home, unique_resource_name,
+                                   logger)
+    if not status:
+        msg = "No configfile for: '" + unique_resource_name + "'"
+        return (False, msg)
+
+    (status, store) = get_resource_store(resource_config, store_name, logger)
+    if not status:
+        msg = "No EXE config for: '" + unique_resource_name + "' EXE: '"\
+             + store_name + "'"
+        return (False, msg)
+
+    status = True
+    if 'sftp' == store['protocol']:
+        setup = {'mount_point': os.path.join(resource_home, unique_resource_name, store_name)}
+        if action in ['stop', 'clean']:
+            if os.path.ismount(setup['mount_point']):
+                for vgrid in store['vgrid']:
+                    vgrid_link = os.path.join(configuration.vgrid_files_home, vgrid, "%s_%s" % \
+                                              (unique_resource_name, store_name))
+                    try:
+                        os.remove(vgrid_link)
+                    except Exception, exc:
+                        msg += ' failed to unlink %s: %s. ' % (vgrid_link, exc)
+
+                command = 'fusermount -u %(mount_point)s' % setup
+                parts = command.split()
+                msg += 'unmounting with %s. ' % command
+                proc = subprocess.Popen(command, shell=True, bufsize=0, stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
+                exit_code = proc.wait()
+                output =  proc.stdout.read()
+
+                msg += '%s returned %s ' % (command, exit_code)
+
+                if exit_code > 0:
+                    status = False
+                    msg += '(non-zero indicates unmount problems). %s. ' % output
+                else:
+                    msg += '(0 means success). '
+
+                if not store['shared_fs']:
+
+                    # execute stop/clean command to clean up remote tunnel or mount
+
+                    command = store['%s_command' % action]
+                    (exit_code, executed_command) = execute_on_resource(command, True,
+                                                                        resource_config, logger)
+                    if exit_code == ssh_error_code:
+                        status = False
+                        msg += ssh_error_msg
+                    else:
+                        msg += ssh_status_msg
+            else:
+                msg += 'already unmounted'
+        elif 'status' == action:
+            if os.path.ismount(setup['mount_point']):
+                msg += 'storage is mounted'
+            else:
+                msg += 'storage is not mounted'
+    else:
+        status = False
+        msg += 'unsupported protocol: %s' % protocol
+    return (status, msg)
+
+
+def clean_resource_store(
+    unique_resource_name,
+    store_name,
+    resource_home,
+    logger,
+    ):
+    """Clean store node"""
+
+    (status, msg) = resource_store_action(unique_resource_name, store_name,
+            resource_home, 'clean', logger)
+    return (status, msg)
+
+
+def status_resource_store(
+    unique_resource_name,
+    store_name,
+    resource_home,
+    logger,
+    ):
+    """Get store node status"""
+
+    (status, msg) = resource_store_action(unique_resource_name, store_name,
+            resource_home, 'status', logger)
+    return (status, msg)
+
+
+def stop_resource_store(
+    unique_resource_name,
+    store_name,
+    resource_home,
+    logger,
+    ):
+    """Stop store node"""
+
+    (status, msg) = resource_store_action(unique_resource_name, store_name,
+            resource_home, 'stop', logger)
+    return (status, msg)
+
+
+def restart_resource_store(
+    unique_resource_name,
+    store_name,
+    resource_home,
+    cputime,
+    logger,
+    ):
+    """Restart store node"""
+
+    (stop_status, stop_msg) = stop_resource_store(unique_resource_name,
+            store_name, resource_home, logger)
+    (start_status, start_msg) = \
+        start_resource_store(unique_resource_name, store_name,
                            resource_home, cputime, logger)
     return (stop_status and start_status, '%s; %s' % (stop_msg,
             start_msg))

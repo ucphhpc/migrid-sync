@@ -89,7 +89,6 @@ def get_resource_all_exes(resource_config, logger):
         return (False, msg)
     return (True, resource_config['EXECONFIG'])
 
-
 def get_all_exe_names(unique_resource_name):
     exe_names = []
     conf = get_configuration_object()
@@ -100,5 +99,42 @@ def get_all_exe_names(unique_resource_name):
         return exe_names
     exe_units = resource_config.get('EXECONFIG', [])
     return [exe['name'] for exe in exe_units]
+
+
+def get_resource_store(resource_config, store_name, logger):
+    for store in resource_config['STORECONFIG']:
+
+        # find the right store entry
+
+        if store['name'] == store_name:
+            logger.debug('The configuration for %s was found'
+                          % store_name)
+            return (True, store)
+
+    # not found
+
+    msg = 'Error: The configuration for %s was not found!' % store_name
+    logger.error(msg)
+    return (False, msg)
+
+def get_resource_all_stores(resource_config, logger):
+    msg = ''
+    if not resource_config.has_key('STORECONFIG'):
+        msg = 'No store hosts configured!'
+        logger.error(msg)
+        return (False, msg)
+    return (True, resource_config['STORECONFIG'])
+
+
+def get_all_store_names(unique_resource_name):
+    store_names = []
+    conf = get_configuration_object()
+    (status, resource_config) = \
+        get_resource_configuration(conf.resource_home,
+                                   unique_resource_name, conf.logger)
+    if not status:
+        return store_names
+    store_units = resource_config.get('STORECONFIG', [])
+    return [store['name'] for store in store_units]
 
 
