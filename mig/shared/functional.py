@@ -90,29 +90,6 @@ def validate_input_and_cert(
     """A wrapper used by most back end functionality"""
 
     if not is_user(client_id, configuration.user_home):
-        title = None
-        header = None
-
-        # Add header if missing
-
-        for entry in output_objects:
-            if entry.get('title', None):
-                title = entry
-            elif entry.get('header', None):
-                header = entry
-        if not title:
-            title_object = {
-                'object_type': 'title',
-                'text': 'MiG error',
-                'javascript': '',
-                'bodyfunctions': '',
-                'skipmenu': True,
-                }
-            output_objects.append(title_object)
-        if not header:
-            output_objects.append({'object_type': 'header', 'text'
-                                  : 'MiG error'})
-
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Invalid certificate or no such MiG user (distinguished name)'
                               })

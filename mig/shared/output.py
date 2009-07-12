@@ -1020,6 +1020,28 @@ def do_output(
                        : 'Validation error! %s' % val_msg},
                        {'object_type': 'title', 'text'
                        : 'Validation error!'}])
+
+    title = None
+    header = None
+
+    # Add header if missing
+
+    for entry in out_obj:
+        if 'title' == entry.get('object_type', None):
+            title = entry
+        elif 'header' == entry.get('object_type', None):
+            header = entry
+    if not header:
+        out_obj = [{'object_type': 'header', 'text': 'MiG error'}]\
+             + out_obj
+    if not title:
+        out_obj = [{
+            'object_type': 'title',
+            'text': 'MiG error',
+            'javascript': '',
+            'bodyfunctions': '',
+            }] + out_obj
+
     if not outputformat in outputformats:
         return txt_format(ret_val, ret_msg, out_obj)
 

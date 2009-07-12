@@ -141,10 +141,6 @@ def application(environ, start_response):
         module_path = 'shared.functionality.%s' % backend
         (output_objs, ret_val) = stub(module_path, user_arguments_dict)
     except Exception, exc:
-
-        # (output_objs, ret_val) = (my_id(), returnvalues.OK)
-        # (output_objs, ret_val) = (user_arguments_dict, returnvalues.OK)
-
         (output_objs, ret_val) = ([{'object_type': 'error_text', 'text'
                                   : exc}, {'object_type': 'text', 'text'
                                   : str(environ)}],
