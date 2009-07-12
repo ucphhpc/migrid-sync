@@ -47,24 +47,26 @@ def signature():
     return ['text', defaults]
 
 
-def create_wiki(vgrid_name, wiki_dir, output_objects):
+def create_wiki(configuration, vgrid_name, wiki_dir, output_objects):
     """Create new Moin Moin wiki"""
 
-    cgi_template_script = '/usr/share/moin/server/moin.cgi'
-    cgi_template_wikiconf = '/usr/share/moin/config/wikiconfig.py'
+    cgi_template_script = os.path.join(configuration.moin_share, 'server',
+                                       'moin.cgi')
+    cgi_template_wikiconf = os.path.join(configuration.moin_share, 'config',
+                                         'wikiconfig.py')
 
     # Depending on the MoinMoin installation some of the
     # configuration strings may vary slightly
 
-    cgi_template_etc = '/etc/moin'
+    cgi_template_etc = configuration.moin_etc
     cgi_template_etc_alternative = '/path/to/wikiconfig'
     cgi_template_name = 'Untitled Wiki'
     cgi_template_data_str = './data/'
     cgi_template_data_str_alternative = '../data/'
     cgi_template_underlay_str = './underlay/'
     cgi_template_underlay_str_alternative = '../underlay/'
-    cgi_template_data = '/usr/share/moin/data'
-    cgi_template_underlay = '/usr/share/moin/underlay/'
+    cgi_template_data = os.path.join(configuration.moin_share, 'data')
+    cgi_template_underlay = os.path.join(configuration.moin_share, 'underlay')
 
     cgi_wiki_bin = wiki_dir + 'cgi-bin'
     cgi_wiki_etc = wiki_dir + 'etc'
@@ -288,11 +290,13 @@ def main(client_id, user_arguments_dict):
                      str(exc))
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    # create public, member, owner wiki's in the vgrid dirs
+    if configuration.moin_share and configuration.moin_etc:
+        
+        # create public, member, owner wiki's in the vgrid dirs
 
-    for wiki_dir in [public_wiki_dir, private_wiki_dir, vgrid_wiki_dir]:
-        if not create_wiki(vgrid_name, wiki_dir, output_objects):
-            return (output_objects, returnvalues.SYSTEM_ERROR)
+        for wiki_dir in [public_wiki_dir, private_wiki_dir, vgrid_wiki_dir]:
+            if not create_wiki(configuration, vgrid_name, wiki_dir, output_objects):
+                return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # create pickled owners list with client_id as owner
     # only add user in owners list if new vgrid is a base vgrid (because symlinks to

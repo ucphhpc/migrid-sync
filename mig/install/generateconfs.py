@@ -27,7 +27,9 @@
 
 # IMPORTANT: Run script with sudo or as root
 
-"""Generate the configurations for a custom MiG server installation. Creates MiG server and Apache configurations to fit the provided user and path settings.
+"""Generate the configurations for a custom MiG server installation.
+Creates MiG server and Apache configurations to fit the provided user and
+path settings.
 """
 
 import sys
@@ -77,8 +79,11 @@ def generate_confs(
     mig_code='/home/mig/mig',
     mig_state='/home/mig/state',
     mig_certs='/home/mig/certs',
+    moin_etc='/etc/moin',
+    moin_share='/usr/share/moin',
     http_port=80,
     https_port=443,
+    listen_prefix='',
     ):
     """Generate Apache and MiG server confs with specified variables"""
 
@@ -94,6 +99,9 @@ def generate_confs(
     user_dict['__APACHE_ETC__'] = apache_etc
     user_dict['__APACHE_RUN__'] = apache_run
     user_dict['__APACHE_LOG__'] = apache_log
+    user_dict['__MOIN_ETC__'] = moin_etc
+    user_dict['__MOIN_SHARE__'] = moin_share
+    user_dict['__LISTEN_PREFIX__'] = listen_prefix
 
     try:
         os.makedirs(destination)
@@ -137,8 +145,11 @@ if '__main__' == __name__:
         'mig_code',
         'mig_state',
         'mig_certs',
+        'moin_etc',
+        'moin_share',
         'http_port',
         'https_port',
+        'listen_prefix',
         )
     if '-h' in sys.argv or '--help' in sys.argv:
         print '''Usage:
@@ -148,7 +159,7 @@ or
                 ' '.join([i.upper() for i in names]))
         sys.exit(0)
 
-    values = tuple(sys.argv[1:14])
+    values = tuple(sys.argv[1:len(names) + 1])
     pairs = zip(names, values)
     settings = dict(pairs)
     for i in names:
@@ -166,8 +177,11 @@ apache_log: %(apache_log)s
 mig_code: %(mig_code)s
 mig_state: %(mig_state)s
 mig_certs: %(mig_certs)s
+moin_etc: %(moin_etc)s
+moin_share: %(moin_share)s
 http_port: %(http_port)s
 https_port: %(https_port)s
+listen_prefix: %(listen_prefix)s
 '''\
          % settings
     generate_confs(*values)

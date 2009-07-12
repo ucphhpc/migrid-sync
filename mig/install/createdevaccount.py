@@ -30,6 +30,11 @@
 """Add a unprivileged user with access to a personal MiG server.
 Still needs some manual setup of apache, sudo and iptables
 afterwards...
+
+This is very much bound to the exact setup used on the main MiG servers
+where things like remote login, firewalling, home dirs and sudo are set up
+for separated developer accounts. Some paths like for apache and moin moin is
+similarly hard coded to the Debian defaults on those servers.
 """
 
 import sys
@@ -132,6 +137,8 @@ def create_user(
     apache_run = apache_dir + '/run'
     apache_log = apache_dir + '/log'
     cert_dir = apache_dir + '/MiG-certificates'
+    moin_etc = '/etc/moin'
+    moin_share = '/usr/share/moin'
 
     firewall_script = '/root/scripts/firewall'
     print '# Add the next line to %s and run the script:'\
@@ -171,8 +178,11 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         mig_dir,
         state_dir,
         cert_dir,
+        moin_etc,
+        moin_share,
         http_port,
         https_port,
+        '',
         )
     apache_httpd_conf = os.path.join(dst, 'httpd.conf')
     apache_mig_conf = os.path.join(dst, 'MiG.conf')

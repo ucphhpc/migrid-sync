@@ -77,6 +77,8 @@ def fix_missing(config_file, verbose=True):
         'sandbox_home': '~/state/sandbox_home',
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
+        'moin_etc': '/etc/moin',
+        'moin_share': '/usr/share/moin',
         'migserver_http_url': 'http://%%(server_fqdn)s',
         'backup_http_urls': '',
         'migserver_https_url': 'https://%%(server_fqdn)s',
@@ -162,6 +164,8 @@ class Configuration:
     sss_home = ''
     sandbox_home = ''
     javabin_home = ''
+    moin_etc = ''
+    moin_share = ''
     smtp_server = ''
     smtp_sender = ''
     server_home = ''
@@ -388,6 +392,15 @@ class Configuration:
 
         if config.has_option('SCHEDULER', 'job_retries'):
             self.job_retries = config.getint('SCHEDULER', 'job_retries')
+
+        if config.has_option('WIKI', 'moin_etc'):
+            self.moin_etc = config.get('WIKI', 'moin_etc')
+        else:
+            self.moin_etc = ''
+        if config.has_option('WIKI', 'moin_share'):
+            self.moin_share = config.get('WIKI', 'moin_share')
+        else:
+            self.moin_share = ''
 
         # set test modes if requested
 
