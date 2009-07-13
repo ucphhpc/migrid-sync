@@ -182,7 +182,9 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         moin_share,
         http_port,
         https_port,
-        '',
+        'User',
+        'Group',
+        'Listen',
         )
     apache_httpd_conf = os.path.join(dst, 'httpd.conf')
     apache_mig_conf = os.path.join(dst, 'MiG.conf')

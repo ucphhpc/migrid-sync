@@ -83,7 +83,9 @@ def generate_confs(
     moin_share='/usr/share/moin',
     http_port=80,
     https_port=443,
-    listen_prefix='',
+    user_clause='User',
+    group_clause='Group',
+    listen_clause='Listen',
     ):
     """Generate Apache and MiG server confs with specified variables"""
 
@@ -101,7 +103,9 @@ def generate_confs(
     user_dict['__APACHE_LOG__'] = apache_log
     user_dict['__MOIN_ETC__'] = moin_etc
     user_dict['__MOIN_SHARE__'] = moin_share
-    user_dict['__LISTEN_PREFIX__'] = listen_prefix
+    user_dict['__USER_CLAUSE__'] = user_clause
+    user_dict['__GROUP_CLAUSE__'] = group_clause
+    user_dict['__LISTEN_CLAUSE'] = listen_clause
 
     try:
         os.makedirs(destination)
@@ -149,7 +153,9 @@ if '__main__' == __name__:
         'moin_share',
         'http_port',
         'https_port',
-        'listen_prefix',
+        'user_clause',
+        'group_clause',
+        'listen_clause',
         )
     if '-h' in sys.argv or '--help' in sys.argv:
         print '''Usage:
@@ -181,7 +187,9 @@ moin_etc: %(moin_etc)s
 moin_share: %(moin_share)s
 http_port: %(http_port)s
 https_port: %(https_port)s
-listen_prefix: %(listen_prefix)s
+user_clause: %(user_clause)s
+group_clause: %(group_clause)s
+listen_clause: %(listen_clause)s
 '''\
          % settings
     generate_confs(*values)
