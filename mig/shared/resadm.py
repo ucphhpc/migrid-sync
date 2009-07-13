@@ -684,9 +684,9 @@ def start_resource_exe(
     create_dirs = 'mkdir -p %s' % exe['execution_dir']
     if exe.get('shared_fs', True):
         (create_status, create_err) = execute_on_resource(create_dirs,
-                True, resource_config, logger)
+                False, resource_config, logger)
     else:
-        (create_status, create_err) = execute_on_exe(create_dirs, True,
+        (create_status, create_err) = execute_on_exe(create_dirs, False,
                 resource_config, exe, logger)
 
     if 0 != create_status:
@@ -733,9 +733,11 @@ def start_resource_exe(
 
     # execute start command
 
+    logger.info('starting command')
     command = exe['start_command']
     (exit_code, executed_command) = execute_on_resource(command, True,
             resource_config, logger)
+    logger.info('command started')
 
     msg += executed_command + '\n' + command + ' returned '\
          + str(exit_code)
@@ -1377,21 +1379,21 @@ def resource_store_action(
                     msg += '(non-zero indicates unmount problems). %s. ' % output
                 else:
                     msg += '(0 means success). '
-
-                if not store.get('shared_fs', True):
-
-                    # execute stop/clean command to clean up remote tunnel or mount
-
-                    command = store['%s_command' % action]
-                    (exit_code, executed_command) = execute_on_resource(command, True,
-                                                                        resource_config, logger)
-                    if exit_code == ssh_error_code:
-                        status = False
-                        msg += ssh_error_msg
-                    else:
-                        msg += ssh_status_msg
             else:
                 msg += 'already unmounted'
+
+            if not store.get('shared_fs', True):
+
+                # execute stop/clean command to clean up remote tunnel or mount
+
+                command = store['%s_command' % action]
+                (exit_code, executed_command) = execute_on_resource(command, True,
+                                                                        resource_config, logger)
+                if exit_code == ssh_error_code:
+                    status = False
+                    msg += ssh_error_msg
+                else:
+                    msg += ssh_status_msg
         elif 'status' == action:
             if os.path.ismount(setup['mount_point']):
                 msg += 'storage is mounted'

@@ -304,10 +304,11 @@ def execute_on_resource(
     if background:
         batch.append('&')
 
-    ssh_command = 'ssh %s %s@%s "bash -c \'%s %s\'"'\
+    ssh_command = "ssh %s %s@%s '%s' %s"\
          % (' '.join(options), user, host, command, ' '.join(batch))
-    logger.debug(ssh_command)
+    logger.debug('running command: %s' % ssh_command)
     status = os.system(ssh_command) >> 8
+    logger.debug('cleaning up after command')
 
     # Remove temp file no matter what ssh command returned
 
@@ -342,11 +343,12 @@ def execute_on_exe(
     user = exe_config['execution_user']
     options = default_ssh_options()
     options.append('-X')
-    batch = []
-    batch.append('1> /dev/null')
-    batch.append('2> /dev/null')
-    ssh_command = "ssh %s %s@%s \'%s %s\'" % (' '.join(options), user,
-            node, command, ' '.join(batch))
+
+    # This command should already be properly escaped by the apostrophes
+    # in the execute_on_resource call
+    
+    ssh_command = "ssh %s %s@%s %s" % (' '.join(options), user,
+            node, command)
     logger.debug(ssh_command)
     return execute_on_resource(ssh_command, background,
                                resource_config, logger)
@@ -365,11 +367,12 @@ def execute_on_store(
     user = store_config['storage_user']
     options = default_ssh_options()
     options.append('-X')
-    batch = []
-    #batch.append('1> /dev/null')
-    #batch.append('2> /dev/null')
-    ssh_command = "ssh %s %s@%s bash -c \'%s %s\'" % (' '.join(options), user,
-            node, command, ' '.join(batch))
+
+    # This command should already be properly escaped by the apostrophes
+    # in the execute_on_resource call
+    
+    ssh_command = "ssh %s %s@%s %s" % (' '.join(options), user,
+            node, command)
     logger.debug(ssh_command)
     return execute_on_resource(ssh_command, background,
                                resource_config, logger)
