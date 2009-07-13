@@ -795,22 +795,43 @@ def start_resource_store(
     status = True
     if 'sftp' == store['storage_protocol']:
         sshfs_options = ['-o reconnect', '-C']
-        setup = {'mount_point': os.path.join(resource_home, unique_resource_name, store_name)}
+        mount_point = os.path.join(resource_home, unique_resource_name, store_name)
+        jump_path = os.path.join(resource_home, unique_resource_name,
+                                 store_name + '-jump.sh')
+        setup = {'mount_point': mount_point, 'jump_path': jump_path}
         setup.update(resource_config)
         setup.update(store)
         try:
-            os.mkdir(setup['mount_point'])
+            os.mkdir(mount_point)
         except:
             pass
+
+        # write ssh jump helper script
+
+        jump_script = '''#!/bin/bash
+#
+# Helper script to make the ssh jump from server through front end to store node
+
+ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
+''' % setup
+
+        try:
+            jump_file = open(jump_path, 'w')
+            jump_file.write(jump_script)
+            jump_file.close()
+            os.chmod(jump_path, 0700)
+        except:
+            status = False
+            msg += ' failed to write jump helper script %s: %s. ' % (jump_path, exc)
 
         for vgrid in store['vgrid']:
             vgrid_link = os.path.join(configuration.vgrid_files_home, vgrid, "%s_%s" % \
                                       (unique_resource_name, store_name))
             try:
-                os.symlink(setup['mount_point'], vgrid_link)
+                os.symlink(mount_point, vgrid_link)
             except Exception, exc:
                 status = False
-                msg += ' failed to link %s into %s: %s. ' % (setup['mount_point'], vgrid_link, exc)
+                msg += ' failed to link %s into %s: %s. ' % (mount_point, vgrid_link, exc)
 
         if not store.get('shared_fs', True):
 
@@ -825,7 +846,7 @@ def start_resource_store(
                 msg += ssh_error_msg
             else:
                 msg += ssh_status_msg
-            sshfs_options.append("-o ssh_command='ssh -o Port=%(SSHPORT)d -o User=%(MIGUSER)s %(HOSTURL)s ssh'" % setup)
+            sshfs_options.append("-o ssh_command='%(jump_path)s'" % setup)
 
         setup['options'] = ' '.join(sshfs_options)
         command = 'sshfs %(storage_user)s@%(storage_node)s:%(storage_dir)s %(mount_point)s %(options)s' % \
@@ -1353,9 +1374,10 @@ def resource_store_action(
 
     status = True
     if 'sftp' == store['storage_protocol']:
-        setup = {'mount_point': os.path.join(resource_home, unique_resource_name, store_name)}
+        mount_point = os.path.join(resource_home, unique_resource_name, store_name)
+        setup = {'mount_point': mount_point}
         if action in ['stop', 'clean']:
-            if os.path.ismount(setup['mount_point']):
+            if os.path.ismount(mount_point):
                 for vgrid in store['vgrid']:
                     vgrid_link = os.path.join(configuration.vgrid_files_home, vgrid, "%s_%s" % \
                                               (unique_resource_name, store_name))
@@ -1395,7 +1417,7 @@ def resource_store_action(
                 else:
                     msg += ssh_status_msg
         elif 'status' == action:
-            if os.path.ismount(setup['mount_point']):
+            if os.path.ismount(mount_point):
                 msg += 'storage is mounted'
             else:
                 msg += 'storage is not mounted'
