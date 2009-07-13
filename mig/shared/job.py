@@ -35,6 +35,10 @@ from shared.fileio import send_message_to_grid_script, unpickle
 from shared.mrslparser import parse
 from shared.useradm import client_id_dir
 
+# Where to save all JOBID.X files
+
+output_dir = 'job_output'
+
 
 class Job:
 

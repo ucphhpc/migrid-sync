@@ -172,7 +172,7 @@ class GenJobScriptJava:
         cmd = ''
         for name in files:
 
-            # TODO: place files in "job_output"/job_id/
+            # TODO: place files in '%s/%s/' % (shared.job.output_dir, job_id)
 
             if name.count('stdout') > 0:
                 cmd += 'stdout: ' + migserver_https_url_arg\
@@ -193,7 +193,7 @@ class GenJobScriptJava:
         for name in files:
             if name.count('status') > 0:
 
-                # TODO: place files in "job_output"/job_id/
+                # TODO: place files in '%s/%s/' % (shared.job.output_dir, job_id)
 
                 cmd += 'status: ' + migserver_https_url_arg\
                      + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\

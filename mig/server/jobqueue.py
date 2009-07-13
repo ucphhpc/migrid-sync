@@ -121,7 +121,7 @@ class JobQueue:
                               , index, self.queue_length())
         return job
 
-    def get_job_by_id(self, jobid):
+    def get_job_by_id(self, jobid, log_errors=True):
         """Find and return job with jobid"""
 
         job = None
@@ -130,10 +130,10 @@ class JobQueue:
                 if j['JOB_ID'] == jobid:
                     job = j
                     break
-        else:
+        elif log_errors:
             self.logger.error('get_job_by_id: Queue empty.')
 
-        if not job:
+        if not job and log_errors:
             self.logger.error('get_job_by_id: Failed to get job - jobid: %s '
                                % jobid)
         return job
@@ -151,7 +151,7 @@ class JobQueue:
                               , index, self.queue_length())
         return job
 
-    def dequeue_job_by_id(self, jobid):
+    def dequeue_job_by_id(self, jobid, log_errors=True):
         """Dequeue and return job with id: 'jobid'"""
 
         job = None
@@ -163,10 +163,10 @@ class JobQueue:
                     self.dequeue_job(index)
                     break
                 index += 1
-        else:
+        elif log_errors:
             self.logger.error('dequeue_job_by_id: Queue empty.')
 
-        if not job:
+        if not job and log_errors:
             self.logger.error('dequeue_job_by_id: Failed to dequeue job - jobid: %s '
                                % jobid)
         return job

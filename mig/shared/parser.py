@@ -571,11 +571,11 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                 supported_protocols = ['sftp']
                 try:
-                    protocol = store_dict['protocol']
+                    protocol = store_dict['storage_protocol']
                     if protocol not in supported_protocols:
                         status = False
                         msg += print_type_error(job_keyword,
-                                'protocol must be in %s' % supported_protocols,
+                                'storage_protocol must be in %s' % supported_protocols,
                                 keyword_dict, keyword_data)
 
                     shared_fs = store_dict['shared_fs']

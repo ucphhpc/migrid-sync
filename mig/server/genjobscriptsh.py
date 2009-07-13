@@ -29,6 +29,7 @@
 
 import os
 
+from shared.job import output_dir
 
 def curl_cmd_send(resource_filename, mig_server_filename,
                   migserver_https_url_arg):
@@ -772,8 +773,8 @@ class GenJobScriptSh:
 
         cmd = '%s=0\n' % result
         for name in files:
-            name_on_mig_server = 'job_output/' + job_dict['JOB_ID']\
-                 + '/' + name
+            name_on_mig_server = os.path.join(output_dir, job_dict['JOB_ID'],
+                                              name)
             cmd += '[ ! -e "%s" ] || ' % name
             cmd += '%s\n' % curl_cmd_send(name, name_on_mig_server,
                     migserver_https_url_arg)
@@ -797,8 +798,8 @@ class GenJobScriptSh:
 
         cmd = '%s=0\n' % result
         for name in files:
-            name_on_mig_server = 'job_output/' + job_dict['JOB_ID']\
-                 + '/' + name
+            name_on_mig_server = os.path.join(output_dir, job_dict['JOB_ID'],
+                                              name)
             cmd += '[ -e "%s" ] && ' % name
             cmd += '%s\n' % curl_cmd_send(name, name_on_mig_server,
                     migserver_https_url_arg)

@@ -29,6 +29,7 @@
 
 import os
 
+from shared.job import output_dir
 
 def curl_cmd_send(resource_filename, mig_server_filename,
                   migserver_https_url_arg):
@@ -360,8 +361,8 @@ io_log.flush()'''\
 
         cmd = ''
         for name in files:
-            name_on_mig_server = 'job_output/' + job_dict['JOB_ID']\
-                 + '/' + name
+            name_on_mig_server = os.path.join(output_dir, job_dict['JOB_ID'],
+                                              name)
             cmd += 'if (os.path.isfile("' + name\
                  + '") and os.path.getsize("' + name + '") > 0):\n'
 
@@ -379,8 +380,8 @@ io_log.flush()'''\
 
         cmd = ''
         for name in files:
-            name_on_mig_server = 'job_output/' + job_dict['JOB_ID']\
-                 + '/' + name
+            name_on_mig_server = os.path.join(output_dir, job_dict['JOB_ID'],
+                                              name)
 
             # cmd += "os.popen(\"%s\")\n" % curl_cmd_send(name)
 

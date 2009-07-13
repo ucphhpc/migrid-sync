@@ -352,6 +352,29 @@ def execute_on_exe(
                                resource_config, logger)
 
 
+def execute_on_store(
+    command,
+    background,
+    resource_config,
+    store_config,
+    logger,
+    ):
+    """Execute command (through resource) on store"""
+
+    node = store_config['storage_node']
+    user = store_config['storage_user']
+    options = default_ssh_options()
+    options.append('-X')
+    batch = []
+    #batch.append('1> /dev/null')
+    #batch.append('2> /dev/null')
+    ssh_command = "ssh %s %s@%s bash -c \'%s %s\'" % (' '.join(options), user,
+            node, command, ' '.join(batch))
+    logger.debug(ssh_command)
+    return execute_on_resource(ssh_command, background,
+                               resource_config, logger)
+
+
 def execute_remote_ssh(
     remote_port,
     remote_hostkey,

@@ -31,9 +31,10 @@ import os
 import smtplib
 import threading
 
-from shared.validstring import is_valid_email_address
 from shared.fileio import unpickle
+from shared.job import output_dir
 from shared.settings import load_settings
+from shared.validstring import is_valid_email_address
 
 # might be python 2.4, without xml.etree
 # ...in which case: better not configure usage_record_dir
@@ -56,7 +57,8 @@ def create_notify_message(
     txt = ''
 
     var_dict = {'url': configuration.migserver_https_url,
-                'jobid': jobid, 'retries': configuration.job_retries}
+                'jobid': jobid, 'retries': configuration.job_retries,
+                'output_dir': output_dir}
 
     if status == 'SUCCESS':
         header = 'MiG JOB finished'
@@ -77,10 +79,10 @@ The job commands and their exit codes:
         txt += \
             '''
 Link to stdout file:
-%(url)s/cert_redirect/job_output/%(jobid)s/%(jobid)s.stdout (might not be available)
+%(url)s/cert_redirect/%(output_dir)s/%(jobid)s/%(jobid)s.stdout (might not be available)
 
 Link to stderr file:
-%(url)s/cert_redirect/job_output/%(jobid)s/%(jobid)s.stderr (might not be available)
+%(url)s/cert_redirect/%(output_dir)s/%(jobid)s/%(jobid)s.stderr (might not be available)
 
 Replies to this message will not be read!
 '''\

@@ -32,8 +32,9 @@ import pickle
 import time
 
 import shared.fileio as io
-from shared.notification import notify_user_thread
 from shared.fileio import send_message_to_grid_script
+from shared.job import output_dir
+from shared.notification import notify_user_thread
 from shared.useradm import client_id_dir
 
 
@@ -287,21 +288,28 @@ def server_cleanup(
         success = False
 
     # Empty jobs should have all their status files deleted
+    # Clean up may happen before any files are uploaded so ignore
+    # missing files, however.
 
     if job_id.find(configuration.empty_job_name) != -1:
-        empty_prefix = configuration.user_home + os.sep\
-             + configuration.empty_job_name + os.sep + job_id
+        empty_prefix = os.path.join(configuration.user_home,
+                                    configuration.empty_job_name,
+                                    output_dir, job_id)
         for name in ['.status', '.io-status', '.stdout', '.stderr']:
-            status_path = os.path.realpath(empty_prefix + name)
-            if not os.path.exists(status_path):
-                logger.warning('server_cleanup could not find expected file %s'
-                                % status_path)
-            else:
+            status_path = os.path.realpath(os.path.join(empty_prefix,
+                                                        job_id + name))
+            if os.path.exists(status_path):
                 try:
                     os.remove(status_path)
                 except Exception, err:
                     logger.error('could not remove %s during server_clean_up %s'
                                   % (status_path, err))
+        if os.path.exists(empty_prefix):
+            try:
+                os.rmdir(empty_prefix)
+            except Exception, err:
+                logger.error('could not remove %s during server_clean_up %s'
+                             % (empty_prefix, err))
 
     # Only sandboxes create this link, so we don't fail if it does not exists.
 

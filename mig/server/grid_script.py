@@ -493,9 +493,9 @@ while True:
 
         # read resource config file
 
-        resource_config = unpickle(configuration.resource_home
-                                    + unique_resource_name + '/config',
-                                   logger)
+        res_file = os.path.join(configuration.resource_home,
+                                unique_resource_name, 'config')
+        resource_config = unpickle(res_file, logger)
         if resource_config == False:
             logger.error('error unpickling resource config for %s'
                           % unique_resource_name)
@@ -523,16 +523,13 @@ while True:
 
             continue
 
-        # Debug queue
-        # job_queue.ShowQueue(['JOB_ID', 'MAXPRICE', 'CPUTIME'])
-
         job_dict = None
 
         # mark job failed if resource requests a new job and
         # previously dispatched job is not marked done yet
 
-        last_req_file = configuration.resource_home\
-             + unique_resource_name + '/last_request.' + exe
+        last_req_file = os.path.join(configuration.resource_home,
+                                     unique_resource_name, 'last_request.' + exe)
         last_req = unpickle(last_req_file, logger)
         if last_req == False:
 
@@ -541,49 +538,28 @@ while True:
 
             last_req = {'EMPTY_JOB': True}
 
-        if last_req.has_key('EMPTY_JOB'):
-            logger.info('last job was an empty job')
-            if last_req.has_key('JOB_ID'):
+        if last_req.get('EMPTY_JOB', False) or not last_req.get('USER_CERT', None):
 
-                # Dequeue empty job and cleanup
-                # This is done to avoid them stacking up in the executing_queue
-                # in case of a faulty resource who keeps requesting jobs
-
-                job_dict = \
-                    executing_queue.dequeue_job_by_id(last_req['JOB_ID'
-                        ])
-                if job_dict:
-                    if not server_cleanup(
-                        job_dict['SESSIONID'],
-                        job_dict['IOSESSIONID'],
-                        job_dict['LOCALJOBNAME'],
-                        job_dict['JOB_ID'],
-                        configuration,
-                        logger,
-                        ):
-                        logger.error('could not clean up MiG server')
-        elif not last_req.has_key('USER_CERT'):
-
-            logger.error('non-empty last job has no USER_CERT! %s'
-                          % last_req)
-            if last_req.has_key('JOB_ID'):
-
-                # Dequeue faulty job and cleanup
-                # This is done to avoid them stacking up in the executing_queue
-
-                job_dict = \
-                    executing_queue.dequeue_job_by_id(last_req['JOB_ID'
-                        ])
-                if job_dict:
-                    if not server_cleanup(
-                        job_dict['SESSIONID'],
-                        job_dict['IOSESSIONID'],
-                        job_dict['LOCALJOBNAME'],
-                        job_dict['JOB_ID'],
-                        configuration,
-                        logger,
-                        ):
-                        logger.error('could not clean up MiG server')
+            # Dequeue empty job and cleanup (if not already done in FINISH)
+            # This is done to avoid them stacking up in the executing_queue
+            # in case of a faulty resource who keeps requesting jobs
+            
+            job_dict = \
+                     executing_queue.dequeue_job_by_id(last_req['JOB_ID'
+                        ], log_errors=False)
+            if job_dict:
+                logger.info('last job was an empty job which did not finish')
+                if not server_cleanup(
+                    job_dict['SESSIONID'],
+                    job_dict['IOSESSIONID'],
+                    job_dict['LOCALJOBNAME'],
+                    job_dict['JOB_ID'],
+                    configuration,
+                    logger,
+                    ):
+                    logger.error('could not clean up MiG server')
+            else:
+                logger.info('last job was an empty job which already finished')
         else:
 
             # open the mRSL file belonging to the last request
@@ -591,8 +567,8 @@ while True:
 
             last_job_ok_status_list = ['FINISHED', 'CANCELED']
             client_dir = client_id_dir(last_req['USER_CERT'])
-            filenamelast = configuration.mrsl_files_dir + client_dir\
-                 + os.sep + last_req['JOB_ID'] + '.mRSL'
+            filenamelast = os.path.join(configuration.mrsl_files_dir, client_dir,
+                                        last_req['JOB_ID'] + '.mRSL')
             job_dict = unpickle(filenamelast, logger)
             if job_dict:
                 if job_dict['STATUS'] not in last_job_ok_status_list:

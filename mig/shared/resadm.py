@@ -38,7 +38,7 @@ import time
 from shared.conf import get_resource_configuration, get_resource_exe, \
     get_resource_store, get_configuration_object
 from shared.fileio import unpickle
-from shared.ssh import execute_on_resource, execute_on_exe, \
+from shared.ssh import execute_on_resource, execute_on_exe, execute_on_store, \
     copy_file_to_exe, copy_file_to_resource
 
 ssh_error_code = 255
@@ -125,8 +125,8 @@ def put_exe_pgid(
     # Please note that base_dir must end in slash to avoid access to other
     # resource dirs when own name is a prefix of another resource name
 
-    base_dir = os.path.abspath(resource_home + os.sep
-                                + unique_resource_name) + os.sep
+    base_dir = os.path.abspath(os.path.join(resource_home,
+                                            unique_resource_name)) + os.sep
 
     # The exe node script has already been started on resource, so we
     # better get the PGID no matter what.
@@ -440,7 +440,7 @@ def fill_exe_node_script(
 
         # Backward compatible test for shared_fs - fall back to scp
 
-        if exe.has_key('shared_fs') and exe['shared_fs']:
+        if exe.get('shared_fs', True):
             os.write(filehandle, "copy_command='cp'\n")
             os.write(filehandle, 'copy_frontend_prefix=""\n')
             os.write(filehandle, 'copy_execution_prefix=""\n')
@@ -498,8 +498,8 @@ def get_frontend_script(unique_resource_name, logger):
     # Please note that mkstemp uses os.open() style rather than open()
 
     try:
-        resource_dir = configuration.resource_home + os.sep\
-             + unique_resource_name
+        resource_dir = os.path.join(configuration.resource_home,
+                                    unique_resource_name)
 
         (filehandle, local_filename) = \
             tempfile.mkstemp(dir=resource_dir, text=True)
@@ -547,8 +547,8 @@ def get_master_node_script(unique_resource_name, exe_name, logger):
     # Add values from resource config to the top of master_node_script.sh
 
     try:
-        resource_dir = configuration.resource_home + os.sep\
-             + unique_resource_name
+        resource_dir = os.path.join(configuration.resource_home,
+                                    unique_resource_name)
 
         (filehandle, local_filename) = \
             tempfile.mkstemp(dir=resource_dir, text=True)
@@ -682,7 +682,7 @@ def start_resource_exe(
     # create needed dirs on resource frontend and exe
 
     create_dirs = 'mkdir -p %s' % exe['execution_dir']
-    if exe.has_key('shared_fs') and exe['shared_fs']:
+    if exe.get('shared_fs', True):
         (create_status, create_err) = execute_on_resource(create_dirs,
                 True, resource_config, logger)
     else:
@@ -705,7 +705,7 @@ def start_resource_exe(
         # Please note that mkstemp uses os.open() style rather
         # than open()
 
-        resource_dir = resource_home + os.sep + unique_resource_name
+        resource_dir = os.path.join(resource_home, unique_resource_name)
         (filehandle, local_filename) = \
             tempfile.mkstemp(dir=resource_dir, text=True)
         (rv, msg) = fill_exe_node_script(filehandle, resource_config,
@@ -770,18 +770,18 @@ def start_resource_store(
 
     (status, store) = get_resource_store(resource_config, store_name, logger)
     if not status:
-        msg = "No EXE config for: '" + unique_resource_name + "' EXE: '"\
+        msg = "No STORE config for: '" + unique_resource_name + "' STORE: '"\
              + store_name + "'"
         return (False, msg)
 
     # create needed dirs on resource frontend and store
 
-    create_dirs = 'mkdir -p %s' % store['storage_dir']
-    if store.has_key('shared_fs') and store['shared_fs']:
+    create_dirs = 'mkdir -p %(storage_dir)s' % store
+    if store.get('shared_fs', True):
         (create_status, create_err) = execute_on_resource(create_dirs,
-                True, resource_config, logger)
+                False, resource_config, logger)
     else:
-        (create_status, create_err) = execute_on_store(create_dirs, True,
+        (create_status, create_err) = execute_on_store(create_dirs, False,
                 resource_config, store, logger)
 
     if 0 != create_status:
@@ -791,8 +791,11 @@ def start_resource_store(
                       % create_err)
 
     status = True
-    if 'sftp' == store['protocol']:
+    if 'sftp' == store['storage_protocol']:
+        sshfs_options = ['-o reconnect', '-C']
         setup = {'mount_point': os.path.join(resource_home, unique_resource_name, store_name)}
+        setup.update(resource_config)
+        setup.update(store)
         try:
             os.mkdir(setup['mount_point'])
         except:
@@ -807,11 +810,12 @@ def start_resource_store(
                 status = False
                 msg += ' failed to link %s into %s: %s. ' % (setup['mount_point'], vgrid_link, exc)
 
-        if not store['shared_fs']:
+        if not store.get('shared_fs', True):
 
             # execute start command to prepare remote tunnel or mount
 
             command = store['start_command']
+            logger.info('running start command on front end: %s' % command)
             (exit_code, executed_command) = execute_on_resource(command, True,
                                                                 resource_config, logger)
             if exit_code == ssh_error_code:
@@ -819,11 +823,12 @@ def start_resource_store(
                 msg += ssh_error_msg
             else:
                 msg += ssh_status_msg
+            sshfs_options.append("-o ssh_command='ssh -o Port=%(SSHPORT)d -o User=%(MIGUSER)s %(HOSTURL)s ssh'" % setup)
 
-        setup.update(store)
-        command = 'sshfs %(storage_user)s@%(storage_node)s:%(storage_dir)s %(mount_point)s' % \
+        setup['options'] = ' '.join(sshfs_options)
+        command = 'sshfs %(storage_user)s@%(storage_node)s:%(storage_dir)s %(mount_point)s %(options)s' % \
                   setup
-
+        logger.info('running mount command on server: %s' % command)
         msg += 'mounting with %s. ' % command
         proc = subprocess.Popen(command, shell=True, bufsize=0, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
@@ -837,7 +842,7 @@ def start_resource_store(
             msg += '(0 means success). '
     else:
         status = False
-        msg += 'unsupported protocol: %s' % protocol
+        msg += 'unsupported storage_protocol: %(storage_protocol)s' % store
 
     return (status, msg)
 
@@ -868,10 +873,22 @@ def start_resource(
         msg += "No resouce_config for: '" + unique_resource_name + "'\n"
         return (False, msg)
 
-    pgid_path = resource_home + unique_resource_name + '/FE.PGID'
+    pgid_path = os.path.join(resource_home, unique_resource_name, 'FE.PGID')
     if os.path.exists(pgid_path):
-        msg += 'Frontend already startet.'
-        return (False, msg)
+        try:
+
+            # determine if fe runs by finding out if pgid is numerical
+
+            pgid_file = open(pgid_path, 'r')
+            fcntl.flock(pgid_file, fcntl.LOCK_EX)
+            pgid = pgid_file.readline().strip()
+            fcntl.flock(pgid_file, fcntl.LOCK_UN)
+            pgid_file.close()
+            if pgid.isdigit():
+                raise Exception('FE already started')
+        except Exception, exc:
+            msg += str(exc)
+            return (False, msg)
 
     # make sure newest version of frontend_script.sh is on the
     # resource and put unique_resource_name and the URL of the MiG
@@ -880,7 +897,7 @@ def start_resource(
     # Please note that mkstemp uses os.open() style rather than open()
 
     try:
-        resource_dir = resource_home + os.sep + unique_resource_name
+        resource_dir = os.path.join(resource_home, unique_resource_name)
         (filehandle, local_filename) = \
             tempfile.mkstemp(dir=resource_dir, text=True)
         (rv, msg) = fill_frontend_script(filehandle, https_sid_url,
@@ -1328,12 +1345,12 @@ def resource_store_action(
 
     (status, store) = get_resource_store(resource_config, store_name, logger)
     if not status:
-        msg = "No EXE config for: '" + unique_resource_name + "' EXE: '"\
+        msg = "No STORE config for: '" + unique_resource_name + "' STORE: '"\
              + store_name + "'"
         return (False, msg)
 
     status = True
-    if 'sftp' == store['protocol']:
+    if 'sftp' == store['storage_protocol']:
         setup = {'mount_point': os.path.join(resource_home, unique_resource_name, store_name)}
         if action in ['stop', 'clean']:
             if os.path.ismount(setup['mount_point']):
@@ -1361,7 +1378,7 @@ def resource_store_action(
                 else:
                     msg += '(0 means success). '
 
-                if not store['shared_fs']:
+                if not store.get('shared_fs', True):
 
                     # execute stop/clean command to clean up remote tunnel or mount
 
@@ -1382,7 +1399,7 @@ def resource_store_action(
                 msg += 'storage is not mounted'
     else:
         status = False
-        msg += 'unsupported protocol: %s' % protocol
+        msg += 'unsupported storage_protocol: %(storage_protocol)s' % store
     return (status, msg)
 
 

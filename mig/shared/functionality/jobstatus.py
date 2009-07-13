@@ -35,10 +35,10 @@ import time
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.fileio import unpickle
+from shared.job import output_dir, get_job_ids_with_specified_project_name
 from shared.parseflags import verbose, sorted
 from shared.init import initialize_main_variables
 from shared.validstring import valid_user_path
-from shared.job import get_job_ids_with_specified_project_name
 from shared.useradm import client_id_dir
 
 
@@ -280,8 +280,8 @@ def main(client_id, user_arguments_dict):
         job_obj['execution_histories'] = execution_histories
 
         job_obj['statuslink'] = {'object_type': 'link',
-                                 'destination': 'ls.py?path=job_output/%s/*'\
-                                  % job_id, 'text': 'View status files'}
+                                 'destination': 'ls.py?path=%s/%s/*'\
+                                  % (output_dir, job_id), 'text': 'View status files'}
         job_obj['mrsllink'] = {'object_type': 'link',
                                'destination': 'mrslview.py?job_id=%s'\
                                 % job_id,

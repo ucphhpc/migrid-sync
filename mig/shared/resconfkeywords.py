@@ -212,8 +212,9 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         'Sublevel': True,
         'Sublevel_required': [
             'name',
-            'disk',
-            'protocol',
+            'storage_disk',
+            'storage_protocol',
+            'storage_port',
             'storage_user',
             'storage_node',
             'storage_dir',
@@ -505,18 +506,25 @@ def get_storenode_keywords(configuration):
         'Value': 'localhost',
         'Required': True,
         } 
-    disk = {
+    storage_disk = {
         'Description': 'Amount of disk space available on the storage node. The amount is specified in gigabytes and the default is 10.',
         'Example': '1000',
         'Type': 'int',
         'Value': 10,
         'Required': True,
         }
-    protocol = {
+    storage_protocol = {
         'Description': 'Which protocol to use for accessing the storage on the node. Currently only supports sftp.',
         'Example': 'sftp',
         'Type': 'string',
         'Value': 'sftp',
+        'Required': True,
+        }
+    storage_port = {
+        'Description': 'Which port to use for accessing the storage on the node.',
+        'Example': '2222',
+        'Type': 'int',
+        'Value': '22',
         'Required': True,
         }
     storage_user = {
@@ -587,8 +595,9 @@ def get_storenode_keywords(configuration):
 
     keywords_dict = {
         'NAME': name,
-        'DISK': disk,
-        'PROTOCOL': protocol,
+        'STORAGE_DISK': storage_disk,
+        'STORAGE_PROTOCOL': storage_protocol,
+        'STORAGE_PORT': storage_port,
         'STORAGE_USER': storage_user,
         'STORAGE_NODE': storage_node,
         'STORAGE_DIR': storage_dir,

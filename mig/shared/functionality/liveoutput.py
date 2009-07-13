@@ -31,14 +31,15 @@ import glob
 import os
 import datetime
 
-from shared.validstring import valid_user_path
 from shared.fileio import unpickle, pickle
+from shared.job import output_dir
 from shared.ssh import copy_file_to_resource
 from shared.conf import get_resource_exe
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
 from shared.useradm import client_id_dir
+from shared.validstring import valid_user_path
 
 
 def signature():
@@ -291,8 +292,8 @@ def main(client_id, user_arguments_dict):
                                   : 'The stdout and stderr files for the job will be uploaded from the executing resource and should become available in a minute using the link below.'
                                   })
             output_objects.append({'object_type': 'link', 'destination'
-                                  : 'ls.py?path=job_output/%s/*'
-                                   % job_id, 'text': 'View status files'
+                                  : 'ls.py?path=%s/%s/*'
+                                   % (output_dir, job_id), 'text': 'View status files'
                                   })
 
         try:
