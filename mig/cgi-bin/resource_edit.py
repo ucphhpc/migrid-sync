@@ -1074,7 +1074,7 @@ else:
         print """            <input type="hidden" name="apply_changes" value="true">"""
 
     print """                <BR>
-                             <B>Host FQDN:</B>&nbsp;<A HREF="./resource_edit_help.py#hosturl">help</A><BR>"""
+                             <B>Host FQDN:</B>&nbsp;<A HREF="./resedithelp.py#hosturl">help</A><BR>"""
     if form.has_key('new_resource'):
         print """<input type="text" name="hosturl" size="30" value='"""\
              + hosturl + """'>"""
@@ -1084,74 +1084,74 @@ else:
              + hosturl\
              + """'>
                  <BR><BR>
-                 <B>Host identifier:</B>&nbsp;<A HREF="./resource_edit_help.py#hostidentifier">help</A><BR>"""
+                 <B>Host identifier:</B>&nbsp;<A HREF="./resedithelp.py#hostidentifier">help</A><BR>"""
         print hostidentifier
 
     print """                   <input type="hidden" name="hostidentifier" size="30" value='"""\
          + hostidentifier\
          + """'> 
                                 <BR><BR>
-                                <B>Public name:</B>&nbsp<A HREF="./resource_edit_help.py#publicname">help</A>
+                                <B>Public name:</B>&nbsp<A HREF="./resedithelp.py#publicname">help</A>
                                 <BR>
                                 <input type="text" name="publicname" size="30" value='"""\
          + html_encode(publicname)\
          + """'>
                                 <BR><BR>
-                                <B>MiG user:</B>&nbsp;<A HREF="./resource_edit_help.py#mig_user">help</A>
+                                <B>MiG user:</B>&nbsp;<A HREF="./resedithelp.py#miguser">help</A>
                                 <BR>
                                 <input type="text" name="mig_user" size="30" value='"""\
          + html_encode(mig_user)\
          + """'>
                                 <BR><BR>
-                                <B>MiG home:</B>&nbsp;<A HREF="./resource_edit_help.py#mig_home">help</A>
+                                <B>MiG home:</B>&nbsp;<A HREF="./resedithelp.py#resourcehome">help</A>
                                 <BR>                            
                                 <input type="text" name="mig_home" size="30" value='"""\
          + html_encode(mig_home)\
          + """'> 
                                 <BR><BR>
-                                <B>Host IP:</B>&nbsp;<A HREF="./resource_edit_help.py#hostip">help</A>
+                                <B>Host IP:</B>&nbsp;<A HREF="./resedithelp.py#hostip">help</A>
                                 <BR>
                                 <input type="text" name="hostip" size="30" value='"""\
          + html_encode(hostip)\
          + """'>
                                 <BR><BR>
-                                <B>Ssh port:</B>&nbsp<A HREF="./resource_edit_help.py#sshport">help</A>
+                                <B>Ssh port:</B>&nbsp<A HREF="./resedithelp.py#sshport">help</A>
                                 <BR>
                                 <input type="text" name="sshport" size="30" value='"""\
          + html_encode(sshport)\
          + """'>
                                 <BR><BR>
-                                <B>Ssh multiplex:</B>&nbsp<A HREF="./resource_edit_help.py#sshmultiplex">help</A>
+                                <B>Ssh multiplex:</B>&nbsp<A HREF="./resedithelp.py#sshmultiplex">help</A>
                                 <BR>
                                 <input type="text" name="sshmultiplex" size="30" value='"""\
          + html_encode(sshmultiplex)\
          + """'>
                                 <BR><BR>        
-                                <B>Host key:</B>&nbsp;<A HREF="./resource_edit_help.py#hostkey">help</A>
+                                <B>Host key:</B>&nbsp;<A HREF="./resedithelp.py#hostkey">help</A>
                                 <BR>
                                 <input type="text" name="hostkey" size="260" value='"""\
          + html_encode(hostkey)\
          + """'>
                                 <BR><BR>        
-                                <B>Frontend node:</B>&nbsp;<A HREF="./resource_edit_help.py#frontend_node">help</A>
+                                <B>Frontend node:</B>&nbsp;<A HREF="./resedithelp.py#frontendnode">help</A>
                                 <BR>
                                 <input type="text" name="frontend_node" size="30" value='"""\
          + html_encode(frontend_node)\
          + """'>
                                 <BR><BR>        
-                                <B>Max download bandwidth:</B>&nbsp;<A HREF="./resource_edit_help.py#max_download_bandwidth">help</A>
+                                <B>Max download bandwidth:</B>&nbsp;<A HREF="./resedithelp.py#maxdownloadbandwidth">help</A>
                                 <BR>
                                 <input type="text" name="max_download_bandwidth" size="30" value='"""\
          + html_encode(max_download_bandwidth)\
          + """'>
                                 <BR><BR>
-                                <B>Max upload bandwidth:</B>&nbsp;<A HREF="./resource_edit_help.py#max_upload_bandwidth">help</A>
+                                <B>Max upload bandwidth:</B>&nbsp;<A HREF="./resedithelp.py#maxuploadbandwidth">help</A>
                                 <BR>
                                 <input type="text" name="max_upload_bandwidth" size="30" value='"""\
          + html_encode(max_upload_bandwidth)\
          + """'>
                                 <BR><BR>        
-                                <B>LRMS type:</B>&nbsp;<A HREF="./resource_edit_help.py#lrms_type">help</A>
+                                <B>LRMS type:</B>&nbsp;<A HREF="./resedithelp.py#lrmstype">help</A>
                                 <BR>
                                 <select name="lrms_type">"""
 
@@ -1180,67 +1180,67 @@ else:
 
     print """           </select>       
                                 <BR><BR>        
-                                <B>LRMS execution delay command:</B>&nbsp;<A HREF="./resource_edit_help.py#execution_delay_command">help</A>
+                                <B>LRMS execution delay command:</B>&nbsp;<A HREF="./resedithelp.py#lrmsdelaycommand">help</A>
                                 <BR>
                                 <input type="text" name="execution_delay_command" size="50" value='"""\
          + html_encode(execution_delay_command)\
          + """'>
                                 <BR><BR>        
-                                <B>LRMS submit job command:</B>&nbsp;<A HREF="./resource_edit_help.py#submit_job_command">help</A>
+                                <B>LRMS submit job command:</B>&nbsp;<A HREF="./resedithelp.py#lrmssubmitcommand">help</A>
                                 <BR>
                                 <input type="text" name="submit_job_command" size="50" value='"""\
          + html_encode(submit_job_command)\
          + """'>
                                 <BR><BR>        
-                                <B>LRMS remove job command:</B>&nbsp;<A HREF="./resource_edit_help.py#remove_job_command">help</A>
+                                <B>LRMS remove job command:</B>&nbsp;<A HREF="./resedithelp.py#lrmsremovecommand">help</A>
                                 <BR>
                                 <input type="text" name="remove_job_command" size="50" value='"""\
          + html_encode(remove_job_command)\
          + """'>
                                 <BR><BR>        
-                                <B>LRMS query done command:</B>&nbsp;<A HREF="./resource_edit_help.py#query_done_command">help</A>
+                                <B>LRMS query done command:</B>&nbsp;<A HREF="./resedithelp.py#lrmsdonecommand">help</A>
                                 <BR>
                                 <input type="text" name="query_done_command" size="50" value='"""\
          + html_encode(query_done_command)\
          + """'>
                                 <BR><BR>
-                                <B>Execution node(s):</B>&nbsp;<A HREF="./resource_edit_help.py#execution_nodes">help</A>
+                                <B>Execution node(s):</B>&nbsp;<A HREF="./resedithelp.py#executionnodes">help</A>
                                 <BR>
                                 <input type="text" name="execution_nodes" size="30" value='"""\
          + html_encode(execution_nodes)\
          + """'>
                                 <BR><BR>
-                                <B>Node count:</B>&nbsp;<A HREF="./resource_edit_help.py#nodecount">help</A>
+                                <B>Node count:</B>&nbsp;<A HREF="./resedithelp.py#nodecount">help</A>
                                 <BR>
                                 <input type="text" name="nodecount" size="30" value='"""\
          + html_encode(nodecount)\
          + """'>
                                 <BR><BR>
-                                <B>CPU count:</B>&nbsp;<A HREF="./resource_edit_help.py#cpucount">help</A>
+                                <B>CPU count:</B>&nbsp;<A HREF="./resedithelp.py#cpucount">help</A>
                                 <BR>
                                 <input type="text" name="cpucount" size="30" value='"""\
          + html_encode(cpucount)\
          + """'>
                                 <BR><BR>
-                                <B>CPU time:</B>&nbsp<A HREF="./resource_edit_help.py#cputime">help</A>
+                                <B>CPU time:</B>&nbsp<A HREF="./resedithelp.py#cputime">help</A>
                                 <BR>
                                 <input type="text" name="cputime" size="30" value='"""\
          + html_encode(cputime)\
          + """'>
                                 <BR><BR>
-                                <B>Memory (MB):</B>&nbsp<A HREF="./resource_edit_help.py#memory">help</A>
+                                <B>Memory (MB):</B>&nbsp<A HREF="./resedithelp.py#memory">help</A>
                                 <BR>
                                 <input type="text" name="memory" size="30" value='"""\
          + html_encode(memory)\
          + """'>
                                 <BR><BR>
-                                <B>Disk (GB):</B>&nbsp<A HREF="./resource_edit_help.py#disk">help</A>
+                                <B>Disk (GB):</B>&nbsp<A HREF="./resedithelp.py#disk">help</A>
                                 <BR>
                                 <input type="text" name="disk" size="10" value='"""\
          + html_encode(disk)\
          + """'> 
                                 <BR><BR>
-                                <B>Architecture:</B>&nbsp<A HREF="./resource_edit_help.py#architecture">help</A>
+                                <B>Architecture:</B>&nbsp<A HREF="./resedithelp.py#architecture">help</A>
                                 <BR>
                                 <select name="architecture">"""
 
@@ -1261,7 +1261,7 @@ else:
     print """           </select>       
                                 
                                 <BR><BR>
-                                <B>Script language:</B>&nbsp<A HREF="./resource_edit_help.py#scriptlanguage">help</A>
+                                <B>Script language:</B>&nbsp<A HREF="./resedithelp.py#scriptlanguage">help</A>
                                 <BR>
                                 <select name="scriptlanguage">"""
 
@@ -1281,7 +1281,7 @@ else:
 
     print """                   </select>
                                 <BR><BR>
-                                <B>Job type:</B>&nbsp<A HREF="./resource_edit_help.py#jobtype">help</A>
+                                <B>Job type:</B>&nbsp<A HREF="./resedithelp.py#jobtype">help</A>
                                 <BR>
                                 <select name="jobtype">"""
 
@@ -1301,7 +1301,7 @@ else:
 
     print """                   </select>
                                 <BR><BR>
-                                <B>Runtime environments:</B>&nbsp<A HREF="./resource_edit_help.py#runtimeenvironment">help</A>
+                                <B>Runtime environments:</B>&nbsp<A HREF="./resedithelp.py#runtimeenvironment">help</A>
                                                 
                                 <input type="hidden" name="runtime_env_fields" size="30" value='"""\
          + str(runtime_env_fields) + """'>"""
@@ -1346,43 +1346,43 @@ else:
         # print """<input type="text" name='runtimeenvironment""" + str(i) + """' size="30" value='""" + html_encode(runtimeenvironment[i]) + """'><BR>"""
 
     print """                   <BR><BR>
-                                <B>Execution precondition:</B>&nbsp<A HREF="./resource_edit_help.py#execution_precondition">help</A>
+                                <B>Execution precondition:</B>&nbsp<A HREF="./resedithelp.py#execution_precondition">help</A>
                                 <BR>
                                 <input type="text" name="execution_precondition" size="30" value='"""\
          + html_encode(execution_precondition)\
          + """'
                                 <BR><BR>
-                                <B>Prepend execute:</B>&nbsp<A HREF="./resource_edit_help.py#prepend_execute">help</A>
+                                <B>Prepend execute:</B>&nbsp<A HREF="./resedithelp.py#prepend_execute">help</A>
                                 <BR>
                                 <input type="text" name="prepend_execute" size="30" value='"""\
          + html_encode(prepend_execute)\
          + """'>
                                 <BR><BR>
-                                <B>Execute command:</B>&nbsp<A HREF="./resource_edit_help.py#execute_command">help</A>
+                                <B>Execute command:</B>&nbsp<A HREF="./resedithelp.py#start_command">help</A>
                                 <BR>
                                 <input type="text" name="execute_command" size="30" value='"""\
          + html_encode(execute_command)\
          + """'>
                                 <BR><BR>
-                                <B>Status command:</B>&nbsp<A HREF="./resource_edit_help.py#status_command">help</A>
+                                <B>Status command:</B>&nbsp<A HREF="./resedithelp.py#status_command">help</A>
                                 <BR>
                                 <input type="text" name="status_command" size="30" value='"""\
          + html_encode(status_command)\
          + """'>
                                 <BR><BR>
-                                <B>Stop command:</B>&nbsp<A HREF="./resource_edit_help.py#stop_command">help</A>
+                                <B>Stop command:</B>&nbsp<A HREF="./resedithelp.py#stop_command">help</A>
                                 <BR>
                                 <input type="text" name="stop_command" size="30" value='"""\
          + html_encode(stop_command)\
          + """'
                                 <BR><BR>
-                                <B>Clean command:</B>&nbsp<A HREF="./resource_edit_help.py#clean_command">help</A>
+                                <B>Clean command:</B>&nbsp<A HREF="./resedithelp.py#clean_command">help</A>
                                 <BR>
                                 <input type="text" name="clean_command" size="30" value='"""\
          + html_encode(clean_command)\
          + """'
                                 <BR><BR>
-                                <B>Job mode:</B>&nbsp<A HREF="./resource_edit_help.py#continuous">help</A>
+                                <B>Job mode:</B>&nbsp<A HREF="./resedithelp.py#continuous">help</A>
                                 <BR>
                                 <select name="continuous">"""
     selectedtrue = ''
@@ -1399,7 +1399,7 @@ else:
 
     print """                   </select>
                                 <BR><BR>
-                                <B>Shared filesystem:</B>&nbsp<A HREF="./resource_edit_help.py#shared_fs">help</A>
+                                <B>Shared filesystem:</B>&nbsp<A HREF="./resedithelp.py#shared_fs">help</A>
                                 <BR>
                                 <select name="shared_fs">"""
     selectedtrue = ''
@@ -1416,7 +1416,7 @@ else:
 
     print """                   </select>
                                 <br><br>
-                                <b>VGrid:</b>&nbsp<a href="./resource_edit_help.py#vgrid">help</a>
+                                <b>VGrid:</b>&nbsp<a href="./resedithelp.py#vgrid">help</a>
                                 <br>"""
     print """                   <input type="hidden" name="vgrid_fields" size="30" value='"""\
          + str(vgrid_fields) + """'>"""
