@@ -693,7 +693,7 @@ def start_resource_exe(
         msg += '\ncreate exe node dirs returned %s (command %s): %s'\
              % (create_status, create_dirs, create_err)
         logger.error('failed to create execution dir on resource: %s'
-                      % create_err)
+                     % create_err)
 
     # add values from resource config to the top of
     # %(exe_kind)s_node_script.sh and copy it to exe
@@ -776,6 +776,9 @@ def start_resource_store(
              + store_name + "'"
         return (False, msg)
 
+    status = True
+    mount_point = os.path.join(resource_home, unique_resource_name, store_name)
+
     # create needed dirs on resource frontend and store
 
     create_dirs = 'mkdir -p %(storage_dir)s' % store
@@ -787,66 +790,63 @@ def start_resource_store(
                 resource_config, store, logger)
 
     if 0 != create_status:
-        msg += '\ncreate store node dirs returned %s (command %s): %s'\
+        msg += '\ncreate store node dirs returned %s (command %s): %s. '\
              % (create_status, create_dirs, create_err)
         logger.error('failed to create storage dir on resource: %s'
-                      % create_err)
+                     % create_err)
 
-    status = True
+    # prepare mount point
+    try:
+        os.mkdir(mount_point)
+    except:
+        pass
+
+    # execute start command to prepare remote tunnel or mount
+
+    command = store['start_command']
+    logger.info('running start command on front end: %s' % command)
+    (exit_code, executed_command) = execute_on_resource(command, True,
+                                                        resource_config, logger)
+
+    msg += executed_command + '\n' + command + ' returned '\
+             + str(exit_code)
+
+    if exit_code == ssh_error_code:
+        status = False
+        msg += ssh_error_msg
+        logger.error('run start command on front end failed: %s' % command)
+    else:
+        msg += ssh_status_msg
+
     if 'sftp' == store['storage_protocol']:
         sshfs_options = ['-o reconnect', '-C']
-        mount_point = os.path.join(resource_home, unique_resource_name, store_name)
         jump_path = os.path.join(resource_home, unique_resource_name,
                                  store_name + '-jump.sh')
         setup = {'mount_point': mount_point, 'jump_path': jump_path}
         setup.update(resource_config)
         setup.update(store)
-        try:
-            os.mkdir(mount_point)
-        except:
-            pass
+        if not store.get('shared_fs', True):
+            # write ssh jump helper script
 
-        # write ssh jump helper script
-
-        jump_script = '''#!/bin/bash
+            jump_script = '''#!/bin/sh
 #
-# Helper script to make the ssh jump from server through front end to store node
+# Helper script to make the ssh jump from server through front end to store node.
+# Connects to the front end node and runs ssh with the supplied arguments there.
 
 ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
 ''' % setup
 
-        try:
-            jump_file = open(jump_path, 'w')
-            jump_file.write(jump_script)
-            jump_file.close()
-            os.chmod(jump_path, 0700)
-        except:
-            status = False
-            msg += ' failed to write jump helper script %s: %s. ' % (jump_path, exc)
-
-        for vgrid in store['vgrid']:
-            vgrid_link = os.path.join(configuration.vgrid_files_home, vgrid, "%s_%s" % \
-                                      (unique_resource_name, store_name))
             try:
-                os.symlink(mount_point, vgrid_link)
-            except Exception, exc:
+                jump_file = open(jump_path, 'w')
+                jump_file.write(jump_script)
+                jump_file.close()
+                os.chmod(jump_path, 0700)
+            except:
                 status = False
-                msg += ' failed to link %s into %s: %s. ' % (mount_point, vgrid_link, exc)
+                msg += ' failed to write jump helper script %s: %s. ' % (jump_path, exc)
 
-        if not store.get('shared_fs', True):
-
-            # execute start command to prepare remote tunnel or mount
-
-            command = store['start_command']
-            logger.info('running start command on front end: %s' % command)
-            (exit_code, executed_command) = execute_on_resource(command, True,
-                                                                resource_config, logger)
-            if exit_code == ssh_error_code:
-                status = False
-                msg += ssh_error_msg
-            else:
-                msg += ssh_status_msg
             sshfs_options.append("-o ssh_command='%(jump_path)s'" % setup)
+            sshfs_options.append("-o Port=%(storage_port)s" % setup)
 
         setup['options'] = ' '.join(sshfs_options)
         command = 'sshfs %(storage_user)s@%(storage_node)s:%(storage_dir)s %(mount_point)s %(options)s' % \
@@ -866,6 +866,21 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
     else:
         status = False
         msg += 'unsupported storage_protocol: %(storage_protocol)s' % store
+
+    if status:
+
+        # Finally link mount point into vgrid dirs now that mount should be ready
+    
+        for vgrid in store['vgrid']:
+            vgrid_link = os.path.join(configuration.vgrid_files_home, vgrid, "%s_%s" % \
+                                      (unique_resource_name, store_name))
+            try:
+                if not os.path.exists(vgrid_link):
+                    os.symlink(mount_point, vgrid_link)
+            except Exception, exc:
+                status = False
+                msg += ' failed to link %s into %s: %s. ' % (mount_point, vgrid_link, exc)
+                logger.error('failed to link %s: %s' % (mount_point, exc))
 
     return (status, msg)
 
@@ -1373,23 +1388,28 @@ def resource_store_action(
         return (False, msg)
 
     status = True
-    if 'sftp' == store['storage_protocol']:
-        mount_point = os.path.join(resource_home, unique_resource_name, store_name)
-        setup = {'mount_point': mount_point}
-        if action in ['stop', 'clean']:
-            if os.path.ismount(mount_point):
-                for vgrid in store['vgrid']:
-                    vgrid_link = os.path.join(configuration.vgrid_files_home, vgrid, "%s_%s" % \
-                                              (unique_resource_name, store_name))
-                    try:
-                        os.remove(vgrid_link)
-                    except Exception, exc:
-                        msg += ' failed to unlink %s: %s. ' % (vgrid_link, exc)
+    mount_point = os.path.join(resource_home, unique_resource_name, store_name)
 
+    # Remove vgrid dir symlinks before unmounting
+    
+    for vgrid in store['vgrid']:
+        vgrid_link = os.path.join(configuration.vgrid_files_home, vgrid,
+                                  "%s_%s" % (unique_resource_name, store_name))
+        try:
+            if os.path.exists(vgrid_link):
+                os.remove(vgrid_link)
+        except Exception, exc:
+            msg += ' failed to unlink %s: %s. ' % (vgrid_link, exc)
+                
+    if 'sftp' == store['storage_protocol']:
+        setup = {'mount_point': mount_point}
+        if os.path.ismount(mount_point):
+            if action in ['stop', 'clean']:
                 command = 'fusermount -u %(mount_point)s' % setup
                 parts = command.split()
                 msg += 'unmounting with %s. ' % command
-                proc = subprocess.Popen(command, shell=True, bufsize=0, stdout=subprocess.PIPE,
+                proc = subprocess.Popen(command, shell=True, bufsize=0,
+                                        stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
                 exit_code = proc.wait()
                 output =  proc.stdout.read()
@@ -1401,29 +1421,36 @@ def resource_store_action(
                     msg += '(non-zero indicates unmount problems). %s. ' % output
                 else:
                     msg += '(0 means success). '
-            else:
-                msg += 'already unmounted'
-
-            if not store.get('shared_fs', True):
-
-                # execute stop/clean command to clean up remote tunnel or mount
-
-                command = store['%s_command' % action]
-                (exit_code, executed_command) = execute_on_resource(command, True,
-                                                                        resource_config, logger)
-                if exit_code == ssh_error_code:
-                    status = False
-                    msg += ssh_error_msg
-                else:
-                    msg += ssh_status_msg
-        elif 'status' == action:
-            if os.path.ismount(mount_point):
-                msg += 'storage is mounted'
-            else:
-                msg += 'storage is not mounted'
+            elif 'status' == action:
+                msg += 'storage is mounted. '
+            
+        else:
+            msg += 'storage is not mounted. '
     else:
         status = False
-        msg += 'unsupported storage_protocol: %(storage_protocol)s' % store
+        msg += 'unsupported storage_protocol: %(storage_protocol)s. ' % store
+
+    # clean mount point
+    try:
+        os.rmdir(mount_point)
+    except:
+        pass
+    
+    # Finally execute action command to clean up remote tunnel or mount
+
+    command = store['%s_command' % action]
+    (exit_code, executed_command) = execute_on_resource(command, True,
+                                                        resource_config, logger)
+
+    msg += executed_command + '\n' + command + ' returned '\
+             + str(exit_code)
+    
+    if exit_code == ssh_error_code:
+        status = False
+        msg += ssh_error_msg
+    else:
+        msg += ssh_status_msg
+
     return (status, msg)
 
 
