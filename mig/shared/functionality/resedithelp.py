@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# resedithelp - 
+# resedithelp - Help back end for resource editor fields
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -26,6 +26,8 @@
 #
 
 # Martin Rehr martin@rehr.dk August 2005
+
+"""Display resource editor help"""
 
 import shared.resconfkeywords as resconfkeywords
 import shared.returnvalues as returnvalues
@@ -91,29 +93,30 @@ def main(client_id, user_arguments_dict):
                   ('Script Language', 'SCRIPTLANGUAGE'), ('Job Type', 'JOBTYPE'),
                   ]
 
-    exe_fields = [('Node Count', 'NODECOUNT'), ('CPU/Wall Time (s)', 'CPUTIME'), 
-                  ('Execution precondition', 'EXECUTION_PRECONDITION'),
-                  ('Prepend Execute', 'PREPEND_EXECUTE'),
-                  ('Start Executing Command', 'START_COMMAND'),
-                  ('Executing Status Command', 'STATUS_COMMAND'),
-                  ('Stop Executing Command', 'STOP_COMMAND'),
-                  ('Executing Clean Up Command', 'CLEAN_COMMAND'),
-                  ('Executing Mode', 'CONTINUOUS'), ('Shared File System', 'SHARED_FS'),
-                  ('VGrid Participation', 'VGRID'),
+    exe_fields = [('Node Count', 'nodecount'), ('CPU/Wall Time (s)', 'cputime'), 
+                  ('Execution precondition', 'execution_precondition'),
+                  ('Prepend Execute', 'prepend_execute'),
+                  ('Start Executing Command', 'start_command'),
+                  ('Executing Status Command', 'status_command'),
+                  ('Stop Executing Command', 'stop_command'),
+                  ('Executing Clean Up Command', 'clean_command'),
+                  ('Continuous Executing Mode', 'continuous'),
+                  ('Shared File System', 'shared_fs'),
+                  ('VGrid Participation', 'vgrid'),
                   ]
 
-    store_fields = [('Storage Disk (GB)', 'STORAGE_DISK'),
-                    ('Storage Protocol', 'STORAGE_PROTOCOL'),
-                    ('Storage Port', 'STORAGE_PORT'),
-                    ('Storage User', 'STORAGE_USER'),
-                    ('Storage Node', 'STORAGE_NODE'),
-                    ('Storage Directory', 'STORAGE_DIR'),
-                    ('Start Storage Command', 'START_COMMAND'),
-                    ('Storage Status Command', 'STATUS_COMMAND'),
-                    ('Stop Storage Command', 'STOP_COMMAND'),
-                    ('Storage Clean Up Command', 'CLEAN_COMMAND'),
-                    ('Shared File System', 'SHARED_FS'),
-                    ('VGrid Participation', 'VGRID'),
+    store_fields = [('Storage Disk (GB)', 'storage_disk'),
+                    ('Storage Protocol', 'storage_protocol'),
+                    ('Storage Port', 'storage_port'),
+                    ('Storage User', 'storage_user'),
+                    ('Storage Node', 'storage_node'),
+                    ('Storage Directory', 'storage_dir'),
+                    ('Start Storage Command', 'start_command'),
+                    ('Storage Status Command', 'status_command'),
+                    ('Stop Storage Command', 'stop_command'),
+                    ('Storage Clean Up Command', 'clean_command'),
+                    ('Shared File System', 'shared_fs'),
+                    ('VGrid Participation', 'vgrid'),
                     ]
 
     # Resource overall fields
@@ -121,7 +124,7 @@ def main(client_id, user_arguments_dict):
     for (title, field) in res_fields:
         output_objects.append({'object_type': 'html_form', 'text'
                                : """
-<b><a name='%s'>%s:</A></b><br>
+<b><a name='res-%s'>%s:</a></b><br>
 %s<br>
 <br>
 Example:&nbsp;%s<br>
@@ -131,21 +134,10 @@ Example:&nbsp;%s<br>
 
     # Not all exenode fields map directly to documentation in resconfkeywords
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                           : """
-<b><a name='%s'>%s:</A></b><br>
-%s<br>
-<br>
-Example:&nbsp;%s<br>
-<br>""" % ('hostip', 'Host IP',
-           """This is the external IP address which corresponds to the 'Host FQDN'""",
-           '1.2.3.4')
-                               })
-
     field = 'RUNTIMEENVIRONMENT'
     output_objects.append({'object_type': 'html_form', 'text'
                            : """
-<b><a name='%s'>%s:</A></b><br>
+<b><a name='res-%s'>%s:</a></b><br>
 %s<br>
 <br>
 Example:&nbsp;%s<br>
@@ -158,12 +150,12 @@ Example:&nbsp;%s<br>
 
     output_objects.append({'object_type': 'html_form', 'text'
                            : """
-<b><a name='%s'>%s:</A></b><br>
+<b><a name='exe-%s'>%s:</a></b><br>
 %s<br>
 <br>
 Example:&nbsp;%s<br>
 <br>""" % ('executionnodes', 'Execution Node(s)',
-           exenode_keywords['NAME']['Description'],
+           exenode_keywords['name']['Description'],
            """
 This fields configures all the job execution nodes in one MiG resource.<br>
 It is possible to specify several execution nodes by seperating them with ';'<br>
@@ -184,7 +176,7 @@ in a cluster or batch system, should it be set higher.<br>
     for (title, field) in exe_fields:
         output_objects.append({'object_type': 'html_form', 'text'
                                : """
-<b><a name='%s'>%s:</A></b><br>
+<b><a name='exe-%s'>%s:</a></b><br>
 %s<br>
 <br>
 Example:&nbsp;%s<br>
@@ -196,12 +188,12 @@ Example:&nbsp;%s<br>
 
     output_objects.append({'object_type': 'html_form', 'text'
                            : """
-<b><a name='%s'>%s:</A></b><br>
+<b><a name='store-%s'>%s:</a></b><br>
 %s<br>
 <br>
 Example:&nbsp;%s<br>
-<br>""" % ('storagenodes', 'Storage Node(s)',
-           storenode_keywords['NAME']['Description'],
+<br>""" % ('store-storagenodes', 'Storage Node(s)',
+           storenode_keywords['name']['Description'],
            """
 This fields configures all the storage nodes in one MiG resource.<br>
 It is possible to specify several storage nodes by seperating them with ';'<br>
@@ -219,7 +211,7 @@ physical storage reserved for MiG on each of these MiG storage nodes.<br>
     for (title, field) in store_fields:
         output_objects.append({'object_type': 'html_form', 'text'
                                : """
-<b><a name='%s'>%s:</A></b><br>
+<b><a name='store-%s'>%s:</a></b><br>
 %s<br>
 <br>
 Example:&nbsp;%s<br>
