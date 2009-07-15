@@ -38,12 +38,15 @@
 import os
 import sys
 import datetime
-from xml.etree import ElementTree as ET
+# from xml.etree import ElementTree as ET
+
+# in order to construct our own XML DOMs
+from xml.dom.minidom import getDOMImplementation
 
 # MiG-specific imports
 
 from shared.configuration import Configuration
-from shared.fileio import unpickle
+from shared.fileio import unpickle,write_file
 
 # Description of the Usage Record XML format:
 
@@ -205,6 +208,10 @@ __state_map__ = {
 # shared/gridstat.py:        elif job_dict['STATUS'] == 'FINISHED':
 
 
+# static: minidom implementation, used to create XML documents
+
+ET = getDOMImplementation()
+
 class UsageRecord:
 
     """
@@ -213,6 +220,7 @@ class UsageRecord:
 
     __logger = None
     __configuration = None
+    __doc = None
 
     # XML data which we intend to use:
 
@@ -246,6 +254,9 @@ class UsageRecord:
 
         self.__logger = logger
         self.__configuration = config
+        self.__doc = ET.createDocument(None,'JobUsageRecord',None)
+
+        # we keep the document around from the beginning...
 
     def generate_tree(self):
         """
@@ -255,8 +266,11 @@ class UsageRecord:
         def set_element(parent, name, text):
             """ utility function, adds a child node with text content"""
 
-            element = ET.SubElement(parent, name)
-            element.text = str(text)
+            # DOM implementation:
+
+            element = self.__doc.createElement(name)
+            element.appendChild(self.__doc.createTextNode(str(text)))
+            parent.appendChild(element)
             return element  # in case we want to add attributes...
 
         # temporary element storage in some following if clauses
@@ -268,46 +282,55 @@ class UsageRecord:
         self.__logger.debug('Writing out usage record, ID %s'
                              % self.record_id)
 
-        record = ET.Element('JobUsageRecord')
+        record = self.__doc.documentElement
 
         if self.record_id == None:
             self.__logger.error('No recordId specified, '
                                  + 'cannot generate usage record')
             return None
-        record_id = ET.SubElement(record, 'RecordIdentity')
-        record_id.set('recordId', self.record_id)
+        record_id = self.__doc.createElement('RecordIdentity')
+        record_id.setAttribute('recordId', self.record_id)
         if self.create_time:
-            record_id.set('createTime', self.create_time)
+            record_id.setAttribute('createTime', self.create_time)
         else:
-            record_id.set('createTime', xsl_datetime())
+            record_id.setAttribute('createTime', xsl_datetime())
+        record.appendChild(record_id)
 
         if self.global_job_id or self.local_job_id:
-            job_identity = ET.SubElement(record, 'JobIdentity')
+            job_identity = self.__doc.createElement('JobIdentity')
             if self.global_job_id:
                 set_element(job_identity, 'GlobalJobId',
                             self.global_job_id)
             if self.local_job_id:
                 set_element(job_identity, 'LocalJobId',
                             self.local_job_id)
+            record.appendChild(job_identity)
 
         if self.global_user_name or self.local_job_id:
-            user_identity = ET.SubElement(record, 'UserIdentity')
+            user_identity = self.__doc.createElement('UserIdentity')
             if self.global_user_name:
                 set_element(user_identity, 'GlobalUserName',
                             self.global_user_name)
             if self.local_user_id:
                 set_element(user_identity, 'LocalUserId',
                             self.local_user_id)
+            record.appendChild(user_identity)
+
         if self.charge:
             temp = set_element(record, 'Charge', text=self.charge)
             if self.charge_formula:
-                temp.set('formula', self.charge_formula)
+                temp.setAttribute('formula', self.charge_formula)
 
         if self.status == None:
             self.__logger.error('No status specified, '
                                  + 'cannot generate usage record')
             return None
         set_element(record, 'Status', text=self.status)
+
+        # we always have a machine name...
+        
+        set_element(record, 'MachineName',
+                    text=self.__configuration.mig_server_id)
 
         if self.queue:
             set_element(record, 'Queue', text=self.queue)
@@ -328,20 +351,20 @@ class UsageRecord:
         if self.cpu_duration_user:
             temp = set_element(record, 'CpuDuration',
                                text=self.cpu_duration_user)
-            temp.set('usageType', 'user')
+            temp.setAttribute('usageType', 'user')
         if self.cpu_duration_system:
             temp = set_element(record, 'CpuDuration',
                                text=self.cpu_duration_system)
-            temp.set('usageType', 'system')
+            temp.setAttribute('usageType', 'system')
 
-        return ET.ElementTree(record)
+        return self.__doc.toxml()
 
     def write_xml(self, filename):
         """ Writes the Usage Record to a file as XML """
 
         try:
-            tree = self.generate_tree()
-            tree.write(filename)
+            xml = self.generate_tree()
+            result = write_file(xml, filename, self.__logger)
         except Exception, err:
             self.__logger.error('Unable to write XML file: %s' % err)
 
@@ -389,6 +412,8 @@ class UsageRecord:
             else:
                 raise NotHere(name + ' not found.')
 
+        self.__logger.debug('filling in job data from dictionary: %s'
+                             % job )
         # set all fields we can get from mRSL easily:
 
         # these are required, give up if not there:
@@ -427,9 +452,9 @@ class UsageRecord:
         except NotHere:
             pass
 
-        # try: self.job_name = lookup('JOBNAME')
-        # except NotHere: pass
+        # global JOB_ID should be there if we get here...
 
+        self.global_job_id = lookup('JOB_ID')
         try:
             self.local_job_id = lookup('LOCALJOBNAME')
         except NotHere:
@@ -446,13 +471,18 @@ class UsageRecord:
             # EXECUTING_TIMESTAMP - StartTime
             # EXECUTING - FINISHED = WallDuration
 
-            end_ = lookup('FINISHED_TIMESTAMP')
-            end_time = datetime.datetime(*end_[:6])
-            self.end_time = xsl_datetime(end_time)
-
             start_ = lookup('EXECUTING_TIMESTAMP')
             start_time = datetime.datetime(*start_[:6])
             self.start_time = xsl_datetime(start_time)
+
+            # FINISHED_TIMESTAMP is not there for failed jobs.
+            # Question is how to account them, when 
+            # they have spent resources (e.g. failed due 
+            # to timeout, several retries,...)
+
+            end_ = lookup('FINISHED_TIMESTAMP')
+            end_time = datetime.datetime(*end_[:6])
+            self.end_time = xsl_datetime(end_time)
 
             self.wall_duration = xsl_duration(start_time, end_time)
 
@@ -473,6 +503,11 @@ class UsageRecord:
         except NotHere:
             pass  # nevermind...
 
+        if job.has_key('RESOURCE_CONFIG'):
+            resCfg = job['RESOURCE_CONFIG']
+            self.local_user_id = resCfg.get('MIGUSER',None)
+            self.host  = resCfg.get('RESOURCE_ID',None)
+
         # if something is not found, we jump out, but
         # we have set all available fields before.
 
@@ -488,12 +523,33 @@ class UsageRecord:
 
 # end usage record
 
+# called from outside: write out XMl if directory configured
+    # first of all, write out the usage record (if configured)
+
+def write_usage_record_from_dict(jobdict, config):
+
+#    if not configuration:
+#        configuration = get_configuration_object
+
+    ur_destination = config.usage_record_dir
+    if ur_destination and jobdict:
+
+        logger.debug('XML Usage Record directory %s' % ur_destination)
+        usage_record = UsageRecord(config, config.logger)
+        usage_record.fill_from_dict(jobdict)
+
+        # we use the job_id as a file name (should be unique)
+
+        usage_record.write_xml(ur_destination + os.sep
+                                + jobdict['JOB_ID'] + '.xml')
+
 # testing
 
 if __name__ == '__main__':
     print len(sys.argv)
     if len(sys.argv) > 1:
         fname = sys.argv[1]
+
         conf = Configuration('MiGserver.conf')
         usage_record = UsageRecord(conf, conf.logger)
 
