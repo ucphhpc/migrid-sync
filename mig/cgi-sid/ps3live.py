@@ -41,6 +41,7 @@ from shared.sandbox import get_resource_name
 from shared.resadm import get_frontend_script, get_master_node_script
 from shared.resadm import fill_frontend_script, \
     fill_master_node_script, get_resource_exe
+from shared.vgrid import default_vgrid
 import shared.confparser as confparser
 
 
@@ -91,7 +92,7 @@ def create_ps3_resource(sandboxkey):
     exe_clean_command = 'N/A'
     exe_continuous = False
     exe_shared_fs = True
-    exe_vgrid = 'Generic'
+    exe_vgrid = default_vgrid
 
     result = create_resource(resource_name, sandboxkey,
                              configuration.resource_home, logger)

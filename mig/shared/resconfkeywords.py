@@ -27,6 +27,8 @@
 
 """Keywords in the resource configuration files"""
 
+from shared.vgrid import default_vgrid
+
 
 def get_resource_keywords(configuration):
     scriptlanguage = {
@@ -471,7 +473,7 @@ def get_exenode_keywords(configuration):
         'Description': 'Which VGrids should the resource accept jobs from? Please note that the corresponding VGrid owners must add the resource to the VGrid first. The raw format is a comma separated list of VGrid names.',
         'Example': 'Generic, MyVGrid',
         'Type': 'list of strings',
-        'Value': 'Generic',
+        'Value': default_vgrid,
         'Required': True,
         }
 
@@ -587,7 +589,7 @@ def get_storenode_keywords(configuration):
         'Description': 'Which VGrids should the resource accept jobs from? Please note that the corresponding VGrid owners must add the resource to the VGrid first. The raw format is a comma separated list of VGrid names.',
         'Example': 'Generic, MyVGrid',
         'Type': 'list of strings',
-        'Value': 'Generic',
+        'Value': default_vgrid,
         'Required': True,
         }
 

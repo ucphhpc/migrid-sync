@@ -44,7 +44,7 @@ from shared.fileio import make_symlink
 import shared.resadm as resadm
 from shared.resource import create_resource, remove_resource
 from shared.sandbox import load_sandbox_db, save_sandbox_db
-from shared.vgrid import vgrid_list_vgrids
+from shared.vgrid import vgrid_list_vgrids, default_vgrid
 
 # uncomment for debugging
 # print "Content-Type: txt/html"
@@ -61,7 +61,7 @@ form = cgi.FieldStorage()
 username = form.getfirst('username', '').strip()
 vgrid_list = form.getlist('vgrid')
 if not vgrid_list:
-    vgrid_list = ['Generic']
+    vgrid_list = [default_vgrid]
 
 # password = form.getfirst("password","").strip()
 

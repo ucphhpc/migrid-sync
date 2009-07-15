@@ -31,6 +31,7 @@ from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 from shared.gridstat import GridStat
 from shared.sandbox import load_sandbox_db, save_sandbox_db
+from shared.vgrid import default_vgrid
 import shared.returnvalues as returnvalues
 
 
@@ -135,15 +136,15 @@ def print_expert_settings(display):
     </select></td></tr>
     <tr><td align='' colspan=''>Which VGrid do you want the sandbox to work for?</td>
     <td><select name='vgrid'>
-    <option value='Generic'>Generic</option>
+    <option value='%(default_vgrid)s'>%(default_vgrid)s</option>
     </select></td></tr>
-"""
+""" % {'default_vgrid': default_vgrid}
     else:
         html = \
             """
              <input type=hidden name='image_format' value='qcow'>
-             <input type='hidden' name='vgrid' value='Generic'>
-"""
+             <input type='hidden' name='vgrid' value='%(default_vgrid)s'>
+""" % {'default_vgrid': default_vgrid}
 
     return html
 

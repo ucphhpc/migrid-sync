@@ -83,15 +83,18 @@ commandline like the command help indicates:
 Usage:
 ./generateconfs.py
 or
-./generateconfs.py SOURCE DESTINATION SERVER_FQDN USER GROUP APACHE_ETC
-APACHE_RUN APACHE_LOG MIG_CODE MIG_STATE MIG_CERTS HTTP_PORT HTTPS_PORT
+./generateconfs.py SOURCE DESTINATION SERVER_FQDN USER GROUP APACHE_ETC \
+		   APACHE_RUN APACHE_LOG MIG_CODE MIG_STATE MIG_CERTS \
+		   MOIN_ETC MOIN_SHARE HTTP_PORT HTTPS_PORT USER_CLAUSE \
+		   GROUP_CLAUSE LISTEN_CLAUSE		   
 
 For one of our servers running MiG as the 'mig' user with the code
 checked out directly in the home directory and with Debian apache
 defaults, this could be:
 python generateconfs.py . generated-confs mig-1.imada.sdu.dk mig mig \
        /etc/apache /var/run/apache /var/log/apache /home/mig/mig \
-       /home/mig/state /home/mig/MiG-certificates 80 443
+       /home/mig/state /home/mig/MiG-certificates /etc/moin \
+       /usr/share/moin 80 443 User Group Listen
 
 Most of the arguments should be relatively straight forward, but you
 need to provide the MIG_CERTS path where your apache server key and
@@ -99,6 +102,15 @@ certificates are available along with optional MiG x509 server
 certificates (used for MiG server to server communication).
 The actual keys and certificates can be added later, so you can just
 choose a suitable directory path at first.
+
+The two moin paths are optional and can be set to the empty string if
+moin is not available or should not be enabled. On Debian the
+moinmoin-common package provides all the necessary wiki requirements. 
+
+The three CLAUSE arguments can be used to comment out the explicit
+setting of user, group and ports in the apache conf by providing a
+'# User', '# Group' and '# Listen'. This is mostly relevant if using
+apache2 with WSGI.
 
 The generator will inform you about the steps to install your
 configuration files in the right locations.

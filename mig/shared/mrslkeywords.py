@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# mrslkeywords - [insert a few words of module description on this line]
+# mrslkeywords - Mapping of available mRSL keywords and doc
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,11 @@
 # -- END_HEADER ---
 #
 
-"""Keywords in the mRSL language"""
+"""Keywords in the mRSL language:
+Works as a combined specification of and source of information about keywords.
+"""
+
+from shared.vgrid import default_vgrid
 
 
 def get_keywords_dict(configuration):
@@ -261,9 +265,9 @@ The economy is not yet enforced, so this is a proof of concept option only.
         'Required': False,
         }
     vgrid = {
-        'Description': '''A prioritized list of the VGRIDs allowed to execute the job (Default value is Generic).
+        'Description': '''A prioritized list of the VGRIDs allowed to execute the job (Default value is %s).
 During job submit the keyword ANY is replaced by a list of all the VGrids that you can access.
-''',
+''' % default_vgrid,
         'Example': '''
 ::VGRID::
 Dalton

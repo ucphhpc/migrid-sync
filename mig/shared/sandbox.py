@@ -36,6 +36,7 @@ from binascii import hexlify
 from conf import get_configuration_object
 from shared.fileio import make_symlink
 from shared.resource import create_resource
+from shared.vgrid import default_vgrid
 import shared.confparser as confparser
 
 sandbox_db_name = 'sandbox_users.pkl'
@@ -180,9 +181,9 @@ stop_command=N/A
 clean_command=N/A
 continuous=False
 shared_fs=False
-vgrid=Generic
+vgrid=%s
     """\
-         % (result[2], sandboxkey, exe_name, cputime)
+         % (result[2], sandboxkey, exe_name, cputime, default_vgrid)
 
     # write the conf string to a conf file
 

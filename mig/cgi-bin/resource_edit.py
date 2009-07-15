@@ -57,7 +57,7 @@ from shared.refunctions import list_runtime_environments, \
 from shared.cgishared import init_cgi_script_with_cert
 from shared.notification import send_resource_create_request_mail
 from shared.ssh import default_ssh_options
-from shared.vgrid import user_allowed_vgrids
+from shared.vgrid import user_allowed_vgrids, default_vgrid
 from shared.useradm import client_id_dir
 
 
@@ -134,12 +134,6 @@ def get_default_clean_command(execution_dir, execution_node):
                                     execution_node,
                                     get_local_clean_command(execution_dir,
                                     execution_node))
-
-
-def get_default_vgrid():
-    """Return a string of VGrids to use as default"""
-
-    return 'Generic'
 
 
 def parse_resource_config(conf_dict, config_file):
@@ -645,7 +639,7 @@ if (form.has_key('new_resource') or form.has_key('apply_changes'))\
             if form.has_key('vgrid'):
                 vgrid = ', '.join(form.getlist('vgrid'))
             else:
-                vgrid = get_default_vgrid()
+                vgrid = default_vgrid
             fd.write('vgrid=%s\n' % vgrid)
 
         fd.close()

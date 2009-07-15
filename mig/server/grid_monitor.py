@@ -35,7 +35,7 @@ import datetime
 from shared.conf import get_configuration_object
 from shared.gridstat import GridStat
 from shared.fileio import unpickle
-from shared.vgrid import vgrid_list_vgrids
+from shared.vgrid import vgrid_list_vgrids, default_vgrid
 from shared.html import get_cgi_html_header, get_cgi_html_footer
 
 print """
@@ -48,21 +48,21 @@ unless it is available in mig/server/MiGserver.conf
 configuration = get_configuration_object()
 logger = configuration.logger
 
-# Make sure that the Generic VGrid home used by monitor exists
+# Make sure that the default VGrid home used by monitor exists
 
-generic_dir = configuration.vgrid_home + os.sep + 'Generic'
-if not os.path.isdir(generic_dir):
+default_vgrid_dir = os.path.join(configuration.vgrid_home, default_vgrid)
+if not os.path.isdir(default_vgrid_dir):
     try:
-        os.makedirs(generic_dir)
+        os.makedirs(default_vgrid_dir)
     except OSError, ose:
-        logger.error('Failed to create Generic VGrid home: %s' % ose)
+        logger.error('Failed to create default VGrid home: %s' % ose)
 
 
 def create_monitor(vgrid_name):
     """Write monitor HTML file for vgrid_name"""
 
-    html_file = configuration.vgrid_home + '/' + vgrid_name\
-         + '/monitor.html'
+    html_file = os.path.join(configuration.vgrid_home, vgrid_name,
+                             'monitor.html')
 
     print 'starting collecting statistics for VGrid %s' % vgrid_name
     sleep_secs = configuration.sleep_secs
@@ -280,8 +280,8 @@ Listing the last request from each resource<br>
 
                 # read file
 
-                mon_file_name = configuration.vgrid_home + current_dir\
-                     + '/' + filename
+                mon_file_name = os.path.join(configuration.vgrid_home, current_dir,
+                                             filename)
                 print 'found ' + mon_file_name
                 last_request_dict = unpickle(mon_file_name, logger)
                 if not last_request_dict:
@@ -464,5 +464,5 @@ while True:
         print 'creating monitor for vgrid: %s' % vgrid_name
         create_monitor(vgrid_name)
 
-    print 'sleeping for ' + str(configuration.sleep_secs) + 'seconds'
+    print 'sleeping for %s seconds' % configuration.sleep_secs
     time.sleep(float(configuration.sleep_secs))

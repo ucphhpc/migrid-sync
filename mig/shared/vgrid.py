@@ -101,7 +101,7 @@ def vgrid_is_owner(vgrid_name, client_id, configuration):
 
 def vgrid_is_member(vgrid_name, client_id, configuration):
     """Check if client_id is a member of vgrid_name. Please note
-    that everyone is a member of the Generic vgrid.
+    that everyone is a member of the default vgrid.
     """
 
     # anyone is member of default VGrid
@@ -114,7 +114,7 @@ def vgrid_is_member(vgrid_name, client_id, configuration):
 
 def vgrid_is_resource(vgrid_name, client_id, configuration):
     """Check if client_id is a resource in vgrid_name. Please note
-    that everyone is a member of the Generic vgrid.
+    that everyone is a member of the default vgrid.
     """
 
     if vgrid_is_default(vgrid_name):

@@ -33,6 +33,7 @@ import pickle as py_pickle
 import datetime
 
 from shared.fileio import pickle, unpickle, touch
+from shared.vgrid import default_vgrid
 
 
 class GridStat:
@@ -434,7 +435,7 @@ class GridStat:
             if root.find(os.sep + '.') != -1:
                 continue
             for name in files:
-                filename = root + '/' + name
+                filename = os.path.join(root, name)
 
                 # Only files modified since last update is checked
 
@@ -446,13 +447,9 @@ class GridStat:
                         self.__logger.error(msg)
                         continue
 
-                    # If no VGRID information in jobfile,
-                    # VGRID is Generic
+                    # Use default VGrid if no VGRID information in jobfile
 
-                    if not job_dict.has_key('VGRID'):
-                        job_vgrids = ['Generic']
-                    else:
-                        job_vgrids = job_dict['VGRID']
+                    job_vgrids = job_dict.get('VGRID', [default_vgrid])
 
                     for job_vgrid_name in job_vgrids:
 
