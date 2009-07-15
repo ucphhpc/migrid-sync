@@ -1,5 +1,6 @@
 ;; Emacs initialization file
 
+;; ========== General Options =========
 ; y and n is enough - no need for yes and no
 (fset 'yes-or-no-p 'y-or-n-p)
 
@@ -8,17 +9,28 @@
 (setq scroll-step			1)
 (setq default-case-fold-search	nil)
 (setq default-fill-column		72)
-
-(standard-display-european t)
- 
-(require 'latin-1)
-;; support Danish
-(set-language-environment "Latin-1")
-
 (setq display-time-24hr-format t)
 
 
-; Key mappings
+;; ========== Support Danish =========
+;(standard-display-european t)
+;(require 'latin-1)
+;(set-language-environment "Latin-1")
+(setq locale-coding-system 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-selection-coding-system 'utf-8)
+(prefer-coding-system 'utf-8)
+
+
+;; ========== Enable Line and Column Numbering ==========
+;; Show line-number in the mode line
+(line-number-mode 1)
+;; Show column-number in the mode line
+(column-number-mode 1)
+
+
+;; ========== Key mappings =========
 ;;; The function keys
 (global-set-key [f1] 'tags-search)
 (global-set-key [f2] 'list-matching-lines)
