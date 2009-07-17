@@ -545,8 +545,8 @@ while True:
             # in case of a faulty resource who keeps requesting jobs
             
             job_dict = \
-                     executing_queue.dequeue_job_by_id(last_req['JOB_ID'
-                        ], log_errors=False)
+                     executing_queue.dequeue_job_by_id(last_req.get('JOB_ID', ''),
+                                                       log_errors=False)
             if job_dict:
                 logger.info('last job was an empty job which did not finish')
                 if not server_cleanup(
