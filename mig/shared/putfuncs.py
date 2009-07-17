@@ -229,4 +229,3 @@ def migrated_job(filename, client_id, configuration):
 
     return (True, '%s succesfully migrated.' % job_id)
 
-

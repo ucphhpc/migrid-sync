@@ -28,11 +28,776 @@
 """Resource configuration functions"""
 
 import os
+import re
+import socket
 
 from shared.fileio import pickle
 from shared.confparser import get_resource_config_dict, run
+from shared.ssh import default_ssh_options
 from shared.useradm import client_id_dir
+import shared.resconfkeywords as resconfkeywords
 
+
+def get_regex_non_numeric():
+    """Match everything except numbers"""
+    return re.compile('[^0-9]*')
+
+def retrieve_execution_nodes(exe_nodes, prepend_leader=False):
+    """Return an ordered list of exe nodes from the allowed range formats.
+    Prepend execution-leader node if prepend_leader is set.
+    """
+
+    execution_nodes = []
+    regex_nonnumeric = get_regex_non_numeric()
+    index = 0
+
+    if prepend_leader:
+        execution_nodes.append('execution-leader')
+
+    for noderange in exe_nodes.split(';'):
+        noderange = noderange.replace(' ', '')
+
+        node_array = noderange.split('->')
+
+        if len(node_array) == 1:
+            node_name = node_array[0]
+            if not node_name in execution_nodes:
+                execution_nodes.append(node_name)
+        elif len(node_array) == 2:
+
+            start_node = regex_nonnumeric.split(node_array[0])[-1]
+            end_node = regex_nonnumeric.split(node_array[1])[-1]
+            node_name = (node_array[0])[0:0 - len(start_node)]
+
+            if start_node.isdigit() and end_node.isdigit():
+                start_node = int(start_node)
+                end_node = int(end_node) + 1
+            else:
+                start_node = -1
+                end_node = -1
+
+            for i in range(start_node, end_node):
+                if not node_name in execution_nodes:
+                    execution_nodes.append(node_name + str(i))
+    return execution_nodes
+
+def retrieve_storage_nodes(store_nodes):
+    """Return an ordered list of store nodes from the allowed range formats.
+    """
+
+    return retrieve_execution_nodes(store_nodes)
+
+
+def generate_execution_node_string(exe_nodes, hide_leader=True):
+    """Create a node name string from list of exe config dictionaries"""
+
+    execution_nodes = ''
+    node_name = ''
+    new_node_name = ''
+    node_index = -1
+    new_node_index = -1
+    add_node_index = [-1, -1]
+    regex_nonnumeric = get_regex_non_numeric()
+
+    if hide_leader:
+        exe_nodes = [exe for exe in exe_nodes if 'execution-leader'
+                      != exe['execution_node']]
+    for execution_node in exe_nodes:
+
+        # If only NonNumeric characters, write the execnode as it is.
+
+        if not execution_node['name'].isdigit():
+            if execution_nodes:
+                execution_nodes = execution_nodes + '; '
+            execution_nodes = execution_nodes + execution_node['name']
+        else:
+            non_numeric_split = \
+                regex_nonnumeric.split(execution_node['name'])
+
+            new_node_index = int(non_numeric_split[-1])
+            new_node_name = (execution_node['name'])[0:0
+                 - len(non_numeric_split[-1])]
+
+            if node_name == new_node_name and node_index\
+                 == new_node_index - 1:
+                add_node_index[1] = new_node_index
+            else:
+                if -1 != add_node_index[0]:
+                    if execution_nodes:
+                        execution_nodes += '; '
+
+                    if -1 == add_node_index[1]:
+                        execution_nodes += node_name\
+                             + str(add_node_index[0])
+                    else:
+                        execution_nodes += node_name + ' '\
+                             + str(add_node_index[0]) + '->'\
+                             + str(add_node_index[1])
+
+                add_node_index[0] = new_node_index
+                add_node_index[1] = -1
+
+            node_name = new_node_name
+            node_index = new_node_index
+
+    if -1 != add_node_index[0]:
+        if len(execution_nodes) > 0:
+            execution_nodes += '; '
+
+        if -1 != add_node_index[1]:
+            execution_nodes += node_name + ' ' + str(add_node_index[0])\
+                 + '->' + str(add_node_index[1])
+        else:
+            execution_nodes += node_name + str(add_node_index[0])
+
+    return execution_nodes
+
+def generate_storage_node_string(store_nodes):
+    """Create a node name string from list of store config dictionaries"""
+    return generate_execution_node_string(store_nodes, False)
+
+def local_exe_start_command(dir, node, name='master'):
+    return 'cd %(dir)s ; chmod 700 %(name)s_node_script_%(node)s.sh; nice ./%(name)s_node_script_%(node)s.sh start'\
+         % {'dir': dir, 'node': node, 'name': name}
+
+
+def default_exe_start_command(execution_dir, execution_node):
+    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()),
+                                    execution_node,
+                                    local_exe_start_command(execution_dir,
+                                    execution_node))
+
+def local_exe_status_command(dir, node, name='master'):
+    if 'master' != name:
+        return 'cd %(dir)s; nice ./%(name)s_node_script_%(node)s.sh status %(pgid)s'\
+             % {
+            'dir': dir,
+            'node': node,
+            'name': name,
+            'pgid': '$mig_exe_pgid',
+            }
+    return r'if [ \\`ps -o pid= -g $mig_exe_pgid | wc -l \\` -eq 0 ]; then exit 1; else exit 0;fi'\
+         % {'dir': dir, 'node': node, 'name': name}
+
+
+def default_exe_status_command(execution_dir, execution_node):
+    pgid_file = execution_dir + 'job.pgid'
+    return r'ssh %s %s  \"MIG_EXE_PGID=$mig_exe_pgid ; if [ \\\\\\`ps -o pid= -g \\\\\\$MIG_EXE_PGID | wc -l \\\\\\` -eq 0 ]; then exit 1; else exit 0;fi \"'\
+         % (' '.join(default_ssh_options()), execution_node)
+
+
+def local_exe_stop_command(dir, node, name='master'):
+    if 'master' != name:
+        return 'cd %(dir)s; nice ./%(name)s_node_script_%(node)s.sh stop %(pgid)s'\
+             % {
+            'dir': dir,
+            'node': node,
+            'name': name,
+            'pgid': '$mig_exe_pgid',
+            }
+    return 'kill -9 -$mig_exe_pgid ' % {'dir': dir, 'node': node,
+            'name': name}
+
+
+def default_exe_stop_command(execution_dir, execution_node):
+    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()),
+                                    execution_node,
+                                    local_exe_stop_command(execution_dir,
+                                    execution_node))
+
+
+def local_exe_clean_command(dir, node, name='master'):
+    if 'master' != name:
+        return 'cd %(dir)s; nice ./%(name)s_node_script_%(node)s.sh clean %(pgid)s'\
+             % {
+            'dir': dir,
+            'node': node,
+            'name': name,
+            'pgid': '$mig_exe_pgid',
+            }
+    return 'killall -9 %(name)s_node_script_%(node)s.sh; rm -rf %(dir)s'\
+         % {'dir': dir, 'node': node, 'name': name}
+
+
+def default_exe_clean_command(execution_dir, execution_node):
+    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()),
+                                    execution_node,
+                                    local_exe_clean_command(execution_dir,
+                                    execution_node))
+
+def local_store_start_command(dir, node):
+    return 'echo no action required for %(node)s' % {'dir': dir, 'node': node}
+
+
+def default_store_start_command(execution_dir, execution_node):
+    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()),
+                                    execution_node,
+                                    local_store_start_command(execution_dir,
+                                    execution_node))
+
+def local_store_status_command(dir, node):
+    return 'echo no action required for %(node)s' % {'dir': dir, 'node': node}
+
+
+def default_store_status_command(execution_dir, execution_node):
+    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()),
+                                    execution_node,
+                                    local_store_status_command(execution_dir,
+                                    execution_node))
+
+
+def local_store_stop_command(dir, node, name='master'):
+    return 'echo no action required for %(node)s' % {'dir': dir, 'node': node}
+
+def default_store_stop_command(execution_dir, execution_node):
+    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()),
+                                    execution_node,
+                                    local_store_stop_command(execution_dir,
+                                    execution_node))
+
+
+def local_store_clean_command(dir, node, name='master'):
+    return 'echo no action required for %(node)s' % {'dir': dir, 'node': node}
+
+
+def default_store_clean_command(execution_dir, execution_node):
+    return r'ssh %s %s \\"%s\\"' % (' '.join(default_ssh_options()),
+                                    execution_node,
+                                    local_store_clean_command(execution_dir,
+                                    execution_node))
+
+
+def init_conf(configuration, hosturl='', hostidentifier=''):
+    """Pull out a full configuration for specified resource with all missing
+    fields set to default values.
+    """
+
+    conf = {}
+    if not hosturl:
+        return conf
+    resource_id = '%s.%s' % (hosturl, hostidentifier)
+    conf_file = os.path.join(configuration.resource_home, resource_id,
+                             'config.MiG')
+    if not os.path.isfile(conf_file):
+        return conf
+    (status, msg, conf) = \
+             get_resource_config_dict(conf_file)
+    if not status:
+        return conf
+
+    # Fill in frontendhome if not already set
+
+    if not conf.get('frontendhome', None):
+        conf['frontendhome'] = ''
+        if conf.get('RESOURCEHOME', None):
+            home = conf['RESOURCEHOME']
+            base_index = home.find('/MiG/mig_frontend/')
+            if base_index != -1:
+                home = home[:base_index]
+            conf['frontendhome'] = home
+
+    if conf.get('HOSTKEY', None):
+        if len(conf['HOSTKEY'].split()) == 3:
+            conf['HOSTKEY'] = conf['HOSTKEY'].split(None, 1)[1]
+
+    # Fill in all_X if not already set
+
+    if not conf.get('all_exes', None):
+        all = {}
+        all['execution_user'] = ''
+        all['nodecount'] = 1
+        all['cputime'] = 3600
+        all['execution_precondition'] = ' '
+        all['prepend_execute'] = 'nice -19'
+        all['exehostlog'] = ''
+        all['joblog'] = ''
+        all['start_command'] = 'default'
+        all['status_command'] = 'default'
+        all['stop_command'] = 'default'
+        all['clean_command'] = 'default'
+        all['continuous'] = True
+        all['shared_fs'] = True
+        all['vgrid_list'] = []
+        all['executionnodes'] = []
+        all['executionhome'] = ''
+
+        if conf.get('EXECONFIG', None):
+            all['executionnodes'] = generate_execution_node_string(conf['EXECONFIG'])
+            first = conf['EXECONFIG'][0]
+
+            print [first['shared_fs']]
+            home = str(first['execution_dir'])
+            base_index = home.find('/MiG/mig_exe/')
+            if base_index != -1:
+                home = home[:base_index]
+            all['executionhome'] = home
+            all['execution_user'] = str(first['execution_user'])
+            all['nodecount'] = first['nodecount']
+            all['cputime'] = first['cputime']
+            all['execution_precondition'] = str(first['execution_precondition']).strip("'")
+            all['prepend_execute'] = str(first['prepend_execute']).strip('"')
+
+            
+            all['start_command'] = str(first['start_command'])
+            default_start_command = \
+                                  default_exe_start_command(str(first['execution_dir']), str(first['name']))
+            if all['start_command'].strip().replace('\\', '')\
+                   == default_start_command.strip().replace('\\', ''):
+                all['start_command'] = 'default'
+            local_start_command = \
+                                local_exe_start_command(str(first['execution_dir']), str(first['name']))
+            if all['start_command'].strip().replace('\\', '')\
+                   == local_start_command.strip().replace('\\', ''):
+                all['start_command'] = 'local'
+            local_leader_start_command = \
+                                       local_exe_start_command(str(first['execution_dir']), str(first['name']), 'leader')
+            if all['start_command'].strip().replace('\\', '')\
+                   == local_leader_start_command.strip().replace('\\',
+                                                                   ''):
+                all['start_command'] = 'local'
+            local_dummy_start_command = \
+                                      local_exe_start_command(str(first['execution_dir']), str(first['name']), 'dummy')
+            if all['start_command'].strip().replace('\\', '')\
+                   == local_dummy_start_command.strip().replace('\\', ''
+                                                                  ):
+                all['start_command'] = 'local'
+                
+            all['status_command'] = str(first['status_command'])
+            default_status_command = \
+                                   default_exe_status_command(str(first['execution_dir']), str(first['name']))
+            if all['status_command'].strip().replace('\\', '')\
+                   == default_status_command.strip().replace('\\', ''):
+                all['status_command'] = 'default'
+            local_status_command = \
+                                 local_exe_status_command(str(first['execution_dir']), str(first['name']))
+            if all['status_command'].strip().replace('\\', '')\
+                   == local_status_command.strip().replace('\\', ''):
+                all['status_command'] = 'local'
+            local_leader_status_command = \
+                                        local_exe_status_command(str(first['execution_dir']), str(first['name']), 'leader')
+            if all['status_command'].strip().replace('\\', '')\
+                   == local_leader_status_command.strip().replace('\\', ''
+                                                                  ):
+                all['status_command'] = 'local'
+            local_dummy_status_command = \
+                                       local_exe_status_command(str(first['execution_dir']), str(first['name']), 'dummy')
+            if all['status_command'].strip().replace('\\', '')\
+                   == local_dummy_status_command.strip().replace('\\', ''
+                                                                 ):
+                all['status_command'] = 'local'
+
+            all['stop_command'] = str(first['stop_command'
+                                                           ])
+            default_stop_command = \
+                                 default_exe_stop_command(str(first['execution_dir']), str(first['name']))
+            if all['stop_command'].strip().replace('\\', '')\
+                   == default_stop_command.strip().replace('\\', ''):
+                all['stop_command'] = 'default'
+            local_stop_command = \
+                               local_exe_stop_command(str(first['execution_dir']), str(first['name']))
+            if all['stop_command'].strip().replace('\\', '')\
+                   == local_stop_command.strip().replace('\\', ''):
+                all['stop_command'] = 'local'
+            local_leader_stop_command = \
+                                      local_exe_stop_command(str(first['execution_dir']), str(first['name']), 'leader')
+            if all['stop_command'].strip().replace('\\', '')\
+                   == local_leader_stop_command.strip().replace('\\', ''):
+                all['stop_command'] = 'local'
+            local_dummy_stop_command = \
+                                     local_exe_stop_command(str(first['execution_dir']), str(first['name']), 'dummy')
+            if all['stop_command'].strip().replace('\\', '')\
+                   == local_dummy_stop_command.strip().replace('\\', ''):
+                conf['stop_command'] = 'local'
+
+            all['clean_command'] = str(first['clean_command'])
+            default_clean_command = \
+                                  default_exe_clean_command(str(first['execution_dir']), str(first['name']))
+            if all['clean_command'].strip().replace('\\', '')\
+                   == default_clean_command.strip().replace('\\', ''):
+                all['clean_command'] = 'default'
+            local_clean_command = \
+                                local_exe_clean_command(str(first['execution_dir']), str(first['name']))
+            if all['clean_command'].strip().replace('\\', '')\
+                   == local_clean_command.strip().replace('\\', ''):
+                all['clean_command'] = 'local'
+            local_leader_clean_command = \
+                                       local_exe_clean_command(str(first['execution_dir']), str(first['name']), 'leader')
+            if all['clean_command'].strip().replace('\\', '')\
+                   == local_leader_clean_command.strip().replace('\\', ''
+                                                                 ):
+                all['clean_command'] = 'local'
+            local_dummy_clean_command = \
+                                      local_exe_clean_command(str(first['execution_dir']), str(first['name']), 'dummy')
+            if all['clean_command'].strip().replace('\\', '')\
+                   == local_dummy_clean_command.strip().replace('\\', ''):
+                all['clean_command'] = 'local'
+            
+            # Handle old typo gracefully
+            
+            if first.has_key('continuous'):
+                all['continuous'] = first['continuous']
+            else:
+                all['continuous'] = first['continious']
+                
+            all['shared_fs'] = first['shared_fs']
+
+            # Read in list value
+            
+            all['vgrid'] = first['vgrid']
+            conf['all_exes'] = all
+
+    if not conf.get('all_stores', None):
+        all = {}
+        all['storage_disk'] = 10
+        all['storage_protocol'] = 'sftp'
+        all['storage_port'] = 22
+        all['storage_user'] = 'miguser'
+        all['storage_dir'] = '/home/miguser/MiG-storage'
+        all['start_command'] = 'default'
+        all['status_command'] = 'default'
+        all['stop_command'] = 'default'
+        all['clean_command'] = 'default'
+        all['shared_fs'] = True
+        all['vgrid'] = []
+        all['storagehome'] = ''
+
+        if conf.get('STORECONFIG', None):
+            all['storagenodes'] = generate_storage_node_string(conf['STORECONFIG'])
+            first = conf['STORECONFIG'][0]
+            home = str(first['storage_dir'])
+            base_index = home.find('/MiG/mig_store/')
+            if base_index != -1:
+                home = home[:base_index]
+            all['storagehome'] = home
+            all['storage_disk'] = first['storage_disk']
+            all['storage_protocol'] = str(first['storage_protocol'])
+            all['storage_port'] = first['storage_port']
+            all['storage_user'] = str(first['storage_user'])
+            all['storage_dir'] = str(first['storage_dir'])
+            
+            all['start_command'] = str(first['start_command'])
+            default_start_command = \
+                                  default_store_start_command(str(first['storage_dir']), str(first['name']))
+            if all['start_command'].strip().replace('\\', '')\
+                   == default_start_command.strip().replace('\\', ''):
+                all['start_command'] = 'default'
+            local_start_command = \
+                                local_store_start_command(str(first['storage_dir']), str(first['name']))
+            if all['start_command'].strip().replace('\\', '')\
+                   == local_start_command.strip().replace('\\', ''):
+                all['start_command'] = 'local'
+                
+            all['status_command'] = str(first['status_command'])
+            default_status_command = \
+                                          default_store_status_command(str(first['storage_dir']), str(first['name']))
+            if all['status_command'].strip().replace('\\', '')\
+                   == default_status_command.strip().replace('\\', ''):
+                all['status_command'] = 'default'
+            local_status_command = \
+                                        local_store_status_command(str(first['storage_dir']), str(first['name']))
+            if all['status_command'].strip().replace('\\', '')\
+                   == local_status_command.strip().replace('\\', ''):
+                all['status_command'] = 'local'
+
+            all['stop_command'] = str(first['stop_command'
+                                                           ])
+            default_stop_command = \
+                                        default_store_stop_command(str(first['storage_dir']), str(first['name']))
+            if all['stop_command'].strip().replace('\\', '')\
+                   == default_stop_command.strip().replace('\\', ''):
+                all['stop_command'] = 'default'
+            local_stop_command = \
+                                      local_store_stop_command(str(first['storage_dir']), str(first['name']))
+            if all['stop_command'].strip().replace('\\', '')\
+                   == local_stop_command.strip().replace('\\', ''):
+                all['stop_command'] = 'local'
+
+            all['clean_command'] = str(conf['STORECONFIG'
+                                            ][0]['clean_command'])
+            default_clean_command = \
+                                         default_store_clean_command(str(first['storage_dir']), str(first['name']))
+            if all['clean_command'].strip().replace('\\', '')\
+                   == default_clean_command.strip().replace('\\', ''):
+                all['clean_command'] = 'default'
+            local_clean_command = \
+                                local_store_clean_command(str(first['storage_dir']), str(first['name']))
+            if all['clean_command'].strip().replace('\\', '')\
+                   == local_clean_command.strip().replace('\\', ''):
+                all['clean_command'] = 'local'
+            
+            all['shared_fs'] = first['shared_fs']
+
+            # Read in list value
+            
+            all['vgrid'] = first['vgrid']
+            conf['all_stores'] = all
+
+    return conf 
+
+def prepare_conf(configuration, input_args, resource_id):
+    """Update minimally validated user input dictionary to one suitable
+    for resource conf parsing.
+    """
+
+    # Flatten list structure for all fields
+
+    user_args = {}
+    for (key, val) in input_args.items():
+        user_args[key] = val[-1]
+
+    # Merge the variable fields like runtimeenvironmentX and re_valuesX
+    # pairs into the final form suitable for parsing. Both fields
+    # should exist for all X in range(0, runtime_env_fields) .
+   
+    re_list = []
+    field_count = 0
+    field_count_arg = user_args.get('runtime_env_fields', None)
+    if field_count_arg:
+        field_count = int(field_count_arg)
+        del user_args['runtime_env_fields']
+    for i in range(field_count):
+        runtime_env = 'runtimeenvironment' + str(i)
+        env_values = 're_values' + str(i)
+        if user_args.has_key(runtime_env):
+            if user_args.has_key(env_values):
+                # re_valuesX is a single line, A=xyz\nB=def, with all assignments
+                var_lines = user_args[env_values].split()
+                re_values = [tuple(line.split('=', 1)) for line in var_lines]
+                del user_args[env_values]
+            else:
+                re_values = []
+            re_list.append((user_args[runtime_env], re_values))
+            del user_args[runtime_env]
+    user_args['RUNTIMEENVIRONMENT'] = re_list
+    frontend_home = user_args.get('frontendhome', None)
+    if frontend_home:
+        if not user_args.get('RESOURCEHOME', None):
+            user_args['RESOURCEHOME'] = frontend_home
+        del user_args['frontendhome']
+
+    execution_leader = False
+    if user_args.get('LRMSTYPE', '').find('-execution-leader') != -1:
+        execution_leader = True
+    all_exes = []
+    execution_nodes = user_args.get('exe-executionnodes', '')
+    exe_names = retrieve_execution_nodes(execution_nodes, execution_leader)
+    for name in exe_names:
+        exe = {}
+        if not user_args.get('exe-execution_dir', None):
+            user_args['exe-execution_dir'] = user_args.get('exe-executionhome', '')
+        for (key, __) in resconfkeywords.get_exenode_specs(configuration):
+            exe[key] = user_args.get("exe-%s" % key, '')
+        exe['name'] = exe['execution_node'] = name
+        all_exes.append(exe)
+    user_args['EXECONFIG'] = all_exes
+    all_stores = []
+    storage_nodes = user_args.get('store-storagenodes', '')
+    store_names = retrieve_storage_nodes(storage_nodes)
+    for name in store_names:
+        store = {}
+        if not user_args.get('store-storage_dir', None):
+            user_args['store-storage_dir'] = user_args.get('store-storagehome', '')
+        for (key, __) in resconfkeywords.get_storenode_specs(configuration):
+            store[key] = user_args.get("store-%s" % key, '')
+        store['name'] = store['storage_node'] = name
+        all_stores.append(store)
+    user_args['STORECONFIG'] = all_stores
+    for key in user_args.keys():
+        if key.startswith('exe-') or key.startswith('store-'):
+            del user_args[key]
+
+    conf = {}
+    conf.update(user_args)
+
+    # Now all fields should be valid conf fields, but we still need to
+    # merge some partially filled ones
+
+    if conf.get('RESOURCEHOME', None):
+        if conf['RESOURCEHOME'].find(conf['HOSTURL']) == -1:
+            conf['RESOURCEHOME'] = os.path.join(conf['RESOURCEHOME'], 'MiG',
+                                                'mig_frontend',
+                                                resource_id)
+        if not conf.get('FRONTENDLOG', None):
+            conf['FRONTENDLOG'] = os.path.join(conf['RESOURCEHOME'],
+                                               'frontend.log')
+
+    # We can not be sure to have any exes so remain conservative here
+    
+    execution_nodes = conf['EXECONFIG']
+    storage_nodes = conf['STORECONFIG']
+    nodes = 0
+    if execution_nodes:
+        nodes = int(execution_nodes[-1]['nodecount'])
+    exe_count = len(execution_nodes)
+    store_count = len(storage_nodes)
+    if execution_leader:
+        exe_count -= 1
+    total_nodes = exe_count * nodes + store_count
+    conf['NODECOUNT'] = total_nodes
+
+    if conf.get('HOSTKEY', None):
+        if len(conf['HOSTKEY'].split()) < 3:
+            host_key = ''
+            conf['HOSTIP'] = conf.get('HOSTIP',
+                                      socket.gethostbyname(conf['HOSTURL']))
+            host_key = conf['HOSTURL'] + ',' + conf['HOSTIP']
+            raw_key = conf['HOSTKEY'].strip()
+            if not raw_key.startswith('ssh-rsa'):
+                raw_key = 'ssh-rsa ' + raw_key
+            host_key += ' ' + raw_key
+            conf['HOSTKEY'] = host_key
+
+    for exe in execution_nodes:
+        execution_node = exe['execution_node']
+
+        if exe['execution_dir'].find(conf['HOSTURL']) == -1:
+            execution_dir = os.path.join(exe['execution_dir'],
+                                         'MiG', 'mig_exe', resource_id)
+            
+        # In the execution leader model all executors share a working dir
+
+        if execution_leader:
+
+            # replace exe dir name with "all" but keep trailing slash
+
+            execution_dir = os.path.join(execution_dir, 'all')
+            if exe['name'] == 'execution-leader':
+                script_prefix = 'leader'
+            else:
+                script_prefix = 'dummy'
+        else:
+            execution_dir = os.path.join(execution_dir, exe['name'])
+            script_prefix = 'master'
+
+        if not exe.get('exehostlog', None):
+            exe['exehostlog'] = os.path.join(execution_dir, 'exehost.log')
+        if not exe.get('joblog', None):
+            exe['joblog'] = os.path.join(execution_dir, 'job.log')    
+
+        exe['execution_dir'] = execution_dir
+
+        if 'default' == exe.get('start_command', '').strip():
+            exe['start_command'] = default_exe_start_command(execution_dir,
+                                                             execution_node)
+        elif 'local' == exe.get('start_command', '').strip():
+            exe['start_command'] = local_exe_start_command(execution_dir,
+                                                           execution_node, script_prefix)
+            
+        if 'default' == exe.get('status_command', '').strip():
+            exe['status_command'] = default_exe_status_command(execution_dir,
+                                                               execution_node)
+        elif 'local' == exe.get('status_command', '').strip():
+            exe['status_command'] = local_exe_status_command(execution_dir,
+                                                             execution_node, script_prefix)
+
+        if 'default' == exe.get('stop_command', '').strip():
+            exe['stop_command'] =  default_exe_stop_command(execution_dir,
+                                                            execution_node)
+        elif 'local' == exe.get('stop_command', '').strip():
+            exe['stop_command'] =  local_exe_stop_command(execution_dir,
+                                                          execution_node, script_prefix)
+
+        if 'default' == exe.get('clean_command', '').strip():
+            exe['clean_command'] =  default_exe_clean_command(execution_dir,
+                                                              execution_node)
+        elif 'local' == exe.get('clean_command', '').strip():
+            exe['clean_command'] =  local_exe_clean_command(execution_dir,
+                                                            execution_node, script_prefix)
+            
+    for store in storage_nodes:
+        storage_node = store['storage_node']
+        if store['storage_dir'].find(conf['HOSTURL']) == -1:
+            storage_dir = os.path.join(store['storage_dir'],
+                                         'MiG', 'mig_store', resource_id,
+                                         store['name'])
+
+        store['storage_dir'] = storage_dir
+
+        if 'default' == store.get('start_command', '').strip():
+            store['start_command'] = default_store_start_command(storage_dir,
+                                                             storage_node)
+        elif 'local' == store.get('start_command', '').strip():
+            store['start_command'] = local_store_start_command(storage_dir,
+                                                           storage_node)
+            
+        if 'default' == store.get('status_command', '').strip():
+            store['status_command'] = default_store_status_command(storage_dir,
+                                                               storage_node)
+        elif 'local' == store.get('status_command', '').strip():
+            store['status_command'] = local_store_status_command(storage_dir,
+                                                             storage_node)
+
+        if 'default' == store.get('stop_command', '').strip():
+            store['stop_command'] =  default_store_stop_command(storage_dir,
+                                                            storage_node)
+        elif 'local' == store.get('stop_command', '').strip():
+            store['stop_command'] =  local_store_stop_command(storage_dir,
+                                                          storage_node)
+
+        if 'default' == store.get('clean_command', '').strip():
+            store['clean_command'] =  default_store_clean_command(storage_dir,
+                                                              storage_node)
+        elif 'local' == store.get('clean_command', '').strip():
+            store['clean_command'] =  local_store_clean_command(storage_dir,
+                                                            storage_node)
+            
+    return conf
+
+
+def empty_resource_config(configuration):
+    """Prepares a basic resource configuration for use in creation of
+    new resources.
+    """
+    conf = {'frontendhome': ''}
+    for (field, spec) in resconfkeywords.get_resource_keywords(configuration).items():
+        conf[field] = spec['Value']
+    conf['all_exes'] = {'executionnodes': '', 'executionhome': ''}
+    for (field, spec) in resconfkeywords.get_exenode_keywords(configuration).items():
+        conf['all_exes'][field] = spec['Value']
+    conf['all_stores'] = {'storagenodes': '', 'storagehome': ''}
+    for (field, spec) in resconfkeywords.get_storenode_keywords(configuration).items():
+        conf['all_stores'][field] = spec['Value']
+    return conf
+
+def write_resource_config(configuration, resource_conf, conf_path):
+    """Write resource_conf dictionary settings into conf_path on disk"""
+
+    lines = []
+    for (field, __) in resconfkeywords.get_resource_specs(configuration):
+        value = resource_conf.get(field, None)
+        if value:
+            if 'RUNTIMEENVIRONMENT' == field:
+                lines.append('::%s::' % field)
+                for (re_name, env_pairs) in value:
+                    lines.append('name: %s' % re_name)
+                    for (env_name, env_val) in env_pairs:
+                        lines.append('%s=%s' % (env_name, env_val))
+                lines.append('')
+            elif 'EXECONFIG' == field:
+                for exe in resource_conf['EXECONFIG']:
+                    lines.append('::%s::' % field)
+                    for (exe_field, __) in resconfkeywords.get_exenode_specs(configuration):
+                        lines.append('%s=%s' % (exe_field, exe[exe_field]))
+                    lines.append('')
+            elif 'STORECONFIG' == field:
+                for store in resource_conf['STORECONFIG']:
+                    lines.append('::%s::' % field)
+                    for (store_field, __) in resconfkeywords.get_storenode_specs(configuration):
+                        lines.append('%s=%s' % (store_field, store[store_field]))
+                    lines.append('')
+            else:
+                lines.append('::%s::' % field)
+                lines.append('%s' % value)
+                lines.append('')
+
+    if not os.path.isdir(os.path.dirname(conf_path)):
+        os.makedirs(os.path.dirname(conf_path))
+
+    conf_fd = open(conf_path, 'w')
+    conf_fd.write('\n'.join(lines))
+    conf_fd.close()
+
+    return lines
 
 def create_resource(
     resource_name,
@@ -40,6 +805,7 @@ def create_resource(
     resource_home,
     logger,
     ):
+    """Create unique resource home dir and return hostidentifier"""
 
     status = True
 
@@ -59,7 +825,7 @@ def create_resource(
     resource_identifier = maxcounter + 1
     unique_resource_name = resource_name + '.'\
          + str(resource_identifier)
-    newdir = resource_home + unique_resource_name
+    newdir = os.path.join(resource_home, unique_resource_name)
     try:
         os.mkdir(newdir)
     except Exception, err:
@@ -69,7 +835,7 @@ def create_resource(
 
     owner_list = []
     owner_list.append(client_id)
-    owner_file = resource_home + unique_resource_name + '/owners'
+    owner_file = os.path.join(resource_home, unique_resource_name, 'owners')
     status = pickle(owner_list, owner_file, logger)
     if status == False:
         msg = 'could not pickle: %s\n' % owner_file
@@ -97,6 +863,7 @@ def create_resource(
 
 
 def remove_resource(resource_home, resource_name, resource_identifier):
+    """Remove a resource home dir"""
     msg = "\nRemoving host: '%s.%s'" % (resource_name,
             resource_identifier)
 
@@ -108,7 +875,7 @@ def remove_resource(resource_home, resource_name, resource_identifier):
             try:
                 os.remove(os.path.join(root, file))
             except Exception, err:
-                msg += "\n  Could'nt remove file: '%s'. Failure: %s"\
+                msg += "\n  Could not remove file: '%s'. Failure: %s"\
                      % (os.path.join(root, file), err)
     try:
         os.rmdir(resource_path)
@@ -128,6 +895,7 @@ def create_new_resource_configuration(
     resource_identifier,
     resource_configfile,
     ):
+    """Create a resource from conf in pending file"""
 
     msg = \
         "\nTrying to create configuration for new resource: '%s.%s' from file: '%s'"\

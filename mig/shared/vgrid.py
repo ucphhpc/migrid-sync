@@ -310,4 +310,19 @@ def user_allowed_vgrids(configuration, client_id):
             allowed.append(vgrid)
     return allowed
 
+def res_allowed_vgrids(configuration, client_id):
+    """Return a list of all VGrids that the resource with
+    client_id is allowed to access. I.e. the VGrids
+    that the resource is member of.
+    """
+
+    allowed = []
+    (status, all_vgrids) = vgrid_list_vgrids(configuration)
+    if not status:
+        return allowed
+    for vgrid in all_vgrids:
+        if vgrid_is_resource(vgrid, client_id, configuration):
+            allowed.append(vgrid)
+    return allowed
+
 

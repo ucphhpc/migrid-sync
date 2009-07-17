@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-""" Interface between CGI and functionality """
+"""Interface between CGI and functionality"""
 
 import cgi
 import cgitb
@@ -38,13 +38,23 @@ from shared.cgishared import init_cgi_script_with_cert, \
 from shared.output import do_output
 
 
-def run_cgi_script(main):
-    """ Get needed information and run the function received as argument """
+def run_cgi_script(main, delayed_input=None):
+    """Get needed information and run the function received as argument.
+    If delayed_input is not set to a function, the default cgi input will be
+    extracted and parsed before being passed on to the main function. Some
+    CGI operations like file upload won't work efficiently if the fieldstorage
+    is passed around (huge memory consumption) so they can pass the form
+    extracting function here and leave it to the back end to extract the
+    form.
+    """
 
     (logger, configuration, client_id, o) = init_cgi_script_with_cert()
-    fieldstorage = cgi.FieldStorage()
 
-    user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+    if not delayed_input:
+        fieldstorage = cgi.FieldStorage()
+        user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+    else:
+        user_arguments_dict = {'__DELAYED_INPUT__': delayed_input}
     (out_obj, (ret_code, ret_msg)) = main(client_id,
             user_arguments_dict)
 
@@ -63,14 +73,24 @@ def run_cgi_script(main):
     print output
 
 
-def run_cgi_script_possibly_with_cert(main):
-    """ Get needed information and run the function received as argument """
+def run_cgi_script_possibly_with_cert(main, delayed_input=None):
+    """Get needed information and run the function received as argument.
+    If delayed_input is not set to a function, the default cgi input will be
+    extracted and parsed before being passed on to the main function. Some
+    CGI operations like file upload won't work efficiently if the fieldstorage
+    is passed around (huge memory consumption) so they can pass the form
+    extracting function here and leave it to the back end to extract the
+    form.
+    """
 
     (logger, configuration, client_id, o) = \
         init_cgiscript_possibly_with_cert()
-    fieldstorage = cgi.FieldStorage()
 
-    user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+    if not delayed_input:
+        fieldstorage = cgi.FieldStorage()
+        user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+    else:
+        user_arguments_dict = {'__DELAYED_INPUT__': delayed_input}
     (out_obj, (ret_code, ret_msg)) = main(client_id,
             user_arguments_dict)
 

@@ -691,125 +691,129 @@ def validated_job_id(user_arguments_dict, name, default):
 def guess_type(name):
     """Maps variable names to expected types"""
 
-    if name.find('path') != -1:
+    if name.lower().find('path') != -1:
         return valid_path_pattern
-    elif name.find('job_id') != -1:
+    elif name.lower().find('job_id') != -1:
         return valid_job_id_pattern
-    elif name.find('flags') != -1:
+    elif name.lower().find('flags') != -1:
         return valid_ascii
-    elif name.find('max_jobs') != -1:
+    elif name.lower().find('max_jobs') != -1:
         return valid_numeric
-    elif name.find('lines') != -1:
+    elif name.lower().find('lines') != -1:
         return valid_numeric
-    elif name.find('cputime') != -1:
+    elif name.lower().find('cputime') != -1:
         return valid_numeric
-    elif name.find('unique_resource_name') != -1:
+    elif name.lower().find('unique_resource_name') != -1:
         return valid_fqdn
-    elif name.find('exe_name') != -1:
+    elif name.lower().find('hosturl') != -1:
         return valid_fqdn
-    elif name.find('cert_name') != -1:
+    elif name.lower().find('exe_name') != -1:
+        return valid_fqdn
+    elif name.lower().find('cert_name') != -1:
         return valid_commonname
-    elif name.find('cert_id') != -1:
+    elif name.lower().find('cert_id') != -1:
         return valid_distinguished_name
-    elif name.find('vgrid_name') != -1:
+    elif name.lower().find('vgrid_name') != -1:
         return valid_path
-    elif name.find('re_name') != -1:
+    elif name.lower().find('fileupload') != -1:
+        return valid_path
+    elif name.lower().find('re_name') != -1:
         return valid_job_id
-    elif name.find('re_template') != -1:
+    elif name.lower().find('re_template') != -1:
         return valid_job_id
-    elif name.find('src') != -1:
+    elif name.lower().find('src') != -1:
         return valid_path_pattern
-    elif name.find('dst') != -1:
+    elif name.lower().find('dst') != -1:
         return valid_path_pattern
-    elif name.find('size') != -1:
+    elif name.lower().find('size') != -1:
         return valid_numeric
-    elif name.find('request_text') != -1:
+    elif name.lower().find('request_text') != -1:
         return valid_plain_text
-    elif name.find('AOL') != -1:
+    elif name.lower().find('AOL') != -1:
         return valid_email_address
-    elif name.find('YAHOO') != -1:
+    elif name.lower().find('YAHOO') != -1:
         return valid_email_address
-    elif name.find('MSN') != -1:
+    elif name.lower().find('MSN') != -1:
         return valid_email_address
-    elif name.find('ICQ') != -1:
+    elif name.lower().find('ICQ') != -1:
         return valid_email_address
-    elif name.find('JABBER') != -1:
+    elif name.lower().find('JABBER') != -1:
         return valid_email_address
-    elif name.find('EMAIL') != -1:
+    elif name.lower().find('EMAIL') != -1:
         return valid_email_address
-    elif name.find('resconfig') != -1:
+    elif name.lower().find('resconfig') != -1:
         return valid_plain_text
-    elif name.find('redescription') != -1:
+    elif name.lower().find('redescription') != -1:
         return valid_plain_text
-    elif name.find('testprocedure') != -1:
+    elif name.lower().find('testprocedure') != -1:
         return valid_plain_text
-    elif name.find('environment') != -1:
+    elif name.lower().find('environment') != -1:
         return valid_plain_text
-    elif name.find('software') != -1:
+    elif name.lower().find('software') != -1:
         return valid_plain_text
-    elif name.find('verifystdout') != -1:
+    elif name.lower().find('verifystdout') != -1:
         return valid_plain_text
-    elif name.find('verifystderr') != -1:
+    elif name.lower().find('verifystderr') != -1:
         return valid_plain_text
-    elif name.find('verifystatus') != -1:
+    elif name.lower().find('verifystatus') != -1:
         return valid_plain_text
-    elif name.find('editarea') != -1:
+    elif name.lower().find('editarea') != -1:
         return valid_free_text
-    elif name.find('software_entries') != -1:
+    elif name.lower().find('software_entries') != -1:
         return valid_numeric
-    elif name.find('environment_entries') != -1:
+    elif name.lower().find('environment_entries') != -1:
         return valid_numeric
-    elif name.find('testprocedure_entry') != -1:
+    elif name.lower().find('testprocedure_entry') != -1:
         return valid_numeric
-    elif name.find('current_dir') != -1:
+    elif name.lower().find('current_dir') != -1:
         return valid_path_pattern
-    elif name.find('search') != -1:
+    elif name.lower().find('search') != -1:
         return valid_job_id_pattern
-    elif name.find('show') != -1:
+    elif name.lower().find('show') != -1:
         return valid_job_id_pattern
-    elif name.find('country') != -1:
+    elif name.lower().find('country') != -1:
         return valid_ascii
-    elif name.find('state') != -1:
+    elif name.lower().find('state') != -1:
         return valid_ascii
-    elif name.find('email') != -1:
+    elif name.lower().find('email') != -1:
         return valid_email_address
-    elif name.find('comment') != -1:
+    elif name.lower().find('comment') != -1:
         return valid_plain_text
-    elif name.find('password') != -1:
+    elif name.lower().find('password') != -1:
         return valid_password
-    elif name.find('verifypassword') != -1:
+    elif name.lower().find('verifypassword') != -1:
         return valid_password
-    elif name.find('cmd') != -1:
+    elif name.lower().find('cmd') != -1:
         return valid_path_pattern
-    elif name.find('pattern') != -1:
+    elif name.lower().find('pattern') != -1:
         return valid_path_pattern
-    elif name.find('name') != -1:
+    elif name.lower().find('name') != -1:
         return valid_job_id_pattern
-    elif name.find('lang') != -1:
+    elif name.lower().find('lang') != -1:
         return valid_job_id
-    elif name.find('EXECUTE') != -1:
+    elif name.lower().find('EXECUTE') != -1:
         return valid_plain_text
-    elif name.find('EXECUTABLES') != -1:
+    elif name.lower().find('EXECUTABLES') != -1:
         return valid_plain_text
-    elif name.find('INPUTFILES') != -1:
+    elif name.lower().find('INPUTFILES') != -1:
         return valid_plain_text
-    elif name.find('OUTPUTFILES') != -1:
+    elif name.lower().find('OUTPUTFILES') != -1:
         return valid_plain_text
-    elif name.find('VERIFYFILES') != -1:
+    elif name.lower().find('VERIFYFILES') != -1:
         return valid_plain_text
-    elif name.find('NOTIFY') != -1:
+    elif name.lower().find('NOTIFY') != -1:
         return valid_plain_text
-    elif name.find('VGRID') != -1:
+    elif name.lower().find('VGRID') != -1:
         return valid_plain_text
-    elif name.find('RUNTIMEENVIRONMENT') != -1:
+    elif name.lower().find('RUNTIMEENVIRONMENT') != -1:
         return valid_plain_text
-    elif name.find('width') != -1:
+    elif name.lower().find('width') != -1:
         return valid_numeric
-    elif name.find('height') != -1:
+    elif name.lower().find('height') != -1:
         return valid_numeric
-    elif name.find('depth') != -1:
+    elif name.lower().find('depth') != -1:
         return valid_numeric
-    elif name.find('desktopname') != -1:
+    elif name.lower().find('desktopname') != -1:
         return valid_ascii
     else:
 
@@ -821,9 +825,9 @@ def guess_type(name):
 def guess_value(name):
     """Maps variable names to expected values"""
 
-    if name.find('lines') != -1:
+    if name.lower().find('lines') != -1:
         return lines_value_checker
-    elif name.find('max_jobs') != -1:
+    elif name.lower().find('max_jobs') != -1:
         return max_jobs_value_checker
     else:
         return id

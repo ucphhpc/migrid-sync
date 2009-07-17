@@ -43,8 +43,12 @@ def parse(
     job_id,
     client_id,
     forceddestination,
-    outfile='not_specified',
+    outfile='AUTOMATIC',
     ):
+    """Parse job description and optionally write results to parsed mRSL file.
+    If outfile is non-empty it is used as destination file, and the keyword
+    AUTOMATIC is replaced by the default mrsl dir destination.
+    """
 
     configuration = get_configuration_object()
     logger = configuration.logger
@@ -197,7 +201,7 @@ def parse(
 
     # save file
 
-    if outfile == 'not_specified':
+    if outfile == 'AUTOMATIC':
         filename = \
             os.path.abspath(os.path.join(configuration.mrsl_files_dir,
                             client_dir, job_id + '.mRSL'))
@@ -207,7 +211,7 @@ def parse(
     if not pickle(replaced_dict, filename, logger):
         return (False, 'Fatal error: Could not write %s' % filename)
 
-    if not outfile == 'not_specified':
+    if not outfile == 'AUTOMATIC':
 
         # an outfile was specified, so this is just for testing - dont tell grid_script
 

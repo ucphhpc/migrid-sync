@@ -101,7 +101,7 @@ def display_resource(
     html += '<h1>%s</h1>\n' % resourcename
     html += '<h3>Configuration</h3>'
     html += \
-        'Use the <a href="resource_edit.py?hosturl=%s;hostidentifier=%s">editing interface</a> '\
+        'Use the <a href="resedit.py?hosturl=%s;hostidentifier=%s">editing interface</a> '\
          % (hosturl, identifier)
     html += 'or make any changes manually in the text box below.<br>'
     html += \
@@ -369,7 +369,7 @@ def main(client_id, user_arguments_dict):
                           : 'MiG Resource Management'})
     output_objects.append({'object_type': 'link', 'text'
                           : 'Create a new MiG resource', 'destination'
-                          : 'resource_edit.py?new_resource=true'})
+                          : 'resedit.py'})
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
 
     # Use cgi-bin links to sandboxes here to preserve menu

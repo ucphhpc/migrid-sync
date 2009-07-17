@@ -51,6 +51,11 @@ def list_runtime_environments(configuration):
                          % (configuration.re_home, err))
 
     for entry in dir_content:
+
+        # Skip dot files/dirs
+
+        if entry.startswith('.'):
+            continue
         if os.path.isfile(configuration.re_home + entry):
 
             # entry is a file and hence a re

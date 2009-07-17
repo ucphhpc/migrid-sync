@@ -52,6 +52,9 @@ from shared.settings import parse_and_save_settings
 from shared.useradm import client_id_dir
 
 
+block_size = 1024 * 1024
+
+
 # ## Main ###
 
 (logger, configuration, client_id, o) = \
@@ -138,13 +141,15 @@ if not client_id:
 
         pass
 
-    # write file to disk
-
     dest_path = dest_dir + '/' + dest_file
     try:
-        fh = open(dest_path, 'w')
-        fh.write(sys.stdin.read())
-        fh.close()
+        upload_fd = open(dest_path, 'wb')
+        while True:
+            chunk = sys.stdin.read(block_size)
+            if not chunk:
+                break
+            upload_fd.write(chunk)
+        upload_fd.close()
     except Exception, err:
         o.out('Could not write file %s: %s' % (dest_path, err))
 
@@ -303,9 +308,13 @@ elif is_user(client_id, configuration.user_home):
         o.internal("'%s' sent a resource update file '%s', saving file in '%s'"
                     % (client_id, filename, pending_file))
         try:
-            fh = open(pending_file, 'w')
-            fh.write(sys.stdin.read())
-            fh.close()
+            upload_fd = open(pending_file, 'wb')
+            while True:
+                chunk = sys.stdin.read(block_size)
+                if not chunk:
+                    break
+                upload_fd.write(chunk)
+            upload_fd.close()
         except Exception, err:
             o.out('File: %s was not written! %s' % (pending_file, err))
             o.reply_and_exit(o.ERROR)
@@ -377,9 +386,13 @@ Please contact the MiG server administrator.""")
         pending_file = os.path.join(configuration.user_home,
                                     client_dir, filename + '.' + str(time.time()))
         try:
-            fh = open(pending_file, 'w')
-            fh.write(sys.stdin.read())
-            fh.close()
+            upload_fd = open(pending_file, 'wb')
+            while True:
+                chunk = sys.stdin.read(block_size)
+                if not chunk:
+                    break
+                upload_fd.write(chunk)
+            upload_fd.close()
         except Exception, e:
             o.out('File: %s was not written!' % pending_file, str(e))
             o.reply_and_exit(o.ERROR)
@@ -397,9 +410,13 @@ Please contact the MiG server administrator.""")
         pending_file = os.path.join(configuration.user_home,
                                     client_dir, filename + '.' + str(time.time()))
         try:
-            fh = open(pending_file, 'w')
-            fh.write(sys.stdin.read())
-            fh.close()
+            upload_fd = open(pending_file, 'wb')
+            while True:
+                chunk = sys.stdin.read(block_size)
+                if not chunk:
+                    break
+                upload_fd.write(chunk)
+            upload_fd.close()
         except Exception, e:
             o.out('File: %s was not written!' % pending_file, str(e))
             o.reply_and_exit(o.ERROR)
@@ -435,9 +452,13 @@ Please contact the MiG server administrator.""")
     # logger.info("put: %s writing %s" % (client_id, real_path))
 
     try:
-        fh = open(real_path, 'w')
-        fh.write(sys.stdin.read())
-        fh.close()
+        upload_fd = open(real_path, 'wb')
+        while True:
+            chunk = sys.stdin.read(block_size)
+            if not chunk:
+                break
+            upload_fd.write(chunk)
+        upload_fd.close()
     except Exception, e:
         o.out('Could not write %s' % filename, str(e))
         o.reply_and_exit(o.ERROR)
@@ -514,9 +535,14 @@ elif is_server(client_id, configuration.server_home):
                  )
         o.reply_and_exit(o.CLIENT_ERROR)
     try:
-        fh = open(dest_path, 'w')
-        fh.write(sys.stdin.read())
-        fh.close()
+        upload_fd = open(dest_path, 'wb')
+        while True:
+            chunk = sys.stdin.read(block_size)
+            if not chunk:
+                break
+            upload_fd.write(chunk)
+            upload_fd.flush()
+        upload_fd.close()
     except Exception, e:
         o.out('Could not write %s' % dest_path, str(e))
         o.reply_and_exit(o.ERROR)

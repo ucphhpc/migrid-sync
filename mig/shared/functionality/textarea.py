@@ -53,7 +53,7 @@ def signature():
     """Signature of the main function"""
 
     defaults = {}
-    return ['TODO: signature', defaults]
+    return ['html_form', defaults]
 
 
 def convert_control_value_to_line(form_key, user_arguments_dict):

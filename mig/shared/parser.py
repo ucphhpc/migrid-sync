@@ -323,6 +323,25 @@ def check_types(parse_output, external_keyword_dict, configuration):
                         msg += print_type_error(job_keyword,
                                 'requires an integer', keyword_dict,
                                 keyword_data)
+            elif keyword_type == 'boolean':
+                if not len(keyword_data) == 1:
+                    status = False
+                    msg += print_type_error(job_keyword,
+                            'requires only a single boolean',
+                            keyword_dict, keyword_data)
+                else:
+                    if str(keyword_data[0]).lower() in ['true', '1']:
+                        keyword_dict['Value'] = True
+                    elif str(keyword_data[0]).lower() in ['false', '0']:
+                        keyword_dict['Value'] = False
+                    else:
+
+                        # could not convert value to boolean
+
+                        status = False
+                        msg += print_type_error(job_keyword,
+                                'requires a boolean', keyword_dict,
+                                keyword_data)
             elif keyword_type == 'string':
 
                 if not keyword_data:
@@ -505,7 +524,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                              % exe_dict, keyword_dict, keyword_data)
 
                 try:
-                    continuous = exe_dict['continuous']
+                    continuous = str(exe_dict['continuous'])
 
                         # Keep old typo for backwards compatibility
 
@@ -521,7 +540,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                                 'continuous must be True or False',
                                 keyword_dict, keyword_data)
 
-                    shared_fs = exe_dict['shared_fs']
+                    shared_fs = str(exe_dict['shared_fs'])
                     if shared_fs == 'False':
                         exe_dict['shared_fs'] = False
                     elif shared_fs == 'True':
@@ -578,7 +597,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                                 'storage_protocol must be in %s' % supported_protocols,
                                 keyword_dict, keyword_data)
 
-                    shared_fs = store_dict['shared_fs']
+                    shared_fs = str(store_dict['shared_fs'])
                     if shared_fs == 'False':
                         store_dict['shared_fs'] = False
                     elif shared_fs == 'True':

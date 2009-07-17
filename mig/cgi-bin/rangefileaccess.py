@@ -229,7 +229,7 @@ def put(o, fileinfo_dict):
             file_endpos = (file_startpos + content_length) - 1
         elif file_startpos == -1 and file_endpos == -1:
 
-            # Write the hole file
+            # Write the whole file
 
             file_startpos = 0
             file_endpos = content_length - 1

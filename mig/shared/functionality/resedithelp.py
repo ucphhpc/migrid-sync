@@ -75,75 +75,32 @@ def main(client_id, user_arguments_dict):
                           : 'Help for each of the resource editor fields is available below.'
                           })
 
-    res_fields = [('Host FQDN', 'HOSTURL'), ('Host identifier', 'HOSTIDENTIFIER'),
-                  ('Public name', 'PUBLICNAME'), ('MiG user', 'MIGUSER'),
-                  ('MiG home', 'RESOURCEHOME'), ('SSH port', 'SSHPORT'),
-                  ('SSH Multiplex', 'SSHMULTIPLEX'), ('SSH Host Public Key', 'HOSTKEY'),
-                  ('Frontend Node', 'FRONTENDNODE'),
-                  ('Max Download Bandwidth', 'MAXDOWNLOADBANDWIDTH'),
-                  ('Max Upload Bandwidth', 'MAXUPLOADBANDWIDTH'),
-                  ('Type of Local Resource Management System (LRMS)', 'LRMSTYPE'),
-                  ('LRMS Execution Delay Command', 'LRMSDELAYCOMMAND'),
-                  ('LRMS Submit Jobs Command', 'LRMSSUBMITCOMMAND'),
-                  ('LRMS Remove Jobs Command', 'LRMSREMOVECOMMAND'),
-                  ('LRMS Query Done Command', 'LRMSDONECOMMAND'),
-                  ('Node Count', 'NODECOUNT'), ('CPU Count', 'CPUCOUNT'),
-                  ('Memory (MB)', 'MEMORY'), ('Disk (GB)', 'DISK'),
-                  ('Architecture', 'ARCHITECTURE'),
-                  ('Script Language', 'SCRIPTLANGUAGE'), ('Job Type', 'JOBTYPE'),
-                  ]
-
-    exe_fields = [('Node Count', 'nodecount'), ('CPU/Wall Time (s)', 'cputime'), 
-                  ('Execution precondition', 'execution_precondition'),
-                  ('Prepend Execute', 'prepend_execute'),
-                  ('Start Executing Command', 'start_command'),
-                  ('Executing Status Command', 'status_command'),
-                  ('Stop Executing Command', 'stop_command'),
-                  ('Executing Clean Up Command', 'clean_command'),
-                  ('Continuous Executing Mode', 'continuous'),
-                  ('Shared File System', 'shared_fs'),
-                  ('VGrid Participation', 'vgrid'),
-                  ]
-
-    store_fields = [('Storage Disk (GB)', 'storage_disk'),
-                    ('Storage Protocol', 'storage_protocol'),
-                    ('Storage Port', 'storage_port'),
-                    ('Storage User', 'storage_user'),
-                    ('Storage Node', 'storage_node'),
-                    ('Storage Directory', 'storage_dir'),
-                    ('Start Storage Command', 'start_command'),
-                    ('Storage Status Command', 'status_command'),
-                    ('Stop Storage Command', 'stop_command'),
-                    ('Storage Clean Up Command', 'clean_command'),
-                    ('Shared File System', 'shared_fs'),
-                    ('VGrid Participation', 'vgrid'),
-                    ]
+    res_fields = resconfkeywords.get_resource_specs(configuration)
+    exe_fields = resconfkeywords.get_exenode_specs(configuration)
+    store_fields = resconfkeywords.get_storenode_specs(configuration)
 
     # Resource overall fields
 
-    for (title, field) in res_fields:
+    output_objects.append({'object_type': 'html_form', 'text'
+                           : """
+<b><a name='%s'>%s:</a></b><br>
+%s<br>
+<br>""" % ('frontendhome', 'Frontend Home Path',
+           """The MiG user home directory on the frontend""")
+                               })
+
+    for (field, spec) in res_fields:
+        if 'invisible' == spec['Editor']:
+            continue
+        title = spec['Title']
         output_objects.append({'object_type': 'html_form', 'text'
                                : """
 <b><a name='res-%s'>%s:</a></b><br>
 %s<br>
 <br>
 Example:&nbsp;%s<br>
-<br>""" % (field.lower(), title, resource_keywords[field]['Description'],
+<br>""" % (field, title, resource_keywords[field]['Description'],
                resource_keywords[field]['Example'])
-                               })
-
-    # Not all exenode fields map directly to documentation in resconfkeywords
-
-    field = 'RUNTIMEENVIRONMENT'
-    output_objects.append({'object_type': 'html_form', 'text'
-                           : """
-<b><a name='res-%s'>%s:</a></b><br>
-%s<br>
-<br>
-Example:&nbsp;%s<br>
-<br>""" % (field.lower(), 'Runtime Environment',
-           resource_keywords[field]['Description'],
-           resource_keywords[field]['Example'].replace('name: ', '').replace('\n', '<br>'))
                                })
 
     # Execution node fields
@@ -173,14 +130,25 @@ in a cluster or batch system, should it be set higher.<br>
 """)
                                })
 
-    for (title, field) in exe_fields:
+    output_objects.append({'object_type': 'html_form', 'text'
+                           : """
+<b><a name='exe-%s'>%s:</a></b><br>
+%s<br>
+<br>""" % ('executionhome', 'Execution Home Path',
+           """The MiG user home directory on execution nodes""")
+                               })
+
+    for (field, spec) in exe_fields:
+        if 'invisible' == spec['Editor']:
+            continue
+        title = spec['Title']
         output_objects.append({'object_type': 'html_form', 'text'
                                : """
 <b><a name='exe-%s'>%s:</a></b><br>
 %s<br>
 <br>
 Example:&nbsp;%s<br>
-<br>""" % (field.lower(), title, exenode_keywords[field]['Description'],
+<br>""" % (field, title, exenode_keywords[field]['Description'],
                exenode_keywords[field]['Example'])
                                })
 
@@ -208,14 +176,25 @@ physical storage reserved for MiG on each of these MiG storage nodes.<br>
 """)
                                })
 
-    for (title, field) in store_fields:
+    output_objects.append({'object_type': 'html_form', 'text'
+                           : """
+<b><a name='store-%s'>%s:</a></b><br>
+%s<br>
+<br>""" % ('storagehome', 'Storage Home Path',
+           """The MiG user home directory on storage nodes""")
+                               })
+
+    for (field, spec) in store_fields:
+        if 'invisible' == spec['Editor']:
+            continue
+        title = spec['Title']
         output_objects.append({'object_type': 'html_form', 'text'
                                : """
 <b><a name='store-%s'>%s:</a></b><br>
 %s<br>
 <br>
 Example:&nbsp;%s<br>
-<br>""" % (field.lower(), title, storenode_keywords[field]['Description'],
+<br>""" % (field, title, storenode_keywords[field]['Description'],
                storenode_keywords[field]['Example'])
                                })
 

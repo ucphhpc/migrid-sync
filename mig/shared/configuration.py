@@ -96,6 +96,7 @@ def fix_missing(config_file, verbose=True):
         'architectures': 'X86 AMD64 IA64 SPARC SPARC64 ITANIUM SUN4U SPARC-T1',
         'scriptlanguages': 'sh python java',
         'jobtypes': 'batch interactive bulk all',
+        'lrmstypes': 'Native Native-execution-leader Batch Batch-execution-leader',
         }
     scheduler_section = {'algorithm': 'FairFit',
                          'expire_after': '99999999999',
@@ -189,6 +190,8 @@ class Configuration:
     architectures = []
     scriptlanguages = []
     jobtypes = []
+    lrmstypes = []
+    storage_protocols = ['sftp']
     server_cert = ''
     server_key = ''
     passphrase_file = ''
@@ -325,6 +328,7 @@ class Configuration:
             self.scriptlanguages = config.get('GLOBAL',
                     'scriptlanguages').split(' ')
             self.jobtypes = config.get('GLOBAL', 'jobtypes').split(' ')
+            self.lrmstypes = config.get('GLOBAL', 'lrmstypes').split(' ')
             self.sessid_to_mrsl_link_home = config.get('GLOBAL',
                     'sessid_to_mrsl_link_home')
             self.mig_system_files = config.get('GLOBAL',
@@ -379,6 +383,8 @@ class Configuration:
         else:
             self.smtp_sender = 'MiG Server <%s@%s>'\
                  % (os.environ.get('USER', 'mig'), self.server_fqdn)
+        if config.has_option('GLOBAL', 'storage_protocols'):
+            self.storage_protocols = config.get('GLOBAL', 'storage_protocols').split(' ')
 
         # logger.debug('starting scheduler options')
 

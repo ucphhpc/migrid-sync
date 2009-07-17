@@ -67,8 +67,12 @@ def get_resource_config_dict(config_file):
     return (status, msg, global_dict)
 
 
-def run(localfile_spaces, unique_resource_name, outfile='not_specified'
+def run(localfile_spaces, unique_resource_name, outfile='AUTOMATIC'
         ):
+    """Parse configuration in localfile_spaces and write results to outfile
+    if non-empty. The keyword AUTOMATIC is replaced by the expected resource
+    configuration path.
+    """
 
     (status, msg, conf) = get_resource_config_dict(localfile_spaces)
 
@@ -197,17 +201,20 @@ def run(localfile_spaces, unique_resource_name, outfile='not_specified'
 
     # save dictionary to a file
 
-    if outfile == 'not_specified':
+    if outfile == 'AUTOMATIC':
 
         # save configuration as python dictionary in the resource' private directory
 
         filename = configuration.resource_home + unique_resource_name\
              + '/config'
-    else:
+    elif outfile:
 
         # outfile specified (DumpConfig)
 
         filename = outfile
+    else:
+        return (True, 'Everything ok')
+        
     try:
         fsock = open(filename, 'w')
         st = pickle.dumps(conf, 0)

@@ -653,7 +653,6 @@ if (form.has_key('new_resource') or form.has_key('apply_changes'))\
         if status:
             logger.info(msg)
             try:
-                pass
                 os.rename(pending_file, conf_file)
             except Exception, exc:
                 o.out('Accepted config, but failed to save it! Failed:'
@@ -794,7 +793,7 @@ else:
             if int(hostidentifier) != int(form['hostidentifier'].value):
                 o.out("Failure: ::HOSTIDENTIFIER:: in file '"
                        + conf_file
-                       + "' does'nt match hostidentifier provided: '"
+                       + "' doesn't match hostidentifier provided: '"
                        + str(form['hostidentifier'].value) + "'")
                 o.reply_and_exit(o.ERROR)
 
@@ -1084,8 +1083,8 @@ else:
     print """                   <input type="hidden" name="hostidentifier" size="30" value='"""\
          + hostidentifier\
          + """'> 
-                                <BR><BR>
-                                <B>Public name:</B>&nbsp<A HREF="./resedithelp.py#publicname">help</A>
+                                <BR><BR>"""
+    print """                   <B>Public name:</B>&nbsp<A HREF="./resedithelp.py#publicname">help</A>
                                 <BR>
                                 <input type="text" name="publicname" size="30" value='"""\
          + html_encode(publicname)\
