@@ -304,7 +304,10 @@ def execute_on_resource(
     if background:
         batch.append('&')
 
-    ssh_command = "ssh %s %s@%s '%s' %s"\
+    # IMPORTANT: careful with the ssh_command line!
+    # removing explicit bash or changing quotes breaks resource management
+    
+    ssh_command = 'ssh %s %s@%s "bash -c \'%s %s\'"'\
          % (' '.join(options), user, host, command, ' '.join(batch))
     logger.debug('running command: %s' % ssh_command)
     status = os.system(ssh_command) >> 8
