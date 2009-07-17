@@ -514,7 +514,7 @@ def get_frontend_script(unique_resource_name, logger):
         fe_script = os.read(filehandle, os.path.getsize(local_filename))
         os.close(filehandle)
         os.remove(local_filename)
-        logger.debug('got frontend script %s', local_filename)
+        logger.debug('got frontend script %s' % local_filename)
         return (True, fe_script)
     except Exception, err:
 
@@ -563,7 +563,7 @@ def get_master_node_script(unique_resource_name, exe_name, logger):
                              os.path.getsize(local_filename))
         os.close(filehandle)
         os.remove(local_filename)
-        logger.debug('got master node script %s', local_filename)
+        logger.debug('got master node script %s' % local_filename)
         return (True, exe_script)
     except Exception, err:
 
@@ -733,11 +733,9 @@ def start_resource_exe(
 
     # execute start command
 
-    logger.info('starting command')
     command = exe['start_command']
     (exit_code, executed_command) = execute_on_resource(command, True,
             resource_config, logger)
-    logger.info('command started')
 
     msg += executed_command + '\n' + command + ' returned '\
          + str(exit_code)
@@ -804,7 +802,6 @@ def start_resource_store(
     # execute start command to prepare remote tunnel or mount
 
     command = store['start_command']
-    logger.info('running start command on front end: %s' % command)
     (exit_code, executed_command) = execute_on_resource(command, True,
                                                         resource_config, logger)
 
@@ -943,7 +940,7 @@ def start_resource(
         if not rv:
             return (False, msg)
         os.close(filehandle)
-        logger.debug('wrote frontend script %s', local_filename)
+        logger.debug('wrote frontend script %s' % local_filename)
     except Exception, err:
         logger.error('could not write frontend script (%s)', err)
         return (False, msg)
@@ -966,7 +963,7 @@ def start_resource(
         if os.path.isfile(local_filename):
             os.remove(local_filename)
     except Exception, err:
-        logger.error('Could not remove %s (%s)', local_filename, err)
+        logger.error('Could not remove %s (%s)' % (local_filename, err))
 
     if copy_status:
         msg += 'copy of frontend_script.sh was successfull!\n'
@@ -982,7 +979,7 @@ def start_resource(
 
     command = 'cd %s; chmod +x frontend_script.sh; ./frontend_script.sh'\
          % resource_config['RESOURCEHOME']
-    (exit_code, executed_command) = execute_on_resource(command, False,
+    (exit_code, executed_command) = execute_on_resource(command, True,
             resource_config, logger)
 
     msg += executed_command + '\n' + command + ' returned '\
