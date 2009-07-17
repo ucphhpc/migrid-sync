@@ -539,11 +539,14 @@ def prepare_conf(configuration, input_args, resource_id):
     for resource conf parsing.
     """
 
-    # Flatten list structure for all fields
+    # Flatten list structure for all fields except vgrid ones
 
     user_args = {}
     for (key, val) in input_args.items():
-        user_args[key] = val[-1]
+        if key.endswith('vgrid'):
+            user_args[key] = val
+        else:
+            user_args[key] = val[-1]
 
     # Merge the variable fields like runtimeenvironmentX and re_valuesX
     # pairs into the final form suitable for parsing. Both fields
@@ -777,13 +780,19 @@ def write_resource_config(configuration, resource_conf, conf_path):
                 for exe in resource_conf['EXECONFIG']:
                     lines.append('::%s::' % field)
                     for (exe_field, __) in resconfkeywords.get_exenode_specs(configuration):
-                        lines.append('%s=%s' % (exe_field, exe[exe_field]))
+                        if exe_field.endswith('vgrid'):
+                            lines.append('%s=%s' % (exe_field, ','.join(exe[exe_field])))
+                        else:
+                            lines.append('%s=%s' % (exe_field, exe[exe_field]))
                     lines.append('')
             elif 'STORECONFIG' == field:
                 for store in resource_conf['STORECONFIG']:
                     lines.append('::%s::' % field)
                     for (store_field, __) in resconfkeywords.get_storenode_specs(configuration):
-                        lines.append('%s=%s' % (store_field, store[store_field]))
+                        if store_field.endswith('vgrid'):
+                            lines.append('%s=%s' % (store_field, ','.join(store[store_field])))
+                        else:
+                            lines.append('%s=%s' % (store_field, store[store_field]))
                     lines.append('')
             else:
                 lines.append('::%s::' % field)
