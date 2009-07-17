@@ -273,7 +273,7 @@ def create_job_script(
 
     # hack to ensure that a resource has a sandbox keyword
 
-    if resource_config.get('SANDBOX', 0) == 1:
+    if resource_config.get('SANDBOX', False):
 
         # Move file to webserver_home for download as we can't push it to sandboxes
 

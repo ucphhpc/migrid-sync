@@ -204,10 +204,10 @@ def start_resource_exe_if_continuous(
 
     if not resource_dict:
         return (False, 'Failed to unpack resource configuration!')
-    if not resource_dict.has_key('SANDBOX'):
-        resource_dict['SANDBOX'] = 0
+    
+    resource_dict['SANDBOX'] = resource_dict.get('SANDBOX', False)
 
-    if resource_dict['SANDBOX'] == 1:
+    if resource_dict['SANDBOX']:
         return (True, '')
 
     for exe in resource_dict['EXECONFIG']:
@@ -322,7 +322,8 @@ def fill_frontend_script(
     msg = ''
 
     try:
-        os.write(filehandle, '#!/bin/bash\n')
+        os.write(filehandle, '#!/bin/bash\n#\n')
+        os.write(filehandle, '# MiG resource front end\n\n')
         os.write(filehandle, 'migserver=' + https_sid_url + '\n')
         os.write(filehandle, 'unique_resource_name='
                   + unique_resource_name + '\n')
@@ -331,23 +332,15 @@ def fill_frontend_script(
         os.write(filehandle, 'curllog=' + resource_config['CURLLOG']
                   + '\n')
 
-        if resource_config.has_key('SANDBOX'):
-            os.write(filehandle, 'sandbox='
-                      + str(resource_config['SANDBOX']) + '\n')
-            if resource_config['SANDBOX'] == 1:
-
-                # resource is a sandbox
-
-                if not resource_config.has_key('SANDBOXKEY'):
-                    return (False,
-                            'Resource error, SANDBOX flag is true but SANDBOXKEY was not found!'
-                            )
-                else:
-                    os.write(filehandle, 'sandboxkey='
-                              + str(resource_config['SANDBOXKEY'])
-                              + '\n')
-        else:
-            os.write(filehandle, 'sandbox=0\n')
+        sandbox = resource_config.get('SANDBOX', False)
+        os.write(filehandle, 'sandbox=%d\n' % int(sandbox))
+        if sandbox:
+            sandbox_key = resource_config.get('SANDBOXKEY', None)
+            if not sandbox_key:
+                return (False,
+                        'Resource error, SANDBOX flag is true but SANDBOXKEY was not found!'
+                        )
+            os.write(filehandle, 'sandboxkey=%s\n' % sandbox_key)
 
         # append frontend_script.sh
 
@@ -1517,8 +1510,8 @@ def get_sandbox_exe_stop_command(
 
     # open the resources configuration
 
-    resource_configuration_file = sandbox_home + '/' + sandboxkey\
-         + '/config'
+    resource_configuration_file = os.path.join(sandbox_home, sandboxkey,
+                                               'config')
     resource_dict = unpickle(resource_configuration_file, logger)
     if not resource_dict:
         return (False,

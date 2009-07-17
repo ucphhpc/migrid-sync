@@ -236,10 +236,10 @@ This makes is possible to get a total statistic for all jobs in a project.
         'Required': False,
         }
     sandbox = {
-        'Description': 'Specifies whether the job may run in a sandbox. If 0 it may not, if 1 it may.',
-        'Example': '0',
-        'Type': 'int',
-        'Value': 0,
+        'Description': 'Specifies whether the job may run in a sandbox. If 0 or false it may not, if 1 or true it may.',
+        'Example': 'True',
+        'Type': 'boolean',
+        'Value': False,
         'Required': False,
         }
     jobtype = {

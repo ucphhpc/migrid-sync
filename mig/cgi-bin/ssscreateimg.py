@@ -198,7 +198,7 @@ sh
 1
 
 ::SANDBOX::
-1
+True
 
 ::SANDBOXKEY::
 %s

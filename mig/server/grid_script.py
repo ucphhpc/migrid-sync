@@ -501,7 +501,7 @@ while True:
                           % unique_resource_name)
             continue
 
-        sandboxed = resource_config.get('SANDBOX', 0)
+        sandboxed = resource_config.get('SANDBOX', False)
 
         # Write the PGID of EXE to PGID file
 
@@ -511,7 +511,7 @@ while True:
             exe,
             exe_pgid,
             logger,
-            sandboxed == 1,
+            sandboxed,
             )
         if status:
             logger.info(msg)
@@ -1269,7 +1269,7 @@ while True:
                 ):
                 logger.error('could not clean up MiG server')
 
-            if resource_config.get('SANDBOX', 0) == 0:
+            if not resource_config.get('SANDBOX', False):
                 logger.info('Killing running job with atomic_resource_exe_restart'
                             )
                 (status, msg) = \
@@ -1364,7 +1364,7 @@ while True:
 
             # Restart non-sandbox resources for all timed out jobs
 
-            if resource_config.get('SANDBOX', 0) == 0:
+            if not resource_config.get('SANDBOX', False):
 
                 # TODO: atomic_resource_exe_restart is not always effective
                 # The imada resources have been seen to hang in wait for input files loop

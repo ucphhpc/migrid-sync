@@ -77,7 +77,7 @@ class BestFitScheduler(Scheduler):
         # Ordinary resources should avoid sandbox jobs unless there are no
         # other jobs around
 
-        if resource_conf.get('SANDBOX', 0) != job.get('SANDBOX', 0):
+        if resource_conf.get('SANDBOX', False) != job.get('SANDBOX', False):
             job_fitness -= 200
 
         self.logger.debug('fitness: %f', job_fitness)

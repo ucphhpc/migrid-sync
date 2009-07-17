@@ -58,7 +58,7 @@ def create_ps3_resource(sandboxkey):
 
     disk = 0
     cpucount = 1
-    sandbox = 1
+    sandbox = True
     arch = 'PS3'
     nodecount = 1
     hostkey = 'N/A'

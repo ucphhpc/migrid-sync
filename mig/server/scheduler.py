@@ -1194,11 +1194,11 @@ class Scheduler:
                 # hack to ensure that a resource has a sandbox keyword
 
                 if not res.has_key(attr):
-                    res[attr] = 0
+                    res[attr] = False
 
                 # do not schedule non-sandbox jobs on a sandbox resource
 
-                if job[attr] == 0 and res[attr] == 1:
+                if not job[attr] and res[attr]:
 
                     # job is not allowed to run in a sandbox resource
                     # self.logger.info("job is not allowed to run in a sandbox resource")

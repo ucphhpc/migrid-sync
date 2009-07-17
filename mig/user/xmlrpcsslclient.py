@@ -346,7 +346,7 @@ uname -a
 30
 
 ::SANDBOX::
-1
+True
 """
     print 'writing job description to %s file on server' % mrsl_path
     (inlist, retval) = server.editfile({'path': [mrsl_path], 'editarea'

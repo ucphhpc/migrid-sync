@@ -224,7 +224,7 @@ if not status:
     o.out("No resouce_config for: '" + unique_resource_name + "'\n")
     o.reply_and_exit(o.ERROR)
 
-if resource_conf['SANDBOX'] == 1:
+if resource_conf.get('SANDBOX', False):
     if sandboxkey == '':
         o.out('Error, sandbox must submit sandboxkey in requestnewjob!')
         o.reply_and_exit(o.ERROR)
