@@ -160,8 +160,8 @@ Actual examples for inspiration:
                 if field_type.startswith('multiple'):
                     output_objects.append({'object_type': 'html_form', 'text'
                                            : """
-<textarea name='%s' cols='%d' rows='%d'></textarea>
-""" % (field, area_cols, area_rows)
+<textarea name='%s' cols='%d' rows='%d'>%s</textarea>
+""" % (field, area_cols, area_rows, '\n'.join(default))
                                    })
                 else:
                     output_objects.append({'object_type': 'html_form', 'text'
@@ -170,7 +170,7 @@ Actual examples for inspiration:
 """ % (field, field_size, default)
                                    })
             elif 'select' == spec['Editor']:
-                choices = available_choices(configuration, client_id,
+                choices = [''] + available_choices(configuration, client_id,
                                             field, spec)
                 res_value = default
                 value_select = ''
@@ -190,12 +190,12 @@ Actual examples for inspiration:
 
         # Not all resource fields here map directly to keywords/specs input field
     
-        (title, field) = ('VGrid Participation', 'vgrid')
+        (title, field) = ('VGrid Priority', 'VGRID')
         exe_vgrids = []
         show = exe_vgrids + ['' for i in range(extra_selects)]
         vgrid_select = ''
         for active in show:
-            vgrid_select += "<select name='exe-vgrid'>\n"
+            vgrid_select += "<select name='%s'>\n" % field
             for name in allowed_vgrids + ['']:
                 selected = ''
                 if active == name:
@@ -211,27 +211,21 @@ Actual examples for inspiration:
         
         (title, field) = ('Runtime Environments', 'RUNTIMEENVIRONMENT')
         re_list = []
-        show = re_list + [('', []) for i in range(extra_selects)]
+        show = re_list + ['' for i in range(extra_selects)]
         re_select = "<input type='hidden' name='runtime_env_fields' value='%s'>\n" % len(show)
         i = 0
         for active in show:
             re_select += "<select name='runtimeenvironment%d'>\n" % i
             for name in allowed_run_envs + ['']:
                 selected = ''
-                if active[0] == name:
+                if active == name:
                     selected = 'selected'
                 re_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
             re_select += """</select><br>\n"""
-            values = '\n'.join(['%s=%s' % pair for pair in active[1]])
-            re_select += "<textarea cols='%d' rows='%d' name='re_values%d'>%s</textarea><br>\n" % \
-                         (area_cols, area_rows, i, values)
             i += 1
-
         output_objects.append({'object_type': 'html_form', 'text'
                                : """<br>
 <b>%s:</b>&nbsp;<a href='docs.py?show=job#%s'>help</a><br>
-Please enter any required environment variable settings on the form NAME=VALUE in the box below
-each selected runtimeenvironment.<br>
 %s
 <br>""" % (title, field, re_select)
                            })

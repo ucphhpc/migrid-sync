@@ -42,7 +42,7 @@ def get_job_specs(configuration):
 
     specs = []
     specs.append(('EXECUTE', {
-        'Title': 'Commands',
+        'Title': 'Execute Commands',
         'Description': 'One or more commands to execute',
         'Example': '''
 ::EXECUTE::

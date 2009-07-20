@@ -320,7 +320,7 @@ each selected runtimeenvironment.<br>
     show = exe_vgrids + ['' for i in range(extra_selects)]
     vgrid_select = ''
     for active in show:
-        vgrid_select += "<select name='exe-vgrid'>\n"
+        vgrid_select += "<select name='exe-%s'>\n" % field
         for name in allowed_vgrids + ['']:
             selected = ''
             if active == name:
@@ -398,7 +398,7 @@ each selected runtimeenvironment.<br>
     show = store_vgrids + ['' for i in range(extra_selects)]
     vgrid_select = ''
     for active in show:
-        vgrid_select += "<select name='store-vgrid'>\n"
+        vgrid_select += "<select name='store-%s'>\n" % field
         for name in allowed_vgrids + ['']:
             selected = ''
             if active == name:
