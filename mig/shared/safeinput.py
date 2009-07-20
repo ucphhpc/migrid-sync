@@ -729,17 +729,17 @@ def guess_type(name):
         return valid_numeric
     elif name.lower().find('request_text') != -1:
         return valid_plain_text
-    elif name.lower().find('AOL') != -1:
+    elif name.lower().find('aol') != -1:
         return valid_email_address
-    elif name.lower().find('YAHOO') != -1:
+    elif name.lower().find('yahoo') != -1:
         return valid_email_address
-    elif name.lower().find('MSN') != -1:
+    elif name.lower().find('msn') != -1:
         return valid_email_address
-    elif name.lower().find('ICQ') != -1:
+    elif name.lower().find('icq') != -1:
         return valid_email_address
-    elif name.lower().find('JABBER') != -1:
+    elif name.lower().find('jabber') != -1:
         return valid_email_address
-    elif name.lower().find('EMAIL') != -1:
+    elif name.lower().find('email') != -1:
         return valid_email_address
     elif name.lower().find('resconfig') != -1:
         return valid_plain_text
@@ -791,21 +791,21 @@ def guess_type(name):
         return valid_job_id_pattern
     elif name.lower().find('lang') != -1:
         return valid_job_id
-    elif name.lower().find('EXECUTE') != -1:
+    elif name.lower().find('execute') != -1:
         return valid_plain_text
-    elif name.lower().find('EXECUTABLES') != -1:
+    elif name.lower().find('executables') != -1:
         return valid_plain_text
-    elif name.lower().find('INPUTFILES') != -1:
+    elif name.lower().find('inputfiles') != -1:
         return valid_plain_text
-    elif name.lower().find('OUTPUTFILES') != -1:
+    elif name.lower().find('outputfiles') != -1:
         return valid_plain_text
-    elif name.lower().find('VERIFYFILES') != -1:
+    elif name.lower().find('verifyfiles') != -1:
         return valid_plain_text
-    elif name.lower().find('NOTIFY') != -1:
+    elif name.lower().find('notify') != -1:
         return valid_plain_text
-    elif name.lower().find('VGRID') != -1:
+    elif name.lower().find('vgrid') != -1:
         return valid_plain_text
-    elif name.lower().find('RUNTIMEENVIRONMENT') != -1:
+    elif name.lower().find('runtimeenvironment') != -1:
         return valid_plain_text
     elif name.lower().find('width') != -1:
         return valid_numeric
