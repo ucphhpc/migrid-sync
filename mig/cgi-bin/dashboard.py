@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# ls - [insert a few words of module description on this line]
+# dashboard - Dashboard entry page
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,13 +25,13 @@
 # -- END_HEADER ---
 #
 
-"""File viewer page"""
+"""Dashboard page used as entry page"""
 
 import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.ls import main
+from shared.functionality.dashboard import main
 from shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)
