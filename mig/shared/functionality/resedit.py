@@ -101,8 +101,10 @@ def main(client_id, user_arguments_dict):
     extra_selects = 3
     allowed_vgrids = res_allowed_vgrids(configuration, resource_id)
     allowed_vgrids.sort()
-    (status, allowed_run_envs) = list_runtime_environments(configuration)
+    (re_status, allowed_run_envs) = list_runtime_environments(configuration)
     allowed_run_envs.sort()
+    area_cols = 80
+    area_rows = 5
     
     status = returnvalues.OK
 
@@ -240,8 +242,8 @@ description, you can likely just leave the field alone.'''
             re_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
         re_select += """</select><br>\n"""
         values = '\n'.join(['%s=%s' % pair for pair in active[1]])
-        re_select += "<textarea cols='30' rows='3' name='re_values%d'>%s</textarea><br>\n" % \
-                     (i, values)
+        re_select += "<textarea cols='%d' rows='%d' name='re_values%d'>%s</textarea><br>\n" % \
+                     (area_cols, area_rows, i, values)
         i += 1
 
     output_objects.append({'object_type': 'html_form', 'text'
