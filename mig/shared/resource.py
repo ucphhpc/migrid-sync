@@ -651,7 +651,7 @@ def prepare_conf(configuration, input_args, resource_id):
 
     for exe in execution_nodes:
         execution_node = exe['execution_node']
-        execution_dir = exe['execution_dir'],
+        execution_dir = exe['execution_dir']
         if execution_dir.find(conf['HOSTURL']) == -1:
             execution_dir = os.path.join(exe['execution_dir'],
                                          'MiG', 'mig_exe', resource_id)
