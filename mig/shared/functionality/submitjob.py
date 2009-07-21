@@ -55,7 +55,7 @@ def available_choices(configuration, client_id, field, spec):
     """
     if 'boolean' == spec['Type']:
         choices = [True, False]
-    elif 'string' == spec['Type']:
+    elif spec['Type'] in ('string', 'multiplestrings'):
         try:
             choices = getattr(configuration, '%ss' % field.lower())
         except AttributeError, exc:
@@ -64,7 +64,7 @@ def available_choices(configuration, client_id, field, spec):
     else:
         choices = []
     if not spec['Required']:
-        choices.append('')
+        choices = [''] + choices
     default = spec['Value']
     if default in choices:
         choices = [default] + [i for i in choices if not default == i]

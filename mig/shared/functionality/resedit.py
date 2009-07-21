@@ -65,7 +65,7 @@ def available_choices(configuration, client_id, resource_id, field, spec):
     """
     if 'boolean' == spec['Type']:
         choices = [True, False]
-    elif 'string' == spec['Type']:
+    elif spec['Type'] in ('string', 'multiplestrings'):
         try:
             choices = getattr(configuration, '%ss' % field.lower())
         except AttributeError, exc:
@@ -73,6 +73,8 @@ def available_choices(configuration, client_id, resource_id, field, spec):
             choices = []
     else:
         choices = []
+    if not spec['Required']:
+        choices = [''] + choices
     default = spec['Value']
     if default in choices:
         choices = [default] + [i for i in choices if not default == i]
@@ -103,10 +105,10 @@ def main(client_id, user_arguments_dict):
     # Find allowed VGrids and Runtimeenvironments and add them to
     # configuration object for automated choice handling    
 
-    allowed_vgrids = res_allowed_vgrids(configuration, resource_id)
+    allowed_vgrids = [''] + res_allowed_vgrids(configuration, resource_id)
     allowed_vgrids.sort()
-    configuration.exe-vgrids = allowed_vgrids
-    configuration.store-vgrids = allowed_vgrids
+
+    configuration.vgrids = allowed_vgrids
     (re_status, allowed_run_envs) = list_runtime_environments(configuration)
     allowed_run_envs.sort()
     area_cols = 80
@@ -223,11 +225,12 @@ description, you can likely just leave the field alone.'''
                 select_count = len(res_value) + extra_selects
             else:
                 select_count = 1
+                res_value = [res_value]
             for i in range(select_count):
                 value_select += "<select name='%s'>\n" % field
                 for name in choices:
                     selected = ''
-                    if res_value == name:
+                    if i < len(res_value) and res_value[i] == name:
                         selected = 'selected'
                     value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
                 value_select += """</select><br>\n"""    
@@ -318,11 +321,12 @@ each selected runtimeenvironment.<br>
                 select_count = len(exe_value) + extra_selects
             else:
                 select_count = 1
+                exe_value = [exe_value]
             for i in range(select_count):
                 value_select += "<select name='exe-%s'>\n" % field
                 for name in choices:
                     selected = ''
-                    if exe_value == name:
+                    if i < len(exe_value) and exe_value[i] == name:
                         selected = 'selected'
                     value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
                 value_select += """</select><br>\n"""    
@@ -384,11 +388,12 @@ each selected runtimeenvironment.<br>
                 select_count = len(store_value) + extra_selects
             else:
                 select_count = 1
+                store_value = [store_value]
             for i in range(select_count):
                 value_select += "<select name='store-%s'>\n" % field
                 for name in choices:
                     selected = ''
-                    if store_value == name:
+                    if i < len(store_value) and store_value[i] == name:
                         selected = 'selected'
                     value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
                 value_select += """</select><br>\n"""    

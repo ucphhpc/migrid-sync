@@ -325,7 +325,6 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
             all['executionnodes'] = generate_execution_node_string(conf['EXECONFIG'])
             first = conf['EXECONFIG'][0]
 
-            print [first['shared_fs']]
             home = str(first['execution_dir'])
             base_index = home.find('/MiG/mig_exe/')
             if base_index != -1:
