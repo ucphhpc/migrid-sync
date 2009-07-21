@@ -268,11 +268,10 @@ Listing the last request from each resource<br>
     row_name = ('even_row', 'odd_row')
 
     for vgrid_name_part in vgrid_name_list:
-        current_dir += '/' + vgrid_name_part
-        print 'dir: ' + configuration.vgrid_home + current_dir
-
-        sorted_names = os.listdir(configuration.vgrid_home
-                                   + current_dir)
+        current_dir = os.path.join(current_dir, vgrid_name_part)
+        abs_dir = os.path.join(configuration.vgrid_home, current_dir)
+        print 'dir: %s' % abs_dir
+        sorted_names = os.listdir(abs_dir)
         sorted_names.sort()
         for filename in sorted_names:
             print filename
@@ -280,8 +279,7 @@ Listing the last request from each resource<br>
 
                 # read file
 
-                mon_file_name = os.path.join(configuration.vgrid_home, current_dir,
-                                             filename)
+                mon_file_name = os.path.join(abs_dir, filename)
                 print 'found ' + mon_file_name
                 last_request_dict = unpickle(mon_file_name, logger)
                 if not last_request_dict:
