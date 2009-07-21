@@ -155,7 +155,7 @@ To submit with execution on the first suitable and allowed VGrid.
 ''',
         'Type': 'multiplestrings',
         'Value': [],
-        'Editor': 'custom',
+        'Editor': 'select',
         'Required': False,
         }))
     specs.append(('NODECOUNT', {
@@ -239,7 +239,7 @@ The job will only be executed on resources that advertize the same runtime envir
 ''',
         'Type': 'multiplestrings',
         'Value': [],
-        'Editor': 'custom',
+        'Editor': 'select',
         'Required': False,
         }))
     specs.append(('NOTIFY', {

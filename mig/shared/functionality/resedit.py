@@ -99,8 +99,14 @@ def main(client_id, user_arguments_dict):
     hostidentifier = accepted['hostidentifier'][-1]
     resource_id = '%s.%s' % (hosturl, hostidentifier)
     extra_selects = 3
+
+    # Find allowed VGrids and Runtimeenvironments and add them to
+    # configuration object for automated choice handling    
+
     allowed_vgrids = res_allowed_vgrids(configuration, resource_id)
     allowed_vgrids.sort()
+    configuration.exe-vgrids = allowed_vgrids
+    configuration.store-vgrids = allowed_vgrids
     (re_status, allowed_run_envs) = list_runtime_environments(configuration)
     allowed_run_envs.sort()
     area_cols = 80
@@ -196,6 +202,7 @@ description, you can likely just leave the field alone.'''
 
     for (field, spec) in res_fields:
         title = spec['Title']
+        field_type = spec['Type']
         if 'invisible' == spec['Editor']:
             continue
         elif 'input' == spec['Editor']:
@@ -212,13 +219,18 @@ description, you can likely just leave the field alone.'''
                                         resource_id, field, spec)
             res_value = conf[field]
             value_select = ''
-            value_select += "<select name='%s'>\n" % field
-            for name in choices:
-                selected = ''
-                if res_value == name:
-                    selected = 'selected'
-                value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-            value_select += """</select><br>\n"""    
+            if field_type.startswith('multiple'):
+                select_count = len(res_value) + extra_selects
+            else:
+                select_count = 1
+            for i in range(select_count):
+                value_select += "<select name='%s'>\n" % field
+                for name in choices:
+                    selected = ''
+                    if res_value == name:
+                        selected = 'selected'
+                    value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
+                value_select += """</select><br>\n"""    
             output_objects.append({'object_type': 'html_form', 'text'
                                    : """<br>
 <b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br>
@@ -285,6 +297,7 @@ each selected runtimeenvironment.<br>
 
     for (field, spec) in exe_fields:
         title = spec['Title']
+        field_type = spec['Type']
         if 'invisible' == spec['Editor']:
             continue
         elif 'input' == spec['Editor']:
@@ -301,38 +314,24 @@ each selected runtimeenvironment.<br>
                                         resource_id, field, spec)
             exe_value = conf['all_exes'][field]
             value_select = ''
-            value_select += "<select name='exe-%s'>\n" % field
-            for name in choices:
-                selected = ''
-                if exe_value == name:
-                    selected = 'selected'
-                value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-            value_select += """</select><br>\n"""    
+            if field_type.startswith('multiple'):
+                select_count = len(exe_value) + extra_selects
+            else:
+                select_count = 1
+            for i in range(select_count):
+                value_select += "<select name='exe-%s'>\n" % field
+                for name in choices:
+                    selected = ''
+                    if exe_value == name:
+                        selected = 'selected'
+                    value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
+                value_select += """</select><br>\n"""    
             output_objects.append({'object_type': 'html_form', 'text'
                                    : """<br>
 <b>%s:</b>&nbsp;<a href='resedithelp.py#exe-%s'>help</a><br>
 %s
 <br>""" % (title, field, value_select)
                                    })
-
-    (title, field) = ('VGrid Participation', 'vgrid')
-    exe_vgrids = conf['all_exes']['vgrid']
-    show = exe_vgrids + ['' for i in range(extra_selects)]
-    vgrid_select = ''
-    for active in show:
-        vgrid_select += "<select name='exe-%s'>\n" % field
-        for name in allowed_vgrids + ['']:
-            selected = ''
-            if active == name:
-                selected = 'selected'
-            vgrid_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-        vgrid_select += """</select><br>\n"""    
-    output_objects.append({'object_type': 'html_form', 'text'
-                               : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#exe-%s'>help</a><br>
-%s
-<br>""" % (title, field, vgrid_select)
-                           })
     
     # Storage node fields
 
@@ -364,6 +363,7 @@ each selected runtimeenvironment.<br>
 
     for (field, spec) in store_fields:
         title = spec['Title']
+        field_type = spec['Type']
         if 'invisible' == spec['Editor']:
             continue
         elif 'input' == spec['Editor']:
@@ -380,38 +380,24 @@ each selected runtimeenvironment.<br>
                                         resource_id, field, spec)
             store_value = conf['all_stores'][field]
             value_select = ''
-            value_select += "<select name='store-%s'>\n" % field
-            for name in choices:
-                selected = ''
-                if store_value == name:
-                    selected = 'selected'
-                value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-            value_select += """</select><br>\n"""    
+            if field_type.startswith('multiple'):
+                select_count = len(store_value) + extra_selects
+            else:
+                select_count = 1
+            for i in range(select_count):
+                value_select += "<select name='store-%s'>\n" % field
+                for name in choices:
+                    selected = ''
+                    if store_value == name:
+                        selected = 'selected'
+                    value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
+                value_select += """</select><br>\n"""    
             output_objects.append({'object_type': 'html_form', 'text'
                                    : """<br>
 <b>%s:</b>&nbsp;<a href='resedithelp.py#store-%s'>help</a><br>
 %s
 <br>""" % (title, field, value_select)
                                    })
-    (title, field) = ('VGrid Participation', 'vgrid')
-    store_vgrids = conf['all_stores']['vgrid']
-    show = store_vgrids + ['' for i in range(extra_selects)]
-    vgrid_select = ''
-    for active in show:
-        vgrid_select += "<select name='store-%s'>\n" % field
-        for name in allowed_vgrids + ['']:
-            selected = ''
-            if active == name:
-                selected = 'selected'
-            vgrid_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-        vgrid_select += """</select><br>\n"""    
-    output_objects.append({'object_type': 'html_form', 'text'
-                               : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#store-%s'>help</a><br>
-%s
-<br>""" % (title, field, vgrid_select)
-                           })
-
 
     output_objects.append({'object_type': 'html_form', 'text': """
 <input type='submit' value='Save'>

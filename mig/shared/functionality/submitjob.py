@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# submitjob - [insert a few words of module description on this line]
+# submitjob - Job submission interfaces
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -63,6 +63,8 @@ def available_choices(configuration, client_id, field, spec):
             choices = []
     else:
         choices = []
+    if not spec['Required']:
+        choices.append('')
     default = spec['Value']
     if default in choices:
         choices = [default] + [i for i in choices if not default == i]
@@ -135,16 +137,23 @@ Actual examples for inspiration:
 """
                               })
         show_fields = get_job_specs(configuration)
+
+        # Find allowed VGrids and Runtimeenvironments and add them to
+        # configuration object for automated choice handling
+        
         allowed_vgrids = user_allowed_vgrids(configuration, client_id) + ['ANY']
         allowed_vgrids.sort()
+        configuration.vgrids = allowed_vgrids
         (re_status, allowed_run_envs) = list_runtime_environments(configuration)
         allowed_run_envs.sort()
+        configuration.runtimeenvironments = allowed_run_envs
         extra_selects = 3
         field_size = 30
         area_cols = 80
         area_rows = 5
         for (field, spec) in show_fields:
             title = spec['Title']
+            description = spec['Description']
             field_type = spec['Type']
             default = spec['Value']
             # TODO: override with default_mrsl
@@ -154,7 +163,8 @@ Actual examples for inspiration:
                 continue
             output_objects.append({'object_type': 'html_form', 'text'
                                        : """<br>
-<b>%s:</b>&nbsp;<a href='docs.py?show=job#%s'>help</a><br>""" % (title, field)
+<b>%s:</b>&nbsp;<a href='docs.py?show=job#%s'>help</a><br>
+<br>%s<br>""" % (title, field, description)
                                    })
             if 'input' == spec['Editor']:
                 if field_type.startswith('multiple'):
@@ -170,65 +180,29 @@ Actual examples for inspiration:
 """ % (field, field_size, default)
                                    })
             elif 'select' == spec['Editor']:
-                choices = [''] + available_choices(configuration, client_id,
+                choices = available_choices(configuration, client_id,
                                             field, spec)
                 res_value = default
-                value_select = ''
-                value_select += "<select name='%s'>\n" % field
-                for name in choices:
-                    selected = ''
-                    if res_value == name:
-                        selected = 'selected'
-                    value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-                value_select += """</select><br>\n"""    
-                output_objects.append({'object_type': 'html_form', 'text'
-                                       : value_select
-                                       })
+                if field_type.startswith('multiple'):
+                    select_count = extra_selects
+                else:
+                    select_count = 1
+                for i in range(select_count):
+                    value_select = ''
+                    value_select += "<select name='%s'>\n" % field
+                    for name in choices:
+                        selected = ''
+                        if res_value == name:
+                            selected = 'selected'
+                        value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
+                    value_select += """</select><br>\n"""    
+                    output_objects.append({'object_type': 'html_form', 'text'
+                                           : value_select
+                                           })
             output_objects.append({'object_type': 'html_form', 'text'
                                        : """<br><br>"""
                                    })
 
-        # Not all resource fields here map directly to keywords/specs input field
-    
-        (title, field) = ('VGrid Priority', 'VGRID')
-        exe_vgrids = []
-        show = exe_vgrids + ['' for i in range(extra_selects)]
-        vgrid_select = ''
-        for active in show:
-            vgrid_select += "<select name='%s'>\n" % field
-            for name in allowed_vgrids + ['']:
-                selected = ''
-                if active == name:
-                    selected = 'selected'
-                vgrid_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-            vgrid_select += """</select><br>\n"""    
-        output_objects.append({'object_type': 'html_form', 'text'
-                               : """<br>
-<b>%s:</b>&nbsp;<a href='docs.py?show=job#%s'>help</a><br>
-%s
-<br>""" % (title, field, vgrid_select)
-                           })
-        
-        (title, field) = ('Runtime Environments', 'RUNTIMEENVIRONMENT')
-        re_list = []
-        show = re_list + ['' for i in range(extra_selects)]
-        re_select = "<input type='hidden' name='runtime_env_fields' value='%s'>\n" % len(show)
-        i = 0
-        for active in show:
-            re_select += "<select name='runtimeenvironment%d'>\n" % i
-            for name in allowed_run_envs + ['']:
-                selected = ''
-                if active == name:
-                    selected = 'selected'
-                re_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-            re_select += """</select><br>\n"""
-            i += 1
-        output_objects.append({'object_type': 'html_form', 'text'
-                               : """<br>
-<b>%s:</b>&nbsp;<a href='docs.py?show=job#%s'>help</a><br>
-%s
-<br>""" % (title, field, re_select)
-                           })
 
         output_objects.append({'object_type': 'html_form', 'text'
                               : """

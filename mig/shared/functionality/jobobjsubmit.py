@@ -62,27 +62,6 @@ def signature():
                 defaults[key] = []
     return ['html_form', defaults]
 
-def init_job(configuration, user_args, client_id):
-    """Prepare encoded input args for regular job format validation"""
-
-    # Merge the variable fields like runtimeenvironmentX
-    # into the final form suitable for parsing.
-   
-    re_list = []
-    field_count = 0
-    field_count_arg = user_args.get('runtime_env_fields', None)[-1]
-    print field_count_arg
-    if field_count_arg:
-        field_count = int(field_count_arg)
-        del user_args['runtime_env_fields']
-    for i in range(field_count):
-        runtime_env = 'runtimeenvironment' + str(i)
-        if user_args.has_key(runtime_env):
-            re_list.append(user_args[runtime_env][-1])
-            del user_args[runtime_env]
-    user_args['RUNTIMEENVIRONMENT'] = re_list
-    return user_args
-
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -92,12 +71,6 @@ def main(client_id, user_arguments_dict):
     client_dir = client_id_dir(client_id)
     status = returnvalues.OK
     defaults = signature()[1]
-
-    # IMPORTANT: runtime envs may be encoded in multiple values here
-    # Parse them to ordinary form first if so
-
-    user_arguments_dict = init_job(configuration, user_arguments_dict, client_id)
-
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,

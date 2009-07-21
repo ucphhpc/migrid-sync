@@ -537,9 +537,9 @@ def get_exenode_specs(configuration):
         'Title': 'VGrid Participation',
         'Description': 'Which VGrids should the resource accept jobs from? Please note that the corresponding VGrid owners must add the resource to the VGrid first. The raw format is a comma separated list of VGrid names.',
         'Example': 'Generic, MyVGrid',
-        'Type': 'list of strings',
+        'Type': 'multiplestrings',
         'Value': [default_vgrid],
-        'Editor': 'custom',
+        'Editor': 'select',
         'Required': True,
         }))
     return specs
@@ -662,9 +662,9 @@ def get_storenode_specs(configuration):
         'Title': 'VGrid Participation',
         'Description': 'Which VGrids should the resource accept jobs from? Please note that the corresponding VGrid owners must add the resource to the VGrid first. The raw format is a comma separated list of VGrid names.',
         'Example': 'Generic, MyVGrid',
-        'Type': 'list of strings',
+        'Type': 'multiplestrings',
         'Value': [default_vgrid],
-        'Editor': 'custom',
+        'Editor': 'select',
         'Required': True,
         }))
     return specs
