@@ -1,0 +1,132 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# --- BEGIN_HEADER ---
+#
+# get_resource_pgid - [insert a few words of module description on this line]
+# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+# Martin Rehr Sep 2005
+
+"""Get process group id of resource script processes"""
+
+import os
+import cgi
+import fcntl
+
+# MiG imports
+
+from shared.findtype import is_owner
+from shared.validstring import valid_dir_input
+from shared.cgishared import init_cgiscript_possibly_with_cert
+
+# ## Main ###
+
+(logger, configuration, client_id, o) = \
+    init_cgiscript_possibly_with_cert()
+
+if str(os.getenv('REQUEST_METHOD')) != 'GET':
+    o.out('Please use HTTP GET')
+    o.reply_and_exit(o.ERROR)
+
+# Make sure that we're actually called by an authenticated resource!
+
+if str(os.getenv('HTTPS')) != 'on':
+    o.out('Please use HTTPS with session id for authenticating job requests!'
+          )
+    o.reply_and_exit(o.ERROR)
+
+# TODO: add session ID check here
+
+remote_ip = str(os.getenv('REMOTE_ADDR'))
+
+fieldstorage = cgi.FieldStorage()
+
+res_type = fieldstorage.getfirst('type', '')
+unique_resource_name = fieldstorage.getfirst('unique_resource_name', '')
+pgid = fieldstorage.getfirst('pgid', '')
+exe_name = fieldstorage.getfirst('exe_name', '')
+
+if unique_resource_name == '':
+    o.client('please specify the unique_resource_name in the querystring.'
+             )
+    o.reply_and_exit(o.CLIENT_ERROR)
+
+# Please note that base_dir must end in slash to avoid access to other
+# resource dirs when own name is a prefix of another resource name
+
+base_dir = os.path.abspath(configuration.resource_home + os.sep
+                            + unique_resource_name) + os.sep
+
+if not is_owner(client_id, unique_resource_name,
+                configuration.resource_home, logger):
+    o.client("Failure: You must be an owner of '%s' to get the PGID!"
+              % unique_resource_name)
+    o.reply_and_exit(o.CLIENT_ERROR)
+
+# is_owner incorporates unique_resource_name verification - no need to
+# specifically check for illegal directory traversal on that variable.
+# exe_name is not automatically checked however - do it manually
+
+if not valid_dir_input(base_dir, 'EXE_' + exe_name + '.PGID'):
+
+    # out of bounds - rogue resource!?!?
+
+    o.out('invalid exe_name! %s' % exe_name)
+    o.internal('get_resource_pgid called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, client_id %s'
+                % (unique_resource_name, exe_name, client_id))
+    o.reply_and_exit(o.CLIENT_ERROR)
+
+if 'FE' == res_type:
+    pgid_path = base_dir + 'FE.PGID'
+elif 'EXE' == res_type:
+    pgid_path = base_dir + 'EXE_' + exe_name + '.PGID'
+else:
+    o.out("Unknown type: '%s'" % res_type)
+    o.reply_and_exit(o.CLIENT_ERROR)
+
+try:
+    pgid_file = open(pgid_path, 'r+')
+    fcntl.flock(pgid_file, fcntl.LOCK_EX)
+    pgid_file.seek(0, 0)
+    pgid = pgid_file.readline().strip()
+    fcntl.flock(pgid_file, fcntl.LOCK_UN)
+    pgid_file.close()
+
+    o.out("%s\n'%s' PGID succesfully retrieved." % (pgid, res_type))
+    status = True
+except Exception, err:
+    if 'FE' == res_type:
+        o.out("Resource frontend: '%s' is stopped."
+               % unique_resource_name)
+    elif 'EXE' == res_type:
+        o.out("Error reading PGID for resource: '%s' EXE: '%s'\n"
+               + 'Either resource has never been started or a server error occured.'
+               % (unique_resource_name, exe_name))
+
+    status = False
+
+if status:
+    o.reply_and_exit(o.OK)
+else:
+    o.reply_and_exit(o.CLIENT_ERROR)
+

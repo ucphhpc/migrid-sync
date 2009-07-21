@@ -815,6 +815,12 @@ def guess_type(name):
         return valid_numeric
     elif name.lower().find('desktopname') != -1:
         return valid_ascii
+    elif name.lower().find('hd_size') != -1:
+        return valid_numeric
+    elif name.lower().find('memory') != -1:
+        return valid_numeric
+    elif name.lower().find('net_bw') != -1:
+        return valid_numeric
     else:
 
     # TODO: extend to include all used variables here

@@ -467,10 +467,10 @@ def settings(user_arguments_dict):
     return stub('shared.functionality.settings', user_arguments_dict)
 
 
-def public_vgrid_projects(user_arguments_dict):
+def pubvgridprojects(user_arguments_dict):
     """Wrap backend of same name"""
 
-    return stub('shared.functionality.public_vgrid_projects',
+    return stub('shared.functionality.pubvgridprojects',
                 user_arguments_dict)
 
 
@@ -576,7 +576,7 @@ if '__main__' == __name__:
     server.register_function(editor)
     server.register_function(rmdir)
     server.register_function(settings)
-    server.register_function(public_vgrid_projects)
+    server.register_function(pubvgridprojects)
     server.register_function(zip)
     server.register_function(showvgridmonitor)
     server.register_function(mv)

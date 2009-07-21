@@ -545,7 +545,7 @@ def prepare_conf(configuration, input_args, resource_id):
         if key.endswith('vgrid'):
             user_args[key] = val
         else:
-            user_args[key] = val[-1]
+            user_args[key] = val[-1].strip()
 
     # Merge the variable fields like runtimeenvironmentX and re_valuesX
     # pairs into the final form suitable for parsing. Both fields
@@ -651,8 +651,8 @@ def prepare_conf(configuration, input_args, resource_id):
 
     for exe in execution_nodes:
         execution_node = exe['execution_node']
-
-        if exe['execution_dir'].find(conf['HOSTURL']) == -1:
+        execution_dir = exe['execution_dir'],
+        if execution_dir.find(conf['HOSTURL']) == -1:
             execution_dir = os.path.join(exe['execution_dir'],
                                          'MiG', 'mig_exe', resource_id)
             
@@ -708,7 +708,8 @@ def prepare_conf(configuration, input_args, resource_id):
             
     for store in storage_nodes:
         storage_node = store['storage_node']
-        if store['storage_dir'].find(conf['HOSTURL']) == -1:
+        storage_dir = store['storage_dir']
+        if storage_dir.find(conf['HOSTURL']) == -1:
             storage_dir = os.path.join(store['storage_dir'],
                                          'MiG', 'mig_store', resource_id,
                                          store['name'])
