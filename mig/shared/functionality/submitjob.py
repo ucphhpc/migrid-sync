@@ -156,7 +156,7 @@ Actual examples for inspiration:
         for (field, spec) in show_fields:
             title = spec['Title']
             if show_description:
-                description = '<br>%s<br>' % spec['Description']
+                description = '%s<br>' % spec['Description']
             else:
                 description = ''
             field_type = spec['Type']
@@ -167,7 +167,7 @@ Actual examples for inspiration:
             if 'custom' == spec['Editor']:
                 continue
             output_objects.append({'object_type': 'html_form', 'text'
-                                       : """<br>
+                                       : """
 <b>%s:</b>&nbsp;<a href='docs.py?show=job#%s'>help</a><br>
 %s""" % (title, field, description)
                                    })
@@ -175,13 +175,13 @@ Actual examples for inspiration:
                 if field_type.startswith('multiple'):
                     output_objects.append({'object_type': 'html_form', 'text'
                                            : """
-<textarea name='%s' cols='%d' rows='%d'>%s</textarea>
+<textarea name='%s' cols='%d' rows='%d'>%s</textarea><br>
 """ % (field, area_cols, area_rows, '\n'.join(default))
                                    })
                 else:
                     output_objects.append({'object_type': 'html_form', 'text'
                                            : """
-<input type='text' name='%s' size='%d' value='%s'>
+<input type='text' name='%s' size='%d' value='%s'><br>
 """ % (field, field_size, default)
                                    })
             elif 'select' == spec['Editor']:
@@ -204,10 +204,7 @@ Actual examples for inspiration:
                     output_objects.append({'object_type': 'html_form', 'text'
                                            : value_select
                                            })
-            output_objects.append({'object_type': 'html_form', 'text'
-                                       : """<br><br>"""
-                                   })
-
+            output_objects.append({'object_type': 'html_form', 'text': "<br>"})
 
         output_objects.append({'object_type': 'html_form', 'text'
                               : """
