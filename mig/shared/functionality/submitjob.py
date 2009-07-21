@@ -44,7 +44,7 @@ from shared.vgrid import user_allowed_vgrids, default_vgrid
 def signature():
     """Signature of the main function"""
 
-    defaults = {}
+    defaults = {'description': ['False']}
     return ['html_form', defaults]
 
 
@@ -89,6 +89,8 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    show_description = accepted['description'][-1].lower() == 'true'
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -153,7 +155,10 @@ Actual examples for inspiration:
         area_rows = 5
         for (field, spec) in show_fields:
             title = spec['Title']
-            description = spec['Description']
+            if show_description:
+                description = '<br>%s<br>' % spec['Description']
+            else:
+                description = ''
             field_type = spec['Type']
             default = spec['Value']
             # TODO: override with default_mrsl
@@ -164,7 +169,7 @@ Actual examples for inspiration:
             output_objects.append({'object_type': 'html_form', 'text'
                                        : """<br>
 <b>%s:</b>&nbsp;<a href='docs.py?show=job#%s'>help</a><br>
-<br>%s<br>""" % (title, field, description)
+%s""" % (title, field, description)
                                    })
             if 'input' == spec['Editor']:
                 if field_type.startswith('multiple'):

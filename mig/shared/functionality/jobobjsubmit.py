@@ -34,29 +34,29 @@ import sys
 import glob
 import tempfile
 
-import shared.mrslkeywords as mrslkeywords
+import shared.returnvalues as returnvalues
 from shared.conf import get_resource_configuration, \
     get_configuration_object
-from shared.refunctions import get_re_dict, list_runtime_environments
 from shared.fileio import unpickle
-from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-import shared.returnvalues as returnvalues
+from shared.init import initialize_main_variables
 from shared.job import new_job, create_job_object_from_pickled_mrsl
+from shared.mrslkeywords import get_job_specs, get_keywords_dict
+from shared.refunctions import get_re_dict, list_runtime_environments
 from shared.useradm import client_id_dir
 
 
 def signature():
     defaults = {}
     configuration = get_configuration_object()
-    external_dict = mrslkeywords.get_keywords_dict(configuration)
+    show_fields = get_job_specs(configuration)
 
-    for (key, value_dict) in external_dict.items():
+    for (key, specs) in show_fields:
         if not defaults.has_key(key):
 
             # make sure required fields are set but do not overwrite
 
-            if value_dict['Required']:
+            if specs['Required']:
                 defaults[key] = REJECT_UNSET
             else:
                 defaults[key] = []
@@ -82,9 +82,9 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    external_dict = mrslkeywords.get_keywords_dict(configuration)
+    external_dict = get_keywords_dict(configuration)
     spec = []
-    for (key, value_dict) in external_dict.items():
+    for key in external_dict.keys():
         attrName = key
         if user_arguments_dict.has_key(attrName):
             spec.append('::%s::' % attrName)
