@@ -160,17 +160,19 @@ def save_user_db(user_db, db_path):
     db_fd.close()
 
 
-def delete_dir(path):
+def delete_dir(path, verbose=False):
     """Recursively remove path:
     first remove all files and subdirs, then remove dir tree.
     """
 
     for (root, dirs, files) in os.walk(path, topdown=False):
         for name in files:
-            print 'removing: ' + root + os.sep + name
+            if verbose:
+                print 'removing: ' + root + os.sep + name
             os.remove(root + os.sep + name)
         for name in dirs:
-            print 'removing: ' + root + os.sep + name
+            if verbose:
+                print 'removing: ' + root + os.sep + name
             if os.path.islink(root + os.sep + name):
                 os.remove(root + os.sep + name)
             else:
@@ -183,6 +185,7 @@ def create_user(
     conf_path,
     db_path,
     force=False,
+    verbose=False,
     ):
     """Add user"""
 
@@ -198,17 +201,18 @@ def create_user(
     fill_distinguished_name(user)
     client_id = user['distinguished_name']
     client_dir = client_id_dir(client_id)
-    full_name = user['full_name']
 
     renew = False
 
-    print 'User name without spaces: %s\n' % full_name
+    if verbose:
+        print 'User ID: %s\n' % client_id
     if os.path.exists(db_path):
         try:
             db_fd = open(db_path, 'rb')
             user_db = pickle.load(db_fd)
             db_fd.close()
-            print 'Loaded existing user DB from: %s' % db_path
+            if verbose:
+                print 'Loaded existing user DB from: %s' % db_path
         except Exception, err:
             print 'Failed to load user DB!'
             if not force:
@@ -220,9 +224,11 @@ def create_user(
                           )
             renew = not renew_answer.lower().startswith('n')
             if renew:
-                print 'Renewing existing user'
+                if verbose:
+                    print 'Renewing existing user'
             elif not force:
-                print 'Nothing more to do for existing user'
+                if verbose:
+                    print 'Nothing more to do for existing user'
                 return
 
     try:
@@ -230,10 +236,11 @@ def create_user(
         db_fd = open(db_path, 'wb')
         pickle.dump(user_db, db_fd)
         db_fd.close()
-        print 'User %s was successfully added/updated in user DB!'\
-             % full_name
+        if verbose:
+            print 'User %s was successfully added/updated in user DB!'\
+                  % client_id
     except Exception, err:
-        print 'Error: Failed to add %s to user DB: %s' % (full_name,
+        print 'Error: Failed to add %s to user DB: %s' % (client_id,
                 err)
         if not force:
             sys.exit(1)
@@ -245,8 +252,8 @@ def create_user(
     htaccess_path = os.path.join(home_dir, '.htaccess')
     css_path = os.path.join(home_dir, css_template)
     if not renew:
-        print 'Creating dirs and files for new user: %s' % full_name
-
+        if verbose:        
+            print 'Creating dirs and files for new user: %s' % client_id
         try:
             os.mkdir(home_dir)
         except:
@@ -314,6 +321,7 @@ def delete_user(
     conf_path,
     db_path,
     force=False,
+    verbose=False,
     ):
     """Delete user"""
 
@@ -326,14 +334,15 @@ def delete_user(
     fill_distinguished_name(user)
     client_id = user['distinguished_name']
     client_dir = client_id_dir(client_id)
-    full_name = user['full_name']
 
-    print 'User name without spaces: %s\n' % full_name
+    if verbose:
+        print 'User ID: %s\n' % client_id
 
     if os.path.exists(db_path):
         try:
             user_db = load_user_db(db_path)
-            print 'Loaded existing user DB from: %s' % db_path
+            if verbose:
+                print 'Loaded existing user DB from: %s' % db_path
         except Exception, err:
             print 'Failed to load user DB!'
             print err
@@ -348,11 +357,12 @@ def delete_user(
     try:
         del user_db[client_id]
         save_user_db(user_db, db_path)
-        print 'User %s was successfully removed from user DB!'\
-             % full_name
+        if verbose:
+            print 'User %s was successfully removed from user DB!'\
+                  % client_id
     except Exception, err:
         print 'Error: Failed to remove %s from user DB: %s'\
-             % (full_name, err)
+             % (client_id, err)
         if not force:
             sys.exit(1)
 
@@ -369,6 +379,9 @@ def delete_user(
             print 'Error: could not remove %s: %s' % (user_path, exc)
             if not force:
                 sys.exit(1)
+    if verbose:
+        print 'User dirs for %s was successfully removed!'\
+                  % client_id
 
 
 def migrate_user(
@@ -376,6 +389,7 @@ def migrate_user(
     conf_path,
     db_path,
     force=False,
+    verbose=False,
     ):
     """Migrate all user data for possibly old format user client_id to new format:
 
@@ -399,7 +413,8 @@ def migrate_user(
     if os.path.exists(db_path):
         try:
             user_db = load_user_db(db_path)
-            print 'Loaded existing user DB from: %s' % db_path
+            if verbose:
+                print 'Loaded existing user DB from: %s' % db_path
         except Exception, err:
             print 'Failed to load user DB!'
             print err
@@ -415,30 +430,28 @@ def migrate_user(
     fill_distinguished_name(user)
     new_id = user['distinguished_name']
     if client_id == new_id:
-        print 'user %s is already updated to new format' % client_id
+        if verbose:
+            print 'user %s is already updated to new format' % client_id
         return
 
-    print 'updating user %s on old format to %s' % (client_id, new_id)
-
-    full_name = user['full_name']
-    full_name_without_spaces = full_name.replace(' ', '_')
-
-    print 'User name without spaces: %s\n' % full_name_without_spaces
+    if verbose:
+        print 'updating user %s on old format to new format %s' % (client_id,
+                                                                   new_id)
 
     try:
         del user_db[client_id]
         user_db[new_id] = user
         save_user_db(user_db, db_path)
-        print 'User %s was successfully removed from user DB!'\
-             % full_name
+        if verbose:
+            print 'User %s was successfully removed from user DB!'\
+                  % client_id
     except Exception, err:
         print 'Error: Failed to remove %s from user DB: %s'\
-             % (full_name, err)
+             % (client_id, err)
         if not force:
             sys.exit(1)
 
-    old_id = full_name_without_spaces
-    old_name = full_name_without_spaces
+    old_name = client_id_dir(client_id)
     new_name = client_id_dir(new_id)
 
     # Move user dirs
@@ -466,11 +479,8 @@ def migrate_user(
             mrsl_path = os.path.join(mrsl_base, mrsl_name)
             if not os.path.isfile(mrsl_path):
                 continue
-            filter_pickled_dict(mrsl_path, {old_id: new_id})
+            filter_pickled_dict(mrsl_path, {client_id: new_id})
         except Exception, exc:
-
-            # print "filtered %s" % mrsl_path
-
             print 'Error: could not update saved mrsl user in %s: %s'\
                  % (mrsl_path, exc)
             if not force:
@@ -482,11 +492,8 @@ def migrate_user(
             re_path = os.path.join(re_base, re_name)
             if not os.path.isfile(re_path):
                 continue
-            filter_pickled_dict(re_path, {old_id: new_id})
+            filter_pickled_dict(re_path, {client_id: new_id})
         except Exception, exc:
-
-            # print "filtered %s" % re_path
-
             print 'Error: could not update saved mrsl user in %s: %s'\
                  % (re_path, exc)
             if not force:
@@ -500,11 +507,8 @@ def migrate_user(
                 if not os.path.isfile(kind_path):
                     continue
                 try:
-                    filter_pickled_list(kind_path, {old_id: new_id})
+                    filter_pickled_list(kind_path, {client_id: new_id})
                 except Exception, exc:
-
-                    # print "filtered %s" % kind_path
-
                     print 'Error: could not update saved kind in %s: %s'\
                          % (kind_path, exc)
                     if not force:
@@ -520,12 +524,13 @@ def default_search():
     return search_filter
 
 
-def search_users(search_filter, conf_path, db_path):
+def search_users(search_filter, conf_path, db_path, verbose=False):
     """Search for matching users"""
 
     try:
         user_db = load_user_db(db_path)
-        print 'Loaded existing user DB from: %s' % db_path
+        if verbose:
+            print 'Loaded existing user DB from: %s' % db_path
     except Exception, err:
         print 'Failed to load user DB: %s' % err
         return []

@@ -19,11 +19,19 @@ With the restructuring of the user database *all* existing installations
 need to update their user database before they can use the new version.
 Please backup all your state data and the MiG-users.db and run
 cd mig/server
-./fix_user_db.py CONF_PATH DB_PATH
+./fixuserdb.py [OPTIONS]
+Where OPTIONS may be one or more of:
+   -c CONF_FILE        Use CONF_FILE as server configuration
+   -d DB_FILE          Use DB_FILE as user data base file
+   -f                  Force operations to continue past errors
+   -h                  Show this help
+   -v                  Verbose output              
 which in most cases will be
 ./fix_user_db.py ./MiGserver.conf MiG-users.db
 
 to automatically upgrade all your MiG user directories and the database.
+Run the command with the -v flag for detailed informations about applied
+changes.
 You also need to update your apache MiG configuration to map SSL
 certificates to the new user dirs.
 If you choose to switch to the new relocatable state directory layout
