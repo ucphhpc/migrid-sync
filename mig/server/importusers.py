@@ -48,8 +48,10 @@ Where OPTIONS may be one or more of:
    -C CERT_PATH        Use CERT_PATH as client certificate
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
+   -f                  Force operations to continue past errors
    -h                  Show this help
    -K KEY_PATH         Use KEY_PATH as client key
+   -v                  Verbose output
 """\
          % {'name': name}
 
@@ -92,7 +94,9 @@ if '__main__' == __name__:
     conf_path = None
     key_path = None
     cert_path = None
-    opt_args = 'C:c:d:hK:'
+    force = False
+    verbose = False
+    opt_args = 'C:c:d:fhK:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -105,6 +109,8 @@ if '__main__' == __name__:
             conf_path = val
         elif opt == '-d':
             db_path = val
+        elif opt == '-f':
+            force = True
         elif opt == '-h':
             usage()
             sys.exit(0)
@@ -112,6 +118,8 @@ if '__main__' == __name__:
             cert_path = val
         elif opt == '-K':
             key_path = val
+        elif opt == '-v':
+            verbose = True
         else:
             print 'Error: %s not supported!' % opt
             sys.exit(1)
@@ -130,16 +138,18 @@ if '__main__' == __name__:
     for user_dict in users:
         id_search = default_search()
         id_search['distinguished_name'] = user_dict['distinguished_name']
-        if search_users(id_search, conf_path, db_path):
-            print 'Not adding existing user: %s'\
-                 % user_dict['distinguished_name']
+        if search_users(id_search, conf_path, db_path, verbose):
+            if verbose:
+                print 'Not adding existing user: %s'\
+                      % user_dict['distinguished_name']
             continue
         new_users.append(user_dict)
 
     for user_dict in new_users:
         fill_user(user_dict)
         user_dict['comment'] = 'imported from external URL'
-        print 'creating user: %s' % user_dict['distinguished_name']
-        create_user(user_dict, conf_path, db_path, False)
+        create_user(user_dict, conf_path, db_path, force, verbose)
+        print 'Created %s in user database and in file system' % \
+              user_dict['distinguished_name']
 
     print '%d new users imported' % len(new_users)

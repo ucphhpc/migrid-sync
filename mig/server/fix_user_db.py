@@ -25,21 +25,59 @@ instead of the old CN based ones"""
 
 import os
 import sys
+import getopt
 
-from shared.useradm import search_users, default_search, migrate_user
+from shared.useradm import init_user_adm, search_users, default_search, \
+     migrate_user
+
+def usage(name='fix_user_db.py'):
+    """Usage help"""
+
+    print """Update MiG user database and user dirs from old format with CN
+as user idetifier to new format with DN as user identifier.
+
+Usage:
+%(name)s [OPTIONS]
+Where OPTIONS may be one or more of:
+   -c CONF_FILE        Use CONF_FILE as server configuration
+   -d DB_FILE          Use DB_FILE as user data base file
+   -f                  Force operations to continue past errors
+   -h                  Show this help
+   -v                  Verbose output
+"""\
+         % {'name': name}
 
 if '__main__' == __name__:
-    if len(sys.argv) < 3:
-        print 'Usage: %s CONF_PATH DB_PATH' % sys.argv[0]
-        print 'Upgrade all files and dirs to new certificate DN format'
-        print 'based on the MiG server configuration in CONF_PATH and the'
-        print 'MiG user database in DB_PATH.'
+    (args, app_dir, db_path) = init_user_adm()
+    conf_path = None
+    force = False
+    verbose = False
+    opt_args = 'c:d:fhv'
+    try:
+        (opts, args) = getopt.getopt(args, opt_args)
+    except getopt.GetoptError, err:
+        print 'Error: ', err.msg
+        usage()
         sys.exit(1)
 
-    conf_path = sys.argv[1]
-    db_path = sys.argv[2]
+    for (opt, val) in opts:
+        if opt == '-c':
+            conf_path = val
+        elif opt == '-d':
+            db_path = val
+        elif opt == '-f':
+            force = True
+        elif opt == '-h':
+            usage()
+            sys.exit(0)
+        elif opt == '-v':
+            verbose = True
+        else:
+            print 'Error: %s not supported!' % opt
+            sys.exit(1)
+
     search_filter = default_search()
-    all_users = search_users(search_filter, conf_path, db_path)
+    all_users = search_users(search_filter, conf_path, db_path, verbose)
 
     for (user_id, user_dict) in all_users:
-        migrate_user(user_id, conf_path, db_path)
+        migrate_user(user_id, conf_path, db_path, force, verbose)

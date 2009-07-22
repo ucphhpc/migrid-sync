@@ -47,10 +47,10 @@ or
 Where OPTIONS may be one or more of:
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
-   -f                  Force: continue on errors
+   -f                  Force operations to continue past errors
    -h                  Show this help
    -i CERT_DN          Use CERT_DN as user ID no matter what other fields suggest
-   -v                  Be verbose
+   -v                  Verbose output
 """\
          % {'name': name}
 
@@ -60,8 +60,8 @@ Where OPTIONS may be one or more of:
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
-    verbose = False
     force = False
+    verbose = False
     user_id = None
     user_dict = {}
     opt_args = 'c:d:fhi:u:v'
@@ -100,7 +100,7 @@ if '__main__' == __name__:
             print 'using configuration from MIG_CONF (or default)'
 
     if user_id and args:
-        print 'Only one kind of user specification allowed at a time'
+        print 'Error: Only one kind of user specification allowed at a time'
         usage()
         sys.exit(1)
 
@@ -131,13 +131,10 @@ if '__main__' == __name__:
 
     fill_user(user_dict)
 
-    # Now all user fields are set and we can begin adding the user
+    # Now all user fields are set and we can begin deleting the user
 
-    print 'Removing DB entry and dirs for user: %s' % user_dict
-
-    # Update user data base
-
-    delete_user(user_dict, conf_path, db_path, force)
-
-    print 'DB entry and dirs for %s were removed'\
-         % user_dict['distinguished_name']
+    if verbose:
+        print 'Removing DB entry and dirs for user: %s' % user_dict
+    delete_user(user_dict, conf_path, db_path, force, verbose)
+    print 'Deleted %s from user database and from file system'\
+          % user_dict['distinguished_name']

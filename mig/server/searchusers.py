@@ -44,11 +44,12 @@ Where SEARCH_OPTIONS may be one or more of:
    -d DB_PATH          Use DB_PATH as user data base file path
    -E EMAIL            Search for email
    -F FULLNAME         Search for full name
-   -n                  Show only name
    -h                  Show this help
    -I                  Search for user ID (distinguished name)
+   -n                  Show only name
    -O ORGANIZATION     Search for organization
    -S STATE            Search for state
+   -v                  Verbose output
 
 Each search value can be a string or a pattern with * and ? as wildcards.
 """\
@@ -60,8 +61,9 @@ Each search value can be a string or a pattern with * and ? as wildcards.
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
+    verbose = False
     user_dict = {}
-    opt_args = 'c:C:d:E:F:hI:nO:S:'
+    opt_args = 'c:C:d:E:F:hI:nO:S:v'
     search_filter = default_search()
     name_only = False
     try:
@@ -93,12 +95,15 @@ if '__main__' == __name__:
             search_filter['organization'] = val
         elif opt == '-S':
             search_filter['state'] = val
+        elif opt == '-v':
+            verbose = True
         else:
             print 'Error: %s not supported!' % opt
             usage()
             sys.exit(0)
 
-    hits = search_users(search_filter, conf_path, db_path)
+    hits = search_users(search_filter, conf_path, db_path, verbose)
+    print "Matching users:"
     for (uid, user_dict) in hits:
         if name_only:
             print '%s' % user_dict['full_name']
