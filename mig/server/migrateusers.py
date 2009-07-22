@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# fixuserdb - a simple helper to migrate old CN to new DN user IDs
+# migrateusers - a simple helper to migrate old CN to new DN user IDs
 # Copyright (C) 2009  Jonas Bardino
 #
 # This file is part of MiG.
@@ -30,7 +30,7 @@ import getopt
 from shared.useradm import init_user_adm, search_users, default_search, \
      migrate_user
 
-def usage(name='fixuserdb.py'):
+def usage(name='migrateusers.py'):
     """Usage help"""
 
     print """Update MiG user database and user dirs from old format with CN
