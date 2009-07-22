@@ -31,7 +31,7 @@ import sys
 import getopt
 import urllib
 
-from shared.useradm import init_user_adm, fill_user, \
+from shared.useradm import init_user_adm, fill_user, default_search, \
     distinguished_name_to_user, create_user, search_users
 
 
@@ -40,7 +40,7 @@ def usage(name='importusers.py'):
 
     print """Import users from an external XML source URL.
 Creates a local MiG user identified by DISTINGUISHED_NAME for each
-<item>DISTINGUISHED_NAME</item> in the XML.
+new <item>DISTINGUISHED_NAME</item> in the XML.
 
 Usage:
 %(name)s [OPTIONS] URL [URL [...]]
@@ -128,7 +128,9 @@ if '__main__' == __name__:
 
     new_users = []
     for user_dict in users:
-        if search_users(user_dict, conf_path, db_path):
+        id_search = default_search()
+        id_search['distinguished_name'] = user_dict['distinguished_name']
+        if search_users(id_search, conf_path, db_path):
             print 'Not adding existing user: %s'\
                  % user_dict['distinguished_name']
             continue
