@@ -70,6 +70,7 @@ def display_resource(
     frontend = None
     hosturl = None
     html = ''
+    row_name = ('even_row', 'odd_row')
 
     if resource_config:
         if resource_config.has_key('EXECONFIG'):
@@ -129,9 +130,9 @@ def display_resource(
         '<table class=resources><tr class=title><td colspan="5">Front End</td></tr>\n'
 
     if not frontend:
-        html += '<tr><td>Not specified</td><tr>'
+        html += '<tr><td colspan=5>Not specified</td></tr>\n'
     else:
-        html += '<tr><td>' + frontend + '</td>'
+        html += '<tr><td>%s</td>' % frontend
 
         for action in ['restart', 'status', 'stop', 'clean']:
             if action == 'restart':
@@ -147,15 +148,12 @@ def display_resource(
             </td>
             '''\
                  % (action, resourcename, action_str)
-
-    html += '</tr>'
-
-    # html += '</tr></table><p>'
+        html += '</tr>'
 
     html += '<tr class=title><td colspan=5>Execution Units</td></tr>\n'
 
     if not exe_units:
-        html += '<tr><td>Not specified</td><tr>'
+        html += '<tr><td colspan=5>None specified</td></tr>\n'
     else:
         html += '<tr><td>ALL UNITS</td>'
         for action in ['restart', 'status', 'stop', 'clean']:
@@ -179,8 +177,10 @@ def display_resource(
                  % action_str
         html += '</tr>'
 
+        row_number = 1
         for unit in exe_units:
-            html += '<tr><td>' + unit + '</td>'
+            row_class = row_name[row_number % 2]
+            html += '<tr class=%s><td>%s</td>' % (row_class, unit)
             for action in ['restart', 'status', 'stop', 'clean']:
                 if action == 'restart':
                     action_str = '(Re)Start'
@@ -197,11 +197,12 @@ def display_resource(
                 '''\
                      % (action, resourcename, unit, action_str)
             html += '</tr>'
+            row_number += 1
 
     html += '<tr class=title><td colspan=5>Storage Units</td></tr>\n'
 
     if not store_units:
-        html += '<tr><td>Not specified</td><tr>'
+        html += '<tr><td colspan=5>None specified</td></tr>\n'
     else:
         html += '<tr><td>ALL UNITS</td>'
         for action in ['restart', 'status', 'stop', 'clean']:
@@ -225,8 +226,10 @@ def display_resource(
                  % action_str
         html += '</tr>'
 
+        row_number = 1
         for unit in store_units:
-            html += '<tr><td>' + unit + '</td>'
+            row_class = row_name[row_number % 2]
+            html += '<tr class=%s><td>%s</td>' % (row_class, unit)
             for action in ['restart', 'status', 'stop', 'clean']:
                 if action == 'restart':
                     action_str = '(Re)Start'
@@ -243,6 +246,7 @@ def display_resource(
                 '''\
                      % (action, resourcename, unit, action_str)
             html += '</tr>'
+            row_number += 1
 
     html += '</table><p>'
 
