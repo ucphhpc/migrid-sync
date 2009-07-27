@@ -105,7 +105,7 @@ def generate_confs(
     user_dict['__MOIN_SHARE__'] = moin_share
     user_dict['__USER_CLAUSE__'] = user_clause
     user_dict['__GROUP_CLAUSE__'] = group_clause
-    user_dict['__LISTEN_CLAUSE'] = listen_clause
+    user_dict['__LISTEN_CLAUSE__'] = listen_clause
 
     try:
         os.makedirs(destination)
