@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# apache-mig-devs	Start the personal MiG developer apache HTTP servers.
+# apache2-mig-devs	Start the personal MiG developer apache HTTP servers.
 #
 # The variables below are NOT to be changed.  They are there to make the
 # script more readable.
 
-NAME=apache
+NAME=apache2
 
 case "$1" in
   start | stop | reload | restart)

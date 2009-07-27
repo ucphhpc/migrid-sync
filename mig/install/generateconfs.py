@@ -73,9 +73,9 @@ def generate_confs(
     server_fqdn='localhost',
     user='mig',
     group='mig',
-    apache_etc='/etc/apache',
+    apache_etc='/etc/apache2',
     apache_run='/var/run',
-    apache_log='/var/log/apache',
+    apache_log='/var/log/apache2',
     mig_code='/home/mig/mig',
     mig_state='/home/mig/state',
     mig_certs='/home/mig/certs',
@@ -112,14 +112,26 @@ def generate_confs(
     except OSError:
         pass
 
+    apache_envs_template = os.path.join(source,
+            'apache-envs-template.conf')
+    apache_envs_conf = os.path.join(destination, 'envvars')
+    fill_template(apache_envs_template, apache_envs_conf, user_dict)
+    apache_apache2_template = os.path.join(source,
+                                         'apache-apache2-template.conf')
+    apache_apache2_conf = os.path.join(destination, 'apache2.conf')
+    fill_template(apache_apache2_template, apache_apache2_conf, user_dict)
+    apache_httpd_template = os.path.join(source,
+                                         'apache-httpd-template.conf')
+    apache_httpd_conf = os.path.join(destination, 'httpd.conf')
+    fill_template(apache_httpd_template, apache_httpd_conf, user_dict)
+    apache_ports_template = os.path.join(source,
+                                         'apache-ports-template.conf')
+    apache_ports_conf = os.path.join(destination, 'ports.conf')
+    fill_template(apache_ports_template, apache_ports_conf, user_dict)
     apache_mig_template = os.path.join(source,
             'apache-MiG-template.conf')
     apache_mig_conf = os.path.join(destination, 'MiG.conf')
     fill_template(apache_mig_template, apache_mig_conf, user_dict)
-    apache_httpd_template = os.path.join(source,
-            'apache-httpd-template.conf')
-    apache_httpd_conf = os.path.join(destination, 'httpd.conf')
-    fill_template(apache_httpd_template, apache_httpd_conf, user_dict)
     apache_initd_template = os.path.join(source,
             'apache-init.d-template')
     apache_initd_script = os.path.join(destination, 'apache-%s' % user)
@@ -196,11 +208,16 @@ listen_clause: %(listen_clause)s
 
     print '''Configurations for MiG and Apache were generated in %(destination)s/
 You need to copy them to their final destinations like this:
-cp %(destination)s/httpd.conf %(apache_etc)s/
 cp %(destination)s/MiG.conf %(apache_etc)s/conf.d/
 cp %(destination)s/MiGserver.conf %(mig_code)s/server/
 and optionally
 cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
+
+If you are running Debian you may also want to copy the generated apache2.conf,
+httpd.conf and envvars to %(apache_etc)s/:
+cp %(destination)s/apache2.conf %(apache_etc)s/
+cp %(destination)s/httpd.conf %(apache_etc)s/
+cp %(destination)s/envvars %(apache_etc)s/
 '''\
          % settings
 

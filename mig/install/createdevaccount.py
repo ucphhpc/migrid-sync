@@ -28,7 +28,7 @@
 # IMPORTANT: Run script with sudo or as root
 
 """Add a unprivileged user with access to a personal MiG server.
-Still needs some manual setup of apache, sudo and iptables
+Still needs some semi-automated setup of apache, sudo and iptables
 afterwards...
 
 This is very much bound to the exact setup used on the main MiG servers
@@ -132,11 +132,11 @@ def create_user(
     mig_dir = os.path.join(home, 'mig')
     server_dir = os.path.join(mig_dir, 'server')
     state_dir = os.path.join(home, 'state')
-    apache_etc = '/etc/apache'
-    apache_dir = apache_etc + '-%s' % user
-    apache_run = apache_dir + '/run'
-    apache_log = apache_dir + '/log'
-    cert_dir = apache_dir + '/MiG-certificates'
+    apache_etc = '/etc/apache2'
+    apache_dir = '%s-%s' % (apache_etc, user)
+    apache_run = '%s/run' % apache_dir
+    apache_log = '%s/log' % apache_dir
+    cert_dir = '%s/MiG-certificates' % apache_dir
     moin_etc = '/etc/moin'
     moin_share = '/usr/share/moin'
 
@@ -184,9 +184,12 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         https_port,
         'User',
         'Group',
-        'Listen',
+        '#Listen',
         )
+    apache_envs_conf = os.path.join(dst, 'envvars')
+    apache_apache2_conf = os.path.join(dst, 'apache2.conf')
     apache_httpd_conf = os.path.join(dst, 'httpd.conf')
+    apache_ports_conf = os.path.join(dst, 'ports.conf')
     apache_mig_conf = os.path.join(dst, 'MiG.conf')
     server_conf = os.path.join(dst, 'MiGserver.conf')
     apache_initd_script = os.path.join(dst, 'apache-%s' % user)
@@ -194,9 +197,16 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     print '# Clone %s to %s and put config files there:' % (apache_etc,
             apache_dir)
     print 'sudo cp -r -u -d -x %s %s' % (apache_etc, apache_dir)
-    print 'sudo cp -f -d %s \\\n\t%s/httpd.conf' % (apache_httpd_conf,
-            apache_dir)
+    print 'sudo rm -f %s/envvars' % apache_dir
+    print 'sudo rm -f %s/apache2.conf' % apache_dir
+    print 'sudo rm -f %s/httpd.conf' % apache_dir
+    print 'sudo rm -f %s/ports.conf' % apache_dir
+    print 'sudo rm -f %s/sites-enabled/*' % apache_dir
     print 'sudo rm -f %s/conf.d/*' % apache_dir
+    print 'sudo cp -f -d %s %s/' % (apache_envs_conf, apache_dir)
+    print 'sudo cp -f -d %s %s/' % (apache_apache2_conf, apache_dir)
+    print 'sudo cp -f -d %s %s/' % (apache_httpd_conf, apache_dir)
+    print 'sudo cp -f -d %s %s/' % (apache_ports_conf, apache_dir)
     print 'sudo cp -f -d %s %s/conf.d/' % (apache_mig_conf, apache_dir)
     print 'sudo cp -f -d %s %s/' % (apache_initd_script, apache_dir)
     print 'sudo mkdir -p %s %s' % (apache_run, apache_log)

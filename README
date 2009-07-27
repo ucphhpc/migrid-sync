@@ -89,12 +89,18 @@ or
 		   GROUP_CLAUSE LISTEN_CLAUSE		   
 
 For one of our servers running MiG as the 'mig' user with the code
-checked out directly in the home directory and with Debian apache
+checked out directly in the home directory and with Debian apache 1.3.x
 defaults, this could be:
 python generateconfs.py . generated-confs mig-1.imada.sdu.dk mig mig \
        /etc/apache /var/run/apache /var/log/apache /home/mig/mig \
        /home/mig/state /home/mig/MiG-certificates /etc/moin \
        /usr/share/moin 80 443 User Group Listen
+
+or similarly with apache 2.x:
+python generateconfs.py . generated-confs mig-1.imada.sdu.dk mig mig \
+       /etc/apache2 /var/run/apache2 /var/log/apache2 /home/mig/mig \
+       /home/mig/state /home/mig/MiG-certificates /etc/moin \
+       /usr/share/moin 80 443 User Group '#Listen'
 
 Most of the arguments should be relatively straight forward, but you
 need to provide the MIG_CERTS path where your apache server key and
