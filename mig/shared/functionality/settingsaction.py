@@ -25,16 +25,14 @@
 # -- END_HEADER ---
 #
 
-import sys
 import os
 import tempfile
 
-from shared.settingskeywords import get_keywords_dict
-from shared.fileio import pickle
-from shared.settings import parse_and_save_settings
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.init import initialize_main_variables
+from shared.functional import validate_input_and_cert
+from shared.settings import parse_and_save_settings
+from shared.settingskeywords import get_keywords_dict
 
 
 def signature():

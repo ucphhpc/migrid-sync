@@ -45,7 +45,6 @@ import os
 import sys
 import time
 import thread
-import datetime
 import irclib
 
 from shared.conf import get_configuration_object

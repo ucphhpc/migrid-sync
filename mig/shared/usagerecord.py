@@ -534,7 +534,7 @@ def write_usage_record_from_dict(jobdict, config):
     ur_destination = config.usage_record_dir
     if ur_destination and jobdict:
 
-        logger.debug('XML Usage Record directory %s' % ur_destination)
+        config.logger.debug('XML Usage Record directory %s' % ur_destination)
         usage_record = UsageRecord(config, config.logger)
         usage_record.fill_from_dict(jobdict)
 

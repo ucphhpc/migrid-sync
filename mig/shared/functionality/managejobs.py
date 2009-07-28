@@ -27,12 +27,9 @@
 
 """Simple front end to job management"""
 
-import os
-import sys
-
 import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.functional import validate_input_and_cert
 
 
 def signature():

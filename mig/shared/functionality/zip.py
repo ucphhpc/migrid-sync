@@ -30,17 +30,15 @@ the home directory of a MiG user into a zip file.
 """
 
 import os
-import sys
 import zipfile
-import time
 import glob
 
-from shared.validstring import valid_user_path
-from shared.parseflags import verbose
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables
+from shared.parseflags import verbose
 from shared.useradm import client_id_dir
+from shared.validstring import valid_user_path
 
 
 def signature():

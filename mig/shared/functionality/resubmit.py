@@ -34,17 +34,15 @@ temp file in mRSL format and submits the tempfile to new_job()
 """
 
 import os
-import sys
-import time
 import tempfile
 import glob
 
+import shared.returnvalues as returnvalues
 from shared.job import new_job
 from shared.fileio import unpickle
 from shared.validstring import valid_user_path
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-import shared.returnvalues as returnvalues
 from shared.useradm import client_id_dir
 
 

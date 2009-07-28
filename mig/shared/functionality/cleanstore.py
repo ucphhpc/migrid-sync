@@ -25,10 +25,6 @@
 # -- END_HEADER ---
 #
 
-import cgi
-import os
-import sys
-
 from shared.conf import get_all_store_names
 from shared.findtype import is_owner
 from shared.resadm import clean_resource_store, stop_resource_store

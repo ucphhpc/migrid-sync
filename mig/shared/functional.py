@@ -31,8 +31,10 @@
 the functionality dir.
 """
 
+# REJECT_UNSET is not used directly but exposed to functionality
+
 from shared.safeinput import validated_input, valid_user_path, \
-    REJECT_UNSET
+     REJECT_UNSET
 from shared.findtype import is_user
 
 

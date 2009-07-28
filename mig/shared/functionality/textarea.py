@@ -33,14 +33,12 @@ This is the form handler called by html pages
 @todo better user input validation
 """
 
-import cgi
 import os
 import time
 import base64
 
-import shared.returnvalues as returnvalues
 import shared.mrslkeywords as mrslkeywords
-from shared.functional import validate_input_and_cert, REJECT_UNSET
+import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.upload import handle_package_upload
 from shared.fileio import write_file

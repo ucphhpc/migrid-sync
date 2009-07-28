@@ -31,7 +31,6 @@ import os
 import smtplib
 import threading
 
-from shared.fileio import unpickle
 from shared.job import output_dir
 from shared.settings import load_settings
 from shared.validstring import is_valid_email_address

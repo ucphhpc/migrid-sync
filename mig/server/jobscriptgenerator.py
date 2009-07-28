@@ -34,7 +34,6 @@ from binascii import hexlify
 import genjobscriptpython
 import genjobscriptsh
 import genjobscriptjava
-from shared.confparser import get_resource_config_dict
 from shared.ssh import copy_file_to_resource
 from shared.fileio import write_file, pickle, make_symlink
 from shared.useradm import client_id_dir

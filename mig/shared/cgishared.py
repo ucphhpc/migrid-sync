@@ -27,7 +27,6 @@
 
 """Common cgi functions"""
 
-import os
 import sys
 
 from shared.cgioutput import CGIOutput

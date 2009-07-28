@@ -30,9 +30,7 @@
 
 """Add MiG resource"""
 
-import os
 import sys
-import time
 
 from shared.conf import get_configuration_object
 from shared.resource import create_resource, \

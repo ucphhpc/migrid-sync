@@ -23,7 +23,6 @@
 """Upgrade all files and dirs to use the new certificate DN based user ID
 instead of the old CN based ones"""
 
-import os
 import sys
 import getopt
 

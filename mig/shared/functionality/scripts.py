@@ -299,7 +299,7 @@ def main(client_id, user_arguments_dict):
         if err:
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Zip file integrity check failed! (%s)'
-                                   % e})
+                                   % err})
             status = returnvalues.SYSTEM_ERROR
             continue
 

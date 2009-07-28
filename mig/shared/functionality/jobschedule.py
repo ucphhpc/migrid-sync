@@ -27,20 +27,14 @@
 
 """Forward valid schedule requests to grid_script for consistent job schedule data"""
 
-import cgi
-import cgitb
-cgitb.enable()
 import os
-import sys
-import time
 import glob
 
 import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.validstring import valid_user_path
-from shared.fileio import unpickle, unpickle_and_change_status, \
-    send_message_to_grid_script
+from shared.fileio import unpickle, send_message_to_grid_script
 from shared.useradm import client_id_dir
 
 

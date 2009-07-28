@@ -30,7 +30,6 @@ to an extent where it can be used in back ends and output
 without worrying about XSS vulnerabilities, etc.
 """
 
-import os
 from string import letters, digits
 
 from shared.valuecheck import lines_value_checker, \

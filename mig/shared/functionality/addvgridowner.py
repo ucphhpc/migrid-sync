@@ -32,7 +32,7 @@ import os
 from shared.fileio import make_symlink
 from shared.listhandling import add_item_to_pickled_list
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-    vgrid_is_member, vgrid_is_cert_in_list, vgrid_list_subvgrids
+    vgrid_is_member, vgrid_list_subvgrids
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues

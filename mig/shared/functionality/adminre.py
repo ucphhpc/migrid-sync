@@ -25,14 +25,13 @@
 # -- END_HEADER ---
 #
 
-import sys
 import base64
 
 from shared.refunctions import is_runtime_environment, \
     list_runtime_environments, get_re_dict
 from shared.rekeywords import get_keywords_dict
 from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.functional import validate_input_and_cert
 import shared.returnvalues as returnvalues
 
 

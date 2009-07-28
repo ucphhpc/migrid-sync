@@ -36,7 +36,6 @@ import sys
 import signal
 import time
 
-import shared.distfile as distfile
 from shared.distbase import get_leader, get_address
 
 

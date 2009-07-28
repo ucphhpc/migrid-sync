@@ -30,9 +30,8 @@
 """Editor back end"""
 
 import os
-import sys
-import time
 import glob
+
 from shared.validstring import valid_user_path
 from shared.editing import acquire_edit_lock, release_edit_lock
 from shared.job import new_job

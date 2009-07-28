@@ -28,7 +28,6 @@
 """Show a human readable version of the saved internal mRSL dictionary"""
 
 import os
-import sys
 import glob
 
 import shared.returnvalues as returnvalues

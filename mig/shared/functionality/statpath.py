@@ -28,8 +28,6 @@
 """Emulate the un*x function with the same name"""
 
 import os
-import sys
-import stat
 import glob
 
 import shared.returnvalues as returnvalues

@@ -28,7 +28,6 @@
 """List all CNs in the list of administrators for a given resource"""
 
 import os
-import sys
 
 from shared.listhandling import list_items_in_pickled_list
 from shared.findtype import is_owner

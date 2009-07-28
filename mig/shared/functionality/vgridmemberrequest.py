@@ -27,11 +27,9 @@
 
 """Request VGrid membership back end"""
 
-import sys
-import os
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.functional import validate_input_and_cert
+from shared.init import initialize_main_variables
 
 
 def signature():

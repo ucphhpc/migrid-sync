@@ -28,12 +28,11 @@
 """Show the monitor page for requested vgrids - ALL keyword for all allowed vgrids"""
 
 import os
-import sys
 
-from shared.vgrid import vgrid_is_owner_or_member, user_allowed_vgrids
-from shared.init import initialize_main_variables
-from shared.functional import validate_input, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.init import initialize_main_variables
+from shared.functional import validate_input
+from shared.vgrid import vgrid_is_owner_or_member, user_allowed_vgrids
 
 
 def signature():

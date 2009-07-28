@@ -29,12 +29,7 @@
 
 """Forward valid cancel requests to grid_script for consistent job status changes"""
 
-import cgi
-import cgitb
-cgitb.enable()
 import os
-import sys
-import time
 import glob
 
 from shared.init import initialize_main_variables

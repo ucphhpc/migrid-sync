@@ -27,11 +27,11 @@
 
 """ Show all available runtime environments"""
 
+import shared.returnvalues as returnvalues
 from shared.refunctions import list_runtime_environments, get_re_dict
 from shared.functionality.showre import build_reitem_object_from_re_dict
 from shared.init import initialize_main_variables
-from shared.functional import validate_input, REJECT_UNSET
-import shared.returnvalues as returnvalues
+from shared.functional import validate_input
 
 
 def signature():

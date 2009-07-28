@@ -37,7 +37,7 @@ from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert
 from shared.refunctions import list_runtime_environments
 from shared.resource import init_conf, empty_resource_config 
-from shared.vgrid import res_allowed_vgrids, default_vgrid
+from shared.vgrid import res_allowed_vgrids
 
 
 def signature():

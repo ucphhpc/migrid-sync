@@ -27,20 +27,15 @@
 
 """External certificate sign up action back end"""
 
-import cgi
-import cgitb
-cgitb.enable()
-import sys
 import os
 import time
 import tempfile
-import base64
 import pickle
 
+import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 from shared.notification import send_email
-import shared.returnvalues as returnvalues
 
 
 def signature():

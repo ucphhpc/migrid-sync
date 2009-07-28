@@ -28,7 +28,6 @@
 """Creating the MiG monitor page"""
 
 import os
-import sys
 import time
 import datetime
 

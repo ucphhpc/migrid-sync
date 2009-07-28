@@ -27,12 +27,14 @@
 
 """This script allows users to administrate their sandboxes"""
 
+import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 from shared.gridstat import GridStat
 from shared.sandbox import load_sandbox_db, save_sandbox_db
 from shared.vgrid import default_vgrid
-import shared.returnvalues as returnvalues
+
+PW, RESOURCES = 0, 1
 
 
 def signature():
@@ -149,7 +151,7 @@ def print_expert_settings(display):
     return html
 
 
-def count_jobs(resource_name):
+def count_jobs(grid_stat, resource_name):
     """Counts number of jobs executed by given resource"""
 
     # grid_stat.update()
@@ -159,7 +161,7 @@ def count_jobs(resource_name):
     return value
 
 
-def sum_walltime(resource_name):
+def sum_walltime(grid_stat, resource_name):
     """Sum total walltime used by jobs executed by given resource"""
 
     # grid_stat.update()
@@ -169,8 +171,10 @@ def sum_walltime(resource_name):
     return value
 
 
-def show_info(user, passwd, expert):
+def show_info(configuration, userdb, grid_stat, user, passwd, expert):
     """Shows info for given user"""
+
+    admin_email = configuration.admin_email
 
     # Resource Monitor Section
 
@@ -293,12 +297,6 @@ def main(client_id, user_arguments_dict):
     if 'true' == expert_string.lower():
         expert = True
 
-    PW = 0
-    global RESOURCES
-    RESOURCES = 1
-
-    global userdb
-
     # Load the user DB
 
     try:
@@ -314,9 +312,6 @@ def main(client_id, user_arguments_dict):
                                % exc})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    global admin_email
-    admin_email = configuration.admin_email
-    global grid_stat
     grid_stat = GridStat(configuration, logger)
 
     # If it's a new user, check that the username is free
@@ -357,8 +352,9 @@ def main(client_id, user_arguments_dict):
                          % exc})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
             output_objects.append({'object_type': 'html_form', 'text'
-                                  : show_info(username, password,
-                                  expert)})
+                                  : show_info(configuration, userdb,
+                                              grid_stat, username, password,
+                                              expert)})
     else:
 
     # Otherwise, check that username and password are correct
@@ -387,8 +383,9 @@ def main(client_id, user_arguments_dict):
             # print "<a href='ssslogin.py'>Back</a>"....
 
             output_objects.append({'object_type': 'html_form', 'text'
-                                  : show_info(username, password,
-                                  expert)})
+                                  : show_info(configuration, userdb,
+                                              grid_stat, username, password,
+                                              expert)})
     output_objects.append({'object_type': 'text', 'text': ''})
     return (output_objects, returnvalues.OK)
 

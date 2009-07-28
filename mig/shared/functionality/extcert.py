@@ -27,13 +27,10 @@
 
 """Request sign up with external certificate back end"""
 
-import sys
-import os
-
+import shared.returnvalues as returnvalues
 from shared.certreq import valid_name_chars, dn_max_len
 from shared.init import initialize_main_variables
-from shared.functional import validate_input, REJECT_UNSET
-import shared.returnvalues as returnvalues
+from shared.functional import validate_input
 from shared.useradm import distinguished_name_to_user
 
 

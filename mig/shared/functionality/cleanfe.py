@@ -25,10 +25,6 @@
 # -- END_HEADER ---
 #
 
-import cgi
-import os
-import sys
-
 from shared.findtype import is_owner
 from shared.resadm import clean_resource_frontend, \
     stop_resource_frontend

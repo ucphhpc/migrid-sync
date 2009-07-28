@@ -29,11 +29,8 @@
 
 """Oneclick resource back end"""
 
-import sys
-import os
-
 from shared.init import initialize_main_variables
-from shared.functional import validate_input, REJECT_UNSET
+from shared.functional import validate_input
 from shared.sandbox import get_resource
 import shared.returnvalues as returnvalues
 

@@ -31,14 +31,12 @@ import sys
 import time
 import datetime
 import threading
-import pickle
 import os
 import signal
 import copy
 
 import jobscriptgenerator
 from jobqueue import JobQueue
-from shared.configuration import Configuration
 from shared.conf import get_configuration_object
 from shared.notification import notify_user_thread
 from shared.fileio import pickle, unpickle, unpickle_and_change_status, \

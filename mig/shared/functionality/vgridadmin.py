@@ -27,14 +27,9 @@
 
 """VGrid administration back end functionality"""
 
-import os
-import sys
-
 import shared.returnvalues as returnvalues
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.parseflags import verbose
+from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables
-from shared.validstring import valid_user_path
 from shared.vgrid import vgrid_list_vgrids, vgrid_is_owner, \
     vgrid_is_member, vgrid_is_owner_or_member
 

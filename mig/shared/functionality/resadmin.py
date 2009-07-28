@@ -33,17 +33,16 @@ administrating owners.
 """
 
 import os
-import sys
 import glob
 import time
 
+import shared.returnvalues as returnvalues
 from shared.conf import get_resource_configuration
 from shared.refunctions import get_re_dict, list_runtime_environments
 from shared.fileio import unpickle
 from shared.init import initialize_main_variables
 from shared.findtype import is_owner
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-import shared.returnvalues as returnvalues
+from shared.functional import validate_input_and_cert
 
 
 def signature():

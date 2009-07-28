@@ -28,17 +28,15 @@
 """Emulate a command line interface with all the cgi functions"""
 
 import os
-import sys
 import getopt
 
 import shared.returnvalues as returnvalues
-from shared.validstring import valid_user_path
-from shared.parseflags import verbose
 from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.functional import validate_input_and_cert
 from shared.functionality import canceljob, cat, cp, docs, find, grep, \
     head, jobstatus, liveoutput, ls, mkdir, mv, resubmit, rm, rmdir, \
     spell, statpath, submit, tail, touch, truncate, wc
+from shared.validstring import valid_user_path
 
 
 def signature():

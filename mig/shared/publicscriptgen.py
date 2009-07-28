@@ -31,9 +31,7 @@
 for the supported programming languages.
 """
 
-import sys
 import os
-import getopt
 
 # ##########################
 # Script helper functions #
@@ -721,8 +719,8 @@ def write_script(contents, filename, mode=0755):
         script_file.write(contents)
         script_file.close()
         os.chmod(filename, mode)
-    except Exception, e:
-        print 'Error: failed to write %s: %s' % (filename, e)
+    except Exception, exc:
+        print 'Error: failed to write %s: %s' % (filename, exc)
         return False
 
     return True

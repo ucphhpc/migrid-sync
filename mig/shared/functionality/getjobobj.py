@@ -27,18 +27,15 @@
 
 # Minimum Intrusion Grid
 
-"""
-"""
+"""Get job on object format"""
 
 import os
-import sys
-import glob
+
 import shared.mrslkeywords as mrslkeywords
-from shared.conf import get_resource_configuration
-from shared.refunctions import get_re_dict, list_runtime_environments
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.conf import get_configuration_object
+from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables
 from shared.job import create_job_object_from_pickled_mrsl
 from shared.useradm import client_id_dir
 
@@ -46,6 +43,7 @@ from shared.useradm import client_id_dir
 def signature():
     defaults = {'job_id': REJECT_UNSET}
 
+    configuration = get_configuration_object()
     external_dict = mrslkeywords.get_keywords_dict(configuration)
     for (key, value_dict) in external_dict.iteritems():
         if not defaults.has_key(key):
@@ -59,7 +57,6 @@ def signature():
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
-    global configuration
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False, op_title=False)
     client_dir = client_id_dir(client_id)

@@ -32,7 +32,6 @@ resource.
 """
 
 import os
-import sys
 
 from shared.listhandling import add_item_to_pickled_list
 from shared.findtype import is_user, is_owner

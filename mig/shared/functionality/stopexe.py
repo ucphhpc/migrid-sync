@@ -27,16 +27,12 @@
 
 """Stop exe unit"""
 
-import cgi
-import os
-import sys
-
+import shared.returnvalues as returnvalues
 from shared.conf import get_all_exe_names
 from shared.findtype import is_owner
-from shared.resadm import stop_resource_exe
-from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-import shared.returnvalues as returnvalues
+from shared.init import initialize_main_variables
+from shared.resadm import stop_resource_exe
 from shared.worker import Worker
 
 

@@ -29,7 +29,6 @@
 
 import os
 import shutil
-import sys
 
 from shared.validstring import valid_dir_input
 from shared.fileio import write_file, pickle, make_symlink

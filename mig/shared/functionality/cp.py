@@ -28,7 +28,6 @@
 """Emulate the un*x function with the same name"""
 
 import os
-import sys
 import glob
 import shutil
 

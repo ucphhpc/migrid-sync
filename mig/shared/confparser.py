@@ -29,15 +29,12 @@
 # Henrik Hoey Karlsen
 # Martin Rehr
 
-import os
-import sys
 import pickle
 
 import shared.resconfkeywords as resconfkeywords
 import shared.parser as parser
 import shared.refunctions as refunctions
 from shared.vgrid import vgrid_is_resource
-from shared.configuration import Configuration
 from shared.conf import get_configuration_object
 
 configuration = get_configuration_object()

@@ -28,7 +28,6 @@
 """Emulate the un*x function with the same name"""
 
 import os
-import sys
 import glob
 import fnmatch
 
@@ -36,7 +35,7 @@ import shared.returnvalues as returnvalues
 from shared.validstring import valid_user_path
 from shared.parseflags import verbose
 from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.functional import validate_input_and_cert
 from shared.useradm import client_id_dir
 
 

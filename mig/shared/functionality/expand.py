@@ -31,15 +31,12 @@ wild card expansion.
 """
 
 import os
-import sys
-import time
 import glob
-import stat
 
 from shared.parseflags import all, long_list, recursive
 from shared.validstring import valid_user_path
 from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.functional import validate_input_and_cert
 import shared.returnvalues as returnvalues
 from shared.settings import load_settings
 from shared.useradm import client_id_dir

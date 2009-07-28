@@ -30,13 +30,12 @@ not required to be that of an existing MiG user.
 """
 
 import os
-import sys
 
-from shared.listhandling import remove_item_from_pickled_list
-from shared.findtype import is_user, is_owner
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.findtype import is_user, is_owner
+from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables
+from shared.listhandling import remove_item_from_pickled_list
 
 
 def signature():

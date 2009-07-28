@@ -32,23 +32,13 @@
 import os
 import time
 
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.notification import send_resource_create_request_mail
-from shared.resource import prepare_conf, write_resource_config, \
-     retrieve_execution_nodes,  retrieve_storage_nodes, \
-     default_exe_start_command, local_exe_start_command, \
-     default_exe_status_command, local_exe_status_command, \
-     default_exe_stop_command, local_exe_stop_command, \
-     default_exe_clean_command, local_exe_clean_command, \
-     default_store_start_command, local_store_start_command, \
-     default_store_status_command, local_store_status_command, \
-     default_store_stop_command, local_store_stop_command, \
-     default_store_clean_command, local_store_clean_command
-from shared.useradm import client_id_dir
 import shared.confparser as confparser
-import shared.resconfkeywords as resconfkeywords
 import shared.returnvalues as returnvalues
+from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables
+from shared.notification import send_resource_create_request_mail
+from shared.resource import prepare_conf, write_resource_config
+from shared.useradm import client_id_dir
 
 
 def signature():

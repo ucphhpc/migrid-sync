@@ -29,11 +29,10 @@
 
 import glob
 import os
-import sys
 import time
 
 import shared.returnvalues as returnvalues
-from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.functional import validate_input_and_cert
 from shared.fileio import unpickle
 from shared.job import output_dir, get_job_ids_with_specified_project_name
 from shared.parseflags import verbose, sorted

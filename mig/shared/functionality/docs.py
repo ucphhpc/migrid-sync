@@ -36,7 +36,7 @@ import shared.mrslkeywords as mrslkeywords
 import shared.resconfkeywords as resconfkeywords
 from shared.output import get_valid_outputformats
 from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.functional import validate_input_and_cert
 import shared.returnvalues as returnvalues
 
 
@@ -47,7 +47,8 @@ def signature():
     return ['text', defaults]
 
 
-def display_topic(subject, all_docs):
+def display_topic(output_objects, subject, all_docs):
+    """Display specified subject"""
     if subject in all_docs.keys():
         output_objects.append({'object_type': 'link', 'text': subject,
                               'destination': './docs.py?show=%s'
@@ -58,20 +59,24 @@ def display_topic(subject, all_docs):
                                % subject})
 
 
-def show_subject(subject, doc_function):
-    doc_function()
+def show_subject(subject, doc_function, doc_args):
+    """Show documentation for specified subject"""
+    doc_function(*doc_args)
 
 
-def display_doc(subject, all_docs):
+def display_doc(output_objects, subject, all_docs):
+    """Show doc"""
     if subject in all_docs.keys():
-        show_subject(subject, all_docs[subject])
+        (func, args) = all_docs[subject]
+        show_subject(output_objects, subject, func, args)
     else:
         output_objects.append({'object_type': 'text', 'text'
                               : "No documentation found matching '%s'"
                                % subject})
 
 
-def mrsl_keywords():
+def mrsl_keywords(configuration, output_objects):
+    """All job description keywords"""
     keywords_dict = mrslkeywords.get_keywords_dict(configuration)
     output_objects.append({'object_type': 'header', 'text'
                           : 'Job description: mRSL'})
@@ -89,7 +94,8 @@ def mrsl_keywords():
         output_objects.append({'object_type': 'list', 'list': entries})
 
 
-def config_keywords():
+def config_keywords(configuration, output_objects):
+    """All resource configuration keywords"""
     resource_keywords = \
         resconfkeywords.get_resource_keywords(configuration)
     exenode_keywords = \
@@ -112,7 +118,8 @@ def config_keywords():
         output_objects.append({'object_type': 'header', 'text': ''})
 
 
-def valid_outputformats():
+def valid_outputformats(output_objects):
+    """All valid output formats"""
     output_objects.append({'object_type': 'header', 'text'
                           : 'Valid outputformats'})
     output_objects.append({'object_type': 'text', 'text'
@@ -129,19 +136,9 @@ def valid_outputformats():
     output_objects.append({'object_type': 'list', 'list': entries})
 
 
-# Topic to generator-function mapping - add new topics here
-# by adding a 'topic:generator-function' pair.
-
-all_docs = {'Job description: mRSL': mrsl_keywords,
-            'Resource configuration': config_keywords,
-            'Valid outputformats': valid_outputformats}
-
-
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
-    global output_objects
-    global configuration
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False)
     defaults = signature()[1]
@@ -157,6 +154,14 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
     show = accepted['show'][-1].lower()
     search = accepted['search'][-1].lower()
+
+    # Topic to generator-function mapping - add new topics here
+    # by adding a 'topic:generator-function' pair.
+
+    all_docs = {'Job description: mRSL': (mrsl_keywords, (configuration, output_objects, )),
+                'Resource configuration': (config_keywords, (configuration, output_objects, )),
+                'Valid outputformats': (valid_outputformats, (output_objects, ))}
+
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG On-demand Documentation'})
     html = '<p>Filter (using *,? etc.)'
@@ -189,7 +194,7 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'header', 'text'
                               : 'Documentation topics:'})
         for pattern in search_patterns:
-            display_topic(pattern, all_docs)
+            display_topic(output_objects, pattern, all_docs)
         if not search_patterns:
             output_objects.append({'object_type': 'text', 'text'
                                   : 'No topics matching %s' % search})
@@ -209,7 +214,7 @@ def main(client_id, user_arguments_dict):
                 show_patterns.append(topic)
 
         for pattern in show_patterns:
-            display_doc(pattern, all_docs)
+            display_doc(output_objects, pattern, all_docs)
 
         if not show_patterns:
             output_objects.append({'object_type': 'text', 'text'

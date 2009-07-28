@@ -25,19 +25,11 @@
 # -- END_HEADER ---
 #
 
-import cgi
-import cgitb
-cgitb.enable()
-import sys
-import os
-
-from shared.settingskeywords import get_keywords_dict
-from shared.fileio import unpickle
-from shared.vgrid import vgrid_list, vgrid_is_owner, vgrid_is_member
-from shared.notification import notify_user_thread
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables
+from shared.notification import notify_user_thread
+from shared.vgrid import vgrid_list, vgrid_is_owner, vgrid_is_member
 
 
 def signature():

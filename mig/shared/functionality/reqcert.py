@@ -27,14 +27,11 @@
 
 """Request certificate back end"""
 
-import sys
-import os
-
+import shared.returnvalues as returnvalues
 from shared.certreq import valid_password_chars, valid_name_chars, \
     password_min_len, password_max_len
 from shared.init import initialize_main_variables
-from shared.functional import validate_input, REJECT_UNSET
-import shared.returnvalues as returnvalues
+from shared.functional import validate_input
 
 
 def signature():

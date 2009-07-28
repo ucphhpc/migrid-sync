@@ -27,15 +27,13 @@
 
 """ Get info about a runtime environtment """
 
-import sys
 import time
 import base64
-import os
 
-from shared.refunctions import is_runtime_environment, get_re_dict
+import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-import shared.returnvalues as returnvalues
+from shared.refunctions import is_runtime_environment, get_re_dict
 
 
 def signature():

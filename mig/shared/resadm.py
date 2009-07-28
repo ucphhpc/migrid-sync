@@ -831,7 +831,7 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
                 jump_file.write(jump_script)
                 jump_file.close()
                 os.chmod(jump_path, 0700)
-            except:
+            except Exception, exc:
                 status = False
                 msg += ' failed to write jump helper script %s: %s. ' % (jump_path, exc)
 

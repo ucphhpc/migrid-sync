@@ -25,12 +25,12 @@
 # -- END_HEADER ---
 #
 
-import os
 import datetime
-from shared.init import initialize_main_variables
-from shared.functional import validate_input, REJECT_UNSET
-from shared.gridstat import GridStat
+
 import shared.returnvalues as returnvalues
+from shared.init import initialize_main_variables
+from shared.functional import validate_input
+from shared.gridstat import GridStat
 from shared.sandbox import load_sandbox_db
 
 

@@ -28,17 +28,15 @@
 """Simple front end to job and file uploads"""
 
 import os
-import sys
 
 import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
-from shared.fileio import unpickle
-from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.functional import validate_input_and_cert
 from shared.mrslkeywords import get_job_specs
 from shared.refunctions import list_runtime_environments
 from shared.settings import load_settings
 from shared.useradm import mrsl_template, get_default_mrsl, client_id_dir
-from shared.vgrid import user_allowed_vgrids, default_vgrid
+from shared.vgrid import user_allowed_vgrids
 
 
 def signature():

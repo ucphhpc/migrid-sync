@@ -39,7 +39,6 @@ similarly hard coded to the Debian defaults on those servers.
 
 import sys
 import os
-import re
 import random
 import crypt
 import socket

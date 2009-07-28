@@ -30,7 +30,6 @@ import base64
 import tempfile
 
 from shared.refunctions import create_runtimeenv
-from shared.validstring import valid_dir_input
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
