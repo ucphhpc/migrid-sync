@@ -45,6 +45,10 @@ from shared.resource import create_resource, remove_resource
 from shared.sandbox import load_sandbox_db, save_sandbox_db
 from shared.vgrid import vgrid_list_vgrids, default_vgrid
 
+# sandbox db has the format: {username: (password, [list_of_resources])}
+
+PW, RESOURCES = 0, 1
+
 
 def signature():
     """Signature of the main function"""
@@ -60,11 +64,31 @@ def signature():
                 'vgrid': [default_vgrid]}
     return ['zip', defaults]
 
+
+def ordinary_output():
+    """Switch to plain output"""
+    print 'Content-Type: text/html'
+    print ''
+
+
+def raw_output(file_name, file_size):
+    """Switch to raw output"""
+
+    print 'Content-Type: application/zip'
+    print 'Content-Type: application/force-download'
+    print 'Content-Type: application/octet-stream'
+    print 'Content-Type: application/download'
+    print 'Content-Disposition: attachment; filename=%s' % file_name
+    print 'Content-Length: %s' % file_size
+    print ''
+
+
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False, op_menu=client_id)
+
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Screen Saver Sandbox Download'})
 
@@ -72,14 +96,17 @@ def main(client_id, user_arguments_dict):
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
+        ordinary_output()
         return (accepted, returnvalues.CLIENT_ERROR)
 
     username = accepted['username'][-1]
     password = accepted['password'][-1]
     hd_size = accepted['hd_size'][-1]
-    memory = accepted['memory'][-1]
-    net_bw = accepted['net_bw'][-1]
     image_format = accepted['image_format'][-1]
+    net_bw = accepted['net_bw'][-1]
+    memory = accepted['memory'][-1]
+    operating_system = accepted['operating_system'][-1]
+    win_solution = accepted['win_solution'][-1]
     vgrid_list = accepted['vgrid']
     ip_address = 'UNKNOWN'
     if os.environ.has_key('REMOTE_ADDR'):
@@ -88,6 +115,7 @@ def main(client_id, user_arguments_dict):
     # check that requested image format is valid
 
     if not image_format in ['raw', 'qcow', 'cow', 'qcow2', 'vmdk']:
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Unsupported image format: %s'
                                % image_format})
@@ -100,6 +128,7 @@ def main(client_id, user_arguments_dict):
     (vg_status, all_vgrids) = vgrid_list_vgrids(configuration)
     for vgrid in vgrid_list:
         if not vg_status or not vgrid in all_vgrids:
+            ordinary_output()
             output_objects.append({'object_type': 'error_text', 'text'
                               : 'Failed to validate VGrid %s: %s'
                                % (vgrid, all_vgrids)})
@@ -110,12 +139,14 @@ def main(client_id, user_arguments_dict):
     try:
         userdb = load_sandbox_db(configuration)
     except Exception, exc:
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Failed to read login info: %s'
                                % exc})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not userdb.has_key(username) or userdb[username][PW] != password:
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Wrong username or password - please go back and try again...'
                                })
@@ -141,6 +172,7 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'text', 'text': msg})
         logger.info('Created MiG sandbox resource request')
     else:
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text': msg})
         (remove_status, msg) = remove_resource(configuration.resource_home,
                                                resource_name,
@@ -157,6 +189,7 @@ def main(client_id, user_arguments_dict):
     try:
         save_sandbox_db(userdb, configuration)
     except Exception, exc:
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text':
                                'Could not update sandbox database: %s' % exc
                                })
@@ -264,29 +297,30 @@ shared_fs=True
 vgrid=%s
 
 """\
-     % (
-         resource_name,
-         resource_identifier,
-         memory,
-         int(hd_size) / 1000,
-         net_bw,
-         str(int(net_bw) / 2),
-         sandboxkey,
-         unique_host_name,
-         unique_host_name,
-         ', '.join(vgrid_list),
-         )
+    % (
+        resource_name,
+        resource_identifier,
+        memory,
+        int(hd_size) / 1000,
+        net_bw,
+        str(int(net_bw) / 2),
+        sandboxkey,
+        unique_host_name,
+        unique_host_name,
+        ', '.join(vgrid_list),
+        )
 
-     # write the conf string to a conf file
+    # write the conf string to a conf file
 
-     conf_file_src = os.path.join(configuration.resource_home,
-                                  unique_host_name, 'config.MiG')
-     try:
-         fd = open(conf_file_src, 'w')
-         fd.write(res_conf_string)
-         fd.close()
-         logger.debug('wrote conf: %s' % res_conf_string)
-     except Exception, err:
+    conf_file_src = os.path.join(configuration.resource_home,
+                                 unique_host_name, 'config.MiG')
+    try:
+        fd = open(conf_file_src, 'w')
+        fd.write(res_conf_string)
+        fd.close()
+        logger.debug('wrote conf: %s' % res_conf_string)
+    except Exception, err:
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text': err})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -297,6 +331,7 @@ vgrid=%s
                                    + str(resource_identifier))
     logger.debug('res conf parser returned: %s' % status)
     if not status:
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text': msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -309,6 +344,7 @@ vgrid=%s
                                         unique_host_name, logger)
     logger.debug('got resource conf %s' % resource_config)
     if not resource_config:
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text':
                                "No resouce_config for: '%s'" % unique_host_name})
         return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -317,6 +353,7 @@ vgrid=%s
 
     (status, exe) = get_resource_exe(resource_config, 'localhost', logger)
     if not exe:
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text':
                                "No 'localhost' EXE config for: '%s'" % \
                                unique_host_name})
@@ -334,6 +371,7 @@ vgrid=%s
         fd.close()
         logger.debug('wrote fake pgid file %s' % pgid_file)
     except Exception, err:
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text': err})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -353,12 +391,14 @@ vgrid=%s
         (master_status, msg) = resadm.fill_master_node_script(
             master_node_script_file, resource_config, exe, 1000)
         if not master_status:
+            ordinary_output()
             output_objects.append({'object_type': 'error_text', 'text':
                                    'Filling script failed: %s' % msg})
             return (output_objects, returnvalues.SYSTEM_ERROR)
         os.close(master_node_script_file)
         logger.debug('wrote master node script %s' % mns_fname)
     except Exception, err:
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text':
                                    'Creating script failed: %s' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -373,12 +413,14 @@ vgrid=%s
             unique_host_name, resource_config)
 
         if not fe_status:
+            ordinary_output()
             output_objects.append({'object_type': 'error_text', 'text':
                                    'Filling script failed: %s' % msg})
             return (output_objects, returnvalues.SYSTEM_ERROR)
         os.close(fe_script_file)
         logger.debug('wrote frontend script %s' % fes_fname)
     except Exception, err:
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text':
                                    'Creating script failed: %s' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -397,6 +439,7 @@ vgrid=%s
             touch_lockfile.write('this is the lockfile')
             touch_lockfile.close()
         except Exception, exc:
+            ordinary_output()
             output_objects.append({'object_type': 'error_text', 'text':
                                    'Could not create lock file: %s' % exc})
             return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -424,6 +467,7 @@ vgrid=%s
         fd.write(configuration.migserver_https_url)
         fd.close()
     except Exception, err:
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text':
                                    'Creating script failed: %s' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -446,6 +490,7 @@ vgrid=%s
             time.sleep(1)
 
     if not os.path.ismount('mnt'):
+        ordinary_output()
         output_objects.append({'object_type': 'error_text', 'text':
                                'Failed to mount sandbox disk image!'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -489,6 +534,7 @@ vgrid=%s
             time.sleep(1)
 
     if failed:
+        ordinary_output()
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
 
@@ -537,23 +583,14 @@ vgrid=%s
 
     lockfile.close()  # unlocks lockfile
 
-    logger.debug('packed files in zip for download')
+    logger.info('Created image and packed files in zip for download')
 
 
     ### Everything went as planned - switch to raw output for download
 
     file_size = os.stat(dlfilename).st_size
-
-    # print header:
-
-    print 'Content-Type: application/zip'
-    print 'Content-Type: application/force-download'
-    print 'Content-Type: application/octet-stream'
-    print 'Content-Type: application/download'
-    print 'Content-Disposition: attachment; filename=' + dlfilename + ''
-    print 'Content-Length: %s' % file_size
-    print   # blank line, end of header
-
+    raw_output(dlfilename, file_size)
+    
     fd = open(dlfilename, 'r')
     print fd.read()
     fd.close()

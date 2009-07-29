@@ -200,8 +200,9 @@ def show_download(configuration, userdb, user, passwd, expert):
     html += \
         """<tr><td>
     <input type='hidden' name='username' value='%s'>
+    <input type='hidden' name='password' value='%s'>
 """\
-         % user
+         % (user, passwd)
     html += """</td></tr>
         """
     html += \

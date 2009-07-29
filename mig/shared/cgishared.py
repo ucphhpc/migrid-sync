@@ -34,7 +34,8 @@ from shared.conf import get_configuration_object
 from shared.httpsclient import extract_client_id
 
 
-def print_cgiscript_init(header_info=None, content_type='text/html'):
+def cgiscript_header(header_info=None, content_type='text/html'):
+    """Output header used by CGI scripts before any output"""
 
     # first header line
 
@@ -53,9 +54,11 @@ def print_cgiscript_init(header_info=None, content_type='text/html'):
     print ''
 
 
-def init_cgi_script_with_cert(print_header=True):
+def init_cgi_script_with_cert(print_header=True, content_type='text/html'):
+    """Prepare for CGI script with client certificate"""
+
     if print_header:
-        print_cgiscript_init()
+        cgiscript_header(content_type=content_type)
 
     configuration = get_configuration_object()
     logger = configuration.logger
@@ -65,22 +68,24 @@ def init_cgi_script_with_cert(print_header=True):
 
     client_id = extract_client_id()
     if not client_id:
-        o.out('No client ID available from SSL session - not authenticated?!'
-              )
+        msg = 'No client ID available from SSL env - not authenticated!'
+        logger.error(msg)
+        o.out(msg)
         o.reply_and_exit(o.ERROR)
 
-    o.internal('script: %s cert: %s' % (sys.argv[0], client_id))
+    logger.info('script: %s cert: %s' % (sys.argv[0], client_id))
     return (logger, configuration, client_id, o)
 
 
 def init_cgiscript_possibly_with_cert(print_header=True,
-        content_type='text/html'):
+                                      content_type='text/html'):
+    """Prepare for CGI script with optional client certificate"""
 
     # script used by 'requestnewjob' and 'put' where certs are not
     # required for resources with sessionid
 
     if print_header:
-        print_cgiscript_init(content_type=content_type)
+        cgiscript_header(content_type=content_type)
 
     configuration = get_configuration_object()
     logger = configuration.logger
@@ -90,10 +95,7 @@ def init_cgiscript_possibly_with_cert(print_header=True,
 
     client_id = extract_client_id()
     if not client_id:
-        o.internal('(No client ID available in SSL session)')
+        logger.debug('(No client ID available in SSL session)')
 
-    o.internal('script: %s cert: %s' % (sys.argv[0], client_id))
-
+    logger.info('script: %s cert: %s' % (sys.argv[0], client_id))
     return (logger, configuration, client_id, o)
-
-

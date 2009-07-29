@@ -38,7 +38,8 @@ from shared.cgishared import init_cgi_script_with_cert, \
 from shared.output import do_output
 
 
-def run_cgi_script(main, delayed_input=None):
+def run_cgi_script(main, delayed_input=None, print_header=True,
+                   content_type='text/html'):
     """Get needed information and run the function received as argument.
     If delayed_input is not set to a function, the default cgi input will be
     extracted and parsed before being passed on to the main function. Some
@@ -48,7 +49,8 @@ def run_cgi_script(main, delayed_input=None):
     form.
     """
 
-    (logger, configuration, client_id, o) = init_cgi_script_with_cert()
+    (logger, configuration, client_id, o) = init_cgi_script_with_cert(
+        print_header, content_type)
 
     if not delayed_input:
         fieldstorage = cgi.FieldStorage()
@@ -73,7 +75,9 @@ def run_cgi_script(main, delayed_input=None):
     print output
 
 
-def run_cgi_script_possibly_with_cert(main, delayed_input=None):
+def run_cgi_script_possibly_with_cert(main, delayed_input=None,
+                                      print_header=True,
+                                      content_type='text/html'):
     """Get needed information and run the function received as argument.
     If delayed_input is not set to a function, the default cgi input will be
     extracted and parsed before being passed on to the main function. Some
@@ -84,7 +88,7 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None):
     """
 
     (logger, configuration, client_id, o) = \
-        init_cgiscript_possibly_with_cert()
+        init_cgiscript_possibly_with_cert(print_header, content_type)
 
     if not delayed_input:
         fieldstorage = cgi.FieldStorage()
