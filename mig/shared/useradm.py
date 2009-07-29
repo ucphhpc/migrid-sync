@@ -378,6 +378,7 @@ def migrate_users(
     db_path,
     force=False,
     verbose=False,
+    prune_dupes=False,
     ):
     """Migrate all user data for possibly old format users to new format:
 
@@ -409,27 +410,55 @@ def migrate_users(
             if not force:
                 sys.exit(1)
 
-    # Make sure there are no duplicate user IDs
-
-    all_old = []
+    targets = {}
     for (client_id, user) in user_db.items():
-        old_id = user['full_name']
-        if old_id in all_old:
-            print 'Error: old user ID %s is not unique in user DB!' % old_id
-            if not force:
-                sys.exit(1)
-        else:
-            all_old.append(old_id)
-
-    for (client_id, user) in user_db.items():
-        old_id = user['full_name']
         fill_distinguished_name(user)
+        old_id = user['full_name']
         new_id = user['distinguished_name']
         if client_id == new_id:
             if verbose:
                 print 'user %s is already updated to new format' % client_id
             continue
+        targets[client_id] = user
 
+    # Make sure there are no collisions in old user IDs
+
+    latest = {}
+    for (client_id, user) in targets.items():
+        old_id = user['full_name']
+        new_id = user['distinguished_name']        
+        if new_id in user_db.keys():
+            if not prune_dupes:
+                print 'Error: new ID of old user %s already exists in user DB!' % new_id
+                if not force:
+                    sys.exit(1)
+            else:
+                if verbose:
+                    print 'Pruning old duplicate user %s from user DB' % old_id
+                del user_db[old_id]
+        elif old_id in latest.keys():
+            if not prune_dupes:
+                print 'Error: old user ID %s is not unique in user DB!' % old_id
+                if not force:
+                    sys.exit(1)
+            else:
+                (latest_id, latest_user) = latest[old_id]
+                latest_expire = int(latest_user.get('expire', 0))
+                current_expire = int(user.get('expire', 0))
+                if latest_expire <= current_expire:
+                    prune_id = latest_id
+                    latest[old_id] = (client_id, user)
+                else:
+                    prune_id = client_id
+                if verbose:
+                    print 'Pruning duplicate user %s from user DB' % prune_id
+                del user_db[prune_id]
+        else:
+            latest[old_id] = (client_id, user)
+    save_user_db(user_db, db_path)
+
+    
+    for (client_id, user) in targets.items():
         if verbose:
             print 'updating user %s on old format to new format %s' % (client_id,
                                                                        new_id)

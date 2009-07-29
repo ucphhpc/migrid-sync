@@ -41,6 +41,7 @@ Where OPTIONS may be one or more of:
    -d DB_FILE          Use DB_FILE as user data base file
    -f                  Force operations to continue past errors
    -h                  Show this help
+   -p                  Prune duplicate users (keeps the one with latest expire)
    -v                  Verbose output
 """\
          % {'name': name}
@@ -50,7 +51,8 @@ if '__main__' == __name__:
     conf_path = None
     force = False
     verbose = False
-    opt_args = 'c:d:fhv'
+    prune = False
+    opt_args = 'c:d:fhpv'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -68,10 +70,12 @@ if '__main__' == __name__:
         elif opt == '-h':
             usage()
             sys.exit(0)
+        elif opt == '-p':
+            prune = True
         elif opt == '-v':
             verbose = True
         else:
             print 'Error: %s not supported!' % opt
             sys.exit(1)
 
-    migrate_users(conf_path, db_path, force, verbose)
+    migrate_users(conf_path, db_path, force, verbose, prune)
