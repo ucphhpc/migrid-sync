@@ -26,8 +26,7 @@ instead of the old CN based ones"""
 import sys
 import getopt
 
-from shared.useradm import init_user_adm, search_users, default_search, \
-     migrate_user
+from shared.useradm import init_user_adm, migrate_users
 
 def usage(name='migrateusers.py'):
     """Usage help"""
@@ -75,8 +74,4 @@ if '__main__' == __name__:
             print 'Error: %s not supported!' % opt
             sys.exit(1)
 
-    search_filter = default_search()
-    all_users = search_users(search_filter, conf_path, db_path, verbose)
-
-    for (user_id, user_dict) in all_users:
-        migrate_user(user_id, conf_path, db_path, force, verbose)
+    migrate_users(conf_path, db_path, force, verbose)

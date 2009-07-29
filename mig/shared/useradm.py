@@ -373,14 +373,13 @@ def delete_user(
                   % client_id
 
 
-def migrate_user(
-    client_id,
+def migrate_users(
     conf_path,
     db_path,
     force=False,
     verbose=False,
     ):
-    """Migrate all user data for possibly old format user client_id to new format:
+    """Migrate all user data for possibly old format users to new format:
 
     update entry in user DB
     move user_home dir and symlink
@@ -410,100 +409,95 @@ def migrate_user(
             if not force:
                 sys.exit(1)
 
-        if not user_db.has_key(client_id):
-            print "Error: User DB entry '%s' doesn't exist!" % client_id
-            if not force:
-                sys.exit(1)
+    for (client_id, user) in user_db.items():
+        fill_distinguished_name(user)
+        new_id = user['distinguished_name']
+        if client_id == new_id:
+            if verbose:
+                print 'user %s is already updated to new format' % client_id
+            continue
 
-    user = user_db[client_id]
-    fill_distinguished_name(user)
-    new_id = user['distinguished_name']
-    if client_id == new_id:
         if verbose:
-            print 'user %s is already updated to new format' % client_id
-        return
+            print 'updating user %s on old format to new format %s' % (client_id,
+                                                                       new_id)
 
-    if verbose:
-        print 'updating user %s on old format to new format %s' % (client_id,
-                                                                   new_id)
+        old_name = client_id_dir(user['full_name'])
+        new_name = client_id_dir(new_id)
 
-    old_name = client_id_dir(user['full_name'])
-    new_name = client_id_dir(new_id)
+        # Move user dirs
 
-    # Move user dirs
+        for base_dir in (configuration.user_home,
+                         configuration.mrsl_files_dir,
+                         configuration.resource_pending):
 
-    for base_dir in (configuration.user_home,
-                     configuration.mrsl_files_dir,
-                     configuration.resource_pending):
+            try:
+                old_path = os.path.join(base_dir, old_name)
+                new_path = os.path.join(base_dir, new_name)
+                shutil.move(old_path, new_path)
+            except Exception, exc:
 
-        try:
-            old_path = os.path.join(base_dir, old_name)
-            new_path = os.path.join(base_dir, new_name)
-            shutil.move(old_path, new_path)
-        except Exception, exc:
+                # os.symlink(new_path, old_path)
 
-            # os.symlink(new_path, old_path)
+                print 'Error: could not move %s to %s: %s' % (old_path,
+                        new_path, exc)
+                if not force:
+                    sys.exit(1)
 
-            print 'Error: could not move %s to %s: %s' % (old_path,
-                    new_path, exc)
-            if not force:
-                sys.exit(1)
-
-    mrsl_base = os.path.join(configuration.mrsl_files_dir, new_name)
-    for mrsl_name in os.listdir(mrsl_base):
-        try:
-            mrsl_path = os.path.join(mrsl_base, mrsl_name)
-            if not os.path.isfile(mrsl_path):
-                continue
-            filter_pickled_dict(mrsl_path, {client_id: new_id})
-        except Exception, exc:
-            print 'Error: could not update saved mrsl user in %s: %s'\
-                 % (mrsl_path, exc)
-            if not force:
-                sys.exit(1)
-
-    re_base = configuration.re_home
-    for re_name in os.listdir(re_base):
-        try:
-            re_path = os.path.join(re_base, re_name)
-            if not os.path.isfile(re_path):
-                continue
-            filter_pickled_dict(re_path, {client_id: new_id})
-        except Exception, exc:
-            print 'Error: could not update RE user in %s: %s'\
-                 % (re_path, exc)
-            if not force:
-                sys.exit(1)
-
-    for base_dir in (configuration.resource_home,
-                     configuration.vgrid_home):
-        for entry_name in os.listdir(base_dir):
-            for kind in ('members', 'owners'):
-                kind_path = os.path.join(base_dir, entry_name, kind)
-                if not os.path.isfile(kind_path):
+        mrsl_base = os.path.join(configuration.mrsl_files_dir, new_name)
+        for mrsl_name in os.listdir(mrsl_base):
+            try:
+                mrsl_path = os.path.join(mrsl_base, mrsl_name)
+                if not os.path.isfile(mrsl_path):
                     continue
-                try:
-                    filter_pickled_list(kind_path, {client_id: new_id})
-                except Exception, exc:
-                    print 'Error: could not update saved %s in %s: %s'\
-                         % (kind, kind_path, exc)
-                    if not force:
-                        sys.exit(1)
+                filter_pickled_dict(mrsl_path, {client_id: new_id})
+            except Exception, exc:
+                print 'Error: could not update saved mrsl user in %s: %s'\
+                     % (mrsl_path, exc)
+                if not force:
+                    sys.exit(1)
 
-    # Finally update user DB now that file system was updated
-    
-    try:
-        del user_db[client_id]
-        user_db[new_id] = user
-        save_user_db(user_db, db_path)
-        if verbose:
-            print 'User %s was successfully updated in user DB!'\
-                  % client_id
-    except Exception, err:
-        print 'Error: Failed to update %s in user DB: %s'\
-             % (client_id, err)
-        if not force:
-            sys.exit(1)
+        re_base = configuration.re_home
+        for re_name in os.listdir(re_base):
+            try:
+                re_path = os.path.join(re_base, re_name)
+                if not os.path.isfile(re_path):
+                    continue
+                filter_pickled_dict(re_path, {client_id: new_id})
+            except Exception, exc:
+                print 'Error: could not update RE user in %s: %s'\
+                     % (re_path, exc)
+                if not force:
+                    sys.exit(1)
+
+        for base_dir in (configuration.resource_home,
+                         configuration.vgrid_home):
+            for entry_name in os.listdir(base_dir):
+                for kind in ('members', 'owners'):
+                    kind_path = os.path.join(base_dir, entry_name, kind)
+                    if not os.path.isfile(kind_path):
+                        continue
+                    try:
+                        filter_pickled_list(kind_path, {client_id: new_id})
+                    except Exception, exc:
+                        print 'Error: could not update saved %s in %s: %s'\
+                             % (kind, kind_path, exc)
+                        if not force:
+                            sys.exit(1)
+
+        # Finally update user DB now that file system was updated
+
+        try:
+            del user_db[client_id]
+            user_db[new_id] = user
+            save_user_db(user_db, db_path)
+            if verbose:
+                print 'User %s was successfully updated in user DB!'\
+                      % client_id
+        except Exception, err:
+            print 'Error: Failed to update %s in user DB: %s'\
+                 % (client_id, err)
+            if not force:
+                sys.exit(1)
 
 
 def default_search():

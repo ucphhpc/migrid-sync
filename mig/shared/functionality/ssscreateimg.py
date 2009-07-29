@@ -177,6 +177,9 @@ def main(client_id, user_arguments_dict):
     # change dir to sss_home
     
     old_path = os.getcwd()
+
+    #TODO: We can not rely on chdir to work consistently!
+    
     os.chdir(configuration.sss_home)
 
     # log_dir = "log/"
@@ -288,300 +291,272 @@ vgrid=%s
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
 
-# parse and pickle the conf file
+    # parse and pickle the conf file
 
-(status, msg) = confparser.run(conf_file_src, resource_name + '.'
-                                + str(resource_identifier))
-logger.debug('res conf parser returned: %s' % status)
-if not status:
-    o.out(msg, conf_file_src)
-    o.reply_and_exit(o.ERROR)
+    (status, msg) = confparser.run(conf_file_src, resource_name + '.'
+                                   + str(resource_identifier))
+    logger.debug('res conf parser returned: %s' % status)
+    if not status:
+        output_objects.append({'object_type': 'error_text', 'text': msg})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
-# read pickled resource conf file (needed to create
-# master_node_script.sh)
+    # read pickled resource conf file (needed to create
+    # master_node_script.sh)
 
-msg = ''
-(status, resource_config) = \
-    get_resource_configuration(configuration.resource_home,
-                               unique_host_name, logger)
-logger.debug('got resource conf %s' % resource_config)
-if not resource_config:
-    msg += "No resouce_config for: '" + unique_host_name + "'\n"
-    o.out(msg)
-    o.reply_and_exit(o.ERROR)
+    msg = ''
+    (status, resource_config) = \
+             get_resource_configuration(configuration.resource_home,
+                                        unique_host_name, logger)
+    logger.debug('got resource conf %s' % resource_config)
+    if not resource_config:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "No resouce_config for: '%s'" % unique_host_name})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
-# read pickled exe conf file (needed to create master_node_script.sh)
+    # read pickled exe conf file (needed to create master_node_script.sh)
 
-(status, exe) = get_resource_exe(resource_config, 'localhost', logger)
-if not exe:
-    msg = "No EXE config for: '" + unique_host_name\
-         + "' EXE: localhost'"
-    o.out(msg)
-    o.reply_and_exit(o.ERROR)
+    (status, exe) = get_resource_exe(resource_config, 'localhost', logger)
+    if not exe:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "No 'localhost' EXE config for: '%s'" % \
+                               unique_host_name})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
-# HACK: a PGID file is required in the resource home directory
-# write the conf string to a conf file
+    # HACK: a PGID file is required in the resource home directory
+    # write the conf string to a conf file
 
-pgid_file = configuration.resource_home + unique_host_name + os.sep\
-     + 'EXE_Uid.PGID'
-try:
-    fd = open(pgid_file, 'w')
-    fd.write('')
-    fd.close()
-    logger.debug('wrote fake pgid file %s' % pgid_file)
-except Exception, err:
-    o.client(err)
-    o.reply_and_exit(o.CLIENT_ERROR)
+    
+    pgid_file = os.path.join(configuration.resource_home, unique_host_name,
+                             'EXE_localhost.PGID')
+    try:
+        fd = open(pgid_file, 'w')
+        fd.write('')
+        fd.close()
+        logger.debug('wrote fake pgid file %s' % pgid_file)
+    except Exception, err:
+        output_objects.append({'object_type': 'error_text', 'text': err})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
-# and another pgid file... dont know which one is being used...
+    os.chdir(old_path)
 
-pgid_file = configuration.resource_home + unique_host_name + os.sep\
-     + 'EXE_localhost.PGID'
-try:
-    fd = open(pgid_file, 'w')
-    fd.write('')
-    fd.close()
-    logger.debug('wrote fake pgid file %s' % pgid_file)
-except Exception, err:
-    o.client(err)
-    o.reply_and_exit(o.CLIENT_ERROR)
+    resource_dir = os.path.join(configuration.resource_home, unique_host_name)
 
-os.chdir(old_path)
+    # create master_node_script
 
-# create master_node_script
+    try:
 
-try:
+        # Securely open a temporary file in resource_dir
 
-    # Securely open a temporary file in resource_dir
+        (master_node_script_file, mns_fname) = \
+                                  tempfile.mkstemp(dir=resource_dir,
+                                                   text=True)
+        (master_status, msg) = resadm.fill_master_node_script(
+            master_node_script_file, resource_config, exe, 1000)
+        if not master_status:
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Filling script failed: %s' % msg})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+        os.close(master_node_script_file)
+        logger.debug('wrote master node script %s' % mns_fname)
+    except Exception, err:
+        output_objects.append({'object_type': 'error_text', 'text':
+                                   'Creating script failed: %s' % msg})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    resource_dir = configuration.resource_home + os.sep\
-         + unique_host_name
-    (master_node_script_file, mns_fname) = \
-        tempfile.mkstemp(dir=resource_dir, text=True)
-    (rv, msg) = resadm.fill_master_node_script(master_node_script_file,
-            resource_config, exe, 1000)
-    if not rv:
-        o.out(msg)
-        o.reply_and_exit(o.ERROR)
-    os.close(master_node_script_file)
-    logger.debug('wrote master node script %s' % mns_fname)
-except Exception, err:
-    o.out('could not write master node script file (%s)' % err)
-    o.reply_and_exit(o.ERROR)
+    # create front_end_script
 
-# create front_end_script
+    try:
+        (fe_script_file, fes_fname) = tempfile.mkstemp(dir=resource_dir,
+                                                       text=True)
+        (fe_status, msg) = resadm.fill_frontend_script(
+            fe_script_file, configuration.migserver_https_url,
+            unique_host_name, resource_config)
 
-try:
-    resource_dir = configuration.resource_home + os.sep\
-         + unique_host_name
-    (fe_script_file, fes_fname) = tempfile.mkstemp(dir=resource_dir,
-            text=True)
-    (rv, msg) = resadm.fill_frontend_script(fe_script_file,
-            configuration.migserver_https_url, unique_host_name,
-            resource_config)
+        if not fe_status:
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Filling script failed: %s' % msg})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+        os.close(fe_script_file)
+        logger.debug('wrote frontend script %s' % fes_fname)
+    except Exception, err:
+        output_objects.append({'object_type': 'error_text', 'text':
+                                   'Creating script failed: %s' % msg})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    if not rv:
-        o.out(msg)
-        o.reply_and_exit(o.ERROR)
+    # change directory to sss_home and mount hd image in order to copy
+    # the FE-script and masternode script to the hd
 
-    os.close(fe_script_file)
-    logger.debug('wrote frontend script %s' % fes_fname)
-except Exception, err:
-    o.out('I could could not write frontend script file (%s)' % err)
-    o.reply_and_exit(o.ERROR)
+    logger.debug('modifying hda image for this sandbox')
 
-# change directory to sss_home and mount hd image in order to copy
-# the FE-script and masternode script to the hd
+    os.chdir(configuration.sss_home)
 
-logger.debug('modifying hda image for this sandbox')
-
-os.chdir(configuration.sss_home)
-
-FILE = 'lockfile.txt'
-if not os.path.isfile(FILE):
-    if not os.path.exists(FILE):
+    lock_path = os.path.join(configuration.sss_home, 'lockfile.txt')
+    if not os.path.isfile(lock_path):
         try:
-            touch_lockfile = open(FILE, 'w')
+            touch_lockfile = open(lock_path, 'w')
             touch_lockfile.write('this is the lockfile')
             touch_lockfile.close()
         except Exception, exc:
-            o.out('coult not create lockfile!')
-            o.reply_and_exit(o.CLIENT_ERROR)
-    else:
-        o.out('%s exists but is not a file!' % FILE)
-        o.reply_and_exit(o.CLIENT_ERROR)
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not create lock file: %s' % exc})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
 
-# ## Enter critical region ###
+    # ## Enter critical region ###
 
-lockfile = open(FILE, 'r+')
-fcntl.flock(lockfile.fileno(), fcntl.LOCK_EX)
+    lockfile = open(lock_path, 'r+')
+    fcntl.flock(lockfile.fileno(), fcntl.LOCK_EX)
 
-# unmount leftover disk image mounts if any
+    # unmount leftover disk image mounts if any
 
-if os.path.ismount('mnt'):
-    logger.warning('unmounting leftover mount point')
-    os.system('sync')
-    os.system('umount mnt')
-    os.system('sync')
-
-# use a disk of the requested size
-
-command = 'cp -f MiG-SSS' + os.sep + 'hda_' + hd_size + '.img MiG-SSS'\
-     + os.sep + 'hda.img'
-os.system(command)
-
-# mount hda and copy scripts to it
-
-os.system('mount mnt')
-
-for i in range(60):
-    if not os.path.ismount('mnt'):
-        logger.warning('waiting for mount point to appear...')
-        time.sleep(1)
-
-if not os.path.ismount('mnt'):
-    o.out('Failed to mount sandbox disk image!')
-    o.reply_and_exit(o.CLIENT_ERROR)
-
-try:
-
-    # save master_node_script to hd image
-
-    shutil.copyfile(mns_fname,
-                    'mnt/mig/MiG/mig_exe/master_node_script_localhost.sh'
-                    )
-
-    # save frontend_script to hd image
-
-    shutil.copyfile(fes_fname,
-                    'mnt/mig/MiG/mig_frontend/frontend_script.sh')
-except Exception, err:
-    o.client(err)
-
-    # unmount disk image
-
-    os.system('sync')
-    os.system('umount mnt')
-    os.system('sync')
-    o.reply_and_exit(o.CLIENT_ERROR)
-
-# copy the sandboxkey to the keyfile:
-
-try:
-    fd = open('keyfile', 'w')
-    fd.write(sandboxkey)
-    fd.close()
-    fd = open('serverfile', 'w')
-    fd.write(configuration.migserver_https_url)
-    fd.close()
-except Exception, err:
-    o.client(err)
-
-    # unmount disk image
-
-    os.system('sync')
-    os.system('umount mnt')
-    os.system('sync')
-    o.reply_and_exit(o.CLIENT_ERROR)
-
-try:
-    shutil.copyfile('keyfile', 'mnt/mig/etc/keyfile')
-    shutil.copyfile('serverfile', 'mnt/mig/etc/serverfile')
-except Exception, err:
-    o.client(err)
-
-    # unmount disk image
-
-    os.system('sync')
-    os.system('umount mnt')
-    os.system('sync')
-    o.reply_and_exit(o.CLIENT_ERROR)
-
-# unmount disk image
-
-os.system('sync')
-os.system('umount mnt')
-os.system('sync')
-
-for i in range(60):
     if os.path.ismount('mnt'):
-        logger.warning('waiting for mount point to disappear...')
-        time.sleep(1)
+        logger.warning('unmounting leftover mount point')
+        os.system('sync')
+        os.system('umount mnt')
+        os.system('sync')
 
-logger.debug('finished modifying hda image')
+    # create individual key files
 
-# Convert the hda to vmdk - no longer needed! (04.2008)
-# os.system('/usr/local/bin/qemu-img ' \
-#          'convert MiG-SSS/hda.img -O vmdk MiG-SSS/hda.vmdk')
+    try:
+        fd = open('keyfile', 'w')
+        fd.write(sandboxkey)
+        fd.close()
+        fd = open('serverfile', 'w')
+        fd.write(configuration.migserver_https_url)
+        fd.close()
+    except Exception, err:
+        output_objects.append({'object_type': 'error_text', 'text':
+                                   'Creating script failed: %s' % msg})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
-# Optional conversion to requested disk image format
 
-if 'raw' != image_format:
-    o.internal('Converting disk image to %s format' % image_format)
-    image_path = 'MiG-SSS' + os.sep + 'hda.img'
-    tmp_path = image_path + '.' + image_format
-    command = 'qemu-img convert -f raw ' + image_path + ' -O '\
-         + image_format + ' ' + tmp_path
+    # use a disk of the requested size
+
+    src_path = os.path.join('MiG-SSS', 'hda_' + hd_size + '.img')
+    dst_path = os.path.join('MiG-SSS', 'hda.img')
+    command = 'cp -f %s %s' % (src_path, dst_path)
     os.system(command)
-    os.remove(image_path)
-    os.rename(tmp_path, image_path)
-    logger.debug('converted hda image to %s format' % image_format)
 
-# Copy one of the vmx files according to the specified memory requirement: - no longer needed! (04.2008)
-# command = "cp MiG-SSS" + os.sep + "MiG_" + memory + ".vmx MiG-SSS" + \
-#          os.sep + "MiG.vmx"
-# os.system(command)
+    # mount hda and copy scripts to it
 
-dlfilename = 'MiG-SSS_' + str(resource_identifier) + '.zip'
-if operating_system == 'linux':
+    os.system('mount mnt')
 
-    # Put all linux-related files in a zip archive
+    for i in range(60):
+        if not os.path.ismount('mnt'):
+            logger.warning('waiting for mount point to appear...')
+            time.sleep(1)
 
-    os.system('/usr/bin/zip ' + dlfilename
-               + ' MiG-SSS/MiG.iso MiG-SSS/hda.img MiG-SSS/mig_xsss.py MiG-SSS/readme.txt'
-              )
-else:
+    if not os.path.ismount('mnt'):
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Failed to mount sandbox disk image!'})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    if win_solution == 'screensaver':
+    failed = False
+    try:
 
-        # Put all win-related files in the archive (do not store dir
-        # name: -j)
+        # save master_node_script to hd image
 
-        os.system('/usr/bin/zip -j ' + dlfilename
-                   + ' MiG-SSS/MiG-SSS_Setup.exe MiG-SSS/hda.img MiG-SSS/MiG.iso'
+        master_dst = os.path.join('mnt', 'mig', 'MiG', 'mig_exe',
+                                  'master_node_script_localhost.sh')
+        shutil.copyfile(mns_fname, master_dst)
+
+        # save frontend_script to hd image
+
+        fe_dst = os.path.join('mnt', 'mig', 'MiG', 'mig_frontend',
+                                  'frontend_script.sh')
+        shutil.copyfile(fes_fname, fe_dst)
+
+        # copy the sandboxkey to the keyfile:
+
+        key_dst = os.path.join('mnt', 'mig', 'etc', 'keyfile')
+        shutil.copyfile('keyfile', key_dst)
+        server_dst = os.path.join('mnt', 'mig', 'etc', 'serverfile')
+        shutil.copyfile('serverfile', server_dst)
+    except Exception, err:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Failed to customize image: %s' \
+                               % err})
+        failed = True
+
+    # unmount disk image
+
+    os.system('sync')
+    os.system('umount mnt')
+    os.system('sync')    
+
+    for i in range(60):
+        if os.path.ismount('mnt'):
+            logger.warning('waiting for mount point to disappear...')
+            time.sleep(1)
+
+    if failed:
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
+
+    logger.debug('finished modifying hda image')
+
+    # Optional conversion to requested disk image format
+
+    if 'raw' != image_format:
+        logger.debug('Converting disk image to %s format' % image_format)
+        image_path = 'MiG-SSS' + os.sep + 'hda.img'
+        tmp_path = image_path + '.' + image_format
+        command = 'qemu-img convert -f raw ' + image_path + ' -O '\
+                  + image_format + ' ' + tmp_path
+        os.system(command)
+        os.remove(image_path)
+        os.rename(tmp_path, image_path)
+        logger.debug('converted hda image to %s format' % image_format)
+
+    dlfilename = 'MiG-SSS_' + str(resource_identifier) + '.zip'
+    if operating_system == 'linux':
+
+        # Put all linux-related files in a zip archive
+
+        os.system('/usr/bin/zip ' + dlfilename
+                  + ' MiG-SSS/MiG.iso MiG-SSS/hda.img MiG-SSS/mig_xsss.py MiG-SSS/readme.txt'
                   )
     else:
 
-          # windows service
+        if win_solution == 'screensaver':
+            
+            # Put all win-related files in the archive (do not store dir
+            # name: -j)
+            
+            os.system('/usr/bin/zip -j ' + dlfilename
+                      + ' MiG-SSS/MiG-SSS_Setup.exe MiG-SSS/hda.img MiG-SSS/MiG.iso'
+                      )
+        else:
 
-        os.system('/usr/bin/zip -j ' + dlfilename
-                   + ' MiG-SSS/MiG-SSS-Service_Setup.exe MiG-SSS/hda.img MiG-SSS/MiG.iso'
-                  )
+            # windows service
+            
+            os.system('/usr/bin/zip -j ' + dlfilename
+                      + ' MiG-SSS/MiG-SSS-Service_Setup.exe MiG-SSS/hda.img MiG-SSS/MiG.iso'
+                      )
 
-# ## Leave critical region ###
+    # ## Leave critical region ###
 
-lockfile.close()  # unlocks lockfile
+    lockfile.close()  # unlocks lockfile
 
-logger.debug('packed files in zip for download')
-
-file_size = os.stat(dlfilename).st_size
-
-# print header:
-
-print 'Content-Type: application/zip'
-print 'Content-Type: application/force-download'
-print 'Content-Type: application/octet-stream'
-print 'Content-Type: application/download'
-print 'Content-Disposition: attachment; filename=' + dlfilename + ''
-print 'Content-Length: %s' % file_size
-print   # blank line, end of header
-
-fd = open(dlfilename, 'r')
-print fd.read()
-fd.close()
-os.system('rm -f ' + dlfilename)
+    logger.debug('packed files in zip for download')
 
 
-    return (output_objects, returnvalues.OK)
+    ### Everything went as planned - switch to raw output for download
 
+    file_size = os.stat(dlfilename).st_size
 
+    # print header:
+
+    print 'Content-Type: application/zip'
+    print 'Content-Type: application/force-download'
+    print 'Content-Type: application/octet-stream'
+    print 'Content-Type: application/download'
+    print 'Content-Disposition: attachment; filename=' + dlfilename + ''
+    print 'Content-Length: %s' % file_size
+    print   # blank line, end of header
+
+    fd = open(dlfilename, 'r')
+    print fd.read()
+    fd.close()
+    os.system('rm -f ' + dlfilename)
+
+    ### Ignore output_objects as output is raw data above
