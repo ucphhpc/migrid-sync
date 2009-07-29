@@ -27,7 +27,7 @@
 
 """ Defines valid objecttypes and provides a method to verify if an object is correct """
 
-start = {'object_type': 'start', 'required': [], 'optional': []}
+start = {'object_type': 'start', 'required': ['headers'], 'optional': []}
 title = {'object_type': 'title', 'required': ['text'],
          'optional': ['javascript', 'bodyfunctions']}
 text = {'object_type': 'text', 'required': ['text'], 'optional': []}

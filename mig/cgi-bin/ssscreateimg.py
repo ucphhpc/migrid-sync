@@ -34,4 +34,4 @@ cgitb.enable()
 from shared.functionality.ssscreateimg import main
 from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
-run_cgi_script_possibly_with_cert(main, print_header=False)
+run_cgi_script_possibly_with_cert(main)

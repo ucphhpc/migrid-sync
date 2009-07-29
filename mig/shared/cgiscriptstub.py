@@ -27,19 +27,89 @@
 
 """Interface between CGI and functionality"""
 
+import sys
 import cgi
 import cgitb
 cgitb.enable()
 
+import shared.returnvalues as returnvalues
 from shared.cgiinput import fieldstorage_to_dict
-from shared.cgishared import init_cgi_script_with_cert, \
-    init_cgiscript_possibly_with_cert
+from shared.conf import get_configuration_object
+from shared.httpsclient import extract_client_id
+from shared.output import format_output
 
-from shared.output import do_output
+def init_cgi_script(delayed_input=None):
+    """Shared init"""
+    configuration = get_configuration_object()
+    logger = configuration.logger
+
+    # get DN of user currently logged in
+
+    client_id = extract_client_id()
+    logger.info('script: %s cert: %s' % (sys.argv[0], client_id))
+    if not delayed_input:
+        fieldstorage = cgi.FieldStorage()
+        user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+    else:
+        user_arguments_dict = {'__DELAYED_INPUT__': delayed_input}
+    return (configuration, logger, client_id, user_arguments_dict)
 
 
-def run_cgi_script(main, delayed_input=None, print_header=True,
-                   content_type='text/html'):
+def finish_cgi_script(configuration, output_format, ret_code, ret_msg, output_objs):
+    """Shared finalization"""
+
+    logger = configuration.logger
+    start_entry = None
+    for entry in output_objs:
+        if entry['object_type'] == 'start':
+            start_entry = entry
+    if not start_entry or not start_entry.get('headers', []):
+        start_entry = {'object_type': 'start', 'headers':
+                       [('Content-Type', 'text/html')]}
+        output_objs = [start_entry] + output_objs
+    headers = start_entry['headers']
+    for (key, val) in headers:
+        print "%s: %s" % (key, val)
+    print ''
+
+    output = format_output(ret_code, ret_msg, output_objs, output_format)
+
+    if not output:
+
+        # Error occured during output print
+
+        print 'Return object could _not_ be printed!'
+    print output
+
+def run_cgi_script(main, delayed_input=None):
+    """Get needed information and run the function received as argument.
+    If delayed_input is not set to a function, the default cgi input will be
+    extracted and parsed before being passed on to the main function. Some
+    CGI operations like file upload won't work efficiently if the fieldstorage
+    is passed around (huge memory consumption) so they can pass the form
+    extracting function here and leave it to the back end to extract the
+    form.
+    """
+    
+    (configuration, logger, client_id, user_arguments_dict) = \
+                    init_cgi_script(delayed_input)
+
+    # default to html output
+
+    output_format = user_arguments_dict.get('output_format', ['html'])[-1]
+
+    if client_id:
+        (out_obj, (ret_code, ret_msg)) = main(client_id,
+                                                  user_arguments_dict)
+    else:
+        (ret_code, ret_msg) = returnvalues.CLIENT_ERROR
+        out_obj = [{'object_type': 'error_text', 'text':
+                    'No client ID available from SSL env - not authenticated!'
+                    }]
+    finish_cgi_script(configuration, output_format, ret_code, ret_msg, out_obj)
+
+
+def run_cgi_script_possibly_with_cert(main, delayed_input=None):
     """Get needed information and run the function received as argument.
     If delayed_input is not set to a function, the default cgi input will be
     extracted and parsed before being passed on to the main function. Some
@@ -49,67 +119,16 @@ def run_cgi_script(main, delayed_input=None, print_header=True,
     form.
     """
 
-    (logger, configuration, client_id, o) = init_cgi_script_with_cert(
-        print_header, content_type)
+    (configuration, logger, client_id, user_arguments_dict) = \
+                    init_cgi_script(delayed_input)
 
-    if not delayed_input:
-        fieldstorage = cgi.FieldStorage()
-        user_arguments_dict = fieldstorage_to_dict(fieldstorage)
-    else:
-        user_arguments_dict = {'__DELAYED_INPUT__': delayed_input}
+    # default to html output
+
+    output_format = user_arguments_dict.get('output_format', ['html'])[-1]
+
     (out_obj, (ret_code, ret_msg)) = main(client_id,
             user_arguments_dict)
 
-    # default to html
-
-    output_format = 'html'
-    if user_arguments_dict.has_key('output_format'):
-        output_format = user_arguments_dict['output_format'][0]
-
-    output = do_output(ret_code, ret_msg, out_obj, output_format)
-    if not output:
-
-        # Error occured during output print
-
-        print 'Return object was _not_ successfully printed!'
-    print output
-
-
-def run_cgi_script_possibly_with_cert(main, delayed_input=None,
-                                      print_header=True,
-                                      content_type='text/html'):
-    """Get needed information and run the function received as argument.
-    If delayed_input is not set to a function, the default cgi input will be
-    extracted and parsed before being passed on to the main function. Some
-    CGI operations like file upload won't work efficiently if the fieldstorage
-    is passed around (huge memory consumption) so they can pass the form
-    extracting function here and leave it to the back end to extract the
-    form.
-    """
-
-    (logger, configuration, client_id, o) = \
-        init_cgiscript_possibly_with_cert(print_header, content_type)
-
-    if not delayed_input:
-        fieldstorage = cgi.FieldStorage()
-        user_arguments_dict = fieldstorage_to_dict(fieldstorage)
-    else:
-        user_arguments_dict = {'__DELAYED_INPUT__': delayed_input}
-    (out_obj, (ret_code, ret_msg)) = main(client_id,
-            user_arguments_dict)
-
-    # default to html
-
-    output_format = 'html'
-    if user_arguments_dict.has_key('output_format'):
-        output_format = user_arguments_dict['output_format'][0]
-
-    output = do_output(ret_code, ret_msg, out_obj, output_format)
-    if not output:
-
-        # Error occured during output print
-
-        print 'Return object was _not_ successfully printed!'
-    print output
+    finish_cgi_script(configuration, output_format, ret_code, ret_msg, out_obj)
 
 

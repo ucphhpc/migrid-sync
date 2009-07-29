@@ -316,7 +316,7 @@ def html_format(ret_val, ret_msg, out_obj):
     lines = []
     for i in out_obj:
         if i['object_type'] == 'start':
-            pass  # for now
+            pass
         elif i['object_type'] == 'error_text':
             lines.append('<p class=errortext>%s</p>' % i['text'])
         elif i['object_type'] == 'warning':
@@ -1014,7 +1014,7 @@ def get_valid_outputformats():
         ]
 
 
-def do_output(
+def format_output(
     ret_val,
     ret_msg,
     out_obj,
@@ -1035,26 +1035,31 @@ def do_output(
                        {'object_type': 'title', 'text'
                        : 'Validation error!'}])
 
+    start = None
     title = None
     header = None
 
     # Add header if missing
 
     for entry in out_obj:
-        if 'title' == entry.get('object_type', None):
+        obj_type = entry.get('object_type', None)
+        if 'start' == obj_type:
+            start = entry
+        elif 'title' == obj_type:
             title = entry
-        elif 'header' == entry.get('object_type', None):
+        elif 'header' == obj_type:
             header = entry
-    if not header:
-        out_obj = [{'object_type': 'header', 'text': 'MiG error'}]\
-             + out_obj
-    if not title:
-        out_obj = [{
-            'object_type': 'title',
-            'text': 'MiG error',
-            'javascript': '',
-            'bodyfunctions': '',
-            }] + out_obj
+    if not start:
+        if not header:
+            out_obj = [{'object_type': 'header', 'text': 'MiG error'}]\
+                      + out_obj
+        if not title:
+            out_obj = [{
+                'object_type': 'title',
+                'text': 'MiG error',
+                'javascript': '',
+                'bodyfunctions': '',
+                }] + out_obj
 
     if not outputformat in outputformats:
         return txt_format(ret_val, ret_msg, out_obj)

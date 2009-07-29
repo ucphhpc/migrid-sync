@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-""" Script initialization helper functions """
+"""Script initialization helper functions"""
 
 import os
 import sys
@@ -42,7 +42,7 @@ def initialize_main_variables(op_title=True, op_header=True,
     configuration = get_configuration_object()
     logger = configuration.logger
     output_objects = []
-    output_objects.append({'object_type': 'start'})
+    output_objects.append({'object_type': 'start', 'headers': []})
     op_name = os.path.basename(sys.argv[0]).replace('.py', '')
 
     if op_title:

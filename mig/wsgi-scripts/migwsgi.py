@@ -33,7 +33,7 @@ import shared.returnvalues as returnvalues
 from shared.cgiinput import fieldstorage_to_dict
 from shared.httpsclient import extract_client_id
 from shared.objecttypes import get_object_type_info
-from shared.output import validate, do_output
+from shared.output import validate, format_output
 
 
 def object_type_info(object_type):
@@ -151,18 +151,25 @@ def application(environ, start_response):
         status = '403 ERROR'
 
     (ret_code, ret_msg) = ret_val
-    output = do_output(ret_code, ret_msg, output_objs, output_format)
+    output = format_output(ret_code, ret_msg, output_objs, output_format)
     if not output:
 
         # Error occured during output print
 
-        output = 'Return object was _not_ successfully extracted!'
+        output = 'Output could _not_ be extracted!'
 
-    content = 'text/html'
-    if 'html' != output_format:
-        content = 'text/plain'
-    response_headers = [('Content-type', content), ('Content-Length',
-                        str(len(output)))]
+    start_entry = None
+    for entry in output_objs:
+        if entry['object_type'] == 'start':
+            start_entry = entry
+    if not start_entry or not start_entry.get('headers', []):
+        start_entry = {'object_type': 'start', 'headers':
+                       [('Content-Type', 'text/html')]}
+        output_objs = [start_entry] + output_objs
+    response_headers = start_entry['headers']
+    if not [i for i in response_headers if 'Content-Length' == i[0]]:
+        response_headers.append(('Content-Length', str(len(output))))
+
     start_response(status, response_headers)
 
     return [output]

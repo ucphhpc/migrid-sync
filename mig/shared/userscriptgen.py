@@ -39,6 +39,8 @@ for all supported languages. If one or more languages are supplied
 as arguments, only those languages will be generated.
 """
 
+import sys
+
 __version__ = '$Revision: 2591 $'
 
 # $Id: userscriptgen.py 2591 2009-02-25 10:56:13Z jones $
