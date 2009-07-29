@@ -466,6 +466,8 @@ def migrate_users(
 
     
     for (client_id, user) in targets.items():
+        old_id = user['full_name']
+        new_id = user['distinguished_name']        
         if verbose:
             print 'updating user %s on old format to new format %s' % (client_id,
                                                                        new_id)
