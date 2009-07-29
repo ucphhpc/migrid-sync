@@ -409,7 +409,20 @@ def migrate_users(
             if not force:
                 sys.exit(1)
 
+    # Make sure there are no duplicate user IDs
+
+    all_old = []
     for (client_id, user) in user_db.items():
+        old_id = user['full_name']
+        if old_id in all_old:
+            print 'Error: old user ID %s is not unique in user DB!' % old_id
+            if not force:
+                sys.exit(1)
+        else:
+            all_old.append(old_id)
+
+    for (client_id, user) in user_db.items():
+        old_id = user['full_name']
         fill_distinguished_name(user)
         new_id = user['distinguished_name']
         if client_id == new_id:
@@ -421,7 +434,7 @@ def migrate_users(
             print 'updating user %s on old format to new format %s' % (client_id,
                                                                        new_id)
 
-        old_name = client_id_dir(user['full_name'])
+        old_name = client_id_dir(old_id)
         new_name = client_id_dir(new_id)
 
         # Move user dirs
