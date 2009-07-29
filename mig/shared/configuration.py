@@ -57,6 +57,7 @@ def fix_missing(config_file, verbose=True):
         'im_notify_stdin': '~/mig/server/notify.stdin',
         'gridstat_files_dir': '~/state/gridstat_files/',
         'mig_server_home': '~/mig/server/',
+        'mig_code_base': '~/mig/',
         'resource_home': '~/state/resource_home/',
         'resource_pending': '~/state/resource_pending/',
         'user_pending': '~/state/user_pending/',
@@ -151,6 +152,7 @@ class Configuration:
     im_notify_stdin = ''
     gridstat_files_dir = ''
     mig_server_home = ''
+    mig_code_base = ''
     server_fqdn = ''
     admin_email = ''
     resource_home = ''
@@ -375,6 +377,10 @@ class Configuration:
                 pass
             raise Exception('Failed to parse configuration: %s' % err)
 
+        if config.has_option('GLOBAL', 'mig_code_base'):
+            self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
+        else:
+            self.mig_code_base = os.path.dirname(self.mig_server_home.rstrip(os.sep))
         if config.has_option('GLOBAL', 'public_key_file'):
             self.public_key_file = config.get('GLOBAL',
                     'public_key_file')

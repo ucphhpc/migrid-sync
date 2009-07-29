@@ -320,6 +320,7 @@ def fill_frontend_script(
     """Fill in frontend template"""
 
     msg = ''
+    configuration = get_configuration_object()
 
     try:
         os.write(filehandle, '#!/bin/bash\n#\n')
@@ -344,7 +345,9 @@ def fill_frontend_script(
 
         # append frontend_script.sh
 
-        newhandle = open('../resource/frontend_script.sh', 'r')
+        script_path = os.path.join(configuration.mig_code_base, 'resource',
+                                   'frontend_script.sh')
+        newhandle = open(script_path, 'r')
         os.write(filehandle, newhandle.read())
         newhandle.close()
         return (True, '')
@@ -450,12 +453,14 @@ def fill_exe_node_script(
 
         # append ANY_node_script!
 
-        newhandle = open('../resource/%s_node_script.sh' % name, 'r')
+        script_path = os.path.join(configuration.mig_code_base, 'resource',
+                                   '%s_node_script.sh' % name)
+        newhandle = open(script_path, 'r')
         os.write(filehandle, newhandle.read())
         newhandle.close()
         return (True, '')
     except Exception, err:
-        return (False, 'could not write exe node script file: %s' % err)
+        return (False, 'could not write exe node script file: %s (%s , %s)' % (err, configuration, os.environ))
 
 
 def fill_master_node_script(
