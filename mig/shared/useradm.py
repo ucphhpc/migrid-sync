@@ -443,9 +443,16 @@ def migrate_users(
                     sys.exit(1)
             else:
                 (latest_id, latest_user) = latest[old_id]
-                latest_expire = int(latest_user.get('expire', 0))
-                current_expire = int(user.get('expire', 0))
-                if latest_expire <= current_expire:
+                # expire may be int, unset or None: try with fall back
+                try:
+                    latest_expire = int(latest_user['expire'])
+                except:
+                    latest_expire = 0
+                try:
+                    current_expire = int(user['expire'])
+                except:
+                    current_expire = 0
+                if latest_expire < current_expire:
                     prune_id = latest_id
                     latest[old_id] = (client_id, user)
                 else:
