@@ -35,6 +35,8 @@ from shared.html import get_cgi_html_header, get_cgi_html_footer
 from shared.objecttypes import validate
 from shared.prettyprinttable import pprint_table
 
+row_name = ('even_row', 'odd_row')
+
 
 def txt_table_if_have_keys(header, input_dict, keywordlist):
     """create txt table contents based on keys in a dictionary"""
@@ -553,9 +555,11 @@ def html_format(ret_val, ret_msg, out_obj):
                           % (columns - cols))
             lines.append('</tr>')
 
+            row_number = 1
             for dir_listing in i['dir_listings']:
                 for entry in dir_listing['entries']:
                     cols = 0
+                    row_class = row_name[row_number % 2]
                     if 'directory' == entry['type']:
                         directory = entry
                         if directory == dir_listing['entries'][0]:
@@ -568,7 +572,7 @@ def html_format(ret_val, ret_msg, out_obj):
                                      - cols) + '</tr>')
                             cols = columns
 
-                        lines.append('<tr>')
+                        lines.append('<tr class=%s>' % row_class)
                         cols = 0
                         lines.append('<td><br></td>')
                         cols += 1
@@ -597,7 +601,7 @@ def html_format(ret_val, ret_msg, out_obj):
                         lines.append('</tr>')
                     elif 'file' == entry['type']:
                         this_file = entry
-                        lines.append('<tr>')
+                        lines.append('<tr class=%s>' % row_class)
                         cols = 0
                         lines.append('<td><br></td>')
                         cols += 1
@@ -631,6 +635,7 @@ def html_format(ret_val, ret_msg, out_obj):
                                  + '</tr>')
                         cols = columns
                         lines.append('</tr>')
+                    row_number += 1
             lines.append('</form></table>')
             lines.append('')
         elif i['object_type'] == 'filewcs':
@@ -730,12 +735,15 @@ def html_format(ret_val, ret_msg, out_obj):
             else:
                 lines.append('<table class="runtimeenvs"><th>Name</th><th>Description</th><th>Details</th><th>Creator</th></tr>'
                              )
+                row_number = 1
                 for single_re in runtimeenvironments:
-                    lines.append('<tr><td>%s</td><td>%s</td><td><a href=showre.py?re_name=%s>View</a></td><td>%s</td></tr>'
-                                  % (single_re['name'],
+                    row_class = row_name[row_number % 2]
+                    lines.append('<tr class=%s><td>%s</td><td>%s</td><td><a href=showre.py?re_name=%s>View</a></td><td>%s</td></tr>'
+                                  % (row_class, single_re['name'],
                                  single_re['description'],
                                  single_re['name'], single_re['creator'
                                  ]))
+                    row_number += 1
                 lines.append('</table>')
         elif i['object_type'] == 'runtimeenvironment':
             software_html = ''
@@ -802,8 +810,10 @@ def html_format(ret_val, ret_msg, out_obj):
                 lines.append("<table class='vgrids'>")
                 lines.append('<tr class="title"><td>Name</td><td>Actions</td><td class=centertext colspan=2>Private page</td><td class=centertext colspan=2>Public page</td><td class=centertext colspan=2>Wiki</td><td class=centertext colspan=2>Monitor</td></tr>'
                              )
+                row_number = 1
                 for obj in vgrids:
-                    lines.append('<tr>')
+                    row_class = row_name[row_number % 2]
+                    lines.append('<tr class=%s>' % row_class)
                     lines.append('<td>%s</td>' % obj['name'])
                     lines.append('<td>')
                     if obj.has_key('administratelink'):
@@ -869,6 +879,7 @@ def html_format(ret_val, ret_msg, out_obj):
                         lines.append('-----')
                     lines.append('</td>')
                     lines.append('</tr>')
+                    row_number += 1
                 lines.append('</table>')
             else:
                 lines.append('No matching VGrids found')
