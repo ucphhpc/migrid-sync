@@ -29,6 +29,7 @@
 
 import os
 import sys
+import shutil
 import pickle
 import fnmatch
 
@@ -163,19 +164,9 @@ def delete_dir(path, verbose=False):
     first remove all files and subdirs, then remove dir tree.
     """
 
-    for (root, dirs, files) in os.walk(path, topdown=False):
-        for name in files:
-            if verbose:
-                print 'removing: ' + root + os.sep + name
-            os.remove(root + os.sep + name)
-        for name in dirs:
-            if verbose:
-                print 'removing: ' + root + os.sep + name
-            if os.path.islink(root + os.sep + name):
-                os.remove(root + os.sep + name)
-            else:
-                os.rmdir(root + os.sep + name)
-    os.removedirs(path)
+    if verbose:
+        print 'removing: %s' % path
+    shutil.rmtree(path)
 
 
 def create_user(
@@ -436,20 +427,7 @@ def migrate_user(
         print 'updating user %s on old format to new format %s' % (client_id,
                                                                    new_id)
 
-    try:
-        del user_db[client_id]
-        user_db[new_id] = user
-        save_user_db(user_db, db_path)
-        if verbose:
-            print 'User %s was successfully removed from user DB!'\
-                  % client_id
-    except Exception, err:
-        print 'Error: Failed to remove %s from user DB: %s'\
-             % (client_id, err)
-        if not force:
-            sys.exit(1)
-
-    old_name = client_id_dir(client_id)
+    old_name = client_id_dir(user['full_name'])
     new_name = client_id_dir(new_id)
 
     # Move user dirs
@@ -461,7 +439,7 @@ def migrate_user(
         try:
             old_path = os.path.join(base_dir, old_name)
             new_path = os.path.join(base_dir, new_name)
-            os.renames(old_path, new_path)
+            shutil.move(old_path, new_path)
         except Exception, exc:
 
             # os.symlink(new_path, old_path)
@@ -492,7 +470,7 @@ def migrate_user(
                 continue
             filter_pickled_dict(re_path, {client_id: new_id})
         except Exception, exc:
-            print 'Error: could not update saved mrsl user in %s: %s'\
+            print 'Error: could not update RE user in %s: %s'\
                  % (re_path, exc)
             if not force:
                 sys.exit(1)
@@ -507,10 +485,25 @@ def migrate_user(
                 try:
                     filter_pickled_list(kind_path, {client_id: new_id})
                 except Exception, exc:
-                    print 'Error: could not update saved kind in %s: %s'\
-                         % (kind_path, exc)
+                    print 'Error: could not update saved %s in %s: %s'\
+                         % (kind, kind_path, exc)
                     if not force:
                         sys.exit(1)
+
+    # Finally update user DB now that file system was updated
+    
+    try:
+        del user_db[client_id]
+        user_db[new_id] = user
+        save_user_db(user_db, db_path)
+        if verbose:
+            print 'User %s was successfully updated in user DB!'\
+                  % client_id
+    except Exception, err:
+        print 'Error: Failed to update %s in user DB: %s'\
+             % (client_id, err)
+        if not force:
+            sys.exit(1)
 
 
 def default_search():
