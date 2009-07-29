@@ -121,11 +121,6 @@ def main(client_id, user_arguments_dict):
             n = {resource: walltime_per_resource}
             resources_walltime.update(n)
 
-        # if level == "basic":
-            # print username,":", jobs_per_user, "jobs"
-        # else:
-            # print "---- ", username, " ----"
-
         if group_by == 'users' and (jobs_per_user > 0 or show_all
                                      == 'true'):
             sandboxinfo = {'object_type': 'sandboxinfo'}
@@ -133,15 +128,8 @@ def main(client_id, user_arguments_dict):
             sandboxinfo['resource'] = len(userdb[username][RESOURCES])
             sandboxinfo['jobs'] = jobs_per_user
             sandboxinfo['walltime'] = walltime_per_user
-
-            # print "<tr><td>%s</td><td>%s jobs</td></tr>" % (res, resources[res])
-            # print res,":", resources[res], "jobs"
-
             sandboxinfos.append(sandboxinfo)
         elif jobs_per_user > 0 or show_all == 'true':
-
-            # print "<tr><td colspan='2'><h2>%s</h2></td></tr>" % username
-
             for res in resources_jobs.keys():
                 if resources_jobs[res] > 0 or show_all == 'true':
                     sandboxinfo = {'object_type': 'sandboxinfo'}
@@ -149,16 +137,9 @@ def main(client_id, user_arguments_dict):
                     sandboxinfo['resource'] = res
                     sandboxinfo['jobs'] = resources_jobs[res]
                     sandboxinfo['walltime'] = resources_walltime[res]
-
-                    # print "<tr><td>%s</td><td>%s jobs</td></tr>" % (res, resources[res])
-                    # print res,":", resources[res], "jobs"
-
                     sandboxinfos.append(sandboxinfo)
 
         total_jobs += jobs_per_user
-
-        # print "Total jobs run by sandboxes: ", total_jobs, "jobs"............
-        # print "<form action='sssmonitor.py' method='POST'>"
 
     if 'username' == sort:
 
@@ -202,7 +183,7 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'verbatim', 'text'
                           : 'Sort by: '})
-
+    
     link_list = []
     for name in ('username', 'resource', 'jobs', 'walltime'):
         link_list.append({'object_type': 'link', 'destination'
@@ -225,8 +206,15 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'multilinkline', 'links'
                           : link_list})
+    # Time stamp
 
+    now = datetime.datetime.now()
+    output_objects.append({'object_type': 'text', 'text'
+                          : 'Updated on %s' % now})
     output_objects.append({'object_type': 'text', 'text': ''})
+
+    
+    # Actual stats
 
     output_objects.append({'object_type': 'sandboxinfos', 'sandboxinfos'
                           : sandboxinfos})
@@ -234,9 +222,3 @@ def main(client_id, user_arguments_dict):
                           : 'Total jobs run by sandboxes: %s'
                            % total_jobs})
     return (output_objects, returnvalues.OK)
-
-
-    # if show_all=='true':
-    #    print "<tr><td align='center'><a href=?show_all=false>Hide empty resources</a></td></tr>"
-    # else:
-    #    print "<tr><td align='center'><a href=?show_all=true>Show all users and resources</a></td></tr>"

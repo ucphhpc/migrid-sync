@@ -1395,7 +1395,10 @@ class Scheduler:
         # ttl = self.expire_after - queued_time
         # expire_factor = 16.0 / ttl
 
-        expire_factor = 16.0 / self.conf.expire_after
+        if self.conf.expire_after < 60:
+            expire_factor = 0.0
+        else:
+            expire_factor = 16.0 / self.conf.expire_after
 
         delay = float(res['EXPECTED_DELAY'])
         delay_penalty = scale * (exp(delay * expire_factor) - 1)

@@ -1290,6 +1290,17 @@ while True:
                             configuration)
     elif cap_line.find('JOBTIMEOUT') == 0:
 
+        print cap_line
+        logger.info(cap_line)
+        logger.info('job timeout: %d job(s) in the executing queue.',
+                    executing_queue.queue_length())
+
+        if len(linelist) != 4:
+            logger.error('Invalid timeout job request')
+            continue
+        
+        # read values
+
         unique_resource_name = linelist[1]
         exe_name = linelist[2]
         jobid = linelist[3]
