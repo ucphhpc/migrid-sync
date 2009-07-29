@@ -33,6 +33,10 @@ from shared.functional import validate_input
 from shared.gridstat import GridStat
 from shared.sandbox import load_sandbox_db
 
+# sandbox db has the format: {username: (password, [list_of_resources])}
+
+PW, RESOURCES = 0, 1
+
 
 def signature():
     """Signature of the main function"""
@@ -59,11 +63,6 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG Screen Saver Sandbox Monitor'})
-
-    # sandbox db has the format: {username: (password, [list_of_resources])}
-
-    PW = 0
-    RESOURCES = 1
 
     # Load the user file
 

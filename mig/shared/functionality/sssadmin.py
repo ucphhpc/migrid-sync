@@ -27,12 +27,16 @@
 
 """This script allows users to administrate their sandboxes"""
 
+import datetime
+
 import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 from shared.gridstat import GridStat
 from shared.sandbox import load_sandbox_db, save_sandbox_db
 from shared.vgrid import default_vgrid
+
+# sandbox db has the format: {username: (password, [list_of_resources])}
 
 PW, RESOURCES = 0, 1
 
@@ -171,58 +175,14 @@ def sum_walltime(grid_stat, resource_name):
     return value
 
 
-def show_info(configuration, userdb, grid_stat, user, passwd, expert):
-    """Shows info for given user"""
+def show_download(configuration, userdb, user, passwd, expert):
+    """Shows download form"""
 
     admin_email = configuration.admin_email
 
-    # Resource Monitor Section
-
-    html = \
-        """<H1>Sandbox Administration and Monitor</H1>
-    <table class=monitor>
-    <tr class=title><td align='center' colspan='3'>
-    Your SSS sandbox resources and their individual job statistics
-    </td>
-    </tr>
-    <tr>
-    <td align='center'>
-    Resource
-    </td>
-    <td align='center'>
-    Jobs
-    </td>
-    <td align='center'>
-    Walltime
-    </td>
-    </tr>
-    
-    """
-
-    for resource in userdb[user][RESOURCES]:
-
-        # now find number of jobs successfully executed by resource
-
-        jobs = count_jobs(resource)
-        walltime = sum_walltime(resource)
-        html += \
-            """<tr>
-<td align='center'>%s</td>
-<td align='center'>%s</td>
-<td align='center'>%s</td>
-</tr>"""\
-             % (resource, jobs, walltime)
-    if len(userdb[user][RESOURCES]) == 0:
-        html += \
-            """<tr><td align='center'>You haven't downloaded any
-              sandbox resources yet</td></tr>"""
-    html += """
-    </table>
-    <br>"""
-
     # Download sandbox section
 
-    html += \
+    html = \
         """<form action='ssscreateimg.py?MiG-SSS.zip' 
           method='POST'>
     <table class=sandboxcreateimg>
@@ -297,6 +257,9 @@ def main(client_id, user_arguments_dict):
     if 'true' == expert_string.lower():
         expert = True
 
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'MiG Sandbox Administration and Monitor'})
+
     # Load the user DB
 
     try:
@@ -357,7 +320,7 @@ def main(client_id, user_arguments_dict):
                                               expert)})
     else:
 
-    # Otherwise, check that username and password are correct
+        # Otherwise, check that username and password are correct
 
         if not userdb.has_key(username):
             output_objects.append({'object_type': 'error_text', 'text'
@@ -368,9 +331,6 @@ def main(client_id, user_arguments_dict):
                                   })
             return (output_objects, returnvalues.CLIENT_ERROR)
         elif userdb[username][PW] != password:
-
-            # print "<a href='ssslogin.py'>Back</a>"....
-
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Wrong password - please go back and try again...'
                                   })
@@ -380,12 +340,36 @@ def main(client_id, user_arguments_dict):
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:
 
-            # print "<a href='ssslogin.py'>Back</a>"....
+            # Resource Monitor Section
+            # Time stamp
 
+            msg = "Your SSS sandbox resources and their individual job statistics"
+            output_objects.append({'object_type': 'text', 'text': msg})
+            now = datetime.datetime.now()
+            output_objects.append({'object_type': 'text', 'text'
+                                   : 'Updated on %s' % now})
+
+            sandboxinfos = []
+            for resource in userdb[username][RESOURCES]:
+                sandboxinfo = {'object_type': 'sandboxinfo'}
+                sandboxinfo['username'] = username
+                sandboxinfo['resource'] = resource
+                sandboxinfo['jobs'] = count_jobs(grid_stat, resource)
+                sandboxinfo['walltime'] = sum_walltime(grid_stat, resource)
+                sandboxinfos.append(sandboxinfo)
+
+            if sandboxinfos:
+                output_objects.append({'object_type': 'sandboxinfos', 'sandboxinfos'
+                                       : sandboxinfos})
+            else:
+                output_objects.append({'object_type': 'text', 'text'
+                                   : "You haven't downloaded any sandbox resources yet"})
+
+            output_objects.append({'object_type': 'text', 'text': ''})
             output_objects.append({'object_type': 'html_form', 'text'
-                                  : show_info(configuration, userdb,
-                                              grid_stat, username, password,
-                                              expert)})
+                                   : show_download(configuration, userdb,
+                                                   username, password,
+                                                   expert)})
     output_objects.append({'object_type': 'text', 'text': ''})
     return (output_objects, returnvalues.OK)
 

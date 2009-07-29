@@ -68,7 +68,7 @@ def display_doc(output_objects, subject, all_docs):
     """Show doc"""
     if subject in all_docs.keys():
         (func, args) = all_docs[subject]
-        show_subject(output_objects, subject, func, args)
+        show_subject(subject, func, args)
     else:
         output_objects.append({'object_type': 'text', 'text'
                               : "No documentation found matching '%s'"

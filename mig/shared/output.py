@@ -722,11 +722,14 @@ def html_format(ret_val, ret_msg, out_obj):
             else:
                 lines.append('<table class="sandboxinfo"><th>Username</th><th>Resource(s)</th><th>Jobs</th><th>Walltime</th></tr>'
                              )
+                row_number = 1
                 for sandboxinfo in sandboxinfos:
-                    lines.append('<tr>%s</tr>'
-                                  % html_table_if_have_keys(sandboxinfo,
+                    row_class = row_name[row_number % 2]
+                    lines.append('<tr class=%s>%s</tr>'
+                                  % (row_class, html_table_if_have_keys(sandboxinfo,
                                  ['username', 'resource', 'jobs',
-                                 'walltime']))
+                                 'walltime'])))
+                    row_number += 1
                 lines.append('</table>')
         elif i['object_type'] == 'runtimeenvironments':
             runtimeenvironments = i['runtimeenvironments']
