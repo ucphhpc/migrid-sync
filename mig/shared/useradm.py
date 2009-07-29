@@ -429,16 +429,16 @@ def migrate_users(
         new_id = user['distinguished_name']        
         if new_id in user_db.keys():
             if not prune_dupes:
-                print 'Error: new ID of old user %s already exists in user DB!' % new_id
+                print 'Error: new ID %s already exists in user DB!' % new_id
                 if not force:
                     sys.exit(1)
             else:
                 if verbose:
                     print 'Pruning old duplicate user %s from user DB' % old_id
-                del user_db[old_id]
+                del user_db[client_id]
         elif old_id in latest.keys():
             if not prune_dupes:
-                print 'Error: old user ID %s is not unique in user DB!' % old_id
+                print 'Error: old ID %s is not unique in user DB!' % old_id
                 if not force:
                     sys.exit(1)
             else:
@@ -464,8 +464,8 @@ def migrate_users(
             latest[old_id] = (client_id, user)
     save_user_db(user_db, db_path)
 
-    
-    for (client_id, user) in targets.items():
+    # Now update the remaining users, i.e. those in latest
+    for (client_id, user) in latest.values():
         old_id = user['full_name']
         new_id = user['distinguished_name']        
         if verbose:
