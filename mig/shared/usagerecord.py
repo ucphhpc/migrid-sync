@@ -218,35 +218,6 @@ class UsageRecord:
     Provides a usage record data structure and writing it out to xml.
     """
 
-    __logger = None
-    __configuration = None
-    __doc = None
-
-    # XML data which we intend to use:
-
-    record_id = None
-    create_time = None
-    global_job_id = None
-    local_job_id = None
-    global_user_name = None
-    local_user_id = None
-    status = None
-    charge = None
-    charge_formula = None
-    wall_duration = None
-    node_count = None
-    start_time = None
-    end_time = None
-    project_name = None
-
-# currently not used, but prepared:
-
-    cpu_duration_user = None
-    cpu_duration_system = None
-    submit_host = None
-    host = None
-    queue = None
-
 # constructor, empty record:
 
     def __init__(self, config, logger):
@@ -257,6 +228,31 @@ class UsageRecord:
         self.__doc = ET.createDocument(None,'JobUsageRecord',None)
 
         # we keep the document around from the beginning...
+
+        # XML data which we intend to use:
+
+        self.record_id = None
+        self.create_time = None
+        self.global_job_id = None
+        self.local_job_id = None
+        self.global_user_name = None
+        self.local_user_id = None
+        self.status = None
+        self.charge = None
+        self.charge_formula = None
+        self.wall_duration = None
+        self.node_count = None
+        self.start_time = None
+        self.end_time = None
+        self.project_name = None
+
+# currently not used, but prepared:
+
+        self.cpu_duration_user = None
+        self.cpu_duration_system = None
+        self.submit_host = None
+        self.host = None
+        self.queue = None
 
     def generate_tree(self):
         """
