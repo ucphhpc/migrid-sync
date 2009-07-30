@@ -59,26 +59,32 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg, output_ob
     """Shared finalization"""
 
     logger = configuration.logger
+    default_content = 'text/html'
+    if 'html' != output_format:
+        default_content = 'text/plain'
+    default_headers = [('Content-Type', default_content)]
     start_entry = None
     for entry in output_objs:
         if entry['object_type'] == 'start':
             start_entry = entry
-    if not start_entry or not start_entry.get('headers', []):
-        start_entry = {'object_type': 'start', 'headers':
-                       [('Content-Type', 'text/html')]}
+    if not start_entry:
+        start_entry = {'object_type': 'start', 'headers': default_headers}
         output_objs = [start_entry] + output_objs
+    elif not start_entry.get('headers', []):
+        start_entry['headers'] = default_headers
     headers = start_entry['headers']
+
+    output = format_output(ret_code, ret_msg, output_objs, output_format)
+    if not output:
+
+        # Error occured during output formatting
+
+        output = 'Output could _not_ be extracted!'
+
     for (key, val) in headers:
         print "%s: %s" % (key, val)
     print ''
 
-    output = format_output(ret_code, ret_msg, output_objs, output_format)
-
-    if not output:
-
-        # Error occured during output print
-
-        print 'Return object could _not_ be printed!'
     print output
 
 def run_cgi_script(main, delayed_input=None):
