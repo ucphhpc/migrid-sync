@@ -246,13 +246,15 @@ class UsageRecord:
         self.end_time = None
         self.project_name = None
 
+        self.machine_name = None
+        self.host = None
+
 # currently not used, but prepared:
 
         self.cpu_duration_user = None
         self.cpu_duration_system = None
-        self.submit_host = None
-        self.host = None
         self.queue = None
+        self.submit_host = None
 
     def generate_tree(self):
         """
@@ -323,10 +325,9 @@ class UsageRecord:
             return None
         set_element(record, 'Status', text=self.status)
 
-        # we always have a machine name...
-        
-        set_element(record, 'MachineName',
-                    text=self.__configuration.mig_server_id)
+        # we should have a machine name...
+        if self.machine_name:
+            set_element(record, 'MachineName', text=self.machine_name)
 
         if self.queue:
             set_element(record, 'Queue', text=self.queue)
@@ -429,36 +430,22 @@ class UsageRecord:
 
         self.create_time = xsl_datetime()  # i.e. Now!
 
-        # more fields directly used:
+        # fields directly used (lookup not needed):
 
-        try:
-            self.global_user_name = lookup('USER_CERT')
-        except NotHere:
-            pass
-        try:
-            self.project_name = lookup('PROJECT')
-        except NotHere:
-            pass
+        self.global_user_name = job.get('USER_CERT',None)
 
-        # try: self.machine_name = lookup('UNIQUE_RESOURCE_NAME')
-        # except NotHere: pass
+        self.project_name = job.get('PROJECT',None)
 
-        try:
-            self.node_count = lookup('NODECOUNT')
-        except NotHere:
-            pass
+        self.node_count = job.get('NODECOUNT', None)
 
-        # global JOB_ID should be there if we get here...
+        # global JOB_ID should always be there if we get here...
+        self.global_job_id = job.get('JOB_ID', None)
 
-        self.global_job_id = lookup('JOB_ID')
-        try:
-            self.local_job_id = lookup('LOCALJOBNAME')
-        except NotHere:
-            pass
+        self.local_job_id = job.get('LOCALJOBNAME', None)
 
-        # used to compute a field value:
+        # compute timing values:
         # QUEUED_TIMESTAMP - Start time (???)
-        # not used yet, not really the start time
+        # not used yet, could be added ("deisa extension" to UR in SGAS)
 
         try:
 
@@ -484,7 +471,7 @@ class UsageRecord:
 
             # charge is computed as wall time * node count:
 
-            if self.node_count is not None:
+            if self.node_count:
 
                 charge_delta = self.node_count * (end_time - start_time)
                 self.charge = charge_delta.days * 86400\
@@ -497,15 +484,28 @@ class UsageRecord:
 
                 self.charge_formula = 'nodes * wall_duration(sec)'
         except NotHere:
-            pass  # nevermind...
+            pass  
+                # nevermind... if something is not found, we jump out, 
+                # but we have set all available fields before.
 
+        # executing host, should always be there:
+        self.host = job.get('EXE',None)
+        
+        # machine name = executing resource ID
+        try: 
+            self.machine_name = lookup('UNIQUE_RESOURCE_NAME')
+        except NotHere: 
+            # might be a failed job, try execution history
+            if 'EXECUTION_HISTORY' in job:
+                hist = job['EXECUTION_HISTORY']
+                lastTry = hist[len(hist)]
+                self.machine_name = lastTry.get('UNIQUE_RESOURCE_NAME',None)
+
+        # local user on the resource, if available
         if job.has_key('RESOURCE_CONFIG'):
             resCfg = job['RESOURCE_CONFIG']
             self.local_user_id = resCfg.get('MIGUSER',None)
-            self.host  = resCfg.get('RESOURCE_ID',None)
-
-        # if something is not found, we jump out, but
-        # we have set all available fields before.
+            # self.host  = resCfg.get('RESOURCE_ID',None)
 
         # could be used, but unreliable:
         # (scheduling req.ments given by user)
