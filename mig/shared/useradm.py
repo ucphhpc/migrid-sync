@@ -425,7 +425,7 @@ def migrate_users(
 
     latest = {}
     for (client_id, user) in targets.items():
-        old_id = user['full_name']
+        old_id = user['full_name'].replace(' ', '_')
         new_id = user['distinguished_name']        
         if new_id in user_db.keys():
             if not prune_dupes:
@@ -434,7 +434,7 @@ def migrate_users(
                     sys.exit(1)
             else:
                 if verbose:
-                    print 'Pruning old duplicate user %s from user DB' % old_id
+                    print 'Pruning old duplicate user %s from user DB' % client_id
                 del user_db[client_id]
         elif old_id in latest.keys():
             if not prune_dupes:
