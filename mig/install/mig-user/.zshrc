@@ -96,15 +96,7 @@ export HISTFILE
 export HISTSIZE
 export SAVEHIST
 
-
-CVSROOT=":ext:bach.imada.sdu.dk:/home/jones/cvs"
-CVS_RSH="ssh"
-CVSUMASK=007
-export CVSROOT
-export CVS_RSH
-export CVSUMASK
-
 setopt nobeep
 # enable danish chars (Jonas)
-LC_CTYPE="da_DK"
+LC_CTYPE="en_DK"
 export LC_CTYPE

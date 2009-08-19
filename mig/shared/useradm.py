@@ -466,11 +466,12 @@ def migrate_users(
 
     # Now update the remaining users, i.e. those in latest
     for (client_id, user) in latest.values():
-        old_id = user['full_name']
+        old_id = user['full_name'].replace(' ', '_')
         new_id = user['distinguished_name']        
         if verbose:
-            print 'updating user %s on old format to new format %s' % (client_id,
-                                                                       new_id)
+            print 'updating user %s on old format %s to new format %s' % (client_id,
+                                                                          old_id,
+                                                                          new_id)
 
         old_name = client_id_dir(old_id)
         new_name = client_id_dir(new_id)
@@ -500,7 +501,7 @@ def migrate_users(
                 mrsl_path = os.path.join(mrsl_base, mrsl_name)
                 if not os.path.isfile(mrsl_path):
                     continue
-                filter_pickled_dict(mrsl_path, {client_id: new_id})
+                filter_pickled_dict(mrsl_path, {old_id: new_id})
             except Exception, exc:
                 print 'Error: could not update saved mrsl user in %s: %s'\
                      % (mrsl_path, exc)
@@ -513,7 +514,7 @@ def migrate_users(
                 re_path = os.path.join(re_base, re_name)
                 if not os.path.isfile(re_path):
                     continue
-                filter_pickled_dict(re_path, {client_id: new_id})
+                filter_pickled_dict(re_path, {old_id: new_id})
             except Exception, exc:
                 print 'Error: could not update RE user in %s: %s'\
                      % (re_path, exc)
@@ -528,7 +529,7 @@ def migrate_users(
                     if not os.path.isfile(kind_path):
                         continue
                     try:
-                        filter_pickled_list(kind_path, {client_id: new_id})
+                        filter_pickled_list(kind_path, {old_id: new_id})
                     except Exception, exc:
                         print 'Error: could not update saved %s in %s: %s'\
                              % (kind, kind_path, exc)
