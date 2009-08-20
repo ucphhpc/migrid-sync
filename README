@@ -62,6 +62,14 @@ As root you can create an ordinary user, mig, for running the MiG server:
 Login as the new user:
 # su - mig
 
+To avoid other processes from tampering it is a good idea to set either
+the permissions on the entire mig user home very restrictively:
+# chmod 700 ~mig
+or at least set the umask tight enough to avoid unauthorized access to
+the MiG server files. 
+If you run MiG with different apache and mig users, you will most likely
+need to provide both users write access to the mig user home, though.
+
 Download and unpack the MiG source or make a checkout from svn as described on:
 http://code.google.com/p/migrid/source/checkout
 
@@ -183,22 +191,24 @@ certificate and user creation. Certificate requests will automatically
 result in an email with full certificate and MiG user creation
 instructions to the configured MiG admins. 
 
-Otherwise you can either still use the certificate request mechanism and
-ignore the certificate specific instructions or simply run the MiG user
-creation commands directly as described below.
+Otherwise you can use the external certificate sign up request mechanism
+included in MiG (https://server/cgi-sid/extcert.py) or simply run the
+MiG user creation commands directly as described below.
 
 To manually add a user to your MiG server you need to look up the certificate
 fields and run the createuser script:
 
 cd ~/mig/server
-
 ./createuser.py
 
 You will be prompted for user details one by one before the user is
 added to the local MiG user database. Any user added to this database
 can access your MiG server and manage his/her MiG jobs and files. The
-user must present a MiG certificate with the exact same Full Name field
-to get access, however.
+user must present a MiG certificate with the exact same Distinguished Name
+to get access, however. If you do not use the MiG CA or another CA with
+the same Distinguished Name format
+(/C=.*/ST=.*/O=.*/CN=.*/emailAddress=.*) you have to supply the -i DN
+option for the user to work.
 
 Example: adding myself as a user on a MiG server:
 
