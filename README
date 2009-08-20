@@ -105,7 +105,7 @@ python generateconfs.py . generated-confs mig-1.imada.sdu.dk mig mig \
        /usr/share/moin 80 443 User Group Listen
 
 or similarly with apache 2.x:
-python generateconfs.py . generated-confs mig-1.imada.sdu.dk mig mig \
+python generateconfs.py . generated-confs dk.migrid.org mig mig \
        /etc/apache2 /var/run/apache2 /var/log/apache2 /home/mig/mig \
        /home/mig/state /home/mig/MiG-certificates /etc/moin \
        /usr/share/moin 80 443 User Group '#Listen'
