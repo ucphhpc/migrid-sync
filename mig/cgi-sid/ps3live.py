@@ -34,7 +34,7 @@ import os
 import tempfile
 
 from shared.cgishared import init_cgiscript_possibly_with_cert, \
-    print_cgiscript_init
+    cgiscript_header
 from shared.fileio import make_symlink
 from shared.resource import create_resource
 from shared.sandbox import get_resource_name
@@ -99,7 +99,7 @@ def create_ps3_resource(sandboxkey):
 
     if not result[0]:
         o.out(result[1])
-        print_cgiscript_init()
+        cgiscript_header()
         o.reply_and_exit(o.ERROR)
 
     resource_identifier = result[2]
@@ -317,7 +317,7 @@ if os.getenv('REQUEST_METHOD') != 'GET':
 
     # Request method is not GET
 
-    print_cgiscript_init()
+    cgiscript_header()
     o.out('You must use HTTP GET!')
     o.reply_and_exit(o.ERROR)
 
@@ -326,7 +326,7 @@ if os.getenv('REQUEST_METHOD') != 'GET':
 if str(os.getenv('HTTPS')) != 'on':
     o.out('Please use HTTPS with session id for authenticating job requests!'
           )
-    print_cgiscript_init()
+    cgiscript_header()
     o.reply_and_exit(o.ERROR)
 
 action = fieldstorage.getfirst('action', None)

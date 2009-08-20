@@ -35,8 +35,7 @@ import os
 from shared.sandbox import get_resource_name
 from shared.resadm import get_frontend_script, get_master_node_script
 
-from shared.cgishared import init_cgiscript_possibly_with_cert, \
-    print_cgiscript_init
+from shared.cgishared import init_cgiscript_possibly_with_cert
 
 # ## Main ###
 # Get Querystring object
