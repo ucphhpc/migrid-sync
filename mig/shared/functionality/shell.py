@@ -193,6 +193,9 @@ def handle_command(cmd_line, client_id, output_objects):
         elif 'wc' == cmd:
             (out, code) = wc.main(client_id, {'path': args, 'flags'
                                   : flags})
+        # Undocumented operation for debugging apache environment
+        elif 'env' == cmd:
+            raise Exception('Dumping environment: %s' % os.environ)
         else:
             raise Exception('command not found')
     except Exception, exc:

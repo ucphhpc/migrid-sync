@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# docs - [insert a few words of module description on this line]
+# docs - online documentation front end
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -30,6 +30,6 @@ import cgitb
 cgitb.enable()
 
 from shared.functionality.docs import main
-from shared.cgiscriptstub import run_cgi_script
+from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
-run_cgi_script(main)
+run_cgi_script_possibly_with_cert(main)

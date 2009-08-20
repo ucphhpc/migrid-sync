@@ -275,10 +275,24 @@ def create_user(
     try:
         filehandle = open(htaccess_path, 'w')
 
-        # Match all known fields
+        # Match all known fields or require the client to come from a SID path.
+        #
+        # IMPORTANT:
+        # The fall back to explicitly allow no client certificate is necessary
+        # with apache2, where symlink target directories are checked against all
+        # Directory directives and thus preventing SID links to user homes from
+        # being used without a certificate, if htaccess doesn't explicitly allow
+        # it.
+        # As this is the required SID behaviour used to hand in job results, the
+        # fallback is needed to avoid breaking all job handling.
+        # With apache 1.x the symlink was not further checked and thus the
+        # htaccess requirement was simply ignored from those SID paths.
+        # It is *critical* that all other access to user homes are secured with
+        # SID or cert requirement to prevent unauthorized access.
 
         access = 'SSLRequire ('
-        access += '%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s"'
+        access += '%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s" || '
+        access += '%%{SSL_CLIENT_VERIFY} eq "NONE"'
         access += ')\n'
 
         filehandle.write(access % user)
