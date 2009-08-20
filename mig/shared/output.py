@@ -174,6 +174,9 @@ def txt_format(ret_val, ret_msg, out_obj):
                     if obj.has_key('executing_timestamp'):
                         lines.append('Executing: %s'
                                  % obj['executing_timestamp'])
+                    if obj.has_key('unique_resource_name'):
+                        lines.append('Resource: %s'
+                                 % obj['unique_resource_name'])
                     if obj.has_key('finished_timestamp'):
                         lines.append('Finished: %s'
                                  % obj['finished_timestamp'])
@@ -195,6 +198,9 @@ def txt_format(ret_val, ret_msg, out_obj):
                         if single_history.has_key('executing'):
                             lines.append('Executing %s: %s' % (count,
                                     single_history['executing']))
+                        if single_history.has_key('resource'):
+                            lines.append('Resource %s: %s' % (count,
+                                    single_history['resource']))
                         if single_history.has_key('failed'):
                             lines.append('Failed %s: %s' % (count,
                                     single_history['failed']))
@@ -388,6 +394,9 @@ def html_format(ret_val, ret_msg, out_obj):
                     if obj.has_key('executing_timestamp'):
                         lines.append('<tr><td>Executing</td><td>%s</td></tr>'
                                  % obj['executing_timestamp'])
+                    if obj.has_key('unique_resource_name'):
+                        lines.append('<tr><td>Resource</td><td>%s</td></tr>'
+                                 % obj['unique_resource_name'])
                     if obj.has_key('finished_timestamp'):
                         lines.append('<tr><td>Finished</td><td>%s</td></tr>'
                                  % obj['finished_timestamp'])
@@ -411,6 +420,10 @@ def html_format(ret_val, ret_msg, out_obj):
                             lines.append('<tr><td>Executing %s</td><td>%s</td></tr>'
                                      % (count,
                                     single_history['executing']))
+                        if single_history.has_key('resource'):
+                            lines.append('<tr><td>Resource %s</td><td>%s</td></tr>'
+                                     % (count,
+                                    single_history['resource']))
                         if single_history.has_key('failed'):
                             lines.append('<tr><td>Failed %s</td><td>%s</td></tr>'
                                      % (count, single_history['failed'
@@ -649,13 +662,13 @@ def html_format(ret_val, ret_msg, out_obj):
                     lines.append('<tr><td>%s</td>' % filewc['name'])
                     lines.append('<td>')
                     if filewc.has_key('lines'):
-                        lines.append(filewc['lines'])
+                        lines.append('%s' % filewc['lines'])
                     lines.append('</td><td>')
                     if filewc.has_key('words'):
-                        lines.append(filewc['words'])
+                        lines.append('%s' % filewc['words'])
                     lines.append('</td><td>')
                     if filewc.has_key('bytes'):
-                        lines.append(filewc['bytes'])
+                        lines.append('%s' % filewc['bytes'])
                     lines.append('</td></tr>')
                 lines.append('</table>')
         elif i['object_type'] == 'file_not_found':

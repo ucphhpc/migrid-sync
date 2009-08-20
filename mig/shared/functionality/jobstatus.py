@@ -223,6 +223,7 @@ def main(client_id, user_arguments_dict):
             'QUEUED_TIMESTAMP',
             'SCHEDULE_TIMESTAMP',
             'EXECUTING_TIMESTAMP',
+            'UNIQUE_RESOURCE_NAME',
             'FINISHED_TIMESTAMP',
             'FAILED_TIMESTAMP',
             'CANCELED_TIMESTAMP',
@@ -263,6 +264,9 @@ def main(client_id, user_arguments_dict):
                         execution_history['executing'] = \
                             time.asctime(history_dict['EXECUTING_TIMESTAMP'
                                 ])
+                    if history_dict.has_key('UNIQUE_RESOURCE_NAME'):
+                        execution_history['resource'] = \
+                            history_dict['UNIQUE_RESOURCE_NAME']
                     if history_dict.has_key('FAILED_TIMESTAMP'):
                         execution_history['failed'] = \
                             time.asctime(history_dict['FAILED_TIMESTAMP'
