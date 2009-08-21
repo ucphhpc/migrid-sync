@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-import datetime
+from datetime import datetime, timedelta
 
 import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
@@ -37,7 +37,35 @@ from shared.sandbox import load_sandbox_db
 
 PW, RESOURCES = 0, 1
 
+def get_sssmonitor_timedelta_format(timedelta):
+    """Outputs timedelta as '[Years,] [days,] HH:MM:SS'"""
+    years = timedelta.days/365
+    days = timedelta.days - (years*365)
+    hours = timedelta.seconds/3600
+    minutes = (timedelta.seconds-(hours*3600))/60
+    seconds = timedelta.seconds - (hours*3600) - (minutes*60)
 
+    hours_str = "%s" % (str(hours))
+    if (hours < 10):
+        hours_str = "0%s" % (hours_str)
+
+    minutes_str = "%s" % (str(minutes))
+    if (minutes < 10):
+        minutes_str = "0%s" % (minutes_str)
+        
+    seconds_str = "%s" % (str(seconds))
+    if (seconds < 10):
+        seconds_str = "0%s" % (seconds_str)
+
+    if (years > 0):
+        result = "%s years, %s days, %s:%s:%s" % (str(years), str(days), hours_str, minutes_str, seconds_str)
+    elif (days > 0):
+        result = "%s days, %s:%s:%s" % (str(days), hours_str, minutes_str, seconds_str)
+    else:
+        result = "%s:%s:%s" % (hours_str, minutes_str, seconds_str)
+        
+    return result
+    
 def signature():
     """Signature of the main function"""
 
@@ -91,8 +119,8 @@ def main(client_id, user_arguments_dict):
         jobs_per_user = 0
 
         resources_walltime = {}
-        walltime_per_resource = datetime.timedelta(0)
-        walltime_per_user = datetime.timedelta(0)
+        walltime_per_resource = timedelta(0)
+        walltime_per_user = timedelta(0)
 
         # loop through all resources of each user
 
@@ -116,7 +144,9 @@ def main(client_id, user_arguments_dict):
                     walltime_per_user = walltime_per_resource
                 else:
                     walltime_per_user += walltime_per_resource
-
+            else:
+                walltime_per_resource = timedelta(0)
+                
             n = {resource: walltime_per_resource}
             resources_walltime.update(n)
 
@@ -126,7 +156,8 @@ def main(client_id, user_arguments_dict):
             sandboxinfo['username'] = username
             sandboxinfo['resource'] = len(userdb[username][RESOURCES])
             sandboxinfo['jobs'] = jobs_per_user
-            sandboxinfo['walltime'] = walltime_per_user
+            sandboxinfo['walltime'] = get_sssmonitor_timedelta_format(walltime_per_user)
+            sandboxinfo['walltime_sort'] = walltime_per_user
             sandboxinfos.append(sandboxinfo)
         elif jobs_per_user > 0 or show_all == 'true':
             for res in resources_jobs.keys():
@@ -135,7 +166,8 @@ def main(client_id, user_arguments_dict):
                     sandboxinfo['username'] = username
                     sandboxinfo['resource'] = res
                     sandboxinfo['jobs'] = resources_jobs[res]
-                    sandboxinfo['walltime'] = resources_walltime[res]
+                    sandboxinfo['walltime'] = get_sssmonitor_timedelta_format(resources_walltime[res])
+                    sandboxinfo['walltime_sort'] = resources_walltime[res]
                     sandboxinfos.append(sandboxinfo)
 
         total_jobs += jobs_per_user
@@ -168,9 +200,9 @@ def main(client_id, user_arguments_dict):
 
         # sort by most walltime
 
-        sandboxinfos.sort(cmp=lambda a, b: cmp(a['walltime'].days
-                           * 86400 + a['walltime'].seconds, b['walltime'
-                          ].days * 86400 + b['walltime'].seconds),
+        sandboxinfos.sort(cmp=lambda a, b: cmp(a['walltime_sort'].days
+                           * 86400 + a['walltime_sort'].seconds, b['walltime_sort'
+                          ].days * 86400 + b['walltime_sort'].seconds),
                           reverse=True)
     else:
 
@@ -207,7 +239,7 @@ def main(client_id, user_arguments_dict):
                           : link_list})
     # Time stamp
 
-    now = datetime.datetime.now()
+    now = datetime.now()
     output_objects.append({'object_type': 'text', 'text'
                           : 'Updated on %s' % now})
     output_objects.append({'object_type': 'text', 'text': ''})
