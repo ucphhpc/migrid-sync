@@ -37,6 +37,7 @@ import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 from shared.notification import send_email
+from shared.useradm import fill_distinguished_name
 
 
 def signature():
@@ -135,8 +136,8 @@ will be given access to the necessary resources anyway.
         'password': base64.b64encode(password),
         'expire': int(time.time() + (((2 * 365.25) * 24) * 60) * 60),
         }
-    user_id = '%(full_name)s:%(organization)s:' % user_dict
-    user_id += '%(state)s:%(country)s:%(email)s' % user_dict
+    fill_distinguished_name(user_dict)
+    user_id = user_dict['distinguished_name']
     req_path = None
     try:
         (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
@@ -175,20 +176,19 @@ cd ~/mig/server
         """
 As '%s' user on %s:
 cd ~/mig/server
-./deleteuser.py '%s' '%s' '%s' '%s' '%s'"""\
-         % (
-        mig_user,
-        configuration.server_fqdn,
-        cert_name,
-        org,
-        state,
-        country,
-        email,
-        )
+./deleteuser.py -i '%s'"""\
+         % (mig_user, configuration.server_fqdn, user_id)
+    command_cert_revoke = \
+        """
+on CA host (amigos19.diku.dk):
+sudo su - mig-ca
+./ca-scripts/revokeusercert.py -a '%s' -d ~/MiG-users.db -u '%s'"""\
+         % (configuration.admin_email, user_id)
 
     user_dict['command_user_create'] = command_user_create
     user_dict['command_user_delete'] = command_user_delete
     user_dict['command_cert_create'] = command_cert_create
+    user_dict['command_cert_revoke'] = command_cert_revoke
     user_dict['migserver_https_url'] = configuration.migserver_https_url
     email_header = 'MiG certificate request for %s' % cert_name
     email_msg = \
@@ -208,12 +208,21 @@ Command to create user on MiG server:
 Command to create certificate:
 %(command_cert_create)s
 
-Finally add the user to any relevant VGrids from:
+Finally add the user to any relevant VGrids on:
 %(migserver_https_url)s/cgi-bin/vgridadmin.py
 
----
+
+--- If user must be denied access or deleted at some point ---
+
+Remove the user from any relevant VGrids on:
+%(migserver_https_url)s/cgi-bin/vgridadmin.py
+
+Command to revoke user certificate:
+%(command_cert_revoke)s
+
 Command to delete user again on MiG server:
 %(command_user_delete)s
+
 ---
 
 """\
