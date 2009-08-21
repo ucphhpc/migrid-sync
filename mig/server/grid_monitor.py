@@ -36,6 +36,7 @@ from shared.gridstat import GridStat
 from shared.fileio import unpickle
 from shared.vgrid import vgrid_list_vgrids, default_vgrid
 from shared.html import get_cgi_html_header, get_cgi_html_footer
+from shared.output import format_timedelta
 
 print """
 Running grid monitor generator.
@@ -155,8 +156,16 @@ Automatic refresh every %(sleep_secs)s secs.<br>
             vgrid_name.upper(), 'CPUTIME_REQ')
     cputime_done = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                    'CPUTIME_DONE')
-    used_walltime = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
+
+    used_walltime = gstat.get_value(gstat.VGRID,
+                                    vgrid_name.upper(),
                                     'USED_WALLTIME')
+                        
+    if (used_walltime == 0):
+        used_walltime = datetime.timedelta(0)
+                                     
+    used_walltime = format_timedelta(used_walltime)
+
     disk_requested = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
             'DISK_REQ')
     disk_done = gstat.get_value(gstat.VGRID, vgrid_name.upper(),

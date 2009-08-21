@@ -1079,4 +1079,33 @@ def format_output(
 
     return eval('%s_format(ret_val, ret_msg, out_obj)' % outputformat)
 
+def format_timedelta(timedelta):
+    """Formats timedelta as '[Years,] [days,] HH:MM:SS'"""
+    years = timedelta.days/365
+    days = timedelta.days - (years*365)
+    hours = timedelta.seconds/3600
+    minutes = (timedelta.seconds-(hours*3600))/60
+    seconds = timedelta.seconds - (hours*3600) - (minutes*60)
 
+    hours_str = "%s" % (str(hours))
+    if (hours < 10):
+        hours_str = "0%s" % (hours_str)
+
+    minutes_str = "%s" % (str(minutes))
+    if (minutes < 10):
+        minutes_str = "0%s" % (minutes_str)
+        
+    seconds_str = "%s" % (str(seconds))
+    if (seconds < 10):
+        seconds_str = "0%s" % (seconds_str)
+
+    if (years > 0):
+        result = "%s years, %s days, %s:%s:%s" % (str(years), str(days), hours_str, minutes_str, seconds_str)
+    elif (days > 0):
+        result = "%s days, %s:%s:%s" % (str(days), hours_str, minutes_str, seconds_str)
+    else:
+        result = "%s:%s:%s" % (hours_str, minutes_str, seconds_str)
+        
+    return result
+
+    

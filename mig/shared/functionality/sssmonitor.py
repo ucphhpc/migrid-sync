@@ -32,40 +32,12 @@ from shared.init import initialize_main_variables
 from shared.functional import validate_input
 from shared.gridstat import GridStat
 from shared.sandbox import load_sandbox_db
+from shared.output import format_timedelta
 
 # sandbox db has the format: {username: (password, [list_of_resources])}
 
 PW, RESOURCES = 0, 1
 
-def get_sssmonitor_timedelta_format(timedelta):
-    """Outputs timedelta as '[Years,] [days,] HH:MM:SS'"""
-    years = timedelta.days/365
-    days = timedelta.days - (years*365)
-    hours = timedelta.seconds/3600
-    minutes = (timedelta.seconds-(hours*3600))/60
-    seconds = timedelta.seconds - (hours*3600) - (minutes*60)
-
-    hours_str = "%s" % (str(hours))
-    if (hours < 10):
-        hours_str = "0%s" % (hours_str)
-
-    minutes_str = "%s" % (str(minutes))
-    if (minutes < 10):
-        minutes_str = "0%s" % (minutes_str)
-        
-    seconds_str = "%s" % (str(seconds))
-    if (seconds < 10):
-        seconds_str = "0%s" % (seconds_str)
-
-    if (years > 0):
-        result = "%s years, %s days, %s:%s:%s" % (str(years), str(days), hours_str, minutes_str, seconds_str)
-    elif (days > 0):
-        result = "%s days, %s:%s:%s" % (str(days), hours_str, minutes_str, seconds_str)
-    else:
-        result = "%s:%s:%s" % (hours_str, minutes_str, seconds_str)
-        
-    return result
-    
 def signature():
     """Signature of the main function"""
 
@@ -156,7 +128,7 @@ def main(client_id, user_arguments_dict):
             sandboxinfo['username'] = username
             sandboxinfo['resource'] = len(userdb[username][RESOURCES])
             sandboxinfo['jobs'] = jobs_per_user
-            sandboxinfo['walltime'] = get_sssmonitor_timedelta_format(walltime_per_user)
+            sandboxinfo['walltime'] = format_timedelta(walltime_per_user)
             sandboxinfo['walltime_sort'] = walltime_per_user
             sandboxinfos.append(sandboxinfo)
         elif jobs_per_user > 0 or show_all == 'true':
@@ -166,7 +138,7 @@ def main(client_id, user_arguments_dict):
                     sandboxinfo['username'] = username
                     sandboxinfo['resource'] = res
                     sandboxinfo['jobs'] = resources_jobs[res]
-                    sandboxinfo['walltime'] = get_sssmonitor_timedelta_format(resources_walltime[res])
+                    sandboxinfo['walltime'] = format_timedelta(resources_walltime[res])
                     sandboxinfo['walltime_sort'] = resources_walltime[res]
                     sandboxinfos.append(sandboxinfo)
 
