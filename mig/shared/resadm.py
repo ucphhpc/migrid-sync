@@ -820,8 +820,13 @@ def start_resource_store(
         setup = {'mount_point': mount_point, 'jump_path': jump_path}
         setup.update(resource_config)
         setup.update(store)
-        if not store.get('shared_fs', True):
-            # write ssh jump helper script
+        if store.get('shared_fs', False):
+            sshfs_options.append('-o Port=%(SSHPORT)s' % setup)
+            setup['options'] = ' '.join(sshfs_options)
+            command = 'sshfs %(MIGUSER)s@%(HOSTURL)s:%(storage_dir)s %(mount_point)s %(options)s' % \
+                  setup
+        else:
+            # write and use ssh jump helper script
 
             jump_script = '''#!/bin/sh
 #
@@ -842,10 +847,9 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
 
             sshfs_options.append("-o ssh_command='%(jump_path)s'" % setup)
             sshfs_options.append("-o Port=%(storage_port)s" % setup)
-
-        setup['options'] = ' '.join(sshfs_options)
-        command = 'sshfs %(storage_user)s@%(storage_node)s:%(storage_dir)s %(mount_point)s %(options)s' % \
-                  setup
+            setup['options'] = ' '.join(sshfs_options)
+            command = 'sshfs %(storage_user)s@%(storage_node)s:%(storage_dir)s %(mount_point)s %(options)s' % \
+                      setup
         logger.info('running mount command on server: %s' % command)
         msg += 'mounting with %s. ' % command
         proc = subprocess.Popen(command, shell=True, bufsize=0, stdout=subprocess.PIPE,

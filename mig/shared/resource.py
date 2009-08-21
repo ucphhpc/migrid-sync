@@ -443,7 +443,8 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
             # Read in list value
             
             all['vgrid'] = first['vgrid']
-            conf['all_exes'] = all
+
+        conf['all_exes'] = all
 
     if not conf.get('all_stores', None):
         all = {}
@@ -458,6 +459,7 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
         all['clean_command'] = 'default'
         all['shared_fs'] = True
         all['vgrid'] = []
+        all['storagenodes'] = ''
         all['storagehome'] = ''
 
         if conf.get('STORECONFIG', None):
@@ -529,7 +531,8 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
             # Read in list value
             
             all['vgrid'] = first['vgrid']
-            conf['all_stores'] = all
+
+        conf['all_stores'] = all
 
     return conf 
 
