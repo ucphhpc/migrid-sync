@@ -85,7 +85,7 @@ def generate_confs(
     https_port=443,
     user_clause='User',
     group_clause='Group',
-    listen_clause='Listen',
+    listen_clause='#Listen',
     ):
     """Generate Apache and MiG server confs with specified variables"""
 
@@ -207,18 +207,26 @@ listen_clause: %(listen_clause)s
     generate_confs(*values)
 
     print '''Configurations for MiG and Apache were generated in %(destination)s/
-You need to copy them to their final destinations like this:
-cp %(destination)s/MiG.conf %(apache_etc)s/conf.d/
+For a default setup you will probably want to copy the MiG daemon conf to the server code directory:
 cp %(destination)s/MiGserver.conf %(mig_code)s/server/
-and optionally
-cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
 
-If you are running Debian you may also want to copy the generated apache2.conf,
+If you are running apache 2.x on Debian you can use the sites-available and sites-enabled structure with:
+cp %(destination)s/MiG.conf %(apache_etc)s/sites-available/MiG
+a2ensite MiG
+
+On other distro and apache combinations you will likely want to rely on the automatic inclusion of configurations in the conf.d directory instead:
+cp %(destination)s/MiG.conf %(apache_etc)s/conf.d/
+
+You may also want to consider copying the generated apache2.conf,
 httpd.conf and envvars to %(apache_etc)s/:
 cp %(destination)s/apache2.conf %(apache_etc)s/
 cp %(destination)s/httpd.conf %(apache_etc)s/
 cp %(destination)s/envvars %(apache_etc)s/
-'''\
+
+On a MiG developer server the dedicated apache init script is added with:
+cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
+
+Please reload or restart your apache daemons to catch the configuration changes.'''\
          % settings
 
     sys.exit(0)

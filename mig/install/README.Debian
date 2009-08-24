@@ -55,6 +55,10 @@ If you prefer apache 2.x the install command is simply:
 # aptitude install apache2-mpm-prefork
 
 The other apache2 flavors *may* work, but they are untested with MiG.
+Please be careful and consider the securiy implications if you want to
+use the event or thread based apache flavors instead. It is essential
+that concurrent CGI script execution does not allow information leak
+between different users because of e.g. shared memory.
 
 Stop the apache server for now
 # /etc/init.d/apache2 stop
@@ -102,23 +106,38 @@ sufficient to copy the MiG specific configuration to the apache
 configuration directory. The actual details depend on the Apache
 version, so use the same as you chose above.
 
-Apache 1.3:
+Apache 1.x:
 -----------
-Copy the configuration to the conf.d dir:
+If you use apache 1.x or if your distribution doesn't support the
+sites-enabled model for apache 2.x (see below) you can use these
+instructions. You may have to replace references to /etc/apache with
+/etc/httpd or /etc/apache2 depending on your setup.
+
+Copy the generated configuration to the apache conf.d dir:
+# cp /path/to/generated/MiG.conf /etc/apache/conf.d/MiG.conf
+or the static configuration
 # cp ~mig/path/to/migbase/mig/apache/MiG.conf.Debian /etc/apache/conf.d/MiG.conf
 
 In that way it should automatically be included in the apache configuration.
-If it doesn't, please make sure that httpd.conf contains the line:
+If it doesn't, please make sure that apache httpd.conf contains a line like:
 Include /etc/apache/conf.d
 
 Apache 2.x:
 -----------
-Copy the configuration to the sites-available dir:
+Debian uses a custom sites-available / sites-enabled model. The
+following instructions rely on that model, so if you do not have it, you
+can fall back to use the instructions for apache 1.x above.
+
+Copy the generatd configuration to the sites-available dir:
+# cp /path/to/generated/MiG.conf /etc/apache2/sites-available/MiG
+or for the static version:
 # cp ~mig/path/to/migbase/mig/apache/MiG.conf.Debian /etc/apache2/sites-available/MiG
 
-Edit /etc/apache2/sites-available/MiG and comment out the two Listen
+With the static version you probably need to edit
+/etc/apache2/sites-available/MiG and comment out the two Listen
 directives (Listen 80 and Listen 443) that are already handled in
-/etc/apache2/ports.conf for apache2. 
+/etc/apache2/ports.conf for apache2. This is automatically done in the
+generated conf if you leave the LISTEN field to the default of '#Listen'.
 
 Add the new site to your enabled sites:
 # a2ensite MiG
@@ -131,13 +150,15 @@ Always check that the apache configuration actually fits your
 setup. Especially the server certificate, key and CA lines may need
 modification to fit your particular setup. Unless you checked out or
 unpacked the MiG code directly in ~/ the paths to the MiG dirs also need
-to be updated.
+to be updated or provided to the configuration generator.
 
 You can use the MiG CA certificate bundle from
 mig/apache/MiG-ca-bundle.crt for the SSLCACertificateFile in the apache
 configuration, to allow users with our MiG certificates to connect. They
 will still need to be added as users on your particular server to be
-able to do anything, however.
+able to do anything, however. They can request user creation themselves
+through the extcert.py CGI script which should appear if they connect
+without being previously added.
 
 Finally restart apache (use the init.d scripts as above) to activate the
 changes and check that you can access the https pages on the server by
@@ -158,10 +179,10 @@ web interface (/cgi-sid/reqcert.py). Please make sure to configure the
 admin_email option in the MiGserver.conf before you proceed as that
 address is used for instruction emails when adding users and resources.
 
-The user addition is bound to the certificate request page so you will
-have to go through that form to get an email with instructions on
-creating the user on the server or manually experiment with the format
-of the mig/server/createuser.py script.
+The user addition is bound to the certificate or external certificate
+request page so you will have to go through that form to get an email
+with instructions on creating the user on the server or manually
+experiment with the format of the mig/server/createuser.py script.
 If you run your own CA you can try to follow the certificate
 instructions but with your own setup in mind. Otherwise you can only add
 users with an existing user certificate.
@@ -176,20 +197,20 @@ VGrid wiki:
 In order to support VGrid wikis you will need to install the MoinMoin package:
 # aptitude install python-moinmoin
 
-Now make sure that the paths match those in the
-mig/cgi-bin/createvgrid.py CGI script so that creating a new VGrid succeeds.
+Now make sure that the install paths are configured in your
+MiGserver.conf so that creating a new VGrid succeeds.
 
 
 Debugging:
 ==========
 This section is only relevant if you experience problems with your
-server either after te initial setup or after modifying it.
+server either after the initial setup or after modifying it.
 Problems with the web server can often be deugged by looking at the
-apache logs in /var/log/apache/ . MiG problems on the other hand should
+apache logs in /var/log/apache*/ . MiG problems on the other hand should
 be visible from the output of the daemons and in the 'logfile' path
 configured in MiGserver.conf . Please note that a relative path as
 logfile results in a file of that name in the location where the code
 file runs. That is, you will have log files from the daemons in the
 mig/server directory but log files from cgi scripts in the mig/cgi-bin
 and mig/cgi-sid directories. If you use an absolute path as logfile
-instead all the log entries will end up in that file.
+instead all the log entries will end up in that same file.
