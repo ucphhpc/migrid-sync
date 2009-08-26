@@ -40,8 +40,8 @@ from shared.useradm import client_id_dir
 import shared.userscriptgen as usergen
 import shared.vgridscriptgen as vgridgen
 
-sh_cmd_def = 'sh'
-python_cmd_def = 'python'
+sh_cmd_def = '/bin/bash'
+python_cmd_def = '/usr/bin/python'
 
 
 def signature():
@@ -51,8 +51,8 @@ def signature():
         'flags': [''],
         'lang': [],
         'flavor': [],
-        'sh_path': [sh_cmd_def],
-        'python_path': [python_cmd_def],
+        'sh_cmd': [sh_cmd_def],
+        'python_cmd': [python_cmd_def],
         }
     return ['link', defaults]
 
@@ -108,29 +108,10 @@ def main(client_id, user_arguments_dict):
     flags = ''.join(accepted['flags'])
     langs = accepted['lang']
     flavor_list = accepted['flavor']
-    sh_cmd = accepted['sh_path'][-1]
-    python_cmd = accepted['python_path'][-1]
-
-    # Default values: lang = python, flavor = user, no flags
-    # langs must be a list - waiting for new input validation for better check
-    # langs = []
-    # if user_arguments_dict.has_key("lang"):
-    #    if type(user_arguments_dict["lang"]) == type([]):
-    #        langs = user_arguments_dict["lang"]
-
-    # flags, err = validated_string(user_arguments_dict, "flags", "")
-    # if err:
-    #    output_objects.append({"object_type":"warning", "text":"illegal flags argument: %s" % err})
-
-    # flavor must be a list - waiting for new input validation for better check
-    # flavor_list = []
-    # if user_arguments_dict.has_key("flavor"):
-    #    if type(user_arguments_dict["flavor"]) == type([]):
-    #        flavor_list = user_arguments_dict["flavor"]
+    sh_cmd = accepted['sh_cmd'][-1]
+    python_cmd = accepted['python_cmd'][-1]
 
     flavors = []
-
-    # We can't print path input until we have parsed it - only print op name for now!
 
     output_objects.append({'object_type': 'title', 'text'
                           : 'MiG script generator'})

@@ -247,7 +247,7 @@ def txt_format(ret_val, ret_msg, out_obj):
                 continue
             columns = 6
             cols = 0
-            if i['show_dest']:
+            if i.get('show_dest', False):
                 columns += 1
             for dir_listing in i['dir_listings']:
                 for entry in dir_listing['entries']:
