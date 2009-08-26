@@ -1527,8 +1527,9 @@ index=1
 for pattern in \"${orig_args[@]}\"; do
     expanded_path=$(expand_name \"path=$pattern\" \"$server_flags\" \"%s\" 2> /dev/null)
     set -- $expanded_path
+    shift; shift
     exit_code=\"$1\"
-    shift
+    shift; shift; shift; shift; shift; shift; shift; shift    
     if [ \"$exit_code\" -ne \"0\" ]; then
 """\
              % (expanded_list, input_list, str(destinations).lower())
@@ -1556,9 +1557,9 @@ done
 %s = []
 for pattern in %s:
     (status, out) = expand_name('path=' + pattern, server_flags, '%s')
-    result = [line.strip() for line in out]
-    status = result[0]
-    src_list = result[1:]
+    result = [line.strip() for line in out if line.strip()]
+    status = result[0].split()[2]
+    src_list = result[3:]
     if status != '0':
 """\
              % (expanded_list, input_list, str(destinations).lower())
@@ -1778,7 +1779,7 @@ src_list = sys.argv[1:-1]
 # Expand does not automatically split the outputlines, so they are still on
 # the src\tdest form
 for line in expanded_list:
-    src, dest = line.split('\t')
+    src, dest = line.split()
     dst = raw_dst + os.sep + dest
     (status, out) = get_file(src, dst)
 sys.exit(status)

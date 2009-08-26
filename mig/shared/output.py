@@ -259,23 +259,17 @@ def txt_format(ret_val, ret_msg, out_obj):
                                 lines.append('%s:\ntotal %s'
                                          % (dir_listing['relative_path'
                                         ], len(dir_listing['entries'])))
-                        line += '\t\t'
                         if directory.has_key('actual_dir'):
-                            line += '%s' % directory['actual_dir']
-                        else:
-                            line += '\t'
+                            line += '%s ' % directory['actual_dir']
                         line += '%s' % directory['name']
                         lines.append(line)
                     elif 'file' == entry['type']:
                         this_file = entry
-                        line += '\t\t'
                         if this_file.has_key('long_format'):
-                            line += '%s' % this_file['long_format']
-                        else:
-                            line += '\t'
+                            line += '%s ' % this_file['long_format']
                         line += '%s' % this_file['name']
-                        if this_file.has_key('show_dest'):
-                            line += '%s' % this_file['dest']
+                        if this_file.has_key('file_dest'):
+                            line += ' %s' % this_file['file_dest']
                         lines.append(line)
         elif i['object_type'] == 'jobobj':
             job_dict = i['jobobj'].to_dict()
@@ -640,9 +634,9 @@ def html_format(ret_val, ret_msg, out_obj):
                         cols += 1
                         lines.append('<td>%s</td>' % this_file['name'])
                         cols += 1
-                        if this_file.get('show_dest', False):
+                        if this_file.get('file_dest', False):
                             lines.append('<td>%s</td>'
-                                     % this_file['dest'])
+                                     % this_file['file_dest'])
                             cols += 1
                         lines.append('<td><br></td>' * (columns - cols)
                                  + '</tr>')

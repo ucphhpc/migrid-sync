@@ -95,8 +95,11 @@ else:
     logger.debug('put: file with Content-Type: %s', content_type)
 
 # 'urllib.unquote(string)': Replaces urlencode chars "%xx" by their single-character equivalent.
+# REQUEST_URI is relative path suffix i.e. without protocol and FQDN part
+# We normalize path to remove double slashes that would otherwise cause problems
 
-filename = urllib.unquote(str(os.getenv('REQUEST_URI')))
+filename = os.path.normpath(urllib.unquote(str(os.getenv('REQUEST_URI'))))
+rel_name = filename.lstrip('/')
 
 # Prevent modification of htaccess files, even if apache allows it
 
@@ -304,7 +307,7 @@ elif is_user(client_id, configuration.user_home):
 
     if content_type == 'text/resourceconf':
         pending_file = os.path.join(configuration.resource_pending,
-                                    client_dir, filename + '.' + str(time.time()))
+                                    client_dir, rel_name + '.' + str(time.time()))
         o.internal("'%s' sent a resource update file '%s', saving file in '%s'"
                     % (client_id, filename, pending_file))
         try:
@@ -384,7 +387,7 @@ Please contact the MiG server administrator.""")
             o.reply_and_exit(o.ERROR)
     elif content_type == 'text/runtimeenvconf':
         pending_file = os.path.join(configuration.user_home,
-                                    client_dir, filename + '.' + str(time.time()))
+                                    client_dir, rel_name + '.' + str(time.time()))
         try:
             upload_fd = open(pending_file, 'wb')
             while True:
@@ -408,7 +411,7 @@ Please contact the MiG server administrator.""")
         o.reply_and_exit(o.OK)
     elif content_type == 'text/settings':
         pending_file = os.path.join(configuration.user_home,
-                                    client_dir, filename + '.' + str(time.time()))
+                                    client_dir, rel_name + '.' + str(time.time()))
         try:
             upload_fd = open(pending_file, 'wb')
             while True:
@@ -433,7 +436,7 @@ Please contact the MiG server administrator.""")
 
         
     real_path = os.path.normpath(os.path.join(configuration.user_home,
-                                              client_dir, filename))
+                                              client_dir, rel_name))
     dest_dir = os.path.dirname(real_path)
     dest_file = os.path.basename(real_path)
 
@@ -511,7 +514,7 @@ elif is_server(client_id, configuration.server_home):
     logger.info('Certificate found as a server cert: %s'
                  % client_id)
     dest_file = os.path.normpath(os.path.join(configuration.server_home,
-                                              client_dir, filename))
+                                              client_dir, rel_name))
     dest_file = dest_file.replace('//', '/')
     dest_dir = dest_file[:dest_file.rfind('/')]
     dest_file = dest_file[dest_file.rfind('/') + 1:]
