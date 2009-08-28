@@ -1,5 +1,14 @@
 echo "`date`: starting" >> $frontendlog
 
+# Make sure sandboxes use the current MiG server when booted next time.
+# This is a workaround after our server migration, so that existing 
+# images can continue working as long as we redirect or proxy sandboxes 
+# to the new server at least once.
+
+if [ $sandbox -eq 1 ]; then
+    echo $migserver > /opt/mig/etc/serverfile
+fi
+
 # $Revision: 2580 $
 
 clean_command="rm -f"
