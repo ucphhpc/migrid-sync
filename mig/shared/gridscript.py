@@ -28,7 +28,6 @@
 """Main MiG daemon (grid_script) helper functions"""
 
 import os
-import pickle
 import time
 
 import shared.fileio as io
@@ -65,7 +64,8 @@ def load_queue(path, logger):
 
     queue = io.unpickle(path, logger)
     if not queue:
-        return None  # unpickle not successful
+        # unpickle not successful
+        return None
     else:
         queue.logger = logger
         return queue
@@ -111,7 +111,7 @@ def check_mrsl_files(
         if root.find(os.sep + '.') != -1:
             continue
         for name in files:
-            filename = root + '/' + name
+            filename = os.path.join(root, name)
             if os.path.getmtime(filename) < last_start:
                 if only_new:
                     logger.info('skipping treated mrsl file: %s'
@@ -120,16 +120,9 @@ def check_mrsl_files(
                 logger.info('parsing possibly outdated mrsl file: %s'
                              % filename)
 
-            try:
-                filehandle = open(filename, 'r')
-            except Exception, err:
-                logger.error('could not open: %s %s' % (filename, err))
-
-            try:
-                job_dict = pickle.load(filehandle)
-                filehandle.close()
-            except Exception, err:
-                logger.error('could not open and pickle: %s %s'
+            job_dict = io.unpickle(filename, logger)
+            if not job_dict:
+                logger.error('could not open and unpickle: %s %s'
                               % (filename, err))
                 continue
 

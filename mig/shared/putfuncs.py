@@ -32,9 +32,8 @@ If other scripts needs it then move the function to another file.
 import os
 import time
 import re
-import pickle
 
-from shared.fileio import send_message_to_grid_script
+import shared.fileio as io
 from shared.useradm import client_id_dir
 
 
@@ -189,18 +188,15 @@ def migrated_job(filename, client_id, configuration):
 
     # unpickle and enqueue received job file
 
-    try:
-        job_path_spaces = job_path.replace('\\ ', '\\\\\\ ')
-        filehandle = open(job_path_spaces, 'r+')
-        job = pickle.load(filehandle)
+    job_path_spaces = job_path.replace('\\ ', '\\\\\\ ')
+    job = io.unpickle(job_path_spaces, configuration.logger)
 
-        # TODO: update any fields to mark migration?
+    # TODO: update any fields to mark migration?
 
-        filehandle.close()
-    except:
+    if not job:
         return (False,
-                'Fatal migration error: loading pickled job failed! '
-                 + job_path_spaces)
+                'Fatal migration error: loading pickled job (%s) failed! ' % \
+                job_path_spaces)
 
     job_id = job['JOB_ID']
 
@@ -209,19 +205,15 @@ def migrated_job(filename, client_id, configuration):
     mrsl_filename = \
         os.path.abspath(os.path.join(configuration.mrsl_files_dir,
                         client_dir, job_id + '.mRSL'))
-
-    try:
-        mrsl_file = open(mrsl_filename, 'w')
-        mrsl_file.write(pickle.dumps(job))
-        mrsl_file.close()
-    except:
+    
+    if not io.pickle(job, mrsl_filename, configuration.logger):
         return (False, 'Fatal error: Could not write ' + filename)
 
     # tell 'grid_script'
 
     message = 'SERVERJOBFILE ' + client_dir + '/' + job_id + '\n'
 
-    if not send_message_to_grid_script(message, logger, configuration):
+    if not io.send_message_to_grid_script(message, logger, configuration):
         return (False, 'Fatal error: Could not write to grid stdin')
 
     # TODO: do we need to wait for grid_script to ack job reception?
