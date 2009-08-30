@@ -44,6 +44,13 @@ while True:
         path = raw_input("Path to open: ")
         pickle_fd = open(path, 'rb+')
         obj = pickle.load(pickle_fd)
+    elif command in ['h', 'help']:
+        print "Valid commands include:"
+        print "(d)isplay to display the opened pickled object"
+        print "(e)dit to edit the opened pickled object"
+        print "(o)pen to open a new pickle file"
+        print "(c)lose to close the opened pickled object"
+        print "(q)uit to quit pickle editor"
     elif command in ['d', 'display']:
         print obj
     elif command in ['e', 'edit']:

@@ -36,6 +36,7 @@ import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 from shared.notification import send_email
+from shared.useradm import distinguished_name_to_user
 
 
 def signature():
@@ -113,6 +114,15 @@ Please read and follow the instructions in red on the request page!
 If you are a DIKU student with only a @*.ku.dk address please just use KU as organization.
 As long as you state that you want the certificate for DIKU purposes in the comment field, you
 will be given access to the necessary resources anyway.
+'''})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    try:
+        distinguished_name_to_user(cert_id)
+    except:
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : '''Illegal Distinguished name:
+Please note that the distinguished name must be a valid certificate DN with multiple "key=val" fields separated by "/".
 '''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
