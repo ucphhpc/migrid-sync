@@ -499,9 +499,9 @@ script_ops_two_args.append(['rmvgridres', 'remove_resource',
 # Res functions
 
 script_ops_two_args.append(['addresowner', 'unique_resource_name',
-                           'cert_name'])
+                           'cert_id'])
 script_ops_two_args.append(['rmresowner', 'unique_resource_name',
-                           'cert_name'])
+                           'cert_id'])
 
 script_ops_two_args.append(['startexe', 'unique_resource_name',
                            'exe_name'])

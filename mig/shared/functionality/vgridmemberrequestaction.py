@@ -131,7 +131,7 @@ def main(client_id, user_arguments_dict):
             ], 'JOB_ID': 'NOJOBIDVGRIDMEMBERREQUESTMESSAGE',
                 'USER_CERT': owner}
 
-        notify_user_thread(
+        notifier = notify_user_thread(
             job_dict,
             [client_id, vgrid_name, request_type, request_text],
             'VGRIDMEMBERREQUEST',
@@ -140,13 +140,9 @@ def main(client_id, user_arguments_dict):
             configuration,
             )
 
-        # if not msg_stat:
-            # o.out("Could not send message to %s. %s" % (owner, msg_text))
-            # o.reply_and_exit(o.ERROR)
-
-            # for keyword in get_keywords_dict().keys():
-                # pass
-
+        # Try finishing delivery but do not block forever on one message
+        notifier.join(30)
+        
     return (output_objects, returnvalues.OK)
 
 

@@ -131,12 +131,12 @@ Replies to this message will not be read!!!
             'If you want to authorize this request visit the following link in a browser: \n'
         if request_type == 'member':
             txt += \
-                '%s/cgi-bin/addvgridmember.py?vgrid_name=%s&cert_name=%s'\
+                '%s/cgi-bin/addvgridmember.py?vgrid_name=%s&cert_id=%s'\
                  % (configuration.migserver_https_url, vgrid_name,
                     from_cert)
         elif request_type == 'owner':
             txt += \
-                '%s/cgi-bin/addvgridowner.py?vgrid_name=%s&cert_name=%s'\
+                '%s/cgi-bin/addvgridowner.py?vgrid_name=%s&cert_id=%s'\
                  % (configuration.migserver_https_url, vgrid_name,
                     from_cert)
         else:

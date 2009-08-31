@@ -27,12 +27,16 @@
 
 """Import any missing users from provided URL into user DB and in file system"""
 
+import os
 import sys
 import getopt
 import urllib
+import re
 
+import shared.returnvalues as returnvalues
 from shared.useradm import init_user_adm, fill_user, default_search, \
     distinguished_name_to_user, create_user, search_users
+from shared.functionality.vgridmemberrequestaction import main
 
 
 def usage(name='importusers.py'):
@@ -51,6 +55,7 @@ Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -K KEY_PATH         Use KEY_PATH as client key
+   -m VGRID            Make user a member of VGRID (multiple occurences allowed)
    -v                  Verbose output
 """\
          % {'name': name}
@@ -73,16 +78,13 @@ def dump_contents(url, key_path=None, cert_path=None):
 
 
 def parse_contents(user_data):
-    """Extract users from data dump"""
+    """Extract users from data dump - We simply catch all occurences
+    of anything looking like a DN (/ABC=bla bla/DEF=more words/...)
+    """
 
     users = []
-    for line in user_data.split('\n'):
-        line = line.strip()
-        if not line or line.find('<item>') == -1:
-            continue
-        line = line.split('<item>', 1)[-1]
-        line = line.split('</item>', 1)[0]
-        user_dict = distinguished_name_to_user(line)
+    for user_creds in re.findall('/[a-zA-Z]+=[^<]+', user_data):
+        user_dict = distinguished_name_to_user(user_creds)
         users.append(user_dict)
     return users
 
@@ -96,7 +98,8 @@ if '__main__' == __name__:
     cert_path = None
     force = False
     verbose = False
-    opt_args = 'C:c:d:fhK:v'
+    vgrids = []
+    opt_args = 'C:c:d:fhK:m:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -118,6 +121,8 @@ if '__main__' == __name__:
             cert_path = val
         elif opt == '-K':
             key_path = val
+        elif opt == '-m':
+            vgrids.append(val)
         elif opt == '-v':
             verbose = True
         else:
@@ -147,9 +152,21 @@ if '__main__' == __name__:
 
     for user_dict in new_users:
         fill_user(user_dict)
+        user_id = user_dict['distinguished_name']
         user_dict['comment'] = 'imported from external URL'
         create_user(user_dict, conf_path, db_path, force, verbose)
-        print 'Created %s in user database and in file system' % \
-              user_dict['distinguished_name']
+        print 'Created %s in user database and in file system' % user_id
+        for name in vgrids:
+            request = {'vgrid_name': [name],
+                'request_type': ['member'],
+                'request_text': ['automatic request from importusers script']}
+            (output, status) = main(user_id, request)
+            if status == returnvalues.OK:
+                print 'Request for %s membership in %s sent to owners' % \
+                      (user_id, name)
+            else:
+                print 'Request for %s membership in %s failed: %s' % \
+                      (name, user_id, output)
+                
 
     print '%d new users imported' % len(new_users)
