@@ -27,6 +27,8 @@
 
 """Request certificate back end"""
 
+import os
+
 import shared.returnvalues as returnvalues
 from shared.certreq import valid_password_chars, valid_name_chars, \
     password_min_len, password_max_len
@@ -60,7 +62,12 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    extcert_link = {'object_type': 'link', 'destination': 'extcert.py',
+    # Redirect to extcert page with certificate requirement but without
+    # changing access method (CGI vs. WSGI).
+    
+    extcert_url = os.environ['REQUEST_URI'].replace('-sid', '-bin')
+    extcert_url = os.path.join(os.path.dirname(extcert_url), 'extcert.py')
+    extcert_link = {'object_type': 'link', 'destination': extcert_url,
                     'text': 'Sign up with existing certificate'}
     if client_id:
         output_objects.append({'object_type': 'warning', 'text'

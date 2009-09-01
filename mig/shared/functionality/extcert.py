@@ -60,7 +60,12 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    certreq_link = {'object_type': 'link', 'destination': 'reqcert.py',
+    # Redirect to reqcert page without certificate requirement but without
+    # changing access method (CGI vs. WSGI).
+    
+    certreq_url = os.environ['REQUEST_URI'].replace('-bin', '-sid')
+    certreq_url = os.path.join(os.path.dirname(certreq_url), 'reqcert.py')
+    certreq_link = {'object_type': 'link', 'destination': certreq_url,
                     'text': 'Request a new MiG certificate'}
     new_user = distinguished_name_to_user(client_id)
 

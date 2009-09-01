@@ -31,6 +31,8 @@
 the functionality dir.
 """
 
+import os
+
 # REJECT_UNSET is not used directly but exposed to functionality
 
 from shared.safeinput import validated_input, valid_user_path, \
@@ -95,11 +97,18 @@ def validate_input_and_cert(
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Invalid certificate or no such MiG user (distinguished name)'
                               })
-        certreq_link = {'object_type': 'link',
-                        'destination': '/cgi-sid/reqcert.py',
+
+        # Redirect to req or ext cert page with suitable certificate requirement
+        # but without changing access method (CGI vs. WSGI).
+    
+        certreq_url = os.environ['REQUEST_URI'].replace('-bin', '-sid')
+        certreq_url = os.path.join(os.path.dirname(certreq_url), 'reqcert.py')
+        extcert_url = os.environ['REQUEST_URI'].replace('-sid', '-bin')
+        extcert_url = os.path.join(os.path.dirname(extcert_url), 'extcert.py')
+
+        certreq_link = {'object_type': 'link', 'destination': certreq_url,
                         'text': 'Request a new MiG certificate'}
-        extcert_link = {'object_type': 'link',
-                        'destination': '/cgi-sid/extcert.py',
+        extcert_link = {'object_type': 'link', 'destination': extcert_url,
                         'text': 'Sign up with existing certificate'}
         if not client_id:
             output_objects.append({'object_type': 'text', 'text'
