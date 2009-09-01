@@ -58,7 +58,7 @@ def curl_cmd_send(resource_filename, mig_server_filename,
 
         sid_put_marker = '-X SIDPUT'
 
-    return 'curl --connect-timeout 30 --max-time 3600 '\
+    return 'curl --location --connect-timeout 30 --max-time 3600 '\
          + upload_bw_limit + ' --fail --silent --insecure '\
          + " --upload-file '" + resource_filename + "' "\
          + sid_put_marker + " '" + dst_url + "'"
@@ -91,7 +91,7 @@ def curl_cmd_get(mig_server_filename, resource_filename,
         src_url = migserver_https_url_arg + '/sid_redirect/'\
              + job_dict['MIGSESSIONID'] + '/' + mig_server_filename
 
-    cmd += 'curl --connect-timeout 30 --max-time 3600 '\
+    cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
          + download_bw_limit + ' --fail --silent --insecure ' + " -o '"\
          + resource_filename + "' '" + src_url + "'"
     return cmd
@@ -112,7 +112,7 @@ def curl_cmd_get_special(file_extension, resource_filename,
     if dest_path:
         cmd += "mkdir -p '%s' && \\" % dest_path
         cmd += '\n'
-    cmd += 'curl --connect-timeout 30 --max-time 3600 '\
+    cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
          + download_bw_limit + ' --fail --silent --insecure ' + " -o '"\
          + resource_filename + "' '" + migserver_https_url_arg\
          + '/sid_redirect/' + job_dict['MIGSESSIONID'] + file_extension\
@@ -124,7 +124,7 @@ def curl_cmd_request_interactive(migserver_https_url_arg):
     """CGI request for interactive job"""
 
     int_command = \
-        "curl --connect-timeout 30 --max-time 3600 --fail --silent --insecure '"\
+        "curl --location --connect-timeout 30 --max-time 3600 --fail --silent --insecure '"\
          + migserver_https_url_arg\
          + '/cgi-sid/requestinteractivejob.py?sessionid='\
          + job_dict['MIGSESSIONID'] + '&jobid=' + job_dict['JOB_ID']\

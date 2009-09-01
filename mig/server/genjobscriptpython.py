@@ -35,7 +35,7 @@ def curl_cmd_send(resource_filename, mig_server_filename,
                   migserver_https_url_arg):
     """Upload files"""
 
-    return "curl --fail --silent --insecure --upload-file '"\
+    return "curl --location --fail --silent --insecure --upload-file '"\
          + resource_filename + "' -X SIDPUT '" + migserver_https_url_arg\
          + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
          + mig_server_filename + "'"
@@ -50,7 +50,7 @@ def curl_cmd_get(mig_server_filename, resource_filename,
     if dest_path != '':
         cmd += "mkdir -p '%s' && \\" % dest_path
         cmd += '\n'
-    cmd += "curl --fail --silent --insecure -o '" + resource_filename\
+    cmd += "curl --location --fail --silent --insecure -o '" + resource_filename\
          + "' '" + migserver_https_url_arg + '/sid_redirect/'\
          + job_dict['MIGSESSIONID'] + '/' + mig_server_filename + "'"
     return cmd
@@ -65,7 +65,7 @@ def curl_cmd_get_special(file_extension, resource_filename,
     if dest_path != '':
         cmd += 'mkdir -p %s && \\' % dest_path
         cmd += '\n'
-    cmd += "curl --fail --silent --insecure -o '" + resource_filename\
+    cmd += "curl --location --fail --silent --insecure -o '" + resource_filename\
          + "' '" + migserver_https_url_arg + '/sid_redirect/'\
          + job_dict['MIGSESSIONID'] + file_extension + "'"
     return cmd
@@ -74,7 +74,7 @@ def curl_cmd_get_special(file_extension, resource_filename,
 def curl_cmd_request_interactive(migserver_https_url_arg):
     """CGI request for interactive job"""
 
-    int_command = "curl --fail --silent --insecure '"\
+    int_command = "curl --location --fail --silent --insecure '"\
          + migserver_https_url_arg\
          + '/cgi-sid/requestinteractivejob.py?sessionid='\
          + job_dict['MIGSESSIONID'] + '&jobid=' + job_dict['JOB_ID']\

@@ -311,6 +311,7 @@ def curl_perform(
                 data="--data \"$post_data\""
         fi
         $curl \\
+                --location \\
                 --fail \\
                 --silent \\
                 --show-error \\
@@ -343,7 +344,7 @@ def curl_perform(
         data = ''
         if post_data:
             data = '--data "%%s"' %% post_data
-        command = \"%%s --fail --silent --show-error --cert %%s --key %%s %%s %%s %%s %%s %%s --url '%%s/%%s%%s'\" %% (curl, cert_file, key_file, data, ca_check, password_check, timeout, target, mig_server, location, query)
+        command = \"%%s --location --fail --silent --show-error --cert %%s --key %%s %%s %%s %%s %%s %%s --url '%%s/%%s%%s'\" %% (curl, cert_file, key_file, data, ca_check, password_check, timeout, target, mig_server, location, query)
         proc = subprocess.Popen(command, shell=True, bufsize=0,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
         buffer = StringIO.StringIO(proc.communicate()[0])

@@ -151,6 +151,7 @@ def vgrid_single_argument_function(
         s += \
             """
         $curl \\
+                --location \\
                 --fail \\
                 --cert $cert_file \\
                 --key $key_file \\
@@ -166,7 +167,7 @@ def vgrid_single_argument_function(
 
     # TODO: create valid python code
     #        s += """
-    #        status = os.system("%%s --fail --cert %%s --key %%s %%s %%s --url '%%s/cgi-bin/%s.py?%s=$%s&%s=$%s;output_format=txt;with_html=false'" % (curl, cert_file, key_file, ca_check, password_check, mig_server))
+    #        status = os.system("%%s --location --fail --cert %%s --key %%s %%s %%s --url '%%s/cgi-bin/%s.py?%s=$%s&%s=$%s;output_format=txt;with_html=false'" % (curl, cert_file, key_file, ca_check, password_check, mig_server))
     #        return status >> 8
     # """ % (command, first_arg, first_arg, second_arg, second_arg, second_arg)
 
@@ -197,6 +198,7 @@ def vgrid_single_argument_upload_function(
             """
         $curl \\
 	        -H "Content-Type: %s" \\
+                --location \\
                 --fail \\
                 --cert $cert_file \\
                 --key $key_file \\
@@ -213,7 +215,7 @@ def vgrid_single_argument_upload_function(
 
     # TODO: create valid python code
     #        s += """
-    #        status = os.system("%%s --fail --cert %%s --key %%s %%s %%s --url '%%s/cgi-bin/%s.py?%s=$%s&%s=$%s;output_format=txt;with_html=false'" % (curl, cert_file, key_file, ca_check, password_check, mig_server))
+    #        status = os.system("%%s --location --fail --cert %%s --key %%s %%s %%s --url '%%s/cgi-bin/%s.py?%s=$%s&%s=$%s;output_format=txt;with_html=false'" % (curl, cert_file, key_file, ca_check, password_check, mig_server))
     #        return status >> 8
     # """ % (command, first_arg, first_arg, second_arg, second_arg, second_arg)
 
@@ -243,6 +245,7 @@ def vgrid_two_arguments_function(
         s += \
             """
         $curl \\
+                --location \\
                 --fail \\
                 --cert $cert_file \\
                 --key $key_file \\
@@ -258,7 +261,7 @@ def vgrid_two_arguments_function(
 
     # TODO: create valid python code
     #        s += """
-    #        status = os.system("%%s --fail --cert %%s --key %%s %%s %%s --url '%%s/cgi-bin/%s.py?%s=$%s&%s=$%s;output_format=txt;with_html=false'" % (curl, cert_file, key_file, ca_check, password_check, mig_server))
+    #        status = os.system("%%s --location --fail --cert %%s --key %%s %%s %%s --url '%%s/cgi-bin/%s.py?%s=$%s&%s=$%s;output_format=txt;with_html=false'" % (curl, cert_file, key_file, ca_check, password_check, mig_server))
     #        return status >> 8
     # """ % (command, first_arg, first_arg, second_arg, second_arg, second_arg)
 

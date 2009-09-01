@@ -32,7 +32,7 @@ send_pgid() {
     contimeout=20
     
     # TODO: can we supply ca-cert to avoid insecure here?
-    command="curl --insecure --stderr $curllog --connect-timeout $contimeout -m $contimeout $migserver/cgi-sid/put_resource_pgid?type=$type&amp;unique_resource_name=${unique_resource_name}&amp;pgid=$pgid"
+    command="curl --location --insecure --stderr $curllog --connect-timeout $contimeout -m $contimeout $migserver/cgi-sid/put_resource_pgid?type=$type&amp;unique_resource_name=${unique_resource_name}&amp;pgid=$pgid"
     
     if [ $type == "EXE" ]; then
         exe=$3
@@ -197,7 +197,7 @@ request_job() {
     while [ 1 ]; do
         retry_counter=$((retry_counter+1))
         # TODO: can we supply ca-cert to avoid insecure here?
-        curl --insecure --stderr $curllog --connect-timeout $contimeout -m $contimeout $migserver/cgi-sid/requestnewjob?exe=${exe}\&amp\;unique_resource_name=${unique_resource_name}\&amp\;cputime=${cputime}\&amp\;nodecount=${nodecount}\&amp\;sandboxkey=${sandboxkey}\&amp\;localjobname=${localjobname}\&amp\;execution_delay=${execution_delay}\&amp\;exe_pgid=${exe_pgid} 1>> $frontendlog 2>> $frontendlog
+        curl --location --insecure --stderr $curllog --connect-timeout $contimeout -m $contimeout $migserver/cgi-sid/requestnewjob?exe=${exe}\&amp\;unique_resource_name=${unique_resource_name}\&amp\;cputime=${cputime}\&amp\;nodecount=${nodecount}\&amp\;sandboxkey=${sandboxkey}\&amp\;localjobname=${localjobname}\&amp\;execution_delay=${execution_delay}\&amp\;exe_pgid=${exe_pgid} 1>> $frontendlog 2>> $frontendlog
         echo "a new job ${exe} ${nodecount} ${cputime} ${localjobname} ${execution_delay} ${exe_pgid} was requested" 1>> $frontendlog 2>> $frontendlog
         
         if [ $sandbox -eq 1 ]; then
@@ -205,7 +205,7 @@ request_job() {
             getinputfiles_max_retries=5
             while [ ! -f ${localjobname}.getinputfiles ] && \
                 [ $getinputfiles_retry -lt $getinputfiles_max_retries ]; do
-                curl --fail --insecure --stderr $curllog --connect-timeout $contimeout -m $contimeout $migserver/sid_redirect/${localjobname}.getinputfiles -o ${localjobname}.getinputfiles 1>> $frontendlog 2>> $frontendlog
+                curl --location --fail --insecure --stderr $curllog --connect-timeout $contimeout -m $contimeout $migserver/sid_redirect/${localjobname}.getinputfiles -o ${localjobname}.getinputfiles 1>> $frontendlog 2>> $frontendlog
                 # Loop until .getinputfiles is ready, curl returns 0,
                 # --fail must be set on curl command to do this, see 
                 # man curl
@@ -271,7 +271,7 @@ sandbox_stop_exe() {
         execution_node=`awk '/execution_node/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ${newest_job_dir}/${localjobname}.executionnode`
         
         # Check if newest_job is still active, if not issue the stop command returned by the MiG server
-        command="curl --insecure --stderr $curllog --connect-timeout 10 -m 10 $migserver/cgi-sid/isjobactive.py"
+        command="curl --location --insecure --stderr $curllog --connect-timeout 10 -m 10 $migserver/cgi-sid/isjobactive.py"
         command="${command}?iosessionid=${iosessionid}&sandboxkey=${sandboxkey}&exe_name=${execution_node}"
         status=`$command  2>> $frontendlog`
         retval=$?

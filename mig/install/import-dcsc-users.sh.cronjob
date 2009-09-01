@@ -13,8 +13,9 @@ MIGCERTS="$MIGHOME/MiG-certificates"
 MIGIMPORT="$MIGCODE/server/importusers.py"
 MIGCONF="$MIGCODE/server/MiGserver.conf"
 MIGDB="$MIGCODE/server/MiG-users.db"
+VGRID="DCSC"
 VOMSKEY="$MIGCERTS/vomskey.pem"
 VOMSCERT="$MIGCERTS/vomscert.pem"
 VOMSURL='https://voms.ndgf.org:8443/voms/dcsc.dk/services/VOMSCompatibility?method=getGridmapUsers&container=%2Fdcsc.dk'
 
-su - $MIGUSER -c "$MIGIMPORT -c $MIGCONF -d $MIGDB -K $VOMSKEY -C $VOMSCERT $VOMSURL"
+su - $MIGUSER -c "$MIGIMPORT -c $MIGCONF -d $MIGDB -K $VOMSKEY -C $VOMSCERT -m $VGRID $VOMSURL"
