@@ -32,6 +32,6 @@ import cgitb
 cgitb.enable()
 
 from shared.functionality.extcertaction import main
-from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
+from shared.cgiscriptstub import run_cgi_script
 
-run_cgi_script_possibly_with_cert(main)
+run_cgi_script(main)

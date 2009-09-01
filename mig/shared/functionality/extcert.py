@@ -62,25 +62,14 @@ def main(client_id, user_arguments_dict):
 
     certreq_link = {'object_type': 'link', 'destination': 'reqcert.py',
                     'text': 'Request a new MiG certificate'}
-    if not client_id:
-        output_objects.append({'object_type': 'warning', 'text'
-                              : 'Apparently you do not have a suitable MiG certificate, but you can request one:'
-                              })
-        output_objects.append(certreq_link)
-        output_objects.append({'object_type': 'warning', 'text'
-                              : 'However, if you do own a suitable certificate you can sign up with it below:'
-                              })
-        new_user = {}
-    else:
-
-        new_user = distinguished_name_to_user(client_id)
+    new_user = distinguished_name_to_user(client_id)
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 This page is used to sign up for MiG with an existing certificate from some other Certificate Authority (CA) than MiG.
 You can use it if you already have a x509 certificate from another accepted CA. In this way you can simply use your existing certificate for MiG access instead of requesting a new one.
 <br>
-The page tries to auto load any certificate your browser provides and fill in the fields accordingly, but in case it can't guess all <span class=mandatory>mandatory</span> fields, you still need to fill in those. If no suitable certificates are provided you need to enter everything manually.<br>
+The page tries to auto load any certificate your browser provides and fill in the fields accordingly, but in case it can't guess all <span class=mandatory>mandatory</span> fields, you still need to fill in those.<br>
 Please enter any missing information below and press the Send button to submit the external certificate sign up request to the MiG administrators.<p>
 <b><font color='red'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br>
 That is, if You're a student/employee at DIKU, please type DIKU in the Organization field and use your USER@diku.dk address in the Email field.</font></b><p>
