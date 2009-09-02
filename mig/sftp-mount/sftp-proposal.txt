@@ -1,0 +1,108 @@
+= Providing sft access to MiG homes =
+We run into problems with efficient MiG home file handling from time to
+time. The HTTPS transport is not very efficient for uploads and
+generally doesn't cope very well with big files as HTTP PUT results in
+the entire file being temporarily stored in memory.
+We need secure and yet efficient file handling so this proposal treats
+an alternative way of accessing files using the secure sftp protocol
+available with OpenSSH.
+With sftp access the user can additionally use the popular sshfs
+remote file system to securely mount the MiG home directory locally to
+make file handling a breeze.
+
+
+= Access Control =
+All MiG home directories are stored as subdirs inside the home directory of the
+dedicated mig user on the servers (~mig/state/user_home/USERID). Thus it
+is a challenge to map individual MiG users into their own MiG home
+without giving access to anybody elses MiG home.
+With OpenSSH 5.x and later the ssh daemon supports native chrooting of
+sftp users, which makes it significatly easier to limit a user to only
+have sftp access and only within a particular directory.
+It appears users still need to be created as real users on the system
+for openssh to allow them, so we will need to create user accounts for
+each MiG user. Then we need to make only the files of the user available
+inside a chroot for each user. Using the sftp chroot feature we might as
+well chroot them inside their own home directory and map their MiG home
+into that space.
+So for each USERID we create a user on the server with home dir in
+/home/USERID and change ownership to root. This user is then added to
+the fuse and restrictedsftp system groups.
+
+Modify sshd_config to use the built-in sftp server subsystem
+and to restrict members of the restrictedsftp group to their own home:
+# Disable the default external sftp-server and use internal one instead
+# to allow automatic chrooting of sftp sessions 
+#Subsystem sftp /usr/lib/openssh/sftp-server
+Subsystem sftp internal-sftp
+
+# Chroot all sftp sessions to the user home directory
+Match Group restrictedsftp
+    ChrootDirectory /home/%u/chroot
+    AllowTCPForwarding no
+    X11Forwarding no
+    ForceCommand internal-sftp
+
+
+Now such users can only use sftp and only inside /home/USERID , which
+must be owned by root and not writable by the user.
+
+addgroup restrictedsftp
+ssh-keygen -t rsa -N '' -f ~mig/.ssh/id_rsa-restrictedsftp
+PUBKEY=`cat ~mig/.ssh/id_rsa-restrictedsftp`
+echo "from='localhost,127.0.0.1',no-pty,no-agent-forwarding,no-x11-forwarding,no-port-forwarding $PUBKEY" >> ~mig/.ssh/authorized_keys
+
+Use the MiG rsa key of the user for sftp login or let them provide one
+themselves.
+
+That is for each user with user ID set in the USERID environment and the
+ssh public key path set in the USERPUBPATH environment the actions would
+be:
+    sudo su -
+    useradd -m $USERID -p 12345678
+    passwd -l $USERID
+    adduser $USERID restrictedsftp
+    adduser $USERID fuse
+    su - $USERID -c 'ssh -oStrictHostKeyChecking=no localhost uname'
+    cp ~mig/.ssh/id_rsa-restrictedsftp ~$USERID/.ssh/id_rsa
+    cp ~mig/.ssh/id_rsa-restrictedsftp.pub ~$USERID/.ssh/id_rsa.pub
+    echo 'command="internal-sftp",no-pty,no-x11-forwarding,no-agent-forwarding,no-port-forwarding' `cat $USERPUBPATH` > ~$USERID/.ssh/authorized_keys
+    mkdir ~$USERID/localmount
+    mkdir -p ~$USERID/chroot/MiG-home
+    chown -R 0:0 ~$USERID
+    chown -R $USERID:$USERID ~$USERID/chroot/MiG-home
+    su - $USERID -c "sshfs mig@localhost:state/user_home/$USERID /home/$USERID/MiG-home -oCipher=blowfish -oallow_other"
+
+Now USERID should be able to sftp to the server where her MiG home is
+locally mounted onto ~/MiG-home with correct permissions.
+
+If the user copies the key.pem and key.pub from the unpacked MiG
+certificate bundle to $HOME/.ssh/identity and -.pub she can now sftp to
+the server with:
+sftp $USERID@$SERVER
+and sshfs mount the MiG home with:
+sshfs $USERID@$SERVER:MiG-home $MOUNTPOINT
+
+It is possible to skip the copying if the
+"-oIdentityFile=$HOME/.mig/key.pem" option is passed to sftp or sshfs but
+that is left to the user to decide.
+
+
+IMPORTANT: user can still create symlinks to files and dirs outside own MiG
+home using sftp and illegally gain access to files through those links with
+https afterwards!!!
+Switching to another local mount mechanism (smb or whatever) may
+work around this problem.
+A modified local sshfs would allow removal of symlink and chmod support
+but it is cumbersome. Perhaps an overlay fuse FS like a minimally modified
+nullfs can do that?
+
+A first attempt to prevent e.g. symlinks is implemented in migaccess.py and the sshfs mount command should thus be changed to:
+    su - $USERID -c "sshfs mig@localhost:state/user_home/$USERID /private/MiG-home -oCipher=blowfish -oallow_other"
+    su - $USERID -c "python migaccess.py /home/$USERID/MiG-home -oroot=/private/MiG-home"
+
+
+Please note that the local sshfs mount must be repeated every time the
+server is booted.
+
+ 
