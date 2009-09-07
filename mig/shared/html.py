@@ -113,11 +113,11 @@ def get_cgi_html_header(
 <link rel="stylesheet" type="text/css" href="/cert_redirect/.default.css" media="screen"/>
 <link rel="icon" type="image/vnd.microsoft.icon" href="/images/favicon.ico">
 <title>
- %s
- </title>
- %s
- <SCRIPT TYPE="text/javascript" SRC="/images/backlink.js"></SCRIPT>
- </head>
+%s
+</title>
+%s
+<SCRIPT TYPE="text/javascript" SRC="/images/backlink.js"></SCRIPT>
+</head>
 <body %s>
 <div id="topspace">
 </div>

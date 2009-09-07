@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# output - [insert a few words of module description on this line]
+# output - General formatting of backend output objects
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -27,8 +27,6 @@
 
 """Module with functions to generate output in format
 specified by the client."""
-
-import pickle
 
 import shared.returnvalues as returnvalues
 from shared.html import get_cgi_html_header, get_cgi_html_footer
@@ -927,36 +925,31 @@ def soap_format(ret_val, ret_msg, out_obj):
         return None
 
 
-def pickle_helper(
-    ret_val,
-    ret_msg,
-    out_obj,
-    protocol=None,
-    ):
-    """Shared helper to generate output in pickle"""
+def pickle_helper(ret_val, ret_msg, out_obj, protocol=None):
+    """Generate output in requested pickle protocol format"""
 
-    return pickle.dumps(out_obj, protocol)
-
-
-def pickle_x86_format(ret_val, ret_msg, out_obj):
-    """Generate output in pickle x86 format - deprecated!"""
-
-    # There's no guarantee that output is actually X86
-    # it probably depends on the server arch if anything
-
-    return pickle_helper(ret_val, ret_msg, out_obj)
-
+    try:
+        import pickle
+        return pickle.dumps(out_obj, protocol)
+    except Exception, exc:
+        print 'pickle not available on server! Defaulting to .txt output. (%s)'\
+             % exc
+        return None
 
 def pickle_format(ret_val, ret_msg, out_obj):
-    """Generate output in pickle default protocol format"""
+    """Generate output in default pickle protocol format"""
 
-    return pickle_helper(ret_val, ret_msg, out_obj)
+    return pickle_helper(ret_val, ret_msg, out_obj, protocol=0)
 
+def pickle1_format(ret_val, ret_msg, out_obj):
+    """Generate output in pickle protocol 1 format"""
+
+    return pickle_helper(ret_val, ret_msg, out_obj, protocol=1)
 
 def pickle2_format(ret_val, ret_msg, out_obj):
-    """Generate output in pickle protocol 2 format"""
+    """Generate output in default pickle protocol 2 format"""
 
-    return pickle_helper(ret_val, ret_msg, out_obj, 2)
+    return pickle_helper(ret_val, ret_msg, out_obj, protocol=2)
 
 
 def yaml_format(ret_val, ret_msg, out_obj):
@@ -1011,8 +1004,8 @@ def get_valid_outputformats():
         'html',
         'txt',
         'soap',
-        'pickle_x86',
         'pickle',
+        'pickle1',
         'pickle2',
         'yaml',
         'xmlrpc',
