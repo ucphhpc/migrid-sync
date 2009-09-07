@@ -47,13 +47,9 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False,
-                                  op_menu=False)
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG external certificate sign up request',
-                          'skipmenu': True})
+        initialize_main_variables(op_header=False)
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Welcome to the MiG external certificate sign up page'
+                          : 'Welcome to the MiG user sign up page'
                           })
 
     defaults = signature()[1]
@@ -73,7 +69,7 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-This page is used to sign up for MiG with an existing certificate from some other Certificate Authority (CA) than MiG.
+This page is used to sign up for MiG with an existing certificate from a Certificate Authority (CA) allowed for MiG.
 You can use it if you already have a x509 certificate from another accepted CA. In this way you can simply use your existing certificate for MiG access instead of requesting a new one.
 <br>
 The page tries to auto load any certificate your browser provides and fill in the fields accordingly, but in case it can't guess all <span class=mandatory>mandatory</span> fields, you still need to fill in those.<br>

@@ -28,10 +28,10 @@
 """ Show all available runtime environments"""
 
 import shared.returnvalues as returnvalues
-from shared.refunctions import list_runtime_environments, get_re_dict
-from shared.functionality.showre import build_reitem_object_from_re_dict
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input
+from shared.functionality.showre import build_reitem_object_from_re_dict
+from shared.refunctions import list_runtime_environments, get_re_dict
 
 
 def signature():
@@ -45,17 +45,17 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
+        initialize_main_variables(op_header=False)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG Runtime Environments'})
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Runtime Environments'
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG Runtime Environments'})
+                          : 'Runtime Environments'})
     output_objects.append({'object_type': 'text', 'text'
                           : """
 <div class="migcontent">

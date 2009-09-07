@@ -47,7 +47,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
+        initialize_main_variables(op_header=False)
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -61,10 +61,8 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG Settings'})
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG Settings'})
+                          : 'Settings'})
 
     # unpickle current settings
 

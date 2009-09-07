@@ -284,6 +284,8 @@ def txt_format(ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'list':
             for list_item in i['list']:
                 lines.append('%s' % list_item)
+        elif i['object_type'] == 'end':
+            pass
         else:
             lines.append('unknown object %s' % i)
 
@@ -333,6 +335,21 @@ def html_format(ret_val, ret_msg, out_obj):
             include_menu = True
             if i.has_key('skipmenu'):
                 include_menu = not i['skipmenu']
+            defaultcss = ''
+            if i.has_key('defaultcss'):
+                defaultcss = i['defaultcss']
+            usercss = ''
+            if i.has_key('usercss'):
+                usercss = i['usercss']
+            favicon = ''
+            if i.has_key('favicon'):
+                favicon = i['favicon']
+            logoimage = ''
+            if i.has_key('logoimage'):
+                logoimage = i['logoimage']
+            logotitle = ''
+            if i.has_key('logotitle'):
+                logotitle = i['logotitle']
             lines.append(get_cgi_html_header(
                 i['text'],
                 '',
@@ -340,6 +357,11 @@ def html_format(ret_val, ret_msg, out_obj):
                 javascript,
                 bodyfunctions,
                 include_menu,
+                defaultcss=defaultcss,
+                usercss=usercss,
+                favicon=favicon,
+                logoimage=logoimage,
+                logotitle=logotitle,
                 ))
         elif i['object_type'] == 'text':
             lines.append('<p>%s</p>' % i['text'])
@@ -891,6 +913,8 @@ def html_format(ret_val, ret_msg, out_obj):
                 lines.append('</table>')
             else:
                 lines.append('No matching VGrids found')
+        elif i['object_type'] == 'end':
+            pass
         else:
             lines.append('unknown object %s' % i)
     footer = \

@@ -32,7 +32,7 @@ import socket
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.livedisplaysfunctions import get_users_display_dict, \
     get_dict_from_display_number, set_user_display_active, \
     set_user_display_inactive
@@ -56,7 +56,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
+        initialize_main_variables(op_header=False)
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -135,12 +135,10 @@ def main(client_id, user_arguments_dict):
     # ....}
     # ===============================================================================
 
-    output_objects.append({
-        'object_type': 'title',
-        'text': 'MiG Interactive Session',
-        'javascript': script,
-        'bodyfunctions': 'onUnLoad="endVNC()"',
-        })
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'MiG Interactive Session'
+    title_entry['javascript'] = script
+    title_entry['bodyfunctions'] = 'onUnLoad="endVNC()"'
     output_objects.append({'object_type': 'header', 'text'
                           : 'Session for: %s' % client_id})
 

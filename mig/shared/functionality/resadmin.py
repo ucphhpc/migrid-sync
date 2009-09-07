@@ -40,7 +40,7 @@ import shared.returnvalues as returnvalues
 from shared.conf import get_resource_configuration
 from shared.refunctions import get_re_dict, list_runtime_environments
 from shared.fileio import unpickle
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.findtype import is_owner
 from shared.functional import validate_input_and_cert
 
@@ -343,7 +343,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
+        initialize_main_variables(op_header=False)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -366,10 +366,10 @@ def main(client_id, user_arguments_dict):
                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG Resource Management'})
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Resource Management'
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG Resource Management'})
+                          : ' Resource Management'})
     output_objects.append({'object_type': 'link', 'text'
                           : 'Create a new MiG resource', 'destination'
                           : 'resedit.py'})

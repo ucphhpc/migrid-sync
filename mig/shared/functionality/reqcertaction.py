@@ -34,7 +34,7 @@ import base64
 import pickle
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input, REJECT_UNSET
 from shared.notification import send_email
 from shared.useradm import fill_distinguished_name
@@ -60,19 +60,18 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False,
-                                  op_menu=False)
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG certificate request', 'skipmenu'
-                          : True})
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG certificate request'})
-
+        initialize_main_variables(op_header=False, op_menu=False)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'MiG certificate request'
+    title_entry['skipmenu'] = True
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'MiG certificate request'})
 
     admin_email = configuration.admin_email
     smtp_server = configuration.smtp_server

@@ -33,6 +33,42 @@ import sys
 from shared.conf import get_configuration_object
 
 
+def make_basic_entry(kind, values):
+    """Create basic entry for output_objects"""
+    entry =  {'object_type': kind}
+    entry.update(values)
+    return entry
+
+def make_start_entry(headers=[]):
+    """Create start entry for output_objects"""
+    return make_basic_entry('start', {'headers': headers})
+
+def make_title_entry(text, javascript='', bodyfunctions='', skipmenu=False,
+                     defaultcss='', usercss='', favicon='', logoimage='',
+                     logotitle=''):
+    """Create title entry for output_objects"""
+    return make_basic_entry('title', {'text': text,
+                                      'javascript': javascript,
+                                      'bodyfunctions': bodyfunctions,
+                                      'skipmenu': skipmenu,
+                                      'defaultcss': defaultcss,
+                                      'usercss': usercss,
+                                      'favicon': favicon,
+                                      'logoimage': logoimage,
+                                      'logotitle': logotitle,
+                                      })
+
+def make_header_entry(text):
+    """Create header entry for output_objects"""
+    return  make_basic_entry('header', {'text': text})
+
+def find_entry(output_objects, kind):
+    """Find entry in output_objects"""
+    for entry in output_objects:
+        if kind == entry['object_type']:
+            return entry
+    return None
+
 def initialize_main_variables(op_title=True, op_header=True,
                               op_menu=True):
     """Script initialization is identical for most scripts in 
@@ -42,22 +78,21 @@ def initialize_main_variables(op_title=True, op_header=True,
     configuration = get_configuration_object()
     logger = configuration.logger
     output_objects = []
-    output_objects.append({'object_type': 'start', 'headers': []})
+    start_entry = make_start_entry()
+    output_objects.append(start_entry)
     op_name = os.path.basename(sys.argv[0]).replace('.py', '')
 
     if op_title:
-        title_object = {
-            'object_type': 'title',
-            'text': 'MiG %s' % op_name,
-            'javascript': '',
-            'bodyfunctions': '',
-            }
-        if not op_menu:
-            title_object['skipmenu'] = True
+        title_object = make_title_entry('%s' % op_name, skipmenu=(not op_menu),
+                                        defaultcss=configuration.site_default_css,
+                                        usercss=configuration.site_user_css,
+                                        favicon=configuration.site_fav_icon,
+                                        logoimage=configuration.site_logo_image,
+                                        logotitle=configuration.site_logo_text)
         output_objects.append(title_object)
     if op_header:
-        output_objects.append({'object_type': 'header', 'text': 'MiG %s'
-                               % op_name})
+        header_object = make_header_entry('%s' % op_name)
+        output_objects.append(header_object)
 
     return (configuration, logger, output_objects, op_name)
 

@@ -43,7 +43,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
+        initialize_main_variables(op_header=False)
 
     status = returnvalues.OK
     defaults = signature()[1]
@@ -58,10 +58,8 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG Downloads'})
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG Downloads'})
+                          : 'Downloads'})
     output_objects.append({'object_type': 'text', 'text'
                           : """
 <div class="migcontent">

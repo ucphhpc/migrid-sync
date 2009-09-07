@@ -58,11 +58,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False,
-                                  op_menu=False)
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG external certificate sign up',
-                          'skipmenu': True})
+        initialize_main_variables(op_header=False)
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG external certificate sign up'})
 

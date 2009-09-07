@@ -31,7 +31,7 @@ import os
 import getopt
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
 from shared.functionality import canceljob, cat, cp, docs, find, grep, \
     head, jobstatus, liveoutput, ls, mkdir, mv, resubmit, rm, rmdir, \
@@ -212,7 +212,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
+        initialize_main_variables(op_header=False)
 
     status = returnvalues.OK
     defaults = signature()[1]
@@ -235,8 +235,9 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(configuration.mig_server_home + os.sep
                                 + '..' + os.sep + 'cgi-bin') + os.sep
 
-    output_objects.append({'object_type': 'title', 'text': 'MiG Shell'})
-    output_objects.append({'object_type': 'header', 'text': 'MiG Shell'
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Command Shell'
+    output_objects.append({'object_type': 'header', 'text': 'Command Shell'
                           })
     output_objects.append({'object_type': 'html_form', 'text'
                           : """

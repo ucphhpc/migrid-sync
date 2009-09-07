@@ -35,7 +35,7 @@ from shared.fileio import unpickle, pickle
 from shared.job import output_dir
 from shared.ssh import copy_file_to_resource
 from shared.conf import get_resource_exe
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
 from shared.useradm import client_id_dir
@@ -53,14 +53,8 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_title=False, op_header=False)
+        initialize_main_variables(op_header=False)
     client_dir = client_id_dir(client_id)
-    output_objects.append({
-        'object_type': 'title',
-        'text': 'MiG live output',
-        'javascript': '',
-        'bodyfunctions': '',
-        })
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -74,6 +68,8 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
     job_ids = accepted['job_id']
 
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'MiG live output'
     output_objects.append({'object_type': 'header', 'text'
                           : 'Requesting live output for %s'
                            % ', '.join(job_ids)})

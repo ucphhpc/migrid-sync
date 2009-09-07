@@ -33,7 +33,7 @@ import socket
 
 import shared.resconfkeywords as resconfkeywords
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
 from shared.refunctions import list_runtime_environments
 from shared.resource import init_conf, empty_resource_config 
@@ -84,7 +84,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
+        initialize_main_variables(op_header=False)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -118,8 +118,8 @@ def main(client_id, user_arguments_dict):
 
     logger.info('Starting Resource edit GUI.')
 
-    output_objects.append({'object_type': 'title', 'text': 'Resource Editor'
-                          })
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Resource Editor'
     output_objects.append({'object_type': 'header', 'text': 'Resource Editor'
                           })
     output_objects.append({'object_type': 'sectionheader', 'text'

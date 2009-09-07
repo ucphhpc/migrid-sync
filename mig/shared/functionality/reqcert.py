@@ -32,7 +32,7 @@ import os
 import shared.returnvalues as returnvalues
 from shared.certreq import valid_password_chars, valid_name_chars, \
     password_min_len, password_max_len
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input
 
 
@@ -47,21 +47,20 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False,
-                                  op_menu=False)
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG certificate request', 'skipmenu'
-                          : True})
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Welcome to the MiG certificate request page'
-                          })
-
+        initialize_main_variables(op_header=False, op_menu=False)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'MiG certificate request'
+    title_entry['skipmenu'] = True
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Welcome to the MiG certificate request page'
+                          })
+    
     # Redirect to extcert page with certificate requirement but without
     # changing access method (CGI vs. WSGI).
     

@@ -29,7 +29,7 @@
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 
 
 def signature():
@@ -43,12 +43,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG VGrid membership request'})
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Request VGrid member or ownership'})
-
+        initialize_main_variables(op_header=False)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -60,6 +55,11 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'MiG VGrid membership request'
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Request VGrid member or ownership'})
 
     output_objects.append({'object_type': 'warning', 'text'
                           : '''

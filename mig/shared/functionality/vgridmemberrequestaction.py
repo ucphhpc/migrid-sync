@@ -27,7 +27,7 @@
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.notification import notify_user_thread
 from shared.vgrid import vgrid_list, vgrid_is_owner, vgrid_is_member
 
@@ -45,11 +45,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG VGrid membership request'})
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG VGrid membership request'})
+        initialize_main_variables(op_header=False)
     defaults = signature()[1]
 
     (validate_status, accepted) = validate_input_and_cert(
@@ -62,6 +58,12 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'MiG VGrid membership request'
+    output_objects.append({'object_type': 'title', 'text'
+                          : 'MiG VGrid membership request'})
+
     vgrid_name = accepted['vgrid_name'][-1]
     request_type = accepted['request_type'][-1].strip().lower()
     request_text = accepted['request_text'][-1].strip()

@@ -30,7 +30,7 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
 from shared.mrslkeywords import get_job_specs
 from shared.refunctions import list_runtime_environments
@@ -73,7 +73,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
+        initialize_main_variables(op_header=False)
     client_dir = client_id_dir(client_id)
     status = returnvalues.OK
     defaults = signature()[1]
@@ -98,10 +98,10 @@ def main(client_id, user_arguments_dict):
 
     template_path = os.path.join(base_dir, mrsl_template)
 
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG Submit Job'})
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Submit Job'
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG Submit Job'})
+                          : 'Submit Job'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <div class='smallcontent'>

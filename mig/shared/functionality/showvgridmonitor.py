@@ -30,7 +30,7 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input
 from shared.vgrid import vgrid_is_owner_or_member, user_allowed_vgrids
 
@@ -46,21 +46,19 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
-    refresh = '<meta http-equiv="refresh" content="%s">'\
-         % configuration.sleep_secs
-    output_objects.append({
-        'object_type': 'title',
-        'text': 'MiG VGrid Monitor',
-        'javascript': refresh,
-        'bodyfunctions': '',
-        })
-
+        initialize_main_variables(op_header=False)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    refresh = '<meta http-equiv="refresh" content="%s">'\
+         % configuration.sleep_secs
+
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'MiG VGrid Monitor'
+    title_entry['javascript'] = refresh
 
     allowed_vgrids = user_allowed_vgrids(configuration, client_id)
     vgrid_list = accepted['vgrid_name']

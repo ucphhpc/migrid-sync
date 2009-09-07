@@ -1,0 +1,8 @@
+= MiG web page style =
+The site.css file is used by all MiG web pages, so site wide style can easily be modified by simply 
+changing the symlink to another css file.
+
+This is in addition to the user selectable styles and any future custom skin support.
+
+Please note that the file or symlink site-logo.png is used as the top logo on all pages.
+Similarly the status-icons dir or symlink holds e.g. the resource monitor icons.

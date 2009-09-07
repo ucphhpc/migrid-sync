@@ -414,6 +414,47 @@ class Configuration:
         else:
             self.moin_share = ''
 
+        if config.has_option('SITE', 'images'):
+            self.site_images = config.get('SITE', 'images')
+        else:
+            self.site_images = "/images"
+        if config.has_option('SITE', 'styles'):
+            self.site_styles = config.get('SITE', 'styles')
+        else:
+            self.site_styles = self.site_images
+        if config.has_option('SITE', 'user_redirect'):
+            self.site_user_redirect = config.get('SITE', 'user_redirect')
+        else:
+            self.site_user_redirect = '/cert_redirect'
+        if config.has_option('SITE', 'default_css'):
+            self.site_default_css = config.get('SITE', 'default_css')
+        else:
+            self.site_default_css = '%s/site.css' % self.site_styles
+        if config.has_option('SITE', 'user_css'):
+            self.site_user_css = config.get('SITE', 'user_css')
+        else:
+            self.site_user_css = '%s/.default.css' % self.site_user_redirect
+        if config.has_option('SITE', 'fav_icon'):
+            self.site_fav_icon = config.get('SITE', 'fav_icon')
+        else:
+            self.site_fav_icon = '%s/favicon.ico' % self.site_images
+        if config.has_option('SITE', 'logo_text'):
+            self.site_logo_text = config.get('SITE', 'logo_text')
+        else:
+            self.site_logo_text = "Minimum intrusion Grid"
+        if config.has_option('SITE', 'logo_image'):
+            self.site_logo_image = config.get('SITE', 'logo_image')
+        else:
+            self.site_logo_image = '%s/site-logo.png' % self.site_images
+        if config.has_option('SITE', 'credits_text'):
+            self.site_credits_text = config.get('SITE', 'credits_text')
+        else:
+            self.site_credits_text = '2009, <a href="http://www.migrid.org">The MiG Project</a>'
+        if config.has_option('SITE', 'credits_image'):
+            self.site_credits_image = config.get('SITE', 'credits_image')
+        else:
+            self.site_credits_image = '%s/copyright.png' % self.site_images
+
         # set test modes if requested
 
         if config.has_option('GLOBAL', 'enable_server_dist'):

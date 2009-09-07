@@ -46,8 +46,8 @@ def html_add(formatted_text, html=True):
 def render_menu(menu_class='navmenu', menu_items='',
                 current_element='Unknown'):
 
-    menu_lines = '<div class="%s">' % menu_class
-    menu_lines += ' <ul>'
+    menu_lines = '<div class="%s">\n' % menu_class
+    menu_lines += ' <ul>\n'
 
     for menu_line in menu_items:
         selected = ''
@@ -57,12 +57,12 @@ def render_menu(menu_class='navmenu', menu_items='',
             attr = menu_line['attr']
         if menu_line['url'].find(current_element) > -1:
             selected = ' class="selected" ' + current_element
-        menu_lines += '   <li %s class="%s"><a href="%s" %s>%s</a></li>'\
+        menu_lines += '   <li %s class="%s"><a href="%s" %s>%s</a></li>\n'\
              % (attr, menu_line['class'], menu_line['url'], selected,
                 menu_line['title'])
 
-    menu_lines += ' </ul>'
-    menu_lines += '</div>'
+    menu_lines += ' </ul>\n'
+    menu_lines += '</div>\n'
 
     return menu_lines
 
@@ -74,6 +74,11 @@ def get_cgi_html_header(
     scripts='',
     bodyfunctions='',
     menu=True,
+    defaultcss="/images/site.css",
+    usercss="/cert_redirect/.default.css",
+    favicon="/images/favicon.ico",
+    logoimage="/images/site-logo.png",
+    logotitle="Minimum intrusion Grid",
     ):
     """Return the html tags to mark the beginning of a page."""
 
@@ -109,22 +114,21 @@ def get_cgi_html_header(
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-<link rel="stylesheet" type="text/css" href="/images/mig.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/cert_redirect/.default.css" media="screen"/>
-<link rel="icon" type="image/vnd.microsoft.icon" href="/images/favicon.ico">
+<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+<link rel="icon" type="image/vnd.microsoft.icon" href="%s">
 <title>
 %s
 </title>
 %s
-<SCRIPT TYPE="text/javascript" SRC="/images/backlink.js"></SCRIPT>
 </head>
 <body %s>
 <div id="topspace">
 </div>
 <div id="toplogo">
-<img src="/images/MiG-logo-small.png" id="logoimage" alt="MiG logo"/>
+<img src="%s" id="logoimage" alt="site logo"/>
 <span id="logotitle">
-Minimum intrusion Grid
+%s
 </span>
 </div>
 %s
@@ -133,10 +137,12 @@ Minimum intrusion Grid
 </div>
 <div id="content">
     '''\
-         % (title, scripts, bodyfunctions, menu_lines, header)
+         % (defaultcss, usercss, favicon, title, scripts,
+            bodyfunctions, logoimage, logotitle, menu_lines, header)
 
 
-def get_cgi_html_footer(footer='', html=True):
+def get_cgi_html_footer(footer='', html=True, creditsimage="/images/copyright.png",
+                        credits='2009, <a href="http://www.migrid.org">The MiG Project</a>'):
     """Return the html tags to mark the end of a page. If a footer string
     is supplied it is inserted at the bottom of the page.
     """
@@ -145,19 +151,19 @@ def get_cgi_html_footer(footer='', html=True):
         return ''
 
     out = footer
-    out += \
-        '''
-        </div>
-        <div id="bottomlogo">
-        <span id="credits">
-        Copyright 2009 - <a href="http://www.migrid.org">The MiG Project</a>
-        </span>
-        </div>
-        <div id="bottomspace">
-        </div>
-        </body>
+    out += '''
+</div>
+<div id="bottomlogo">
+<img src="%s" id="creditsimage" alt=""/>
+<span id="credits">
+%s
+</span>
+</div>
+<div id="bottomspace">
+</div>
+</body>
 </html>
-'''
+''' % (creditsimage, credits)
     return out
 
 

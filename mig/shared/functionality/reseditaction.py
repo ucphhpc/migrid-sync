@@ -35,7 +35,7 @@ import time
 import shared.confparser as confparser
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_resource_create_request_mail
 from shared.resource import prepare_conf, write_resource_config
 from shared.useradm import client_id_dir
@@ -153,7 +153,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
+        initialize_main_variables(op_header=False)
     defaults = signature()[1]
 
     ### IMPORTANT: we can not validate input completely here!
@@ -194,8 +194,8 @@ def main(client_id, user_arguments_dict):
 
     status = returnvalues.OK
 
-    output_objects.append({'object_type': 'title', 'text': 'Resource edit actions'
-                          })
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Resource edit actions'
     output_objects.append({'object_type': 'header', 'text': 'Resource edit actions'
                           })
     conf = prepare_conf(configuration, user_arguments_dict, resource_id)

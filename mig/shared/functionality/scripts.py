@@ -33,7 +33,7 @@ import os
 import zipfile
 import time
 
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
 import shared.returnvalues as returnvalues
 from shared.useradm import client_id_dir
@@ -88,7 +88,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False, op_title=False)
+        initialize_main_variables(op_header=False)
     client_dir = client_id_dir(client_id)
 
     valid_langs = {'sh': 'shell', 'python': 'python'}
@@ -113,10 +113,10 @@ def main(client_id, user_arguments_dict):
 
     flavors = []
 
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG script generator'})
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Script generator'
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG script generator'})
+                          : 'Script generator'})
 
     status = returnvalues.OK
 
