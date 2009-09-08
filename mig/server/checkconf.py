@@ -34,6 +34,7 @@ import os
 import re
 import sys
 import types
+from ConfigParser import ConfigParser
 
 from shared.configuration import Configuration
 from shared.configuration import fix_missing
@@ -123,33 +124,15 @@ if not conf:
 
 attrs = []
 ignore_attrs = ['__class__', '__doc__', '__module__']
-for name in dir(conf):
-
-    # print name
-
-    if name in ignore_attrs:
-
-        # ignore special attributes
-
-        continue
-
-    attr = getattr(conf, name)
-    if isinstance(attr, types.MethodType) or isinstance(attr,
-            types.FunctionType):
-
-        # ignore methods
-
-        continue
-    else:
-        attrs.append((name, attr))
-
 path_re = re.compile('(' + os.sep + "\w+)+")
 
 conf.logger.info('Checking configuration paths in %s ...', conf_file)
 print 'Checking configuration paths in %s ...' % conf_file
 warnings = 0
 missing_paths = []
-for (name, val) in attrs:
+conf_parser = ConfigParser()
+conf_parser.read([conf_file])
+for (name, val) in conf_parser.items('GLOBAL'):
     if not isinstance(val, types.StringType):
 
         # ignore non-string values
