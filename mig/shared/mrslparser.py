@@ -30,11 +30,11 @@ import time
 
 import shared.mrslkeywords as mrslkeywords
 import shared.parser as parser
-from shared.refunctions import is_runtime_environment
-from shared.vgrid import user_allowed_vgrids, any_vgrid, default_vgrid
-from shared.fileio import unpickle, pickle, send_message_to_grid_script
 from shared.conf import get_configuration_object
+from shared.fileio import unpickle, pickle, send_message_to_grid_script
+from shared.refunctions import is_runtime_environment
 from shared.useradm import client_id_dir
+from shared.vgrid import user_allowed_vgrids, any_vgrid, default_vgrid
 
 
 def parse(

@@ -32,6 +32,7 @@ import fcntl
 import os
 
 from shared.fileio import send_message_to_grid_script, unpickle
+from shared.mrslkeywords import get_keywords_dict
 from shared.mrslparser import parse
 from shared.useradm import client_id_dir
 
@@ -238,4 +239,23 @@ def get_job_ids_with_specified_project_name(
     return matching_job_ids
 
 
-    # return ["8_12_6_2006__19_39_23_vcr", "8_12_6_2006__19_39_23_vcr"]
+def fields_to_mrsl(configuration, user_arguments_dict, external_dict):
+    spec = []
+    for key in external_dict.keys():
+        attr_name = key
+        if user_arguments_dict.has_key(attr_name):
+            spec.append('::%s::' % attr_name)
+            attr = user_arguments_dict[attr_name]
+
+            # FIXME: this type check is not perfect... I should be
+            # able to extend on any sequence...
+
+            if isinstance(attr, list):
+                spec.extend(attr)
+            elif isinstance(attr, tuple):
+                spec.extend(attr)
+            else:
+                spec.append(attr)
+            spec.append('')
+    mrsl = '\n'.join(spec)
+    return mrsl

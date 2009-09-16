@@ -133,7 +133,7 @@ Actual examples for inspiration:
         output_objects.append({'object_type': 'html_form', 'text'
                               : """
 <table class="submitjob">
-<form method="post" action="jobobjsubmit.py" id="miginput">
+<form method="post" action="submitfields.py" id="miginput">
 """
                               })
         show_fields = get_job_specs(configuration)

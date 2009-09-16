@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# jobobjsubmit - Submit a job object/dictionary directly
+# submitfields - Submit a job through the fields interface
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -27,7 +27,7 @@
 
 # Minimum Intrusion Grid
 
-"""Takes a job object/dictionary, writes the mRSL file and submits it"""
+"""Takes job fields and submits it with the usual submit status"""
 
 import os
 import tempfile
@@ -36,7 +36,7 @@ import shared.returnvalues as returnvalues
 from shared.conf import get_configuration_object
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables
-from shared.job import new_job, fields_to_mrsl, create_job_object_from_pickled_mrsl
+from shared.job import new_job, fields_to_mrsl
 from shared.mrslkeywords import get_job_specs, get_keywords_dict
 from shared.useradm import client_id_dir
 
@@ -55,7 +55,7 @@ def signature():
                 defaults[key] = REJECT_UNSET
             else:
                 defaults[key] = []
-    return ['jobobj', defaults]
+    return ['submitstatuslist', defaults]
 
 
 def main(client_id, user_arguments_dict):
@@ -96,38 +96,40 @@ def main(client_id, user_arguments_dict):
 
     # submit it
 
-    (submit_status, newmsg, job_id) = new_job(real_path, client_id,
-            configuration, False, True)
-    if not submit_status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : newmsg})
-        return (output_objects, returnvalues.CLIENT_ERROR)
+    submitstatuslist = []
+    submitstatus = {'object_type': 'submitstatus',
+                    'name': relative_path}
+    try:
+        (job_status, newmsg, job_id) = new_job(real_path,
+                                               client_id, configuration, False, True)
+    except Exception, exc:
+        logger.error("%s: failed on '%s': %s" % (op_name,
+                                                 relative_path, exc))
+        job_status = False
+        newmsg = "%s failed on '%s' (invalid mRSL?)"\
+                 % (op_name, relative_path)
+        job_id = None
 
-    # Please note that base_dir must end in slash to avoid access to other
-    # user dirs when own name is a prefix of another user name
+    if not job_status:
 
-    base_dir = \
-        os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                        client_dir)) + os.sep
+        # output_objects.append({"object_type":"error_text", "text":"%s" % newmsg})
 
-    # job = Job()
-
-    filepath = os.path.join(base_dir, job_id)
-    filepath += '.mRSL'
-
-    (new_job_obj_status, new_job_obj) = \
-        create_job_object_from_pickled_mrsl(filepath, logger,
-            external_dict)
-    if not new_job_obj_status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : new_job_obj})
+        submitstatus['status'] = False
+        submitstatus['message'] = newmsg
         status = returnvalues.CLIENT_ERROR
     else:
 
-        # return new_job_obj
+        # return (output_objects, returnvalues.CLIENT_ERROR)
 
-        output_objects.append({'object_type': 'jobobj', 'jobobj'
-                              : new_job_obj})
+        submitstatus['status'] = True
+        submitstatus['job_id'] = job_id
+
+        # output_objects.append({"object_type":"text", "text":"%s" % newmsg})
+
+    submitstatuslist.append(submitstatus)
+
+    output_objects.append({'object_type': 'submitstatuslist',
+                           'submitstatuslist': submitstatuslist})
     return (output_objects, status)
 
 
