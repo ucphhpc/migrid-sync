@@ -6,7 +6,7 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
-=== July 6th, 2009 ===
+=== September 17th, 2009 ===
 ********************************************************
 *** IMPORTANT * This upgrade requires admin actions! ***
 ********************************************************
@@ -25,6 +25,7 @@ Where OPTIONS may be one or more of:
    -d DB_FILE          Use DB_FILE as user data base file
    -f                  Force operations to continue past errors
    -h                  Show this help
+   -p                  Prune duplicate users (keeps the one with latest expire)
    -v                  Verbose output              
 which in most cases will be just
 ./migrateusers.py
@@ -38,7 +39,8 @@ you also need to update your MiGserver.conf and move the state
 directories around.
 Please refer to the example apache and MiGserver confs or use the config
 generator to achieve this.
-
+After migrating users you will have truly unique users, but you will no
+longer be able to use the migrated data with older middleware versions.
 
 === May 1st, 2009 ===
 We finally got the old grey web pages completely overhauled. Thanks to those of you 
@@ -65,10 +67,12 @@ More detailed changelogs for the public releases.
 == 1.1.0 ==
 -reworked user ID structure to avoid collissions when users with same
 full name exist
+-move to apache 2.x as default web server
 -moved state directories to improve relocation support
 -more relocatable installation with e.g. MIG_CONF environment
 -users can now request scheduling information
 -support for external users signing up or imported from XML
+-added resource storage units for integration of external storage
 -custom style sheets support for all pages
 -added optional usage records for statistics and accounting
 -several SSS monitor improvements including sorting
@@ -76,13 +80,14 @@ full name exist
 -lowered default number of job retries and provided override in mRSL
 -user selectable job submit and files page interfaces
 -improved handling of quotes in EXECUTE field
+-added new dashboard user entry page
 -web interface improvements and fixes
 -rescheduling fixes
 -jabber notification fixes
 -ssh/scp timeout tuning
 -user script fixes
 -fixed several minor bugs pointed out by pylint
-
+-initial support for skin customization 
 
 == 1.0.4 ==
 -complete reworking of web layout
