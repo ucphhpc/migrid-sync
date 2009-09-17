@@ -45,7 +45,7 @@ def signature():
     """Signature of the main function"""
 
     defaults = {
-        'job_id': [],
+        'job_id': ['*'],
         'max_jobs': ['1000000'],
         'flags': [''],
         'project_name': [],
