@@ -182,6 +182,14 @@ if '__main__' == __name__:
     methods = server.system.listMethods()
     print 'supported remote methods:\n%s' % '\n'.join(methods)
     print
+    print 'submit() signature: %s'\
+         % server.system.methodSignature('submit')
+    print 'the signature is a tuple of output object type and a list of expected/default input values'
+    print 'submit() help: %s' % server.system.methodHelp('submit')
+    print 'please note that help is not yet available for all methods'
+    print
+    
+    print 'Testing some action methods:'
     print 'checking job status for job(s) with IDs: %s'\
          % ' '.join(job_id_list)
     (inlist, retval) = server.jobstatus({'job_id': job_id_list, 'flags'
@@ -410,12 +418,4 @@ True
     # (inlist, retval) = server.liveoutput({"job_id":["%s" % sys.argv[1]]})
 
     # print inlist
-
-    print
-    print 'all server methods: %s' % ', '.join(server.dirserver())
-    print 'submit() signature: %s'\
-         % server.system.methodSignature('submit')
-    print 'the signature is a tuple of output object type and a list of expected/default input values'
-    print 'submit() help: %s' % server.system.methodHelp('submit')
-    print 'please note that help is not yet available for all methods'
 
