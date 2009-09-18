@@ -1180,91 +1180,92 @@ def test_function(lang, curl_cmd, curl_flags=''):
            return 1
         fi
            
+        path_prefix=`dirname $0`
         echo \"running $op test(s)\"
-        cmd=\"%s${op}.%s\"
+        cmd=\"$path_prefix/%s${op}.%s\"
         declare -a cmd_args
         declare -a verify_cmd
         case $op in
            'cancel')
-              pre_cmd='migsubmit.sh mig-test.mRSL'
+              pre_cmd=\"$path_prefix/migsubmit.sh mig-test.mRSL\"
               cmd_args[1]='DUMMY_JOB_ID'
               ;;
            'cat')
-              pre_cmd='migput.sh mig-test.txt .'
+              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
               cmd_args[1]='mig-test.txt'
-              post_cmd='migrm.sh -r mig-test.txt'
+              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
               ;;
            'doc')
               cmd_args[1]=''
               ;;
            'get')
-              pre_cmd='migput.sh mig-test.txt .'
+              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
               cmd_args[1]='mig-test.txt .'
-              post_cmd='migrm.sh -r mig-test.txt'
+              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
               ;;
            'head')
-              pre_cmd='migput.sh mig-test.txt .'
+              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
               cmd_args[1]='mig-test.txt'
-              post_cmd='migrm.sh -r mig-test.txt'
+              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
               ;;
            'ls')
-              pre_cmd='migput.sh mig-test.txt .'
+              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
               cmd_args[1]='mig-test.txt'
-              post_cmd='migrm.sh -r mig-test.txt'
+              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
               ;;
            'mkdir')
-              pre_cmd='migrm.sh -r mig-test-dir'
+              pre_cmd=\"$path_prefix/migrm.sh -r mig-test-dir\"
               cmd_args[1]='mig-test-dir'
-              verify_cmd[1]='migls.sh mig-test-dir'
-              post_cmd='migrm.sh -r mig-test-dir'
+              verify_cmd[1]=\"$path_prefix/migls.sh mig-test-dir\"
+              post_cmd=\"$path_prefix/migrm.sh -r mig-test-dir\"
               ;;
            'mv')
-              pre_cmd='migput.sh mig-test.txt .'
+              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
               cmd_args[1]='mig-test.txt mig-test-new.txt'
-              post_cmd='migrm.sh mig-test-new.txt'
+              post_cmd=\"$path_prefix/migrm.sh mig-test-new.txt\"
               ;;
            'put')
-              pre_cmd[1]='migrm.sh mig-test.txt'
+              pre_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
               cmd_args[1]='mig-test.txt .'
-              verify_cmd[1]='migls.sh mig-test.txt'
-              post_cmd[1]='migrm.sh mig-test.txt'
+              verify_cmd[1]=\"$path_prefix/migls.sh mig-test.txt\"
+              post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
               cmd_args[2]='mig-test.t*t mig-test.txt'
-              verify_cmd[2]='migrm.sh mig-test.txt'
+              verify_cmd[2]=\"$path_prefix/migrm.sh mig-test.txt\"
               cmd_args[3]='mig-test.txt mig-test.txt'
-              verify_cmd[3]='migrm.sh mig-test.txt'
+              verify_cmd[3]=\"$path_prefix/migrm.sh mig-test.txt\"
               cmd_args[4]='mig-test.txt mig-remote-test.txt'
-              verify_cmd[4]='migrm.sh mig-remote-test.txt'
+              verify_cmd[4]=\"$path_prefix/migrm.sh mig-remote-test.txt\"
               cmd_args[5]='mig-test.txt mig-test-dir/'
-              verify_cmd[5]='migrm.sh mig-test-dir/mig-test.txt'
+              verify_cmd[5]=\"$path_prefix/migrm.sh mig-test-dir/mig-test.txt\"
               cmd_args[6]='mig-test.txt mig-test-dir/mig-remote-test.txt'
-              verify_cmd[6]='migrm.sh mig-test-dir/mig-remote-test.txt'
+              verify_cmd[6]=\"$path_prefix/migrm.sh mig-test-dir/mig-remote-test.txt\"
 
               # Disabled since put doesn't support wildcards in destination (yet?)
               # cmd_args[]='mig-test.txt 'mig-test-d*/''
               # cmd_args[]='mig-test.txt 'mig-test-d*/mig-remote-test.txt''
-              # verify_cmd[]='migrm.sh mig-test-dir/mig-remote-test.txt'
-              # verify_cmd[]='migrm.sh mig-test-dir/mig-remote-test.txt'
+              # verify_cmd[]=\"$path_prefix/migrm.sh mig-test-dir/mig-remote-test.txt\"
+              # verify_cmd[]=\"$path_prefix/migrm.sh mig-test-dir/mig-remote-test.txt\"
               ;;
            'read')
-              pre_cmd='migput.sh mig-test.txt .'
+              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
               cmd_args[1]='0 16 mig-test.txt -'
-              post_cmd='migrm.sh -r mig-test.txt'
+              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
               ;;
            'rm')
-              pre_cmd='migput.sh mig-test.txt .'
+              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
               cmd_args[1]='mig-test.txt'
-              verify_cmd[1]='migls.sh mig-test.txt'
+              verify_cmd[1]=\"$path_prefix/migls.sh mig-test.txt\"
               ;;
            'rmdir')
-              pre_cmd='migmkdir mig-test-dir'
+              pre_cmd=\"$path_prefix/migmkdir.sh mig-test-dir\"
               cmd_args[1]='mig-test-dir'
-              verify_cmd[1]='migls.sh mig-test-dir'
-              post_cmd='migrm.sh -r mig-test-dir'
+              verify_cmd[1]=\"$path_prefix/migls.sh mig-test-dir\"
+              post_cmd=\"$path_prefix/migrm.sh -r mig-test-dir\"
               ;;
            'stat')
-              pre_cmd='migput.sh mig-test.txt .'
+              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
               cmd_args[1]='mig-test.txt'
-              post_cmd='migrm.sh -r mig-test.txt'
+              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
               ;;
            'status')
               cmd_args[1]=''
@@ -1273,30 +1274,30 @@ def test_function(lang, curl_cmd, curl_flags=''):
               cmd_args[1]='mig-test.mRSL'
               ;;
            'tail')
-              pre_cmd='migput.sh mig-test.txt .'
+              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
               cmd_args[1]='mig-test.txt'
-              post_cmd[1]='migrm.sh mig-test.txt'
+              post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
               ;;
            'touch')
-              pre_cmd[1]='migrm.sh mig-test.txt'
+              pre_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
               cmd_args[1]='mig-test.txt'
-              verify_cmd[1]='migls.sh mig-test.txt'
-              post_cmd[1]='migrm.sh mig-test.txt'
+              verify_cmd[1]=\"$path_prefix/migls.sh mig-test.txt\"
+              post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
               ;;
            'truncate')
-              pre_cmd='migput.sh mig-test.txt .'
+              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
               cmd_args[1]='mig-test.txt'
-              post_cmd[1]='migrm.sh mig-test.txt'
+              post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
               ;;
            'wc')
-              pre_cmd='migput.sh mig-test.txt'
+              pre_cmd=\"$path_prefix/migput.sh mig-test.txt\"
               cmd_args[1]='mig-test.txt'
-              post_cmd='migrm.sh -r mig-test.txt'
+              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
               ;;
            'write')
-              pre_cmd='migput.sh mig-test.txt .'
+              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
               cmd_args[1]='4 8 mig-test.txt mig-test.txt'
-              post_cmd='migrm.sh -r mig-test.txt'
+              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
               ;;
            *)
            echo \"No test available for $op!\"
@@ -1314,7 +1315,6 @@ def test_function(lang, curl_cmd, curl_flags=''):
                 $pre >& /dev/null
             fi
             ./$cmd $test_flags $args >& /dev/null
-            #./$cmd $test_flags $args
             ret=$?
             if [ $ret -eq 0 ]; then
                 echo \"   $op test $index SUCCEEDED\"
