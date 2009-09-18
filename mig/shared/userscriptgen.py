@@ -2106,9 +2106,10 @@ for src in ${src_list[@]}; do
             echo \"Nonrecursive put skipping directory: $src\"
             continue
         fi
-        # TODO: remove local dir prefix (put somedir/otherdir should only put otherdir)
         # Recursive dirs may not exist - create them first
-        dirs=`find $src -type d`
+        src_parent=`dirname $src`
+        src_target=`basename $src`
+        dirs=`cd $src_parent && find $src_target -type d`
         # force mkdir -p
         old_flags=\"$server_flags\"
         server_flags=\"p\"
@@ -2118,9 +2119,9 @@ for src in ${src_list[@]}; do
         done
         mk_dir \"$dir_list\"
         server_flags=\"$old_flags\"
-        sources=`find $src -type f`
+        sources=`cd $src_parent && find $src_target -type f`
         for path in $sources; do
-            put_file \"$path\" \"$dst/$path\" $submit_mrsl $extract_package
+            put_file \"$src_parent/$path\" \"$dst/$path\" $submit_mrsl $extract_package
         done
     else
         put_file \"$src\" \"$dst\" $submit_mrsl $extract_package
@@ -2158,17 +2159,22 @@ for src in src_list:
         if not recursive:
             print \"Nonrecursive put skipping directory: %s\" % src
             continue
-        # TODO: remove local dir prefix (put somedir/otherdir should only put otherdir)
-        for root, dirs, files in os.walk(src):
+        src_parent = os.path.abspath(os.path.dirname(src))
+        for root, dirs, files in os.walk(os.path.abspath(src)):
             # Recursive dirs may not exist - create them first
             # force mkdir -p
             old_flags = \"$server_flags\"
             server_flags = \"p\"
-            mk_dir(';'.join(['path=%s/%s/%s' % (dst, root, dir) for dir in dirs]))
+            rel_root = root.replace(src_parent, '', 1).lstrip(os.sep)
+            dir_list = ';'.join(['path=%s' % os.path.join(dst, rel_root, i) for i in dirs])
+            # add current root
+            dir_list += ';path=%s' % os.path.join(dst, rel_root)
+            mk_dir(dir_list)
             server_flags = \"$old_flags\"
             for name in files:
-                path = root + '/' + name
-                put_file(path, dst + '/' + path, submit_mrsl, extract_package)
+                src_path = os.path.join(root, name)
+                dst_path = os.path.join(dst, rel_root, name)
+                (status, out) = put_file(src_path, dst_path, submit_mrsl, extract_package)
     else:
         (status, out) = put_file(src, dst, submit_mrsl, extract_package)
 sys.exit(status)

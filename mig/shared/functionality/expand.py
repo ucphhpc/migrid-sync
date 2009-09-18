@@ -152,7 +152,7 @@ def handle_expand(
                         rel_path,
                         path,
                         flags,
-                        dest,
+                        os.path.join(dest, os.path.basename(rel_path)),
                         show_dest,
                         )
         else:
@@ -180,7 +180,7 @@ def handle_expand(
                         base_dir,
                         path,
                         flags,
-                        dest + os.sep + name + os.sep,
+                        os.path.join(dest, name),
                         depth + 1,
                         show_dest,
                         )
