@@ -144,26 +144,24 @@ def basic_usage_options(usage_str, lang):
             """
         echo \"%s\"
         echo \"Where OPTIONS include:\"
-        echo \"-r\t\trecursive\"
-        echo \"-v\t\tverbose mode\"
-        echo \"-V\t\tdisplay version\"
-        echo \"-h\t\tdisplay this help\"
         echo \"-c CONF\t\tread configuration from CONF instead of\"
         echo \"\t\t\tdefault (~/.mig/miguser.conf).\"
-        echo \"-s MIG_SERVER\tforce use of MIG_SERVER.\""""\
+        echo \"-h\t\tdisplay this help\"
+        echo \"-s MIG_SERVER\tforce use of MIG_SERVER.\"
+        echo \"-v\t\tverbose mode\"
+        echo \"-V\t\tdisplay version\""""\
              % usage_str
     elif lang == 'python':
         s += \
             """
         print \"%s\"
         print \"Where OPTIONS include:\"
-        print \"-r\t\trecursive\"
-        print \"-v\t\tverbose mode\"
-        print \"-V\t\tdisplay version\"
-        print \"-h\t\tdisplay this help\"
         print \"-c CONF\t\tread configuration from CONF instead of\"
         print \"\t\tdefault (~/.mig/miguser.conf).\"
-        print \"-s MIG_SERVER\tforce use of MIG_SERVER.\""""\
+        print \"-h\t\tdisplay this help\"
+        print \"-s MIG_SERVER\tforce use of MIG_SERVER.\"
+        print \"-v\t\tverbose mode\"
+        print \"-V\t\tdisplay version\""""\
              % usage_str
     else:
         print 'Error: %s not supported!' % lang
@@ -352,7 +350,7 @@ def curl_perform(
         out = buffer.readlines()
         exit_code = proc.returncode
 
-	return (exit_code, out)
+        return (exit_code, out)
 """\
              % (
             curl_cmd,
@@ -381,7 +379,6 @@ def basic_main_init(lang):
         s += comment(lang, '=== Main ===')
         s += \
             """
-recursive=0
 verbose=0
 conf=\"$HOME/.mig/miguser.conf\"
 flags=""
@@ -396,7 +393,6 @@ script_dir=`dirname $script_path`
 
         s += \
             """
-recursive = 0
 verbose = 0
 conf = os.path.expanduser(\"~/.mig/miguser.conf\")
 flags = ""
@@ -425,19 +421,16 @@ def parse_options(lang, extra_opts, extra_opts_handler):
         s += \
             """
     case \"$opt\" in
+          c) conf=\"$OPTARG\"
+             flags="$flags -c $conf";;
           h) usage
              exit 0;;
-          r) recursive=1
-             server_flags="${server_flags}r"
-             flags="$flags -r";;
           s) mig_server=\"$OPTARG\";;
           v) verbose=1
              server_flags="${server_flags}v"
              flags="$flags -v";;
           V) version
              exit 0;;
-          c) conf=\"$OPTARG\"
-             flags="$flags -c $conf";;
 """
         if extra_opts_handler:
             s += extra_opts_handler
@@ -471,9 +464,11 @@ except getopt.GetoptError, e:
         sys.exit(1)
 
 for (opt, val) in opts:
-        if opt == \"-r\":
-                recursive = True
-                server_flags += \"r\"
+        if opt == \"-c\":
+                conf = val
+        elif opt == \"-h\":
+                usage()
+                sys.exit(0)
         elif opt == \"-s\":
                 mig_server = val
         elif opt == \"-v\":
@@ -481,11 +476,6 @@ for (opt, val) in opts:
         elif opt == \"-V\":
                 version()
                 sys.exit(0)
-        elif opt == \"-h\":
-                usage()
-                sys.exit(0)
-        elif opt == \"-c\":
-                conf = val
 """
         if extra_opts_handler:
             s += extra_opts_handler
@@ -730,5 +720,3 @@ def write_script(contents, filename, mode=0755):
 def verbose(verbose_mode, txt):
     if verbose_mode:
         print txt
-
-

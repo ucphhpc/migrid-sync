@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# userscriptgen - [insert a few words of module description on this line]
+# userscriptgen - Generator backend for user scripts
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -31,8 +31,6 @@
 # TODO: mig-ls.* -r fib.out incorrectly lists entire home recursively
 # TODO: ls -r is not recursive -> use -R!
 
-# Generator version (automagically updated by cvs)
-
 """Generate MiG user scripts for the specified programming
 languages. Called without arguments the generator creates scripts
 for all supported languages. If one or more languages are supplied
@@ -40,6 +38,9 @@ as arguments, only those languages will be generated.
 """
 
 import sys
+import getopt
+
+# Generator version (automagically updated by cvs)
 
 __version__ = '$Revision: 2591 $'
 
@@ -1739,7 +1740,16 @@ def get_main(lang):
 
     s = ''
     s += basic_main_init(lang)
-    s += parse_options(lang, None, None)
+    if lang == 'sh':
+        s += 'recursive=0\n'
+        s += parse_options(lang, 'r',
+                           '          r) recursive=1;;'
+                           )
+    elif lang == 'python':
+        s += 'recursive = False\n'
+        s += parse_options(lang, 'r',
+                           '''        elif opt == "-r":
+                recursive = True''')
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -1855,17 +1865,21 @@ def ls_main(lang):
     s = ''
     s += basic_main_init(lang)
     if lang == 'sh':
-        s += parse_options(lang, 'al',
+        s += parse_options(lang, 'alr',
                            '''          a) server_flags="${server_flags}a"
              flags="${flags} -a";;
           l) server_flags="${server_flags}l"
-             flags="${flags} -l";;''')
+             flags="${flags} -l";;
+          r) server_flags="${server_flags}r"
+             flags="${flags} -r";;''')
     elif lang == 'python':
-        s += parse_options(lang, 'al',
+        s += parse_options(lang, 'alr',
                            '''        elif opt == "-a":
                 server_flags += "a"
         elif opt == "-l":
-                server_flags += "l"''')
+                server_flags += "l"
+        elif opt == "-r":
+                server_flags += "r"''')
     s += arg_count_check(lang, None, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -1971,6 +1985,7 @@ def mv_main(lang):
 
     s = ''
     s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -2036,19 +2051,23 @@ def put_main(lang):
     s = ''
     s += basic_main_init(lang)
     if lang == 'sh':
-        s += 'extract_package=0\n'
         s += 'submit_mrsl=0\n'
-        s += parse_options(lang, 'xp',
-                           '          x) extract_package=1;;\n          p) submit_mrsl=1;;'
+        s += 'recursive=0\n'
+        s += 'extract_package=0\n'
+        s += parse_options(lang, 'prx',
+                           '          p) submit_mrsl=1;;\n          r) recursive=1;;\n          x) extract_package=1;;'
                            )
     elif lang == 'python':
-        s += 'extract_package = False\n'
         s += 'submit_mrsl = False\n'
-        s += parse_options(lang, 'xp',
-                           '''        elif opt == "-x":
-                extract_package = True
-        elif opt == "-p":
-                submit_mrsl = True''')
+        s += 'recursive = False\n'
+        s += 'extract_package = False\n'
+        s += parse_options(lang, 'prx',
+                           '''        elif opt == "-p":
+                submit_mrsl = True
+        elif opt == "-r":
+                recursive = True
+        elif opt == "-x":
+                extract_package = True''')
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -2159,6 +2178,7 @@ def read_main(lang):
 
     s = ''
     s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
     s += arg_count_check(lang, 4, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -2232,11 +2252,17 @@ def rm_main(lang):
 
     # rm cgi supports wild cards natively so no need to use
     # expand here
-    # TODO: support -r flags
 
     s = ''
     s += basic_main_init(lang)
-    s += parse_options(lang, None, None)
+    if lang == 'sh':
+        s += parse_options(lang, 'r',
+                           '          r) server_flags="${server_flags}r"\n             flags="${flags} -r";;'
+                           )
+    elif lang == 'python':
+        s += parse_options(lang, 'r',
+                           '        elif opt == "-r":\n                server_flags += "r"'
+                           )
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -2750,6 +2776,7 @@ def write_main(lang):
 
     s = ''
     s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
     s += arg_count_check(lang, 4, None)
     s += check_conf_readable(lang)
     s += configure(lang)
