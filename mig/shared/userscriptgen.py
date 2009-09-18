@@ -160,6 +160,12 @@ def get_usage_function(lang, extension):
     s = ''
     s += begin_function(lang, 'usage', [])
     s += basic_usage_options(usage_str, lang)
+    recursive_usage_string = '-r\t\tact recursively'
+    if lang == 'sh':
+        s += '\n\techo "%s"' % recursive_usage_string
+    elif lang == 'python':
+        s += '\n\tprint "%s"' % recursive_usage_string
+
     s += end_function(lang, 'usage')
 
     return s
@@ -199,12 +205,15 @@ def ls_usage_function(lang, extension):
     s += basic_usage_options(usage_str, lang)
     all_usage_string = "-a\t\tDo not hide entries starting with '.'"
     long_usage_string = '-l\t\tDisplay long format'
+    recursive_usage_string = '-r\t\tact recursively'
     if lang == 'sh':
         s += '\n\techo "%s"' % all_usage_string
         s += '\n\techo "%s"' % long_usage_string
+        s += '\n\techo "%s"' % recursive_usage_string
     elif lang == 'python':
         s += '\n\tprint "%s"' % all_usage_string
         s += '\n\tprint "%s"' % long_usage_string
+        s += '\n\tprint "%s"' % recursive_usage_string
 
     s += end_function(lang, 'usage')
 
@@ -260,19 +269,19 @@ def put_usage_function(lang, extension):
     s += begin_function(lang, 'usage', [])
     s += basic_usage_options(usage_str, lang)
 
+    package_usage_string = \
+        '-p\t\tSubmit mRSL files (also in packages if -x is specified) after upload'
+    recursive_usage_string = '-r\t\tact recursively'
     extract_usage_string = \
         '-x\t\tExtract package (.zip etc) after upload'
     if lang == 'sh':
+        s += '\n\techo "%s"' % package_usage_string
+        s += '\n\techo "%s"' % recursive_usage_string
         s += '\n\techo "%s"' % extract_usage_string
     elif lang == 'python':
-        s += '\n\tprint "%s"' % extract_usage_string
-
-    package_usage_string = \
-        '-p\t\tSubmit mRSL files (also in packages if -x is specified) after upload'
-    if lang == 'sh':
-        s += '\n\techo "%s"' % package_usage_string
-    elif lang == 'python':
         s += '\n\tprint "%s"' % package_usage_string
+        s += '\n\tprint "%s"' % recursive_usage_string
+        s += '\n\tprint "%s"' % extract_usage_string
 
     s += end_function(lang, 'usage')
 
@@ -322,6 +331,11 @@ def rm_usage_function(lang, extension):
     s = ''
     s += begin_function(lang, 'usage', [])
     s += basic_usage_options(usage_str, lang)
+    recursive_usage_string = '-r\t\tact recursively'
+    if lang == 'sh':
+        s += '\n\techo "%s"' % recursive_usage_string
+    elif lang == 'python':
+        s += '\n\tprint "%s"' % recursive_usage_string
     s += end_function(lang, 'usage')
 
     return s
@@ -377,16 +391,14 @@ def status_usage_function(lang, extension):
     s += begin_function(lang, 'usage', [])
     s += basic_usage_options(usage_str, lang)
     max_jobs_usage_string = '-m M\t\tShow status for at most M jobs'
-    if lang == 'sh':
-        s += '\n\techo "%s"' % max_jobs_usage_string
-    elif lang == 'python':
-        s += '\n\tprint "%s"' % max_jobs_usage_string
-
     sort_jobs_usage_string = '-S\t\tSort jobs by modification time'
     if lang == 'sh':
+        s += '\n\techo "%s"' % max_jobs_usage_string
         s += '\n\techo "%s"' % sort_jobs_usage_string
     elif lang == 'python':
+        s += '\n\tprint "%s"' % max_jobs_usage_string
         s += '\n\tprint "%s"' % sort_jobs_usage_string
+
     s += end_function(lang, 'usage')
 
     return s
@@ -1741,15 +1753,13 @@ def get_main(lang):
     s = ''
     s += basic_main_init(lang)
     if lang == 'sh':
-        s += 'recursive=0\n'
         s += parse_options(lang, 'r',
-                           '          r) recursive=1;;'
+                           '          r) server_flags="${server_flags}r";;'
                            )
     elif lang == 'python':
-        s += 'recursive = False\n'
         s += parse_options(lang, 'r',
                            '''        elif opt == "-r":
-                recursive = True''')
+                server_flags += "r"''')
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -2102,9 +2112,11 @@ for src in ${src_list[@]}; do
         # force mkdir -p
         old_flags=\"$server_flags\"
         server_flags=\"p\"
+        dir_list=\"\"
         for dir in $dirs; do
-            mk_dir \"$dst/$dir\"
+            dir_list=\"$dir_list;path=$dst/$dir\"
         done
+        mk_dir \"$dir_list\"
         server_flags=\"$old_flags\"
         sources=`find $src -type f`
         for path in $sources; do
@@ -2152,9 +2164,7 @@ for src in src_list:
             # force mkdir -p
             old_flags = \"$server_flags\"
             server_flags = \"p\"
-            mk_dir(dst + '/' + root)
-            for dir in dirs:
-                mk_dir(dst + '/' + root + '/' + dir)
+            mk_dir(';'.join(['path=%s/%s/%s' % (dst, root, dir) for dir in dirs]))
             server_flags = \"$old_flags\"
             for name in files:
                 path = root + '/' + name
