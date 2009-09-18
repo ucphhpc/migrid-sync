@@ -61,6 +61,8 @@ def main(client_id, user_arguments_dict):
     # for huge files!
 
     # TODO: explosions still happen sometimes!
+    # Most likely because of Apache SSL renegotiations which have
+    # no other way of storing input
 
     extract_input = user_arguments_dict['__DELAYED_INPUT__']
     logger.info('Extracting input in %s' % op_name)

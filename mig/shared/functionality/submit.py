@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# submit - [insert a few words of module description on this line]
+# submit - submit a job file
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Explicit job submit"""
+"""Explicit job file submit"""
 
 import os
 import glob
