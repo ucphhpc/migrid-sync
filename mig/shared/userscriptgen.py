@@ -3122,7 +3122,6 @@ def generate_put(scripts_languages, dest_dir='.'):
         script += shared_usage_function(op, lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += expand_function(lang, curl_cmd)
 
         # Recursive put requires mkdir
 
