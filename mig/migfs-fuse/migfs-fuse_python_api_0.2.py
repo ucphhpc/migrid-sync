@@ -1305,6 +1305,10 @@ try:
     if 'logfile' in options:
         logfile = os.path.abspath(os.path.expanduser(conf.get('log',
                                   'logfile')))
+        # TODO: Switch to ConcurrentRotatingFileHandler?
+        # The regular RotatingFileHandler is not thread safe and won't work
+        # consistently with threaded prefetching:
+        # http://bugs.python.org/issue4749
         file_handler = logging.handlers.RotatingFileHandler(logfile, 'a'
                 , 5242880, 3)
         file_handler.setFormatter(default_format)
