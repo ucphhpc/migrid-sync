@@ -31,7 +31,7 @@ which at the time of this writing uses curl as a HTTPS transport
 with client certificate support.
 """
 
-__version__ = '0.5.2'
+__version__ = '0.5.3'
 
 import ConfigParser
 import array
