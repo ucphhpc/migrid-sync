@@ -1175,7 +1175,11 @@ class MiGfs(Fuse):
                                  % (path, parts))
                     continue
                 (name, val) = parts
-                inode[mapping[name]] = int(val)
+                # times may be float string which causes ValueError for int()
+                if '.' in val:
+                    inode[mapping[name]] = int(float(val))
+                else:
+                    inode[mapping[name]] = int(val)
                 inode['uid'] = int(os.getuid())
                 inode['gid'] = int(os.getgid())
             log.debug('prefetch_inodes: %s; inode %s' % (path, inode))
@@ -1255,7 +1259,11 @@ class MiGfs(Fuse):
                             parts))
                 continue
             (name, val) = parts
-            inode[mapping[name]] = int(val)
+            # times may be float string which causes ValueError for int()
+            if '.' in val:
+                inode[mapping[name]] = int(float(val))
+            else:
+                inode[mapping[name]] = int(val)
         if inode:
 
             # Overwrite uid/gid and save to cache
