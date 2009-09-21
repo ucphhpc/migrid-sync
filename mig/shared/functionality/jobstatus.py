@@ -322,9 +322,7 @@ def main(client_id, user_arguments_dict):
                 'destination': 'liveoutput.py?job_id=%s' % job_id,
                 'text': 'Request live update'}
         job_list['jobs'].append(job_obj)
-
     output_objects.append(job_list)
-    output_objects.append({'object_type': 'text', 'text': ''})
 
     return (output_objects, status)
 

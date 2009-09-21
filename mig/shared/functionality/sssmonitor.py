@@ -198,7 +198,7 @@ def main(client_id, user_arguments_dict):
 
     # Group
 
-    output_objects.append({'object_type': 'text', 'text': ''})
+    output_objects.append({'object_type': 'html_form', 'text': '<br>'})
     output_objects.append({'object_type': 'verbatim', 'text': 'Show: '})
 
     link_list = []
@@ -214,7 +214,7 @@ def main(client_id, user_arguments_dict):
     now = datetime.now()
     output_objects.append({'object_type': 'text', 'text'
                           : 'Updated on %s' % now})
-    output_objects.append({'object_type': 'text', 'text': ''})
+    output_objects.append({'object_type': 'html_form', 'text': '<br>'})
 
     
     # Actual stats

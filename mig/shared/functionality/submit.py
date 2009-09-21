@@ -156,10 +156,8 @@ def main(client_id, user_arguments_dict):
                 # output_objects.append({"object_type":"text", "text":"%s" % newmsg})
 
             submitstatuslist.append(submitstatus)
-
         output_objects.append({'object_type': 'submitstatuslist',
                               'submitstatuslist': submitstatuslist})
-
     return (output_objects, status)
 
 

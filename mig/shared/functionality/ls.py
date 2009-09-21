@@ -695,7 +695,6 @@ Optional remote filename (extra useful in windows)
     """
                                % {'dest_dir': relative_dir + os.sep}})
 
-    output_objects.append({'object_type': 'text', 'text': ''})
     return (output_objects, status)
 
 

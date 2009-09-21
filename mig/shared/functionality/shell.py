@@ -285,7 +285,6 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'text', 'text': cmd_line})
         (output_objects, status) = handle_command(cmd_line, client_id,
                 output_objects)
-        output_objects.append({'object_type': 'text', 'text': ''})
 
     return (output_objects, status)
 

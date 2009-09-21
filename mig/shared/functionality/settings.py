@@ -231,7 +231,6 @@ Please note that you can not save an empty style file, but must at least leave a
 
     output_objects.append({'object_type': 'html_form', 'text': html})
 
-    output_objects.append({'object_type': 'text', 'text': ''})
     return (output_objects, returnvalues.OK)
 
 

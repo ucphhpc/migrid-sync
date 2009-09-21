@@ -366,12 +366,11 @@ def main(client_id, user_arguments_dict):
                 output_objects.append({'object_type': 'text', 'text'
                                    : "You haven't downloaded any sandbox resources yet"})
 
-            output_objects.append({'object_type': 'text', 'text': ''})
+            output_objects.append({'object_type': 'html_form', 'text': '<br>'})
             output_objects.append({'object_type': 'html_form', 'text'
                                    : show_download(configuration, userdb,
                                                    username, password,
                                                    expert)})
-    output_objects.append({'object_type': 'text', 'text': ''})
     return (output_objects, returnvalues.OK)
 
 
