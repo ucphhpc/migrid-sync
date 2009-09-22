@@ -57,6 +57,7 @@ def display_topic(output_objects, subject, all_docs):
         output_objects.append({'object_type': 'text', 'text'
                               : "No documentation found matching '%s'"
                                % subject})
+    output_objects.append({'object_type': 'html_form', 'text': '<br>'})
 
 
 def show_subject(subject, doc_function, doc_args):
@@ -86,7 +87,7 @@ def mrsl_keywords(configuration, output_objects):
         info = keywords_dict[keyword]
         output_objects.append({'object_type': 'html_form', 'text'
                               : "<a name='%s'></a>" % keyword})
-        output_objects.append({'object_type': 'header', 'text'
+        output_objects.append({'object_type': 'sectionheader', 'text'
                               : keyword})
         entries = []
         for (field, val) in info.items():
@@ -130,7 +131,7 @@ def valid_outputformats(output_objects):
     output_objects.append({'object_type': 'text', 'text'
                           : 'Example: SERVER_URL/ls.py?output_format=txt'
                           })
-    output_objects.append({'object_type': 'header', 'text'
+    output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Valid formats'})
     entries = []
     for outputformat in get_valid_outputformats():
@@ -169,7 +170,7 @@ def main(client_id, user_arguments_dict):
     html += "<input type='hidden' name='show' value=''>"
     html += "<input type='text' name='search' value=''>"
     html += "<input type='submit' value='Filter'>"
-    html += '</form></p>'
+    html += '</form></p><br>'
     output_objects.append({'object_type': 'html_form', 'text': html})
 
     # Fall back to show all topics
