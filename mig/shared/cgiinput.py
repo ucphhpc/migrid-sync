@@ -25,31 +25,16 @@
 # -- END_HEADER ---
 #
 
-# -*- coding: iso-8859-1 -*-
-
 """This module contains cgi specific functions for handling
 user input.
 """
 
-import cgi
-
-# TODO: remove this backwards compatibility when scripts are updated
+# Expose some safeinput functions here, too
 
 from shared.safeinput import validated_boolean, validated_string, \
     validated_path, validated_fqdn, validated_commonname, \
-    validated_integer, validated_job_id
+    validated_integer, validated_job_id, html_escape
 from shared.safeinput import InputException as CgiInputException
-
-# Public functions
-
-
-def html_escape(contents):
-    """Uses cgi.escape() to encode contents in a html safe way. In that
-    way the resulting data can be included in a html page without risk
-    of XSS vulnerabilities.
-    """
-
-    return cgi.escape(contents)
 
 
 def parse_input(user_arguments_dict, fields):

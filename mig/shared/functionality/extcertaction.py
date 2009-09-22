@@ -36,7 +36,8 @@ import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 from shared.notification import send_email
-from shared.useradm import distinguished_name_to_user
+from shared.useradm import db_name, distinguished_name_to_user, \
+     create_user, fill_user
 
 
 def signature():
@@ -130,23 +131,50 @@ Please note that the distinguished name must be a valid certificate DN with mult
         'country': country,
         'email': email,
         'password': '',
-        'comment': '%s: %s' % ('External certificate', comment),
+        'comment': '%s: %s' % ('Existing certificate', comment),
         'expire': int(time.time() + (((2 * 365.25) * 24) * 60) * 60),
         }
+
+    # If server allows automatic addition of users with a CA validated cert
+    # we create the user immediately and skip mail
+    
+    if configuration.auto_add_cert_user:
+        fill_user(user_dict)
+
+        # Now all user fields are set and we can begin adding the user
+
+        db_path = os.path.join(configuration.mig_server_home, db_name)
+        try:
+            create_user(user_dict, configuration.config_file, db_path, ask_renew=False)
+        except Exception, err:
+            logger.error('Failed to create user with existing certificate %s: %s'
+                     % (cert_id, err))
+            output_objects.append({'object_type': 'error_text', 'text'
+                                   : '''Could not create the user account for you:
+Please report this problem to the grid administrators (%s).''' % admin_email})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+
+        output_objects.append({'object_type': 'text', 'text'
+                                   : '''Created the user account for you:
+Please use the navigation menu to the left to proceed using it.
+'''})
+        return (output_objects, returnvalues.OK)
+
+    # Without auto add we end here and go through the mail-to-admins procedure
     req_path = None
     try:
         (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
         os.write(os_fd, pickle.dumps(user_dict))
         os.close(os_fd)
     except Exception, err:
-        logger.error('Failed to write external certificate request to %s: %s'
-                      % (req_path, err))
+        logger.error('Failed to write existing certificate request to %s: %s'
+                     % (req_path, err))
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Request could not be sent to MiG administrators. Please contact the MiG administrators %s if this error persists.'
+                               : 'Request could not be sent to grid administrators. Please contact them manually on %s if this error persists.'
                                % admin_email})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    logger.info('Wrote external certificate request to %s' % req_path)
+    logger.info('Wrote existing certificate sign up request to %s' % req_path)
     tmp_id = req_path.replace(user_pending, '')
     user_dict['tmp_id'] = tmp_id
 
@@ -171,7 +199,7 @@ cd ~/mig/server
     email_header = 'MiG sign up request for %s' % cert_id
     email_msg = \
         """
-Received an external certificate sign up request with certificate data
+Received an existing certificate sign up request with certificate data
  * Distinguished Name: %(distinguished_name)s
  * Full Name: %(full_name)s
  * Organization: %(organization)s
@@ -200,13 +228,11 @@ Command to delete user again on MiG server:
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'An error occured trying to send the email requesting the MiG administrators to sign up with an external certificate. Please email the MiG administrators (%s) manually and include the session ID: %s'
+                              : 'An error occured trying to send the email requesting the grid administrators to sign up with an existing certificate. Please email the grid administrators (%s) manually and include the session ID: %s'
                                % (admin_email, tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : "Request sent to MiG administrators: Your request for a MiG user with the external certificate will be verified and handled as soon as possible, so please be patient. Once handled an email will be sent to the account you have specified ('%s') with further information. In case of inquiries about this request, please include the session ID: %s"
-                           % (email, tmp_id)})
+                          : "Request sent to grid administrators: Your request for a MiG user account with your existing certificate will be verified and handled as soon as possible, so please be patient. In case of inquiries about this request, please email the grid administrators (%s) and include the session ID: %s"
+                           % (admin_email, tmp_id)})
     return (output_objects, returnvalues.OK)
-
-

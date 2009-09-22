@@ -60,7 +60,7 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'header', 'text'
                           : 'Downloads'})
-    output_objects.append({'object_type': 'text', 'text'
+    output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <div class="migcontent">
 This page provides access to on-demand downloads of the MiG user scripts in all available formats.<br>

@@ -178,8 +178,6 @@ def sum_walltime(grid_stat, resource_name):
 def show_download(configuration, userdb, user, passwd, expert):
     """Shows download form"""
 
-    admin_email = configuration.admin_email
-
     # Download sandbox section
 
     html = \
@@ -224,16 +222,9 @@ def show_download(configuration, userdb, user, passwd, expert):
     <input type='submit' value='Toggle expert mode'>
     </form>
     </td></tr>    
-    <tr><td align='center'>
-    <br>
-    </td></tr>    
-    <tr><td align='center'>
-    If you run into any problems, please contact the MiG administrators (%s)
-    </td></tr>
     </table> 
     """\
-         % (user, passwd, not expert, admin_email.replace('<', '&lt;'
-            ).replace('>', '&gt;'))
+         % (user, passwd, not expert)
     return html
 
 
@@ -257,9 +248,10 @@ def main(client_id, user_arguments_dict):
     expert = False
     if 'true' == expert_string.lower():
         expert = True
+    admin_email = configuration.admin_email
 
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG Sandbox Administration and Monitor'})
+                          : 'Personal Sandbox Administration and Monitor'})
 
     # Load the user DB
 
@@ -371,6 +363,11 @@ def main(client_id, user_arguments_dict):
                                    : show_download(configuration, userdb,
                                                    username, password,
                                                    expert)})
+            output_objects.append({'object_type': 'text', 'text'
+                                   : """
+If you run into any problems, please contact the grid administrators (%s)""" % \
+                                   admin_email})
+
     return (output_objects, returnvalues.OK)
 
 

@@ -146,7 +146,7 @@ will be given access to the necessary resources anyway.
         logger.error('Failed to write certificate request to %s: %s'
                       % (req_path, err))
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Request could not be sent to MiG administrators. Please contact the MiG administrators %s if this error persists.'
+                              : 'Request could not be sent to grid administrators. Please contact them manually on %s if this error persists.'
                                % admin_email})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -232,13 +232,11 @@ Command to delete user again on MiG server:
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'An error occured trying to send the email requesting the MiG administrators to create a new certificate. Please email the MiG administrators (%s) manually and include the session ID: %s'
+                              : 'An error occured trying to send the email requesting the grid administrators to create a new certificate. Please email them (%s) manually and include the session ID: %s'
                                % (admin_email, tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : "Request sent to MiG administrators: Your certificate request will be verified and handled as soon as possible, so please be patient. Once handled an email will be sent to the account you have specified ('%s') with further information. In case of inquiries about this request, please include the session ID: %s"
+                          : "Request sent to grid administrators: Your certificate request will be verified and handled as soon as possible, so please be patient. Once handled an email will be sent to the account you have specified ('%s') with further information. In case of inquiries about this request, please include the session ID: %s"
                            % (email, tmp_id)})
     return (output_objects, returnvalues.OK)
-
-

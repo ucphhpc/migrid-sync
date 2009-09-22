@@ -47,6 +47,7 @@ def fix_missing(config_file, verbose=True):
     user = os.environ['USER']
     global_section = {
         'enable_server_dist': False,
+        'auto_add_cert_user': False,
         'server_fqdn': fqdn,
         'admin_email': '%s@%s' % (user, fqdn),
         'mrsl_files_dir': '~/state/mrsl_files/',
@@ -222,6 +223,7 @@ class Configuration:
     # directory for usage records, initially None (means: do not generate)
 
     usage_record_dir = None
+    auto_add_cert_user = False
     config_file = None
 
     # constructor
@@ -508,6 +510,12 @@ class Configuration:
         if config.has_option('GLOBAL', 'usage_record_dir'):
             self.usage_record_dir = config.get('GLOBAL',
                     'usage_record_dir')
+
+        # Automatic creation of users with a valid certificate
+
+        if config.has_option('GLOBAL', 'auto_add_cert_user'):
+            self.auto_add_cert_user = config.getboolean('GLOBAL',
+                    'auto_add_cert_user')
 
     def parse_peers(self, peerfile):
 

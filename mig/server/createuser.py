@@ -184,7 +184,11 @@ if '__main__' == __name__:
 
     if verbose:
         print 'using user dict: %s' % user_dict
-    create_user(user_dict, conf_path, db_path, force, verbose)
+    try:
+        create_user(user_dict, conf_path, db_path, force, verbose)
+    except Exception, exc:
+        print exc
+        sys.exit(1)
     print 'Created or updated  %s in user database and in file system' % \
           user_dict['distinguished_name']
     if user_file:

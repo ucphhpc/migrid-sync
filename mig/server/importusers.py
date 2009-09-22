@@ -154,7 +154,11 @@ if '__main__' == __name__:
         fill_user(user_dict)
         user_id = user_dict['distinguished_name']
         user_dict['comment'] = 'imported from external URL'
-        create_user(user_dict, conf_path, db_path, force, verbose)
+        try:
+            create_user(user_dict, conf_path, db_path, force, verbose)
+        except Exception, exc:
+            print exc
+            continue
         print 'Created %s in user database and in file system' % user_id
         for name in vgrids:
             request = {'vgrid_name': [name],
