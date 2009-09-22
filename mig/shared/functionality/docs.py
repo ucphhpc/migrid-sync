@@ -100,22 +100,24 @@ def config_keywords(configuration, output_objects):
         resconfkeywords.get_resource_keywords(configuration)
     exenode_keywords = \
         resconfkeywords.get_exenode_keywords(configuration)
+    storenode_keywords = \
+        resconfkeywords.get_storenode_keywords(configuration)
     topics = [('Resource configuration', resource_keywords),
-              ('Execution node configuration', exenode_keywords)]
+              ('Execution node configuration', exenode_keywords),
+              ('Storage node configuration', storenode_keywords)]
     for (title, keywords_dict) in topics:
         output_objects.append({'object_type': 'header', 'text': title})
         sorted_keys = keywords_dict.keys()
         sorted_keys.sort()
         for keyword in sorted_keys:
             info = keywords_dict[keyword]
-            output_objects.append({'object_type': 'header', 'text'
+            output_objects.append({'object_type': 'sectionheader', 'text'
                                   : keyword})
             entries = []
             for (field, val) in info.items():
                 entries.append(field + ': ' + str(val))
             output_objects.append({'object_type': 'list', 'list'
                                   : entries})
-        output_objects.append({'object_type': 'header', 'text': ''})
 
 
 def valid_outputformats(output_objects):
