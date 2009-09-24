@@ -393,6 +393,7 @@ MaxRequestsPerChild 10000
    <Directory "/home/mig/state/webserver_home/">
       SSLVerifyClient none
       SSLOptions +StdEnvVars
+      AllowOverride none
       Options FollowSymLinks
       Order deny,allow
       Allow from all

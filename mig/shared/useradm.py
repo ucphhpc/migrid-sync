@@ -291,8 +291,7 @@ def create_user(
         # SID or cert requirement to prevent unauthorized access.
 
         access = 'SSLRequire ('
-        access += '%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s" || '
-        access += '%%{SSL_CLIENT_VERIFY} eq "NONE"'
+        access += '%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s"'
         access += ')\n'
 
         filehandle.write(access % user)
