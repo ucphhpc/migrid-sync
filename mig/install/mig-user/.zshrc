@@ -97,6 +97,3 @@ export HISTSIZE
 export SAVEHIST
 
 setopt nobeep
-# enable danish chars (Jonas)
-LC_CTYPE="en_DK"
-export LC_CTYPE
