@@ -127,6 +127,7 @@ def send_msg(
 
         id_dict = nick_and_id_dict['%s_%s' % (replaced_im_network,
                                    dest)]
+        print 'account %s_%s found in buddy list: %s' % id_dict
         nickname = id_dict['nick']
     else:
 
@@ -163,6 +164,7 @@ def send_msg(
         print 'add %s %s %s' % (account_number, dest, nickname)
         connection.privmsg('root', 'add %s %s %s' % (account_number,
                            dest, nickname))
+        time.sleep(2)
 
     # actually send the message
 

@@ -396,9 +396,7 @@ def main(client_id, user_arguments_dict):
     owned = 0
     for resource_dir in glob.glob(base + os.sep + '*'):
         dir_name = os.path.basename(resource_dir)
-        if dir_name.startswith('sandbox.'):
-            continue
-        elif dir_name.startswith('oneclick.'):
+        if dir_name.split('.', 1)[0] in ('sandbox', 'oneclick', 'ps3live'):
             continue
         if os.path.isdir(resource_dir):
             unique_resource_name = resource_dir.replace(base, '')

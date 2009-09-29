@@ -555,6 +555,58 @@ def migrate_users(
                                 % (client_id, err))
 
 
+def fix_entities(
+    conf_path,
+    db_path,
+    force=False,
+    verbose=False,
+    ):
+    """Update owners/members for all resources and vgrids to use new format IDs
+    where possible"""
+
+    user_db = {}
+    if conf_path:
+        configuration = Configuration(conf_path)
+    else:
+        configuration = get_configuration_object()
+
+    if os.path.exists(db_path):
+        try:
+            user_db = load_user_db(db_path)
+            if verbose:
+                print 'Loaded existing user DB from: %s' % db_path
+        except Exception, err:
+            if not force:
+                raise Exception('Failed to load user DB: %s' % err)
+
+    for (client_id, user) in user_db.items():
+        fill_distinguished_name(user)
+        old_id = user['full_name'].replace(' ', '_')
+        new_id = user['distinguished_name']        
+        if verbose:
+            print 'updating user %s on old format %s to new format %s' % (client_id,
+                                                                          old_id,
+                                                                          new_id)
+
+        for base_dir in (configuration.resource_home, configuration.vgrid_home):
+            for entry_name in os.listdir(base_dir):
+                for kind in ('members', 'owners'):
+                    kind_path = os.path.join(base_dir, entry_name, kind)
+                    if not os.path.isfile(kind_path):
+                        continue
+                    if entry_name.split('.', 1)[0] in ('sandbox', 'oneclick',
+                                                       'ps3live'):
+                        continue
+                    if verbose:
+                        print 'updating %s in %s' % (client_id, kind_path)
+                    try:
+                        filter_pickled_list(kind_path, {old_id: new_id})
+                    except Exception, exc:
+                        if not force:
+                            raise Exception('Error: could not update saved %s in %s: %s'\
+                                            % (kind, kind_path, exc))
+
+
 def default_search():
     """Default search filter to match all users"""
 
