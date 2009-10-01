@@ -127,7 +127,7 @@ def send_msg(
 
         id_dict = nick_and_id_dict['%s_%s' % (replaced_im_network,
                                    dest)]
-        print 'account %s_%s found in buddy list: %s' % id_dict
+        print 'account %s_%s found in buddy list: %s' % (replaced_im_network, dest, id_dict)
         nickname = id_dict['nick']
     else:
 
@@ -211,7 +211,6 @@ def on_privmsg(connection, event):
         return
 
     recvd = event.arguments()[0]
-    print '%s' % recvd
     recvd_split = recvd.split()
 
     if recvd == 'Password accepted':
