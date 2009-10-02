@@ -249,7 +249,10 @@ def main(client_id, user_arguments_dict):
                 else:
                     job_obj['execute'] = command_line
             if job_dict.has_key('PUBLICNAME'):
-                job_obj['resource'] = job_dict['PUBLICNAME']
+                if job_dict['PUBLICNAME']:
+                    job_obj['resource'] = job_dict['PUBLICNAME']
+                else:
+                    job_obj['resource'] = 'HIDDEN'
 
             if job_dict.has_key('EXECUTION_HISTORY'):
                 counter = 0
