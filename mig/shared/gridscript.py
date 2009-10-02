@@ -383,6 +383,7 @@ def requeue_job(
             'FAILED_TIMESTAMP': failed_timestamp,
             'FAILED_MESSAGE': failed_msg,
             'UNIQUE_RESOURCE_NAME': job_dict['UNIQUE_RESOURCE_NAME'],
+            'RESOURCE_VGRID': job_dict.get('RESOURCE_VGRID', ''),
             'PUBLICNAME': job_dict.get('PUBLICNAME', 'HIDDEN'),
             }
 
@@ -412,6 +413,8 @@ def requeue_job(
                 del job_dict['IOSESSIONID']
             if job_dict.has_key('PUBLICNAME'):
                 del job_dict['PUBLICNAME']
+            if job_dict.has_key('RESOURCE_VGRID'):
+                del job_dict['RESOURCE_VGRID']
 
             io.pickle(job_dict, mrsl_file, logger)
 

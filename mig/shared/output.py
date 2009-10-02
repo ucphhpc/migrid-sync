@@ -176,6 +176,9 @@ def txt_format(ret_val, ret_msg, out_obj):
                     if obj.has_key('resource'):
                         lines.append('Resource: %s'
                                  % obj['resource'])
+                    if obj.has_key('vgrid'):
+                        lines.append('VGrid: %s'
+                                 % obj['vgrid'])
                     if obj.has_key('finished_timestamp'):
                         lines.append('Finished: %s'
                                  % obj['finished_timestamp'])
@@ -200,6 +203,9 @@ def txt_format(ret_val, ret_msg, out_obj):
                         if single_history.has_key('resource'):
                             lines.append('Resource %s: %s' % (count,
                                     single_history['resource']))
+                        if single_history.has_key('vgrid'):
+                            lines.append('VGrid %s: %s' % (count,
+                                    single_history['vgrid']))
                         if single_history.has_key('failed'):
                             lines.append('Failed %s: %s' % (count,
                                     single_history['failed']))
@@ -412,6 +418,9 @@ def html_format(ret_val, ret_msg, out_obj):
                     if obj.has_key('resource'):
                         lines.append('<tr><td>Resource</td><td>%s</td></tr>'
                                  % obj['resource'])
+                    if obj.has_key('vgrid'):
+                        lines.append('<tr><td>VGrid</td><td>%s</td></tr>'
+                                 % obj['vgrid'])
                     if obj.has_key('finished_timestamp'):
                         lines.append('<tr><td>Finished</td><td>%s</td></tr>'
                                  % obj['finished_timestamp'])
@@ -439,6 +448,10 @@ def html_format(ret_val, ret_msg, out_obj):
                             lines.append('<tr><td>Resource %s</td><td>%s</td></tr>'
                                      % (count,
                                     single_history['resource']))
+                        if single_history.has_key('vgrid'):
+                            lines.append('<tr><td>VGrid %s</td><td>%s</td></tr>'
+                                     % (count,
+                                    single_history['vgrid']))
                         if single_history.has_key('failed'):
                             lines.append('<tr><td>Failed %s</td><td>%s</td></tr>'
                                      % (count, single_history['failed'

@@ -47,7 +47,7 @@ from shared.gridscript import clean_grid_stdin, \
     server_cleanup, load_queue, save_queue, load_schedule_cache, \
     save_schedule_cache
 from shared.resadm import atomic_resource_exe_restart, put_exe_pgid
-from shared.vgrid import default_vgrid
+from shared.vgrid import default_vgrid, job_fits_res_vgrid
 from shared.useradm import client_id_dir
 
 try:
@@ -905,8 +905,9 @@ while True:
                 # resource: change status in the mRSL file
 
                 client_dir = client_id_dir(job_dict['USER_CERT'])
-                mrsl_filename = configuration.mrsl_files_dir\
-                     + client_dir + '/' + job_dict['JOB_ID'] + '.mRSL'
+                mrsl_filename = os.path.join(configuration.mrsl_files_dir,
+                                             client_dir,
+                                             job_dict['JOB_ID'] + '.mRSL')
                 mrsl_dict = unpickle(mrsl_filename, logger)
                 if mrsl_dict:
                     (sessionid, iosessionid) = \
@@ -921,6 +922,12 @@ while True:
                         )
                     if sessionid and iosessionid:
 
+
+                        # Select actual VGrid to use
+
+                        (match, active_vgrid) = job_fits_res_vgrid(
+                            job_dict['VGRID'], vgrids_in_prioritized_order)
+
                         # Write executing details to mRSL file
 
                         mrsl_dict['STATUS'] = 'EXECUTING'
@@ -930,6 +937,7 @@ while True:
                             unique_resource_name
                         mrsl_dict['PUBLICNAME'] = resource_config.get('PUBLICNAME', 'HIDDEN')
                         mrsl_dict['EXE'] = exe
+                        mrsl_dict['RESOURCE_VGRID'] = active_vgrid
                         mrsl_dict['RESOURCE_CONFIG'] = resource_config
                         mrsl_dict['LOCALJOBNAME'] = localjobname
                         mrsl_dict['SESSIONID'] = sessionid
@@ -958,8 +966,7 @@ while True:
 
                         try:
                             vgrid_index = \
-                                vgrids_in_prioritized_order.index(job_dict['RESOURCE_VGRID'
-                                    ])
+                                vgrids_in_prioritized_order.index(active_vgrid)
                         except StandardError:
 
                             # fall back to simple increment

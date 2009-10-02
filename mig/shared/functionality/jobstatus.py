@@ -253,6 +253,8 @@ def main(client_id, user_arguments_dict):
                     job_obj['resource'] = job_dict['PUBLICNAME']
                 else:
                     job_obj['resource'] = 'HIDDEN'
+            if job_dict.has_key('RESOURCE_VGRID'):
+                job_obj['vgrid'] = job_dict['RESOURCE_VGRID']
 
             if job_dict.has_key('EXECUTION_HISTORY'):
                 counter = 0
@@ -269,8 +271,13 @@ def main(client_id, user_arguments_dict):
                             time.asctime(history_dict['EXECUTING_TIMESTAMP'
                                 ])
                     if history_dict.has_key('PUBLICNAME'):
-                        execution_history['resource'] = \
-                            history_dict['PUBLICNAME']
+                        if history_dict['PUBLICNAME']:
+                            execution_history['resource'] = history_dict['PUBLICNAME']
+                        else:
+                            execution_history['resource'] = 'HIDDEN'
+                    if history_dict.has_key('RESOURCE_VGRID'):
+                        execution_history['vgrid'] = \
+                            history_dict['RESOURCE_VGRID']
                     if history_dict.has_key('FAILED_TIMESTAMP'):
                         execution_history['failed'] = \
                             time.asctime(history_dict['FAILED_TIMESTAMP'
