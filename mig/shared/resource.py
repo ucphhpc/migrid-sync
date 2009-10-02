@@ -565,8 +565,8 @@ def prepare_conf(configuration, input_args, resource_id):
         env_values = 're_values' + str(i)
         if user_args.has_key(runtime_env):
             if user_args.has_key(env_values):
-                # re_valuesX is a single line, A=xyz\nB=def, with all assignments
-                var_lines = user_args[env_values].split()
+                # re_valuesX is a single line, A=vx yz\nB=def, with all assignments
+                var_lines = user_args[env_values].split('\n')
                 re_values = [tuple(line.split('=', 1)) for line in var_lines]
                 del user_args[env_values]
             else:
