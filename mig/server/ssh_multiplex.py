@@ -116,6 +116,9 @@ for unique_resource_name in os.listdir(configuration.resource_home):
                                 + unique_resource_name)
     if not os.path.isdir(res_dir):
         continue
+    dir_name = os.path.basename(res_dir)
+    if dir_name.split('.', 1)[0] in ('sandbox', 'oneclick', 'ps3live'):
+        continue
     try:
         (status, res_conf) = \
             get_resource_configuration(configuration.resource_home,
