@@ -173,9 +173,9 @@ def txt_format(ret_val, ret_msg, out_obj):
                     if obj.has_key('executing_timestamp'):
                         lines.append('Executing: %s'
                                  % obj['executing_timestamp'])
-                    if obj.has_key('unique_resource_name'):
+                    if obj.has_key('resource'):
                         lines.append('Resource: %s'
-                                 % obj['unique_resource_name'])
+                                 % obj['resource'])
                     if obj.has_key('finished_timestamp'):
                         lines.append('Finished: %s'
                                  % obj['finished_timestamp'])
@@ -409,9 +409,9 @@ def html_format(ret_val, ret_msg, out_obj):
                     if obj.has_key('executing_timestamp'):
                         lines.append('<tr><td>Executing</td><td>%s</td></tr>'
                                  % obj['executing_timestamp'])
-                    if obj.has_key('unique_resource_name'):
+                    if obj.has_key('resource'):
                         lines.append('<tr><td>Resource</td><td>%s</td></tr>'
-                                 % obj['unique_resource_name'])
+                                 % obj['resource'])
                     if obj.has_key('finished_timestamp'):
                         lines.append('<tr><td>Finished</td><td>%s</td></tr>'
                                  % obj['finished_timestamp'])
@@ -464,6 +464,7 @@ def html_format(ret_val, ret_msg, out_obj):
                         lines.append('<br>%s'
                                  % html_link(obj['outputfileslink']))
                     lines.append('</td></tr><tr><td><br></td></tr>')
+
 
                 lines.append('</table>')
         elif i['object_type'] == 'resubmitobjs':

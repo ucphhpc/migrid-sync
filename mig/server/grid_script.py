@@ -756,6 +756,8 @@ while True:
                     empty_job['EXECUTION_DELAY']
                 last_request_dict['UNIQUE_RESOURCE_NAME'] = \
                     unique_resource_name
+                last_request_dict['PUBLICNAME'] = \
+                                                resource_config.get('PUBLICNAME', 'HIDDEN')
                 last_request_dict['EXE'] = exe
                 last_request_dict['RESOURCE_CONFIG'] = resource_config
                 last_request_dict['LOCALJOBNAME'] = localjobname
@@ -883,6 +885,8 @@ while True:
                         execution_delay
                     last_request_dict['UNIQUE_RESOURCE_NAME'] = \
                         unique_resource_name
+                    last_request_dict['PUBLICNAME'] = \
+                                                    resource_config.get('PUBLICNAME', 'HIDDEN')
                     last_request_dict['EXE'] = exe
                     last_request_dict['RESOURCE_CONFIG'] = \
                         resource_config
