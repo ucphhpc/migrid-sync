@@ -32,7 +32,7 @@ Contrary to the native pickle module this version does not separate
 file opening from pickle operations.
 """
 
-import pickle
+import cPickle as pickle
 
 from localfile import LocalFile
 

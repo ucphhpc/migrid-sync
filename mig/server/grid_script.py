@@ -924,6 +924,7 @@ while True:
                         mrsl_dict['EXECUTION_DELAY'] = execution_delay
                         mrsl_dict['UNIQUE_RESOURCE_NAME'] = \
                             unique_resource_name
+                        mrsl_dict['PUBLICNAME'] = resource_config.get('PUBLICNAME', 'HIDDEN')
                         mrsl_dict['EXE'] = exe
                         mrsl_dict['RESOURCE_CONFIG'] = resource_config
                         mrsl_dict['LOCALJOBNAME'] = localjobname

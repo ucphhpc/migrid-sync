@@ -29,7 +29,7 @@
 
 import time
 import os
-import pickle as org_pickle
+import cPickle as org_pickle
 import shutil
 import fcntl
 
