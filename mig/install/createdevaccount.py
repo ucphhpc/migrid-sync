@@ -150,8 +150,8 @@ def create_user(
 # to the AllowUsers line in %s and restart sshd."""\
          % (ssh_login_group, user, sshd_conf)
     print """# Add %s to the sudoers file (visudo) with privileges
-# to run apache init script in %s"""\
-         % (user, apache_dir)
+# to run apache init script in %s
+visudo""" % (user, apache_dir)
     print """# Set disk quotas for %s using reference user quota:
 edquota -u %s -p LOGIN_OF_SIMILAR_USER"""\
          % (user, user)
