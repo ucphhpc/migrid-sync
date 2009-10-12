@@ -31,7 +31,7 @@ class GridEpistasis:
         self.main_output_dir = ""
         #self.mig_session = ""
 
-# ########## UPDATE / STATUS ###############
+########### UPDATE / STATUS ###############
     
     def get_epistasis_status(self):
         """Return the status of the jobs and a progress indicator to be displayed in GUI."""

@@ -1,30 +1,31 @@
 main_script = "epistasis.py"
-data_file = "RfilesAndscripts/Inter99All290606.sav"
+#data_file = "RfilesAndscripts/Inter99All290606.sav"
+data_file = "RfilesAndscripts/M101SNP210609W.sav"
 
 main_r_file = "EpiMain.R"
-r_files = ["EpiCRnew_R_edit.R","DistrPost07_R_edit.R"]
+r_files = ["EpiCRnew_R_edit.R","DistrPost07_R_edit.R","EpiLW.R"]
 
-program_files = ["RfilesAndscripts/EpiMain.R", "RfilesAndscripts/EpiCRnew_R_edit.R","RfilesAndscripts/DistrPost07_R_edit.R", "RfilesAndscripts/epistasis.py"]
+program_files = ["RfilesAndscripts/EpiMain.R", "RfilesAndscripts/EpiCRnew_R_edit.R","RfilesAndscripts/EpiLW.R","RfilesAndscripts/DistrPost07_R_edit.R", "RfilesAndscripts/epistasis.py"]
 
 monitor_polling_frequency = 5
-gene_first_index = 74 #74
-gene_last_index = 75 #103
+gene_first_index = 54#54
+gene_last_index = 56#271
 
-trait_first_index = 7 #7 
-trait_last_index = 8 #37 
+trait_first_index = 30 #11 bt30
+trait_last_index = 47#53 bt47 incl puls 46-47
 
 
 default_job_size = 1
 
-default_gene_list = range(gene_first_index,gene_first_index+3,1)#["rhnf4a2", "rhnf4a1", "rkir62"]
-default_trait_list = range(trait_first_index,trait_first_index+3,1)#["Heigth","Alder","Omliv"] # height is misspelled purposely
+default_gene_list = range(gene_first_index,gene_last_index+1,1)#["rhnf4a2", "rhnf4a1", "rkir62"]
+default_trait_list = range(trait_first_index,trait_last_index+1,1)#["Heigth","Alder","Omliv"] # height is misspelled purposely
 
 
 
 default_selection_variable_index = 2
-default_selection_variable_label = "Gender"
+#default_selection_variable_label = "Gender"
 
-default_variable_values = ["1","2"]
+default_variable_values = ["1","2"]#,"3","4","5","6","7","8","9","10","11","12"]
 Epistasis_working_dir = "Epistasis_tmp/"
 
 output_dir = "epifiles/"
@@ -33,7 +34,7 @@ resource_specs = {}
 #resource_specs["ARCHITECTURE"] ="AMD64"
 resource_specs["RUNTIMEENVIRONMENT"] = "GNU_R"
 resource_specs["VGRID"] = "DCSC"
-resource_specs["CPUTIME"] = 6000
+resource_specs["CPUTIME"] = 12000
 resource_specs["MEMORY"] = 100
 resource_specs["DISK"] = 1
 

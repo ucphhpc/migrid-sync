@@ -4,10 +4,11 @@
 #All genotypic values are obtained independently. Using these, variances (where appropiate) can be calculated using these
 #avoiding covariances between derived genic or genotypic values.
 
-
+#print("In EpiCR")
 
 #Below means and varaince is calculated for each two-gene haplotype. Can this be doen in a single less
 #costly procedure???
+
 
 #Means of two-gene genotypes OK Mayb droped and instead use mean from t-test!
 #This is the geontypic values!!
@@ -47,15 +48,11 @@ vgaabb<-var(trcontent[[9]],na.rm = TRUE)
 vgvect<-c(vgAABB,vgAABb,vgAAbb,vgAaBB,vgAaBb,vgAabb,vgaaBB,vgaaBb,vgaabb)
 for(vg in 1:9){if(is.na(vgvect[vg]) || is.nan(vgvect[vg])){vgvect[vg] = 0}} # Kan ikke sammenligne NA (nonværdi) med "=="-operatoren
 
-
 #Average single-locus genotypic values as the average of two-gene genotypic values
 gaverage<-sum(mgvect,na.rm=T)/9 #ONLY FOR GENOTYPES PRESENT? Philosophical question
 
-#Now we hav to calculate non-epistasis values. This is subtracted from the mean-value of
-#each two-gene haplotypes. The result is then epistatic values for each subject from which the variance
-#is calculated i.e. epistasis
+#Calculation ofnon-epistasis values. 
 
-#Pt no way around this
 #Marginal single-locus genotypic values as the average of two-gene genotypic values OK
 #these are intermediate calculations
 gAA<-sum(mgvect[1:3],na.rm=T)/3
@@ -67,7 +64,7 @@ gbb<-sum(mgvect[c(3,6,9)],na.rm=T)/3
 
 #Are used to calculate single genotype values
 
-##Non-epistatic genotypic values OK
+##Mean non-epistatic genotypic values OK
 neAABB<-gAA+gBB-gaverage
 neAABb<-gAA+gBb-gaverage
 neAAbb<-gAA+gbb-gaverage
@@ -82,10 +79,9 @@ nevect<-c(neAABB,neAABb,neAAbb,neAaBB,neAaBb,neAabb,neaaBB,neaaBb,neaabb)
 #Exclude values for which there is no genotype values ie mgvect = 0
 for(ng in 1:9){if(mgvect[ng]==0){nevect[ng] = 0}}
 
-
-##
-#Epistatic genotypic values OK
+##Epistatic genotypic values OK
 evect<-mgvect-nevect
+
 #Exclude values for which there is no genotype values ie mgvect = 0
 for(ng in 1:9){if(mgvect[ng]==0){evect[ng] = 0}}
 
@@ -97,31 +93,81 @@ for(ng in 1:9){if(mgvect[ng]==0){evect[ng] = 0}}
 
 EMS<-sum(trlength*evect^2)/4
 #In Cheverud 1995 the above bracket er substracte by SUM*SUM/N, where SUM is the sum of phenotypes across the entire population
-#However this often results in negative epistasis mean square which is not possible.
-#In addtion genotypic means has already been removed as the sum of epistais is zero.
+#However this sum is zero as all calculation have been zero-centered
 #Besides, the sum-square term is not included in the 1997 paper. 
-#The formula is wrong!!!
 
-#Two residuals are calculated. We may drop one of them, and preferable use aov-formulation
+#Two residuals are calculated. We may drop one of them.
 #RMS calculated as the sum of weigthed genotypic variance
-RMS<-sum(vgvect*trlength)/sumcases
-#It is stated just as the pooled variance, but the above gives the same results as the ANOVA-design
+
+RMS<-sum(vgvect*trlength)/sumcases #DROP???
+#It is stated just as the pooled variance, but the above gives approximately the same results as the ANOVA-design
 
 #RMS can be calculated as the residual mean square of two-way ANOVA with singel-locus genotypes and their interaction as factors
 #It appears although as the CR-calculation is valid. No sign discrepancies has been detected between the two calculations
 #Entries are the names of the columns in traittrim OK
 
-aovRMS<-summary(aov(traitVector~geneVector1+geneVector2 + geneVector1*geneVector2, data=traittrim, na.action=na.exclude))[[1]][4,3]
+#Mean squares
+aovX<-summary(aov(traitVector~geneVector1+geneVector2 + geneVector1*geneVector2, data=traittrim, na.action=na.exclude))[[1]]
 
-#The two RMS-calcualtions are nearly identical
-#To handel zero-valued RMS's
-if(is.na(aovRMS)){
+
+#Beta-parameters, extendt to single genes too
+
+aovY<-aov(traitVector~geneVector1+geneVector2 + geneVector1*geneVector2, data=traittrim, na.action=na.exclude)[[1]]
+BetaVal<-aovY[2:4]#this may be done global, be sure not to "carry-over"
+
+BetaValues<-c(format(BetaVal[1],digits=3,nsmall=3),format(BetaVal[2],digits=3,nsmall=3),format(BetaVal[3],digits=3,nsmall=3))
+
+if(BetaValues[3]=="NA"){BetaValues[3]<-0}
+
+#P-values for main effects
+MainGene1Sign<-aovX[1,5]
+MainGene2Sign<-aovX[2,5]
+
+#Extract RMS
+if(dim(aovX)[1]==4){
+   aovRMS<-aovX[4,3]
+   aovNote<<-""}
+   else{
+	if(dim(aovX)[1]==3){
+	aovRMS<-aovX[3,3]
+       	 aovNote<<-"No AnoEpi"
+	}
+	else{
+	aovNote<<-"Invalid"
+	aovRMS<-"NA"
+#This be superflous, but keep to debugging is complete
+print("in epiberegn")
+print(aovX)
+print(gene1)
+print(gene2)
+print(gname1)
+print(gname2)
+print(dim(aovX))
+
+	}
+
+}
+#The result of two RMS-calcualtions are nearly identical
+#To handel zero-valued RMS's and NA and NaN
+
+if(aovRMS==0 || aovRMS== "NA" || aovRMS== "NaN"){
+
+print("i aovRMS = NA")
+print(aovRMS)
+MainGene1Sign<-1
+MainGene2Sign<-1
+
 Fval2<-"RMS = 0"
 fpval2<-1
 }
 else{
 Fval2<-EMS/aovRMS
 fpval2<-1-pf(Fval2, 4, (sumcases-9)) 
+
+if(fpval2 == "NA" || fpval2 == "NaN"){fpval2<-1
+
+	}
+   else{fpval2<-format(fpval2, digits = 4,scientific=T)}
 }
 
 if(RMS==0){
@@ -131,14 +177,16 @@ fpval1<-1
 else{
 Fval1<-EMS/RMS
 fpval1<-1-pf(Fval1, 4, (sumcases-9)) 
+if(fpval1 == "NA" || fpval1 == "NaN"){fpval1<-1}
+    else{fpval1<-format(fpval1, digits = 4,scientific=T)}
 }
-
-                                                                                      
+                                                                           
 ######
 
 #No further calculations here, but see older scripts for variances etc.
 
-signpval<-c(fpval1,fpval2)
+signpval<-c(fpval1,fpval2,BetaValues,MainGene1Sign,MainGene2Sign)
+
 return(signpval)
 
 }

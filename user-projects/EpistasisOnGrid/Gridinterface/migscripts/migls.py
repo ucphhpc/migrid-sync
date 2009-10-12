@@ -67,7 +67,7 @@ def ls_file(path_list):
 
 	# import StringIO
 
-        curl = 'curl --compressed'
+        curl = 'curl' #--compressed'
         target = ''
         location = "cgi-bin/ls.py"
         post_data = 'output_format=txt;flags=%s;%s' % (server_flags, path_list)
@@ -75,7 +75,7 @@ def ls_file(path_list):
         data = ''
         if post_data:
             data = '--data "%s"' % post_data
-        command = "%s --fail --silent --cert %s --key %s %s %s %s %s %s --url '%s/%s%s'" % (curl, cert_file, key_file, data, ca_check, password_check, timeout, target, mig_server, location, query)
+        command = "%s --fail --cert %s --key %s %s %s %s %s %s --url '%s/%s%s'" % (curl, cert_file, key_file, data, ca_check, password_check, timeout, target, mig_server, location, query)
         # TODO: should we replace popen4 call with this next section?
         #from subprocess import Popen, PIPE, STDOUT
         #proc = Popen(command, shell=True, stdout=PIPE, stderr=STDOUT,
