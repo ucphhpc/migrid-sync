@@ -99,6 +99,9 @@ def create_wiki(
         # Simply replace all occurences of template conf dir with vgrid wiki conf dir.
         # In that way config files (python modules) are automatically loaded from there.
 
+        # IMPORTANT NOTE:
+        # prevent users writing in cgi-bin and etc dir to avoid remote execution exploit
+
         for line in template_script:
             line = line.replace(cgi_template_etc_alternative,
                                 cgi_wiki_etc)
@@ -107,7 +110,8 @@ def create_wiki(
         cgi_fd = open(cgi_wiki_script, 'w')
         cgi_fd.writelines(cgi_script)
         cgi_fd.close()
-        os.chmod(cgi_wiki_script, 0755)
+        os.chmod(cgi_wiki_script, 0555)
+        os.chmod(cgi_wiki_bin, 0555)
 
         # Now create the vgrid specific wiki configuration file
 
@@ -132,11 +136,14 @@ def create_wiki(
         cgi_fd = open(cgi_wiki_wikiconf, 'w')
         cgi_fd.writelines(cgi_wikiconfig)
         cgi_fd.close()
+        os.chmod(cgi_wiki_wikiconf, 0444)
+        os.chmod(cgi_wiki_etc, 0555)
 
         # Copy example data and underlay directories directly
 
         shutil.copytree(cgi_template_data, cgi_wiki_data)
         shutil.copytree(cgi_template_underlay, cgi_wiki_underlay)
+        os.chmod(wiki_dir, 0555)
         return True
     except Exception, exc:
         output_objects.append({'object_type': 'error_text', 'text'

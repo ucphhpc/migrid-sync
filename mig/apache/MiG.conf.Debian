@@ -402,6 +402,11 @@ MaxRequestsPerChild 10000
 
 # BEGIN FOR MiG VGrid MOIN MOIN
    Alias /wiki/ "/usr/share/moin/htdocs/"
+
+   ###############################################################################
+   # IMPORTANT: don't ever allow users writing under these cgi-bin's in any way! #
+   # Otherwise you leave a remote execution hole open for all VGrid members      #
+   ###############################################################################
    
    # Home directory wiki access - we need to avoid catching raw cert_redirect URLs
    ScriptAliasMatch ^/([^/]+)/public_base/(.*)/.vgridwiki/cgi-bin/(.*) __MIG_STATE__/user_home/$1/public_base/$2/.vgridwiki/cgi-bin/$3
