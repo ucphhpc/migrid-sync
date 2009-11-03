@@ -64,8 +64,7 @@ def pattern_match_file(pattern, filename, allowed_time=5.0):
 
             break
 
-        line = line.strip()
-        if re.match(pattern, line):
+        if re.match(pattern, line.strip()):
             fit.append(line)
     file_fd.close()
 
