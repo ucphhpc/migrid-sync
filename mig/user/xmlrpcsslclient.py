@@ -345,6 +345,15 @@ vgrid=Generic
     # (inlist, retval) = server.editfile({"path":["/m2"], "submitjob":["True"], "editarea":["%s" % mrsl]})
     # (inlist, retval) = server.canceljob({"job_id":["%s" % sys.argv[1]]})
 
+    try:
+        print "cat as binary file"
+        (inlist, retval) = server.cat({"path":["%s" % sys.argv[1]], "flags":"vb"})
+        for entry in inlist:
+            if 'file_output' == entry['object_type']:
+                print ''.join([i.data for i in entry['lines']])
+    except Exception, exc:
+        print "Error: could not cat as binary file: %s" % exc
+
     print 'testing a basic job flow'
     mrsl_path = 'xmlrpc-test-job.mRSL'
     mrsl = """::EXECUTE::
