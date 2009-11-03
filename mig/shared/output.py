@@ -71,33 +71,35 @@ def txt_format(ret_val, ret_msg, out_obj):
     """Generate output in txt format"""
 
     lines = []
-    lines.append('Exit code: %s Description %s' % (ret_val, ret_msg))
+    lines.append('Exit code: %s Description %s\n' % (ret_val, ret_msg))
 
     for i in out_obj:
         if i['object_type'] == 'error_text':
-            lines.append('** %s **' % i['text'])
+            lines.append('** %s **\n' % i['text'])
         elif i['object_type'] == 'warning':
-            lines.append('! %s !' % i['text'])
+            lines.append('! %s !\n' % i['text'])
         elif i['object_type'] == 'start':
             pass
         elif i['object_type'] == 'header':
-            lines.append('')
-            lines.append('___%s___' % i['text'].upper())
-            lines.append('')
+            lines.append('''
+___%s___
+
+''' % i['text'].upper())
         elif i['object_type'] == 'sectionheader':
-            lines.append('')
-            lines.append('___%s___' % i['text'])
-            lines.append('')
+            lines.append('''
+___%s___
+
+''' % i['text'])
         elif i['object_type'] == 'title':
-            lines.append('Title: %s' % i['text'])
+            lines.append('Title: %s\n' % i['text'])
         elif i['object_type'] == 'text':
-            lines.append('%s' % i['text'])
+            lines.append('%s\n' % i['text'])
         elif i['object_type'] == 'verbatim':
-            lines.append('%s' % i['text'])
+            lines.append('%s\n' % i['text'])
         elif i['object_type'] == 'link':
 
             # We do not want link junk in plain text
-            # lines.append(txt_link(i)
+            # lines.append('%s\n' % txt_link(i))
 
             continue
         elif i['object_type'] == 'multilinkline':
@@ -107,7 +109,7 @@ def txt_format(ret_val, ret_msg, out_obj):
             # if len(links) == 0:
             #    lines.append("No links found!"
             # else:
-            #    lines.append(' / '.join([txt_link(link) for link in links])
+            #    lines.append(' / \n'.join([txt_link(link) for link in links])
 
             continue
         elif i['object_type'] == 'changedstatusjobs':
@@ -132,62 +134,63 @@ def txt_format(ret_val, ret_msg, out_obj):
             if len(stats) == 0:
                 continue
             for stat in stats:
-                lines.append('device\t%(device)s' % stat)
-                lines.append('inode\t%(inode)s' % stat)
-                lines.append('mode\t%(mode)s' % stat)
-                lines.append('nlink\t%(nlink)s' % stat)
-                lines.append('uid\t%(uid)s' % stat)
-                lines.append('gid\t%(gid)s' % stat)
-                lines.append('rdev\t%(rdev)s' % stat)
-                lines.append('size\t%(size)s' % stat)
-                lines.append('atime\t%(atime)s' % stat)
-                lines.append('mtime\t%(mtime)s' % stat)
-                lines.append('ctime\t%(ctime)s' % stat)
+                lines.append('''device\t%(device)s
+inode\t%(inode)s
+mode\t%(mode)s
+nlink\t%(nlink)s
+uid\t%(uid)s
+gid\t%(gid)s
+rdev\t%(rdev)s
+size\t%(size)s
+atime\t%(atime)s
+mtime\t%(mtime)s
+ctime\t%(ctime)s
+''' % stat)
         elif i['object_type'] == 'job_list':
             if len(i['jobs']) > 0:
                 jobs = i['jobs']
 
                 for obj in jobs:
-                    lines.append('Job Id: %s' % obj['job_id'])
-                    lines.append('Status: %s' % obj['status'])
+                    lines.append('Job Id: %(job_id)s\n' % obj)
+                    lines.append('Status: %(status)s\n' % obj)
                     if obj.has_key('execute'):
-                        lines.append('Execute: %s' % obj['execute'])
+                        lines.append('Execute: %(execute)s\n' % obj)
                     if obj.has_key('verified'):
-                        lines.append('Verified status: %s'
-                                 % obj['verified'])
+                        lines.append('Verified status: %(verified)s\n'
+                                 % obj)
                     if obj.has_key('verified_timestamp'):
-                        lines.append('Verified: %s'
-                                 % obj['verified_timestamp'])
+                        lines.append('Verified: %(verified_timestamp)s\n'
+                                 % obj)
                     if obj.has_key('received_timestamp'):
-                        lines.append('Received: %s'
-                                 % obj['received_timestamp'])
+                        lines.append('Received: %(received_timestamp)s\n'
+                                 % obj)
                     if obj.has_key('queued_timestamp'):
-                        lines.append('Queued: %s'
-                                 % obj['queued_timestamp'])
+                        lines.append('Queued: %(queued_timestamp)s\n'
+                                 % obj)
                     if obj.has_key('schedule_timestamp'):
-                        lines.append('Scheduled: %s'
-                                 % obj['schedule_timestamp'])
+                        lines.append('Scheduled: %(schedule_timestamp)s\n'
+                                 % obj)
                     if obj.has_key('schedule_hint'):
-                        lines.append('Schedule hint: %s'
-                                 % obj['schedule_hint'])
+                        lines.append('Schedule hint: %(schedule_hint)s\n'
+                                 % obj)
                     if obj.has_key('executing_timestamp'):
-                        lines.append('Executing: %s'
-                                 % obj['executing_timestamp'])
+                        lines.append('Executing: %(executing_timestamp)s\n'
+                                 % obj)
                     if obj.has_key('resource'):
-                        lines.append('Resource: %s'
-                                 % obj['resource'])
+                        lines.append('Resource: %(resource)s\n'
+                                 % obj)
                     if obj.has_key('vgrid'):
                         lines.append('VGrid: %s'
                                  % obj['vgrid'])
                     if obj.has_key('finished_timestamp'):
-                        lines.append('Finished: %s'
-                                 % obj['finished_timestamp'])
+                        lines.append('Finished: %(finished_timestamp)s\n'
+                                 % obj)
                     if obj.has_key('failed_timestamp'):
-                        lines.append('Failed: %s'
-                                 % obj['failed_timestamp'])
+                        lines.append('Failed: %(failed_timestamp)s\n'
+                                 % obj)
                     if obj.has_key('canceled_timestamp'):
-                        lines.append('Canceled: %s'
-                                 % obj['canceled_timestamp'])
+                        lines.append('Canceled: %(canceled_timestamp)s\n'
+                                 % obj)
                     for execution_history in obj['execution_histories']:
                         count = execution_history['count']
                         single_history = \
@@ -195,28 +198,28 @@ def txt_format(ret_val, ret_msg, out_obj):
                         lines.append('Execution history</td><td>#%s</td></tr>'
                                  % count)
                         if single_history.has_key('queued'):
-                            lines.append('Queued %s: %s' % (count,
+                            lines.append('Queued %s: %s\n' % (count,
                                     single_history['queued']))
                         if single_history.has_key('executing'):
-                            lines.append('Executing %s: %s' % (count,
+                            lines.append('Executing %s: %s\n' % (count,
                                     single_history['executing']))
                         if single_history.has_key('resource'):
-                            lines.append('Resource %s: %s' % (count,
+                            lines.append('Resource %s: %s\n' % (count,
                                     single_history['resource']))
                         if single_history.has_key('vgrid'):
                             lines.append('VGrid %s: %s' % (count,
                                     single_history['vgrid']))
                         if single_history.has_key('failed'):
-                            lines.append('Failed %s: %s' % (count,
+                            lines.append('Failed %s: %s\n' % (count,
                                     single_history['failed']))
                         if single_history.has_key('failed_message'):
-                            lines.append('Failed message %s: %s'
+                            lines.append('Failed message %s: %s\n'
                                      % (count,
                                     single_history['failed_message']))
 
                     # add newline before next job)
 
-                    lines.append('')
+                    lines.append('\n')
         elif i['object_type'] == 'filewcs':
 
             # if len(i["jobs"]) > 0:
@@ -229,7 +232,7 @@ def txt_format(ret_val, ret_msg, out_obj):
 
             filewcs = i['filewcs']
             if len(filewcs) == 0:
-                lines.append('No files to run wc on')
+                lines.append('No files to run wc on\n')
             else:
                 for filewc in filewcs:
                     out = ''
@@ -244,9 +247,10 @@ def txt_format(ret_val, ret_msg, out_obj):
                     out += '\t'
                     if filewc.has_key('bytes'):
                         out += '%s' % filewc['bytes']
+                    out += '\n'
                     lines.append(out)
         elif i['object_type'] == 'file_not_found':
-            lines.append('%s: No such file or directory' % i['name'])
+            lines.append('%s: No such file or directory\n' % i['name'])
         elif i['object_type'] == 'dir_listings':
             if len(i['dir_listings']) == 0:
                 continue
@@ -261,12 +265,12 @@ def txt_format(ret_val, ret_msg, out_obj):
                         directory = entry
                         if directory.has_key('long_format'):
                             if directory == dir_listing['entries'][0]:
-                                lines.append('%s:\ntotal %s'
+                                lines.append('%s:\ntotal %s\n'
                                          % (dir_listing['relative_path'
                                         ], len(dir_listing['entries'])))
                         if directory.has_key('actual_dir'):
                             line += '%s ' % directory['actual_dir']
-                        line += '%s' % directory['name']
+                        line += '%s\n' % directory['name']
                         lines.append(line)
                     elif 'file' == entry['type']:
                         this_file = entry
@@ -275,28 +279,30 @@ def txt_format(ret_val, ret_msg, out_obj):
                         line += '%s' % this_file['name']
                         if this_file.has_key('file_dest'):
                             line += ' %s' % this_file['file_dest']
+                        line += '\n'
                         lines.append(line)
         elif i['object_type'] == 'jobobj':
             job_dict = i['jobobj'].to_dict()
-            lines.append('Field\t\tValue')
+            lines.append('Field\t\tValue\n')
             for (key, val) in job_dict.items():
-                lines.append('%s\t\t%s' % (key, val))
+                lines.append('%s\t\t%s\n' % (key, val))
         elif i['object_type'] == 'html_form':
             pass
         elif i['object_type'] == 'file_output':
             if i.has_key('path'):
-                lines.append('File: %s' % i['path'])
+                lines.append('File: %s\n' % i['path'])
             for line in i['lines']:
+                # Do not add newlines here!
                 lines.append(line)
         elif i['object_type'] == 'list':
             for list_item in i['list']:
-                lines.append('%s' % list_item)
+                lines.append('%s\n' % list_item)
         elif i['object_type'] == 'end':
             pass
         else:
-            lines.append('unknown object %s' % i)
-
-    return '\n'.join(lines)
+            lines.append('unknown object %s\n' % i)
+            
+    return ''.join(lines)
 
 
 def html_link(obj):
@@ -706,7 +712,7 @@ def html_format(ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'file_output':
             if i.has_key('path'):
                 lines.append('File: %s<br>' % i['path'])
-            lines.append('<br>'.join(i['lines']) + '<br>')
+            lines.append('<pre>%s</pre><br>' % ''.join(i['lines']))
         elif i['object_type'] == 'list':
             lines.append('<ul>')
             for list_item in i['list']:
@@ -1008,6 +1014,13 @@ def xmlrpc_format(ret_val, ret_msg, out_obj):
 
     try:
         import xmlrpclib
+        # Wrap any explicit binary entries to avoid encoding errors
+        for entry in out_obj:
+            if entry.get('wrap_binary', False):
+                for key in entry.get('wrap_targets', []):
+                    if not key in entry:
+                        continue
+                    entry[key] = xmlrpclib.Binary(entry[key])
         return xmlrpclib.dumps((out_obj, ), allow_none=True)
     except Exception, exc:
         print 'xmlrpclib not available on server! Defaulting to .txt output. (%s)'\

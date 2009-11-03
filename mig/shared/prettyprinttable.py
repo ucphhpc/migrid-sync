@@ -85,7 +85,7 @@ def pprint_table(table):
         for i in range(1, len(row)):
             col = format_num(row[i]).rjust(col_paddings[i] + 2)
             lines.append(col)
-        lines.append('')
+        lines.append('\n')
     return lines
 
 

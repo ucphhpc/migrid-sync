@@ -85,7 +85,9 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg, output_ob
         print "%s: %s" % (key, val)
     print ''
 
-    print output
+    # Print without adding newline
+    
+    print output,
 
 def run_cgi_script(main, delayed_input=None):
     """Get needed information and run the function received as argument.

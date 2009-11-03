@@ -33,11 +33,11 @@ import re
 import time
 
 import shared.returnvalues as returnvalues
-from shared.validstring import valid_user_path
-from shared.parseflags import verbose
-from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables
+from shared.parseflags import verbose, binary
 from shared.useradm import client_id_dir
+from shared.validstring import valid_user_path
 
 
 def signature():
@@ -145,7 +145,7 @@ def main(client_id, user_arguments_dict):
             try:
                 matching = pattern_match_file(search, real_path)
                 for line in matching:
-                    output_lines.append(line.strip())
+                    output_lines.append(line)
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s': %s" % (op_name,
@@ -154,12 +154,13 @@ def main(client_id, user_arguments_dict):
                              relative_path, exc))
                 status = returnvalues.SYSTEM_ERROR
                 continue
+            entry = {'object_type': 'file_output',
+                       'lines': output_lines,
+                       'wrap_binary': binary(flags),
+                       'wrap_targets': ['lines']}
             if verbose(flags):
-                output_objects.append({'object_type': 'file_output',
-                        'path': relative_path, 'lines': output_lines})
-            else:
-                output_objects.append({'object_type': 'file_output',
-                        'lines': output_lines})
+                entry['path'] = relative_path
+            output_objects.append(entry)
 
     return (output_objects, status)
 

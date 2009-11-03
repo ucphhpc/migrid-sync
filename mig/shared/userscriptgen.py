@@ -1631,8 +1631,7 @@ done
 job_list = sys.argv[1:]
 for job in job_list:
    (status, out) = cancel_job(job)
-   for line in out:
-      print line.strip()
+   print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -1675,8 +1674,7 @@ cat_file $path_list
 # 'path="$1";path="$2";...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = cat_file(path_list)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -1733,8 +1731,7 @@ for Search in SearchList:
 for Topic in TopicList:
    (status, topic_out) = show_doc("", Topic)
    out += topic_out
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -1852,8 +1849,7 @@ head_file $lines $path_list
 # 'path="$1";path="$2";...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = head_file(lines, path_list)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -1920,8 +1916,7 @@ if len(sys.argv) == 1:
     sys.argv.append(".")
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = ls_file(path_list)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -1973,8 +1968,7 @@ mk_dir $path_list
 # 'path=$1;path=$2;...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = mk_dir(path_list)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2022,8 +2016,7 @@ mv_file $src_list $dst
 src_list = \"src=%s\" % \";src=\".join(sys.argv[1:-1])
 dst = sys.argv[-1]
 (status, out) = mv_file(src_list, dst)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2206,8 +2199,7 @@ read_file $@
         s += \
             """
 (status, out) = read_file(*(sys.argv[1:]))
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2249,9 +2241,7 @@ src_list = sys.argv[1:]
 
 for src in src_list:
    (status, out) = resubmit_job(src)
-   for line in out:
-      print line.strip()
-
+   print ''.join(out),
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -2303,8 +2293,7 @@ rm_file $path_list
 # 'path=$1;path=$2;...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = rm_file(path_list)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2356,8 +2345,7 @@ rm_dir $path_list
 # 'path=$1;path=$2;...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = rm_dir(path_list)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2400,8 +2388,7 @@ stat_file $path_list
 # 'path="$1";path="$2";...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = stat_file(path_list)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2456,8 +2443,7 @@ job_status $job_id_list $max_job_count
 # 'job_id="$1";job_id="$2";...;job_id=$N'
 job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[1:])
 (status, out) = job_status(job_id_list, max_job_count)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2503,8 +2489,7 @@ src_list = sys.argv[1:]
 for src in src_list:
    dst = os.path.basename(src)
    (status, out) = submit_file(src, dst, submit_mrsl, extract_package)
-   for line in out:
-      print line.strip()
+   print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2555,8 +2540,7 @@ tail_file $lines $path_list
 # 'path="$1";path="$2";...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = tail_file(lines, path_list)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2662,8 +2646,7 @@ touch_file $path_list
 # 'path=$1;path=$2;...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = touch_file(path_list)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2714,8 +2697,7 @@ truncate_file $size $path_list
 # 'path="$1";path="$2";...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = truncate_file(size, path_list)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2773,8 +2755,7 @@ wc_file $path_list
 # 'path=$1;path=$2;...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = wc_file(path_list)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2804,8 +2785,7 @@ write_file $@
         s += \
             """
 (status, out) = write_file(*(sys.argv[1:]))
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2848,8 +2828,7 @@ job_liveoutput $job_id_list
 # 'job_id="$1";job_id="$2";...;job_id=$N'
 job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[1:])
 (status, out) = job_liveoutput(job_id_list)
-for line in out:
-    print line.strip()
+print ''.join(out),
 sys.exit(status)
 """
     else:

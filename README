@@ -107,7 +107,7 @@ python generateconfs.py . generated-confs mig-1.imada.sdu.dk mig mig \
 or similarly with apache 2.x:
 python generateconfs.py . generated-confs dk.migrid.org mig mig \
        /etc/apache2 /var/run/apache2 /var/log/apache2 /home/mig/mig \
-       /home/mig/state /home/mig/MiG-certificates /etc/moin \
+       /home/mig/state /etc/apache2/MiG-certificates /etc/moin \
        /usr/share/moin 80 443 User Group '#Listen'
 
 Most of the arguments should be relatively straight forward, but you

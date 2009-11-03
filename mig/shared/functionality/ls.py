@@ -95,7 +95,6 @@ function selectedFilesAction() {
     }
     else if (document.pressed == 'tail') {
        document.fileform.action = 'tail.py';
-       document.fileform.flags.value = '';
     }
     else if (document.pressed == 'touch') {
        document.fileform.action = 'touch.py';
