@@ -38,11 +38,11 @@ import time
 
 import shared.returnvalues as returnvalues
 from shared.conf import get_resource_configuration
-from shared.refunctions import get_re_dict, list_runtime_environments
 from shared.fileio import unpickle
-from shared.init import initialize_main_variables, find_entry
 from shared.findtype import is_owner
 from shared.functional import validate_input_and_cert
+from shared.init import initialize_main_variables, find_entry
+from shared.refunctions import get_re_dict, list_runtime_environments
 
 
 def signature():

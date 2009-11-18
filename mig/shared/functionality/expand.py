@@ -33,15 +33,15 @@ wild card expansion.
 import os
 import glob
 
-from shared.parseflags import all, long_list, recursive
-from shared.validstring import valid_user_path
-from shared.init import initialize_main_variables, find_entry
-from shared.functional import validate_input_and_cert
 import shared.returnvalues as returnvalues
-from shared.settings import load_settings
-from shared.useradm import client_id_dir
+from shared.functional import validate_input_and_cert
 from shared.functionality.ls import select_all_javascript, \
     selected_file_actions_javascript
+from shared.init import initialize_main_variables, find_entry
+from shared.parseflags import all, long_list, recursive
+from shared.settings import load_settings
+from shared.useradm import client_id_dir
+from shared.validstring import valid_user_path
 
 
 def signature():

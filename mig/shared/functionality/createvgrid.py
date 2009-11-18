@@ -30,13 +30,13 @@
 import os
 import shutil
 
-from shared.validstring import valid_dir_input
-from shared.fileio import write_file, pickle, make_symlink
-from shared.vgrid import vgrid_is_owner
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.fileio import write_file, pickle, make_symlink
+from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables
 from shared.useradm import client_id_dir
+from shared.validstring import valid_dir_input
+from shared.vgrid import vgrid_is_owner
 
 
 def signature():

@@ -27,12 +27,12 @@
 
 import base64
 
+import shared.returnvalues as returnvalues
+from shared.functional import validate_input_and_cert
+from shared.init import initialize_main_variables
 from shared.refunctions import is_runtime_environment, \
     list_runtime_environments, get_re_dict
 from shared.rekeywords import get_keywords_dict
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert
-import shared.returnvalues as returnvalues
 
 
 def signature():

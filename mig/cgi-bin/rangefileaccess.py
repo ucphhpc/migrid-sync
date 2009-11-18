@@ -44,7 +44,7 @@ import sys
 
 # MiG imports
 
-from shared.cgiinput import fieldstorage_to_dict
+from shared.scriptinput import fieldstorage_to_dict
 from shared.cgishared import init_cgiscript_possibly_with_cert
 from shared.useradm import client_id_dir
 

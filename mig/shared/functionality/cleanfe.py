@@ -25,12 +25,12 @@
 # -- END_HEADER ---
 #
 
+import shared.returnvalues as returnvalues
 from shared.findtype import is_owner
+from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables
 from shared.resadm import clean_resource_frontend, \
     stop_resource_frontend
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-import shared.returnvalues as returnvalues
 
 
 def signature():

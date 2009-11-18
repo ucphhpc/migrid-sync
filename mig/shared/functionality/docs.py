@@ -34,10 +34,10 @@ import fnmatch
 
 import shared.mrslkeywords as mrslkeywords
 import shared.resconfkeywords as resconfkeywords
-from shared.output import get_valid_outputformats
-from shared.init import initialize_main_variables
-from shared.functional import validate_input
 import shared.returnvalues as returnvalues
+from shared.functional import validate_input
+from shared.init import initialize_main_variables
+from shared.output import get_valid_outputformats
 
 
 def signature():

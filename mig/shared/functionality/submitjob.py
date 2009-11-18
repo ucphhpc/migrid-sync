@@ -30,8 +30,8 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
+from shared.init import initialize_main_variables, find_entry
 from shared.mrslkeywords import get_job_specs
 from shared.refunctions import list_runtime_environments
 from shared.settings import load_settings

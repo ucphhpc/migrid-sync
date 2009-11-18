@@ -27,28 +27,4 @@
 
 # "redirect" to restart
 
-from shared.init import initialize_main_variables
-from shared.functionality.restartfe import main as restartmain
-
-
-def signature():
-    """Signature of the main function"""
-
-    defaults = {'unique_resource_name': REJECT_UNSET}
-    return ['text', defaults]
-
-
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
-
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables()
-
-    (output_objects_ret, status_res) = restartmain(client_id,
-            user_arguments_dict)
-    output_objects_ret.append({'object_type': 'text', 'text'
-                              : '( START is always performed by calling restart! )'
-                              })
-    return (output_objects_ret, status_res)
-
-
+from shared.functionality.restartfe import *

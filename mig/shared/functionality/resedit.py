@@ -33,8 +33,8 @@ import socket
 
 import shared.resconfkeywords as resconfkeywords
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
+from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import list_runtime_environments
 from shared.resource import init_conf, empty_resource_config 
 from shared.vgrid import res_allowed_vgrids

@@ -28,9 +28,9 @@
 """List all user IDs in the list of members for a given vgrid"""
 
 import shared.returnvalues as returnvalues
-from shared.vgrid import init_vgrid_script_list, vgrid_list
-from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables
+from shared.vgrid import init_vgrid_script_list, vgrid_list
 
 
 def signature():

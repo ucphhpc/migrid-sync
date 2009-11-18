@@ -31,11 +31,11 @@ import os
 import getopt
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
 from shared.functionality import canceljob, cat, cp, docs, find, grep, \
     head, jobstatus, liveoutput, ls, mkdir, mv, resubmit, rm, rmdir, \
     spell, statpath, submit, tail, touch, truncate, wc
+from shared.init import initialize_main_variables, find_entry
 from shared.validstring import valid_user_path
 
 

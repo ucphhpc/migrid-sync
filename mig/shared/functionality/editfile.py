@@ -32,13 +32,13 @@
 import os
 import glob
 
-from shared.validstring import valid_user_path
-from shared.editing import acquire_edit_lock, release_edit_lock
-from shared.job import new_job
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.editing import acquire_edit_lock, release_edit_lock
+from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables
+from shared.job import new_job
 from shared.useradm import client_id_dir
+from shared.validstring import valid_user_path
 
 
 def signature():

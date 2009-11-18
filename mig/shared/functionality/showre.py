@@ -31,8 +31,8 @@ import time
 import base64
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import is_runtime_environment, get_re_dict
 
 

@@ -28,8 +28,8 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
 from shared.functional import validate_input
+from shared.init import initialize_main_variables
 
 
 def signature():

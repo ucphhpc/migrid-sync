@@ -29,8 +29,8 @@ import os
 import tempfile
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert
+from shared.init import initialize_main_variables
 from shared.settings import parse_and_save_settings
 from shared.settingskeywords import get_keywords_dict
 

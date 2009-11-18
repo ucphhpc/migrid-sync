@@ -30,8 +30,8 @@
 import os
 
 import shared.returnvalues as returnvalues
+from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
-from shared.functional import validate_input
 from shared.vgrid import vgrid_is_owner_or_member, user_allowed_vgrids
 
 
@@ -48,8 +48,14 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False)
     defaults = signature()[1]
-    (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+    (validate_status, accepted) = validate_input_and_cert(
+        user_arguments_dict,
+        defaults,
+        output_objects,
+        client_id,
+        configuration,
+        allow_rejects=False,
+        )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 

@@ -31,13 +31,13 @@ import glob
 import os
 import datetime
 
+import shared.returnvalues as returnvalues
+from shared.conf import get_resource_exe
 from shared.fileio import unpickle, pickle
+from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables, find_entry
 from shared.job import output_dir
 from shared.ssh import copy_file_to_resource
-from shared.conf import get_resource_exe
-from shared.init import initialize_main_variables, find_entry
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-import shared.returnvalues as returnvalues
 from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 

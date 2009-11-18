@@ -33,7 +33,7 @@ import cgitb
 cgitb.enable()
 
 import shared.returnvalues as returnvalues
-from shared.cgiinput import fieldstorage_to_dict
+from shared.scriptinput import fieldstorage_to_dict
 from shared.conf import get_configuration_object
 from shared.httpsclient import extract_client_id
 from shared.output import format_output

@@ -68,8 +68,8 @@ def validate_input(
     ):
     """A wrapper used by most back end functionality"""
 
-    # always allow output_format, we dont want to use unnecesary
-    # lines in all scripts to specify this
+    # always allow output_format, we don't want to use
+    # unnecessary lines in all scripts to specify this
 
     defaults['output_format'] = ['allow_me']
     (accepted, rejected) = validated_input(user_arguments_dict,
@@ -90,12 +90,19 @@ def validate_input_and_cert(
     client_id,
     configuration,
     allow_rejects,
+    require_user=True,
     ):
     """A wrapper used by most back end functionality"""
+    
+    cert_error = ''
+    if not client_id:
+        cert_error = "Invalid or missing user certificate"
+    elif require_user and not is_user(client_id, configuration.user_home):
+        cert_error = "No such user (distinguished name)"
 
-    if not is_user(client_id, configuration.user_home):
+    if cert_error:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Invalid certificate or no such MiG user (distinguished name)'
+                              : cert_error
                               })
 
         # Redirect to req or ext cert page with suitable certificate requirement
@@ -107,12 +114,12 @@ def validate_input_and_cert(
         extcert_url = os.path.join(os.path.dirname(extcert_url), 'extcert.py')
 
         certreq_link = {'object_type': 'link', 'destination': certreq_url,
-                        'text': 'Request a new MiG certificate'}
+                        'text': 'Request a new user certificate'}
         extcert_link = {'object_type': 'link', 'destination': extcert_url,
                         'text': 'Sign up with existing certificate'}
         if not client_id:
             output_objects.append({'object_type': 'text', 'text'
-                                  : 'Apparently you do not have a suitable MiG certificate, but you can request one:'
+                                  : 'Apparently you do not have a suitable user certificate, but you can request one:'
                                   })
             output_objects.append(certreq_link)
             output_objects.append({'object_type': 'text', 'text'
@@ -125,12 +132,12 @@ def validate_input_and_cert(
                                   })
             output_objects.append(extcert_link)
             output_objects.append({'object_type': 'text', 'text'
-                                  : 'However, you can still request a dedicated MiG certificate if you prefer:'
+                                  : 'However, you can still request a dedicated user certificate if you prefer:'
                                   })
             output_objects.append(certreq_link)
 
         output_objects.append({'object_type': 'text', 'text'
-                              : 'If you already received a certificate you probably just need to import it in your browser.'
+                              : 'If you already received a user certificate you probably just need to import it in your browser.'
                               })
         output_objects.append({'object_type': 'text', 'text': ''})
         return (False, output_objects)

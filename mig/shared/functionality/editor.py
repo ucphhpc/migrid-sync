@@ -34,12 +34,12 @@ need to download, edit and upload the files.
 import os
 import time
 
-from shared.validstring import valid_user_path
-from shared.editing import acquire_edit_lock, get_edit_lock_suffix
-from shared.init import initialize_main_variables, find_entry
-from shared.functional import validate_input_and_cert
 import shared.returnvalues as returnvalues
+from shared.editing import acquire_edit_lock, get_edit_lock_suffix
+from shared.functional import validate_input_and_cert
+from shared.init import initialize_main_variables, find_entry
 from shared.useradm import client_id_dir
+from shared.validstring import valid_user_path
 
 
 def signature():

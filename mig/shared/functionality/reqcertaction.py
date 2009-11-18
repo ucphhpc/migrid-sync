@@ -34,8 +34,8 @@ import base64
 import pickle
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input, REJECT_UNSET
+from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_email
 from shared.useradm import fill_distinguished_name
 

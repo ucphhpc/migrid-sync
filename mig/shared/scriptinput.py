@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# cgiinput - [insert a few words of module description on this line]
+# scriptinput - Handles html form style input from user
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,8 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""This module contains cgi specific functions for handling
-user input.
+"""This module contains CGI/WSGI/... specific functions for
+handling user input.
 """
 
 # Expose some safeinput functions here, too
@@ -38,7 +38,7 @@ from shared.safeinput import InputException as CgiInputException
 
 
 def parse_input(user_arguments_dict, fields):
-    """A cgi input parser"""
+    """A user input parser"""
 
     parsed_input = {}
     error = ''

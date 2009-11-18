@@ -28,8 +28,8 @@
 from datetime import datetime, timedelta
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
 from shared.functional import validate_input
+from shared.init import initialize_main_variables
 from shared.gridstat import GridStat
 from shared.sandbox import load_sandbox_db
 from shared.output import format_timedelta
@@ -37,6 +37,7 @@ from shared.output import format_timedelta
 # sandbox db has the format: {username: (password, [list_of_resources])}
 
 PW, RESOURCES = 0, 1
+
 
 def signature():
     """Signature of the main function"""

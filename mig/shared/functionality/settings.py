@@ -28,9 +28,9 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
 from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert
+from shared.init import initialize_main_variables
 from shared.settingskeywords import get_keywords_dict
 from shared.useradm import client_id_dir, mrsl_template, css_template, \
     get_default_mrsl, get_default_css

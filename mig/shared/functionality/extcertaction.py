@@ -33,8 +33,8 @@ import tempfile
 import pickle
 
 import shared.returnvalues as returnvalues
+from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables
-from shared.functional import validate_input, REJECT_UNSET
 from shared.notification import send_email
 from shared.useradm import db_name, distinguished_name_to_user, \
      create_user, fill_user
@@ -64,8 +64,15 @@ def main(client_id, user_arguments_dict):
                           : 'MiG external certificate sign up'})
 
     defaults = signature()[1]
-    (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+    (validate_status, accepted) = validate_input_and_cert(
+        user_arguments_dict,
+        defaults,
+        output_objects,
+        client_id,
+        configuration,
+        allow_rejects=False,
+        require_user=False
+        )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 

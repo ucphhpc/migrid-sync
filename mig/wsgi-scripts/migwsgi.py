@@ -30,7 +30,7 @@ import sys
 import cgi
 
 import shared.returnvalues as returnvalues
-from shared.cgiinput import fieldstorage_to_dict
+from shared.scriptinput import fieldstorage_to_dict
 from shared.httpsclient import extract_client_id
 from shared.objecttypes import get_object_type_info
 from shared.output import validate, format_output
@@ -97,20 +97,6 @@ def stub(function, user_arguments_dict):
 
 
 # ## Main ###
-
-
-def basic_application(environ, start_response):
-    """Sample app called automatically by wsgi"""
-
-    status = '200 OK'
-    output = 'Hello World!'
-
-    response_headers = [('Content-type', 'text/plain'),
-                        ('Content-Length', str(len(output)))]
-    start_response(status, response_headers)
-
-    return [output]
-
 
 def application(environ, start_response):
     """MiG app called automatically by wsgi"""

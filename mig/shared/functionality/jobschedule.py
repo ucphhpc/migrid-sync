@@ -31,11 +31,11 @@ import os
 import glob
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.validstring import valid_user_path
 from shared.fileio import unpickle, send_message_to_grid_script
+from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables
 from shared.useradm import client_id_dir
+from shared.validstring import valid_user_path
 
 
 def signature():

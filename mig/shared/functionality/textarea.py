@@ -39,12 +39,13 @@ import base64
 
 import shared.mrslkeywords as mrslkeywords
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
-from shared.upload import handle_package_upload
 from shared.fileio import write_file
+from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.init import initialize_main_variables
 from shared.job import new_job
-from shared.validstring import valid_user_path
+from shared.upload import handle_package_upload
 from shared.useradm import client_id_dir
+from shared.validstring import valid_user_path
 
 
 def signature():
@@ -148,6 +149,20 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_title=True, op_header=False)
     client_dir = client_id_dir(client_id)
+    status = returnvalues.OK
+    defaults = signature()[1]
+    # TODO: all non-file fields should be validated!!
+    # Input fields are mostly file stuff so do not validate it
+    (validate_status, accepted) = validate_input_and_cert(
+        {},
+        defaults,
+        output_objects,
+        client_id,
+        configuration,
+        allow_rejects=False,
+        )
+    if not validate_status:
+        return (accepted, returnvalues.CLIENT_ERROR)
     output_objects.append({'object_type': 'header', 'text'
                           : 'MiG submit job/file'})
     submitstatuslist = []
