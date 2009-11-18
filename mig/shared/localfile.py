@@ -28,6 +28,7 @@
 """This module contains various wrapper functions for server IO. In that way the underlying distribution of server files can be separated from the normal server operation."""
 
 import fcntl
+from errno import EACCES, EAGAIN
 
 from serverfile import ServerFile, LOCK_UN, LOCK_SH, LOCK_EX, \
     LockingException
@@ -65,7 +66,7 @@ class LocalFile(ServerFile):
         try:
             fcntl.flock(self.fileno(), mode | fcntl.LOCK_NB)
         except IOError, ioe:
-            if ioe.errno in [EACCESS, EAGAIN]:
+            if ioe.errno in [EACCES, EAGAIN]:
                 raise LockingException('Locking failed: locking timed out!'
                         )
         except Exception, e:

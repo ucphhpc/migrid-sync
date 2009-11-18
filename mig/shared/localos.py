@@ -63,8 +63,8 @@ def mkdir(path, mode=0777):
     return os.mkdir(path, mode)
 
 
-def mkdirs(path_list):
-    return os.mkdirs(path_list)
+def makedirs(path_list):
+    return os.makedirs(path_list)
 
 
 def remove(path):
@@ -79,8 +79,8 @@ def rmdir(path):
     return os.rmdir(path)
 
 
-def rmdirs(path_list):
-    return os.rmdirs(path_list)
+def removedirs(path_list):
+    return os.removedirs(path_list)
 
 
 def stat(path):
@@ -89,10 +89,6 @@ def stat(path):
 
 def symlink(src, dst):
     return os.symlink(src, dst)
-
-
-def touch(path):
-    return os.touch(path)
 
 
 def walk(top, topdown=True):

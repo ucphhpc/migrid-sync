@@ -74,8 +74,8 @@ if unique_resource_name == '':
 # Please note that base_dir must end in slash to avoid access to other
 # resource dirs when own name is a prefix of another resource name
 
-base_dir = os.path.abspath(configuration.resource_home + os.sep
-                            + unique_resource_name) + os.sep
+base_dir = os.path.abspath(os.path.join(configuration.resource_home,
+                                        unique_resource_name)) + os.sep
 
 if not is_owner(client_id, unique_resource_name,
                 configuration.resource_home, logger):
@@ -97,9 +97,9 @@ if not valid_dir_input(base_dir, 'EXE_' + exe_name + '.PGID'):
     o.reply_and_exit(o.CLIENT_ERROR)
 
 if 'FE' == res_type:
-    pgid_path = base_dir + 'FE.PGID'
+    pgid_path = os.path.join(base_dir, 'FE.PGID')
 elif 'EXE' == res_type:
-    pgid_path = base_dir + 'EXE_' + exe_name + '.PGID'
+    pgid_path = os.path.join(base_dir + 'EXE_%s.PGID' % exe_name)
 else:
     o.out("Unknown type: '%s'" % res_type)
     o.reply_and_exit(o.CLIENT_ERROR)

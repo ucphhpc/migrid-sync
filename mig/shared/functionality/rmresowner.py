@@ -82,12 +82,12 @@ def main(client_id, user_arguments_dict):
                                % cert_id})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    base_dir = os.path.abspath(configuration.resource_home + os.sep
-                                + unique_resource_name) + os.sep
+    base_dir = os.path.abspath(os.path.join(configuration.resource_home,
+                                            unique_resource_name)) + os.sep
 
     # Add owner
 
-    owners_file = base_dir + 'owners'
+    owners_file = os.path.join(base_dir, 'owners')
     (status, msg) = remove_item_from_pickled_list(owners_file, cert_id,
             logger, False)
 

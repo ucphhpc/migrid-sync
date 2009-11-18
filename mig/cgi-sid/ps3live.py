@@ -216,8 +216,8 @@ vgrid=%s"""\
 
     # write the conf string to a conf file
 
-    conf_file_src = configuration.resource_home + unique_resource_name\
-         + os.sep + 'config.MiG'
+    conf_file_src = os.path.join(configuration.resource_home,
+                                 unique_resource_name, 'config.MiG')
     try:
         fd = open(conf_file_src, 'w')
         fd.write(res_conf_string)
@@ -236,8 +236,9 @@ vgrid=%s"""\
 
     # Create PGID file in resource_home, this is needed for timeout/kill of jobs
 
-    exe_pgid_file = configuration.resource_home + unique_resource_name\
-         + os.sep + 'EXE_%s.PGID' % exe_name
+    exe_pgid_file = os.path.join(configuration.resource_home,
+                                 unique_resource_name,
+                                 'EXE_%s.PGID' % exe_name)
     try:
         fd = open(exe_pgid_file, 'w')
         fd.write('stopped')
@@ -276,8 +277,8 @@ def get_ps3_resource():
     # sandbox_home/sandboxkey to resource_home/resource_name
 
         sandbox_link = configuration.sandbox_home + sandboxkey
-        resource_path = os.path.abspath(configuration.resource_home
-                 + unique_resource_name)
+        resource_path = os.path.abspath(os.path.join(configuration.resource_home,
+                                                     unique_resource_name))
 
         make_symlink(resource_path, sandbox_link, logger)
     else:
@@ -288,8 +289,9 @@ def get_ps3_resource():
 
     # If resource has a jobrequest pending, remove it.
 
-    job_pending_file = configuration.resource_home\
-         + unique_resource_name + os.sep + 'jobrequest_pending.ps3'
+    job_pending_file = os.path.join(configuration.resource_home,
+                                    unique_resource_name,
+                                    'jobrequest_pending.ps3')
 
     if os.path.exists(job_pending_file):
         os.remove(job_pending_file)

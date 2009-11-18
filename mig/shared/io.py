@@ -473,12 +473,12 @@ def copy_file(src, dst, location=DISTRIBUTED):
     else:
         raise Exception('Illegal location in copy_file: %s' % location)
     try:
-        src_fd = file_opener(real_path, 'r')
+        src_fd = file_opener(src, 'r')
         src_fd.lock(file_lib.LOCK_SH)
-        dst_fd = file_opener(real_dest, 'w')
-        dst_fd.lock(io.LOCK_EX)
+        dst_fd = file_opener(dst, 'w')
+        dst_fd.lock(file_lib.LOCK_EX)
         while True:
-            data = src_fd.read(io.OPTIMAL_BLOCK_SIZE)
+            data = src_fd.read(OPTIMAL_BLOCK_SIZE)
             if not data:
                 break
             dst_fd.write(data)

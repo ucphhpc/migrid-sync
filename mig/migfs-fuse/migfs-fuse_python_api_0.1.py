@@ -572,8 +572,10 @@ class MiGfs(Fuse):
         self.mount_point = mount_point
         self.__inode_timeout = inode_timeout
 
+        self.optlist = getattr(self, 'optlist', [])
+        self.optdict = getattr(self, 'optdict', {})
         log.info('Mountpoint: %s' % self.mount_point)
-        log.info('Unnamed mount options: %s' % (self.optlist, ))
+        log.info('Unnamed mount options: %s' % self.optlist)
 
         # obfuscate sensitive fields before logging
 
@@ -802,11 +804,11 @@ class MiGfs(Fuse):
         try:
             (status, out) = self.mig_access.mv([src], dst)
             if status != 0:
-                raise IOError("mv failed on '%s': %s" % (path, out))
+                raise IOError("mv failed on '%s': %s" % (src, out))
             self.__inode_cache.delete_inode(src)
             return status
         except Exception, exc:
-            log.error('migfs.py:MiGfs:rename: %s: %s!' % (path, exc))
+            log.error('migfs.py:MiGfs:rename: %s: %s!' % (src, exc))
             msg = 'Could not rename %s to %s' % (src, dst)
             _log_exception(msg)
             err = OSError(msg)
@@ -1054,7 +1056,7 @@ class MiGfs(Fuse):
         namelen = 255
         (status, out) = self.mig_access.statfs()
         if status != 0:
-            raise IOError("statfs failed on '%s': %s" % (path, out))
+            raise IOError("statfs failed: %s" % out)
         (fs_blocks, used) = out
         if fs_blocks:
             total_blocks = long(fs_blocks / block_size)

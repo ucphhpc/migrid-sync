@@ -64,7 +64,7 @@ def copy_file_to_resource(
     host = resource_config['HOSTURL']
     identifier = resource_config['HOSTIDENTIFIER']
     unique_id = '%s.%s' % (host, identifier)
-    res_dir = configuration.resource_home + os.sep + unique_id
+    res_dir = os.path.join(configuration.resource_home, unique_id)
     port = resource_config['SSHPORT']
     user = resource_config['MIGUSER']
 

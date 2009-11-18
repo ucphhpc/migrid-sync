@@ -96,9 +96,10 @@ def graceful_shutdown(signum, frame):
     """ This function is responsible for shutting down the 
     system in a graceful way """
 
-    print 'graceful_shutdown called'
+    msg = '%s: graceful_shutdown called' % sys.argv[0]
+    print msg
     try:
-        logger.info('graceful_shutdown called')
+        logger.info(msg)
     except StandardError:
         pass
     sys.exit(0)
@@ -114,6 +115,11 @@ resource_path = configuration.resource_home
 for unique_resource_name in os.listdir(configuration.resource_home):
     res_dir = os.path.realpath(configuration.resource_home + os.sep
                                 + unique_resource_name)
+
+    # skip all dot dirs - they are from repos etc and _not_ jobs
+
+    if res_dir.find(os.sep + '.') != -1:
+        continue    
     if not os.path.isdir(res_dir):
         continue
     dir_name = os.path.basename(res_dir)

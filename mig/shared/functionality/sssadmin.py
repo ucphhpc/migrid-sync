@@ -307,66 +307,59 @@ def main(client_id, user_arguments_dict):
                         : 'Could not save you in the user database! %s'
                          % exc})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
-            output_objects.append({'object_type': 'html_form', 'text'
-                                  : show_info(configuration, userdb,
-                                              grid_stat, username, password,
-                                              expert)})
+            output_objects.append({'object_type': 'text', 'text'
+                                  : 'User created!'})
+
+    # Existing or just created user: check that username and password is correct
+
+    if not userdb.has_key(username):
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : 'Wrong username - please go back and try again...'
+                               })
+        output_objects.append({'object_type': 'link', 'destination'
+                               : 'ssslogin.py', 'text': 'Retry login'
+                               })
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    elif userdb[username][PW] != password:
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : 'Wrong password - please go back and try again...'
+                               })
+        output_objects.append({'object_type': 'link', 'destination'
+                               : 'ssslogin.py', 'text': 'Retry login'
+                               })
+        return (output_objects, returnvalues.CLIENT_ERROR)
     else:
 
-        # Otherwise, check that username and password are correct
+        # Resource Monitor Section
+        # Time stamp
 
-        if not userdb.has_key(username):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Wrong username - please go back and try again...'
-                                  })
-            output_objects.append({'object_type': 'link', 'destination'
-                                  : 'ssslogin.py', 'text': 'Retry login'
-                                  })
-            return (output_objects, returnvalues.CLIENT_ERROR)
-        elif userdb[username][PW] != password:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Wrong password - please go back and try again...'
-                                  })
-            output_objects.append({'object_type': 'link', 'destination'
-                                  : 'ssslogin.py', 'text': 'Retry login'
-                                  })
-            return (output_objects, returnvalues.CLIENT_ERROR)
-        else:
+        msg = "Your SSS sandbox resources and their individual job statistics"
+        output_objects.append({'object_type': 'text', 'text': msg})
+        now = datetime.datetime.now()
+        output_objects.append({'object_type': 'text', 'text'
+                               : 'Updated on %s' % now})
 
-            # Resource Monitor Section
-            # Time stamp
+        sandboxinfos = []
+        for resource in userdb[username][RESOURCES]:
+            sandboxinfo = {'object_type': 'sandboxinfo'}
+            sandboxinfo['username'] = username
+            sandboxinfo['resource'] = resource
+            sandboxinfo['jobs'] = count_jobs(grid_stat, resource)
+            sandboxinfo['walltime'] = sum_walltime(grid_stat, resource)
+            sandboxinfos.append(sandboxinfo)
 
-            msg = "Your SSS sandbox resources and their individual job statistics"
-            output_objects.append({'object_type': 'text', 'text': msg})
-            now = datetime.datetime.now()
-            output_objects.append({'object_type': 'text', 'text'
-                                   : 'Updated on %s' % now})
+        output_objects.append({'object_type': 'sandboxinfos', 'sandboxinfos'
+                                   : sandboxinfos})
 
-            sandboxinfos = []
-            for resource in userdb[username][RESOURCES]:
-                sandboxinfo = {'object_type': 'sandboxinfo'}
-                sandboxinfo['username'] = username
-                sandboxinfo['resource'] = resource
-                sandboxinfo['jobs'] = count_jobs(grid_stat, resource)
-                sandboxinfo['walltime'] = sum_walltime(grid_stat, resource)
-                sandboxinfos.append(sandboxinfo)
-
-            if sandboxinfos:
-                output_objects.append({'object_type': 'sandboxinfos', 'sandboxinfos'
-                                       : sandboxinfos})
-            else:
-                output_objects.append({'object_type': 'text', 'text'
-                                   : "You haven't downloaded any sandbox resources yet"})
-
-            output_objects.append({'object_type': 'html_form', 'text': '<br>'})
-            output_objects.append({'object_type': 'html_form', 'text'
-                                   : show_download(configuration, userdb,
-                                                   username, password,
-                                                   expert)})
-            output_objects.append({'object_type': 'text', 'text'
-                                   : """
-If you run into any problems, please contact the grid administrators (%s)""" % \
-                                   admin_email})
+        output_objects.append({'object_type': 'html_form', 'text': '<br>'})
+        output_objects.append({'object_type': 'html_form', 'text'
+                               : show_download(configuration, userdb,
+                                               username, password,
+                                               expert)})
+        output_objects.append({'object_type': 'text', 'text'
+                               : """
+ou run into any problems, please contact the grid administrators (%s)""" % \
+                               admin_email})
 
     return (output_objects, returnvalues.OK)
 

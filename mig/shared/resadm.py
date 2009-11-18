@@ -198,9 +198,9 @@ def start_resource_exe_if_continuous(
 
     # open the resources configuration
 
-    resource_configuration_file = resource_home + '/'\
-         + unique_resource_name + '/config'
-    resource_dict = unpickle(resource_configuration_file, logger)
+    res_conf_path = os.path.join(resource_home, unique_resource_name,
+                                 'config')
+    resource_dict = unpickle(res_conf_path, logger)
 
     if not resource_dict:
         return (False, 'Failed to unpack resource configuration!')
@@ -265,8 +265,8 @@ def atomic_resource_exe_restart(
 
     resource_home = configuration.resource_home
 
-    pgid_path = os.path.join(resource_home, unique_resource_name, 'EXE_'
-                              + exe_name + '.PGID')
+    pgid_path = os.path.join(resource_home, unique_resource_name,
+                             'EXE_%s.PGID' % exe_name)
 
     # Lock pgid file
 
@@ -608,8 +608,8 @@ def start_resource_exe(
 
     # write PGID file
 
-    pgid_path = os.path.join(resource_home, unique_resource_name, 'EXE_'
-                              + exe_name + '.PGID')
+    pgid_path = os.path.join(resource_home, unique_resource_name,
+                             'EXE_%s.PGID' % exe_name)
 
     try:
         if not os.path.exists(pgid_path):
@@ -1155,8 +1155,8 @@ def resource_exe_action(
              + exe_name + "'"
         return (False, msg)
 
-    pgid_path = os.path.join(resource_home, unique_resource_name, 'EXE_'
-                              + exe_name + '.PGID')
+    pgid_path = os.path.join(resource_home, unique_resource_name,
+                             'EXE_%s.PGID' % exe_name)
     try:
         pgid_file = open(pgid_path, 'r+')
     except IOError:

@@ -76,8 +76,8 @@ def main(client_id, user_arguments_dict):
 
     # TODO: race if two confs are uploaded concurrently!
 
-    tmp_path = configuration.resource_home + os.sep\
-         + unique_resource_name + os.sep + 'config.tmp'
+    tmp_path = os.path.join(configuration.resource_home,
+                            unique_resource_name, 'config.tmp')
 
     # write new proposed config file to disk
 
@@ -100,8 +100,8 @@ def main(client_id, user_arguments_dict):
                               : msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    accepted_path = configuration.resource_home + os.sep\
-         + unique_resource_name + os.sep + 'config.MiG'
+    accepted_path = os.path.join(configuration.resource_home,
+                                 unique_resource_name, 'config.MiG')
 
     # truncate old conf with new accepted file
 

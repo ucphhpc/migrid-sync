@@ -879,16 +879,16 @@ def remove_resource(resource_home, resource_name, resource_identifier):
     msg = "\nRemoving host: '%s.%s'" % (resource_name,
             resource_identifier)
 
-    resource_path = resource_home + resource_name + '.'\
-         + str(resource_identifier)
+    unique_resource_name = resource_name + '.' + str(resource_identifier)
+    resource_path = os.path.join(resource_home, unique_resource_name)
 
     for (root, dirs, files) in os.walk(resource_path):
-        for file in files:
+        for filename in files:
             try:
-                os.remove(os.path.join(root, file))
+                os.remove(os.path.join(root, filename))
             except Exception, err:
                 msg += "\n  Could not remove file: '%s'. Failure: %s"\
-                     % (os.path.join(root, file), err)
+                     % (os.path.join(root, filename), err)
     try:
         os.rmdir(resource_path)
     except Exception, err:

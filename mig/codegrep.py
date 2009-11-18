@@ -25,28 +25,24 @@
 import os
 import sys
 
-if len(sys.argv) < 2:
-    print 'Usage: %s PATTERN' % sys.argv[0]
-    print 'Grep for PATTERN in all code files'
-    sys.exit(1)
-
-pattern = sys.argv[1]
+# Ignore backup and dot files in wild card match
+plain = '[a-zA-Z0-9]*.py'
 code_files = [
-    '*.py',
-    'cgi-bin/*.py',
-    'cgi-sid/*.py',
-    'wsgi-scripts/*.py',
-    'install/*.py',
-    'migfs-fuse/*.py',
-    'server/*.py',
-    'shared/*.py',
-    'shared/functionality/*.py',
-    'shared/distos/*.py',
-    'simulation/*.py',
+    '%s' % plain,
+    'cgi-bin/%s' % plain,
+    'cgi-sid/%s' % plain,
+    'wsgi-scripts/%s' % plain,
+    'install/%s' % plain,
+    'migfs-fuse/%s' % plain,
+    'server/%s' % plain,
+    'shared/%s' % plain,
+    'shared/functionality/%s' % plain,
+    'shared/distos/%s' % plain,
+    'simulation/%s' % plain,
     'resource/frontend_script.sh',
     'resource/master_node_script.sh',
-    'user/*.py',
-    'webserver/*.py',
+    'user/%s' % plain,
+    'webserver/%s' % plain,
     ]
 code_files += ['cgi-sid/%s' % name for name in ['requestnewjob',
                'get_resource_pgid', 'put_resource_pgid']]
@@ -63,4 +59,10 @@ code_files += ['cgi-bin/%s' % name for name in [
     ]]
 
 if '__main__' == __name__:
+    if len(sys.argv) < 2:
+        print 'Usage: %s PATTERN' % sys.argv[0]
+        print 'Grep for PATTERN in all code files'
+        sys.exit(1)
+    
+    pattern = sys.argv[1]
     os.system("grep -E '%s' %s" % (pattern, ' '.join(code_files)))

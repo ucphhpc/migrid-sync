@@ -179,6 +179,11 @@ def check_mrsl_files(
 def remove_jobrequest_pending_files(configuration):
     for (root, dirs, files) in os.walk(configuration.resource_home):
         for name in files:
+
+            # skip all dot dirs - they are from repos etc and _not_ jobs
+
+            if root.find(os.sep + '.') != -1:
+                continue
             if name.startswith('jobrequest_pending.'):
 
                 # remove it

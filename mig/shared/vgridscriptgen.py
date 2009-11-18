@@ -34,6 +34,10 @@ __version__ = '$Revision: 2590 $'
 
 # $Id: vgridscriptgen.py 2590 2009-02-25 10:45:03Z jones $
 
+import os
+import sys
+import getopt
+
 from publicscriptgen import *
 
 # ######################################
