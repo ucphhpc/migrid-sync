@@ -96,6 +96,8 @@ ___%s___
             lines.append('%s\n' % i['text'])
         elif i['object_type'] == 'verbatim':
             lines.append('%s\n' % i['text'])
+        elif i['object_type'] == 'binary':
+            lines.append(i['data'])
         elif i['object_type'] == 'link':
 
             # We do not want link junk in plain text
@@ -380,6 +382,8 @@ def html_format(ret_val, ret_msg, out_obj):
             lines.append('<p>%s</p>' % html_escape(i['text']))
         elif i['object_type'] == 'verbatim':
             lines.append('%s' % html_escape(i['text']))
+        elif i['object_type'] == 'binary':
+            lines.append(i['data'])
         elif i['object_type'] == 'link':
             lines.append(html_link(i))
         elif i['object_type'] == 'job_list':

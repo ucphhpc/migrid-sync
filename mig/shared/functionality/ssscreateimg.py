@@ -506,7 +506,7 @@ vgrid=%s
 
     if 'raw' != image_format:
         logger.debug('Converting disk image to %s format' % image_format)
-        image_path = 'MiG-SSS' + os.sep + 'hda.img'
+        image_path = os.path.join('MiG-SSS', 'hda.img')
         tmp_path = image_path + '.' + image_format
         command = 'qemu-img convert -f raw ' + image_path + ' -O '\
                   + image_format + ' ' + tmp_path
@@ -558,8 +558,8 @@ vgrid=%s
                ('Content-Disposition', 'attachment; filename=%s' % file_name),
                ('Content-Length', '%s' % file_size)]
     output_objects = [{'object_type': 'start', 'headers': headers}]
-    fd = open(file_name, 'r')
-    output_objects.append({'object_type': 'verbatim', 'text': fd.read()})
+    fd = open(file_name, 'rb')
+    output_objects.append({'object_type': 'binary', 'data': fd.read()})
     fd.close()
     os.system('rm -f ' + file_name)
     return (output_objects, returnvalues.OK)

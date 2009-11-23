@@ -33,6 +33,8 @@ title = {'object_type': 'title', 'required': ['text'],
 text = {'object_type': 'text', 'required': ['text'], 'optional': []}
 verbatim = {'object_type': 'verbatim', 'required': ['text'],
             'optional': []}
+binary = {'object_type': 'binary', 'required': ['data'],
+            'optional': []}
 header = {'object_type': 'header', 'required': ['text'], 'optional': []}
 sectionheader = {'object_type': 'sectionheader', 'required': ['text'],
                  'optional': []}
@@ -169,6 +171,7 @@ valid_types_list = [
     title,
     text,
     verbatim,
+    binary,
     header,
     sectionheader,
     link,
