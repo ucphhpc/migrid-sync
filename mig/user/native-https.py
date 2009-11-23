@@ -37,7 +37,7 @@ try:
     HOME = os.getenv('HOME')
 except Exception:
     HOME = '.'
-args = ['mig-1.imada.sdu.dk', 443, '%s/.mig/key.pem' % HOME,
+args = ['dk.migrid.org', 443, '%s/.mig/key.pem' % HOME,
         '%s/.mig/cert.pem' % HOME]
 input_args = sys.argv[1:]
 if len(input_args) > 4:

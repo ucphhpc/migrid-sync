@@ -42,8 +42,8 @@ to mount and modify the image on the fly, so we do that with the raw images and
 convert them just before zip and download.
 
 The generator needs a MiG.iso base file system iso which can be downloaded from:
-http://mig-1.imada.sdu.dk/public/sandbox/MiG-SSS/MiG.iso
+http://dk.migrid.org/public/sandbox/MiG-SSS/MiG.iso
 
 Windows sandboxes additionally need a couple of installers avilable from:
-http://mig-1.imada.sdu.dk/public/sandbox/MiG-SSS/MiG-SSS_Setup.exe
-http://mig-1.imada.sdu.dk/public/sandbox/MiG-SSS/MiG-SSS-Service_Setup.exe
+http://dk.migrid.org/public/sandbox/MiG-SSS/MiG-SSS_Setup.exe
+http://dk.migrid.org/public/sandbox/MiG-SSS/MiG-SSS-Service_Setup.exe
