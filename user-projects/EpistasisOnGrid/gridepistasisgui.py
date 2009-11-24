@@ -319,6 +319,7 @@ def OnMenuQuit(event=None):
     frame_1.Destroy()
 
 def OnTimer(event=None):
+    print "timer event"
     if model.epistasis_status == pending_state:
         start()
     elif model.epistasis_status == exec_state:

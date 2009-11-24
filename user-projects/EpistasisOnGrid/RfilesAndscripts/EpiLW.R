@@ -12,7 +12,7 @@ expdata<-trmean
 allFreq<-allFreq
 sumcases<-sumcases
 
-#Genotypic vlaues
+#Genotypic values
 
 gVaacc<-allFreq[1]*allFreq[1]*allFreq[3]*allFreq[3]*expdata[1]
 gVaacd<-2*allFreq[1]*allFreq[1]*allFreq[3]*allFreq[4]*expdata[2]

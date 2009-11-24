@@ -148,6 +148,11 @@ class MigSession:
             #print j["id"]if j
         #print job_ids
         job_info_list = self.mig.get_status(job_ids)
+        if len(job_info_list) != len(job_ids):
+            print str(job_info_list)
+            print str(jobs)
+            raise Exception("Critical job management error.  Job list lengths.")
+                
         for i in range(len(jobs)):
             jobs[i]["status"] = job_info_list[i]
             

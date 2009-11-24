@@ -1,6 +1,8 @@
 main_script = "epistasis.py"
 #data_file = "RfilesAndscripts/Inter99All290606.sav"
-data_file = "RfilesAndscripts/M101SNP210609W.sav"
+#data_file = "RfilesAndscripts/M101SNP210609W.sav"
+#data_file = "RfilesAndscripts/M101comp120909W.sav"
+data_file = "RfilesAndscripts/SkizoGWA1.sav"
 
 main_r_file = "EpiMain.R"
 r_files = ["EpiCRnew_R_edit.R","DistrPost07_R_edit.R","EpiLW.R"]
@@ -8,11 +10,11 @@ r_files = ["EpiCRnew_R_edit.R","DistrPost07_R_edit.R","EpiLW.R"]
 program_files = ["RfilesAndscripts/EpiMain.R", "RfilesAndscripts/EpiCRnew_R_edit.R","RfilesAndscripts/EpiLW.R","RfilesAndscripts/DistrPost07_R_edit.R", "RfilesAndscripts/epistasis.py"]
 
 monitor_polling_frequency = 5
-gene_first_index = 54#54
-gene_last_index = 56#271
+gene_first_index = 5
+gene_last_index = 1005
 
-trait_first_index = 30 #11 bt30
-trait_last_index = 47#53 bt47 incl puls 46-47
+trait_first_index = 3 #11 bt30
+trait_last_index = 3#53 bt47 incl puls 46-47
 
 
 default_job_size = 1
@@ -20,27 +22,27 @@ default_job_size = 1
 default_gene_list = range(gene_first_index,gene_last_index+1,1)#["rhnf4a2", "rhnf4a1", "rkir62"]
 default_trait_list = range(trait_first_index,trait_last_index+1,1)#["Heigth","Alder","Omliv"] # height is misspelled purposely
 
-
-
 default_selection_variable_index = 2
 #default_selection_variable_label = "Gender"
 
-default_variable_values = ["1","2"]#,"3","4","5","6","7","8","9","10","11","12"]
+default_variable_values = ["1","2"]#,"3","4","5","6","7","8","9","10","11","12","13","14"]#,"15"]
 Epistasis_working_dir = "Epistasis_tmp/"
 
 output_dir = "epifiles/"
 # MiG specifications
 resource_specs = {}
-#resource_specs["ARCHITECTURE"] ="AMD64"
+resource_specs["ARCHITECTURE"] ="AMD64"
 resource_specs["RUNTIMEENVIRONMENT"] = "GNU_R"
 resource_specs["VGRID"] = "DCSC"
-resource_specs["CPUTIME"] = 12000
-resource_specs["MEMORY"] = 100
+resource_specs["CPUTIME"] = 120000
+resource_specs["MEMORY"] = 5000
 resource_specs["DISK"] = 1
+
+#resource_specs["ARCHITECTURE"] = "AMD64"
 
 default_user_output_dir = "epifiles/"
 
-selection_variable_range = {'2':[1,2], '5':range(1,20)}
+selection_variable_range = {'2':[1,2], '9':range(1,14)}
 
 resultsdir_prefix_name = "EpistasisFiles"
 tmp_local_job_dir = "EpiMigJobFiles"

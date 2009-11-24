@@ -6,11 +6,11 @@
 
 #print("In EpiCR")
 
-#Below means and varaince is calculated for each two-gene haplotype. Can this be doen in a single less
+#Below means and variance is calculated for each two-gene haplotype. Can this be doen in a single less
 #costly procedure???
 
 
-#Means of two-gene genotypes OK Mayb droped and instead use mean from t-test!
+#Means of two-gene genotypes OK Maybe droped and instead use mean from t-test!
 #This is the geontypic values!!
 mgAABB<-mean(trcontent[[1]],  na.rm=T)
 mgAABb<-mean(trcontent[[2]],  na.rm=T)
@@ -117,11 +117,26 @@ BetaVal<-aovY[2:4]#this may be done global, be sure not to "carry-over"
 
 BetaValues<-c(format(BetaVal[1],digits=3,nsmall=3),format(BetaVal[2],digits=3,nsmall=3),format(BetaVal[3],digits=3,nsmall=3))
 
+#print(aovX)
+#print(sumcases)
+#bla
+
+#superflous??
+if(BetaValues[1]=="NA"){BetaValues[1]<-0}
+if(BetaValues[2]=="NA"){BetaValues[2]<-0}
+
+#This happens
 if(BetaValues[3]=="NA"){BetaValues[3]<-0}
 
 #P-values for main effects
+
 MainGene1Sign<-aovX[1,5]
+if(is.null(aovX[1,5])){
+   MainGene1Sign<-1}
+
 MainGene2Sign<-aovX[2,5]
+if(is.null(aovX[2,5])){
+   MainGene2Sign<-1}
 
 #Extract RMS
 if(dim(aovX)[1]==4){
@@ -135,25 +150,24 @@ if(dim(aovX)[1]==4){
 	else{
 	aovNote<<-"Invalid"
 	aovRMS<-"NA"
-#This be superflous, but keep to debugging is complete
-print("in epiberegn")
-print(aovX)
-print(gene1)
-print(gene2)
-print(gname1)
-print(gname2)
-print(dim(aovX))
+#This should be superflous in trimmed databases, but keep to debugging is complete
 
+warndet<-paste(svarn,sval,trait,gene1,gname1,gene2,gname2)
+writeToFile(paste("NOTE ",notabene),paste(notesave,logext,sep=""))
+writeToFile(warndet,paste(notesave,logext,sep=""))
+writeToFile("Check datafile for entries (only 1,2,3, or -99)",paste(notesave,logext,sep=""))
+writeToFile(" ",paste(notesave,logext,sep=""))
+notabene<<-notabene+1
 	}
-
 }
 #The result of two RMS-calcualtions are nearly identical
 #To handel zero-valued RMS's and NA and NaN
 
 if(aovRMS==0 || aovRMS== "NA" || aovRMS== "NaN"){
+writeToFile(aovX,paste(notesave,logext,sep=""))
+writeToFile(paste("aovRMS=",aovRMS),paste(notesave,logext,sep=""))
+writeToFile(" ",paste(notesave,logext,sep=""))
 
-print("i aovRMS = NA")
-print(aovRMS)
 MainGene1Sign<-1
 MainGene2Sign<-1
 
@@ -184,7 +198,7 @@ if(fpval1 == "NA" || fpval1 == "NaN"){fpval1<-1}
 ######
 
 #No further calculations here, but see older scripts for variances etc.
-
+#NB BetValues contaians three values
 signpval<-c(fpval1,fpval2,BetaValues,MainGene1Sign,MainGene2Sign)
 
 return(signpval)

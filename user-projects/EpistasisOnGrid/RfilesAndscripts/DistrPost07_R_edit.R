@@ -26,15 +26,15 @@ meantrait<-mean(traittrim[3])#NB This is grand mean for the trait
 #microsatelites witch may have 10 or more values. This is not an issue right now, the issue is to 
 #reduce computing time
 
-gdfAABB<-traittrim[(traittrim[1]=="1" & traittrim[2]=="1"),3]
-gdfAABb<-traittrim[(traittrim[1]=="1" & traittrim[2]=="2"),3]
-gdfAAbb<-traittrim[(traittrim[1]=="1" & traittrim[2]=="3"),3]
-gdfAaBB<-traittrim[(traittrim[1]=="2" & traittrim[2]=="1"),3]
-gdfAaBb<-traittrim[(traittrim[1]=="2" & traittrim[2]=="2"),3]
-gdfAabb<-traittrim[(traittrim[1]=="2" & traittrim[2]=="3"),3]
-gdfaaBB<-traittrim[(traittrim[1]=="3" & traittrim[2]=="1"),3]
-gdfaaBb<-traittrim[(traittrim[1]=="3" & traittrim[2]=="2"),3]
-gdfaabb<-traittrim[(traittrim[1]=="3" & traittrim[2]=="3"),3]
+gdfAABB<-traittrim[(traittrim[1]=="1" & traittrim[2]=="0"),3]
+gdfAABb<-traittrim[(traittrim[1]=="1" & traittrim[2]=="1"),3]
+gdfAAbb<-traittrim[(traittrim[1]=="1" & traittrim[2]=="2"),3]
+gdfAaBB<-traittrim[(traittrim[1]=="2" & traittrim[2]=="0"),3]
+gdfAaBb<-traittrim[(traittrim[1]=="2" & traittrim[2]=="1"),3]
+gdfAabb<-traittrim[(traittrim[1]=="2" & traittrim[2]=="2"),3]
+gdfaaBB<-traittrim[(traittrim[1]=="3" & traittrim[2]=="0"),3]
+gdfaaBb<-traittrim[(traittrim[1]=="3" & traittrim[2]=="1"),3]
+gdfaabb<-traittrim[(traittrim[1]=="3" & traittrim[2]=="2"),3]
 
 #number of haplotypes Obsolete??? Used for calculating size of sample
 ltr1<-length(gdfAABB)
@@ -75,7 +75,7 @@ allFreq<-c(allelA,allela,allelB,allelb)
 
 #Headings for outputs
 #Necesary to do here, as traits are accessed succesively in this script, not in main script
-traitsavelogSig<<-paste("Epistasis ",names(smplt[c(selectvar)]),trait) 
+traitsavelogSig<<-paste("Epistasis ",names(smplt[c(selectvar)]),sval,trait) 
 tlogana1<-matrix(c("EPISTASIS calculations."),nrow=1)
 tlogana2<-matrix(c("Only haplotypes with significant epistasis are printed."),nrow=1)
 tlogana2a<-matrix(c("Additive and dominant effects are two-effects."),nrow=1)
@@ -93,7 +93,7 @@ tloghead3<-matrix(c("Number of genes:","","",numgene),nrow=1)
 tloghead4<-matrix(c("This is class","","",sval),nrow=1)
 
 #Var and beta headings special
-BetasavelogSig<<-paste("Variance and beta-values",names(smplt[c(selectvar)]),trait) 
+BetasavelogSig<<-paste("Variance and beta-values",names(smplt[c(selectvar)]),sval,trait) 
 bheading<-matrix(c("VARIANCE and BETA-VLAUES"),nrow=1)
 
 #MF comment eventually cut HWE and Haplotype stat if it consumes time!Interesting stuff but may be calculated separately for positiv epi-pairs
@@ -164,7 +164,7 @@ signval<-EpiCR(trcontent,meantrait,trlength,sumcases,traittrim,vartrait,trait)
 genval<-EpiLW(traittrim,trmean,allFreq,sumcases)
 
 
-##
+##Define locations of genes in matices
 for(ge1 in 1:numGenes){
 	if(geneL[ge1]==gene1){
 	   ge1ok<-ge1
@@ -180,40 +180,52 @@ for(ge2 in 1:numGenes){
 	}
 ##
 
-#Beta-value gene1...
+#Beta-value if signifcant single gene main-effects for gene1 (upper right in matrix)...
 #if(as.numeric(signval[6])<epistsign){
-if(as.numeric(signval[6])<SignMain){#NB Special sig-level for main effects
+
    mainBetaMatr[ge1ok,ge2ok]<<-as.numeric(signval[3])#has to be global, otherwise inserts are lost when returning to mainscript
-   mainGene<-matrix(c(gname1,sval,trait),nrow=1)
+   mainBetaMatr[ge2ok,ge1ok]<<-as.numeric(signval[4]) 
+
+if(as.numeric(signval[6])<SignMain){#NB Special sig-level for main effects
+#   mainBetaMatr[ge1ok,ge2ok]<<-as.numeric(signval[3])#has to be global, otherwise inserts are lost when returning to mainscript
+   mainGene<-matrix(c(gname1,sval,trait,as.numeric(signval[6])),nrow=1)
    MainEffect<<-rbind(MainEffect,mainGene)
   }
 
-#...and gene2
+#...and for gene2 (lower left in matrix)
 #if(as.numeric(signval[7])<epistsign){
 if(as.numeric(signval[7])<SignMain){#NB Special sig-level for main effects
-   mainBetaMatr[ge2ok,ge1ok]<<-as.numeric(signval[4]) 
-   mainGene<-matrix(c(gname2,sval,trait),nrow=1)
+#   mainBetaMatr[ge2ok,ge1ok]<<-as.numeric(signval[4]) 
+   mainGene<-matrix(c(gname2,sval,trait,as.numeric(signval[7])),nrow=1)
    MainEffect<<-rbind(MainEffect,mainGene)
  }
 
-#Additive variance in upper rigth triangle..
-#if(as.numeric(signval[6])<epistsign || as.numeric(signval[7])<epistsign){
-if(as.numeric(signval[6])<SignMain || as.numeric(signval[7])<SignMain){#NB Special sig-level for main effects
-MainVarMatr[ge1ok,ge2ok]<<-as.numeric(genval[6])
-#..and dominant variance in lower left triangle..
-MainVarMatr[ge2ok,ge1ok]<<-as.numeric(genval[7])
-  }
+# 2-gene additive variance
+AddVarMatr[ge1ok,ge2ok]<<-as.numeric(genval[6])
 
-#Epistasis only of significant. NB Values are from EpiLW, and is tabulated disreagriding the Anova-values for beta.
+# 2-gene dominance variance
+DomVarMatr[ge1ok,ge2ok]<<-as.numeric(genval[7])
+
+#Epistasis raw values. NB Values are from EpiLW.
+#..variance
+EpiVarMatr[ge1ok,ge2ok]<<-as.numeric(genval[8])
+#..beta-values
+EpiBetaMatr[ge1ok,ge2ok]<<-as.numeric(signval[5])
+#..and significance (p-values)
+EpiSignMatr[ge1ok,ge2ok]<<-as.numeric(signval[1])#RMS CR Upper right triangle
+EpiSignMatr[ge2ok,ge1ok]<<-as.numeric(signval[2])#Anova Lower left triangle
+
+WEpiVarMatr[ge1ok,ge2ok]<<-as.numeric(genval[8])*as.numeric(signval[5])
+
+#Epistasis only of significant. NB Values are from EpiLW, and is tabulated disregarding the Anova-values for beta.
 if(as.numeric(signval[1])<epistsign || as.numeric(signval[2])<epistsign){
 #Variances gene1 x gene2, epistasis
-EpiBetaVarMatr[ge1ok,ge2ok]<<-as.numeric(genval[8])
+EpiVarMatrS[ge1ok,ge2ok]<<-as.numeric(genval[8])
+EpiBetaMatrS[ge1ok,ge2ok]<<-as.numeric(signval[5])
+WEpiVarMatrS[ge1ok,ge2ok]<<-as.numeric(genval[8])*as.numeric(signval[5])
 
-#Beta-value gene1 x gene2, epistasis. NB If not possible to calculate from Anova, then set to zero
-#Thus the mastirx may not be "symmetric" (variances always included, but not necessary beta-values. 
-EpiBetaVarMatr[ge2ok,ge1ok]<<-as.numeric(signval[5])
-
-#trlogsum contains sign-levels, relative amount of genetic varaince, and comments
+###
+##trlogsum contains sign-levels, relative amount of genetic varaince, and comments
 #blogsum contains actual variances and betabalues
 #NB Beta-values and add/dom variances should only be printed if significant (see above)
 
@@ -221,7 +233,6 @@ trlogsum<-matrix(c(eheadtrait2,gname1,gname2,signval[1],signval[2],genval[1:4],S
 blogsum<-matrix(c(sumcases,gname1,gname2,format(vartrait, digits = 3,nsmall=3),genval[5:8],signval[3:5]),nrow=1)
 #eheadtrait2<-matrix(c(sval,format(meantrait, digits = 3,nsmall=2),format(vartrait, digits = 3,nsmall=2)),nrow=1)
 ##If above is done, then the if-statement not necessary, but the content is  
-#if(as.numeric(signval[1])<epistsign || as.numeric(signval[2])<epistsign){
 
 #Collate trlogsum
 trlBind<<-rbind(trlBind,trlogsum)
