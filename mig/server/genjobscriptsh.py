@@ -32,7 +32,7 @@ import os
 from shared.job import output_dir
 
 def curl_cmd_send(resource_filename, mig_server_filename,
-                  migserver_https_url_arg):
+                  https_sid_url_arg):
     """Upload files"""
 
     upload_bw_limit = ''
@@ -51,7 +51,7 @@ def curl_cmd_send(resource_filename, mig_server_filename,
 
         # Relative paths are uploaded to the corresponding session on the server
 
-        dst_url = migserver_https_url_arg + '/sid_redirect/'\
+        dst_url = https_sid_url_arg + '/sid_redirect/'\
              + job_dict['MIGSESSIONID'] + '/' + mig_server_filename
 
         # MiG server needs to know that this PUT uses a session ID
@@ -65,7 +65,7 @@ def curl_cmd_send(resource_filename, mig_server_filename,
 
 
 def curl_cmd_get(mig_server_filename, resource_filename,
-                 migserver_https_url_arg):
+                 https_sid_url_arg):
     """Download files"""
 
     download_bw_limit = ''
@@ -88,7 +88,7 @@ def curl_cmd_get(mig_server_filename, resource_filename,
 
         # Relative paths are downloaded from the corresponding session on the server
 
-        src_url = migserver_https_url_arg + '/sid_redirect/'\
+        src_url = https_sid_url_arg + '/sid_redirect/'\
              + job_dict['MIGSESSIONID'] + '/' + mig_server_filename
 
     cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
@@ -98,7 +98,7 @@ def curl_cmd_get(mig_server_filename, resource_filename,
 
 
 def curl_cmd_get_special(file_extension, resource_filename,
-                         migserver_https_url_arg):
+                         https_sid_url_arg):
     """Download internal job files"""
 
     download_bw_limit = ''
@@ -114,18 +114,18 @@ def curl_cmd_get_special(file_extension, resource_filename,
         cmd += '\n'
     cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
          + download_bw_limit + ' --fail --silent --insecure ' + " -o '"\
-         + resource_filename + "' '" + migserver_https_url_arg\
+         + resource_filename + "' '" + https_sid_url_arg\
          + '/sid_redirect/' + job_dict['MIGSESSIONID'] + file_extension\
          + "'"
     return cmd
 
 
-def curl_cmd_request_interactive(migserver_https_url_arg):
+def curl_cmd_request_interactive(https_sid_url_arg):
     """CGI request for interactive job"""
 
     int_command = \
         "curl --location --connect-timeout 30 --max-time 3600 --fail --silent --insecure '"\
-         + migserver_https_url_arg\
+         + https_sid_url_arg\
          + '/cgi-sid/requestinteractivejob.py?sessionid='\
          + job_dict['MIGSESSIONID'] + '&jobid=' + job_dict['JOB_ID']\
          + '&exe=' + exe + '&unique_resource_name='\
@@ -151,7 +151,7 @@ class GenJobScriptSh:
         job_dictionary,
         resource_config,
         exe_unit,
-        migserver_https_url,
+        https_sid_url,
         localjobnam,
         filename_without_ext,
         ):
@@ -164,8 +164,8 @@ class GenJobScriptSh:
         resource_conf = resource_config
         global exe
         exe = exe_unit
-        global migserver_https_url_arg
-        migserver_https_url_arg = migserver_https_url
+        global https_sid_url_arg
+        https_sid_url_arg = https_sid_url
         global filename_without_extension
         filename_without_extension = filename_without_ext
         global localjobname
@@ -311,7 +311,7 @@ class GenJobScriptSh:
             resource_filename = resource_filename.lstrip('/')
 
             cmd += '%s\n' % curl_cmd_get(mig_server_filename,
-                    resource_filename, migserver_https_url_arg)
+                    resource_filename, https_sid_url_arg)
             cmd += 'last_get_status=$?\n'
             cmd += 'if [ $last_get_status -ne 0 ]; then\n'
             cmd += '    %s=$last_get_status\n' % result
@@ -328,17 +328,17 @@ class GenJobScriptSh:
 
         cmd = ''
         cmd += '%s && \\' % curl_cmd_get_special('.job', localjobname
-                 + '.job', migserver_https_url_arg)
+                 + '.job', https_sid_url_arg)
         cmd += '''
 %s
 ''' % curl_cmd_get_special('.sendupdatefiles',
                 localjobname + '.sendupdatefiles',
-                migserver_https_url_arg)
+                https_sid_url_arg)
         cmd += '''
 %s
 ''' % curl_cmd_get_special('.sendoutputfiles',
                 localjobname + '.sendoutputfiles',
-                migserver_https_url_arg)
+                https_sid_url_arg)
         cmd += '%s=$?\n' % result
         cmd += """# Now 'return' status is available in %s
 
@@ -374,7 +374,7 @@ class GenJobScriptSh:
             resource_filename = resource_filename.lstrip('/')
 
             cmd += '%s\n' % curl_cmd_get(mig_server_filename,
-                    resource_filename, migserver_https_url_arg)
+                    resource_filename, https_sid_url_arg)
             cmd += 'last_get_status=$?\n'
             cmd += 'if [ $last_get_status -ne 0 ]; then\n'
             cmd += '    %s=$last_get_status\n' % result
@@ -752,7 +752,7 @@ class GenJobScriptSh:
 
             cmd += '[ ! -e "%s" ] || ' % resource_filename
             cmd += '%s\n' % curl_cmd_send(resource_filename,
-                    mig_server_filename, migserver_https_url_arg)
+                    mig_server_filename, https_sid_url_arg)
             cmd += 'last_send_status=$?\n'
             cmd += 'if [ $last_send_status -ne 0 ]; then\n'
             cmd += '    %s=$last_send_status\n' % result
@@ -777,7 +777,7 @@ class GenJobScriptSh:
                                               name)
             cmd += '[ ! -e "%s" ] || ' % name
             cmd += '%s\n' % curl_cmd_send(name, name_on_mig_server,
-                    migserver_https_url_arg)
+                    https_sid_url_arg)
             cmd += 'last_send_status=$?\n'
             cmd += 'if [ $last_send_status -ne 0 ]; then\n'
             cmd += '    %s=$last_send_status\n' % result
@@ -802,7 +802,7 @@ class GenJobScriptSh:
                                               name)
             cmd += '[ -e "%s" ] && ' % name
             cmd += '%s\n' % curl_cmd_send(name, name_on_mig_server,
-                    migserver_https_url_arg)
+                    https_sid_url_arg)
             cmd += 'last_send_status=$?\n'
             cmd += 'if [ $last_send_status -ne 0 ]; then\n'
             cmd += '    %s=$last_send_status\n' % result
@@ -816,11 +816,11 @@ class GenJobScriptSh:
     def request_interactive(self):
         """Request interactive job"""
 
-        # return curl_cmd_request_interactive(migserver_https_url_arg,
+        # return curl_cmd_request_interactive(https_sid_url_arg,
         #                                    job_dict, resource_conf,
         #                                    exe)
 
-        return curl_cmd_request_interactive(migserver_https_url_arg)
+        return curl_cmd_request_interactive(https_sid_url_arg)
 
     def save_status(self, result='ret'):
         """Save exit code in supplied result"""

@@ -179,6 +179,8 @@ class Configuration:
     migserver_http_url = ''
     backup_http_urls = ''
     migserver_https_url = ''
+    migserver_https_cert_url = ''
+    migserver_https_sid_url = ''
     backup_https_urls = ''
     sleep_period_for_empty_jobs = ''
     min_seconds_between_live_update_requests = 0
@@ -379,6 +381,16 @@ class Configuration:
                 pass
             raise Exception('Failed to parse configuration: %s' % err)
 
+        if config.has_option('GLOBAL', 'migserver_https_cert_url'):
+            self.migserver_https_cert_url = config.get('GLOBAL',
+                                                       'migserver_https_cert_url')
+        else:
+            self.migserver_https_cert_url = self.migserver_https_url
+        if config.has_option('GLOBAL', 'migserver_https_sid_url'):
+            self.migserver_https_sid_url = config.get('GLOBAL',
+                                                       'migserver_https_sid_url')
+        else:
+            self.migserver_https_sid_url = self.migserver_https_url
         if config.has_option('GLOBAL', 'mig_code_base'):
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:

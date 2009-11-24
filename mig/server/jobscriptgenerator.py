@@ -397,7 +397,7 @@ def gen_job_script(
             job_dictionary,
             resource_config,
             exe,
-            configuration.migserver_https_url,
+            configuration.migserver_https_sid_url,
             localjobname,
             path_without_extension,
             )
@@ -406,13 +406,13 @@ def gen_job_script(
             job_dictionary,
             resource_config,
             exe,
-            configuration.migserver_https_url,
+            configuration.migserver_https_sid_url,
             localjobname,
             path_without_extension,
             )
     elif script_language == 'java':
         generator = genjobscriptjava.GenJobScriptJava(job_dictionary,
-                resource_config, configuration.migserver_https_url,
+                resource_config, configuration.migserver_https_sid_url,
                 localjobname, path_without_extension)
     else:
         print 'Unknown script language! (is in configuration.scriptlanguages but not in jobscriptgenerator) %s '\

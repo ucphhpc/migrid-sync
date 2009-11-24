@@ -32,17 +32,17 @@ import os
 from shared.job import output_dir
 
 def curl_cmd_send(resource_filename, mig_server_filename,
-                  migserver_https_url_arg):
+                  https_sid_url_arg):
     """Upload files"""
 
     return "curl --location --fail --silent --insecure --upload-file '"\
-         + resource_filename + "' -X SIDPUT '" + migserver_https_url_arg\
+         + resource_filename + "' -X SIDPUT '" + https_sid_url_arg\
          + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
          + mig_server_filename + "'"
 
 
 def curl_cmd_get(mig_server_filename, resource_filename,
-                 migserver_https_url_arg):
+                 https_sid_url_arg):
     """Download files"""
 
     dest_path = os.path.split(resource_filename)[0]
@@ -51,13 +51,13 @@ def curl_cmd_get(mig_server_filename, resource_filename,
         cmd += "mkdir -p '%s' && \\" % dest_path
         cmd += '\n'
     cmd += "curl --location --fail --silent --insecure -o '" + resource_filename\
-         + "' '" + migserver_https_url_arg + '/sid_redirect/'\
+         + "' '" + https_sid_url_arg + '/sid_redirect/'\
          + job_dict['MIGSESSIONID'] + '/' + mig_server_filename + "'"
     return cmd
 
 
 def curl_cmd_get_special(file_extension, resource_filename,
-                         migserver_https_url_arg):
+                         https_sid_url_arg):
     """Download internal job files"""
 
     dest_path = os.path.split(resource_filename)[0]
@@ -66,16 +66,16 @@ def curl_cmd_get_special(file_extension, resource_filename,
         cmd += 'mkdir -p %s && \\' % dest_path
         cmd += '\n'
     cmd += "curl --location --fail --silent --insecure -o '" + resource_filename\
-         + "' '" + migserver_https_url_arg + '/sid_redirect/'\
+         + "' '" + https_sid_url_arg + '/sid_redirect/'\
          + job_dict['MIGSESSIONID'] + file_extension + "'"
     return cmd
 
 
-def curl_cmd_request_interactive(migserver_https_url_arg):
+def curl_cmd_request_interactive(https_sid_url_arg):
     """CGI request for interactive job"""
 
     int_command = "curl --location --fail --silent --insecure '"\
-         + migserver_https_url_arg\
+         + https_sid_url_arg\
          + '/cgi-sid/requestinteractivejob.py?sessionid='\
          + job_dict['MIGSESSIONID'] + '&jobid=' + job_dict['JOB_ID']\
          + '&exe=' + exe + '&unique_resource_name='\
@@ -101,7 +101,7 @@ class GenJobScriptPython:
         job_dictionary,
         resource_config,
         exe_unit,
-        migserver_https_url,
+        https_sid_url,
         localjobnam,
         filename_without_ext,
         ):
@@ -114,8 +114,8 @@ class GenJobScriptPython:
         resource_conf = resource_config
         global exe
         exe = exe_unit
-        global migserver_https_url_arg
-        migserver_https_url_arg = migserver_https_url
+        global https_sid_url_arg
+        https_sid_url_arg = https_sid_url
         global filename_without_extension
         filename_without_extension = filename_without_ext
         global localjobname
@@ -232,11 +232,11 @@ io_log.flush()'''\
 
         cmd = ''
         cmd += curl_cmd_get_special('.job', localjobname + '.job',
-                                    migserver_https_url_arg) + ' && \\'\
+                                    https_sid_url_arg) + ' && \\'\
              + '\n'
         cmd += curl_cmd_get_special('.sendoutputfiles', localjobname
                                      + '.sendoutputfiles',
-                                    migserver_https_url_arg) + '\n'
+                                    https_sid_url_arg) + '\n'
         return cmd
 
     def get_executables(self, result='get_executables_status'):
@@ -369,7 +369,7 @@ io_log.flush()'''\
             # cmd += "  os.popen(\"" + curl_cmd_send(name) + "\")\n"
 
             cmd += '  os.popen("' + curl_cmd_send(name,
-                    name_on_mig_server, migserver_https_url_arg)\
+                    name_on_mig_server, https_sid_url_arg)\
                  + '")\n'
         return cmd
 
@@ -386,16 +386,16 @@ io_log.flush()'''\
             # cmd += "os.popen(\"%s\")\n" % curl_cmd_send(name)
 
             cmd += 'os.popen("' + curl_cmd_send(name,
-                    name_on_mig_server, migserver_https_url_arg)\
+                    name_on_mig_server, https_sid_url_arg)\
                  + '")\n'
         return cmd
 
     def request_interactive(self):
         """Request interactive job"""
 
-        # return curl_cmd_request_interactive(migserver_https_url_arg, job_dict, resource_conf, exe)
+        # return curl_cmd_request_interactive(https_sid_url_arg, job_dict, resource_conf, exe)
 
-        return curl_cmd_request_interactive(migserver_https_url_arg)
+        return curl_cmd_request_interactive(https_sid_url_arg)
 
     def save_status(self, variable='ret'):
         """Save exit code"""

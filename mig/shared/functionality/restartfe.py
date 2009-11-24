@@ -84,7 +84,7 @@ def main(client_id, user_arguments_dict):
 
     (status, msg2) = start_resource(unique_resource_name,
                                     configuration.resource_home,
-                                    configuration.migserver_https_url,
+                                    configuration.migserver_https_sid_url,
                                     logger)
     if not status:
         output_objects.append({'object_type': 'error_text', 'text'

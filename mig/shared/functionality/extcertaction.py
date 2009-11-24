@@ -202,7 +202,7 @@ cd ~/mig/server
 
     user_dict['command_user_create'] = command_user_create
     user_dict['command_user_delete'] = command_user_delete
-    user_dict['migserver_https_url'] = configuration.migserver_https_url
+    user_dict['https_cert_url'] = configuration.migserver_https_cert_url
     email_header = 'MiG sign up request for %s' % cert_id
     email_msg = \
         """
@@ -220,7 +220,7 @@ Command to create user on MiG server:
 %(command_user_create)s
 
 Finally add the user to any relevant VGrids from:
-%(migserver_https_url)s/cgi-bin/vgridadmin.py
+%(https_cert_url)s/cgi-bin/vgridadmin.py
 
 ---
 Command to delete user again on MiG server:

@@ -503,7 +503,7 @@ def get_frontend_script(unique_resource_name, logger):
             tempfile.mkstemp(dir=resource_dir, text=True)
 
         (status, msg) = fill_frontend_script(filehandle,
-                configuration.migserver_https_url,
+                configuration.migserver_https_sid_url,
                 unique_resource_name, resource_config)
         if not status:
             return (False, msg)
@@ -890,7 +890,7 @@ def start_resource_frontend(unique_resource_name, configuration,
 
     return start_resource(unique_resource_name,
                           configuration.resource_home,
-                          configuration.migserver_https_url, logger)
+                          configuration.migserver_https_sid_url, logger)
 
 
 def start_resource(
@@ -1600,7 +1600,7 @@ def restart_resource_frontend(unique_resource_name, configuration,
 
     return restart_resource(unique_resource_name,
                             configuration.resource_home,
-                            configuration.migserver_https_url, logger)
+                            configuration.migserver_https_sid_url, logger)
 
 
 def restart_resource(

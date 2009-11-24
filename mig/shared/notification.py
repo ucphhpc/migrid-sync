@@ -55,7 +55,7 @@ def create_notify_message(
     header = ''
     txt = ''
 
-    var_dict = {'url': configuration.migserver_https_url,
+    var_dict = {'https_cert_url': configuration.migserver_https_cert_url,
                 'jobid': jobid, 'retries': configuration.job_retries,
                 'output_dir': output_dir}
 
@@ -64,7 +64,7 @@ def create_notify_message(
         txt += \
             '''
 Your MiG job with JOB ID %(jobid)s has finished and full status is available at:
-%(url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
+%(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
 
 The job commands and their exit codes:
 '''\
@@ -78,10 +78,10 @@ The job commands and their exit codes:
         txt += \
             '''
 Link to stdout file:
-%(url)s/cert_redirect/%(output_dir)s/%(jobid)s/%(jobid)s.stdout (might not be available)
+%(https_cert_url)s/cert_redirect/%(output_dir)s/%(jobid)s/%(jobid)s.stdout (might not be available)
 
 Link to stderr file:
-%(url)s/cert_redirect/%(output_dir)s/%(jobid)s/%(jobid)s.stderr (might not be available)
+%(https_cert_url)s/cert_redirect/%(output_dir)s/%(jobid)s/%(jobid)s.stderr (might not be available)
 
 Replies to this message will not be read!
 '''\
@@ -93,7 +93,7 @@ Replies to this message will not be read!
             '''
 The job with JOB ID %(jobid)s has failed after %(retries)s retries!
 This may be due to internal errors, but full status is available at:
-%(url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
+%(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
 
 Please contact the MiG team if the problem occurs multiple times.
 
@@ -106,7 +106,7 @@ Replies to this message will not be read!!!
             '''
 Your MiG job with JOB ID %(jobid)s has expired, after remaining in the queue for too long.
 This may be due to internal errors, but full status is available at:
-%(url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
+%(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
 
 Please contact the MiG team for details about expire policies.
 
@@ -132,12 +132,12 @@ Replies to this message will not be read!!!
         if request_type == 'member':
             txt += \
                 '%s/cgi-bin/addvgridmember.py?vgrid_name=%s&cert_id=%s'\
-                 % (configuration.migserver_https_url, vgrid_name,
+                 % (configuration.migserver_https_cert_url, vgrid_name,
                     from_cert)
         elif request_type == 'owner':
             txt += \
                 '%s/cgi-bin/addvgridowner.py?vgrid_name=%s&cert_id=%s'\
-                 % (configuration.migserver_https_url, vgrid_name,
+                 % (configuration.migserver_https_cert_url, vgrid_name,
                     from_cert)
         else:
             txt += 'INVALID REQUEST TYPE: %s' % request_type

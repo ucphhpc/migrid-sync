@@ -377,7 +377,7 @@ vgrid=%s
         (fe_script_file, fes_fname) = tempfile.mkstemp(dir=resource_dir,
                                                        text=True)
         (fe_status, msg) = resadm.fill_frontend_script(
-            fe_script_file, configuration.migserver_https_url,
+            fe_script_file, configuration.migserver_https_sid_url,
             unique_host_name, resource_config)
 
         if not fe_status:
@@ -429,7 +429,7 @@ vgrid=%s
         fd.write(sandboxkey)
         fd.close()
         fd = open('serverfile', 'w')
-        fd.write(configuration.migserver_https_url)
+        fd.write(configuration.migserver_https_sid_url)
         fd.close()
     except Exception, err:
         output_objects.append({'object_type': 'error_text', 'text':

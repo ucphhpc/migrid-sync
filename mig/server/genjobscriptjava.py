@@ -37,7 +37,7 @@ class GenJobScriptJava:
         self,
         job_dictionary,
         resource_config,
-        migserver_https_url,
+        https_sid_url,
         localjobnam,
         filename_without_ext,
         ):
@@ -46,8 +46,8 @@ class GenJobScriptJava:
         job_dict = job_dictionary
         global resource_conf
         resource_conf = resource_config
-        global migserver_https_url_arg
-        migserver_https_url_arg = migserver_https_url
+        global https_sid_url_arg
+        https_sid_url_arg = https_sid_url
         global filename_without_extension
         filename_without_extension = filename_without_ext
         global localjobname
@@ -175,15 +175,15 @@ class GenJobScriptJava:
             # TODO: place files in '%s/%s/' % (shared.job.output_dir, job_id)
 
             if name.count('stdout') > 0:
-                cmd += 'stdout: ' + migserver_https_url_arg\
+                cmd += 'stdout: ' + https_sid_url_arg\
                      + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
                      + name + '\n'
             elif name.count('stderr') > 0:
-                cmd += 'stderr: ' + migserver_https_url_arg\
+                cmd += 'stderr: ' + https_sid_url_arg\
                      + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
                      + name + '\n'
             elif name.count('io-status') > 0:
-                cmd += 'io-status: ' + migserver_https_url_arg\
+                cmd += 'io-status: ' + https_sid_url_arg\
                      + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
                      + name + '\n'
         return cmd
@@ -195,7 +195,7 @@ class GenJobScriptJava:
 
                 # TODO: place files in '%s/%s/' % (shared.job.output_dir, job_id)
 
-                cmd += 'status: ' + migserver_https_url_arg\
+                cmd += 'status: ' + https_sid_url_arg\
                      + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
                      + name + '\n'
         return cmd
