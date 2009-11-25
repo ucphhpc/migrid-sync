@@ -89,26 +89,54 @@ If your setup uses custom paths or settings just provide them on the
 commandline like the command help indicates:
 ./generateconfs.py -h
 Usage:
-./generateconfs.py
-or
-./generateconfs.py SOURCE DESTINATION SERVER_FQDN USER GROUP APACHE_ETC \
-		   APACHE_RUN APACHE_LOG MIG_CODE MIG_STATE MIG_CERTS \
-		   MOIN_ETC MOIN_SHARE HTTP_PORT HTTPS_PORT USER_CLAUSE \
-		   GROUP_CLAUSE LISTEN_CLAUSE		   
+./generateconfs.py [OPTIONS]
+Where supported options include -h/--help for this help or the conf settings:
+--source=SOURCE
+--destination=DESTINATION
+--server_fqdn=SERVER_FQDN
+--user=USER
+--group=GROUP
+--apache_etc=APACHE_ETC
+--apache_run=APACHE_RUN
+--apache_log=APACHE_LOG
+--mig_code=MIG_CODE
+--mig_state=MIG_STATE
+--mig_certs=MIG_CERTS
+--moin_etc=MOIN_ETC
+--moin_share=MOIN_SHARE
+--http_port=HTTP_PORT
+--https_port=HTTPS_PORT
+--user_clause=USER_CLAUSE
+--group_clause=GROUP_CLAUSE
+--listen_clause=LISTEN_CLAUSE
 
 For one of our servers running MiG as the 'mig' user with the code
 checked out directly in the home directory and with Debian apache 1.3.x
 defaults, this could be:
-python generateconfs.py . generated-confs mig-1.imada.sdu.dk mig mig \
-       /etc/apache /var/run/apache /var/log/apache /home/mig/mig \
-       /home/mig/state /home/mig/MiG-certificates /etc/moin \
-       /usr/share/moin 80 443 User Group Listen
+./generateconfs.py --source=. --destination=generated-confs \
+		   --server_fqdn=mig-1.imada.sdu.dk --user=mig \
+		   --group=mig --apache_etc=/etc/apache \
+		   --apache_run=/var/run/apache \
+		   --apache_log=/var/log/apache \
+		   --mig_code=/home/mig/mig \
+		   --mig_state=/home/mig/state \
+		   --mig_certs=/home/mig/MiG-certificates \
+		   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
+		   --http_port=80 --https_port=443 --user_clause=User \
+		   --group_clause=Group --listen_clause='Listen'
 
 or similarly with apache 2.x:
-python generateconfs.py . generated-confs dk.migrid.org mig mig \
-       /etc/apache2 /var/run/apache2 /var/log/apache2 /home/mig/mig \
-       /home/mig/state /etc/apache2/MiG-certificates /etc/moin \
-       /usr/share/moin 80 443 User Group '#Listen'
+./generateconfs.py --source=. --destination=generated-confs \
+		   --server_fqdn=dk.migrid.org --user=mig --group=mig \
+		   --apache_etc=/etc/apache2 \
+		   --apache_run=/var/run/apache2 \
+		   --apache_log=/var/log/apache2 \
+		   --mig_code=/home/mig/mig \
+		   --mig_state=/home/mig/state \
+		   --mig_certs=/etc/apache2/MiG-certificates \
+		   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
+		   --http_port=80 --https_port=443 --user_clause=User \
+		   --group_clause=Group --listen_clause='#Listen'
 
 Most of the arguments should be relatively straight forward, but you
 need to provide the MIG_CERTS path where your apache server key and
@@ -118,10 +146,12 @@ The actual keys and certificates can be added later, so you can just
 choose a suitable directory path at first.
 
 The two moin paths are optional and can be set to the empty string if
-moin is not available or should not be enabled. On Debian the
-moinmoin-common package provides all the necessary wiki requirements. 
+moin is not available or should if VGrid wikis should not be enabled. On
+Debian the moinmoin-common package provides all the necessary wiki
+requirements.
 
 The three CLAUSE arguments can be used to comment out the explicit
+
 setting of user, group and ports in the apache conf by providing a
 '# User', '# Group' and '# Listen'. This is mostly relevant if using
 apache2 with WSGI.
@@ -153,7 +183,8 @@ All the daemons can be launched from inside the mig/server directory:
 cd /path/to/unpacked/mig/source/mig/server
 python grid_script.py
 
-Alternatively they can be launched from other locations as long as the configuration path is provided in the environment:
+Alternatively they can be launched from other locations as long as the
+configuration path is provided in the environment: 
 export MIG_CONF="/path/to/MiGserver.conf"
 python /path/to/unpacked/mig/source/mig/server/grid_script.py
 

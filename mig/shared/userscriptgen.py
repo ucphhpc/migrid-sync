@@ -3564,8 +3564,8 @@ if __name__ == '__main__':
     opts_str = 'c:d:hlp:s:tvV'
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opts_str)
-    except getopt.GetoptError, e:
-        print 'Error: ', e.msg
+    except getopt.GetoptError, exc:
+        print 'Error: %s' % exc
         usage()
         sys.exit(1)
 

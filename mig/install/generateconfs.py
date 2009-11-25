@@ -28,16 +28,27 @@
 # IMPORTANT: Run script with sudo or as root
 
 """Generate the configurations for a custom MiG server installation.
-Creates MiG server and Apache configurations to fit the provided user and
-path settings.
+Creates MiG server and Apache configurations to fit the provided settings.
 """
 
 import sys
 import os
 import re
+import getopt
 
 
-def fill_template(template_file, output_file, dictionary):
+def usage(options):
+    lines = ["--%s=%s" % pair for pair in zip(options,
+                                              [i.upper() for i in options])]
+    print '''Usage:
+%s [OPTIONS]
+Where supported options include -h/--help for this help or the conf settings:
+%s
+''' % (sys.argv[0], '\n'.join(lines))
+
+
+def fill_template(template_file, output_file, settings):
+    """Fill a configuration template using provided settings dictionary"""
     try:
         template = open(template_file, 'r')
         contents = template.read()
@@ -49,7 +60,7 @@ def fill_template(template_file, output_file, dictionary):
 
     # print "template read:\n", output
 
-    for (variable, value) in dictionary.items():
+    for (variable, value) in settings.items():
         contents = re.sub(variable, value, contents)
 
     # print "output:\n", contents
@@ -169,20 +180,40 @@ if '__main__' == __name__:
         'group_clause',
         'listen_clause',
         )
-    if '-h' in sys.argv or '--help' in sys.argv:
-        print '''Usage:
-%s
-or
-%s %s''' % (sys.argv[0], sys.argv[0],
-                ' '.join([i.upper() for i in names]))
-        sys.exit(0)
+    settings = {}
 
-    values = tuple(sys.argv[1:len(names) + 1])
-    pairs = zip(names, values)
-    settings = dict(pairs)
+    flag_str = 'h'
+    opts_str = ["%s=" % i for i in names] + ["help"]
+    
+    try:
+        (opts, args) = getopt.getopt(sys.argv[1:], flag_str, opts_str)
+    except getopt.GetoptError, exc:
+        print 'Error: ', exc.msg
+        usage(names)
+        sys.exit(1)
+
+    for (opt, val) in opts:
+        opt_name = opt.lstrip('-')
+        if opt in ('-h', '--help'):
+            usage(names)
+            sys.exit(0)
+        elif opt_name in names:
+            settings[opt_name] = val
+        else:
+            print 'Error: %s not supported!' % opt
+            usage(names)
+            sys.exit(1)
+
+    if args:
+        print 'Error: non-option arguments are no longer supported!'
+        usage(names)
+        sys.exit(1)
+
+    full_settings = {}
     for i in names:
-        if not settings.has_key(i):
-            settings[i] = 'DEFAULT'
+        full_settings[i] = 'DEFAULT'
+    full_settings.update(settings)
+
     print '''# Creating confs with:
 source: %(source)s
 destination: %(destination)s
@@ -203,8 +234,8 @@ user_clause: %(user_clause)s
 group_clause: %(group_clause)s
 listen_clause: %(listen_clause)s
 '''\
-         % settings
-    generate_confs(*values)
+         % full_settings
+    generate_confs(**settings)
 
     print '''Configurations for MiG and Apache were generated in %(destination)s/
 For a default setup you will probably want to copy the MiG daemon conf to the server code directory:
@@ -227,6 +258,6 @@ On a MiG developer server the dedicated apache init script is added with:
 cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
 
 Please reload or restart your apache daemons to catch the configuration changes.'''\
-         % settings
+         % full_settings
 
     sys.exit(0)
