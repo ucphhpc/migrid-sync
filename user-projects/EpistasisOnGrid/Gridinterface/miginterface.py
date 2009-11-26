@@ -276,7 +276,7 @@ def mig_function_wrapper(func,*args):
     #funct = "miglib."+func
     #print func, args
     retries = 3
-    retry_wait = 2000 # 2 seconds
+    retry_wait = 2 # 2 seconds
     code, out = func(*args)
     #print out
     exit_code = get_exit_code(out)
