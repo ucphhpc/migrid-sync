@@ -99,6 +99,9 @@ clean_and_exit() {
     $clean_command ${localjobname}.jobdone 1>> $exehostlog 2>> $exehostlog
     sync_clean ${localjobname}.jobdone
     
+    # Leave job dir before cleaning it (recursively removing working dir is not portable) 
+    cd ${execution_dir}
+
     echo "deleting recursive job-dir_${localjobname}" 1>> $exehostlog 2>> $exehostlog
     $clean_recursive ${execution_dir}/job-dir_${localjobname} 1>> $exehostlog 2>> $exehostlog
     sync_clean ${execution_dir}/job-dir_${localjobname}
