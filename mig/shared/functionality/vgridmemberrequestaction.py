@@ -61,7 +61,7 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'MiG VGrid membership request'
-    output_objects.append({'object_type': 'title', 'text'
+    output_objects.append({'object_type': 'header', 'text'
                           : 'MiG VGrid membership request'})
 
     vgrid_name = accepted['vgrid_name'][-1]
