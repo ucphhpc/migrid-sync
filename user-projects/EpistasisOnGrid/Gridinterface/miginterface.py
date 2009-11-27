@@ -270,21 +270,22 @@ def remove_files_local(files):
         except OSError:
             print "Can't delete : "+f
 
-
 def mig_function_wrapper(func,*args):
     #print args
     #funct = "miglib."+func
     #print func, args
     retries = 3
     retry_wait = 2 # 2 seconds
-    code, out = func(*args)
+    exit_code, out = func(*args)
     #print out
-    exit_code = get_exit_code(out)
+    if exit_code != 0:
+        exit_code = get_exit_code(out)
     
     #print "exit code", exit_code
     if exit_code != 0:
         for i in range(retries):
             time.sleep(retry_wait)
+            print out
             print "exit code", exit_code, "retrying... ",i
             code, out = func(*args)
             exit_code = get_exit_code(out)
@@ -293,6 +294,7 @@ def mig_function_wrapper(func,*args):
         raise Exception("MiG Error: \n"+str(func)+":"+str(args)+"\n"+"".join(out))
     else:
         return out
+
 
 def command_test():
     (code, out) = miglib.ls_file(".")
