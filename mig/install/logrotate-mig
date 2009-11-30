@@ -1,4 +1,4 @@
-/home/mig/mig/server/*.log /home/mig/mig/cgi-bin/*.log /home/mig/mig/cgi-sid/*.log {
+/home/mig/mig/server/*.log /home/mig/mig/cgi-bin/*.log /home/mig/mig/cgi-sid/*.log /home/mig/last-scp.err {
 	weekly
 	missingok
 	rotate 52
