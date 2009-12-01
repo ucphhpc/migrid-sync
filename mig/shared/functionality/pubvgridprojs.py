@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# public_vgrid_projects - [insert a few words of module description on this line]
+# pubvgridprojs - [insert a few words of module description on this line]
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -26,11 +26,10 @@
 #
 
 import os
-import sys
 
-from shared.init import initialize_main_variables
-from shared.functional import validate_input, REJECT_UNSET
 import shared.returnvalues as returnvalues
+from shared.functional import validate_input
+from shared.init import initialize_main_variables
 
 
 def signature():
@@ -40,7 +39,7 @@ def signature():
     return ['linklist', defaults]
 
 
-def main(cert_name_no_spaces, user_arguments_dict):
+def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
