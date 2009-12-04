@@ -128,13 +128,15 @@ def main(client_id, user_arguments_dict):
                 for (key, val) in mrsl_dict.items():
                     if not key in mrsl_keywords_dict.keys():
                         continue
-                    output_lines.append('::%s::' % key)
-                    if mrsl_keywords_dict[key]['Type'].startswith('multiple'
-                            ):
+                    output_lines.append('::%s::\n' % key)
+                    if 'multiplestrings' == mrsl_keywords_dict[key]['Type']:
                         for line in val:
-                            output_lines.append('%s' % line)
+                            output_lines.append('%s\n' % line)
+                    elif 'multiplekeyvalues' == mrsl_keywords_dict[key]['Type']:
+                        for (left, right) in val:
+                            output_lines.append('%s=%s\n' % (left, right))
                     else:
-                        output_lines.append('%s' % val)
+                        output_lines.append('%s\n' % val)
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text', 'text'
                                       : "%s: '%s': %s" % (op_name,
