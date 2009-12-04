@@ -110,45 +110,45 @@ def main(client_id, user_arguments_dict):
                 continue
             match.append(real_path)
 
-    # Now actually treat list of allowed matchings and notify if
-    # no (allowed) match
+        # Now actually treat list of allowed matchings and notify if
+        # no (allowed) match
 
-    if not match:
-        output_objects.append({'object_type': 'file_not_found', 'name'
-                              : pattern})
-        status = returnvalues.FILE_NOT_FOUND
+        if not match:
+            output_objects.append({'object_type': 'file_not_found', 'name'
+                                  : pattern})
+            status = returnvalues.FILE_NOT_FOUND
 
-    for real_path in match:
-        output_lines = []
-        relative_path = real_path.replace(base_dir, '')
-        try:
-            mrsl_dict = unpickle(real_path, logger)
-            if not mrsl_dict:
-                raise Exception('could not load job mRSL')
-            for (key, val) in mrsl_dict.items():
-                if not key in mrsl_keywords_dict.keys():
-                    continue
-                output_lines.append('::%s::' % key)
-                if mrsl_keywords_dict[key]['Type'].startswith('multiple'
-                        ):
-                    for line in val:
-                        output_lines.append('%s' % line)
-                else:
-                    output_lines.append('%s' % val)
-        except Exception, exc:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : "%s: '%s': %s" % (op_name,
-                                  relative_path, exc)})
-            logger.error("%s: failed on '%s': %s" % (op_name,
-                         relative_path, exc))
-            status = returnvalues.SYSTEM_ERROR
-            continue
-        if verbose(flags):
-            output_objects.append({'object_type': 'file_output', 'path'
-                                  : relative_path, 'lines'
-                                  : output_lines})
-        else:
-            output_objects.append({'object_type': 'file_output', 'lines'
+        for real_path in match:
+            output_lines = []
+            relative_path = real_path.replace(base_dir, '')
+            try:
+                mrsl_dict = unpickle(real_path, logger)
+                if not mrsl_dict:
+                    raise Exception('could not load job mRSL')
+                for (key, val) in mrsl_dict.items():
+                    if not key in mrsl_keywords_dict.keys():
+                        continue
+                    output_lines.append('::%s::' % key)
+                    if mrsl_keywords_dict[key]['Type'].startswith('multiple'
+                            ):
+                        for line in val:
+                            output_lines.append('%s' % line)
+                    else:
+                        output_lines.append('%s' % val)
+            except Exception, exc:
+                output_objects.append({'object_type': 'error_text', 'text'
+                                      : "%s: '%s': %s" % (op_name,
+                                      relative_path, exc)})
+                logger.error("%s: failed on '%s': %s" % (op_name,
+                             relative_path, exc))
+                status = returnvalues.SYSTEM_ERROR
+                continue
+            if verbose(flags):
+                output_objects.append({'object_type': 'file_output', 'path'
+                                      : relative_path, 'lines'
+                                      : output_lines})
+            else:
+                output_objects.append({'object_type': 'file_output', 'lines'
                                   : output_lines})
 
     return (output_objects, status)
