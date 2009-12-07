@@ -796,7 +796,7 @@ def guess_type(name):
     elif name.lower().find('lang') != -1:
         return valid_job_id
     elif name.lower().find('execute') != -1:
-        return valid_plain_text
+        return valid_free_text
     elif name.lower().find('executables') != -1:
         return valid_plain_text
     elif name.lower().find('inputfiles') != -1:
