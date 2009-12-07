@@ -81,7 +81,9 @@ def fill_template(template_file, output_file, settings):
 def generate_confs(
     source=os.path.dirname(sys.argv[0]),
     destination=os.path.dirname(sys.argv[0]),
-    server_fqdn='localhost',
+    public_fqdn='localhost',
+    cert_fqdn='localhost',
+    sid_fqdn='localhost',
     user='mig',
     group='mig',
     apache_etc='/etc/apache2',
@@ -92,8 +94,9 @@ def generate_confs(
     mig_certs='/home/mig/certs',
     moin_etc='/etc/moin',
     moin_share='/usr/share/moin',
-    http_port=80,
-    https_port=443,
+    public_port=80,
+    cert_port=443,
+    sid_port=444,
     user_clause='User',
     group_clause='Group',
     listen_clause='#Listen',
@@ -101,11 +104,14 @@ def generate_confs(
     """Generate Apache and MiG server confs with specified variables"""
 
     user_dict = {}
-    user_dict['__SERVER_FQDN__'] = server_fqdn
+    user_dict['__PUBLIC_FQDN__'] = public_fqdn
+    user_dict['__CERT_FQDN__'] = cert_fqdn
+    user_dict['__SID_FQDN__'] = sid_fqdn
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
-    user_dict['__HTTP_PORT__'] = str(http_port)
-    user_dict['__HTTPS_PORT__'] = str(https_port)
+    user_dict['__PUBLIC_PORT__'] = str(public_port)
+    user_dict['__CERT_PORT__'] = str(cert_port)
+    user_dict['__SID_PORT__'] = str(sid_port)
     user_dict['__MIG_HOME__'] = mig_code
     user_dict['__MIG_STATE__'] = mig_state
     user_dict['__MIG_CERTS__'] = mig_certs
@@ -117,6 +123,18 @@ def generate_confs(
     user_dict['__USER_CLAUSE__'] = user_clause
     user_dict['__GROUP_CLAUSE__'] = group_clause
     user_dict['__LISTEN_CLAUSE__'] = listen_clause
+
+    # Apache fails on duplicate Listen directives so comment in that case
+    same_port, same_fqdn = (cert_port == sid_port), (cert_fqdn == sid_fqdn)
+    user_dict['__IF_SEPARATE_PORTS__'] = '#'
+    if not same_port:
+        user_dict['__IF_SEPARATE_PORTS__'] = ''
+
+    if same_fqdn and same_port:
+            print """
+WARNING: you probably have to use either different fqdn or port settings for
+cert and sid based https!
+"""
 
     try:
         os.makedirs(destination)
@@ -163,7 +181,9 @@ if '__main__' == __name__:
     names = (
         'source',
         'destination',
-        'server_fqdn',
+        'public_fqdn',
+        'cert_fqdn',
+        'sid_fqdn',
         'user',
         'group',
         'apache_etc',
@@ -174,8 +194,9 @@ if '__main__' == __name__:
         'mig_certs',
         'moin_etc',
         'moin_share',
-        'http_port',
-        'https_port',
+        'public_port',
+        'cert_port',
+        'sid_port',
         'user_clause',
         'group_clause',
         'listen_clause',
@@ -217,7 +238,9 @@ if '__main__' == __name__:
     print '''# Creating confs with:
 source: %(source)s
 destination: %(destination)s
-server_fqdn: %(server_fqdn)s
+public_fqdn: %(public_fqdn)s
+cert_fqdn: %(cert_fqdn)s
+sid_fqdn: %(sid_fqdn)s
 user: %(user)s
 group: %(group)s
 apache_etc: %(apache_etc)s
@@ -228,8 +251,9 @@ mig_state: %(mig_state)s
 mig_certs: %(mig_certs)s
 moin_etc: %(moin_etc)s
 moin_share: %(moin_share)s
-http_port: %(http_port)s
-https_port: %(https_port)s
+public_port: %(public_port)s
+cert_port: %(cert_port)s
+sid_port: %(sid_port)s
 user_clause: %(user_clause)s
 group_clause: %(group_clause)s
 listen_clause: %(listen_clause)s

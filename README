@@ -87,13 +87,16 @@ cd mig/install/
 
 If your setup uses custom paths or settings just provide them on the
 commandline like the command help indicates:
-./generateconfs.py -h
+~/mig/install > ./generateconfs.py -h
 Usage:
 ./generateconfs.py [OPTIONS]
-Where supported options include -h/--help for this help or the conf settings:
+Where supported options include -h/--help for this help or the conf
+settings:
 --source=SOURCE
 --destination=DESTINATION
---server_fqdn=SERVER_FQDN
+--public_fqdn=PUBLIC_FQDN
+--cert_fqdn=CERT_FQDN
+--sid_fqdn=SID_FQDN
 --user=USER
 --group=GROUP
 --apache_etc=APACHE_ETC
@@ -104,8 +107,9 @@ Where supported options include -h/--help for this help or the conf settings:
 --mig_certs=MIG_CERTS
 --moin_etc=MOIN_ETC
 --moin_share=MOIN_SHARE
---http_port=HTTP_PORT
---https_port=HTTPS_PORT
+--public_port=PUBLIC_PORT
+--cert_port=CERT_PORT
+--sid_port=SID_PORT
 --user_clause=USER_CLAUSE
 --group_clause=GROUP_CLAUSE
 --listen_clause=LISTEN_CLAUSE
@@ -114,7 +118,9 @@ For one of our servers running MiG as the 'mig' user with the code
 checked out directly in the home directory and with Debian apache 1.3.x
 defaults, this could be:
 ./generateconfs.py --source=. --destination=generated-confs \
-		   --server_fqdn=mig-1.imada.sdu.dk --user=mig \
+		   --public_fqdn=mig-1.imada.sdu.dk \
+		   --cert_fqdn=mig-1.imada.sdu.dk \
+		   --sid_fqdn=mig-1.imada.sdu.dk --user=mig \
 		   --group=mig --apache_etc=/etc/apache \
 		   --apache_run=/var/run/apache \
 		   --apache_log=/var/log/apache \
@@ -122,12 +128,15 @@ defaults, this could be:
 		   --mig_state=/home/mig/state \
 		   --mig_certs=/home/mig/MiG-certificates \
 		   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
-		   --http_port=80 --https_port=443 --user_clause=User \
-		   --group_clause=Group --listen_clause='Listen'
+		   --http_port=80 --cert_port=443 --sid_port=8092 \
+		   --user_clause=User --group_clause=Group \
+		   --listen_clause='Listen'
 
 or similarly with apache 2.x:
 ./generateconfs.py --source=. --destination=generated-confs \
-		   --server_fqdn=dk.migrid.org --user=mig --group=mig \
+		   --public_fqdn=dk.migrid.org \
+		   --cert_fqdn=dk-cert.migrid.org \
+		   --sid_fqdn=dk-sid.migrid.org --user=mig --group=mig \
 		   --apache_etc=/etc/apache2 \
 		   --apache_run=/var/run/apache2 \
 		   --apache_log=/var/log/apache2 \
@@ -135,8 +144,9 @@ or similarly with apache 2.x:
 		   --mig_state=/home/mig/state \
 		   --mig_certs=/etc/apache2/MiG-certificates \
 		   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
-		   --http_port=80 --https_port=443 --user_clause=User \
-		   --group_clause=Group --listen_clause='#Listen'
+		   --http_port=80 --cert_port=443 --sid_port=443 \
+		   --user_clause=User --group_clause=Group \
+		   --listen_clause='#Listen'
 
 Most of the arguments should be relatively straight forward, but you
 need to provide the MIG_CERTS path where your apache server key and

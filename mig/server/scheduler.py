@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# scheduler - [insert a few words of module description on this line]
+# scheduler - base scheduler class used by all schedulers
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.

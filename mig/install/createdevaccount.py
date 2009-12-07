@@ -119,14 +119,9 @@ def create_user(
 
     # print "uid: %d, gid: %d" % (uid, gid)
 
-    # Historically we used three server ports, and since user
-    # ports are calculated with this assumption, we just keep
-    # providing three ports. Users may then use the last one for
-    # other purposes, including testing extra daemons.
-
-    http_port = 3 * uid
-    https_port = http_port + 1
-    extra_port = http_port + 2
+    public_port = 3 * uid
+    cert_port = public_port + 1
+    sid_port = public_port + 2
 
     mig_dir = os.path.join(home, 'mig')
     server_dir = os.path.join(mig_dir, 'server')
@@ -143,7 +138,7 @@ def create_user(
     print '# Add the next line to %s and run the script:'\
          % firewall_script
     print 'iptables -A INPUT -p tcp --dport %d:%d -j ACCEPT # webserver: %s'\
-         % (http_port, extra_port, user)
+         % (public_port, sid_port, user)
 
     sshd_conf = '/etc/ssh/sshd_config'
     print """# Unless 'AllowGroups %s' is already included, append %s
@@ -169,6 +164,8 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         src,
         dst,
         socket.getfqdn(),
+        socket.getfqdn(),
+        socket.getfqdn(),
         user,
         group,
         apache_dir,
@@ -179,8 +176,9 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         cert_dir,
         moin_etc,
         moin_share,
-        http_port,
-        https_port,
+        public_port,
+        cert_port,
+        sid_port,
         'User',
         'Group',
         '#Listen',
@@ -241,11 +239,8 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
 Created %s in group %s with pw %s
 Reserved ports:
 HTTP:\t\t%d
-HTTPS:\t\t%d
-EXTRA:\t\t%d
-
-The EXTRA port is not used by MiG, so it can be used for
-testing any additional daemons.
+HTTPS users:\t\t%d
+HTTPS resources:\t\t%d
 
 The dedicated apache server can be started with the command:
 sudo %s/%s start
@@ -256,9 +251,9 @@ sudo %s/%s start
         user,
         group,
         pw,
-        http_port,
-        https_port,
-        extra_port,
+        public_port,
+        cert_port,
+        sid_port,
         apache_dir,
         os.path.basename(apache_initd_script),
         )
