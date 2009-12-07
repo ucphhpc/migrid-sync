@@ -68,13 +68,14 @@ def get_job_id(configuration):
     does not exist.
     """
 
+    logger = configuration.logger
     filehandle = None
     job_id_counter_path = os.path.join(configuration.mig_system_files,
             'job_id_counter')
     try:
         filehandle = open(job_id_counter_path, 'r+')
     except IOError, ioe:
-        print 'No job id counter found - creating one (first run?)'
+        logger.error('No job id counter found - creating one (first run?)')
 
     if filehandle:
         try:
@@ -84,7 +85,7 @@ def get_job_id(configuration):
             filehandle.write(str(int(val) + 1))
             filehandle.close()
         except IOError, ioe:
-            print 'get_job_id: ioerror: %s' % ioe
+            logger.error('get_job_id: ioerror: %s' % ioe)
             return -1
     else:
         try:
@@ -97,8 +98,8 @@ def get_job_id(configuration):
             filehandle.write(str(int(val) + 1))
             filehandle.close()
         except IOError, ioe:
-            print 'get_job_id: Failed to create job id counter file!%s'\
-                 % ioe
+            logger.error('get_job_id: Failed to create job id counter file!%s'\
+                 % ioe)
             return -1
     return val
 
