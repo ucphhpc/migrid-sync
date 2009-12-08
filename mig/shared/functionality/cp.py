@@ -158,15 +158,16 @@ def main(client_id, user_arguments_dict):
             if not recursive(flags) and os.path.isdir(real_path):
                 output_objects.append({'object_type': 'warning', 'text'
                         : 'skipping directory src %s!' % relative_path})
-
+                continue
+            
             # If destination is a directory the src should be copied there
 
-            if os.path.isdir(real_dest):
-                real_target = real_dest + os.sep\
-                     + os.path.basename(real_path)
+            real_target = real_dest
+            if os.path.isdir(real_target):
+                real_target = os.path.join(real_target, os.path.basename(real_path))
             try:
-                if recursive(flags) and os.path.isdir(real_path):
-                    shutil.copytree(real_path, real_dest)
+                if os.path.isdir(real_path):
+                    shutil.copytree(real_path, real_target)
                 else:
                     shutil.copy(real_path, real_target)
             except Exception, exc:

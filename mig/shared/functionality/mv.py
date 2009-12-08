@@ -142,23 +142,38 @@ def main(client_id, user_arguments_dict):
         for real_path in match:
             relative_path = real_path.replace(base_dir, '')
             if verbose(flags):
-                if verbose(flags):
-                    output_objects.append({'object_type': 'file', 'name'
-                            : relative_path})
+                output_objects.append({'object_type': 'file', 'name'
+                                       : relative_path})
 
-            # Until recursive is supported src must be a file
-
-            if os.path.isdir(real_path):
+            if os.path.basename(real_path) == '.htaccess':
                 output_objects.append({'object_type': 'warning', 'text'
-                        : 'skipping directory src %s!' % relative_path})
+                        : "You're not allowed to move your .htaccess file!"
+                        })
+                status = returnvalues.CLIENT_ERROR
+                continue
+            if os.path.islink(real_path):
+                output_objects.append({'object_type': 'warning', 'text'
+                        : "You're not allowed to move entire VGrid dirs!"
+                        })
+                status = returnvalues.CLIENT_ERROR
+                continue
+            
+            # If destination is a directory the src should be moved in there
+            # Move with existing directory as target replaces the directory!
 
-            # If destination is a directory the src should be copied there
-
-            if os.path.isdir(real_dest):
-                real_dest = real_dest + os.sep\
-                     + os.path.basename(real_path)
+            real_target = real_dest
+            if os.path.isdir(real_target):
+                if os.path.samefile(real_target, real_path):
+                    output_objects.append({'object_type': 'warning', 'text'
+                                           : "Cannot move '%s' to a subdirectory of itself!" % \
+                                           relative_path
+                                           })
+                    status = returnvalues.CLIENT_ERROR
+                    continue
+                real_target = os.path.join(real_target, os.path.basename(real_path))
+            
             try:
-                shutil.move(real_path, real_dest)
+                shutil.move(real_path, real_target)
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s': %s" % (op_name,
