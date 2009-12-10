@@ -32,15 +32,15 @@ Contrary to the native pickle module this version does not separate
 file opening from pickle operations.
 """
 
-import cPickle as pickle
 
 from localfile import LocalFile
+from shared.serial import loads, dumps
 
 
 def dump(obj, path, protocol=0):
     """Dump a binary representation of obj to the file, path"""
 
-    contents = pickle.dumps(obj)
+    contents = dumps(obj)
     fd = LocalFile(path, 'w')
     fd.write(contents)
     fd.close()
@@ -49,7 +49,7 @@ def dump(obj, path, protocol=0):
 def dumps(obj, protocol=0):
     """Simple pass through to same pickle function"""
 
-    return pickle.dumps(obj)
+    return dumps(obj)
 
 
 def load(path):
@@ -59,12 +59,12 @@ def load(path):
     fd = LocalFile(path, 'r')
     contents = fd.read()
     fd.close()
-    return pickle.loads(contents)
+    return loads(contents)
 
 
 def loads(contents):
     """Simple pass through to same pickle function"""
 
-    return pickle.loads(contents)
+    return loads(contents)
 
 

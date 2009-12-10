@@ -32,9 +32,9 @@ import time
 import os
 import getopt
 import base64
-import pickle
 from getpass import getpass
 
+from shared.serial import load
 from shared.useradm import init_user_adm, create_user, \
     fill_distinguished_name, fill_user
 
@@ -142,8 +142,7 @@ if '__main__' == __name__:
             sys.exit(1)
     elif user_file:
         try:
-            user_fd = open(user_file, 'rb')
-            user_dict = pickle.load(user_fd)
+            user_dict = load(user_file)
         except Exception, err:
             print 'Error in user name extraction: %s' % err
             usage()

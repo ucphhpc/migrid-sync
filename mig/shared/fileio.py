@@ -29,10 +29,10 @@
 
 import time
 import os
-import cPickle as org_pickle
 import shutil
 import fcntl
 
+from shared.serial import dump, load
 
 def write_file(content, filename, logger):
     logger.debug('writing file: %s' % filename)
@@ -88,12 +88,9 @@ def filter_pickled_list(filename, changes):
     mapping existing list entries and the value to replace it with.
     """
 
-    filehandle = open(filename, 'r+')
-    saved_list = org_pickle.load(filehandle)
+    saved_list = load(filename)
     saved_list = [changes.get(entry, entry) for entry in saved_list]
-    filehandle.seek(0, 0)
-    org_pickle.dump(saved_list, filehandle)
-    filehandle.close()
+    dump(saved_list, filename)
     return saved_list
 
 
@@ -101,26 +98,20 @@ def filter_pickled_dict(filename, changes):
     """Filter pickled dictionary on disk with provided changes where changes is a
     dictionary mapping existing dictionary values to a value to replace it with"""
 
-    filehandle = open(filename, 'r+')
-    saved_dict = org_pickle.load(filehandle)
+    saved_dict = load(filename)
     for (key, val) in saved_dict.items():
         if val in changes.keys():
             saved_dict[key] = changes[val]
-    filehandle.seek(0, 0)
-    org_pickle.dump(saved_dict, filehandle)
-    filehandle.close()
+    dump(saved_dict, filename)
     return saved_dict
 
 
 def update_pickled_dict(filename, changes):
     """Update pickled dictionary on disk with provided changes"""
 
-    filehandle = open(filename, 'r+')
-    saved_dict = org_pickle.load(filehandle)
+    saved_dict = load(filename)
     saved_dict.update(changes)
-    filehandle.seek(0, 0)
-    org_pickle.dump(saved_dict, filehandle)
-    filehandle.close()
+    dump(saved_dict, filename)
     return saved_dict
 
 
@@ -143,9 +134,7 @@ def unpickle_and_change_status(filename, newstatus, logger):
 
 def unpickle(filename, logger):
     try:
-        filehandle = open(filename, 'r')
-        job_dict = org_pickle.load(filehandle)
-        filehandle.close()
+        job_dict = load(filename)
         logger.debug('%s was unpickled successfully' % filename)
         return job_dict
     except Exception, err:
@@ -156,9 +145,7 @@ def unpickle(filename, logger):
 
 def pickle(job_dict, filename, logger):
     try:
-        filehandle = open(filename, 'w')
-        org_pickle.dump(job_dict, filehandle, 0)
-        filehandle.close()
+        dump(job_dict, filename)
         logger.debug('pickle success: %s' % filename)
         return True
     except Exception, err:

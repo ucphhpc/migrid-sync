@@ -31,12 +31,12 @@ import os
 import time
 import tempfile
 import base64
-import pickle
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_email
+from shared.serial import dumps
 from shared.useradm import fill_distinguished_name
 
 
@@ -140,7 +140,7 @@ will be given access to the necessary resources anyway.
     req_path = None
     try:
         (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
-        os.write(os_fd, pickle.dumps(user_dict))
+        os.write(os_fd, dumps(user_dict))
         os.close(os_fd)
     except Exception, err:
         logger.error('Failed to write certificate request to %s: %s'

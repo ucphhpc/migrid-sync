@@ -29,13 +29,12 @@
 # Henrik Hoey Karlsen
 # Martin Rehr
 
-import pickle
-
-import shared.resconfkeywords as resconfkeywords
 import shared.parser as parser
 import shared.refunctions as refunctions
-from shared.vgrid import vgrid_is_resource
+import shared.resconfkeywords as resconfkeywords
 from shared.conf import get_configuration_object
+from shared.serial import dumps
+from shared.vgrid import vgrid_is_resource
 
 configuration = get_configuration_object()
 
@@ -214,7 +213,7 @@ def run(localfile_spaces, unique_resource_name, outfile='AUTOMATIC'
         
     try:
         fsock = open(filename, 'w')
-        st = pickle.dumps(conf, 0)
+        st = dumps(conf, 0)
         fsock.write(st)
         fsock.close()
     except Exception, err:

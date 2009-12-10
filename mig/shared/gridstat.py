@@ -29,10 +29,10 @@
 
 import os
 import fcntl
-import pickle as py_pickle
 import datetime
 
 from shared.fileio import pickle, unpickle, touch
+from shared.serial import pickle as py_pickle
 from shared.vgrid import default_vgrid
 
 

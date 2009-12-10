@@ -30,12 +30,12 @@
 import os
 import time
 import tempfile
-import pickle
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables
 from shared.notification import send_email
+from shared.serial import dumps
 from shared.useradm import db_name, distinguished_name_to_user, \
      create_user, fill_user
 
@@ -171,7 +171,7 @@ Please use the navigation menu to the left to proceed using it.
     req_path = None
     try:
         (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
-        os.write(os_fd, pickle.dumps(user_dict))
+        os.write(os_fd, dumps(user_dict))
         os.close(os_fd)
     except Exception, err:
         logger.error('Failed to write existing certificate request to %s: %s'

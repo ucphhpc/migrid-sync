@@ -989,8 +989,8 @@ def pickle_helper(ret_val, ret_msg, out_obj, protocol=None):
     """Generate output in requested pickle protocol format"""
 
     try:
-        import pickle
-        return pickle.dumps(out_obj, protocol)
+        from shared.serial import dumps
+        return dumps(out_obj, protocol)
     except Exception, exc:
         print 'pickle not available on server! Defaulting to .txt output. (%s)'\
              % exc

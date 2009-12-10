@@ -30,12 +30,12 @@
 import os
 import sys
 import shutil
-import pickle
 import fnmatch
 
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.fileio import filter_pickled_list, filter_pickled_dict
+from shared.serial import load, dump
 
 db_name = 'MiG-users.db'
 mrsl_template = '.default.mrsl'
@@ -145,18 +145,13 @@ def distinguished_name_to_user(distinguished_name):
 def load_user_db(db_path):
     """Load pickled user DB"""
 
-    db_fd = open(db_path, 'rb')
-    user_db = pickle.load(db_fd)
-    db_fd.close()
-    return user_db
+    return load(db_path)
 
 
 def save_user_db(user_db, db_path):
     """Save pickled user DB"""
 
-    db_fd = open(db_path, 'wb')
-    pickle.dump(user_db, db_fd)
-    db_fd.close()
+    dump(user_db, db_path)
 
 
 def delete_dir(path, verbose=False):
@@ -198,9 +193,7 @@ def create_user(
         print 'User ID: %s\n' % client_id
     if os.path.exists(db_path):
         try:
-            db_fd = open(db_path, 'rb')
-            user_db = pickle.load(db_fd)
-            db_fd.close()
+            user_db = load(db_path)
             if verbose:
                 print 'Loaded existing user DB from: %s' % db_path
         except Exception, err:
@@ -225,9 +218,7 @@ def create_user(
 
     try:
         user_db[client_id] = user
-        db_fd = open(db_path, 'wb')
-        pickle.dump(user_db, db_fd)
-        db_fd.close()
+        dump(user_db, db_path)
         if verbose:
             print 'User %s was successfully added/updated in user DB!'\
                   % client_id

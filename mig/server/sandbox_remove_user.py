@@ -25,14 +25,15 @@
 # -- END_HEADER ---
 #
 
-# TODO: move these admin scripts out of cgi-bin
 
 """This script removes a given sandbox user from the user list"""
 
 import sys
 import os
-import pickle
+
+from shared.serial import load, dump
 from shared.conf import get_configuration_object
+
 configuration = get_configuration_object()
 
 sandboxdb_file = configuration.sandbox_home + os.sep\
@@ -49,18 +50,14 @@ except:
 
 # Load the user file
 
-fd = open(sandboxdb_file, 'rb')
-userdb = pickle.load(fd)
-fd.close()
+userdb = load(sandboxdb_file)
 
 if userdb.has_key(username):
 
     # Open the user file in write-mode - this deletes the file!
 
-    fd = open(sandboxdb_file, 'wb')
     del userdb[username]
-    pickle.dump(userdb, fd)
-    fd.close()
+    pickle.dump(userdb, sandboxdb_file)
     print 'Username %s has now been deleted!' % username
 else:
     print 'Sorry, username does not exist: %s' % username

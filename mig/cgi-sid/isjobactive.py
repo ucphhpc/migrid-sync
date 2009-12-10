@@ -36,7 +36,6 @@ import os
 
 from shared.cgishared import init_cgiscript_possibly_with_cert
 from shared.resadm import get_sandbox_exe_stop_command
-from shared.fileio import unpickle
 
 # ## Main ###
 

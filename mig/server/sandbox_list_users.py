@@ -25,12 +25,14 @@
 # -- END_HEADER ---
 #
 
-""" List sandbox users and print total number of registered users """
+"""List sandbox users and print total number of registered users"""
 
-import pickle
 import os
 import sys
+
 from shared.conf import get_configuration_object
+from shared.serial import load
+
 configuration = get_configuration_object()
 
 sandboxdb_file = configuration.sandbox_home + os.sep\
@@ -42,9 +44,7 @@ if not os.path.isfile(sandboxdb_file):
     sys.exit(1)
 
 try:
-    fd = open(sandboxdb_file, 'rb')
-    userdb = pickle.load(fd)
-    fd.close()
+    userdb = load(sandboxdb_file)
 except Exception, exc:
     print 'Exception reading %s, (%s)' % (sandboxdb_file, exc)
 user_count = 0

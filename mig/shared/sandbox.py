@@ -28,14 +28,12 @@
 """Sandbox functions"""
 
 import os
-import pickle
 from binascii import hexlify
-
-# MiG imports
 
 from conf import get_configuration_object
 from shared.fileio import make_symlink
 from shared.resource import create_resource
+from shared.serial import load, dump
 from shared.vgrid import default_vgrid
 import shared.confparser as confparser
 
@@ -51,9 +49,7 @@ def load_sandbox_db(configuration=None):
         configuration = get_configuration_object()
     sandbox_db_path = os.path.join(configuration.sandbox_home,
                                    sandbox_db_name)
-    db_fd = open(sandbox_db_path, 'rb')
-    sandbox_db = pickle.load(db_fd)
-    db_fd.close()
+    sandbox_db = load(sandbox_db_path)
     return sandbox_db
 
 
@@ -66,9 +62,7 @@ def save_sandbox_db(sandbox_db, configuration=None):
         configuration = get_configuration_object()
     sandbox_db_path = os.path.join(configuration.sandbox_home,
                                    sandbox_db_name)
-    db_fd = open(sandbox_db_path, 'wb')
-    pickle.dump(sandbox_db, db_fd)
-    db_fd.close()
+    dump(sandbox_db, sandbox_db_path)
 
 
 def get_resource_name(sandboxkey, logger):

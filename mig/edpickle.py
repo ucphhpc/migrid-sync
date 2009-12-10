@@ -24,7 +24,9 @@
 
 import os
 import sys
-import pickle
+
+from shared.serial import pickle
+
 
 if len(sys.argv) < 2:
     print 'Usage: %s PATH' % sys.argv[0]
