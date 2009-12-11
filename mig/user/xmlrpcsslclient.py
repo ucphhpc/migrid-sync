@@ -372,8 +372,6 @@ True
     
     (inlist, retval) = server.textarea({"jobname_0_0_0":"abc", "fileupload_0_0_0filename":"newfile.txt", "submitmrsl_0":["OFF"], "fileupload_0_0_0":["%s" % mrsl]})
     print inlist
-    # TMP!
-    sys.exit(0)
 
     # print "DEBUG: %s\n%s" % (inlist, retval)
 

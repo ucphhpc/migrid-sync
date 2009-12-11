@@ -27,9 +27,7 @@
 
 """Pickle based serializing"""
 
-# TODO: enable cPickle again if segfaults continue on production server
-#import cPickle as pickle
-import pickle
+import cPickle as pickle
 
 def dumps(data, protocol=0):
     """Dump data to serialized string"""
