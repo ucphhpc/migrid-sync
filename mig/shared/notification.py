@@ -30,6 +30,7 @@
 import os
 import smtplib
 import threading
+from urllib import quote
 
 from shared.job import output_dir
 from shared.settings import load_settings
@@ -132,13 +133,13 @@ Replies to this message will not be read!!!
         if request_type == 'member':
             txt += \
                 '%s/cgi-bin/addvgridmember.py?vgrid_name=%s&cert_id=%s'\
-                 % (configuration.migserver_https_cert_url, vgrid_name,
-                    from_cert)
+                 % (configuration.migserver_https_cert_url, quote(vgrid_name),
+                    quote(from_cert))
         elif request_type == 'owner':
             txt += \
                 '%s/cgi-bin/addvgridowner.py?vgrid_name=%s&cert_id=%s'\
-                 % (configuration.migserver_https_cert_url, vgrid_name,
-                    from_cert)
+                 % (configuration.migserver_https_cert_url, quote(vgrid_name),
+                    quote(from_cert))
         else:
             txt += 'INVALID REQUEST TYPE: %s' % request_type
 
