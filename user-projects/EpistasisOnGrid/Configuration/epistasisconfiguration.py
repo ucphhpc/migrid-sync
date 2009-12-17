@@ -9,7 +9,7 @@ r_files = ["EpiCRnew_R_edit.R","DistrPost07_R_edit.R","EpiLW.R"]
 
 program_files = ["RfilesAndscripts/EpiMain.R", "RfilesAndscripts/EpiCRnew_R_edit.R","RfilesAndscripts/EpiLW.R","RfilesAndscripts/DistrPost07_R_edit.R", "RfilesAndscripts/epistasis.py"]
 
-monitor_polling_frequency = 5
+monitor_polling_frequency = 20
 gene_first_index = 5
 gene_last_index = 1005
 

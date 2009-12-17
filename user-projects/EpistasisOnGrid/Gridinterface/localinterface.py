@@ -1,17 +1,13 @@
-#userMiGDir = "mol_server_localtest"
-#fakeMiGuserDir" #"/home/benja/mig/wwwuser/Benjamin_Richardt_Thomas_Sedoc/"
-#mrsldir = "mol_server_localtest/mrsldir"
-#localFakeOutputdir = "mol_server_localtest/createscript"
 certName = "Benjamin_Richardt_Thomas_Sedoc"
 jobstatusDir = ""#configuration.mrsl_files_dir+"/"+certName+"/"
 #import configuration as config
 import shutil
-import os
+import subprocess
 import time
 import tarfile
-# creates a MRSL script and submits it as MiG job. Returns the job id assigned by MiG.
-#def createJob(exeCommands, inputfiles, executables, outputfile):
-def create_job(exec_commands, input_files, executables, local_working_dir, mig_working_dir, output_files, static_files=[], vgrid="Generic", resource_specs={}, args=[]):
+import os
+
+def create_job(exec_commands, input_files, executables, local_working_dir, mig_working_dir, output_files, cached_files=[], resource_specs={}, args=[], name=""):
     #import createMRSL 
     import time
     #import tarfile
@@ -22,38 +18,50 @@ def create_job(exec_commands, input_files, executables, local_working_dir, mig_w
     #mrslfile = createMRSL.generateMRSL(exeCommands,inputfiles, outputfile, mrsldir)
     
     # make a fake id from the mrslfile
-    job_id = str(time.time()) #mrslfile.split("/")[-1].split(".")[0]
-    print job_id
+    if name == "":
+        timestamp = str(int(time.time()*100))
+        name = "submit_file_"+timestamp
+    mrsl_filename = name+".mRSL"
+    job_id = name#str(time.time()) #mrslfile.split("/")[-1].split(".")[0]
+    #print job_id
     # submit 
     #copy files to the user directory where MRSL file operates
     # for file in inputfiles:
     #     filename = file.split("/")[-1]
     #     #print filename
     #     shutil.copy(file,userMiGDir+"/"+filename)
-    print input_files
+    #print input_files
     #copy_files_to_working_dir(input_files, local_working_dir)
     
-    if args !=[]:
-        arg_files = write_args_to_files(args, local_working_dir)
-        input_files.extend(arg_files)
+    #if args !=[]:
+    #    arg_files = write_args_to_files(args, local_working_dir)
+     #   input_files.extend(arg_files)
         
     
         # hack to simulate 
-    olddir = "" 
+    #olddir = "" 
+    olddir = os.getcwd()
+    os.chdir(local_working_dir)
     for cmd in exec_commands:
-        if cmd.startswith( "cd"):
-            olddir = os.getcwd()
+        if cmd.startswith( "cd"): # necessary to simulate change dir locally, since popen does not change python's "current dir" state. cd should propably be avoid if possible.
             os.chdir(cmd[3:])
-            print os.getcwd()
-            chdir = True
+         #   print os.getcwd()
+          #  chdir = True
         else:
-            proc = os.popen(cmd, "w")
+            proc = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE) # takes a list cmdline args
+            while True:
+                line = proc.stdout.readline()
+                if not line:
+                    break
+                print line,
+
+            #print str(proc.stdout.read())
             proc.close()
     
     if olddir != "": # restore to initial working dir
         os.chdir(olddir)
 
-#    clean_up(local_working_dir,exceptions_list=output_files)
+    #clean_up(local_working_dir,exceptions_list=output_files)
     return job_id
 
 def cancel_job(job_id):
@@ -69,11 +77,13 @@ def get_status(job_ids):
         status_list.append(job_status)
     return status_list
 
-def get_output(filename, destination_dir):
-    copyfile = destination_dir+filename.split("/")[-1]
-    if filename != copyfile:
-        shutil.copy(filename, copyfile)
-    return copyfile
+def get_output(filepath, destination_file):
+    #copyfile = destination_file+filepath.split("/")[-1]
+    print filepath, destination_file
+    if filepath != destination_file:
+        print "copying result: "+filepath
+        shutil.copy(filepath, destination_file)
+    return destination_file
 
 #def getOutput(filename):
 #    return userMiGDir+"/"+filename
@@ -166,8 +176,10 @@ def make_dir_tree(path):
 
 
 def mk_dir(path):
-    if not os.path.exists(path):
-        os.mkdir(path)
+    "do nothing" # fake mig operation
+
+#if not os.path.exists(path):
+      #  os.mkdir(path)
 #whatever
     #print "(fake) make mig dir : "+path 
 
@@ -242,7 +254,7 @@ def create_archive(input_files, temp_dir, remote_dir):
     # delete the locally staged files
     #cleanUpLocally([tarpath])
 
-def upload_files(input_files, dest_dir, is_archive=True):
+def upload_files(input_files, dest_dir, is_archive=True, recursive=True):
         #ScriptsWrapper.makeDir(remoteDir, recursive=True)
     #makeDirTree(remoteDir)
     #timestamp = str(time.time())
@@ -254,7 +266,7 @@ def upload_files(input_files, dest_dir, is_archive=True):
     #    filename = f.split("/")[-1]
     #    tar.add(f, remoteDir+filename) 
     #tar.close()
-    print "uploading"
+    print "do nothing in local execution"
     print input_files
     
     #outStrs = ScriptsWrapper.put(tarpath, tarName)

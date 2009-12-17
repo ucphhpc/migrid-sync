@@ -179,7 +179,7 @@ class GridEpistasis:
             
         os.mkdir(output_dir)
         self.mig_session = \
-            migsession.MigSession(output_dir, self.logfile, local_mode, self.debug_mode)
+            migsession.Migsession(output_dir, self.logfile, local_mode, self.debug_mode)
         self.mig_session.create_mig_jobs(epi_jobs, configuration.Epistasis_working_dir)
         self.epistasis_jobs.extend(epi_jobs)
         self.all_jobs.extend(epi_jobs)

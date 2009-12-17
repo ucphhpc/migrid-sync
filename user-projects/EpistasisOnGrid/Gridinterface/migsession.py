@@ -5,7 +5,7 @@ import shutil
 from mylogger import log
 
 
-class MigSession:
+class Migsession:
     def __init__(self, local_project_results_dir, logfile, local=False, debugging=False):
         self.debug_mode = debugging
         if local:
@@ -42,8 +42,8 @@ class MigSession:
         #print input_files
         job["commands"].insert(0,"cd "+job["job_dir"])
         job["id"]= self.mig.create_job(exec_commands=job["commands"], input_files=job["input_files"], 
-                                      executables=[], local_working_dir=job["job_dir"], mig_working_dir=job["job_dir"], 
-                                      output_files=job["output_files"], static_files=[], 
+                                      executables=[], local_working_dir=".", mig_working_dir=".", 
+                                      output_files=job["output_files"], cached_files=[], 
                                       resource_specs=job["resource_specs"])
         job["started"] = self.get_time()
         log(self.logfile,"Job created. Id :"+job["id"])
@@ -127,7 +127,7 @@ class MigSession:
         files = []
         for f in job["output_files"]:
             output_filename =  job["job_dir"]+f
-            outputfile = self.mig.get_output(output_filename, job["job_dir"])
+            outputfile = self.mig.get_output(output_filename, job["job_dir"]+f)
             log(self.logfile, "Retrieved output file for job "+job["id"],self.debug_mode)
               #print "opening ", destDir+filepath, "to", destDir
             files.append(outputfile)
@@ -241,7 +241,7 @@ class MigSession:
         
 
     def check_connection(self):
-        success, func = self.mig.command_test()
+        success = self.mig.command_test()
         if not success:
             raise Exception("MiG connection error. Could not execute remote test command :"+str(func)+". You are propably not connected to MiG.")
     
