@@ -31,6 +31,7 @@ import re
 import types
 import os
 import base64
+import StringIO
 import tempfile
 
 from shared.rekeywords import get_keywords_dict
@@ -210,8 +211,16 @@ def read_block(input_file):
 
 
 def parse(mrsl_file):
+    """Parse an mRSL file or file-like object into a list of lists
+    on the form [[KEYWORD, [VALUE, VALUE, ... ]], ... ] .
+    """
+
     data = []
-    input_file = open(mrsl_file, 'rb', 0)
+    if hasattr(mrsl_file, 'readline'):
+        input_file = mrsl_file
+    else:
+        input_file = open(mrsl_file, 'rb', 0)
+
     while True:
 
         # read a line
@@ -240,6 +249,12 @@ def parse(mrsl_file):
 
     input_file.close()
     return data
+
+
+def parse_lines(mrsl_text):
+    """Wrap lines in IO object to allow parsing from list"""
+    mrsl_buffer = StringIO.StringIO(mrsl_text)
+    return parse(mrsl_buffer)
 
 
 def print_type_error(

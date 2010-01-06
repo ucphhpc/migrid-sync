@@ -33,6 +33,7 @@ import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.mrslkeywords import get_job_specs
+from shared.parser import parse_lines
 from shared.refunctions import list_runtime_environments
 from shared.settings import load_settings
 from shared.useradm import mrsl_template, get_default_mrsl, client_id_dir
@@ -137,6 +138,10 @@ Actual examples for inspiration:
 """
                               })
         show_fields = get_job_specs(configuration)
+        try:
+            parsed_mrsl = dict(parse_lines(default_mrsl))
+        except:
+            parsed_mrsl = {}
 
         # Find allowed VGrids and Runtimeenvironments and add them to
         # configuration object for automated choice handling
@@ -147,10 +152,10 @@ Actual examples for inspiration:
         (re_status, allowed_run_envs) = list_runtime_environments(configuration)
         allowed_run_envs.sort()
         configuration.runtimeenvironments = allowed_run_envs
-        extra_selects = 3
         field_size = 30
         area_cols = 80
         area_rows = 5
+
         for (field, spec) in show_fields:
             title = spec['Title']
             if show_description:
@@ -158,8 +163,15 @@ Actual examples for inspiration:
             else:
                 description = ''
             field_type = spec['Type']
-            default = spec['Value']
-            # TODO: override with default_mrsl
+            # Use saved value and fall back to default if it is missing
+            saved = parsed_mrsl.get('::%s::' % field, None)
+            if saved:
+                if not spec['Type'].startswith('multiple'):
+                    default = saved[0]
+                else:
+                    default = saved
+            else:
+                default = spec['Value']
             if 'invisible' == spec['Editor']:
                 continue
             if 'custom' == spec['Editor']:
@@ -169,6 +181,7 @@ Actual examples for inspiration:
 <b>%s:</b>&nbsp;<a href='docs.py?show=job#%s'>help</a><br>
 %s""" % (title, field, description)
                                    })
+            
             if 'input' == spec['Editor']:
                 if field_type.startswith('multiple'):
                     output_objects.append({'object_type': 'html_form', 'text'
@@ -187,21 +200,20 @@ Actual examples for inspiration:
                                             field, spec)
                 res_value = default
                 if field_type.startswith('multiple'):
-                    select_count = extra_selects
+                    multi_select = 'multiple'
                 else:
-                    select_count = 1
-                for i in range(select_count):
-                    value_select = ''
-                    value_select += "<select name='%s'>\n" % field
-                    for name in choices:
-                        selected = ''
-                        if res_value == name:
-                            selected = 'selected'
-                        value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-                    value_select += """</select><br>\n"""    
-                    output_objects.append({'object_type': 'html_form', 'text'
-                                           : value_select
-                                           })
+                    multi_select = ''
+                value_select = ''
+                value_select += "<select %s name='%s'>\n" % (multi_select, field)
+                for name in choices:
+                    selected = ''
+                    if str(res_value) == str(name) or multi_select and str(name) in res_value:
+                        selected = 'selected'
+                    value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
+                value_select += """</select><br>\n"""    
+                output_objects.append({'object_type': 'html_form', 'text'
+                                       : value_select
+                                       })
             output_objects.append({'object_type': 'html_form', 'text': "<br>"})
 
         output_objects.append({'object_type': 'html_form', 'text'

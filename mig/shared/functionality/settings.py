@@ -136,7 +136,7 @@ def main(client_id, user_arguments_dict):
     html += \
         """
     <tr><td>
-    <input type="submit" value="Save">
+    <input type="submit" value="Save Settings">
     </form>
     </td></tr>
     </table>
