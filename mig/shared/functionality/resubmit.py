@@ -86,6 +86,7 @@ def main(client_id, user_arguments_dict):
                         client_dir)) + os.sep
 
     filelist = []
+    keywords_dict = mrslkeywords.get_keywords_dict(configuration)
     for pattern in patterns:
         pattern = pattern.strip()
 
@@ -148,8 +149,8 @@ def main(client_id, user_arguments_dict):
 
         # filename = configuration.mrsl_files_dir + "/" + client_id + "/" + job_id + ".mRSL"
 
-        dict = unpickle(filepath, logger)
-        if not dict:
+        mrsl_dict = unpickle(filepath, logger)
+        if not mrsl_dict:
 
             # o.out("You can only resubmit your own jobs. Please verify that you submitted the job with job id '%s' (Could not unpickle mRSL file)" % job_id, filepath)
             # o.reply_and_exit(o.CLIENT_ERROR)
@@ -161,7 +162,7 @@ def main(client_id, user_arguments_dict):
             resubmitobjs.append(resubmitobj)
             continue
 
-        resubmit_items = mrslkeywords.get_keywords_dict(configuration).keys()
+        resubmit_items = keywords_dict.keys()
 
         # loop selected keywords and create mRSL string
 
@@ -169,13 +170,17 @@ def main(client_id, user_arguments_dict):
 
         for dict_elem in resubmit_items:
             value = ''
-            if type(dict[dict_elem]) == type([]):
-                for elem in dict[dict_elem]:
+            if keywords_dict[dict_elem]['Type'].startswith('multiplekeyvalues'):
+                for (elem_key, elem_val) in mrsl_dict[dict_elem]:
+                    if elem_key:
+                        value += '%s=%s\n' % (str(elem_key).strip(), str(elem_val).strip())
+            elif keywords_dict[dict_elem]['Type'].startswith('multiple'):
+                for elem in mrsl_dict[dict_elem]:
                     if elem:
-                        value += '%s\n' % elem.rstrip()
+                        value += '%s\n' % str(elem).rstrip()
             else:
-                if str(dict[dict_elem]):
-                    value += '%s\n' % str(dict[dict_elem]).rstrip()
+                if str(mrsl_dict[dict_elem]):
+                    value += '%s\n' % str(mrsl_dict[dict_elem]).rstrip()
 
             # Only insert keywords with an associated value
 
