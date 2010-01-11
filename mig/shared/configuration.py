@@ -329,12 +329,11 @@ class Configuration:
             self.javabin_home = config.get('GLOBAL', 'javabin_home')
             self.smtp_server = config.get('GLOBAL', 'smtp_server')
             self.wwwpublic = config.get('GLOBAL', 'wwwpublic')
-            self.architectures = config.get('GLOBAL', 'architectures'
-                    ).split(' ')
+            self.architectures = config.get('GLOBAL', 'architectures').split()
             self.scriptlanguages = config.get('GLOBAL',
-                    'scriptlanguages').split(' ')
-            self.jobtypes = config.get('GLOBAL', 'jobtypes').split(' ')
-            self.lrmstypes = config.get('GLOBAL', 'lrmstypes').split(' ')
+                                              'scriptlanguages').split()
+            self.jobtypes = config.get('GLOBAL', 'jobtypes').split()
+            self.lrmstypes = config.get('GLOBAL', 'lrmstypes').split()
             self.sessid_to_mrsl_link_home = config.get('GLOBAL',
                     'sessid_to_mrsl_link_home')
             self.mig_system_files = config.get('GLOBAL',
@@ -365,11 +364,9 @@ class Configuration:
             self.sleep_update_totals = config.get('MONITOR',
                     'sleep_update_totals')
             self.slackperiod = config.get('MONITOR', 'slackperiod')
-            self.language = config.get('SETTINGS', 'language').split(' '
-                    )
-            self.submitui = config.get('SETTINGS', 'submitui').split(' '
-                    )
-            self.filesui = config.get('SETTINGS', 'filesui').split(' ')
+            self.language = config.get('SETTINGS', 'language').split()
+            self.submitui = config.get('SETTINGS', 'submitui').split()
+            self.filesui = config.get('SETTINGS', 'filesui').split()
         except Exception, err:
 
             # logger.info("done reading settings from config")
@@ -404,7 +401,7 @@ class Configuration:
             self.smtp_sender = 'MiG Server <%s@%s>'\
                  % (os.environ.get('USER', 'mig'), self.server_fqdn)
         if config.has_option('GLOBAL', 'storage_protocols'):
-            self.storage_protocols = config.get('GLOBAL', 'storage_protocols').split(' ')
+            self.storage_protocols = config.get('GLOBAL', 'storage_protocols').split()
 
         # logger.debug('starting scheduler options')
 
@@ -440,6 +437,17 @@ class Configuration:
             self.site_user_redirect = config.get('SITE', 'user_redirect')
         else:
             self.site_user_redirect = '/cert_redirect'
+        if config.has_option('SITE', 'default_menu'):
+            self.site_default_menu = config.get('SITE', 'default_menu').split()
+        else:
+            self.site_default_menu = ['dashboard', 'submitjob', 'files',
+                                      'jobs', 'vgrids', 'resources',
+                                      'downloads', 'runtimeenvs',
+                                      'settings', 'shell']
+        if config.has_option('SITE', 'user_menu'):
+            self.site_user_menu = config.get('SITE', 'user_menu').split()
+        else:
+            self.site_user_menu = []
         if config.has_option('SITE', 'default_css'):
             self.site_default_css = config.get('SITE', 'default_css')
         else:

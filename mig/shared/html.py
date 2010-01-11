@@ -29,6 +29,27 @@ import os
 import sys
 
 
+# Define all possible menu items
+menu_items = {}
+menu_items['dashboard'] = {'class': 'dashboard', 'url': 'dashboard.py',
+                           'title': 'Dashboard'}
+menu_items['submitjob'] = {'class': 'submitjob', 'url': 'submitjob.py',
+                           'title': 'Submit Job'}
+menu_items['files'] = {'class': 'files', 'url': 'ls.py', 'title': 'Files'}
+menu_items['jobs'] = {'class': 'jobs', 'url': 'managejobs.py', 'title': 'Jobs'}
+menu_items['vgrids'] = {'class': 'vgrids', 'url': 'vgridadmin.py',
+                        'title': 'VGrids'}
+menu_items['resources'] = {'class': 'resources', 'url': 'resadmin.py',
+                           'title': 'Resources'}
+menu_items['downloads'] = {'class': 'downloads', 'url': 'downloads.py',
+                           'title': 'Downloads'}
+menu_items['runtimeenvs'] = {'class': 'runtimeenvs', 'url': 'redb.py',
+                             'title': 'Runtime Envs'}
+menu_items['settings'] = {'class': 'settings', 'url': 'settings.py',
+                          'title': 'Settings'}
+menu_items['shell'] = {'class': 'shell', 'url': 'shell.py', 'title': 'Shell'}
+
+
 def html_print(formatted_text, html=True):
     print html_add(formatted_text, html)
 
@@ -43,23 +64,30 @@ def html_add(formatted_text, html=True):
         return ''
 
 
-def render_menu(configuration, menu_class='navmenu', menu_items='',
+def render_menu(configuration, menu_class='navmenu', 
                 current_element='Unknown'):
+    """Render the menu contents using configuration"""
+
+    raw_order = configuration.site_default_menu + configuration.site_user_menu
+    menu_order = []
+    # Remove duplicates
+    for name in raw_order:
+        if not name in menu_order:
+            menu_order.append(name)
 
     menu_lines = '<div class="%s">\n' % menu_class
     menu_lines += ' <ul>\n'
-
-    for menu_line in menu_items:
+    for name in menu_order:
+        spec = menu_items.get(name, None)
+        if not spec:
+            menu_lines += '   <!-- No such menu item: "%s" !!! -->\n' % name
+            continue
         selected = ''
-
-        attr = ''
-        if menu_line.has_key('attr'):
-            attr = menu_line['attr']
-        if menu_line['url'].find(current_element) > -1:
+        if spec['url'].find(current_element) > -1:
             selected = ' class="selected" ' + current_element
         menu_lines += '   <li %s class="%s"><a href="%s" %s>%s</a></li>\n'\
-             % (attr, menu_line['class'], menu_line['url'], selected,
-                menu_line['title'])
+             % (spec.get('attr', ''), spec['class'], spec['url'], selected,
+                spec['title'])
 
     menu_lines += ' </ul>\n'
     menu_lines += '</div>\n'
@@ -83,27 +111,7 @@ def get_cgi_html_header(
     menu_lines = ''
     if menu:
         current_page = os.path.basename(sys.argv[0]).replace('.py', '')
-        menu_items = (
-            {'class': 'dashboard', 'url': 'dashboard.py', 'title'
-             : 'Dashboard'},
-            {'class': 'submitjob', 'url': 'submitjob.py', 'title'
-             : 'Submit Job'},
-            {'class': 'files', 'url': 'ls.py', 'title': 'Files'},
-            {'class': 'jobs', 'url': 'managejobs.py', 'title': 'Jobs'},
-            {'class': 'vgrids', 'url': 'vgridadmin.py', 'title'
-             : 'VGrids'},
-            {'class': 'resources', 'url': 'resadmin.py', 'title'
-             : 'Resources'},
-            {'class': 'downloads', 'url': 'downloads.py', 'title'
-             : 'Downloads'},
-            {'class': 'runtimeenvs', 'url': 'redb.py', 'title'
-             : 'Runtime Envs'},
-            {'class': 'settings', 'url': 'settings.py', 'title'
-             : 'Settings'},
-            {'class': 'shell', 'url': 'shell.py', 'title': 'Shell'},
-            )
-
-        menu_lines = render_menu(configuration, 'navmenu', menu_items, current_page)
+        menu_lines = render_menu(configuration, 'navmenu', current_page)
 
     return '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
