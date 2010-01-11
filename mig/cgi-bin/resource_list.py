@@ -35,7 +35,7 @@ import os
 import sys
 import time
 
-from shared.html import get_cgi_html_header
+from shared.html import get_cgi_html_header, get_cgi_html_footer
 from shared.conf import get_configuration_object
 
 # ## Main ###
@@ -55,7 +55,7 @@ print '''Content-type: text/html
 
 form = cgi.FieldStorage()
 
-print get_cgi_html_header('MiG Resource administration',
+print get_cgi_html_header(configuration, 'MiG Resource administration',
                           'Welcome to the MiG resource administration.')
 
 dir_list = os.listdir(configuration.resource_home)
@@ -71,7 +71,6 @@ print """	<hr>
 	    <input type="hidden" name="new_resource" value="true">
 	    <input type="submit" name="New" value="New">
 	    </form>
-	    </body>
-	    </html>
 	    """
+print get_cgi_html_footer(configuration, '')
 

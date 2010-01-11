@@ -76,7 +76,7 @@ def create_monitor(vgrid_name):
         'now': now,
         }
 
-    html = get_cgi_html_header(
+    html = get_cgi_html_header(configuration,
         'MiG Monitor, VGrid %(vgrid_name)s' % html_vars,
         '',
         True,
@@ -450,7 +450,7 @@ A total of <b>'''\
 """
     html += \
         '<!-- begin raw footer: this line is used by showvgridmonitor -->'
-    html += get_cgi_html_footer('')
+    html += get_cgi_html_footer(configuration, '')
 
     file_handle = open(html_file, 'w')
     file_handle.write(html)

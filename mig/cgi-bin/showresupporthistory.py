@@ -56,8 +56,10 @@ printhtml = False
 if htmlquery == 'true' or not htmlquery:
     printhtml = True
 
-o.client(get_cgi_html_header('Runtime environment support history',
-         'Runtime environment support', printhtml, scripts=''))
+o.client(get_cgi_html_header(configuration,
+                             'Runtime environment support history',
+                             'Runtime environment support', printhtml,
+                             scripts=''))
 
 if re_name == '':
     o.out('Please specify the name of the runtime environment (re_name)!'
@@ -170,6 +172,7 @@ else:
                 o.out('Exception looping testprocedure jobs!', ex)
                 o.reply_and_exit(o.ERROR)
 
-o.client(get_cgi_html_footer("<p><a href='resadmin.py'>Back to resource administration page.</a>"
-         , printhtml))
+o.client(get_cgi_html_footer(configuration,
+                             "<p><a href='resadmin.py'>Back to resource administration page.</a>",
+                             printhtml))
 o.reply_and_exit(o.OK)

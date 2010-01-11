@@ -43,7 +43,7 @@ def html_add(formatted_text, html=True):
         return ''
 
 
-def render_menu(menu_class='navmenu', menu_items='',
+def render_menu(configuration, menu_class='navmenu', menu_items='',
                 current_element='Unknown'):
 
     menu_lines = '<div class="%s">\n' % menu_class
@@ -68,17 +68,13 @@ def render_menu(menu_class='navmenu', menu_items='',
 
 
 def get_cgi_html_header(
+    configuration,
     title,
     header,
     html=True,
     scripts='',
     bodyfunctions='',
     menu=True,
-    defaultcss="/images/site.css",
-    usercss="/cert_redirect/.default.css",
-    favicon="/images/favicon.ico",
-    logoimage="/images/site-logo.png",
-    logotitle="Minimum intrusion Grid",
     ):
     """Return the html tags to mark the beginning of a page."""
 
@@ -86,7 +82,6 @@ def get_cgi_html_header(
         return ''
     menu_lines = ''
     if menu:
-
         current_page = os.path.basename(sys.argv[0]).replace('.py', '')
         menu_items = (
             {'class': 'dashboard', 'url': 'dashboard.py', 'title'
@@ -108,7 +103,7 @@ def get_cgi_html_header(
             {'class': 'shell', 'url': 'shell.py', 'title': 'Shell'},
             )
 
-        menu_lines = render_menu('navmenu', menu_items, current_page)
+        menu_lines = render_menu(configuration, 'navmenu', menu_items, current_page)
 
     return '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -137,12 +132,13 @@ def get_cgi_html_header(
 </div>
 <div id="content">
     '''\
-         % (defaultcss, usercss, favicon, title, scripts,
-            bodyfunctions, logoimage, logotitle, menu_lines, header)
+         % (configuration.site_default_css, configuration.site_user_css,
+            configuration.site_fav_icon, title, scripts,
+            bodyfunctions, configuration.site_logo_image,
+            configuration.site_logo_text, menu_lines, header)
 
 
-def get_cgi_html_footer(footer='', html=True, creditsimage="/images/copyright.png",
-                        credits='2009, <a href="http://www.migrid.org">The MiG Project</a>'):
+def get_cgi_html_footer(configuration, footer='', html=True):
     """Return the html tags to mark the end of a page. If a footer string
     is supplied it is inserted at the bottom of the page.
     """
@@ -163,32 +159,12 @@ def get_cgi_html_footer(footer='', html=True, creditsimage="/images/copyright.pn
 </div>
 </body>
 </html>
-''' % (creditsimage, credits)
+''' % (configuration.site_credits_image, configuration.site_credits_text)
     return out
 
 
-# Wrappers used during transition phase - replace with
-# get_cgi_html_X contents when cgi-scripts all use add_cgi_html_X
-# instead of if printhtml: print get_cgi_html_X
-
-
-def add_cgi_html_header(
-    title,
-    header,
-    html=True,
-    scripts='',
-    ):
-
-    if html:
-        print get_cgi_html_header(title, header, html, scripts)
-
-
-def add_cgi_html_footer(footer, html=True):
-    if html:
-        print get_cgi_html_footer(footer, html)
-
-
 def html_encode(raw_string):
+    """Encode some common reserved html characters"""
     result = raw_string.replace("'", '&#039;')
     result = result.replace('"', '&#034;')
     return result

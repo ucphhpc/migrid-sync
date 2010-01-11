@@ -74,7 +74,7 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg, output_ob
         start_entry['headers'] = default_headers
     headers = start_entry['headers']
 
-    output = format_output(ret_code, ret_msg, output_objs, output_format)
+    output = format_output(configuration, ret_code, ret_msg, output_objs, output_format)
     if not output:
 
         # Error occured during output formatting

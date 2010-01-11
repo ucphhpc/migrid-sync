@@ -67,7 +67,7 @@ def resource_format(ret_val, ret_msg, out_obj):
     return txt
 
 
-def txt_format(ret_val, ret_msg, out_obj):
+def txt_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in txt format"""
 
     lines = []
@@ -336,7 +336,7 @@ def html_table_if_have_keys(dictionary, keywordlist):
     return outputstring
 
 
-def html_format(ret_val, ret_msg, out_obj):
+def html_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in html format"""
 
     lines = []
@@ -361,33 +361,13 @@ def html_format(ret_val, ret_msg, out_obj):
             include_menu = True
             if i.has_key('skipmenu'):
                 include_menu = not i['skipmenu']
-            defaultcss = ''
-            if i.has_key('defaultcss'):
-                defaultcss = i['defaultcss']
-            usercss = ''
-            if i.has_key('usercss'):
-                usercss = i['usercss']
-            favicon = ''
-            if i.has_key('favicon'):
-                favicon = i['favicon']
-            logoimage = ''
-            if i.has_key('logoimage'):
-                logoimage = i['logoimage']
-            logotitle = ''
-            if i.has_key('logotitle'):
-                logotitle = i['logotitle']
             lines.append(get_cgi_html_header(
-                html_escape(i['text']),
+                configuration, html_escape(i['text']),
                 '',
                 True,
                 javascript,
                 bodyfunctions,
                 include_menu,
-                defaultcss=defaultcss,
-                usercss=usercss,
-                favicon=favicon,
-                logoimage=logoimage,
-                logotitle=logotitle,
                 ))
         elif i['object_type'] == 'text':
             lines.append('<p>%s</p>' % html_escape(i['text']))
@@ -962,18 +942,18 @@ Exit code: %s Description: %s<br>
 """\
          % (ret_val, ret_msg)
 
-    lines.append(get_cgi_html_footer(footer))
+    lines.append(get_cgi_html_footer(configuration, footer))
     return '\n'.join(lines)
 
 
-# def xml_format(ret_val, ret_msg, out_obj):
+# def xml_format(configuration, ret_val, ret_msg, out_obj):
 #    """Generate output in xml format"""
 #
 #    print "xml format not implemented yet"
 #    return True
 
 
-def soap_format(ret_val, ret_msg, out_obj):
+def soap_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in soap format"""
 
     try:
@@ -985,7 +965,7 @@ def soap_format(ret_val, ret_msg, out_obj):
         return None
 
 
-def pickle_helper(ret_val, ret_msg, out_obj, protocol=None):
+def pickle_helper(configuration, ret_val, ret_msg, out_obj, protocol=None):
     """Generate output in requested pickle protocol format"""
 
     try:
@@ -996,23 +976,23 @@ def pickle_helper(ret_val, ret_msg, out_obj, protocol=None):
              % exc
         return None
 
-def pickle_format(ret_val, ret_msg, out_obj):
+def pickle_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in default pickle protocol format"""
 
     return pickle_helper(ret_val, ret_msg, out_obj, protocol=0)
 
-def pickle1_format(ret_val, ret_msg, out_obj):
+def pickle1_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in pickle protocol 1 format"""
 
     return pickle_helper(ret_val, ret_msg, out_obj, protocol=1)
 
-def pickle2_format(ret_val, ret_msg, out_obj):
+def pickle2_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in default pickle protocol 2 format"""
 
     return pickle_helper(ret_val, ret_msg, out_obj, protocol=2)
 
 
-def yaml_format(ret_val, ret_msg, out_obj):
+def yaml_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in yaml format"""
 
     try:
@@ -1024,7 +1004,7 @@ def yaml_format(ret_val, ret_msg, out_obj):
         return None
 
 
-def xmlrpc_format(ret_val, ret_msg, out_obj):
+def xmlrpc_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in xmlrpc format"""
 
     try:
@@ -1043,7 +1023,7 @@ def xmlrpc_format(ret_val, ret_msg, out_obj):
         return None
 
 
-def json_format(ret_val, ret_msg, out_obj):
+def json_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in json format"""
 
     try:
@@ -1077,6 +1057,7 @@ def get_valid_outputformats():
 
 
 def format_output(
+    configuration,
     ret_val,
     ret_msg,
     out_obj,
@@ -1124,9 +1105,9 @@ def format_output(
                 }] + out_obj
 
     if not outputformat in outputformats:
-        return txt_format(ret_val, ret_msg, out_obj)
+        return txt_format(configuration, ret_val, ret_msg, out_obj)
 
-    return eval('%s_format(ret_val, ret_msg, out_obj)' % outputformat)
+    return eval('%s_format(configuration, ret_val, ret_msg, out_obj)' % outputformat)
 
 def format_timedelta(timedelta):
     """Formats timedelta as '[Years,] [days,] HH:MM:SS'"""

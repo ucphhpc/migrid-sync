@@ -30,10 +30,11 @@ import sys
 import cgi
 
 import shared.returnvalues as returnvalues
-from shared.scriptinput import fieldstorage_to_dict
+from shared.conf import get_configuration_object
 from shared.httpsclient import extract_client_id
 from shared.objecttypes import get_object_type_info
 from shared.output import validate, format_output
+from shared.scriptinput import fieldstorage_to_dict
 
 
 def object_type_info(object_type):
@@ -153,7 +154,8 @@ def application(environ, start_response):
         start_entry['headers'] = default_headers
     response_headers = start_entry['headers']
 
-    output = format_output(ret_code, ret_msg, output_objs, output_format)
+    configuration = get_configuration_object()
+    output = format_output(configuration, ret_code, ret_msg, output_objs, output_format)
     if not [i for i in response_headers if 'Content-Length' == i[0]]:
         response_headers.append(('Content-Length', str(len(output))))
     if not output:

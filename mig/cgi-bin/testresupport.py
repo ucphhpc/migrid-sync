@@ -92,7 +92,7 @@ printhtml = False
 if htmlquery == 'true' or not htmlquery:
     printhtml = True
 
-o.client(get_cgi_html_header('Verify runtime environment',
+o.client(get_cgi_html_header(configuration, 'Verify runtime environment',
          'Verify runtime environment', printhtml, scripts=''))
 
 if re_name == '':
@@ -180,6 +180,7 @@ except:
 
 o.out('Runtime environment test job successfuly submitted! %s' % msg)
 
-o.client(get_cgi_html_footer("<p><a href='resadmin.py'>Back to resource administration page.</a>"
-         , printhtml))
+o.client(get_cgi_html_footer(configuration,
+                             "<p><a href='resadmin.py'>Back to resource administration page.</a>",
+                             printhtml))
 o.reply_and_exit(o.OK)
