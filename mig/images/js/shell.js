@@ -14,15 +14,15 @@ Shell=function (selfname, pagelayer, serviceurl)
 }
 Shell.prototype.CheckBrowser=function ()
 {
-    if(window.navigator.userAgent.indexOf("MSIE")>0)
+    if(window.navigator.userAgent.indexOf("MSIE")>=0)
         return 0;
-    else if(window.navigator.userAgent.indexOf("Mozilla")>0)
+    else if(window.navigator.userAgent.indexOf("Mozilla")>=0)
         return 1;
-    else if(window.navigator.userAgent.indexOf("Safari")>0)
+    else if(window.navigator.userAgent.indexOf("Safari")>=0)
         return 2;
-    else if(window.navigator.userAgent.indexOf("Opera")>0)
+    else if(window.navigator.userAgent.indexOf("Opera")>=0)
         return 3;
-    else if(window.navigator.userAgent.indexOf("Chrome")>0)
+    else if(window.navigator.userAgent.indexOf("Chrome")>=0)
         return 4;
     else
         return -1;
