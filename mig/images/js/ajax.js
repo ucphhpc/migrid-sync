@@ -32,9 +32,9 @@ XMLService.prototype.CreateParser=function ()
     {
         this.xmlparser=new DOMParser();
     }
-    else
-    {
-	alert("create parser got unexpected browser: " + this.browsertype);
+    else {
+        // TODO: this is untested! (Neither IE nor Firefox)
+        //alert("create parser got unexpected browser: " + this.browsertype);
         this.xmlparser=new DOMParser();
     }
 }
@@ -49,7 +49,8 @@ XMLService.prototype.LoadXMLText=function (xml, async)
         this.xmldoc=this.xmlparser.parseFromString(xml,"text/xml");
     }
     else {
-	alert("load xml got unexpected browser: " + this.browsertype);
+        // TODO: this is untested! (Neither IE nor Firefox)
+	//alert("load xml got unexpected browser: " + this.browsertype);
         this.xmldoc=this.xmlparser.parseFromString(xml,"text/xml");
     }
     this.xmldoc.async=async;
