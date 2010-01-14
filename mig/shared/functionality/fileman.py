@@ -34,7 +34,6 @@ import os
 import time
 import glob
 import stat
-import simplejson as json
 
 from shared.parseflags import all, long_list, recursive
 from shared.validstring import valid_user_path
