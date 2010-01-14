@@ -35,8 +35,8 @@ menu_items['dashboard'] = {'class': 'dashboard', 'url': 'dashboard.py',
                            'title': 'Dashboard'}
 menu_items['submitjob'] = {'class': 'submitjob', 'url': 'submitjob.py',
                            'title': 'Submit Job'}
-menu_items['files'] = {'class': 'files', 'url': 'ls.py', 'title': 'Files'}
-menu_items['jobs'] = {'class': 'jobs', 'url': 'managejobs.py', 'title': 'Jobs'}
+menu_items['files'] = {'class': 'files', 'url': 'fileman.py', 'title': 'Files'}
+menu_items['jobs'] = {'class': 'jobs', 'url': 'jobman.py', 'title': 'Jobs'}
 menu_items['vgrids'] = {'class': 'vgrids', 'url': 'vgridadmin.py',
                         'title': 'VGrids'}
 menu_items['resources'] = {'class': 'resources', 'url': 'resadmin.py',
@@ -117,9 +117,26 @@ def get_cgi_html_header(
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <link rel="stylesheet" type="text/css" href="%s" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.filemanager.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.jobmanager.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.contextmenu.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-1.7.2.custom.css" media="screen"/>
 <link rel="icon" type="image/vnd.microsoft.icon" href="%s">
+
+<script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui-1.7.2.custom.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery.form.js"></script>
+<script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
+<script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.jobmanager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
+
 <title>
 %s
 </title>
@@ -176,5 +193,4 @@ def html_encode(raw_string):
     result = raw_string.replace("'", '&#039;')
     result = result.replace('"', '&#034;')
     return result
-
 

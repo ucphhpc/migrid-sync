@@ -1,0 +1,329 @@
+#fm_filemanager {
+  width: auto;
+
+  margin-top: -16px;
+  
+  background: #ccc;
+  border: 1px solid grey;
+  padding: 4px;
+  -moz-border-radius: 0;
+  -moz-border-radius-bottomleft: 4px;
+  -moz-border-radius-bottomright: 4px;
+  -webkit-border-radius: 4px;
+	cursor: default;  
+}
+#jm_jobmanager {
+	border-spacing: 0;
+  background: #ccc;
+  border: 1px solid grey;
+  padding: 4px;
+  -moz-border-radius: 0;
+  -moz-border-radius-bottomleft: 4px;
+  -moz-border-radius-bottomright: 4px;
+  -webkit-border-radius: 4px;
+	cursor: default;	
+}
+#fm_filemanager table, #jm_jobmanager table {
+  border: 0;
+  padding: 0;
+  background-color: #fff;
+}
+#fm_filemanager thead, #jm_jobmanager thead {
+  background-color: #eee;
+}
+
+#fm_filemanager thead td, #jm_jobmanager thead td {
+  border: 0;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid grey;
+  padding: 2px;
+}
+/* The sorting element */
+#fm_filelisting div { display: none; }
+#fm_filelisting table {
+	padding: 2px;
+}
+#fm_filelisting tbody tr.odd:hover, #jm_jobmanager tbody tr.odd:hover {
+	background-color: #ffdd4d;
+}
+#fm_filelisting tbody tr.even:hover, #jm_jobmanager tbody tr.even:hover {
+	background-color: #ffdd7f;
+}
+#jm_jobmanager tbody tr.odd.ui-selected { background-color: #ffdd4d; }
+#jm_jobmanager tbody tr.even.ui-selected { background-color: #ffdd7f; }
+
+#fm_filelisting td, th { padding: 4px; background-position: 2px 50%; }
+#jm_jobmanager td, th { padding: 4px; background-position: 2px 50%; }
+#fm_filelisting .header, #jm_jobmanager .header { 
+    background-image: url('/images/icons/desc.gif'); 
+		background-image: url('/images/icons/small.gif');     
+    cursor: pointer; 
+    font-weight: bold; 
+    background-repeat: no-repeat; 
+    background-position: center left; 
+    padding-left: 20px; 
+    border-right: 1px solid #dad9c7; 
+    margin-left: -1px; 		
+} 
+#fm_filelisting .headerSortDown, #jm_jobmanager .headerSortDown { 
+    background-image: url('/images/icons/asc.gif'); 
+    background-color: #3399FF; 
+}
+#fm_filelisting .headerSortUp, #jm_jobmanager .headerSortUp { 
+    background-image: url('/images/icons/desc.gif'); 
+    background-color: #3399FF; 
+}
+.fm_addressbar {	
+  padding-bottom: 2px;	
+  border: 0;
+}
+.fm_addressbar ul {
+  margin: 0;
+  padding: 0;
+  list-style:none;
+}
+.fm_addressbar li {
+  display:inline;
+  margin:0;
+  padding:0;
+}
+.fm_addressbar ul li {
+  list-style-type: none;
+  display: inline;
+}
+.fm_addressbar input {
+	width: 98%;
+}
+.fm_folders {
+  float:left;
+  width:25%;
+  padding: 0;
+  
+  border: 1px solid grey;
+  border-bottom: 0;
+  background-color: white;
+  
+  overflow:scroll;
+  height: 500px;
+  
+}
+.fm_files {
+  float:right;
+  width:74%;
+  padding: 0;
+  border: 1px solid grey;
+  border-bottom: 0;
+	overflow: scroll;
+  height: 500px;
+  background-color: #fff;		
+}
+.fm_files .bulk {
+	padding: 0;
+	margin: 0;
+}
+.fm_toolbar {
+	float:right;
+  width:74%;
+  padding-bottom: 5px;
+	padding-top: 5px;
+  border: 0;
+}
+.fm_toolbar ul {
+  margin: 0;
+  padding: 0;
+  list-style:none;
+}
+.fm_toolbar li {
+  display:inline;
+  margin:0;
+  padding:0;
+}
+.fm_toolbar ul li {
+  list-style-type: none;
+  display: inline;
+}
+.fm_toolbar ul li a:hover {     
+  background-color: #369;
+  color: white;
+}
+.fm_toolbar ul li a.selected {    
+  background-color: #147;
+  color: white;
+}
+.fm_toolbar ul li a {
+  -moz-border-radius:4px;
+  
+  background-repeat: no-repeat;
+  background-image: url('/images/icons/bullet_black.png');
+  background-position: 5px 50%;
+	background: none;
+  
+  border:1px solid darkgrey;
+  color: black;
+  font-size:12px;
+  font-weight:bold;
+  padding:3px 9px 3px 9px;
+  text-decoration:none;
+  background-color: #ccc;
+
+  margin-right: 10px;
+}
+.fm_toolbar ul li.fm_upload a {
+  background-image: url('/images/icons/add.png');
+}
+.fm_toolbar ul li.fm_refresh a {
+  background-image: url('/images/icons/arrow_refresh.png');
+}
+.fm_toolbar ul li.fm_home a {
+  background-image: url('/images/icons/folder.png');
+}
+.fm_toolbar ul li input {
+  border:1px solid #999999;
+  display:inline;
+  padding:2px 4px;
+	width: 80%;
+}
+.fm_statusbar {
+  clear:both;
+  padding:5px 5px;
+    
+  border: 0;
+  border-top: 1px solid #ccc;  
+  background-color: #eee;
+
+}
+* html #fm_statusbar {
+  height:1px;
+}
+
+UL.jqueryFileTree {
+	/*
+	font-family: Verdana, sans-serif;
+	font-size: 11px;*/
+	line-height: 22px;
+	padding: 0px;
+	margin: 0px;
+}
+
+UL.jqueryFileTree LI {
+	list-style: none;
+	padding: 0px;
+	padding-left: 20px;
+	margin: 0px;
+	white-space: nowrap;
+}
+
+UL.jqueryFileTree div:hover {	
+	background-color: #ffdd7f;
+}
+
+/* Core Styles */
+.jqueryFileTree LI.directory { background: url(/images/icons/directory.png) left top no-repeat; }
+.jqueryFileTree LI.expanded { background: url(/images/icons/folder_open.png) left top no-repeat; }
+.jqueryFileTree LI.file { background: url(/images/icons/file.png) left top no-repeat; }
+.jqueryFileTree LI.wait { background: url(/images/icons/spinner.gif) left top no-repeat; }
+.spinner { background: url(/images/icons/spinner.gif) left center no-repeat; }
+
+UL.jqueryFileList {
+	
+	/*font-family: Verdana, sans-serif;
+	font-size: 11px;*/
+	line-height: 22px;
+	padding-left: 0px;
+	margin: 0px;
+}
+
+UL.jqueryFileList LI {	
+	list-style: none;
+	padding: 0px;
+	margin: 0px;
+	/*white-space: nowrap;*/
+}
+
+UL.jqueryFileList A {
+	color: #333;
+	text-decoration: none;
+	display: block;
+	padding: 0px 2px;
+}
+
+UL.jqueryFileList A:hover {
+	background: #BDF;
+}
+
+.jqueryFileList div {
+	display: inline;
+}
+.jqueryFileList .cdate,.size {float:right; margin-top: -20px;}
+/* Core Styles */
+#fm_filelisting .directory { background-image: url(/images/icons/directory.png); background-repeat: no-repeat; background-position: 2px 50%; }
+#fm_filelisting .expanded { background: url(/images/icons/folder_open.png) left top no-repeat; background-position: 2px 50%; }
+#fm_filelisting .file { background-image: url(/images/icons/file.png); background-repeat: no-repeat; background-position: 2px 50%; }
+#fm_filelisting .wait { background: url(/images/icons/spinner.gif) left top no-repeat; background-position: 2px 50%; }
+
+/* File Extensions*/
+/*.directory { background: url(/images/icons/directory.png) left top no-repeat; }
+.file { background: url(/images/icons/file.png) left top no-repeat; }*/
+
+.ext_3gp { background: url(/images/icons/film.png) left top no-repeat; }
+.ext_afp { background: url(/images/icons/code.png) left top no-repeat; }
+.ext_afpa { background: url(/images/icons/code.png) left top no-repeat; }
+.ext_asp { background: url(/images/icons/code.png) left top no-repeat; }
+.ext_aspx { background: url(/images/icons/code.png) left top no-repeat; }
+.ext_avi { background: url(/images/icons/film.png) left top no-repeat; }
+.ext_bat { background: url(/images/icons/application.png) left top no-repeat; }
+.ext_bmp { background: url(/images/icons/picture.png) left top no-repeat; }
+.ext_c { background: url(/images/icons/code.png) left top no-repeat; }
+.ext_cfm { background: url(/images/icons/code.png) left top no-repeat; }
+.ext_cgi { background: url(/images/icons/code.png) left top no-repeat; }
+.ext_com { background: url(/images/icons/application.png) left top no-repeat; }
+.ext_cpp { background: url(/images/icons/code.png) left top no-repeat; }
+.ext_css { background: url(/images/icons/css.png) left top no-repeat; }
+.ext_doc { background: url(/images/icons/doc.png) left top no-repeat; }
+.ext_exe { background: url(/images/icons/application.png) left top no-repeat; }
+.ext_gif { background: url(/images/icons/picture.png) left top no-repeat; }
+.ext_fla { background: url(/images/icons/flash.png) left top no-repeat; }
+.ext_h { background: url(/images/icons/code.png) left top no-repeat; }
+.ext_htm { background: url(/images/icons/html.png) left top no-repeat; }
+.ext_html { background: url(/images/icons/html.png) left top no-repeat; }
+.ext_jar { background: url(/images/icons/java.png) left top no-repeat; }
+.ext_jpg { background: url(/images/icons/picture.png) left top no-repeat; }
+.ext_jpeg { background: url(/images/icons/picture.png) left top no-repeat; }
+.ext_js { background: url(/images/icons/script.png) left top no-repeat; }
+.ext_lasso { background: url(/images/icons/code.png) left top no-repeat; }
+.ext_log { background: url(/images/icons/txt.png) left top no-repeat; }
+.ext_m4p { background: url(/images/icons/music.png) left top no-repeat; }
+.ext_mov { background: url(/images/icons/film.png) left top no-repeat; }
+.ext_mp3 { background: url(/images/icons/music.png) left top no-repeat; }
+.ext_mp4 { background: url(/images/icons/film.png) left top no-repeat; }
+.ext_mpg { background: url(/images/icons/film.png) left top no-repeat; }
+.ext_mpeg { background: url(/images/icons/film.png) left top no-repeat; }
+.ext_ogg { background: url(/images/icons/music.png) left top no-repeat; }
+.ext_pcx { background: url(/images/icons/picture.png) left top no-repeat; }
+.ext_pdf { background: url(/images/icons/pdf.png) left top no-repeat; }
+.ext_php { background: url(/images/icons/php.png) left top no-repeat; }
+.ext_png { background: url(/images/icons/picture.png) left top no-repeat; }
+.ext_ppt { background: url(/images/icons/ppt.png) left top no-repeat; }
+.ext_psd { background: url(/images/icons/psd.png) left top no-repeat; }
+.ext_pl { background: url(/images/icons/script.png) left top no-repeat; }
+.ext_py { background: url(/images/icons/script.png) left top no-repeat; }
+.ext_rb { background: url(/images/icons/ruby.png) left top no-repeat; }
+.ext_rbx { background: url(/images/icons/ruby.png) left top no-repeat; }
+.ext_rhtml { background: url(/images/icons/ruby.png) left top no-repeat; }
+.ext_rpm { background: url(/images/icons/linux.png) left top no-repeat; }
+.ext_ruby { background: url(/images/icons/ruby.png) left top no-repeat; }
+.ext_sql { background: url(/images/icons/db.png) left top no-repeat; }
+.ext_swf { background: url(/images/icons/flash.png) left top no-repeat; }
+.ext_tif { background: url(/images/icons/picture.png) left top no-repeat; }
+.ext_tiff { background: url(/images/icons/picture.png) left top no-repeat; }
+.ext_txt { background: url(/images/icons/txt.png) left top no-repeat; }
+.ext_vb { background: url(/images/icons/code.png) left top no-repeat; }
+.ext_wav { background: url(/images/icons/music.png) left top no-repeat; }
+.ext_wmv { background: url(/images/icons/film.png) left top no-repeat; }
+.ext_xls { background: url(/images/icons/xls.png) left top no-repeat; }
+.ext_xml { background: url(/images/icons/code.png) left top no-repeat; }
+.ext_zip { background: url(/images/icons/zip.png) left top no-repeat; }
+
+.ui-draggable-dragging {
+	background-color: red;
+}

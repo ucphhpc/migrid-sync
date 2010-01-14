@@ -1,0 +1,797 @@
+if (jQuery) (function($){
+  
+	$.fn.renderError = function(jsonRes) {
+		
+		var errors = '';
+		
+		for(var i=0; i<jsonRes.length; i++) {
+			if (jsonRes[i]['object_type'] == 'error_text')
+				errors +='<p>'+jsonRes[i].text+'</p>';
+		}
+		return errors;
+	}
+	
+	$.fn.renderFileoutput = function(jsonRes) {
+		
+		var file_output = '';
+		
+		for(i=0;i<jsonRes.length; i++) {
+			if (jsonRes[i].object_type=='file_output') {			
+				for(j=0; j<jsonRes[i].lines.length; j++) {
+					file_output += jsonRes[i].lines[j];
+				}
+			}
+		}
+		return file_output;
+	}
+	
+	$.fn.tagName = function() {
+    return this.get(0).tagName;
+	}
+	
+	$.fn.parentPath = function(path) {
+		// Extract the parent of the path
+		if (path.lastIndexOf("/") == (path.length-1)) { // is directory?
+			reloadPath = path.substring(0, path.length-1);
+			reloadPath = path.substring(0, reloadPath.lastIndexOf('/'))+'/';
+		} else {
+			reloadPath = path.substring(0, path.lastIndexOf('/'))+'/';
+		}
+		return reloadPath;
+	}
+
+	$.fn.reload = function reload(path) {
+		var reloadPath = path;
+		
+		if (reloadPath == '') {			
+			reloadPath = $('.fm_addressbar input[name=fm_current_path]').val().substr(1);
+		}
+		
+		// Root is a special-case.
+		if (reloadPath == '/') {
+			reloadPath = '';
+		}
+
+		// Trigger the click-event twice for obtaining the original state (collapse+expand).
+		$('.fm_folders li [title='+reloadPath+']').click();
+		$('.fm_folders li [title='+reloadPath+']').click();
+
+	}
+	
+  $.fn.filemanager = function(user_options) {
+	
+		var pathAttribute = 'title';
+		var clipboard = new Array({'is_dir':false, 'path':''});
+		
+		// Note: max-height is broken on autoHeight this is noted as a bug:
+		//       http://dev.jqueryui.com/ticket/4820
+		//       The stated workaround is used in jsonWrapper.
+		var dialogOptions = { width: '620px', autoOpen: false, closeOnEscape: true, modal: true}
+		var okDialog			= { buttons: {Ok: function() {$(this).dialog('close');} }, width: '620px', autoOpen: false, closeOnEscape: true, modal: true}
+		var closeDialog		= { buttons: {Close: function() {$(this).dialog('close');} }, width: '620px', autoOpen: false, closeOnEscape: true, modal: true}
+
+		function doubleClickEvent(el) {
+			if($(el).hasClass('directory')) {
+				$('#fm_filemanager').reload($(el).attr(pathAttribute));
+			} else {
+				// Do stuff with files.
+				callbacks['edit']('action', el, null);				
+			}
+		}
+
+		function toTimestamp(strDate){
+			var datum = Date.parse(strDate);
+			return datum/1000;
+		}
+
+		function copy(src, dst) {
+									
+			var flag = '';
+						
+			// Handle directory copy, set flag and alter destination path.
+			if (clipboard['is_dir']) {
+				
+				flag = 'r';				
+				// Extract last directory from source
+				dst += src.split('/')[src.split('/').length-2];
+			}
+			if (dst == '') {
+				dst = '.';
+			}
+			
+			$('#cmd_dialog').dialog(okDialog);
+			$('#cmd_dialog').dialog('open');
+			$('#cmd_dialog').html('<p class="spinner" style="padding-left: 26px;">Copying... "'+src+'" <br />To: "'+dst+'"</p>');			
+			
+			$.getJSON('/cgi-bin/cp.py',
+								{ src: src,
+									dst: dst,
+									output_format: 'json',
+									flags: flag
+								},
+								function(jsonRes, textStatus) {
+									
+									if (jsonRes.length > 3) {										
+										for(var i=2; i<jsonRes.length; i++) {
+											$($('#cmd_dialog').html('<p>Error:</p>'+jsonRes[i].text));
+										}										
+									} else {
+										// Only reload if destination is current folder
+										if ($('.fm_addressbar input[name=fm_current_path]').val().substr(1) == dst.substring(0,dst.lastIndexOf('/'))+'/')
+											$('#fm_filemanager').reload($('.fm_addressbar input[name=fm_current_path]').val().substr(1));
+										$('#cmd_dialog').dialog('close');
+									}
+								}
+			)
+			
+		}
+		
+		function jsonWrapper(el, dialog, url, jsonOptions) {
+			
+			var jsonSettings = {	path: $(el).attr(pathAttribute),
+														output_format: 'json' };
+			
+			$.fn.extend(jsonSettings, jsonOptions);
+			
+			$.getJSON(url,
+								jsonSettings,
+								function(jsonRes, textStatus) {
+									
+									var errors			= $(this).renderError(jsonRes);
+									var file_output = $(this).renderFileoutput(jsonRes);
+									var misc_output = '';
+			
+									for(var i=0; i<jsonRes.length; i++) {
+										if (jsonRes[i]['object_type'] == 'submitstatuslist') {
+											for(j=0; j<jsonRes[i]['submitstatuslist'].length; j++) {
+												
+												if (jsonRes[i]['submitstatuslist'][j]['status']) {
+													misc_output +=	'<p>Submitted "'
+																			+		jsonRes[i]['submitstatuslist'][j]['name']
+																			+		'"</P>'
+																			+		'<p>Job identfier: "'+jsonRes[i]['submitstatuslist'][j]['job_id']
+																			+		'"</p>';
+												} else {
+													misc_output +=	'<p>Failed submitting:</p><p>'
+																			+		jsonRes[i]['submitstatuslist'][j]['name']
+																			+		' '+jsonRes[i]['submitstatuslist'][j]['message']
+																			+		'</p>';
+												}													
+											
+											}
+										}
+									}
+									
+									if ((errors.length > 0) || (file_output.length > 0) || (misc_output.length>0)){
+										$(dialog).dialog(okDialog);
+										$(dialog).dialog('open');
+										
+										if (file_output.length>0) {
+											file_output = '<pre>'+file_output+'</pre>';	
+										}
+																				
+										$(dialog).html(errors+file_output+misc_output);
+									} else {
+										
+										$('#fm_filemanager').reload($(this).parentPath($(el).attr(pathAttribute)));	
+									}
+																		
+								}
+			)
+
+		}
+
+		// Callback helpers for context menu
+		var callbacks = {
+			
+			show: 	function (action, el, pos) { document.location = '/cgi-bin/cat.py?path='+$(el).attr(pathAttribute)+'&output_format=file' },
+			edit: 	function (action, el, pos) {
+				
+				$('#editor_dialog').dialog('destroy');
+				$('#editor_output').html('');
+				$("#editor_dialog").dialog({ buttons: {
+																			'Save Changes': function() { $('#editor_form').submit(); },
+																			Close: function() {$(this).dialog('close');},
+																			Download: function() { document.location = '/cgi-bin/cat.py?path='+$(el).attr(pathAttribute)+'&output_format=file' }
+																		},
+																		autoOpen: false,
+																		closeOnEscape: true,
+																		modal: true,
+																		width: '800px'}
+			
+																	);
+				$("#editor_dialog div.spinner").show();
+				$("#editor_dialog input[name=submitjob]").attr('checked', false);
+				$("#editor_dialog input[name=path]").val('./'+$(el).attr(pathAttribute));
+				$("#editor_dialog").dialog('open');				
+				
+				// Grab file info
+				$.getJSON('/cgi-bin/cat.py',
+				{ path: $(el).attr(pathAttribute),
+					output_format: 'json' },
+				function(jsonRes, textStatus) {
+					
+					var file_output = '';
+					for(i=0;i<jsonRes.length; i++) {
+						if (jsonRes[i].object_type=='file_output') {
+							for(j=0; j<jsonRes[i].lines.length; j++) {
+								file_output += jsonRes[i].lines[j];
+							}
+						}
+					}
+					
+					$("#editor_dialog textarea[name=editarea]").val(file_output);
+					$("#editor_dialog div.spinner").hide();
+					
+				});
+				
+			},
+			create: 	function (action, el, pos) {
+				
+				$('#editor_dialog').dialog('destroy');
+				$('#editor_output').html('');
+				$("#editor_dialog").dialog({ buttons: {
+																			'Save Changes': function() {
+																				$('#editor_form').submit();																				
+																			},
+																			Close: function() {$(this).dialog('close');}
+																		},
+																		autoOpen: false,
+																		closeOnEscape: true,
+																		modal: true,
+																		width: '800px'}
+			
+																	);
+			
+				// determine file-name of new file
+				var new_file_name = 'unknown';
+				var name_taken = true;
+
+				for(var i=1; name_taken; i++) {
+					name_taken = false;
+					$('#fm_filelisting tbody tr').each(function(item) {
+						if ( $(this).attr('title') == $(el).attr(pathAttribute)+'new_empty_file'+'-'+i ) {
+							name_taken = true;							
+						} else {
+							new_file_name = $(el).attr(pathAttribute)+'new_empty_file'+'-'+i;
+						}
+					});
+					
+				}
+
+				$("#editor_dialog input[name=submitjob]").attr('checked', false);
+				$("#editor_dialog input[name=path]").val('./'+new_file_name);
+				$("#editor_dialog textarea[name=editarea]").val('');
+				$("#editor_dialog div.spinner").hide();
+				$("#editor_dialog").dialog('open');				
+				
+			},
+			cat:		function (action, el, pos) { jsonWrapper(el, '#cmd_dialog', '/cgi-bin/cat.py'); },
+			head:		function (action, el, pos) { jsonWrapper(el, '#cmd_dialog', '/cgi-bin/head.py'); },
+			tail:		function (action, el, pos) { jsonWrapper(el, '#cmd_dialog', '/cgi-bin/tail.py'); },
+			submit:	function (action, el, pos) { jsonWrapper(el, '#cmd_dialog', '/cgi-bin/submit.py'); },
+			
+			copy: 	function (action, el, pos) {
+				clipboard['is_dir'] = $(el).hasClass('directory');
+				clipboard['path']		= $(el).attr(pathAttribute);
+			},
+			paste: 	function (action, el, pos) {
+				copy(clipboard['path'], $(el).attr(pathAttribute));				
+			},
+			rm:			function (action, el, pos) {
+			
+				var flags = '';
+				var rm_path = $(el).attr(pathAttribute);
+				if ($(el).attr(pathAttribute).lastIndexOf('/') == $(el).attr(pathAttribute).length-1) {
+					flags = 'r';
+				}
+				$('#cmd_dialog').dialog('destroy');
+				$('#cmd_dialog').html('<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>"'+rm_path+'" will be permanently deleted. Are you sure?</p></div>');
+				$('#cmd_dialog').dialog({ buttons: {Ok: function() { $(this).dialog('close');
+																							jsonWrapper(el, '#cmd_dialog', '/cgi-bin/rm.py', {flags: flags});
+																						},
+																						Cancel: function() { $(this).dialog('close'); }
+																	},
+																	width: '500px',
+																	autoOpen: false,
+																	closeOnEscape: true,
+																	modal: true});
+				$('#cmd_dialog').dialog('open');
+				
+			},
+			upload: function (action, el, pos) {
+				
+				var remote_path = $(el).attr(pathAttribute);
+				if (remote_path == '/') {
+					remote_path = './';												
+				} else {
+					remote_path = './'+remote_path;
+				}
+				$("#upload_form input[name=remotefilename_0]").val(remote_path);
+				$("#upload_form input[name=fileupload_0_0_0]").val('');
+				$("#upload_output").html('');
+				$("#upload_dialog").dialog({buttons: {
+																			Upload: function() { $('#upload_form').submit(); },
+																			Cancel: function() {$(this).dialog('close');}
+																		},
+																		autoOpen:				false,
+																		closeOnEscape:	true,
+																		modal:	true,
+																		width: '620px'});
+				$('#upload_dialog').dialog('open');
+
+			},
+			mkdir:  function (action, el, pos) {
+								
+								// Initialize the form
+								$('#mkdir_form input[name=current_dir]').val($(el).attr(pathAttribute));
+								$('#mkdir_form input[name=path]').val('');
+								$('#mkdir_output').html('');
+																
+								$("#mkdir_dialog").dialog('destroy');
+								$("#mkdir_dialog").dialog({ buttons: {
+																								Ok: function() { $('#mkdir_form').submit(); },
+																								Cancel: function() {$(this).dialog('close');}
+																							},
+																							autoOpen: false,
+																							closeOnEscape: true,
+																							modal: true}
+								
+																						);
+								$("#mkdir_dialog").dialog('open');
+			},
+							
+			// NOTE: it seems that the mv.py backend does not allow for folders to be moved so only
+			//       renaming of files works.
+			rename: function(action, el, pos) {
+				
+				var path_name = '';
+				pathEl = $(el).attr(pathAttribute).split('/');
+				if ($(el).attr(pathAttribute).lastIndexOf('/') == $(el).attr(pathAttribute).length-1) {
+					path_name = pathEl[pathEl.length-2];
+				} else {
+					path_name = pathEl[pathEl.length-1];
+				}
+			
+				// Initialize the form
+				$('#rename_form input[name=src]').val($(el).attr(pathAttribute));
+				$('#rename_form input[name=name]').val(path_name);
+				$("#rename_output").html('');
+				$("#rename_dialog").dialog('destroy');
+				$("#rename_dialog").dialog({ buttons: {
+																				Ok: function() { $("#rename_form").submit(); },
+																				Cancel: function() {$(this).dialog('close');}
+																			},
+																			autoOpen: false,
+																			closeOnEscape: true,
+																			modal: true}
+				
+																		);
+				$("#rename_dialog").dialog('open');
+			}
+		}
+
+    var defaults = {
+        root: '/',      
+        connector: 'somewhere.py',
+        param: 'path',
+        folderEvent: 'click',  
+        expandSpeed: 500,
+        collapseSpeed: 500,
+        expandEasing: null,
+  			collapseEasing: null,
+        multiFolder: true,
+        loadMessage: 'Loading...',
+				actions: callbacks,
+				subFolder: '/'
+    };
+    var options = $.extend(defaults, user_options);
+
+    return this.each(function() {
+      obj = $(this);
+            						
+			// Create the tree structure on the left and populates the table list of files on the right
+      function showBranch(folder_pane, t) {
+				
+        var file_pane   = $('.fm_files', obj);        
+        var statusbar   = $('.fm_statusbar', obj);
+        var addressbar  = $('.fm_addressbar', obj);
+				var timestamp = 0;
+        var emptyDir = true;
+				
+				// Refix the root
+				
+        $(folder_pane).addClass('wait');
+        $(".jqueryFileTree.start").remove();
+				$('.fm_files div').remove();
+				
+        $.getJSON(options.connector,
+									{	path: t,
+										output_format: 'json',
+										flags: 'fa'
+									},
+									function(jsonRes, textStatus) {
+          
+					// Place ls.py output in listing array
+					var cur_folder_names = new Array();
+          var listing = new Array();
+          var i,j;          
+          for(i=0;i<jsonRes.length; i++) {            
+            if (jsonRes[i].object_type=='dir_listings') {              
+              for(j=0; j<jsonRes[i].dir_listings.length; j++) {
+                listing = listing.concat(jsonRes[i].dir_listings[j].entries);
+              }              
+            }
+          }
+                  
+          var folders = '';
+
+					// Root node					
+					if (t=='/') {
+						folders +=	'<ul class="jqueryFileTree">'+
+												'<li class="directory collapsed" title=""><div>/</div>';
+					}
+					
+					// Regular nodes from herone after
+					folders += '<ul class="jqueryFileTree">';          
+          var files = '<ul class="jqueryFileList">';
+					$('table tbody').html('');
+          
+          var total_file_size = 0;
+          var file_count = 0.0;          
+          var is_dir = false;
+          var base_css_style = 'file';
+					var dir_prefix = '';
+					var path = '';
+          
+          for (i=0;i<listing.length;i++) {
+            
+						// ignore the pseudo-dirs
+						if ((listing[i]['name'] == '.') ||
+								(listing[i]['name'] == '..')) {
+							continue;
+						}
+						
+            is_dir = listing[i]['type'] == 'directory';
+            base_css_style	= 'file';
+						dir_prefix			= '__';
+						
+						// Stats for the statusbar
+						file_count++;
+            total_file_size += listing[i]['file_info']['size'];
+												
+						path = listing[i]['name'];
+						if (t != '/') { // Do not prepend the fake-root.
+							path = t+path;	
+						}
+						
+            if (is_dir) {
+              base_css_style = 'directory';
+
+							path += '/';
+							folders +=  '<li class="'+base_css_style+' collapsed" title="'+path+'	"><div>'
+                          + listing[i]['name']
+													+'</div></li>\n';
+							dir_prefix = '##';
+							
+							cur_folder_names.push(listing[i]['name']);
+							
+            }
+						
+						$('table tbody').html = '';						
+						$('table tbody').append($('<tr></tr>')
+													.attr('title', path)
+													.addClass(base_css_style)
+													.addClass('ext_'+listing[i]['ext'])
+													.dblclick( function() { doubleClickEvent(this); } )
+													.append(
+														$(
+															'<td style="padding-left: 20px;"><div>'+dir_prefix+listing[i]['name']+'</div>'+listing[i]['name']+'</td>'+
+															'<td><div>'+listing[i]['file_info']['size']+'</div>'+pp_bytes(listing[i]['file_info']['size'])+'</td>'+
+															'<td><div>'+listing[i]['file_info']['ext']+'</div>'+listing[i]['file_info']['ext']+'</td>'+
+															'<td><div>'+listing[i]['file_info']['created']+'</div>'+pp_date(listing[i]['file_info']['created'])+'</td>'
+														)
+													));
+						emptyDir = false;
+										
+          }
+					
+          folders, files += '</ul>';
+					
+					// End the root node
+					if (t=='/') {
+						folders += '</li></ul>';
+					}
+					
+					// Prefix '/' for the visual presentation of the current path.
+					if (t.substr(0,1)=='/') {
+						addressbar.find('input[name=fm_current_path]').val(t);	
+					} else {
+						addressbar.find('input[name=fm_current_path]').val('/'+t);	
+					}
+					
+          folder_pane.removeClass('wait').append(folders);
+					
+					// Inform tablesorter of new data
+					var sorting = [[0,0]]; 
+					$("table").trigger("update");
+					if (!emptyDir)  { // Don't try and sort an empty table, this causes error!
+						$("table").trigger("sorton",[sorting]);
+					}
+					
+					// Update statusbar
+          statusbar.html(file_count+' files in current folder of total '+pp_bytes(total_file_size)+' bytes in size.');
+  
+          if( options.root == t ) {
+					//if( options.root == t+'/' ) {
+            folder_pane.find('UL:hidden').show();
+          } else {
+            folder_pane.find('UL:hidden').slideDown({ duration: options.expandSpeed, easing: options.expandEasing });
+          }
+          
+					/* UI stuff: contextmenu, drag'n'drop. */
+					
+					// Create an element for the whitespace below the list of files in the file pane
+					var spacerHeight = $("#fm_filelisting").height() - $(".fm_files").height();
+					if (spacerHeight < 0) {
+						spacerHeight = $(".fm_files").height() - $("#fm_filelisting").height()-20;
+						if (t != '/') { // Do not prepend the fake-root.
+							$('.fm_files').append('<div class="filespacer" style="height: '+spacerHeight+'px ;" title="'+t+'"></div>');
+						} else {
+							$('.fm_files').append('<div class="filespacer" style="height: '+spacerHeight+'px ;" title=""></div>');	
+						}
+						
+						$("div.filespacer").contextMenu({ menu: 'folder_context'},
+                                            function(action, el, pos) {
+																							(options['actions'][action])(action, el, pos);                                            
+                                            });
+					}
+					
+					// Associate context-menus
+          $("tr.directory, li.directory div").contextMenu({ menu: 'folder_context'},
+                                            function(action, el, pos) {
+																							if ($(el).tagName() == 'DIV') {
+																								(options['actions'][action])(action, el.parent(), pos);
+																							} else {
+																								(options['actions'][action])(action, el, pos);
+																							}																							
+                                            });
+          
+          $("tr.file").contextMenu({ menu: 'file_context'},
+                                            function(action, el, pos) {
+																							(options['actions'][action])(action, el, pos);																						
+                                            });
+					
+					// Associate drag'n'drop
+					$('tr.file, tr.directory, li.directory').draggable({cursorAt: { cursor: 'move', top: 0, left: -10 },
+																														  distance: 5,
+																															helper: function(event) {
+																																				return $('<div style="display: block;">&nbsp;</div>')
+																																							.attr('title', $(this).attr('title'))
+																																							.attr('class', $(this).attr('class'))
+																																							.css('width', '20px');
+																																			}
+																			}
+													);
+					
+					$('tr.directory, li.directory').droppable({
+						greedy: true,
+						drop: function(event, ui) {
+							clipboard['is_dir'] = $(ui.helper).hasClass('directory');
+							clipboard['path']		= $(ui.helper).attr(pathAttribute);
+							copy($(ui.helper).attr('title'), $(this).attr('title'));
+						}
+					});	
+          										
+					// Binds: Expands and a call to showbranch
+					// or
+					// Binds: Collapse
+					bindBranch(folder_pane);					
+				
+					// Go to subFolder					
+					var current_dir = addressbar.find('input[name=fm_current_path]').val();
+					var first_child = options.subFolder.slice(0, options.subFolder.indexOf('/'));
+					
+					var descend = false;
+					for(var i=0; i<cur_folder_names.length; i++) {
+						if (first_child == cur_folder_names[i]) {
+							descend = true;
+						}
+					}
+					if ((descend == false) && (options.subFolder!='')) {
+						
+						// Inform the user
+						$('#cmd_dialog').html('Path does not exist! '+ current_dir.slice(1)+options.subFolder);
+						$('#cmd_dialog').dialog(okDialog);
+						$('#cmd_dialog').dialog('open');
+						
+						// Stop trying to find it.
+						options.subFolder = '';
+						
+					}
+					if (descend) {
+						options.subFolder = options.subFolder.slice(first_child.length+1);						
+						$('.fm_folders li [title='+current_dir.slice(1)+first_child+'/]').click();						
+					}
+					
+        });
+
+      }
+      
+      function bindBranch(t) {
+				$(t).find('LI').bind(options.folderEvent,
+					
+					function() {
+						if( $(this).hasClass('directory') ) {
+							if( $(this).hasClass('collapsed') ) {
+								// Expand
+								if( !options.multiFolder ) {
+									$(this).parent().find('UL').slideUp({ duration: options.collapseSpeed, easing: options.collapseEasing });
+									$(this).parent().find('LI.directory').removeClass('expanded').addClass('collapsed');
+								}
+								$(this).find('UL').remove(); // cleanup
+								// Go deeper
+								showBranch( $(this), $(this).attr('title') );
+								$(this).removeClass('collapsed').addClass('expanded');
+							} else {
+								// Collapse
+								$(this).find('UL').slideUp({ duration: options.collapseSpeed, easing: options.collapseEasing });
+								$(this).removeClass('expanded').addClass('collapsed');
+							}
+						} else {
+							$(this).attr('title');
+						}
+						return false;
+					}
+				);
+				
+        // Prevent A from triggering the # on non-click events
+        if( options.folderEvent.toLowerCase != 'click' ) {
+					$(t).find('LI').bind('click', function() { return false; });
+				}
+				
+			}
+			    			
+      // Base sorting on the content of the hidden <div> element
+			var myTextExtraction = function(node) {  
+					return node.childNodes[0].innerHTML; 
+			}
+			$('.fm_files table', obj).tablesorter({widgets: ['zebra'],
+																						textExtraction: myTextExtraction,
+																						sortColumn: 'Name'});
+			
+			// Loading message
+      $('.fm_folders', obj).html('<ul class="jqueryFileTree start"><li class="wait">' + options.loadMessage + '<li></ul>');
+			
+			// Sanitize the subfolder path, simple checks, a malicious user would only hurt himself..
+			
+			// Ignore the root
+			if (options.subFolder == '/') {
+				options.subFolder = '';
+			}
+			
+			// Append a slash to path
+			if ((options.subFolder != '') && (options.subFolder.lastIndexOf('/') != options.subFolder.length)) {
+				options.subFolder = options.subFolder + '/';	
+			}
+			
+      showBranch( $('.fm_folders', obj), escape(options.root) );			
+			
+			/**
+			 * Bind handlers for forms. This is redicoulous and tedious repetitive code.
+			 *
+			 */
+			$('#upload_form').ajaxForm({target: '#upload_output',
+																	dataType: 'json',
+																	success: function(responseObject, statusText) {
+																		
+																		var errors = $(this).renderError(responseObject);
+																		if (errors.length > 0) {
+																			$('#upload_output').html(errors);
+																		}	else {
+																			$('#fm_filemanager').reload($('#upload_form input[name=remotefilename_0]').val().substr(2));																																					
+																			$('#upload_dialog').dialog('close');																			
+																		}
+																		
+																	}
+																});
+			
+			$('#mkdir_form').ajaxForm({target: '#mkdir_output',
+																	dataType: 'json',
+																	success: function(responseObject, statusText) {
+																		
+																		var errors = $(this).renderError(responseObject);
+																		if (errors.length > 0) {
+																			$('#mkdir_output').html(errors);
+																		}	else {
+																			$('#mkdir_dialog').dialog('close');
+																			$('#fm_filemanager').reload('');
+																		}
+																		
+																	}
+																});
+			
+			$('#rename_form').ajaxForm(
+				{target: '#rename_output',
+				 dataType: 'json',
+				 success: function(responseObject, statusText) {
+					 
+					 var errors = $(this).renderError(responseObject);
+					 if (errors.length > 0) {
+						 $('#rename_output').html(errors);
+					 }	else {
+						 $('#rename_dialog').dialog('close');
+						 $('#fm_filemanager').reload('');
+					 }
+					 
+				 },
+				beforeSubmit: function(formData, jqForm, options) {
+										
+					var src = $('#rename_form input[name=src]').val();
+					// Extract the parent of the path
+					var dst = '';
+					// New name of file/dir
+					var newName = $('#rename_form input[name=name]').val();
+				
+					// Extract the parent of the path		
+					if (src.lastIndexOf("/") == (src.length-1)) { // is directory?
+						dst = src.substring(0, src.length-1);
+						dst = src.substring(0, dst.lastIndexOf('/'))+'/';
+					} else {
+						dst = src.substring(0, src.lastIndexOf('/'))+'/';				
+					}
+		
+					for(var i=0; i<formData.length; i++) {
+						if (formData[i].name == 'dst') {
+							formData[i].value = dst+newName;
+						}
+						if (formData[i].name == 'name') {
+							formData[i].value = ''; // Remove the field value othervise the backend pukes.
+						}
+						
+					}
+					
+					return true;
+					
+				}
+				}
+			);
+						
+			// This is the only form not matching the stuff above
+			$('#editor_form').ajaxForm({target: '#editor_output',
+																	dataType: 'json',
+																	success: function(responseObject, statusText) {
+																																				
+																		var stuff =''
+																		for(var i=0; i<(responseObject.length); i++) {
+																			
+																			switch(responseObject[i]['object_type']) {
+																				case 'text':
+																					stuff += '<p>'+responseObject[i]['text']+'</p>';	
+																				break;
+																			
+																				case 'submitstatuslist':
+
+																					for(var j=0;j<responseObject[i]['submitstatuslist'].length; j++) {
+																						
+																						if (responseObject[i]['submitstatuslist'][j]['status']) {
+																							stuff += '<p>Submitted as: '+responseObject[i]['submitstatuslist'][j]['job_id']+'</p>';
+																						} else {
+																							stuff += '<p style="color: red;">'+responseObject[i]['submitstatuslist'][j]['message']+'</p>';
+																						}
+																					}
+																				break;
+																			}
+																			
+																		}
+																		$('#editor_output').html(stuff);
+																		$('#fm_filemanager').reload('');
+																		
+																	}
+																});
+			
+    });
+		
+	};
+ 
+})(jQuery);

@@ -34,7 +34,7 @@ import shared.refunctions as refunctions
 import shared.resconfkeywords as resconfkeywords
 from shared.conf import get_configuration_object
 from shared.serial import dumps
-from shared.vgrid import vgrid_is_resource
+from shared.vgrid import vgrid_is_resource,vgrid_is_default
 
 configuration = get_configuration_object()
 
@@ -180,7 +180,7 @@ def run(localfile_spaces, unique_resource_name, outfile='AUTOMATIC'
                 # list
 
                 for vgrid in vgrid_name:
-                    if not vgrid_is_resource(vgrid,
+                    if not vgrid_is_default(vgrid) and not vgrid_is_resource(vgrid,
                             unique_resource_name, configuration):
                         return (False,
                                 "Your resource is not allowed in the vgrid '%s' specified in the configuation for the '%s' execution unit. Please contact the vgrid owner and ask if you can be included in the vgrid."
@@ -189,7 +189,7 @@ def run(localfile_spaces, unique_resource_name, outfile='AUTOMATIC'
 
                 # string
 
-                if not vgrid_is_resource(vgrid_name,
+                if not vgrid_is_default(vgrid) and not vgrid_is_resource(vgrid_name,
                         unique_resource_name, configuration):
                     return (False,
                             "Your resource is not allowed in the vgrid '%s' specified in the configuation for the '%s' execution unit. Please contact the vgrid owner and ask if you can be included in the vgrid."

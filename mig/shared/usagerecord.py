@@ -41,7 +41,7 @@ import datetime
 # from xml.etree import ElementTree as ET
 
 # in order to construct our own XML DOMs
-from xml.dom.minidom import getDOMImplementation
+from xml.dom import getDOMImplementation,XMLNS_NAMESPACE
 
 # MiG-specific imports
 
@@ -211,6 +211,8 @@ __state_map__ = {
 # static: minidom implementation, used to create XML documents
 
 ET = getDOMImplementation()
+namespace_ogf = 'http://schema.ogf.org/urf/2003/09/urf'
+namespace_prefix= 'ur:'
 
 class UsageRecord:
 
@@ -225,9 +227,13 @@ class UsageRecord:
 
         self.__logger = logger
         self.__configuration = config
-        self.__doc = ET.createDocument(None,'JobUsageRecord',None)
-
+        self.__doc = ET.createDocument(namespace_ogf,
+                                       namespace_prefix + 'JobUsageRecord',
+                                       None)
         # we keep the document around from the beginning...
+        self.__doc.documentElement.setAttributeNS(XMLNS_NAMESPACE, 
+                          'xmlns:' + namespace_prefix[:-1],
+                          namespace_ogf)
 
         # XML data which we intend to use:
 
@@ -266,7 +272,8 @@ class UsageRecord:
 
             # DOM implementation:
 
-            element = self.__doc.createElement(name)
+            element = self.__doc.createElementNS(namespace_ogf,
+                                                 namespace_prefix + name)
             element.appendChild(self.__doc.createTextNode(str(text)))
             parent.appendChild(element)
             return element  # in case we want to add attributes...
@@ -286,16 +293,26 @@ class UsageRecord:
             self.__logger.error('No recordId specified, '
                                  + 'cannot generate usage record')
             return None
-        record_id = self.__doc.createElement('RecordIdentity')
-        record_id.setAttribute('recordId', self.record_id)
+        record_id = self.__doc.createElementNS(namespace_ogf,
+                                               namespace_prefix + 
+                                               'RecordIdentity')
+        record_id.setAttributeNS(namespace_ogf,
+                                 namespace_prefix + 'recordId', 
+                                 self.record_id)
         if self.create_time:
-            record_id.setAttribute('createTime', self.create_time)
+            record_id.setAttributeNS(namespace_ogf,
+                                     namespace_prefix + 'createTime', 
+                                     self.create_time)
         else:
-            record_id.setAttribute('createTime', xsl_datetime())
+            record_id.setAttributeNS(namespace_ogf,
+                                     namespace_prefix + 'createTime', 
+                                     xsl_datetime())
         record.appendChild(record_id)
 
         if self.global_job_id or self.local_job_id:
-            job_identity = self.__doc.createElement('JobIdentity')
+            job_identity = self.__doc.createElementNS(namespace_ogf,
+                                                      namespace_prefix + 
+                                                      'JobIdentity')
             if self.global_job_id:
                 set_element(job_identity, 'GlobalJobId',
                             self.global_job_id)
@@ -305,7 +322,9 @@ class UsageRecord:
             record.appendChild(job_identity)
 
         if self.global_user_name or self.local_job_id:
-            user_identity = self.__doc.createElement('UserIdentity')
+            user_identity = self.__doc.createElementNS(namespace_ogf,
+                                                       namespace_prefix +
+                                                       'UserIdentity')
             if self.global_user_name:
                 set_element(user_identity, 'GlobalUserName',
                             self.global_user_name)
@@ -317,7 +336,9 @@ class UsageRecord:
         if self.charge:
             temp = set_element(record, 'Charge', text=self.charge)
             if self.charge_formula:
-                temp.setAttribute('formula', self.charge_formula)
+                temp.setAttributeNS(namespace_ogf,
+                                    namespace_prefix + 'formula', 
+                                    self.charge_formula)
 
         if self.status == None:
             self.__logger.error('No status specified, '
@@ -348,11 +369,15 @@ class UsageRecord:
         if self.cpu_duration_user:
             temp = set_element(record, 'CpuDuration',
                                text=self.cpu_duration_user)
-            temp.setAttribute('usageType', 'user')
+            temp.setAttributeNS(namespace_ogf,
+                                namespace_prefix + 'usageType', 
+                                'user')
         if self.cpu_duration_system:
             temp = set_element(record, 'CpuDuration',
                                text=self.cpu_duration_system)
-            temp.setAttribute('usageType', 'system')
+            temp.setAttributeNS(namespace_ogf,
+                                namespace_prefix + 'usageType', 
+                                'system')
 
         return self.__doc.toxml()
 
@@ -498,8 +523,7 @@ class UsageRecord:
             # might be a failed job, try execution history
             if 'EXECUTION_HISTORY' in job:
                 hist = job['EXECUTION_HISTORY']
-                lastTry = hist[len(hist)]
-                self.machine_name = lastTry.get('UNIQUE_RESOURCE_NAME',None)
+                self.machine_name = hist[-1].get('UNIQUE_RESOURCE_NAME',None)
 
         # local user on the resource, if available
         if job.has_key('RESOURCE_CONFIG'):
@@ -554,4 +578,8 @@ if __name__ == '__main__':
         usage_record.record_id = 'uninitialised'
         usage_record.status = 'unknown'
         usage_record.fill_from_mrsl(fname)
-        usage_record.write_xml(fname + '.xml')
+        if len(sys.argv) > 2:
+            target = sys.argv[2]
+        else:
+            target = '.'.join([fname,'xml'])
+        usage_record.write_xml(target)

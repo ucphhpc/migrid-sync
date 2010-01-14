@@ -289,6 +289,14 @@ table.monitorruntimeenvreq {
   border-spacing: 0;
 }
 
+.odd {
+  background-color: white;
+}
+
+.even {
+  background-color: #ccc;
+}
+
 #exitcode {
   font-family: Small Fonts, VT100, Arial, Helvetica;
   font-size: 8px;
@@ -419,3 +427,13 @@ table.monitorruntimeenvreq {
 .mandatory {
   color: blue;
 }
+
+/* Job manager */
+.jm {
+  margin-top: -15px; 
+}
+
+.error { background: url('/images/icons/exclamation.png') no-repeat; }
+.warn { background: url('/images/icons/error.png') no-repeat; }
+.info { background: url('/images/icons/information.png') no-repeat; }
+.ok { background: url('/images/icons/accept.png') no-repeat; }

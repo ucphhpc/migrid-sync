@@ -111,14 +111,10 @@ def vgrid_is_member(vgrid_name, client_id, configuration):
     return vgrid_is_cert_in_list(vgrid_name, client_id, 'members',
                                  configuration)
 
-
 def vgrid_is_resource(vgrid_name, client_id, configuration):
-    """Check if client_id is a resource in vgrid_name. Please note
-    that everyone is a member of the default vgrid.
-    """
+    """Check if client_id is a resource in vgrid_name.
+    The default VGrid is _not_ considered."""
 
-    if vgrid_is_default(vgrid_name):
-        return True
     return vgrid_is_cert_in_list(vgrid_name, client_id, 'resources',
                                  configuration)
 

@@ -1,0 +1,29 @@
+﻿#shell {height: 300px; width: 100%; background: #fff; margin: 0px; padding: 0px; overflow: scroll;}
+#divShellOutput {margin-left: 2px; margin-top: 0px; }
+#divShellInput {margin-left: 2px; margin-top: 0px; }
+#divShellOutput table{padding: 0px; vertical-align: top;  border-style: none; border-collapse:collapse; background-color:Transparent;}
+.tableShellInput {padding: 0px; width : 100%; vertical-align: top; border-style: none; border-collapse:collapse; background-color:Transparent;}
+.trShellInput {padding:0px; width: 100%; vertical-align: top; }
+.tdShellCommand {padding:0px; vertical-align: middle; width: 100%;}
+.tdShellPrompt {padding: 0px; vertical-align: middle;color:#666; white-space: nowrap;}
+.inputShellCommand { font-family:Verdana, verdana, Times New Roman;vertical-align: middle; width: 100%;border-style:none; overflow: hidden; white-space: nowrap;}
+/*
+html { height: 100%; }
+body { background: #fff; font-size: 12px; font-family: Tahoma, Geneva, sans-serif; height: 99%; margin:0px; padding: 0px; }
+form { padding: 0px; margin: 0px; }
+pre { font-size: 12px; }
+br { clear: both; }
+:focus { outline: 0; }
+input{ border: none; border: 0px; font-size: 12px; font-family: Tahoma, Geneva, sans-serif; padding: 0px; margin:0px; width:100%; }
+table{ width:100%; vertical-align:top; }
+td.commandline { width:100%; }
+#input { margin-left: 8px; color: #666; overflow: hidden; }
+#output{ margin-left: 8px; margin-top: 8px; }
+.less { color: #666; }
+.info { color: #090; }
+table { padding: 0px; margin: 0px; border-collapse: collapse; border-spacing: 0px; }
+td { padding: 0px; margin: 0px; vertical-align: top; font-size: 12px; font-family: Tahoma, Geneva, sans-serif; }
+.help td { padding-right: 25px; font-size: 12px; }
+div#prompt { display: inline; white-space:nowrap; padding:0px; margin:0px; }
+img { border: none; }
+*/

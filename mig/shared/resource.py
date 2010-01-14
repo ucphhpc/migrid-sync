@@ -643,8 +643,11 @@ def prepare_conf(configuration, input_args, resource_id):
     if conf.get('HOSTKEY', None):
         if len(conf['HOSTKEY'].split()) < 3:
             host_key = ''
-            conf['HOSTIP'] = conf.get('HOSTIP',
-                                      socket.gethostbyname(conf['HOSTURL']))
+            try:
+                fallback_ip = socket.gethostbyname(conf['HOSTURL'])
+            except:
+                fallback_ip = '0.0.0.0'
+            conf['HOSTIP'] = conf.get('HOSTIP', fallback_ip)
             host_key = conf['HOSTURL'] + ',' + conf['HOSTIP']
             raw_key = conf['HOSTKEY'].strip()
             if not raw_key.startswith('ssh-rsa'):

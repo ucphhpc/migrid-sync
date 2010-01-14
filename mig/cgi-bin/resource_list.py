@@ -55,8 +55,8 @@ print '''Content-type: text/html
 
 form = cgi.FieldStorage()
 
-print get_cgi_html_header(configuration, 'MiG Resource administration',
-                          'Welcome to the MiG resource administration.')
+print get_cgi_html_header(configuration, 'Grid Resource administration',
+                          'Welcome to the Grid resource administration.')
 
 dir_list = os.listdir(configuration.resource_home)
 for file in dir_list:

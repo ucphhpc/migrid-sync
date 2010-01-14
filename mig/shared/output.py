@@ -1027,7 +1027,10 @@ def json_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in json format"""
 
     try:
-        import json
+        try:
+            import json
+        except:
+            import simplejson as json
         # python >=2.6 includes native json module with loads/dumps methods
         # python <2.6 + python-json module with read/write methods
         if not hasattr(json, 'dumps') and hasattr(json, 'write'):
@@ -1038,6 +1041,16 @@ def json_format(configuration, ret_val, ret_msg, out_obj):
              % exc
         return None
 
+def file_format(ret_val, ret_msg, out_obj):
+    
+    file_content = ''
+    
+    for entry in out_obj:
+        if entry['object_type'] == 'file_output':
+            for line in entry['lines']:
+                file_content += line
+                
+    return file_content
 
 def get_valid_outputformats():
     """Return list of valid outputformats"""
@@ -1053,6 +1066,7 @@ def get_valid_outputformats():
         'xmlrpc',
         'resource',
         'json',
+        'file'
         ]
 
 
@@ -1107,7 +1121,13 @@ def format_output(
     if not outputformat in outputformats:
         return txt_format(configuration, ret_val, ret_msg, out_obj)
 
-    return eval('%s_format(configuration, ret_val, ret_msg, out_obj)' % outputformat)
+    try:
+        return eval('%s_format(configuration, ret_val, ret_msg, out_obj)' % \
+                    outputformat)
+    except Exception, err:
+        msg = outputformat + \
+              ' failed on server! Defaulting to .txt output. (%s)' % err
+        return (txt_format(configuration, ret_val, msg, out_obj))
 
 def format_timedelta(timedelta):
     """Formats timedelta as '[Years,] [days,] HH:MM:SS'"""

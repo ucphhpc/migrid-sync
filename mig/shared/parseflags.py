@@ -35,28 +35,16 @@ def contains_letter(flags, letter):
     return letter in flags
 
 
-# end contains_letter
-
-
 def all(flags, letter='a'):
     return contains_letter(flags, letter)
-
-
-# end all
 
 
 def byte_count(flags, letter='b'):
     return contains_letter(flags, letter)
 
 
-# end byte_count
-
-
 def binary(flags, letter='b'):
     return contains_letter(flags, letter)
-
-
-# end binary
 
 
 def format(flags, letter='l'):
@@ -66,21 +54,16 @@ def format(flags, letter='l'):
         return 'basic'
 
 
-# end format
-
-
 def line_count(flags, letter='l'):
     return contains_letter(flags, letter)
-
-
-# end line_count
 
 
 def long_list(flags, letter='l'):
     return contains_letter(flags, letter)
 
 
-# end long_list
+def file_info(flags, letter='f'):
+    return contains_letter(flags, letter)
 
 
 def parents(flags, letter='p'):
@@ -89,16 +72,10 @@ def parents(flags, letter='p'):
     return contains_letter(flags, letter)
 
 
-# end parents
-
-
 def recursive(flags, letter='r'):
     """Verify if flags contain the recursive flag"""
 
     return contains_letter(flags, letter)
-
-
-# end recursive
 
 
 def sorted(flags, letter='s'):
@@ -107,20 +84,12 @@ def sorted(flags, letter='s'):
     return contains_letter(flags, letter)
 
 
-# end sorted
-
-
 def verbose(flags, letter='v'):
     """Verify if flags contain the verbose flag"""
 
     return contains_letter(flags, letter)
 
 
-# end verbose
-
-
 def word_count(flags, letter='w'):
     return contains_letter(flags, letter)
 
-
-# end word_count
