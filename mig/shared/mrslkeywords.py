@@ -137,9 +137,27 @@ Copies myscript and myfile_or_url from your MiG home to the resource, but myfile
         'Editor': 'input',
         'Required': False,
         }))
+    specs.append(('RESOURCE', {
+        'Title': 'Target Resources',
+        'Description': '''A list of resources allowed to execute the job (default is unset which means any resource).
+Each entry can be a full resource ID or a pattern with wild card support to match multiple resources or execution nodes.''',
+        'Example': '''
+::RESOURCE::
+6ad933abfde57855d45fd805654508f9_*
+f92dc607c8d1bc4710fad44f89cfd40b_localhost
+
+To submit with execution on any executor under the resource with ID 6ad933abfde57855d45fd805654508f9 or on the localhost exe node under the resource with ID f92dc607c8d1bc4710fad44f89cfd40b.
+
+Leave unset or empty to submit with execution on the first suitable resource.
+''',
+        'Type': 'multiplestrings',
+        'Value': [],
+        'Editor': 'select',
+        'Required': False,
+        }))
     specs.append(('VGRID', {
         'Title': 'VGrid Order',
-        'Description': '''A prioritized list of the VGRIDs allowed to execute the job (Default value is %s).
+        'Description': '''A prioritized list of the VGRIDs allowed to execute the job (default value is %s).
 During job submit the keyword ANY is replaced by a list of all the VGrids that you can access.
 ''' % default_vgrid,
         'Example': '''

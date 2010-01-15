@@ -32,11 +32,12 @@ import time
 import datetime
 
 from shared.conf import get_configuration_object
-from shared.gridstat import GridStat
 from shared.fileio import unpickle
-from shared.vgrid import vgrid_list_vgrids, default_vgrid
+from shared.gridstat import GridStat
 from shared.html import get_cgi_html_header, get_cgi_html_footer
 from shared.output import format_timedelta
+from shared.resource import anon_resource_id
+from shared.vgrid import vgrid_list_vgrids, default_vgrid
 
 print """
 Running grid monitor generator.
@@ -376,10 +377,10 @@ Listing the last request from each resource<br>
                     html += \
                         '<td><img src=/images/status-icons/%s.png></td>'\
                          % resource_status
+                    anon_id = anon_resource_id(unique_res_name_and_exe_list[1]) 
                     html += '<td>%s<br>%s</td>'\
-                         % (unique_res_name_and_exe_list[1],
-                            time.asctime(last_request_dict['CREATED_TIME'
-                            ].timetuple()))
+                         % (anon_id, time.asctime(
+                        last_request_dict['CREATED_TIME'].timetuple()))
                     html += '<td>' + days + ' days, ' + hours\
                          + ' hours, ' + minutes + ' min, ' + seconds\
                          + 'secs</td>'

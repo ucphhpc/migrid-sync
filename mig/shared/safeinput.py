@@ -707,6 +707,8 @@ def guess_type(name):
         return valid_numeric
     elif name.lower().find('unique_resource_name') != -1:
         return valid_fqdn
+    elif name.lower().find('resource') != -1:
+        return valid_job_id_pattern
     elif name.lower().find('hosturl') != -1:
         return valid_fqdn
     elif name.lower().find('exe_name') != -1:

@@ -46,12 +46,21 @@ def get_regex_non_numeric():
     """Match everything except numbers"""
     return re.compile('[^0-9]*')
 
-def anon_resource_id(res_id):
+def anon_resource_id(res_id, keep_exe=True):
     """Generates an anonymous but (practically) unique resource ID for
     resource with provided unique res_id. The anonymous ID is just a md5
     hash of the res_id to keep ID relatively short.
+    If keep_exe is set any '_exename' suffix is stripped before hashing
+    and appended again afterwards.
     """
-    return hash_algo(res_name).hexdigest()
+    res_part, exe_part = res_id, ''
+    if keep_exe:
+        parts = res_id.rsplit('_', 1) + ['']
+        res_part, exe_part = parts[0], parts[1]
+    anon_id = hash_algo(res_part).hexdigest()
+    if exe_part:
+        anon_id += "_%s" % exe_part
+    return anon_id
 
 def retrieve_execution_nodes(exe_nodes, prepend_leader=False):
     """Return an ordered list of exe nodes from the allowed range formats.

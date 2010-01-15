@@ -27,16 +27,18 @@
 
 """General Scheduler framework"""
 
-import time
 import calendar
+import fnmatch
 import re
+import time
 
 # Exponential delay penalty
 
 from math import exp, floor
 
-from jobqueue import print_job
 import shared.safeeval as safeeval
+from jobqueue import print_job
+from shared.resource import anon_resource_id
 from shared.vgrid import job_fits_res_vgrid
 
 
@@ -1140,6 +1142,7 @@ class Scheduler:
 
         # self.logger.info("scheduler examines job_id %s" % job["JOB_ID"])
 
+        # TODO: switch FORCEDDESTINATION jobs to use new RESOURCE field
         if job.has_key('FORCEDDESTINATION'):
             unique_resource_name = res['RESOURCE_ID']
             job_forced_dict = job['FORCEDDESTINATION']
@@ -1153,6 +1156,16 @@ class Scheduler:
 
                 # self.logger.info("jobs forceddestination does not match this resource (job: %s, res: %s)" % (job_forced_dict["UNIQUE_RESOURCE_NAME"], unique_resource_name))
 
+                return False
+
+        if job.get('RESOURCE', []):
+            res_match = False
+            anon_id = anon_resource_id(res['RESOURCE_ID'])
+            for job_dest in job['RESOURCE']:
+                if fnmatch.fnmatch(anon_id, job_dest):
+                    res_match = True
+                    break
+            if not res_match:
                 return False
 
         checklist = ['NODECOUNT', 'CPUCOUNT', 'CPUTIME', 'DISK',

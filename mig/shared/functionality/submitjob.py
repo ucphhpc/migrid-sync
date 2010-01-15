@@ -58,7 +58,7 @@ def available_choices(configuration, client_id, field, spec):
         try:
             choices = getattr(configuration, '%ss' % field.lower())
         except AttributeError, exc:
-            print exc
+            configuration.logger.error('%s' % exc)
             choices = []
     else:
         choices = []
@@ -68,6 +68,14 @@ def available_choices(configuration, client_id, field, spec):
     if default in choices:
         choices = [default] + [i for i in choices if not default == i]
     return choices
+
+
+def user_allowed_resources(configuration, client_id):
+    """Extract a list of recently seen resources that client_id can submit to.
+    There is no guarantee that thay will ever accept any further jobs.
+    """
+    # TODO: generate real list from gridstat or similar
+    return []
 
 
 def main(client_id, user_arguments_dict):
@@ -152,6 +160,9 @@ Actual examples for inspiration:
         (re_status, allowed_run_envs) = list_runtime_environments(configuration)
         allowed_run_envs.sort()
         configuration.runtimeenvironments = allowed_run_envs
+        allowed_resources = user_allowed_resources(configuration, client_id)
+        allowed_resources.sort()
+        configuration.resources = allowed_resources
         field_size = 30
         area_cols = 80
         area_rows = 5
