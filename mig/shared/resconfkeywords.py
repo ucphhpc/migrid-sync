@@ -255,7 +255,7 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         }))
     specs.append(('PUBLICNAME', {
         'Title': 'Public Name',
-        'Description': 'Specifies a public name or alias to display as the resource identity in monitors. This _may_ eventually be allowed as a job field to target in order to direct jobs to a specific resource.',
+        'Description': 'Specifies a public name or alias to display along with the resource identity in monitors.',
         'Example': 'EightByEight',
         'Type': 'string',
         'Value': '',

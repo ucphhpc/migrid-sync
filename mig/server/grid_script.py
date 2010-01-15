@@ -37,18 +37,17 @@ import copy
 
 import jobscriptgenerator
 from jobqueue import JobQueue
-from shared.conf import get_configuration_object
-from shared.notification import notify_user_thread
+from shared.conf import get_configuration_object, get_resource_exe
 from shared.fileio import pickle, unpickle, unpickle_and_change_status, \
     send_message_to_grid_script
-from shared.conf import get_resource_exe
 from shared.gridscript import clean_grid_stdin, \
     remove_jobrequest_pending_files, check_mrsl_files, requeue_job, \
     server_cleanup, load_queue, save_queue, load_schedule_cache, \
     save_schedule_cache
+from shared.notification import notify_user_thread
 from shared.resadm import atomic_resource_exe_restart, put_exe_pgid
-from shared.vgrid import default_vgrid, job_fits_res_vgrid
 from shared.useradm import client_id_dir
+from shared.vgrid import default_vgrid, job_fits_res_vgrid
 
 try:
     import servercomm
