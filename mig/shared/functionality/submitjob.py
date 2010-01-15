@@ -70,7 +70,7 @@ def available_choices(configuration, client_id, field, spec):
     return choices
 
 
-def user_allowed_resources(configuration, client_id):
+def user_allowed_resources(configuration, client_id, allowed_vgrids):
     """Extract a list of recently seen resources that client_id can submit to.
     There is no guarantee that thay will ever accept any further jobs.
     """
@@ -160,7 +160,7 @@ Actual examples for inspiration:
         (re_status, allowed_run_envs) = list_runtime_environments(configuration)
         allowed_run_envs.sort()
         configuration.runtimeenvironments = allowed_run_envs
-        allowed_resources = user_allowed_resources(configuration, client_id)
+        allowed_resources = user_allowed_resources(configuration, client_id, allowed_vgrids)
         allowed_resources.sort()
         configuration.resources = allowed_resources
         field_size = 30

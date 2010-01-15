@@ -44,8 +44,9 @@ from shared.settings import load_settings
 from shared.useradm import client_id_dir
 
 def html_tmpl():
-    
-  return  """
+  """HTML page base"""
+
+  html = '''
   <div id="debug"></div>
   <div id="fm_filemanager">        
     <div class="fm_addressbar">
@@ -223,26 +224,40 @@ def html_tmpl():
   </form>
   <div id="editor_output"></div>
   </div>
-
-  """
+  '''
+  return html
 
 def js_tmpl(entry_path='/'):
-    
-  js = """
+  """Javascript to include in the page header"""
+
+  js = '''
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.contextmenu.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-1.7.2.custom.css" media="screen"/>
+
+<script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui-1.7.2.custom.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery.form.js"></script>
+<script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
+<script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
+
   <script>
   
   $.ui.dialog.defaults.bgiframe = true;
           
   $(document).ready( function() {
   
-    $('#fm_filemanager').filemanager({
-                                      root: '/',
-                                      connector: 'ls.py',
-                                      params: 'path',
+    $("#fm_filemanager").filemanager({
+                                      root: "/",
+                                      connector: "ls.py",
+                                      params: "path",
                                       expandSpeed: 0,
                                       collapseSpeed: 0,
                                       multiFolder: false,
-                                      subFolder: '%s'
+                                      subFolder: "%s"
                                       },
                                       function(file) { alert(file); }
     );
@@ -250,7 +265,7 @@ def js_tmpl(entry_path='/'):
   });
 
   </script>
-  """ % entry_path
+  ''' % entry_path
   return js
     
 def signature():
@@ -282,10 +297,10 @@ def main(client_id, user_arguments_dict):
   
   entry_path = ''.join(accepted['path'])
   title_entry = find_entry(output_objects, 'title')
-  title_entry['text'] = 'Filemanager'
+  title_entry['text'] = 'File Manager'
   title_entry['javascript'] = js_tmpl(entry_path)        
   
-  output_objects.append({'object_type': 'header', 'text': 'Filemanager' })
+  output_objects.append({'object_type': 'header', 'text': 'File Manager' })
   
   output_objects.append({'object_type': 'html_form', 'text': html_tmpl()})
       
