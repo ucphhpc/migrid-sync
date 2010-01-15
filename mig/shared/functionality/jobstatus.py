@@ -288,8 +288,8 @@ def main(client_id, user_arguments_dict):
                     execution_histories.append({'execution_history'
                             : execution_history, 'count': counter})
                     counter += 1
-            if job_dict.has_key('SCHEDULE_HINT'):
-                job_obj['schedule_hint'] = job_dict['SCHEDULE_HINT']
+        if job_dict.has_key('SCHEDULE_HINT'):
+            job_obj['schedule_hint'] = job_dict['SCHEDULE_HINT']
 
         job_obj['execution_histories'] = execution_histories
 

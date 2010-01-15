@@ -73,6 +73,7 @@
 .contextMenu LI.mrsl a { background-image: url('/images/icons/page_white_text.png'); }
 .contextMenu LI.viewmrls a { background-image: url(/images/icons/file.png); }
 .contextMenu LI.statusfiles a{ background-image: url(/images/icons/drive.png); }
+.contextMenu LI.outputfiles a{ background-image: url(/images/icons/download.png); }
 .contextMenu LI.schedule a { background-image: url(/images/icons/calendar.png); }
 .contextMenu LI.resubmit a { background-image: url(/images/icons/arrow_redo.png); }
 .contextMenu LI.cancel a { background-image: url(/images/icons/cancel.png); }

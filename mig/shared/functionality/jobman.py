@@ -78,7 +78,7 @@ def html_tmpl():
         <tr>
           <th style="width: 20px;"><input type="checkbox" id="checkAll" /></th>
           <th>JobID</th>
-          <th style="width: 80px;">Status</th>
+          <th style="width: 120px;">Status</th>
           <th style="width: 180px;">Date</th>
         </tr>        
       </thead>
@@ -97,11 +97,11 @@ def html_tmpl():
       <li class="cancel single">
           <a href="#cancel">Cancel</a>
       </li>
-      <li class="mrsl separator single">
-          <a href="#mrsl">mRSL File</a>
+      <li class="mrsl single separator">
+          <a href="#mrsl">Raw Description</a>
       </li>
       <li class="schedule single">
-          <a href="#schedule">Scheduler</a>
+          <a href="#schedule">Schedule Status</a>
       </li>
       <li class="liveoutput single">
           <a href="#liveoutput">Live Output</a>
@@ -109,7 +109,13 @@ def html_tmpl():
       <li class="statusfiles single separator">
           <a href="#statusfiles">Status Files</a>
       </li>
+      <li class="outputfiles single">
+          <a href="#outputfiles">Output Files</a>
+      </li>
       
+      <li class="schedule multi">
+          <a href="#schedule">Schedule Status All</a>
+      </li>
       <li class="resubmit multi">
           <a href="#resubmit">Resubmit All</a>
       </li>
@@ -219,7 +225,7 @@ def js_tmpl():
               if (jsonRes[i]["changedstatusjobs"][j]["message"]) {
                 misc_output += jsonRes[i]["changedstatusjobs"][j]["message"];
               } else {
-                success_message = "<p>Job-Status changed from '"+ jsonRes[i]["changedstatusjobs"][j]["oldstatus"] + "' to '"+jsonRes[i]["changedstatusjobs"][j]["newstatus"]+"'.</p>";
+                success_message = "<p>Job status changed from '"+ jsonRes[i]["changedstatusjobs"][j]["oldstatus"] + "' to '"+jsonRes[i]["changedstatusjobs"][j]["newstatus"]+"'.</p>";
               }
             }
               
@@ -230,7 +236,7 @@ def js_tmpl():
               if (jsonRes[i]["saveschedulejobs"][j]["message"]) {
                 misc_output += jsonRes[i]["saveschedulejobs"][j]["message"];
               } else {
-                success_message = "<p>Job-Schedule '"+ jsonRes[i]["saveschedulejobs"][j]["oldstatus"]+"'.";
+                success_message = "<p>Job schedule '"+ jsonRes[i]["saveschedulejobs"][j]["oldstatus"]+"'.";
               }
             }
           break;
@@ -238,7 +244,7 @@ def js_tmpl():
           case "resubmitobjs":
             for(j=0; j<jsonRes[i]["resubmitobjs"].length; j++) {
               if (jsonRes[i]["resubmitobjs"][j]["status"]) {
-                success_message = "<br /> New JobID: "+jsonRes[i]["resubmitobjs"][j]["new_job_id"];
+                success_message = "<br />Resubmitted job as: "+jsonRes[i]["resubmitobjs"][j]["new_job_id"];
               } else {
                 misc_output += jsonRes[i]["resubmitobjs"][j]["message"];  
               }
@@ -330,6 +336,11 @@ def js_tmpl():
                 statusfiles: function (job_id) {    
                     document.location = "/cgi-bin/fileman.py?path="+"job_output/"+job_id;
                 },
+                outputfiles: function (job_output) {    
+                    // TODO: fileman does not support file paths and multi path - use old ls
+                    //document.location = "/cgi-bin/fileman.py?"+job_output.match(/^ls.py\?(.*)$/)[1];
+                    document.location = job_output;
+                },
                 liveoutput: function (job_id) {
                     jsonWrapper(job_id, "#cmd_dialog", "liveoutput.py", {job_id: job_id})
                 },
@@ -341,9 +352,13 @@ def js_tmpl():
             $("#jm_jobmanager tbody tr td").contextMenu({ menu: "job_context"},
                 function(action, el, pos) {
                     
-                    // Status-files redirect to the filemanger they therefore do not match the general case of jsonwrapping/commandoutput
+                    // Status and output files redirect to the filemanager, so they do not match the general case of jsonwrapping/commandoutput
                     if (action == "statusfiles") {
                       actions[action]($("input[name=job_identifier]", $(el).parent()).val());                      
+                      return true;
+                    }
+                    else if (action == "outputfiles") {
+                      actions[action]($("input[name=job_output]", $(el).parent()).val());                      
                       return true;
                     }                    
                     
@@ -364,7 +379,7 @@ def js_tmpl():
                         
                     } else {
                         var selected_rows = $("#jm_jobmanager tbody tr.ui-selected");
-                        $("#cmd_helper").append("<p>"+action+"ing "+selected_rows.length+" jobs, see individual status below:</p>");
+                        $("#cmd_helper").append("<p>"+action+": "+selected_rows.length+" jobs, see individual status below:</p>");
                         selected_rows.each(function(i) {
                             job_id = $("input[name=job_identifier]", this).val();                            
                             $("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>"+job_id+"</p></div>");
@@ -412,11 +427,14 @@ def js_tmpl():
         
         $("table tbody").html("");
         var job_count = 0;
+        var sched_hint = '';
+        var output_url = '';
+        
         // add some html      
         $.getJSON("jobstatus.py?output_format=json", {}, function(jsonRes, textStatus) {
         
             var jobList = new Array();
-            var i =0;
+            var i = 0;
             
             // Grab jobs from json response and place them in jobList.
             for(i=0; i<jsonRes.length; i++) {
@@ -428,11 +446,21 @@ def js_tmpl():
     
             // Wrap each json result into html
             $.each(jobList, function(i, item) {
-    
+                if (item.schedule_hint != null) {
+                    sched_hint = " ("+item.schedule_hint+")";
+                } else {
+                    sched_hint = "";
+                }
+                if (item.outputfileslink != null) {
+                    output_url = item.outputfileslink.destination;
+                } else {
+                    output_url = "";
+                }
                 $("#jm_jobmanager tbody").append("<tr id='"+item.job_id.match(/^([0-9_]+)__/)[1]+"'>"+
                   "<td><div class='sortkey'></div><input type='checkbox' name='job_identifier' value='"+item.job_id+"' /></td>"+
                   "<td><div class='sortkey'>"+item.job_id.match(/^([0-9]+)_/)[1]+"</div>"+item.job_id+"</td>"+                 
-                  "<td><div class='sortkey'>"+item.status+"</div><div class='statusfiles'>"+item.status+"</div></td>"+
+                  "<input type='hidden' name='job_output' value='"+output_url+"' />"+
+                  "<td><div class='sortkey'>"+item.status+"</div><div class='jobstatus'>"+item.status+sched_hint+"</div></td>"+
                   "<td><div class='sortkey'>"+toTimestamp(item.received_timestamp)+"</div>"+item.received_timestamp+"</td>"+                 
                   "</tr>"                  
                   );
