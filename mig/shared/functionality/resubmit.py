@@ -170,17 +170,19 @@ def main(client_id, user_arguments_dict):
 
         for dict_elem in resubmit_items:
             value = ''
+            # Extract job value with fallback to default to support optional fields
+            job_value = mrsl_dict.get(dict_elem, keywords_dict[dict_elem]['Value'])
             if keywords_dict[dict_elem]['Type'].startswith('multiplekeyvalues'):
-                for (elem_key, elem_val) in mrsl_dict[dict_elem]:
+                for (elem_key, elem_val) in job_value:
                     if elem_key:
                         value += '%s=%s\n' % (str(elem_key).strip(), str(elem_val).strip())
             elif keywords_dict[dict_elem]['Type'].startswith('multiple'):
-                for elem in mrsl_dict[dict_elem]:
+                for elem in job_value:
                     if elem:
                         value += '%s\n' % str(elem).rstrip()
             else:
-                if str(mrsl_dict[dict_elem]):
-                    value += '%s\n' % str(mrsl_dict[dict_elem]).rstrip()
+                if str(job_value):
+                    value += '%s\n' % str(job_value).rstrip()
 
             # Only insert keywords with an associated value
 
