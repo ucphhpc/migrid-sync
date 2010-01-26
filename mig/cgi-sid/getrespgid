@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# get_resource_pgid - [insert a few words of module description on this line]
+# getrespgid - download PGID for use in kill in clean up
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.

@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# put_resource_pgid - upload script PGID's to allow kill in clean up
+# putrespgid - upload script PGID's to allow kill in clean up
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.

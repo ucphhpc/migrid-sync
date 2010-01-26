@@ -71,7 +71,7 @@ def txt_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in txt format"""
 
     lines = []
-    lines.append('Exit code: %s Description %s\n' % (ret_val, ret_msg))
+    status_line = 'Exit code: %s Description %s\n' % (ret_val, ret_msg)
 
     for i in out_obj:
         if i['object_type'] == 'error_text':
@@ -310,11 +310,15 @@ ctime\t%(ctime)s
         elif i['object_type'] == 'list':
             for list_item in i['list']:
                 lines.append('%s\n' % list_item)
+        elif i['object_type'] == 'script_status':
+            status_line = i.get('text')
         elif i['object_type'] == 'end':
             pass
         else:
             lines.append('unknown object %s\n' % i)
             
+    if status_line:
+        lines = [status_line] + lines
     return ''.join(lines)
 
 
@@ -340,6 +344,14 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in html format"""
 
     lines = []
+    status_line = \
+        """</div>
+    <div id="exitcode">
+Exit code: %s Description: %s<br>
+    </div>
+<br>    
+"""\
+         % (ret_val, ret_msg)
     for i in out_obj:
         if i['object_type'] == 'start':
             pass
@@ -929,20 +941,15 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 lines.append('</table>')
             else:
                 lines.append('No matching VGrids found')
+        elif i['object_type'] == 'script_status':
+            status_line = i.get('text')
         elif i['object_type'] == 'end':
             pass
         else:
             lines.append('unknown object %s' % i)
-    footer = \
-        """</div>
-    <div id="exitcode">
-Exit code: %s Description: %s<br>
-    </div>
-<br>    
-"""\
-         % (ret_val, ret_msg)
 
-    lines.append(get_cgi_html_footer(configuration, footer))
+    if status_line:
+        lines.append(get_cgi_html_footer(configuration, script_status))
     return '\n'.join(lines)
 
 

@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# isjobactive - [insert a few words of module description on this line]
+# isjobactive - sandbox job kill helper
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,54 +25,11 @@
 # -- END_HEADER ---
 #
 
-# Created 271006 by Martin Rehr
-
 import cgi
 import cgitb
 cgitb.enable()
-import os
 
-# MiG imports
+from shared.functionality.isjobactive import main
+from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
-from shared.cgishared import init_cgiscript_possibly_with_cert
-from shared.resadm import get_sandbox_exe_stop_command
-
-# ## Main ###
-
-(logger, configuration, client_id, o) = \
-    init_cgiscript_possibly_with_cert()
-
-# Check we are using correct method
-
-if os.getenv('REQUEST_METHOD') != 'GET':
-
-    # Request method is wrong
-
-    o.out('You must use HTTP GET!')
-    o.reply_and_exit(o.CLIENT_ERROR)
-
-# check that the job exists, iosessionid is ok (does symlink exist?)
-
-fieldstorage = cgi.FieldStorage()
-iosessionid = fieldstorage.getfirst('iosessionid', None)
-sandboxkey = fieldstorage.getfirst('sandboxkey', None)
-exe_name = fieldstorage.getfirst('exe_name', None)
-
-if iosessionid and os.path.islink(configuration.webserver_home
-                                   + iosessionid):
-    o.client('jobactive')
-    o.reply_and_exit(o.OK)
-else:
-    if sandboxkey and exe_name:
-        (status, msg) = \
-            get_sandbox_exe_stop_command(configuration.sandbox_home,
-                sandboxkey, exe_name, logger)
-        if status:
-            o.client('stop_command: %s' % msg)
-        else:
-            o.client(msg)
-    else:
-        o.client('jobinactive')
-
-    o.reply_and_exit(o.ERROR)
-
+run_cgi_script_possibly_with_cert(main)
