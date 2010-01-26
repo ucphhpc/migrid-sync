@@ -50,7 +50,7 @@ def html_tmpl():
   <div>
     <div class="toolbar">        
       <div class="pager" id="pager">
-      <form style="display: inline;">
+      <form style="display: inline;" action="">
         <img class="first" src="/images/icons/arrow_left.png"/>
         <img class="prev" src="/images/icons/arrow_left.png"/>
         <input type="text" class="pagedisplay" />
@@ -145,7 +145,7 @@ def js_tmpl():
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
   
-  <script>
+  <script type="text/javascript">
   
   function toTimestamp(strDate) {
       return Date.parse(strDate);

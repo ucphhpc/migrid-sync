@@ -345,11 +345,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 
     lines = []
     status_line = \
-        """</div>
+        """
     <div id="exitcode">
-Exit code: %s Description: %s<br>
+Exit code: %s Description: %s<br />
     </div>
-<br>    
+<br />    
 """\
          % (ret_val, ret_msg)
     for i in out_obj:
@@ -475,21 +475,21 @@ Exit code: %s Description: %s<br>
                                     single_history['failed_message']))
 
                     lines.append('<tr><td>Links</td><td>')
-                    lines.append('%s<br>' % html_link(obj['statuslink'
+                    lines.append('%s<br />' % html_link(obj['statuslink'
                                  ]))
-                    lines.append('%s<br>' % html_link(obj['mrsllink']))
-                    lines.append('%s<br>' % html_link(obj['resubmitlink'
+                    lines.append('%s<br />' % html_link(obj['mrsllink']))
+                    lines.append('%s<br />' % html_link(obj['resubmitlink'
                                  ]))
-                    lines.append('%s<br>' % html_link(obj['cancellink'
+                    lines.append('%s<br />' % html_link(obj['cancellink'
                                  ]))
-                    lines.append('%s<br>'
+                    lines.append('%s<br />'
                                   % html_link(obj['jobschedulelink']))
-                    lines.append('%s<br>'
+                    lines.append('%s<br />'
                                   % html_link(obj['liveoutputlink']))
                     if obj.has_key('outputfileslink'):
-                        lines.append('<br>%s'
+                        lines.append('<br />%s'
                                  % html_link(obj['outputfileslink']))
-                    lines.append('</td></tr><tr><td><br></td></tr>')
+                    lines.append('</td></tr><tr><td><br /></td></tr>')
 
 
                 lines.append('</table>')
@@ -598,7 +598,7 @@ Exit code: %s Description: %s<br>
                              )
                 cols += 1
 
-                # lines.append("<td><br></td>"
+                # lines.append("<td><br /></td>"
                 # cols += 1
 
                 lines.append('<td colspan=%d>Select/deselect all files</td>'
@@ -619,17 +619,17 @@ Exit code: %s Description: %s<br>
                         directory = entry
                         if directory == dir_listing['entries'][0]:
                             lines.append('<tr>')
-                            lines.append('<td width=20%%>%s:<br>total %s</td>'
+                            lines.append('<td width=20%%>%s:<br />total %s</td>'
                                      % (dir_listing['relative_path'],
                                     len(dir_listing['entries'])))
                             cols += 1
-                            lines.append('<td><br></td>' * (columns
+                            lines.append('<td><br /></td>' * (columns
                                      - cols) + '</tr>')
                             cols = columns
 
                         lines.append('<tr class=%s>' % row_class)
                         cols = 0
-                        lines.append('<td><br></td>')
+                        lines.append('<td><br /></td>')
                         cols += 1
                         if 'full' == i['style']:
                             lines.append("<td><input type='checkbox' name='path' value='%s'></td>"
@@ -639,7 +639,7 @@ Exit code: %s Description: %s<br>
                             lines.append('<td>%s</td>'
                                      % directory['actual_dir'])
                         else:
-                            lines.append('<td><br></td>')
+                            lines.append('<td><br /></td>')
                         cols += 1
                         lines.append("<td><a href='ls.py?path=%s;flags=%s;output_format=html'>show</a></td><td>DIR</td>"
                                  % (directory['dirname_with_dir'],
@@ -650,7 +650,7 @@ Exit code: %s Description: %s<br>
                         cols += 1
                         lines.append('<td>%s</td>' % directory['name'])
                         cols += 1
-                        lines.append('<td><br></td>' * (columns - cols)
+                        lines.append('<td><br /></td>' * (columns - cols)
                                  + '</tr>')
                         cols = columns
                         lines.append('</tr>')
@@ -658,7 +658,7 @@ Exit code: %s Description: %s<br>
                         this_file = entry
                         lines.append('<tr class=%s>' % row_class)
                         cols = 0
-                        lines.append('<td><br></td>')
+                        lines.append('<td><br /></td>')
                         cols += 1
                         if 'full' == i['style']:
                             lines.append("<td><input type='checkbox' name='path' value='%s'></td>"
@@ -668,7 +668,7 @@ Exit code: %s Description: %s<br>
                             lines.append('<td>%s</td>'
                                      % this_file['long_format'])
                         else:
-                            lines.append('<td><br></td>')
+                            lines.append('<td><br /></td>')
                         cols += 1
                         lines.append("<td><a href='/%s/%s'>show</a></td>"
                                  % ('cert_redirect',
@@ -686,7 +686,7 @@ Exit code: %s Description: %s<br>
                             lines.append('<td>%s</td>'
                                      % this_file['file_dest'])
                             cols += 1
-                        lines.append('<td><br></td>' * (columns - cols)
+                        lines.append('<td><br /></td>' * (columns - cols)
                                  + '</tr>')
                         cols = columns
                         lines.append('</tr>')
@@ -718,13 +718,13 @@ Exit code: %s Description: %s<br>
             lines.append('File %s was <B>not</B> found!' % i['name'])
         elif i['object_type'] == 'file_output':
             if i.has_key('path'):
-                lines.append('File: %s<br>' % i['path'])
-            lines.append('<pre>%s</pre><br>' % ''.join(i['lines']))
+                lines.append('File: %s<br />' % i['path'])
+            lines.append('<pre>%s</pre><br />' % ''.join(i['lines']))
         elif i['object_type'] == 'list':
             lines.append('<ul>')
             for list_item in i['list']:
                 lines.append(('<li>%s</li>' % list_item).replace('\n',
-                             '<br>'))
+                             '<br />'))
             lines.append('</ul>')
         elif i['object_type'] == 'linklist':
             links = i['links']

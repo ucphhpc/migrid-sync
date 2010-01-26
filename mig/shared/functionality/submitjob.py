@@ -114,8 +114,8 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <div class='smallcontent'>
-Job descriptions can use a wide range of keywords to specify job requirements and actions.<br>
-Each keyword accepts one or more values of a particular type.<br>
+Job descriptions can use a wide range of keywords to specify job requirements and actions.<br />
+Each keyword accepts one or more values of a particular type.<br />
 The full list of keywords with their default values and format is available in the on-demand <a href='docs.py?show=job'>mRSL Documentation</a>.
 <p>
 Actual examples for inspiration:
@@ -170,7 +170,7 @@ Actual examples for inspiration:
         for (field, spec) in show_fields:
             title = spec['Title']
             if show_description:
-                description = '%s<br>' % spec['Description']
+                description = '%s<br />' % spec['Description']
             else:
                 description = ''
             field_type = spec['Type']
@@ -189,7 +189,7 @@ Actual examples for inspiration:
                 continue
             output_objects.append({'object_type': 'html_form', 'text'
                                        : """
-<b>%s:</b>&nbsp;<a href='docs.py?show=job#%s'>help</a><br>
+<b>%s:</b>&nbsp;<a href='docs.py?show=job#%s'>help</a><br />
 %s""" % (title, field, description)
                                    })
             
@@ -197,13 +197,13 @@ Actual examples for inspiration:
                 if field_type.startswith('multiple'):
                     output_objects.append({'object_type': 'html_form', 'text'
                                            : """
-<textarea name='%s' cols='%d' rows='%d'>%s</textarea><br>
+<textarea name='%s' cols='%d' rows='%d'>%s</textarea><br />
 """ % (field, area_cols, area_rows, '\n'.join(default))
                                    })
                 else:
                     output_objects.append({'object_type': 'html_form', 'text'
                                            : """
-<input type='text' name='%s' size='%d' value='%s'><br>
+<input type='text' name='%s' size='%d' value='%s' /><br />
 """ % (field, field_size, default)
                                    })
             elif 'select' == spec['Editor']:
@@ -221,20 +221,20 @@ Actual examples for inspiration:
                     if str(res_value) == str(name) or multi_select and str(name) in res_value:
                         selected = 'selected'
                     value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-                value_select += """</select><br>\n"""    
+                value_select += """</select><br />\n"""    
                 output_objects.append({'object_type': 'html_form', 'text'
                                        : value_select
                                        })
-            output_objects.append({'object_type': 'html_form', 'text': "<br>"})
+            output_objects.append({'object_type': 'html_form', 'text': "<br />"})
 
         output_objects.append({'object_type': 'html_form', 'text'
                               : """
 <tr>
-<td><br></td>
+<td><br /></td>
 <td class=centertext>
-<input type="submit" value="Submit Job">
+<input type="submit" value="Submit Job" />
 </td>
-<td><br></td>
+<td><br /></td>
 </tr>
 </form>
 </table>
@@ -253,13 +253,13 @@ are supplied: thus we simply send a bogus jobname which does nothing
 <table class="submitjob">
 <tr><td class=centertext>
 <form method="post" action="textarea.py" id="miginput">
-<input type=hidden name=jobname_0_0_0 value=" ">
+<input type=hidden name=jobname_0_0_0 value=" " />
 <textarea cols="82" rows="25" name="mrsltextarea_0">
 %(default_mrsl)s
 </textarea>
 </td></tr>
 <tr><td>
-<center><input type="submit" value="Submit Job"></center>
+<center><input type="submit" value="Submit Job" /></center>
 </form>
 </td></tr>
 </table>
@@ -270,7 +270,7 @@ are supplied: thus we simply send a bogus jobname which does nothing
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<br>
+<br />
 <table class='files'>
 <tr class=title><td class=centertext colspan=4>
 Upload file
@@ -282,12 +282,12 @@ Upload file to current directory (%(dest_dir)s)
 <form enctype='multipart/form-data' action='textarea.py' method='post'>
 Extract package files (.zip, .tar.gz, .tar.bz2)
 </td><td colspan=2>
-<input type=checkbox name='extract_0'>
+<input type=checkbox name='extract_0' />
 </td></tr>
 <tr><td colspan=2>
 Submit mRSL files (also .mRSL files included in packages)
 </td><td colspan=2>
-<input type=checkbox name='submitmrsl_0' CHECKED>
+<input type=checkbox name='submitmrsl_0' CHECKED />
 </td></tr>
 <tr><td>    
 File to upload
@@ -298,7 +298,7 @@ File to upload
 Optional remote filename (extra useful in windows)
 </td><td class=righttext colspan=3>
 <input name='default_remotefilename_0' type='hidden' value='%(dest_dir)s'/>
-<input name='remotefilename_0' type='input' size='50' value='%(dest_dir)s'/>
+<input name='remotefilename_0' type='text' size='50' value='%(dest_dir)s'/>
 <input type='submit' value='Upload' name='sendfile'/>
 </form>
 </td></tr>

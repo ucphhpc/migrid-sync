@@ -70,8 +70,6 @@ def html_tmpl():
           <th style="width: 120px;">Date Modified</th>
         </tr>        
       </thead>
-      <tbody>
-      </tbody>
       </table>            
     
     </div>        
@@ -139,7 +137,7 @@ def html_tmpl():
 
   <div id="upload_dialog" title="Upload File" style="display: none;">
   
-    <form id="upload_form" enctype="multipart/form-data" method="POST" action="textarea.py">
+    <form id="upload_form" enctype="multipart/form-data" method="post" action="textarea.py">
     <fieldset>
       <input type="hidden" name="output_format" value="json"/>
       <input type="hidden" name="MAX_FILE_SIZE" value="100000"/>
@@ -149,7 +147,7 @@ def html_tmpl():
       <br />
       
       <label for="remotefilename_0">Optional remote filename (extra useful in windows):</label>
-      <input type="input" value="./" size="50" name="remotefilename_0" />
+      <input type="text" value="./" size="50" name="remotefilename_0" />
       <br />
       
       <label for="extract_0">Extract package files (.zip, .tar.gz, .tar.bz2)</label>
@@ -202,10 +200,10 @@ def html_tmpl():
   <div class="spinner" style="padding-left: 20px;">Loading file...</div>
   <fieldset>
 
-    <input type="hidden" name="output_format" value="json">
+    <input type="hidden" name="output_format" value="json" />
 
     <label for="path">Select file:</label>
-    <input type="text" size="80" name="path" value=""><br />
+    <input type="text" size="80" name="path" value="" /><br />
     
     <label for="editarea">Edit contents:</label>
     <textarea cols="80" rows="20" wrap="off" name="editarea"></textarea>
@@ -218,7 +216,7 @@ def html_tmpl():
     </select>
     
     <label for="name">Submit file as job after saving </label>
-    <input type="checkbox" name="submitjob">
+    <input type="checkbox" name="submitjob" />
             
   </fieldset>
   </form>
@@ -244,7 +242,7 @@ def js_tmpl(entry_path='/'):
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
 
-  <script>
+  <script type="text/javascript">
   
   $.ui.dialog.defaults.bgiframe = true;
           
