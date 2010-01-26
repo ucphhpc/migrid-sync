@@ -187,6 +187,7 @@ if (jQuery) (function($){
 			show: 	function (action, el, pos) { document.location = '/cgi-bin/cat.py?path='+$(el).attr(pathAttribute)+'&output_format=file' },
 			edit: 	function (action, el, pos) {
 				
+				$("#editor_dialog textarea[name=editarea]").val('');
 				$('#editor_dialog').dialog('destroy');
 				$('#editor_output').html('');
 				$("#editor_dialog").dialog({ buttons: {
