@@ -157,9 +157,8 @@ def get_cgi_html_footer(configuration, footer='', html=True):
     if not html:
         return ''
 
-    out = footer
+    out = "</div>\n" + footer
     out += '''
-</div>
 <div id="bottomlogo">
 <img src="%s" id="creditsimage" alt=""/>
 <span id="credits">

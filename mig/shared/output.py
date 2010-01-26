@@ -1048,7 +1048,7 @@ def json_format(configuration, ret_val, ret_msg, out_obj):
              % exc
         return None
 
-def file_format(ret_val, ret_msg, out_obj):
+def file_format(configuration, ret_val, ret_msg, out_obj):
     
     file_content = ''
     
