@@ -62,7 +62,7 @@ def create_html(vgrid_name, configuration):
              % vgrid_name
 
         out += 'Current owners of %s:' % vgrid_name
-        out += '<table class="vgridowner"><th>Remove</th><th>Owner</th>'
+        out += '<table class="vgridowner"><tr><th>Remove</th><th>Owner</th>'
         for elem in msg:
             if elem != '':
                 out += \
@@ -80,7 +80,7 @@ def create_html(vgrid_name, configuration):
     <input type="text" size=40 name="cert_id" />
     <input type="submit" value="Add vgrid owner" />
     </form>
-    <hr>
+    <hr />
     <h2>Members</h2>"""\
          % vgrid_name
 
@@ -101,7 +101,7 @@ def create_html(vgrid_name, configuration):
 
         out += 'Current members of %s:' % vgrid_name
         out += \
-            '<table class="vgridmember"><th>Remove</th><th>Member</th>'
+            '<table class="vgridmember"><tr><th>Remove</th><th>Member</th>'
         for elem in msg:
             out += \
                 "<tr><td><input type=radio name='cert_id' value='%s' /></td><td>%s</td></tr>"\
@@ -118,7 +118,7 @@ def create_html(vgrid_name, configuration):
     <input type="text" size=40 name="cert_id" />
     <input type="submit" value="Add vgrid member" />
     </form>
-    <hr>
+    <hr />
     <h2>Resources</h2>"""\
          % vgrid_name
 
@@ -139,7 +139,7 @@ def create_html(vgrid_name, configuration):
 
         out += 'Current resources of %s:' % vgrid_name
         out += \
-            '<table class="vgridresource"><th>Remove</th><th>Resource</th></tr>'
+            '<table class="vgridresource"><tr><th>Remove</th><th>Resource</th></tr>'
         for elem in msg:
             out += \
                 "<tr><td><input type=radio name='unique_resource_name' value='%s' /></td><td>%s</td></tr>"\

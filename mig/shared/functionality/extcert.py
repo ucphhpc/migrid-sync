@@ -82,12 +82,11 @@ You can use it if you already have a x509 certificate from another accepted CA. 
 The page tries to auto load any certificate your browser provides and fill in the fields accordingly, but in case it can't guess all <span class=mandatory>mandatory</span> fields, you still need to fill in those.<br />
 Please enter any missing information below and press the Send button to submit the external certificate sign up request to the MiG administrators.<p>
 <b><font color='red'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br />
-That is, if You're a student/employee at DIKU, please type DIKU in the Organization field and use your USER@diku.dk address in the Email field.</font></b><p>
-<hr>
+That is, if You're a student/employee at DIKU, please type DIKU in the Organization field and use your USER@diku.dk address in the Email field.</font></b></p>
+<hr />
 <p>
 <!-- use post here to avoid field contents in URL -->
 <form method=post action=extcertaction.py>
-<input type=hidden commit=true />
 <table>
 <tr><td>Certificate DN</td>
 <td><input type=text size=%(dn_max_len)s maxlength=%(dn_max_len)s name=cert_id value='%(client_id)s' /> <sup class=mandatory>1</sup></td>
@@ -101,8 +100,8 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <tr><td><input type='submit' value='Send' /></td><td></td></tr>
 </table>
 </form>
-<p>
-<hr>
+</p>
+<hr />
 <p>
 <font size=-1>
 <sup>1</sup> must be the exact Distinguished Name (DN) of your certificate<br />
@@ -113,7 +112,7 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <sup>6</sup> country code is on the form GB/DK/.. , <a href=http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html>help</a><br />
 <sup>7</sup> optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.<br />
 </font>
-<p>
+</p>
 """
                            % {
         'valid_name_chars': valid_name_chars,

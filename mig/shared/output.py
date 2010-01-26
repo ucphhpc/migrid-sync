@@ -325,7 +325,7 @@ ctime\t%(ctime)s
 def html_link(obj):
     """html format link"""
 
-    return '<a href=%s>%s</a>' % (obj['destination'], obj['text'])
+    return '<a href="%s">%s</a>' % (obj['destination'], obj['text'])
 
 
 def html_table_if_have_keys(dictionary, keywordlist):
@@ -391,7 +391,7 @@ Exit code: %s Description: %s<br />
             lines.append(html_link(i))
         elif i['object_type'] == 'job_list':
 
-            # lines.append("<a href=%s>%s</a>" % (i["destination"], i["text"])
+            # lines.append("<a href="%s">%s</a>" % (i["destination"], i["text"])
 
             if len(i['jobs']) > 0:
                 jobs = i['jobs']
@@ -796,7 +796,7 @@ Exit code: %s Description: %s<br />
                 row_number = 1
                 for single_re in runtimeenvironments:
                     row_class = row_name[row_number % 2]
-                    lines.append('<tr class=%s><td>%s</td><td>%s</td><td><a href=showre.py?re_name=%s>View</a></td><td>%s</td></tr>'
+                    lines.append('<tr class=%s><td>%s</td><td>%s</td><td><a href="showre.py?re_name=%s">View</a></td><td>%s</td></tr>'
                                   % (row_class, single_re['name'],
                                  single_re['description'],
                                  single_re['name'], single_re['creator'
@@ -814,7 +814,7 @@ Exit code: %s Description: %s<br />
                 software_html += '<tr><td>Name:</td><td>%s</td></tr>'\
                      % software['name']
                 software_html += \
-                    '<tr><td>Url:</td><td><a href=%s>%s</a></td></tr>'\
+                    '<tr><td>Url:</td><td><a href="%s">%s</a></td></tr>'\
                      % (software['url'], software['url'])
                 software_html += \
                     '<tr><td>Description:</td><td>%s</td></tr>'\

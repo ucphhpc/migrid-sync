@@ -106,7 +106,7 @@ def print_os_selection():
     """Prints html section where a user chooses which OS he uses"""
 
     html = \
-        """<tr><td align='' colspan=''>Which operating system 
+        """<tr><td align='left' colspan='1'>Which operating system 
           are you using?</td>
     <td><select name='operating_system'>
     <option value='win'>Windows XP/Vista</option>
@@ -121,7 +121,7 @@ def print_windows_solution_selection():
 
     html = \
         """<tr><td>If Windows, do you want 
-          the screensaver <break> or the service model? If unsure, choose screensaver</td>
+          the screensaver <br /> or the service model? If unsure, choose screensaver</td>
     <td><select name='win_solution'>
     <option value='screensaver'>Screensaver</option>
     <option value='service'>Windows Service</option>
@@ -135,12 +135,12 @@ def print_expert_settings(display):
 
     if display:
         html = \
-            """<tr><td align='' colspan=''>Which kind of disk image would you like?</td>
+            """<tr><td align='center' colspan='1'>Which kind of disk image would you like?</td>
     <td><select name='image_format'>
     <option value='qcow'>qcow</option>
     <option value='raw'>raw</option>
     </select></td></tr>
-    <tr><td align='' colspan=''>Which VGrid do you want the sandbox to work for?</td>
+    <tr><td align='center' colspan='1'>Which VGrid do you want the sandbox to work for?</td>
     <td><select name='vgrid'>
     <option value='%(default_vgrid)s'>%(default_vgrid)s</option>
     </select></td></tr>

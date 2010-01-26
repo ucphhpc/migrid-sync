@@ -59,7 +59,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    refresh = '<meta http-equiv="refresh" content="%s">'\
+    refresh = '<meta http-equiv="refresh" content="%s" />'\
          % configuration.sleep_secs
 
     title_entry = find_entry(output_objects, 'title')

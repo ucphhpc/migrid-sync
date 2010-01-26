@@ -81,12 +81,11 @@ def main(client_id, user_arguments_dict):
                           : """
 Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the certificate request to the MiG administrators.<p>
 <b><font color='red'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br />
-That is, if You're a student/employee at DIKU, please type DIKU in the Organization field and use your USER@diku.dk address in the Email field.</font></b><p>
-<hr>
+That is, if You're a student/employee at DIKU, please type DIKU in the Organization field and use your USER@diku.dk address in the Email field.</font></b></p>
+<hr />
 <p>
 <!-- use post here to avoid field contents in URL -->
 <form method=post action=reqcertaction.py>
-<input type=hidden commit=true />
 <table>
 <tr><td>Full name</td><td><input type=text name=cert_name /> <sup class=mandatory>1</sup></td></tr>
 <tr><td>Organization</td><td><input type=text name=org /> <sup class=mandatory>2</sup></td></tr>
@@ -99,9 +98,11 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <tr><td><input type=submit value=Send /></td><td></td></tr>
 </table>
 </form>
+</p>
 <p>
-<font color='red'>Please note that passwords will be visible to the MiG administrators!</font><p>
-<hr>
+<font color='red'>Please note that passwords will be visible to the MiG administrators!</font>
+</p>
+<hr />
 <p>
 <font size=-1>
 <sup>1</sup> restricted to the characters in '%(valid_name_chars)s'<br />
@@ -113,7 +114,7 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <sup>7</sup> Password must be at least %(password_min_len)s and at most %(password_max_len)s characters long<br /> 
 <sup>8</sup> optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.<br />
 </font>
-<p>
+</p>
 """
                            % {
         'valid_name_chars': valid_name_chars,

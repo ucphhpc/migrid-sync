@@ -257,7 +257,7 @@ Automatic refresh every %(sleep_secs)s secs.<br />
 
 </table><br />
 <br />
-<hr><br />
+<hr /><br />
 <h2>Resource job request</h2>
 Listing the last request from each resource<br />
 <br />
@@ -437,7 +437,7 @@ Listing the last request from each resource<br />
     html += '</table>\n'
 
     html += '''<br />
-<hr>
+<hr />
 <br />
 <h3>VGrid Totals</h3>
 A total of <b>'''\

@@ -49,12 +49,12 @@ Sorry we are currently down for maintenance, we'll be back shortly
 
 html['english'] = \
     """
-<form action='sssadmin.py' method='POST'>
+<form action='sssadmin.py' method='post'>
 
 <table class='sandboxlogintext'>
 <tr><td><a href='ssslogin.py?language=danish'>P&aring; dansk</a></td></tr>
 <tr><td><h3>Intro</h3></td></tr>
-<tr><td>Welcome to the MiG-SSS download site. By downloading and installing this software, your computer will be participating in solving scientific problems whenever the screen saver is on. All you have to do is log in below, download the sandbox, and follow the instructions during the install procedure.<td><tr>
+<tr><td>Welcome to the MiG-SSS download site. By downloading and installing this software, your computer will be participating in solving scientific problems whenever the screen saver is on. All you have to do is log in below, download the sandbox, and follow the instructions during the install procedure.</td></tr>
 
 <tr><td><h3>Why Login?</h3></td></tr>
 <tr><td>Please note that we do not store any personal information. All you need is a login name which is solely used for identifying sandboxes so that you can keep track of how many jobs your PC has solved while it was idle.  </td></tr>
@@ -71,10 +71,10 @@ html['english'] = \
 </table>
 <br />
 <table class='sandboxlogin'>
-<tr><td align='' colspan=''>Choose a user name:</td>
+<tr><td align='center' colspan='1'>Choose a user name:</td>
 <td><input type='text' name='username' size='10' /></td></tr>
 
-<tr><td align='' colspan=''>Choose a password:</td>
+<tr><td align='center' colspan='1'>Choose a password:</td>
 <td><input type='password' name='password' size='10' /></td></tr>
 
 <tr><td>I'm a new user</td><td align='left' colspan='1'><input type='checkbox' name='newuser' /></td></tr>
@@ -112,10 +112,10 @@ html['danish'] = \
 
 <br />
 <table class='sandboxlogin'>
-<tr><td align='' colspan=''>V&aelig;lg et brugernavn:</td>
+<tr><td align='center' colspan='1'>V&aelig;lg et brugernavn:</td>
 <td><input type='text' name='username' size='10' /></td></tr>
 
-<tr><td align='' colspan=''>V&aelig;lg et password:</td>
+<tr><td align='center' colspan='1'>V&aelig;lg et password:</td>
 <td><input type='password' name='password' size='10' /></td></tr>
 
 <tr><td>Jeg er ny bruger</td><td align='left' colspan='1'><input type='checkbox' name='newuser' /></td></tr>

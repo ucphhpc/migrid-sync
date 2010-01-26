@@ -94,8 +94,6 @@ html['english'] = \
 
 </table>
 <br />
-
-</table></form>
 """
 
 html['danish'] = \

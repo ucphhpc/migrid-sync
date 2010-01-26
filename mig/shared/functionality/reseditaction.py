@@ -133,7 +133,7 @@ and provide this information''' % (tmp_id, msg, configuration.admin_email)
     output = """Your creation request of the resource: <b>%s</b>
 has been sent to the MiG server administration and will be processed as
 soon as possible.
-<hr>
+<hr />
 Until you get a confirmation from a MiG administrator, please make sure
 the MiG server can SSH to your resource without a passphrase. The MiG
 server's public key should be in ~/.ssh/authorized_keys for the mig user

@@ -191,7 +191,7 @@ def main(client_id, user_arguments_dict):
     link_list = []
     for name in ('username', 'resource', 'jobs', 'walltime'):
         link_list.append({'object_type': 'link', 'destination'
-                         : '?sort=%s&group_by=%s' % (name, group_by),
+                         : '?sort=%s;group_by=%s' % (name, group_by),
                          'text': '%s' % name.capitalize()})
 
     output_objects.append({'object_type': 'multilinkline', 'links'
@@ -205,7 +205,7 @@ def main(client_id, user_arguments_dict):
     link_list = []
     for name in ('resources', 'users'):
         link_list.append({'object_type': 'link', 'destination'
-                         : '?sort=%s&group_by=%s' % (sort, name), 'text'
+                         : '?sort=%s;group_by=%s' % (sort, name), 'text'
                          : '%s' % name.capitalize()})
 
     output_objects.append({'object_type': 'multilinkline', 'links'

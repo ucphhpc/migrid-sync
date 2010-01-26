@@ -83,23 +83,24 @@ def main(client_id, user_arguments_dict):
 
         body = \
             """
-        <Applet codebase='%(codebase)s' code='%(oneclick_code)s' archive='%(oneclick_archive)s' width='800' height='600'>
-        <PARAM name='server' value='%(server)s'>
-        <PARAM name='sandboxkey' value='%(sandboxkey)s'>
-        <PARAM name='resource_name' value='%(resource_name)s'>
-        <PARAM name='cputime' value='%(cputime)s'>
-        </Applet>
+        <applet codebase='%(codebase)s' code='%(oneclick_code)s' archive='%(oneclick_archive)s' width='800' height='600'>
+        <param name='server' value='%(server)s'>
+        <param name='sandboxkey' value='%(sandboxkey)s'>
+        <param name='resource_name' value='%(resource_name)s'>
+        <param name='cputime' value='%(cputime)s'>
+        </applet>
         <p>
         Your computer will act as a MiG One-click resource as long as this browser
         window/tab remains open.
-        <p>
+        </p>
         <h3>Java requirements and background</h3>
         Please note that if you get no applet picture above with status text,
         it is a likely indicator that you do not have the required Java plugin installed in your
         browser. You can download and install it from
         <a href='http://www.java.com/en/download/manual.jsp'>Sun Java Downloads</a>. The browser
         probably needs to be restarted after the installation before the plugin will be enabled.<br />
-        Other Java implementations may <i>appear</i> to work but not really deliver job results correctly, so if you want to be sure, please install the Sun Java plugin.<p>
+        Other Java implementations may <i>appear</i> to work but not really deliver job results correctly, so if you want to be sure, please install the Sun Java plugin.
+        <br />
         Your browser provides the following Java information:<br />
         <applet codebase='%(codebase)s' code='%(info_code)s' height='60' alt='Java plugin not installed or disabled' width='400'>
         </applet>
