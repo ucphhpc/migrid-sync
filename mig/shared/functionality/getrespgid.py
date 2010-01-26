@@ -99,7 +99,7 @@ def main(client_id, user_arguments_dict):
 
         output_objects.append({'object_type': 'error_text', 'text': 
                                'invalid exe_name! %s' % exe_name})
-        logger.error('get_resource_pgid called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, client_id %s'
+        logger.error('getrespgid called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, client_id %s'
                      % (unique_resource_name, exe_name, client_id))
         return (output_objects, returnvalues.CLIENT_ERROR)
 

@@ -45,7 +45,7 @@ code_files = [
     'webserver/%s' % plain,
     ]
 code_files += ['cgi-sid/%s' % name for name in ['requestnewjob',
-               'get_resource_pgid', 'put_resource_pgid']]
+               'putrespgid']]
 
 code_files += ['cgi-bin/%s' % name for name in [
     'listdir',
@@ -56,6 +56,7 @@ code_files += ['cgi-bin/%s' % name for name in [
     'rmdir',
     'stat',
     'walk',
+    'getrespgid',
     ]]
 
 if '__main__' == __name__:
