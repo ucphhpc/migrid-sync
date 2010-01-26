@@ -43,7 +43,7 @@ def signature():
 def create_html(vgrid_name, configuration):
     """HTML format"""
 
-    out = '<H3>Owners</H3>'
+    out = '<h3>Owners</h3>'
 
     # list owners
 
@@ -57,7 +57,7 @@ def create_html(vgrid_name, configuration):
     else:
         out += \
             """<form method="get" action="rmvgridowner.py">
-        <input type="hidden" name="vgrid_name" value="%s">
+        <input type="hidden" name="vgrid_name" value="%s" />
         """\
              % vgrid_name
 
@@ -66,22 +66,22 @@ def create_html(vgrid_name, configuration):
         for elem in msg:
             if elem != '':
                 out += \
-                    "<tr><td><input type=radio name='cert_id' value='%s'></td><td>%s</td></tr>"\
+                    "<tr><td><input type=radio name='cert_id' value='%s' /></td><td>%s</td></tr>"\
                      % (elem, elem)
         out += '</table>'
         out += \
-            """<input type="submit" value="Remove owner(s)">
+            """<input type="submit" value="Remove owner(s)" />
         </form>
         """
 
     out += \
         """<form method="get" action="addvgridowner.py">
-    <input type="hidden" name="vgrid_name" value="%s">
-    <input type="text" size=40 name="cert_id">
-    <input type="submit" value="Add vgrid owner">
+    <input type="hidden" name="vgrid_name" value="%s" />
+    <input type="text" size=40 name="cert_id" />
+    <input type="submit" value="Add vgrid owner" />
     </form>
-    <HR>
-    <H2>Members</H2>"""\
+    <hr>
+    <h2>Members</h2>"""\
          % vgrid_name
 
     # list members
@@ -91,11 +91,11 @@ def create_html(vgrid_name, configuration):
         return (False, msg)
 
     if len(msg) <= 0:
-        out += 'No members found!<BR>'
+        out += 'No members found!<br />'
     else:
         out += \
             """<form method="get" action="rmvgridmember.py">
-        <input type="hidden" name="vgrid_name" value="%s">
+        <input type="hidden" name="vgrid_name" value="%s" />
         """\
              % vgrid_name
 
@@ -104,22 +104,22 @@ def create_html(vgrid_name, configuration):
             '<table class="vgridmember"><th>Remove</th><th>Member</th>'
         for elem in msg:
             out += \
-                "<tr><td><input type=radio name='cert_id' value='%s'></td><td>%s</td></tr>"\
+                "<tr><td><input type=radio name='cert_id' value='%s' /></td><td>%s</td></tr>"\
                  % (elem, elem)
         out += '</table>'
 
         out += \
-            """<input type="submit" value="Remove member(s)">
+            """<input type="submit" value="Remove member(s)" />
         </form>
         """
     out += \
         """<form method="get" action="addvgridmember.py">
-    <input type="hidden" name="vgrid_name" value="%s">
-    <input type="text" size=40 name="cert_id">
-    <input type="submit" value="Add vgrid member">
+    <input type="hidden" name="vgrid_name" value="%s" />
+    <input type="text" size=40 name="cert_id" />
+    <input type="submit" value="Add vgrid member" />
     </form>
-    <HR>
-    <H2>Resources</H2>"""\
+    <hr>
+    <h2>Resources</h2>"""\
          % vgrid_name
 
     # list resources
@@ -129,11 +129,11 @@ def create_html(vgrid_name, configuration):
         return (False, msg)
 
     if len(msg) <= 0:
-        out += 'No resources found!<BR>'
+        out += 'No resources found!<br />'
     else:
         out += \
             """<form method="get" action="rmvgridres.py">
-        <input type="hidden" name="vgrid_name" value="%s">
+        <input type="hidden" name="vgrid_name" value="%s" />
         """\
              % vgrid_name
 
@@ -142,19 +142,19 @@ def create_html(vgrid_name, configuration):
             '<table class="vgridresource"><th>Remove</th><th>Resource</th></tr>'
         for elem in msg:
             out += \
-                "<tr><td><input type=radio name='unique_resource_name' value='%s'></td><td>%s</td></tr>"\
+                "<tr><td><input type=radio name='unique_resource_name' value='%s' /></td><td>%s</td></tr>"\
                  % (elem, elem)
         out += '</table>'
 
         out += \
-            """<input type="submit" value="Remove resource(s)">
+            """<input type="submit" value="Remove resource(s)" />
         </form>
         """
     out += \
         """<form method="get" action="addvgridres.py">
-    <input type="hidden" name="vgrid_name" value="%s">
-    <input type="text" size=40 name="unique_resource_name">
-    <input type="submit" value="Add vgrid resource">
+    <input type="hidden" name="vgrid_name" value="%s" />
+    <input type="text" size=40 name="unique_resource_name" />
+    <input type="submit" value="Add vgrid resource" />
     </form>
     """\
          % vgrid_name

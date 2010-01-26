@@ -123,14 +123,14 @@ and provide this information''' % (tmp_id, msg, configuration.admin_email)
     # Avoid line breaks in displayed key
     if public_key_file_content:
         public_key_info = \
-                        'The public key you must add:<br>***BEGIN KEY***<BR>%s<BR>***END KEY***<BR><BR>'\
+                        'The public key you must add:<br />***BEGIN KEY***<br />%s<br />***END KEY***<br /><br />'\
                         % public_key_file_content.replace(' ', '&nbsp;')
     else:
         public_key_info = \
-                        '<BR>Please request an SSH public key from the MiG administrator(s) (%s)<BR><BR>'\
+                        '<br />Please request an SSH public key from the MiG administrator(s) (%s)<br /><br />'\
                         % configuration.admin_email
 
-    output = """Your creation request of the resource: <B>%s</B>
+    output = """Your creation request of the resource: <b>%s</b>
 has been sent to the MiG server administration and will be processed as
 soon as possible.
 <hr>
@@ -138,7 +138,7 @@ Until you get a confirmation from a MiG administrator, please make sure
 the MiG server can SSH to your resource without a passphrase. The MiG
 server's public key should be in ~/.ssh/authorized_keys for the mig user
 on the resource frontend. %s
-<br>
+<br />
 <a href='resadmin.py'>View existing resources</a> where your new resource will also eventually
 show up.
         """\

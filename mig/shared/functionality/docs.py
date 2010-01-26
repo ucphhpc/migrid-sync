@@ -57,7 +57,7 @@ def display_topic(output_objects, subject, all_docs):
         output_objects.append({'object_type': 'text', 'text'
                               : "No documentation found matching '%s'"
                                % subject})
-    output_objects.append({'object_type': 'html_form', 'text': '<br>'})
+    output_objects.append({'object_type': 'html_form', 'text': '<br />'})
 
 
 def show_subject(subject, doc_function, doc_args):
@@ -167,10 +167,10 @@ def main(client_id, user_arguments_dict):
                           : 'MiG On-demand Documentation'})
     html = '<p>Filter (using *,? etc.)'
     html += "<form method='post' action='docs.py'>"
-    html += "<input type='hidden' name='show' value=''>"
-    html += "<input type='text' name='search' value=''>"
-    html += "<input type='submit' value='Filter'>"
-    html += '</form></p><br>'
+    html += "<input type='hidden' name='show' value='' />"
+    html += "<input type='text' name='search' value='' />"
+    html += "<input type='submit' value='Filter' />"
+    html += '</form></p><br />'
     output_objects.append({'object_type': 'html_form', 'text': html})
 
     # Fall back to show all topics

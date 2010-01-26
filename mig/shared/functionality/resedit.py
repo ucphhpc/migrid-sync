@@ -162,43 +162,43 @@ description, you can likely just leave the field alone.'''
     if hosturl:
         hostip = conf.get('HOSTIP', socket.gethostbyname(hosturl))
         output_objects.append({'object_type': 'html_form', 'text'
-                               : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br>
-<input type='hidden' name='%s' value='%s'>
-<input type='hidden' name='HOSTIP' value='%s'>
+                               : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br />
+<input type='hidden' name='%s' value='%s' />
+<input type='hidden' name='hostip' value='%s' />
 %s
-<br>
-<br>""" % (title, field, field, conf[field], hostip,
+<br />
+<br />""" % (title, field, field, conf[field], hostip,
            conf[field])
                                })
     else:
         output_objects.append({'object_type': 'html_form', 'text'
-                               : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br>
-<input type='text' name='%s' size='%d' value='%s'>
-<br>
-<br>""" % (title, field, field, field_size(conf[field]),
+                               : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br />
+<input type='text' name='%s' size='%d' value='%s' />
+<br />
+<br />""" % (title, field, field, field_size(conf[field]),
            conf[field])
                                })
 
     (title, field) = ('Host identifier', 'HOSTIDENTIFIER')
     if hostidentifier:
         output_objects.append({'object_type': 'html_form', 'text'
-                               : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br>
-<input type='hidden' name='%s' value='%s'>
+                               : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br />
+<input type='hidden' name='%s' value='%s' />
 %s
-<br>
-<br>""" % (title, field, field, conf[field], conf[field])
+<br />
+<br />""" % (title, field, field, conf[field], conf[field])
                                })                               
 
     (field, title) = 'frontendhome', 'Frontend Home Path'
     output_objects.append({'object_type': 'html_form', 'text'
-                           : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#%s'>help</a><br>
-<input type='text' name='%s' size='%d' value='%s'>
-<br>
-<br>""" % (title, field, field,
+                           : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#%s'>help</a><br />
+<input type='text' name='%s' size='%d' value='%s' />
+<br />
+<br />""" % (title, field, field,
            field_size(conf[field]), conf[field])
                                })
 
@@ -209,11 +209,11 @@ description, you can likely just leave the field alone.'''
             continue
         elif 'input' == spec['Editor']:
             output_objects.append({'object_type': 'html_form', 'text'
-                                   : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br>
-<input type='text' name='%s' size='%d' value='%s'>
-<br>
-<br>""" % (title, field, field, field_size(conf[field]),
+                                   : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br />
+<input type='text' name='%s' size='%d' value='%s' />
+<br />
+<br />""" % (title, field, field, field_size(conf[field]),
            conf[field])
                                    })
         elif 'select' == spec['Editor']:
@@ -233,12 +233,12 @@ description, you can likely just leave the field alone.'''
                     if i < len(res_value) and res_value[i] == name:
                         selected = 'selected'
                     value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-                value_select += """</select><br>\n"""    
+                value_select += """</select><br />\n"""    
             output_objects.append({'object_type': 'html_form', 'text'
-                                   : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br>
+                                   : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br />
 %s
-<br>""" % (title, field, value_select)
+<br />""" % (title, field, value_select)
                                    })
 
     # Not all resource fields here map directly to keywords/specs input field
@@ -246,7 +246,7 @@ description, you can likely just leave the field alone.'''
     (title, field) = ('Runtime Environments', 'RUNTIMEENVIRONMENT')
     re_list = conf[field]
     show = re_list + [('', []) for i in range(extra_selects)]
-    re_select = "<input type='hidden' name='runtime_env_fields' value='%s'>\n" % len(show)
+    re_select = "<input type='hidden' name='runtime_env_fields' value='%s' />\n" % len(show)
     i = 0
     for active in show:
         re_select += "<select name='runtimeenvironment%d'>\n" % i
@@ -255,19 +255,19 @@ description, you can likely just leave the field alone.'''
             if active[0] == name:
                 selected = 'selected'
             re_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-        re_select += """</select><br>\n"""
+        re_select += """</select><br />\n"""
         values = '\n'.join(['%s=%s' % pair for pair in active[1]])
-        re_select += "<textarea cols='%d' rows='%d' name='re_values%d'>%s</textarea><br>\n" % \
+        re_select += "<textarea cols='%d' rows='%d' name='re_values%d'>%s</textarea><br />\n" % \
                      (area_cols, area_rows, i, values)
         i += 1
 
     output_objects.append({'object_type': 'html_form', 'text'
-                               : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br>
+                               : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br />
 Please enter any required environment variable settings on the form NAME=VALUE in the box below
-each selected runtimeenvironment.<br>
+each selected runtimeenvironment.<br />
 %s
-<br>""" % (title, field, re_select)
+<br />""" % (title, field, re_select)
                            })
 
 
@@ -280,21 +280,21 @@ each selected runtimeenvironment.<br>
                            })
     (field, title) = 'executionnodes', 'Execution Node(s)'
     output_objects.append({'object_type': 'html_form', 'text'
-                           : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#exe-%s'>help</a><br>
-<input type='text' name='exe-%s' size='%d' value='%s'>
-<br>
-<br>""" % (title, field, field,
+                           : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#exe-%s'>help</a><br />
+<input type='text' name='exe-%s' size='%d' value='%s' />
+<br />
+<br />""" % (title, field, field,
            field_size(conf['all_exes'][field]), conf['all_exes'][field])
                                })
 
     (field, title) = 'executionhome', 'Execution Home Path'
     output_objects.append({'object_type': 'html_form', 'text'
-                           : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#exe-%s'>help</a><br>
-<input type='text' name='exe-%s' size='%d' value='%s'>
-<br>
-<br>""" % (title, field, field,
+                           : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#exe-%s'>help</a><br />
+<input type='text' name='exe-%s' size='%d' value='%s' />
+<br />
+<br />""" % (title, field, field,
            field_size(conf['all_exes'][field]), conf['all_exes'][field])
                                })
 
@@ -305,11 +305,11 @@ each selected runtimeenvironment.<br>
             continue
         elif 'input' == spec['Editor']:
             output_objects.append({'object_type': 'html_form', 'text'
-                                   : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#exe-%s'>help</a><br>
-<input type='text' name='exe-%s' size='%d' value='%s'>
-<br>
-<br>""" % (title, field, field,
+                                   : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#exe-%s'>help</a><br />
+<input type='text' name='exe-%s' size='%d' value='%s' />
+<br />
+<br />""" % (title, field, field,
            field_size(conf['all_exes'][field]), conf['all_exes'][field])
                                    })
         elif 'select' == spec['Editor']:
@@ -329,12 +329,12 @@ each selected runtimeenvironment.<br>
                     if i < len(exe_value) and exe_value[i] == name:
                         selected = 'selected'
                     value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-                value_select += """</select><br>\n"""    
+                value_select += """</select><br />\n"""    
             output_objects.append({'object_type': 'html_form', 'text'
-                                   : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#exe-%s'>help</a><br>
+                                   : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#exe-%s'>help</a><br />
 %s
-<br>""" % (title, field, value_select)
+<br />""" % (title, field, value_select)
                                    })
     
     # Storage node fields
@@ -347,21 +347,21 @@ each selected runtimeenvironment.<br>
     
     (field, title) = 'storagenodes', 'Storage Node(s)'
     output_objects.append({'object_type': 'html_form', 'text'
-                           : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#store-%s'>help</a><br>
-<input type='text' name='store-%s' size='%d' value='%s'>
-<br>
-<br>""" % (title, field, field,
+                           : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#store-%s'>help</a><br />
+<input type='text' name='store-%s' size='%d' value='%s' />
+<br />
+<br />""" % (title, field, field,
            field_size(conf['all_stores'][field]), conf['all_stores'][field])
                                })
 
     (field, title) = 'storagehome', 'Storage Home Path'
     output_objects.append({'object_type': 'html_form', 'text'
-                           : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#store-%s'>help</a><br>
-<input type='text' name='store-%s' size='%d' value='%s'>
-<br>
-<br>""" % (title, field, field,
+                           : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#store-%s'>help</a><br />
+<input type='text' name='store-%s' size='%d' value='%s' />
+<br />
+<br />""" % (title, field, field,
            field_size(conf['all_stores'][field]), conf['all_stores'][field])
                                })
 
@@ -372,11 +372,11 @@ each selected runtimeenvironment.<br>
             continue
         elif 'input' == spec['Editor']:
             output_objects.append({'object_type': 'html_form', 'text'
-                           : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#store-%s'>help</a><br>
-<input type='text' name='store-%s' size='%d' value='%s'>
-<br>
-<br>""" % (title, field, field,
+                           : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#store-%s'>help</a><br />
+<input type='text' name='store-%s' size='%d' value='%s' />
+<br />
+<br />""" % (title, field, field,
            field_size(conf['all_stores'][field]), conf['all_stores'][field])
                                    })
         elif 'select' == spec['Editor']:
@@ -396,16 +396,16 @@ each selected runtimeenvironment.<br>
                     if i < len(store_value) and store_value[i] == name:
                         selected = 'selected'
                     value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-                value_select += """</select><br>\n"""    
+                value_select += """</select><br />\n"""    
             output_objects.append({'object_type': 'html_form', 'text'
-                                   : """<br>
-<b>%s:</b>&nbsp;<a href='resedithelp.py#store-%s'>help</a><br>
+                                   : """<br />
+<b>%s:</b>&nbsp;<a href='resedithelp.py#store-%s'>help</a><br />
 %s
-<br>""" % (title, field, value_select)
+<br />""" % (title, field, value_select)
                                    })
 
     output_objects.append({'object_type': 'html_form', 'text': """
-<input type='submit' value='Save'>
+<input type='submit' value='Save' />
 </form>
 """
                            })

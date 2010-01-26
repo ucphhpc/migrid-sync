@@ -146,27 +146,27 @@ else:
                         continue
 
                     o.client('Job id: %s\n' % job_id)
-                    o.client_html('<BR>', printhtml)
+                    o.client_html('<br>', printhtml)
 
                     o.client('Job status: %s\n' % job_dict['STATUS'])
-                    o.client_html('<BR>', printhtml)
+                    o.client_html('<br>', printhtml)
 
                     if job_dict.has_key('VERIFIED'):
-                        o.client_html('<I>', printhtml)
+                        o.client_html('<i>', printhtml)
                         o.client('Verified: %s\n' % job_dict['VERIFIED'
                                  ])
-                        o.client_html('</I><BR>', printhtml)
+                        o.client_html('</i><br>', printhtml)
 
                     if job_dict.has_key('VERIFIED_TIMESTAMP'):
                         o.client('Verified at: %s\n'
                                   % time.asctime(job_dict['VERIFIED_TIMESTAMP'
                                  ]))
-                        o.client_html('<BR>', printhtml)
+                        o.client_html('<br>', printhtml)
 
                     o.client('''
 
 ''')
-                    o.client_html('<BR><BR>', printhtml)
+                    o.client_html('<br><br>', printhtml)
             except Exception, ex:
 
                 o.out('Exception looping testprocedure jobs!', ex)

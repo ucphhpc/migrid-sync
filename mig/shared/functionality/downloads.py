@@ -63,10 +63,10 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <div class="migcontent">
-This page provides access to on-demand downloads of the MiG user scripts in all available formats.<br>
+This page provides access to on-demand downloads of the MiG user scripts in all available formats.<br />
 Simply pick your flavor of choice to generate the latest user scripts in your MiG home directory and as a zip file for easy download.<p>
 In order to use the scripts your need the interpreter of choice (bash or python at the moment) and the
-<a href="http://curl.haxx.se">cURL</a> command line client.<br>
+<a href="http://curl.haxx.se">cURL</a> command line client.<br />
 There's a tutorial with examples of all the commands available on the MiG page. The python version of the user scripts additionally include a miglib python module, which may be used to incorporate MiG commands in your python applications.
 </div>
 """})
@@ -81,29 +81,29 @@ Generate MiG user scripts to manage jobs and files:<br/>
 <tr>
 <td>
 <form method='get' action='scripts.py'>
-<input type='hidden' name='output_format' value='html'>
-<input type='hidden' name='lang' value='python'>
-<input type='submit' value='python version'>
+<input type='hidden' name='output_format' value='html' />
+<input type='hidden' name='lang' value='python' />
+<input type='submit' value='python version' />
 </form>
 </td>
 <td>
 <form method='get' action='scripts.py'>
-<input type='hidden' name='output_format' value='html'>
-<input type='hidden' name='lang' value='sh'>
-<input type='submit' value='sh version'>
+<input type='hidden' name='output_format' value='html' />
+<input type='hidden' name='lang' value='sh' />
+<input type='submit' value='sh version' />
 </form>
 </td>
 <td>
 <form method='get' action='scripts.py'>
-<input type='hidden' name='output_format' value='html'>
-<input type='submit' value='all versions'>
+<input type='hidden' name='output_format' value='html' />
+<input type='submit' value='all versions' />
 </form>
 </td>
 </tr>
 </table>
 </div>
 </div>
-<br>
+<br />
     """})
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'MiG Resource Scripts'})
@@ -116,31 +116,31 @@ Generate MiG scripts to administrate resources and vgrids:<br/>
 <tr>
 <td>
 <form method='get' action='scripts.py'>
-<input type='hidden' name='output_format' value='html'>
-<input type='hidden' name='lang' value='python'>
+<input type='hidden' name='output_format' value='html' />
+<input type='hidden' name='lang' value='python' />
 
-<input type='hidden' name='flavor' value='resource'>
-<input type='submit' value='python version'>
+<input type='hidden' name='flavor' value='resource' />
+<input type='submit' value='python version' />
 </form>
 </td>
 <td>
 <form method='get' action='scripts.py'>
-<input type='hidden' name='output_format' value='html'>
-<input type='hidden' name='lang' value='sh'>
-<input type='hidden' name='flavor' value='resource'>
-<input type='submit' value='sh version'>
+<input type='hidden' name='output_format' value='html' />
+<input type='hidden' name='lang' value='sh' />
+<input type='hidden' name='flavor' value='resource' />
+<input type='submit' value='sh version' />
 </form>
 </td>
 <td>
 <form method='get' action='scripts.py'>
-<input type='hidden' name='output_format' value='html'>
-<input type='hidden' name='flavor' value='resource'>
-<input type='submit' value='all versions'>
+<input type='hidden' name='output_format' value='html' />
+<input type='hidden' name='flavor' value='resource' />
+<input type='submit' value='all versions' />
 </form>
 </td>
 </tr>
 </table>
-<br>
+<br />
 </div>
 </div>
     """})

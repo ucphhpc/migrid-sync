@@ -89,9 +89,9 @@ def create_monitor(vgrid_name):
         '''
 <!-- end of raw header: this line is used by showvgridmonitor -->
 <h1>Statistics/monitor for the %(vgrid_name)s VGrid</h1>
-This page was generated %(now)s<br>
-Automatic refresh every %(sleep_secs)s secs.<br>
-<br>'''\
+This page was generated %(now)s<br />
+Automatic refresh every %(sleep_secs)s secs.<br />
+<br />'''\
          % html_vars
 
     # loop and get totals
@@ -234,7 +234,7 @@ Automatic refresh every %(sleep_secs)s secs.<br>
 <tr><td>GB Disk</td><td>%(disk_requested)s</td><td>%(disk_done)s</td></tr>
 <tr><td>MB Memory</td><td>%(memory_requested)s</td><td>%(memory_done)s</td></tr>
 <tr><td>Used Walltime</td><td colspan='2'>%(used_walltime)s</td></tr>
-</table><br>
+</table><br />
 </td><td valign=top>
 <table class=monitorruntimeenvreq>
 <tr class=title><td>Runtimeenvironment</td><td></td></tr>
@@ -255,12 +255,12 @@ Automatic refresh every %(sleep_secs)s secs.<br>
         """</table>
 </td></tr>
 
-</table><br>
-<br>
-<hr><br>
+</table><br />
+<br />
+<hr><br />
 <h2>Resource job request</h2>
-Listing the last request from each resource<br>
-<br>
+Listing the last request from each resource<br />
+<br />
 <table class=monitor>
 <tr class=title><td><!-- status icon --></td><td>Resource and last seen</td><td>Time ago</td><td>VGrid</td><td>CPU time</td>
 <td>Node count</td><td>CPU count</td><td>GB Disk</td>
@@ -375,10 +375,10 @@ Listing the last request from each resource<br>
 
                     html += '<tr class=%s>' % row_class
                     html += \
-                        '<td><img src=/images/status-icons/%s.png></td>'\
+                        '<td><img src=/images/status-icons/%s.png /></td>'\
                          % resource_status
                     anon_id = anon_resource_id(unique_res_name_and_exe_list[1]) 
-                    html += '<td>%s<br>%s</td>'\
+                    html += '<td>%s<br />%s</td>'\
                          % (anon_id, time.asctime(
                         last_request_dict['CREATED_TIME'].timetuple()))
                     html += '<td>' + days + ' days, ' + hours\
@@ -436,18 +436,18 @@ Listing the last request from each resource<br>
 
     html += '</table>\n'
 
-    html += '''<br>
+    html += '''<br />
 <hr>
-<br>
+<br />
 <h3>VGrid Totals</h3>
 A total of <b>'''\
          + str(total_number_of_resources) + '</b> resources ('\
          + str(total_number_of_cpus) + " cpu's) joined this VGrid ("\
          + str(up_count) + ' up, ' + str(down_count) + ' down?, '\
-         + str(slack_count) + ' slack)<br>'
+         + str(slack_count) + ' slack)<br />'
     html += str(job_assigned) + ' resources (' + str(job_assigned_cpus)\
-         + """ cpu's) appear to be executing a job<br>
-<br>
+         + """ cpu's) appear to be executing a job<br />
+<br />
 """
     html += \
         '<!-- begin raw footer: this line is used by showvgridmonitor -->'

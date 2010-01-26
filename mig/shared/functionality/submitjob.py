@@ -287,7 +287,7 @@ Extract package files (.zip, .tar.gz, .tar.bz2)
 <tr><td colspan=2>
 Submit mRSL files (also .mRSL files included in packages)
 </td><td colspan=2>
-<input type=checkbox name='submitmrsl_0' CHECKED />
+<input type=checkbox name='submitmrsl_0' checked />
 </td></tr>
 <tr><td>    
 File to upload

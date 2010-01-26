@@ -296,14 +296,14 @@ def main(client_id, user_arguments_dict):
             return (output_objects, status)
 
         html = \
-            '''Opening embedded vnc applet here:<br>
-<b>This will only work if your browser includes a java plugin!</b><br>
+            '''Opening embedded vnc applet here:<br />
+<b>This will only work if your browser includes a java plugin!</b><br />
 <applet code="vncviewer" archive="vncviewer.jar" codebase="%s/vgrid/" width="%s" height="%s">
-<param name="PORT" value="%s">
-<param name="PASSWORD" value="%s">
+<param name="port" value="%s">
+<param name="password" value="%s">
 </applet>
-<br>
-VNC port: %s<br>
+<br />
+VNC port: %s<br />
 Display number: %s<p>
 '''\
              % (

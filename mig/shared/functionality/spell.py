@@ -230,8 +230,8 @@ def main(client_id, user_arguments_dict):
             htmlform = \
                 '''
 <form method="post" action="editor.py">
-<input type="hidden" name="path" value="%s">
-<input type="submit" value="Edit file">
+<input type="hidden" name="path" value="%s" />
+<input type="submit" value="Edit file" />
 </form>
 '''\
                  % relative_path

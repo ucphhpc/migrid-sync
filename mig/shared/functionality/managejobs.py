@@ -67,25 +67,25 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <form method="post" action="jobstatus.py">
-Sort by modification time: <input type="radio" name="flags" value="sv">yes
-<input type="radio" name="flags" checked="checked" value="v">no<BR>
-<input type="hidden" name="job_id" value="*">
-<input type="hidden" name="output_format" value="html">
-<input type="submit" value="Show All">
+Sort by modification time: <input type="radio" name="flags" value="sv" />yes
+<input type="radio" name="flags" checked="checked" value="v" />no<br />
+<input type="hidden" name="job_id" value="*" />
+<input type="hidden" name="output_format" value="html" />
+<input type="submit" value="Show All" />
 </form>
     """})
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'View status of individual jobs'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-Filter job IDs (* and ? wildcards are supported)<br>
+Filter job IDs (* and ? wildcards are supported)<br />
 <form method="post" action="jobstatus.py">
-Job ID: <input type="text" name="job_id" value="*" size="30"><br>
-Show only <input type="text" name="max_jobs" size="6" value=5> first matching jobs<br>
-Sort by modification time: <input type="radio" name="flags" checked="checked" value="vs">yes
-<input type="radio" name="flags" value="v">no<br>
-<input type="hidden" name="output_format" value="html">
-<input type="submit" value="Show">
+Job ID: <input type="text" name="job_id" value="*" size="30" /><br />
+Show only <input type="text" name="max_jobs" size="6" value=5 /> first matching jobs<br />
+Sort by modification time: <input type="radio" name="flags" checked="checked" value="vs" />yes
+<input type="radio" name="flags" value="v" />no<br />
+<input type="hidden" name="output_format" value="html" />
+<input type="submit" value="Show" />
 </form>
     """})
     output_objects.append({'object_type': 'sectionheader', 'text'
@@ -93,9 +93,9 @@ Sort by modification time: <input type="radio" name="flags" checked="checked" va
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <form method="post" action="resubmit.py">
-Job ID: <input type="text" name="job_id" size="30"><br>
-<input type="hidden" name="output_format" value="html">
-<input type="submit" value="Submit">
+Job ID: <input type="text" name="job_id" size="30" /><br />
+<input type="hidden" name="output_format" value="html" />
+<input type="submit" value="Submit" />
 </form>
     """})
     output_objects.append({'object_type': 'sectionheader', 'text'
@@ -103,9 +103,9 @@ Job ID: <input type="text" name="job_id" size="30"><br>
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <form method="post" action="canceljob.py">
-Job ID: <input type="text" name="job_id" size="30"><br>
-<input type="hidden" name="output_format" value="html">
-<input type="submit" value="Cancel job">
+Job ID: <input type="text" name="job_id" size="30" /><br />
+<input type="hidden" name="output_format" value="html" />
+<input type="submit" value="Cancel job" />
 </form>
     """})
     output_objects.append({'object_type': 'sectionheader', 'text'
@@ -113,11 +113,11 @@ Job ID: <input type="text" name="job_id" size="30"><br>
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <form method="post" action="liveoutput.py">
-Job ID: <input type="text" name="job_id" size="30"><br>
-<input type="hidden" name="output_format" value="html">
-<input type="submit" value="Request">
+Job ID: <input type="text" name="job_id" size="30" /><br />
+<input type="hidden" name="output_format" value="html" />
+<input type="submit" value="Request" />
 </form>
-<br>
+<br />
     """})
     return (output_objects, status)
 

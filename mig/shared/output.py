@@ -594,7 +594,7 @@ Exit code: %s Description: %s<br />
             lines.append('<td>Info</td>')
             cols += 1
             if 'full' == i['style']:
-                lines.append("<td><input type='checkbox' name='allbox' value='allbox' onclick='un_check()'></td>"
+                lines.append("<td><input type='checkbox' name='allbox' value='allbox' onclick='un_check()' /></td>"
                              )
                 cols += 1
 
@@ -632,7 +632,7 @@ Exit code: %s Description: %s<br />
                         lines.append('<td><br /></td>')
                         cols += 1
                         if 'full' == i['style']:
-                            lines.append("<td><input type='checkbox' name='path' value='%s'></td>"
+                            lines.append("<td><input type='checkbox' name='path' value='%s' /></td>"
                                      % directory['dirname_with_dir'])
                             cols += 1
                         if directory.has_key('actual_dir'):
@@ -661,7 +661,7 @@ Exit code: %s Description: %s<br />
                         lines.append('<td><br /></td>')
                         cols += 1
                         if 'full' == i['style']:
-                            lines.append("<td><input type='checkbox' name='path' value='%s'></td>"
+                            lines.append("<td><input type='checkbox' name='path' value='%s' /></td>"
                                      % this_file['file_with_dir'])
                             cols += 1
                         if this_file.has_key('long_format'):
@@ -715,7 +715,7 @@ Exit code: %s Description: %s<br />
                 lines.append('</table>')
         elif i['object_type'] == 'file_not_found':
 
-            lines.append('File %s was <B>not</B> found!' % i['name'])
+            lines.append('File %s was <b>not</b> found!' % i['name'])
         elif i['object_type'] == 'file_output':
             if i.has_key('path'):
                 lines.append('File: %s<br />' % i['path'])
@@ -731,7 +731,7 @@ Exit code: %s Description: %s<br />
             if len(links) == 0:
                 lines.append('No links found!')
             else:
-                lines.append('<table class="links"><th>Name</th><th>Link</th></tr>'
+                lines.append('<table class="links"><tr><th>Name</th><th>Link</th></tr>'
                              )
                 for link in links:
                     lines.append('<tr><td>%s</td><td>%s</td></tr>'
@@ -751,7 +751,7 @@ Exit code: %s Description: %s<br />
             if len(submitstatuslist) == 0:
                 lines.append('No job submit status found!')
             else:
-                lines.append('<table class="submitstatus"><th>File</th><th>Status</th><th>Job Id</th><th>Message</th></tr>'
+                lines.append('<table class="submitstatus"><tr><th>File</th><th>Status</th><th>Job Id</th><th>Message</th></tr>'
                              )
                 for submitstatus in submitstatuslist:
                     lines.append('<tr>%s</tr>'
@@ -764,7 +764,7 @@ Exit code: %s Description: %s<br />
             if len(objects) == 0:
                 lines.append('No objects found!')
             else:
-                lines.append('<table class="objects"><th>Object</th><th>Info</th></tr>'
+                lines.append('<table class="objects"><tr><th>Object</th><th>Info</th></tr>'
                              )
                 for (name, val) in objects:
                     lines.append('<tr><td>%s</td><td>%s</td></tr>'
@@ -772,7 +772,7 @@ Exit code: %s Description: %s<br />
                 lines.append('</table>')
         elif i['object_type'] == 'sandboxinfos':
             sandboxinfos = i['sandboxinfos']
-            lines.append('<table class="sandboxinfo"><th>Username</th><th>Resource(s)</th><th>Jobs</th><th>Walltime</th></tr>'
+            lines.append('<table class="sandboxinfo"><tr><th>Username</th><th>Resource(s)</th><th>Jobs</th><th>Walltime</th></tr>'
                          )
             row_number = 1
             if not sandboxinfos:
@@ -791,7 +791,7 @@ Exit code: %s Description: %s<br />
             if len(runtimeenvironments) == 0:
                 lines.append('No runtime environments found!')
             else:
-                lines.append('<table class="runtimeenvs"><th>Name</th><th>Description</th><th>Details</th><th>Creator</th></tr>'
+                lines.append('<table class="runtimeenvs"><tr><th>Name</th><th>Description</th><th>Details</th><th>Creator</th></tr>'
                              )
                 row_number = 1
                 for single_re in runtimeenvironments:
@@ -809,7 +809,7 @@ Exit code: %s Description: %s<br />
                 software_html += \
                     '<table class="runtimeenvsw" frame=hsides rules=none cellpadding=5>'
                 software_html += \
-                    '<tr><td><img src=%s width=80 height=80></td><td></td></tr>'\
+                    '<tr><td><img src=%s width="80" height="80" /></td><td></td></tr>'\
                      % software['icon']
                 software_html += '<tr><td>Name:</td><td>%s</td></tr>'\
                      % software['name']

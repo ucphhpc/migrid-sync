@@ -103,7 +103,7 @@ def display_resource(
     html += \
         'Use the <a href="resedit.py?hosturl=%s;hostidentifier=%s">editing interface</a> '\
          % (hosturl, identifier)
-    html += 'or make any changes manually in the text box below.<br>'
+    html += 'or make any changes manually in the text box below.<br />'
     html += \
         '<a href="docs.py?show=Resource">Resource configuration docs</a>'
     html += '<table class=resources>\n<tr><td class=centertext>'
@@ -115,11 +115,11 @@ def display_resource(
         html += '%s\n' % line.strip()
     html += \
         '''</textarea>
-<br>
-<input type="hidden" name="unique_resource_name" value="%s">
-<input type="submit" value="Save">
+<br />
+<input type="hidden" name="unique_resource_name" value="%s" />
+<input type="submit" value="Save" />
 ----------
-<input type="reset" value="Forget changes">
+<input type="reset" value="Forget changes" />
 </form>
 '''\
          % resourcename
@@ -141,8 +141,8 @@ def display_resource(
             html += \
                 '''<td>
             <form method="get" action="%sfe.py">
-            <input type="hidden" name="unique_resource_name" value="%s">
-            <input type="submit" value="%s">
+            <input type="hidden" name="unique_resource_name" value="%s" />
+            <input type="submit" value="%s" />
             </form>
             </td>
             '''\
@@ -159,9 +159,9 @@ def display_resource(
             html += \
                 '''<td>
             <form method="get" action="%sexe.py">
-            <input type="hidden" name="unique_resource_name" value="%s">
-            <input type="hidden" name="all" value="true">
-            <input type="hidden" name="parallel" value="true">'''\
+            <input type="hidden" name="unique_resource_name" value="%s" />
+            <input type="hidden" name="all" value="true" />
+            <input type="hidden" name="parallel" value="true" />'''\
                  % (action, resourcename)
             if action == 'restart':
                 action_str = '(Re)Start'
@@ -169,7 +169,7 @@ def display_resource(
                 action_str = action.capitalize()
             html += \
                 '''
-            <input type="submit" value="%s">
+            <input type="submit" value="%s" />
             </form>
             </td>
             '''\
@@ -188,9 +188,9 @@ def display_resource(
                 html += \
                     '''<td>
                 <form method="get" action="%sexe.py">
-                <input type="hidden" name="unique_resource_name" value="%s">
-                <input type="hidden" name="exe_name" value="%s">
-                <input type="submit" value="%s">
+                <input type="hidden" name="unique_resource_name" value="%s" />
+                <input type="hidden" name="exe_name" value="%s" />
+                <input type="submit" value="%s" />
                 </form>
                 </td>
                 '''\
@@ -208,9 +208,9 @@ def display_resource(
             html += \
                 '''<td>
             <form method="get" action="%sstore.py">
-            <input type="hidden" name="unique_resource_name" value="%s">
-            <input type="hidden" name="all" value="true">
-            <input type="hidden" name="parallel" value="true">'''\
+            <input type="hidden" name="unique_resource_name" value="%s" />
+            <input type="hidden" name="all" value="true" />
+            <input type="hidden" name="parallel" value="true" />'''\
                  % (action, resourcename)
             if action == 'restart':
                 action_str = '(Re)Start'
@@ -218,7 +218,7 @@ def display_resource(
                 action_str = action.capitalize()
             html += \
                 '''
-            <input type="submit" value="%s">
+            <input type="submit" value="%s" />
             </form>
             </td>
             '''\
@@ -237,9 +237,9 @@ def display_resource(
                 html += \
                     '''<td>
                 <form method="get" action="%sstore.py">
-                <input type="hidden" name="unique_resource_name" value="%s">
-                <input type="hidden" name="store_name" value="%s">
-                <input type="submit" value="%s">
+                <input type="hidden" name="unique_resource_name" value="%s" />
+                <input type="hidden" name="store_name" value="%s" />
+                <input type="submit" value="%s" />
                 </form>
                 </td>
                 '''\
@@ -253,20 +253,20 @@ def display_resource(
     html += \
         '''
 Owners are specified with the Distinguished Name (DN)
-from the certificate.<br> 
+from the certificate.<br /> 
 <table class=resources>
 '''
 
     html += \
         '''<tr><td>
 <form method="get" action="addresowner.py">
-<input type="hidden" name="unique_resource_name" value="%s">
-<input type="hidden" name="output_format" value="html">
-<input type="text" name="cert_id" size=30>
+<input type="hidden" name="unique_resource_name" value="%s" />
+<input type="hidden" name="output_format" value="html" />
+<input type="text" name="cert_id" size="30" />
 </td><td>
-<input type="submit" value=" Add ">
+<input type="submit" value=" Add " />
 </form>
-</td></tr></table><br>
+</td></tr></table><br />
 <table class=resources>
 '''\
          % resourcename
@@ -275,10 +275,10 @@ from the certificate.<br>
         html += \
             '''<tr><td>
 <form method="get" action="rmresowner.py">
-<input type="hidden" name="unique_resource_name" value="%s">
-<input type="hidden" name="cert_id" value="%s">
-<input type="hidden" name="output_format" value="html">
-<input type="submit" value="Remove">
+<input type="hidden" name="unique_resource_name" value="%s" />
+<input type="hidden" name="cert_id" value="%s" />
+<input type="hidden" name="output_format" value="html" />
+<input type="submit" value="Remove" />
 </form>
 </td>
 '''\
@@ -295,8 +295,8 @@ from the certificate.<br>
     <table class=resources>
     <tr><td>
     <form method="get" action="testresupport.py">
-    <input type="hidden" name="with_html" value="true">
-    <input type="hidden" name="unique_resource_name" value="%s">
+    <input type="hidden" name="with_html" value="true" />
+    <input type="hidden" name="unique_resource_name" value="%s" />
     <select name="re_name">"""\
          % resourcename
 
@@ -310,7 +310,7 @@ from the certificate.<br>
                     html += '<option value=%s>%s' % (re, re)
 
     html += """</select></td>"""
-    html += '<td><input type=submit name=submit value=verify>'
+    html += '<td><input type="submit" name="submit" value="verify" />'
     html += '</form></table><p>'
 
     # create html to select and call script to display testprocedure history
@@ -320,7 +320,7 @@ from the certificate.<br>
     <table class=resources>
     <tr><td>
     <form method="get" action="showresupporthistory.py">
-    <input type="hidden" name="unique_resource_name" value="%s">
+    <input type="hidden" name="unique_resource_name" value="%s" />
     <select name="re_name">"""\
          % resourcename
 
@@ -334,7 +334,7 @@ from the certificate.<br>
                     html += '<option value=%s>%s' % (re, re)
 
     html += """</select></td>"""
-    html += '<td><input type=submit name=submit value=Show>'
+    html += '<td><input type="submit" name="submit" value="Show" />'
     html += '</form></table><p>'
     return html
 
@@ -450,7 +450,7 @@ def main(client_id, user_arguments_dict):
             # add new line
 
             quick_links.append({'object_type': 'html_form', 'text'
-                               : '<br>'})
+                               : '<br />'})
         output_objects = output_objects[:quick_links_index]\
              + quick_links + output_objects[quick_links_index:]
 

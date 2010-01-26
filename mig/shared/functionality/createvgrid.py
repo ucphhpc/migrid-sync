@@ -288,7 +288,7 @@ def main(client_id, user_arguments_dict):
         os.mkdir(private_base_dir)
         priv_entry_page = os.path.join(private_base_dir, 'index.html')
         if not os.path.exists(priv_entry_page):
-            write_file("<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>\n<html><head><title>Private entry page not created yet..</title></head><body>No private entrypage created yet! (If you are owner of the vgrid, overwrite private_base/%s/index.html to place it here)<BR>  <p><a href='http://validator.w3.org/check?uri=referer'><img src='http://www.w3.org/Icons/valid-html401' alt='Valid HTML 4.01 Transitional' height='31' width='88'></a> </p></body></html>"
+            write_file("<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>\n<html><head><title>Private entry page not created yet..</title></head><body>No private entrypage created yet! (If you are owner of the vgrid, overwrite private_base/%s/index.html to place it here)<br>  <p><a href='http://validator.w3.org/check?uri=referer'><img src='http://www.w3.org/Icons/valid-html401' alt='Valid HTML 4.01 Transitional' height='31' width='88' /></a> </p></body></html>"
                         % vgrid_name, priv_entry_page, logger)
     except Exception, exc:
         output_objects.append({'object_type': 'error_text', 'text'

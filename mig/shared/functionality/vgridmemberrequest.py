@@ -72,10 +72,10 @@ will not be tolerated!'''})
                           : """
     <form method='post' action='vgridmemberrequestaction.py'>
 <table align='center'><tr><td>
-VGrid name</td><td><input name=vgrid_name> </td></tr>
+VGrid name</td><td><input name=vgrid_name /> </td></tr>
 <tr><td>Type</td><td><select name=request_type><option name=member>Member</option><option name=owner>Owner</option></select></td></tr>
-<tr><td>Reason (text to VGrid owner)</td><td><input name=request_text size=40></td></tr>
-<tr><td><input type='submit' value='Submit'></td><td></td></tr></table>
+<tr><td>Reason (text to VGrid owner)</td><td><input name=request_text size=40 /></td></tr>
+<tr><td><input type='submit' value='Submit' /></td><td></td></tr></table>
 </form>"""})
 
     return (output_objects, returnvalues.OK)

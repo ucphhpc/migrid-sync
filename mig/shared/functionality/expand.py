@@ -265,7 +265,7 @@ Working directory:
 </td></tr>
 </table>
 </div>
-<br>
+<br />
 """
 
     output_objects.append({'object_type': 'html_form', 'text'
@@ -284,18 +284,18 @@ Action on paths selected below
 </td>
 <td class=centertext>
 <form method='post' name='fileform' onSubmit='return selectedFilesAction();'>
-<input type='hidden' name='output_format' value='html'>
-<input type='hidden' name='flags' value='v'>
-<input type='submit' title='Show concatenated contents (cat)' onClick='document.pressed=this.value' value='cat'>
-<input type='submit' onClick='document.pressed=this.value' value='head' title='Show first lines (head)'>
-<input type='submit' onClick='document.pressed=this.value' value='tail' title='Show last lines (tail)'>
-<input type='submit' onClick='document.pressed=this.value' value='wc' title='Count lines/words/chars (wc)'>
-<input type='submit' onClick='document.pressed=this.value' value='stat' title='Show details (stat)'>
-<input type='submit' onClick='document.pressed=this.value' value='touch' title='Update timestamp (touch)'>
-<input type='submit' onClick='document.pressed=this.value' value='truncate' title='TRUNCATE! (truncate)'>
-<input type='submit' onClick='document.pressed=this.value' value='rm' title='DELETE! (rm)'>
-<input type='submit' onClick='document.pressed=this.value' value='rmdir' title='Remove directory (rmdir)'>
-<input type='submit' onClick='document.pressed=this.value' value='submit' title='Submit file (submit)'>
+<input type='hidden' name='output_format' value='html' />
+<input type='hidden' name='flags' value='v' />
+<input type='submit' title='Show concatenated contents (cat)' onClick='document.pressed=this.value' value='cat' />
+<input type='submit' onClick='document.pressed=this.value' value='head' title='Show first lines (head)' />
+<input type='submit' onClick='document.pressed=this.value' value='tail' title='Show last lines (tail)' />
+<input type='submit' onClick='document.pressed=this.value' value='wc' title='Count lines/words/chars (wc)' />
+<input type='submit' onClick='document.pressed=this.value' value='stat' title='Show details (stat)' />
+<input type='submit' onClick='document.pressed=this.value' value='touch' title='Update timestamp (touch)' />
+<input type='submit' onClick='document.pressed=this.value' value='truncate' title='truncate! (truncate)' />
+<input type='submit' onClick='document.pressed=this.value' value='rm' title='delete! (rm)' />
+<input type='submit' onClick='document.pressed=this.value' value='rmdir' title='Remove directory (rmdir)' />
+<input type='submit' onClick='document.pressed=this.value' value='submit' title='Submit file (submit)' />
 </td></tr>
 </table>    
 </div>
@@ -391,10 +391,10 @@ Action on paths selected below
     <tr class=title><td class=centertext>
     Filter paths (wildcards like * and ? are allowed)
     <form method='post' action='ls.py'>
-    <input type='hidden' name='output_format' value='html'>
-    <input type='hidden' name='flags' value='%s'>
-    <input type='text' name='path' value=''>
-    <input type='submit' value='Filter'>
+    <input type='hidden' name='output_format' value='html' />
+    <input type='hidden' name='flags' value='%s' />
+    <input type='text' name='path' value='' />
+    <input type='submit' value='Filter' />
     </form>
     </td></tr>
     </table>    
@@ -409,36 +409,36 @@ Action on paths selected below
     <tr class=title><td class=centertext colspan=4>
     File view options
     </td></tr>
-    <tr><td><br></td></tr>
+    <tr><td><br /></td></tr>
     <tr class=title><td>Parameter</td><td>Setting</td><td>Enable</td><td>Disable</td></tr>
     <tr><td>Long format</td><td>
     %s</td><td>"""\
          % long_list(flags)\
          + """
     <form method='post' action='ls.py'>
-    <input type='hidden' name='output_format' value='html'>
-    <input type='hidden' name='flags' value='%s'>"""\
+    <input type='hidden' name='output_format' value='html' />
+    <input type='hidden' name='flags' value='%s' />"""\
          % (flags + 'l')
 
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s'>"\
+        htmlform += "<input type='hidden' name='path' value='%s' />"\
              % entry
     htmlform += \
         """
-    <input type='submit' value='On'><br>
+    <input type='submit' value='On' /><br />
     </form>
     </td><td>
     <form method='post' action='ls.py'>
-    <input type='hidden' name='output_format' value='html'>
-    <input type='hidden' name='flags' value='%s'>"""\
+    <input type='hidden' name='output_format' value='html' />
+    <input type='hidden' name='flags' value='%s' />"""\
          % flags.replace('l', '')
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s'>"\
+        htmlform += "<input type='hidden' name='path' value='%s' />"\
              % entry
 
     htmlform += \
         """
-    <input type='submit' value='Off'><br>
+    <input type='submit' value='Off' /><br />
     </form>
     </td></tr>
     """
@@ -456,27 +456,27 @@ Action on paths selected below
         htmlform += \
             """
     <form method='post' action='ls.py'>
-    <input type='hidden' name='output_format' value='html'>
-    <input type='hidden' name='flags' value='%s'>"""\
+    <input type='hidden' name='output_format' value='html' />
+    <input type='hidden' name='flags' value='%s' />"""\
              % (flags + 'r')
         for entry in pattern_list:
-            htmlform += " <input type='hidden' name='path' value='%s'>"\
+            htmlform += " <input type='hidden' name='path' value='%s' />"\
                  % entry
         htmlform += \
             """
-    <input type='submit' value='On'><br>
+    <input type='submit' value='On' /><br />
     </form>
     </td><td>
     <form method='post' action='ls.py'>
-    <input type='hidden' name='output_format' value='html'>
-    <input type='hidden' name='flags' value='%s'>"""\
+    <input type='hidden' name='output_format' value='html' />
+    <input type='hidden' name='flags' value='%s' />"""\
              % flags.replace('r', '')
         for entry in pattern_list:
-            htmlform += "<input type='hidden' name='path' value='%s'>"\
+            htmlform += "<input type='hidden' name='path' value='%s' />"\
                  % entry
             htmlform += \
                 """
-    <input type='submit' value='Off'><br>
+    <input type='submit' value='Off' /><br />
     </form>
     </td></tr>
     """
@@ -490,27 +490,27 @@ Action on paths selected below
     htmlform += \
         """
     <form method='post' action='ls.py'>
-    <input type='hidden' name='output_format' value='html'>
-    <input type='hidden' name='flags' value='%s'>"""\
+    <input type='hidden' name='output_format' value='html' />
+    <input type='hidden' name='flags' value='%s' />"""\
          % (flags + 'a')
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s'>"\
+        htmlform += "<input type='hidden' name='path' value='%s' />"\
              % entry
     htmlform += \
         """
-    <input type='submit' value='On'><br>
+    <input type='submit' value='On' /><br />
     </form>
     </td><td>
     <form method='post' action='ls.py'>
-    <input type='hidden' name='output_format' value='html'>
-    <input type='hidden' name='flags' value='%s'>"""\
+    <input type='hidden' name='output_format' value='html' />
+    <input type='hidden' name='flags' value='%s' />"""\
          % flags.replace('a', '')
     for entry in pattern_list:
-        htmlform += "<input type='hidden' name='path' value='%s'>"\
+        htmlform += "<input type='hidden' name='path' value='%s' />"\
              % entry
     htmlform += \
         """
-    <input type='submit' value='Off'><br>
+    <input type='submit' value='Off' /><br />
     </form>
     </td></tr>
     </table>
@@ -540,25 +540,25 @@ Action on paths selected below
 
         output_objects.append({'object_type': 'html_form', 'text'
                               : """
-<br>
+<br />
 <table class='files'>
 <tr class=title><td class=centertext colspan=3>
 Edit file
 </td></tr>
 <tr><td>
-Fill in the path of a file to edit and press 'edit' to open that file in the<br>
-online file editor. Alternatively a file can be selected for editing through<br>
+Fill in the path of a file to edit and press 'edit' to open that file in the<br />
+online file editor. Alternatively a file can be selected for editing through<br />
 the listing of personal files. 
 </td><td colspan=2 class=righttext>
 <form name='editor' method='post' action='editor.py'>
-<input type='hidden' name='output_format' value='html'>
-<input name='current_dir' type='hidden' value='%(dest_dir)s'>
-<input type='text' name='path' size=50 value=''>
-<input type='submit' value='edit'>
+<input type='hidden' name='output_format' value='html' />
+<input name='current_dir' type='hidden' value='%(dest_dir)s' />
+<input type='text' name='path' size=50 value='' />
+<input type='submit' value='edit' />
 </form>
 </td></tr>
 </table>
-<br>
+<br />
 <table class='files'>
 <tr class=title><td class=centertext colspan=4>
 Create directory
@@ -567,13 +567,13 @@ Create directory
 Name of new directory to be created in current directory (%(dest_dir)s)
 </td><td class=righttext colspan=3>
 <form action='mkdir.py' method=post>
-<input name='path' size=50>
-<input name='current_dir' type='hidden' value='%(dest_dir)s'/>
-<input type='submit' value='Create' name='mkdirbutton'>
+<input name='path' size=50 />
+<input name='current_dir' type='hidden' value='%(dest_dir)s' />
+<input type='submit' value='Create' name='mkdirbutton' />
 </form>
 </td></tr>
 </table>
-<br>
+<br />
 <table class='files'>
 <tr class=title><td class=centertext colspan=4>
 Upload file
@@ -585,24 +585,24 @@ Upload file to current directory (%(dest_dir)s)
 <form enctype='multipart/form-data' action='textarea.py' method='post'>
 Extract package files (.zip, .tar.gz, .tar.bz2)
 </td><td colspan=2>
-<input type=checkbox name='extract_0'>
+<input type=checkbox name='extract_0' />
 </td></tr>
 <tr><td colspan=2>
 Submit mRSL files (also .mRSL files included in packages)
 </td><td colspan=2>
-<input type=checkbox name='submitmrsl_0' CHECKED>
+<input type=checkbox name='submitmrsl_0' checked />
 </td></tr>
 <tr><td>    
 File to upload
 </td><td class=righttext colspan=3>
-<input name='fileupload_0_0_0' type='file' size='50'/>
+<input name='fileupload_0_0_0' type='file' size='50' />
 </td></tr>
 <tr><td>
 Optional remote filename (extra useful in windows)
 </td><td class=righttext colspan=3>
-<input name='default_remotefilename_0' type='hidden' value='%(dest_dir)s'/>
-<input name='remotefilename_0' type='input' size='50' value='%(dest_dir)s'/>
-<input type='submit' value='Upload' name='sendfile'/>
+<input name='default_remotefilename_0' type='hidden' value='%(dest_dir)s' />
+<input name='remotefilename_0' type='input' size='50' value='%(dest_dir)s' />
+<input type='submit' value='Upload' name='sendfile' />
 </form>
 </td></tr>
 </table>

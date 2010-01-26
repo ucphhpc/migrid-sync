@@ -105,7 +105,7 @@ def main(client_id, user_arguments_dict):
 %s
 
 """ % (re_name,
-            redescription.replace('\n', '<br>'))
+            redescription.replace('\n', '<br />'))
 
     if testprocedure:
         verify_specified = []

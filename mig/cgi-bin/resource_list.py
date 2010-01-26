@@ -62,14 +62,14 @@ dir_list = os.listdir(configuration.resource_home)
 for file in dir_list:
     hosturl = file[0:file.rindex('.')]
     hostidentifier = file[file.rindex('.') + 1:]
-    print "     <A HREF='resource_edit.py?hosturl=" + hosturl\
+    print "     <a href='resource_edit.py?hosturl=" + hosturl\
          + '&hostidentifier=' + hostidentifier\
-         + "'>edit</A>&nbsp;&nbsp;<B>" + file + '</B><BR>'
+         + "'>edit</a>&nbsp;&nbsp;<b>" + file + '</b><br />'
 
 print """	<hr>
 	    <form action="./resource_edit.py" method="post">
-	    <input type="hidden" name="new_resource" value="true">
-	    <input type="submit" name="New" value="New">
+	    <input type="hidden" name="new_resource" value="true" />
+	    <input type="submit" name="New" value="New" />
 	    </form>
 	    """
 print get_cgi_html_footer(configuration, '')

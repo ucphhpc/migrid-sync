@@ -83,9 +83,9 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'html_form', 'text'
                            : """
-<b><a name='%s'>%s:</a></b><br>
-%s<br>
-<br>""" % ('frontendhome', 'Frontend Home Path',
+<b><a name='%s'>%s:</a></b><br />
+%s<br />
+<br />""" % ('frontendhome', 'Frontend Home Path',
            """The MiG user home directory on the frontend""")
                                })
 
@@ -95,11 +95,11 @@ def main(client_id, user_arguments_dict):
         title = spec['Title']
         output_objects.append({'object_type': 'html_form', 'text'
                                : """
-<b><a name='res-%s'>%s:</a></b><br>
-%s<br>
-<br>
-Example:&nbsp;%s<br>
-<br>""" % (field, title, resource_keywords[field]['Description'],
+<b><a name='res-%s'>%s:</a></b><br />
+%s<br />
+<br />
+Example:&nbsp;%s<br />
+<br />""" % (field, title, resource_keywords[field]['Description'],
                resource_keywords[field]['Example'])
                                })
 
@@ -107,34 +107,34 @@ Example:&nbsp;%s<br>
 
     output_objects.append({'object_type': 'html_form', 'text'
                            : """
-<b><a name='exe-%s'>%s:</a></b><br>
-%s<br>
-<br>
-Example:&nbsp;%s<br>
-<br>""" % ('executionnodes', 'Execution Node(s)',
+<b><a name='exe-%s'>%s:</a></b><br />
+%s<br />
+<br />
+Example:&nbsp;%s<br />
+<br />""" % ('executionnodes', 'Execution Node(s)',
            exenode_keywords['name']['Description'],
            """
-This fields configures all the job execution nodes in one MiG resource.<br>
-It is possible to specify several execution nodes by seperating them with ';'<br>
-and it's possible to denote ranges of execution nodes by using '->'.<br>
-<br>
-Example:&nbsp; n0->n8 ; n10 ; n12->n24<br>
-<br>
-Specifies the nodes n0 to n8, n10 and n12 to n24.<br>
-<br>
+This fields configures all the job execution nodes in one MiG resource.<br />
+It is possible to specify several execution nodes by seperating them with ';'<br />
+and it's possible to denote ranges of execution nodes by using '->'.<br />
+<br />
+Example:&nbsp; n0->n8 ; n10 ; n12->n24<br />
+<br />
+Specifies the nodes n0 to n8, n10 and n12 to n24.<br />
+<br />
 Please note that the following node count field specifies the number of actual
 physical hosts associated with each of these MiG execution nodes. In case of a
 one-to-one mapping between MiG execution nodes and actual nodes, it should just
 be set to 1. Only if each MiG execution node gives access to multiple nodes e.g.
-in a cluster or batch system, should it be set higher.<br>
+in a cluster or batch system, should it be set higher.<br />
 """)
                                })
 
     output_objects.append({'object_type': 'html_form', 'text'
                            : """
-<b><a name='exe-%s'>%s:</a></b><br>
-%s<br>
-<br>""" % ('executionhome', 'Execution Home Path',
+<b><a name='exe-%s'>%s:</a></b><br />
+%s<br />
+<br />""" % ('executionhome', 'Execution Home Path',
            """The MiG user home directory on execution nodes""")
                                })
 
@@ -144,11 +144,11 @@ in a cluster or batch system, should it be set higher.<br>
         title = spec['Title']
         output_objects.append({'object_type': 'html_form', 'text'
                                : """
-<b><a name='exe-%s'>%s:</a></b><br>
-%s<br>
-<br>
-Example:&nbsp;%s<br>
-<br>""" % (field, title, exenode_keywords[field]['Description'],
+<b><a name='exe-%s'>%s:</a></b><br />
+%s<br />
+<br />
+Example:&nbsp;%s<br />
+<br />""" % (field, title, exenode_keywords[field]['Description'],
                exenode_keywords[field]['Example'])
                                })
 
@@ -156,31 +156,31 @@ Example:&nbsp;%s<br>
 
     output_objects.append({'object_type': 'html_form', 'text'
                            : """
-<b><a name='store-%s'>%s:</a></b><br>
-%s<br>
-<br>
-Example:&nbsp;%s<br>
-<br>""" % ('store-storagenodes', 'Storage Node(s)',
+<b><a name='store-%s'>%s:</a></b><br />
+%s<br />
+<br />
+Example:&nbsp;%s<br />
+<br />""" % ('store-storagenodes', 'Storage Node(s)',
            storenode_keywords['name']['Description'],
            """
-This fields configures all the storage nodes in one MiG resource.<br>
-It is possible to specify several storage nodes by seperating them with ';'<br>
-and it's possible to denote ranges of storage nodes by using '->'.<br>
-<br>
-Example:&nbsp; n0->n8 ; n10 ; n12->n24<br>
-<br>
-Specifies the nodes n0 to n8, n10 and n12 to n24.<br>
-<br>
+This fields configures all the storage nodes in one MiG resource.<br />
+It is possible to specify several storage nodes by seperating them with ';'<br />
+and it's possible to denote ranges of storage nodes by using '->'.<br />
+<br />
+Example:&nbsp; n0->n8 ; n10 ; n12->n24<br />
+<br />
+Specifies the nodes n0 to n8, n10 and n12 to n24.<br />
+<br />
 Please note that the following disk field specifies the amount of actual
-physical storage reserved for MiG on each of these MiG storage nodes.<br>
+physical storage reserved for MiG on each of these MiG storage nodes.<br />
 """)
                                })
 
     output_objects.append({'object_type': 'html_form', 'text'
                            : """
-<b><a name='store-%s'>%s:</a></b><br>
-%s<br>
-<br>""" % ('storagehome', 'Storage Home Path',
+<b><a name='store-%s'>%s:</a></b><br />
+%s<br />
+<br />""" % ('storagehome', 'Storage Home Path',
            """The MiG user home directory on storage nodes""")
                                })
 
@@ -190,11 +190,11 @@ physical storage reserved for MiG on each of these MiG storage nodes.<br>
         title = spec['Title']
         output_objects.append({'object_type': 'html_form', 'text'
                                : """
-<b><a name='store-%s'>%s:</a></b><br>
-%s<br>
-<br>
-Example:&nbsp;%s<br>
-<br>""" % (field, title, storenode_keywords[field]['Description'],
+<b><a name='store-%s'>%s:</a></b><br />
+%s<br />
+<br />
+Example:&nbsp;%s<br />
+<br />""" % (field, title, storenode_keywords[field]['Description'],
                storenode_keywords[field]['Example'])
                                })
 

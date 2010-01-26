@@ -241,14 +241,14 @@ def handle_package_upload(
                 submitstatus['message'] = parse_msg
             else:
 
-                # msg += "<H2>Failure</H2><BR>\n"
+                # msg += "<h2>Failure</h2><br>\n"
                 # msg += parse_msg
                 # return(False, msg)
 
                 submitstatus['status'] = True
                 submitstatus['job_id'] = job_id
 
-            # msg += "<H2>%s Success</H2><BR>\n" % mrslfile
+            # msg += "<h2>%s Success</h2><br>\n" % mrslfile
             # msg += parse_msg
 
             submitstatuslist.append(submitstatus)

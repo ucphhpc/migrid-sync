@@ -885,8 +885,8 @@ def create_resource(
     else:
 
         # msg += """\n\n\Tell resource owner: You should also verify that you have the needed directories %s and %s. If not, you can create the
-        # directories by running the following command on the frontend: <BR>mkdir -p %s
-        # and this command on the execution unit: <BR>%s
+        # directories by running the following command on the frontend: <br>mkdir -p %s
+        # and this command on the execution unit: <br>%s
         # """ % ("a", "b", "c", "d")
         # if len(resource_configfile):
 

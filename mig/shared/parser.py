@@ -273,7 +273,7 @@ def print_type_error(
     out += '<tr><td>Keyword example</td><td>%s</td></tr>'\
          % keyword_dict['Example']
     out += \
-        '<tr><td>Keyword description</td><td>%s</td></tr></table><br>'\
+        '<tr><td>Keyword description</td><td>%s</td></tr></table><br />'\
          % keyword_dict['Description']
     out += \
         '''

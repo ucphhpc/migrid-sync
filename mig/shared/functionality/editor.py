@@ -140,11 +140,11 @@ def edit_file(path, real_path):
             return 'Failed to open file %s: %s' % (path, e)
 
     html = \
-        '''Select file:<br>
+        '''Select file:<br />
 <form method="post" action="editfile.py">
-<input type="text" size='120' name="path" value="%s">
+<input type="text" size='120' name="path" value="%s" />
 <p>
-Edit contents:<br>
+Edit contents:<br />
 <textarea cols="120" rows="25" wrap="off" name="editarea">'''\
          % path
     for line in text:
@@ -152,7 +152,7 @@ Edit contents:<br>
 
     html += \
         '''</textarea>
-<br>
+<br />
 Newline mode:
 <select name="newline">
 <option selected value="unix">UNIX</option>
@@ -160,25 +160,25 @@ Newline mode:
 <option value="windows">DOS / Windows</option>
 </select>
 (<a href="http://en.wikipedia.org/wiki/Newline">help</a>)
-<br>
-Submit file as job after saving <input type=checkbox name="submitjob">
-<br>
-"Save changes" stores the edited contents in the selected file.<br>
-"Forget changes" reloads the last saved version of the selected file.<br>
-<input type="submit" value="Save">
+<br />
+Submit file as job after saving <input type=checkbox name="submitjob" />
+<br />
+"Save changes" stores the edited contents in the selected file.<br />
+"Forget changes" reloads the last saved version of the selected file.<br />
+<input type="submit" value="Save" />
 ----------
-<input type="reset" value="Forget changes">
+<input type="reset" value="Forget changes" />
 </form>
 <form method="post" action="rm.py">
-<input type="hidden" name="output_format" value="html">
-<input type="hidden" name="flags" value="rf">
-<input type="hidden" name="path" value="%(path)s%(lock_suffix)s">
-<input type="submit" value="Discard changes">
+<input type="hidden" name="output_format" value="html" />
+<input type="hidden" name="flags" value="rf" />
+<input type="hidden" name="path" value="%(path)s%(lock_suffix)s" />
+<input type="submit" value="Discard changes" />
 </form>
 <p>
 <form method="post" action="spell.py">
-Spell check (last saved) contents:<br>
-<input type="hidden" name="path" value="%(path)s">
+Spell check (last saved) contents:<br />
+<input type="hidden" name="path" value="%(path)s" />
 Language:
 <select name="lang">
 <option value="da">Danish</option>
@@ -195,7 +195,7 @@ Type:
 <option value="sgml">SGML</option>
 <option value="tex">LaTeX</option>
 </select>
-<input type="submit" value="Check">
+<input type="submit" value="Check" />
 </form>
 <p>
 '''\

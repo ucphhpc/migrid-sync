@@ -69,17 +69,17 @@ html['english'] = \
 <tr><td><h3>More Questions?</h3></td></tr>
 <tr><td>Please check the <a href='sssfaq.py?language=english'>FAQ</a>, or send us an email.</td></tr>
 </table>
-<br>
+<br />
 <table class='sandboxlogin'>
-<TR><TD align='' colspan=''>Choose a user name:</TD>
-<TD><input type='TEXT' name='username' size='10'></TD></TR>
+<tr><td align='' colspan=''>Choose a user name:</td>
+<td><input type='text' name='username' size='10' /></td></tr>
 
-<TR><TD align='' colspan=''>Choose a password:</TD>
-<TD><input type='PASSWORD' name='password' size='10'></TD></TR>
+<tr><td align='' colspan=''>Choose a password:</td>
+<td><input type='password' name='password' size='10' /></td></tr>
 
-<TR><TD>I'm a new user</TD><TD align='left' colspan='1'><input type='checkbox' name='newuser'></TD></TR>
+<tr><td>I'm a new user</td><td align='left' colspan='1'><input type='checkbox' name='newuser' /></td></tr>
 
-<TR><TD align='center' colspan='2'><input type='SUBMIT' value='Send'></TD></TR>
+<tr><td align='center' colspan='2'><input type='submit' value='Send' /></td></tr>
 
 
 </table></form>
@@ -87,7 +87,7 @@ html['english'] = \
 
 html['danish'] = \
     """
-<form action='sssadmin.py' method='POST'>
+<form action='sssadmin.py' method='post'>
 
 <table class='sandboxlogintext'>
 <tr><td><a href='ssslogin.py?language=english'>In English</a></td></tr>
@@ -110,17 +110,17 @@ html['danish'] = \
 <tr><td>Check om det skulle findes i <a href='sssfaq.py?language=danish'>FAQ'en</a>, ellers send os en email.</td></tr>
 </table>
 
-<br>
+<br />
 <table class='sandboxlogin'>
-<TR><TD align='' colspan=''>V&aelig;lg et brugernavn:</TD>
-<TD><input type='TEXT' name='username' size='10'></TD></TR>
+<tr><td align='' colspan=''>V&aelig;lg et brugernavn:</td>
+<td><input type='text' name='username' size='10' /></td></tr>
 
-<TR><TD align='' colspan=''>V&aelig;lg et password:</TD>
-<TD><input type='PASSWORD' name='password' size='10'></TD></TR>
+<tr><td align='' colspan=''>V&aelig;lg et password:</td>
+<td><input type='password' name='password' size='10' /></td></tr>
 
-<TR><TD>Jeg er ny bruger</TD><TD align='left' colspan='1'><input type='checkbox' name='newuser'></TD></TR>
+<tr><td>Jeg er ny bruger</td><td align='left' colspan='1'><input type='checkbox' name='newuser' /></td></tr>
 
-<TR><TD align='center' colspan='2'><input type='SUBMIT' value='Send'></TD></TR>
+<tr><td align='center' colspan='2'><input type='submit' value='Send' /></td></tr>
 
 
 </table></form>

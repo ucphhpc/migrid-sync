@@ -109,8 +109,8 @@ def main(client_id, user_arguments_dict):
                 """<textarea cols="40" rows="1" wrap="off" name="%s">"""\
                  % keyword
             if current_settings_dict.has_key(keyword):
-                html += '<BR>'.join(current_settings_dict[keyword])
-            html += '</textarea><BR>'
+                html += '<br />'.join(current_settings_dict[keyword])
+            html += '</textarea><br />'
         elif val['Type'] == 'string':
 
             # get valid choices from conf
@@ -125,10 +125,10 @@ def main(client_id, user_arguments_dict):
                 for choice in valid_choices:
                     selected = ''
                     if choice == current_choice:
-                        selected = 'SELECTED'
+                        selected = 'selected'
                     html += '<option %s value=%s>%s</option>'\
                          % (selected, choice, choice)
-                html += '</select><BR>'
+                html += '</select><br />'
         html += """
         </td></tr>
         """
@@ -136,7 +136,7 @@ def main(client_id, user_arguments_dict):
     html += \
         """
     <tr><td>
-    <input type="submit" value="Save Settings">
+    <input type="submit" value="Save Settings" />
     </form>
     </td></tr>
     </table>
@@ -172,17 +172,15 @@ If you use the same fields and values in many of your jobs, you can save your pr
 </td></tr>
 <tr><td class=centertext>
 <form method="post" action="editfile.py">
-<input type="hidden" name="path" value="%(mrsl_template)s">
-<input type="hidden" name="newline" value="unix">
+<input type="hidden" name="path" value="%(mrsl_template)s" />
+<input type="hidden" name="newline" value="unix" />
 <textarea cols="82" rows="25" wrap="off" name="editarea">
 %(default_mrsl)s
 </textarea>
 </td></tr>
-<tr><td>
-<center>
-<input type="submit" value="Save template">
-<input type="reset" value="Forget changes">
-<center>
+<tr><td class=centertext>
+<input type="submit" value="Save template" />
+<input type="reset" value="Forget changes" />
 </form>
 </td></tr>
 </table>
@@ -195,8 +193,8 @@ Default CSS (style) for all pages
 <tr><td>
 </td></tr>
 <tr><td>
-If you want to customize the look and feel of the MiG web interfaces you can override default values here. If you leave the style file blank you will just use the default style.<br>
-You can copy paste from the available style file links below if you want to override specific parts.<br>
+If you want to customize the look and feel of the MiG web interfaces you can override default values here. If you leave the style file blank you will just use the default style.<br />
+You can copy paste from the available style file links below if you want to override specific parts.<br />
 Please note that you can not save an empty style file, but must at least leave a blank line to use defaults.
 </td></tr>
 <tr><td class=centertext>
@@ -206,17 +204,15 @@ Please note that you can not save an empty style file, but must at least leave a
 </td></tr>
 <tr><td class=centertext>
 <form method="post" action="editfile.py">
-<input type="hidden" name="path" value="%(css_template)s">
-<input type="hidden" name="newline" value="unix">
+<input type="hidden" name="path" value="%(css_template)s" />
+<input type="hidden" name="newline" value="unix" />
 <textarea cols="82" rows="25" wrap="off" min_len=1 name="editarea">
 %(default_css)s
 </textarea>
 </td></tr>
-<tr><td>
-<center>
-<input type="submit" value="Save style">
-<input type="reset" value="Forget changes">
-<center>
+<tr><td class=centertext>
+<input type="submit" value="Save style" />
+<input type="reset" value="Forget changes" />
 </form>
 </td></tr>
 </table>

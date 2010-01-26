@@ -117,16 +117,16 @@ def main(client_id, user_arguments_dict):
 
     html_form = \
         """<form method="get" action="adminre.py">
-    <SELECT NAME="re_template">
-    <OPTION VALUE="">None
+    <select name="re_template">
+    <option value="">None
 
     """
     for existing_re in ret:
-        html_form += '<OPTION VALUE=%s>%s\n' % (existing_re,
+        html_form += '<option value=%s>%s\n' % (existing_re,
                 existing_re)
     html_form += \
-        """</SELECT>
-    <input type="submit" value="Get">
+        """</select>
+    <input type="submit" value="Get" />
     </form>"""
     output_objects.append({'object_type': 'html_form', 'text'
                           : html_form})
@@ -145,13 +145,13 @@ def main(client_id, user_arguments_dict):
         if template.has_key('SOFTWARE'):
             software_entries = len(template['SOFTWARE'])
     html_form += \
-        """<tr><td>Number of needed software entries</td><td><input type=text size=2 name=software_entries value=%s></td></tr>"""\
+        """<tr><td>Number of needed software entries</td><td><input type=text size=2 name=software_entries value=%s /></td></tr>"""\
          % software_entries
     if template:
         if template.has_key('ENVIRONMENTVARIABLE'):
             environment_entries = len(template['ENVIRONMENTVARIABLE'])
     html_form += \
-        """<tr><td>Number of environment entries</td><td><input type=text size=2 name=environment_entries value=%s></td></tr>"""\
+        """<tr><td>Number of environment entries</td><td><input type=text size=2 name=environment_entries value=%s /></td></tr>"""\
          % environment_entries
     if template:
         if template.has_key('TESTPROCEDURE'):
@@ -162,10 +162,10 @@ def main(client_id, user_arguments_dict):
                           : html_form})
     if testprocedure_entry == 0:
         select_string = \
-            """<option value=0 SELECTED>No<option value=1>Yes"""
+            """<option value=0 selected>No<option value=1>Yes"""
     elif testprocedure_entry == 1:
         select_string = \
-            """<option value=0>No<option value=1 SELECTED>Yes"""
+            """<option value=0>No<option value=1 selected>Yes"""
     else:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'testprocedure_entry should be 0 or 1, you specified %s'
@@ -176,14 +176,14 @@ def main(client_id, user_arguments_dict):
         """<tr><td>Runtime environment has a testprocedure</td><td><select name=testprocedure_entry>%s</select></td></tr>"""\
          % select_string
     html_form += \
-        """<tr><td><input type="submit" value="Update fields"></td></tr></table></form><br>"""
+        """<tr><td><input type="submit" value="Update fields" /></td></tr></table></form><br />"""
 
     html_form += \
         """<form method="post" action="createre.py">
-    <B>RE Name</B><BR>
-    <SMALL>(eg. DALTON-3.0, must be unique):</SMALL><BR>
-    <input type="text" size=40 name="re_name"><BR>
-    <BR><B>Description:</B><BR>
+    <b>RE Name</b><br />
+    <small>(eg. DALTON-3.0, must be unique):</small><br />
+    <input type="text" size=40 name="re_name" /><br />
+    <br /><b>Description:</b><br />
     <textarea cols="50" rows="2" wrap="off" name="redescription">"""
     if template:
         html_form += template['DESCRIPTION']
@@ -193,7 +193,7 @@ def main(client_id, user_arguments_dict):
         if template.has_key('SOFTWARE'):
             soft = template['SOFTWARE']
             if soft:
-                html_form += '<BR><B>Needed Software:</B><BR>'
+                html_form += '<br /><b>Needed Software:</b><br />'
                 loop_number = 0
             for s in soft:
                 html_form += \
@@ -202,13 +202,13 @@ def main(client_id, user_arguments_dict):
                 for keyname in s.keys():
                     if keyname != '':
                         html_form += '%s=%s' % (keyname, s[keyname])
-                html_form += '</textarea><BR>'
+                html_form += '</textarea><br />'
     else:
 
         # loop and create textareas for each software entry
 
         if software_entries > 0:
-            html_form += '<BR><B>Needed Software:</B><BR>'
+            html_form += '<br /><b>Needed Software:</b><br />'
 
             software = rekeywords_dict['SOFTWARE']
             sublevel_required = []
@@ -225,11 +225,11 @@ def main(client_id, user_arguments_dict):
                 html_form += '%s=   # required\n' % sub_req
             for sub_opt in sublevel_optional:
                 html_form += '%s=   # optional\n' % sub_opt
-            html_form += '</textarea><BR>'
+            html_form += '</textarea><br />'
     if template and testprocedure_entry == 1:
         if template.has_key('TESTPROCEDURE'):
             html_form += \
-                """<BR><B>Testprocedure</B> (in mRSL format):<BR>
+                """<br /><b>Testprocedure</b> (in mRSL format):<br />
             <textarea cols="50" rows="15" wrap="off" name="testprocedure">"""
 
             base64string = ''
@@ -242,7 +242,7 @@ def main(client_id, user_arguments_dict):
                                   : html_form})
 
             html_form = \
-                """<BR><B>Expected .stdout file if testprocedure is executed</B><BR>
+                """<br /><b>Expected .stdout file if testprocedure is executed</b><br />
             <textarea cols="50" rows="10" wrap="off" name="verifystdout">"""
 
             if template.has_key('VERIFYSTDOUT'):
@@ -251,7 +251,7 @@ def main(client_id, user_arguments_dict):
             html_form += '</textarea>'
 
             html_form += \
-                """<BR><B>Expected .stderr file if testprocedure is executed</B><BR>
+                """<br /><b>Expected .stderr file if testprocedure is executed</b><br />
             <textarea cols="50" rows="10" wrap="off" name="verifystderr">"""
             if template.has_key('VERIFYSTDERR'):
                 for line in template['VERIFYSTDERR']:
@@ -259,7 +259,7 @@ def main(client_id, user_arguments_dict):
             html_form += '</textarea>'
 
             html_form += \
-                """<BR><B>Expected .status file if testprocedure is executed</B><BR>
+                """<br /><b>Expected .status file if testprocedure is executed</b><br />
             <textarea cols="50" rows="10" wrap="off" name="verifystatus">"""
             if template.has_key('VERIFYSTATUS'):
                 for line in template['VERIFYSTATUS']:
@@ -268,18 +268,18 @@ def main(client_id, user_arguments_dict):
     elif testprocedure_entry == 1:
 
         html_form += \
-            """<BR><B>Testprocedure</B> (in mRSL format):<BR>
+            """<br /><b>Testprocedure</b> (in mRSL format):<br />
         <textarea cols="50" rows="15" wrap="off" name="testprocedure">"""
 
         html_form += \
             """::EXECUTE::
 ls    
 </textarea>
-<BR><B>Expected .stdout file if testprocedure is executed</B><BR>
+<br /><b>Expected .stdout file if testprocedure is executed</b><br />
 <textarea cols="50" rows="10" wrap="off" name="verifystdout"></textarea>
-<BR><B>Expected .stderr file if testprocedure is executed</B><BR>
+<br /><b>Expected .stderr file if testprocedure is executed</b><br />
 <textarea cols="50" rows="10" wrap="off" name="verifystderr"></textarea>
-<BR><B>Expected .status file if testprocedure is executed</B><BR>
+<br /><b>Expected .status file if testprocedure is executed</b><br />
 <textarea cols="50" rows="10" wrap="off" name="verifystatus"></textarea>
 """
 
@@ -297,7 +297,7 @@ ls
             env = template['ENVIRONMENTVARIABLE']
 
             if env:
-                html_form += '<BR><B><BR><BR><B>Environments:</B><BR>'
+                html_form += '<br /><b><br /><br /><b>Environments:</b><br />'
 
             loop_number = 0
             for e in env:
@@ -312,7 +312,7 @@ ls
     else:
 
         if environment_entries > 0:
-            html_form += '<BR><B><BR><BR><B>Environments:</B><BR>'
+            html_form += '<br /><b><br /><br /><b>Environments:</b><br />'
 
         for loop_number in range(0, environment_entries):
             html_form += \
@@ -321,10 +321,10 @@ ls
                 html_form += '%s=   # required\n' % sub_req
             for sub_opt in sublevel_optional:
                 html_form += '%s=   # optional\n' % sub_opt
-            html_form += '</textarea><br>'
+            html_form += '</textarea><br />'
 
     html_form += \
-        """<BR><BR><input type="submit" value="Create">
+        """<br /><br /><input type="submit" value="Create" />
     </form>
     """
     output_objects.append({'object_type': 'html_form', 'text'

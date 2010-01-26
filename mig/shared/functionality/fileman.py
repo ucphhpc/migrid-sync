@@ -140,7 +140,7 @@ def html_tmpl():
     <form id="upload_form" enctype="multipart/form-data" method="post" action="textarea.py">
     <fieldset>
       <input type="hidden" name="output_format" value="json"/>
-      <input type="hidden" name="MAX_FILE_SIZE" value="100000"/>
+      <input type="hidden" name="max_file_size" value="100000"/>
       
       <label for="submitmrsl_0">Submit mRSL files (also .mRSL files included in packages):</label>
       <input type="checkbox" checked="" name="submitmrsl_0"/>
