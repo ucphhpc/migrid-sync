@@ -70,6 +70,9 @@ def html_tmpl():
           <th style="width: 120px;">Date Modified</th>
         </tr>        
       </thead>
+      <tbody>
+      <!-- this is a placeholder for contents: do not remove! -->
+      </tbody>
       </table>            
     
     </div>        

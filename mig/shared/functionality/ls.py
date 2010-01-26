@@ -54,7 +54,7 @@ def select_all_javascript():
     """ return javascript to select all html checkboxes """
 
     return """
-<script LANGUAGE='JavaScript'>
+<script type='text/javascript'>
 document.fileform.allbox.onclick = un_check;
 function un_check() {
    for(var i = 0; i < document.fileform.elements.length; i++) {
@@ -72,7 +72,7 @@ def selected_file_actions_javascript():
     """ return javascript """
 
     return """
-<script language='JavaScript'>
+<script type='text/javascript'>
 function selectedFilesAction() {
     if (document.pressed == 'cat') {
        document.fileform.action = 'cat.py';
