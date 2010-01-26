@@ -1,4 +1,4 @@
-﻿#shell {height: 300px; width: 100%; background: #fff; margin: 0px; padding: 0px; overflow: scroll;}
+#shell {height: 450px; width: 100%; background: #fff; margin: 0px; padding: 0px; overflow: scroll;}
 #divShellOutput {margin-left: 2px; margin-top: 0px; }
 #divShellInput {margin-left: 2px; margin-top: 0px; }
 #divShellOutput table{padding: 0px; vertical-align: top;  border-style: none; border-collapse:collapse; background-color:Transparent;}

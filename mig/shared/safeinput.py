@@ -829,6 +829,8 @@ def guess_type(name):
         return valid_numeric
     elif name.lower().find('net_bw') != -1:
         return valid_numeric
+    elif name.lower().find('menu') != -1:
+        return lambda x:__valid_contents(x, "yesno")
     else:
 
     # TODO: extend to include all used variables here

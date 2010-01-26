@@ -5,10 +5,9 @@ License: GPL v2
 This is a subproject affiliated to Minimium Intrusion Grid (MiG) directed by Prof. Brian Vinter.
 The purpose is to improve web UI and provide a managerial shortcut for trivial operations.
 */
-XMLService=function (selfname, browsertype)
+XMLService=function (selfname)
 {
     this.selfname=selfname;
-    this.browsertype=browsertype;
     this.xmldoc=null;
     this.xmlparser=null;
 }
@@ -18,8 +17,8 @@ XMLService.prototype.Init=function ()
 }
 XMLService.prototype.CreateParser=function ()
 {
-   if(this.browsertype==0)
-   {
+   if ( window.ActiveXObject ) {
+       // IE style browser
         var ProgIDs=["Msxml2.DOMDocument.6.0","Msxml2.DOMDocument.3.0"];
         for(var i=0;i<ProgIDs.length;i++)
             try
@@ -28,32 +27,36 @@ XMLService.prototype.CreateParser=function ()
                 break;
             }catch(e){}
     }
-    else if(this.browsertype==1)
-    {
+    else if( window.DOMParser ) {
+	// Mozilla style browser
         this.xmlparser=new DOMParser();
     }
     else {
-        // TODO: this is untested! (Neither IE nor Firefox)
-        //alert("create parser got unexpected browser: " + this.browsertype);
-        this.xmlparser=new DOMParser();
+	// not supported
+        alert("create parser: Browser not supported for XML parsing.");
+        this.xmlparser=null;
     }
 }
 XMLService.prototype.LoadXMLText=function (xml, async)
 {
-    if(this.browsertype==0)
+    if (!(this.xmlparser)) {
+        alert("Load: Browser not supported for XML parsing.");
+	return;
+    }
+    if(  window.ActiveXObject )
     {
         if(this.xmldoc.loadXML(xml)!=true)
             return this.xmldoc.parseError.errorCode+"\n"+this.xmldoc.parseError.reason+this.xmldoc.parseError.line+','+this.xmldoc.parseError.linepos;
-    }else if(this.browsertype==1)
+    } else if( window.DOMParser )
     {
         this.xmldoc=this.xmlparser.parseFromString(xml,"text/xml");
+	this.xmldoc.async=async;
     }
     else {
-        // TODO: this is untested! (Neither IE nor Firefox)
-	//alert("load xml got unexpected browser: " + this.browsertype);
-        this.xmldoc=this.xmlparser.parseFromString(xml,"text/xml");
+        // cannot be!
+	alert("load xml: unexpected exception");
+	return;
     }
-    this.xmldoc.async=async;
 }
 XMLService.prototype.PackMessage=function (methodname, arguments)
 {
@@ -79,7 +82,16 @@ XMLService.prototype.PackMessage=function (methodname, arguments)
     }
     this.xmldoc.getElementsByTagName("methodCall")[0].appendChild(node1);
     this.xmldoc.getElementsByTagName("methodCall")[0].appendChild(node3);
-    return this.browsertype==0?this.xmldoc.xml:(new XMLSerializer()).serializeToString(this.xmldoc);
+
+    if ( window.ActiveXObject ) {
+	return this.xmldoc.xml;
+    }
+    else if ( window.DOMParser ) {
+	return (new XMLSerializer().serializeToString(this.xmldoc));
+    }
+    else {
+	return "<ERROR/>";
+    }
 }
 XMLService.prototype.UnpackMessage=function (xml)
 {
@@ -294,10 +306,9 @@ XMLService.prototype.NodeText=function (node)
     return node.childNodes[0].nodeValue;
 }
 
-AjaxService=function (selfname, browsertype, serviceurl)
+AjaxService=function (selfname, serviceurl)
 {
     this.serviceurl=serviceurl;
-    this.browsertype=browsertype;
     this.selfname=selfname;
 }
 
@@ -305,7 +316,7 @@ AjaxService.prototype.Init=function ()
 {
     this.xmlresponse=null;
     this.xmlhttprequest=null;
-    this.xmlservice=new XMLService(this.selfname+".xmlservice", this.browsertype);
+    this.xmlservice=new XMLService(this.selfname+".xmlservice");
     this.xmlservice.Init();
     this.CreateXMLHttpRequest();
 }

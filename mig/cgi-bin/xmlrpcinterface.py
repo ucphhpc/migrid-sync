@@ -35,12 +35,6 @@ from shared.output import validate
 
 class MiGCGIXMLRPCRequestHandler(CGIXMLRPCRequestHandler):
 
-    def system_listMethods(self):
-        """List all methods as well as signatures"""
-        methods=CGIXMLRPCRequestHandler.system_listMethods(self)
-        methods_and_signatures=[(method, self.system_methodSignature(method)) for method in methods]
-        return methods_and_signatures
-
     def system_methodSignature(self, method_name):
         """List method signatures"""
 
@@ -70,6 +64,13 @@ class MiGCGIXMLRPCRequestHandler(CGIXMLRPCRequestHandler):
                 help_string = ''
         return help_string
 
+
+
+def serverMethodSignatures(server):
+    """List all methods as well as signatures"""
+    methods=CGIXMLRPCRequestHandler.system_listMethods(server)
+    methods_and_signatures=[(method, server.system_methodSignature(method)) for method in methods]
+    return methods_and_signatures
 
 def object_type_info(object_type):
     """Lookup object type"""
@@ -522,6 +523,10 @@ def getjobobj(user_arguments_dict):
 
 if '__main__' == __name__:
     server = MiGCGIXMLRPCRequestHandler()
+
+    def AllMethodSignatures(): return serverMethodSignatures(server)
+    server.register_function(AllMethodSignatures)
+
     server.register_function(object_type_info)
     server.register_function(my_id)
     server.register_function(jobstatus)

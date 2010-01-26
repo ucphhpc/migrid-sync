@@ -36,7 +36,7 @@ from shared.init import initialize_main_variables, find_entry
 
 def signature():
     """Signature of the main function"""
-    defaults = {}
+    defaults = {'menu':'yes'}
     return ['html_form', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -60,59 +60,59 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Advanced Shell'
+    if accepted['menu'][-1]=='no':
+        title_entry['skipmenu']=True
+        title_entry['javascript'] = '''
+<style type="text/css">
+#content { margin: 10px }
+</style>'''
     # Please have href points to the CSS file and have basedir changed to the directory where JavaScripts are placed.
-    title_entry['javascript']='<link rel="stylesheet" type="text/css" href="/images/css/shell.css"/>\
-<script type="text/javascript">var shell; var state=false; var interval; var  basedir="/images/js/";\
-var scripts=["toolkits.js","gui.js","ajax.js","intellisense.js","output.js","status.js","lib.js","shell.js"]; \
-for(var i=0;i<scripts.length;i++){scripts[i]=basedir+scripts[i];}\
-</script>'
-    title_entry['bodyfunctions']='onload="load(scripts, 0);"'
-    
-    output_objects.append({'object_type': 'header', 'text': 'Advanced Shell'
-                          })
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
-    <div id='shell'></div>
-    <script type="text/javascript">
-    function load (scripts, i)
-    {
-        if(i==scripts.length)
+    title_entry['javascript']+='''
+<link rel="stylesheet" type="text/css" href="/images/css/shell.css"/>
+<script type="text/javascript">
+  var  basedir="/images/js/";
+
+  var shell;
+  var interval;
+  // scripts have to be loaded in sequence, thereby this recursion.
+  var scripts=["toolkits.js","gui.js","ajax.js","intellisense.js",
+               "output.js","status.js","lib.js","shell.js"];
+  function loadAll(s_i) {
+        if(s_i<1)
         {
-            state=true;
             shell=new Shell('shell', 'shell', '/cgi-bin/xmlrpcinterface.py');
             shell.Init();
             return;
         }
         var script=document.createElement('script');
         script.setAttribute('type','text/javascript');
-        script.setAttribute('src',scripts[i]);
+        script.setAttribute('src',basedir + scripts[ scripts.length - s_i ]);
         document.getElementsByTagName('head')[0].appendChild(script);
-        if(navigator.userAgent.indexOf('MSIE')>=0)
-        {
-            script.onreadystatechange=function()
-            {
+
+        if ( script.readyState ) {
+           // IE style browser
+           script.onreadystatechange= function () {
                 if(this.readyState=='loaded'||this.readyState=='complete')
-                    load(scripts, i+1);
+                    loadAll( s_i-1 );
             }
-        }
-        else if(navigator.userAgent.indexOf('Mozilla')>=0)
-        {
+        } else {
+        // other browser, should support onload
             script.onload=function()
             {
-                load(scripts, i+1);
+                loadAll( s_i-1 );
             }
         }
-        else
-        {
-            script.onload=function()
-            {
-                alert("Unrecognised browser type: " + navigator.userAgent);
-            }
-        }
+        return;
     }
-    </script>
-    </div>
-    """})
+</script>
+'''
+#    title_entry['bodyfunctions']='onload="mkShell();"'
+    title_entry['bodyfunctions']='onload="loadAll(scripts.length);"'
+    
+    output_objects.append({'object_type': 'header', 'text': 'Advanced Shell'
+                          })
+    output_objects.append({'object_type': 'html_form', 'text'
+                          :'<div id="shell"><!-- filled by js --></div>'})
 
     return (output_objects, status)
 

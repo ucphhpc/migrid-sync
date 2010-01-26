@@ -5,10 +5,9 @@ License: GPL v2
 This is a subproject affiliated to Minimium Intrusion Grid (MiG) directed by Prof. Brian Vinter.
 The purpose is to improve web UI and provide a managerial shortcut for trivial operations.
 */
-Gui=function (selfname, pagelayer, browsertype)
+Gui=function (selfname, pagelayer)
 {
     this.pagelayer=pagelayer;
-    this.browsertype=browsertype;
     this.selfname=selfname;
 }
 Gui.prototype.Init=function (lib)
@@ -160,10 +159,15 @@ Gui.prototype.CreateTable=function(rows, columns)
 Gui.prototype.FillTable=function(tableelement, row, column, content)
 {
     var td=tableelement.getElementsByTagName('tbody')[0].getElementsByTagName('tr')[row].getElementsByTagName('td')[column];
-    if(Type(content)=='STRING')
-        this.browsertype==1?td.textContent=content:td.innerText=content;
-    else
+    if(Type(content)=='STRING') {
+	// Mozilla style browser
+	td.textContent=content;
+	// IE style browser
+	td.innerText=content;
+    }
+    else {
         td.appendChild(content);
+    }
 }
 Gui.prototype.CreateUpload=function(dir)
 {

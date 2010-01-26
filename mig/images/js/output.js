@@ -10,10 +10,9 @@ The purpose is to improve web UI and provide a managerial shortcut for trivial o
 Output - To show javascript objects. 
 The objects are structurally parsed from corresponding XMLRPC response.
 */
-Output=function(selfname,browsertype)
+Output=function(selfname)
 {
     this.selfname=selfname;
-    this.browsertype=browsertype;
     this.gui=null;
 }
 Output.prototype.Init=function(gui)

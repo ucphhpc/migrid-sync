@@ -5,9 +5,8 @@ License: GPL v2
 This is a subproject affiliated to Minimium Intrusion Grid (MiG) directed by Prof. Brian Vinter.
 The purpose is to improve web UI and provide a managerial shortcut for trivial operations.
 */
-Lib=function (selfname, browsertype, gui, ajax, output, intellisense, status)
+Lib=function (selfname, gui, ajax, output, intellisense, status)
 {
-    this.browsertype=browsertype;
     this.selfname=selfname;
     this.gui=gui;
     this.ajax=ajax;
@@ -31,11 +30,22 @@ Lib.prototype.Init=function ()
     this.priority=1;
     //methods repository
     this.methods=[
-    [['help','help'], "{'method': ['']}", 0],
-    [['clear','clear'], "", 0],
-    [['list','list'], "{'type': ['']}", 0],
+  /* Entry Format: [ method names (standard one first), 
+                     argument/default list, 
+                     0(local) or 1(remote) ]   
+     Semantics for an entry: when one of the names is entered on the cmd line,
+			1. check arguments, reject if something wrong with arg.s
+            2. if local: call a local method "Shell<Name>" where <Name> is
+            			the first method names, with first letter capitalized
+               if remote: call the method (same name, from registering it
+               			with Probe) via XMLRPC
+  */
+    [['help','man'], "{'method': ['']}", 0],
+    [['clear'], "", 0],
+    [['list'], "{'type': ['']}", 0],
     [['cd'], "{'path': ['']}", 0],
-    [['upload'],"",0]
+    [['upload'],"",0],
+    [['exit','quit'],"",0]
     ];
     //get all remote methods
     this.methods=this.Probe(this.methods);
@@ -87,7 +97,14 @@ Lib.prototype.HookKey=function (e)
 Lib.prototype.OnMouseUp=function()
 {
     var userselection;
-    userselection=(this.browsertype==0?window.document.selection.createRange().text:window.document.getSelection());
+    if ( window.document.selection ) {
+	/* IE style browser */
+	userselection = window.document.selection.createRange();
+    }
+    else if ( window.document.getSelection ) {
+	userselection=window.document.getSelection();
+    } 
+    else return;
     if(userselection!='')
         this.status.clipboard=userselection;
     //this.gui.FocusInput();
@@ -100,6 +117,10 @@ Lib.prototype.ShellCd=function(param)
 {
     this.Output(param);
     var c=this.ajax.Invoke('ls', [param]);
+    if (/\*/.test(param.path[0])) {
+        this.gui.Output('cd: Wildcards not supported!');
+	return;
+    }
     if(c[1][0]!=0)
     {
         this.gui.Output('Directory not found!');
@@ -109,17 +130,18 @@ Lib.prototype.ShellCd=function(param)
     {
         this.status.GetDir(param.path[0],true, true);
         this.gui.SetPrompt(this.status.GetPrompt());
+	return;
     }
 }
 Lib.prototype.ShellHelp=function(param)
 {
     if(!param.hasOwnProperty('method'))
     {
-        var str='<p>Minium Intrusion Grid Advanced Shell - Help</p>';
-        str+='<p>list [console|remote]- to show all/console/remote commands.</p>';
-        str+='<p>help <command name> - to show help of a certain command.</p>';
-        str+='<p>Note: this shell doesn\'t support pipe or redirection</p>';
-        this.gui.Output(str);
+        this.gui.Output('Advanced Grid Shell    - Help');
+        this.gui.Output('list [console|remote]  - to show all/console/remote commands.');
+        this.gui.Output('help <command name> - to show help of a certain command.');
+        this.gui.Output('Note: this shell does not support pipes or redirection\n');
+        this.gui.Output('----------');
     }
     else
     {
@@ -158,12 +180,20 @@ Lib.prototype.ShellList=function(param)
         this.ShellList({type: 'remote'});
     }
 }
+
+Lib.prototype.ShellExit=function () {
+
+    window.close();
+    // and if we survive it, go to dashboard
+    window.location='/';
+}
+
 Lib.prototype.GetUserDN=function ()
 {
     var str=this.ajax.Invoke('my_id', null);
-    var re=new RegExp('/CN=(.[^/]*)'); // Jost
+    var re=new RegExp('/CN=(.[^/]*)');
     var tmp=str.match(re);
-    if(tmp[1]=='undefined') // Jost
+    if(tmp[1]=='undefined')
         return 'unknown';
     else
         return tmp[1];
@@ -369,7 +399,7 @@ Lib.prototype.Evaluate=function(params, method, flags, hasflags)
 }
 Lib.prototype.Probe=function (methodlist)
 {
-    var methods=this.ajax.Invoke("system.listMethods", null);
+    var methods=this.ajax.Invoke("AllMethodSignatures", null);
     for(var i=0;i<methods.length;i++)
         if(methods[i][0].indexOf('system.')<0)
             this.AddMethod([methods[i][0]], methods[i][1], 1, methodlist);

@@ -48,6 +48,13 @@ menu_items['runtimeenvs'] = {'class': 'runtimeenvs', 'url': 'redb.py',
 menu_items['settings'] = {'class': 'settings', 'url': 'settings.py',
                           'title': 'Settings'}
 menu_items['shell'] = {'class': 'shell', 'url': 'shell.py', 'title': 'Shell'}
+menu_items['wshell'] = {'class': 'shell',
+    'url': 'javascript:\
+             window.open(\'shell.py?menu=no\',\'shellwindow\',\
+             \'dependent=yes,menubar=no,status=no,toolbar=no,\
+               height=650px,width=800px\');\
+             window.reload();',
+    'title': 'Shell(popup)'}
 
 
 def html_print(formatted_text, html=True):

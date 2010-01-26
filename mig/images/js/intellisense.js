@@ -5,10 +5,9 @@ License: GPL v2
 This is a subproject affiliated to Minimium Intrusion Grid (MiG) directed by Prof. Brian Vinter.
 The purpose is to improve web UI and provide a managerial shortcut for trivial operations.
 */
-Intellisense=function(selfname, browsertype)
+Intellisense=function(selfname)
 {
-    this.selfname=selfname;
-    this.browsertype=browsertype;
+    /* nothing */
 }
 Intellisense.prototype.Init=function()
 {
