@@ -35,6 +35,8 @@ verbatim = {'object_type': 'verbatim', 'required': ['text'],
             'optional': []}
 binary = {'object_type': 'binary', 'required': ['data'],
             'optional': []}
+script_status = {'object_type': 'script_status', 'required': [],
+            'optional': ['text']}
 header = {'object_type': 'header', 'required': ['text'], 'optional': []}
 sectionheader = {'object_type': 'sectionheader', 'required': ['text'],
                  'optional': []}
@@ -172,6 +174,7 @@ valid_types_list = [
     text,
     verbatim,
     binary,
+    script_status,
     header,
     sectionheader,
     link,

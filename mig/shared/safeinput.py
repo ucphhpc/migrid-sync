@@ -697,6 +697,8 @@ def guess_type(name):
         return valid_path_pattern
     elif name.lower().find('job_id') != -1:
         return valid_job_id_pattern
+    elif name.lower().find('action') != -1:
+        return valid_job_id
     elif name.lower().find('flags') != -1:
         return valid_ascii
     elif name.lower().find('max_jobs') != -1:

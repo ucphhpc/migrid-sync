@@ -61,11 +61,14 @@ def main(client_id, user_arguments_dict):
 
     status = returnvalues.OK
 
-    # Insert explicit start to avoid automatic header 
-    output_objects.append({'object_type': 'start'})
+    # Web format for cert access and no header for SID access
     if client_id:
+        output_objects.append({'object_type': 'title', 'text'
+                               : 'SSS script download'})
         output_objects.append({'object_type': 'header', 'text'
                                : 'SSS script download'})
+    else:
+        output_objects.append({'object_type': 'start'})
 
     (result, unique_resource_name) = get_resource_name(sandboxkey, logger)
     if not result:
@@ -84,6 +87,7 @@ def main(client_id, user_arguments_dict):
 
     # Status code line followed by raw output
     if not client_id:
-        output_objects.append({'object_type': 'script_status', 'text':status[0]})
+        output_objects.append({'object_type': 'script_status', 'text': ''})
+        output_objects.append({'object_type': 'binary', 'data': '%s' % status[0]})
     output_objects.append({'object_type': 'binary', 'data': msg})
     return (output_objects, status)

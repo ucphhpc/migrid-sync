@@ -32,7 +32,7 @@ import fcntl
 
 import shared.returnvalues as returnvalues
 from shared.findtype import is_owner
-from shared.functional import validate_input
+from shared.functional import validate_input, REJECT_UNSET
 from shared.init import initialize_main_variables
 from shared.validstring import valid_dir_input
 
@@ -66,11 +66,14 @@ def main(client_id, user_arguments_dict):
 
     status = returnvalues.OK
 
-    # Insert explicit start to avoid automatic header 
-    output_objects.append({'object_type': 'start'})
+    # Web format for cert access and no header for SID access
     if client_id:
+        output_objects.append({'object_type': 'title', 'text'
+                               : 'Load resource script PGID'})
         output_objects.append({'object_type': 'header', 'text'
                                : 'Load resource script PGID'})
+    else:
+        output_objects.append({'object_type': 'start'})
 
     # TODO: add session ID check here
 
@@ -106,7 +109,7 @@ def main(client_id, user_arguments_dict):
         pgid_path = os.path.join(base_dir + 'EXE_%s.PGID' % exe_name)
     else:
         output_objects.append({'object_type': 'error_text', 'text': 
-                               "Unknown type: '%s'" % res_typemsg})
+                               "Unknown type: '%s'" % res_type})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     try:
@@ -118,7 +121,6 @@ def main(client_id, user_arguments_dict):
         pgid_file.close()
 
         msg = "%s\n'%s' PGID succesfully retrieved." % (pgid, res_type)
-        output_objects.append({'object_type': 'text', 'text': msg})
     except Exception, err:
         if 'FE' == res_type:
             msg = "Resource frontend: '%s' is stopped." \
@@ -127,12 +129,12 @@ def main(client_id, user_arguments_dict):
             msg = "Error reading PGID for resource: '%s' EXE: '%s'\n" + \
                   'Either resource has never been started or a server error occured.' \
                   % (unique_resource_name, exe_name)
-        output_objects.append({'object_type': 'error_text', 'text': msg})
         status = returnvalues.CLIENT_ERROR
 
     # Status code line followed by raw output
     if not client_id:
-        output_objects.append({'object_type': 'script_status', 'text':status[0]})
+        output_objects.append({'object_type': 'script_status', 'text': ''})
+        output_objects.append({'object_type': 'binary', 'data': '%s' % status[0]})
     output_objects.append({'object_type': 'binary', 'data': msg})
     return (output_objects, status)
 

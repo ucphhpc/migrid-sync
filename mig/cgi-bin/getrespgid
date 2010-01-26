@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# putrespgid - upload script PGID's to allow kill in clean up
+# getrespgid - download PGID for use in kill in clean up
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,15 +25,13 @@
 # -- END_HEADER ---
 #
 
-"""Let resources hand in their process group IDs used for managing
-scripts running on the reources.
-"""
+"""Get process group id of resource script processes"""
 
 import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.putrespgid import main
-from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
+from shared.functionality.getrespgid import main
+from shared.cgiscriptstub import run_cgi_script
 
-run_cgi_script_possibly_with_cert(main)
+run_cgi_script(main)

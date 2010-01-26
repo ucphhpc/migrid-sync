@@ -949,7 +949,7 @@ Exit code: %s Description: %s<br>
             lines.append('unknown object %s' % i)
 
     if status_line:
-        lines.append(get_cgi_html_footer(configuration, script_status))
+        lines.append(get_cgi_html_footer(configuration, status_line))
     return '\n'.join(lines)
 
 
