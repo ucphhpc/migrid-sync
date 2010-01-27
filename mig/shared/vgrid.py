@@ -90,7 +90,7 @@ def vgrid_is_cert_in_list(
 
 def vgrid_is_owner(vgrid_name, client_id, configuration):
     """Check if client_id is an owner of vgrid_name. Please note
-    that noone is an owner of the default vgrid.
+    that nobody owns the default vgrid.
     """
 
     if vgrid_is_default(vgrid_name):
@@ -101,20 +101,24 @@ def vgrid_is_owner(vgrid_name, client_id, configuration):
 
 def vgrid_is_member(vgrid_name, client_id, configuration):
     """Check if client_id is a member of vgrid_name. Please note
-    that everyone is a member of the default vgrid.
+    that everybody is a member of the default vgrid.
     """
-
-    # anyone is member of default VGrid
 
     if vgrid_is_default(vgrid_name):
         return True
     return vgrid_is_cert_in_list(vgrid_name, client_id, 'members',
                                  configuration)
 
-def vgrid_is_resource(vgrid_name, client_id, configuration):
-    """Check if client_id is a resource in vgrid_name.
-    The default VGrid is _not_ considered."""
 
+def vgrid_is_resource(vgrid_name, client_id, configuration):
+    """Check if client_id is a resource in vgrid_name. Please note
+    that everyone is a member of the default vgrid.
+    They still explicitly have to sign up to accept jobs
+    from it, though.
+    """
+
+    if vgrid_is_default(vgrid_name):
+        return True
     return vgrid_is_cert_in_list(vgrid_name, client_id, 'resources',
                                  configuration)
 
