@@ -163,7 +163,6 @@ def main(client_id, user_arguments_dict):
             saveschedulejob['message'] = \
                 'You can only read schedule for jobs with status: %s.'\
                  % ' or '.join(possible_schedule_states)
-            status = returnvalues.CLIENT_ERROR
             saveschedulejobs.append(saveschedulejob)
             continue
 

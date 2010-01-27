@@ -80,7 +80,7 @@ def main(client_id, user_arguments_dict):
   function loadAll(s_i) {
         if(s_i<1)
         {
-            shell=new Shell('shell', 'shell', '/cgi-bin/xmlrpcinterface.py');
+            shell=new Shell('shell', 'shell', 'xmlrpcinterface.py');
             shell.Init();
             return;
         }

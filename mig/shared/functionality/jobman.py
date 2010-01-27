@@ -334,11 +334,11 @@ def js_tmpl():
                     jsonWrapper(job_id, "#cmd_dialog", "resubmit.py", {job_id: job_id})
                 },
                 statusfiles: function (job_id) {    
-                    document.location = "/cgi-bin/fileman.py?path="+"job_output/"+job_id;
+                    document.location = "fileman.py?path="+"job_output/"+job_id;
                 },
                 outputfiles: function (job_output) {    
                     // TODO: fileman does not support file paths and multi path - use old ls
-                    //document.location = "/cgi-bin/fileman.py?"+job_output.match(/^ls.py\?(.*)$/)[1];
+                    //document.location = "fileman.py?"+job_output.match(/^ls.py\?(.*)$/)[1];
                     document.location = job_output;
                 },
                 liveoutput: function (job_id) {
