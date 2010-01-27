@@ -162,7 +162,7 @@ def js_tmpl():
     jsonSettings,
     function(jsonRes, textStatus) {
     
-      var errors			= "";
+      var errors = "";
       var file_output = "";
       var dir_listings = "";
       var misc_output = "";
@@ -179,12 +179,9 @@ def js_tmpl():
           break;
           
           case "file_output":
-            
+            file_output += "<p>Contents:</p>";  
             for(j=0; j<jsonRes[i].lines.length; j++) {
-              file_output += jsonRes[i].lines[j]+"\\n";
-            }
-            if (file_output.length>0) {
-              file_output += "<p>File output:</p>"+file_output;  
+              file_output += jsonRes[i].lines[j];
             }
           break;
           
