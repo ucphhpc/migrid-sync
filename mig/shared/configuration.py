@@ -416,6 +416,10 @@ class Configuration:
         if config.has_option('SCHEDULER', 'job_retries'):
             self.job_retries = config.getint('SCHEDULER', 'job_retries')
 
+        if config.has_option('SETTINGS', 'dashboardui'):
+            self.dashboardui = config.get('SETTINGS', 'dashboardui')
+        else:
+            self.dashboardui = 'basic'
         if config.has_option('WIKI', 'moin_etc'):
             self.moin_etc = config.get('WIKI', 'moin_etc')
         else:
@@ -437,6 +441,10 @@ class Configuration:
             self.site_user_redirect = config.get('SITE', 'user_redirect')
         else:
             self.site_user_redirect = '/cert_redirect'
+        if config.has_option('SITE', 'title'):
+            self.site_title = config.get('SITE', 'title')
+        else:
+            self.site_title = "Minimum intrusion Grid"
         if config.has_option('SITE', 'default_menu'):
             self.site_default_menu = config.get('SITE', 'default_menu').split()
         else:
