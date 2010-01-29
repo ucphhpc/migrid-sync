@@ -1,0 +1,5 @@
+Build the class and jar files with the make command in this directory:
+make
+
+You need to have a working java sdk installation for that to work.
+It is known to work with Sun java 6, but other implementations may work, too.

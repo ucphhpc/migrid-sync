@@ -1,4 +1,3 @@
-#!java
 /*
 # HelloMiGOneClickWorld - Simple OneClick hello world app
 # Copyright (C) 2007  Martin Rehr

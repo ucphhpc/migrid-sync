@@ -90,7 +90,11 @@ if [ ! -r $MiGOneClickConsoleconf ]; then
 fi
 
 
-keyfile="`hostname`.`domainname`.key"
+host=`hostname`
+# hostname options are not portable - try domainname first
+domain=`domainname 2> /dev/null`
+[ $? -ne 0 ] && domain=`hostname -d`
+keyfile="$host.$domain.key"
 POLICY_FILE="$keyfile.policy"
 POLICY_TEMPLATE_FILE="MiGOneClick.policy.template"
 JAR_FILE=MiGOneClickConsole.jar
