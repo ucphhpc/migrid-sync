@@ -258,7 +258,7 @@ def js_tmpl(entry_path='/'):
                                       expandSpeed: 0,
                                       collapseSpeed: 0,
                                       multiFolder: false,
-                                      subFolder: "%s"
+                                      subPath: "%s"
                                       },
                                       function(file) { alert(file); }
     );
@@ -295,8 +295,9 @@ def main(client_id, user_arguments_dict):
       return (accepted, returnvalues.CLIENT_ERROR)
   
   status = returnvalues.OK
-  
-  entry_path = ''.join(accepted['path'])
+
+  # TODO: multi path support?
+  entry_path = accepted['path'][-1]
   title_entry = find_entry(output_objects, 'title')
   title_entry['text'] = 'File Manager'
   title_entry['javascript'] = js_tmpl(entry_path)        

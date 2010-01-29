@@ -384,7 +384,7 @@ if (jQuery) (function($){
         multiFolder: true,
         loadMessage: 'Loading...',
 				actions: callbacks,
-				subFolder: '/'
+				subPath: '/'
     };
     var options = $.extend(defaults, user_options);
 
@@ -415,6 +415,7 @@ if (jQuery) (function($){
           
 					// Place ls.py output in listing array
 					var cur_folder_names = new Array();
+					var cur_file_names = new Array();
           var listing = new Array();
           var i,j;          
           for(i=0;i<jsonRes.length; i++) {            
@@ -433,7 +434,7 @@ if (jQuery) (function($){
 												'<li class="directory collapsed" title=""><div>/</div>';
 					}
 					
-					// Regular nodes from herone after
+					// Regular nodes from here on after
 					folders += '<ul class="jqueryFileTree">';          
           var files = '<ul class="jqueryFileList">';
 					$('table tbody').html('');
@@ -476,6 +477,10 @@ if (jQuery) (function($){
 							dir_prefix = '##';
 							
 							cur_folder_names.push(listing[i]['name']);
+							
+            }
+            else {
+							cur_file_names.push(listing[i]['name']);
 							
             }
 						
@@ -589,29 +594,38 @@ if (jQuery) (function($){
 					// Binds: Collapse
 					bindBranch(folder_pane);					
 				
-					// Go to subFolder					
+					// Go to subPath					
 					var current_dir = addressbar.find('input[name=fm_current_path]').val();
-					var first_child = options.subFolder.slice(0, options.subFolder.indexOf('/'));
+					var first_child = options.subPath.slice(0, options.subPath.indexOf('/'));
 					
 					var descend = false;
 					for(var i=0; i<cur_folder_names.length; i++) {
 						if (first_child == cur_folder_names[i]) {
 							descend = true;
+							break;
 						}
 					}
-					if ((descend == false) && (options.subFolder!='')) {
+					var hit = false;
+					if ((descend == false) && (options.subPath!='')) {
+						for(var i=0; i<cur_file_names.length; i++) {
+							if (options.subPath == cur_file_names[i]) {
+								hit = true;
+								break;
+							}
+						}
+						if ((hit == false) && (options.subPath!='')) {
+						   // Inform the user
+						   $('#cmd_dialog').html('Path does not exist! '+ current_dir.slice(1)+options.subPath);
+						   $('#cmd_dialog').dialog(okDialog);
+						   $('#cmd_dialog').dialog('open');
 						
-						// Inform the user
-						$('#cmd_dialog').html('Path does not exist! '+ current_dir.slice(1)+options.subFolder);
-						$('#cmd_dialog').dialog(okDialog);
-						$('#cmd_dialog').dialog('open');
-						
-						// Stop trying to find it.
-						options.subFolder = '';
+						   // Stop trying to find it.
+						   options.subPath = '';
+						}
 						
 					}
 					if (descend) {
-						options.subFolder = options.subFolder.slice(first_child.length+1);						
+						options.subPath = options.subPath.slice(first_child.length+1);						
 						$('.fm_folders li [title='+current_dir.slice(1)+first_child+'/]').click();						
 					}
 					
@@ -667,15 +681,10 @@ if (jQuery) (function($){
 			// Sanitize the subfolder path, simple checks, a malicious user would only hurt himself..
 			
 			// Ignore the root
-			if (options.subFolder == '/') {
-				options.subFolder = '';
+			if (options.subPath == '/') {
+				options.subPath = '';
 			}
-			
-			// Append a slash to path
-			if ((options.subFolder != '') && (options.subFolder.lastIndexOf('/') != options.subFolder.length)) {
-				options.subFolder = options.subFolder + '/';	
-			}
-			
+						
       showBranch( $('.fm_folders', obj), escape(options.root) );			
 			
 			/**
