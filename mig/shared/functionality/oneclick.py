@@ -38,7 +38,7 @@ from shared.sandbox import get_resource
 def signature():
     """Signature of the main function"""
 
-    defaults = {'debug': ['false']}
+    defaults = {'debug': ['false'], 'console': ['false']}
     return ['html_form', defaults]
 
 
@@ -55,6 +55,9 @@ def main(client_id, user_arguments_dict):
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    debug = ('true' == accepted['debug'][0].lower())
+    console = ('true' == accepted['console'][0].lower())
 
     (status, result) = get_resource(client_id, configuration, logger)
     if not status:
@@ -77,12 +80,29 @@ def main(client_id, user_arguments_dict):
         'server': configuration.migserver_https_sid_url,
         }
 
-    if 'false' == accepted['debug'][0].lower():
+    if debug:
+        body = """
+DEBUG input vars:
+%s
+""" % fields
+        output_objects.append({'object_type': 'text', 'text': body})
 
-        # Generate applet output
-
+    elif console:
         body = \
-            """
+                 """
+codebase: %(codebase)s
+code: %(resource_code)s
+archive: %(oneclick_archive)s
+server: %(server)s
+sandboxkey: %(sandboxkey)s
+resource_name: %(resource_name)s
+cputime: %(cputime)s
+        """ % fields
+        output_objects.append({'object_type': 'text', 'text'
+                                   : body})
+    else:
+        body = \
+             """
         <applet codebase='%(codebase)s' code='%(oneclick_code)s' archive='%(oneclick_archive)s' width='800' height='600'>
         <param name='server' value='%(server)s'>
         <param name='sandboxkey' value='%(sandboxkey)s'>
@@ -104,16 +124,9 @@ def main(client_id, user_arguments_dict):
         Your browser provides the following Java information:<br />
         <applet codebase='%(codebase)s' code='%(info_code)s' height='60' alt='Java plugin not installed or disabled' width='400'>
         </applet>
-        """\
-             % fields
+        """ % fields
         output_objects.append({'object_type': 'html_form', 'text'
-                              : body})
-    else:
-        body = """
-DEBUG input vars:
-%s
-""" % fields
-        output_objects.append({'object_type': 'text', 'text': body})
+                               : body})
 
     return (output_objects, returnvalues.OK)
 
