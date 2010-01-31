@@ -53,6 +53,6 @@ cp -a iso remaster
 mkisofs -RlDJLV "MiG SSS X86" -b isolinux/isolinux.bin -c isolinux/boot.cat \
 	-no-emul-boot -boot-load-size 4 -boot-info-table -o MiG.iso remaster
 
-Windows sandboxes additionally need a couple of installers avilable from:
+Windows sandboxes additionally need a couple of installers available from:
 http://dk.migrid.org/public/sandbox/MiG-SSS/MiG-SSS_Setup.exe
 http://dk.migrid.org/public/sandbox/MiG-SSS/MiG-SSS-Service_Setup.exe
