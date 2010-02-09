@@ -400,6 +400,10 @@ class Configuration:
         else:
             self.smtp_sender = 'MiG Server <%s@%s>'\
                  % (os.environ.get('USER', 'mig'), self.server_fqdn)
+        if config.has_option('GLOBAL', 'notify_protocols'):
+            self.notify_protocols = config.get('GLOBAL', 'notify_protocols').split()
+        else:
+            self.notify_protocols = []
         if config.has_option('GLOBAL', 'storage_protocols'):
             self.storage_protocols = config.get('GLOBAL', 'storage_protocols').split()
 
@@ -456,6 +460,10 @@ class Configuration:
             self.site_user_menu = config.get('SITE', 'user_menu').split()
         else:
             self.site_user_menu = []
+        if config.has_option('SITE', 'enable_sandboxes'):
+            self.site_enable_sandboxes = config.getboolean('SITE', 'enable_sandboxes')
+        else:
+            self.site_enable_sandboxes = True
         if config.has_option('SITE', 'default_css'):
             self.site_default_css = config.get('SITE', 'default_css')
         else:

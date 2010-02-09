@@ -34,6 +34,7 @@ def get_keywords_dict():
         'Example': 'my@email.com, my_other@email.com',
         'Type': 'multiplestrings',
         'Value': [],
+        'Context': 'notify',
         'Required': False,
         }
     jabber = {
@@ -41,6 +42,7 @@ def get_keywords_dict():
         'Example': 'me@jabber.com, me2@jabber.com',
         'Type': 'multiplestrings',
         'Value': [],
+        'Context': 'notify',
         'Required': False,
         }
     msn = {
@@ -48,6 +50,7 @@ def get_keywords_dict():
         'Example': 'me@hotmail.com, me2@hotmail.com',
         'Type': 'multiplestrings',
         'Value': [],
+        'Context': 'notify',
         'Required': False,
         }
     icq = {
@@ -55,6 +58,7 @@ def get_keywords_dict():
         'Example': '2364236, 2342342',
         'Type': 'multiplestrings',
         'Value': [],
+        'Context': 'notify',
         'Required': False,
         }
     aol = {
@@ -62,6 +66,7 @@ def get_keywords_dict():
         'Example': 'me@aol.com, me2@aol.com',
         'Type': 'multiplestrings',
         'Value': [],
+        'Context': 'notify',
         'Required': False,
         }
     yahoo = {
@@ -69,6 +74,7 @@ def get_keywords_dict():
         'Example': 'me@yahoo.com, me2@hotmail.com',
         'Type': 'multiplestrings',
         'Value': [],
+        'Context': 'notify',
         'Required': False,
         }
     language = {
@@ -76,6 +82,7 @@ def get_keywords_dict():
         'Example': 'English',
         'Type': 'string',
         'Value': 'English',
+        'Context': 'localization',
         'Required': False,
         }
     submitui = {
@@ -83,6 +90,7 @@ def get_keywords_dict():
         'Example': 'fields',
         'Type': 'string',
         'Value': 'textarea',
+        'Context': 'appearance',
         'Required': False,
         }
     filesui = {
@@ -90,6 +98,7 @@ def get_keywords_dict():
         'Example': 'basic',
         'Type': 'string',
         'Value': 'full',
+        'Context': 'appearance',
         'Required': False,
         }
 

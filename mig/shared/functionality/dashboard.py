@@ -114,14 +114,14 @@ the answer there as well in the future.
         output_objects.append({'object_type': 'text', 'text': support_guide})
 
         
-    output_objects.append({'object_type': 'sectionheader', 'text' :
-                           "Personal Settings"})
-    settings_info = """
+        output_objects.append({'object_type': 'sectionheader', 'text' :
+                               "Personal Settings"})
+        settings_info = """
 You can customize your personal pages if you like, by opening the Settings
 page from the navigation menu and entering personal preferences. In that way you
 can ease file and job handling or even completely redecorate your interface.
 """
-    output_objects.append({'object_type': 'text', 'text': settings_info})
+        output_objects.append({'object_type': 'text', 'text': settings_info})
 
     output_objects.append({'object_type': 'sectionheader', 'text' :
                            "Status information"})
