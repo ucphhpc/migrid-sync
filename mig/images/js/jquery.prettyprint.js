@@ -1,8 +1,8 @@
 /**
  * Returns on the form:
- * 800 -> 800 b
- * 1024 -> 1 kb
- * 1024*1024 -> mb
+ * 800 -> 800 B
+ * 1024 -> 1 KB
+ * 1024*1024 -> MB
  */
 function pp_bytes(bytes) {
   
@@ -11,13 +11,13 @@ function pp_bytes(bytes) {
     temp ='B';
   } else if (bytes < 1048576) {
     bytes = bytes/1024;
-    temp = 'kB';
+    temp = 'KB';
   } else if (bytes < 1073741824) {
     bytes = bytes/1048576;
-    temp = 'mB';
+    temp = 'MB';
   } else if (bytes < 1099511627776) {
     bytes = bytes/1048576;
-    temp = 'gB';
+    temp = 'GB';
   }
   
   return bytes.toFixed(2)+' '+temp;

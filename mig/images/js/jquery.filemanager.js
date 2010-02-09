@@ -526,7 +526,7 @@ if (jQuery) (function($){
 					}
 					
 					// Update statusbar
-          statusbar.html(file_count+' files in current folder of total '+pp_bytes(total_file_size)+' bytes in size.');
+          statusbar.html(file_count+' files in current folder of total '+pp_bytes(total_file_size)+' in size.');
   
           if( options.root == t ) {
 					//if( options.root == t+'/' ) {
