@@ -103,7 +103,7 @@ if (jQuery) (function($){
 			$('#cmd_dialog').dialog('open');
 			$('#cmd_dialog').html('<p class="spinner" style="padding-left: 26px;">Copying... "'+src+'" <br />To: "'+dst+'"</p>');			
 			
-			$.getJSON('/cgi-bin/cp.py',
+			$.getJSON('cp.py',
 								{ src: src,
 									dst: dst,
 									output_format: 'json',
@@ -184,7 +184,7 @@ if (jQuery) (function($){
 		// Callback helpers for context menu
 		var callbacks = {
 			
-			show: 	function (action, el, pos) { document.location = '/cgi-bin/cat.py?path='+$(el).attr(pathAttribute)+'&output_format=file' },
+			show: 	function (action, el, pos) { document.location = 'cat.py?path='+$(el).attr(pathAttribute)+'&output_format=file' },
 			edit: 	function (action, el, pos) {
 				
 				$("#editor_dialog textarea[name=editarea]").val('');
@@ -193,7 +193,7 @@ if (jQuery) (function($){
 				$("#editor_dialog").dialog({ buttons: {
 																			'Save Changes': function() { $('#editor_form').submit(); },
 																			Close: function() {$(this).dialog('close');},
-																			Download: function() { document.location = '/cgi-bin/cat.py?path='+$(el).attr(pathAttribute)+'&output_format=file' }
+																			Download: function() { document.location = 'cat.py?path='+$(el).attr(pathAttribute)+'&output_format=file' }
 																		},
 																		autoOpen: false,
 																		closeOnEscape: true,
@@ -207,7 +207,7 @@ if (jQuery) (function($){
 				$("#editor_dialog").dialog('open');				
 				
 				// Grab file info
-				$.getJSON('/cgi-bin/cat.py',
+				$.getJSON('cat.py',
 				{ path: $(el).attr(pathAttribute),
 					output_format: 'json' },
 				function(jsonRes, textStatus) {
@@ -267,10 +267,10 @@ if (jQuery) (function($){
 				$("#editor_dialog").dialog('open');				
 				
 			},
-			cat:		function (action, el, pos) { jsonWrapper(el, '#cmd_dialog', '/cgi-bin/cat.py'); },
-			head:		function (action, el, pos) { jsonWrapper(el, '#cmd_dialog', '/cgi-bin/head.py'); },
-			tail:		function (action, el, pos) { jsonWrapper(el, '#cmd_dialog', '/cgi-bin/tail.py'); },
-			submit:	function (action, el, pos) { jsonWrapper(el, '#cmd_dialog', '/cgi-bin/submit.py'); },
+			cat:		function (action, el, pos) { jsonWrapper(el, '#cmd_dialog', 'cat.py'); },
+			head:		function (action, el, pos) { jsonWrapper(el, '#cmd_dialog', 'head.py'); },
+			tail:		function (action, el, pos) { jsonWrapper(el, '#cmd_dialog', 'tail.py'); },
+			submit:	function (action, el, pos) { jsonWrapper(el, '#cmd_dialog', 'submit.py'); },
 			
 			copy: 	function (action, el, pos) {
 				clipboard['is_dir'] = $(el).hasClass('directory');
@@ -289,7 +289,7 @@ if (jQuery) (function($){
 				$('#cmd_dialog').dialog('destroy');
 				$('#cmd_dialog').html('<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>"'+rm_path+'" will be permanently deleted. Are you sure?</p></div>');
 				$('#cmd_dialog').dialog({ buttons: {Ok: function() { $(this).dialog('close');
-																							jsonWrapper(el, '#cmd_dialog', '/cgi-bin/rm.py', {flags: flags});
+																							jsonWrapper(el, '#cmd_dialog', 'rm.py', {flags: flags});
 																						},
 																						Cancel: function() { $(this).dialog('close'); }
 																	},
