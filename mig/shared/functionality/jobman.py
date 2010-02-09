@@ -49,15 +49,23 @@ def html_tmpl():
         <img class="next" src="/images/icons/arrow_right.png"/>
         <img class="last" src="/images/icons/arrow_right.png"/>
         <select class="pagesize">
-          <option value="10">10</option>
-          <option value="15" selected>15</option>
-          <option value="20">20</option>
-          <option value="25">25</option>
-          <option value="40">40</option>
-          <option value="50">50</option>
-          <option value="60">60</option>
-          <option value="80">80</option>
-          <option value="100">100</option>
+          <option value="10">10 jobs per page</option>
+          <option value="15" selected>15 jobs per page</option>
+          <option value="20">20 jobs per page</option>
+          <option value="25">25 jobs per page</option>
+          <option value="40">40 jobs per page</option>
+          <option value="50">50 jobs per page</option>
+          <option value="75">75 jobs per page</option>
+          <option value="100">100 jobs per page</option>
+        </select>
+        <select class="maxjobs">
+          <option value="100">load 100 last jobs</option>
+          <option value="200" selected>load 200 last jobs</option>
+          <option value="500">load 500 last jobs</option>
+          <option value="1000">load 1000 last jobs</option>
+          <option value="5000">load 5000 last jobs</option>
+          <option value="10000">load 10000 last jobs</option>
+          <option value="">load all jobs (slow)</option>
         </select>
       </form>
       <div id="append"  style="display: inline;"><img src="/images/icons/arrow_refresh.png" /></div>
@@ -416,9 +424,13 @@ def js_tmpl():
         var job_count = 0;
         var sched_hint = '';
         var output_url = '';
+        var max_jobs = '';
+
+        // Read out current max jobs setting from selector
+        max_jobs = parseInt($(".maxjobs", config.container).val());
         
         // add some html      
-        $.getJSON("jobstatus.py?output_format=json", {}, function(jsonRes, textStatus) {
+        $.getJSON("jobstatus.py?output_format=json;flags=s;max_jobs=" + max_jobs, {}, function(jsonRes, textStatus) {
         
             var jobList = new Array();
             var i = 0;
