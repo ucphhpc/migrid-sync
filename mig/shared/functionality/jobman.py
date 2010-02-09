@@ -30,17 +30,9 @@
 their home directories.
 """
 
-import os
-import time
-import glob
-import stat
-
-from shared.parseflags import all, long_list, recursive
-from shared.validstring import valid_user_path
 from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
 import shared.returnvalues as returnvalues
-from shared.settings import load_settings
 from shared.useradm import client_id_dir
 
 def html_tmpl():
