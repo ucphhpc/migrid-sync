@@ -246,7 +246,7 @@ def main(client_id, user_arguments_dict):
                                % flavor})
         output_objects.append({'object_type': 'link', 'text'
                               : 'View directory', 'destination'
-                              : 'ls.py?path=%s' % script_dir})
+                              : 'fileman.py?path=%s/' % script_dir})
 
         # Create zip from generated dir
 
