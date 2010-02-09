@@ -112,8 +112,13 @@ def check_mrsl_files(
             continue
         logger.info('check mRSL files: inspecting %d files in %s' % \
                     (len(files), root))
+        file_count = 0
         for name in files:
             filename = os.path.join(root, name)
+            file_count += 1
+            if file_count % 1000 == 0:
+                logger.info('check mRSL files: %d files in %s checked' % \
+                            (file_count, root))
             if os.path.getmtime(filename) < last_start:
                 if only_new:
                     #logger.debug('skipping treated mrsl file: %s'
@@ -165,7 +170,8 @@ def check_mrsl_files(
                              % (executing_queue.queue_length(),
                             job_dict['JOB_ID']))
             else:
-                logger.info('Job in %s is already treated' % filename)
+                # logger.debug('Job in %s is already treated' % filename)
+                continue
 
     # update last_start_file access times. Note the timestamp is not "now" but
     # when check_mrsl_files was called to avoid loosing any jobs being parsed
