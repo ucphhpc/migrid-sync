@@ -65,7 +65,7 @@ def html_tmpl():
           <option value="1000">load 1000 last jobs</option>
           <option value="5000">load 5000 last jobs</option>
           <option value="10000">load 10000 last jobs</option>
-          <option value="">load all jobs (slow)</option>
+          <option value="-1">load all jobs (slow)</option>
         </select>
       </form>
       <div id="append"  style="display: inline;"><img src="/images/icons/arrow_refresh.png" /></div>
@@ -424,13 +424,16 @@ def js_tmpl():
         var job_count = 0;
         var sched_hint = '';
         var output_url = '';
-        var max_jobs = '';
+        var max_jobs = -1;
+        var limit_opts = "max_jobs=100";
 
         // Read out current max jobs setting from selector
         max_jobs = parseInt($(".maxjobs", config.container).val());
-        
+        if (max_jobs > 0) {
+            limit_opts = "flags=s;max_jobs=" + max_jobs;
+        }
         // add some html      
-        $.getJSON("jobstatus.py?output_format=json;flags=s;max_jobs=" + max_jobs, {}, function(jsonRes, textStatus) {
+        $.getJSON("jobstatus.py?output_format=json;"+limit_opts, {}, function(jsonRes, textStatus) {
         
             var jobList = new Array();
             var i = 0;
