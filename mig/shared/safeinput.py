@@ -165,6 +165,19 @@ def valid_plain_text(
     __valid_contents(text, valid_chars, min_length, max_length)
 
 
+def valid_label_text(
+    text,
+    min_length=-1,
+    max_length=-1,
+    extra_chars='',
+    ):
+    """Verify that supplied text only contains characters that we consider
+    valid"""
+
+    valid_chars = VALID_PATH_CHARACTERS + extra_chars
+    __valid_contents(text, valid_chars, min_length, max_length)
+
+
 def valid_free_text(
     text,
     min_length=-1,
@@ -776,7 +789,7 @@ def guess_type(name):
     elif name.lower().find('search') != -1:
         return valid_job_id_pattern
     elif name.lower().find('show') != -1:
-        return valid_job_id_pattern
+        return valid_label_text
     elif name.lower().find('country') != -1:
         return valid_ascii
     elif name.lower().find('state') != -1:
