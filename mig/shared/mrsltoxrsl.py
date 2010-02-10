@@ -21,7 +21,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 
-"""translate a "job" from MiG format to ARC format."""
+"""translate a 'job' from MiG format to ARC format"""
 
 import string
 import random
@@ -48,8 +48,7 @@ except:
                         + '/lib/python2.4/site-packages')
         import arclib
     except:
-        logger.error('arclib not found. Aborting whole execution.')
-        sys.exit(255)
+        raise Exception('arclib not found - no problem unless using ARC')
 
 # translate :: (checked Dictionary, session_ID) 
 #              -> (Xrsl,Job Script,name for Job script)

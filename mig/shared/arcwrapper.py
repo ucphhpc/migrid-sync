@@ -53,8 +53,7 @@ except:
                         + '/lib/python2.4/site-packages')
         import arclib
     except:
-        logger.error('arclib not found.')
-        pass
+        raise Exception('arclib not found - no problem unless using ARC')
 
 # (trivially inheriting) exception class of our own
 class ARCWrapperError(arclib.ARCLibError):

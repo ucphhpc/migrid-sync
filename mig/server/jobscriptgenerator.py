@@ -37,9 +37,13 @@ import genjobscriptjava
 from shared.ssh import copy_file_to_resource
 from shared.fileio import write_file, pickle, make_symlink
 from shared.useradm import client_id_dir
-import shared.mrsltoxrsl as mrsltoxrsl
 
-import shared.arcwrapper as arc
+try:
+    import shared.mrsltoxrsl as mrsltoxrsl
+    import shared.arcwrapper as arc
+except Exception, exc:
+    # Ignore errors and let it crash if ARC is enabled without the lib
+    pass
 
 
 def create_empty_job(
