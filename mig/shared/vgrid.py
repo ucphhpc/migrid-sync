@@ -190,11 +190,13 @@ def init_vgrid_script_add_rem(
 
     if subject_type == 'member' or subject_type == 'owner':
         if not is_user(subject, configuration.user_home):
-            msg += '%s is not a valid MiG user!' % subject
+            msg += '%s is not a valid %s user!' % \
+                    (subject, configuration.short_title)
             return (False, msg, None)
     elif subject_type == 'resource':
         if not is_resource(subject, configuration.resource_home):
-            msg += '%s is not a valid MiG resource' % subject
+            msg += '%s is not a valid %s resource' % \
+                    (subject, configuration.short_title)
             msg += \
                 ' (OK, if removing or if e.g. the resource creation is pending)'
     else:

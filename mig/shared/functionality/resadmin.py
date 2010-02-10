@@ -371,17 +371,20 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : ' Resource Management'})
     output_objects.append({'object_type': 'link', 'text'
-                          : 'Create a new MiG resource', 'destination'
-                          : 'resedit.py'})
+                          : 'Create a new %s resource' % \
+                            configuration.short_title, 
+                           'destination' : 'resedit.py'})
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
 
     if configuration.site_enable_sandboxes:
         output_objects.append({'object_type': 'link', 'text'
-                               : 'Administrate MiG sandbox resources',
+                               : 'Administrate %s sandbox resources' % \
+                               configuration.short_title,
                                'destination': 'ssslogin.py'})
         output_objects.append({'object_type': 'sectionheader', 'text': ''})
         output_objects.append({'object_type': 'link', 'text'
-                               : 'Use this computer as One-click MiG resource'
+                               : 'Use this computer as One-click %s resource' % \
+                               configuration.short_title
                                , 'destination': 'oneclick.py'})
 
     quick_links = [{'object_type': 'sectionheader', 'text'
@@ -389,7 +392,7 @@ def main(client_id, user_arguments_dict):
     quick_res = {}
     quick_links_index = len(output_objects)
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'MiG Resources Owned'})
+                          : '%s Resources Owned' % configuration.short_title})
 
     base = configuration.resource_home
     owned = 0
@@ -410,7 +413,7 @@ def main(client_id, user_arguments_dict):
                 if not status:
                     output_objects.append({'object_type': 'warning',
                             'text'
-                            : "Could not unpack resource configuration - Don't worry if this is a new MiG resource."
+                            : "Could not unpack resource configuration - Don't worry if this is a new resource."
                             })
                     continue
                 try:

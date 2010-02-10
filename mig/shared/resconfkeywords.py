@@ -77,8 +77,9 @@ def get_resource_specs(configuration):
         'Required': False,
         }))
     specs.append(('MIGUSER', {
-        'Title': 'MiG SSH User',
-        'Description': 'The MiG ssh login user on the resource frontend node.',
+        'Title': '%s SSH User' % configuration.short_title,
+        'Description': 'The %s ssh login user on the resource frontend node.'\
+                       % configuration.short_title,
         'Example': 'miguser',
         'Type': 'string',
         'Value': '',
@@ -86,8 +87,9 @@ def get_resource_specs(configuration):
         'Required': True,
         }))
     specs.append(('RESOURCEHOME', {
-        'Title': 'MiG Frontend Working Directory',
-        'Description': 'The working directory for the MiG user on the resource frontend.',
+        'Title': '%s Frontend Working Directory' % configuration.short_title,
+        'Description': 'The working directory for the %s user on the resource frontend.'\
+                        % configuration.short_title,
         'Example': '/home/miguser',
         'Type': 'string',
         'Value': '',
@@ -105,8 +107,8 @@ def get_resource_specs(configuration):
         }))
     specs.append(('SCRIPTLANGUAGE', {
         'Title': 'Script Language',
-        'Description': 'The language the MiG server should use to create the job scripts. Valid languages: %s'\
-             % configuration.scriptlanguages,
+        'Description': 'The language the %s server should use to create the job scripts. Valid languages: %s'\
+             % (configuration.short_title, configuration.scriptlanguages),
         'Example': 'sh',
         'Type': 'string',
         'Value': configuration.scriptlanguages[0],
@@ -115,7 +117,7 @@ def get_resource_specs(configuration):
         }))
     specs.append(('JOBTYPE', {
         'Title': 'Job Type',
-        'Description': "Specifies which types of jobs the resource accepts. A job can be of type 'interactive', 'batch' or 'bulk' and the keyword 'all' is provided to allow all types. Interactive jobs are executed on a resource but with the graphical display forwarded to the MiG display of the user. Batch jobs are executed in a headless mode and can not use graphical output. Bulk jobs are like batch jobs, but additionally allow concurrent execution of other bulk jobs belonging to the same user. I.e. a bulk of multiple jobs running on the same resource at the same time, as long as the resource can provide the requested job resources (cpucount, nodecount, memory, disk). This particular MiG server supports the following jobtypes: %s"\
+        'Description': "Specifies which types of jobs the resource accepts. A job can be of type 'interactive', 'batch' or 'bulk' and the keyword 'all' is provided to allow all types. Interactive jobs are executed on a resource but with the graphical display forwarded to the MiG display of the user. Batch jobs are executed in a headless mode and can not use graphical output. Bulk jobs are like batch jobs, but additionally allow concurrent execution of other bulk jobs belonging to the same user. I.e. a bulk of multiple jobs running on the same resource at the same time, as long as the resource can provide the requested job resources (cpucount, nodecount, memory, disk). This particular server supports the following jobtypes: %s"\
              % ', '.join(configuration.jobtypes),
         'Example': 'all',
         'Type': 'string',
@@ -182,8 +184,9 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         'Required': False,
         }))
     specs.append(('FRONTENDLOG', {
-        'Title': 'MiG Frontend Log File',
-        'Description': 'Name of the MiG log file for the frontend.',
+        'Title': '%s Frontend Log File' % configuration.short_title,
+        'Description': 'Name of the %s log file for the frontend.'\
+                        % configuration.short_title,
         'Example': '/home/miguser/frontend.log',
         'Type': 'string',
         'Value': 'frontend.log',
@@ -191,8 +194,9 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         'Required': False,
         }))
     specs.append(('CURLLOG', {
-        'Title': 'MiG cURL Log File',
-        'Description': 'Name of the MiG log file for the cURL commands on the frontend.',
+        'Title': '%s cURL Log File' % configuration.short_title,
+        'Description': 'Name of the %s log file for the cURL commands on the frontend.'\
+                        % configuration.short_title,
         'Example': '/home/miguser/curllog',
         'Type': 'string',
         'Value': '/dev/null',
@@ -201,7 +205,7 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         }))
     specs.append(('SSHMULTIPLEX', {
         'Title': 'SSH Connection Sharing',
-        'Description': 'Enable sharing of multiple ssh sessions over a single network connection. This can significantly speed up MiG communication with the resource, if the resource supports session multiplexing. If unset or 0 multiplexing is disabled, otherwise it will be attempted (Just leave it unset if in doubt).',
+        'Description': 'Enable sharing of multiple ssh sessions over a single network connection. This can significantly speed up communication with the resource, if the resource supports session multiplexing. If unset or 0 multiplexing is disabled, otherwise it will be attempted (Just leave it unset if in doubt).',
         'Example': 'True',
         'Type': 'boolean',
         'Value': False,
@@ -210,7 +214,7 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         }))
     specs.append(('LRMSTYPE', {
         'Title': 'Type of Local Resource Management System (LRMS)',
-        'Description': 'Specifies the type of Local Resource Management System (LRMS). Simple resources generally use native execution to simply fork a new job subprocess whereas clusters and super computers tend to rely on a batch system like PBS or SGE to manage job processes. The type setting is used to decide if the remaining LRMS* settings are used to manage jobs. The default is Native execution where they are ignored because jobs are only running in the foreground, completely eliminating the need to submit or query progress. For each type there is a plain version and an X-execution-leader version: The former uses a model where each execution node on the resource is handled by a dedicated process. As the number of execution nodes grows this may become a resource bottleneck, and in that case the X-execution-leader version may be more efficient, because it handles all execution nodes in a single leader process. This is known to severely lessen the load on cluster frontends where the user home directories are located on a NFS mounted file system. Please note that the PBS and SGE flavors are now deprecated because they are no longer handled differently from the replacement general Batch flavors. So simply use one of the Batch modes instead of PBS or SGE flavors and request/download the appropriate LRMS helper scripts from mig/resource/lrms-scripts/ directory in the MiG source code.',
+        'Description': 'Specifies the type of Local Resource Management System (LRMS). Simple resources generally use native execution to simply fork a new job subprocess whereas clusters and super computers tend to rely on a batch system like PBS or SGE to manage job processes. The type setting is used to decide if the remaining LRMS* settings are used to manage jobs. The default is Native execution where they are ignored because jobs are only running in the foreground, completely eliminating the need to submit or query progress. For each type there is a plain version and an X-execution-leader version: The former uses a model where each execution node on the resource is handled by a dedicated process. As the number of execution nodes grows this may become a resource bottleneck, and in that case the X-execution-leader version may be more efficient, because it handles all execution nodes in a single leader process. This is known to severely lessen the load on cluster frontends where the user home directories are located on a NFS mounted file system. Please note that the PBS and SGE flavors are now deprecated because they are no longer handled differently from the replacement general Batch flavors. So simply use one of the Batch modes instead of PBS or SGE flavors and request/download the appropriate LRMS helper scripts from mig/resource/lrms-scripts/ directory in the source code.',
         'Example': 'Batch',
         'Type': 'string',
         'Value': 'Native',
@@ -246,7 +250,8 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         }))
     specs.append(('LRMSDONECOMMAND', {
         'Title': 'LRMS Query Job Command',
-        'Description': 'Specifies the command used to query if a submitted batch job is done (only used if the resource uses a batch system). The specified command is called repeatedly after submitting the MiG job to the LRMS and should return 0 only when the job is done and the result can be delivered. The usual helper environment variables MIG_JOBNAME, MIG_JOBDIR, MIG_EXENODE and MIG_SUBMITUSER are available to help querying the status of the right job. If the submit command includes flags to label jobs with MIG_JOBNAME and they are submitted by MIG_SUBMITUSER, those fields can be used to identify the job again here. In most cases this is easier to wrap in a script on the resource and thus only supply the absolute path to the (read-only) script here.',
+        'Description': 'Specifies the command used to query if a submitted batch job is done (only used if the resource uses a batch system). The specified command is called repeatedly after submitting the %s job to the LRMS and should return 0 only when the job is done and the result can be delivered. The usual helper environment variables MIG_JOBNAME, MIG_JOBDIR, MIG_EXENODE and MIG_SUBMITUSER are available to help querying the status of the right job. If the submit command includes flags to label jobs with MIG_JOBNAME and they are submitted by MIG_SUBMITUSER, those fields can be used to identify the job again here. In most cases this is easier to wrap in a script on the resource and thus only supply the absolute path to the (read-only) script here.'\
+                        % configuration.short_title,
         'Example': '/path/to/query_done.sh',
         'Type': 'string',
         'Value': '',
@@ -391,7 +396,8 @@ def get_exenode_specs(configuration):
     specs = []
     specs.append(('name', {
         'Title': 'Execution Node Identifier',
-        'Description': 'Execution node names are symbolic names to identify MiG execution nodes. This can be any text string as long as it is unique among the execution nodes of the resource. The MiG execution nodes do not necessarily have to map to physical hosts in a one-to-one way.',
+        'Description': 'Execution node names are symbolic names to identify %(site)s execution nodes. This can be any text string as long as it is unique among the execution nodes of the resource. The %(site)s execution nodes do not necessarily have to map to physical hosts in a one-to-one way.'\
+                        % { 'site' : configuration.short_title },
         'Example': 'node01',
         'Type': 'string',
         'Value': '',
@@ -400,7 +406,8 @@ def get_exenode_specs(configuration):
         }))
     specs.append(('cputime', {
         'Title': 'CPU/Wall Time (s)',
-        'Description': 'The maximum number of seconds of walltime each MiG job is allowed to use on an execution node.',
+        'Description': 'The maximum number of seconds of walltime each %s job is allowed to use on an execution node.'\
+                        % configuration.short_title,
         'Example': '86400',
         'Type': 'int',
         'Value': 3600,
@@ -409,7 +416,8 @@ def get_exenode_specs(configuration):
         }))
     specs.append(('nodecount', {
         'Title': 'Node Count',
-        'Description': 'The number of actual computation nodes associated with a MiG execution node. For simple resources or clusters exposing each node individually this is just one. However, the resource can map multiple physical nodes to a single MiG execution node through an LRMS or a cluster frontend, so it may bind more than one actual node to each MiG execution node.',
+        'Description': 'The number of actual computation nodes associated with a %(site)s execution node. For simple resources or clusters exposing each node individually this is just one. However, the resource can map multiple physical nodes to a single %(site)s execution node through an LRMS or a cluster frontend, so it may bind more than one actual node to each %(site)s execution node.'\
+                        % { 'site' : configuration.short_title} ,
         'Example': '128',
         'Type': 'int',
         'Value': 1,
@@ -427,7 +435,8 @@ def get_exenode_specs(configuration):
         }))
     specs.append(('prepend_execute', {
         'Title': 'Job Setup',
-        'Description': "If the execution node should perform a task before the execution of the MiG job or prefix the job command with another command, it should be specified here. This can be used to run jobs with a modified scheduling priority ('nice').",
+        'Description': "If the execution node should perform a task before the execution of the %s job or prefix the job command with another command, it should be specified here. This can be used to run jobs with a modified scheduling priority ('nice')."\
+                        % configuration.short_title,
         'Example': 'nice',
         'Type': 'string',
         'Value': '',
@@ -435,7 +444,7 @@ def get_exenode_specs(configuration):
         'Required': True,
         }))
     specs.append(('exehostlog', {
-        'Title': 'MiG Execution Log File',
+        'Title': '%s Execution Log File' % configuration.short_title,
         'Description': 'Name of the main log file for the execution node.',
         'Example': '/home/miguser/exehost.log',
         'Type': 'string',
@@ -444,7 +453,7 @@ def get_exenode_specs(configuration):
         'Required': True,
         }))
     specs.append(('joblog', {
-        'Title': 'MiG Job Log File',
+        'Title': '%s Job Log File' % configuration.short_title,
         'Description': 'Name of the job log file for the execution node.',
         'Example': '/home/miguser/job.log',
         'Type': 'string',
@@ -453,8 +462,9 @@ def get_exenode_specs(configuration):
         'Required': True,
         }))
     specs.append(('execution_user', {
-        'Title': 'Execution Node MiG User',
-        'Description': 'The local user to login as on the node(s) associated with this MiG execution node. In most cases this is identical to the global resource MiG user. When using the local start/status/stop/clean commands this field is ignored.',
+        'Title': 'Execution Node %s User' % configuration.short_title,
+        'Description': 'The local user to login as on the node(s) associated with this %(site)s execution node. In most cases this is identical to the global resource %(site)s user. When using the local start/status/stop/clean commands this field is ignored.'\
+                        % { 'site' : configuration.short_title },
         'Example': 'miguser',
         'Type': 'string',
         'Value': '',
@@ -463,7 +473,8 @@ def get_exenode_specs(configuration):
         }))
     specs.append(('execution_node', {
         'Title': 'Execution Node',
-        'Description': 'The local node associated with this MiG execution unit. For clusters exposed as single nodes and NAT firewalled resources this field contains the hostname of one of the actual hosts behind the frontend. When using the local start/status/stop/clean commands this field is ignored.',
+        'Description': 'The local node associated with this %s execution unit. For clusters exposed as single nodes and NAT firewalled resources this field contains the hostname of one of the actual hosts behind the frontend. When using the local start/status/stop/clean commands this field is ignored.'\
+                        % configuration.short_title,
         'Example': 'node01',
         'Type': 'string',
         'Value': '',
@@ -517,7 +528,8 @@ def get_exenode_specs(configuration):
         }))
     specs.append(('continuous', {
         'Title': 'Continuous Execution',
-        'Description': 'If the execution node should continuously take jobs (i.e. True) or only run a single job when started (i.e. False). The default setting is to run in continuous mode, but some applications such as The MiG ScreenSaver Science require single run mode.',
+        'Description': 'If the execution node should continuously take jobs (i.e. True) or only run a single job when started (i.e. False). The default setting is to run in continuous mode, but some applications such as The %s ScreenSaver Science require single run mode.'\
+                        % configuration.short_title,
         'Example': 'False',
         'Type': 'boolean',
         'Value': True,
@@ -526,7 +538,8 @@ def get_exenode_specs(configuration):
         }))
     specs.append(('shared_fs', {
         'Title': 'Shared File System',
-        'Description': 'If the frontend and execution node shares the same file system (i.e. True), so that frontend and execution management processes can communicate directly through files in the MiG user home directory. If this is not the case (i.e. False) the communication will use ssh to communicate, but this is slightly less efficient and requires additional setup of local login access without password. To be more precise the frontend must be able to login as the execution user on the execution node and vice versa without any user input (e.g. by using ssh keys with an empty passphrase).',
+        'Description': 'If the frontend and execution node shares the same file system (i.e. True), so that frontend and execution management processes can communicate directly through files in the %s user home directory. If this is not the case (i.e. False) the communication will use ssh to communicate, but this is slightly less efficient and requires additional setup of local login access without password. To be more precise the frontend must be able to login as the execution user on the execution node and vice versa without any user input (e.g. by using ssh keys with an empty passphrase).'\
+                        % configuration.short_title,
         'Example': 'False',
         'Type': 'boolean',
         'Value': True,
@@ -552,7 +565,8 @@ def get_storenode_specs(configuration):
     specs = []
     specs.append(('name', {
         'Title': 'Storage Node Identifier',
-        'Description': 'Storage node names are symbolic names to identify MiG storage nodes. This can be any text string as long as it is unique among the storage nodes of the resource. The MiG storage nodes do not necessarily have to map to physical hosts in a one-to-one way.',
+        'Description': 'Storage node names are symbolic names to identify %(site)s storage nodes. This can be any text string as long as it is unique among the storage nodes of the resource. The %(site)s storage nodes do not necessarily have to map to physical hosts in a one-to-one way.'\
+                        % { 'site' : configuration.short_title },
         'Example': 'node01',
         'Type': 'string',
         'Value': 'localhost',
@@ -587,8 +601,9 @@ def get_storenode_specs(configuration):
         'Required': True,
         }))
     specs.append(('storage_user', {
-        'Title': 'Storage Node MiG User',
-        'Description': 'The local user to login as on the node(s) associated with this MiG storage node. In most cases this is identical to the global resource MiG user.',
+        'Title': 'Storage Node %s User' % configuration.short_title,
+        'Description': 'The local user to login as on the node(s) associated with this %(site)s storage node. In most cases this is identical to the global resource %(site)s user.'\
+                        % { 'site' : configuration.short_title },
         'Example': 'miguser',
         'Type': 'string',
         'Value': '',
@@ -597,7 +612,8 @@ def get_storenode_specs(configuration):
         }))
     specs.append(('storage_node', {
         'Title': 'Storage Node',
-        'Description': 'The local node associated with this MiG storage unit. For clusters exposed as single nodes and NAT firewalled resources this field contains the hostname of one of the actual hosts behind the frontend. When using the local start/status/stop/clean commands this field is ignored.',
+        'Description': 'The local node associated with this %s storage unit. For clusters exposed as single nodes and NAT firewalled resources this field contains the hostname of one of the actual hosts behind the frontend. When using the local start/status/stop/clean commands this field is ignored.'\
+                        % configuration.short_title,
         'Example': 'node01',
         'Type': 'string',
         'Value': '',
@@ -606,7 +622,8 @@ def get_storenode_specs(configuration):
         }))
     specs.append(('storage_dir', {
         'Title': 'Export Directory',
-        'Description': 'Path to export to selected VGrids in MiG.',
+        'Description': 'Path to export to selected VGrids on the %s server.'\
+                        % configuration.short_title,
         'Example': '/home/miguser/MiG/mig_exe/myresource.org.0/node01/',
         'Type': 'string',
         'Value': '',
@@ -651,7 +668,8 @@ def get_storenode_specs(configuration):
         }))
     specs.append(('shared_fs', {
         'Title': 'Shared File System',
-        'Description': 'If the frontend and storage node shares the same file system (i.e. True), so that frontend and storage management processes can communicate directly through files in the MiG user home directory. If this is not the case (i.e. False) the communication will use ssh to communicate, but this is slightly less efficient and requires additional setup of local login access without password. To be more precise the frontend must be able to login as the storage user on the storage node and vice versa without any user input (e.g. by using ssh keys with an empty passphrase).',
+        'Description': 'If the frontend and storage node shares the same file system (i.e. True), so that frontend and storage management processes can communicate directly through files in the %s user home directory. If this is not the case (i.e. False) the communication will use ssh to communicate, but this is slightly less efficient and requires additional setup of local login access without password. To be more precise the frontend must be able to login as the storage user on the storage node and vice versa without any user input (e.g. by using ssh keys with an empty passphrase).'\
+                        % configuration.short_title,
         'Example': 'False',
         'Type': 'boolean',
         'Value': True,

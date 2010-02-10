@@ -79,8 +79,8 @@ def main(client_id, user_arguments_dict):
 
     if not is_user(cert_id, configuration.user_home):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is not a valid MiG user!'
-                               % cert_id})
+                              : '%s is not a valid %s user!'
+                               % (cert_id, configuration.short_title)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other

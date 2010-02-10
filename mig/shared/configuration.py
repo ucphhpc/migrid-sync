@@ -225,7 +225,15 @@ class Configuration:
     # directory for usage records, initially None (means: do not generate)
 
     usage_record_dir = None
+
     auto_add_cert_user = False
+
+    # ARC resource configuration (list)
+    # wired-in shorthands in arcwrapper: 
+    # fyrgrid, benedict. Otherwise, ldap://bla.bla:2135/...
+    
+    arc_clusters = [] 
+    
     config_file = None
 
     # constructor
@@ -449,6 +457,10 @@ class Configuration:
             self.site_title = config.get('SITE', 'title')
         else:
             self.site_title = "Minimum intrusion Grid"
+        if config.has_option('SITE', 'short_title'):
+            self.short_title = config.get('SITE', 'short_title')
+        else:
+            self.short_title = "MiG"
         if config.has_option('SITE', 'default_menu'):
             self.site_default_menu = config.get('SITE', 'default_menu').split()
         else:
@@ -553,6 +565,12 @@ class Configuration:
             self.auto_add_cert_user = config.getboolean('GLOBAL',
                     'auto_add_cert_user')
 
+        # if arc cluster URLs configured, read them in:
+
+        if config.has_option('ARC', 'arc_clusters'):
+            self.arc_clusters = config.get('ARC',
+                    'arc_clusters').split()
+
     def parse_peers(self, peerfile):
 
         # read peer information from peerfile
@@ -585,7 +603,7 @@ class Configuration:
 
             # Show exception details
 
-            logger.error('%s: %s', sys.exc_type, sys.exc_value)
+            logger.error('%s: %s', sys.exc_info()[0], sys.exc_info()[1])
 
         logger.info('Added %d peer(s) from %s', len(peers_dict.keys()),
                     peerfile)

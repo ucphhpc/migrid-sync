@@ -63,7 +63,9 @@ def main(client_id, user_arguments_dict):
     group_by = accepted['group_by'][-1].lower()
 
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG Screen Saver Sandbox Monitor'})
+                          : '%s Screen Saver Sandbox Monitor' % \
+                            configuration.short_title 
+                          })
 
     # Load the user file
 

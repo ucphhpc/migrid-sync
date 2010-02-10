@@ -35,7 +35,7 @@ from shared.fileio import send_message_to_grid_script
 from shared.job import output_dir
 from shared.notification import notify_user_thread
 from shared.useradm import client_id_dir
-
+import shared.arcwrapper as arc
 
 def clean_grid_stdin(stdin):
     """Deletes all content from the pipe (used when grid-script is
@@ -460,4 +460,122 @@ def requeue_job(
                 configuration,
                 )
 
+def arc_job_status(
+    job_dict,
+    configuration,
+    logger
+    ):
+    """Retrieve status information for a job submitted to ARC.
+       Status is returned as a string. In case of failure, returns 
+       'UNKNOWN' and logs the error."""
+    
+    logger.debug('Checking ARC job status for %s' % job_dict['JOB_ID'])
 
+    userdir = os.path.join(configuration.user_home, \
+                           client_id_dir(job_dict['USER_CERT']))
+    try:
+        jobinfo = {'status':'UNKNOWN(TO FINISH)'}
+        session = arc.Ui(userdir)
+        jobinfo = session.jobStatus(job_dict['EXE'])
+    except arc.ARCWrapperError, err:
+        logger.error('Error during ARC status retrieval: %s'\
+                     % err.what())
+        pass
+    except arc.NoProxyError, err:
+        logger.error('Error during ARC status retrieval: %s'\
+                     % err.what())
+        pass
+    except Exception, err:
+        logger.error('Error during ARC status retrieval: %s'\
+                     % err.__str__())
+        pass
+    return jobinfo['status']
+
+def clean_arc_job(
+    job_dict, 
+    status,
+    msg,
+    configuration,
+    logger,
+    kill = True,
+    timestamp = None
+    ):
+    """Cleaning remainder of an executed ARC job:
+        - delete from ARC (and possibly kill the job, parameter)
+        - delete two symbolic links (user dir and mrsl file)
+        - write status and timestamp into mrsl 
+    """
+
+
+    logger.debug('Cleanup for ARC job %s, status %s' % (job_dict['JOB_ID'],status))
+
+    if not status in ['FINISHED', 'CANCELED', 'FAILED']:
+        logger.error('inconsistent cleanup request: %s for job %s' % \
+                     (status, job_dict))
+        return
+
+# done by the caller...
+#    executing_queue.dequeue_job_by_id(job_dict['JOB_ID'])
+
+    if not timestamp:
+        timestamp = time.gmtime()
+    client_dir = client_id_dir(job_dict['USER_CERT'])
+
+    # clean up in ARC
+    try:
+        userdir = os.path.join(configuration.user_home, client_dir)
+        arcsession = arc.Ui(userdir)
+    except Exception, err:
+        logger.error('Error cleaning up ARC job: %s' % err)
+        logger.debug('Job was: %s' % job_dict)
+    else:
+        # cancel catches, clean always succeeds
+        if kill:
+            killed = arcsession.cancel(job_dict['EXE'])
+            if not killed:
+                arcsession.clean(job_dict['EXE'])
+        else:
+            arcsession.clean(job_dict['EXE'])
+
+# Clean up associated server files of the job
+
+    if 'SESSIONID' in job_dict:
+        sessionid = job_dict['SESSIONID']
+        symlinks = [os.path.join(configuration.webserver_home,
+                                 sessionid)
+                    , os.path.join(configuration.sessid_to_mrsl_link_home,
+                                   sessionid + '.mRSL')]
+        for link in symlinks:
+            try: 
+                os.remove(link)
+            except Exception, err:
+                logger.error('Could not remove link %s: %s' % (link, err))
+
+
+    job_dict['STATUS'] = status
+    job_dict[ status + '_TIMESTAMP' ] = timestamp
+
+    if not status == 'FINISHED':
+        # Generate execution history
+
+        if not job_dict.has_key('EXECUTION_HISTORY'):
+            job_dict['EXECUTION_HISTORY'] = []
+
+        history_dict = {
+            'QUEUED_TIMESTAMP': job_dict['QUEUED_TIMESTAMP'],
+            'EXECUTING_TIMESTAMP': job_dict['EXECUTING_TIMESTAMP'],
+            status + '_TIMESTAMP': timestamp,
+            status + '_MESSAGE': msg,
+            'UNIQUE_RESOURCE_NAME': job_dict['UNIQUE_RESOURCE_NAME'],
+        }
+
+        job_dict['EXECUTION_HISTORY'].append(history_dict)
+
+    # save into mrsl
+
+    mrsl_file = os.path.join(configuration.mrsl_files_dir,
+                                 client_dir, 
+                                 job_dict['JOB_ID'] + '.mRSL')
+    io.pickle(job_dict, mrsl_file, logger)
+
+    return

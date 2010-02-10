@@ -37,6 +37,9 @@ import genjobscriptjava
 from shared.ssh import copy_file_to_resource
 from shared.fileio import write_file, pickle, make_symlink
 from shared.useradm import client_id_dir
+import shared.mrsltoxrsl as mrsltoxrsl
+
+import shared.arcwrapper as arc
 
 
 def create_empty_job(
@@ -374,6 +377,118 @@ def create_job_script(
             logger.error('could not remove ' + inputfiles_path)
     return (sessionid, iosessionid)
 
+
+def create_arc_job(
+    job,
+    configuration,
+    logger,
+    ):
+    """Analogon to create_job_script for ARC jobs:
+    Creates symLinks for receiving result files, translates job dict to ARC xrsl,
+    and stores resulting job script (xrsl + sh script) for submitting.
+    
+    We do _not_ create a separate job_dict with copies and SESSIONID inside,
+    as opposed to create_job_script, all we need is the link from 
+    webserver_home / sessionID into the user's home directory 
+    ("job_output/job['JOB_ID']" is added to the result upload URLs in the 
+    translation). 
+    
+    Returns message (ARC job ID if no error) and sessionid (None if error)
+    """
+
+    if not job['JOBTYPE'] == 'arc':
+        return ('Error. This is not an ARC job', None)
+    
+    client_id = str(job['USER_CERT'])
+
+    # we do not want to see empty jobs here. Test as done in create_job_script.
+    if client_id == configuration.empty_job_name:
+        return ('Error. empty job for ARC?', None)
+
+
+    # generate random session ID:
+    sessionid = hexlify(open('/dev/urandom').read(32))
+    logger.debug('session ID (for creating links): %s' % sessionid)
+
+    client_dir = client_id_dir(client_id)
+
+    # make symbolic links inside webserver_home:
+    #  
+    # we need: link to owner's dir. to receive results, 
+    #          job mRSL inside sessid_to_mrsl_link_home
+    linklist = [(configuration.user_home + client_dir, 
+                 configuration.webserver_home + sessionid)
+               ,(configuration.mrsl_files_dir + client_dir + '/' + str(job['JOB_ID']) + '.mRSL',
+                 configuration.sessid_to_mrsl_link_home + sessionid + '.mRSL')
+               ]
+
+    def symlink ((dest,loc)): make_symlink(dest,loc,logger)
+    map(symlink, linklist)
+
+    # the translation generates an xRSL object which specifies to execute
+    # a shell script with script_name. If sessionid != None, results will
+    # be uploaded to sid_redirect/sessionid/job_output/job_id  
+
+    try:
+        (xrsl, script, script_name) = mrsltoxrsl.translate(job, sessionid)
+        logger.debug('translated to xRSL: %s' % xrsl)
+        logger.debug('script:\n %s' % script)
+
+    except Exception, err:
+        # error during translation, pass a message
+        logger.error('Error during xRSL translation: %s' % err.__str__())
+        return (err.__str__(), None)
+    
+        # we submit directly from here (the other version above does 
+        # copyFileToResource and gen_job_script generates all files)
+
+    # we have to put the generated script somewhere..., and submit from there.
+    # inputfiles are given by the user as relative paths from his home,
+    # so we should use that location (and clean up afterwards).
+
+    # write script (to user home)
+    user_home = os.path.join(configuration.user_home, client_dir)
+    script_path = os.path.abspath(os.path.join(user_home, script_name))
+    write_file(script, script_path, logger)
+
+    os.chdir(user_home)
+
+    try:
+        logger.debug('submitting job to ARC')
+        session = arc.Ui(user_home)
+        arc_job_ids = session.submit(xrsl)
+
+        # if no exception occurred, we are done:
+
+        msg = arc_job_ids[0]
+        result = sessionid
+
+    # when errors occurred, pass a message to the caller.
+    except arc.ARCWrapperError, err:
+        msg = err.what()
+        result = None # unsuccessful
+    except arc.NoProxyError, err:
+        msg = 'No Proxy found: %s' % err.what()
+        result = None # unsuccessful
+    except Exception, err:
+        msg = err.__str__()
+        result = None # unsuccessful
+
+    # always remove the generated script
+    os.remove(script_name)
+    # and remove the created links immediately if failed
+    if not result:
+        map(os.remove, [link for (_,link) in linklist] )
+        logger.error('Unsuccessful ARC job submission: %s' % msg)
+    else:
+        logger.debug('submitted to ARC as job %s' % msg)
+    return (msg, result)
+
+    # errors are handled inside grid_script. For ARC jobs, set status = FAILED
+    # on errors, and include the message
+    # One potential error is that the proxy is invalid,
+    # which should be checked inside the parser, before informing 
+    # grid_script about the new job.
 
 def gen_job_script(
     job_dictionary,

@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# returnvalues - [insert a few words of module description on this line]
+# resadmin - Resource view for ARC resources
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,24 +25,11 @@
 # -- END_HEADER ---
 #
 
-""" Returnvalues / exit code constants """
+import cgi
+import cgitb
+cgitb.enable()
 
-OK = (0, 'OK')
+from shared.functionality.arcresources import main
+from shared.cgiscriptstub import run_cgi_script
 
-ERROR = (1, 'Client or system error')
-
-# CLIENT ERRORS
-
-CLIENT_ERROR = (100, 'Client error')
-NO_SUCH_JOB_ID = (101, 'No job id..')
-INVALID_ARGUMENT = (102, 'Invalid argument')
-NO_FILE_PATH = (103, 'No file path provided')
-AUTHENTICATION_ERROR = (104, 'Authentication error')
-FILE_NOT_FOUND = (105, 'File not found')
-
-# SYSTEM ERRORS
-
-SYSTEM_ERROR = (200, 'SYSTEM_ERROR')
-USER_NOT_CREATED = (201, 'USER_NOT_CREATED')
-OUTPUT_VALIDATION_ERROR = (202, 'The output the server '
-                            + 'has generated could not be validated')
+run_cgi_script(main)

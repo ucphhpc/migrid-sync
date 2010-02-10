@@ -63,19 +63,19 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <div class="migcontent">
-This page provides access to on-demand downloads of the MiG user scripts in all available formats.<br />
-Simply pick your flavor of choice to generate the latest user scripts in your MiG home directory and as a zip file for easy download.<p>
+This page provides access to on-demand downloads of the %(site)s user scripts in all available formats.<br />
+Simply pick your flavor of choice to generate the latest user scripts in your %(site)s home directory and as a zip file for easy download.<p>
 In order to use the scripts your need the interpreter of choice (bash or python at the moment) and the
 <a href="http://curl.haxx.se">cURL</a> command line client.<br />
-There's a tutorial with examples of all the commands available on the MiG page. The python version of the user scripts additionally include a miglib python module, which may be used to incorporate MiG commands in your python applications.
+There's a tutorial with examples of all the commands available on the %(site)s page. The python version of the user scripts additionally includes a miglib python module, which may be used to incorporate %(site)s commands in your python applications.
 </div>
-"""})
+""" % { 'site' : configuration.short_title} })
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'MiG User Scripts'})
+                          : '%s User Scripts' % configuration.short_title})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <div class="migcontent">
-Generate MiG user scripts to manage jobs and files:<br/>
+Generate %s user scripts to manage jobs and files:<br/>
 <div class="container">
 <table class="downloads">
 <tr>
@@ -104,13 +104,13 @@ Generate MiG user scripts to manage jobs and files:<br/>
 </div>
 </div>
 <br />
-    """})
+    """ % configuration.short_title })
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'MiG Resource Scripts'})
+                        : '%s Resource Scripts' % configuration.short_title})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <div class="migcontent">
-Generate MiG scripts to administrate resources and vgrids:<br/>
+Generate %s scripts to administrate resources and vgrids:<br/>
 <div class="container">
 <table class="downloads">
 <tr>
@@ -143,7 +143,7 @@ Generate MiG scripts to administrate resources and vgrids:<br/>
 <br />
 </div>
 </div>
-    """})
+    """ % configuration.short_title })
     return (output_objects, status)
 
 

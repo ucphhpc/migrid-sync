@@ -36,6 +36,10 @@ from shared.refunctions import is_runtime_environment
 from shared.useradm import client_id_dir
 from shared.vgrid import user_allowed_vgrids, any_vgrid, default_vgrid
 
+try:
+    import shared.arcwrapper as arc
+except:
+    pass
 
 def parse(
     localfile_spaces,
@@ -116,7 +120,9 @@ def parse(
 
     # convert specified runtime environments to upper-case and verify they actually exist
 
-    if global_dict.has_key('RUNTIMEENVIRONMENT'):
+    # do not check REs if the job is for ARC (submission will fail later) 
+    if global_dict.get('JOBTYPE', 'unset') != 'arc' \
+        and global_dict.has_key('RUNTIMEENVIRONMENT'):
         re_entries_uppercase = []
         for specified_re in global_dict['RUNTIMEENVIRONMENT']:
             specified_re = specified_re.upper()
@@ -198,6 +204,28 @@ def parse(
 
     replaced_dict = parser.replace_special(global_dict)
 
+    # if this is an ARC job (indicated by a flag), check proxy existence 
+    # and lifetime. grid_script will submit the job directly.
+    
+    if replaced_dict.get('JOBTYPE', 'unset') == 'arc':
+        logger.debug('Received job for ARC.')
+        user_home = os.path.join(configuration.user_home, client_dir)
+        try:
+            session = arc.Ui(user_home)
+            timeleft = session.getProxy().getTimeleft()
+            req_time = int(replaced_dict.get('CPUTIME','0')) 
+            logger.debug('CPU time (%s), proxy lifetime (%s)' \
+                         % (req_time, timeleft))
+            if timeleft < req_time:
+                return (False, 'Proxy time shorter than requested CPU time')
+
+        except arc.ARCWrapperError, err:
+            return (False, err.what())
+        except arc.NoProxyError, err:
+            return (False, 'No Proxy found: %s' % err.what())
+        except Exception, err:
+            return (False, err.__str__())
+    
     # save file
 
     if outfile == 'AUTOMATIC':

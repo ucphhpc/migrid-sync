@@ -75,10 +75,11 @@ def create_monitor(vgrid_name):
         'vgrid_name': vgrid_name,
         'logo_url': '/images/logo.jpg',
         'now': now,
+        'short_title': configuration.short_title,
         }
 
     html = get_cgi_html_header(configuration,
-        'MiG Monitor, VGrid %(vgrid_name)s' % html_vars,
+        '%(short_title)s Monitor, VGrid %(vgrid_name)s' % html_vars,
         '',
         True,
         '<meta http-equiv="refresh" content="%(sleep_secs)s">',

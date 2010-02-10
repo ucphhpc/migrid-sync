@@ -164,7 +164,8 @@ def main(client_id, user_arguments_dict):
                 'Valid outputformats': (valid_outputformats, (output_objects, ))}
 
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG On-demand Documentation'})
+                          : '%s On-demand Documentation' % \
+                            configuration.short_title })
     html = '<p>Filter (using *,? etc.)'
     html += "<form method='post' action='docs.py'>"
     html += "<input type='hidden' name='show' value='' />"

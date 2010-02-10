@@ -1115,12 +1115,13 @@ def format_output(
             header = entry
     if not start:
         if not header:
-            out_obj = [{'object_type': 'header', 'text': 'MiG error'}]\
+            out_obj = [{'object_type': 'header', 
+                        'text': '%s error' % configuration.short_title}]\
                       + out_obj
         if not title:
             out_obj = [{
                 'object_type': 'title',
-                'text': 'MiG error',
+                'text': '%s error' % configuration.short_title,
                 'javascript': '',
                 'bodyfunctions': '',
                 }] + out_obj

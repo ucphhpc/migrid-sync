@@ -136,7 +136,7 @@ def main(client_id, user_arguments_dict):
     # ===============================================================================
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'MiG Interactive Session'
+    title_entry['text'] = '%s Interactive Session' % configuration.short_title
     title_entry['javascript'] = script
     title_entry['bodyfunctions'] = 'onUnLoad="endVNC()"'
     output_objects.append({'object_type': 'header', 'text'

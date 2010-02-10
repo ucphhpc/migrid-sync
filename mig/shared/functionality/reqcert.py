@@ -55,10 +55,11 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'MiG certificate request'
+    title_entry['text'] = '%s certificate request' % configuration.short_title
     title_entry['skipmenu'] = True
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Welcome to the MiG certificate request page'
+                          : 'Welcome to the %s certificate request page' % \
+                            configuration.short_title
                           })
     
     # Redirect to extcert page with certificate requirement but without
@@ -70,16 +71,18 @@ def main(client_id, user_arguments_dict):
                     'text': 'Sign up with existing certificate'}
     if client_id:
         output_objects.append({'object_type': 'warning', 'text'
-                              : 'Apparently you already have a suitable MiG certificate that you may sign up with:'
+                              : 'Apparently you already have a suitable %s certificate that you may sign up with:' % \
+                                configuration.short_title
                               })
         output_objects.append(extcert_link)
         output_objects.append({'object_type': 'warning', 'text'
-                              : 'However, if you want a dedicated MiG certificate you can still request one below:'
+                              : 'However, if you want a dedicated %s certificate you can still request one below:' % \
+                                configuration.short_title
                               })
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the certificate request to the MiG administrators.<p>
+Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the certificate request to the %(site)s administrators.<p>
 <b><font color='red'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br />
 That is, if You're a student/employee at DIKU, please type DIKU in the Organization field and use your USER@diku.dk address in the Email field.</font></b></p>
 <hr />
@@ -94,13 +97,13 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2 /> <sup class=mandatory>5</sup></td></tr>
 <tr><td>Password</td><td><input type=password name=password maxlength=%(password_max_len)s /> <sup class=mandatory>6, 7</sup></td></tr>
 <tr><td>Verify password</td><td><input type=password name=verifypassword maxlength=%(password_max_len)s /> <sup class=mandatory>6, 7</sup></td></tr>
-<tr><td>Comment or reason why you should<br />be granted a MiG certificate:</td><td><textarea rows=4 cols=%(password_max_len)s name=comment></textarea> <sup class=optional>8</sup></td></tr>
+<tr><td>Comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea rows=4 cols=%(password_max_len)s name=comment></textarea> <sup class=optional>8</sup></td></tr>
 <tr><td><input type=submit value=Send /></td><td></td></tr>
 </table>
 </form>
 </p>
 <p>
-<font color='red'>Please note that passwords will be visible to the MiG administrators!</font>
+<font color='red'>Please note that passwords will be visible to the %(site)s administrators!</font>
 </p>
 <hr />
 <p>
@@ -121,6 +124,7 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
         'valid_password_chars': valid_password_chars,
         'password_min_len': password_min_len,
         'password_max_len': password_max_len,
+        'site': configuration.short_title
         }})
 
     return (output_objects, returnvalues.OK)

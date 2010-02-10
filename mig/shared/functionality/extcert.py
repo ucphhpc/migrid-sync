@@ -49,7 +49,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False)
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Welcome to the MiG user sign up page'
+                          : 'Welcome to the %s user sign up page' % \
+                            configuration.site_title
                           })
 
     defaults = signature()[1]
@@ -71,16 +72,17 @@ def main(client_id, user_arguments_dict):
     certreq_url = os.environ['REQUEST_URI'].replace('-bin', '-sid')
     certreq_url = os.path.join(os.path.dirname(certreq_url), 'reqcert.py')
     certreq_link = {'object_type': 'link', 'destination': certreq_url,
-                    'text': 'Request a new MiG certificate'}
+                    'text': 'Request a new %s certificate' % \
+                            configuration.short_title }
     new_user = distinguished_name_to_user(client_id)
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-This page is used to sign up for MiG with an existing certificate from a Certificate Authority (CA) allowed for MiG.
-You can use it if you already have a x509 certificate from another accepted CA. In this way you can simply use your existing certificate for MiG access instead of requesting a new one.
+This page is used to sign up for %(site)s with an existing certificate from a Certificate Authority (CA) allowed for %(site)s.
+You can use it if you already have a x509 certificate from another accepted CA. In this way you can simply use your existing certificate for %(site)s access instead of requesting a new one.
 <br />
 The page tries to auto load any certificate your browser provides and fill in the fields accordingly, but in case it can't guess all <span class=mandatory>mandatory</span> fields, you still need to fill in those.<br />
-Please enter any missing information below and press the Send button to submit the external certificate sign up request to the MiG administrators.<p>
+Please enter any missing information below and press the Send button to submit the external certificate sign up request to the %(site)s administrators.<p>
 <b><font color='red'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br />
 That is, if You're a student/employee at DIKU, please type DIKU in the Organization field and use your USER@diku.dk address in the Email field.</font></b></p>
 <hr />
@@ -96,7 +98,7 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <tr><td>Email address</td><td><input type=text name=email value='%(email)s' /> <sup class=mandatory>4</sup></td></tr>
 <tr><td>State</td><td><input type=text name=state value='%(state)s' /> <sup class=optional>5</sup></td></tr>
 <tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2 value='%(country)s' /> <sup class=mandatory>6</sup></td></tr>
-<tr><td>Comment or reason why you should<br />be granted a MiG certificate:</td><td><textarea rows=4 cols=%(dn_max_len)s name=comment></textarea> <sup class=optional>7</sup></td></tr>
+<tr><td>Comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea rows=4 cols=%(dn_max_len)s name=comment></textarea> <sup class=optional>7</sup></td></tr>
 <tr><td><input type='submit' value='Send' /></td><td></td></tr>
 </table>
 </form>
@@ -123,6 +125,7 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
         'email': new_user.get('email', ''),
         'state': new_user.get('state', ''),
         'country': new_user.get('country', ''),
+        'site': configuration.short_title,
         }})
 
     return (output_objects, returnvalues.OK)

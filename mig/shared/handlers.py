@@ -95,7 +95,7 @@ def get_allowed_path(configuration, client_id, path):
         target_dir = os.path.dirname(real_path)
         target_file = os.path.basename(real_path)
     else:
-        raise Exception('Invalid credentials %s: no such MiG user or server'
+        raise Exception('Invalid credentials %s: no such user or server'
                          % client_id)
 
     target_path = target_dir + '/' + target_file

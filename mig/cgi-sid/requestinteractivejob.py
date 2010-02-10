@@ -145,7 +145,8 @@ if mrsldict['STATUS'] == 'FINISHED':
     o.reply_and_exit(o.ERROR)
 
 if not is_resource(unique_resource_name, configuration.resource_home):
-    o.out('requestinteractivejob error! Your unique_resource_name is not recognized as a MiG resource!'
+    o.out('requestinteractivejob error! Your unique_resource_name ' + 
+          ' is not recognized as a %s resource!' % configuration.short_title
           )
     o.reply_and_exit(o.ERROR)
 

@@ -73,17 +73,17 @@ script instead of putting them directly in the EXECUTE field.
     specs.append(('INPUTFILES', {
         'Title': 'Input Files',
         'Description': '''Files to be copied to the resource before job execution.
-Relative paths like plain file names are automatically taken from the user home on the MiG server.
+Relative paths like plain file names are automatically taken from the user home on the %s server.
 External sources are also allowed as long as they can be downloaded with the "curl" client without user interaction. This means that HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, DICT, TELNET or even LDAP are at least technically supported. External data sources obviously require the executing resource to have outbound network access to the data source. Thus HTTP and HTTPS are the most likely to generally work even on network restricted resources.
 Inputfiles may be specified as a single name per line or as lines of source and destination path separated by a space. In the single name format the file will be called the same on the destination as on the source.
 Supports the same variable expansion as described in the EXECUTE field documentation, but neither directories nor wild cards are supported!
-''',
+''' % configuration.short_title ,
         'Example': '''
 ::INPUTFILES::
 somefile
 another_file another_file_renamed
 
-Copies somefile and another_file from your MiG home to the resource, but another_file is renamed to another_file_renamed on the resource.
+Copies somefile and another_file from your server home to the resource, but another_file is renamed to another_file_renamed on the resource.
 
 ::INPUTFILES::
 some_url some_file
@@ -98,22 +98,22 @@ Downloads the contents from some_url (e.g. https://myhost.org/inputfile.txt) to 
     specs.append(('OUTPUTFILES', {
         'Title': 'Output Files',
         'Description': '''Files to be copied from the resource after job execution.
-Relative paths like plain file names are automatically sent to the user home on the MiG server. External destinations are also allowed as long as they can be uploaded with the "curl" client without user interaction. This means that HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, DICT, TELNET or even LDAP are at least technically supported. External data destinations obviously require the executing resource to have outbound network access to the data destination. Thus HTTP or HTTPS are the most likely to be allowed even on network restricted resources. Please note however, that HTTP upload requires the destination HTTP server to support the PUT operation, which is not generally enabled on all servers.
+Relative paths like plain file names are automatically sent to the user home on the %s server. External destinations are also allowed as long as they can be uploaded with the "curl" client without user interaction. This means that HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, DICT, TELNET or even LDAP are at least technically supported. External data destinations obviously require the executing resource to have outbound network access to the data destination. Thus HTTP or HTTPS are the most likely to be allowed even on network restricted resources. Please note however, that HTTP upload requires the destination HTTP server to support the PUT operation, which is not generally enabled on all servers.
 Outputfiles may be specified as a single name per line or as lines of source and destination path separated by a space. In the single name format the file will be called the same on the destination as on the source.
 Supports the same variable expansion as described in the EXECUTE field documentation, but neither directories nor wild cards are supported!
-''',
+''' % configuration.short_title ,
         'Example': '''
 ::OUTPUTFILES::
 file
 another_file_renamed another_file
 
-Copies file and another_file_renamed to the MiG server, but another_file_renamed is renamed to another_file on the MiG server.
+Copies file and another_file_renamed to the %s server, but another_file_renamed is renamed to another_file on the server.
 
 ::OUTPUFILES::
 some_file some_url
 
 Uploads some_file on the resource to some_url (e.g. ftp://myuser:mypw@myhost.org/outputfile.txt).
-''',
+''' % configuration.short_title ,
         'Type': 'multiplestrings',
         'Value': [],
         'Editor': 'input',
@@ -130,8 +130,8 @@ Supports the same variable expansion as described in the EXECUTE field documenta
 myscript
 myfile_or_url some_name
 
-Copies myscript and myfile_or_url from your MiG home to the resource, but myfile_or_url is renamed to the executable some_name on the resource.
-''',
+Copies myscript and myfile_or_url from your %s home to the resource, but myfile_or_url is renamed to the executable some_name on the resource.
+''' % configuration.short_title ,
         'Type': 'multiplestrings',
         'Value': [],
         'Editor': 'input',
@@ -228,7 +228,7 @@ To submit with execution on the first suitable and allowed VGrid.
 ::ARCHITECTURE::
 X86
 
-This particular MiG server supports the following values:
+This particular server supports the following values:
 %s
 '''\
              % ', '.join(configuration.architectures),
@@ -263,7 +263,8 @@ The job will only be executed on resources that advertize the same runtime envir
     specs.append(('NOTIFY', {
         'Title': 'Job Status Notification',
         'Description': '''Email and/or Instant Messenger account to notify when the job is done or if it fails.
-If you have configured your MiG settings you may leave the address part empty or set it to "SETTINGS" to use the saved setting.''',
+If you have configured your %s settings you may leave the address part empty or set it to "SETTINGS" to use the saved setting.
+''' % configuration.short_title ,
         'Example': '''
 ::NOTIFY::
 myemail@mailserver.org
@@ -287,8 +288,8 @@ EXPECTED.status
 EXPECTED.stdout
 EXPECTED.stderr
 
-Compares JOB_ID.status from the job against the file called EXPECTED.status from the MiG home directory and similarly for JOB_ID.stdout and JOB_ID.stderr. For each supplied verify file, EXPECTED.X, the corresponding JOB_ID.X file will be verified line by line using regular expression matching. If any verification fails, the VERIFIED field of the job will be set to FAILURE with the reason appended. If all verification succeeds the VERIFIED field will be set to SUCCESS with a list of the checks appended. If VERIFYFILES is left unset the VERIFIED field will simply be set to NO. In all cases the VERIFIED field is shown as a part of the job status.
-''',
+Compares JOB_ID.status from the job against the file called EXPECTED.status from the %s home directory and similarly for JOB_ID.stdout and JOB_ID.stderr. For each supplied verify file, EXPECTED.X, the corresponding JOB_ID.X file will be verified line by line using regular expression matching. If any verification fails, the VERIFIED field of the job will be set to FAILURE with the reason appended. If all verification succeeds the VERIFIED field will be set to SUCCESS with a list of the checks appended. If VERIFYFILES is left unset the VERIFIED field will simply be set to NO. In all cases the VERIFIED field is shown as a part of the job status.
+''' % configuration.short_title ,
         'Type': 'multiplestrings',
         'Value': [],
         'Editor': 'invisible',
@@ -309,7 +310,7 @@ Compares JOB_ID.status from the job against the file called EXPECTED.status from
         'Description': '''Specifies the type of a job:
 A job can be of type "interactive", "batch" or "bulk". Interactive jobs are executed on a resource but with the graphical display forwarded to the MiG display of the user. Batch jobs are executed in a headless mode and can not use graphical output. Bulk jobs are like batch jobs, but additionally allows concurrent execution of your other jobs on the same resource as long as the resource can provide the requested job resources (cpucpunt, nodecount, memory, disk). Set to "interactive" for jobs that use a display, set to bulk for high throughput jobs and leave unset or set to batch for the rest.
 
-This particular MiG server supports the following values:
+This particular server supports the following values:
 %s
 '''\
              % ', '.join(configuration.jobtypes),

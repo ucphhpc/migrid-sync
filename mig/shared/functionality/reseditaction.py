@@ -105,10 +105,13 @@ def update_resource(configuration, client_id, resource_id, user_vars, output_obj
     logger.info(msg)
     if not status:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Failed to send request with ID "%s" to the MiG administrator(s):
+                               '''Failed to send request with ID "%s" to the %s administrator(s):
 %s
-Please manually contact the MiG server administrator(s) (%s)
-and provide this information''' % (tmp_id, msg, configuration.admin_email)
+Please manually contact the %s server administrator(s) (%s)
+and provide this information''' % (tmp_id, msg, 
+                                   configuration.short_title, 
+                                   configuration.short_title,
+                                   configuration.admin_email )
                                })
         return False
 
@@ -127,22 +130,24 @@ and provide this information''' % (tmp_id, msg, configuration.admin_email)
                         % public_key_file_content.replace(' ', '&nbsp;')
     else:
         public_key_info = \
-                        '<br />Please request an SSH public key from the MiG administrator(s) (%s)<br /><br />'\
-                        % configuration.admin_email
+                        '<br />Please request an SSH public key from the %s administrator(s) (%s)<br /><br />'\
+                        % (configuration.short_title, configuration.admin_email)
 
     output = """Your creation request of the resource: <b>%s</b>
-has been sent to the MiG server administration and will be processed as
+has been sent to the %s server administration and will be processed as
 soon as possible.
-<hr />
-Until you get a confirmation from a MiG administrator, please make sure
-the MiG server can SSH to your resource without a passphrase. The MiG
+<hr />""" % (user_vars['HOSTURL'], configuration.short_title) \
+            + """
+Until you get a confirmation from a %s administrator, please make sure
+the %s server can SSH to your resource without a passphrase. The %s
 server's public key should be in ~/.ssh/authorized_keys for the mig user
 on the resource frontend. %s
 <br />
 <a href='resadmin.py'>View existing resources</a> where your new resource will also eventually
 show up.
-        """\
-             % (user_vars['HOSTURL'], public_key_info)
+        """ % (configuration.short_title, configuration.short_title, 
+                configuration.short_title, public_key_info)
+
     output_objects.append({'object_type': 'html_form', 'text': output})
 
     return True

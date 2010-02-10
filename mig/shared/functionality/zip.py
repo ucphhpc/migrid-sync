@@ -62,7 +62,7 @@ def usage(output_objects):
                           : '- flags is a string of one character flags to be passed to the script'
                           })
     output_objects.append({'object_type': 'text', 'text'
-                          : '- each path specifies a file or directory in your MiG home to include in the zip archive'
+                          : '- each path specifies a file or directory in your home to include in the zip archive'
                           })
     output_objects.append({'object_type': 'text', 'text'
                           : '- dst is the path where the generated zip archive will be stored'

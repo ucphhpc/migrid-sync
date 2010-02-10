@@ -142,11 +142,11 @@ def new_job(
     else:
         if returnjobid:
             return (False,
-                    'parse failed, Error in mRSL file - or parser - or MiG subsystem :)\n%s'
+                    'parse failed, Error in mRSL file - or parser - or subsystem :)\n%s'
                      % parsemsg, None)
         else:
             return (False,
-                    'parse failed, Error in mRSL file - or parser - or MiG subsystem :)\n%s'
+                    'parse failed, Error in mRSL file - or parser - or subsystem :)\n%s'
                      % parsemsg)
 
 

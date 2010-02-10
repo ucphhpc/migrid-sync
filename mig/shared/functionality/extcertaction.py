@@ -61,7 +61,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False)
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG external certificate sign up'})
+                          : '%s external certificate sign up' % \
+                            configuration.short_title })
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -202,8 +203,10 @@ cd ~/mig/server
 
     user_dict['command_user_create'] = command_user_create
     user_dict['command_user_delete'] = command_user_delete
+    user_dict['site'] = configuration.short_title
     user_dict['https_cert_url'] = configuration.migserver_https_cert_url
-    email_header = 'MiG sign up request for %s' % cert_id
+    email_header = '%s sign up request for %s' % \
+                   (configuration.short_title, cert_id)
     email_msg = \
         """
 Received an existing certificate sign up request with certificate data
@@ -216,14 +219,14 @@ Received an existing certificate sign up request with certificate data
  * Comment: %(comment)s
  * Expire: %(expire)s
 
-Command to create user on MiG server:
+Command to create user on %(site)s server:
 %(command_user_create)s
 
 Finally add the user to any relevant VGrids from:
 %(https_cert_url)s/cgi-bin/vgridadmin.py
 
 ---
-Command to delete user again on MiG server:
+Command to delete user again on %(site)s server:
 %(command_user_delete)s
 ---
 
@@ -240,6 +243,6 @@ Command to delete user again on MiG server:
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : "Request sent to grid administrators: Your request for a MiG user account with your existing certificate will be verified and handled as soon as possible, so please be patient. In case of inquiries about this request, please email the grid administrators (%s) and include the session ID: %s"
-                           % (admin_email, tmp_id)})
+                          : "Request sent to grid administrators: Your request for a %s user account with your existing certificate will be verified and handled as soon as possible, so please be patient. In case of inquiries about this request, please email the grid administrators (%s) and include the session ID: %s"
+                           % (configuration.short_title, admin_email, tmp_id)})
     return (output_objects, returnvalues.OK)

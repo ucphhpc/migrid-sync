@@ -232,9 +232,10 @@ def main(client_id, user_arguments_dict):
         javascript = ''
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'MiG Files'
+    title_entry['text'] = '%s Files' % configuration.short_title
     title_entry['javascript'] = javascript
-    output_objects.append({'object_type': 'header', 'text': 'MiG Files'
+    output_objects.append({'object_type': 'header', 
+                           'text': '%s Files' % configuration.short_title
                           })
 
     location_pre_html = \
@@ -250,8 +251,9 @@ Working directory:
                           : location_pre_html})
     for pattern in pattern_list:
         links = []
-        links.append({'object_type': 'link', 'text': 'MiG HOME',
-                     'destination': 'ls.py?path=.'})
+        links.append({'object_type': 'link', 'text': 
+                      '%s HOME' % configuration.short_title,
+                      'destination': 'ls.py?path=.'})
         prefix = ''
         parts = pattern.split(os.sep)
         for i in parts:

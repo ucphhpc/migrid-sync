@@ -245,10 +245,11 @@ def main(client_id, user_arguments_dict):
     # possible to target the directory from the current dir.
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'MiG file web editor'
+    title_entry['text'] = '%s file web editor' % configuration.short_title
     title_entry['javascript'] = lock_info('this file', -1)
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Editing file in MiG home directory'})
+                          : 'Editing file in %s home directory' % \
+                            configuration.short_title })
 
     # addMiGhtmlHeader( "MiG file web editor",  "Editing file in MiG home directory of %s " % client_id , printhtml, scripts=lock_info("this file", -1))lock_info("this file", -1)
 

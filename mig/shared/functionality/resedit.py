@@ -123,12 +123,12 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text': 'Resource Editor'
                           })
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'MiG Resource Editor'})
+                          : '%s Resource Editor' % configuration.short_title})
     output_objects.append({'object_type': 'text', 'text'
                            : '''
-Please fill in or edit the fields below to fit your MiG resource reservation. Most fields
+Please fill in or edit the fields below to fit your %s resource reservation. Most fields
 will work with their default values. So if you are still in doubt after reading the help
-description, you can likely just leave the field alone.'''
+description, you can likely just leave the field alone.''' % configuration.short_title
                           })
 
     if hosturl and hostidentifier:

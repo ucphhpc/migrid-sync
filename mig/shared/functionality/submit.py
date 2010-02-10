@@ -50,7 +50,7 @@ def usage():
     """Usage help"""
 
     return """submit one or more job description files.
-Takes a list of path entries relative to your MiG home directory and submits each one in turn.
+Takes a list of path entries relative to your home directory and submits each one in turn.
 The result is a structure with submit details for each submit attempt including status and job ID
 upon success.
 The flags parameter can be used to request more verbose output.

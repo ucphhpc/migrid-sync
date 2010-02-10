@@ -58,13 +58,14 @@ def create_notify_message(
 
     var_dict = {'https_cert_url': configuration.migserver_https_cert_url,
                 'jobid': jobid, 'retries': configuration.job_retries,
-                'output_dir': output_dir}
+                'output_dir': output_dir,
+                'site' : configuration.short_title}
 
     if status == 'SUCCESS':
-        header = 'MiG JOB finished'
+        header = '%s JOB finished' % configuration.short_title
         txt += \
             '''
-Your MiG job with JOB ID %(jobid)s has finished and full status is available at:
+Your %(site)s job with JOB ID %(jobid)s has finished and full status is available at:
 %(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
 
 The job commands and their exit codes:
@@ -75,7 +76,7 @@ The job commands and their exit codes:
             txt += str(status_fd.read())
             status_fd.close()
         except Exception, err:
-            txt += 'Could not be read (Internal MiG error?): %s' % err
+            txt += 'Could not be read (Internal error?): %s' % err
         txt += \
             '''
 Link to stdout file:
@@ -89,27 +90,27 @@ Replies to this message will not be read!
              % var_dict
     elif status == 'FAILED':
 
-        header = 'MiG JOB Failed'
+        header = '%s JOB Failed' % configuration.short_title
         txt += \
             '''
 The job with JOB ID %(jobid)s has failed after %(retries)s retries!
 This may be due to internal errors, but full status is available at:
 %(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
 
-Please contact the MiG team if the problem occurs multiple times.
+Please contact the %(site)s team if the problem occurs multiple times.
 
 Replies to this message will not be read!!!
 '''\
              % var_dict
     elif status == 'EXPIRED':
-        header = 'MiG JOB Expired'
+        header = '%s JOB Expired' % configuration.short_title
         txt += \
             '''
-Your MiG job with JOB ID %(jobid)s has expired, after remaining in the queue for too long.
+Your %(site)s job with JOB ID %(jobid)s has expired, after remaining in the queue for too long.
 This may be due to internal errors, but full status is available at:
 %(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
 
-Please contact the MiG team for details about expire policies.
+Please contact the %(site)s team for details about expire policies.
 
 Replies to this message will not be read!!!
 '''\
@@ -119,7 +120,7 @@ Replies to this message will not be read!!!
         vgrid_name = myfiles_py_location[1]
         request_type = myfiles_py_location[2]
         request_text = myfiles_py_location[3]
-        header = 'MiG VGrid member request'
+        header = '%s VGrid member request' % configuration.short_title
         txt += \
             "This is a request from %s who would like to be added to your VGrid '%s' as a %s\n"\
              % (from_cert, vgrid_name, request_type)
@@ -145,7 +146,7 @@ Replies to this message will not be read!!!
 
         txt += ' Replies to this message will not be read!!!\n'
     else:
-        header = 'MiG Unknown message type'
+        header = '%s Unknown message type' % configuration.short_title
         txt += 'unknown status'
     return (header, txt)
 
@@ -413,8 +414,8 @@ def send_resource_create_request_mail(
     msg = "Sending the resource creation information for '%s' to '%s'"\
          % (hosturl, recipients)
 
-    subject = 'MiG resource creation request on %s'\
-         % configuration.server_fqdn
+    subject = '%s resource creation request on %s'\
+         % (configuration.short_title, configuration.server_fqdn)
     txt = \
         """
 Cert. ID: '%s'

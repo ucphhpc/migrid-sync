@@ -70,7 +70,8 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text': 'Resource administration help'
                           })
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Welcome to the MiG resource administration help'})
+                        : 'Welcome to the %s resource administration help' % \
+                          configuration.short_title })
     output_objects.append({'object_type': 'text', 'text'
                           : 'Help for each of the resource editor fields is available below.'
                           })
@@ -86,7 +87,8 @@ def main(client_id, user_arguments_dict):
 <b><a name='%s'>%s:</a></b><br />
 %s<br />
 <br />""" % ('frontendhome', 'Frontend Home Path',
-           """The MiG user home directory on the frontend""")
+           """The %s user home directory on the frontend""" % \
+                configuration.short_title )
                                })
 
     for (field, spec) in res_fields:
@@ -114,7 +116,7 @@ Example:&nbsp;%s<br />
 <br />""" % ('executionnodes', 'Execution Node(s)',
            exenode_keywords['name']['Description'],
            """
-This fields configures all the job execution nodes in one MiG resource.<br />
+This fields configures all the job execution nodes in one %(site)s resource.<br />
 It is possible to specify several execution nodes by seperating them with ';'<br />
 and it's possible to denote ranges of execution nodes by using '->'.<br />
 <br />
@@ -123,11 +125,11 @@ Example:&nbsp; n0->n8 ; n10 ; n12->n24<br />
 Specifies the nodes n0 to n8, n10 and n12 to n24.<br />
 <br />
 Please note that the following node count field specifies the number of actual
-physical hosts associated with each of these MiG execution nodes. In case of a
-one-to-one mapping between MiG execution nodes and actual nodes, it should just
-be set to 1. Only if each MiG execution node gives access to multiple nodes e.g.
+physical hosts associated with each of these %(site)s execution nodes. In case of a
+one-to-one mapping between %(site)s execution nodes and actual nodes, it should just
+be set to 1. Only if each %(site)s execution node gives access to multiple nodes e.g.
 in a cluster or batch system, should it be set higher.<br />
-""")
+""" % {'site' : configuration.short_title} )
                                })
 
     output_objects.append({'object_type': 'html_form', 'text'
@@ -135,7 +137,8 @@ in a cluster or batch system, should it be set higher.<br />
 <b><a name='exe-%s'>%s:</a></b><br />
 %s<br />
 <br />""" % ('executionhome', 'Execution Home Path',
-           """The MiG user home directory on execution nodes""")
+           """The %s user home directory on execution nodes""" % \
+             configuration.short_title )
                                })
 
     for (field, spec) in exe_fields:
@@ -163,7 +166,7 @@ Example:&nbsp;%s<br />
 <br />""" % ('store-storagenodes', 'Storage Node(s)',
            storenode_keywords['name']['Description'],
            """
-This fields configures all the storage nodes in one MiG resource.<br />
+This fields configures all the storage nodes in one %(site)s resource.<br />
 It is possible to specify several storage nodes by seperating them with ';'<br />
 and it's possible to denote ranges of storage nodes by using '->'.<br />
 <br />
@@ -172,8 +175,8 @@ Example:&nbsp; n0->n8 ; n10 ; n12->n24<br />
 Specifies the nodes n0 to n8, n10 and n12 to n24.<br />
 <br />
 Please note that the following disk field specifies the amount of actual
-physical storage reserved for MiG on each of these MiG storage nodes.<br />
-""")
+physical storage reserved for %(site)s on each of these %(site)s storage nodes.<br />
+""" % { 'site' : configuration.short_title} )
                                })
 
     output_objects.append({'object_type': 'html_form', 'text'
@@ -181,7 +184,8 @@ physical storage reserved for MiG on each of these MiG storage nodes.<br />
 <b><a name='store-%s'>%s:</a></b><br />
 %s<br />
 <br />""" % ('storagehome', 'Storage Home Path',
-           """The MiG user home directory on storage nodes""")
+           """The %s user home directory on storage nodes""" % \
+            configuration.short_title )
                                })
 
     for (field, spec) in store_fields:

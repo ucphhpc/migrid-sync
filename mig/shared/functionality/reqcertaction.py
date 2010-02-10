@@ -68,10 +68,12 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'MiG certificate request'
+    title_entry['text'] = '%s certificate request' % configuration.short_title
     title_entry['skipmenu'] = True
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG certificate request'})
+                          : '%s certificate request' % \
+                            configuration.short_title 
+                           })
 
     admin_email = configuration.admin_email
     smtp_server = configuration.smtp_server
@@ -188,8 +190,10 @@ sudo su - mig-ca
     user_dict['command_user_delete'] = command_user_delete
     user_dict['command_cert_create'] = command_cert_create
     user_dict['command_cert_revoke'] = command_cert_revoke
+    user_dict['site'] = configuration.short_title
     user_dict['https_cert_url'] = configuration.migserver_https_cert_url
-    email_header = 'MiG certificate request for %s' % cert_name
+    email_header = '%s certificate request for %s' % \
+                   (configuration.short_title, cert_name)
     email_msg = \
         """
 Received a certificate request with certificate data
@@ -201,7 +205,7 @@ Received a certificate request with certificate data
  * Comment: %(comment)s
  * Expire: %(expire)s
 
-Command to create user on MiG server:
+Command to create user on %(site)s server:
 %(command_user_create)s
 
 Command to create certificate:
@@ -219,7 +223,7 @@ Remove the user from any relevant VGrids on:
 Command to revoke user certificate:
 %(command_cert_revoke)s
 
-Command to delete user again on MiG server:
+Command to delete user again on %(site)s server:
 %(command_user_delete)s
 
 ---

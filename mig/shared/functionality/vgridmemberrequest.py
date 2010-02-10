@@ -57,7 +57,8 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'MiG VGrid membership request'
+    title_entry['text'] = '%s VGrid membership request' % \
+                          configuration.short_title
     output_objects.append({'object_type': 'header', 'text'
                           : 'Request VGrid member or ownership'})
 

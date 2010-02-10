@@ -35,6 +35,7 @@ from shared.settingskeywords import get_keywords_dict
 from shared.useradm import client_id_dir, mrsl_template, css_template, \
     get_default_mrsl, get_default_css
 
+import shared.arcwrapper as arc
 
 def signature():
     """Signature of the main function"""
@@ -80,7 +81,7 @@ def main(client_id, user_arguments_dict):
         <div id=settings>
         <table class=settings>
         <tr class=title><td class=centertext>
-        Select your MiG settings
+        Select your %s settings
         </td></tr>
         <tr><td>
         </td></tr>
@@ -90,7 +91,7 @@ def main(client_id, user_arguments_dict):
         </td></tr>
         <tr><td>
         </td></tr>
-        """
+        """ % configuration.site_title
     keywords_dict = get_keywords_dict()
     for (keyword, val) in keywords_dict.items():
         if 'notify' == val['Context'] and keyword.lower() not in configuration.notify_protocols:
@@ -195,7 +196,7 @@ Default CSS (style) for all pages
 <tr><td>
 </td></tr>
 <tr><td>
-If you want to customize the look and feel of the MiG web interfaces you can override default values here. If you leave the style file blank you will just use the default style.<br />
+If you want to customize the look and feel of the %(site)s web interfaces you can override default values here. If you leave the style file blank you will just use the default style.<br />
 You can copy paste from the available style file links below if you want to override specific parts.<br />
 Please note that you can not save an empty style file, but must at least leave a blank line to use defaults.
 </td></tr>
@@ -225,10 +226,39 @@ Please note that you can not save an empty style file, but must at least leave a
         'mrsl_template': mrsl_template,
         'default_css': default_css,
         'css_template': css_template,
+        'site'        : configuration.short_title,
         }
 
     output_objects.append({'object_type': 'html_form', 'text': html})
 
+
+    # if ARC-enabled server:
+    # provide information about the available proxy, offer upload
+    try:
+        dir = os.path.join(configuration.user_home,client_dir)
+        session_Ui = arc.Ui(dir)
+        proxy = session_Ui.getProxy()
+        if proxy.IsExpired():
+            # can rarely happen, constructor will throw exception
+            output_objects.append({'object_type': 'text', 
+                               'text': 'Proxy certificate is expired.'})
+        else:
+            output_objects.append({'object_type': 'text', 
+                                   'text': 'Proxy for %s' \
+                                           % proxy.GetIdentitySN()})
+            output_objects.append(\
+                {'object_type': 'text', 
+                 'text': 'Proxy certificate will expire on %s (in %s sec.)' \
+                         % (proxy.Expires(), proxy.getTimeleft())
+                })
+    except arc.NoProxyError, err:
+        
+        output_objects.append({'object_type':'warning',
+                               'text': 'No proxy certificate to load: %s' \
+                                       % err.what()})
+    
+    output_objects = output_objects + arc.askProxy()
+    
     return (output_objects, returnvalues.OK)
 
 

@@ -40,6 +40,7 @@ from shared.parseflags import verbose, sorted
 from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 
+import shared.arcwrapper as arc
 
 def signature():
     """Signature of the main function"""
@@ -109,7 +110,8 @@ def main(client_id, user_arguments_dict):
                         client_dir)) + os.sep
 
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG %s job status' % order})
+                          : '%s %s job status' % \
+                            (configuration.short_title, order)})
 
     if not patterns:
         output_objects.append({'object_type': 'error_text', 'text'
@@ -125,8 +127,10 @@ def main(client_id, user_arguments_dict):
     if not os.path.isdir(base_dir):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'You have not been created'
-                               + ' as a user on the MiG server!'
-                               + ' Please contact the MiG team.'})
+                               + ' as a user on the %s server!' % \
+                                 configuration.short_title
+                               + ' Please contact the %s team.' % \
+                                 configuration.short_title })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     filelist = []
@@ -239,6 +243,29 @@ def main(client_id, user_arguments_dict):
                     # not a time object, just add
 
                     job_obj[name.lower()] = job_dict[name]
+
+        ###########################################
+        # ARC job status retrieval on demand:
+        # But we should _not_ update the status in the mRSL files, since 
+        # other MiG code might rely on finding only valid "MiG" states.
+        
+        if 'UNIQUE_RESOURCE_NAME' in job_dict \
+            and job_dict['UNIQUE_RESOURCE_NAME'] == 'ARC' \
+            and job_dict['STATUS'] == 'EXECUTING':
+            try:
+                home = os.path.join(configuration.user_home,client_dir)
+                arcsession = arc.Ui(home)
+                arcstatus = arcsession.jobStatus(job_dict['EXE'])
+                job_obj['status'] = arcstatus['status']
+            except arc.ARCWrapperError, err:
+                logger.error('Error retrieving ARC job status: %s' % err.what())
+                job_obj['status'] += '(Error: ' + err.what() + ')' 
+            except arc.NoProxyError, err:
+                logger.error('While retrieving ARC job status: %s' % err.what())
+                job_obj['status'] += '(Error: ' + err.what() + ')' 
+            except Exception, err:
+                logger.error('Error retrieving ARC job status: %s' % err)
+                job_obj['status'] += '(Error during retrieval)' 
 
         execution_histories = []
         if verbose(flags):

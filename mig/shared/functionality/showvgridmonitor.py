@@ -63,7 +63,7 @@ def main(client_id, user_arguments_dict):
          % configuration.sleep_secs
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'MiG VGrid Monitor'
+    title_entry['text'] = '%s Monitor' % configuration.short_title
     title_entry['javascript'] = refresh
 
     allowed_vgrids = user_allowed_vgrids(configuration, client_id)

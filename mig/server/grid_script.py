@@ -30,6 +30,7 @@
 import sys
 import time
 import datetime
+import calendar
 import threading
 import os
 import signal
@@ -43,7 +44,7 @@ from shared.fileio import pickle, unpickle, unpickle_and_change_status, \
 from shared.gridscript import clean_grid_stdin, \
     remove_jobrequest_pending_files, check_mrsl_files, requeue_job, \
     server_cleanup, load_queue, save_queue, load_schedule_cache, \
-    save_schedule_cache
+    save_schedule_cache, arc_job_status, clean_arc_job
 from shared.notification import notify_user_thread
 from shared.resadm import atomic_resource_exe_restart, put_exe_pgid
 from shared.useradm import client_id_dir
@@ -123,18 +124,11 @@ def time_out_jobs(stop_event):
                     total_cputime = delay + extra_cputime + cputime
                     timestamp = job['EXECUTING_TIMESTAMP']
 
-                    # is there a  nicer way to convert time.gmtime() to
-                    # a datetime?
-                    # Time is in UTC timezone
+                    # the canonical way to convert time.gmtime() to
+                    # a datetime... All times in UTC timezone
 
-                    start_executing_datetime = datetime.datetime(
-                        timestamp.tm_year,
-                        timestamp.tm_mon,
-                        timestamp.tm_mday,
-                        timestamp.tm_hour,
-                        timestamp.tm_min,
-                        timestamp.tm_sec,
-                        )
+                    start_executing_datetime = \
+                      datetime.datetime.utcfromtimestamp(calendar.timegm(timestamp))
 
                     last_valid_finish_time = start_executing_datetime\
                          + datetime.timedelta(seconds=total_cputime)
@@ -152,6 +146,32 @@ def time_out_jobs(stop_event):
                                 ], job['JOB_ID'])
                         send_message_to_grid_script(grid_script_msg,
                                 logger, configuration)
+
+                    elif job['UNIQUE_RESOURCE_NAME'] == 'ARC':
+                        jobstatus = arc_job_status(job, configuration, logger)
+
+                        # take action if the job is failed or killed. 
+                        # No action for a finished job, since other 
+                        # machinery will be at work to update it
+
+                        if jobstatus  in ['FINISHED','FAILED','KILLED']:
+                            logger.debug('discovered %s job %s, clean it on the server' % \
+                                         (jobstatus, job['JOB_ID']))
+                            if jobstatus in ['FAILED','KILLED']:
+                                msg = '(failed inside ARC)'
+                            else:
+                                msg = None
+                            exec_job = executing_queue.dequeue_job_by_id(job['JOB_ID'])
+                            if exec_job:
+                                # job was still there, clean up here
+                                # (otherwise, someone else picked it up in the meantime)
+                                clean_arc_job(exec_job, jobstatus, msg,
+                                              configuration, logger, False)
+                        else:
+                            logger.debug('Status %s for ARC job %s, no action required' %  \
+                                         (jobstatus, job['JOB_ID']))
+
+
     except Exception, err:
         logger.error('time_out_jobs: unexpected exception: %s' % err)
     logger.info('time_out_jobs: time out thread terminating')
@@ -389,6 +409,59 @@ while True:
         dict_userjob['OWNER'] = user_id
         dict_userjob['MIGRATE_COUNT'] = str(0)
 
+        # ARC jobs: directly submit, and put in executing_queue
+        if dict_userjob['JOBTYPE'] == 'arc':
+            logger.debug('ARC Job' )
+            (arc_id, session_id) = jobscriptgenerator.create_arc_job(\
+                                    dict_userjob, configuration, logger)
+            if not session_id:
+                # something has gone wrong
+                logger.error('Job NOT submitted (%s)' % arc_id) 
+                # discard this job (as FAILED, including message)
+                # see gridscript::requeue_job for how to do this...
+                
+                dict_userjob['STATUS'] = 'FAILED'
+                dict_userjob['FAILED_TIMESTAMP'] = time.gmtime()
+                # and create an execution history (basically empty)
+                hist = ({'QUEUED_TIMESTAMP': dict_userjob['QUEUED_TIMESTAMP'],
+                         'EXECUTING_TIMESTAMP': dict_userjob['FAILED_TIMESTAMP'],
+                         'FAILED_TIMESTAMP': dict_userjob['FAILED_TIMESTAMP'],
+                         'FAILED_MESSAGE': ('ARC Submission failed: %s' % arc_id),
+                         'UNIQUE_RESOURCE_NAME': 'ARC',})
+                dict_userjob['EXECUTION_HISTORY'] = [hist]
+
+                # should also notify the user (if requested)
+                # not implented for this branch.
+
+            else:
+                # all fine, job is now in some ARC queue
+                logger.debug('Job submitted (%s,%s)' % (session_id,arc_id) )
+                # set some job fields for job status retrieval, and
+                # put in exec.queue for job status queries and timeout
+                dict_userjob['SESSIONID'] = session_id
+                # abuse these two fields, 
+                # expected by timeout thread to be there anyway
+                dict_userjob['UNIQUE_RESOURCE_NAME'] = 'ARC'
+                dict_userjob['EXE'] = arc_id
+
+                # this one is used by the timeout thread as well
+                # We put in a wild guess, 1 minute. Perhaps not enough
+                dict_userjob['EXECUTION_DELAY'] = 60 
+
+                dict_userjob['STATUS'] = 'EXECUTING' # which is kind-of wrong...
+                dict_userjob['EXECUTING_TIMESTAMP'] = time.gmtime()
+                executing_queue.enqueue_job(dict_userjob, \
+                                            executing_queue.queue_length())
+
+            # Either way, save the job mrsl. 
+            # Status is EXECUTING or FAILED
+            pickle(dict_userjob, file_userjob, logger)
+
+            # go on with scheduling loop (do not use scheduler magic below)
+            continue
+
+        # following: non-ARC code
+        
         # put job in queue
 
         job_queue.enqueue_job(dict_userjob, job_queue.queue_length())
@@ -1146,8 +1219,20 @@ while True:
         elif job_dict['UNIQUE_RESOURCE_NAME'] != res_name\
              or job_dict['EXE'] != exe_name:
             msg += \
-                ', but job is beeing executed by %s:%s, ignoring result.'\
+                ', but job is being executed by %s:%s, ignoring result.'\
                  % (job_dict['UNIQUE_RESOURCE_NAME'], job_dict['EXE'])
+        elif job_dict['UNIQUE_RESOURCE_NAME'] == 'ARC':
+            msg += (', which is an ARC job (ID %s).' % job_dict['EXE'])
+
+            # remove from the executing queue
+            executing_queue.dequeue_job_by_id(job_id)
+
+            # job status has been checked by put script already
+            # we need to clean up the job remainder (links, queue, and ARC side)
+            clean_arc_job(job_dict, 'FINISHED', None, 
+                          configuration, logger, False)
+            msg += 'ARC job completed'
+
         else:
 
             # Clean up the server for files associated with the finished job
@@ -1271,6 +1356,22 @@ while True:
                             )
                 continue
 
+            # special treatment of ARC jobs: delete two links and cancel job in ARC
+            if unique_resource_name == 'ARC':
+
+
+                # remove from the executing queue
+                executing_queue.dequeue_job_by_id(job_id)
+
+                # job status has been set by the cancel request already, but 
+                # we need to kill the ARC job, or clean it (if already finished),
+                # and clean up the job remainder links
+                clean_arc_job(job_dict, 'CANCELED', None, 
+                              configuration, logger, True)
+
+                logger.debug('ARC job completed')
+                continue
+
             if not server_cleanup(
                 job_dict['SESSIONID'],
                 job_dict['IOSESSIONID'],
@@ -1332,6 +1433,23 @@ while True:
         # Retrieve job_dict
 
         job_dict = executing_queue.get_job_by_id(jobid)
+
+        # special treatment of ARC jobs: delete two links and 
+        # clean job in ARC system, do not retry.
+        if job_dict and unique_resource_name == 'ARC':
+
+            # remove from the executing queue
+            executing_queue.dequeue_job_by_id(jobid)
+
+            # job status has been set by the cancel request already, but 
+            # we need to kill the ARC job, or clean it (if already finished),
+            # and clean up the job remainder links
+            clean_arc_job(job_dict, 'FAILED', 'Job timed out', 
+                          configuration, logger, True)
+
+            logger.debug('ARC job timed out, removed')
+            continue
+
 
         # Execution information is removed from job_dict in
         # requeue_job - save here

@@ -42,19 +42,19 @@ def signature():
 
 
 html = {}
-html['maintenance'] = \
+html['maintenance'] = lambda site : \
     """
 Sorry we are currently down for maintenance, we'll be back shortly
 """
 
-html['english'] = \
+html['english'] = lambda site : \
     """
 <form action='sssadmin.py' method='post'>
 
 <table class='sandboxlogintext'>
 <tr><td><a href='ssslogin.py?language=danish'>P&aring; dansk</a></td></tr>
 <tr><td><h3>Intro</h3></td></tr>
-<tr><td>Welcome to the MiG-SSS download site. By downloading and installing this software, your computer will be participating in solving scientific problems whenever the screen saver is on. All you have to do is log in below, download the sandbox, and follow the instructions during the install procedure.</td></tr>
+<tr><td>Welcome to the %(site)s-SSS download site. By downloading and installing this software, your computer will be participating in solving scientific problems whenever the screen saver is on. All you have to do is log in below, download the sandbox, and follow the instructions during the install procedure.</td></tr>
 
 <tr><td><h3>Why Login?</h3></td></tr>
 <tr><td>Please note that we do not store any personal information. All you need is a login name which is solely used for identifying sandboxes so that you can keep track of how many jobs your PC has solved while it was idle.  </td></tr>
@@ -83,16 +83,16 @@ html['english'] = \
 
 
 </table></form>
-"""
+""" % {'site':site}
 
-html['danish'] = \
+html['danish'] = lambda site : \
     """
 <form action='sssadmin.py' method='post'>
 
 <table class='sandboxlogintext'>
 <tr><td><a href='ssslogin.py?language=english'>In English</a></td></tr>
 <tr><td><h3>Intro</h3></td></tr>
-<tr><td>Velkommen til MiG-SSS. Ved at downloade og installere denne software vil din PC, n&aring;r den er i screen saver mode, donere den ubrugte CPU-tid til at bidrage med at l&oslash;se videnskabelige problemer. Det eneste, der kr&aelig;ves er, at man logger ind nedenfor, downloader softwaren og f&oslash;lger installationsproceduren.<td><tr>
+<tr><td>Velkommen til %(site)s-SSS. Ved at downloade og installere denne software vil din PC, n&aring;r den er i screen saver mode, donere den ubrugte CPU-tid til at bidrage med at l&oslash;se videnskabelige problemer. Det eneste, der kr&aelig;ves er, at man logger ind nedenfor, downloader softwaren og f&oslash;lger installationsproceduren.<td><tr>
 
 <tr><td><h3>Brugernavn</h3></td></tr>
 <tr><td>Der gemmes ikke nogen former for personlig information. Der skal blot v&aelig;lges et brugernavn, som udelukkende bruges til at identificere individuelle bidragsydere, s&aring; man kan f&oslash;lge med i hvor mange jobs ens PC har afviklet mens den har v&aelig;ret i screen saver mode.<td></tr>
@@ -124,7 +124,7 @@ html['danish'] = \
 
 
 </table></form>
-"""
+""" % {'site':site}
 
 
 def main(client_id, user_arguments_dict):
@@ -133,7 +133,9 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False, op_menu=client_id)
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG Screen Saver Sandbox'})
+                          : '%s Screen Saver Sandbox' % \
+                            configuration.short_title
+                            })
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
@@ -152,7 +154,7 @@ def main(client_id, user_arguments_dict):
         # sys.exit(1)
 
     output_objects.append({'object_type': 'html_form', 'text'
-                          : html[language]})
+                          : html[language](configuration.short_title)})
     return (output_objects, returnvalues.OK)
 
 

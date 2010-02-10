@@ -127,7 +127,7 @@ def main(client_id, user_arguments_dict):
     mode = accepted['mode'][-1]
 
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG spell check'})
+                          : '%s spell check' % configuration.short_title })
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name

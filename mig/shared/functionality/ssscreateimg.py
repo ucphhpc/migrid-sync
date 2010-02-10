@@ -72,7 +72,8 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(op_header=False, op_menu=client_id)
 
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG Screen Saver Sandbox Download'})
+                          : '%s Screen Saver Sandbox Download' % \
+                            configuration.short_title })
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
@@ -136,8 +137,9 @@ def main(client_id, user_arguments_dict):
 
     resource_name = 'sandbox'
 
-    logger.info('''Generating MiG linux sandbox dist with hd size %s and mem
-%s for user %s from %s running OS %s ....''' % (hd_size, memory, username,
+    logger.info('''Generating %s linux sandbox dist with hd size %s and mem
+%s for user %s from %s running OS %s ....''' % (configuration.short_title,
+                                                hd_size, memory, username,
                                                 ip_address, operating_system))
 
     # Send a request for creating the resource
@@ -147,7 +149,8 @@ def main(client_id, user_arguments_dict):
                                                          logger)
     if create_status:
         output_objects.append({'object_type': 'text', 'text': msg})
-        logger.info('Created MiG sandbox resource request')
+        logger.info('Created %s sandbox resource request' % \
+                    configuration.short_title)
     else:
         output_objects.append({'object_type': 'error_text', 'text': msg})
         (remove_status, msg) = remove_resource(configuration.resource_home,

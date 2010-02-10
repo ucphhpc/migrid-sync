@@ -48,7 +48,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False, op_menu=client_id)
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG One-click resource'})
+                        : '%s One-click resource' % configuration.short_title
+                          })
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
@@ -78,6 +79,7 @@ def main(client_id, user_arguments_dict):
         'info_code': 'JavaInfoApplet.class',
         'info_archive': '',
         'server': configuration.migserver_https_sid_url,
+        'site' : configuration.short_title,
         }
 
     if debug:
@@ -110,7 +112,7 @@ cputime: %(cputime)s
         <param name='cputime' value='%(cputime)s'>
         </applet>
         <p>
-        Your computer will act as a MiG One-click resource as long as this browser
+        Your computer will act as a %(site)s One-click resource as long as this browser
         window/tab remains open.
         </p>
         <h3>Java requirements and background</h3>

@@ -178,8 +178,9 @@ def main(client_id, user_arguments_dict):
             # out of range? should not be possible due to is_subvgrid check
 
             output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Could not create needed dirs on MiG server!'
-                                   % exc})
+                                  : ('Could not create needed dirs on %s server! %s'
+                                     % (configuration.short_title, exc))})
+            logger.error('%s when looking for dir %s.' % (exc, dir1))
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # create symlink from users home directory to vgrid file directory

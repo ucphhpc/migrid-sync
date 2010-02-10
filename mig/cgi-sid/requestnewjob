@@ -146,9 +146,9 @@ if filehandle:
     except IOError, ioe:
 
         o.out('Could not get exclusive lock')
-        o.client('Your last job request for %s has been received on the MiG server. The job should be available shortly.'
-                  % exe)
-        o.client('If you recieve this message often, please increase the timeout for job requests.'
+        o.client('Your last job request for %s has been received on the %s server. The job should be available shortly.'
+                  % (exe, configuration.short_title))
+        o.client('If you receive this message often, please increase the timeout for job requests.'
                  )
         o.reply_and_exit(o.CLIENT_ERROR)
 else:
@@ -213,8 +213,8 @@ except:
 #    logger.warning("job request not issued from address of resource! (%s != %s)", remote_ip, resource_ip)
 
 if not is_resource(unique_resource_name, configuration.resource_home):
-    o.out('REQUESTNEWJOB error! Your unique_resource_name is not recognized as a MiG resource!'
-          )
+    o.out('REQUESTNEWJOB error! Your unique_resource_name is not recognized'+
+          ' as a %s resource!' % configuration.short_title)
     o.reply_and_exit(o.ERROR)
 
 (status, resource_conf) = \

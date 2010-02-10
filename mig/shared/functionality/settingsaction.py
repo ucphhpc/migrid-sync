@@ -51,7 +51,7 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False)
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG settings'})
+                          : '%s settings' % configuration.short_title })
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(

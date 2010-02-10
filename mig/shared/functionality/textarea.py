@@ -164,7 +164,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG submit job/file'})
+                          : '%s submit job/file' % configuration.short_title})
     submitstatuslist = []
     fileuploadobjs = []
     filenumber = 0

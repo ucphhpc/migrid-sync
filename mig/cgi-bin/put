@@ -40,7 +40,7 @@ import shared.confparser as confparser
 from shared.putfuncs import verify_results, migrated_job
 from shared.resadm import start_resource_exe_if_continuous
 from shared.refunctions import create_runtimeenv
-from shared.notification import notify_user_thread,\
+from shared.notification import notify_user_thread, \
      parse_im_relay, send_resource_create_request_mail, \
      send_instant_message
 from shared.cgishared import init_cgiscript_possibly_with_cert
@@ -156,11 +156,30 @@ if not client_id:
     except Exception, err:
         o.out('Could not write file %s: %s' % (dest_path, err))
 
+    # if this was an ARC job, we do not have a job file
+    joblink = configuration.webserver_home + sessionid + '.job'
+
     # If a .status file is uploaded, then the job has finished and
     # we will clean up and notify (mail or jabber) the job owner
 
     str_suffix = filename[len(filename) - 7:len(filename)]
-    if str_suffix == '.status':
+
+    # ARC jobs: no job file:
+    if not os.path.exists(joblink):
+        # we have no job script => ARC job returned a file 
+
+        logger.debug('Received file %s from ARC (session id %s)' \
+                      % (filename, sessionid))
+        
+        # An ARC job can have several, or no, output files, so we cannot
+        # depend on them to clean up. In addition, ARC expects a reply 
+        # for the upload before the job status is "FINISHED". 
+        # Job status is handled inside the timeout thread only, not here.
+
+        o.reply_and_exit(o.OK)
+
+    # normal jobs: clean up when *.status is uploaded
+    elif str_suffix == '.status':
         o.internal('.status file received|')
 
         # open .mRSL file containing all info about the job
@@ -235,7 +254,7 @@ if not client_id:
             # clean up removed during cvs update 04122006 by henrik
             # Clean up links etc before reply and exit
             # if not server_clean_up(sessionid, dict["LOCALJOBNAME"], True):
-            #    logger.error("could not clean up MiG server!")
+            #    logger.error("could not clean up the server!")
 
             if stat:
                 o.out('put empty job.status: Restart of resource if continuous: OK!'
@@ -346,16 +365,16 @@ elif is_user(client_id, configuration.user_home):
                     config_dict['HOSTURL'], pending_file, configuration)
             o.internal(msg)
             if not status:
-                o.client("""Failed to send an email to the MiG server administrator, your configuration was saved on the server in:
+                o.client("""Failed to send an email to the Grid server administrator, your configuration was saved on the server in:
 
 '"""
                           + pending_file
                           + """'
 
-Please contact the MiG server administrator.""")
+Please contact the server administrator.""")
                 o.reply_and_exit(o.CLIENT_ERROR)
             else:
-                o.client("Your creation request of the resource: '%s'\nhas been send to the MiG server administration and will be processed as soon as possible."
+                o.client("Your creation request of the resource: '%s'\nhas been send to the Grid server administration and will be processed as soon as possible."
                           % config_dict['HOSTURL'])
                 o.reply_and_exit(o.OK)
         else:

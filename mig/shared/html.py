@@ -32,29 +32,43 @@ import sys
 # Define all possible menu items
 menu_items = {}
 menu_items['dashboard'] = {'class': 'dashboard', 'url': 'dashboard.py',
-                           'title': 'Dashboard'}
+                           'title': 'Dashboard', 
+                           'hover': 'this is the overview page to start with'}
 menu_items['submitjob'] = {'class': 'submitjob', 'url': 'submitjob.py',
-                           'title': 'Submit Job'}
-menu_items['files'] = {'class': 'files', 'url': 'fileman.py', 'title': 'Files'}
-menu_items['jobs'] = {'class': 'jobs', 'url': 'jobman.py', 'title': 'Jobs'}
+                           'title': 'Submit Job',
+                           'hover': 'submit a job for execution on a resource'}
+menu_items['files'] = {'class': 'files', 'url': 'fileman.py', 'title': 'Files',
+                           'hover': 'view files and folders in your home directory'}
+menu_items['jobs'] = {'class': 'jobs', 'url': 'jobman.py', 'title': 'Job monitor', 
+                           'hover': 'view status of all your jobs'}
 menu_items['vgrids'] = {'class': 'vgrids', 'url': 'vgridadmin.py',
-                        'title': 'VGrids'}
+                        'title': 'VGrids',
+                           'hover': 'virtual organisations sharing some resources and files'}
 menu_items['resources'] = {'class': 'resources', 'url': 'resadmin.py',
-                           'title': 'Resources'}
+                           'title': 'Resources',
+                           'hover': 'Resources available in the system'}
 menu_items['downloads'] = {'class': 'downloads', 'url': 'downloads.py',
-                           'title': 'Downloads'}
+                           'title': 'Downloads',
+                           'hover': 'download scripts to work directly from your local machine'}
 menu_items['runtimeenvs'] = {'class': 'runtimeenvs', 'url': 'redb.py',
-                             'title': 'Runtime Envs'}
+                             'title': 'Runtime Envs', 
+                           'hover': 'runtime environments: software which can be made available'}
 menu_items['settings'] = {'class': 'settings', 'url': 'settings.py',
-                          'title': 'Settings'}
-menu_items['shell'] = {'class': 'shell', 'url': 'shell.py', 'title': 'Shell'}
+                          'title': 'Settings',
+                           'hover': 'your personal settings for these pages'}
+menu_items['shell'] = {'class': 'shell', 'url': 'shell.py', 'title': 'Shell', 
+                           'hover': 'a command line interface, based on javascript and xmlrpc'}
 menu_items['wshell'] = {'class': 'shell',
     'url': 'javascript:\
              window.open(\'shell.py?menu=no\',\'shellwindow\',\
              \'dependent=yes,menubar=no,status=no,toolbar=no,\
                height=650px,width=800px\');\
              window.reload();',
-    'title': 'Shell(popup)'}
+    'title': 'Shell',
+    'hover': 'a command line interface, based on javascript and xmlrpc. Opens in a new window'}
+menu_items['statistics'] = {'class': 'settings', 'url': 'showstats.py',
+                          'title': 'Statistics',
+                           'hover': 'usage overview for resources and users on this server'}
 
 
 def html_print(formatted_text, html=True):
