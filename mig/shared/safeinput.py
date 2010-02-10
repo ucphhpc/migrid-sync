@@ -31,7 +31,7 @@ without worrying about XSS vulnerabilities, etc.
 """
 
 import cgi
-from string import letters, digits
+from string import letters, digits, printable
 
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
@@ -125,6 +125,12 @@ def html_escape(contents):
     # mostly html (cgi) related
 
     return cgi.escape(contents)
+
+def valid_printable(contents, min_length=0, max_length=-1):
+    """Verify that supplied contents only contain ascii characters
+    (where "ascii characters" means printable ASCII, not just letters)"""
+
+    __valid_contents(contents, printable, min_length, max_length)
 
 def valid_ascii(contents, min_length=0, max_length=-1):
     """Verify that supplied contents only contain ascii characters"""
@@ -842,6 +848,20 @@ def guess_type(name):
         return valid_numeric
     elif name.lower().find('net_bw') != -1:
         return valid_numeric
+    # showstats.py:
+    # time_start/time_end: YYYY-MM
+    elif name.lower().find('time_') != -1:
+        # has to be a function with type (something convertible to string) -> Bool 
+        return lambda x:__valid_contents(x, "-" + digits)
+    # group_in_time: month,week,day,all
+    elif name.lower().find('group_in_time') != -1:
+        return lambda x:__valid_contents(x, "monthweekdayall")
+    # display: machine, user, summary
+    elif name.lower().find('display') != -1:
+        return lambda x:__valid_contents(x, "machineusersummary")
+    # autocreate.py: proxy_upload and proxy_uploadfilename, contain cert/key
+    elif name.lower().find('proxy_upload') != -1:
+        return valid_printable
     elif name.lower().find('menu') != -1:
         return lambda x:__valid_contents(x, "yesno")
     else:

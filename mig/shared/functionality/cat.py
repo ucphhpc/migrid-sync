@@ -112,6 +112,7 @@ def main(client_id, user_arguments_dict):
         for real_path in match:
             output_lines = []
             relative_path = real_path.replace(base_dir, '')
+            filename = 'unknown'
             try:
                 fd = open(real_path, 'r')
 
@@ -119,6 +120,7 @@ def main(client_id, user_arguments_dict):
 
                 for line in fd:
                     output_lines.append(line)
+
                 fd.close()
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
@@ -136,6 +138,15 @@ def main(client_id, user_arguments_dict):
                 entry['path'] = relative_path
             output_objects.append(entry)
 
+            # TODO: rip this hack out into real download handler?
+            # Force download of files when output_format == 'file_format'
+            # This will only work for the first file matching a glob when using file_format.
+            # And it is supposed to only work for one file.
+            if user_arguments_dict.has_key('output_format'):
+                output_format = user_arguments_dict['output_format'][0]
+                if output_format == 'file':
+                    output_objects.append({'object_type': 'start', 'headers': [('Content-Disposition', 'attachment; filename="%s";' % os.path.basename(real_path))] })
+            
     return (output_objects, status)
 
 
