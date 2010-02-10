@@ -148,6 +148,10 @@ def time_out_jobs(stop_event):
                                 logger, configuration)
 
                     elif job['UNIQUE_RESOURCE_NAME'] == 'ARC':
+                        if not configuration.arc_clusters:
+                            logger.error('ARC backend disabled - ignore %s' % \
+                                         job)
+                            continue
                         jobstatus = arc_job_status(job, configuration, logger)
 
                         # take action if the job is failed or killed. 
@@ -411,6 +415,10 @@ while True:
 
         # ARC jobs: directly submit, and put in executing_queue
         if dict_userjob['JOBTYPE'] == 'arc':
+            if not configuration.arc_clusters:
+                logger.error('ARC backend disabled - ignore %s' % \
+                             dict_userjob)
+                continue
             logger.debug('ARC Job' )
             (arc_id, session_id) = jobscriptgenerator.create_arc_job(\
                                     dict_userjob, configuration, logger)
@@ -1222,6 +1230,10 @@ while True:
                 ', but job is being executed by %s:%s, ignoring result.'\
                  % (job_dict['UNIQUE_RESOURCE_NAME'], job_dict['EXE'])
         elif job_dict['UNIQUE_RESOURCE_NAME'] == 'ARC':
+            if not configuration.arc_clusters:
+                logger.error('ARC backend disabled - ignore %s' % \
+                             job_dict)
+                continue
             msg += (', which is an ARC job (ID %s).' % job_dict['EXE'])
 
             # remove from the executing queue
@@ -1358,7 +1370,10 @@ while True:
 
             # special treatment of ARC jobs: delete two links and cancel job in ARC
             if unique_resource_name == 'ARC':
-
+                if not configuration.arc_clusters:
+                    logger.error('ARC backend disabled - ignore %s' % \
+                                 job_dict)
+                    continue
 
                 # remove from the executing queue
                 executing_queue.dequeue_job_by_id(job_id)
@@ -1437,6 +1452,10 @@ while True:
         # special treatment of ARC jobs: delete two links and 
         # clean job in ARC system, do not retry.
         if job_dict and unique_resource_name == 'ARC':
+            if not configuration.arc_clusters:
+                logger.error('ARC backend disabled - ignore %s' % \
+                             job_dict)
+                continue
 
             # remove from the executing queue
             executing_queue.dequeue_job_by_id(jobid)

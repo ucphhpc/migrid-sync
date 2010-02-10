@@ -400,6 +400,8 @@ def create_arc_job(
     Returns message (ARC job ID if no error) and sessionid (None if error)
     """
 
+    if not configuration.arc_clusters:
+        return ('No ARC support!', None)
     if not job['JOBTYPE'] == 'arc':
         return ('Error. This is not an ARC job', None)
     

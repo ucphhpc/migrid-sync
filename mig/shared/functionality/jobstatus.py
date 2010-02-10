@@ -40,7 +40,11 @@ from shared.parseflags import verbose, sorted
 from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 
-import shared.arcwrapper as arc
+try:
+    import shared.arcwrapper as arc
+except Exception, exc:
+    # Ignore errors and let it crash if ARC is enabled without the lib
+    pass
 
 def signature():
     """Signature of the main function"""
@@ -249,11 +253,11 @@ def main(client_id, user_arguments_dict):
         # But we should _not_ update the status in the mRSL files, since 
         # other MiG code might rely on finding only valid "MiG" states.
         
-        if 'UNIQUE_RESOURCE_NAME' in job_dict \
-            and job_dict['UNIQUE_RESOURCE_NAME'] == 'ARC' \
-            and job_dict['STATUS'] == 'EXECUTING':
+        if configuration.arc_clusters and \
+               job_dict.get('UNIQUE_RESOURCE_NAME', 'unset') == 'ARC' \
+               and job_dict['STATUS'] == 'EXECUTING':
             try:
-                home = os.path.join(configuration.user_home,client_dir)
+                home = os.path.join(configuration.user_home, client_dir)
                 arcsession = arc.Ui(home)
                 arcstatus = arcsession.jobStatus(job_dict['EXE'])
                 job_obj['status'] = arcstatus['status']

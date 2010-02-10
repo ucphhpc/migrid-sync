@@ -44,8 +44,12 @@ from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 from shared.useradm import db_name, distinguished_name_to_user, \
      create_user, fill_user, client_id_dir
-import shared.arcwrapper as arc
 from shared.fileio import write_file
+try:
+    import shared.arcwrapper as arc
+except Exception, exc:
+    # Ignore errors and let it crash if ARC is enabled without the lib
+    pass
 
 def signature():
     """Signature of the main function"""
@@ -75,6 +79,11 @@ def handle_proxy(proxy_string, client_id, config):
     client_dir = client_id_dir(client_id)
     dir = os.path.join(config.user_home,client_dir)
     path = os.path.join(config.user_home,client_dir, arc.Ui.proxy_name)
+
+    if not config.arc_clusters:
+        output.append({'object_type': 'error_text', 'text':
+                       'No ARC support!'})
+        return output
 
     # store the file
     try:

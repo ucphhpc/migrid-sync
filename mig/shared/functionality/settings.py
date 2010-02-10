@@ -35,7 +35,11 @@ from shared.settingskeywords import get_keywords_dict
 from shared.useradm import client_id_dir, mrsl_template, css_template, \
     get_default_mrsl, get_default_css
 
-import shared.arcwrapper as arc
+try:
+    import shared.arcwrapper as arc
+except Exception, exc:
+    # Ignore errors and let it crash if ARC is enabled without the lib
+    pass
 
 def signature():
     """Signature of the main function"""
@@ -231,33 +235,32 @@ Please note that you can not save an empty style file, but must at least leave a
 
     output_objects.append({'object_type': 'html_form', 'text': html})
 
-
     # if ARC-enabled server:
-    # provide information about the available proxy, offer upload
-    try:
-        dir = os.path.join(configuration.user_home,client_dir)
-        session_Ui = arc.Ui(dir)
-        proxy = session_Ui.getProxy()
-        if proxy.IsExpired():
-            # can rarely happen, constructor will throw exception
-            output_objects.append({'object_type': 'text', 
-                               'text': 'Proxy certificate is expired.'})
-        else:
-            output_objects.append({'object_type': 'text', 
-                                   'text': 'Proxy for %s' \
-                                           % proxy.GetIdentitySN()})
-            output_objects.append(\
-                {'object_type': 'text', 
-                 'text': 'Proxy certificate will expire on %s (in %s sec.)' \
-                         % (proxy.Expires(), proxy.getTimeleft())
-                })
-    except arc.NoProxyError, err:
-        
-        output_objects.append({'object_type':'warning',
-                               'text': 'No proxy certificate to load: %s' \
-                                       % err.what()})
+    if configuration.arc_clusters:
+        # provide information about the available proxy, offer upload
+        try:
+            home_dir = os.path.join(configuration.user_home, client_dir)
+            session_Ui = arc.Ui(home_dir)
+            proxy = session_Ui.getProxy()
+            if proxy.IsExpired():
+                # can rarely happen, constructor will throw exception
+                output_objects.append({'object_type': 'text', 
+                                       'text': 'Proxy certificate is expired.'})
+            else:
+                output_objects.append({'object_type': 'text', 
+                                       'text': 'Proxy for %s' \
+                                       % proxy.GetIdentitySN()})
+                output_objects.append(
+                    {'object_type': 'text', 
+                     'text': 'Proxy certificate will expire on %s (in %s sec.)' \
+                     % (proxy.Expires(), proxy.getTimeleft())
+                     })
+        except arc.NoProxyError, err:
+            output_objects.append({'object_type':'warning',
+                                   'text': 'No proxy certificate to load: %s' \
+                                   % err.what()})
     
-    output_objects = output_objects + arc.askProxy()
+        output_objects = output_objects + arc.askProxy()
     
     return (output_objects, returnvalues.OK)
 

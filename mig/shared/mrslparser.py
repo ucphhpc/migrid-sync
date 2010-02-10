@@ -39,6 +39,7 @@ from shared.vgrid import user_allowed_vgrids, any_vgrid, default_vgrid
 try:
     import shared.arcwrapper as arc
 except:
+    # Ignore errors and let it crash if ARC is enabled without the lib
     pass
 
 def parse(
@@ -123,6 +124,8 @@ def parse(
     # do not check REs if the job is for ARC (submission will fail later) 
     if global_dict.get('JOBTYPE', 'unset') != 'arc' \
         and global_dict.has_key('RUNTIMEENVIRONMENT'):
+        if not configuration.arc_clusters:
+            return (False, 'No ARC support!')
         re_entries_uppercase = []
         for specified_re in global_dict['RUNTIMEENVIRONMENT']:
             specified_re = specified_re.upper()
@@ -208,6 +211,9 @@ def parse(
     # and lifetime. grid_script will submit the job directly.
     
     if replaced_dict.get('JOBTYPE', 'unset') == 'arc':
+        if not configuration.arc_clusters:
+            return (False, 'No ARC support!')
+            
         logger.debug('Received job for ARC.')
         user_home = os.path.join(configuration.user_home, client_dir)
         try:

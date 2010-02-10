@@ -33,8 +33,12 @@ import time
 import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
-import shared.arcwrapper as arc
 from shared.useradm import client_id_dir
+try:
+    import shared.arcwrapper as arc
+except Exception, exc:
+    # Ignore errors and let it crash if ARC is enabled without the lib
+    pass
 
 def signature():
     """Signature of the main function"""
@@ -111,6 +115,10 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = 'ARC Queues'
     output_objects.append({'object_type': 'header', 'text'
                           : 'ARC Resources available'})
+    if not configuration.arc_clusters:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'No ARC support!'})
+        return (output_objects, returnvalues.ERROR)
     try:
         session = arc.Ui(user_dir)
         queues = session.getQueues()
@@ -141,5 +149,5 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'html_form', 'text' 
                                : display_arc_queue(q) })
 
-    return ( output_objects, returnvalues.OK )
+    return (output_objects, returnvalues.OK)
 

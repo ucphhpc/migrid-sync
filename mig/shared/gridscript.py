@@ -518,8 +518,8 @@ def clean_arc_job(
                      (status, job_dict))
         return
 
-# done by the caller...
-#    executing_queue.dequeue_job_by_id(job_dict['JOB_ID'])
+    # done by the caller...
+    # executing_queue.dequeue_job_by_id(job_dict['JOB_ID'])
 
     if not timestamp:
         timestamp = time.gmtime()
@@ -541,7 +541,7 @@ def clean_arc_job(
         else:
             arcsession.clean(job_dict['EXE'])
 
-# Clean up associated server files of the job
+    # Clean up associated server files of the job
 
     if 'SESSIONID' in job_dict:
         sessionid = job_dict['SESSIONID']
