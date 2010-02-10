@@ -42,12 +42,12 @@ def signature():
 
 
 html = {}
-html['maintenance'] = lambda site : \
+html['maintenance'] = \
     """
 Sorry we are currently down for maintenance, we'll be back shortly
 """
 
-html['english'] = lambda site : \
+html['english'] = \
     """
 <form action='sssadmin.py' method='post'>
 
@@ -83,9 +83,9 @@ html['english'] = lambda site : \
 
 
 </table></form>
-""" % {'site':site}
+"""
 
-html['danish'] = lambda site : \
+html['danish'] = \
     """
 <form action='sssadmin.py' method='post'>
 
@@ -124,7 +124,7 @@ html['danish'] = lambda site : \
 
 
 </table></form>
-""" % {'site':site}
+"""
 
 
 def main(client_id, user_arguments_dict):
@@ -154,7 +154,8 @@ def main(client_id, user_arguments_dict):
         # sys.exit(1)
 
     output_objects.append({'object_type': 'html_form', 'text'
-                          : html[language](configuration.short_title)})
+                           : html[language] % \
+                           {'site': configuration.short_title}})
     return (output_objects, returnvalues.OK)
 
 
