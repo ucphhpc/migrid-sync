@@ -44,7 +44,8 @@ block_size = 1024 * 1024
 def signature():
     """Signature of the main function"""
 
-    defaults = {'path': REJECT_UNSET, 'fileupload': REJECT_UNSET}
+    defaults = {'path': REJECT_UNSET, 'fileupload': REJECT_UNSET, 
+                'restrict':False}
     return ['html_form', defaults]
 
 
@@ -77,6 +78,8 @@ def main(client_id, user_arguments_dict):
         user_arguments_dict['path'] = [file_name]
     if form.has_key('path'):
         user_arguments_dict['path'] = [form['path'].value]
+    if form.has_key('restrict'):
+        user_arguments_dict['restrict'] = [form['restrict'].value]
     logger.info('Filtered input is: %s' % user_arguments_dict)
 
     # Now validate parts as usual
@@ -93,6 +96,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     path = accepted['path'][-1]
+    restrict = accepted['restrict'][-1]
 
     logger.info('Filtered input validated with result: %s' % accepted)
 
@@ -163,6 +167,9 @@ def main(client_id, user_arguments_dict):
             upload_fd.write(chunk)
         upload_fd.close()
         logger.info('Wrote %s' % real_path)
+
+        if restrict:
+            os.chmod(real_path, 0600)
 
         # everything ok
 
