@@ -188,4 +188,22 @@ def touch(filepath, timestamp=None):
         print "could not touch file: '%s', Error: %s" % (filepath, err)
         return False
 
-
+def disk_stats(top_dir, follow_links=False):
+    """Count the files and directories under top_dir and return a dictionary
+    with file count, dir count and used space.
+    If follow_links is set links will be followed.
+    """
+    # TODO: consider caching
+    stats = {'files': 0, 'directories': 0, 'bytes': 0}
+    for (root, dirs, files) in os.walk(top_dir):
+        stats['files'] += len(files)
+        stats['directories'] += len(dirs)
+        for name in files + dirs:
+            path = os.path.join(root, name)
+            if follow_links or not os.path.islink(path):
+                stats['bytes'] += os.path.getsize(path)
+    stats['kilobytes'] = stats['bytes'] / 1024.0
+    stats['megabytes'] = stats['kilobytes'] / 1024.0
+    stats['gigabytes'] = stats['megabytes'] / 1024.0
+    stats['terabytes'] = stats['gigabytes'] / 1024.0
+    return stats
