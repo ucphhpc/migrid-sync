@@ -124,8 +124,6 @@ def parse(
     # do not check REs if the job is for ARC (submission will fail later) 
     if global_dict.get('JOBTYPE', 'unset') != 'arc' \
         and global_dict.has_key('RUNTIMEENVIRONMENT'):
-        if not configuration.arc_clusters:
-            return (False, 'No ARC support!')
         re_entries_uppercase = []
         for specified_re in global_dict['RUNTIMEENVIRONMENT']:
             specified_re = specified_re.upper()
