@@ -35,9 +35,11 @@ from shared.init import initialize_main_variables, find_entry
 from shared.mrslkeywords import get_job_specs
 from shared.parser import parse_lines
 from shared.refunctions import list_runtime_environments
+from shared.resource import anon_resource_id
 from shared.settings import load_settings
 from shared.useradm import mrsl_template, get_default_mrsl, client_id_dir
 from shared.vgrid import user_allowed_vgrids
+from shared.vgridaccess import user_allowed_resources
 
 
 def signature():
@@ -68,14 +70,6 @@ def available_choices(configuration, client_id, field, spec):
     if default in choices:
         choices = [default] + [i for i in choices if not default == i]
     return choices
-
-
-def user_allowed_resources(configuration, client_id, allowed_vgrids):
-    """Extract a list of recently seen resources that client_id can submit to.
-    There is no guarantee that thay will ever accept any further jobs.
-    """
-    # TODO: generate real list from gridstat or similar
-    return []
 
 
 def main(client_id, user_arguments_dict):
@@ -114,9 +108,11 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <div class='smallcontent'>
-Job descriptions can use a wide range of keywords to specify job requirements and actions.<br />
+Job descriptions can use a wide range of keywords to specify job requirements
+and actions.<br />
 Each keyword accepts one or more values of a particular type.<br />
-The full list of keywords with their default values and format is available in the on-demand <a href='docs.py?show=job'>mRSL Documentation</a>.
+The full list of keywords with their default values and format is available in
+the on-demand <a href='docs.py?show=job'>mRSL Documentation</a>.
 <p>
 Actual examples for inspiration:
 <a href=/cpuinfo.mRSL>CPU Info</a>,
@@ -160,7 +156,11 @@ Actual examples for inspiration:
         (re_status, allowed_run_envs) = list_runtime_environments(configuration)
         allowed_run_envs.sort()
         configuration.runtimeenvironments = allowed_run_envs
-        allowed_resources = user_allowed_resources(configuration, client_id, allowed_vgrids)
+        user_res = user_allowed_resources(configuration, client_id)
+
+        # Allow any exe unit on all allowed resources and anonymize to match monitor
+        
+        allowed_resources = [anon_resource_id('%s_*' % res) for res in user_res]
         allowed_resources.sort()
         configuration.resources = allowed_resources
         field_size = 30

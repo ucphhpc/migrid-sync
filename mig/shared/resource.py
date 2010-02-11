@@ -834,6 +834,22 @@ def write_resource_config(configuration, resource_conf, conf_path):
 
     return lines
 
+def list_resources(resource_home):
+    """Return a list of all resources"""
+    resources = []
+    children = os.listdir(resource_home)
+    for name in children:
+        path = os.path.join(resource_home, name)
+
+        # skip all files and dot dirs - they are _not_ resources
+        
+        if not os.path.isdir(path):
+            continue
+        if path.find(os.sep + '.') != -1:
+            continue
+        resources.append(name)
+    return resources
+
 def create_resource(
     resource_name,
     client_id,
@@ -844,7 +860,7 @@ def create_resource(
 
     status = True
 
-    names = os.listdir(resource_home)
+    names = list_resources(resource_home)
 
     # This is a bit dangerous, but if all administrators use this script to
     # create resources it should not be a problem.
@@ -1011,5 +1027,3 @@ Failure:
 
     msg += '\nNew configfile successfully applied.'
     return (True, msg)
-
-

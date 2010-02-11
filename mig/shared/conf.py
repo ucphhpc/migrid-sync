@@ -101,6 +101,20 @@ def get_all_exe_names(unique_resource_name):
     return [exe['name'] for exe in exe_units]
 
 
+def get_all_exe_vgrids(unique_resource_name):
+    """Return a dictionary mapping exe names to assigned vgrids"""
+    exe_vgrids = {}
+    conf = get_configuration_object()
+    (status, resource_config) = \
+        get_resource_configuration(conf.resource_home,
+                                   unique_resource_name, conf.logger)
+    if not status:
+        return exe_vgrids
+    exe_units = resource_config.get('EXECONFIG', [])
+    exe_vgrids = dict([(exe['name'], exe['vgrid']) for exe in exe_units])
+    return exe_vgrids
+
+
 def get_resource_store(resource_config, store_name, logger):
     for store in resource_config['STORECONFIG']:
 
@@ -138,3 +152,15 @@ def get_all_store_names(unique_resource_name):
     return [store['name'] for store in store_units]
 
 
+def get_all_store_vgrids(unique_resource_name):
+    """Return a dictionary mapping store names to assigned vgrids"""
+    store_vgrids = {}
+    conf = get_configuration_object()
+    (status, resource_config) = \
+        get_resource_configuration(conf.resource_home,
+                                   unique_resource_name, conf.logger)
+    if not status:
+        return store_vgrids
+    store_units = resource_config.get('STORECONFIG', [])
+    store_vgrids = dict([(store['name'], store['vgrid']) for store in store_units])
+    return store_vgrids

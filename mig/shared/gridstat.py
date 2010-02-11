@@ -302,7 +302,7 @@ class GridStat:
 
             used_walltime = finished_datetime - starting_datetime
 
-            # Vgrid stats
+            # VGrid stats
 
             self.__add(self.VGRID, job_vgrid_name, 'FINISHED', 1)
             self.__add(self.VGRID, job_vgrid_name, 'NODECOUNT_DONE',
@@ -328,7 +328,7 @@ class GridStat:
             self.__add_resource(unique_resource_name, resource_id,
                                 'USED_WALLTIME', used_walltime)
 
-            # Re stats
+            # RE stats
 
             for runtime_env in job_dict['RUNTIMEENVIRONMENT']:
                 self.__addre(self.VGRID, job_vgrid_name, runtime_env, 1)
@@ -414,8 +414,8 @@ class GridStat:
         # Get timestamp for last build and create timestamp for this
         # build.
         # This is done here to avoid races in the cache
-        # between mRSL files that is beeing modified while cache is
-        # beeing build.
+        # between mRSL files that are being modified while cache is
+        # being build.
 
         last_buildtime = 0
         if os.path.exists(buildtimestamp_file):
@@ -477,5 +477,3 @@ class GridStat:
             return False
 
         return True
-
-
