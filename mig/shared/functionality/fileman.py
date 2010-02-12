@@ -296,14 +296,22 @@ def main(client_id, user_arguments_dict):
   
   status = returnvalues.OK
 
-  # TODO: multi path support?
-  entry_path = accepted['path'][-1]
+  all_paths = accepted['path']
+  entry_path = all_paths[-1]
   title_entry = find_entry(output_objects, 'title')
   title_entry['text'] = 'File Manager'
   title_entry['javascript'] = js_tmpl(entry_path)        
   
   output_objects.append({'object_type': 'header', 'text': 'File Manager' })
-  
+
   output_objects.append({'object_type': 'html_form', 'text': html_tmpl()})
+
+  if len(all_paths) > 1:
+    output_objects.append({'object_type': 'sectionheader', 'text':
+                           'All requested paths:'})
+    for path in all_paths:
+      output_objects.append({'object_type': 'link', 'text': path,
+                             'destination': 'fileman.py?path=%s' % path})
+      output_objects.append({'object_type': 'text', 'text': ''})
       
   return (output_objects, status)
