@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# showre - [insert a few words of module description on this line]
+# showre - Display a runtime environment
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-""" Get info about a runtime environtment """
+"""Get info about a runtime environtment"""
 
 import time
 import base64

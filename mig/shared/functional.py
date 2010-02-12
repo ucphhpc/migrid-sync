@@ -36,7 +36,7 @@ import os
 # REJECT_UNSET is not used directly but exposed to functionality
 
 from shared.safeinput import validated_input, valid_user_path, \
-     REJECT_UNSET
+     html_escape, REJECT_UNSET
 from shared.findtype import is_user
 
 
@@ -98,7 +98,7 @@ def validate_input_and_cert(
     if not client_id:
         cert_error = "Invalid or missing user certificate"
     elif require_user and not is_user(client_id, configuration.user_home):
-        cert_error = "No such user (distinguished name)"
+        cert_error = "No such user (%s)" % html_escape(client_id)
 
     if cert_error:
         output_objects.append({'object_type': 'error_text', 'text'

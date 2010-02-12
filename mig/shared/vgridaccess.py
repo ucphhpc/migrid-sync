@@ -27,11 +27,57 @@
 
 """User access to VGrids"""
 
+import os
+import fcntl
 
 from shared.conf import get_all_exe_vgrids
 from shared.resource import list_resources
+from shared.serial import load, dump
 from shared.vgrid import user_allowed_vgrids, vgrid_match_resources
 
+
+def refresh_vgrid_map(configuration):
+    """Refresh map of resources and their vgrid participation. Uses a pickled
+    dictionary for efficiency. 
+    Only update map for resources that updated conf after last map save.
+    """
+    dirty = False
+    map_path = os.path.join(configuration.resource_home, "vgrid.map")
+    lock_path = os.path.join(configuration.resource_home, "vgrid.lock")
+    lock_handle = open(lock_path, 'a')
+
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+
+    try:
+        vgrid_map = load(map_path)
+        map_stamp = os.path.getmtime(map_path)
+    except IOError:
+        configuration.logger.warn("No vgrid map to load - ok first time")
+        vgrid_map = {}
+        map_stamp = -1
+    
+    all_resources = list_resources(configuration.resource_home)
+    for res in all_resources:
+        conf_path = os.path.join(configuration.resource_home, res, "config")
+        if not os.path.isfile(conf_path):
+            continue
+        if os.path.getmtime(conf_path) >= map_stamp:
+            vgrid_map[res] = get_all_exe_vgrids(res)
+            total = []
+            for exe_vgrids in vgrid_map[res].values():
+                total += exe_vgrids
+            vgrid_map[res]['all_exes'] = total
+            dirty = True
+
+    if dirty:
+        try:
+            dump(vgrid_map, map_path)
+        except Exception, exc:
+            configuration.logger.error("Could not save vgrid map: %s" % exc)
+
+    lock_handle.close()
+    
+    return vgrid_map
 
 def user_allowed_resources(configuration, client_id):
     """Extract a list of resources that client_id can submit to.
@@ -47,25 +93,28 @@ def user_allowed_resources(configuration, client_id):
 
     # Find all potential resources from vgrid sign up
 
-    # TODO: add caching to this expensive vgrid map lookup
-    # Save map to pickle and only update entries if resource config
-    # timestamp changed since pickle timestamp
-
-    all_resources = list_resources(configuration.resource_home)
-    for res in all_resources:
-        vgrid_map[res] = get_all_exe_vgrids(res)
-        total = []
-        for exe_vgrids in vgrid_map[res].values():
-            total += exe_vgrids
-        vgrid_map[res]['all_exes'] = total
-
+    vgrid_map = refresh_vgrid_map(configuration)
+    
     # Now select only the ones that actually still are allowed for that vgrid
 
     for vgrid in allowed_vgrids:
-        match = vgrid_match_resources(vgrid, all_resources, configuration)
+        match = vgrid_match_resources(vgrid, vgrid_map.keys(), configuration)
         for res in match:
             if res in allowed:
                 continue
             if vgrid in vgrid_map[res]['all_exes']:
                 allowed.append(res)
     return allowed
+
+if "__main__" == __name__:
+    from shared.conf import get_configuration_object
+    conf = get_configuration_object()
+    all_vgrids = refresh_vgrid_map(conf)
+    print "raw vgrid map: %s" % all_vgrids
+    all_resources = all_vgrids.keys()
+    print "all resources: %s" % ', '.join(all_resources)
+    generic_match = vgrid_match_resources('Generic', all_resources, conf)
+    print "Resources in Generic: %s" % ', '.join(generic_match)
+    anybody_access = user_allowed_resources(conf, 'anybody')
+    print "Anybody can access: %s" % ', '.join(anybody_access)
+    

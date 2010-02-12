@@ -73,8 +73,7 @@ def main(client_id, user_arguments_dict):
         userdb = load_sandbox_db(configuration)
     except Exception, exc:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not read file with sandbox info! (%s)'
-                               % exc})
+                              : 'Could not load any sandbox information'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Load statistics objects

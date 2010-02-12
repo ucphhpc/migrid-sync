@@ -258,26 +258,18 @@ def vgrid_list(vgrid_name, group, configuration):
     return (True, output)
 
 
-def vgrid_match_list(vgrid_name, clients, group, configuration):
-    """Helper function to match all the client entries that match the group
-    entities in vgrid.
-    Can be used to filter out the resources that are allowed in a vgrid.
-    """
-
-    match = []
-    for entry in clients:
-        if entry in match:
-            continue
-        if vgrid_is_cert_in_list(vgrid_name, entry, group, configuration):
-            match.append(entry)
-    return match
-
 def vgrid_match_resources(vgrid_name, resources, configuration):
-    """Return a list of resources filtered to only those  allowed in
+    """Return a list of resources filtered to only those allowed in
     the provided vgrid.
     """
 
-    return vgrid_match_list(vgrid_name, resources, "resources", configuration)
+    match = []
+    for entry in resources:
+        if entry in match:
+            continue
+        if vgrid_is_resource(vgrid_name, entry, configuration):
+            match.append(entry)
+    return match
     
 
 def job_fits_res_vgrid(job_vgrid_list, res_vgrid_list):

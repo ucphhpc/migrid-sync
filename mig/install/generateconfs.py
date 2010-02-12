@@ -266,9 +266,10 @@ On other distro and apache combinations you will likely want to rely on the auto
 cp %(destination)s/MiG.conf %(apache_etc)s/conf.d/
 
 You may also want to consider copying the generated apache2.conf,
-httpd.conf and envvars to %(apache_etc)s/:
+httpd.conf, ports.conf and envvars to %(apache_etc)s/:
 cp %(destination)s/apache2.conf %(apache_etc)s/
 cp %(destination)s/httpd.conf %(apache_etc)s/
+cp %(destination)s/ports.conf %(apache_etc)s/
 cp %(destination)s/envvars %(apache_etc)s/
 
 On a MiG developer server the dedicated apache init script is added with:

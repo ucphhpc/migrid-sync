@@ -37,6 +37,7 @@ from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables
 from shared.fileio import disk_stats
 from shared.useradm import client_id_dir
+from shared.vgridaccess import user_allowed_resources
 
 
 def signature():
@@ -138,6 +139,11 @@ can ease file and job handling or even completely redecorate your interface.
 You have submitted a total of %d jobs.
 """ % job_count
     output_objects.append({'object_type': 'text', 'text': job_info})
+    resource_count = len(user_allowed_resources(configuration, client_id))
+    resource_info = """
+%d resources allow execution of your jobs.
+""" % resource_count
+    output_objects.append({'object_type': 'text', 'text': resource_info})
     disk_used = disk_stats(base_dir)
     disk_info = """
 Your %(files)d files and %(directories)d directories take up %(megabytes).1f MB in total.

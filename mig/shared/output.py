@@ -826,15 +826,14 @@ Exit code: %s Description: %s<br />
             for environment in i['environments']:
                 environment_html += \
                     '<table class="runtimeenvvars" frame=hsides rules=none cellpadding=5>'
-                environment_html += '<tr><td>Name:</td><td>%s</td></tr>'\
-                     % environment['name']
                 environment_html += \
-                    '<tr><td>Example::</td><td>%s</td></tr>'\
-                     % environment['example']
+                                 '<tr><td>Name:</td><td>%(name)s (use with $%(name)s)</td></tr>'
                 environment_html += \
-                    '<tr><td>Description:</td><td>%s</td></tr>'\
-                     % environment['description']
+                    '<tr><td>Example::</td><td>%(example)s</td></tr>'
+                environment_html += \
+                    '<tr><td>Description:</td><td>%(description)s</td></tr>'
                 environment_html += '</table>'
+                environment_html = environment_html % environment
 
             lines.append('<table class="runtimeenvdetails">')
             lines.append('<tr><td>Name</td><td>%s</td></tr>' % i['name'
