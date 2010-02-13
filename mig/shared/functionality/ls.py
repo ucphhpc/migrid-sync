@@ -193,12 +193,14 @@ def handle_file(
         # Always hide .htaccess
 
         return
+    special = ''
     file_obj = {
         'object_type': 'direntry',
         'type': 'file',
         'name': filename,
         'file_with_dir': file_with_dir,
         'flags': flags,
+        'special': special,
         }
 
     if long_list(flags):
@@ -219,12 +221,16 @@ def handle_dir(
     ):
     """handle a dir"""
 
+    special = ''
+    if os.path.islink(actual_dir):
+        special = ' - VGrid shared directory'
     dir_obj = {
         'object_type': 'direntry',
         'type': 'directory',
         'name': dirname,
         'dirname_with_dir': dirname_with_dir,
         'flags': flags,
+        'special': special,
         }
 
     if long_list(flags):

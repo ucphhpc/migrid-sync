@@ -53,14 +53,14 @@ if (jQuery) (function($){
 		}
 
 		// Trigger the click-event twice for obtaining the original state (collapse+expand).
-		$('.fm_folders li [title='+reloadPath+']').click();
-		$('.fm_folders li [title='+reloadPath+']').click();
+		$('.fm_folders li [rel_path='+reloadPath+']').click();
+		$('.fm_folders li [rel_path='+reloadPath+']').click();
 
 	}
 	
   $.fn.filemanager = function(user_options) {
 	
-		var pathAttribute = 'title';
+		var pathAttribute = 'rel_path';
 		var clipboard = new Array({'is_dir':false, 'path':''});
 		
 		// Note: max-height is broken on autoHeight this is noted as a bug:
@@ -251,7 +251,7 @@ if (jQuery) (function($){
 				for(var i=1; name_taken; i++) {
 					name_taken = false;
 					$('#fm_filelisting tbody tr').each(function(item) {
-						if ( $(this).attr('title') == $(el).attr(pathAttribute)+'new_empty_file'+'-'+i ) {
+						if ( $(this).attr('rel_path') == $(el).attr(pathAttribute)+'new_empty_file'+'-'+i ) {
 							name_taken = true;							
 						} else {
 							new_file_name = $(el).attr(pathAttribute)+'new_empty_file'+'-'+i;
@@ -431,7 +431,7 @@ if (jQuery) (function($){
 					// Root node					
 					if (t=='/') {
 						folders +=	'<ul class="jqueryFileTree">'+
-												'<li class="directory collapsed" title=""><div>/</div>';
+												'<li class="directory collapsed" rel_path="" title=""><div>/</div>';
 					}
 					
 					// Regular nodes from here on after
@@ -443,6 +443,8 @@ if (jQuery) (function($){
           var file_count = 0.0;          
           var is_dir = false;
           var base_css_style = 'file';
+          var entry_title = '';
+
 					var dir_prefix = '';
 					var path = '';
           
@@ -467,11 +469,12 @@ if (jQuery) (function($){
 							path = t+path;	
 						}
 						
+            entry_title = path + ' ' + listing[i]['special']
             if (is_dir) {
               base_css_style = 'directory';
 
 							path += '/';
-							folders +=  '<li class="'+base_css_style+' collapsed" title="'+path+'	"><div>'
+							folders +=  '<li class="'+base_css_style+' collapsed" rel_path="'+path+'" title="'+entry_title+'"><div>'
                           + listing[i]['name']
 													+'</div></li>\n';
 							dir_prefix = '##';
@@ -486,7 +489,7 @@ if (jQuery) (function($){
 						
 						$('table tbody').html = '';						
 						$('table tbody').append($('<tr></tr>')
-													.attr('title', path)
+													.attr('rel_path', path)
 													.addClass(base_css_style)
 													.addClass('ext_'+listing[i]['ext'])
 													.dblclick( function() { doubleClickEvent(this); } )
@@ -542,9 +545,9 @@ if (jQuery) (function($){
 					if (spacerHeight < 0) {
 						spacerHeight = $(".fm_files").height() - $("#fm_filelisting").height()-20;
 						if (t != '/') { // Do not prepend the fake-root.
-							$('.fm_files').append('<div class="filespacer" style="height: '+spacerHeight+'px ;" title="'+t+'"></div>');
+							$('.fm_files').append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path="'+t+'" title="'+t+'"+></div>');
 						} else {
-							$('.fm_files').append('<div class="filespacer" style="height: '+spacerHeight+'px ;" title=""></div>');	
+							$('.fm_files').append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path="" title=""></div>');	
 						}
 						
 						$("div.filespacer").contextMenu({ menu: 'folder_context'},
@@ -573,7 +576,7 @@ if (jQuery) (function($){
 																														  distance: 5,
 																															helper: function(event) {
 																																				return $('<div style="display: block;">&nbsp;</div>')
-																																							.attr('title', $(this).attr('title'))
+																																							.attr('rel_path', $(this).attr('rel_path'))
 																																							.attr('class', $(this).attr('class'))
 																																							.css('width', '20px');
 																																			}
@@ -585,7 +588,7 @@ if (jQuery) (function($){
 						drop: function(event, ui) {
 							clipboard['is_dir'] = $(ui.helper).hasClass('directory');
 							clipboard['path']		= $(ui.helper).attr(pathAttribute);
-							copy($(ui.helper).attr('title'), $(this).attr('title'));
+							copy($(ui.helper).attr('rel_path'), $(this).attr('rel_path'));
 						}
 					});	
           										
@@ -626,7 +629,7 @@ if (jQuery) (function($){
 					}
 					if (descend) {
 						options.subPath = options.subPath.slice(first_child.length+1);						
-						$('.fm_folders li [title='+current_dir.slice(1)+first_child+'/]').click();						
+						$('.fm_folders li [rel_path='+current_dir.slice(1)+first_child+'/]').click();						
 					}
 					
         });
@@ -646,7 +649,7 @@ if (jQuery) (function($){
 								}
 								$(this).find('UL').remove(); // cleanup
 								// Go deeper
-								showBranch( $(this), $(this).attr('title') );
+								showBranch( $(this), $(this).attr('rel_path') );
 								$(this).removeClass('collapsed').addClass('expanded');
 							} else {
 								// Collapse
@@ -654,7 +657,7 @@ if (jQuery) (function($){
 								$(this).removeClass('expanded').addClass('collapsed');
 							}
 						} else {
-							$(this).attr('title');
+							$(this).attr('rel_path');
 						}
 						return false;
 					}

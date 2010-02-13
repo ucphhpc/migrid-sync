@@ -48,7 +48,7 @@ def html_tmpl():
 
   html = '''
   <div id="debug"></div>
-  <div id="fm_filemanager">        
+  <div id="fm_filemanager">
     <div class="fm_addressbar">
       <ul><li class="fm_path"><input type="text" value="/" name="fm_current_path" readonly="readonly" /></li></ul>
     </div>
