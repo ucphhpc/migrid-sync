@@ -56,6 +56,7 @@
 
 #fm_filelisting td, th { padding: 4px; background-position: 2px 50%; }
 #jm_jobmanager td, th { padding: 4px; background-position: 2px 50%; }
+
 #fm_filelisting .header, #jm_jobmanager .header { 
     background-image: url('/images/icons/desc.gif'); 
 		background-image: url('/images/icons/small.gif');     
@@ -262,6 +263,7 @@ UL.jqueryFileList A:hover {
 #fm_filelisting .expanded { background: url(/images/icons/folder_open.png) left top no-repeat; background-position: 2px 50%; }
 #fm_filelisting .file { background-image: url(/images/icons/file.png); background-repeat: no-repeat; background-position: 2px 50%; }
 #fm_filelisting .wait { background: url(/images/icons/spinner.gif) left top no-repeat; background-position: 2px 50%; }
+#jm_jobmanager .wait { background: url(/images/icons/spinner.gif) left top no-repeat; background-position: 2px 50%; }
 
 /* File Extensions*/
 /*.directory { background: url(/images/icons/directory.png) left top no-repeat; }

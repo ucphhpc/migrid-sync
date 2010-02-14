@@ -272,8 +272,9 @@ if (jQuery) (function($){
     $("table").bind("sortEnd", function() { $("#checkAll").attr("checked", false); });
     
     $("#append").click(function() { 
-        
-        $("table tbody").html("");
+
+        // Busy marker while loading jobs from server
+        $("table tbody").html("<tr class='odd'><td class='wait'></td><td>Loading jobs...</td><td></td><td></td></tr>");
         var job_count = 0;
         var sched_hint = '';
         var output_url = '';
@@ -299,6 +300,8 @@ if (jQuery) (function($){
                 }
             }   
     
+	    // Remove busy marker
+            $("#jm_jobmanager tbody").html("");
             // Wrap each json result into html
             $.each(jobList, function(i, item) {
                 if (item.schedule_hint != null) {
@@ -321,7 +324,7 @@ if (jQuery) (function($){
                   );
 
             });
-        
+
         var sorting = [[1,1]]; 
         // Inform tablesorter of new data
         $("table").trigger("update");
