@@ -53,7 +53,7 @@ def html_tmpl():
       <ul><li class="fm_path"><input type="text" value="/" name="fm_current_path" readonly="readonly" /></li></ul>
     </div>
     <div class="fm_folders">
-      <ul class="jqueryFileTree">                
+      <ul class="jqueryFileTree">
         <li class="directory expanded">
           <a href="#">...</a>
         </li>
@@ -248,7 +248,7 @@ def js_tmpl(entry_path='/'):
   <script type="text/javascript">
   
   $.ui.dialog.defaults.bgiframe = true;
-          
+
   $(document).ready( function() {
   
     $("#fm_filemanager").filemanager({
