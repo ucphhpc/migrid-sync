@@ -61,6 +61,10 @@ def refresh_vgrid_map(configuration):
         conf_path = os.path.join(configuration.resource_home, res, "config")
         if not os.path.isfile(conf_path):
             continue
+        # Sandboxes do not change their vgrid participation
+        if vgrid_map.has_key(res) and (res.startswith('sandbox.') or \
+                                       res.startswith('oneclick.')):
+            continue
         if os.path.getmtime(conf_path) >= map_stamp:
             vgrid_map[res] = get_all_exe_vgrids(res)
             total = []
