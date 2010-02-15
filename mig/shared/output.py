@@ -840,26 +840,30 @@ Exit code: %s Description: %s<br />
                          ])
             lines.append('<tr><td>Description</td><td>%s</td></tr>'
                           % i['description'])
-            lines.append('<tr><td>Creator</td><td>%s</td></tr>'
-                          % i['creator'])
+            lines.append('<tr><td>Needed software</td><td>%s</td></tr>'
+                          % software_html)
+            lines.append('<tr><td>Environment variables</td><td>%s</td></tr>'
+                          % environment_html)
+            if i['testprocedure']:
+                lines.append("<tr><td>Testprocedure</td><td valign='top'>%s</td></tr>"
+                             % i['testprocedure'])
+            if i['verifystdout']:
+                lines.append("<tr><td>Verifystdout</td><td valign='top'>%s</td></tr>"
+                             % i['verifystdout'])
+            if i['verifystderr']:
+                lines.append("<tr><td>Verifystderr</td><td valign='top'>%s</td></tr>"
+                             % i['verifystderr'])
+            if i['verifystatus']:
+                lines.append("<tr><td>Verifystatus</td><td valign='top'>%s</td></tr>"
+                             % i['verifystatus'])
             lines.append('<tr><td>Created</td><td>%s</td></tr>'
                           % i['created'])
+            lines.append('<tr><td>Creator</td><td>%s</td></tr>'
+                          % i['creator'])
             lines.append('<tr><td>Job count</td><td>%s</td></tr>'
                           % i['job_count'])
             lines.append('<tr><td>Resource count</td><td>%s</td></tr>'
                           % i['resource_count'])
-            lines.append('<tr><td>Needed software</td><td>%s</td></tr>'
-                          % software_html)
-            lines.append("<tr><td>Testprocedure</td><td valign='top'>%s</td></tr>"
-                          % i['testprocedure'])
-            lines.append("<tr><td>Verifystdout</td><td valign='top'>%s</td></tr>"
-                          % i['verifystdout'])
-            lines.append("<tr><td>Verifystderr</td><td valign='top'>%s</td></tr>"
-                          % i['verifystderr'])
-            lines.append("<tr><td>Verifystatus</td><td valign='top'>%s</td></tr>"
-                          % i['verifystatus'])
-            lines.append('<tr><td>Environment variables</td><td>%s</td></tr>'
-                          % environment_html)
             lines.append('</table>')
         elif i['object_type'] == 'vgrid_list':
             if len(i['vgrids']) > 0:
