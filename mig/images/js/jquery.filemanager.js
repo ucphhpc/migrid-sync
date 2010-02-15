@@ -436,18 +436,18 @@ if (jQuery) (function($){
 					folders += '<ul class="jqueryFileTree">';          
           var files = '<ul class="jqueryFileList">';
 
-	  $(".jqueryFileTree.start").remove();
-	  $('.fm_files div').remove();
-	  $('table tbody').html('');
-          
           var total_file_size = 0;
           var file_count = 0.0;          
           var is_dir = false;
           var base_css_style = 'file';
           var entry_title = '';
 
-					var dir_prefix = '';
-					var path = '';
+          var dir_prefix = '';
+          var path = '';
+          
+          $(".jqueryFileTree.start").remove();
+          $('.fm_files div').remove();
+          $('table tbody').html('');
           
           for (i=0;i<listing.length;i++) {
             
@@ -488,7 +488,6 @@ if (jQuery) (function($){
 							
             }
 						
-						$('table tbody').html = '';						
 						$('table tbody').append($('<tr></tr>')
 													.attr('rel_path', path)
 													.addClass(base_css_style)
