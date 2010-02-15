@@ -858,7 +858,7 @@ Exit code: %s Description: %s<br />
                           % i['verifystderr'])
             lines.append("<tr><td>Verifystatus</td><td valign='top'>%s</td></tr>"
                           % i['verifystatus'])
-            lines.append('<tr><td>Environments</td><td>%s</td></tr>'
+            lines.append('<tr><td>Environment variables</td><td>%s</td></tr>'
                           % environment_html)
             lines.append('</table>')
         elif i['object_type'] == 'vgrid_list':

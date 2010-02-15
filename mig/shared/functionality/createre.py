@@ -188,6 +188,9 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'text', 'text'
                           : 'New runtime environment %s successfuly created!'
                            % re_name})
+    output_objects.append({'object_type': 'link', 'destination':
+                           'showre.py?re_name=%s' % re_name, 'text':
+                           'View new runtime environment'})
     return (output_objects, returnvalues.OK)
 
 

@@ -50,6 +50,8 @@ def build_reitem_object_from_re_dict(re_dict):
     soft = re_dict['SOFTWARE']
     if len(soft) > 0:
         for software_item in soft:
+            if software_item['url'].find('://') < 0:
+                software_item['url'] = 'http://%(url)s' % software_item
             software_list.append({
                 'object_type': 'software',
                 'name': software_item['name'],
