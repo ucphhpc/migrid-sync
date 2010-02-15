@@ -5,7 +5,7 @@ import os
 import time
 import getopt
 
-MIG_HOME="../MiG/"
+MIG_HOME="./MiG/"
 FE_STATUS_CMD = MIG_HOME + "migstatusfe.sh"
 FE_STOP_CMD = MIG_HOME + "migstopfe.sh"
 FE_START_CMD = MIG_HOME + "migstartfe.sh"
@@ -13,7 +13,7 @@ FE_START_CMD = MIG_HOME + "migstartfe.sh"
 EXE_STATUS_CMD = MIG_HOME + "migstatusexe.sh"
 EXE_START_CMD = MIG_HOME + "migstartexe.sh"
 EXE_RESTART_CMD = MIG_HOME + "migrestartexe.sh"
-EXE_RESET_CMD = MIG_HOME + "migresetexe.sh"
+EXE_CLEAN_CMD = MIG_HOME + "migcleanexe.sh"
 
 def usage():
     print "Usage: restart_resource.py resource_fe resource_exe"
@@ -23,8 +23,8 @@ def usage():
     print ""
     print "Example: restart_resource.py lucia.imada.sdu.dk.0 lucia"
 	
-def reset_and_restartexe(resource_fe, resource_exe):
-    cmd = "%s %s %s 2>/dev/null" % (EXE_RESET_CMD, resource_fe, resource_exe)
+def clean_and_restartexe(resource_fe, resource_exe):
+    cmd = "%s %s %s 2>/dev/null" % (EXE_CLEAN_CMD, resource_fe, resource_exe)
     print cmd
     fd = os.popen(cmd)
     readline = fd.readline()
@@ -78,7 +78,7 @@ if arg_count < min_count:
     
 resource_fe = sys.argv[1]
 resource_exe = sys.argv[2]
-reset_and_restartexe(resource_fe, resource_exe)
+clean_and_restartexe(resource_fe, resource_exe)
 
 
 

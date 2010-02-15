@@ -5,7 +5,7 @@ import os
 import time
 import getopt
 
-MIG_HOME="../MiG/"
+MIG_HOME="./MiG/"
 FE_STATUS_CMD = MIG_HOME + "migstatusfe.sh"
 FE_STOP_CMD = MIG_HOME + "migstopfe.sh"
 FE_START_CMD = MIG_HOME + "migstartfe.sh"
@@ -13,8 +13,8 @@ FE_START_CMD = MIG_HOME + "migstartfe.sh"
 EXE_STATUS_CMD = MIG_HOME + "migstatusexe.sh"
 EXE_START_CMD = MIG_HOME + "migstartexe.sh"
 EXE_RESTART_CMD = MIG_HOME + "migrestartexe.sh"
-EXE_RESET_CMD="./reset_and_start_resource.py"
-EXE_RESET_ALL_CMD="./reset_and_start_resources.sh"
+EXE_CLEAN_CMD="./clean_and_start_resource.py"
+EXE_CLEAN_ALL_CMD="./clean_and_start_resources.sh"
 EXE_CHECK_DICT = {}
 EXE_CHECKS_BEFORE_RESTART = 10
 
@@ -70,8 +70,8 @@ def check_exe(resource_description_file):
                 # Reset check counter
                 EXE_CHECK_DICT[exe_name] = 0
                 
-                # Reset exe
-                cmd = "%s %s %s 2>/dev/null" % (EXE_RESET_CMD, resource_name, exe_name)
+                # Clean exe
+                cmd = "%s %s %s 2>/dev/null" % (EXE_CLEAN_CMD, resource_name, exe_name)
                 print cmd
                 fd2 = os.popen(cmd)
                 readline3 = fd2.readline()
