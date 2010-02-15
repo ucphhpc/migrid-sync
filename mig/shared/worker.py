@@ -30,12 +30,21 @@
 import time
 from threading import Thread
 
+# Maximum number of concurrent workers to allow with throttle_max_concurrent
+
+__max_concurrent = 8
 
 def dummy_test(delay):
     """Dummy function for testing: sleep for delay seconds and return True"""
 
     time.sleep(delay)
     return True
+
+def throttle_max_concurrent(workers):
+    """Wait until at most max_concurrent workers are active"""
+    while len([w for w in workers if w.isAlive()]) >= __max_concurrent:
+        time.sleep(1)
+    return
 
 
 class Worker(Thread):

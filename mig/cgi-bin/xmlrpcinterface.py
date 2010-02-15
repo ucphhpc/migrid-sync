@@ -275,11 +275,6 @@ def stopexe(user_arguments_dict):
     return stub('shared.functionality.stopexe', user_arguments_dict)
 
 
-# def resetexe(user_arguments_dict):
-#    """Wrap backend of same name"""
-#    return stub("shared.functionality.stopexe", user_arguments_dict)
-
-
 def vgridmemberrequest(user_arguments_dict):
     """Wrap backend of same name"""
 
@@ -553,9 +548,6 @@ if '__main__' == __name__:
     server.register_function(textarea)
     server.register_function(restartexe)
     server.register_function(stopexe)
-
-    # server.register_function(resetexe)
-
     server.register_function(cleanfe)
     server.register_function(cleanexe)
     server.register_function(vgridmemberrequest)

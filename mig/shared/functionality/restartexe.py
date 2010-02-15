@@ -33,7 +33,7 @@ from shared.findtype import is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables
 from shared.resadm import start_resource_exe, stop_resource_exe
-from shared.worker import Worker
+from shared.worker import Worker, throttle_max_concurrent
 
 
 def signature():
@@ -97,11 +97,14 @@ def main(client_id, user_arguments_dict):
                               })
 
     workers = []
+    task_list = []
     for exe_name in exe_name_list:
         task = Worker(target=stop_resource_exe,
                       args=(unique_resource_name, exe_name,
                       configuration.resource_home, logger))
         workers.append((exe_name, [task]))
+        task_list.append(task)
+        throttle_max_concurrent(task_list)
         task.start()
         if not parallel:
             task.join()
@@ -119,6 +122,7 @@ def main(client_id, user_arguments_dict):
                       configuration.resource_home, int(cputime),
                       logger))
         task_list.append(task)
+        throttle_max_concurrent(task_list)
         task.start()
         if not parallel:
             task.join()
