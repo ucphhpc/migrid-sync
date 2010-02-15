@@ -518,8 +518,7 @@ script_ops_two_args.append(['stopexe', 'unique_resource_name',
                            'exe_name'])
 script_ops_two_args.append(['restartexe', 'unique_resource_name',
                            'exe_name'])
-
-# script_ops_two_args.append(["resetexe", "unique_resource_name", "exe_name"])
+script_ops_two_args.append(['cleanexe', 'unique_resource_name', 'exe_name'])
 
 script_ops_two_args.append(['startallexes', 'unique_resource_name',
                            'all'])
@@ -546,6 +545,7 @@ script_ops_single_arg.append(['lsresowners', 'unique_resource_name'])
 script_ops_single_arg.append(['startfe', 'unique_resource_name'])
 script_ops_single_arg.append(['statusfe', 'unique_resource_name'])
 script_ops_single_arg.append(['stopfe', 'unique_resource_name'])
+script_ops_single_arg.append(['cleanfe', 'unique_resource_name'])
 
 # action_allexes scripts obsolete, use actionexe all=true instead
 # script_ops_single_arg.append(["startallexes", "unique_resource_name"])
