@@ -201,6 +201,9 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'text', 'text'
                           : '%s successfully removed as member of %s vgrid!'
                            % (cert_id, vgrid_name)})
+    output_objects.append({'object_type': 'link', 'destination':
+                           'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
+                           'Back to administration for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)
 
 
