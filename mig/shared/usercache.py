@@ -41,8 +41,10 @@ DISK_REFRESH_DELAY = 600
 # Internal field names
 TOTALS = (OWN, VGRID, JOBS) = ('__user_totals__', '__vgrid_totals__', '__jobs__')
 (FILES, DIRECTORIES, BYTES) = ('__files__', '__directories__', '__bytes__')
-STATES = (PARSE, QUEUED, EXECUTING, FINISHED, CANCELED, FAILED) = \
-         ("PARSE", "QUEUED", "EXECUTING", "FINISHED", "CANCELED", "FAILED")
+STATES = (PARSE, QUEUED, EXECUTING, FINISHED, RETRY, CANCELED, EXPIRED,
+          FAILED) = \
+          ("PARSE", "QUEUED", "EXECUTING", "FINISHED", "RETRY", "CANCELED",
+           "EXPIRED", "FAILED")
 JOBFIELDS = ["JOB_ID", "STATUS", "RECEIVED_TIMESTAMP", "USER_CERT"]
 
 
@@ -244,7 +246,7 @@ def refresh_job_stats(configuration, client_id):
     except IOError:
         configuration.logger.warn("No job stats to load - ok first time")
         stats = {JOBS: {PARSE: 0, QUEUED: 0, EXECUTING:0, FINISHED: 0,
-                        CANCELED: 0, FAILED: 0}}
+                        RETRY: 0, CANCELED: 0, EXPIRED: 0, FAILED: 0}}
         stats_stamp = -1
 
     now = time.time()
