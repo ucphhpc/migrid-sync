@@ -39,7 +39,7 @@ from shared.useradm import client_id_dir
 from shared.vgridaccess import user_allowed_resources
 from shared.usercache import refresh_disk_stats, refresh_job_stats, \
      format_bytes, OWN, VGRID, JOBS, FILES, DIRECTORIES, BYTES, PARSE, \
-     QUEUED, EXECUTING, FINISHED, CANCELED
+     QUEUED, EXECUTING, FINISHED, CANCELED, FAILED
 
 
 def signature():
@@ -143,10 +143,11 @@ can ease file and job handling or even completely redecorate your interface.
                   'executing': job_stats[JOBS][EXECUTING],
                   'finished': job_stats[JOBS][FINISHED],
                   'canceled': job_stats[JOBS][CANCELED],
+                  'failed': job_stats[JOBS][FAILED],
                   }
     job_info = """
 You have submitted a total of %(total)d jobs:
-%(parse)d parse, %(queued)d queued, %(executing)d executing, %(finished)d finished and %(canceled)d canceled.
+%(parse)d parse, %(queued)d queued, %(executing)d executing, %(finished)d finished, %(canceled)d canceled and %(failed)d failed.
 """ % total_jobs
     output_objects.append({'object_type': 'text', 'text': job_info})
     resource_count = len(user_allowed_resources(configuration, client_id))
