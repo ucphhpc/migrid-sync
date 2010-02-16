@@ -36,8 +36,8 @@ from shared.serial import load, dump
 from shared.useradm import client_id_dir
 
 # Only refresh stats if at least this many seconds since last refresh
-JOB_REFRESH_DELAY = 60
-DISK_REFRESH_DELAY = 600
+JOB_REFRESH_DELAY = 120
+DISK_REFRESH_DELAY = 1800
 # Internal field names
 TOTALS = (OWN, VGRID, JOBS) = ('__user_totals__', '__vgrid_totals__', '__jobs__')
 (FILES, DIRECTORIES, BYTES) = ('__files__', '__directories__', '__bytes__')
@@ -161,7 +161,6 @@ def refresh_disk_stats(configuration, client_id):
     for (root, dirs, files) in os.walk(user_base):
         rel_root = root.replace(user_base, '').lstrip(os.sep)
         cur_roots.append(rel_root)
-        root_stamp = os.path.getmtime(root)
         for dir_name in dirs:
             dir_path = os.path.join(root, dir_name)
             if os.path.islink(dir_path):
@@ -181,9 +180,9 @@ def refresh_disk_stats(configuration, client_id):
     total = VGRID
     for vgrid_base in vgrid_dirs:
         for (root, dirs, files) in os.walk(vgrid_base):
-            rel_root = root.replace(vgrid_base, '').lstrip(os.sep)
+            # Still use path relative to user base!
+            rel_root = root.replace(user_base, '').lstrip(os.sep)
             cur_roots.append(rel_root)
-            root_stamp = os.path.getmtime(root)
 
             # Directory and contents unchanged - ignore
 
@@ -287,6 +286,5 @@ if "__main__" == __name__:
     print "user totals: %s" % raw_stats[OWN]
     print "vgrid totals: %s" % raw_stats[VGRID]
     raw_stats = refresh_job_stats(conf, sys.argv[1])
-    print "user jobs: %s" % raw_stats
     print "total jobs: %s" % raw_stats[JOBS]
     
