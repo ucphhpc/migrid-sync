@@ -64,6 +64,24 @@ def get_resource_configuration(resource_home, unique_resource_name,
         return (True, resource_config)
 
 
+def get_resource_fields(unique_resource_name, fields):
+    """Return a dictionary mapping fields to resource_config values.
+    Missing fields are left out of the result dictionary.
+    """
+    results = {}
+    conf = get_configuration_object()
+    (status, resource_config) = \
+        get_resource_configuration(conf.resource_home,
+                                   unique_resource_name, conf.logger)
+    if not status:
+        return results
+    for name in fields:
+        res_val = resource_config.get(name, '__UNSET__')
+        if res_val != '__UNSET__':
+            results[name] = res_val
+    return results
+
+
 def get_resource_exe(resource_config, exe_name, logger):
     for exe in resource_config['EXECONFIG']:
 

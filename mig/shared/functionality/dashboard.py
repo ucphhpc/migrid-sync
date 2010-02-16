@@ -134,7 +134,7 @@ can ease file and job handling or even completely redecorate your interface.
         output_objects.append({'object_type': 'text', 'text': settings_info})
 
     output_objects.append({'object_type': 'sectionheader', 'text' :
-                           "Status information"})
+                           "Your Status"})
     job_dir = os.path.join(configuration.mrsl_files_dir, client_dir)
     job_stats = refresh_job_stats(configuration, client_id)
     total_jobs = {'total': sum(job_stats[JOBS].values()),

@@ -31,8 +31,8 @@ import os
 import fcntl
 import time
 
-from shared.conf import get_all_exe_vgrids
-from shared.resource import list_resources
+from shared.conf import get_all_exe_vgrids, get_resource_fields
+from shared.resource import list_resources, anon_resource_id
 from shared.serial import load, dump
 from shared.vgrid import user_allowed_vgrids, vgrid_match_resources
 
@@ -40,6 +40,7 @@ from shared.vgrid import user_allowed_vgrids, vgrid_match_resources
 def refresh_vgrid_map(configuration):
     """Refresh map of resources and their vgrid participation. Uses a pickled
     dictionary for efficiency. 
+    Resource IDs are stored in their raw (non-anonymized form).
     Only update map for resources that updated conf after last map save.
     """
     dirty = False
@@ -77,16 +78,20 @@ def refresh_vgrid_map(configuration):
     if dirty:
         try:
             dump(vgrid_map, map_path)
+            map_stamp = os.path.getmtime(map_path)
         except Exception, exc:
             configuration.logger.error("Could not save vgrid map: %s" % exc)
 
     lock_handle.close()
-    
+
+    vgrid_map['time_stamp'] = map_stamp
     return vgrid_map
 
 def user_allowed_resources(configuration, client_id):
     """Extract a list of resources that client_id can submit to.
     There is no guarantee that they will ever accept any further jobs.
+
+    Resources are anonymized unless explicitly specifying otherwise.
     
     Please note that vgrid participation is a mutual agreement between vgrid
     owners and resource owners, so that a resource only truly participates
@@ -99,16 +104,28 @@ def user_allowed_resources(configuration, client_id):
     # Find all potential resources from vgrid sign up
 
     vgrid_map = refresh_vgrid_map(configuration)
+    # TODO: use map_stamp?
+    map_stamp = vgrid_map['time_stamp']
+    del vgrid_map['time_stamp']
     
+    # Map only contains the raw resource names - anonomize as requested
+
+    anon_map = {}
+    for res in vgrid_map.keys():
+        public_id = res
+        if get_resource_fields(res, ['ANONYMOUS']).get('ANONYMOUS', True):
+            public_id = anon_resource_id(public_id)
+        anon_map[public_id] = res
+
     # Now select only the ones that actually still are allowed for that vgrid
 
     for vgrid in allowed_vgrids:
-        match = vgrid_match_resources(vgrid, vgrid_map.keys(), configuration)
-        for res in match:
-            if res in allowed:
+        match = vgrid_match_resources(vgrid, anon_map.keys(), configuration)
+        for pub in match:
+            if pub in allowed:
                 continue
-            if vgrid in vgrid_map[res]['all_exes']:
-                allowed.append(res)
+            if vgrid in vgrid_map[anon_map[pub]]['all_exes']:
+                allowed.append(pub)
     return allowed
 
 if "__main__" == __name__:
@@ -117,9 +134,6 @@ if "__main__" == __name__:
     all_vgrids = refresh_vgrid_map(conf)
     print "raw vgrid map: %s" % all_vgrids
     all_resources = all_vgrids.keys()
-    print "all resources: %s" % ', '.join(all_resources)
-    generic_match = vgrid_match_resources('Generic', all_resources, conf)
-    print "Resources in Generic: %s" % ', '.join(generic_match)
+    print "raw resource IDs: %s" % ', '.join(all_resources)
     anybody_access = user_allowed_resources(conf, 'anybody')
     print "Anybody can access: %s" % ', '.join(anybody_access)
-    

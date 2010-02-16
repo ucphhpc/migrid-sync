@@ -58,6 +58,15 @@ def get_resource_specs(configuration):
         'Editor': 'custom',
         'Required': True,
         }))
+    specs.append(('ANONYMOUS', {
+        'Title': 'Anonymize ID in grid',
+        'Description': 'Enable anonymous resource ID for this resource in all grid interfaces. When enabled the unique resource name will be hashed to a long string of apparently random characters. Default vlaue is True.',
+        'Example': 'False',
+        'Type': 'boolean',
+        'Value': True,
+        'Editor': 'select',
+        'Required': False,
+        }))
     specs.append(('HOSTKEY', {
         'Title': 'SSH Public Host Key',
         'Description': 'The public SSS host key of the resource (content of e.g. /etc/ssh/ssh_host_rsa_key.pub). Can be left empty to disable host key validation, but that is not recommended as it weakens the trust model.',
@@ -260,7 +269,7 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         }))
     specs.append(('PUBLICNAME', {
         'Title': 'Public Name',
-        'Description': 'Specifies a public name or alias to display along with the resource identity in monitors.',
+        'Description': 'Specifies a public name or alias to display along with the resource identity in monitors and in verbose job status for finished jobs executed there.',
         'Example': 'EightByEight',
         'Type': 'string',
         'Value': '',

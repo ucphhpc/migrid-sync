@@ -728,43 +728,36 @@ while True:
         # find the vgrid that should receive the job request
 
         last_vgrid = 0
-        if not exe_conf.has_key('vgrid'):
-
-            # all resources should have vgrid section!
-
-            continue
-
-        if exe_conf['vgrid'] == '':
+        if not exe_conf.get('vgrid', ''):
 
             # fall back to default vgrid
 
             exe_conf['vgrid'] = [default_vgrid]
 
-        exe_conf_vgrid = exe_conf['vgrid']
-        if type(exe_conf_vgrid) == type([]):
+        if isinstance(exe_conf['vgrid'], basestring):
+            exe_conf['vgrid'] = list(exe_conf['vgrid'])
+        exe_vgrids = exe_conf['vgrid']
 
-            # list
+        if last_req.has_key('LAST_VGRID'):
 
-            if last_req.has_key('LAST_VGRID'):
+            # index of last vgrid found
 
-                # index of last vgrid found
+            last_vgrid_index = last_req['LAST_VGRID']
 
-                last_vgrid_index = last_req['LAST_VGRID']
+            # make sure the index is within bounds (some vgrids
+            # might have been removed from conf since last run)
 
-                # make sure the index is within bounds (some vgrids
-                # might have been removed from conf since last run)
+            res_vgrid_count = len(exe_vgrids)
+            if last_vgrid_index + 1 > res_vgrid_count - 1:
 
-                res_vgrid_count = len(exe_conf_vgrid)
-                if last_vgrid_index + 1 > res_vgrid_count - 1:
+                # out of bounds, use index 0
 
-                    # out of bounds, use index 0
+                pass
+            else:
 
-                    pass
-                else:
+                # within bounds
 
-                    # within bounds
-
-                    last_vgrid = last_vgrid_index + 1
+                last_vgrid = last_vgrid_index + 1
 
         # The scheduler checks the vgrids in the order as they appear in
         # the list, so to be fair the order of the vgrids in the list
@@ -772,7 +765,7 @@ while True:
 
         vgrids_in_prioritized_order = []
 
-        list_indexes = range(last_vgrid, len(exe_conf_vgrid))
+        list_indexes = range(last_vgrid, len(exe_vgrids))
         list_indexes = list_indexes + range(0, last_vgrid)
 
         for index in list_indexes:

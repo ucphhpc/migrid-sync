@@ -39,7 +39,7 @@ from math import exp, floor
 import shared.safeeval as safeeval
 from jobqueue import print_job
 from shared.resource import anon_resource_id
-from shared.vgrid import job_fits_res_vgrid
+from shared.vgrid import vgrid_access_match
 
 
 class Scheduler:
@@ -1142,6 +1142,11 @@ class Scheduler:
 
         # self.logger.info("scheduler examines job_id %s" % job["JOB_ID"])
 
+        res_id = res['RESOURCE_ID']
+        public_id = res_id
+        if res.get('ANONYMOUS', True):
+            public_id = anon_resource_id(public_id)
+            
         # TODO: switch FORCEDDESTINATION jobs to use new RESOURCE field
         if job.has_key('FORCEDDESTINATION'):
             unique_resource_name = res['RESOURCE_ID']
@@ -1160,9 +1165,8 @@ class Scheduler:
 
         if job.get('RESOURCE', []):
             res_match = False
-            anon_id = anon_resource_id(res['RESOURCE_ID'])
             for job_dest in job['RESOURCE']:
-                if fnmatch.fnmatch(anon_id, job_dest):
+                if fnmatch.fnmatch(public_id, job_dest):
                     res_match = True
                     break
             if not res_match:
@@ -1286,8 +1290,10 @@ class Scheduler:
 
         if isinstance(job['VGRID'], basestring):
             job['VGRID'] = [job['VGRID']]
-        (match, res_vgrid) = job_fits_res_vgrid(job['VGRID'],
-                res['VGRID'])
+        (match, res_vgrid) = vgrid_access_match(self.conf, job['USER_CERT'],
+                                                job, res_id.split('_')[0],
+                                                res)
+        self.logger.info('scheduler: res and job vgrid match: %s' % res_vgrid)
         res_name = job_name = 'Unknown'
         try:
             res_name = res['RESOURCE_ID']
@@ -1520,7 +1526,7 @@ class Scheduler:
                  < best['dist']:
 
                 # self.logger.info("%s offers a better price (%f) for %s" % \
-        # ........ (res_id, res_price, job_id))
+                # ........ (res_id, res_price, job_id))
 
                 best = {
                     'id': res_id,

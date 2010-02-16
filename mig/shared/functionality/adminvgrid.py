@@ -137,7 +137,7 @@ def create_html(vgrid_name, configuration):
         """\
              % vgrid_name
 
-        out += 'Current resources of %s:' % vgrid_name
+        out += 'Current resources of %s (only non-anonymized IDs allowed):' % vgrid_name
         out += \
             '<table class="vgridresource"><tr><th>Remove</th><th>Resource</th></tr>'
         for elem in msg:

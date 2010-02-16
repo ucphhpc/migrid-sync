@@ -35,7 +35,6 @@ from shared.init import initialize_main_variables, find_entry
 from shared.mrslkeywords import get_job_specs
 from shared.parser import parse_lines
 from shared.refunctions import list_runtime_environments
-from shared.resource import anon_resource_id
 from shared.settings import load_settings
 from shared.useradm import mrsl_template, get_default_mrsl, client_id_dir
 from shared.vgrid import user_allowed_vgrids
@@ -158,9 +157,9 @@ Actual examples for inspiration:
         configuration.runtimeenvironments = allowed_run_envs
         user_res = user_allowed_resources(configuration, client_id)
 
-        # Allow any exe unit on all allowed resources and anonymize to match monitor
+        # Allow any exe unit on all allowed resources
         
-        allowed_resources = [anon_resource_id('%s_*' % res) for res in user_res]
+        allowed_resources = ['%s_*' % res for res in user_res]
         allowed_resources.sort()
         configuration.resources = allowed_resources
         field_size = 30

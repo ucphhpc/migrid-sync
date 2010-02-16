@@ -263,7 +263,7 @@ Automatic refresh every %(sleep_secs)s secs.<br />
 Listing the last request from each resource<br />
 <br />
 <table class=monitor>
-<tr class=title><td><!-- status icon --></td><td>Resource and last seen</td><td>Time ago</td><td>VGrid</td><td>CPU time</td>
+<tr class=title><td><!-- status icon --></td><td>Resource ID with exe unit</td><td>Last seen</td><td>VGrid</td><td>CPU time</td>
 <td>Node count</td><td>CPU count</td><td>GB Disk</td>
 <td>MB Memory</td><td>Arch</td><td>Status</td>
 <td>Time</td><td>Time remaining</td></tr>
@@ -378,13 +378,22 @@ Listing the last request from each resource<br />
                     html += \
                         '<td><img src=/images/status-icons/%s.png /></td>'\
                          % resource_status
-                    anon_id = anon_resource_id(unique_res_name_and_exe_list[1]) 
-                    html += '<td>%s<br />%s</td>'\
-                         % (anon_id, time.asctime(
-                        last_request_dict['CREATED_TIME'].timetuple()))
-                    html += '<td>' + days + ' days, ' + hours\
-                         + ' hours, ' + minutes + ' min, ' + seconds\
-                         + 'secs</td>'
+                    public_id = unique_res_name_and_exe_list[1]
+                    if last_request_dict['RESOURCE_CONFIG'].get('ANONYMOUS', True):
+                        public_id = anon_resource_id(public_id)
+                    public_name = last_request_dict['RESOURCE_CONFIG'].get('PUBLICNAME', '')
+                    resource_parts = public_id.split('_', 2)
+                    resource_name = resource_parts[0]
+                    if public_name:
+                        resource_name += "<br />(alias %s)" % public_name
+                    else:
+                        resource_name += "<br />(no alias)"
+                    resource_name += "<br />%s" % resource_parts[1]
+                    html += '<td>%s</td>' % resource_name
+
+                    html += '<td>%s<br />(%s days, %s hours, %s min, %s secs ago)</td>' % \
+                            (time.asctime(last_request_dict['CREATED_TIME'].timetuple()),
+                             days, hours, minutes, seconds)
                     html += '<td>' + vgrid_name + '</td>'
                     html += '<td>'\
                          + str(last_request_dict['RESOURCE_CONFIG'
