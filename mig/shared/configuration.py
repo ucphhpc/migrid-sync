@@ -67,6 +67,7 @@ def fix_missing(config_file, verbose=True):
         'vgrid_public_base': '~/state/vgrid_public_base/',
         'vgrid_private_base': '~/state/vgrid_private_base/',
         'user_home': '~/state/user_home/',
+        'user_cache': '~/state/user_cache/',
         'server_home': '~/state/server_home/',
         'webserver_home': '~/state/webserver_home/',
         'sessid_to_mrsl_link_home': '~/state/sessid_to_mrsl_link_home/',
@@ -165,6 +166,7 @@ class Configuration:
     user_pending = ''
     webserver_home = ''
     user_home = ''
+    user_cache = ''
     sss_home = ''
     sandbox_home = ''
     javabin_home = ''
@@ -331,6 +333,7 @@ class Configuration:
             self.user_pending = config.get('GLOBAL', 'user_pending')
             self.webserver_home = config.get('GLOBAL', 'webserver_home')
             self.user_home = config.get('GLOBAL', 'user_home')
+            self.user_cache = config.get('GLOBAL', 'user_cache')
             self.server_home = config.get('GLOBAL', 'server_home')
             self.sss_home = config.get('GLOBAL', 'sss_home')
             self.sandbox_home = config.get('GLOBAL', 'sandbox_home')

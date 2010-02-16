@@ -35,9 +35,11 @@ import os
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables
-from shared.fileio import disk_stats
 from shared.useradm import client_id_dir
 from shared.vgridaccess import user_allowed_resources
+from shared.usercache import refresh_disk_stats, refresh_job_stats, \
+     format_bytes, OWN, VGRID, JOBS, FILES, DIRECTORIES, BYTES, PARSE, \
+     QUEUED, EXECUTING, FINISHED, CANCELED
 
 
 def signature():
@@ -134,20 +136,37 @@ can ease file and job handling or even completely redecorate your interface.
     output_objects.append({'object_type': 'sectionheader', 'text' :
                            "Status information"})
     job_dir = os.path.join(configuration.mrsl_files_dir, client_dir)
-    job_count = len(os.listdir(job_dir))
+    job_stats = refresh_job_stats(configuration, client_id)
+    total_jobs = {'total': sum(job_stats[JOBS].values()),
+                  'parse': job_stats[JOBS][PARSE],
+                  'queued': job_stats[JOBS][QUEUED],
+                  'executing': job_stats[JOBS][EXECUTING],
+                  'finished': job_stats[JOBS][FINISHED],
+                  'canceled': job_stats[JOBS][CANCELED],
+                  }
     job_info = """
-You have submitted a total of %d jobs.
-""" % job_count
+You have submitted a total of %(total)d jobs:
+%(parse)d parse, %(queued)d queued, %(executing)d executing, %(finished)d finished and %(canceled)d canceled.
+""" % total_jobs
     output_objects.append({'object_type': 'text', 'text': job_info})
     resource_count = len(user_allowed_resources(configuration, client_id))
     resource_info = """
 %d resources allow execution of your jobs.
 """ % resource_count
     output_objects.append({'object_type': 'text', 'text': resource_info})
-    disk_used = disk_stats(base_dir)
+    disk_stats = refresh_disk_stats(configuration, client_id)
+    total_disk = {'own_files': disk_stats[OWN][FILES],
+                 'own_directories': disk_stats[OWN][DIRECTORIES],
+                 'own_megabytes': format_bytes(disk_stats[OWN][BYTES], 'mega'),
+                 'vgrid_files': disk_stats[VGRID][FILES],
+                 'vgrid_directories': disk_stats[VGRID][DIRECTORIES],
+                 'vgrid_megabytes': format_bytes(disk_stats[VGRID][BYTES], 'mega')
+                  }
     disk_info = """
-Your %(files)d files and %(directories)d directories take up %(megabytes).1f MB in total.
-""" % disk_used
+Your own %(own_files)d files and %(own_directories)d directories take up %(own_megabytes).1f MB in total
+and you additionally share %(vgrid_files)d files and %(vgrid_directories)d directories of
+%(vgrid_megabytes).1f MB in total.
+""" % total_disk
     output_objects.append({'object_type': 'text', 'text': disk_info})
     cert_info = """
 Your user certificate expires on %s .

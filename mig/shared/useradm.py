@@ -228,6 +228,7 @@ def create_user(
                             (client_id, err))
 
     home_dir = os.path.join(configuration.user_home, client_dir)
+    cache_dir = os.path.join(configuration.user_cache, client_dir)
     mrsl_dir = os.path.join(configuration.mrsl_files_dir, client_dir)
     pending_dir = os.path.join(configuration.resource_pending,
                                client_dir)
@@ -242,6 +243,12 @@ def create_user(
             if not force:
                 raise Exception('Error: could not create home dir: %s' % \
                                 home_dir)
+        try:
+            os.mkdir(cache_dir)
+        except:
+            if not force:
+                raise Exception('Error: could not create cache dir: %s' % \
+                                cache_dir)
 
         try:
             os.mkdir(mrsl_dir)
@@ -359,6 +366,7 @@ def delete_user(
     # Remove user dirs recursively
 
     for base_dir in (configuration.user_home,
+                     configuration.user_cache,
                      configuration.mrsl_files_dir,
                      configuration.resource_pending):
 
