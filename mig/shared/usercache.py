@@ -45,6 +45,7 @@ STATES = (PARSE, QUEUED, EXECUTING, FINISHED, RETRY, CANCELED, EXPIRED,
           FAILED) = \
           ("PARSE", "QUEUED", "EXECUTING", "FINISHED", "RETRY", "CANCELED",
            "EXPIRED", "FAILED")
+FINAL_STATES = (FINISHED, CANCELED, EXPIRED, FAILED)
 JOBFIELDS = ["STATUS"]
 
 
@@ -256,6 +257,9 @@ def refresh_job_stats(configuration, client_id):
     # Inspect all jobs in user job dir and update the ones that changed
     # since last stats run
     for name in os.listdir(job_base):
+        if stats.has_key(name) and stats[name]["STATUS"] in FINAL_STATES:
+            continue
+
         job_path = os.path.join(job_base, name)
         job_stamp = os.path.getmtime(job_path)
         
