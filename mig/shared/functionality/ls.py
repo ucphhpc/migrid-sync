@@ -223,7 +223,13 @@ def handle_dir(
 
     special = ''
     if os.path.islink(actual_dir):
-        special = ' - VGrid shared directory'
+        dir_type = 'shared files'
+        parent_dir = os.path.basename(os.path.dirname(actual_dir))
+        if parent_dir.find('public_base') >= 0:
+            dir_type = 'public web page'
+        elif parent_dir.find('private_base') >= 0:
+            dir_type = 'private web page'
+        special = ' - VGrid %s directory' % dir_type
     dir_obj = {
         'object_type': 'direntry',
         'type': 'directory',
