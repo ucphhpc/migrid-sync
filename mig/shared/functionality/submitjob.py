@@ -130,104 +130,153 @@ Actual examples for inspiration:
     else:
         submit_style = settings_dict['SUBMITUI']
 
-    if 'fields' == submit_style:
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                              : 'Please fill in your job description in the fields below:'
-                              })
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : """
+    # We generate all 3 variants of job submission (fields, textarea, files),
+    # initially hide them and allow to switch between them using js.
+
+    # could instead extract valid prefixes as in settings.py
+    # (means: by "eval" from configuration). We stick to hard-coding.
+    submit_options = ['fields_form', 'textarea_form', 'files_form']
+
+    title_entry['javascript'] = '''
+<script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
+
+<script type="text/javascript" >
+
+    options = %s;
+
+    function setDisplay(this_id,new_d) {
+        el = document.getElementById(this_id)
+        if ( el == undefined || el.style == undefined ) {
+            return; // avoid js null ref errors
+        }
+        el.style.display=new_d;
+    }
+
+    function switchTo(name) {
+        for (o=0; o < options.length; o++) {
+            if (name == options[o]) {
+                setDisplay(options[o],"block");
+            } else {
+                setDisplay(options[o],"none");
+            }
+        }
+    }
+
+    $(document).ready( function() {
+         switchTo("%s");
+    });
+
+</script>
+''' % (submit_options , submit_style + "_form")
+
+    for o in submit_options:
+        output_objects.append({'object_type': 'link', 
+                               'destination': "javascript:switchTo('%s')" % o ,
+                               'text' : 'Switch to %s style<br>' % \
+                               o.split('_',2)[0] 
+                               })
+
+    output_objects.append({'object_type': 'html_form', 
+                           'text': '<div id="fields_form" style="display:none;">\n'})
+    
+#    if 'fields' == submit_style:
+    output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Please fill in your job description in the fields below:'
+                          })
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : """
 <table class="submitjob">
 <form method="post" action="submitfields.py" id="miginput">
 """
-                              })
-        show_fields = get_job_specs(configuration)
-        try:
-            parsed_mrsl = dict(parse_lines(default_mrsl))
-        except:
-            parsed_mrsl = {}
+                          })
+    show_fields = get_job_specs(configuration)
+    try:
+        parsed_mrsl = dict(parse_lines(default_mrsl))
+    except:
+        parsed_mrsl = {}
 
-        # Find allowed VGrids and Runtimeenvironments and add them to
-        # configuration object for automated choice handling
+    # Find allowed VGrids and Runtimeenvironments and add them to
+    # configuration object for automated choice handling
+    
+    allowed_vgrids = user_allowed_vgrids(configuration, client_id) + ['ANY']
+    allowed_vgrids.sort()
+    configuration.vgrids = allowed_vgrids
+    (re_status, allowed_run_envs) = list_runtime_environments(configuration)
+    allowed_run_envs.sort()
+    configuration.runtimeenvironments = allowed_run_envs
+    user_res = user_allowed_resources(configuration, client_id)
+
+    # Allow any exe unit on all allowed resources
         
-        allowed_vgrids = user_allowed_vgrids(configuration, client_id) + ['ANY']
-        allowed_vgrids.sort()
-        configuration.vgrids = allowed_vgrids
-        (re_status, allowed_run_envs) = list_runtime_environments(configuration)
-        allowed_run_envs.sort()
-        configuration.runtimeenvironments = allowed_run_envs
-        user_res = user_allowed_resources(configuration, client_id)
+    allowed_resources = ['%s_*' % res for res in user_res.keys()]
+    allowed_resources.sort()
+    configuration.resources = allowed_resources
+    field_size = 30
+    area_cols = 80
+    area_rows = 5
 
-        # Allow any exe unit on all allowed resources
-        
-        allowed_resources = ['%s_*' % res for res in user_res.keys()]
-        allowed_resources.sort()
-        configuration.resources = allowed_resources
-        field_size = 30
-        area_cols = 80
-        area_rows = 5
-
-        for (field, spec) in show_fields:
-            title = spec['Title']
-            if show_description:
-                description = '%s<br />' % spec['Description']
+    for (field, spec) in show_fields:
+        title = spec['Title']
+        if show_description:
+            description = '%s<br />' % spec['Description']
+        else:
+            description = ''
+        field_type = spec['Type']
+        # Use saved value and fall back to default if it is missing
+        saved = parsed_mrsl.get('::%s::' % field, None)
+        if saved:
+            if not spec['Type'].startswith('multiple'):
+                default = saved[0]
             else:
-                description = ''
-            field_type = spec['Type']
-            # Use saved value and fall back to default if it is missing
-            saved = parsed_mrsl.get('::%s::' % field, None)
-            if saved:
-                if not spec['Type'].startswith('multiple'):
-                    default = saved[0]
-                else:
-                    default = saved
-            else:
-                default = spec['Value']
-            if 'invisible' == spec['Editor']:
-                continue
-            if 'custom' == spec['Editor']:
-                continue
-            output_objects.append({'object_type': 'html_form', 'text'
-                                       : """
+                default = saved
+        else:
+            default = spec['Value']
+        if 'invisible' == spec['Editor']:
+            continue
+        if 'custom' == spec['Editor']:
+            continue
+        output_objects.append({'object_type': 'html_form', 'text'
+                                   : """
 <b>%s:</b>&nbsp;<a href='docs.py?show=job#%s'>help</a><br />
 %s""" % (title, field, description)
-                                   })
-            
-            if 'input' == spec['Editor']:
-                if field_type.startswith('multiple'):
-                    output_objects.append({'object_type': 'html_form', 'text'
-                                           : """
+                               })
+        
+        if 'input' == spec['Editor']:
+            if field_type.startswith('multiple'):
+                output_objects.append({'object_type': 'html_form', 'text'
+                                       : """
 <textarea name='%s' cols='%d' rows='%d'>%s</textarea><br />
 """ % (field, area_cols, area_rows, '\n'.join(default))
-                                   })
-                else:
-                    output_objects.append({'object_type': 'html_form', 'text'
-                                           : """
+                               })
+            else:
+                output_objects.append({'object_type': 'html_form', 'text'
+                                       : """
 <input type='text' name='%s' size='%d' value='%s' /><br />
 """ % (field, field_size, default)
+                               })
+        elif 'select' == spec['Editor']:
+            choices = available_choices(configuration, client_id,
+                                        field, spec)
+            res_value = default
+            if field_type.startswith('multiple'):
+                multi_select = 'multiple'
+            else:
+                multi_select = ''
+            value_select = ''
+            value_select += "<select %s name='%s'>\n" % (multi_select, field)
+            for name in choices:
+                selected = ''
+                if str(res_value) == str(name) or multi_select and str(name) in res_value:
+                    selected = 'selected'
+                value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
+            value_select += """</select><br />\n"""    
+            output_objects.append({'object_type': 'html_form', 'text'
+                                   : value_select
                                    })
-            elif 'select' == spec['Editor']:
-                choices = available_choices(configuration, client_id,
-                                            field, spec)
-                res_value = default
-                if field_type.startswith('multiple'):
-                    multi_select = 'multiple'
-                else:
-                    multi_select = ''
-                value_select = ''
-                value_select += "<select %s name='%s'>\n" % (multi_select, field)
-                for name in choices:
-                    selected = ''
-                    if str(res_value) == str(name) or multi_select and str(name) in res_value:
-                        selected = 'selected'
-                    value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-                value_select += """</select><br />\n"""    
-                output_objects.append({'object_type': 'html_form', 'text'
-                                       : value_select
-                                       })
-            output_objects.append({'object_type': 'html_form', 'text': "<br />"})
+        output_objects.append({'object_type': 'html_form', 'text': "<br />"})
 
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : """
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : """
 <tr>
 <td><br /></td>
 <td class=centertext>
@@ -238,13 +287,19 @@ Actual examples for inspiration:
 </form>
 </table>
 """
-                               })
-    else:
-        output_objects.append({'object_type': 'sectionheader', 'text'
-                              : 'Please enter your mRSL job description below:'
-                              })
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : """
+                           })
+    output_objects.append({'object_type': 'html_form', 
+                           'text': '''
+</div><!-- fields_form-->
+<div id="textarea_form" style="display:none;">
+'''})
+
+#    else:
+    output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Please enter your mRSL job description below:'
+                          })
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : """
 <!-- 
 Please note that textarea.py chokes if no nonempty KEYWORD_X_Y_Z fields 
 are supplied: thus we simply send a bogus jobname which does nothing
@@ -263,8 +318,13 @@ are supplied: thus we simply send a bogus jobname which does nothing
 </td></tr>
 </table>
 """
-                               % {'default_mrsl': default_mrsl}})
+                           % {'default_mrsl': default_mrsl}})
 
+    output_objects.append({'object_type': 'html_form', 
+                           'text': '''
+</div><!-- textarea_form-->
+<div id="files_form" style="display:none;">
+'''})
     # Upload form
 
     output_objects.append({'object_type': 'html_form', 'text'
@@ -305,6 +365,8 @@ Optional remote filename (extra useful in windows)
 """
                            % {'dest_dir': '.' + os.sep}})
 
+    output_objects.append({'object_type': 'html_form', 
+                           'text': '\n</div><!-- files_form-->'})
     return (output_objects, status)
 
 
