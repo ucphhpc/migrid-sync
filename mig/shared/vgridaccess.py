@@ -97,7 +97,7 @@ def user_allowed_resources(configuration, client_id):
     owners and resource owners, so that a resource only truly participates
     in a vgrid if the vgrid *and* resource owners configured it so.
     """
-    allowed = []
+    allowed = {}
     vgrid_map = {}
     allowed_vgrids = user_allowed_vgrids(configuration, client_id)
 
@@ -125,7 +125,9 @@ def user_allowed_resources(configuration, client_id):
             if pub in allowed:
                 continue
             if vgrid in vgrid_map[anon_map[pub]]['all_exes']:
-                allowed.append(pub)
+                all_exes = [exe for exe in vgrid_map[anon_map[pub]].keys() \
+                            if not exe == 'all_exes']
+                allowed[pub] = all_exes
     return allowed
 
 if "__main__" == __name__:

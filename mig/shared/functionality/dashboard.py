@@ -153,10 +153,15 @@ You have submitted a total of %(total)d jobs:
 %(canceled)d canceled, %(expired)d expired and %(failed)d failed.
 """ % total_jobs
     output_objects.append({'object_type': 'text', 'text': job_info})
-    resource_count = len(user_allowed_resources(configuration, client_id))
+    allowed_res = user_allowed_resources(configuration, client_id)
+    # allowed_res is dictionary of res ID and list of attached exe names
+    resource_count = len(allowed_res.keys())
+    exe_count = 0
+    for exes in allowed_res.values():
+        exe_count += len(exes)
     resource_info = """
-%d resources allow execution of your jobs.
-""" % resource_count
+%d resources providing %d execution units in total allow execution of your jobs.
+""" % (resource_count, exe_count)
     output_objects.append({'object_type': 'text', 'text': resource_info})
     disk_stats = refresh_disk_stats(configuration, client_id)
     total_disk = {'own_files': disk_stats[OWN][FILES],

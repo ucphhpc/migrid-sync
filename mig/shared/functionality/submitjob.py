@@ -159,7 +159,7 @@ Actual examples for inspiration:
 
         # Allow any exe unit on all allowed resources
         
-        allowed_resources = ['%s_*' % res for res in user_res]
+        allowed_resources = ['%s_*' % res for res in user_res.keys()]
         allowed_resources.sort()
         configuration.resources = allowed_resources
         field_size = 30
