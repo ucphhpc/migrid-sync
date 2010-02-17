@@ -57,6 +57,17 @@ def vgrid_is_owner_or_member(vgrid_name, client_id, configuration):
     else:
         return False
 
+def vgrid_allowed(client_id, allowed_pattern):
+    """Helper function to check if client_id is allowed using
+    allowed_pattern list.
+    """
+    for pattern in allowed_pattern:
+
+        # Use fnmatch to accept direct hits as well as wild card matches
+
+        if fnmatch.fnmatch(client_id, pattern):
+            return True
+    return False
 
 def vgrid_is_cert_in_list(
     vgrid_name,
@@ -79,13 +90,7 @@ def vgrid_is_cert_in_list(
                                     % entries)
         return False
 
-    for entry in entries:
-
-        # Use fnmatch to accept direct hits as well as wild card matches
-
-        if fnmatch.fnmatch(client_id, entry):
-            return True
-    return False
+    return vgrid_allowed(client_id, entries)
 
 
 def vgrid_is_owner(vgrid_name, client_id, configuration):
@@ -259,6 +264,17 @@ def vgrid_list(vgrid_name, group, configuration):
             return (False, msg)
     return (True, output)
 
+def vgrid_owners(vgrid_name, configuration):
+    """Extract owners list for a vgrid"""
+    return vgrid_list(vgrid_name, 'owners', configuration)
+
+def vgrid_member(vgrid_name, configuration):
+    """Extract members list for a vgrid"""
+    return vgrid_list(vgrid_name, 'members', configuration)
+
+def vgrid_resources(vgrid_name, configuration):
+    """Extract resources list for a vgrid"""
+    return vgrid_list(vgrid_name, 'resources', configuration)
 
 def vgrid_match_resources(vgrid_name, resources, configuration):
     """Return a list of resources filtered to only those allowed in
