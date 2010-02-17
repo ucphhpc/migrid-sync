@@ -1,0 +1,10 @@
+Icons in this directory:
+
+statistics-icon.png 		http://pixel-mixer.com/			    Free for all uses, but link required.
+
+icons/*: 		http://www.famfamfam.com/lab/icons/silk/    Creative Commons Attribution 2.5 License.
+
+status-icons/*: 		http://www.kde-look.org/content/show.php/Crystal+SVG?content=8341 LGPL
+
+
+
