@@ -291,4 +291,3 @@ if "__main__" == __name__:
     print "vgrid totals: %s" % raw_stats[VGRID]
     raw_stats = refresh_job_stats(conf, sys.argv[1])
     print "total jobs: %s" % raw_stats[JOBS]
-    

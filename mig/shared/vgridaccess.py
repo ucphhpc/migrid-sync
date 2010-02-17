@@ -65,12 +65,12 @@ def refresh_vgrid_map(configuration):
     # Temporary backwards compatibility - old format had resource ID's as keys
     if not vgrid_map.has_key(VGRIDS):
         vgrid_map[VGRIDS] = {default_vgrid: '*'}
-        dirty[VGRIDS] = dirty.get(VGRIDS, []) + [VGRIDS]
+        dirty[VGRIDS] = dirty.get(VGRIDS, []) + [default_vgrid]
     if not vgrid_map.has_key(RESOURCES):
         old_map = vgrid_map
         vgrid_map = {}
         vgrid_map[RESOURCES] = old_map
-        dirty[RESOURCES] = dirty.get(RESOURCES, []) + [RESOURCES]
+        dirty[RESOURCES] = dirty.get(RESOURCES, []) + old_map.keys()
 
     # Find all vgrids and their resources allowed
 
