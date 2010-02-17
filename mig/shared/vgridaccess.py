@@ -116,6 +116,7 @@ def refresh_vgrid_map(configuration):
                 exe_vgrids = vgrid_map[RESOURCES][res][exe]
                 assigned += [i for i in exe_vgrids if i not in assigned]
             vgrid_map[RESOURCES][res][ASSIGN] = assigned
+            vgrid_map[RESOURCES][res][ALLOW] = vgrid_map[RESOURCES][res].get(ALLOW, [])
             dirty[RESOURCES] = dirty.get(RESOURCES, []) + [res]
     # Remove any missing resources from map
     missing_res = [res for res in vgrid_map[RESOURCES].keys() \
