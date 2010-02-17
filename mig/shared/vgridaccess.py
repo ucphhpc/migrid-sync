@@ -37,7 +37,8 @@ from shared.vgrid import vgrid_list_vgrids, vgrid_allowed, vgrid_resources, \
      default_vgrid, user_allowed_vgrids
 
 MAP_SECTIONS = (RESOURCES, VGRIDS) = ("__resources__", "__vgrids__")
-RES_SPECIALS = (ALLOW, ASSIGN) = ('__allow__', '__assign__')
+RES_SPECIALS = (ALLOW, ASSIGN, RESID) = \
+               ('__allow__', '__assign__', '__resid__')
 
 def refresh_vgrid_map(configuration):
     """Refresh map of resources and their vgrid participation. Uses a pickled
@@ -117,6 +118,10 @@ def refresh_vgrid_map(configuration):
                 assigned += [i for i in exe_vgrids if i not in assigned]
             vgrid_map[RESOURCES][res][ASSIGN] = assigned
             vgrid_map[RESOURCES][res][ALLOW] = vgrid_map[RESOURCES][res].get(ALLOW, [])
+            public_id = res
+            if get_resource_fields(res, ['ANONYMOUS']).get('ANONYMOUS', True):
+                public_id = anon_resource_id(public_id)
+            vgrid_map[RESOURCES][res][RESID] = public_id
             dirty[RESOURCES] = dirty.get(RESOURCES, []) + [res]
     # Remove any missing resources from map
     missing_res = [res for res in vgrid_map[RESOURCES].keys() \
@@ -173,10 +178,7 @@ def user_allowed_resources(configuration, client_id):
 
     anon_map = {}
     for res in map_resources.keys():
-        public_id = res
-        if get_resource_fields(res, ['ANONYMOUS']).get('ANONYMOUS', True):
-            public_id = anon_resource_id(public_id)
-        anon_map[res] = public_id
+        anon_map[res] = map_resources[res][RESID]
 
     # Now select only the ones that actually still are allowed for that vgrid
 
