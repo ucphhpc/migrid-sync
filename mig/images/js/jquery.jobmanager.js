@@ -214,7 +214,7 @@ if (jQuery) (function($){
                     var single_selection = !$(el).parent().hasClass("ui-selected");
                     var job_id = "";
                     
-                    $("#cmd_helper").dialog({buttons: {Close: function() {$(this).dialog("close");} }, width: "620px", autoOpen: false, closeOnEscape: true, modal: true, position: [300, 70]});
+                    $("#cmd_helper").dialog({buttons: {Close: function() {$(this).dialog("close");} }, width: "800px", autoOpen: false, closeOnEscape: true, modal: true, position: [300, 70]});
                     $("#cmd_helper").dialog("open");
                     $("#cmd_helper").html("");
                                                         

@@ -66,9 +66,9 @@ if (jQuery) (function($){
 		// Note: max-height is broken on autoHeight this is noted as a bug:
 		//       http://dev.jqueryui.com/ticket/4820
 		//       The stated workaround is used in jsonWrapper.
-		var dialogOptions = { width: '620px', autoOpen: false, closeOnEscape: true, modal: true}
-		var okDialog			= { buttons: {Ok: function() {$(this).dialog('close');} }, width: '620px', autoOpen: false, closeOnEscape: true, modal: true}
-		var closeDialog		= { buttons: {Close: function() {$(this).dialog('close');} }, width: '620px', autoOpen: false, closeOnEscape: true, modal: true}
+		var dialogOptions = { width: '800px', autoOpen: false, closeOnEscape: true, modal: true}
+		var okDialog			= { buttons: {Ok: function() {$(this).dialog('close');} }, width: '800px', autoOpen: false, closeOnEscape: true, modal: true}
+		var closeDialog		= { buttons: {Close: function() {$(this).dialog('close');} }, width: '800px', autoOpen: false, closeOnEscape: true, modal: true}
 
 		function doubleClickEvent(el) {
 			if($(el).hasClass('directory')) {
@@ -293,7 +293,7 @@ if (jQuery) (function($){
 																						},
 																						Cancel: function() { $(this).dialog('close'); }
 																	},
-																	width: '500px',
+																	width: '800px',
 																	autoOpen: false,
 																	closeOnEscape: true,
 																	modal: true});
@@ -318,7 +318,7 @@ if (jQuery) (function($){
 																		autoOpen:				false,
 																		closeOnEscape:	true,
 																		modal:	true,
-																		width: '620px'});
+																		width: '800px'});
 				$('#upload_dialog').dialog('open');
 
 			},
