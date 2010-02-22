@@ -247,6 +247,13 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : '%s On-demand Documentation' % \
                             configuration.short_title })
+    output_objects.append({'object_type': 'text',
+                           'text': '''
+This is the integrated help system for %s. You can search for a topic in the
+search field or select the particular section directly. Please note that the
+integrated help is rather limited to short overviews and technical
+specifications. Please find more user friendly tutorials and examples on the
+official site support pages.''' % configuration.short_title})
     html = '<p>Filter (using *,? etc.)'
     html += "<form method='post' action='docs.py'>"
     html += "<input type='hidden' name='show' value='' />"
