@@ -868,80 +868,92 @@ Exit code: %s Description: %s<br />
         elif i['object_type'] == 'vgrid_list':
             if len(i['vgrids']) > 0:
                 vgrids = i['vgrids']
-                lines.append("<table class='vgrids'>")
-                lines.append('<tr class="title"><td>Name</td><td>Actions</td><td class=centertext colspan=2>Private page</td><td class=centertext colspan=2>Public page</td><td class=centertext colspan=2>Wiki</td><td class=centertext colspan=2>Monitor</td></tr>'
+                lines.append("<table class='vgrids' id='vgridtable'>")
+                lines.append('''
+<thead class="title">
+  <th>Name</th>
+  <th width="8"><!-- member --></th>
+  <th width="8"><!-- Owner --></th>
+  <th class=centertext colspan="2">Private pages</th>
+  <th class=centertext colspan="2">Public pages</th>
+  <th class=centertext colspan="2">Wiki</th>
+  <th class=centertext colspan="2">Monitor</th>
+</thead>
+<tbody>
+'''
                              )
-                row_number = 1
                 for obj in vgrids:
-                    row_class = row_name[row_number % 2]
-                    lines.append('<tr class=%s>' % row_class)
+                    lines.append('<tr>')
                     lines.append('<td>%s</td>' % obj['name'])
+                    lines.append('<td>')
+                    # membership links: should be there in any case
+                    if obj.has_key('memberlink'):
+                        lines.append('%s'
+                                 % html_link(obj['memberlink']))
+                    lines.append('</td>')
                     lines.append('<td>')
                     if obj.has_key('administratelink'):
                         lines.append('%s'
                                  % html_link(obj['administratelink']))
-                    else:
-                        lines.append('-----')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('editprivatelink'):
                         lines.append('%s '
                                  % html_link(obj['editprivatelink']))
                     else:
-                        lines.append('-----')
+                        lines.append('---')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('enterprivatelink'):
                         lines.append('%s '
                                  % html_link(obj['enterprivatelink']))
                     else:
-                        lines.append('-----')
+                        lines.append('---')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('editpubliclink'):
                         lines.append('%s '
                                  % html_link(obj['editpubliclink']))
                     else:
-                        lines.append('-----')
+                        lines.append('---')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('enterpubliclink'):
                         lines.append('%s '
                                  % html_link(obj['enterpubliclink']))
                     else:
-                        lines.append('-----')
+                        lines.append('---')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('privatewikilink'):
                         lines.append('%s '
                                  % html_link(obj['privatewikilink']))
                     else:
-                        lines.append('-----')
+                        lines.append('---')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('publicwikilink'):
                         lines.append('%s '
                                  % html_link(obj['publicwikilink']))
                     else:
-                        lines.append('-----')
+                        lines.append('---')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('privatemonitorlink'):
                         lines.append('%s '
                                  % html_link(obj['privatemonitorlink']))
                     else:
-                        lines.append('-----')
+                        lines.append('---')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('publicmonitorlink'):
                         lines.append('%s '
                                  % html_link(obj['publicmonitorlink']))
                     else:
-                        lines.append('-----')
+                        lines.append('---')
                     lines.append('</td>')
                     lines.append('</tr>')
-                    row_number += 1
-                lines.append('</table>')
+                lines.append('</tbody></table>')
             else:
                 lines.append('No matching VGrids found')
         elif i['object_type'] == 'script_status':
