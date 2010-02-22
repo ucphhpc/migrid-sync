@@ -30,7 +30,7 @@
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables
-from shared.vgrid import vgrid_list
+from shared.vgrid import vgrid_list, vgrid_is_owner
 
 
 def signature():
@@ -182,6 +182,15 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'header', 'text'
                           : "Administrate vgrid '%s'" % vgrid_name})
+
+    # Only owners are allowed to administrate VGrids 
+
+    if not vgrid_is_owner(vgrid_name, client_id, configuration):
+        output_objects.append({'object_type': 'error_text',
+                               'text': '''
+You are not an owner of %s so you are not permitted to administrate access.'''
+                               % vgrid_name})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     (ret, msg) = create_html(vgrid_name, configuration)
     if not ret:

@@ -191,7 +191,7 @@ def init_vgrid_script_add_rem(
         return (False, msg, None)
 
     if not vgrid_is_owner(vgrid_name, client_id, configuration):
-        msg += 'You must be an owner of the %s vgrid to add/remove %s'\
+        msg += 'You must be an owner of the %s vgrid to administrate %s'\
              % (vgrid_name, subject_type)
         return (False, msg, None)
 
