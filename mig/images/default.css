@@ -206,6 +206,13 @@ table.monitorruntimeenvreq {
   background-image: url('/images/icons/application_osx_terminal.png');
 }
 
+.navmenu ul li.statistics a {
+  background-image: url('/images/icons/statistics-icon.png');
+}
+.navmenu ul li.docs a {
+  background-image: url('/images/icons/txt.png');
+}
+
 .navmenu ul li a:hover, .navsubmenu ul li a:hover {     
   background-color: #369;
   color: white;
