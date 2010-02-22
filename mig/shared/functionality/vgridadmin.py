@@ -179,7 +179,7 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript" >
 
 var confirmLeave = function(name, link) {
-    var yes = confirm("Really leave the Virtual Org. " + name + " ?");
+    var yes = confirm("Really leave the VGrid " + name + " ?");
     if (yes) {
          window.location=link;
     }
