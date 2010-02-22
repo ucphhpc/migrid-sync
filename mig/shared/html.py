@@ -66,9 +66,12 @@ menu_items['wshell'] = {'class': 'shell',
              window.reload();',
     'title': 'Shell',
     'hover': 'a command line interface, based on javascript and xmlrpc. Opens in a new window'}
-menu_items['statistics'] = {'class': 'settings', 'url': 'showstats.py',
+menu_items['statistics'] = {'class': 'statistics', 'url': 'showstats.py',
                           'title': 'Statistics',
                            'hover': 'usage overview for resources and users on this server'}
+menu_items['docs'] = {'class': 'docs', 'url': 'docs.py',
+                          'title': 'Documentation',
+                          'hover': 'some online documentation for immediate use'}
 
 
 def html_print(formatted_text, html=True):
@@ -106,9 +109,9 @@ def render_menu(configuration, menu_class='navmenu',
         selected = ''
         if spec['url'].find(current_element) > -1:
             selected = ' class="selected" '
-        menu_lines += '   <li %s class="%s"><a href="%s" %s>%s</a></li>\n'\
+        menu_lines += '   <li %s class="%s"><a href="%s" %s title="%s">%s</a></li>\n'\
              % (spec.get('attr', ''), spec['class'], spec['url'], selected,
-                spec['title'])
+                spec.get('hover',''), spec['title'])
 
     menu_lines += ' </ul>\n'
     menu_lines += '</div>\n'
