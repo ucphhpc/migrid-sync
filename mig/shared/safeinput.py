@@ -864,7 +864,9 @@ def guess_type(name):
         return valid_printable
     # shell:menu or settings:site_user_menu
     elif name.lower().find('menu') != -1:
-        return lambda x:__valid_contents(x, "yesno")
+        return valid_ascii
+
+
     else:
 
     # TODO: extend to include all used variables here
