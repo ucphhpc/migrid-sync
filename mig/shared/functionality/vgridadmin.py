@@ -31,7 +31,7 @@ import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_list_vgrids, vgrid_is_owner, \
-    vgrid_is_member, vgrid_is_owner_or_member
+    vgrid_is_member, vgrid_is_owner_or_member, default_vgrid
 
 
 def signature():
@@ -72,66 +72,154 @@ def main(client_id, user_arguments_dict):
     owner_list = {'object_type': 'vgrid_list', 'vgrids': []}
     member_list = {'object_type': 'vgrid_list', 'vgrids': []}
     for vgrid_name in list:
-        if not vgrid_is_owner_or_member(vgrid_name, client_id,
-                configuration):
-            continue
-
+        
         vgrid_obj = {'object_type': 'vgrid', 'name': vgrid_name}
-        vgrid_obj['enterprivatelink'] = {'object_type': 'link',
-                'destination': '../vgrid/%s/' % vgrid_name,
-                'text': 'Enter'}
-        vgrid_obj['privatewikilink'] = {'object_type': 'link',
-                'destination': '/vgridwiki/%s' % vgrid_name,
-                'text': 'Private'}
-        vgrid_obj['privatemonitorlink'] = {'object_type': 'link',
+
+        if vgrid_name == default_vgrid:
+
+            # Everybody is member and allowed to see statistics, Noone
+            # can own it or leave it. Do not add any page links.
+
+            vgrid_obj['privatemonitorlink'] = {'object_type': 'link',
                 'destination': 'showvgridmonitor.py?vgrid_name=%s'\
                  % vgrid_name, 'text': 'Private'}
-        vgrid_obj['enterpubliclink'] = {'object_type': 'link',
-                'destination': '%s/vgrid/%s/'\
-                 % (configuration.migserver_http_url, vgrid_name),
-                'text': 'Enter'}
+
+            vgrid_obj['memberlink'] = {'object_type': 'link',
+             'destination':'',
+             'text': "<img src='/images/icons/information.png' title='Every user is member of the %s VGrid.'>" % default_vgrid }
+
+            member_list['vgrids'].append(vgrid_obj)
+            continue
+
+        # links for everyone: public pages and membership request
+
         vgrid_obj['publicwikilink'] = {'object_type': 'link',
                 'destination': '%s/vgridpublicwiki/%s'\
                  % (configuration.migserver_http_url, vgrid_name),
-                'text': 'Public'}
+                'text': 'Public Wiki'}
+        vgrid_obj['enterpubliclink'] = {'object_type': 'link',
+                'destination': '%s/vgrid/%s/'\
+                 % (configuration.migserver_http_url, vgrid_name),
+                'text': 'View page'}
+
+        # link to become member. overwritten later for members
+
+        vgrid_obj['memberlink'] = {'object_type': 'link',
+             'destination':
+              'vgridmemberrequestaction.py?vgrid_name=%s&request_type=member&request_text=no+text'\
+              % vgrid_name,
+             'text': "<img src='/images/icons/add.png' title='Become a member'>"}
+        # link to become owner. overwritten later for owners
+
+        vgrid_obj['administratelink'] = {'object_type': 'link',
+             'destination':
+              'vgridmemberrequestaction.py?vgrid_name=%s&request_type=owner&request_text=no+text'\
+              % vgrid_name,
+             'text': "<img src='/images/icons/cog_add.png' title='Become an owner'>"}
+
+        # members/owners are allowed to view private pages and monitor
+
+        if vgrid_is_owner_or_member(vgrid_name, client_id, configuration):
+            vgrid_obj['enterprivatelink'] = {'object_type': 'link',
+                'destination': '../vgrid/%s/' % vgrid_name,
+                'text': 'Enter'}
+            vgrid_obj['privatewikilink'] = {'object_type': 'link',
+                'destination': '/vgridwiki/%s' % vgrid_name,
+                'text': 'Private Wiki'}
+            vgrid_obj['privatemonitorlink'] = {'object_type': 'link',
+                'destination': 'showvgridmonitor.py?vgrid_name=%s'\
+                 % vgrid_name, 'text': 'Private'}
+
+            # to leave this VGrid (remove ourselves). Note that we are
+            # going to overwrite the link later for owners.
+
+            vgrid_obj['memberlink'] = {'object_type': 'link',
+                'destination':
+                 'rmvgridmember.py?vgrid_name=%s&client_id=%s'\
+                 % (vgrid_name,client_id),
+                'text': "<img src='/images/icons/cancel.png' title='Leave this VGrid'>"}
+
+        # owners are allowed to edit pages and administrate
+
         if vgrid_is_owner(vgrid_name, client_id, configuration):
+
+            # correct the link to leave the VGrid
+
+            vgrid_obj['memberlink']['destination'] = \
+                 'rmvgridowner.py?vgrid_name=%s&client_id=%s'\
+                 % (vgrid_name,client_id)
+
+            # add more links: administrate and edit pages
+
             vgrid_obj['administratelink'] = {'object_type': 'link',
                     'destination': 'adminvgrid.py?vgrid_name=%s'\
-                     % vgrid_name, 'text': 'Administrate'}
+                     % vgrid_name,
+                    'text': "<img src='/images/icons/wrench.png' title='Administrate'>"}
             vgrid_obj['editprivatelink'] = {'object_type': 'link',
                     'destination': 'editor.py?path=private_base/%s/index.html'\
                      % vgrid_name, 'text': 'Edit'}
             vgrid_obj['editpubliclink'] = {'object_type': 'link',
                     'destination': 'editor.py?path=public_base/%s/index.html'\
                      % vgrid_name, 'text': 'Edit'}
-            owner_list['vgrids'].append(vgrid_obj)
-        elif vgrid_is_member(vgrid_name, client_id, configuration):
 
-            member_list['vgrids'].append(vgrid_obj)
+        member_list['vgrids'].append(vgrid_obj)
 
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'VGrid administration'
-    output_objects.append({'object_type': 'header', 'text': 'VGrid administration'
-                          })
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'VGrid owner'})
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'List of vgrids where you are registered as owner:'
-                          })
 
-    output_objects.append(owner_list)
+    # quickly hacked in jquery tablesorter support:
+
+    title_entry['javascript'] = '''
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+
+<script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+
+<script type="text/javascript" >
+$(document).ready(function() {
+
+          // table initially sorted by col. 2 (admin), then 1 (member), then 0
+          var sortOrder = [[2,0],[1,1],[0,0]];
+
+          // use an image title for sorting if there is any inside
+          var imgTitle = function(contents) {
+              var key = $(contents).find("img").attr("title");
+              if (key == null) {
+                   key = $(contents).html();
+              }
+              return key;
+          }
+
+          $("#vgridtable").tablesorter({widgets: ["zebra"],
+                                        sortList:sortOrder,
+                                        textExtraction: imgTitle
+                                       });
+     }
+);
+</script>
+'''
+
+    output_objects.append({'object_type': 'header', 'text': 'VGrids'
+                          })
+#    output_objects.append({'object_type': 'sectionheader', 'text'
+#                          : 'VGrid Owner'})
+#    output_objects.append({'object_type': 'text', 'text'
+#                          : 'List of VGrids where you are registered as owner:'
+#                          })
+#
+#    output_objects.append(owner_list)
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'VGrid member'})
     output_objects.append({'object_type': 'text', 'text'
-                          : 'List of vgrids where you are registered as member:'
+                          : 'List of VGrids on this server:'
                           })
     output_objects.append(member_list)
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'VGrid Totals'})
     output_objects.append({'object_type': 'link', 'text'
-                          : 'View a multi VGrid monitor with all the resources you can access'
+                          : 'View a monitor page with all VGrids/resources you can access'
                           , 'destination'
                           : 'showvgridmonitor.py?vgrid_name=ALL'})
 
@@ -147,7 +235,7 @@ def main(client_id, user_arguments_dict):
                           : '''<form method="get" action="createvgrid.py">
     <input type="text" size=40 name="vgrid_name" />
     <input type="hidden" name="output_format" value="html" />
-    <input type="submit" value="Create vgrid" />
+    <input type="submit" value="Create VGrid" />
     </form>
     <br />
     '''})
