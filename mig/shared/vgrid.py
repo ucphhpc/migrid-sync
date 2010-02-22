@@ -190,11 +190,6 @@ def init_vgrid_script_add_rem(
         msg += 'Illegal vgrid_name: %s' % vgrid_name
         return (False, msg, None)
 
-    if not vgrid_is_owner(vgrid_name, client_id, configuration):
-        msg += 'You must be an owner of the %s vgrid to administrate %s'\
-             % (vgrid_name, subject_type)
-        return (False, msg, None)
-
     if subject_type == 'member' or subject_type == 'owner':
         if not is_user(subject, configuration.user_home):
             msg += '%s is not a valid %s user!' % \
@@ -209,6 +204,20 @@ def init_vgrid_script_add_rem(
     else:
         msg += 'unknown subject type in init_vgrid_script_add_rem'
         return (False, msg, [])
+
+    # special case: members may terminate own membership
+
+    if (subject_type == 'member') and (client_id == subject) \
+        and (vgrid_is_member(vgrid_name, subject, configuration)):
+
+        return (True, msg, [])
+
+    # otherwise: only owners may add or remove:
+
+    if not vgrid_is_owner(vgrid_name, client_id, configuration):
+        msg += 'You must be an owner of the %s vgrid to add/remove %s'\
+             % (vgrid_name, subject_type)
+        return (False, msg, None)
 
     return (True, msg, [])
 

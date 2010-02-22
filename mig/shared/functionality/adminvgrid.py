@@ -29,7 +29,7 @@
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_list, vgrid_is_owner
 
 
@@ -40,127 +40,81 @@ def signature():
     return ['html_form', defaults]
 
 
-def create_html(vgrid_name, configuration):
-    """HTML format"""
+def vgrid_add_remove_table(vgrid_name, 
+                           item_string, 
+                           script_suffix, 
+                           configuration):
+    """Create a table of owners/members/resources (item_string), allowing to
+    remove one item by selecting (radio button) and calling a script, and
+    a form to add a new entry. 
+    
+    Arguments: vgrid_name, the vgrid to operate on
+               item_string, one of owner, member, resource
+               script_suffix, will be prepended with "add" and "rm" for forms
+               configuration, for loading the list of current items 
+               
+    Returns: (Bool, list of output_objects)
+    """
 
-    out = '<h3>Owners</h3>'
+    out = []
 
-    # list owners
+    if not item_string in ['owner', 'member', 'resource']:
+        out.append({'object_type': 'error_text', 'text': 
+                    'Internal error: Unknown item type %s.' % item_string
+                    })
+        return (False, out)
 
-    (status, msg) = vgrid_list(vgrid_name, 'owners', configuration)
+    # read list of current items and create form to remove one
+
+    (status, msg) = vgrid_list(vgrid_name, '%ss' % item_string, configuration)
     if not status:
-        return (False, msg)
+        out.append({'object_type': 'error_text',
+                    'text': msg })
+        return (False, out)
 
+    # success, so msg is a list of user names (DNs) or unique resource ids
     if len(msg) <= 0:
-        out += \
-            'No owners found! This could indicate a problem since it is not allowed to remove the last owner of a vgrid!'
+        out.append({'object_type': 'text', 
+                    'text': 'No %ss found!' % str.title(item_string)
+                    })
     else:
-        out += \
-            """<form method="get" action="rmvgridowner.py">
-        <input type="hidden" name="vgrid_name" value="%s" />
-        """\
-             % vgrid_name
+        form = '''
+      <form method="get" action="rm%(scriptname)s.py">
+        <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
+        Current %(item)ss of %(vgrid)s:
+        <table class="vgrid%(item)s">
+          <thead><tr><th>Remove</th><th>Owner</th></thead>
+          <tbody>
+''' % { 'item': item_string,
+        'scriptname': script_suffix,
+        'vgrid': vgrid_name }
 
-        out += 'Current owners of %s:' % vgrid_name
-        out += '<table class="vgridowner"><tr><th>Remove</th><th>Owner</th>'
         for elem in msg:
-            if elem != '':
-                out += \
-                    "<tr><td><input type=radio name='cert_id' value='%s' /></td><td>%s</td></tr>"\
+            if elem:
+                form += \
+"          <tr><td><input type=radio name='cert_id' value='%s' /></td><td>%s</td></tr>"\
                      % (elem, elem)
-        out += '</table>'
-        out += \
-            """<input type="submit" value="Remove owner(s)" />
-        </form>
-        """
+        form += '              </tbody></table>'
+        form += '''
+        <input type="submit" value="Remove %s" />
+      </form>
+''' % item_string
+                    
+        out.append({'object_type': 'html_form', 'text': form })
 
-    out += \
-        """<form method="get" action="addvgridowner.py">
-    <input type="hidden" name="vgrid_name" value="%s" />
-    <input type="text" size=40 name="cert_id" />
-    <input type="submit" value="Add vgrid owner" />
-    </form>
-    <hr />
-    <h2>Members</h2>"""\
-         % vgrid_name
+    # form to add a new item
 
-    # list members
-
-    (status, msg) = vgrid_list(vgrid_name, 'members', configuration)
-    if not status:
-        return (False, msg)
-
-    if len(msg) <= 0:
-        out += 'No members found!<br />'
-    else:
-        out += \
-            """<form method="get" action="rmvgridmember.py">
-        <input type="hidden" name="vgrid_name" value="%s" />
-        """\
-             % vgrid_name
-
-        out += 'Current members of %s:' % vgrid_name
-        out += \
-            '<table class="vgridmember"><tr><th>Remove</th><th>Member</th>'
-        for elem in msg:
-            out += \
-                "<tr><td><input type=radio name='cert_id' value='%s' /></td><td>%s</td></tr>"\
-                 % (elem, elem)
-        out += '</table>'
-
-        out += \
-            """<input type="submit" value="Remove member(s)" />
-        </form>
-        """
-    out += \
-        """<form method="get" action="addvgridmember.py">
-    <input type="hidden" name="vgrid_name" value="%s" />
-    <input type="text" size=40 name="cert_id" />
-    <input type="submit" value="Add vgrid member" />
-    </form>
-    <hr />
-    <h2>Resources</h2>"""\
-         % vgrid_name
-
-    # list resources
-
-    (status, msg) = vgrid_list(vgrid_name, 'resources', configuration)
-    if not status:
-        return (False, msg)
-
-    if len(msg) <= 0:
-        out += 'No resources found!<br />'
-    else:
-        out += \
-            """<form method="get" action="rmvgridres.py">
-        <input type="hidden" name="vgrid_name" value="%s" />
-        """\
-             % vgrid_name
-
-        out += 'Current resources of %s (only non-anonymized IDs allowed):' % vgrid_name
-        out += \
-            '<table class="vgridresource"><tr><th>Remove</th><th>Resource</th></tr>'
-        for elem in msg:
-            out += \
-                "<tr><td><input type=radio name='unique_resource_name' value='%s' /></td><td>%s</td></tr>"\
-                 % (elem, elem)
-        out += '</table>'
-
-        out += \
-            """<input type="submit" value="Remove resource(s)" />
-        </form>
-        """
-    out += \
-        """<form method="get" action="addvgridres.py">
-    <input type="hidden" name="vgrid_name" value="%s" />
-    <input type="text" size=40 name="unique_resource_name" />
-    <input type="submit" value="Add vgrid resource" />
-    </form>
-    """\
-         % vgrid_name
-
+    out.append({'object_type': 'html_form',
+                'text': '''
+      <form method="get" action="add%(script)s.py">
+          <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
+          <input type="text" size=70 name="cert_id" />
+          <input type="submit" value="Add vgrid %(item)s" />
+      </form>
+''' % {'vgrid': vgrid_name, 'item': item_string, 'script': script_suffix}
+                }) 
+    
     return (True, out)
-
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -181,23 +135,79 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1]
 
     output_objects.append({'object_type': 'header', 'text'
-                          : "Administrate vgrid '%s'" % vgrid_name})
-
-    # Only owners are allowed to administrate VGrids 
+                          : "Administrate '%s'" % vgrid_name })
 
     if not vgrid_is_owner(vgrid_name, client_id, configuration):
-        output_objects.append({'object_type': 'error_text',
-                               'text': '''
-You are not an owner of %s so you are not permitted to administrate access.'''
-                               % vgrid_name})
-        return (output_objects, returnvalues.CLIENT_ERROR)
 
-    (ret, msg) = create_html(vgrid_name, configuration)
-    if not ret:
-        output_objects.append({'object_type': 'error_text', 'text': '%s'
-                               % msg})
+        output_objects.append({'object_type': 'error_text', 'text': 
+                    'Only owners of %s can administrate it.' % vgrid_name })
+
+        output_objects.append({'object_type': 'link',
+                               'destination':
+                               'vgridmemberrequestaction.py?vgrid_name=%s&request_type=owner&request_text=no+text' % vgrid_name,
+                               'text':
+                               "<img src='/images/icons/cog_add.png' title='Become an owner'>Apply to become an owner"})
+
         return (output_objects, returnvalues.SYSTEM_ERROR)
-    output_objects.append({'object_type': 'html_form', 'text': msg})
+
+    # prepare support for toggling the views (by css/jquery):
+
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = "Administrate VGrid: %s" % vgrid_name
+
+    title_entry['javascript'] = '''
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+
+<style type="text/css">
+.hidden { display:none; }
+</style>
+<script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
+
+<script type="text/javascript" >
+
+    var toggleHidden = function( classname ) {
+        // classname supposed to have a leading dot 
+        $( classname ).toggleClass('hidden');
+    }
+</script>
+'''
+    
+#    (ret, msg) = create_html(vgrid_name, configuration)
+
+#def vgrid_add_remove_table(vgrid_name,item_string,script_suffix, configuration):
+
+    for item,scr in zip(['owner','member','resource'],
+                        ['vgridowner','vgridmember', 'vgridres']):
+        
+        # section header == title(item_string)
+
+        output_objects.append({'object_type': 'sectionheader',
+                               'text': "%ss" % str.title(item)
+                               })
+
+        (status, oobjs) = vgrid_add_remove_table(vgrid_name, item, 
+                                                 scr, configuration)
+        if not status:
+
+            output_objects.extend(oobjs)
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+
+        else:
+
+            output_objects.append({'object_type': 'html_form', 
+                                   'text': '<div class="div-%s">' % item })
+            output_objects.append({'object_type': 'link', 
+                                   'destination': 
+                                   "javascript:toggleHidden('.div-%s');" % item,
+                                   'text': 'Hide %ss' % str.title(item) })
+            output_objects.extend(oobjs)
+            output_objects.append({'object_type': 'html_form', 
+                                   'text': '</div><div class="hidden div-%s">' % item})
+            output_objects.append({'object_type': 'link', 
+                                   'destination': 
+                                   "javascript:toggleHidden('.div-%s');" % item,
+                                   'text': 'Show %ss' % str.title(item) })
+            output_objects.append({'object_type': 'html_form', 
+                                   'text': '</div>' })
+            
     return (output_objects, returnvalues.OK)
-
-
