@@ -38,7 +38,8 @@ import os
 from shared.safeinput import validated_input, valid_user_path, \
      html_escape, REJECT_UNSET
 from shared.findtype import is_user
-
+from shared.init import find_entry
+from shared.settings import load_settings
 
 def warn_on_rejects(rejects, output_objects):
     if rejects:
@@ -107,7 +108,7 @@ def validate_input_and_cert(
 
         # Redirect to req or ext cert page with suitable certificate requirement
         # but without changing access method (CGI vs. WSGI).
-    
+
         certreq_url = os.environ['REQUEST_URI'].replace('-bin', '-sid')
         certreq_url = os.path.join(os.path.dirname(certreq_url), 'reqcert.py')
         extcert_url = os.environ['REQUEST_URI'].replace('-sid', '-bin')
@@ -143,6 +144,13 @@ def validate_input_and_cert(
         return (False, output_objects)
     (status, retval) = validate_input(user_arguments_dict, defaults,
             output_objects, allow_rejects)
+
+    # add the user-defined menu items (if possible)
+    settings = load_settings(client_id, configuration)
+    title = find_entry(output_objects,'title')
+    if settings and title:
+        user_menu = settings.get('SITE_USER_MENU',None)
+        if user_menu:
+            title['user_menu'] = user_menu
+
     return (status, retval)
-
-

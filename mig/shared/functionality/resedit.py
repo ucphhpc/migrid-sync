@@ -160,7 +160,10 @@ description, you can likely just leave the field alone.''' % configuration.short
 
     (title, field) = ('Host FQDN', 'HOSTURL')
     if hosturl:
-        hostip = conf.get('HOSTIP', socket.gethostbyname(hosturl))
+        try:
+            hostip = conf.get('HOSTIP', socket.gethostbyname(hosturl))
+        except:
+            hostip = '<unknown>'
         output_objects.append({'object_type': 'html_form', 'text'
                                : """<br />
 <b>%s:</b>&nbsp;<a href='resedithelp.py#res-%s'>help</a><br />
