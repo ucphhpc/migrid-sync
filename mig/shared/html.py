@@ -70,7 +70,7 @@ menu_items['statistics'] = {'class': 'statistics', 'url': 'showstats.py',
                           'title': 'Statistics',
                            'hover': 'usage overview for resources and users on this server'}
 menu_items['docs'] = {'class': 'docs', 'url': 'docs.py',
-                          'title': 'Documentation',
+                          'title': 'Docs',
                           'hover': 'some online documentation for immediate use'}
 
 
@@ -202,4 +202,3 @@ def html_encode(raw_string):
     result = raw_string.replace("'", '&#039;')
     result = result.replace('"', '&#034;')
     return result
-
