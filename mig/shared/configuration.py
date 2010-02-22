@@ -465,19 +465,17 @@ class Configuration:
         else:
             self.short_title = "MiG"
         if config.has_option('SITE', 'default_menu'):
-            self.site_default_menu = \
-                  filter(menu_items.has_key,
-                         config.get('SITE', 'default_menu').split())
+            req = config.get('SITE', 'default_menu').split()
+            self.site_default_menu = [i for i in req if menu_items.has_key(i)]
         else:
             self.site_default_menu = ['dashboard', 'submitjob', 'files',
                                       'jobs', 'vgrids', 'resources',
                                       'downloads', 'runtimeenvs',
                                       'settings', 'shell', 'docs']
         if config.has_option('SITE', 'user_menu'):
-            self.site_user_menu = \
-                  filter(menu_items.has_key,
-                         filter(lambda e : not (e in self.site_default_menu),
-                                config.get('SITE', 'user_menu').split()))
+            req = config.get('SITE', 'user_menu').split()
+            self.site_user_menu = [i for i in req if menu_items.has_key(i) and \
+                                   i not in self.site_default_menu]
         else:
             self.site_user_menu = []
         if config.has_option('SITE', 'enable_sandboxes'):
