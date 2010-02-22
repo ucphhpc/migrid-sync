@@ -102,6 +102,14 @@ def get_keywords_dict():
         'Required': False,
         }
 
+    site_user_menu = {
+        'Description': 'Additional menu items.', # can be chosen from configuration.user_menu
+        'Example': '...choose from the list',
+        'Type': 'multiplestrings',
+        'Value': [],
+        'Context': 'appearance',
+        'Required': False,
+        }
     # create the keywords in a single dictionary
 
     keywords_dict = {
@@ -114,6 +122,7 @@ def get_keywords_dict():
         'LANGUAGE': language,
         'SUBMITUI': submitui,
         'FILESUI': filesui,
+        'SITE_USER_MENU': site_user_menu,
         }
 
     return keywords_dict

@@ -112,12 +112,35 @@ def main(client_id, user_arguments_dict):
         """\
              % (keyword, val['Description'])
         if val['Type'] == 'multiplestrings':
-            html += \
-                """<textarea cols="40" rows="1" wrap="off" name="%s">"""\
-                 % keyword
-            if current_settings_dict.has_key(keyword):
-                html += '<br />'.join(current_settings_dict[keyword])
-            html += '</textarea><br />'
+            try:
+                
+                # get valid choices from conf. multiple selections
+
+                valid_choices = eval('configuration.%s' % keyword.lower())
+                current_choice = []
+                if current_settings_dict.has_key(keyword):
+                    current_choice = current_settings_dict[keyword]
+                    
+                if len(valid_choices) > 0:
+                    html += '<select multiple name=%s>' % keyword
+                    for choice in valid_choices:
+                        selected = ''
+                        if choice in current_choice:
+                            selected = 'selected'
+                        html += '<option %s value=%s>%s</option>'\
+                                % (selected, choice, choice)
+                    html += '</select><br />'
+            except:
+                # failed on evaluating configuration.%s
+                
+#        elif val['Type'] == 'multiplestrings':
+                html += \
+                     """<textarea cols="40" rows="1" wrap="off" name="%s">"""\
+                     % keyword
+                if current_settings_dict.has_key(keyword):
+                    html += '<br />'.join(current_settings_dict[keyword])
+                    html += '</textarea><br />'
+
         elif val['Type'] == 'string':
 
             # get valid choices from conf

@@ -35,7 +35,7 @@ import time
 from ConfigParser import ConfigParser
 
 from shared.logger import Logger
-
+from shared.html import menu_items
 
 def fix_missing(config_file, verbose=True):
     """Add missing configuration options - used by checkconf script"""
@@ -465,14 +465,19 @@ class Configuration:
         else:
             self.short_title = "MiG"
         if config.has_option('SITE', 'default_menu'):
-            self.site_default_menu = config.get('SITE', 'default_menu').split()
+            self.site_default_menu = \
+                  filter(menu_items.has_key,
+                         config.get('SITE', 'default_menu').split())
         else:
             self.site_default_menu = ['dashboard', 'submitjob', 'files',
                                       'jobs', 'vgrids', 'resources',
                                       'downloads', 'runtimeenvs',
                                       'settings', 'shell', 'docs']
         if config.has_option('SITE', 'user_menu'):
-            self.site_user_menu = config.get('SITE', 'user_menu').split()
+            self.site_user_menu = \
+                  filter(menu_items.has_key,
+                         filter(lambda e : not (e in self.site_default_menu),
+                                config.get('SITE', 'user_menu').split()))
         else:
             self.site_user_menu = []
         if config.has_option('SITE', 'enable_sandboxes'):

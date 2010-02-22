@@ -373,13 +373,18 @@ Exit code: %s Description: %s<br />
             include_menu = True
             if i.has_key('skipmenu'):
                 include_menu = not i['skipmenu']
+            user_menu = []
+            if i.has_key('user_menu'):
+                user_menu = i['user_menu']
+                
             lines.append(get_cgi_html_header(
                 configuration, html_escape(i['text']),
                 '',
                 True,
                 javascript,
                 bodyfunctions,
-                include_menu,
+                include_menu, 
+                user_menu
                 ))
         elif i['object_type'] == 'text':
             lines.append('<p>%s</p>' % html_escape(i['text']))

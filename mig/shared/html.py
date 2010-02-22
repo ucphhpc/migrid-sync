@@ -89,10 +89,11 @@ def html_add(formatted_text, html=True):
 
 
 def render_menu(configuration, menu_class='navmenu', 
-                current_element='Unknown'):
+                current_element='Unknown',
+                user_menu=[]):
     """Render the menu contents using configuration"""
 
-    raw_order = configuration.site_default_menu + configuration.site_user_menu
+    raw_order = configuration.site_default_menu + user_menu
     menu_order = []
     # Remove duplicates
     for name in raw_order:
@@ -127,6 +128,7 @@ def get_cgi_html_header(
     scripts='',
     bodyfunctions='',
     menu=True,
+    user_menu=[],
     ):
     """Return the html tags to mark the beginning of a page."""
 
@@ -135,7 +137,7 @@ def get_cgi_html_header(
     menu_lines = ''
     if menu:
         current_page = os.path.basename(sys.argv[0]).replace('.py', '')
-        menu_lines = render_menu(configuration, 'navmenu', current_page)
+        menu_lines = render_menu(configuration, 'navmenu', current_page, user_menu)
 
     return '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
