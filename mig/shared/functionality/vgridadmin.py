@@ -135,8 +135,8 @@ def main(client_id, user_arguments_dict):
 
             vgrid_obj['memberlink'] = {'object_type': 'link',
                 'destination':
-                 'rmvgridmember.py?vgrid_name=%s&client_id=%s'\
-                 % (vgrid_name,client_id),
+                 'rmvgridmember.py?vgrid_name=%s&cert_id=%s'\
+                 % (vgrid_name, client_id),
                 'text': "<img src='/images/icons/cancel.png' title='Leave this VGrid'>"}
 
         # owners are allowed to edit pages and administrate
@@ -146,8 +146,8 @@ def main(client_id, user_arguments_dict):
             # correct the link to leave the VGrid
 
             vgrid_obj['memberlink']['destination'] = \
-                 'rmvgridowner.py?vgrid_name=%s&client_id=%s'\
-                 % (vgrid_name,client_id)
+                 'rmvgridowner.py?vgrid_name=%s&cert_id=%s'\
+                 % (vgrid_name, client_id)
 
             # add more links: administrate and edit pages
 
