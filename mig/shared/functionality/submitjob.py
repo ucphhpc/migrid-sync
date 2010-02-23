@@ -104,23 +104,6 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = 'Submit Job'
     output_objects.append({'object_type': 'header', 'text'
                           : 'Submit Job'})
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
-<div class='smallcontent'>
-Job descriptions can use a wide range of keywords to specify job requirements
-and actions.<br />
-Each keyword accepts one or more values of a particular type.<br />
-The full list of keywords with their default values and format is available in
-the on-demand <a href='docs.py?show=job'>mRSL Documentation</a>.
-<p>
-Actual examples for inspiration:
-<a href=/cpuinfo.mRSL>CPU Info</a>,
-<a href=/basic-io.mRSL>Basic I/O</a>,
-<a href=/notification.mRSL>Job Notification</a>,
-<a href=/povray.mRSL>Povray</a> and
-<a href=/vcr.mRSL>VCR</a>
-</div>
-    """})
     default_mrsl = get_default_mrsl(template_path)
     settings_dict = load_settings(client_id, configuration)
     if not settings_dict or not settings_dict.has_key('SUBMITUI'):
@@ -167,14 +150,28 @@ Actual examples for inspiration:
     });
 
 </script>
-''' % (submit_options , submit_style + "_form")
+''' % (submit_options, submit_style + "_form")
 
-    for o in submit_options:
-        output_objects.append({'object_type': 'link', 
-                               'destination': "javascript:switchTo('%s')" % o ,
-                               'text' : 'Switch to %s style<br>' % \
-                               o.split('_',2)[0] 
-                               })
+    output_objects.append({'object_type': 'text',
+                           'text': 'This page is used to submit jobs to the grid.'})
+
+    output_objects.append({'object_type': 'verbatim',
+                           'text': '''
+There are %s interface styles available that you can choose among:''' % \
+                           len(submit_options)})
+
+    links = []
+    for opt in submit_options:
+        links.append({'object_type': 'link', 
+                      'destination': "javascript:switchTo('%s')" % opt,
+                      'text' : '%s style' % \
+                      opt.split('_',2)[0] 
+                      })
+    output_objects.append({'object_type': 'multilinkline', 'links': links})
+
+    output_objects.append({'object_type': 'text', 'text': '''
+Please note that changes to the job description are *not* automatically
+transferred if you switch style.'''}) 
 
     output_objects.append({'object_type': 'html_form', 
                            'text': '<div id="fields_form" style="display:none;">\n'})
@@ -183,6 +180,12 @@ Actual examples for inspiration:
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Please fill in your job description in the fields below:'
                           })
+    output_objects.append({'object_type': 'text', 'text'
+                          : """
+Please fill in one or more fields below to define your job before hitting Submit Job
+at the bottom of the page.
+Empty fields will simply result in the default value being used and each field is
+accompanied by a help link providing further details about the field."""})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <table class="submitjob">
@@ -300,6 +303,24 @@ Actual examples for inspiration:
                           })
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
+<div class='smallcontent'>
+Job descriptions can use a wide range of keywords to specify job requirements
+and actions.<br />
+Each keyword accepts one or more values of a particular type.<br />
+The full list of keywords with their default values and format is available in
+the on-demand <a href='docs.py?show=job'>mRSL Documentation</a>.
+<p>
+Actual examples for inspiration:
+<a href=/cpuinfo.mRSL>CPU Info</a>,
+<a href=/basic-io.mRSL>Basic I/O</a>,
+<a href=/notification.mRSL>Job Notification</a>,
+<a href=/povray.mRSL>Povray</a> and
+<a href=/vcr.mRSL>VCR</a>
+</div>
+    """})
+
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : """
 <!-- 
 Please note that textarea.py chokes if no nonempty KEYWORD_X_Y_Z fields 
 are supplied: thus we simply send a bogus jobname which does nothing
@@ -327,9 +348,11 @@ are supplied: thus we simply send a bogus jobname which does nothing
 '''})
     # Upload form
 
+    output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Please upload your job file or packaged job files below:'
+                          })
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<br />
 <table class='files'>
 <tr class=title><td class=centertext colspan=4>
 Upload file
