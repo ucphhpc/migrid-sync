@@ -60,7 +60,7 @@ def signature():
 def usage(output_objects, valid_langs, valid_flavors):
     """Script usage help"""
 
-    output_objects.append({'object_type': 'section_header', 'text'
+    output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Generator usage'})
     output_objects.append({'object_type': 'text', 'text'
                           : 'SERVER_URL/scripts.py?[with_html=(true|false);][lang=(%s);[...]][flags=h;][flavor=(%s);[...]][sh_cmd=sh_path;][python_cmd=python_path;]'
@@ -129,6 +129,7 @@ def main(client_id, user_arguments_dict):
     if 'h' in flags:
         output_objects = usage(output_objects, valid_langs,
                                valid_flavors)
+        return (output_objects, status)
 
     # Filter out any invalid flavors to avoid illegal filenames, etc.
 
