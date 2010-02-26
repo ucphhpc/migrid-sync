@@ -69,12 +69,12 @@ def main(client_id, user_arguments_dict):
                           : 'docs.py?show=Runtime+Environments', 'text'
                           : 'Documentation on runtime environments'})
 
-    if configuration.site_enable_swcatalogue:
+    if configuration.site_swrepo_url:
         output_objects.append({'object_type': 'sectionheader', 'text': ''})
         output_objects.append({'object_type': 'link', 'text'
                                : 'Open software catalogue for %s' % \
                                configuration.short_title,
-                               'destination': '/software-repository/'})
+                               'destination': configuration.site_swrepo_url})
 
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
     output_objects.append({'object_type': 'link', 'destination'

@@ -482,10 +482,10 @@ class Configuration:
             self.site_enable_sandboxes = config.getboolean('SITE', 'enable_sandboxes')
         else:
             self.site_enable_sandboxes = True
-        if config.has_option('SITE', 'enable_swcatalogue'):
-            self.site_enable_swcatalogue = config.getboolean('SITE', 'enable_swcatalogue')
+        if config.has_option('SITE', 'swrepo_url'):
+            self.site_swrepo_url = config.get('SITE', 'swrepo_url')
         else:
-            self.site_enable_swcatalogue = False
+            self.site_swrepo_url = ''
         if config.has_option('SITE', 'default_css'):
             self.site_default_css = config.get('SITE', 'default_css')
         else:
