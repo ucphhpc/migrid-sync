@@ -68,9 +68,15 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'link', 'destination'
                           : 'docs.py?show=Runtime+Environments', 'text'
                           : 'Documentation on runtime environments'})
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : '<hr>'})
 
+    if configuration.site_enable_swcatalogue:
+        output_objects.append({'object_type': 'sectionheader', 'text': ''})
+        output_objects.append({'object_type': 'link', 'text'
+                               : 'Open software catalogue for %s' % \
+                               configuration.short_title,
+                               'destination': '/software-repository/'})
+
+    output_objects.append({'object_type': 'sectionheader', 'text': ''})
     output_objects.append({'object_type': 'link', 'destination'
                           : 'adminre.py', 'text'
                           : 'Create a new runtime environment'})

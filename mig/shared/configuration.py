@@ -482,6 +482,10 @@ class Configuration:
             self.site_enable_sandboxes = config.getboolean('SITE', 'enable_sandboxes')
         else:
             self.site_enable_sandboxes = True
+        if config.has_option('SITE', 'enable_swcatalogue'):
+            self.site_enable_swcatalogue = config.getboolean('SITE', 'enable_swcatalogue')
+        else:
+            self.site_enable_swcatalogue = False
         if config.has_option('SITE', 'default_css'):
             self.site_default_css = config.get('SITE', 'default_css')
         else:
