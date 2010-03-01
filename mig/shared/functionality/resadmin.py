@@ -48,7 +48,7 @@ from shared.refunctions import get_re_dict, list_runtime_environments
 def signature():
     """Signature of the main function"""
 
-    defaults = {'benchmark': 'false'}
+    defaults = {'benchmark': 'false', 'unique_resource_name': []}
     return ['html_form', defaults]
 
 
@@ -357,6 +357,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     benchmark = accepted['benchmark'][-1].lower() != 'false'
+    unique_res_names = accepted['unique_resource_name']
     start_time = time.time()
 
     (re_stat, re_list) = list_runtime_environments(configuration)
@@ -425,18 +426,20 @@ def main(client_id, user_arguments_dict):
 
                 quick_res[unique_resource_name] = \
                     {'object_type': 'link', 'text': '%s'\
-                      % unique_resource_name, 'destination': '#%s'\
-                      % unique_resource_name}
-                res_html = display_resource(
-                    unique_resource_name,
-                    raw_conf,
-                    resource_config,
-                    owner_list,
-                    re_list,
-                    configuration,
-                    )
-                output_objects.append({'object_type': 'html_form',
-                        'text': res_html})
+                      % unique_resource_name,
+                     'destination': '?unique_resource_name=%s'\
+                     % unique_resource_name}
+                if unique_resource_name in unique_res_names:
+                    res_html = display_resource(
+                        unique_resource_name,
+                        raw_conf,
+                        resource_config,
+                        owner_list,
+                        re_list,
+                        configuration,
+                        )
+                    output_objects.append({'object_type': 'html_form',
+                                           'text': res_html})
                 owned += 1
 
     if owned == 0:

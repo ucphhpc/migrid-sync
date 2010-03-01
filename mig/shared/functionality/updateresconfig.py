@@ -119,7 +119,8 @@ def main(client_id, user_arguments_dict):
                            % msg})
     output_objects.append({'object_type': 'link', 'text':
                            'Manage resource', 'destination':
-                           'resadmin.py#%s' % unique_resource_name
+                           'resadmin.py?unique_resource_name=%s' % \
+                           unique_resource_name
                            })
     return (output_objects, returnvalues.OK)
 
