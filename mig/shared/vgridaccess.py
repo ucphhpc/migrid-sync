@@ -115,7 +115,7 @@ def refresh_vgrid_map(configuration):
                         if not i in RES_SPECIALS]
             for exe in all_exes:
                 exe_vgrids = vgrid_map[RESOURCES][res][exe]
-                assigned += [i for i in exe_vgrids if i not in assigned]
+                assigned += [i for i in exe_vgrids if i and i not in assigned]
             vgrid_map[RESOURCES][res][ASSIGN] = assigned
             vgrid_map[RESOURCES][res][ALLOW] = vgrid_map[RESOURCES][res].get(ALLOW, [])
             public_id = res

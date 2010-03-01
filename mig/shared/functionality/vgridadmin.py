@@ -64,7 +64,7 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Error getting list of vgrids.'})
 
-    # Iterate through jobs and print details for each
+    # Iterate through vgrids and print details for each
 
     member_list = {'object_type': 'vgrid_list', 'vgrids': []}
     for vgrid_name in list:

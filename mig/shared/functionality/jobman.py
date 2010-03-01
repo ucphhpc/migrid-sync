@@ -26,9 +26,7 @@
 # -- END_HEADER ---
 #
 
-"""Script to provide users with a means of listing files and directories in
-their home directories.
-"""
+"""Script to provide users with a means of listing and managing jobs"""
 
 from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
