@@ -163,6 +163,8 @@ linklist = {'object_type': 'linklist', 'required_list': [('links',
             'link')]}
 multilinkline = {'object_type': 'multilinkline',
                  'required_list': [('links', 'link')]}
+resource_list = {'object_type': 'resource_list', 'required_list': [('resources',
+              'resource')]}
 vgrid_list = {'object_type': 'vgrid_list', 'required_list': [('vgrids',
               'vgrid')]}
 object_types = {'object_type': 'object_types',
@@ -216,6 +218,7 @@ valid_types_list = [
     object_types,
     objects,
     jobobj,
+    resource_list,
     vgrid_list,
     ]
 

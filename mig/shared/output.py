@@ -870,6 +870,39 @@ Exit code: %s Description: %s<br />
             lines.append('<tr><td>Resource count</td><td>%s</td></tr>'
                           % i['resource_count'])
             lines.append('</table>')
+        elif i['object_type'] == 'resource_list':
+            if len(i['resources']) > 0:
+                resources = i['resources']
+                lines.append("<table class='resources' id='resourcetable'>")
+                lines.append('''
+<thead class="title">
+  <th>Name</th>
+  <th width="8"><!-- Admin --></th>
+  <th class=centertext>Nodes</th>
+  <th class=centertext>Status</th>
+</thead>
+<tbody>
+'''
+                             )
+                for obj in resources:
+                    lines.append('<tr>')
+                    lines.append('<td>%s</td>' % obj['name'])
+                    lines.append('<td>')
+                    # admin links: should be there in any case
+                    if obj.has_key('resadminlink'):
+                        lines.append('%s'
+                                 % html_link(obj['resadminlink']))
+                    lines.append('</td>')
+                    lines.append('<td class=centertext>')
+                    lines.append('%d' % obj['nodes'])
+                    lines.append('</td>')
+                    lines.append('<td class=centertext>')
+                    lines.append(obj['status'])
+                    lines.append('</td>')
+                    lines.append('</tr>')
+                lines.append('</tbody></table>')
+            else:
+                lines.append('No matching Resources found')
         elif i['object_type'] == 'vgrid_list':
             if len(i['vgrids']) > 0:
                 vgrids = i['vgrids']
