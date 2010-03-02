@@ -83,7 +83,7 @@ def refresh_resource_map(configuration):
         owners_mtime = os.path.getmtime(owners_path)
         # init first time
         resource_map[res] = resource_map.get(res, {})
-        if conf_mtime >= map_stamp:
+        if not resource_map[res].has_key(CONF) or conf_mtime >= map_stamp:
             (status, res_conf) = get_resource_configuration(configuration.resource_home,
                                                   res, configuration.logger)
             if not status:
@@ -95,7 +95,7 @@ def refresh_resource_map(configuration):
             resource_map[res][RESID] = public_id
             resource_map[res][MODTIME] = map_stamp
             dirty += [res]
-        if owners_mtime >= map_stamp:
+        if not resource_map[res].has_key(OWNERS) or owners_mtime >= map_stamp:
             owners = load(owners_path)
             resource_map[res][OWNERS] = owners
             resource_map[res][MODTIME] = map_stamp

@@ -112,6 +112,7 @@ def main(client_id, user_arguments_dict):
 
 <script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 
 <script type="text/javascript" >
 
@@ -139,7 +140,10 @@ $(document).ready(function() {
           $("#resourcetable").tablesorter({widgets: ["zebra"],
                                         sortList:sortOrder,
                                         textExtraction: imgTitle
-                                       });
+                                       })
+                              .tablesorterPager({ container: $("#pager"),
+                        size: 20
+                    });
      }
 );
 </script>
@@ -155,6 +159,32 @@ $(document).ready(function() {
 All available resources are listed below with overall hardware specifications. Any resources that you own will have a administration icon that you can click to open resource management.
 '''
                        })
+    output_objects.append({'object_type': 'html_form', 'text': '''
+  <div>
+    <div class="toolbar">        
+      <div class="pager" id="pager">
+      <form style="display: inline;" action="">
+        <img class="first" src="/images/icons/arrow_left.png"/>
+        <img class="prev" src="/images/icons/arrow_left.png"/>
+        <input type="text" class="pagedisplay" />
+        <img class="next" src="/images/icons/arrow_right.png"/>
+        <img class="last" src="/images/icons/arrow_right.png"/>
+        <select class="pagesize">
+          <option value="10">10 resources per page</option>
+          <option value="20" selected>20 resources per page</option>
+          <option value="40">40 resources per page</option>
+          <option value="80">80 resources per page</option>
+          <option value="100">100 resources per page</option>
+          <option value="250">250 resources per page</option>
+          <option value="500">500 resources per page</option>
+          <option value="1000">1000 resources per page</option>
+        </select>
+      </form>
+      </div>
+      
+    </div>
+'''
+                           })
     output_objects.append(res_list)
 
     output_objects.append({'object_type': 'sectionheader', 'text'
