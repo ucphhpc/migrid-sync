@@ -30,15 +30,92 @@
 import os
 import fcntl
 
-from shared.conf import get_all_exe_vgrids, get_resource_fields
-from shared.resource import list_resources, anon_resource_id
+from shared.base import sandbox_resource
+from shared.conf import get_all_exe_vgrids, get_resource_fields, \
+     get_resource_configuration
+from shared.defaults import default_vgrid
+from shared.resource import list_resources, real_to_anon_res_map
 from shared.serial import load, dump
 from shared.vgrid import vgrid_list_vgrids, vgrid_allowed, vgrid_resources, \
-     default_vgrid, user_allowed_vgrids
+     user_allowed_vgrids
 
 MAP_SECTIONS = (RESOURCES, VGRIDS) = ("__resources__", "__vgrids__")
-RES_SPECIALS = (ALLOW, ASSIGN, RESID) = \
-               ('__allow__', '__assign__', '__resid__')
+RES_SPECIALS = (ALLOW, ASSIGN, RESID, OWNERS, CONF, MODTIME) = \
+               ('__allow__', '__assign__', '__resid__', '__owners__',
+                '__conf__', '__modtime__')
+
+def refresh_resource_map(configuration):
+    """Refresh map of resources and their configuration. Uses a pickled
+    dictionary for efficiency. 
+    Resource IDs are stored in their raw (non-anonymized form).
+    Only update map for resources that updated conf after last map save.
+    """
+    dirty = []
+    map_path = os.path.join(configuration.resource_home, "resource.map")
+    lock_path = os.path.join(configuration.resource_home, "resource.lock")
+    lock_handle = open(lock_path, 'a')
+
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+
+    try:
+        resource_map = load(map_path)
+        map_stamp = os.path.getmtime(map_path)
+    except IOError:
+        configuration.logger.warn("No resource map to load - ok first time")
+        resource_map = {}
+        map_stamp = -1
+
+    # Find all resources and their configurations
+    
+    all_resources = list_resources(configuration.resource_home)
+    real_map = real_to_anon_res_map(configuration.resource_home)
+    for res in all_resources:
+        # Sandboxes do not change their configuration
+        if resource_map.has_key(res) and sandbox_resource(res):
+            continue
+        conf_path = os.path.join(configuration.resource_home, res, "config")
+        if not os.path.isfile(conf_path):
+            continue
+        conf_mtime = os.path.getmtime(conf_path)
+        owners_path = os.path.join(configuration.resource_home, res, "owners")
+        if not os.path.isfile(owners_path):
+            continue
+        owners_mtime = os.path.getmtime(owners_path)
+        # init first time
+        resource_map[res] = resource_map.get(res, {})
+        if conf_mtime >= map_stamp:
+            (status, res_conf) = get_resource_configuration(configuration.resource_home,
+                                                  res, configuration.logger)
+            if not status:
+                continue
+            resource_map[res][CONF] = res_conf
+            public_id = res
+            if res_conf.get('ANONYMOUS', True):
+                public_id = real_map[res]
+            resource_map[res][RESID] = public_id
+            resource_map[res][MODTIME] = map_stamp
+            dirty += [res]
+        if owners_mtime >= map_stamp:
+            owners = load(owners_path)
+            resource_map[res][OWNERS] = owners
+            resource_map[res][MODTIME] = map_stamp
+            dirty += [res]
+    # Remove any missing resources from map
+    missing_res = [res for res in resource_map.keys() \
+                   if not res in all_resources]
+    for res in missing_res:
+        del resource_map[res]
+        dirty += [res]
+
+    if dirty:
+        try:
+            dump(resource_map, map_path)
+        except Exception, exc:
+            configuration.logger.error("Could not save resource map: %s" % exc)
+
+    lock_handle.close()
+
+    return resource_map
 
 def refresh_vgrid_map(configuration):
     """Refresh map of resources and their vgrid participation. Uses a pickled
@@ -98,12 +175,12 @@ def refresh_vgrid_map(configuration):
 
     # Find all resources and their vgrid assignments
     
+    # TODO: use get_resource_map output instead?
     all_resources = list_resources(configuration.resource_home)
+    real_map = real_to_anon_res_map(configuration.resource_home)
     for res in all_resources:
         # Sandboxes do not change their vgrid participation
-        if vgrid_map[RESOURCES].has_key(res) and \
-               (res.startswith('sandbox.') or \
-                res.startswith('oneclick.')):
+        if vgrid_map[RESOURCES].has_key(res) and sandbox_resource(res):
             continue
         conf_path = os.path.join(configuration.resource_home, res, "config")
         if not os.path.isfile(conf_path):
@@ -119,8 +196,10 @@ def refresh_vgrid_map(configuration):
             vgrid_map[RESOURCES][res][ASSIGN] = assigned
             vgrid_map[RESOURCES][res][ALLOW] = vgrid_map[RESOURCES][res].get(ALLOW, [])
             public_id = res
-            if get_resource_fields(res, ['ANONYMOUS']).get('ANONYMOUS', True):
-                public_id = anon_resource_id(public_id)
+            anon_val = get_resource_fields(configuration.resource_home, res,
+                                           ['ANONYMOUS'], configuration.logger)
+            if anon_val.get('ANONYMOUS', True):
+                public_id = real_map[res]
             vgrid_map[RESOURCES][res][RESID] = public_id
             dirty[RESOURCES] = dirty.get(RESOURCES, []) + [res]
     # Remove any missing resources from map
@@ -148,7 +227,6 @@ def refresh_vgrid_map(configuration):
     if dirty:
         try:
             dump(vgrid_map, map_path)
-            map_stamp = os.path.getmtime(map_path)
         except Exception, exc:
             configuration.logger.error("Could not save vgrid map: %s" % exc)
 
@@ -156,11 +234,19 @@ def refresh_vgrid_map(configuration):
 
     return vgrid_map
 
+def get_resource_map(configuration):
+    """Returns the current map of resources and their configurations"""
+    return refresh_resource_map(configuration)
+
+def get_vgrid_map(configuration):
+    """Returns the current map of resources and their vgrid participations"""
+    return refresh_vgrid_map(configuration)
+
 def user_allowed_resources(configuration, client_id):
     """Extract a list of resources that client_id can really submit to.
     There is no guarantee that they will ever accept any further jobs.
 
-    Resources are anonymized unless explicitly specifying otherwise.
+    Resources are anonymized unless explicitly configured otherwise.
     
     Please note that vgrid participation is a mutual agreement between vgrid
     owners and resource owners, so that a resource only truly participates
@@ -171,7 +257,7 @@ def user_allowed_resources(configuration, client_id):
 
     # Find all potential resources from vgrid sign up
 
-    vgrid_map = refresh_vgrid_map(configuration)
+    vgrid_map = get_vgrid_map(configuration)
     map_resources = vgrid_map[RESOURCES]
 
     # Map only contains the raw resource names - anonomize as requested
@@ -202,12 +288,20 @@ if "__main__" == __name__:
     if len(sys.argv) > 1:
         user_id = sys.argv[1]
     conf = get_configuration_object()
-    full_map = refresh_vgrid_map(conf)
+    res_map = get_resource_map(conf)
+    print "raw resource map: %s" % res_map
+    all_resources = res_map.keys()
+    print "raw resource IDs: %s" % ', '.join(all_resources)
+    all_anon = [res_map[i][RESID] for i in all_resources]
+    print "raw anon names: %s" % ', '.join(all_anon)
+    print
+    full_map = get_vgrid_map(conf)
     print "raw vgrid map: %s" % full_map
     all_resources = full_map[RESOURCES].keys()
     print "raw resource IDs: %s" % ', '.join(all_resources)
     all_vgrids = full_map[VGRIDS].keys()
     print "raw vgrid names: %s" % ', '.join(all_vgrids)
+    print
     user_access = user_allowed_resources(conf, user_id)
     print "%s can access: %s" % \
           (user_id, ', '.join(["%s: %s" % (i, j) for (i, j) \

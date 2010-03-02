@@ -33,22 +33,20 @@ administrating owners.
 """
 
 import os
-import glob
 import time
 
 import shared.returnvalues as returnvalues
-from shared.conf import get_resource_configuration
-from shared.fileio import unpickle
-from shared.findtype import is_owner
+from shared.base import sandbox_resource
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import get_re_dict, list_runtime_environments
+from shared.vgridaccess import get_resource_map, CONF, OWNERS
 
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'benchmark': 'false', 'unique_resource_name': []}
+    defaults = {'benchmark': ['false'], 'unique_resource_name': []}
     return ['html_form', defaults]
 
 
@@ -371,52 +369,33 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = 'Resource Management'
     output_objects.append({'object_type': 'header', 'text'
                           : ' Resource Management'})
-    output_objects.append({'object_type': 'link', 'text'
-                          : 'Create a new %s resource' % \
-                            configuration.short_title, 
-                           'destination' : 'resedit.py'})
-    output_objects.append({'object_type': 'sectionheader', 'text': ''})
 
-    if configuration.site_enable_sandboxes:
-        output_objects.append({'object_type': 'link', 'text'
-                               : 'Administrate %s sandbox resources' % \
-                               configuration.short_title,
-                               'destination': 'ssslogin.py'})
-        output_objects.append({'object_type': 'sectionheader', 'text': ''})
-        output_objects.append({'object_type': 'link', 'text'
-                               : 'Use this computer as One-click %s resource' % \
-                               configuration.short_title
-                               , 'destination': 'oneclick.py'})
-
-    quick_links = [{'object_type': 'sectionheader', 'text'
-                   : 'Quick links to existing resources:'}]
-    quick_res = {}
-    quick_links_index = len(output_objects)
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : '%s Resources Owned' % configuration.short_title})
+    quick_links = [{'object_type': 'text', 'text'
+                   : 'Quick links to all your resources and individual mangement'}]
+    quick_res = {}
+    quick_links_index = len(output_objects)
+    output_objects.append({'object_type': 'sectionheader', 'text': ''})
 
-    base = configuration.resource_home
     owned = 0
-    for resource_dir in glob.glob(base + os.sep + '*'):
-        dir_name = os.path.basename(resource_dir)
-        if dir_name.split('.', 1)[0] in ('sandbox', 'oneclick', 'ps3live'):
+    res_map = get_resource_map(configuration)
+    for unique_resource_name in res_map.keys():
+        if sandbox_resource(unique_resource_name):
             continue
-        if os.path.isdir(resource_dir):
-            unique_resource_name = resource_dir.replace(base, '')
-            if is_owner(client_id, unique_resource_name,
-                        configuration.resource_home, logger):
-                raw_conf_file = os.path.join(resource_dir, 'config.MiG')
-                owners_file = os.path.join(resource_dir, 'owners')
-                owner_list = unpickle(owners_file, logger)
-                (status, resource_config) = \
-                    get_resource_configuration(configuration.resource_home,
-                        unique_resource_name, logger)
-                if not status:
-                    output_objects.append({'object_type': 'warning',
-                            'text'
-                            : "Could not unpack resource configuration - Don't worry if this is a new resource."
-                            })
-                    continue
+        owner_list = res_map[unique_resource_name][OWNERS]
+        resource_config = res_map[unique_resource_name][CONF]
+        if client_id in owner_list:
+            quick_res[unique_resource_name] = \
+                {'object_type': 'link', 'text': '%s'\
+                  % unique_resource_name,
+                 'destination': '?unique_resource_name=%s'\
+                 % unique_resource_name}
+
+            if unique_resource_name in unique_res_names:
+                raw_conf_file = os.path.join(configuration.resource_home,
+                                             unique_resource_name,
+                                             'config.MiG')
                 try:
                     filehandle = open(raw_conf_file, 'r')
                     raw_conf = filehandle.readlines()
@@ -424,23 +403,17 @@ def main(client_id, user_arguments_dict):
                 except:
                     raw_conf = ['']
 
-                quick_res[unique_resource_name] = \
-                    {'object_type': 'link', 'text': '%s'\
-                      % unique_resource_name,
-                     'destination': '?unique_resource_name=%s'\
-                     % unique_resource_name}
-                if unique_resource_name in unique_res_names:
-                    res_html = display_resource(
-                        unique_resource_name,
-                        raw_conf,
-                        resource_config,
-                        owner_list,
-                        re_list,
-                        configuration,
-                        )
-                    output_objects.append({'object_type': 'html_form',
-                                           'text': res_html})
-                owned += 1
+                res_html = display_resource(
+                    unique_resource_name,
+                    raw_conf,
+                    resource_config,
+                    owner_list,
+                    re_list,
+                    configuration,
+                    )
+                output_objects.append({'object_type': 'html_form',
+                                       'text': res_html})
+            owned += 1
 
     if owned == 0:
         output_objects.append({'object_type': 'text', 'text'

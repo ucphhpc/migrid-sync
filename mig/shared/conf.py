@@ -64,15 +64,14 @@ def get_resource_configuration(resource_home, unique_resource_name,
         return (True, resource_config)
 
 
-def get_resource_fields(unique_resource_name, fields):
+def get_resource_fields(resource_home, unique_resource_name, fields, logger):
     """Return a dictionary mapping fields to resource_config values.
     Missing fields are left out of the result dictionary.
     """
     results = {}
-    conf = get_configuration_object()
     (status, resource_config) = \
-        get_resource_configuration(conf.resource_home,
-                                   unique_resource_name, conf.logger)
+        get_resource_configuration(resource_home,
+                                   unique_resource_name, logger)
     if not status:
         return results
     for name in fields:

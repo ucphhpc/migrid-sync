@@ -28,6 +28,7 @@
 """Resource configuration functions"""
 
 import os
+import dircache
 import re
 import socket
 try:
@@ -40,7 +41,6 @@ from shared.confparser import get_resource_config_dict, run
 from shared.ssh import default_ssh_options
 from shared.useradm import client_id_dir
 import shared.resconfkeywords as resconfkeywords
-
 
 def get_regex_non_numeric():
     """Match everything except numbers"""
@@ -835,9 +835,12 @@ def write_resource_config(configuration, resource_conf, conf_path):
     return lines
 
 def list_resources(resource_home):
-    """Return a list of all resources"""
+    """Return a list of all resources by listing the resource configuration
+    directories in resource_home. Uses dircache for efficiency when used more
+    than once per session.
+    """
     resources = []
-    children = os.listdir(resource_home)
+    children = dircache.listdir(resource_home)
     for name in children:
         path = os.path.join(resource_home, name)
 
@@ -849,6 +852,20 @@ def list_resources(resource_home):
             continue
         resources.append(name)
     return resources
+
+def anon_to_real_res_map(resource_home):
+    """Return a mapping from anonymous resource names to real names"""
+    anon_map = {}
+    for name in list_resources(resource_home):
+        anon_map[anon_resource_id(name)] = name
+    return anon_map
+
+def real_to_anon_res_map(resource_home):
+    """Return a mapping from real resource names to anonymous names"""
+    res_map = {}
+    for name in list_resources(resource_home):
+        res_map[name] = anon_resource_id(name)
+    return res_map
 
 def create_resource(
     resource_name,

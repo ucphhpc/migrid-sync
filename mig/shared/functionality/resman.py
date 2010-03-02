@@ -28,10 +28,11 @@
 """Resource management back end functionality"""
 
 import shared.returnvalues as returnvalues
-from shared.findtype import is_owner
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
-from shared.vgridaccess import user_allowed_resources
+from shared.resource import anon_to_real_res_map
+from shared.vgridaccess import user_allowed_resources, get_resource_map, \
+     OWNERS, CONF
 
 
 def signature():
@@ -60,34 +61,46 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     allowed = user_allowed_resources(configuration, client_id)
-    # Iterate through resources and print details for each
+    res_map = get_resource_map(configuration)
+    anon_map = anon_to_real_res_map(configuration.resource_home)
+
+    # Iterate through resources and show management for each one requested
 
     res_list = {'object_type': 'resource_list', 'resources': []}
+    fields = ['PUBLICNAME', 'CPUCOUNT', 'MEMORY', 'DISK', 'ARCHITECTURE']
     sorted_names = allowed.keys()
     sorted_names.sort()
-    for unique_resource_name in sorted_names:
-        
-        res_obj = {'object_type': 'resource', 'name': unique_resource_name}
+    for visible_res_name in sorted_names:
+        unique_resource_name = visible_res_name
+        if visible_res_name in anon_map.keys():
+            unique_resource_name = anon_map[visible_res_name]
 
-        if is_owner(client_id, unique_resource_name,
-                    configuration.resource_home, logger):
+        res_obj = {'object_type': 'resource', 'name': visible_res_name}
 
-            # Allow admin of resource
+        if client_id in res_map[unique_resource_name][OWNERS]:
 
+            # Admin of resource when owner
+
+            # TODO: add support for fields in links for id, title, etc (for css img)
+            res_obj['rmresownerlink'] = \
+                                    {'object_type': 'link',
+                                     'destination':
+                                     'rmresowner.py?unique_resource_name=%s;cert_id=%s'\
+                                     % (unique_resource_name, client_id),
+                                     'text': "<img src='/images/icons/cancel.png' title='Remove ownership'>"}
             res_obj['resadminlink'] = \
                                     {'object_type': 'link',
                                      'destination':
                                      'resadmin.py?unique_resource_name=%s'\
                                      % unique_resource_name,
                                      'text': "<img src='/images/icons/wrench.png' title='Administrate'>"}
-
-        # TODO: add more fields
+            
         # fields for everyone: public status
-
-        res_obj['nodes'] = len(allowed[unique_resource_name])
-        res_obj['status'] = 'unknown'
+        for name in fields:
+            res_obj[name] = res_map[unique_resource_name][CONF].get(name, '')
+        # Use allowed nodes in contrast to connected nodes
+        res_obj['NODECOUNT'] = len(allowed[visible_res_name])
         res_list['resources'].append(res_obj)
-
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Resource management'
@@ -132,23 +145,49 @@ $(document).ready(function() {
 </script>
 '''
 
-    output_objects.append({'object_type': 'header', 'text': 'Resources'
+    output_objects.append({'object_type': 'header', 'text': 'Available Resources'
                           })
+
+    output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Resources available on this server'})
     output_objects.append({'object_type': 'text', 'text'
                           : '''
-Resources can execute jobs for you and you can manage any resources that you own.
+All available resources are listed below with overall hardware specifications. Any resources that you own will have a administration icon that you can click to open resource management.
 '''
                        })
+    output_objects.append(res_list)
 
+    output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Resource Status'})
+    output_objects.append({'object_type': 'text',
+                           'text': '''
+Live resource status is available in the resource monitor page with all VGrids/resources you can access
+'''})
+    output_objects.append({'object_type': 'link', 'text'
+                          : 'Global resource monitor'
+                          , 'destination'
+                          : 'showvgridmonitor.py?vgrid_name=ALL'})
+
+    output_objects.append({'object_type': 'sectionheader', 'text': 'Additional Resources'
+                          })
+    output_objects.append({'object_type': 'text',
+                           'text': 'You can sign up spare or dedicated resources to the grid below.'
+                           })
     output_objects.append({'object_type': 'link', 'text'
                           : 'Create a new %s resource' % \
                             configuration.short_title, 
                            'destination' : 'resedit.py'})
+    output_objects.append({'object_type': 'sectionheader', 'text': ''})
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Resources available on this server'})
-    output_objects.append(res_list)
-
-    # print "DEBUG: %s" % output_objects
+    if configuration.site_enable_sandboxes:
+        output_objects.append({'object_type': 'link', 'text'
+                               : 'Administrate %s sandbox resources' % \
+                               configuration.short_title,
+                               'destination': 'ssslogin.py'})
+        output_objects.append({'object_type': 'sectionheader', 'text': ''})
+        output_objects.append({'object_type': 'link', 'text'
+                               : 'Use this computer as One-click %s resource' % \
+                               configuration.short_title
+                               , 'destination': 'oneclick.py'})
 
     return (output_objects, status)

@@ -872,14 +872,21 @@ Exit code: %s Description: %s<br />
             lines.append('</table>')
         elif i['object_type'] == 'resource_list':
             if len(i['resources']) > 0:
+                res_fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK',
+                              'ARCHITECTURE']
                 resources = i['resources']
                 lines.append("<table class='resources' id='resourcetable'>")
                 lines.append('''
 <thead class="title">
   <th>Name</th>
   <th width="8"><!-- Admin --></th>
+  <th width="8"><!-- Remove owner --></th>
+  <th class=centertext>Alias</th>
   <th class=centertext>Nodes</th>
-  <th class=centertext>Status</th>
+  <th class=centertext>CPUs</th>
+  <th class=centertext>Memory</th>
+  <th class=centertext>Disk</th>
+  <th class=centertext>Architecture</th>
 </thead>
 <tbody>
 '''
@@ -887,18 +894,21 @@ Exit code: %s Description: %s<br />
                 for obj in resources:
                     lines.append('<tr>')
                     lines.append('<td>%s</td>' % obj['name'])
+                    # possibly empty admin link fields should always be there
                     lines.append('<td>')
-                    # admin links: should be there in any case
                     if obj.has_key('resadminlink'):
                         lines.append('%s'
                                  % html_link(obj['resadminlink']))
                     lines.append('</td>')
-                    lines.append('<td class=centertext>')
-                    lines.append('%d' % obj['nodes'])
+                    lines.append('<td>')
+                    if obj.has_key('rmresownerlink'):
+                        lines.append('%s'
+                                 % html_link(obj['rmresownerlink']))
                     lines.append('</td>')
-                    lines.append('<td class=centertext>')
-                    lines.append(obj['status'])
-                    lines.append('</td>')
+                    for name in res_fields:
+                        lines.append('<td class=centertext>')
+                        lines.append('%s' % obj.get(name, ''))
+                        lines.append('</td>')
                     lines.append('</tr>')
                 lines.append('</tbody></table>')
             else:
