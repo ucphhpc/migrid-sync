@@ -27,7 +27,7 @@
 
 """Keywords in the resource configuration files"""
 
-from shared.vgrid import default_vgrid
+from shared.defaults import default_vgrid
 
 
 # This is the main location for defining resource keywords. All other resource

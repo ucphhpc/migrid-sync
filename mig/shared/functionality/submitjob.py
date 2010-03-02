@@ -30,6 +30,7 @@
 import os
 
 import shared.returnvalues as returnvalues
+from shared.defaults import any_vgrid
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.mrslkeywords import get_job_specs
@@ -201,7 +202,7 @@ accompanied by a help link providing further details about the field."""})
     # Find allowed VGrids and Runtimeenvironments and add them to
     # configuration object for automated choice handling
     
-    allowed_vgrids = user_allowed_vgrids(configuration, client_id) + ['ANY']
+    allowed_vgrids = user_allowed_vgrids(configuration, client_id) + [any_vgrid]
     allowed_vgrids.sort()
     configuration.vgrids = allowed_vgrids
     (re_status, allowed_run_envs) = list_runtime_environments(configuration)

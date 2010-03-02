@@ -25,11 +25,12 @@
 # -- END_HEADER ---
 #
 
-"""Show the monitor page for requested vgrids - ALL keyword for all allowed vgrids"""
+"""Show the monitor page for requested vgrids - all_vgrids keyword for all allowed vgrids"""
 
 import os
 
 import shared.returnvalues as returnvalues
+from shared.defaults import all_vgrids
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_is_owner_or_member, user_allowed_vgrids
@@ -38,7 +39,7 @@ from shared.vgrid import vgrid_is_owner_or_member, user_allowed_vgrids
 def signature():
     """Signature of the main function"""
 
-    defaults = {'vgrid_name': ['ALL']}
+    defaults = {'vgrid_name': [all_vgrids]}
     return ['html_form', defaults]
 
 
@@ -68,8 +69,8 @@ def main(client_id, user_arguments_dict):
 
     allowed_vgrids = user_allowed_vgrids(configuration, client_id)
     vgrid_list = accepted['vgrid_name']
-    if 'ALL' in accepted['vgrid_name']:
-        vgrid_list = [i for i in vgrid_list if 'ALL' != i]\
+    if all_vgrids in accepted['vgrid_name']:
+        vgrid_list = [i for i in vgrid_list if all_vgrids != i]\
              + allowed_vgrids
 
     # Force list to sequence of unique entries

@@ -33,6 +33,7 @@ import datetime
 
 import shared.returnvalues as returnvalues
 from shared.conf import get_resource_exe
+from shared.defaults import all_jobs
 from shared.fileio import unpickle, pickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
@@ -95,9 +96,9 @@ def main(client_id, user_arguments_dict):
 
         # is job currently being executed?
 
-        # Backward compatibility - keyword ALL should match all jobs
+        # Backward compatibility - all_jobs keyword should match all jobs
 
-        if job_id == 'ALL':
+        if job_id == all_jobs:
             job_id = '*'
 
         # Check directory traversal attempts before actual handling to

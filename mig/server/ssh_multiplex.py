@@ -41,6 +41,7 @@ import sys
 import threading
 from time import sleep
 
+from shared.base import sandbox_resource
 from shared.conf import get_resource_configuration, \
     get_configuration_object
 from shared.ssh import execute_on_resource
@@ -123,7 +124,7 @@ for unique_resource_name in os.listdir(configuration.resource_home):
     if not os.path.isdir(res_dir):
         continue
     dir_name = os.path.basename(res_dir)
-    if dir_name.split('.', 1)[0] in ('sandbox', 'oneclick', 'ps3live'):
+    if sandbox_resource(dir_name):
         continue
     try:
         (status, res_conf) = \

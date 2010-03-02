@@ -30,8 +30,8 @@
 import os
 from string import letters, digits
 
+from shared.base import client_id_dir, old_id_format
 from shared.listhandling import is_item_in_pickled_list
-from shared.useradm import client_id_dir, old_id_format
 from shared.validstring import valid_user_path
 
 VALID_FQDN_CHARACTERS = letters + digits + '.-'

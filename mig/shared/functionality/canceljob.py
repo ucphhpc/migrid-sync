@@ -33,6 +33,7 @@ import os
 import glob
 
 import shared.returnvalues as returnvalues
+from shared.defaults import all_jobs
 from shared.fileio import unpickle, unpickle_and_change_status, \
     send_message_to_grid_script
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -79,9 +80,9 @@ def main(client_id, user_arguments_dict):
     for pattern in patterns:
         pattern = pattern.strip()
 
-        # Backward compatibility - keyword ALL should match all jobs
+        # Backward compatibility - all_jobs keyword should match all jobs
 
-        if pattern == 'ALL':
+        if pattern == all_jobs:
             pattern = '*'
 
         # Check directory traversal attempts before actual handling to

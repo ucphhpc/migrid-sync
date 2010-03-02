@@ -28,10 +28,11 @@
 """VGrid administration back end functionality"""
 
 import shared.returnvalues as returnvalues
+from shared.defaults import default_vgrid
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_list_vgrids, vgrid_is_owner, \
-    vgrid_is_member, vgrid_is_owner_or_member, default_vgrid
+    vgrid_is_member, vgrid_is_owner_or_member
 
 
 def signature():

@@ -31,14 +31,13 @@ import os
 from binascii import hexlify
 
 from conf import get_configuration_object
+from shared.defaults import default_vgrid
 from shared.fileio import make_symlink
 from shared.resource import create_resource
 from shared.serial import load, dump
-from shared.vgrid import default_vgrid
 import shared.confparser as confparser
 
 sandbox_db_name = 'sandbox_users.pkl'
-
 
 def load_sandbox_db(configuration=None):
     """Read in the sandbox DB dictionary:

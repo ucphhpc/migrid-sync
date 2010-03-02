@@ -34,14 +34,13 @@ import base64
 import tempfile
 import os
 
-from shared.validstring import valid_dir_input
-from shared.job import new_job
-from shared.findtype import is_owner
-from shared.html import get_cgi_html_header, get_cgi_html_footer
-from shared.fileio import unpickle, write_file
 from shared.cgishared import init_cgi_script_with_cert
+from shared.fileio import unpickle, write_file
+from shared.findtype import is_owner, client_id_dir
+from shared.html import get_cgi_html_header, get_cgi_html_footer
+from shared.job import new_job
 from shared.refunctions import get_re_dict
-from shared.useradm import client_id_dir
+from shared.validstring import valid_dir_input
 
 
 def create_verify_files(types, base_dir):

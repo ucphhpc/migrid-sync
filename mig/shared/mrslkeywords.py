@@ -29,7 +29,7 @@
 Works as a combined specification of and source of information about keywords.
 """
 
-from shared.vgrid import default_vgrid
+from shared.defaults import default_vgrid, any_vgrid
 
 # This is the main location for defining job keywords. All other job handling
 # functions should only operate on keywords defined here.
@@ -158,8 +158,8 @@ Leave unset or empty to submit with execution on the first suitable resource.
     specs.append(('VGRID', {
         'Title': 'VGrid Order',
         'Description': '''A prioritized list of the VGRIDs allowed to execute the job (default value is %s).
-During job submit the keyword ANY is replaced by a list of all the VGrids that you can access.
-''' % default_vgrid,
+During job submit the keyword %s is replaced by a list of all the VGrids that you can access.
+''' % (default_vgrid, any_vgrid),
         'Example': '''
 ::VGRID::
 Dalton
@@ -167,10 +167,10 @@ Dalton
 To submit with execution on the Dalton VGrid only.
 
 ::VGRID::
-ANY
+%s
 
 To submit with execution on the first suitable and allowed VGrid.
-''',
+''' % any_vgrid,
         'Type': 'multiplestrings',
         'Value': [],
         'Editor': 'select',

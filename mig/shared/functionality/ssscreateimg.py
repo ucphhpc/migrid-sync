@@ -38,12 +38,13 @@ import shared.confparser as confparser
 import shared.resadm as resadm
 import shared.returnvalues as returnvalues
 from shared.conf import get_resource_configuration, get_resource_exe
+from shared.defaults import default_vgrid
 from shared.fileio import make_symlink
 from shared.functional import validate_input, REJECT_UNSET
 from shared.init import initialize_main_variables
 from shared.resource import create_resource, remove_resource
 from shared.sandbox import load_sandbox_db, save_sandbox_db
-from shared.vgrid import vgrid_list_vgrids, default_vgrid
+from shared.vgrid import vgrid_list_vgrids
 
 # sandbox db has the format: {username: (password, [list_of_resources])}
 

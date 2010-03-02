@@ -33,13 +33,12 @@ import cgitb
 cgitb.enable()
 import time
 
-from shared.findtype import is_owner
+from shared.findtype import is_owner, client_id_dir
 from shared.html import get_cgi_html_header, get_cgi_html_footer
 from shared.validstring import valid_dir_input
 from shared.fileio import unpickle
 from shared.cgishared import init_cgi_script_with_cert
 from shared.refunctions import is_runtime_environment
-from shared.useradm import client_id_dir
 
 # ## Main ###
 

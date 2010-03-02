@@ -32,12 +32,13 @@ import time
 import datetime
 
 from shared.conf import get_configuration_object
+from shared.defaults import default_vgrid
 from shared.fileio import unpickle
 from shared.gridstat import GridStat
 from shared.html import get_cgi_html_header, get_cgi_html_footer
 from shared.output import format_timedelta
 from shared.resource import anon_resource_id
-from shared.vgrid import vgrid_list_vgrids, default_vgrid
+from shared.vgrid import vgrid_list_vgrids
 
 print """
 Running grid monitor generator.

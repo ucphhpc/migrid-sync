@@ -31,10 +31,11 @@ import time
 import shared.mrslkeywords as mrslkeywords
 import shared.parser as parser
 from shared.conf import get_configuration_object
+from shared.defaults import default_vgrid, any_vgrid
 from shared.fileio import unpickle, pickle, send_message_to_grid_script
 from shared.refunctions import is_runtime_environment
 from shared.useradm import client_id_dir
-from shared.vgrid import user_allowed_vgrids, any_vgrid, default_vgrid
+from shared.vgrid import user_allowed_vgrids
 
 try:
     import shared.arcwrapper as arc
@@ -86,19 +87,19 @@ def parse(
     vgrid_list = global_dict['VGRID']
     allowed_vgrids = user_allowed_vgrids(configuration, client_id)
 
-    # Replace ANY wildcard with all allowed vgrids (on time of submit!)
+    # Replace any_vgrid keyword with all allowed vgrids (on time of submit!)
 
     try:
         any_pos = vgrid_list.index(any_vgrid)
         vgrid_list[any_pos:any_pos] = allowed_vgrids
 
-        # Remove any additional ANY wildcards
+        # Remove any additional any_vgrid keywords
 
         while any_vgrid in vgrid_list:
             vgrid_list.remove(any_vgrid)
     except ValueError:
 
-        # No ANY wildcards in list - move along
+        # No any_vgrid keywords in list - move along
 
         pass
 

@@ -31,9 +31,9 @@ import os
 import fcntl
 import datetime
 
+from shared.defaults import default_vgrid
 from shared.fileio import pickle, unpickle, touch
 from shared.serial import pickle as py_pickle
-from shared.vgrid import default_vgrid
 
 
 class GridStat:

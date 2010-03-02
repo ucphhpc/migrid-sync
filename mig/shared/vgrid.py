@@ -30,12 +30,10 @@
 import os
 import fnmatch
 
+from shared.defaults import default_vgrid, any_vgrid
+from shared.findtype import is_user, is_resource
 from shared.listhandling import list_items_in_pickled_list
 from shared.validstring import valid_dir_input
-from shared.findtype import is_user, is_resource
-
-default_vgrid = 'Generic'
-any_vgrid = 'ANY'
 
 
 def vgrid_is_default(vgrid):

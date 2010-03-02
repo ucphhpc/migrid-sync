@@ -31,13 +31,13 @@ import sys
 import fcntl
 import time
 
-from shared.ssh import execute_on_resource, copy_file_to_exe
+from shared.cgishared import init_cgiscript_possibly_with_cert
 from shared.conf import get_resource_configuration, get_resource_exe
+from shared.fileio import unpickle
+from shared.findtype import is_resource
 from shared.livedisplaysfunctions import get_users_display_number
 from shared.validstring import valid_dir_input
-from shared.cgishared import init_cgiscript_possibly_with_cert
-from shared.findtype import is_resource
-from shared.fileio import unpickle
+from shared.ssh import execute_on_resource, copy_file_to_exe
 
 # ## Main ###
 

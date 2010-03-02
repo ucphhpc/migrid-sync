@@ -31,11 +31,11 @@ import sys
 import fcntl
 import time
 
-from shared.fileio import send_message_to_grid_script
 from shared.conf import get_resource_configuration
-from shared.validstring import valid_dir_input
 from shared.cgishared import init_cgiscript_possibly_with_cert
+from shared.fileio import send_message_to_grid_script
 from shared.findtype import is_resource
+from shared.validstring import valid_dir_input
 
 # ## Main ###
 

@@ -32,6 +32,7 @@ import sys
 import shutil
 import fnmatch
 
+from shared.base import client_id_dir, old_id_format, sandbox_resource
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.fileio import filter_pickled_list, filter_pickled_dict
@@ -61,33 +62,6 @@ def init_user_adm():
         app_dir = '.'
     db_path = os.path.join(app_dir, db_name)
     return (args, app_dir, db_path)
-
-
-def client_id_dir(client_id):
-    """Map client ID to a valid directory name:
-    client_id is a distinguished name on the form /X=ab/Y=cdef ghi/Z=klmn...
-    so we just replace slashes with plus signs and space with underscore
-    to avoid file system problems.
-    """
-
-    return client_id.replace('/', '+').replace(' ', '_')
-
-
-# TODO: old_id_format should be eliminated after complete migration to full DN
-
-
-def old_id_format(client_id):
-    """Map client ID to the old underscore CN only ID:
-    client_id is a distinguished name on the form /X=ab/Y=cdef ghi/CN=klmn...
-    so we just extract the CN field and replace space with underscore.
-    """
-
-    try:
-        old_id = client_id.split('/CN=', 1)[1]
-        old_id = old_id.split('/', 1)[0]
-        return old_id.replace(' ', '_')
-    except:
-        return client_id
 
 
 def fill_user(target):
@@ -593,8 +567,7 @@ def fix_entities(
                     kind_path = os.path.join(base_dir, entry_name, kind)
                     if not os.path.isfile(kind_path):
                         continue
-                    if entry_name.split('.', 1)[0] in ('sandbox', 'oneclick',
-                                                       'ps3live'):
+                    if sandbox_resource(entry_name):
                         continue
                     if verbose:
                         print 'updating %s in %s' % (client_id, kind_path)
