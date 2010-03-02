@@ -91,13 +91,13 @@ def main(client_id, user_arguments_dict):
                                      'destination':
                                      'rmresowner.py?unique_resource_name=%s;cert_id=%s'\
                                      % (unique_resource_name, client_id),
-                                     'text': "<img src='/images/icons/cancel.png' title='Remove ownership'>"}
+                                     'text': "<img src='/images/icons/cancel.png' title='Remove ownership'/>"}
             res_obj['resadminlink'] = \
                                     {'object_type': 'link',
                                      'destination':
                                      'resadmin.py?unique_resource_name=%s'\
                                      % unique_resource_name,
-                                     'text': "<img src='/images/icons/wrench.png' title='Administrate'>"}
+                                     'text': "<img src='/images/icons/wrench.png' title='Administrate'/>"}
             
         # fields for everyone: public status
         for name in fields:
@@ -186,8 +186,8 @@ All available resources are listed below with overall hardware specifications. A
         </select>
       </form>
       </div>
-      
     </div>
+  </div>
 '''
     output_objects.append({'object_type': 'html_form', 'text': toolbar})
     output_objects.append(res_list)

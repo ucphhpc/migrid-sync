@@ -83,7 +83,7 @@ def main(client_id, user_arguments_dict):
 
             vgrid_obj['memberlink'] = {'object_type': 'link',
              'destination':'',
-             'text': "<img src='/images/icons/information.png' title='Every user is member of the %s VGrid.'>" % default_vgrid }
+             'text': "<img src='/images/icons/information.png' title='Every user is member of the %s VGrid.'/>" % default_vgrid }
 
             member_list['vgrids'].append(vgrid_obj)
             continue
@@ -105,14 +105,14 @@ def main(client_id, user_arguments_dict):
              'destination':
               'vgridmemberrequestaction.py?vgrid_name=%s&request_type=member&request_text=no+text'\
               % vgrid_name,
-             'text': "<img src='/images/icons/add.png' title='Become a member'>"}
+             'text': "<img src='/images/icons/add.png' title='Become a member'/>"}
         # link to become owner. overwritten later for owners
 
         vgrid_obj['administratelink'] = {'object_type': 'link',
              'destination':
               'vgridmemberrequestaction.py?vgrid_name=%s&request_type=owner&request_text=no+text'\
               % vgrid_name,
-             'text': "<img src='/images/icons/cog_add.png' title='Become an owner'>"}
+             'text': "<img src='/images/icons/cog_add.png' title='Become an owner'/>"}
 
         # members/owners are allowed to view private pages and monitor
 
@@ -136,7 +136,7 @@ def main(client_id, user_arguments_dict):
                   (vgrid_name, 
                    'rmvgridmember.py?vgrid_name=%s&cert_id=%s'\
                    % (vgrid_name, client_id)),
-                'text': "<img src='/images/icons/cancel.png' title='Leave this VGrid'>"}
+                'text': "<img src='/images/icons/cancel.png' title='Leave this VGrid'/>"}
 
         # owners are allowed to edit pages and administrate
 
@@ -155,7 +155,7 @@ def main(client_id, user_arguments_dict):
             vgrid_obj['administratelink'] = {'object_type': 'link',
                     'destination': 'adminvgrid.py?vgrid_name=%s'\
                      % vgrid_name,
-                    'text': "<img src='/images/icons/wrench.png' title='Administrate'>"}
+                    'text': "<img src='/images/icons/wrench.png' title='Administrate'/>"}
             vgrid_obj['editprivatelink'] = {'object_type': 'link',
                     'destination': 'editor.py?path=private_base/%s/index.html'\
                      % vgrid_name, 'text': 'Edit'}
