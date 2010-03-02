@@ -28,6 +28,7 @@
 """Resource management back end functionality"""
 
 import shared.returnvalues as returnvalues
+from shared.base import sandbox_resource
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.resource import anon_to_real_res_map
@@ -38,7 +39,7 @@ from shared.vgridaccess import user_allowed_resources, get_resource_map, \
 def signature():
     """Signature of the main function"""
 
-    defaults = {}
+    defaults = {'show_sandboxes': ['false']}
     return ['resources', defaults]
 
 
@@ -60,6 +61,8 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    show_sandboxes = (accepted['show_sandboxes'][-1] != 'false')
+
     allowed = user_allowed_resources(configuration, client_id)
     res_map = get_resource_map(configuration)
     anon_map = anon_to_real_res_map(configuration.resource_home)
@@ -68,13 +71,14 @@ def main(client_id, user_arguments_dict):
 
     res_list = {'object_type': 'resource_list', 'resources': []}
     fields = ['PUBLICNAME', 'CPUCOUNT', 'MEMORY', 'DISK', 'ARCHITECTURE', 'SANDBOX']
-    sorted_names = allowed.keys()
-    sorted_names.sort()
-    for visible_res_name in sorted_names:
+    # Leave the sorting to jquery tablesorter
+    for visible_res_name in allowed.keys():
         unique_resource_name = visible_res_name
         if visible_res_name in anon_map.keys():
             unique_resource_name = anon_map[visible_res_name]
 
+        if not show_sandboxes and sandbox_resource(unique_resource_name):
+            continue
         res_obj = {'object_type': 'resource', 'name': visible_res_name}
 
         if client_id in res_map[unique_resource_name][OWNERS]:
@@ -125,8 +129,8 @@ var confirmDelete = function(name, link) {
 
 $(document).ready(function() {
 
-          // table initially sorted by col. 2 (admin), then 1 (member), then 0
-          var sortOrder = [[2,0],[1,1],[0,0]];
+          // table initially sorted by col. 1 (admin)), then 0 (name)
+          var sortOrder = [[1,0],[0,0]];
 
           // use an image title for sorting if there is any inside
           var imgTitle = function(contents) {
@@ -159,7 +163,8 @@ $(document).ready(function() {
 All available resources are listed below with overall hardware specifications. Any resources that you own will have a administration icon that you can click to open resource management.
 '''
                        })
-    output_objects.append({'object_type': 'html_form', 'text': '''
+
+    toolbar = '''
   <div>
     <div class="toolbar">        
       <div class="pager" id="pager">
@@ -184,8 +189,17 @@ All available resources are listed below with overall hardware specifications. A
       
     </div>
 '''
-                           })
+    output_objects.append({'object_type': 'html_form', 'text': toolbar})
     output_objects.append(res_list)
+
+    if configuration.site_enable_sandboxes:
+        if show_sandboxes:
+            output_objects.append({'object_type': 'link', 'text': 'Exclude sandbox resources',
+                                   'destination': '?show_sandboxes=false'})
+
+        else:
+            output_objects.append({'object_type': 'link', 'text': 'Include sandbox resources',
+                                   'destination': '?show_sandboxes=true'})
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Resource Status'})
