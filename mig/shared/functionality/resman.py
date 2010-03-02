@@ -67,7 +67,7 @@ def main(client_id, user_arguments_dict):
     # Iterate through resources and show management for each one requested
 
     res_list = {'object_type': 'resource_list', 'resources': []}
-    fields = ['PUBLICNAME', 'CPUCOUNT', 'MEMORY', 'DISK', 'ARCHITECTURE']
+    fields = ['PUBLICNAME', 'CPUCOUNT', 'MEMORY', 'DISK', 'ARCHITECTURE', 'SANDBOX']
     sorted_names = allowed.keys()
     sorted_names.sort()
     for visible_res_name in sorted_names:

@@ -873,7 +873,7 @@ Exit code: %s Description: %s<br />
         elif i['object_type'] == 'resource_list':
             if len(i['resources']) > 0:
                 res_fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK',
-                              'ARCHITECTURE']
+                              'ARCHITECTURE', 'SANDBOX']
                 resources = i['resources']
                 lines.append("<table class='resources' id='resourcetable'>")
                 lines.append('''
@@ -884,9 +884,10 @@ Exit code: %s Description: %s<br />
   <th class=centertext>Alias</th>
   <th class=centertext>Nodes</th>
   <th class=centertext>CPUs</th>
-  <th class=centertext>Memory</th>
-  <th class=centertext>Disk</th>
+  <th class=centertext>Memory (MB)</th>
+  <th class=centertext>Disk (GB)</th>
   <th class=centertext>Architecture</th>
+  <th class=centertext>Sandbox</th>
 </thead>
 <tbody>
 '''
