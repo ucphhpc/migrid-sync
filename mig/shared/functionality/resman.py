@@ -130,7 +130,7 @@ var confirmDelete = function(name, link) {
 $(document).ready(function() {
 
           // table initially sorted by col. 1 (admin)), then 0 (name)
-          var sortOrder = [[1,0],[0,0]];
+          var sortOrder = [[1,1],[0,0]];
 
           // use an image title for sorting if there is any inside
           var imgTitle = function(contents) {
