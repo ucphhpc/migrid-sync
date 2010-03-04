@@ -164,17 +164,16 @@ order to support many kinds of software or hardware environments."""})
 
 def license_information(output_objects, configuration):
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
-%s is based on the Grid middleware MiG. You can read about MiG at 
-<a href="http://code.google.com/p/migrid/">its web site</a>.
-""" % configuration.site_title })
-
     output_objects.append({'object_type': 'header', 'text'
                           : 'License'})
-
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : """
+%s is based on the Minimum intrusion Grid (MiG) middleware. You can read about MiG at 
+<a href="http://code.google.com/p/migrid/">its web site</a>.<br />
+The MiG software license follows below.
+""" % configuration.site_title })
     output_objects.append({'object_type': 'text', 'text'
-                           : 'Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter'
+                           : 'Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter'
                            })
 
     output_objects.append({'object_type': 'text', 'text' :"""
@@ -201,7 +200,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                           : 'Acknowledgements' })
 
     output_objects.append({'object_type': 'text', 'text' : """
-This software uses icons from the following sources:""" })
+This software uses JavaScript from:""" })
+    output_objects.append({'object_type': 'link', 
+                           'destination' : 'http://jquery.com/',
+                           'text': 'JQuery and extension modules (GPL/MIT and Creative Commons 3.0 licenses)'})
+    output_objects.append({'object_type': 'text', 'text' : """
+and icons from the following sources:""" })
 
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://pixel-mixer.com/',
