@@ -37,7 +37,7 @@ from shared.useradm import client_id_dir
 
 # Only refresh stats if at least this many seconds since last refresh
 JOB_REFRESH_DELAY = 120
-DISK_REFRESH_DELAY = 24*60*60
+DISK_REFRESH_DELAY = 3600
 # Internal field names
 TOTALS = (OWN, VGRID, JOBS) = ('__user_totals__', '__vgrid_totals__', '__jobs__')
 (FILES, DIRECTORIES, BYTES) = ('__files__', '__directories__', '__bytes__')

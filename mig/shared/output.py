@@ -310,6 +310,27 @@ ctime\t%(ctime)s
         elif i['object_type'] == 'list':
             for list_item in i['list']:
                 lines.append('%s\n' % list_item)
+        elif i['object_type'] == 'user_stats':
+            if i.get('disk', None):
+                disk_info = '== Disk stats ==\n'
+                for (key, val) in i['disk'].items():
+                    disk_info += '%s: %s\n' % (key, val)
+                lines.append(disk_info)
+            if i.get('jobs', None):
+                jobs_info = '== Job stats ==\n'
+                for (key, val) in i['jobs'].items():
+                    jobs_info += '%s: %s\n' % (key, val)
+                lines.append(jobs_info)
+            if i.get('resources', None):
+                resources_info = '== Resource stats ==\n'
+                for (key, val) in i['resources'].items():
+                    resources_info += '%s: %s\n' % (key, val)
+                lines.append(resources_info)
+            if i.get('certificate', None):
+                certificate_info = '== Certificate stats ==\n'
+                for (key, val) in i['certificate'].items():
+                    certificate_info += '%s: %s\n' % (key, val)
+                lines.append(certificate_info)
         elif i['object_type'] == 'script_status':
             status_line = i.get('text')
         elif i['object_type'] == 'end':
@@ -1005,6 +1026,27 @@ Exit code: %s Description: %s<br />
                 lines.append('</tbody></table>')
             else:
                 lines.append('No matching VGrids found')
+        elif i['object_type'] == 'user_stats':
+            if i.get('disk', None):
+                disk_info = '<h2>Disk stats</h2>'
+                for (key, val) in i['disk'].items():
+                    disk_info += '%s: %s<br />' % (key, val)
+                lines.append(disk_info)
+            if i.get('jobs', None):
+                jobs_info = '<h2>Job stats</h2>'
+                for (key, val) in i['jobs'].items():
+                    jobs_info += '%s: %s<br />' % (key, val)
+                lines.append(jobs_info)
+            if i.get('resources', None):
+                resources_info = '<h2>Resource stats</h2>'
+                for (key, val) in i['resources'].items():
+                    resources_info += '%s: %s<br />' % (key, val)
+                lines.append(resources_info)
+            if i.get('certificate', None):
+                certificate_info = '<h2>Certificate stats</h2>'
+                for (key, val) in i['certificate'].items():
+                    certificate_info += '%s: %s<br />' % (key, val)
+                lines.append(certificate_info)
         elif i['object_type'] == 'script_status':
             status_line = i.get('text')
         elif i['object_type'] == 'end':

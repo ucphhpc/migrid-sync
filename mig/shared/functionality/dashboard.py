@@ -34,12 +34,7 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables
-from shared.useradm import client_id_dir
-from shared.vgridaccess import user_allowed_resources
-from shared.usercache import refresh_disk_stats, refresh_job_stats, \
-     format_bytes, OWN, VGRID, JOBS, FILES, DIRECTORIES, BYTES, PARSE, \
-     QUEUED, EXECUTING, FINISHED, RETRY, CANCELED, EXPIRED, FAILED
+from shared.init import initialize_main_variables, find_entry
 
 
 def signature():
@@ -53,7 +48,6 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(op_header=False)
-    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -66,14 +60,109 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    # Please note that base_dir must end in slash to avoid access to other
-    # user dirs when own name is a prefix of another user name
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Dashboard'
 
-    base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+    # jquery support for tablesorter and confirmation on "leave":
 
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Dashboard'})
+    title_entry['javascript'] = '''
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+
+<script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
+
+<script type="text/javascript" >
+
+$(document).ready(function() {
+
+          $("#jobs_stats").addClass("spinner").css("padding-left", "20px");
+          $("#jobs_stats").html("Loading job stats...");
+          $("#res_stats").addClass("spinner").css("padding-left", "20px");
+          $("#res_stats").html("Loading resource stats...");
+          $("#disk_stats").addClass("spinner").css("padding-left", "20px");
+          $("#disk_stats").html("Loading disk stats...");
+          $("#cert_stats").addClass("spinner").css("padding-left", "20px");
+          $("#cert_stats").html("Loading certificate information...");
+          /* Run jobs request in the background and handle as soon as results come in */
+          $.getJSON("userstats.py?output_format=json;stats=jobs", {}, function(jsonRes, textStatus) {
+            var i = 0;
+            var jobs = null;
+            // Grab results from json response and place them in job status.
+            for(i=0; i<jsonRes.length; i++) {
+                if (jsonRes[i].object_type == "user_stats") {    
+                    jobs = jsonRes[i].jobs;
+                    //alert("inspect stats result: " + jobs);
+                    $("#jobs_stats").removeClass("spinner").css("padding-left", "0px");
+                    $("#jobs_stats").html("");
+                    $("#jobs_stats").append("You have submitted a total of " + jobs.total +
+                    " jobs: " + jobs.parse + " parse, " + jobs.queued + " queued, " +
+                    jobs.executing + " executing, " + jobs.finished + " finished, " + jobs.retry +
+                    " retry, " + jobs.canceled + " canceled, " + jobs.expired + " expired and " +
+                    jobs.failed + " failed.");
+                    break;
+                }
+            }   
+
+            });
+          /* Run resources request in the background and handle as soon as results come in */
+          $.getJSON("userstats.py?output_format=json;stats=resources", {}, function(jsonRes, textStatus) {
+            var i = 0;
+            var resources = null;
+            // Grab results from json response and place them in resource status.
+            for(i=0; i<jsonRes.length; i++) {
+                if (jsonRes[i].object_type == "user_stats") {    
+                    resources = jsonRes[i].resources;
+                    //alert("inspect resources stats result: " + resources);
+                    $("#res_stats").removeClass("spinner").css("padding-left", "0px");
+                    $("#res_stats").html("");
+                    $("#res_stats").append(resources.resources + " resources providing " +
+                    resources.exes + " execution units in total allow execution of your jobs.");
+                    break;
+                }
+            }
+          });
+          /* Run disk request in the background and handle as soon as results come in */
+          $.getJSON("userstats.py?output_format=json;stats=disk", {}, function(jsonRes, textStatus) {
+            var i = 0;
+            var disk = null;
+            // Grab results from json response and place them in resource status.
+            for(i=0; i<jsonRes.length; i++) {
+                if (jsonRes[i].object_type == "user_stats") {    
+                    disk = jsonRes[i].disk;
+                    //alert("inspect disk stats result: " + disk);
+                    $("#disk_stats").removeClass("spinner").css("padding-left", "0px");
+                    $("#disk_stats").html("");
+                    $("#disk_stats").append("Your own " + disk.own_files +" files and " +
+                    disk.own_directories + " directories take up " + disk.own_megabytes +
+                    " MB in total and you additionally share " + disk.vgrid_files +
+                    " files and " + disk.vgrid_directories + " directories of " +
+                    disk.vgrid_megabytes + " MB in total.");
+                    break;
+                }
+            }
+          });
+          /* Run certificate request in the background and handle as soon as results come in */
+          $.getJSON("userstats.py?output_format=json;stats=certificate", {}, function(jsonRes, textStatus) {
+            var i = 0;
+            var certificate = null;
+            // Grab results from json response and place them in resource status.
+            for(i=0; i<jsonRes.length; i++) {
+                if (jsonRes[i].object_type == "user_stats") {    
+                    certificate = jsonRes[i].certificate;
+                    //alert("inspect certificate stats result: " + certificate);
+                    $("#cert_stats").removeClass("spinner").css("padding-left", "0px");
+                    $("#cert_stats").html("");
+                    $("#cert_stats").append("Your user certificate expires on " +
+                    certificate.expire + ".");
+                    break;
+                }
+            }
+          });
+     }
+);
+</script>
+'''
+
+    output_objects.append({'object_type': 'header', 'text': 'Dashboard'})
     output_objects.append({'object_type': 'sectionheader', 'text' :
                            "Welcome to the %s" % \
                            configuration.site_title})
@@ -133,54 +222,16 @@ can ease file and job handling or even completely redecorate your interface.
 """
         output_objects.append({'object_type': 'text', 'text': settings_info})
 
-    output_objects.append({'object_type': 'sectionheader', 'text' :
+    output_objects.append({'object_type': 'sectionheader', 'text':
                            "Your Status"})
-    job_dir = os.path.join(configuration.mrsl_files_dir, client_dir)
-    job_stats = refresh_job_stats(configuration, client_id)
-    total_jobs = {'total': sum(job_stats[JOBS].values()),
-                  'parse': job_stats[JOBS][PARSE],
-                  'queued': job_stats[JOBS][QUEUED],
-                  'executing': job_stats[JOBS][EXECUTING],
-                  'finished': job_stats[JOBS][FINISHED],
-                  'retry': job_stats[JOBS][RETRY],
-                  'canceled': job_stats[JOBS][CANCELED],
-                  'expired': job_stats[JOBS][EXPIRED],
-                  'failed': job_stats[JOBS][FAILED],
-                  }
-    job_info = """
-You have submitted a total of %(total)d jobs:
-%(parse)d parse, %(queued)d queued, %(executing)d executing, %(finished)d finished, %(retry)s retry,
-%(canceled)d canceled, %(expired)d expired and %(failed)d failed.
-""" % total_jobs
-    output_objects.append({'object_type': 'text', 'text': job_info})
-    allowed_res = user_allowed_resources(configuration, client_id)
-    # allowed_res is dictionary of res ID and list of attached exe names
-    resource_count = len(allowed_res.keys())
-    exe_count = 0
-    for exes in allowed_res.values():
-        exe_count += len(exes)
-    resource_info = """
-%d resources providing %d execution units in total allow execution of your jobs.
-""" % (resource_count, exe_count)
-    output_objects.append({'object_type': 'text', 'text': resource_info})
-    disk_stats = refresh_disk_stats(configuration, client_id)
-    total_disk = {'own_files': disk_stats[OWN][FILES],
-                 'own_directories': disk_stats[OWN][DIRECTORIES],
-                 'own_megabytes': format_bytes(disk_stats[OWN][BYTES], 'mega'),
-                 'vgrid_files': disk_stats[VGRID][FILES],
-                 'vgrid_directories': disk_stats[VGRID][DIRECTORIES],
-                 'vgrid_megabytes': format_bytes(disk_stats[VGRID][BYTES], 'mega')
-                  }
-    disk_info = """
-Your own %(own_files)d files and %(own_directories)d directories take up %(own_megabytes).1f MB in total
-and you additionally share %(vgrid_files)d files and %(vgrid_directories)d directories of
-%(vgrid_megabytes).1f MB in total.
-""" % total_disk
-    output_objects.append({'object_type': 'text', 'text': disk_info})
-    cert_info = """
-Your user certificate expires on %s .
-""" % os.environ['SSL_CLIENT_V_END']
-    output_objects.append({'object_type': 'text', 'text': cert_info})
+    output_objects.append({'object_type': 'html_form', 'text':
+                           "<div id='jobs_stats'><!-- for jquery --></div>"})
+    output_objects.append({'object_type': 'html_form', 'text':
+                           "<div id='res_stats'><!-- for jquery --></div>"})
+    output_objects.append({'object_type': 'html_form', 'text':
+                           "<div id='disk_stats'><!-- for jquery --></div>"})
+    output_objects.append({'object_type': 'html_form', 'text':
+                           "<div id='cert_stats'><!-- for jquery --></div>"})
 
     #env_info = """Env %s""" % os.environ
     #output_objects.append({'object_type': 'text', 'text': env_info})
