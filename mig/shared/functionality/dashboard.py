@@ -181,6 +181,27 @@ you can navigate your pages using the menu on the left.
 """ % os.environ
     output_objects.append({'object_type': 'text', 'text': dashboard_info})
 
+    output_objects.append({'object_type': 'sectionheader', 'text':
+                           "Your Status"})
+    output_objects.append({'object_type': 'html_form', 'text': '''
+<p>
+This is a general status overview for your Grid activities. Please note that some
+of the numbers are cached for a while to keep server load down.
+</p>
+<p>
+<div id="jobs_stats"><!-- for jquery --></div>
+</p>
+<p>
+<div id="res_stats"><!-- for jquery --></div>
+</p>
+<p>
+<div id="disk_stats"><!-- for jquery --></div>
+</p>
+<p>
+<div id="cert_stats"><!-- for jquery --></div>
+</p>
+'''})
+
     # Only include external documentation in full mode
     if configuration.dashboardui == "full":
         output_objects.append({'object_type': 'sectionheader', 'text' :
@@ -226,27 +247,6 @@ page from the navigation menu and entering personal preferences. In that way you
 can ease file and job handling or even completely redecorate your interface.
 """
         output_objects.append({'object_type': 'text', 'text': settings_info})
-
-    output_objects.append({'object_type': 'sectionheader', 'text':
-                           "Your Status"})
-    output_objects.append({'object_type': 'html_form', 'text': '''
-<p>
-This is a general status overview for your Grid activities. Please note that some
-of the numbers are cached for a while to keep server load down.
-</p>
-<p>
-<div id="jobs_stats"><!-- for jquery --></div>
-</p>
-<p>
-<div id="res_stats"><!-- for jquery --></div>
-</p>
-<p>
-<div id="disk_stats"><!-- for jquery --></div>
-</p>
-<p>
-<div id="cert_stats"><!-- for jquery --></div>
-</p>
-'''})
 
     #env_info = """Env %s""" % os.environ
     #output_objects.append({'object_type': 'text', 'text': env_info})
