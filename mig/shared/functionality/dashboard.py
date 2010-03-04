@@ -74,6 +74,11 @@ def main(client_id, user_arguments_dict):
 
 $(document).ready(function() {
 
+          function roundNumber(num, dec) {
+              var result = Math.round(num*Math.pow(10,dec))/Math.pow(10,dec);
+              return result;
+          }
+
           $("#jobs_stats").addClass("spinner").css("padding-left", "20px");
           $("#jobs_stats").html("Loading job stats...");
           $("#res_stats").addClass("spinner").css("padding-left", "20px");
@@ -132,10 +137,10 @@ $(document).ready(function() {
                     $("#disk_stats").removeClass("spinner").css("padding-left", "0px");
                     $("#disk_stats").html("");
                     $("#disk_stats").append("Your own " + disk.own_files +" files and " +
-                    disk.own_directories + " directories take up " + disk.own_megabytes +
+                    disk.own_directories + " directories take up " + roundNumber(disk.own_megabytes, 2) +
                     " MB in total and you additionally share " + disk.vgrid_files +
                     " files and " + disk.vgrid_directories + " directories of " +
-                    disk.vgrid_megabytes + " MB in total.");
+                    roundNumber(disk.vgrid_megabytes, 2) + " MB in total.");
                     break;
                 }
             }
@@ -224,14 +229,24 @@ can ease file and job handling or even completely redecorate your interface.
 
     output_objects.append({'object_type': 'sectionheader', 'text':
                            "Your Status"})
-    output_objects.append({'object_type': 'html_form', 'text':
-                           "<div id='jobs_stats'><!-- for jquery --></div>"})
-    output_objects.append({'object_type': 'html_form', 'text':
-                           "<div id='res_stats'><!-- for jquery --></div>"})
-    output_objects.append({'object_type': 'html_form', 'text':
-                           "<div id='disk_stats'><!-- for jquery --></div>"})
-    output_objects.append({'object_type': 'html_form', 'text':
-                           "<div id='cert_stats'><!-- for jquery --></div>"})
+    output_objects.append({'object_type': 'html_form', 'text': '''
+<p>
+This is a general status overview for your Grid activities. Please note that some
+of the numbers are cached for a while to keep server load down.
+</p>
+<p>
+<div id="jobs_stats"><!-- for jquery --></div>
+</p>
+<p>
+<div id="res_stats"><!-- for jquery --></div>
+</p>
+<p>
+<div id="disk_stats"><!-- for jquery --></div>
+</p>
+<p>
+<div id="cert_stats"><!-- for jquery --></div>
+</p>
+'''})
 
     #env_info = """Env %s""" % os.environ
     #output_objects.append({'object_type': 'text', 'text': env_info})
