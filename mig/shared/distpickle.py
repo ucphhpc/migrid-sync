@@ -34,6 +34,7 @@ file opening from pickle operations.
 
 import shared.distfile as distfile
 from shared.distfile import LOCK_EX, LOCK_SH
+# Expose loads and dumps from serial
 from shared.serial import loads, dumps
 
 
@@ -48,13 +49,6 @@ def dump(obj, path, protocol=0):
     fd.unlock()
     fd.close()
 
-
-def dumps(obj, protocol=0):
-    """Simple pass through to same pickle function"""
-
-    return dumps(obj)
-
-
 def load(path):
     """Load a object from the binary representation of it in the
     file, path"""
@@ -65,11 +59,3 @@ def load(path):
     fd.unlock()
     fd.close()
     return loads(contents)
-
-
-def loads(contents):
-    """Simple pass through to same pickle function"""
-
-    return loads(contents)
-
-

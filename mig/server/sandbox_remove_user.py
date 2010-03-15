@@ -57,7 +57,7 @@ if userdb.has_key(username):
     # Open the user file in write-mode - this deletes the file!
 
     del userdb[username]
-    pickle.dump(userdb, sandboxdb_file)
+    dump(userdb, sandboxdb_file)
     print 'Username %s has now been deleted!' % username
 else:
     print 'Sorry, username does not exist: %s' % username

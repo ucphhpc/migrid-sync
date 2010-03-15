@@ -38,7 +38,7 @@ import sys
 
 from shared.cgishared import init_cgiscript_possibly_with_cert
 from shared.handlers import correct_handler, get_path, get_allowed_path
-from shared.cgiinput import validated_string
+from shared.safeinput import validated_string
 import shared.localos as localos
 
 # ## Main ###
