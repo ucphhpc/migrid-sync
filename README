@@ -163,11 +163,11 @@ moin is not available or should if VGrid wikis should not be enabled. On
 Debian the moinmoin-common package provides all the necessary wiki
 requirements.
 
-The three CLAUSE arguments can be used to comment out the explicit
+The four CLAUSE arguments can be used to comment out the explicit
 
-setting of user, group and ports in the apache conf by providing a
-'# User', '# Group' and '# Listen'. This is mostly relevant if using
-apache2 with WSGI.
+setting of user, group, serveralias and ports in the apache conf by
+providing a '# User', '# Group', '# ServerAlias' and '# Listen'. This is
+mostly relevant if using apache2 with WSGI.
 
 The generator will inform you about the steps to install your
 configuration files in the right locations.

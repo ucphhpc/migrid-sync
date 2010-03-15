@@ -6,6 +6,20 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
+=== March 15th, 2010 ===
+Our previous shared virtual host for Session ID and certificate based
+access could *potentially* open up for a Man-in-the-Middle attack like:
+http://securitytracker.com/alerts/2009/Nov/1023145.html
+Additionally the same SSL renegotiation prevented upload of big files
+through the web interface. We repartitioned the virtual hosts to prevent
+any such security issues in the future and remove the upload limit at
+once. However, this means that a MiG server now requires either two public IP
+adresses or two SSL ports to work.
+Apart from that we mostly worked on integrating interface polishing and
+improvements from the Grid.dk project. Now some of the main web pages
+use AJAX to some extent for a far more flexible and crisp user experience.
+
+
 === September 17th, 2009 ===
 ********************************************************
 *** IMPORTANT * This upgrade requires admin actions! ***
@@ -63,6 +77,25 @@ for other users.
 
 == Changelogs ==
 More detailed changelogs for the public releases.
+The full changelog is available from the repository.
+
+== 1.2.0 ==
+-Work around potential Man-in-the-Middle apache issue (separate vhosts)
+-Fixed upload of big files (separate vhosts)
+-Optional resource anonymity
+-Optional auto creation of users with valid certificate
+-Fixed some notification timeout delays with threading
+-Multiple submit job styles
+-Support site specific customization
+-Optional resource targetting in submit job
+-New AJAX file manager
+-New AJAX job manager
+-New AJAX MiG shell
+-New optional statistics page
+-Overhauled Most other pages
+-Individual user stats on Dashboard
+-Integrate optional software catalogue from grid.dk
+-Integrate optional ARC support
 
 == 1.1.0 ==
 -reworked user ID structure to avoid collissions when users with same

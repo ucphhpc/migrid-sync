@@ -63,11 +63,11 @@ please feel free to report any problems.
 = Obtaining the scripts =
 All MiG scripts are provided on a //on demand// basis through a generator cgi
 script. To obtain the latest version, simply point your browser to
-[user-scripts https://mig-1.imada.sdu.dk/cgi-bin/scripts.py?flavor=user]
+[user-scripts https://dk.migrid.org/cgi-bin/scripts.py?flavor=user]
 . It is possible to pass options to the generator in order to change the
 generated script languages and default application paths.
 Go to the 
-[usage-help https://mig-1.imada.sdu.dk/cgi-bin/scripts.py?flags=h]
+[usage-help https://dk.migrid.org/cgi-bin/scripts.py?flags=h]
 to get help on using these options.
 After running the generator successfully, the output will include links
 to the location of the generated scripts. Simply select the zip link to
@@ -103,11 +103,10 @@ permission if you choose to include the password.
 Additionally it is possible to verify the identity of the MiG server by
 providing a CA certificate path in the configuration:
 ```
-cacertfile /home/LOGIN/.mig/MiG-CA.crt
+cacertfile /home/LOGIN/.mig/cacert.pem
 ```
 Please contact us if you haven't been given a copy of the CA
-certificate. The CA certificate file may be called either MiG-CA.crt or
-cacert.pem depending on the source.
+certificate, cacert.pem .
 
 
 = Using the scripts =
@@ -146,10 +145,10 @@ Example output:
 ```
 0
 
-2452_11_15_2005__15_54_23_mig-1.imada.sdu.dk.0 is the job id assigned.
+2452_11_15_2005__15_54_23_dk.migrid.org.0 is the job id assigned.
 ```
 Now the job can be referenced by the unique string 
-2452_11_15_2005__15_54_23_mig-1.imada.sdu.dk.0 in status and cancel
+2452_11_15_2005__15_54_23_dk.migrid.org.0 in status and cancel
 requests.
 
 
@@ -157,12 +156,12 @@ requests.
 
 - python
 ```
-python migstatus.py 2452_11_15_2005__15_54_23_mig-1.imada.sdu.dk.0
+python migstatus.py 2452_11_15_2005__15_54_23_dk.migrid.org.0
 ```
 
 - sh
 ```
-./migstatus.sh 2452_11_15_2005__15_54_23_mig-1.imada.sdu.dk.0
+./migstatus.sh 2452_11_15_2005__15_54_23_dk.migrid.org.0
 ```
 
 
@@ -213,12 +212,12 @@ output and exit values against.
 
 - python
 ```
-python migcancel.py 2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0
+python migcancel.py 2453_11_15_2005__15_59_19_dk.migrid.org.0
 ```
 
 - sh
 ```
-./migcancel.sh 2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0
+./migcancel.sh 2453_11_15_2005__15_59_19_dk.migrid.org.0
 ```
 
 
@@ -227,7 +226,7 @@ Example output:
 1
 
 Trying to cancel job with job
-id:2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0
+id:2453_11_15_2005__15_59_19_dk.migrid.org.0
 
 You can only cancel jobs with QUEUED or RETRY status, status of job
 you are trying to cancel: FINISHED
@@ -261,8 +260,8 @@ Example output:
 .
 ..
 hellogrid.mRSL
-2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0.stdout
-2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0.status
+2453_11_15_2005__15_59_19_dk.migrid.org.0.stdout
+2453_11_15_2005__15_59_19_dk.migrid.org.0.status
 ```
 The zero tells us that the operation succeeded and the rest are
 the actual contents of the MiG home directory. hellogrid.mRSL is the job
@@ -299,12 +298,12 @@ file it is indicated that the exit code of the echo command was 0.
 
 - python
 ```
-python migget.py '2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0*' .
+python migget.py '2453_11_15_2005__15_59_19_dk.migrid.org.0*' .
 ```
 
 - sh
 ```
-./migget.sh '2453_11_15_2005__15_59_19_mig-1.imada.sdu.dk.0*' .
+./migget.sh '2453_11_15_2005__15_59_19_dk.migrid.org.0*' .
 ```
 
 
@@ -577,11 +576,11 @@ python migls.py -c my-mig.conf
 The //-s// flag can be used to override the //migserver// line in the configuration:
 - python
 ```
-python migls.py -s "https://mig-2.imada.sdu.dk"
+python migls.py -s "https://amigos18.diku.dk:12345"
 ```
 - sh
 ```
-./migls.sh -s "https://mig-2.imada.sdu.dk"
+./migls.sh -s "https://amigos18.diku.dk:12345"
 ```
 
 
@@ -611,7 +610,7 @@ You need [openssl www.openssl.org] in order to change the passphrase on your key
 
 To create a copy of the key with a new passphrase:
 ```
-openssl rsa -in myMiGkey.pem -des3 -out myMiGkey.pem.new
+openssl rsa -in key.pem -des3 -out key.pem.new
 [enter old passphrase]
 [enter new passphrase]
 [verify new passphrase]
@@ -620,7 +619,7 @@ Now you can use the new key (and thus the new passphrase) along with the origina
 
 To create a copy of the P12 certificate with a new import password:
 ```
-openssl pkcs12 -export -in myMiGcert.pem -inkey myMiGkey.pem -out myMiGcert.p12.new
+openssl pkcs12 -export -in cert.pem -inkey key.pem -out cert.p12.new
 [enter key passphrase]
 [enter new export password]
 [verify new export password]
@@ -629,4 +628,4 @@ Now you can import the new P12 certificate using the new password. In case you w
 
 
 = Feedback =
-Please send any feedback to the MiG mailing list at mig@imada.sdu.dk
+Please send any feedback to the MiG community at http://groups.google.com/group/migrid/
