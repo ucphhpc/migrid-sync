@@ -113,6 +113,7 @@ settings:
 --user_clause=USER_CLAUSE
 --group_clause=GROUP_CLAUSE
 --listen_clause=LISTEN_CLAUSE
+--serveralias_clause=SERVERALIAS_CLAUSE
 
 For one of our servers running MiG as the 'mig' user with the code
 checked out directly in the home directory and with Debian apache 1.3.x
@@ -130,7 +131,8 @@ defaults, this could be:
 		   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
 		   --public_port=80 --cert_port=443 --sid_port=8092 \
 		   --user_clause=User --group_clause=Group \
-		   --listen_clause='Listen'
+		   --listen_clause='Listen' \
+		   --serveralias_clause='#ServerAlias'
 
 or similarly with apache 2.x:
 ./generateconfs.py --source=. --destination=generated-confs \
@@ -146,7 +148,8 @@ or similarly with apache 2.x:
 		   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
 		   --public_port=80 --cert_port=443 --sid_port=443 \
 		   --user_clause=User --group_clause=Group \
-		   --listen_clause='#Listen'
+		   --listen_clause='#Listen' \
+		   --serveralias_clause='ServerAlias'
 
 Most of the arguments should be relatively straight forward, but you
 need to provide the MIG_CERTS path where your apache server key and

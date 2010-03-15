@@ -100,6 +100,7 @@ def generate_confs(
     user_clause='User',
     group_clause='Group',
     listen_clause='#Listen',
+    serveralias_clause='#ServerAlias',
     ):
     """Generate Apache and MiG server confs with specified variables"""
 
@@ -123,6 +124,7 @@ def generate_confs(
     user_dict['__USER_CLAUSE__'] = user_clause
     user_dict['__GROUP_CLAUSE__'] = group_clause
     user_dict['__LISTEN_CLAUSE__'] = listen_clause
+    user_dict['__SERVERALIAS_CLAUSE__'] = serveralias_clause
 
     # Apache fails on duplicate Listen directives so comment in that case
     same_port, same_fqdn = (cert_port == sid_port), (cert_fqdn == sid_fqdn)
@@ -193,6 +195,7 @@ if '__main__' == __name__:
         'user_clause',
         'group_clause',
         'listen_clause',
+        'serveralias_clause',
         )
     settings = {}
 
@@ -250,6 +253,7 @@ sid_port: %(sid_port)s
 user_clause: %(user_clause)s
 group_clause: %(group_clause)s
 listen_clause: %(listen_clause)s
+serveralias_clause: %(serveralias_clause)s
 '''\
          % full_settings
     generate_confs(**settings)

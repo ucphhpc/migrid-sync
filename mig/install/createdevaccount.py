@@ -182,6 +182,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         'User',
         'Group',
         '#Listen',
+        '#ServerAlias',
         )
     apache_envs_conf = os.path.join(dst, 'envvars')
     apache_apache2_conf = os.path.join(dst, 'apache2.conf')
