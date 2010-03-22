@@ -235,6 +235,9 @@ accompanied by a help link providing further details about the field."""})
                 default = saved
         else:
             default = spec['Value']
+        # Hide sandbox field if sandboxes are disabled
+        if field == 'SANDBOX' and not configuration.site_enable_sandboxes:
+            continue
         if 'invisible' == spec['Editor']:
             continue
         if 'custom' == spec['Editor']:

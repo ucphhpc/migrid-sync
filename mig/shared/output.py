@@ -894,7 +894,11 @@ Exit code: %s Description: %s<br />
         elif i['object_type'] == 'resource_list':
             if len(i['resources']) > 0:
                 res_fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK',
-                              'ARCHITECTURE', 'SANDBOX']
+                              'ARCHITECTURE']
+                sandbox_column = ''
+                if configuration.site_enable_sandboxes:
+                    res_fields.append('SANDBOX')
+                    sandbox_column = '<th class=centertext>Sandbox</th>'
                 resources = i['resources']
                 lines.append("<table class='resources' id='resourcetable'>")
                 lines.append('''
@@ -908,10 +912,10 @@ Exit code: %s Description: %s<br />
   <th class=centertext>Memory (MB)</th>
   <th class=centertext>Disk (GB)</th>
   <th class=centertext>Architecture</th>
-  <th class=centertext>Sandbox</th>
+  %s
 </thead>
 <tbody>
-'''
+''' % sandbox_column
                              )
                 for obj in resources:
                     lines.append('<tr>')
