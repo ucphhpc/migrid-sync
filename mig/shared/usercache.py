@@ -40,7 +40,8 @@ JOB_REFRESH_DELAY = 120
 DISK_REFRESH_DELAY = 3600
 # Internal field names
 TOTALS = (OWN, VGRID, JOBS) = ('__user_totals__', '__vgrid_totals__', '__jobs__')
-(FILES, DIRECTORIES, BYTES) = ('__files__', '__directories__', '__bytes__')
+(FILES, DIRECTORIES, BYTES, KIND) = \
+        ('__files__', '__directories__', '__bytes__', '__kind__')
 STATES = (PARSE, QUEUED, EXECUTING, FINISHED, RETRY, CANCELED, EXPIRED,
           FAILED) = \
           ("PARSE", "QUEUED", "EXECUTING", "FINISHED", "RETRY", "CANCELED",
@@ -97,6 +98,7 @@ def update_disk_stats(stats, root, rel_root, dirs, files, total):
         stats[rel_root][DIRECTORIES] = len(dirs)
         stats[total][BYTES] += size
         stats[rel_root][BYTES] = size
+        stats[rel_root][KIND] = total
     else:
         stats[total][FILES] += (len(files) - stats[rel_root][FILES])
         stats[rel_root][FILES] = len(files)
@@ -104,6 +106,7 @@ def update_disk_stats(stats, root, rel_root, dirs, files, total):
         stats[rel_root][DIRECTORIES] = len(dirs)
         stats[total][BYTES] += (size - stats[rel_root][BYTES])
         stats[rel_root][BYTES] = size
+        stats[rel_root][KIND] = total
     return stats
 
 def update_job_stats(stats, job_id, job):
@@ -198,12 +201,10 @@ def refresh_disk_stats(configuration, client_id):
     # Update stats for any roots no longer there
 
     for rel_root in stats.keys():
-        if rel_root in list(TOTALS)+ cur_roots:
+        if rel_root in list(TOTALS) + cur_roots:
             continue
         root = os.path.join(user_base, rel_root)
-        total = OWN
-        if [i for i in vgrid_dirs if root == i or root.startswith(i + os.sep)]:
-            total = VGRID
+        total = stats[rel_root][KIND]
         stats[total][FILES] -= stats[rel_root][FILES]
         stats[total][DIRECTORIES] -= stats[rel_root][DIRECTORIES]
         stats[total][BYTES] -= stats[rel_root][BYTES]
