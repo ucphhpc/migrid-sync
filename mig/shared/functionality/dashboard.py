@@ -202,51 +202,30 @@ of the numbers are cached for a while to keep server load down.
 </p>
 '''})
 
-    # Only include external documentation in full mode
-    if configuration.dashboardui == "full":
-        output_objects.append({'object_type': 'sectionheader', 'text' :
-                               'Documentation and Help'})
-        online_help = """
-%s includes some online documentation like the
+    output_objects.append({'object_type': 'sectionheader', 'text' :
+                           'Documentation and Help'})
+    online_help = """
+%s includes some built-in documentation like the
 """ % configuration.site_title
-        output_objects.append({'object_type': 'text', 'text': online_help})
-        output_objects.append({'object_type': 'link', 'destination': 'docs.py',
-                               'text': 'On-demand documentation '})
-        project_info = """
-but additional background information and tutorials are available on the
+    output_objects.append({'object_type': 'text', 'text': online_help})
+    output_objects.append({'object_type': 'link', 'destination': 'docs.py',
+                           'text': 'Docs page'})
+    project_info = """
+but additional help, background information and tutorials are available in the
 """
-        output_objects.append({'object_type': 'text', 'text': project_info})
-        output_objects.append({'object_type': 'link', 'destination':
-                               'http://code.google.com/p/migrid/',
-                               'text': 'Project page'})
-        intro_info = """
-The Getting Started guide there is a good starting point for new
-users, and the wiki pages should answer the most common questions.
-"""
-        output_objects.append({'object_type': 'text', 'text': intro_info})
-        support_info = """
-In case you still have questions we recommend asking the developer and user
-community online through the
-"""
-        output_objects.append({'object_type': 'text', 'text': support_info})
-        output_objects.append({'object_type': 'link', 'destination':
-                               'http://groups.google.com/group/migrid',
-                               'text': 'Community page'})
-        support_guide = """
-in that way you get the quickest possible answer and other users can find
-the answer there as well in the future.
-"""
-        output_objects.append({'object_type': 'text', 'text': support_guide})
-
-        
-        output_objects.append({'object_type': 'sectionheader', 'text' :
-                               "Personal Settings"})
-        settings_info = """
+    output_objects.append({'object_type': 'text', 'text': project_info})
+    output_objects.append({'object_type': 'link', 'destination':
+                           configuration.site_external_doc,
+                           'text': 'external %s documentation' % configuration.site_title})
+    
+    output_objects.append({'object_type': 'sectionheader', 'text' :
+                           "Personal Settings"})
+    settings_info = """
 You can customize your personal pages if you like, by opening the Settings
 page from the navigation menu and entering personal preferences. In that way you
 can ease file and job handling or even completely redecorate your interface.
 """
-        output_objects.append({'object_type': 'text', 'text': settings_info})
+    output_objects.append({'object_type': 'text', 'text': settings_info})
 
     #env_info = """Env %s""" % os.environ
     #output_objects.append({'object_type': 'text', 'text': env_info})

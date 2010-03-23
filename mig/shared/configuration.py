@@ -108,7 +108,7 @@ def fix_missing(config_file, verbose=True):
                        'sleep_update_totals': '600',
                        'slackperiod': '600'}
     settings_section = {'language': 'English', 'submitui': ['fields',
-                        'textarea', 'files'], 'filesui': ['basic', 'full']}
+                        'textarea', 'files']}
 
     defaults = {
         'GLOBAL': global_section,
@@ -222,7 +222,6 @@ class Configuration:
     expire_peer = 600
     language = ['English']
     submitui = ['fields', 'textarea', 'files']
-    filesui = ['basic', 'full']
 
     # directory for usage records, initially None (means: do not generate)
 
@@ -377,7 +376,6 @@ class Configuration:
             self.slackperiod = config.get('MONITOR', 'slackperiod')
             self.language = config.get('SETTINGS', 'language').split()
             self.submitui = config.get('SETTINGS', 'submitui').split()
-            self.filesui = config.get('SETTINGS', 'filesui').split()
         except Exception, err:
 
             # logger.info("done reading settings from config")
@@ -431,10 +429,6 @@ class Configuration:
         if config.has_option('SCHEDULER', 'job_retries'):
             self.job_retries = config.getint('SCHEDULER', 'job_retries')
 
-        if config.has_option('SETTINGS', 'dashboardui'):
-            self.dashboardui = config.get('SETTINGS', 'dashboardui')
-        else:
-            self.dashboardui = 'basic'
         if config.has_option('WIKI', 'moin_etc'):
             self.moin_etc = config.get('WIKI', 'moin_etc')
         else:
@@ -478,6 +472,10 @@ class Configuration:
                                    i not in self.site_default_menu]
         else:
             self.site_user_menu = []
+        if config.has_option('SITE', 'external_doc'):
+            self.site_external_doc = config.get('SITE', 'external_doc')
+        else:
+            self.site_external_doc = "http://code.google.com/p/migrid/wiki/FrontPage"
         if config.has_option('SITE', 'enable_sandboxes'):
             self.site_enable_sandboxes = config.getboolean('SITE', 'enable_sandboxes')
         else:

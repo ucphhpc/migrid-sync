@@ -218,18 +218,8 @@ def main(client_id, user_arguments_dict):
     status = returnvalues.OK
 
     settings_dict = load_settings(client_id, configuration)
-    if not settings_dict or not settings_dict.has_key('FILESUI'):
-        logger.info('Settings dict does not have FILESUI key - using default'
-                    )
-        files_style = configuration.filesui[0]
-    else:
-        files_style = settings_dict['FILESUI']
-
-    if 'full' == files_style:
-        javascript = '%s\n%s' % (select_all_javascript(),
-                                 selected_file_actions_javascript())
-    else:
-        javascript = ''
+    javascript = '%s\n%s' % (select_all_javascript(),
+                             selected_file_actions_javascript())
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s Files' % configuration.short_title
@@ -272,9 +262,8 @@ Working directory:
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : location_post_html})
-    if 'full' == files_style:
-        more_html = \
-            """
+    more_html = \
+              """
 <div class='files'>
 <table class='files'>
 <tr class=title><td class=centertext colspan=2>
@@ -303,14 +292,13 @@ Action on paths selected below
 </div>
 """
 
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : more_html})
+    output_objects.append({'object_type': 'html_form', 'text'
+                           : more_html})
     dir_listings = []
     output_objects.append({
         'object_type': 'dir_listings',
         'dir_listings': dir_listings,
         'flags': flags,
-        'style': files_style,
         'show_dest': show_dest,
         })
 
@@ -385,9 +373,8 @@ Action on paths selected below
                 )
             dir_listings.append(dir_listing)
 
-    if 'full' == files_style:
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : """
+    output_objects.append({'object_type': 'html_form', 'text'
+                           : """
     <div class='files'>
     <table class='files'>
     <tr class=title><td class=centertext>
@@ -402,7 +389,7 @@ Action on paths selected below
     </table>    
     </div>
     """
-                               % flags})
+                           % flags})
 
     # Short/long format buttons
 
@@ -445,26 +432,24 @@ Action on paths selected below
     </td></tr>
     """
 
-    if 'full' == files_style:
+    # Recursive output
 
-        # Recursive output
-
-        htmlform += \
-            """
+    htmlform += \
+             """
     <!-- Non-/recursive list buttons -->
     <tr><td>Recursion</td><td>
     %s</td><td>"""\
              % recursive(flags)
-        htmlform += \
-            """
+    htmlform += \
+             """
     <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%s' />"""\
              % (flags + 'r')
-        for entry in pattern_list:
-            htmlform += " <input type='hidden' name='path' value='%s' />"\
-                 % entry
-        htmlform += \
+    for entry in pattern_list:
+        htmlform += " <input type='hidden' name='path' value='%s' />"\
+                    % entry
+    htmlform += \
             """
     <input type='submit' value='On' /><br />
     </form>
@@ -473,11 +458,11 @@ Action on paths selected below
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%s' />"""\
              % flags.replace('r', '')
-        for entry in pattern_list:
-            htmlform += "<input type='hidden' name='path' value='%s' />"\
-                 % entry
-            htmlform += \
-                """
+    for entry in pattern_list:
+        htmlform += "<input type='hidden' name='path' value='%s' />"\
+                    % entry
+        htmlform += \
+                 """
     <input type='submit' value='Off' /><br />
     </form>
     </td></tr>
