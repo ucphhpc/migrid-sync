@@ -79,7 +79,7 @@ def main(client_id, user_arguments_dict):
 
             vgrid_obj['privatemonitorlink'] = {'object_type': 'link',
                 'destination': 'showvgridmonitor.py?vgrid_name=%s'\
-                 % vgrid_name, 'text': 'Private'}
+                 % vgrid_name, 'text': 'View'}
 
             vgrid_obj['memberlink'] = {'object_type': 'link',
              'destination':'',
@@ -93,11 +93,11 @@ def main(client_id, user_arguments_dict):
         vgrid_obj['publicwikilink'] = {'object_type': 'link',
                 'destination': '%s/vgridpublicwiki/%s'\
                  % (configuration.migserver_http_url, vgrid_name),
-                'text': 'Public Wiki'}
+                'text': 'Open'}
         vgrid_obj['enterpubliclink'] = {'object_type': 'link',
                 'destination': '%s/vgrid/%s/'\
                  % (configuration.migserver_http_url, vgrid_name),
-                'text': 'View page'}
+                'text': 'View'}
 
         # link to become member. overwritten later for members
 
@@ -119,13 +119,13 @@ def main(client_id, user_arguments_dict):
         if vgrid_is_owner_or_member(vgrid_name, client_id, configuration):
             vgrid_obj['enterprivatelink'] = {'object_type': 'link',
                 'destination': '../vgrid/%s/' % vgrid_name,
-                'text': 'Enter'}
-            vgrid_obj['privatewikilink'] = {'object_type': 'link',
+                'text': 'View'}
+            vgrid_obj['memberwikilink'] = {'object_type': 'link',
                 'destination': '/vgridwiki/%s' % vgrid_name,
-                'text': 'Private Wiki'}
+                'text': 'Open'}
             vgrid_obj['privatemonitorlink'] = {'object_type': 'link',
                 'destination': 'showvgridmonitor.py?vgrid_name=%s'\
-                 % vgrid_name, 'text': 'Private'}
+                 % vgrid_name, 'text': 'View'}
 
             # to leave this VGrid (remove ourselves). Note that we are
             # going to overwrite the link later for owners.
@@ -141,6 +141,9 @@ def main(client_id, user_arguments_dict):
         # owners are allowed to edit pages and administrate
 
         if vgrid_is_owner(vgrid_name, client_id, configuration):
+            vgrid_obj['ownerwikilink'] = {'object_type': 'link',
+                'destination': '/vgridownerwiki/%s' % vgrid_name,
+                'text': 'Open'}
 
             # correct the link to leave the VGrid
 

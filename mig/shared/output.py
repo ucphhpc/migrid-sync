@@ -938,18 +938,23 @@ Exit code: %s Description: %s<br />
             if len(i['vgrids']) > 0:
                 vgrids = i['vgrids']
                 lines.append("<table class='vgrids' id='vgridtable'>")
+                # Hide public wiki column as it is disabled
+                #public_wiki = '<th class=centertext colspan="1">Public Wiki</th>'
+                public_wiki = ''
                 lines.append('''
 <thead class="title">
   <th>Name</th>
   <th width="8"><!-- member --></th>
   <th width="8"><!-- Owner --></th>
-  <th class=centertext colspan="2">Private pages</th>
-  <th class=centertext colspan="2">Public pages</th>
-  <th class=centertext colspan="2">Wiki</th>
-  <th class=centertext colspan="2">Monitor</th>
+  <th class=centertext colspan="2">Private web pages</th>
+  <th class=centertext colspan="2">Public web pages</th>
+  <th class=centertext colspan="1">Owner Wiki</th>
+  <th class=centertext colspan="1">Member Wiki</th>
+  %s
+  <th class=centertext colspan="1">Monitor</th>
 </thead>
 <tbody>
-'''
+''' % public_wiki
                              )
                 for obj in vgrids:
                     lines.append('<tr>')
@@ -994,19 +999,27 @@ Exit code: %s Description: %s<br />
                         lines.append('---')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
-                    if obj.has_key('privatewikilink'):
+                    if obj.has_key('ownerwikilink'):
                         lines.append('%s '
-                                 % html_link(obj['privatewikilink']))
+                                 % html_link(obj['ownerwikilink']))
                     else:
                         lines.append('---')
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
-                    if obj.has_key('publicwikilink'):
+                    if obj.has_key('memberwikilink'):
                         lines.append('%s '
-                                 % html_link(obj['publicwikilink']))
+                                 % html_link(obj['memberwikilink']))
                     else:
                         lines.append('---')
                     lines.append('</td>')
+                    # hide link to public wiki which is disabled in apache
+                    #lines.append('<td class=centertext>')
+                    #if obj.has_key('publicwikilink'):
+                    #    lines.append('%s '
+                    #             % html_link(obj['publicwikilink']))
+                    #else:
+                    #    lines.append('---')
+                    #lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('privatemonitorlink'):
                         lines.append('%s '
@@ -1014,13 +1027,14 @@ Exit code: %s Description: %s<br />
                     else:
                         lines.append('---')
                     lines.append('</td>')
-                    lines.append('<td class=centertext>')
-                    if obj.has_key('publicmonitorlink'):
-                        lines.append('%s '
-                                 % html_link(obj['publicmonitorlink']))
-                    else:
-                        lines.append('---')
-                    lines.append('</td>')
+                    # All monitors are private for now
+                    #lines.append('<td class=centertext>')
+                    #if obj.has_key('publicmonitorlink'):
+                    #    lines.append('%s '
+                    #             % html_link(obj['publicmonitorlink']))
+                    #else:
+                    #    lines.append('---')
+                    #lines.append('</td>')
                     lines.append('</tr>')
                 lines.append('</tbody></table>')
             else:
