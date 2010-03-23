@@ -609,9 +609,7 @@ Exit code: %s Description: %s<br />
         elif i['object_type'] == 'dir_listings':
             if len(i['dir_listings']) == 0:
                 continue
-            columns = 6
-            if 'full' == i['style']:
-                columns += 1
+            columns = 7
             if i.get('show_dest', False):
                 columns += 1
             lines.append("<table class='files'>")
@@ -619,16 +617,15 @@ Exit code: %s Description: %s<br />
             cols = 0
             lines.append('<td>Info</td>')
             cols += 1
-            if 'full' == i['style']:
-                lines.append("<td><input type='checkbox' name='allbox' value='allbox' onclick='un_check()' /></td>"
-                             )
-                cols += 1
+            lines.append("<td><input type='checkbox' name='allbox' value='allbox' onclick='un_check()' /></td>"
+                         )
+            cols += 1
 
-                # lines.append("<td><br /></td>"
-                # cols += 1
+            # lines.append("<td><br /></td>"
+            # cols += 1
 
-                lines.append('<td colspan=%d>Select/deselect all files</td>'
-                              % (columns - cols))
+            lines.append('<td colspan=%d>Select/deselect all files</td>'
+                         % (columns - cols))
             lines.append('</tr>')
             lines.append('<tr>')
             cols = 0
@@ -657,10 +654,9 @@ Exit code: %s Description: %s<br />
                         cols = 0
                         lines.append('<td><br /></td>')
                         cols += 1
-                        if 'full' == i['style']:
-                            lines.append("<td><input type='checkbox' name='path' value='%s' /></td>"
+                        lines.append("<td><input type='checkbox' name='path' value='%s' /></td>"
                                      % directory['dirname_with_dir'])
-                            cols += 1
+                        cols += 1
                         if directory.has_key('actual_dir'):
                             lines.append('<td>%s</td>'
                                      % directory['actual_dir'])
@@ -686,10 +682,9 @@ Exit code: %s Description: %s<br />
                         cols = 0
                         lines.append('<td><br /></td>')
                         cols += 1
-                        if 'full' == i['style']:
-                            lines.append("<td><input type='checkbox' name='path' value='%s' /></td>"
+                        lines.append("<td><input type='checkbox' name='path' value='%s' /></td>"
                                      % this_file['file_with_dir'])
-                            cols += 1
+                        cols += 1
                         if this_file.has_key('long_format'):
                             lines.append('<td>%s</td>'
                                      % this_file['long_format'])
