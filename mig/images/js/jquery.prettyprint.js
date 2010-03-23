@@ -16,7 +16,7 @@ function pp_bytes(bytes) {
     bytes = bytes/1048576;
     temp = 'MB';
   } else if (bytes < 1099511627776) {
-    bytes = bytes/1048576;
+    bytes = bytes/1073741824;
     temp = 'GB';
   }
   
