@@ -159,7 +159,7 @@ Newline mode:
 <option value="mac">Mac OS (pre OS X)</option>
 <option value="windows">DOS / Windows</option>
 </select>
-(<a href="http://en.wikipedia.org/wiki/Newline">help</a>)
+(<a class="infolink" href="http://en.wikipedia.org/wiki/Newline">help</a>)
 <br />
 Submit file as job after saving <input type=checkbox name="submitjob" />
 <br />

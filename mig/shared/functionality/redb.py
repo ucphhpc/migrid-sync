@@ -65,21 +65,28 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'text', 'text' :
                            'Runtime environments specify software packages installed on resources.'})
-    output_objects.append({'object_type': 'link', 'destination'
-                          : 'docs.py?show=Runtime+Environments', 'text'
-                          : 'Documentation on runtime environments'})
+    output_objects.append({'object_type': 'link',
+                           'destination': 'docs.py?show=Runtime+Environments',
+                           'class': 'infolink',
+                           'title': 'Show information about runtime environment', 
+                           'text': 'Documentation on runtime environments'})
 
     if configuration.site_swrepo_url:
         output_objects.append({'object_type': 'sectionheader', 'text': ''})
-        output_objects.append({'object_type': 'link', 'text'
-                               : 'Open software catalogue for %s' % \
+        output_objects.append({'object_type': 'link',
+                               'destination': configuration.site_swrepo_url,
+                               'class': 'swrepolink',
+                               'title': 'Browse available software packages', 
+                               'text': 'Open software catalogue for %s' % \
                                configuration.short_title,
-                               'destination': configuration.site_swrepo_url})
+                               })
 
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
-    output_objects.append({'object_type': 'link', 'destination'
-                          : 'adminre.py', 'text'
-                          : 'Create a new runtime environment'})
+    output_objects.append({'object_type': 'link',
+                           'destination': 'adminre.py',
+                           'class': 'addlink',
+                           'title': 'Specify a new runtime environment', 
+                           'text': 'Create a new runtime environment'})
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Existing runtime environments'})

@@ -70,7 +70,8 @@ def main(client_id, user_arguments_dict):
     # Iterate through resources and show management for each one requested
 
     res_list = {'object_type': 'resource_list', 'resources': []}
-    fields = ['PUBLICNAME', 'CPUCOUNT', 'MEMORY', 'DISK', 'ARCHITECTURE', 'SANDBOX']
+    fields = ['PUBLICNAME', 'CPUCOUNT', 'MEMORY', 'DISK', 'ARCHITECTURE',
+              'SANDBOX', 'RUNTIMEENVIRONMENT']
     # Leave the sorting to jquery tablesorter
     for visible_res_name in allowed.keys():
         unique_resource_name = visible_res_name
@@ -85,25 +86,30 @@ def main(client_id, user_arguments_dict):
 
             # Admin of resource when owner
 
-            # TODO: add support for fields in links for id, title, etc (for css img)
             res_obj['rmresownerlink'] = \
                                     {'object_type': 'link',
                                      'destination':
                                      'rmresowner.py?unique_resource_name=%s;cert_id=%s'\
                                      % (unique_resource_name, client_id),
-                                     'text': "<img src='/images/icons/cancel.png' title='Remove ownership'/>"}
+                                     'class': 'removeadminlink',
+                                     'title': 'Leave %s owners' % unique_resource_name, 
+                                     'text': ''}
             res_obj['resadminlink'] = \
                                     {'object_type': 'link',
                                      'destination':
                                      'resadmin.py?unique_resource_name=%s'\
                                      % unique_resource_name,
-                                     'text': "<img src='/images/icons/wrench.png' title='Administrate'/>"}
+                                     'class': 'adminlink',
+                                     'title': 'Administrate %s' % unique_resource_name, 
+                                     'text': ''}
             
         # fields for everyone: public status
         for name in fields:
             res_obj[name] = res_map[unique_resource_name][CONF].get(name, '')
         # Use allowed nodes in contrast to connected nodes
         res_obj['NODECOUNT'] = len(allowed[visible_res_name])
+        # Use runtimeenvironment names instead of actual definitions
+        res_obj['RUNTIMEENVIRONMENT'] = [i[0] for i in res_obj['RUNTIMEENVIRONMENT']]
         res_list['resources'].append(res_obj)
 
     title_entry = find_entry(output_objects, 'title')
@@ -194,12 +200,20 @@ All available resources are listed below with overall hardware specifications. A
 
     if configuration.site_enable_sandboxes:
         if show_sandboxes:
-            output_objects.append({'object_type': 'link', 'text': 'Exclude sandbox resources',
-                                   'destination': '?show_sandboxes=false'})
+            output_objects.append({'object_type': 'link',
+                                   'destination': '?show_sandboxes=false',
+                                   'class': 'removeitemlink',
+                                   'title': 'Hide sandbox resources', 
+                                   'text': 'Exclude sandbox resources',
+                                   })
 
         else:
-            output_objects.append({'object_type': 'link', 'text': 'Include sandbox resources',
-                                   'destination': '?show_sandboxes=true'})
+            output_objects.append({'object_type': 'link',
+                                   'destination': '?show_sandboxes=true',
+                                   'class': 'additemlink',
+                                   'title': 'Show sandbox resources', 
+                                   'text': 'Include sandbox resources',
+                                   })
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Resource Status'})
@@ -207,31 +221,42 @@ All available resources are listed below with overall hardware specifications. A
                            'text': '''
 Live resource status is available in the resource monitor page with all VGrids/resources you can access
 '''})
-    output_objects.append({'object_type': 'link', 'text'
-                          : 'Global resource monitor'
-                          , 'destination'
-                          : 'showvgridmonitor.py?vgrid_name=ALL'})
+    output_objects.append({'object_type': 'link',
+                           'destination': 'showvgridmonitor.py?vgrid_name=ALL',
+                           'class': 'monitorlink',
+                           'title': 'Show monitor with all resources you can access', 
+                           'text': 'Global resource monitor',
+                           })
 
     output_objects.append({'object_type': 'sectionheader', 'text': 'Additional Resources'
                           })
     output_objects.append({'object_type': 'text',
                            'text': 'You can sign up spare or dedicated resources to the grid below.'
                            })
-    output_objects.append({'object_type': 'link', 'text'
-                          : 'Create a new %s resource' % \
-                            configuration.short_title, 
-                           'destination' : 'resedit.py'})
+    output_objects.append({'object_type': 'link',
+                           'destination' : 'resedit.py',
+                           'class': 'addlink',
+                           'title': 'Show sandbox resources',                            
+                           'text': 'Create a new %s resource' % \
+                           configuration.short_title, 
+                           })
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
 
     if configuration.site_enable_sandboxes:
-        output_objects.append({'object_type': 'link', 'text'
-                               : 'Administrate %s sandbox resources' % \
+        output_objects.append({'object_type': 'link',
+                               'destination': 'ssslogin.py',
+                               'class': 'adminlink',
+                               'title': 'Administrate and monitor your sandbox resources',
+                               'text': 'Administrate %s sandbox resources' % \
                                configuration.short_title,
-                               'destination': 'ssslogin.py'})
+                               })
         output_objects.append({'object_type': 'sectionheader', 'text': ''})
-        output_objects.append({'object_type': 'link', 'text'
-                               : 'Use this computer as One-click %s resource' % \
-                               configuration.short_title
-                               , 'destination': 'oneclick.py'})
+        output_objects.append({'object_type': 'link',
+                               'destination': 'oneclick.py',
+                               'class': 'sandboxlink',
+                               'title': 'Run a One-click resource in your browser', 
+                               'text': 'Use this computer as One-click %s resource' % \
+                               configuration.short_title,
+                               })
 
     return (output_objects, status)

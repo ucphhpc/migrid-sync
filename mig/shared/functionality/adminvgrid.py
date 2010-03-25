@@ -145,8 +145,9 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'link',
                                'destination':
                                'vgridmemberrequestaction.py?vgrid_name=%s&request_type=owner&request_text=no+text' % vgrid_name,
-                               'text':
-                               "<img src='/images/icons/cog_add.png' title='Become an owner'>Apply to become an owner"})
+                               'class': 'addadminlink',
+                               'title': 'Request ownership of %s' % vgrid_name,
+                               'text': 'Apply to become an owner'})
 
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -199,6 +200,8 @@ def main(client_id, user_arguments_dict):
             output_objects.append({'object_type': 'link', 
                                    'destination': 
                                    "javascript:toggleHidden('.div-%s');" % item,
+                                   'class': 'removeitemlink',
+                                   'title': 'Toggle view',
                                    'text': 'Hide %ss' % str.title(item) })
             output_objects.extend(oobjs)
             output_objects.append({'object_type': 'html_form', 
@@ -206,6 +209,8 @@ def main(client_id, user_arguments_dict):
             output_objects.append({'object_type': 'link', 
                                    'destination': 
                                    "javascript:toggleHidden('.div-%s');" % item,
+                                   'class': 'additemlink',
+                                   'title': 'Toggle view',
                                    'text': 'Show %ss' % str.title(item) })
             output_objects.append({'object_type': 'html_form', 
                                    'text': '</div>' })

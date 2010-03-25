@@ -228,7 +228,7 @@ You can copy paste from the available style file links below if you want to over
 Please note that you can not save an empty style file, but must at least leave a blank line to use defaults.
 </td></tr>
 <tr><td class=centertext>
-<a href="/images/default.css">default</a> , <a href="/images/bluesky.css">bluesky</a>
+<a class="urllink" href="/images/default.css">default</a> , <a class="urllink" href="/images/bluesky.css">bluesky</a>
 </td></tr>
 <tr><td>
 </td></tr>

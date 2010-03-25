@@ -449,9 +449,11 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'text', 'text'
                           : 'vgrid %s created!' % vgrid_name})
-    output_objects.append({'object_type': 'link', 'destination':
-                           'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
-                           'Administration for %s' % vgrid_name})
+    output_objects.append({'object_type': 'link',
+                           'destination': 'adminvgrid.py?vgrid_name=%s' % vgrid_name,
+                           'class': 'adminlink',
+                           'title': 'Administrate your new VGrid',
+                           'text': 'Administration for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)
 
 

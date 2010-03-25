@@ -119,7 +119,7 @@ cputime: %(cputime)s
         Please note that if you get no applet picture above with status text,
         it is a likely indicator that you do not have the required Java plugin installed in your
         browser. You can download and install it from
-        <a href='http://www.java.com/en/download/manual.jsp'>Sun Java Downloads</a>. The browser
+        <a class='urllink' href='http://www.java.com/en/download/manual.jsp'>Sun Java Downloads</a>. The browser
         probably needs to be restarted after the installation before the plugin will be enabled.<br />
         Other Java implementations may <i>appear</i> to work but not really deliver job results correctly, so if you want to be sure, please install the Sun Java plugin.
         <br />

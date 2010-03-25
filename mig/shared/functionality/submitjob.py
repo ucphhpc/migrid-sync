@@ -163,10 +163,12 @@ There are %s interface styles available that you can choose among:''' % \
 
     links = []
     for opt in submit_options:
+        name = opt.split('_',2)[0] 
         links.append({'object_type': 'link', 
                       'destination': "javascript:switchTo('%s')" % opt,
-                      'text' : '%s style' % \
-                      opt.split('_',2)[0] 
+                      'class': 'submit%slink' % name,
+                      'title': 'Switch to %s submit interface' % name,
+                      'text' : '%s style' % name,
                       })
     output_objects.append({'object_type': 'multilinkline', 'links': links})
 
@@ -244,7 +246,7 @@ accompanied by a help link providing further details about the field."""})
             continue
         output_objects.append({'object_type': 'html_form', 'text'
                                    : """
-<b>%s:</b>&nbsp;<a href='docs.py?show=job#%s'>help</a><br />
+<b>%s:</b>&nbsp;<a class='infolink' href='docs.py?show=job#%s'>help</a><br />
 %s""" % (title, field, description)
                                })
         

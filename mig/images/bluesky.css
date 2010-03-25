@@ -94,7 +94,7 @@ div.container {
   background-image: url('/images/icons/cog.png');
 }
 .navmenu ul li.vgrids a {
-  background-image: url('/images/icons/folder.png');
+  background-image: url('/images/icons/chart_organisation.png');
 }
 .navmenu ul li.vmachines a {
   background-image: url('/images/icons/computer.png');
@@ -420,4 +420,116 @@ table.monitorruntimeenvreq {
 
 .mandatory {
   color: blue;
+}
+
+/* Job manager */
+.jm {
+  margin-top: -15px; 
+}
+
+/* General helper icons */
+.error { background: url('/images/icons/exclamation.png') no-repeat; }
+.warn { background: url('/images/icons/error.png') no-repeat; }
+.info { background: url('/images/icons/information.png') no-repeat; }
+.ok { background: url('/images/icons/accept.png') no-repeat; }
+.urllink {
+  background: url('/images/icons/html.png') no-repeat;
+  padding-left: 18px;
+}
+.infolink {
+  background: url('/images/icons/information.png') no-repeat;
+  padding-left: 18px;
+}
+.openlink {
+  background: url('/images/icons/add.png') no-repeat;
+  padding-left: 18px;
+}
+.viewlink {
+  background: url('/images/icons/html.png') no-repeat;
+  padding-left: 18px;
+}
+.openlink {
+  background: url('/images/icons/txt.png') no-repeat;
+  padding-left: 18px;
+}
+.editlink {
+  background: url('/images/icons/page_edit.png') no-repeat;
+  padding-left: 18px;
+}
+.wikilink {
+  background: url('/images/icons/overlays.png') no-repeat;
+  padding-left: 18px;
+}
+.monitorlink {
+  background: url('/images/icons/server_chart.png') no-repeat;
+  padding-left: 18px;
+}
+.adminlink {
+  background: url('/images/icons/wrench.png') no-repeat;
+  padding-left: 18px;
+}
+.computerlink {
+  background: url('/images/icons/computer.png') no-repeat;
+  padding-left: 18px;
+}
+.sandboxlink {
+  background: url('/images/icons/hourglass_go.png') no-repeat;
+  padding-left: 18px;
+}
+.danishlink {
+  background: url('/images/crystal-icons/unknown.png') no-repeat;
+  padding-left: 18px;
+}
+.englishlink {
+  background: url('/images/crystal-icons/unknown.png') no-repeat;
+  padding-left: 18px;
+}
+.backlink {
+  background: url('/images/icons/arrow_left.png') no-repeat;
+  padding-left: 18px;
+}
+.addlink {
+  background: url('/images/icons/add.png') no-repeat;
+  padding-left: 18px;
+}
+.addadminlink {
+  background: url('/images/icons/cog_add.png') no-repeat;
+  padding-left: 18px;
+}
+.additemlink {
+  background: url('/images/icons/page_white_add.png') no-repeat;
+  padding-left: 18px;
+}
+.removelink {
+  background: url('/images/icons/delete.png') no-repeat;
+  padding-left: 18px;
+}
+.removeadminlink {
+  background: url('/images/icons/cog_delete.png') no-repeat;
+  padding-left: 18px;
+}
+.removeitemlink {
+  background: url('/images/icons/page_white_delete.png') no-repeat;
+  padding-left: 18px;
+}
+.submitfieldslink {
+  background: url('/images/icons/table.png') no-repeat;
+  padding-left: 18px;
+}
+.submittextarealink {
+  background: url('/images/icons/txt.png') no-repeat;
+  padding-left: 18px;
+}
+.submitfileslink {
+  background: url('/images/icons/page_white_get.png') no-repeat;
+  padding-left: 18px;
+}
+
+.realres {
+  background: url('/images/icons/computer.png') no-repeat;
+  padding-left: 18px;
+}
+.sandboxres {
+  background: url('/images/icons/box.png') no-repeat;
+  padding-left: 18px;
 }

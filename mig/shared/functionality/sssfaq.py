@@ -50,7 +50,7 @@ Sorry we are currently down for maintenance, we'll be back shortly
 html['english'] = \
     """
 <table border='0' width='80%%' align='center'>
-<tr><td><a href='sssfaq.py?language=danish'>P&aring; dansk</a></td></tr>
+<tr><td><a class='danishlink' href='sssfaq.py?language=danish'>P&aring; dansk</a></td></tr>
 <tr><td><h3>What happens when the screen saver deactivates?</h3></td></tr>
 <tr><td>The sandbox is shut down and all hardware resources are given back to you. Any running job within the sandbox is killed and will eventually be scheduled for another resource by the %(site)s system. Work on suspending the job and sending it to another resource that can continue from where the job was suspended is in progress.</td></tr>
 
@@ -73,7 +73,7 @@ html['english'] = \
 <tr><td>No. By default, sandboxes will only download jobs and input files at max 256 kB/s and upload result files at max 128 kB/s, and you can set these appropriately when you download the sandbox. Further, the sandbox model only applies to small jobs that don't need to access big files.</td></tr>
 
 <tr><td><h3>How do I see how many jobs I've executed?</h3></td></tr>
-<tr><td>If you login to the download site, you'll see a list of your resources and the number of jobs executed by each of them. Alternatively you may take a look at the <a href='sssmonitor.py'>overall sandbox monitor</a>. Work is in progress on a credential system which will give a better presentation of user credits. </td></tr>
+<tr><td>If you login to the download site, you'll see a list of your resources and the number of jobs executed by each of them. Alternatively you may take a look at the <a class='monitorlink' href='sssmonitor.py'>overall sandbox monitor</a>. Work is in progress on a credential system which will give a better presentation of user credits. </td></tr>
 
 <tr><td><h3>Can the sandbox function behind a firewall/router/switch?</h3></td></tr>
 <tr><td>Yes, however, some firewalls block individual applications in which case it is necessary to unblock the sandbox application, Qemu. Apart from that, the sandbox only uses standard protocols (HTTP and HTTPS) that are normally open for outbound access, and all communication is initiated by the sandbox, i.e. the Grid system never contacts the sandbox, since this would not be possible had the sandbox resided behind an NAT router.</td></tr>
@@ -90,7 +90,7 @@ html['english'] = \
 <tr><td></td></tr>
 -->
 
-<tr><td><a href='ssslogin.py?language=english'>Back to Sandbox login page</a></td></tr>
+<tr><td><a class='backlink' href='ssslogin.py?language=english'>Back to Sandbox login page</a></td></tr>
 
 </table>
 <br />
@@ -99,7 +99,7 @@ html['english'] = \
 html['danish'] = \
     """
 <table border='0' width='80%%' align='center'>
-<tr><td><a href='sssfaq.py?language=english'>In English</a></td></tr>
+<tr><td><a class='englishlink' href='sssfaq.py?language=english'>In English</a></td></tr>
 <tr><td><h3>Intro</h3></td></tr>
 <tr><td>Velkommen til %(site)s-SSS. Ved at downloade og installere denne software vil din PC, n&aring;r screensaveren er aktiv, donere overskydende regnekraft til l&oslash;sning af videnskabelige problemer. Det eneste, der kr&aelig;ves er, at man logger ind, downloader softwaren og f&oslash;lger installationsproceduren.<td><tr>
 
@@ -126,7 +126,7 @@ html['danish'] = \
 <tr><td>Nej, som udgangspunkt henter sandkasser kun job- og input-filer med op til 256 kB/s og sender resultatfiler med op til 128 kB/s, og du kan skrue yderlige ned eller op p&aring; disse v&aelig;rdier n&aring;r du genererer og henter din sandkasse. Selv med de mindste ADSL l&oslash;sninger p&aring; markedet skulle standard-indstillingerne dog v&aelig;re uproblematiske. Yderligere er sandkasse-modellen hovedsageligt henvendt til sm&aring; jobs, der kan klare sig uden store datafiler, s&aring; overf&oslash;rslerne tager ikke lang tid.</td></tr>
 
 <tr><td><h3>Hvordan ser jeg hvor mange jobs min sandkasse har k&oslash;rt?</h3></td></tr>
-<tr><td>Hvis du &aring;bner sandkasse startsiden og logger ind, n&aring;r du frem til en monitor side med en liste over dine sandkasse-resurser og deres k&oslash;rte jobs. Du kan ogs&aring; se hvor meget dine sandkasser har ydet sammenlignet med andre brugeres  p&aring; den <a href='sssmonitor.py'>samlede sandkasse monitor</a>. Der arbejdes p&aring; at lave et mere finkornet opregning af hvad de enkelte resurser har leveret s&aring; det er lettere at sammenligne.</td></tr>
+<tr><td>Hvis du &aring;bner sandkasse startsiden og logger ind, n&aring;r du frem til en monitor side med en liste over dine sandkasse-resurser og deres k&oslash;rte jobs. Du kan ogs&aring; se hvor meget dine sandkasser har ydet sammenlignet med andre brugeres  p&aring; den <a class='monitorlink' href='sssmonitor.py'>samlede sandkasse monitor</a>. Der arbejdes p&aring; at lave et mere finkornet opregning af hvad de enkelte resurser har leveret s&aring; det er lettere at sammenligne.</td></tr>
 
 <tr><td><h3>Kan sandkasser fungere bag en firewall/router/switch?</h3></td></tr>
 <tr><td>Ja, men nogle firewalls blokkerer individuelle applikationer, hvorfor det kan v&aelig;re n&oslash;dvendigt at tillade sandkasse applikationen, Qemu, at tilg&aring; internettet. Bortset fra det, benytter sandkassen kun standard protokoller (HTTP og HTTPS), som normalt i forvejen er tilladt for udg&aring;ende trafik, og al kommunikation initieres fra sandkassen. D.v.s. Grid systemet kontakter aldrig sandkassen men kun omvendt, da det ellers ikke ville v&aelig;re muligt at k&oslash;re sandkassen bag f.eks. en NAT router.</td></tr>
@@ -137,7 +137,7 @@ html['danish'] = \
 <tr><td><h3>Hvordan adskiller %(site)s projektet sig fra andre projekter som seti@home, folding@home, o.s.v.?</h3></td></tr>
 <tr><td>De eksisterende @home projekter er ikke &aelig;gte grid computing, men derimod 'kun' envejs systemer hvori du kan donere din overskydende regnekraft til et specifikt forskningsprojekt, som f&oslash;rst har tilpasset sin applikation til systemet. Det betyder bl.a. at det er mere arbejdskr&aelig;vende for en forsker at komme igang med at f&aring; sin forskningsapplikation k&oslash;rt. Med %(site)s kan en vilk&aring;rlig bruger derimod indsende jobs uden f&oslash;rst at skulle omskrive sit program til et givet system. Ydermere k&oslash;rer @home programmerne direkte p&aring; din computer, hvormed de teoretisk kan misbruge din computer.<td><tr>
 
-<tr><td><a href='ssslogin.py?language=danish'>Tilbage til sandkasse login siden</a></td></tr>
+<tr><td><a class='backlink' href='ssslogin.py?language=danish'>Tilbage til sandkasse login siden</a></td></tr>
 
 </table>
 <br />

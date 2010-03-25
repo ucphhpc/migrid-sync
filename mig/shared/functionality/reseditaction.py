@@ -91,9 +91,12 @@ def update_resource(configuration, client_id, resource_id, user_vars, output_obj
             return False
         output_objects.append({'object_type': 'text', 'text':
                                'Updated resource configuration: %s' % msg})
-        output_objects.append({'object_type': 'link', 'text':
-                               'Manage resource', 'destination':
-                               'resadmin.py?unique_resource_name=%(HOSTURL)s.%(HOSTIDENTIFIER)s' % user_vars
+        output_objects.append({'object_type': 'link',
+                               'destination':
+                               'resadmin.py?unique_resource_name=%(HOSTURL)s.%(HOSTIDENTIFIER)s' % user_vars,
+                               'class': 'adminlink',
+                               'title': 'Administrate resource',
+                               'text': 'Manage resource',
                                })
         return True
 

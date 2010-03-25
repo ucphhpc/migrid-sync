@@ -66,7 +66,7 @@ def main(client_id, user_arguments_dict):
 This page provides access to on-demand downloads of the %(site)s user scripts in all available formats.<br />
 Simply pick your flavor of choice to generate the latest user scripts in your %(site)s home directory and as a zip file for easy download.<p>
 In order to use the scripts your need the interpreter of choice (bash or python at the moment) and the
-<a href="http://curl.haxx.se">cURL</a> command line client.<br />
+<a href="http://curl.haxx.se" class="urllink">cURL</a> command line client.<br />
 There's a tutorial with examples of all the commands available on the %(site)s page. The python version of the user scripts additionally includes a miglib python module, which may be used to incorporate %(site)s commands in your python applications.
 </div>
 """ % { 'site' : configuration.short_title} })

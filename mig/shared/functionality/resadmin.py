@@ -99,11 +99,11 @@ def display_resource(
     html += '<h1>%s</h1>\n' % resourcename
     html += '<h3>Configuration</h3>'
     html += \
-        'Use the <a href="resedit.py?hosturl=%s;hostidentifier=%s">editing interface</a> '\
+        'Use the <a class="editlink" href="resedit.py?hosturl=%s;hostidentifier=%s">editing interface</a> '\
          % (hosturl, identifier)
     html += 'or make any changes manually in the text box below.<br />'
     html += \
-        '<a href="docs.py?show=Resource">Resource configuration docs</a>'
+        '<a class="infolink" href="docs.py?show=Resource">Resource configuration docs</a>'
     html += '<table class=resources>\n<tr><td class=centertext>'
     html += \
         '''
@@ -387,10 +387,13 @@ def main(client_id, user_arguments_dict):
         resource_config = res_map[unique_resource_name][CONF]
         if client_id in owner_list:
             quick_res[unique_resource_name] = \
-                {'object_type': 'link', 'text': '%s'\
-                  % unique_resource_name,
-                 'destination': '?unique_resource_name=%s'\
-                 % unique_resource_name}
+                {'object_type': 'link',
+                 'destination': '?unique_resource_name=%s' % \
+                 unique_resource_name,
+                 'class': 'urllink',
+                 'title': 'Manage %s' % unique_resource_name,
+                 'text': '%s' % unique_resource_name,
+                 }
 
             if unique_resource_name in unique_res_names:
                 raw_conf_file = os.path.join(configuration.resource_home,
@@ -427,8 +430,7 @@ def main(client_id, user_arguments_dict):
 
             # add new line
 
-            quick_links.append({'object_type': 'html_form', 'text'
-                               : '<br />'})
+            quick_links.append({'object_type': 'text', 'text': ''})
         output_objects = output_objects[:quick_links_index]\
              + quick_links + output_objects[quick_links_index:]
 

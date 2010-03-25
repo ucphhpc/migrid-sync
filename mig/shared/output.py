@@ -345,9 +345,17 @@ ctime\t%(ctime)s
 
 def html_link(obj):
     """html format link"""
-
-    return '<a href="%s">%s</a>' % (obj['destination'], obj['text'])
-
+    
+    extra_fields = ['id', 'class', 'title']
+    extra_params = []
+    # Set parameter in link
+    for name in extra_fields:
+        value = obj.get(name, '')
+        if value:
+            extra_params.append('%s="%s"' % (name, value))
+    link = '<a href="%s" %s>%s</a>' % (obj['destination'],
+                                       ' '.join(extra_params), obj['text'])
+    return link
 
 def html_table_if_have_keys(dictionary, keywordlist):
     """create html table contents based on keys in a dictionary"""
@@ -817,7 +825,7 @@ Exit code: %s Description: %s<br />
                 row_number = 1
                 for single_re in runtimeenvironments:
                     row_class = row_name[row_number % 2]
-                    lines.append('<tr class=%s><td>%s</td><td>%s</td><td><a href="showre.py?re_name=%s">View</a></td><td>%s</td></tr>'
+                    lines.append('<tr class=%s><td>%s</td><td>%s</td><td><a class="viewlink" href="showre.py?re_name=%s">View</a></td><td>%s</td></tr>'
                                   % (row_class, single_re['name'],
                                  single_re['description'],
                                  single_re['name'], single_re['creator'
@@ -835,7 +843,7 @@ Exit code: %s Description: %s<br />
                 software_html += '<tr><td>Name:</td><td>%s</td></tr>'\
                      % software['name']
                 software_html += \
-                    '<tr><td>Url:</td><td><a href="%s">%s</a></td></tr>'\
+                    '<tr><td>Url:</td><td><a class="urllink" href="%s">%s</a></td></tr>'\
                      % (software['url'], software['url'])
                 software_html += \
                     '<tr><td>Description:</td><td>%s</td></tr>'\
@@ -890,10 +898,6 @@ Exit code: %s Description: %s<br />
             if len(i['resources']) > 0:
                 res_fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK',
                               'ARCHITECTURE']
-                sandbox_column = ''
-                if configuration.site_enable_sandboxes:
-                    res_fields.append('SANDBOX')
-                    sandbox_column = '<th class=centertext>Sandbox</th>'
                 resources = i['resources']
                 lines.append("<table class='resources' id='resourcetable'>")
                 lines.append('''
@@ -901,20 +905,24 @@ Exit code: %s Description: %s<br />
   <th>Name</th>
   <th width="8"><!-- Admin --></th>
   <th width="8"><!-- Remove owner --></th>
+  <th class=centertext>Runtime envs</th>
   <th class=centertext>Alias</th>
   <th class=centertext>Nodes</th>
   <th class=centertext>CPUs</th>
-  <th class=centertext>Memory (MB)</th>
+  <th class=centertext>Mem (MB)</th>
   <th class=centertext>Disk (GB)</th>
-  <th class=centertext>Architecture</th>
-  %s
+  <th class=centertext>Arch</th>
 </thead>
 <tbody>
-''' % sandbox_column
+'''
                              )
                 for obj in resources:
                     lines.append('<tr>')
-                    lines.append('<td>%s</td>' % obj['name'])
+                    res_type = 'real'
+                    if obj.get('SANDBOX', False):
+                        res_type = 'sandbox'
+                    lines.append('<td class="%sres" title="%s resource">%s</td>' % \
+                                 (res_type, res_type, obj['name']))
                     # possibly empty admin link fields should always be there
                     lines.append('<td>')
                     if obj.has_key('resadminlink'):
@@ -926,6 +934,14 @@ Exit code: %s Description: %s<br />
                         lines.append('%s'
                                  % html_link(obj['rmresownerlink']))
                     lines.append('</td>')
+                    # List number of runtime environments in field and add
+                    # actual names as mouse-over
+                    rte_list = obj.get('RUNTIMEENVIRONMENT', [])
+                    lines.append('<td class=centertext title="%s">' % \
+                                 ', '.join(rte_list))
+                    lines.append('%d' % len(rte_list))
+                    lines.append('</td>')
+                    # Remaining fields
                     for name in res_fields:
                         lines.append('<td class=centertext>')
                         lines.append('%s' % obj.get(name, ''))
@@ -944,7 +960,7 @@ Exit code: %s Description: %s<br />
                 lines.append('''
 <thead class="title">
   <th>Name</th>
-  <th width="8"><!-- member --></th>
+  <th width="8"><!-- Member --></th>
   <th width="8"><!-- Owner --></th>
   <th class=centertext colspan="2">Private web pages</th>
   <th class=centertext colspan="2">Public web pages</th>

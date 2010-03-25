@@ -50,9 +50,12 @@ def signature():
 def display_topic(output_objects, subject, all_docs):
     """Display specified subject"""
     if subject in all_docs.keys():
-        output_objects.append({'object_type': 'link', 'text': subject,
-                              'destination': './docs.py?show=%s'
-                               % subject})
+        output_objects.append({'object_type': 'link',
+                               'destination': './docs.py?show=%s' % subject,
+                               'class': 'urllink',
+                               'title': '%s Documentation' % subject,
+                               'text': subject,
+                               })
     else:
         output_objects.append({'object_type': 'text', 'text'
                               : "No documentation found matching '%s'"
@@ -169,7 +172,7 @@ def license_information(output_objects, configuration):
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 %s is based on the Minimum intrusion Grid (MiG) middleware. You can read about MiG at 
-<a href="http://code.google.com/p/migrid/">its web site</a>.<br />
+<a class="urllink" href="http://code.google.com/p/migrid/">its web site</a>.<br />
 The MiG software license follows below.
 """ % configuration.site_title })
     output_objects.append({'object_type': 'text', 'text'
@@ -203,21 +206,32 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 This software uses JavaScript from:""" })
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://jquery.com/',
+                           'class': 'urllink',
+                           'title': 'JQuery Home Page',
                            'text': 'JQuery and extension modules (GPL/MIT and Creative Commons 3.0 licenses)'})
     output_objects.append({'object_type': 'text', 'text' : """
 and icons from the following sources:""" })
 
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://pixel-mixer.com/',
-                           'text': 'http://pixel-mixer.com/ (free to use, acknowledgement required)<br>' })
+                           'class': 'urllink',
+                           'title': 'PixelMixer Home Page',                           
+                           'text': 'pixel-mixer.com icons (free to use, acknowledgement required)' })
+    output_objects.append({'object_type': 'text', 'text' : ''})
 
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://www.famfamfam.com/lab/icons/silk/',
-                           'text': 'famfamfam.com silk icons (Creative Commons 2.5 license)<br>'})
+                           'class': 'urllink',
+                           'title': 'FamFamFam Icons Home Page',
+                           'text': 'famfamfam.com silk icons (Creative Commons 2.5 license)'})
+    output_objects.append({'object_type': 'text', 'text' : ''})
 
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://www.kde-look.org/content/show.php/Crystal+SVG?content=8341',
-                           'text': 'KDE Crystal Icons, LGPL<br>'})
+                           'class': 'urllink',
+                           'title': 'KDE Crystal Icons HomePage',
+                           'text': 'KDE Crystal Icons, LGPL'})
+    output_objects.append({'object_type': 'text', 'text' : ''})
 
 
 def main(client_id, user_arguments_dict):
@@ -315,5 +329,3 @@ official site support pages.''' % configuration.short_title})
                                   : 'No topics matching %s' % show})
 
     return (output_objects, returnvalues.OK)
-
-

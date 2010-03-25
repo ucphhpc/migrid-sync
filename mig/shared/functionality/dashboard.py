@@ -209,6 +209,7 @@ of the numbers are cached for a while to keep server load down.
 """ % configuration.site_title
     output_objects.append({'object_type': 'text', 'text': online_help})
     output_objects.append({'object_type': 'link', 'destination': 'docs.py',
+                           'class': 'infolink', 'title': 'built-in documentation',
                            'text': 'Docs page'})
     project_info = """
 but additional help, background information and tutorials are available in the
@@ -216,7 +217,9 @@ but additional help, background information and tutorials are available in the
     output_objects.append({'object_type': 'text', 'text': project_info})
     output_objects.append({'object_type': 'link', 'destination':
                            configuration.site_external_doc,
-                           'text': 'external %s documentation' % configuration.site_title})
+                           'class': 'urllink', 'title': 'external documentation',
+                           'text': 'external %s documentation' % \
+                           configuration.site_title})
     
     output_objects.append({'object_type': 'sectionheader', 'text' :
                            "Personal Settings"})

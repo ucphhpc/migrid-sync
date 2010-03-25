@@ -95,7 +95,7 @@ def html_tmpl():
     <li class="paste">
       <a href="#paste">Paste</a>
     </li>
-    <li class="delete">
+    <li class="rmdir">
       <a href="#rm">Delete Folder</a>
     </li>
     <li class="rename separator">
@@ -104,7 +104,7 @@ def html_tmpl():
   </ul>
   
   <ul id="file_context" class="contextMenu">        
-    <li class="show">
+    <li class="download">
       <a href="#show">Download</a>
     </li>
     <li class="edit">
