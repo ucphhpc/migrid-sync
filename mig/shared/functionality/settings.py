@@ -44,7 +44,7 @@ except Exception, exc:
 def signature():
     """Signature of the main function"""
 
-    defaults = {}
+    defaults = {'topic': ['general']}
     return ['html_form', defaults]
 
 
@@ -66,8 +66,30 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                               client_dir)) + os.sep
+
+    valid_topics = ['general', 'job', 'style']
+    if configuration.arc_clusters:
+        valid_topics.append('arc')
+    topics = accepted['topic']
+    topics = [i for i in topics if i in valid_topics]
     output_objects.append({'object_type': 'header', 'text'
                           : 'Settings'})
+
+    links = []
+    for name in valid_topics:
+        links.append({'object_type': 'link', 
+                      'destination': "settings.py?topic=%s" % name,
+                      'class': '%ssettingslink' % name,
+                      'title': 'Switch to %s settings' % name,
+                      'text' : '%s settings' % name,
+                      })
+    output_objects.append({'object_type': 'multilinkline', 'links': links})
+    output_objects.append({'object_type': 'text', 'text': ''})
 
     # unpickle current settings
 
@@ -80,117 +102,114 @@ def main(client_id, user_arguments_dict):
 
         current_settings_dict = {}
 
-    html = \
-        """
-        <div id=settings>
-        <table class=settings>
-        <tr class=title><td class=centertext>
+    if not topics:
+        output_objects.append({'object_type': 'error_text', 'text': 'No valid topics!'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if 'general' in topics:
+        html = \
+             '''
+        <div id="settings">
+        <table class="settings">
+        <tr class="title"><td class="centertext">
         Select your %s settings
         </td></tr>
         <tr><td>
         </td></tr>
         <tr><td>
-        <form method='post' action='settingsaction.py'>
+        <form method="post" action="settingsaction.py">
         Please note that if you want to set multiple values (e.g. addresses) in the same field, you must write each value on a separate line.
         </td></tr>
         <tr><td>
         </td></tr>
-        """ % configuration.site_title
-    keywords_dict = get_keywords_dict()
-    for (keyword, val) in keywords_dict.items():
-        if 'notify' == val['Context'] and keyword.lower() not in configuration.notify_protocols:
-            continue
-        html += \
-            """
-        <tr class=title><td>
-        %s
-        </td></tr>
-        <tr><td>
-        %s
-        </td></tr>
-        <tr><td>
-        """\
-             % (keyword, val['Description'])
-        if val['Type'] == 'multiplestrings':
-            try:
-                
-                # get valid choices from conf. multiple selections
+        ''' % configuration.site_title
+        keywords_dict = get_keywords_dict()
+        for (keyword, val) in keywords_dict.items():
+            if 'notify' == val['Context'] and keyword.lower() not in configuration.notify_protocols:
+                continue
+            html += \
+                """
+            <tr class=title><td>
+            %s
+            </td></tr>
+            <tr><td>
+            %s
+            </td></tr>
+            <tr><td>
+            """\
+                 % (keyword, val['Description'])
+            if val['Type'] == 'multiplestrings':
+                try:
+
+                    # get valid choices from conf. multiple selections
+
+                    valid_choices = eval('configuration.%s' % keyword.lower())
+                    current_choice = []
+                    if current_settings_dict.has_key(keyword):
+                        current_choice = current_settings_dict[keyword]
+
+                    if len(valid_choices) > 0:
+                        html += '<select multiple name=%s>' % keyword
+                        for choice in valid_choices:
+                            selected = ''
+                            if choice in current_choice:
+                                selected = 'selected'
+                            html += '<option %s value=%s>%s</option>'\
+                                    % (selected, choice, choice)
+                        html += '</select><br />'
+                except:
+                    # failed on evaluating configuration.%s
+
+    #        elif val['Type'] == 'multiplestrings':
+                    html += \
+                         """<textarea cols="40" rows="1" wrap="off" name="%s">"""\
+                         % keyword
+                    if current_settings_dict.has_key(keyword):
+                        html += '<br />'.join(current_settings_dict[keyword])
+                        html += '</textarea><br />'
+
+            elif val['Type'] == 'string':
+
+                # get valid choices from conf
 
                 valid_choices = eval('configuration.%s' % keyword.lower())
-                current_choice = []
+                current_choice = ''
                 if current_settings_dict.has_key(keyword):
                     current_choice = current_settings_dict[keyword]
-                    
+
                 if len(valid_choices) > 0:
-                    html += '<select multiple name=%s>' % keyword
+                    html += '<select name=%s>' % keyword
                     for choice in valid_choices:
                         selected = ''
-                        if choice in current_choice:
+                        if choice == current_choice:
                             selected = 'selected'
                         html += '<option %s value=%s>%s</option>'\
-                                % (selected, choice, choice)
+                             % (selected, choice, choice)
                     html += '</select><br />'
-            except:
-                # failed on evaluating configuration.%s
-                
-#        elif val['Type'] == 'multiplestrings':
-                html += \
-                     """<textarea cols="40" rows="1" wrap="off" name="%s">"""\
-                     % keyword
-                if current_settings_dict.has_key(keyword):
-                    html += '<br />'.join(current_settings_dict[keyword])
-                    html += '</textarea><br />'
+            html += """
+            </td></tr>
+            """
 
-        elif val['Type'] == 'string':
-
-            # get valid choices from conf
-
-            valid_choices = eval('configuration.%s' % keyword.lower())
-            current_choice = ''
-            if current_settings_dict.has_key(keyword):
-                current_choice = current_settings_dict[keyword]
-
-            if len(valid_choices) > 0:
-                html += '<select name=%s>' % keyword
-                for choice in valid_choices:
-                    selected = ''
-                    if choice == current_choice:
-                        selected = 'selected'
-                    html += '<option %s value=%s>%s</option>'\
-                         % (selected, choice, choice)
-                html += '</select><br />'
-        html += """
+        html += \
+            """
+        <tr><td>
+        <input type="submit" value="Save Settings" />
+        </form>
         </td></tr>
+        </table>
+        </div>
         """
+        output_objects.append({'object_type': 'html_form', 'text': html})
 
-    html += \
-        """
-    <tr><td>
-    <input type="submit" value="Save Settings" />
-    </form>
-    </td></tr>
-    </table>
-    </div>
-    """
+    if 'job' in topics:
+        mrsl_path = os.path.join(base_dir, mrsl_template)
 
-    # Please note that base_dir must end in slash to avoid access to other
-    # user dirs when own name is a prefix of another user name
-
-    base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
-
-    mrsl_path = os.path.join(base_dir, mrsl_template)
-
-    default_mrsl = get_default_mrsl(mrsl_path)
-    css_path = os.path.join(base_dir, css_template)
-
-    default_css = get_default_css(css_path)
-
-    html += \
+        default_mrsl = get_default_mrsl(mrsl_path)
+        html = \
         '''
-<div id=defaultmrsl>
+<div id="defaultmrsl">
 <table class="defaultjob">
-<tr class=title><td class=centertext>
+<tr class="title"><td class="centertext">
 Default job on submit page
 </td></tr>
 <tr><td>
@@ -200,7 +219,7 @@ If you use the same fields and values in many of your jobs, you can save your pr
 </td></tr>
 <tr><td>
 </td></tr>
-<tr><td class=centertext>
+<tr><td>
 <form method="post" action="editfile.py">
 <input type="hidden" name="path" value="%(mrsl_template)s" />
 <input type="hidden" name="newline" value="unix" />
@@ -208,16 +227,29 @@ If you use the same fields and values in many of your jobs, you can save your pr
 %(default_mrsl)s
 </textarea>
 </td></tr>
-<tr><td class=centertext>
+<tr><td>
 <input type="submit" value="Save template" />
 <input type="reset" value="Forget changes" />
 </form>
 </td></tr>
 </table>
 </div>
-<div id=defaultcss>
+''' % {
+            'default_mrsl': default_mrsl,
+            'mrsl_template': mrsl_template,
+            'site': configuration.short_title,
+            }
+
+        output_objects.append({'object_type': 'html_form', 'text': html})
+
+    if 'style' in topics:
+        css_path = os.path.join(base_dir, css_template)
+        default_css = get_default_css(css_path)
+        html = \
+             '''
+<div id="defaultcss">
 <table class="defaultstyle">
-<tr class=title><td class=centertext>
+<tr class="title"><td class="centertext">
 Default CSS (style) for all pages
 </td></tr>
 <tr><td>
@@ -227,12 +259,12 @@ If you want to customize the look and feel of the %(site)s web interfaces you ca
 You can copy paste from the available style file links below if you want to override specific parts.<br />
 Please note that you can not save an empty style file, but must at least leave a blank line to use defaults.
 </td></tr>
-<tr><td class=centertext>
+<tr><td>
 <a class="urllink" href="/images/default.css">default</a> , <a class="urllink" href="/images/bluesky.css">bluesky</a>
 </td></tr>
 <tr><td>
 </td></tr>
-<tr><td class=centertext>
+<tr><td>
 <form method="post" action="editfile.py">
 <input type="hidden" name="path" value="%(css_template)s" />
 <input type="hidden" name="newline" value="unix" />
@@ -240,7 +272,7 @@ Please note that you can not save an empty style file, but must at least leave a
 %(default_css)s
 </textarea>
 </td></tr>
-<tr><td class=centertext>
+<tr><td>
 <input type="submit" value="Save style" />
 <input type="reset" value="Forget changes" />
 </form>
@@ -248,21 +280,19 @@ Please note that you can not save an empty style file, but must at least leave a
 </table>
 </div>
 '''\
-         % {
-        'default_mrsl': default_mrsl,
-        'mrsl_template': mrsl_template,
-        'default_css': default_css,
-        'css_template': css_template,
-        'site'        : configuration.short_title,
-        }
+        % {
+            'default_css': default_css,
+            'css_template': css_template,
+            'site': configuration.short_title,
+            }
 
-    output_objects.append({'object_type': 'html_form', 'text': html})
+        output_objects.append({'object_type': 'html_form', 'text': html})
 
     # if ARC-enabled server:
-    if configuration.arc_clusters:
+    if 'arc' in topics:
         # provide information about the available proxy, offer upload
         try:
-            home_dir = os.path.join(configuration.user_home, client_dir)
+            home_dir = os.path.normpath(base_dir)
             session_Ui = arc.Ui(home_dir)
             proxy = session_Ui.getProxy()
             if proxy.IsExpired():

@@ -501,6 +501,10 @@ table.monitorruntimeenvreq {
   background: url('/images/icons/arrow_left.png') no-repeat;
   padding-left: 18px;
 }
+.swrepolink {
+  background: url('/images/icons/table_go.png') no-repeat;
+  padding-left: 18px;
+}
 .addlink {
   background: url('/images/icons/add.png') no-repeat;
   padding-left: 18px;
@@ -535,6 +539,18 @@ table.monitorruntimeenvreq {
 }
 .submitfileslink {
   background: url('/images/icons/page_white_get.png') no-repeat;
+  padding-left: 18px;
+}
+.generalsettingslink {
+  background: url('/images/icons/table.png') no-repeat;
+  padding-left: 18px;
+}
+.jobsettingslink {
+  background: url('/images/icons/cog.png') no-repeat;
+  padding-left: 18px;
+}
+.stylesettingslink {
+  background: url('/images/icons/psd.png') no-repeat;
   padding-left: 18px;
 }
 

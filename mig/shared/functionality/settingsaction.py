@@ -114,6 +114,12 @@ def main(client_id, user_arguments_dict):
     for line in settings_mrsl.split('\n'):
         output_objects.append({'object_type': 'text', 'text': line})
 
+    output_objects.append({'object_type': 'link',
+                           'destination': 'settings.py',
+                           'class': 'backlink',
+                           'title': 'Go back to settings',
+                           'text': 'Back to settings'})
+
     return (output_objects, returnvalues.OK)
 
 
