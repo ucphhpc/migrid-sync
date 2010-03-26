@@ -38,11 +38,11 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables
 from shared.job import new_job, fields_to_mrsl
 from shared.mrslkeywords import get_job_specs, get_keywords_dict
-from shared.useradm import client_id_dir
+from shared.useradm import mrsl_template, client_id_dir
 
 
 def signature():
-    defaults = {}
+    defaults = {'save_as_default': ['False']}
     configuration = get_configuration_object()
     show_fields = get_job_specs(configuration)
 
@@ -77,10 +77,17 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    save_as_default = (accepted['save_as_default'][-1] != 'False')
     external_dict = get_keywords_dict(configuration)
     mrsl = fields_to_mrsl(configuration, user_arguments_dict, external_dict)
 
     tmpfile = None
+
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                               client_dir)) + os.sep
 
     # save to temporary file
 
@@ -90,10 +97,12 @@ def main(client_id, user_arguments_dict):
         os.write(filehandle, mrsl)
         os.close(filehandle)
     except Exception, err:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Failed to write temporary mRSL file: %s' % err})
+        output_objects.append({'object_type': 'error_text',
+                               'text':
+                               'Failed to write temporary mRSL file: %s' % \
+                               err})
         return (output_objects, returnvalues.SYSTEM_ERROR)
-
+        
     # submit it
 
     submitstatuslist = []
@@ -130,6 +139,20 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'submitstatuslist',
                            'submitstatuslist': submitstatuslist})
+
+    # save to default job template file if requested
+
+    if save_as_default:
+        template_path = os.path.join(base_dir, mrsl_template)
+        try:
+            template_fd = open(template_path, 'wb')
+            template_fd.write(mrsl)
+            template_fd.close()
+        except Exception, err:
+            output_objects.append({'object_type': 'error_text',
+                                   'text':
+                                   'Failed to write default job template: %s' % \
+                                   err})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+
     return (output_objects, status)
-
-

@@ -44,14 +44,14 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables
 from shared.job import new_job
 from shared.upload import handle_package_upload
-from shared.useradm import client_id_dir
+from shared.useradm import mrsl_template, client_id_dir
 from shared.validstring import valid_user_path
 
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {}
+    defaults = {'save_as_default': ['False']}
     return ['html_form', defaults]
 
 
@@ -154,7 +154,7 @@ def main(client_id, user_arguments_dict):
     # TODO: all non-file fields should be validated!!
     # Input fields are mostly file stuff so do not validate it
     (validate_status, accepted) = validate_input_and_cert(
-        {},
+        {'save_as_default': user_arguments_dict.get('save_as_default', [])},
         defaults,
         output_objects,
         client_id,
@@ -168,6 +168,7 @@ def main(client_id, user_arguments_dict):
     submitstatuslist = []
     fileuploadobjs = []
     filenumber = 0
+    save_as_default = (accepted['save_as_default'][-1] != 'False')
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -175,6 +176,7 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                client_dir)) + os.sep
 
+    mrsl = ''
     while True:
         (content, file_type) = handle_form_input(filenumber,
                 user_arguments_dict, configuration)
@@ -188,8 +190,8 @@ def main(client_id, user_arguments_dict):
         # always append mrsltextarea if available!
 
         try:
-            content += user_arguments_dict['mrsltextarea_%s'
-                     % filenumber][0]
+            mrsl = user_arguments_dict['mrsltextarea_%s' % filenumber][0]
+            content += mrsl
         except:
             pass
         content += '\n'
@@ -482,6 +484,21 @@ def main(client_id, user_arguments_dict):
                           'submitstatuslist': submitstatuslist})
 
     # output_objects.append({"object_type":"text","text":str(submitstatuslist) + " *** " + str(mrslfiles_to_parse)})
+
+    # save to default job template file if requested
+
+    if save_as_default:
+        template_path = os.path.join(base_dir, mrsl_template)
+        try:
+            template_fd = open(template_path, 'wb')
+            template_fd.write(mrsl)
+            template_fd.close()
+        except Exception, err:
+            output_objects.append({'object_type': 'error_text',
+                                   'text':
+                                   'Failed to write default job template: %s' % \
+                                   err})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
 
     return (output_objects, returnvalues.OK)
 
