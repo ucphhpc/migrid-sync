@@ -303,7 +303,6 @@ def main(client_id, user_arguments_dict):
   title_entry['javascript'] = js_tmpl(entry_path)        
   
   output_objects.append({'object_type': 'header', 'text': 'File Manager' })
-
   output_objects.append({'object_type': 'html_form', 'text': html_tmpl()})
 
   if len(all_paths) > 1:

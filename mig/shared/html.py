@@ -38,9 +38,9 @@ menu_items['submitjob'] = {'class': 'submitjob', 'url': 'submitjob.py',
                            'title': 'Submit Job',
                            'hover': 'submit a job for execution on a resource'}
 menu_items['files'] = {'class': 'files', 'url': 'fileman.py', 'title': 'Files',
-                           'hover': 'view files and folders in your home directory'}
-menu_items['jobs'] = {'class': 'jobs', 'url': 'jobman.py', 'title': 'Job monitor', 
-                           'hover': 'view status of all your jobs'}
+                           'hover': 'manage files and folders in your home directory'}
+menu_items['jobs'] = {'class': 'jobs', 'url': 'jobman.py', 'title': 'Jobs', 
+                           'hover': 'manage and monitor your grid jobs'}
 menu_items['vgrids'] = {'class': 'vgrids', 'url': 'vgridadmin.py',
                         'title': 'VGrids',
                            'hover': 'virtual organisations sharing some resources and files'}

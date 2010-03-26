@@ -75,13 +75,13 @@ def html_tmpl():
       <thead>
         <tr>
           <th style="width: 20px;"><input type="checkbox" id="checkAll" /></th>
-          <th>JobID</th>
+          <th>Job ID</th>
           <th style="width: 120px;">Status</th>
           <th style="width: 180px;">Date</th>
         </tr>        
       </thead>
       <tbody>
-        <tr><td>.</td><td>JobID</td><td>Status</td><td>Date</td></tr>
+        <tr><td>.</td><td>Job ID</td><td>Status</td><td>Date</td></tr>
       </tbody>
     </table>
     </div>
@@ -172,11 +172,10 @@ def main(client_id, user_arguments_dict):
   status = returnvalues.OK
   
   title_entry = find_entry(output_objects, 'title')
-  title_entry['text'] = 'Job Monitor'
+  title_entry['text'] = 'Job Manager'
   title_entry['javascript'] = js_tmpl()
   
-  output_objects.append({'object_type': 'header', 'text': 'Job Monitor' })
-  
+  output_objects.append({'object_type': 'header', 'text': 'Job Manager'})
   output_objects.append({'object_type': 'html_form', 'text': html_tmpl()})
   
   return (output_objects, status)
