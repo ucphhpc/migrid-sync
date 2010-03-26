@@ -88,7 +88,7 @@ def html_tmpl():
     
   </div>
   
-  <ul id="job_context" class="contextMenu">        
+  <ul id="job_context" class="contextMenu">
       <li class="resubmit single">
           <a href="#resubmit">Resubmit</a>
       </li>

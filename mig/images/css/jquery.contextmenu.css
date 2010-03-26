@@ -1,7 +1,7 @@
 /* Generic context menu styles */
 .contextMenu {
 	position: absolute;
-	width: 160px;
+	width: 180px;
 	z-index: 99999;
 	border: solid 1px #CCC;
 	background: #EEE;
@@ -66,7 +66,6 @@
 .contextMenu LI.cat A { background-image: url(/images/icons/application_osx_terminal.png); }
 .contextMenu LI.head A { background-image: url(/images/icons/application_osx_terminal.png); }
 .contextMenu LI.tail A { background-image: url(/images/icons/application_osx_terminal.png); }
-.contextMenu LI.resubmit A { background-image: url(/images/icons/arrow_redo.png); }
 .contextMenu LI.submit A { background-image: url(/images/icons/arrow_redo.png); }
 .contextMenu LI.copy A { background-image: url(/images/icons/page_white_copy.png); }
 .contextMenu LI.paste A { background-image: url(/images/icons/page_white_paste.png); }
