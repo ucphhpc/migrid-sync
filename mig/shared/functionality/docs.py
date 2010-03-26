@@ -203,7 +203,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                           : 'Acknowledgements' })
 
     output_objects.append({'object_type': 'text', 'text' : """
-This software uses JavaScript from:""" })
+This software is mainly implemented in Python:""" })
+    output_objects.append({'object_type': 'link', 
+                           'destination' : 'http://python.org/',
+                           'class': 'urllink',
+                           'title': 'Python Home Page',
+                           'text': 'Python and extension modules (PSF license)'})
+    output_objects.append({'object_type': 'text', 'text' : """
+web interfaces additionally rely on JavaScript from:""" })
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://jquery.com/',
                            'class': 'urllink',
