@@ -31,6 +31,7 @@ import os
 import sys
 
 from shared.conf import get_configuration_object
+from shared.settings import load_settings
 
 
 def make_basic_entry(kind, values):
@@ -63,7 +64,7 @@ def find_entry(output_objects, kind):
             return entry
     return None
 
-def initialize_main_variables(op_title=True, op_header=True,
+def initialize_main_variables(client_id, op_title=True, op_header=True,
                               op_menu=True):
     """Script initialization is identical for most scripts in 
     shared/functionalty. This function should be called in most cases.
@@ -82,6 +83,14 @@ def initialize_main_variables(op_title=True, op_header=True,
     if op_header:
         header_object = make_header_entry('%s' % op_name)
         output_objects.append(header_object)
+    if client_id and op_menu:
+        # add the user-defined menu items (if possible)
+        settings = load_settings(client_id, configuration)
+        title = find_entry(output_objects,'title')
+        if settings and title:
+            user_menu = settings.get('SITE_USER_MENU', None)
+            if user_menu:
+                title['user_menu'] = user_menu
 
     return (configuration, logger, output_objects, op_name)
 

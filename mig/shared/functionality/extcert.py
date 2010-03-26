@@ -47,7 +47,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(op_header=False)
+        initialize_main_variables(client_id, op_header=False)
     output_objects.append({'object_type': 'header', 'text'
                           : 'Welcome to the %s user sign up page' % \
                             configuration.site_title

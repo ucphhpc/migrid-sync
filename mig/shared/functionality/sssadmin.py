@@ -232,7 +232,8 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, _) = \
-        initialize_main_variables(op_header=False, op_menu=client_id)
+        initialize_main_variables(client_id, op_header=False,
+                                  op_menu=client_id)
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,

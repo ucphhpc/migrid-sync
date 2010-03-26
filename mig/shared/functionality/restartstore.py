@@ -53,7 +53,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables()
+        initialize_main_variables(client_id)
     output_objects.append({'object_type': 'text', 'text'
                           : '--------- Trying to RESTART store ----------'
                           })
