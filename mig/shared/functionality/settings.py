@@ -165,8 +165,8 @@ def main(client_id, user_arguments_dict):
                          """<textarea cols="40" rows="1" wrap="off" name="%s">"""\
                          % keyword
                     if current_settings_dict.has_key(keyword):
-                        html += '<br />'.join(current_settings_dict[keyword])
-                        html += '</textarea><br />'
+                        html += '\n'.join(current_settings_dict[keyword])
+                    html += '</textarea><br />'
 
             elif val['Type'] == 'string':
 
