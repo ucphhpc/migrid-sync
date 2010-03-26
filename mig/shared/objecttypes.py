@@ -165,6 +165,8 @@ multilinkline = {'object_type': 'multilinkline',
                  'required_list': [('links', 'link')]}
 resource_list = {'object_type': 'resource_list', 'required_list': [('resources',
               'resource')]}
+resource_info = {'object_type': 'resource_info',
+                 'required': ['unique_resource_name', 'fields', 'exes']}
 vgrid_list = {'object_type': 'vgrid_list', 'required_list': [('vgrids',
               'vgrid')]}
 user_stats = {'object_type': 'user_stats', 'required': ['disk', 'jobs',
@@ -223,6 +225,7 @@ valid_types_list = [
     objects,
     jobobj,
     resource_list,
+    resource_info,
     vgrid_list,
     user_stats,
     ]

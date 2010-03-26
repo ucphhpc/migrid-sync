@@ -102,6 +102,16 @@ def main(client_id, user_arguments_dict):
                                      'class': 'adminlink',
                                      'title': 'Administrate %s' % unique_resource_name, 
                                      'text': ''}
+        else:
+            res_obj['viewreslink'] = \
+                                    {'object_type': 'link',
+                                     'destination':
+                                     'viewres.py?unique_resource_name=%s'\
+                                     % visible_res_name,
+                                     'class': 'infolink',
+                                     'title': 'View detailed %s specs' % \
+                                     visible_res_name, 
+                                     'text': ''}
             
         # fields for everyone: public status
         for name in fields:

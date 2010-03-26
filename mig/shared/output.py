@@ -903,7 +903,7 @@ Exit code: %s Description: %s<br />
                 lines.append('''
 <thead class="title">
   <th>Name</th>
-  <th width="8"><!-- Admin --></th>
+  <th width="8"><!-- View / Admin --></th>
   <th width="8"><!-- Remove owner --></th>
   <th class=centertext>Runtime envs</th>
   <th class=centertext>Alias</th>
@@ -923,9 +923,12 @@ Exit code: %s Description: %s<br />
                         res_type = 'sandbox'
                     lines.append('<td class="%sres" title="%s resource">%s</td>' % \
                                  (res_type, res_type, obj['name']))
-                    # possibly empty admin link fields should always be there
                     lines.append('<td>')
-                    if obj.has_key('resadminlink'):
+                    # view or admin link depending on ownership
+                    if obj.has_key('viewreslink'):
+                        lines.append('%s'
+                                 % html_link(obj['viewreslink']))
+                    elif obj.has_key('resadminlink'):
                         lines.append('%s'
                                  % html_link(obj['resadminlink']))
                     lines.append('</td>')
@@ -950,6 +953,23 @@ Exit code: %s Description: %s<br />
                 lines.append('</tbody></table>')
             else:
                 lines.append('No matching Resources found')
+        elif i['object_type'] == 'resource_info':
+            resource_html = ''
+            resource_html += '<h3>%s</h3>' % i['unique_resource_name']
+            resource_html += \
+                          '<table class="resource" frame=hsides rules=none cellpadding=5>'
+            for (key, val) in i['fields']:
+                resource_html += \
+                          '<tr><td>%s</td><td>%s</td></tr>' % \
+                          (key, val)
+            for (exe_name, exe_spec) in i['exes'].items():
+                resource_html += '<tr><td><b>%s</b></td></tr>' % exe_name
+                for (key, val) in exe_spec:
+                    resource_html += \
+                                  '<tr><td>%s</td><td>%s</td></tr>' % \
+                                  (key, val)
+            resource_html += '</table>'
+            lines.append(resource_html)
         elif i['object_type'] == 'vgrid_list':
             if len(i['vgrids']) > 0:
                 vgrids = i['vgrids']

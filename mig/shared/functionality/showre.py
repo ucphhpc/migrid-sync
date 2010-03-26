@@ -44,7 +44,7 @@ def signature():
 
 
 def build_reitem_object_from_re_dict(re_dict):
-    """ Build a runtimeenvironment object based on input re_dict """
+    """Build a runtimeenvironment object based on input re_dict"""
 
     software_list = []
     soft = re_dict['SOFTWARE']
@@ -153,5 +153,3 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append(build_reitem_object_from_re_dict(re_dict))
     return (output_objects, returnvalues.OK)
-
-
