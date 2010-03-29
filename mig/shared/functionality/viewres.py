@@ -33,8 +33,8 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.resconfkeywords import get_resource_keywords, get_exenode_keywords
 from shared.resource import anon_to_real_res_map
-from shared.vgridaccess import user_allowed_resources, get_resource_map, \
-     CONF
+from shared.vgridaccess import user_allowed_resources, user_allowed_vgrids, \
+     get_resource_map, CONF
 
 
 def signature():
@@ -45,7 +45,7 @@ def signature():
 
 
 def build_resitem_object_from_res_dict(configuration, unique_resource_name,
-                                       res_dict):
+                                       res_dict, allow_vgrids):
     """Build a resource object based on input res_dict"""
 
     res_keywords = get_resource_keywords(configuration)
@@ -72,8 +72,13 @@ def build_resitem_object_from_res_dict(configuration, unique_resource_name,
         for name in exe_fields:
             exe_spec.append((exe_keywords[name]['Title'],
                              exe.get(name, 'UNKNOWN')))
+        exec_vgrids = exe.get('vgrid', [])
+        visible_vgrids = [i for i in exec_vgrids if i in allow_vgrids]
+        if visible_vgrids != exec_vgrids:
+            visible_vgrids.append('%d undisclosed' % \
+                                  (len(exec_vgrids) - len(visible_vgrids)))
         exe_spec.append((exe_keywords['vgrid']['Title'],
-                         ', '.join(exe.get('vgrid'))))
+                         ', '.join(visible_vgrids)))
     return res_item
 
 
@@ -101,12 +106,13 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
     resource_list = accepted['unique_resource_name']
     status = returnvalues.OK
-    allowed = user_allowed_resources(configuration, client_id)
+    allowed_res = user_allowed_resources(configuration, client_id)
+    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
     res_map = get_resource_map(configuration)
     anon_map = anon_to_real_res_map(configuration.resource_home)
 
     for visible_res_name in resource_list:
-        if not visible_res_name in allowed.keys():
+        if not visible_res_name in allowed_res.keys():
             output_objects.append({'object_type': 'error_text',
                                    'text': 'invalid resource %s' % \
                                    visible_res_name})
@@ -117,7 +123,8 @@ def main(client_id, user_arguments_dict):
         res_dict = res_map[unique_resource_name][CONF]
         res_item = build_resitem_object_from_res_dict(configuration,
                                                       visible_res_name,
-                                                      res_dict)
+                                                      res_dict,
+                                                      allowed_vgrids)
         output_objects.append(res_item)
         
     return (output_objects, status)

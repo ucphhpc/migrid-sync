@@ -373,7 +373,7 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : '%s Resources Owned' % configuration.short_title})
     quick_links = [{'object_type': 'text', 'text'
-                   : 'Quick links to all your resources and individual mangement'}]
+                   : 'Quick links to all your resources and individual management'}]
     quick_res = {}
     quick_links_index = len(output_objects)
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
@@ -387,13 +387,25 @@ def main(client_id, user_arguments_dict):
         resource_config = res_map[unique_resource_name][CONF]
         if client_id in owner_list:
             quick_res[unique_resource_name] = \
+                                            {'object_type': 'multilinkline',
+                                             'links': [
                 {'object_type': 'link',
                  'destination': '?unique_resource_name=%s' % \
                  unique_resource_name,
-                 'class': 'urllink',
+                 'class': 'adminlink',
                  'title': 'Manage %s' % unique_resource_name,
-                 'text': '%s' % unique_resource_name,
+                 'text': 'Manage %s' % unique_resource_name,
+                 },
+                {'object_type': 'link',
+                 'destination': 'viewres.py?unique_resource_name=%s' % \
+                 unique_resource_name,
+                 'class': 'infolink',
+                 'title': 'View %s' % unique_resource_name,
+                 'text': 'View %s' % unique_resource_name,
                  }
+                ]
+                                             }
+
 
             if unique_resource_name in unique_res_names:
                 raw_conf_file = os.path.join(configuration.resource_home,
