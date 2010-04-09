@@ -118,18 +118,26 @@ def main(client_id, user_arguments_dict):
         # link to become member. overwritten later for members
 
         vgrid_obj['memberlink'] = {'object_type': 'link',
-                                   'destination':
-                                   'vgridmemberrequestaction.py?vgrid_name=%s&request_type=member&request_text=no+text'\
-                                   % vgrid_name,
-                                   'class': 'addlink',
-                                   'title': 'Request membership of %s' % vgrid_name,
-                                   'text': ''}
+          'destination':
+          "javascript:runConfirmDialog('%s','%s','%s');" % \
+            ("Request membership of " + vgrid_name + """:<br/>
+Please write a message to the owners (field below).""",
+             'vgridmemberrequestaction.py?vgrid_name=%s&request_type=member&'\
+             % vgrid_name,
+             "request_text"),
+          'class': 'addlink',
+          'title': 'Request membership of %s' % vgrid_name,
+          'text': ''}
         # link to become owner. overwritten later for owners
 
         vgrid_obj['administratelink'] = {'object_type': 'link',
-                                         'destination':
-                                         'vgridmemberrequestaction.py?vgrid_name=%s&request_type=owner&request_text=no+text'\
-                                         % vgrid_name,
+          'destination':
+          "javascript:runConfirmDialog('%s','%s','%s');" % \
+            ("Request ownership of " + vgrid_name + """:<br/>
+Please write a message to the owners (field below).""",
+             'vgridmemberrequestaction.py?vgrid_name=%s&request_type=owner&'\
+             % vgrid_name,
+             "request_text"),
                                          'class': 'addadminlink',
                                          'title': 'Request ownership of %s' % vgrid_name, 
                                          'text': ''}
@@ -159,8 +167,8 @@ def main(client_id, user_arguments_dict):
 
             vgrid_obj['memberlink'] = {'object_type': 'link',
                                        'destination':
-                                       "javascript:confirmLeave('%s','%s');" % \
-                                       (vgrid_name, 
+                                       "javascript:runConfirmDialog('%s','%s');" % \
+                                       ("Really leave " + vgrid_name + "?", 
                                         'rmvgridmember.py?vgrid_name=%s&cert_id=%s'\
                                         % (vgrid_name, client_id)),
                                        'class': 'removelink',
@@ -179,10 +187,10 @@ def main(client_id, user_arguments_dict):
             # correct the link to leave the VGrid
 
             vgrid_obj['memberlink']['destination'] = \
-                                                   "javascript:confirmLeave('%s','%s');" % \
-                                                   (vgrid_name, 
-                                                    'rmvgridowner.py?vgrid_name=%s&cert_id=%s'\
-                                                    % (vgrid_name, client_id))
+                      "javascript:runConfirmDialog('%s','%s');" % \
+                      ("Really leave " + vgrid_name + "?", 
+                       'rmvgridowner.py?vgrid_name=%s&cert_id=%s'\
+                       % (vgrid_name, client_id))
             vgrid_obj['memberlink']['class'] = 'removeadminlink'
             vgrid_obj['memberlink']['title'] = 'Leave %s owners' % vgrid_name
 
@@ -217,29 +225,65 @@ def main(client_id, user_arguments_dict):
 
     title_entry['javascript'] = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-1.7.2.custom.css" media="screen"/>
 
 <script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui-1.7.2.custom.min.js"></script>
 
 <script type="text/javascript" >
 
-var confirmLeave = function(name, link) {
-    var yes = confirm("Really leave the VGrid " + name + " ?");
-    if (yes) {
-         window.location=link;
+var runConfirmDialog = function(text, link, textFieldName) {
+
+    if (link == undefined) {
+        link = "#";
     }
+    if (text == undefined) {
+        text = "Are you sure?";
+    }
+    $( "#confirm_text").html(text);
+
+    var addField = function() { /* doing nothing... */ };
+    if (textFieldName != undefined) {
+        $("#confirm_input").show();
+        addField = function() {
+            link += textFieldName + "=" + $("#confirm_input")[0].value;
+        }
+    }
+
+    $( "#confirm_dialog").dialog("option", "buttons", {
+              "No": function() { $("#confirm_input").hide();
+                                 $("#confirm_text").html("");
+                                 $("#confirm_dialog").dialog("close");
+                               },
+              "Yes": function() { addField();
+                                  window.location = link;
+                                }
+            });
+    $( "#confirm_dialog").dialog("open");
 }
 
 $(document).ready(function() {
 
-          // table initially sorted by col. 2 (admin), then 1 (member), then 0
-          var sortOrder = [[2,0],[1,1],[0,0]];
+          // init confirmation dialog
+          $( "#confirm_dialog" ).dialog(
+              // see http://jqueryui.com/docs/dialog/ for options
+              { autoOpen: false,
+                modal: true, closeOnEscape: true,
+                width: 500,
+                buttons: {
+                   "Cancel": function() { $( "#" + name ).dialog("close"); }
+	        }
+              });
 
-          // use an image title for sorting if there is any inside
+          // table initially sorted by col. 2 (admin), then 1 (member), then 0
+          var sortOrder = [[2,1],[1,1],[0,0]];
+
+          // use image path for sorting if there is any inside
           var imgTitle = function(contents) {
-              var key = $(contents).find("img").attr("title");
+              var key = $(contents).find("a").attr("class");
               if (key == null) {
-                   key = $(contents).html();
+                  key = $(contents).html();
               }
               return key;
           }
@@ -252,6 +296,14 @@ $(document).ready(function() {
 );
 </script>
 '''
+
+    output_objects.append({'object_type': 'html_form',
+                           'text':'''
+ <div id="confirm_dialog" title="Confirm" style="background:#fff;">
+  <div id="confirm_text"><!-- filled by js --></div>
+   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"/></textarea>
+ </div>
+'''                       })
 
     output_objects.append({'object_type': 'header', 'text': 'VGrids'
                           })

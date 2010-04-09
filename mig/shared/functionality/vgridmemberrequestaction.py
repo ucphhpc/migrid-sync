@@ -26,6 +26,7 @@
 #
 
 import shared.returnvalues as returnvalues
+from shared.defaults import default_vgrid
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import notify_user_thread
@@ -69,12 +70,12 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1]
     request_type = accepted['request_type'][-1].strip().lower()
     request_text = accepted['request_text'][-1].strip()
-    if vgrid_name.upper() == 'GENERIC':
+    if vgrid_name.upper() == default_vgrid.upper(): # usually 'GENERIC':
 
         # not allowed!
 
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Member and owner requests for the GENERIC VGrid are not allowed!'
+                              : 'Member and owner requests for %s are not allowed!' % default_vgrid
                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
