@@ -242,6 +242,25 @@ def get_vgrid_map(configuration):
     """Returns the current map of resources and their vgrid participations"""
     return refresh_vgrid_map(configuration)
 
+def user_owned_resources(configuration, client_id):
+    """Extract a list of resources that client_id owns.
+
+    Resources are anonymized unless explicitly configured otherwise.
+    """
+    owned = {}
+    resource_map = get_resource_map(configuration)
+
+    # Map only contains the raw resource names - anonomize as requested
+
+    anon_map = {}
+    for res in resource_map.keys():
+        anon_map[res] = resource_map[res][RESID]
+
+    for (res_id, res) in resource_map.items():
+        if vgrid_allowed(client_id, res[OWNERS]):
+            owned[anon_map[res_id]] = res
+    return owned
+
 def user_allowed_resources(configuration, client_id):
     """Extract a list of resources that client_id can really submit to.
     There is no guarantee that they will ever accept any further jobs.
@@ -281,6 +300,18 @@ def user_allowed_resources(configuration, client_id):
         allowed[anon_map[res]] = match
     return allowed
 
+def user_visible_resources(configuration, client_id):
+    """Extract a list of resources that client_id owns or can submit jobs to.
+    This is a wrapper combining user_owned_resources and
+    user_allowed_resources.
+    
+    Resources are anonymized unless explicitly configured otherwise.
+    """
+    visible = user_allowed_resources(configuration, client_id)
+    visible.update(user_owned_resources(configuration, client_id))
+    return visible
+
+
 if "__main__" == __name__:
     import sys
     from shared.conf import get_configuration_object
@@ -306,3 +337,10 @@ if "__main__" == __name__:
     print "%s can access: %s" % \
           (user_id, ', '.join(["%s: %s" % (i, j) for (i, j) \
                                in user_access.items()]))
+    user_owned = user_owned_resources(conf, user_id)
+    print "%s owns: %s" % \
+          (user_id, ', '.join(["%s: %s" % (i, j[MODTIME]) for (i, j) \
+                               in user_owned.items()]))
+    user_visible = user_visible_resources(conf, user_id)
+    print "%s can view: %s" % \
+          (user_id, ', '.join([i for i in user_visible.keys()]))

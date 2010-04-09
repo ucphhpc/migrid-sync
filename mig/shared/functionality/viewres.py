@@ -33,7 +33,7 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.resconfkeywords import get_resource_keywords, get_exenode_keywords
 from shared.resource import anon_to_real_res_map
-from shared.vgridaccess import user_allowed_resources, user_allowed_vgrids, \
+from shared.vgridaccess import user_visible_resources, user_allowed_vgrids, \
      get_resource_map, CONF
 
 
@@ -106,13 +106,13 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
     resource_list = accepted['unique_resource_name']
     status = returnvalues.OK
-    allowed_res = user_allowed_resources(configuration, client_id)
+    visible_res = user_visible_resources(configuration, client_id)
     allowed_vgrids = user_allowed_vgrids(configuration, client_id)
     res_map = get_resource_map(configuration)
     anon_map = anon_to_real_res_map(configuration.resource_home)
 
     for visible_res_name in resource_list:
-        if not visible_res_name in allowed_res.keys():
+        if not visible_res_name in visible_res.keys():
             output_objects.append({'object_type': 'error_text',
                                    'text': 'invalid resource %s' % \
                                    visible_res_name})

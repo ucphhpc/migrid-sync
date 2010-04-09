@@ -571,7 +571,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                         # Split between comma and remove extra whitespace
 
                     exe_dict['vgrid'] = [i.strip() for i in
-                            vgrid_value.split(',')]
+                            vgrid_value.split(',') if i.strip()]
                     value.append(exe_dict)
                 except Exception, err:
                     status = False
@@ -628,7 +628,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                         # Split between comma and remove extra whitespace
 
                     store_dict['vgrid'] = [i.strip() for i in
-                            vgrid_value.split(',')]
+                            vgrid_value.split(',') if i.strip()]
                     value.append(store_dict)
                 except Exception, err:
                     status = False

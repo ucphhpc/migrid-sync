@@ -40,7 +40,7 @@ from shared.base import sandbox_resource
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import get_re_dict, list_runtime_environments
-from shared.vgridaccess import get_resource_map, CONF, OWNERS
+from shared.vgridaccess import get_resource_map, CONF, OWNERS, RESID
 
 
 def signature():
@@ -385,6 +385,7 @@ def main(client_id, user_arguments_dict):
             continue
         owner_list = res_map[unique_resource_name][OWNERS]
         resource_config = res_map[unique_resource_name][CONF]
+        visible_res_name = res_map[unique_resource_name][RESID]
         if client_id in owner_list:
             quick_res[unique_resource_name] = \
                                             {'object_type': 'multilinkline',
@@ -398,7 +399,7 @@ def main(client_id, user_arguments_dict):
                  },
                 {'object_type': 'link',
                  'destination': 'viewres.py?unique_resource_name=%s' % \
-                 unique_resource_name,
+                 visible_res_name,
                  'class': 'infolink',
                  'title': 'View %s' % unique_resource_name,
                  'text': 'View %s' % unique_resource_name,
