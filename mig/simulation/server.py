@@ -91,7 +91,7 @@ class Server:
         job = {}
         job['JOB_ID'] = job_id
         self.nextid += 1
-        job['OWNER'] = user_id
+        job['OWNER'] = job['USER_CERT'] = user_id
         job['CPUTIME'] = length
         job['MAXPRICE'] = maxprice
         job['CPUCOUNT'] = 1

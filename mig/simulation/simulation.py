@@ -523,7 +523,7 @@ if arg.count(':') == 2:
         # Dummy conf to allow use of conf.attributes
         # Use own conf for each server to avoid sharing
 
-        config = Configuration('dummy.conf')
+        config = Configuration('MiGserver.conf')
         config.expire_after = expire
         config.mig_server_id = name
 
