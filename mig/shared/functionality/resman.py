@@ -89,8 +89,11 @@ def main(client_id, user_arguments_dict):
             res_obj['rmresownerlink'] = \
                                     {'object_type': 'link',
                                      'destination':
-                                     'rmresowner.py?unique_resource_name=%s;cert_id=%s'\
-                                     % (unique_resource_name, client_id),
+                                     "javascript:runConfirmDialog('%s','%s');" % \
+                                     ("Really leave " + unique_resource_name + " owners?", 
+                                      'rmresowner.py?unique_resource_name=%s;cert_id=%s'\
+                                      % (unique_resource_name, client_id),
+                                      ),
                                      'class': 'removeadminlink',
                                      'title': 'Leave %s owners' % unique_resource_name, 
                                      'text': ''}
@@ -129,34 +132,70 @@ def main(client_id, user_arguments_dict):
 
     title_entry['javascript'] = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-1.7.2.custom.css" media="screen"/>
 
 <script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui-1.7.2.custom.min.js"></script>
 
 <script type="text/javascript" >
 
-var confirmDelete = function(name, link) {
-    var yes = confirm("Really delete the resource " + name + " ?");
-    if (yes) {
-         window.location=link;
+var runConfirmDialog = function(text, link, textFieldName) {
+
+    if (link == undefined) {
+        link = "#";
     }
+    if (text == undefined) {
+        text = "Are you sure?";
+    }
+    $( "#confirm_text").html(text);
+
+    var addField = function() { /* doing nothing... */ };
+    if (textFieldName != undefined) {
+        $("#confirm_input").show();
+        addField = function() {
+            link += textFieldName + "=" + $("#confirm_input")[0].value;
+        }
+    }
+
+    $( "#confirm_dialog").dialog("option", "buttons", {
+              "No": function() { $("#confirm_input").hide();
+                                 $("#confirm_text").html("");
+                                 $("#confirm_dialog").dialog("close");
+                               },
+              "Yes": function() { addField();
+                                  window.location = link;
+                                }
+            });
+    $( "#confirm_dialog").dialog("open");
 }
 
 $(document).ready(function() {
 
+          // init confirmation dialog
+          $( "#confirm_dialog" ).dialog(
+              // see http://jqueryui.com/docs/dialog/ for options
+              { autoOpen: false,
+                modal: true, closeOnEscape: true,
+                width: 500,
+                buttons: {
+                   "Cancel": function() { $( "#" + name ).dialog("close"); }
+	        }
+              });
+
           // table initially sorted by col. 1 (admin) 
           var sortOrder = [[1,0]];
 
-          // use an image title for sorting if there is any inside
+          // use image path for sorting if there is any inside
           var imgTitle = function(contents) {
-              var key = $(contents).find("img").attr("title");
+              var key = $(contents).find("a").attr("class");
               if (key == null) {
-                   key = $(contents).html();
+                  key = $(contents).html();
               }
               return key;
           }
-
+          
           $("#resourcetable").tablesorter({widgets: ["zebra"],
                                         sortList:sortOrder,
                                         textExtraction: imgTitle
@@ -168,6 +207,14 @@ $(document).ready(function() {
 );
 </script>
 '''
+
+    output_objects.append({'object_type': 'html_form',
+                           'text':'''
+ <div id="confirm_dialog" title="Confirm" style="background:#fff;">
+  <div id="confirm_text"><!-- filled by js --></div>
+   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"/></textarea>
+ </div>
+'''                       })
 
     output_objects.append({'object_type': 'header', 'text': 'Available Resources'
                           })
