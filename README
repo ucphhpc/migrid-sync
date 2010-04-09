@@ -161,7 +161,10 @@ choose a suitable directory path at first.
 The two moin paths are optional and can be set to the empty string if
 moin is not available or should if VGrid wikis should not be enabled. On
 Debian the moinmoin-common package provides all the necessary wiki
-requirements.
+requirements. It is still necessary to tweak the system wide wikiconfig
+template in /usr/share/moin/config/wikiconfig.py to get the moin
+underlay links using /moin_staticXYZ instead of /wiki and front page
+setup right.
 
 The four CLAUSE arguments can be used to comment out the explicit
 
