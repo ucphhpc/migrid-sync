@@ -64,6 +64,11 @@ def vgrid_add_remove_table(vgrid_name,
                     })
         return (False, out)
 
+    if item_string == 'resource':
+        qu_string = 'unique_resource_name'
+    else:
+        qu_string = 'cert_id'
+
     # read list of current items and create form to remove one
 
     (status, msg) = vgrid_list(vgrid_name, '%ss' % item_string, configuration)
@@ -92,8 +97,8 @@ def vgrid_add_remove_table(vgrid_name,
         for elem in msg:
             if elem:
                 form += \
-"          <tr><td><input type=radio name='cert_id' value='%s' /></td><td>%s</td></tr>"\
-                     % (elem, elem)
+"          <tr><td><input type=radio name='%s' value='%s' /></td><td>%s</td></tr>"\
+                     % (qu_string, elem, elem)
         form += '              </tbody></table>'
         form += '''
         <input type="submit" value="Remove %s" />
@@ -108,11 +113,12 @@ def vgrid_add_remove_table(vgrid_name,
                 'text': '''
       <form method="get" action="add%(script)s.py">
           <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
-          <input type="text" size=70 name="cert_id" />
+          <input type="text" size=70 name="%(qu_string)s" />
           <input type="submit" value="Add vgrid %(item)s" />
       </form>
-''' % {'vgrid': vgrid_name, 'item': item_string, 'script': script_suffix}
-                }) 
+''' % {'vgrid': vgrid_name, 'item': item_string, 
+       'script': script_suffix, 'qu_string': qu_string }
+               })
     
     return (True, out)
 
