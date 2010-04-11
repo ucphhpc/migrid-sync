@@ -40,7 +40,7 @@ from shared.vgrid import vgrid_is_owner_or_member
 def signature():
     """Signature of the main function"""
 
-    defaults = {'vgrid_name': REJECT_UNSET, 'file': REJECT_UNSET,
+    defaults = {'vgrid_name': REJECT_UNSET, 'path': REJECT_UNSET,
                 'flags': ['']}
     return ['file_output', defaults]
 
@@ -63,7 +63,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     vgrid_name = accepted['vgrid_name'][-1]
-    filename = accepted['file'][-1]
+    path = accepted['path'][-1]
     flags = ''.join(accepted['flags'])
         
     if not vgrid_is_owner_or_member(vgrid_name, client_id,
@@ -76,12 +76,12 @@ access the private files.''' % vgrid_name})
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
+    base_dir = os.path.abspath(os.path.join(configuration.vgrid_private_base,
                                             vgrid_name)) + os.sep
 
     # Strip leading slashes to avoid join() throwing away prefix 
 
-    rel_path = filename.lstrip(os.sep)
+    rel_path = path.lstrip(os.sep)
     real_path = os.path.abspath(os.path.join(base_dir, rel_path))
 
     if not valid_user_path(real_path, base_dir, True):
@@ -92,11 +92,12 @@ private files dir.'''})
     
     try:
         private_fd = open(real_path, 'rb')
-        entry = {'object_type': 'file_output',
-                 'lines': private_fd.readlines(),
-                 'wrap_binary': binary(flags),
-                 'wrap_targets': ['lines']}
-        output_objects.append(entry)
+        entry = {'object_type': 'binary',
+                 'data': private_fd.read()}
+        # Cut away all the usual web page formatting to show only contents
+        output_objects = [{'object_type': 'start', 'headers': []}, entry,
+                          {'object_type': 'script_status'},
+                          {'object_type': 'end'}]
         private_fd.close()
     except Exception, exc:
         output_objects.append({'object_type': 'error_text', 'text'
