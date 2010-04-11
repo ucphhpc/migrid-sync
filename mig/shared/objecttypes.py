@@ -28,6 +28,7 @@
 """ Defines valid objecttypes and provides a method to verify if an object is correct """
 
 start = {'object_type': 'start', 'required': ['headers'], 'optional': []}
+end = {'object_type': 'end', 'required': [], 'optional': []}
 title = {'object_type': 'title', 'required': ['text'],
          'optional': ['javascript', 'bodyfunctions']}
 text = {'object_type': 'text', 'required': ['text'], 'optional': []}
@@ -178,6 +179,7 @@ object_types = {'object_type': 'object_types',
 
 valid_types_list = [
     start,
+    end,
     title,
     text,
     verbatim,
