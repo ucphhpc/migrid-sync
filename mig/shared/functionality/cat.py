@@ -145,7 +145,7 @@ def main(client_id, user_arguments_dict):
             if user_arguments_dict.has_key('output_format'):
                 output_format = user_arguments_dict['output_format'][0]
                 if output_format == 'file':
-                    output_objects.append({'object_type': 'start', 'headers': [('Content-Disposition', 'attachment; filename="%s";' % os.path.basename(real_path))] })
+                    output_objects.append({'object_type': 'start', 'headers': [('Content-Disposition', 'attachment; filename="%s";' % os.path.basename(real_path))]})
             
     return (output_objects, status)
 

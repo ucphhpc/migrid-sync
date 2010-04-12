@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# showvgridprivatefile - Access to VGrid private files for owners and members
+# showvgridprivatefile - View VGrid private files for owners and members
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,14 +25,17 @@
 # -- END_HEADER ---
 #
 
-"""Show the requested file located in a given vgrids private_base dir"""
+"""Show the requested file located in a given vgrids private_base dir if the
+client is an owner or a member of the vgrid. Members are allowed to read private
+files but not write them, therefore they don't have a private_base link where
+they can access them like owners do.
+"""
 
 import os
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables
-from shared.parseflags import binary
 from shared.validstring import valid_user_path
 from shared.vgrid import vgrid_is_owner_or_member
 
@@ -40,8 +43,7 @@ from shared.vgrid import vgrid_is_owner_or_member
 def signature():
     """Signature of the main function"""
 
-    defaults = {'vgrid_name': REJECT_UNSET, 'path': REJECT_UNSET,
-                'flags': ['']}
+    defaults = {'vgrid_name': REJECT_UNSET, 'path': REJECT_UNSET}
     return ['file_output', defaults]
 
 
@@ -64,7 +66,6 @@ def main(client_id, user_arguments_dict):
 
     vgrid_name = accepted['vgrid_name'][-1]
     path = accepted['path'][-1]
-    flags = ''.join(accepted['flags'])
         
     if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                     configuration):
