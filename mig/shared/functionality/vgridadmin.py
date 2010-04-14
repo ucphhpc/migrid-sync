@@ -109,7 +109,7 @@ def main(client_id, user_arguments_dict):
                                        'title': 'Open %s public wiki' % vgrid_name,
                                        'text': 'Open'}
         vgrid_obj['enterpubliclink'] = {'object_type': 'link',
-                                        'destination': '%s/vgrid/%s/'\
+                                        'destination': '%s/vgrid/%s/path/index.html'\
                                         % (configuration.migserver_http_url, vgrid_name),
                                         'class': 'urllink',
                                         'title': 'View public %s web page' % vgrid_name,
@@ -146,7 +146,7 @@ Please write a message to the owners (field below).""",
 
         if vgrid_is_owner_or_member(vgrid_name, client_id, configuration):
             vgrid_obj['enterprivatelink'] = {'object_type': 'link',
-                                             'destination': '../vgrid/%s/' % vgrid_name,
+                                             'destination': '../vgrid/%s/path/index.html' % vgrid_name,
                                              'class': 'urllink',
                                              'title': 'View private %s web page' % vgrid_name, 
                                              'text': 'View'}

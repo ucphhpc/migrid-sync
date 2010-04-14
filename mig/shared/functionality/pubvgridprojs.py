@@ -63,7 +63,7 @@ def main(client_id, user_arguments_dict):
 
             new_link = {'object_type': 'link',
                         'text': public_vgrid_dir,
-                        'destination': '%s/vgrid/%s'\
+                        'destination': '%s/vgrid/%s/path/index.html'\
                          % (configuration.migserver_http_url,
                         public_vgrid_dir)}
             linklist.append(new_link)
