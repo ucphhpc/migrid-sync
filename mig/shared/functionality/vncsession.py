@@ -298,7 +298,7 @@ def main(client_id, user_arguments_dict):
         html = \
             '''Opening embedded vnc applet here:<br />
 <b>This will only work if your browser includes a java plugin!</b><br />
-<applet code="vncviewer" archive="vncviewer.jar" codebase="%s/vgrid/" width="%s" height="%s">
+<applet code="vncviewer" archive="vncviewer.jar" codebase="%s/vnc/" width="%s" height="%s">
 <param name="port" value="%s">
 <param name="password" value="%s">
 </applet>
