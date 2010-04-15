@@ -429,7 +429,7 @@ if (jQuery) (function($){
 					// Root node					
 					if (t=='/') {
 						folders +=	'<ul class="jqueryFileTree">'+
-												'<li class="directory collapsed" rel_path="" title=""><div>/</div>';
+												'<li class="directory collapsed userhome" rel_path="" title="MiG home"><div>/</div>';
 					}
 					
 					// Regular nodes from here on after
@@ -440,6 +440,7 @@ if (jQuery) (function($){
           var file_count = 0.0;          
           var is_dir = false;
           var base_css_style = 'file';
+          var extra_css_style = '';
           var entry_title = '';
 
           var dir_prefix = '';
@@ -473,9 +474,10 @@ if (jQuery) (function($){
             entry_title = path + ' ' + listing[i]['special']
             if (is_dir) {
               base_css_style = 'directory';
+              extra_css_style = listing[i]['extra_class'];
 
 							path += '/';
-							folders +=  '<li class="'+base_css_style+' collapsed" rel_path="'+path+'" title="'+entry_title+'"><div>'
+							folders +=  '<li class="'+base_css_style+' '+extra_css_style+' collapsed" rel_path="'+path+'" title="'+entry_title+'"><div>'
                           + listing[i]['name']
 													+'</div></li>\n';
 							dir_prefix = '##';
@@ -491,6 +493,8 @@ if (jQuery) (function($){
 						$('table tbody').append($('<tr></tr>')
 													.attr('rel_path', path)
 													.addClass(base_css_style)
+													.addClass(extra_css_style)
+													.attr('title',entry_title)
 													.addClass('ext_'+listing[i]['ext'])
 													.dblclick( function() { doubleClickEvent(this); } )
 													.append(
@@ -690,7 +694,7 @@ if (jQuery) (function($){
       showBranch( $('.fm_folders', obj), escape(options.root) );			
 			
 			/**
-			 * Bind handlers for forms. This is redicoulous and tedious repetitive code.
+			 * Bind handlers for forms. This is ridiculous and tedious repetitive code.
 			 *
 			 */
 			$('#upload_form').ajaxForm({target: '#upload_output',

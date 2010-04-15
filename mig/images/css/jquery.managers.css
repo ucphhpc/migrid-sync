@@ -221,10 +221,15 @@ UL.jqueryFileTree div:hover {
 }
 
 /* Core Styles */
-.jqueryFileTree LI.directory { background: url(/images/icons/directory.png) left top no-repeat; }
+.jqueryFileTree LI.directory { background: url(/images/icons/folder.png) left top no-repeat; }
 .jqueryFileTree LI.expanded { background: url(/images/icons/folder_open.png) left top no-repeat; }
 .jqueryFileTree LI.file { background: url(/images/icons/file.png) left top no-repeat; }
 .jqueryFileTree LI.wait { background: url(/images/icons/spinner.gif) left top no-repeat; }
+/* override folder icon for user home and vgrid folders */
+.jqueryFileTree LI.userhome { background: url(/images/icons/folder_user.png) left top no-repeat; }
+.jqueryFileTree LI.vgridshared { background: url(/images/icons/folder_link.png) left top no-repeat; }
+.jqueryFileTree LI.vgridpublicweb { background: url(/images/icons/folder_table.png) left top no-repeat; }
+.jqueryFileTree LI.vgridprivateweb { background: url(/images/icons/folder_key.png) left top no-repeat; }
 .spinner { background: url(/images/icons/spinner.gif) left center no-repeat; }
 
 UL.jqueryFileList {
@@ -259,14 +264,18 @@ UL.jqueryFileList A:hover {
 }
 .jqueryFileList .cdate,.size {float:right; margin-top: -20px;}
 /* Core Styles */
-#fm_filelisting .directory { background-image: url(/images/icons/directory.png); background-repeat: no-repeat; background-position: 2px 50%; }
+#fm_filelisting .directory { background-image: url(/images/icons/folder.png); background-repeat: no-repeat; background-position: 2px 50%; }
 #fm_filelisting .expanded { background: url(/images/icons/folder_open.png) left top no-repeat; background-position: 2px 50%; }
 #fm_filelisting .file { background-image: url(/images/icons/file.png); background-repeat: no-repeat; background-position: 2px 50%; }
+/* override folder icon for user home and vgrid folders */
+#fm_filelisting .vgridshared { background: url(/images/icons/folder_link.png) left top no-repeat; background-position: 2px 50%; }
+#fm_filelisting .vgridpublicweb { background: url(/images/icons/folder_table.png) left top no-repeat; background-position: 2px 50%; }
+#fm_filelisting .vgridprivateweb { background: url(/images/icons/folder_key.png) left top no-repeat; background-position: 2px 50%; }
 #fm_filelisting .wait { background: url(/images/icons/spinner.gif) left top no-repeat; background-position: 2px 50%; }
 #jm_jobmanager .wait { background: url(/images/icons/spinner.gif) left top no-repeat; background-position: 2px 50%; }
 
 /* File Extensions*/
-/*.directory { background: url(/images/icons/directory.png) left top no-repeat; }
+/*.directory { background: url(/images/icons/folder.png) left top no-repeat; }
 .file { background: url(/images/icons/file.png) left top no-repeat; }*/
 
 .ext_3gp { background: url(/images/icons/film.png) left top no-repeat; }

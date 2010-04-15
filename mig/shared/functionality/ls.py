@@ -222,13 +222,17 @@ def handle_dir(
     """handle a dir"""
 
     special = ''
+    extra_class = ''
     if os.path.islink(actual_dir):
         dir_type = 'shared files'
+        extra_class = 'vgridshared'
         parent_dir = os.path.basename(os.path.dirname(actual_dir))
         if parent_dir.find('public_base') >= 0:
             dir_type = 'public web page'
+            extra_class = 'vgridpublicweb'
         elif parent_dir.find('private_base') >= 0:
             dir_type = 'private web page'
+            extra_class = 'vgridprivateweb'
         special = ' - VGrid %s directory' % dir_type
     dir_obj = {
         'object_type': 'direntry',
@@ -237,6 +241,7 @@ def handle_dir(
         'dirname_with_dir': dirname_with_dir,
         'flags': flags,
         'special': special,
+        'extra_class': extra_class,
         }
 
     if long_list(flags):
