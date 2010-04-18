@@ -29,6 +29,7 @@
 
 import os
 import shutil
+import subprocess
 
 import shared.returnvalues as returnvalues
 from shared.fileio import write_file, pickle, make_symlink
@@ -73,11 +74,11 @@ def create_wiki(
     cgi_template_underlay = os.path.join(configuration.moin_share,
             'underlay')
 
-    cgi_wiki_bin = wiki_dir + 'cgi-bin'
-    cgi_wiki_etc = wiki_dir + 'etc'
+    cgi_wiki_bin = os.path.join(wiki_dir, 'cgi-bin')
+    cgi_wiki_etc = os.path.join(wiki_dir, 'etc')
     cgi_wiki_name = vgrid_name
-    cgi_wiki_data = wiki_dir + 'data'
-    cgi_wiki_underlay = wiki_dir + 'underlay'
+    cgi_wiki_data = os.path.join(wiki_dir, 'data')
+    cgi_wiki_underlay = os.path.join(wiki_dir, 'underlay')
     cgi_wiki_script = os.path.join(cgi_wiki_bin, 'moin.cgi')
     cgi_wiki_wikiconf = os.path.join(cgi_wiki_etc, 'wikiconfig.py')
     try:
@@ -152,6 +153,135 @@ def create_wiki(
         return False
 
 
+def create_scm(
+    configuration,
+    vgrid_name,
+    scm_dir,
+    output_objects,
+    ):
+    """Create new Mercurial SCM repository"""
+
+    kind = 'member'
+    scm_alias = 'vgridscm'
+    server_url = configuration.migserver_https_cert_url
+    if scm_dir.find('private') > -1:
+        kind = 'owner'
+        scm_alias = 'vgridownerscm'
+        server_url = configuration.migserver_https_cert_url
+    elif scm_dir.find('public') > -1:
+        kind = 'public'
+        scm_alias = 'vgridpublicscm'
+        server_url = configuration.migserver_http_url
+    cgi_template_script = os.path.abspath(configuration.hgweb_path)
+
+    # Depending on the Mercurial installation some of the
+    # configuration strings may vary slightly
+
+    cgi_template_name = 'repository name'
+    cgi_template_repo = '/path/to/repo'
+    cgi_scm_name = '%s %s SCM repository' % (vgrid_name, kind)
+    repo_base = 'repo'
+    cgi_scm_repo = os.path.join(scm_dir, repo_base)
+    repo_rc = os.path.join(cgi_scm_repo, '.hg', 'hgrc')
+    repo_readme = os.path.join(cgi_scm_repo, 'readme')
+    rc_text = '''
+[web]
+allow_push = *
+allow_archive = gz, zip
+description = The %s repository for %s participants
+''' % (kind, vgrid_name)
+    readme_text = '''This is the %(kind)s SCM repository for %(vgrid_name)s.
+
+A web view of the repository is available on
+%(server_url)s/%(scm_alias)s/%(vgrid_name)s
+in any browser.
+Access to non-public repositories is only granted if your user certificate
+is imported in the browser.
+
+For full access the repository you need a Mercurial client.
+Once again for non-public repositories you need client certificate support
+in the client. Mercurial 1.3 and later is known to work with certificates,
+but please refer to the documentation provided with your installation if you
+have an older version. Installation of a newer version in user space should
+be possible if case you do not have administrator privileges.
+
+On the client a ~/.hgrc with something like:
+[auth]
+migserver.prefix = %(server_url)s
+migserver.key = /path/to/mig/key.pem
+migserver.cert = /path/to/mig/cert.pem
+
+[web]
+cacerts = /path/to/mig/cacert.pem
+
+should allow access with your certificate.
+In the above /path/to/mig is typically /home/USER/.mig where USER is
+replaced by your login.
+
+You can check out your own copy of the repository with:
+hg clone %(server_url)s/%(scm_alias)s/%(vgrid_name)s [DESTINATION]
+
+Please refer to the Mercurial documentation for further information about
+the commands and work flows of this distributed SCM.
+''' % {'vgrid_name': vgrid_name, 'kind': kind, 'scm_alias': scm_alias,
+       'server_url': server_url}
+
+    cgi_scm_bin = os.path.join(scm_dir, 'cgi-bin')
+    cgi_scm_script = os.path.join(cgi_scm_bin, 'hgweb.cgi')
+    try:
+
+        # Create scm directory
+
+        os.mkdir(scm_dir)
+        os.mkdir(cgi_scm_bin)
+        os.mkdir(cgi_scm_repo)
+
+        # Create modified Mercurial cgi script that uses local scm repo.
+        # In this way modification to one vgrid scm will not affect others.
+
+        template_fd = open(cgi_template_script, 'r')
+        template_script = template_fd.readlines()
+        template_fd.close()
+        cgi_script = []
+
+        # IMPORTANT NOTE:
+        # prevent users writing in cgi-bin dir to avoid remote execution exploit
+
+        for line in template_script:
+            line = line.replace(cgi_template_name,
+                                cgi_scm_name)
+            line = line.replace(cgi_template_repo, cgi_scm_repo)
+            cgi_script.append(line)
+        cgi_fd = open(cgi_scm_script, 'w')
+        cgi_fd.writelines(cgi_script)
+        cgi_fd.close()
+        os.chmod(cgi_scm_script, 0555)
+        os.chmod(cgi_scm_bin, 0555)
+        os.chmod(cgi_scm_repo, 0755)
+        readme_fd = open(repo_readme, 'w')
+        readme_fd.write(readme_text)
+        readme_fd.close()
+        subprocess.call([configuration.hg_path, 'init', cgi_scm_repo])
+        subprocess.call([configuration.hg_path, 'add', repo_readme])
+        subprocess.call([configuration.hg_path, 'commit', '-m"init"', repo_readme])
+        if not os.path.exists(repo_rc):
+            open(repo_rc, 'w').close()
+        os.chmod(repo_rc, 0644)
+        rc_fd = open(repo_rc, 'r+')
+        rc_fd.seek(0, 2)
+        rc_fd.write(rc_text)
+        rc_fd.close()
+        os.chmod(repo_rc, 0444)
+
+        os.chmod(scm_dir, 0555)
+        return True
+    except Exception, exc:
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Could not create vgrid scm: %s'
+                               % exc})
+        return False
+
+
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
@@ -192,18 +322,27 @@ def main(client_id, user_arguments_dict):
     public_wiki_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
                         vgrid_name, '.vgridwiki')) + os.sep
+    public_scm_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_public_base,
+                        vgrid_name, '.vgridscm')) + os.sep
     private_base_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name)) + os.sep
     private_wiki_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name, '.vgridwiki')) + os.sep
+    private_scm_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_private_base,
+                        vgrid_name, '.vgridscm')) + os.sep
     vgrid_files_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
                         vgrid_name)) + os.sep
     vgrid_wiki_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
                         vgrid_name, '.vgridwiki')) + os.sep
+    vgrid_scm_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_files_home,
+                        vgrid_name, '.vgridscm')) + os.sep
 
     # does vgrid exist?
 
@@ -318,11 +457,20 @@ def main(client_id, user_arguments_dict):
                                output_objects):
                 return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    if configuration.hg_path and configuration.hgweb_path:
+
+        # create participant scm repo in the vgrid shared dir
+
+        for scm_dir in [public_scm_dir, private_scm_dir, vgrid_scm_dir]:
+            if not create_scm(configuration, vgrid_name, scm_dir,
+                               output_objects):
+                return (output_objects, returnvalues.SYSTEM_ERROR)
+
     # create pickled owners list with client_id as owner
     # only add user in owners list if new vgrid is a base vgrid (because symlinks to
     # subdirs are not necessary, and an owner is per definition owner of sub vgrids).
 
-    owner_file = base_dir + 'owners'
+    owner_file = os.path.join(base_dir, 'owners')
     owner_list = []
     if new_base_vgrid == True:
         owner_list.append(client_id)
@@ -337,7 +485,7 @@ def main(client_id, user_arguments_dict):
 
     # create empty pickled members list
 
-    member_file = base_dir + 'members'
+    member_file = os.path.join(base_dir, 'members')
     status2 = pickle([], member_file, logger)
     if not status2:
         output_objects.append({'object_type': 'error_text', 'text'
@@ -346,7 +494,7 @@ def main(client_id, user_arguments_dict):
 
     # create empty pickled resources list
 
-    resources_file = base_dir + 'resources'
+    resources_file = os.path.join(base_dir, 'resources')
     status3 = pickle([], resources_file, logger)
     if not status3:
         output_objects.append({'object_type': 'error_text', 'text'

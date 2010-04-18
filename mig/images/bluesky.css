@@ -440,10 +440,6 @@ table.monitorruntimeenvreq {
   background: url('/images/icons/information.png') no-repeat;
   padding-left: 18px;
 }
-.openlink {
-  background: url('/images/icons/add.png') no-repeat;
-  padding-left: 18px;
-}
 .viewlink {
   background: url('/images/icons/html.png') no-repeat;
   padding-left: 18px;
@@ -458,6 +454,10 @@ table.monitorruntimeenvreq {
 }
 .wikilink {
   background: url('/images/icons/overlays.png') no-repeat;
+  padding-left: 18px;
+}
+.scmlink {
+  background: url('/images/icons/calendar.png') no-repeat;
   padding-left: 18px;
 }
 .monitorlink {

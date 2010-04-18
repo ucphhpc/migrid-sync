@@ -94,6 +94,8 @@ def generate_confs(
     mig_certs='/home/mig/certs',
     moin_etc='/etc/moin',
     moin_share='/usr/share/moin',
+    hg_path='/usr/bin/hg',
+    hgweb_path='/usr/share/doc/mercurial/examples/hgweb.cgi',
     public_port=80,
     cert_port=443,
     sid_port=444,
@@ -121,6 +123,8 @@ def generate_confs(
     user_dict['__APACHE_LOG__'] = apache_log
     user_dict['__MOIN_ETC__'] = moin_etc
     user_dict['__MOIN_SHARE__'] = moin_share
+    user_dict['__HG_PATH__'] = hg_path
+    user_dict['__HGWEB_PATH__'] = hgweb_path
     user_dict['__USER_CLAUSE__'] = user_clause
     user_dict['__GROUP_CLAUSE__'] = group_clause
     user_dict['__LISTEN_CLAUSE__'] = listen_clause
@@ -189,6 +193,8 @@ if '__main__' == __name__:
         'mig_certs',
         'moin_etc',
         'moin_share',
+        'hg_path',
+        'hgweb_path',
         'public_port',
         'cert_port',
         'sid_port',
@@ -247,6 +253,8 @@ mig_state: %(mig_state)s
 mig_certs: %(mig_certs)s
 moin_etc: %(moin_etc)s
 moin_share: %(moin_share)s
+hg_path: %(hg_path)s
+hgweb_path: %(hgweb_path)s
 public_port: %(public_port)s
 cert_port: %(cert_port)s
 sid_port: %(sid_port)s

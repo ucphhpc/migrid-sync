@@ -437,6 +437,14 @@ class Configuration:
             self.moin_share = config.get('WIKI', 'moin_share')
         else:
             self.moin_share = ''
+        if config.has_option('SCM', 'hg_path'):
+            self.hg_path = config.get('SCM', 'hg_path')
+        else:
+            self.hg_path = ''
+        if config.has_option('SCM', 'hgweb_path'):
+            self.hgweb_path = config.get('SCM', 'hgweb_path')
+        else:
+            self.hgweb_path = ''
 
         if config.has_option('SITE', 'images'):
             self.site_images = config.get('SITE', 'images')

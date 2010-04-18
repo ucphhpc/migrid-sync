@@ -133,6 +133,8 @@ def create_user(
     cert_dir = '%s/MiG-certificates' % apache_dir
     moin_etc = '/etc/moin'
     moin_share = '/usr/share/moin'
+    hg_path = '/usr/bin/hg'
+    hgweb_path = '/usr/share/doc/mercurial/examples/hgweb.cgi'
 
     firewall_script = '/root/scripts/firewall'
     print '# Add the next line to %s and run the script:'\
@@ -176,6 +178,8 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         cert_dir,
         moin_etc,
         moin_share,
+        hg_path,
+        hgweb_path,
         public_port,
         cert_port,
         sid_port,
