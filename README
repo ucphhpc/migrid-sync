@@ -129,6 +129,8 @@ defaults, this could be:
 		   --mig_state=/home/mig/state \
 		   --mig_certs=/home/mig/MiG-certificates \
 		   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
+		   --hg_path=/usr/bin/hg \
+		   --hgweb_path=/usr/share/doc/mercurial/examples/hgweb.cgi \
 		   --public_port=80 --cert_port=443 --sid_port=8092 \
 		   --user_clause=User --group_clause=Group \
 		   --listen_clause='Listen' \
@@ -146,6 +148,8 @@ or similarly with apache 2.x:
 		   --mig_state=/home/mig/state \
 		   --mig_certs=/etc/apache2/MiG-certificates \
 		   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
+		   --hg_path=/usr/bin/hg \
+		   --hgweb_path=/usr/share/doc/mercurial/examples/hgweb.cgi \
 		   --public_port=80 --cert_port=443 --sid_port=443 \
 		   --user_clause=User --group_clause=Group \
 		   --listen_clause='#Listen' \
@@ -158,13 +162,15 @@ certificates (used for MiG server to server communication).
 The actual keys and certificates can be added later, so you can just
 choose a suitable directory path at first.
 
-The two moin paths are optional and can be set to the empty string if
-moin is not available or should if VGrid wikis should not be enabled. On
-Debian the moinmoin-common package provides all the necessary wiki
-requirements. It is still necessary to tweak the system wide wikiconfig
-template in /usr/share/moin/config/wikiconfig.py to get the moin
-underlay links using /moin_staticXYZ instead of /wiki and front page
-setup right.
+The two moin paths and two hg paths are optional and can be set to the 
+empty string if moin and/or mercurial is not available or if VGrid wikis
+and SCMs should not be enabled. On Debian the moinmoin-common package
+provides all the necessary wiki requirements. It is still necessary to
+tweak the system wide wikiconfig template in
+/usr/share/moin/config/wikiconfig.py to get the moin underlay links
+using /moin_staticXYZ instead of /wiki and front page setup right.
+Similarly the mercurial package provides all required components for 
+VGrid SCMs on Debian.
 
 The four CLAUSE arguments can be used to comment out the explicit
 
