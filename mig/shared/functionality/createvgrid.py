@@ -164,6 +164,7 @@ def create_scm(
     kind = 'member'
     scm_alias = 'vgridscm'
     server_url = configuration.migserver_https_cert_url
+    server_url_without_port = ':'.join(server_url.split(':')[:2])
     if scm_dir.find('private') > -1:
         kind = 'owner'
         scm_alias = 'vgridownerscm'
@@ -207,7 +208,7 @@ be possible if case you do not have administrator privileges.
 
 On the client a ~/.hgrc with something like:
 [auth]
-migserver.prefix = %(server_url)s
+migserver.prefix = %(server_url_without_port)s
 migserver.key = /path/to/mig/key.pem
 migserver.cert = /path/to/mig/cert.pem
 
@@ -224,7 +225,8 @@ hg clone %(server_url)s/%(scm_alias)s/%(vgrid_name)s [DESTINATION]
 Please refer to the Mercurial documentation for further information about
 the commands and work flows of this distributed SCM.
 ''' % {'vgrid_name': vgrid_name, 'kind': kind, 'scm_alias': scm_alias,
-       'server_url': server_url}
+       'server_url': server_url,
+       'server_url_without_port': server_url_without_port}
 
     cgi_scm_bin = os.path.join(scm_dir, 'cgi-bin')
     cgi_scm_script = os.path.join(cgi_scm_bin, 'hgweb.cgi')
