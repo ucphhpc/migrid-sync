@@ -259,8 +259,7 @@ def js_tmpl(entry_path='/'):
                                       collapseSpeed: 0,
                                       multiFolder: false,
                                       subPath: "%s"
-                                      },
-                                      function(file) { alert(file); }
+                                      }
     );
   
   });
