@@ -16,7 +16,7 @@ if (jQuery) (function($){
         var file_output = '';
         
         for(i=0;i<jsonRes.length; i++) {
-            if (jsonRes[i].object_type=='file_output') {            
+            if (jsonRes[i].object_type=='file_output') {
                 for(j=0; j<jsonRes[i].lines.length; j++) {
                     file_output += jsonRes[i].lines[j];
                 }
@@ -43,7 +43,7 @@ if (jQuery) (function($){
     $.fn.reload = function reload(path) {
         var reloadPath = path;
         
-        if (reloadPath == '') {         
+        if (reloadPath == '') {
             reloadPath = $('.fm_addressbar input[name=fm_current_path]').val().substr(1);
         }
         
@@ -119,11 +119,11 @@ if (jQuery) (function($){
             $('#cmd_dialog').dialog('open');
             $('#cmd_dialog').html('<p class="spinner" style="padding-left: 26px;">Copying... "'+src+'" <br />To: "'+dst+'"</p>');           
             
-            $.getJSON('cp.py',{ src: src,
-                                dst: dst,
-                                output_format: 'json',
-                                flags: flag
-                              },
+            $.getJSON('cp.py', { src: src,
+                                 dst: dst,
+                                 output_format: 'json',
+                                 flags: flag
+                               },
                       function(jsonRes, textStatus) {
                                     
                           if (jsonRes.length > 3) {                                       
@@ -132,7 +132,7 @@ if (jQuery) (function($){
                               }                                       
                           } else {
                               // Only reload if destination is current folder
-                              if ($('.fm_addressbar input[name=fm_current_path]').val().substr(1) == dst.substring(0,dst.lastIndexOf('/'))+'/')
+                              if ($('.fm_addressbar input[name=fm_current_path]').val().substr(1) == dst.substring(0, dst.lastIndexOf('/'))+'/')
                                   $('.fm_files').parent().reload($('.fm_addressbar input[name=fm_current_path]').val().substr(1));
                               $('#cmd_dialog').dialog('close');
                           }
@@ -175,12 +175,12 @@ if (jQuery) (function($){
                           
                           if ((errors.length > 0) 
 			      || (file_output.length > 0) 
-			      || (misc_output.length>0)){
+			      || (misc_output.length > 0)){
 
                               $(dialog).dialog(okDialog);
                               $(dialog).dialog('open');
 
-                              if (file_output.length>0) {
+                              if (file_output.length > 0) {
                                   file_output = '<pre>'+file_output+'</pre>'; 
                               }
                               
@@ -444,7 +444,7 @@ if (jQuery) (function($){
           var cur_folder_names = new Array();
           var cur_file_names = new Array();
           var listing = new Array();
-          var i,j;          
+          var i, j;          
           for(i=0;i<jsonRes.length; i++) {            
 	      if (jsonRes[i].object_type=='dir_listings') {
 		  for(j=0; j<jsonRes[i].dir_listings.length; j++) {
@@ -458,7 +458,7 @@ if (jQuery) (function($){
           // Root node                    
           if (t=='/') {
              folders +=  '<ul class="jqueryFileTree">'+
-                  '<li class="directory collapsed userhome" rel_path="" title=""><div>/</div>';
+                  '<li class="directory collapsed userhome" rel_path="" title="Home"><div>/</div>';
           }
 
           // Regular nodes from here on after
@@ -522,7 +522,7 @@ if (jQuery) (function($){
                                                 .attr('rel_path', path)
                                                 .addClass(base_css_style)
                                                 .addClass(extra_css_style)
-                                                .attr('title',entry_title)
+                                                .attr('title', entry_title)
                                                 .addClass('ext_'+listing[i]['ext'])
                                                 .dblclick( function() { doubleClickEvent(this); } )
                                                 .append(
@@ -543,7 +543,7 @@ if (jQuery) (function($){
             }
             
             // Prefix '/' for the visual presentation of the current path.
-            if (t.substr(0,1)=='/') {
+            if (t.substr(0, 1)=='/') {
                 addressbar.find('input[name=fm_current_path]').val(t);  
             } else {
                 addressbar.find('input[name=fm_current_path]').val('/'+t);  
@@ -552,10 +552,10 @@ if (jQuery) (function($){
             folder_pane.removeClass('wait').append(folders);
             
             // Inform tablesorter of new data
-            var sorting = [[0,0]]; 
+            var sorting = [[0, 0]]; 
             $(".fm_files table").trigger("update");
             if (!emptyDir)  { // Don't try and sort an empty table, this causes error!
-                $(".fm_files table").trigger("sorton",[sorting]);
+                $(".fm_files table").trigger("sorton", [sorting]);
             }
             
             // Update statusbar
@@ -895,7 +895,7 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
           actions: {select: select_action}
          },
          // doubleclick callback action
-         function(el) { select_action(undefined,el,undefined); }
+         function(el) { select_action(undefined, el, undefined); }
     );
     return do_d;
 };
