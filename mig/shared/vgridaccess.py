@@ -158,7 +158,8 @@ def refresh_vgrid_map(configuration):
         conf_path = os.path.join(configuration.vgrid_home, vgrid, "resources")
         if not os.path.isfile(conf_path):
             continue
-        if os.path.getmtime(conf_path) >= map_stamp:
+        if not vgrid_map[VGRIDS].has_key(vgrid) or \
+               os.path.getmtime(conf_path) >= map_stamp:
             (status, resources) = vgrid_resources(vgrid, configuration)
             if not status:
                 resources = []
