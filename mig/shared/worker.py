@@ -40,9 +40,11 @@ def dummy_test(delay):
     time.sleep(delay)
     return True
 
-def throttle_max_concurrent(workers):
+# TODO: allow user supplied concurrent arg from resadmin page
+
+def throttle_max_concurrent(workers, concurrent=__max_concurrent):
     """Wait until at most max_concurrent workers are active"""
-    while len([w for w in workers if w.isAlive()]) >= __max_concurrent:
+    while len([w for w in workers if w.isAlive()]) >= concurrent:
         time.sleep(1)
     return
 
