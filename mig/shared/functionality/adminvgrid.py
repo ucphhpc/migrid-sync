@@ -220,5 +220,17 @@ def main(client_id, user_arguments_dict):
                                    'text': 'Show %ss' % str.title(item) })
             output_objects.append({'object_type': 'html_form', 
                                    'text': '</div>' })
+
+    # Checking/fixing of missing components
+
+    output_objects.append({'object_type': 'sectionheader',
+                           'text': "Repair/Add Components"})
+    output_objects.append({'object_type': 'html_form',
+                           'text': '''
+      <form method="get" action="updatevgrid.py">
+          <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
+          <input type="submit" value="Repair components" />
+      </form>
+''' % {'vgrid': vgrid_name}})
             
     return (output_objects, returnvalues.OK)
