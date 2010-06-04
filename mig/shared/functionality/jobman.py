@@ -28,6 +28,8 @@
 
 """Script to provide users with a means of listing and managing jobs"""
 
+import datetime
+
 from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
 import shared.returnvalues as returnvalues
@@ -56,15 +58,16 @@ def html_tmpl():
           <option value="75">75 jobs per page</option>
           <option value="100">100 jobs per page</option>
         </select>
-        <select class="maxjobs">
-          <option value="100">load 100 last jobs</option>
-          <option value="200" selected>load 200 last jobs</option>
-          <option value="500">load 500 last jobs</option>
-          <option value="1000">load 1000 last jobs</option>
-          <option value="5000">load 5000 last jobs</option>
-          <option value="10000">load 10000 last jobs</option>
-          <option value="-1">load all jobs (slow)</option>
-        </select>
+        load <select class="maxjobs">
+          <option value="100" selected>100</option>
+          <option value="200">200</option>
+          <option value="500">500</option>
+          <option value="1000">1000</option>
+          <option value="5000">5000</option>
+          <option value="10000">10000</option>
+          <option value="-1">all</option>
+        </select> last jobs
+        matching <input class="filterid" name="job_id" size=10 value="*_%s_*"/>
       </form>
       <div id="append"  style="display: inline;"><img src="/images/icons/arrow_refresh.png" /></div>
       </div>
@@ -123,7 +126,7 @@ def html_tmpl():
   </ul>
   
   <div id="cmd_helper" title="Command output" style="display: none;"></div>
-  '''
+  ''' % datetime.date.today().year
   return html
 
 def js_tmpl():
