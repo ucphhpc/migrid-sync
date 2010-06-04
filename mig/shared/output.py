@@ -833,12 +833,12 @@ Exit code: %s Description: %s<br />
                     row_number += 1
                 lines.append('</table>')
         elif i['object_type'] == 'runtimeenvironment':
-            software_html = ''
+
+            software_html = \
+                    '<table class="runtimeenvsw" frame=hsides rules=none cellpadding=5>'
             for software in i['software']:
                 software_html += \
-                    '<table class="runtimeenvsw" frame=hsides rules=none cellpadding=5>'
-                software_html += \
-                    '<tr><td><img src=%s width="80" height="80" /></td><td></td></tr>'\
+                    '<tr><td><img src="%s" width="80" height="80" /></td><td></td></tr>'\
                      % software['icon']
                 software_html += '<tr><td>Name:</td><td>%s</td></tr>'\
                      % software['name']
@@ -850,28 +850,28 @@ Exit code: %s Description: %s<br />
                      % software['description']
                 software_html += '<tr><td>Version:</td><td>%s</td></tr>'\
                      % software['version']
-                software_html += '</table>'
-            environment_html = ''
-            for environment in i['environments']:
-                environment_html += \
+            software_html += '</table>'
+
+            environment_html = \
                     '<table class="runtimeenvvars" frame=hsides rules=none cellpadding=5>'
+            for environment in i['environments']:
                 environment_html += \
                                  '<tr><td>Name:</td><td>%(name)s (use with $%(name)s)</td></tr>'
                 environment_html += \
-                    '<tr><td>Example::</td><td>%(example)s</td></tr>'
+                    '<tr><td>Example:</td><td>%(example)s</td></tr>'
                 environment_html += \
                     '<tr><td>Description:</td><td>%(description)s</td></tr>'
-                environment_html += '</table>'
                 environment_html = environment_html % environment
+            environment_html += '</table>'
 
             lines.append('<table class="runtimeenvdetails">')
             lines.append('<tr><td>Name</td><td>%s</td></tr>' % i['name'
                          ])
             lines.append('<tr><td>Description</td><td>%s</td></tr>'
                           % i['description'])
-            lines.append('<tr><td>Needed software</td><td>%s</td></tr>'
+            lines.append('<tr><td>Needed&nbsp;software</td><td>%s</td></tr>'
                           % software_html)
-            lines.append('<tr><td>Environment variables</td><td>%s</td></tr>'
+            lines.append('<tr><td>Environment&nbsp;variables</td><td>%s</td></tr>'
                           % environment_html)
             if i['testprocedure']:
                 lines.append("<tr><td>Testprocedure</td><td valign='top'>%s</td></tr>"
@@ -889,9 +889,9 @@ Exit code: %s Description: %s<br />
                           % i['created'])
             lines.append('<tr><td>Creator</td><td>%s</td></tr>'
                           % i['creator'])
-            lines.append('<tr><td>Job count</td><td>%s</td></tr>'
+            lines.append('<tr><td>Job&nbsp;count</td><td>%s</td></tr>'
                           % i['job_count'])
-            lines.append('<tr><td>Resource count</td><td>%s</td></tr>'
+            lines.append('<tr><td>Resource&nbsp;count</td><td>%s</td></tr>'
                           % i['resource_count'])
             lines.append('</table>')
         elif i['object_type'] == 'resource_list':

@@ -121,6 +121,9 @@ table.runtimeenvs {
 table.runtimeenvdetails {
   padding: 2px;
 }
+table.runtimeenvdetails td {
+  vertical-align: top;
+}
 table.runtimeenvsw {
   border: 0px solid #000;
 }
