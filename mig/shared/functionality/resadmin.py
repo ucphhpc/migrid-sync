@@ -367,6 +367,22 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Resource Management'
+    title_entry['javascript'] = '''
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+
+<style type="text/css">
+.hidden { display:none; }
+</style>
+<script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
+
+<script type="text/javascript" >
+
+    var toggleHidden = function( classname ) {
+        // classname supposed to have a leading dot 
+        $( classname ).toggleClass('hidden');
+    }
+</script>
+'''
     output_objects.append({'object_type': 'header', 'text'
                           : ' Resource Management'})
 
@@ -374,6 +390,16 @@ def main(client_id, user_arguments_dict):
                           : '%s Resources Owned' % configuration.short_title})
     quick_links = [{'object_type': 'text', 'text'
                    : 'Quick links to all your resources and individual management'}]
+    quick_links.append({'object_type': 'html_form', 
+                        'text': '<div class="hidden quicklinks">'})
+    quick_links.append({'object_type': 'link', 
+                        'destination': 
+                        "javascript:toggleHidden('.quicklinks');",
+                        'class': 'removeitemlink',
+                        'title': 'Toggle view',
+                        'text': 'Hide quick links'})
+    quick_links.append({'object_type': 'text', 'text': ''}) 
+
     quick_res = {}
     quick_links_index = len(output_objects)
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
@@ -443,7 +469,19 @@ def main(client_id, user_arguments_dict):
 
             # add new line
 
-            quick_links.append({'object_type': 'text', 'text': ''})
+            quick_links.append({'object_type': 'text', 'text': ''}) 
+
+        quick_links.append({'object_type': 'html_form', 
+                            'text': '</div><div class="quicklinks">'})
+        quick_links.append({'object_type': 'link', 
+                            'destination': 
+                            "javascript:toggleHidden('.quicklinks');",
+                            'class': 'additemlink',
+                            'title': 'Toggle view',
+                            'text': 'Show quick links'})
+        quick_links.append({'object_type': 'html_form', 
+                            'text': '</div>' })
+
         output_objects = output_objects[:quick_links_index]\
              + quick_links + output_objects[quick_links_index:]
 
