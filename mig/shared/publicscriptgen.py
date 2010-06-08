@@ -106,7 +106,7 @@ def read_conf_function(lang):
     else:
         print 'Error: %s not supported!' % lang
 
-    s += end_function(lang, 'usage')
+    s += end_function(lang, 'read_conf')
 
     return s
 
@@ -128,8 +128,36 @@ def check_var_function(lang):
         if not var:
            print name + \" not set! Please set in configuration file or through the command line\"
            sys.exit(1)"""
-    s += end_function(lang, 'version')
+    s += end_function(lang, 'check_var')
 
+    return s
+
+
+def format_list(lang, target_arg, var_name):
+    s = ''
+    fill = {'target': target_arg, 'var': var_name}
+    if lang == 'sh':
+        s += \
+          """
+        # Build the %(target)s string used in wild card expansion:
+        # '%(var)s="$1";%(var)s="$2";...;%(var)s=$N'
+        # %(target)s may be a string or array
+        tmp_var=''
+        for i in ${%(target)s[*]}; do
+           tmp_var=\"${tmp_var};%(var)s=${i#%(var)s=}\"
+        done
+        unset %(target)s
+        %(target)s=\"$tmp_var\"
+        """ % fill
+    elif lang == 'python':
+        s += \
+          """
+        # Build the %(target)s string used in wild card expansion:
+        # '%(var)s="$1";%(var)s="$2";...;%(var)s=$N'
+        # %(target)s may be a string or array
+        if not isinstance(%(target)s, basestring):
+           %(target)s = \";%(var)s=%%s\" %% \";%(var)s=\".join(%(target)s)
+        """ % fill
     return s
 
 

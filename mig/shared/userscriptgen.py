@@ -609,6 +609,7 @@ def cat_function(lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'cat_file', ['path_list'])
+    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -677,6 +678,7 @@ def expand_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'expand_name', ['path_list',
                         'server_flags', 'destinations'])
+    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -746,6 +748,7 @@ def head_function(lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'head_file', ['lines', 'path_list'])
+    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -782,6 +785,7 @@ def ls_function(lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'ls_file', ['path_list'])
+    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -813,6 +817,7 @@ def mkdir_function(lang, curl_cmd, curl_flags=''):
 
     s = ''
     s += begin_function(lang, 'mk_dir', ['path_list'])
+    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -830,7 +835,7 @@ def mkdir_function(lang, curl_cmd, curl_flags=''):
 
 def mv_function(lang, curl_cmd, curl_flags='--compressed'):
     """Call the corresponding cgi script with the string 'src_list' as argument. Thus
-    the variable 'path_list' should be on the form
+    the variable 'src_list' should be on the form
     \"src=pattern1[;src=pattern2[ ... ]]\"
     This may seem a bit awkward but it's difficult to do in a better way when
     begin_function() doesn't support variable length or array args.
@@ -850,6 +855,7 @@ def mv_function(lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'mv_file', ['src_list', 'dst'])
+    s += format_list(lang, 'src_list', 'src')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1017,6 +1023,7 @@ def rm_function(lang, curl_cmd, curl_flags=''):
 
     s = ''
     s += begin_function(lang, 'rm_file', ['path_list'])
+    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1048,6 +1055,7 @@ def rmdir_function(lang, curl_cmd, curl_flags=''):
 
     s = ''
     s += begin_function(lang, 'rm_dir', ['path_list'])
+    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1084,6 +1092,7 @@ def stat_function(lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'stat_file', ['path_list'])
+    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1115,6 +1124,7 @@ def status_function(lang, curl_cmd, curl_flags='--compressed'):
     s = ''
     s += begin_function(lang, 'job_status', ['job_list', 'max_job_count'
                         ])
+    s += format_list(lang, 'job_list', 'job_id')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1154,6 +1164,7 @@ def tail_function(lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'tail_file', ['lines', 'path_list'])
+    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1376,6 +1387,7 @@ def touch_function(lang, curl_cmd, curl_flags=''):
 
     s = ''
     s += begin_function(lang, 'touch_file', ['path_list'])
+    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1406,6 +1418,7 @@ def truncate_function(lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'truncate_file', ['size', 'path_list'])
+    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1435,6 +1448,7 @@ def wc_function(lang, curl_cmd, curl_flags=''):
 
     s = ''
     s += begin_function(lang, 'wc_file', ['path_list'])
+    s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1498,6 +1512,7 @@ def liveoutput_function(lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'job_liveoutput', ['job_list'])
+    s += format_list(lang, 'job_list', 'job_id')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1600,6 +1615,10 @@ def shared_main(op, lang):
     return eval('%s_main' % op)(lang)
 
 
+# TODO: switch to new array/list argument format in all multi target function calls
+# (No need to manually build var=a;var=b;.. in main when functions handle lists)
+
+
 def cancel_main(lang):
     """
     Generate main part of corresponding scripts.
@@ -1608,8 +1627,6 @@ def cancel_main(lang):
     Currently 'sh' and 'python' are supported.
     
     """
-
-    # TODO: join to a single query now that cancel cgi supports multiple job_ids
 
     s = ''
     s += basic_main_init(lang)
@@ -1620,18 +1637,25 @@ def cancel_main(lang):
     if lang == 'sh':
         s += \
             """
-job_list=(\"$@\")
-for job in \"${job_list[@]}\"; do
-    cancel_job \"$job\"
+# Build the job_id string used directly:
+# 'job_id="$1";job_id="$2";...;job_id=$N'
+orig_args=("$@")
+job_id_list=\"job_id=$1\"
+shift
+while [ \"$#\" -gt \"0\" ]; do
+    job_id_list=\"$job_id_list;job_id=$1\"
+    shift
 done
+cancel_job $job_id_list
 """
     elif lang == 'python':
         s += \
             """
-job_list = sys.argv[1:]
-for job in job_list:
-   (status, out) = cancel_job(job)
-   print ''.join(out),
+# Build the job_id_list string used in wild card expansion:
+# 'job_id="$1";job_id="$2";...;job_id=$N'
+job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[1:])
+(status, out) = cancel_job(job_id_list)
+print ''.join(out),
 sys.exit(status)
 """
     else:
