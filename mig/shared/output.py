@@ -980,6 +980,17 @@ Exit code: %s Description: %s<br />
                 # Hide public scm column as it is disabled
                 #public_scm = '<th class=centertext colspan="1">Public SCM</th>'
                 public_scm = ''
+
+                # make "SCM" optional, as it is in the configuration
+                if configuration.hg_path and configuration.hgweb_path:
+                    scm = '''
+  <th class=centertext colspan="1">Owner SCM</th>
+  <th class=centertext colspan="1">Member SCM</th>
+  %s
+''' % public_scm
+                else:
+                    scm = ''
+
                 lines.append('''
 <thead class="title">
   <th>Name</th>
@@ -990,13 +1001,11 @@ Exit code: %s Description: %s<br />
   <th class=centertext colspan="1">Owner Wiki</th>
   <th class=centertext colspan="1">Member Wiki</th>
   %s
-  <th class=centertext colspan="1">Owner SCM</th>
-  <th class=centertext colspan="1">Member SCM</th>
   %s
   <th class=centertext colspan="1">Monitor</th>
 </thead>
 <tbody>
-''' % (public_wiki, public_scm)
+''' % (public_wiki, scm)
                              )
                 for obj in vgrids:
                     lines.append('<tr>')
@@ -1062,28 +1071,29 @@ Exit code: %s Description: %s<br />
                     #else:
                     #    lines.append('---')
                     #lines.append('</td>')
-                    lines.append('<td class=centertext>')
-                    if obj.has_key('ownerscmlink'):
-                        lines.append('%s '
-                                 % html_link(obj['ownerscmlink']))
-                    else:
-                        lines.append('---')
-                    lines.append('</td>')
-                    lines.append('<td class=centertext>')
-                    if obj.has_key('memberscmlink'):
-                        lines.append('%s '
-                                 % html_link(obj['memberscmlink']))
-                    else:
-                        lines.append('---')
-                    lines.append('</td>')
-                    # hide link to public scm which is disabled in apache
-                    #lines.append('<td class=centertext>')
-                    #if obj.has_key('publicscmlink'):
-                    #    lines.append('%s '
-                    #             % html_link(obj['publicscmlink']))
-                    #else:
-                    #    lines.append('---')
-                    #lines.append('</td>')
+                    if scm:
+                        lines.append('<td class=centertext>')
+                        if obj.has_key('ownerscmlink'):
+                            lines.append('%s '
+                                     % html_link(obj['ownerscmlink']))
+                        else:
+                            lines.append('---')
+                        lines.append('</td>')
+                        lines.append('<td class=centertext>')
+                        if obj.has_key('memberscmlink'):
+                            lines.append('%s '
+                                     % html_link(obj['memberscmlink']))
+                        else:
+                            lines.append('---')
+                        lines.append('</td>')
+                        # hide link to public scm which is disabled in apache
+                        #lines.append('<td class=centertext>')
+                        #if obj.has_key('publicscmlink'):
+                        #    lines.append('%s '
+                        #             % html_link(obj['publicscmlink']))
+                        #else:
+                        #    lines.append('---')
+                        #lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('privatemonitorlink'):
                         lines.append('%s '
