@@ -160,7 +160,7 @@ will be given access to the necessary resources anyway.
     mig_user = os.environ.get('USER', 'mig')
     command_cert_create = \
         """
-on CA host (amigos19.diku.dk):
+on CA host (mig-storage01.ekstranet.diku.dk):
 sudo su - mig-ca
 rsync %s@%s:mig/server/MiG-users.db ~/
 ./ca-scripts/createusercert.py -a '%s' -d ~/MiG-users.db -s '%s' -u '%s'"""\
@@ -181,7 +181,7 @@ cd ~/mig/server
          % (mig_user, configuration.server_fqdn, user_id)
     command_cert_revoke = \
         """
-on CA host (amigos19.diku.dk):
+on CA host (mig-storage01.ekstranet.diku.dk):
 sudo su - mig-ca
 ./ca-scripts/revokeusercert.py -a '%s' -d ~/MiG-users.db -u '%s'"""\
          % (configuration.admin_email, user_id)
