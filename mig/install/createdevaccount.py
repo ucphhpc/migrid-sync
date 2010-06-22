@@ -42,6 +42,7 @@ import os
 import random
 import crypt
 import socket
+import datetime
 
 from generateconfs import generate_confs
 
@@ -152,6 +153,11 @@ visudo""" % (user, apache_dir)
     print """# Set disk quotas for %s using reference user quota:
 edquota -u %s -p LOGIN_OF_SIMILAR_USER"""\
          % (user, user)
+    expire = datetime.date.today()
+    expire = expire.replace(year=expire.year + 1)
+    print """# Optionally set account expire date for user:
+chage -E %s %s"""\
+         % (expire, user)
     print """# Attach full name of user to login:
 usermod -c 'INSERT FULL NAME HERE' %s"""\
          % user
