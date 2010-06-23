@@ -150,24 +150,31 @@ table.monitorruntimeenvreq {
 }
 
 
+.menublock {
+  width: 160px;
+  float: left;
+}
+
+.contentblock {
+  margin-left: 160px;
+}
+
+
 /* Navigational menu... */
 .navmenu {
   background: #aaa url('/images/background_greypattern.png');
-  width: 150px;
-  float: left;
-
-  -moz-border-radius-bottomright: 5px;
+  -moz-border-radius: 5px;
+  margin-left: 5px;
 }
 
 .navmenu ul {
   margin: 0;
-  padding: 0px 0px 9px 7px;
+  padding: 2px 0px 9px 7px;
 }
 
 .navsubmenu ul {
   margin: 0;
   padding: 0;
-  margin-top: -10px;
 }
 
 .navmenu ul li, .navsubmenu ul li {
@@ -249,6 +256,27 @@ table.monitorruntimeenvreq {
   display: inline;
   float: left;
 }
+
+.premenuwidgets {
+  margin: 2px;
+  color: black;
+}
+
+.postmenuwidgets {
+  margin: 2px;
+  color: black;
+}
+
+.precontentwidgets {
+  margin: 2px;
+  color: black;
+}
+
+.postcontentwidgets {
+  margin: 2px;
+  color: black;
+}
+
 
 
 /* Used in one place... maybe that place should be fixed? to use h1 instead */
@@ -350,7 +378,6 @@ table.monitorruntimeenvreq {
   border: 1px solid black;
   -moz-border-radius: 4px;
   margin: 5px;
-  margin-left: 155px;
   padding: 8px; 
 }
 
@@ -554,6 +581,10 @@ table.monitorruntimeenvreq {
 }
 .stylesettingslink {
   background: url('/images/icons/psd.png') no-repeat;
+  padding-left: 18px;
+}
+.widgetssettingslink {
+  background: url('/images/icons/application.png') no-repeat;
   padding-left: 18px;
 }
 

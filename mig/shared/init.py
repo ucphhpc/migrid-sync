@@ -31,7 +31,7 @@ import os
 import sys
 
 from shared.conf import get_configuration_object
-from shared.settings import load_settings
+from shared.settings import load_settings, load_widgets
 
 
 def make_basic_entry(kind, values):
@@ -83,14 +83,18 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
     if op_header:
         header_object = make_header_entry('%s' % op_name)
         output_objects.append(header_object)
-    if client_id and op_menu:
-        # add the user-defined menu items (if possible)
-        settings = load_settings(client_id, configuration)
+    if client_id:
+        # add the user-defined menu and widgets (if possible)
         title = find_entry(output_objects,'title')
-        if settings and title:
-            user_menu = settings.get('SITE_USER_MENU', None)
-            if user_menu:
-                title['user_menu'] = user_menu
+        if title:
+            settings = load_settings(client_id, configuration)
+            if settings:
+                user_menu = settings.get('SITE_USER_MENU', None)
+                if user_menu:
+                    title['user_menu'] = user_menu
+            user_widgets = load_widgets(client_id, configuration)
+            if user_widgets:
+                title['user_widgets'] = user_widgets
 
     return (configuration, logger, output_objects, op_name)
 

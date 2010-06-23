@@ -28,10 +28,11 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables
-from shared.settingskeywords import get_keywords_dict
+from shared.settings import load_settings, load_widgets
+from shared.settingskeywords import get_keywords_dict as get_settings_fields
+from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 from shared.useradm import client_id_dir, mrsl_template, css_template, \
     get_default_mrsl, get_default_css
 
@@ -72,7 +73,7 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                client_dir)) + os.sep
 
-    valid_topics = ['general', 'job', 'style']
+    valid_topics = ['general', 'job', 'style', 'widgets']
     if configuration.arc_clusters:
         valid_topics.append('arc')
     topics = accepted['topic']
@@ -91,11 +92,9 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'multilinkline', 'links': links})
     output_objects.append({'object_type': 'text', 'text': ''})
 
-    # unpickle current settings
+    # load current settings
 
-    current_settings_dict = \
-        unpickle(os.path.join(configuration.user_home, client_dir,
-                 '.settings'), logger)
+    current_settings_dict = load_settings(client_id, configuration)
     if not current_settings_dict:
 
         # no current settings found
@@ -123,7 +122,7 @@ def main(client_id, user_arguments_dict):
         <tr><td>
         </td></tr>
         ''' % configuration.site_title
-        keywords_dict = get_keywords_dict()
+        keywords_dict = get_settings_fields()
         for (keyword, val) in keywords_dict.items():
             if 'notify' == val['Context'] and keyword.lower() not in configuration.notify_protocols:
                 continue
@@ -286,6 +285,94 @@ Please note that you can not save an empty style file, but must at least leave a
             'site': configuration.short_title,
             }
 
+        output_objects.append({'object_type': 'html_form', 'text': html})
+
+    if 'widgets' in topics:
+
+        # load current widgets
+
+        current_widgets_dict = load_widgets(client_id, configuration)
+        if not current_widgets_dict:
+            
+            # no current widgets found
+            
+            current_widgets_dict = {}
+
+        html = \
+             '''
+<div id="widgets">
+<table class="swidgets">
+<tr class="title"><td class="centertext">
+Default user defined widgets for all pages
+</td></tr>
+<tr><td>
+</td></tr>
+<tr><td>
+If you want to customize the look and feel of the %s web interfaces you can add your own widgets here. If you leave the widgets blank you will just get the default empty widget spaces.<br />
+You can copy paste from the available widget file links below if you want to reuse existing widgets.<br />
+</td></tr>
+<tr><td>
+<a class="urllink" href="/images/widgets/hello-grid.app">hello grid</a>,
+<a class="urllink" href="/images/widgets/simple-calendar.app">simple calendar</a>,
+<a class="urllink" href="/images/widgets/calendar.app">calendar</a>,
+<a class="urllink" href="/images/widgets/calculator.app">calculator</a>,
+<a class="urllink" href="/images/widgets/countdown.app">countdown</a>
+</td></tr>
+<tr><td>
+<form method="post" action="widgetsaction.py">
+</td></tr>
+<tr><td>
+''' % configuration.short_title
+
+        keywords_dict = get_widgets_fields()
+        for (keyword, val) in keywords_dict.items():
+            html += \
+                """
+            <tr class=title><td>
+            %s
+            </td></tr>
+            <tr><td>
+            %s
+            </td></tr>
+            <tr><td>
+            """\
+                 % (keyword, val['Description'])
+            if val['Type'] == 'multiplestrings':
+                try:
+
+                    # get valid choices from conf. multiple selections
+
+                    valid_choices = eval('configuration.%s' % keyword.lower())
+                    current_choice = []
+                    if current_widgets_dict.has_key(keyword):
+                        current_choice = current_widgets_dict[keyword]
+
+                    if len(valid_choices) > 0:
+                        html += '<select multiple name=%s>' % keyword
+                        for choice in valid_choices:
+                            selected = ''
+                            if choice in current_choice:
+                                selected = 'selected'
+                            html += '<option %s value=%s>%s</option>'\
+                                    % (selected, choice, choice)
+                        html += '</select><br />'
+                except:
+                    html += \
+                         """<textarea cols="78" rows="10" wrap="off" name="%s">"""\
+                         % keyword
+                    if current_widgets_dict.has_key(keyword):
+                        html += '\n'.join(current_widgets_dict[keyword])
+                    html += '</textarea><br />'
+
+        html += \
+             '''
+        <tr><td>
+        <input type="submit" value="Save Widgets" />
+        </form>
+</td></tr>
+</table>
+</div>
+'''
         output_objects.append({'object_type': 'html_form', 'text': html})
 
     # if ARC-enabled server:

@@ -373,6 +373,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in html format"""
 
     lines = []
+    user_widgets = {}
     status_line = \
         """
     <div id="exitcode">
@@ -405,7 +406,8 @@ Exit code: %s Description: %s<br />
             user_menu = []
             if i.has_key('user_menu'):
                 user_menu = i['user_menu']
-                
+            if i.has_key('user_widgets'):
+                user_widgets = i['user_widgets']
             lines.append(get_cgi_html_header(
                 configuration, html_escape(i['text']),
                 '',
@@ -413,7 +415,8 @@ Exit code: %s Description: %s<br />
                 javascript,
                 bodyfunctions,
                 include_menu, 
-                user_menu
+                user_menu,
+                user_widgets
                 ))
         elif i['object_type'] == 'text':
             lines.append('<p>%s</p>' % html_escape(i['text']))
@@ -1142,7 +1145,7 @@ Exit code: %s Description: %s<br />
             lines.append('unknown object %s' % i)
 
     if status_line:
-        lines.append(get_cgi_html_footer(configuration, status_line))
+        lines.append(get_cgi_html_footer(configuration, status_line, True, user_widgets))
     return '\n'.join(lines)
 
 

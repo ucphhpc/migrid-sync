@@ -119,7 +119,6 @@ def render_menu(configuration, menu_class='navmenu',
 
     return menu_lines
 
-
 def get_cgi_html_header(
     configuration,
     title,
@@ -129,9 +128,10 @@ def get_cgi_html_header(
     bodyfunctions='',
     menu=True,
     user_menu=[],
+    user_widgets={},
     ):
     """Return the html tags to mark the beginning of a page."""
-
+    
     if not html:
         return ''
     menu_lines = ''
@@ -139,6 +139,23 @@ def get_cgi_html_header(
         current_page = os.path.basename(sys.argv[0]).replace('.py', '')
         menu_lines = render_menu(configuration, 'navmenu', current_page, user_menu)
 
+    script_deps = user_widgets.get('SITE_SCRIPT_DEPS', [''])
+    pre_menu = '\n'.join(user_widgets.get('PREMENU', ['<!-- empty -->']))
+    post_menu = '\n'.join(user_widgets.get('POSTMENU', ['<!-- empty -->']))
+    pre_content = '\n'.join(user_widgets.get('PRECONTENT', ['<!-- empty -->']))
+    user_scripts = ''
+    for dep in script_deps:
+        # Avoid reloading already included scripts
+        if dep and scripts.find(dep) == -1:
+            if dep.endswith('.js'):
+                user_scripts += '''
+<script type="text/javascript" src="/images/js/%s"></script>
+''' % dep
+            elif dep.endswith('.css'):
+                user_scripts += '''
+<link rel="stylesheet" type="text/css" href="/images/css/%s" media="screen"/>
+''' % dep
+    
     return '''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
@@ -150,6 +167,9 @@ def get_cgi_html_header(
 <link rel="icon" type="image/vnd.microsoft.icon" href="%s"/>
 
 %s
+<!-- begin user supplied script dependencies -->
+%s
+<!-- end user supplied script dependencies -->
 <title>
 %s
 </title>
@@ -163,19 +183,38 @@ def get_cgi_html_header(
 %s
 </span>
 </div>
+<div class="menublock">
+<div class="premenuwidgets">
+<!-- begin user supplied pre menu widgets -->
 %s
+<!-- end user supplied pre menu widgets -->
+</div>
+%s
+<div class="postmenuwidgets">
+<!-- begin user supplied post menu widgets -->
+%s
+<!-- end user supplied post menu widgets -->
+</div>
+</div>
+<div class="contentblock">
+<div class="precontentwidgets">
+<!-- begin user supplied pre content widgets -->
+%s
+<!-- end user supplied pre content widgets -->
+</div>
 <div id="migheader">
 %s
 </div>
 <div id="content">
     '''\
          % (configuration.site_default_css, configuration.site_user_css,
-            configuration.site_fav_icon, scripts, title,
+            configuration.site_fav_icon, scripts, user_scripts, title,
             bodyfunctions, configuration.site_logo_image,
-            configuration.site_logo_text, menu_lines, header)
+            configuration.site_logo_text, pre_menu, menu_lines,
+            post_menu, pre_content, header)
 
 
-def get_cgi_html_footer(configuration, footer='', html=True):
+def get_cgi_html_footer(configuration, footer='', html=True, user_widgets={}):
     """Return the html tags to mark the end of a page. If a footer string
     is supplied it is inserted at the bottom of the page.
     """
@@ -183,7 +222,17 @@ def get_cgi_html_footer(configuration, footer='', html=True):
     if not html:
         return ''
 
-    out = "</div>\n" + footer
+    post_content = '\n'.join(user_widgets.get('POSTCONTENT', ['<!-- empty -->']))
+
+    out = '''
+</div>
+<div class="postcontentwidgets">
+<!-- begin user supplied post content widgets -->
+%s
+<!-- end user supplied post content widgets -->
+</div>
+</div>''' % post_content
+    out += footer
     out += '''
 <div id="bottomlogo">
 <img src="%s" id="creditsimage" alt=""/>

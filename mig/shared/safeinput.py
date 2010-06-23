@@ -848,6 +848,16 @@ def guess_type(name):
         return valid_numeric
     elif name.lower().find('net_bw') != -1:
         return valid_numeric
+    elif name.lower().find('premenu') != -1:
+        return valid_free_text
+    elif name.lower().find('postmenu') != -1:
+        return valid_free_text
+    elif name.lower().find('precontent') != -1:
+        return valid_free_text
+    elif name.lower().find('postcontent') != -1:
+        return valid_free_text
+    elif name.lower().find('site_script_deps') != -1:
+        return valid_path
     # showstats.py:
     # time_start/time_end: YYYY-MM
     elif name.lower().find('time_') != -1:
