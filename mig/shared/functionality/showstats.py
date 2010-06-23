@@ -433,7 +433,7 @@ The query you have requested did not return any data.
          <link rel="stylesheet" type="text/css" 
              href="/images/css/stats.visualize.css" />
          <script type="text/javascript" 
-                 src="/images/js/jquery-1.3.2.min.js"></script>
+                 src="/images/js/jquery.js"></script>
          <script type="text/javascript" 
                  src="/images/js/visualize.jQuery.js"></script>
          <script type="text/javascript">

@@ -122,7 +122,7 @@ def main(client_id, user_arguments_dict):
     submit_options = ['fields_form', 'textarea_form', 'files_form']
 
     title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery.js"></script>
 
 <script type="text/javascript" >
 

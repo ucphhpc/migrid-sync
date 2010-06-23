@@ -67,7 +67,7 @@ def html_tmpl():
           <option value="10000">10000</option>
           <option value="-1">all</option>
         </select> last jobs
-        matching <input class="filterid" name="job_id" size=10 value="*_%s_*"/>
+        matching <input class="filterid" name="filterid" size=10 value="*_%s_*"/>
       </form>
       <div id="append"  style="display: inline;"><img src="/images/icons/arrow_refresh.png" /></div>
       </div>
@@ -135,10 +135,10 @@ def js_tmpl():
   js = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.contextmenu.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-1.7.2.custom.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
 
-<script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui-1.7.2.custom.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
 <script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>

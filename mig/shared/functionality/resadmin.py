@@ -373,7 +373,7 @@ def main(client_id, user_arguments_dict):
 <style type="text/css">
 .hidden { display:none; }
 </style>
-<script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery.js"></script>
 
 <script type="text/javascript" >
 

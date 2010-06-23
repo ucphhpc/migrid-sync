@@ -236,11 +236,11 @@ Please write a message to the owners (field below).""",
 
     title_entry['javascript'] = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-1.7.2.custom.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
 
-<script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui-1.7.2.custom.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 
 <script type="text/javascript" >
 
