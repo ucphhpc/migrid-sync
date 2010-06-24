@@ -36,9 +36,9 @@ def get_widgets_specs():
     specs = []
     specs.append(('SITE_SCRIPT_DEPS', {
         'Description': 'Scripts needed for your widgets',
-        'Example': 'jquery',
+        'Example': 'jquery.js',
         'Type': 'multiplestrings',
-        'Value': ['jquery.js'],
+        'Value': [],
         'Context': 'select',
         'Required': False,
         }))
