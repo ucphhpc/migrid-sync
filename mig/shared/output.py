@@ -1182,17 +1182,17 @@ def pickle_helper(configuration, ret_val, ret_msg, out_obj, protocol=None):
 def pickle_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in default pickle protocol format"""
 
-    return pickle_helper(ret_val, ret_msg, out_obj, protocol=0)
+    return pickle_helper(configuration, ret_val, ret_msg, out_obj, protocol=0)
 
 def pickle1_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in pickle protocol 1 format"""
 
-    return pickle_helper(ret_val, ret_msg, out_obj, protocol=1)
+    return pickle_helper(configuration, ret_val, ret_msg, out_obj, protocol=1)
 
 def pickle2_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in default pickle protocol 2 format"""
 
-    return pickle_helper(ret_val, ret_msg, out_obj, protocol=2)
+    return pickle_helper(configuration, ret_val, ret_msg, out_obj, protocol=2)
 
 
 def yaml_format(configuration, ret_val, ret_msg, out_obj):
