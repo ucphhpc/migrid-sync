@@ -373,6 +373,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in html format"""
 
     lines = []
+    include_widgets = True
     user_widgets = {}
     status_line = \
         """
@@ -403,6 +404,8 @@ Exit code: %s Description: %s<br />
             include_menu = True
             if i.has_key('skipmenu'):
                 include_menu = not i['skipmenu']
+            if i.has_key('skipwidgets'):
+                include_widgets = not i['skipwidgets']
             user_menu = []
             if i.has_key('user_menu'):
                 user_menu = i['user_menu']
@@ -414,7 +417,8 @@ Exit code: %s Description: %s<br />
                 True,
                 javascript,
                 bodyfunctions,
-                include_menu, 
+                include_menu,
+                include_widgets,
                 user_menu,
                 user_widgets
                 ))
@@ -1145,7 +1149,7 @@ Exit code: %s Description: %s<br />
             lines.append('unknown object %s' % i)
 
     if status_line:
-        lines.append(get_cgi_html_footer(configuration, status_line, True, user_widgets))
+        lines.append(get_cgi_html_footer(configuration, status_line, True, include_widgets, user_widgets))
     return '\n'.join(lines)
 
 

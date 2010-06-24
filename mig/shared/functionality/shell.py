@@ -60,8 +60,9 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Advanced Shell'
-    if accepted['menu'][-1]=='no':
-        title_entry['skipmenu']=True
+    if accepted['menu'][-1] == 'no':
+        title_entry['skipmenu'] = True
+        title_entry['skipwidgets'] = True
         title_entry['javascript'] = '''
 <style type="text/css">
 #content { margin: 10px }

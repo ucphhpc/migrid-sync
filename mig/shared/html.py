@@ -127,6 +127,7 @@ def get_cgi_html_header(
     scripts='',
     bodyfunctions='',
     menu=True,
+    widgets=True,
     user_menu=[],
     user_widgets={},
     ):
@@ -139,20 +140,24 @@ def get_cgi_html_header(
         current_page = os.path.basename(sys.argv[0]).replace('.py', '')
         menu_lines = render_menu(configuration, 'navmenu', current_page, user_menu)
 
-    script_deps = user_widgets.get('SITE_SCRIPT_DEPS', [''])
-    pre_menu = '\n'.join(user_widgets.get('PREMENU', ['<!-- empty -->']))
-    post_menu = '\n'.join(user_widgets.get('POSTMENU', ['<!-- empty -->']))
-    pre_content = '\n'.join(user_widgets.get('PRECONTENT', ['<!-- empty -->']))
     user_scripts = ''
-    for dep in script_deps:
-        # Avoid reloading already included scripts
-        if dep and scripts.find(dep) == -1:
-            if dep.endswith('.js'):
-                user_scripts += '''
+    pre_menu = ''
+    post_menu = ''
+    pre_content = ''
+    if widgets:
+        script_deps = user_widgets.get('SITE_SCRIPT_DEPS', [''])
+        pre_menu = '\n'.join(user_widgets.get('PREMENU', ['<!-- empty -->']))
+        post_menu = '\n'.join(user_widgets.get('POSTMENU', ['<!-- empty -->']))
+        pre_content = '\n'.join(user_widgets.get('PRECONTENT', ['<!-- empty -->']))
+        for dep in script_deps:
+            # Avoid reloading already included scripts
+            if dep and scripts.find(dep) == -1:
+                if dep.endswith('.js'):
+                    user_scripts += '''
 <script type="text/javascript" src="/images/js/%s"></script>
 ''' % dep
-            elif dep.endswith('.css'):
-                user_scripts += '''
+                elif dep.endswith('.css'):
+                    user_scripts += '''
 <link rel="stylesheet" type="text/css" href="/images/css/%s" media="screen"/>
 ''' % dep
     
@@ -214,7 +219,7 @@ def get_cgi_html_header(
             post_menu, pre_content, header)
 
 
-def get_cgi_html_footer(configuration, footer='', html=True, user_widgets={}):
+def get_cgi_html_footer(configuration, footer='', html=True, widgets=True, user_widgets={}):
     """Return the html tags to mark the end of a page. If a footer string
     is supplied it is inserted at the bottom of the page.
     """
@@ -222,7 +227,9 @@ def get_cgi_html_footer(configuration, footer='', html=True, user_widgets={}):
     if not html:
         return ''
 
-    post_content = '\n'.join(user_widgets.get('POSTCONTENT', ['<!-- empty -->']))
+    post_content = ''
+    if widgets:
+        post_content = '\n'.join(user_widgets.get('POSTCONTENT', ['<!-- empty -->']))
 
     out = '''
 </div>
