@@ -28,58 +28,57 @@
 """Keywords in the widgets files"""
 
 
-def get_keywords_dict():
-    site_script_deps = {
-        'Description': 'Widget script dependencies',
+def get_widgets_specs():
+    """Return an ordered list of (keywords, spec) tuples. The order is
+    used for configuration order consistency.
+    """
+
+    specs = []
+    specs.append(('SITE_SCRIPT_DEPS', {
+        'Description': 'Scripts needed for your widgets',
         'Example': 'jquery',
         'Type': 'multiplestrings',
-        'Value': [],
+        'Value': ['jquery.js'],
         'Context': 'select',
         'Required': False,
-        }
-    premenu = {
-        'Description': 'Widget before menu',
+        }))
+    specs.append(('PREMENU', {
+        'Description': 'Widgets displayed before menu',
         'Example': '',
         'Type': 'multiplestrings',
         'Value': [],
         'Context': 'menu',
         'Required': False,
-        }
-    postmenu = {
-        'Description': 'Widget after menu',
+        }))
+    specs.append(('POSTMENU', {
+        'Description': 'Widgets displayed after menu',
         'Example': '',
         'Type': 'multiplestrings',
         'Value': [],
         'Context': 'menu',
         'Required': False,
-        }
-    precontent = {
-        'Description': 'Widget before content',
+        }))
+    specs.append(('PRECONTENT', {
+        'Description': 'Widgets displayed before content',
         'Example': '',
         'Type': 'multiplestrings',
         'Value': [],
         'Context': 'content',
         'Required': False,
-        }
-    postcontent = {
-        'Description': 'Widget after content',
+        }))
+    specs.append(('POSTCONTENT', {
+        'Description': 'Widgets displayed after content',
         'Example': '',
         'Type': 'multiplestrings',
         'Value': [],
         'Context': 'content',
         'Required': False,
-        }
-    
+        }))
+    return specs
+
+def get_keywords_dict():
+    """Return mapping between widgets keywords and their specs"""
+
     # create the keywords in a single dictionary
 
-    keywords_dict = {
-        'SITE_SCRIPT_DEPS': site_script_deps,
-        'PREMENU': premenu,
-        'POSTMENU': postmenu,
-        'PRECONTENT': precontent,
-        'POSTCONTENT': postcontent,
-        }
-
-    return keywords_dict
-
-
+    return dict(get_widgets_specs())

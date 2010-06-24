@@ -28,94 +28,89 @@
 """Keywords in the settings files"""
 
 
-def get_keywords_dict():
-    email = {
+def get_settings_specs():
+    """Return an ordered list of (keywords, spec) tuples. The order is
+    used for configuration order consistency.
+    """
+
+    specs = []
+    specs.append(('EMAIL', {
         'Description': 'List of E-mail addresses',
         'Example': 'my@email.com, my_other@email.com',
         'Type': 'multiplestrings',
         'Value': [],
         'Context': 'notify',
         'Required': False,
-        }
-    jabber = {
+        }))
+    specs.append(('JABBER', {
         'Description': 'List of Jabber addresses',
         'Example': 'me@jabber.com, me2@jabber.com',
         'Type': 'multiplestrings',
         'Value': [],
         'Context': 'notify',
         'Required': False,
-        }
-    msn = {
+        }))
+    specs.append(('MSN', {
         'Description': 'List of MSN addresses',
         'Example': 'me@hotmail.com, me2@hotmail.com',
         'Type': 'multiplestrings',
         'Value': [],
         'Context': 'notify',
         'Required': False,
-        }
-    icq = {
+        }))
+    specs.append(('ICQ', {
         'Description': 'List of ICQ numbers',
         'Example': '2364236, 2342342',
         'Type': 'multiplestrings',
         'Value': [],
         'Context': 'notify',
         'Required': False,
-        }
-    aol = {
+        }))
+    specs.append(('AOL', {
         'Description': 'List of AOL addresses',
         'Example': 'me@aol.com, me2@aol.com',
         'Type': 'multiplestrings',
         'Value': [],
         'Context': 'notify',
         'Required': False,
-        }
-    yahoo = {
+        }))
+    specs.append(('YAHOO', {
         'Description': 'List of Yahoo! addresses',
         'Example': 'me@yahoo.com, me2@hotmail.com',
         'Type': 'multiplestrings',
         'Value': [],
         'Context': 'notify',
         'Required': False,
-        }
-    language = {
+        }))
+    specs.append(('LANGUAGE', {
         'Description': 'Your preferred interface language',
         'Example': 'English',
         'Type': 'string',
         'Value': 'English',
         'Context': 'localization',
         'Required': False,
-        }
-    submitui = {
+        }))
+    specs.append(('SUBMITUI', {
         'Description': 'Your preferred Submit Job interface',
         'Example': 'fields',
         'Type': 'string',
         'Value': 'textarea',
         'Context': 'appearance',
         'Required': False,
-        }
-    site_user_menu = {
+        }))
+    specs.append(('SITE_USER_MENU', {
         'Description': 'Additional menu items.', # can be chosen from configuration.user_menu
         'Example': '...choose from the list',
         'Type': 'multiplestrings',
         'Value': [],
         'Context': 'appearance',
         'Required': False,
-        }
-    
+        }))
+    return specs
+
+def get_keywords_dict():
+    """Return mapping between settings keywords and their specs"""
+
     # create the keywords in a single dictionary
 
-    keywords_dict = {
-        'EMAIL': email,
-        'JABBER': jabber,
-        'MSN': msn,
-        'ICQ': icq,
-        'AOL': aol,
-        'YAHOO': yahoo,
-        'LANGUAGE': language,
-        'SUBMITUI': submitui,
-        'SITE_USER_MENU': site_user_menu,
-        }
-
-    return keywords_dict
-
-
+    return dict(get_settings_specs())

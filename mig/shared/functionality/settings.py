@@ -31,8 +31,8 @@ import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables
 from shared.settings import load_settings, load_widgets
-from shared.settingskeywords import get_keywords_dict as get_settings_fields
-from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
+from shared.settingskeywords import get_settings_specs
+from shared.widgetskeywords import get_widgets_specs
 from shared.useradm import client_id_dir, mrsl_template, css_template, \
     get_default_mrsl, get_default_css
 
@@ -122,8 +122,8 @@ def main(client_id, user_arguments_dict):
         <tr><td>
         </td></tr>
         ''' % configuration.site_title
-        keywords_dict = get_settings_fields()
-        for (keyword, val) in keywords_dict.items():
+        settings_entries = get_settings_specs()
+        for (keyword, val) in settings_entries:
             if 'notify' == val['Context'] and keyword.lower() not in configuration.notify_protocols:
                 continue
             html += \
@@ -309,7 +309,7 @@ Default user defined widgets for all pages
 </td></tr>
 <tr><td>
 If you want to customize the look and feel of the %s web interfaces you can add your own widgets here. If you leave the widgets blank you will just get the default empty widget spaces.<br />
-You can copy paste from the available widget file links below if you want to reuse existing widgets.<br />
+You can simply copy/paste from the available widget file links below if you want to reuse existing widgets.<br />
 </td></tr>
 <tr><td>
 <a class="urllink" href="/images/widgets/hello-grid.app">hello grid</a>,
@@ -322,13 +322,16 @@ You can copy paste from the available widget file links below if you want to reu
 <a class="urllink" href="/images/widgets/countdown.app">countdown</a>
 </td></tr>
 <tr><td>
+<div class="warningtext">Please note that the widgets parser is rather grumpy so you may have to avoid blank lines and "#" signs in your widget code below. Additionally any errors in your widgets code may cause severe corruption in your pages, so it may be a good idea to keep another browser tab/window open on this page while experimenting.</div> 
+</td></tr>
+<tr><td>
 <form method="post" action="widgetsaction.py">
 </td></tr>
 <tr><td>
 ''' % configuration.short_title
 
-        keywords_dict = get_widgets_fields()
-        for (keyword, val) in keywords_dict.items():
+        widgets_entries = get_widgets_specs()
+        for (keyword, val) in widgets_entries:
             html += \
                 """
             <tr class=title><td>
