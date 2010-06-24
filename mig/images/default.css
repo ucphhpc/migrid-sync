@@ -156,7 +156,8 @@ table.monitorruntimeenvreq {
 }
 
 .contentblock {
-  margin-left: 160px;
+  margin: 5px;
+  margin-left: 165px;
 }
 
 
@@ -258,22 +259,18 @@ table.monitorruntimeenvreq {
 }
 
 .premenuwidgets {
-  margin: 2px;
   color: black;
 }
 
 .postmenuwidgets {
-  margin: 2px;
   color: black;
 }
 
 .precontentwidgets {
-  margin: 2px;
   color: black;
 }
 
 .postcontentwidgets {
-  margin: 2px;
   color: black;
 }
 
@@ -377,7 +374,6 @@ table.monitorruntimeenvreq {
   background: white;
   border: 1px solid black;
   -moz-border-radius: 4px;
-  margin: 5px;
   padding: 8px; 
 }
 
