@@ -1163,8 +1163,7 @@ def soap_format(configuration, ret_val, ret_msg, out_obj):
         import SOAPpy
         return SOAPpy.buildSOAP(out_obj)
     except Exception, exc:
-        print 'SOAPpy not available on server! Defaulting to .txt output. (%s)'\
-             % exc
+        configuration.logger.error('soap unavailable (%s) - using txt' % exc)
         return None
 
 
@@ -1175,8 +1174,7 @@ def pickle_helper(configuration, ret_val, ret_msg, out_obj, protocol=None):
         from shared.serial import dumps
         return dumps(out_obj, protocol)
     except Exception, exc:
-        print 'pickle not available on server! Defaulting to .txt output. (%s)'\
-             % exc
+        configuration.logger.error('pickle unavailable (%s) - using txt' % exc)
         return None
 
 def pickle_format(configuration, ret_val, ret_msg, out_obj):
@@ -1202,8 +1200,7 @@ def yaml_format(configuration, ret_val, ret_msg, out_obj):
         import yaml
         return yaml.dump(out_obj)
     except Exception, exc:
-        print 'yaml not available on server! Defaulting to .txt output. (%s)'\
-             % exc
+        configuration.logger.error('yaml unavailable (%s) - using txt' % exc)
         return None
 
 
@@ -1221,8 +1218,7 @@ def xmlrpc_format(configuration, ret_val, ret_msg, out_obj):
                     entry[key] = xmlrpclib.Binary(entry[key])
         return xmlrpclib.dumps((out_obj, ), allow_none=True)
     except Exception, exc:
-        print 'xmlrpclib not available on server! Defaulting to .txt output. (%s)'\
-             % exc
+        configuration.logger.error('xmlrpc unavailable (%s) - using txt' % exc)
         return None
 
 
@@ -1240,8 +1236,7 @@ def json_format(configuration, ret_val, ret_msg, out_obj):
             json.dumps = json.write
         return json.dumps(out_obj)
     except Exception, exc:
-        print 'json not available on server! Defaulting to .txt output. (%s)'\
-             % exc
+        configuration.logger.error('json unavailable (%s) - using txt' % exc)
         return None
 
 def file_format(configuration, ret_val, ret_msg, out_obj):

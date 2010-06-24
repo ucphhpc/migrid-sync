@@ -89,22 +89,34 @@ def parse_and_save_widgets(filename, client_id, configuration):
                                  configuration)
 
 
-def load_settings(client_id, configuration):
-    """Load settings from pickled settings file"""
+def load_settings(client_id, configuration, include_meta=False):
+    """Load settings from pickled settings file. Optional include_meta
+    controls the inclusion of meta data like creator and creation time.
+    """
 
     client_dir = client_id_dir(client_id)
     settings_path = os.path.join(configuration.user_home, client_dir,
                                  settings_filename)
     settings_dict = unpickle(settings_path, configuration.logger)
+    if settings_dict and not include_meta:
+        real_keys = get_settings_fields().keys()
+        for key in settings_dict.keys():
+            if not key in real_keys:
+                del settings_dict[key]
     return settings_dict
 
-def load_widgets(client_id, configuration):
-    """Load widgets from pickled widgets file"""
+def load_widgets(client_id, configuration, include_meta=False):
+    """Load widgets from pickled widgets file. Optional include_meta
+    controls the inclusion of meta data like creator and creation time.
+    """
 
     client_dir = client_id_dir(client_id)
     widgets_path = os.path.join(configuration.user_home, client_dir,
                                  widgets_filename)
     widgets_dict = unpickle(widgets_path, configuration.logger)
+    if widgets_dict and not include_meta:
+        real_keys = get_widgets_fields().keys()
+        for key in widgets_dict.keys():
+            if not key in real_keys:
+                del widgets_dict[key]
     return widgets_dict
-
-

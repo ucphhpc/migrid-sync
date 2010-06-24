@@ -833,7 +833,7 @@ if (jQuery) (function($){
     });
         
   };
- 
+
 })(jQuery);
 
 
@@ -899,4 +899,3 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
     );
     return do_d;
 };
-
