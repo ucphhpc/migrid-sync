@@ -274,7 +274,7 @@ if (jQuery) (function($){
     $("#append").click(function() { 
 
         // Busy marker while loading jobs from server
-        $("table tbody").html("<tr class='odd'><td class='wait'></td><td>Loading jobs...</td><td></td><td></td></tr>");
+        $("#jm_jobmanager tbody").html("<tr class='odd'><td class='wait'></td><td>Loading jobs...</td><td></td><td></td></tr>");
         var job_count = 0;
         var sched_hint = '';
         var output_url = '';
