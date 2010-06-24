@@ -316,6 +316,7 @@ You can copy paste from the available widget file links below if you want to reu
 <a class="urllink" href="/images/widgets/simple-calendar.app">simple calendar</a>,
 <a class="urllink" href="/images/widgets/calendar.app">calendar</a>,
 <a class="urllink" href="/images/widgets/calculator.app">calculator</a>,
+<a class="urllink" href="/images/widgets/rss.app">rss reader</a>,
 <a class="urllink" href="/images/widgets/countdown.app">countdown</a>
 </td></tr>
 <tr><td>

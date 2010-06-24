@@ -10,7 +10,7 @@ $(document).ready(function() {
     $(".countdown").countdown({until: future});
 });
 </script>
-<h3>Countdown to new year</h3>
+<h3>Time to new year</h3>
 <div class="countdown">
 <p>Please enable Javascript to view this countdown widget.</p>
 </div>
