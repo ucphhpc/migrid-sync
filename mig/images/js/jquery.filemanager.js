@@ -88,7 +88,7 @@ if (jQuery) (function($){
 	    } 
 	    // if no clickaction is provided, default to opening and editing
             if($(el).hasClass('directory')) {
-                $('.fm_files').parent().reload($(el).attr(pathAttribute));
+                $('.fm_folders li [rel_path='+$(el).attr(pathAttribute)+']').click();
             } else {
                 // Do stuff with files.
                 callbacks['edit']('action', el, null);              
@@ -732,7 +732,7 @@ if (jQuery) (function($){
      if (options.subPath == '/') {
          options.subPath = '';
      }
-                        
+     
      showBranch( $('.fm_folders', obj), escape(options.root) );            
             
      /**

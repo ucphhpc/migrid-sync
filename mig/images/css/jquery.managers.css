@@ -271,7 +271,7 @@ UL.jqueryFileList A:hover {
 .expanded { 
   background: url(/images/icons/folder_open.png);
   /* use top here because it is relative to self plus all expanded children */
-  background-position: left top; 
+  background-position: left top;
   background-repeat: no-repeat;
 }
 
