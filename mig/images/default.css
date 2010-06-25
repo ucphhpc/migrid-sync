@@ -163,6 +163,11 @@ table.monitorruntimeenvreq {
   padding: 0;
 }
 
+/* override block layout for maximized areas like wshell */
+#nomenu {
+  margin: 4px;
+}
+
 
 /* Navigational menu... */
 .navmenu {
@@ -592,3 +597,4 @@ table.monitorruntimeenvreq {
   background: url('/images/icons/box.png') no-repeat;
   padding-left: 18px;
 }
+
