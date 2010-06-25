@@ -233,12 +233,12 @@ table.monitorruntimeenvreq {
   background-image: url('/images/icons/txt.png');
 }
 
-.navmenu ul li a:hover, .navsubmenu ul li a:hover {     
+.navmenu ul li a:hover, .navsubmenu ul li a:hover {
   background-color: #369;
   color: white;
 }
 
-.navmenu ul  li a.selected {    
+.navmenu ul li a.selected {
   background-color: #147;
   color: white;
 }

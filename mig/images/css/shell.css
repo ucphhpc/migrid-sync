@@ -1,12 +1,12 @@
-#shell {height: 450px; width: 100%; background: #fff; margin: 0px; padding: 0px; overflow: scroll;}
+#shell {height: 450px; width: 100%; background: #fff; margin: 0px; #padding: 0px; overflow: scroll; }
 #divShellOutput {margin-left: 2px; margin-top: 0px; }
 #divShellInput {margin-left: 2px; margin-top: 0px; }
-#divShellOutput table{padding: 0px; vertical-align: top;  border-style: none; border-collapse:collapse; background-color:Transparent;}
-.tableShellInput {padding: 0px; width : 100%; vertical-align: top; border-style: none; border-collapse:collapse; background-color:Transparent;}
+#divShellOutput table{padding: 0px; vertical-align: top;  border-style: none; border-collapse:collapse; background-color:Transparent; }
+.tableShellInput {padding: 0px; width : 100%; vertical-align: top; border-style: none; border-collapse:collapse; background-color:Transparent; }
 .trShellInput {padding:0px; width: 100%; vertical-align: top; }
-.tdShellCommand {padding:0px; vertical-align: middle; width: 100%;}
-.tdShellPrompt {padding: 0px; vertical-align: middle;color:#666; white-space: nowrap;}
-.inputShellCommand { font-family:Verdana, verdana, Times New Roman;vertical-align: middle; width: 100%;border-style:none; overflow: hidden; white-space: nowrap;}
+.tdShellCommand {padding:0px; vertical-align: middle; width: 100%; }
+.tdShellPrompt {padding: 0px; vertical-align: middle;color:#666; white-space: nowrap; }
+.inputShellCommand { font-family:Verdana, verdana, Times New Roman;vertical-align: middle; width: 100%;border-style:none; overflow: hidden; white-space: nowrap; }
 /*
 html { height: 100%; }
 body { background: #fff; font-size: 12px; font-family: Tahoma, Geneva, sans-serif; height: 99%; margin:0px; padding: 0px; }
