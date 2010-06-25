@@ -458,7 +458,7 @@ if (jQuery) (function($){
           // Root node                    
           if (t=='/') {
              folders +=  '<ul class="jqueryFileTree">'+
-                  '<li class="directory collapsed userhome" rel_path="" title="Home"><div>/</div>';
+                  '<li class="directory expanded userhome" rel_path="" title="Home"><div>/</div>';
           }
 
           // Regular nodes from here on after
