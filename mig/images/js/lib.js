@@ -45,7 +45,7 @@ Lib.prototype.Init=function ()
     [['list'], "{'type': ['']}", 0],
     [['cd'], "{'path': ['']}", 0],
     [['upload'],"",0],
-    [['exit','quit'],"",0]
+    [['exit','quit','logout'],"",0]
     ];
     //get all remote methods
     this.methods=this.Probe(this.methods);
