@@ -4,9 +4,16 @@ if (jQuery) (function($){
       return Date.parse(strDate);
   }
 
+  function windowWrapper(el_id, dialog, url) {
+    window.open(url);
+    $("#cmd_helper div[title="+el_id+"]").removeClass("spinner").addClass("ok");
+    $("#cmd_helper div[title="+el_id+"] p").append("<br/>Opened in new window/tab");
+    return true;
+  }
+
   function jsonWrapper(el_id, dialog, url, jsonOptions) {
         
-    var jsonSettings = {        output_format: "json" };
+    var jsonSettings = {output_format: "json"};
     
     $.fn.extend(jsonSettings, jsonOptions);
     
@@ -184,10 +191,12 @@ if (jQuery) (function($){
                     jsonWrapper(job_id, "#cmd_dialog", "resubmit.py", {job_id: job_id})
                 },
                 statusfiles: function (job_id) {    
-                    document.location = "fileman.py?path="+"job_output/"+job_id+"/";
+                    url = "fileman.py?path=job_output/"+job_id+"/";
+                    windowWrapper(job_id, "#cmd_dialog", url);
                 },
-                outputfiles: function (job_output) {    
-                    document.location = "fileman.py?"+job_output.match(/^ls.py\?(.*)$/)[1];
+                outputfiles: function (job_id, job_output) {    
+                    url = "fileman.py?"+job_output.match(/^ls.py\?(.*)$/)[1];
+                    windowWrapper(job_id, "#cmd_dialog", url);
                 },
                 liveoutput: function (job_id) {
                     jsonWrapper(job_id, "#cmd_dialog", "liveoutput.py", {job_id: job_id})
@@ -200,17 +209,6 @@ if (jQuery) (function($){
             $("#jm_jobmanager tbody tr td").contextMenu({ menu: "job_context"},
                 function(action, el, pos) {
                     
-                    // Status and output files redirect to the filemanager, so they do not match the general case of jsonwrapping/commandoutput
-                    if (action == "statusfiles") {
-                      actions[action]($("input[name=job_identifier]", $(el).parent()).val());                      
-                      return true;
-                    }
-                    else if (action == "outputfiles") {
-                      actions[action]($("input[name=job_output]", $(el).parent()).val());                      
-                      return true;
-                    }                    
-                    
-                    // All other actions are handled by the general case.
                     var single_selection = !$(el).parent().hasClass("ui-selected");
                     var job_id = "";
                     
@@ -223,8 +221,13 @@ if (jQuery) (function($){
                         job_id = $("input[name=job_identifier]", $(el).parent()).val();
                                                 
                         $("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>JobId: "+job_id+"</p></div>");
-                        actions[action](job_id);
-                        
+                        // Output files redirect to the filemanager with extra args.
+                        // All other actions are handled by the general case.    
+                        if (action == "outputfiles") {
+                          actions[action](job_id, $("input[name=job_output]", $(el).parent()).val());
+                        } else {
+                          actions[action](job_id);
+                        }                        
                     } else {
                         var selected_rows = $("#jm_jobmanager tbody tr.ui-selected");
                         $("#cmd_helper").append("<p>"+action+": "+selected_rows.length+" jobs, see individual status below:</p>");
@@ -317,7 +320,8 @@ if (jQuery) (function($){
                 if (item.outputfileslink != null) {
                     output_url = item.outputfileslink.destination;
                 } else {
-                    output_url = "";
+                    /* dummy value of user home for jobs without output files*/
+                    output_url = "ls.py?path=";
                 }
                 $("#jm_jobmanager tbody").append("<tr id='"+item.job_id.match(/^([0-9_]+)__/)[1]+"'>"+
                   "<td><div class='sortkey'></div><input type='checkbox' name='job_identifier' value='"+item.job_id+"' /></td>"+
