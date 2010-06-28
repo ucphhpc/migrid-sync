@@ -6,7 +6,7 @@ if (jQuery) (function($){
 
   function jsonWrapper(el_id, dialog, url, jsonOptions) {
         
-    var jsonSettings = {	output_format: "json" };
+    var jsonSettings = {        output_format: "json" };
     
     $.fn.extend(jsonSettings, jsonOptions);
     
@@ -53,17 +53,17 @@ if (jQuery) (function($){
             for(j=0; j<jsonRes[i]["submitstatuslist"].length; j++) {
             
               if (jsonRes[i]["submitstatuslist"][j]["status"]) {
-                misc_output +=	"<p>Submitted '"
-                            +		jsonRes[i]["submitstatuslist"][j]["name"]
-                            +		"'</p>"
-                            +		"<p>Job identfier: '"+jsonRes[i]["submitstatuslist"][j]["job_id"]
-                            +		"'</p>";
+                misc_output +=  "<p>Submitted '"
+                            +           jsonRes[i]["submitstatuslist"][j]["name"]
+                            +           "'</p>"
+                            +           "<p>Job identfier: '"+jsonRes[i]["submitstatuslist"][j]["job_id"]
+                            +           "'</p>";
               } else {
-                misc_output +=	"<p>Failed submitting:</p><p>"
-                            +		jsonRes[i]["submitstatuslist"][j]["name"]
-                            +		" "+jsonRes[i]["submitstatuslist"][j]["message"]
-                            +		"</p>";
-              }													
+                misc_output +=  "<p>Failed submitting:</p><p>"
+                            +           jsonRes[i]["submitstatuslist"][j]["name"]
+                            +           " "+jsonRes[i]["submitstatuslist"][j]["message"]
+                            +           "</p>";
+              }                                                                                                 
             
             }
               
@@ -117,11 +117,11 @@ if (jQuery) (function($){
       if ((errors.length + file_output.length + misc_output.length + dir_listings.length) >0){
                     
         if (file_output.length>0) {
-          file_output = "<pre>"+file_output+"</pre>";	
+          file_output = "<pre>"+file_output+"</pre>";   
         }
         
         if (dir_listings.length>0) {
-          dir_listings = "<pre>"+dir_listings+"</pre>";	
+          dir_listings = "<pre>"+dir_listings+"</pre>"; 
         }
         
         if ((errors.length>0) || (misc_output.length>0)) {
@@ -287,7 +287,7 @@ if (jQuery) (function($){
         if (max_jobs > 0) {
             limit_opts += "flags=s;max_jobs=" + max_jobs + ';';
         }
-	filter_id = $(".filterid", config.container).val();
+        filter_id = $(".filterid", config.container).val();
         if (filter_id != '') {
             limit_opts = "job_id=" + filter_id + ';';
         }
@@ -305,7 +305,7 @@ if (jQuery) (function($){
                 }
             }   
     
-	    // Remove busy marker
+            // Remove busy marker
             $("#jm_jobmanager tbody").html("");
             // Wrap each json result into html
             $.each(jobList, function(i, item) {
