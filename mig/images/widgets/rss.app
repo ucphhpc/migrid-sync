@@ -5,7 +5,7 @@ Requires: jquery.js, jquery.zrssfeed.js, jquery.zrssfeed.css
 <script type="text/javascript">
 $(document).ready(function() {
     $(".rssfeed").html("");
-    $(".rssfeed").rssfeed('http://code.google.com/feeds/p/migrid/svnchanges/basic', {
+    $(".rssfeed").rssfeed('https://code.google.com/feeds/p/migrid/svnchanges/basic', {
     limit: 3
   });
 });
