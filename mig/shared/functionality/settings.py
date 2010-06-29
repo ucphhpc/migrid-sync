@@ -319,6 +319,7 @@ You can simply copy/paste from the available widget file links below if you want
 <a class="urllink" href="/images/widgets/rss.app">rss reader</a>,
 <a class="urllink" href="/images/widgets/clock.app">clock</a>,
 <a class="urllink" href="/images/widgets/weather.app">weather</a>,
+<a class="urllink" href="/images/widgets/progressbar.app">progress bar</a>,
 <a class="urllink" href="/images/widgets/countdown.app">countdown</a>
 </td></tr>
 <tr><td>
