@@ -119,6 +119,8 @@ def render_menu(configuration, menu_class='navmenu',
 
     return menu_lines
 
+
+
 def get_cgi_html_header(
     configuration,
     title,
