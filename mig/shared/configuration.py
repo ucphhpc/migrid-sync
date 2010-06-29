@@ -339,6 +339,7 @@ class Configuration:
             self.javabin_home = config.get('GLOBAL', 'javabin_home')
             self.smtp_server = config.get('GLOBAL', 'smtp_server')
             self.wwwpublic = config.get('GLOBAL', 'wwwpublic')
+            self.vm_home = config.get('GLOBAL', 'vm_home')
             self.architectures = config.get('GLOBAL', 'architectures').split()
             self.scriptlanguages = config.get('GLOBAL',
                                               'scriptlanguages').split()
