@@ -588,6 +588,10 @@ table.monitorruntimeenvreq {
   background: url('/images/icons/application.png') no-repeat;
   padding-left: 18px;
 }
+.arcsettingslink {
+  background: url('/images/icons/ng-arc.png') no-repeat;
+  padding-left: 18px;
+}
 
 .realres {
   background: url('/images/icons/computer.png') no-repeat;
