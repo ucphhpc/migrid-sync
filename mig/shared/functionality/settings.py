@@ -73,7 +73,9 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                client_dir)) + os.sep
 
-    valid_topics = ['general', 'job', 'style', 'widgets']
+    valid_topics = ['general', 'job', 'style']
+    if configuration.site_script_deps:
+        valid_topics.append('widgets')
     if configuration.arc_clusters:
         valid_topics.append('arc')
     topics = accepted['topic']
