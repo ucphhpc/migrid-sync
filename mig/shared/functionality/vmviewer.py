@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# vmachines_connect - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# vmviewer - Virtual machine client based on the tightVNC applet
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -24,19 +24,35 @@
 #
 # -- END_HEADER ---
 #
-import os, sys, cgi, cgitb, md5
 
+import os
 import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert
-from shared.cgiscriptstub import run_cgi_script
-from shared import vms # Yeah this is the shit!
 import ConfigParser
-#from shared.functionality.submitjob import main
+
+def generate_vnc_applet(vm_host, proxy_host, vm_port, width, height, password):
+    """Return an html applet tag."""
+    applet = """<APPLET CODE="vncviewer" ARCHIVE="vncviewer.jar" """
+    applet += " CODEBASE=\"%s/vnc/\"" % proxy_host
+    applet += " WIDTH=%d HEIGHT=%d >" % (width, height)
+    applet += "<PARAM NAME=\"PORT\" VALUE=\"%d\">" % vm_port
+    applet += "<PARAM NAME=\"PASSWORD\" VALUE=\"%s\">" % (password)
+    applet += "<PARAM NAME=\"HOST\" VALUE=\"%s\">" % vm_host 
+    applet += "<PARAM NAME=\"ENCODING\" VALUE=\"Auto\">"  
+    applet += "<PARAM NAME=\"Scaling factor\" VALUE=\"120\">" 
+    applet += "<PARAM NAME=\"Show controls\" VALUE=\"no\">"  
+  
+    applet += "</APPLET>"
+  
+    return applet
 
 def signature():
-  defaults = {'flags': [''], 'path': ['.']}
-  return ['dir_listings', defaults]
+    defaults = {'resource' : [''], 
+                    'width' : [''], 
+                    'height' : [''] }
+                    
+    return ['', defaults]
 
 def main(cert_name_no_spaces, user_arguments_dict):
     """Main function used by front end"""
@@ -45,10 +61,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
         initialize_main_variables(cert_name_no_spaces, op_header=False, op_title=False)
 
     status = returnvalues.OK
-    defaults = {'resource' : [''], 
-                    'width' : [''], 
-                    'height' : [''] }
-    
+    defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -68,6 +81,8 @@ def main(cert_name_no_spaces, user_arguments_dict):
     width = int(accepted['width'][0])
     height = int(accepted['height'][0])
 
+    # look up needed information about VM in the config file
+
     config_file_path = os.path.join(configuration.vm_home, vm_id, "vm.conf")
     if not os.path.exists(config_file_path):
         output_objects.append({'object_type': 'text', 'text'
@@ -80,7 +95,7 @@ def main(cert_name_no_spaces, user_arguments_dict):
     passw = vm_config.get('VNC', 'pass')
     port = vm_config.getint('VNC', 'port')
     applet_url = "http://"+configuration.server_fqdn
-    output_objects.append({'object_type': 'html_form', 'text': vms.generate_vnc_applet_tag(url, applet_url, port, 80, width, height, passw)
+    output_objects.append({'object_type': 'html_form', 'text': generate_vnc_applet(url, applet_url, port, width, height, passw)
                               })
     return (output_objects, status)
     
