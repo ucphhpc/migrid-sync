@@ -38,9 +38,9 @@ settings_filename = '.settings'
 widgets_filename = '.widgets'
 
 
-def parse_and_save_pickle(source, destination, keywords, client_id, configuration):
+def parse_and_save_pickle(source, destination, keywords, client_id, configuration, strip_space, strip_comments):
     client_dir = client_id_dir(client_id)
-    result = parser.parse(source)
+    result = parser.parse(source, strip_space, strip_comments)
 
     (status, parsemsg) = parser.check_types(result, keywords,
             configuration)
@@ -81,12 +81,12 @@ def parse_and_save_pickle(source, destination, keywords, client_id, configuratio
 def parse_and_save_settings(filename, client_id, configuration):
     return parse_and_save_pickle(filename, settings_filename,
                                  get_settings_fields(), client_id,
-                                 configuration)
+                                 configuration, True, True)
 
 def parse_and_save_widgets(filename, client_id, configuration):
     return parse_and_save_pickle(filename, widgets_filename,
                                  get_widgets_fields(), client_id,
-                                 configuration)
+                                 configuration, False, False)
 
 
 def load_settings(client_id, configuration, include_meta=False):

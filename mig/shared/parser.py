@@ -137,7 +137,7 @@ def replace_special(global_dict):
     return global_dict
 
 
-def handle_escapes(inputstring):
+def handle_escapes(inputstring, strip_comments):
     new_string = ''
     escape_met = False
 
@@ -172,9 +172,9 @@ def handle_escapes(inputstring):
 
                 # here goes the unescaped chars
 
-                if char == comment_char:
+                if strip_comments and char == comment_char:
 
-                    # a comment
+                    # found a comment - ignore rest of the line
 
                     return new_string
                 else:
@@ -186,31 +186,27 @@ def handle_escapes(inputstring):
     return new_string
 
 
-def read_block(input_file):
+def read_block(input_file, strip_space, strip_comments):
+    """A block is a number of lines terminated by EOF or line with white
+    space only. Any line leading and ending white space as well as comments
+    are handled as specified with the strip parameters.
+    """
     result = []
     data = True
     while data:
-
-        # read a line
-        # readline returns "" string when EOF, to separate EOF and
-        # blank lines .strip must be added later
-
-        line = input_file.readline().strip()
-
-        if re.sub('[ \n\t]', '', line) != '':
-            line = handle_escapes(line)
-            if not line:
-                continue
-            else:
+        line = input_file.readline().rstrip('\r\n')
+        if line.strip():
+            line = handle_escapes(line, strip_comments)
+            if strip_space:
                 line = line.strip()
-                if len(line) > 0:
-                    result.append(line)
+            if line:
+                result.append(line)
         else:
             data = False
     return result
 
 
-def parse(mrsl_file):
+def parse(mrsl_file, strip_space=True, strip_comments=True):
     """Parse an mRSL file or file-like object into a list of lists
     on the form [[KEYWORD, [VALUE, VALUE, ... ]], ... ] .
     """
@@ -244,7 +240,7 @@ def parse(mrsl_file):
 
         target = []
         target.append(word.upper())
-        target.append(read_block(input_file))
+        target.append(read_block(input_file, strip_space, strip_comments))
         data.append(target)
 
     input_file.close()
