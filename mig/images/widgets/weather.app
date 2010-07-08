@@ -1,5 +1,6 @@
 <!-- 
 Name: Weather
+Description: Copenhagen weather using JQuery zweatherfeed plugin (modification of plugin demo)
 Requires: jquery.js, jquery.zweatherfeed.js, jquery.zweatherfeed.css
 -->
 <script type="text/javascript">

@@ -1,5 +1,6 @@
 <!-- 
 Name: Calculator
+Description: Simple calculator using JQuery calculator plugin (modification of plugin demo)
 Requires: jquery.js, jquery.calculator.js, jquery.calculator.css
 -->
 <script type="text/javascript">

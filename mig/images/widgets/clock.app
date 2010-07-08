@@ -1,5 +1,6 @@
 <!-- 
 Name: Clock
+Description: Basic clock using JQuery epiclock plugin (modification of plugin demo)
 Requires: jquery.js, jquery.epiclock.js, jquery.epiclock.css
 -->
 <script type="text/javascript">

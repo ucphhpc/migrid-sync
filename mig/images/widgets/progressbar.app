@@ -1,5 +1,6 @@
 <!-- 
 Name: Progress Bar
+Description: Dummy progress bas using JQuery UI progressbar widget (modification of default demo)
 Requires: jquery.js, jquery-ui.js, jquery-ui.css
 -->
 <script type="text/javascript">

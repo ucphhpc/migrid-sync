@@ -1,5 +1,6 @@
 <!-- 
 Name: Hello grid test
+Description: Basic JQuery demo
 Requires: jquery.js
 -->
 <script type='text/javascript'>

@@ -1,5 +1,6 @@
 <!-- 
 Name: Simple calendar
+Description: Simple calendar using JQuery calendar widget plugin (modification of plugin demo)
 Requires: jquery.js, jquery.calendar-widget.js
 -->
 <script type="text/javascript">

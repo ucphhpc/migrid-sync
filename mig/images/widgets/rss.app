@@ -1,5 +1,6 @@
 <!-- 
 Name: RSS Feed Reader
+Description: Pulls in MiG changelog with JQuery zrssfeed plugin (modification of plugin demo)
 Requires: jquery.js, jquery.zrssfeed.js, jquery.zrssfeed.css
 -->
 <script type="text/javascript">
