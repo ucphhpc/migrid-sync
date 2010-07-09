@@ -216,6 +216,12 @@ web interfaces additionally rely on JavaScript from:""" })
                            'class': 'urllink',
                            'title': 'JQuery Home Page',
                            'text': 'JQuery and extension modules (GPL/MIT and Creative Commons 3.0 licenses)'})
+    output_objects.append({'object_type': 'text', 'text' : ''})
+    output_objects.append({'object_type': 'link', 
+                           'destination' : 'http://marijn.haverbeke.nl/codemirror/',
+                           'class': 'urllink',
+                           'title': 'CodeMirror Home Page',
+                           'text': 'CodeMirror web editor (BSD compatible license)'})
     output_objects.append({'object_type': 'text', 'text' : """
 and icons from the following sources:""" })
 

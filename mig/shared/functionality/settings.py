@@ -29,7 +29,7 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.settings import load_settings, load_widgets
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
@@ -41,6 +41,52 @@ try:
 except Exception, exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass
+
+
+cm_prefix = '/images/lib/codemirror'
+cm_css_prefix = '%s/css' % cm_prefix
+cm_js_prefix = '%s/js' % cm_prefix
+txt_parsers, txt_stylesheets = ['parsedummy.js'], []
+css_parsers, css_stylesheets = ["parsecss.js"], ["%s/csscolors.css" % cm_css_prefix]
+web_parsers = ["parsexml.js", "parsecss.js", "tokenizejavascript.js",
+               "parsejavascript.js", "parsehtmlmixed.js"]
+web_stylesheets = ["%s/%s" % (cm_css_prefix, i) for i in \
+                   ["xmlcolors.css", "jscolors.css", "csscolors.css"]]
+edit_defaults = {'parserfile': txt_parsers, 'stylesheet': txt_stylesheets,
+                  'path': "%s/" % cm_js_prefix, 'autoMatchParens': "true",
+                  'tabMode': "spaces", 'indentUnit': 4, 'height': '600px'}
+general_edit = edit_defaults.copy()
+general_edit['height'] = '50px'
+style_edit = edit_defaults.copy()
+style_edit['parserfile'] = css_parsers
+style_edit['stylesheet'] = css_stylesheets
+widgets_edit = edit_defaults.copy()
+widgets_edit['parserfile'] = web_parsers
+widgets_edit['stylesheet'] = web_stylesheets
+widgets_edit['height'] = '400px'
+
+
+def py_to_js(options):
+    """Format python dictionary as dictionary string used in javascript"""
+
+    out = []
+    for (key, val) in options.items():
+        if isinstance(val, basestring):
+            val = '"%s"' % val
+        out.append('%s: %s' % (key, val))
+    return '{%s}' % ', '.join(out)
+
+def wrap_edit_area(name, area, edit_opts=edit_defaults):
+    """Wrap HTML textarea in user friendly editor with syntax highlighting"""
+    out = '''
+<div style="border: 1px solid black; padding: 3px; background: white;">
+%s
+<script type="text/javascript">
+  var editor = CodeMirror.fromTextArea("%s", %s);
+</script>
+</div>
+'''
+    return out % (area, name, py_to_js(edit_opts))
 
 def signature():
     """Signature of the main function"""
@@ -72,6 +118,14 @@ def main(client_id, user_arguments_dict):
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                client_dir)) + os.sep
+
+    javascript = '''
+<script type="text/javascript" src="%s/codemirror.js"></script>
+''' % cm_js_prefix
+
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Settings'
+    title_entry['javascript'] = javascript
 
     valid_topics = ['general', 'job', 'style']
     if configuration.site_script_deps:
@@ -161,13 +215,13 @@ def main(client_id, user_arguments_dict):
                 except:
                     # failed on evaluating configuration.%s
 
-    #        elif val['Type'] == 'multiplestrings':
-                    html += \
-                         """<textarea cols="40" rows="1" wrap="off" name="%s">"""\
-                         % keyword
+                    area = \
+                         '''<textarea id="%s" cols=40 rows=1 name="%s">''' % (keyword,
+                                                               keyword)
                     if current_settings_dict.has_key(keyword):
-                        html += '\n'.join(current_settings_dict[keyword])
-                    html += '</textarea><br />'
+                        area += '\n'.join(current_settings_dict[keyword])
+                    area += '</textarea><br />'
+                    html += wrap_edit_area(keyword, area, general_edit)
 
             elif val['Type'] == 'string':
 
@@ -224,21 +278,29 @@ If you use the same fields and values in many of your jobs, you can save your pr
 <form method="post" action="editfile.py">
 <input type="hidden" name="path" value="%(mrsl_template)s" />
 <input type="hidden" name="newline" value="unix" />
-<textarea cols="82" rows="25" wrap="off" name="editarea">
+'''
+        keyword = "defaultjob"
+        area = '''
+<textarea id="%(keyword)s" cols=82 rows=25 name="editarea">
 %(default_mrsl)s
 </textarea>
+'''
+        html += wrap_edit_area(keyword, area)
+        
+        html += '''
 </td></tr>
 <tr><td>
 <input type="submit" value="Save template" />
-<input type="reset" value="Forget changes" />
 </form>
 </td></tr>
 </table>
 </div>
-''' % {
+'''
+        html = html % {
             'default_mrsl': default_mrsl,
             'mrsl_template': mrsl_template,
             'site': configuration.short_title,
+            'keyword': keyword
             }
 
         output_objects.append({'object_type': 'html_form', 'text': html})
@@ -269,22 +331,28 @@ Please note that you can not save an empty style file, but must at least leave a
 <form method="post" action="editfile.py">
 <input type="hidden" name="path" value="%(css_template)s" />
 <input type="hidden" name="newline" value="unix" />
-<textarea cols="82" rows="25" wrap="off" min_len=1 name="editarea">
+'''
+        keyword = "defaultstyle"
+        area = '''
+<textarea id="%(keyword)s" cols=82 rows=25 min_len=1 name="editarea">
 %(default_css)s
 </textarea>
+'''
+        html += wrap_edit_area(keyword, area, style_edit)
+        html += '''
 </td></tr>
 <tr><td>
 <input type="submit" value="Save style" />
-<input type="reset" value="Forget changes" />
 </form>
 </td></tr>
 </table>
 </div>
-'''\
-        % {
+'''
+        html = html % {
             'default_css': default_css,
             'css_template': css_template,
             'site': configuration.short_title,
+            'keyword': keyword
             }
 
         output_objects.append({'object_type': 'html_form', 'text': html})
@@ -303,7 +371,7 @@ Please note that you can not save an empty style file, but must at least leave a
         html = \
              '''
 <div id="widgets">
-<table class="swidgets">
+<table class="widgets">
 <tr class="title"><td class="centertext">
 Default user defined widgets for all pages
 </td></tr>
@@ -368,12 +436,13 @@ You can simply copy/paste from the available widget file links below if you want
                                     % (selected, choice, choice)
                         html += '</select><br />'
                 except:
-                    html += \
-                         """<textarea cols="78" rows="10" wrap="off" name="%s">"""\
-                         % keyword
+                    area = \
+                         """<textarea id='%s' cols=78 rows=10 name='%s'>""" % \
+                         (keyword, keyword)
                     if current_widgets_dict.has_key(keyword):
-                        html += '\n'.join(current_widgets_dict[keyword])
-                    html += '</textarea><br />'
+                        area += '\n'.join(current_widgets_dict[keyword])
+                    area += '</textarea><br />'
+                    html += wrap_edit_area(keyword, area, widgets_edit)
 
         html += \
              '''

@@ -1,0 +1,12 @@
+= The lib directory =
+This is a web exposed directory for core web UI dependencies that are 
+unsuitable for direct inclusion in ../js and ../css . It is exposed under
+/images/lib/ on the web server.
+
+CodeMirror (http://marijn.haverbeke.nl/codemirror/) is a pure javascript 
+editor overlay with support for highlighting syntax in e.g. html textareas. 
+We use it in several areas on the Settings page and thus need it in the core 
+installation. It uses multiple files (with some common names) for parsing and
+formatting, so it does not fit well into the general js and css dirs.
+
+Other dependencies for either core or widget-deps can be stored here as well. 
