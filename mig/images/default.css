@@ -21,7 +21,7 @@ a:hover, a:active {
 }
 
 img {
-  border:  0;
+  border: 0;
 }
 
 h1 {
@@ -175,7 +175,7 @@ table.monitorruntimeenvreq {
 .navmenu {
   background: #aaa url('/images/background_greypattern.png');
   -moz-border-radius: 5px;
-  border:1px solid grey;
+  border: 1px solid grey;
   padding: 0;
   margin: 0;
 }
@@ -246,19 +246,19 @@ table.monitorruntimeenvreq {
 }
 
 .navmenu ul li a, .navsubmenu ul li a {
-  -moz-border-radius:4px;
+  -moz-border-radius: 4px;
   display: block;
   
   background-repeat: no-repeat;
   background-image: url('/images/icons/bullet_black.png');
   background-position: 5px 50%;
   
-  border:1px solid darkgrey;
+  border: 1px solid darkgrey;
   color: white;
-  font-size:13px;
-  font-weight:bold;
-  padding:3px 5px 3px 24px;
-  text-decoration:none;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 3px 5px 3px 24px;
+  text-decoration: none;
   background-color: rgb(100,100,100);
 }
 
@@ -287,7 +287,7 @@ table.monitorruntimeenvreq {
 
 /* Used in one place... maybe that place should be fixed? to use h1 instead */
 #migheader {
-  font-size:28px;
+  font-size: 28px;
   border: 0;
   -moz-border-radius: 4px;
   color: #eee;
@@ -400,9 +400,9 @@ table.monitorruntimeenvreq {
 .subsection{
   background: #ccc;
   padding: 5px;
-  border:  0;
-  font-size:17px;
-  font-weight:bold;
+  border: 0;
+  font-size: 17px;
+  font-weight: bold;
   color: red;
   -moz-border-radius: 4px;
 }

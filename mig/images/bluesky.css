@@ -21,7 +21,7 @@ a:hover, a:active {
 }
 
 img {
-  border:  0px;
+  border: 0px;
 }
 
 tr, td {
@@ -126,18 +126,18 @@ div.container {
 }
 
 .navmenu ul li a, .navsubmenu ul li a {
-  -moz-border-radius:4px;
+  -moz-border-radius: 4px;
   display: inline;
   
   background-repeat: no-repeat;
   background-position: 5px 50%;
   
-  border:1px solid #fff;
+  border: 1px solid #fff;
   color: white;
-  font-size:13px;
-  font-weight:bold;
-  padding:3px 5px 3px 24px;
-  text-decoration:none;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 3px 5px 3px 24px;
+  text-decoration: none;
   background-color: #63a4f0;
   margin-right: 10px;
 }
@@ -150,10 +150,10 @@ div.container {
 
 
 #migheader {
-  font-size:30px;
-  letter-spacing:0.2em;
-  margin:0;
-  /*padding:  20px 10px 10px 10px;*/
+  font-size: 30px;
+  letter-spacing: 0.2em;
+  margin: 0;
+  /*padding: 20px 10px 10px 10px;*/
   width: 96%;
   text-align: center;
 }
@@ -242,7 +242,7 @@ table.monitorruntimeenvreq {
 }
 #toplogo {
   border: 0;
-  background:  url('/images/background-top.png');
+  background: url('/images/background-top.png');
   height: 80px;
   border-spacing: 0;
   border: 0px solid #000;
@@ -335,11 +335,11 @@ table.monitorruntimeenvreq {
 .subsection{
   background: #fff;
   padding: 0px 0px 5px 0px;
-  border:  0px;
+  border: 0px;
   width: 98%;
   text-align: center;
-  font-size:17px;
-  font-weight:bold;
+  font-size: 17px;
+  font-weight: bold;
 }
 
 #miginput {
@@ -354,7 +354,7 @@ table.monitorruntimeenvreq {
   background: #fff;
   border: 1px solid #999;
   font-size: 12px;
-  padding:  0;
+  padding: 0;
 }
 
 #miginput input:focus, #miginput textarea:focus{
