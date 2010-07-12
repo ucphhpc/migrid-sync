@@ -778,7 +778,7 @@ Exit code: %s Description: %s<br />
             if len(links) == 0:
                 lines.append('No links found!')
             else:
-                lines.append(' / '.join([html_link(link) for link in
+                lines.append(' , '.join([html_link(link) for link in
                              links]))
         elif i['object_type'] == 'file':
             lines.append(i['name'])
