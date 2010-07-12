@@ -468,6 +468,14 @@ table.monitorruntimeenvreq {
   color: blue;
 }
 
+.scrollselect {
+    height: 120px;
+    padding: 5px;
+    overflow: auto;
+    background: #fff;
+    border: 1px solid #000
+}
+
 /* Job manager */
 .jm {
   margin-top: -15px; 

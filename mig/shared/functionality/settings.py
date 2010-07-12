@@ -204,14 +204,14 @@ def main(client_id, user_arguments_dict):
                         current_choice = current_settings_dict[keyword]
 
                     if len(valid_choices) > 0:
-                        html += '<select multiple name=%s>' % keyword
+                        html += '<div class="scrollselect">'
                         for choice in valid_choices:
                             selected = ''
                             if choice in current_choice:
-                                selected = 'selected'
-                            html += '<option %s value=%s>%s</option>'\
-                                    % (selected, choice, choice)
-                        html += '</select><br />'
+                                selected = 'checked'
+                            html += '<input type="checkbox" name="%s" %s value=%s>%s<br />'\
+                                    % (keyword, selected, choice, choice)
+                        html += '</div>'
                 except:
                     # failed on evaluating configuration.%s
 
@@ -427,14 +427,14 @@ You can simply copy/paste from the available widget file links below if you want
                         current_choice = current_widgets_dict[keyword]
 
                     if len(valid_choices) > 0:
-                        html += '<select multiple name=%s>' % keyword
+                        html += '<div class="scrollselect">'
                         for choice in valid_choices:
                             selected = ''
                             if choice in current_choice:
-                                selected = 'selected'
-                            html += '<option %s value=%s>%s</option>'\
-                                    % (selected, choice, choice)
-                        html += '</select><br />'
+                                selected = 'checked'
+                            html += '<input type="checkbox" name="%s" %s value=%s>%s<br />'\
+                                    % (keyword, selected, choice, choice)
+                        html += '</div>'
                 except:
                     area = \
                          """<textarea id='%s' cols=78 rows=10 name='%s'>""" % \
