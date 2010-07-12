@@ -76,17 +76,188 @@ def py_to_js(options):
         out.append('%s: %s' % (key, val))
     return '{%s}' % ', '.join(out)
 
-def wrap_edit_area(name, area, edit_opts=edit_defaults):
-    """Wrap HTML textarea in user friendly editor with syntax highlighting"""
+def wrap_edit_area(name, area, edit_opts=edit_defaults, toolbar_buttons='ALL'):
+    """Wrap HTML textarea in user friendly editor with syntax highlighting
+    and optional basic toolbar.
+    """
+    init_buttons = ''
+    button_impl = ''
+    if toolbar_buttons:
+        init_buttons = '''  
+  this.spellcheck;
+  makeField(this.searchid);
+  makeButton("Search", "search");
+  makeField(this.replaceid);
+  makeButton("Replace", "replace");
+  makeButton("Replace All", "replaceall");
+  makeSpace("SearchSep");
+  makeField(this.jumpid);
+  makeButton("Jump to line", "jump");
+  makeSpace("JumpSep");
+  makeButton("Re-Indent all", "reindent");
+  makeSpace("IndentSep");
+  makeButton("Toggle line numbers", "line");
+  makeSpace("LineSep");
+  makeButton("Toggle spell check", "spell");
+  makeSpace("SpellSep");
+  makeButton("Undo", "undo");
+  makeButton("Redo", "redo");
+  makeSpace("UndoSep");
+  makeButton("Help", "help");
+  makeRuler("TextSep");
+'''
+
+        button_impl = '''
+  search: function() {
+    var text = document.getElementById(this.searchid).value;
+    if (!text) {
+      alert("Please specify something in the search field!");
+      return;
+    }
+    var first = true;
+    do {
+      var cursor = this.editor.getSearchCursor(text, first);
+      first = false;
+      while (cursor.findNext()) {
+        cursor.select();
+        return;
+      }
+    } while (confirm("End of document reached. Start over?"));
+  },
+
+  replace: function() {
+    var from = document.getElementById(this.searchid).value;
+    if (!from) {
+      alert("Please specify something to replace in the search field!");
+      return;
+    }
+    var to = document.getElementById(this.replaceid).value;
+    var cursor = this.editor.getSearchCursor(from, false);
+    while (cursor.findNext()) {
+      cursor.select();
+      if (confirm("Replace selected entry with '" + to + "'?")) {
+        cursor.replace(to);
+      }
+    }
+  },
+
+  replaceall: function() {
+    var from = document.getElementById(this.searchid).value, to;
+    if (!from) {
+      alert("Please specify something to replace in the search field!");
+      return;
+    }
+    var to = document.getElementById(this.replaceid).value;
+
+    var cursor = this.editor.getSearchCursor(from, false);
+    while (cursor.findNext()) {
+      cursor.replace(to);
+    }
+  },
+
+  jump: function() {
+    var line = document.getElementById(this.jumpid).value;
+    if (line && !isNaN(Number(line)))
+      this.editor.jumpToLine(Number(line));
+    else
+      alert("Please specify a line to jump to in the jump field!");
+  },
+
+  line: function() {
+    this.editor.setLineNumbers(!this.editor.lineNumbers);
+    this.editor.focus();
+  },
+
+  reindent: function() {
+    this.editor.reindent();
+  },
+  
+  spell: function() {
+    if (this.spellcheck == undefined) this.spellcheck = !this.editor.options.disableSpellcheck;
+    this.spellcheck = !this.spellcheck
+    this.editor.setSpellcheck(this.spellcheck);
+    this.editor.focus();
+  },
+
+  undo: function() {
+    this.editor.undo();
+  },
+  
+  redo: function() {
+    this.editor.redo();
+  },
+  
+  help: function() {
+    alert("Quick help:\\n\\nShort cuts:\\nCtrl-z: undo\\nCtrl-y: redo\\nTab re-indents line\\nEnter inserts a new indented line\\n\\nPlease refer the CodeMirror manual for more detailed help.");
+  },
+'''
+
+    script = '''
+/*
+Modified version of the MirrorFrame example from CodeMirror:
+Adds a basic toolbar to the editor widget with limited use of alert popups.
+*/
+
+
+function dumpobj(obj) {
+  alert("dump: " + obj.toSource());
+}
+
+
+function TextAreaEditor(toolbar, textarea, options) {
+  this.bar = toolbar;
+  this.prefix = textarea;
+  this.searchid = this.prefix + "searchfield";
+  this.replaceid = this.prefix + "replacefield";
+  this.jumpid = this.prefix + "jumpfield";
+
+  var self = this;
+  function makeButton(name, action) {
+    var button = document.createElement("INPUT");
+    button.type = "button";
+    button.value = name;
+    self.bar.appendChild(button);
+    button.onclick = function() { self[action].call(self); };
+  }
+  function makeField(name) {
+    var field = document.createElement("INPUT");
+    field.type = "text";
+    field.id = name;
+    self.bar.appendChild(field);
+  }
+  function makeSpace(name) {
+    var elem = document.createTextNode(" | ");
+    self.bar.appendChild(elem);
+  }
+  function makeRuler(name) {
+    var elem = document.createElement("HR");
+    self.bar.appendChild(elem);
+  }
+
+%s  
+
+  this.editor = CodeMirror.fromTextArea(textarea, options);
+}
+
+TextAreaEditor.prototype = {
+%s
+};
+''' % (init_buttons, button_impl)
     out = '''
-<div style="border: 1px solid black; padding: 3px; background: white;">
+<div id="%sinlineeditor" style="border: 1px inset grey; padding: 3px; background: white;">
+<div id="%stoolbar">
+<!--- filled by script --->
+<span id="bla"></span>
+</div>
 %s
 <script type="text/javascript">
-  var editor = CodeMirror.fromTextArea("%s", %s);
+%s
+var editor = new TextAreaEditor(document.getElementById("%stoolbar"), "%s", %s);
 </script>
 </div>
 '''
-    return out % (area, name, py_to_js(edit_opts))
+    return out % (name, name, area, script, name, name, py_to_js(edit_opts))
+
 
 def signature():
     """Signature of the main function"""
@@ -221,7 +392,7 @@ def main(client_id, user_arguments_dict):
                     if current_settings_dict.has_key(keyword):
                         area += '\n'.join(current_settings_dict[keyword])
                     area += '</textarea><br />'
-                    html += wrap_edit_area(keyword, area, general_edit)
+                    html += wrap_edit_area(keyword, area, general_edit, None)
 
             elif val['Type'] == 'string':
 
