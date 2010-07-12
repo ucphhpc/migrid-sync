@@ -470,10 +470,11 @@ table.monitorruntimeenvreq {
 
 .scrollselect {
     height: 120px;
+    width: 600px;
     padding: 5px;
     overflow: auto;
     background: #fff;
-    border: 1px solid #000
+    border: 1px inset grey;
 }
 
 /* Job manager */

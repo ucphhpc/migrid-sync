@@ -267,18 +267,27 @@ accompanied by a help link providing further details about the field."""})
             choices = available_choices(configuration, client_id,
                                         field, spec)
             res_value = default
-            if field_type.startswith('multiple'):
-                multi_select = 'multiple'
-            else:
-                multi_select = ''
             value_select = ''
-            value_select += "<select %s name='%s'>\n" % (multi_select, field)
-            for name in choices:
-                selected = ''
-                if str(res_value) == str(name) or multi_select and str(name) in res_value:
-                    selected = 'selected'
-                value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
-            value_select += """</select><br />\n"""    
+            if field_type.startswith('multiple'):
+                value_select += '<div class="scrollselect">'
+                for name in choices:
+                    # Blank default value does not make sense here
+                    if not str(name):
+                        continue
+                    selected = ''
+                    if str(name) in res_value:
+                        selected = 'checked'
+                    value_select += '<input type="checkbox" name="%s" %s value=%s>%s<br />'\
+                                    % (field, selected, name, name)
+                value_select += '</div>\n'
+            else:
+                value_select += "<select name='%s'>\n" % field
+                for name in choices:
+                    selected = ''
+                    if str(res_value) == str(name):
+                        selected = 'selected'
+                    value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
+                value_select += """</select><br />\n"""    
             output_objects.append({'object_type': 'html_form', 'text'
                                    : value_select
                                    })
