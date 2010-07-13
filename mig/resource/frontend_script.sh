@@ -113,8 +113,6 @@ execute_send_files_script(){
     if [ $sent_output -eq 0 ]; then
         echo "ERROR: ${filesuffix} failed: saving sendoutput for debugging" 1>> $frontendlog 2>> $frontendlog
         cp -dpR ${localjobname}.${filesuffix} ../${localjobname}.${filesuffix}.FAILED 1>> $frontendlog 2>> $frontendlog
-        cd ..
-        continue
     fi
 }
 
@@ -359,8 +357,6 @@ while [ 1 ]; do
         # Try to force disk flush - outputfiles *must* be written 
         # before jobname.sendoutput is executed
         force_refresh "job-dir_${localjobname}"
-        # TODO: do we still need this sync?
-        #sync_disk $frontendlog
         
         # localjobname is filename without .done
         localjobname=${e%\.jobdone}
@@ -403,8 +399,6 @@ while [ 1 ]; do
         # Try to force disk flush - updatefiles *must* be written 
         # before jobname.sendupdatefiles is executed
         force_refresh "job-dir_${localjobname}"
-        # TODO: do we still need this sync?
-        #sync_disk $frontendlog
         
         # localjobname is filename without .updatedone
         localjobname=${e%\.updatedone}
@@ -466,8 +460,6 @@ while [ 1 ]; do
             available_ret=$?
             if [ $available_ret -eq 0 ]; then
                 #echo "copy of ${localjobname}.update went ok ($available_ret)" 1>> $frontendlog 2>> $frontendlog
-                # TMP! do we need this sync?
-                #sync_disk $frontendlog
                 break
             else
                 # continue until succesful
@@ -707,14 +699,14 @@ while [ 1 ]; do
             done
         done
         echo "rotating any big logs" 1>> $frontendlog 2>> $frontendlog
-	for log_file in `find . -name "$(basename frontendlog)" -size +32M| xargs`; do
+        for log_file in `find . -name "$(basename frontendlog)" -size +32M| xargs`; do
             # No matching expansion results in no loop because of 'find' 
             # execution so no need to check for raw pattern 
-	    echo "rotating $log_file" 1>> $frontendlog 2>> $frontendlog
-	    for i in `seq 7 -1 0`; do
-		[ -e "$log_file.$i" ] && mv "$log_file.$i" "$log_file.$((i+1))"
-	    done
-	    mv "${log_file}" "${log_file}.0";
+            echo "rotating $log_file" 1>> $frontendlog 2>> $frontendlog
+            for i in `seq 7 -1 0`; do
+                [ -e "$log_file.$i" ] && mv "$log_file.$i" "$log_file.$((i+1))"
+            done
+            mv "${log_file}" "${log_file}.0";
         done
         echo "finished clean up" 1>> $frontendlog 2>> $frontendlog
         clean_up_counter=0
