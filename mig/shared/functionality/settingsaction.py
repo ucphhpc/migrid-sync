@@ -31,17 +31,31 @@ import tempfile
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables
-from shared.settings import parse_and_save_settings
-from shared.settingskeywords import get_keywords_dict
+from shared.settings import parse_and_save_settings, parse_and_save_widgets
+from shared.settingskeywords import get_keywords_dict as settings_keywords
+from shared.widgetskeywords import get_keywords_dict as widgets_keywords
 
+
+def extend_defaults(defaults, user_args):
+    """Extract topic from untrusted user_args dictionary and safely extend
+    defaults with topic-specific defaults before validation.
+    """
+    topic = user_args.get('topic', defaults['topic'])[-1]
+    if topic == 'general':
+        keywords_dict = settings_keywords()
+    elif topic == 'widgets':
+        keywords_dict = widgets_keywords()
+    else:
+        # should never get here
+        keywords_dict = {}
+    for keyword in keywords_dict.keys():
+        defaults[keyword] = ['']
+    return defaults
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {}
-    keywords_dict = get_keywords_dict()
-    for keyword in keywords_dict.keys():
-        defaults[keyword] = ['']
+    defaults = {'topic': ['general']}
     return ['text', defaults]
 
 
@@ -54,6 +68,7 @@ def main(client_id, user_arguments_dict):
                           : '%s settings' % configuration.short_title })
 
     defaults = signature()[1]
+    extend_defaults(defaults, user_arguments_dict)
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -65,13 +80,21 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    settings_mrsl = ''
+    topic = accepted['topic'][-1]
+    topic_mrsl = ''
 
-    for keyword in get_keywords_dict().keys():
+    if topic == 'general':
+        keywords_dict = settings_keywords()
+    elif topic == 'widgets':
+        keywords_dict = widgets_keywords()
+    else:
+        # should never get here
+        keywords_dict = {}
+    for keyword in keywords_dict.keys():
         received_arguments = accepted[keyword]
         if received_arguments != None and received_arguments != ['\r\n'
                 ]:
-            settings_mrsl += '''::%s::
+            topic_mrsl += '''::%s::
 %s
 
 ''' % (keyword.upper(),
@@ -80,45 +103,56 @@ def main(client_id, user_arguments_dict):
     # Save content to temp file
 
     try:
-        (filehandle, tmpsettingsfile) = tempfile.mkstemp(text=True)
-        os.write(filehandle, settings_mrsl)
+        (filehandle, tmptopicfile) = tempfile.mkstemp(text=True)
+        os.write(filehandle, topic_mrsl)
         os.close(filehandle)
     except Exception:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Problem writing temporary settings file on server.'
+                              : 'Problem writing temporary topic file on server.'
                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    # Parse settings
+    # Parse topic
 
-    (parse_status, parse_msg) = \
-        parse_and_save_settings(tmpsettingsfile, client_id,
-                                configuration)
+    if topic == 'general':
+        (parse_status, parse_msg) = \
+                       parse_and_save_settings(tmptopicfile, client_id,
+                                               configuration)
+    elif topic == 'widgets':
+        (parse_status, parse_msg) = \
+                       parse_and_save_widgets(tmptopicfile, client_id,
+                                              configuration)
+    else:
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'No such settings topic: %s' % topic
+                              })
+        return (output_objects, returnvalues.CLIENT_ERROR)
+        
     try:
-        os.remove(tmpsettingsfile)
+        os.remove(tmptopicfile)
     except Exception:
         pass  # probably deleted by parser!
 
-        # output_objects.append({"object_type":"error_text", "text": "Could not remove temporary settings file %s, exception: %s" % (tmpsettingsfile, e)})
+        # output_objects.append({"object_type":"error_text", "text": "Could not remove temporary topic file %s, exception: %s" % (tmptopicfile, e)})
 
     if not parse_status:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error parsing settings file: %s'
-                               % parse_msg})
+                              : 'Error parsing %s settings file: %s'
+                               % (topic, parse_msg)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # print saved settings
+    # print saved topic
 
     output_objects.append({'object_type': 'text', 'text'
-                          : 'Saved settings:'})
-    for line in settings_mrsl.split('\n'):
+                          : 'Saved %s settings:' % topic})
+    for line in topic_mrsl.split('\n'):
         output_objects.append({'object_type': 'text', 'text': line})
 
     output_objects.append({'object_type': 'link',
-                           'destination': 'settings.py',
+                           'destination': 'settings.py?topic=%s' % topic,
                            'class': 'backlink',
-                           'title': 'Go back to settings',
-                           'text': 'Back to settings'})
+                           'title': 'Go back to %s settings' % topic,
+                           'text': 'Back to %s settings' % topic})
 
     return (output_objects, returnvalues.OK)
 

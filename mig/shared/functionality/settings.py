@@ -344,6 +344,7 @@ def main(client_id, user_arguments_dict):
         </td></tr>
         <tr><td>
         <form method="post" action="settingsaction.py">
+        <input type="hidden" name="topic" value="general" />
         Please note that if you want to set multiple values (e.g. addresses) in the same field, you must write each value on a separate line.
         </td></tr>
         <tr><td>
@@ -566,10 +567,11 @@ You can simply copy/paste from the available widget file links below if you want
 <a class="urllink" href="/images/widgets/countdown.app">countdown</a>
 </td></tr>
 <tr><td>
-<div class="warningtext">Please note that the widgets parser is rather grumpy so you may have to avoid blank lines and "#" signs in your widget code below. Additionally any errors in your widgets code may cause severe corruption in your pages, so it may be a good idea to keep another browser tab/window open on this page while experimenting.</div> 
+<div class="warningtext">Please note that the widgets parser is rather grumpy so you may have to avoid blank lines in your widget code below. Additionally any errors in your widgets code may cause severe corruption in your pages, so it may be a good idea to keep another browser tab/window open on this page while experimenting.</div> 
 </td></tr>
 <tr><td>
-<form method="post" action="widgetsaction.py">
+<form method="post" action="settingsaction.py">
+<input type="hidden" name="topic" value="widgets" />
 </td></tr>
 <tr><td>
 ''' % configuration.short_title
