@@ -392,7 +392,20 @@ while [ 1 ]; do
    fi
 done
 
-echo "${execution_user} ${execution_node} ${execution_dir}" > ${localjobname}.jobdone
+echo "job_id $reqjobid" > ${localjobname}.jobdone
+echo "exeunit $exe" >> ${localjobname}.jobdone
+echo "cputime $cputime" >> ${localjobname}.jobdone
+echo "nodecount $nodecount" >> ${localjobname}.jobdone
+echo "localjobname $localjobname" >> ${localjobname}.jobdone
+echo "execution_user $execution_user" >> ${localjobname}.jobdone
+echo "execution_node $execution_node" >> ${localjobname}.jobdone
+echo "execution_dir $execution_dir" >> ${localjobname}.jobdone
+echo "copy_command $copy_command" >> ${localjobname}.jobdone
+echo "copy_frontend_prefix $copy_frontend_prefix" >> ${localjobname}.jobdone
+echo "copy_execution_prefix $copy_execution_prefix" >> ${localjobname}.jobdone
+echo "move_command $move_command" >> ${localjobname}.jobdone
+echo "execution_delay $execution_delay" >> ${localjobname}.jobdone
+echo "exe_pgid $pgid" >> ${localjobname}.jobdone
 echo "$end_marker" >> ${localjobname}.jobdone
 sync_complete ${localjobname}.jobdone
 echo "sending localjobname.jobdone to frontend" >> $exehostlog

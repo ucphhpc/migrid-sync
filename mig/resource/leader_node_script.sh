@@ -367,6 +367,7 @@ control_submit() {
         
         dummywaitjob="${exe}.dummywaitjob"
         echo "localjobname $localjobname" > $dummywaitjob
+        echo "job_id $reqjobid" >> $dummywaitjob
         # finish time for empty jobs
         echo "finish_time $finish_time" >> $dummywaitjob
         # job PID and PGID here for fork monitor and kill support
@@ -399,6 +400,7 @@ control_finished() {
         execution_node=`awk '/execution_node/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $dummywaitdone`
         execution_dir=`awk '/execution_dir/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $dummywaitdone`
         localjobname=`awk '/localjobname/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $dummywaitdone` 
+        job_id=`awk '/job_id/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $dummywaitdone` 
         admin_email=`awk '/admin_email/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $dummywaitdone` 
 
         exe_pid=`awk '/exe_pid/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $dummywaitjob`
@@ -416,6 +418,7 @@ control_finished() {
         export MIG_EXEUNIT=$exe
         export MIG_JOBNAME="MiG_$exe"
         export MIG_LOCALJOBNAME=$localjobname
+        export MIG_JOBID=$job_id
         export MIG_JOBDIR="$execution_dir/job-dir_$localjobname"
         export MIG_EXENODE=$execution_node
         export MIG_ADMINEMAIL="$admin_email"
@@ -491,6 +494,7 @@ control_results() {
         execution_node=`awk '/execution_node/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $dummysend`
         execution_dir=`awk '/execution_dir/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $dummysend`
         localjobname=`awk '/localjobname/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $dummysend` 
+        job_id=`awk '/job_id/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $dummysend` 
         admin_email=`awk '/admin_email/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $dummysend` 
 
         [ -z "$localjobname" ] && continue
@@ -503,6 +507,7 @@ control_results() {
         export MIG_EXEUNIT=$exe
         export MIG_JOBNAME="MiG_$exe"
         export MIG_LOCALJOBNAME=$localjobname
+        export MIG_JOBID=$job_id
         export MIG_JOBDIR="$execution_dir/job-dir_$localjobname"
         export MIG_EXENODE=$execution_node
         export MIG_ADMINEMAIL="$admin_email"
@@ -535,7 +540,20 @@ control_results() {
             fi
         done
 
-        echo "${execution_user} ${execution_node} ${execution_dir}" > ${localjobname}.jobdone
+        echo "job_id $job_id" > ${localjobname}.jobdone
+        echo "exeunit $exe" >> ${localjobname}.jobdone
+        echo "cputime $cputime" >> ${localjobname}.jobdone
+        echo "nodecount $nodecount" >> ${localjobname}.jobdone
+        echo "localjobname $localjobname" >> ${localjobname}.jobdone
+        echo "execution_user $execution_user" >> ${localjobname}.jobdone
+        echo "execution_node $execution_node" >> ${localjobname}.jobdone
+        echo "execution_dir $execution_dir" >> ${localjobname}.jobdone
+        echo "copy_command $copy_command" >> ${localjobname}.jobdone
+        echo "copy_frontend_prefix $copy_frontend_prefix" >> ${localjobname}.jobdone
+        echo "copy_execution_prefix $copy_execution_prefix" >> ${localjobname}.jobdone
+        echo "move_command $move_command" >> ${localjobname}.jobdone
+        echo "execution_delay $execution_delay" >> ${localjobname}.jobdone
+        echo "exe_pgid $pgid" >> ${localjobname}.jobdone
         echo "$end_marker" >> ${localjobname}.jobdone
         sync_complete ${localjobname}.jobdone
 

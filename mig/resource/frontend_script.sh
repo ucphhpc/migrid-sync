@@ -366,7 +366,11 @@ while [ 1 ]; do
         if [ -d job-dir_${localjobname} ]; then
             cd job-dir_${localjobname} 1>> $frontendlog 2>> $frontendlog
             
-            execute_send_files_script $localjobname "sendoutputfiles"
+            reqjobid=`awk '/job_id/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ../${localjobname}.jobdone`
+            reqsrc=`echo ${reqjobid}.{stdout,stderr}`
+            reqdst="/job_output/${reqjobid}"
+
+            execute_send_files_script $localjobname "sendoutputfiles" $reqsrc $reqdst
             
             #echo "removing ${localjobname}.sendoutputfiles" 1>> $frontendlog 2>> $frontendlog
             $clean_command ${localjobname}.sendoutputfiles
