@@ -367,7 +367,6 @@ control_submit() {
         
         dummywaitjob="${exe}.dummywaitjob"
         echo "localjobname $localjobname" > $dummywaitjob
-        echo "job_id $reqjobid" >> $dummywaitjob
         # finish time for empty jobs
         echo "finish_time $finish_time" >> $dummywaitjob
         # job PID and PGID here for fork monitor and kill support
@@ -379,7 +378,8 @@ control_submit() {
         [ $real_job -eq 0 ] || touch run_handle_updates.${localjobname}
 
         dummywaitdone="$exe.dummywaitdone"
-        cp $dummywaitinput $dummywaitdone && \
+        echo "job_id $reqjobid" > $dummywaitdone
+        cat $dummywaitinput >> $dummywaitdone && \
             $clean_command $dummywaitinput
     done
 }
