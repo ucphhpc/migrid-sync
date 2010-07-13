@@ -80,6 +80,7 @@ sync_disk() {
 execute_send_files_script(){
     localjobname=$1
     filesuffix=$2
+    shift; shift
     
     if [ ! -f ${localjobname}.${filesuffix} ]; then
         echo "${localjobname}.${filesuffix} not found!"
@@ -94,9 +95,9 @@ execute_send_files_script(){
     sent_output=0
     for i in `seq 1 $sendoutput_tries`; do
         # execute $localjobname$.{filesuffix}
-        echo "executing ${localjobname}.${filesuffix}" 1>> $frontendlog 2>> $frontendlog
+        echo "executing ${localjobname}.${filesuffix} $@" 1>> $frontendlog 2>> $frontendlog
         
-        ./${localjobname}.${filesuffix} 1>> $frontendlog 2>> $frontendlog
+        ./${localjobname}.${filesuffix} $@ 1>> $frontendlog 2>> $frontendlog
         
         send_ret=$?
         if [ $send_ret -eq 0 ]; then
@@ -402,14 +403,21 @@ while [ 1 ]; do
         
         # localjobname is filename without .updatedone
         localjobname=${e%\.updatedone}
+        reqjobid=`awk '/job_id/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.updatedone`
+        reqsrc=`awk '/source_files/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.updatedone`
+        reqdst=`awk '/destination_dir/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.updatedone`
+        if [ -z "$reqsrc" ]; then
+            reqsrc=`echo ${reqjobid}.{stdout,stderr,io-status}`
+        fi
+        if [ -z "$reqdst" ]; then
+            reqdst="/job_output/${reqjobid}"
+        fi
         
         echo "Executing sendupdatefiles for job with localjobname: $localjobname" 1>> $frontendlog 2>> $frontendlog
         
         if [ -d job-dir_${localjobname} ]; then
             cd job-dir_${localjobname} 1>> $frontendlog 2>> $frontendlog
-            
-            execute_send_files_script $localjobname "sendupdatefiles"
-            
+            execute_send_files_script $localjobname "sendupdatefiles" $reqsrc $reqdst
             cd ..
         else
             echo "dir job-dir_${localjobname} containing ${localjobname}.sendupdatefiles does not exists!"
@@ -430,6 +438,7 @@ while [ 1 ]; do
         complete_file_available $updaterequest || continue
         echo "update found $updaterequest" 1>> $frontendlog 2>> $frontendlog
         
+        job_id=`awk '/job_id/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $updaterequest`
         localjobname=`awk '/localjobname/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $updaterequest`
         execution_user=`awk '/execution_user/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $updaterequest`
         execution_node=`awk '/execution_node/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $updaterequest`
@@ -437,7 +446,7 @@ while [ 1 ]; do
         exe_copy_command=`awk '/copy_command/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $updaterequest`
         exe_copy_execution_prefix=`awk '/copy_execution_prefix/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $updaterequest`
         exe_move_command=`awk '/move_command/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $updaterequest`
-        echo "from $updaterequest read values $localjobname $execution_user $execution_node $execution_dir $exe_copy_command $exe_copy_execution_prefix $exe_move_command" 1>> $frontendlog 2>> $frontendlog
+        echo "from $updaterequest read values $job_id $localjobname $execution_user $execution_node $execution_dir $exe_copy_command $exe_copy_execution_prefix $exe_move_command" 1>> $frontendlog 2>> $frontendlog
         # Override copy command and exe prefix if specified by exehost
         if [ -z "$exe_copy_command" ]; then
             # Fallback to legacy setup

@@ -58,10 +58,11 @@ def curl_cmd_send(resource_filename, mig_server_filename,
 
         sid_put_marker = '-X SIDPUT'
 
+    # live output requires variabe expansion in filenames (double quotes)
     return 'curl --location --connect-timeout 30 --max-time 3600 '\
          + upload_bw_limit + ' --fail --silent --insecure '\
-         + " --upload-file '" + resource_filename + "' "\
-         + sid_put_marker + " '" + dst_url + "'"
+         + ' --upload-file "' + resource_filename + '" '\
+         + sid_put_marker + ' "' + dst_url + '"'
 
 
 def curl_cmd_get(mig_server_filename, resource_filename,
@@ -763,7 +764,7 @@ class GenJobScriptSh:
 """ % result
         return cmd
 
-    def send_io_files(self, files, result='send_io_status'):
+    def send_io_files(self, result='send_io_status'):
         """Send IO files:
         Existing files must be transferred with status 0, while
         non-existing files shouldn't lead to error.
@@ -772,16 +773,27 @@ class GenJobScriptSh:
         """
 
         cmd = '%s=0\n' % result
-        for name in files:
-            name_on_mig_server = os.path.join(output_dir, job_dict['JOB_ID'],
-                                              name)
-            cmd += '[ ! -e "%s" ] || ' % name
-            cmd += '%s\n' % curl_cmd_send(name, name_on_mig_server,
-                    https_sid_url_arg)
-            cmd += 'last_send_status=$?\n'
-            cmd += 'if [ $last_send_status -ne 0 ]; then\n'
-            cmd += '    %s=$last_send_status\n' % result
-            cmd += 'fi\n'
+        cmd += '# All but last input args are sources and last is dest\n'
+        cmd += 'i=0\n'
+        cmd += 'last=$((${#@}-1))\n'
+        cmd += 'for name in $@; do\n'
+        cmd += '    if [ $i -lt $last ]; then\n'
+        cmd += '        src[$i]=$name\n'
+        cmd += '    else\n'
+        cmd += '        dst=$name\n'
+        cmd += '    fi\n'
+        cmd += '    i=$((i+1))\n'
+        cmd += 'done\n'
+        cmd += 'for name in ${src[@]}; do\n'
+        cmd += '    name_on_mig_server=$dst/`basename $name`\n'
+        cmd += '    [ ! -e "$name" ] || '
+        cmd += '%s\n' % curl_cmd_send('$name', '$name_on_mig_server',
+                                      https_sid_url_arg)
+        cmd += '    last_send_status=$?\n'
+        cmd += '    if [ $last_send_status -ne 0 ]; then\n'
+        cmd += '        %s=$last_send_status\n' % result
+        cmd += '    fi\n'
+        cmd += 'done\n'
 
         cmd += """# Now 'return' status is available in %s
 

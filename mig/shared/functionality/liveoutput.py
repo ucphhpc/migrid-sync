@@ -46,7 +46,7 @@ from shared.validstring import valid_user_path
 def signature():
     """Signature of the main function"""
 
-    defaults = {'job_id': REJECT_UNSET}
+    defaults = {'job_id': REJECT_UNSET, 'src':[], 'dst': []}
     return ['text', defaults]
 
 
@@ -68,6 +68,8 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     job_ids = accepted['job_id']
+    src = accepted['src']
+    dst = accepted['dst'][-1]
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s live output' % configuration.short_title
@@ -248,7 +250,8 @@ def main(client_id, user_arguments_dict):
 
             try:
                 filehandle = open(local_file, 'w')
-                filehandle.write('content of .update file\n')
+                filehandle.write('job_id '
+                                  + job_dict['JOB_ID'] + '\n')
                 filehandle.write('localjobname '
                                   + job_dict['LOCALJOBNAME'] + '\n')
                 filehandle.write('execution_user '
@@ -257,6 +260,20 @@ def main(client_id, user_arguments_dict):
                                   + exe['execution_node'] + '\n')
                 filehandle.write('execution_dir ' + exe['execution_dir']
                                   + '\n')
+
+                # Automatic fall back to stdio files with no path provided
+                
+                src_text = 'The job status files'
+                if src:
+                    src_text = 'The ' + ' '.join(src) + ' files'
+                    filehandle.write('source_files ' + ' '.join(src) + '\n')
+
+                # Automatic fall back to job_output/JOBID/ with no dst provided
+                
+                dst_text = 'the corresponding job_output directory'
+                if dst:
+                    dst_text = 'the ' + dst + ' directory'
+                    filehandle.write('destination_dir ' + dst + '\n')
 
                 # Backward compatible test for shared_fs - fall back to scp
 
@@ -295,7 +312,7 @@ def main(client_id, user_arguments_dict):
                                   : 'Request for live output was successfully sent to the ressource!'
                                   })
             output_objects.append({'object_type': 'text', 'text'
-                                  : 'The stdout and stderr files for the job will be uploaded from the executing resource and should become available in a minute using the link below.'
+                                  : '%s will be uploaded from the executing resource and should become available in %s in a minute.' % (src_text, dst_text)
                                   })
             output_objects.append({'object_type': 'link', 'destination'
                                   : 'ls.py?path=%s/%s/*'

@@ -127,36 +127,36 @@ handle_updates() {
         # any .update file available?
         if [ -f "${localjobname}.update" ]; then
             echo "${localjobname}.update found! Send files to frontend" 1>> $exehostlog 2>> $exehostlog
-            while [ 1 ]; do
-
-                force_refresh .
-
-                reqjobid=`awk '/MIG_JOBID/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
-                echo "$copy_command ${reqjobid}.{stdout,stderr} ${copy_frontend_prefix}${frontend_dir}/job-dir_${localjobname}/" >> $exehostlog
+            force_refresh .
+            reqjobid=`awk '/^#MIG_JOBID/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
+            reqsrc=`awk '/source_files/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.update`
+            if [ -z "$reqsrc" ]; then
+                reqsrc=`echo ${reqjobid}.{stdout,stderr}`
+            fi
+            echo "$copy_command ${reqsrc} ${copy_frontend_prefix}${frontend_dir}/job-dir_${localjobname}/" >> $exehostlog
         
-                $copy_command ${reqjobid}.{stdout,stderr} ${copy_frontend_prefix}${frontend_dir}/job-dir_${localjobname}/ >> $exehostlog 2>> $exehostlog
-                retval=$?
-                if [ ! $retval -eq 0 ]; then
-                    echo "ERROR ($retval) copying update files to frontend ${copy_frontend_prefix}${frontend_dir}/job-dir_${localjobname}/" >> $exehostlog
-                    echo "DEBUG: dir contents: " * >> $exehostlog
-                    sleep 9
-                    continue
-                fi
+            $copy_command ${reqsrc} ${copy_frontend_prefix}${frontend_dir}/job-dir_${localjobname}/ >> $exehostlog 2>> $exehostlog
+            retval=$?
+            if [ ! $retval -eq 0 ]; then
+                echo "ERROR ($retval) copying update files to frontend ${copy_frontend_prefix}${frontend_dir}/job-dir_${localjobname}/" >> $exehostlog
+                echo "DEBUG: dir contents: " * >> $exehostlog
+                sleep 9
+                continue
+            fi
          
-                echo "this is the content of ${localjobname}.updatedone" >> "${localjobname}.updatedone"
-                echo $end_marker >> "${localjobname}.updatedone"
-                $copy_command "${localjobname}.updatedone" ${copy_frontend_prefix}${frontend_dir}/ >> $exehostlog 2>> $exehostlog
-                retval=$?
-                if [ ! $retval -eq 0 ]; then
-                    echo "ERROR ($retval) copying updatedone to frontend ${copy_frontend_prefix}${frontend_dir}/" >> $exehostlog
-                    sleep 9
-                else
-                    break
-                fi
-                
-            done
-            rm -f "${localjobname}.update"
+            cat ${localjobname}.update > ${localjobname}.updatedone
+            echo "$end_marker" >> ${localjobname}.updatedone
+            sync_complete ${localjobname}.updatedone
+            $copy_command ${localjobname}.updatedone ${copy_frontend_prefix}${frontend_dir}/ >> $exehostlog 2>> $exehostlog
+            retval=$?
+            if [ ! $retval -eq 0 ]; then
+                echo "ERROR ($retval) copying updatedone to frontend ${copy_frontend_prefix}${frontend_dir}/" >> $exehostlog
+                sleep 11
+                continue
+            fi
+            $clean_command "${localjobname}.update" "${localjobname}.updatedone"
             sync_clean "${localjobname}.update"
+            sync_clean "${localjobname}.updatedone"
         fi
         loop_count=$((loop_count+1))
         # slow down
@@ -282,12 +282,12 @@ sync_complete ${localjobname}.job
 force_refresh .
 
 echo "Transferring requested nodes, time, etc to environment" >> $exehostlog
-reqnodecount=`awk '/MIG_JOBNODECOUNT/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
-reqcpucount=`awk '/MIG_JOBCPUCOUNT/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
-reqcputime=`awk '/MIG_JOBCPUTIME/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
-reqmemory=`awk '/MIG_JOBMEMORY/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
-reqdisk=`awk '/MIG_JOBDISK/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
-reqjobid=`awk '/MIG_JOBID/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
+reqnodecount=`awk '/^#MIG_JOBNODECOUNT/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
+reqcpucount=`awk '/^#MIG_JOBCPUCOUNT/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
+reqcputime=`awk '/^#MIG_JOBCPUTIME/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
+reqmemory=`awk '/^#MIG_JOBMEMORY/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
+reqdisk=`awk '/^#MIG_JOBDISK/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
+reqjobid=`awk '/^#MIG_JOBID/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
 export MIG_JOBNODES=$reqnodecount
 export MIG_JOBSECONDS=$reqcputime
 export MIG_JOBNODECOUNT=$reqnodecount

@@ -342,8 +342,6 @@ io_log.flush()'''\
     def send_output_files(self, result='send_output_status'):
         """Send outputfiles"""
 
-        # call Kristens code and get outputfiles destination
-
         cmd = ''
 
         for outputfile in job_dict['OUTPUTFILES']:
@@ -353,23 +351,21 @@ io_log.flush()'''\
             cmd += '  os.popen("' + curl_cmd_send(outputfile) + '")\n'
         return cmd
 
-    def send_io_files(self, files, result='send_io_status'):
-        """Send .io-status, .stderr, .stdout"""
-
-        # Existing files must be transferred with status 0, while
-        # non-existing files shouldn't lead to error.
+    def send_io_files(self, result='send_io_status'):
+        """Send IO files:
+        Existing files must be transferred with status 0, while
+        non-existing files shouldn't lead to error.
+        Only react to curl transfer errors, not MiG put errors
+        since we can't handle the latter consistently anyway.
+        """
 
         cmd = ''
-        for name in files:
-            name_on_mig_server = os.path.join(output_dir, job_dict['JOB_ID'],
-                                              name)
-            cmd += 'if (os.path.isfile("' + name\
-                 + '") and os.path.getsize("' + name + '") > 0):\n'
-
-            # cmd += "  os.popen(\"" + curl_cmd_send(name) + "\")\n"
-
-            cmd += '  os.popen("' + curl_cmd_send(name,
-                    name_on_mig_server, https_sid_url_arg)\
+        cmd += 'dst = sys.argv[-1]\n'
+        cmd += 'for name in sys.argv[1:-1]:\n'
+        cmd += '  name_on_mig_server = os.path.join(dst, os.path.basename(name))\n'
+        cmd += '  if (os.path.isfile(name) and os.path.getsize(name) > 0):\n'
+        cmd += '    os.popen("' + curl_cmd_send('name',
+                    'name_on_mig_server', https_sid_url_arg)\
                  + '")\n'
         return cmd
 

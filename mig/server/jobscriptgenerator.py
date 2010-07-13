@@ -665,9 +665,7 @@ def gen_job_script(
                                  , '0', 'send_output_status'))
 
     sendoutputfiles_array.append(generator.comment('send io files'))
-    sendoutputfiles_array.append(generator.send_io_files([job_dictionary['JOB_ID'
-                                 ] + '.stdout', job_dictionary['JOB_ID']
-                                  + '.stderr'], 'send_io_status'))
+    sendoutputfiles_array.append(generator.send_io_files('send_io_status'))
     sendoutputfiles_array.append(generator.log_io_status('send_io_files'
                                  , 'send_io_status'))
     sendoutputfiles_array.append(generator.print_on_error('send_io_status'
@@ -713,10 +711,7 @@ def gen_job_script(
     sendupdatefiles_array.append(generator.init_io_log())
 
     sendupdatefiles_array.append(generator.comment('send io files'))
-    sendupdatefiles_array.append(generator.send_io_files([job_dictionary['JOB_ID'
-                                 ] + '.stdout', job_dictionary['JOB_ID']
-                                  + '.stderr', job_dictionary['JOB_ID']
-                                  + '.io-status'], 'send_io_status'))
+    sendupdatefiles_array.append(generator.send_io_files('send_io_status'))
     sendupdatefiles_array.append(generator.log_io_status('send_io_files'
                                  , 'send_io_status'))
     sendupdatefiles_array.append(generator.print_on_error('send_io_status'
