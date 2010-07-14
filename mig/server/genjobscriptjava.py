@@ -30,6 +30,8 @@ the remote java mechanism where to retrieve the executable
  and corresponding files.
 """
 
+from shared.job import output_dir
+
 
 class GenJobScriptJava:
 
@@ -141,6 +143,9 @@ class GenJobScriptJava:
 
         return cmd
 
+    def get_io_files(self, result='get_io_status'):
+        return ''
+
     def generate_iosessionid_file(self,
                                   result='generate_iosessionid_file'):
         return ''
@@ -168,35 +173,30 @@ class GenJobScriptJava:
     def send_output_files(self, result='send_output_status'):
         return ''
 
-    def send_io_files(self, files, result='send_io_status'):
+    def send_io_files(self, result='send_io_status'):
         cmd = ''
-        for name in files:
 
-            # TODO: place files in '%s/%s/' % (shared.job.output_dir, job_id)
-
-            if name.count('stdout') > 0:
-                cmd += 'stdout: ' + https_sid_url_arg\
-                     + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
-                     + name + '\n'
-            elif name.count('stderr') > 0:
-                cmd += 'stderr: ' + https_sid_url_arg\
-                     + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
-                     + name + '\n'
-            elif name.count('io-status') > 0:
-                cmd += 'io-status: ' + https_sid_url_arg\
-                     + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
-                     + name + '\n'
+        cmd += 'stdout: ' + https_sid_url_arg\
+               + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
+               + output_dir + '/' + job_dict['JOB_ID'] + '/'\
+               + job_dict['JOB_ID'] + '.stdout\n'
+        cmd += 'stderr: ' + https_sid_url_arg\
+               + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
+               + output_dir + '/' + job_dict['JOB_ID'] + '/'\
+               + job_dict['JOB_ID'] + '.stderr\n'
+        cmd += 'io-status: ' + https_sid_url_arg\
+               + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
+               + output_dir + '/' + job_dict['JOB_ID'] + '/'\
+               + job_dict['JOB_ID'] + '.io-status\n'
         return cmd
 
     def send_status_files(self, files, result='send_status_status'):
         cmd = ''
         for name in files:
             if name.count('status') > 0:
-
-                # TODO: place files in '%s/%s/' % (shared.job.output_dir, job_id)
-
                 cmd += 'status: ' + https_sid_url_arg\
                      + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
+                     + output_dir + '/' + job_dict['JOB_ID'] + '/'\
                      + name + '\n'
         return cmd
 

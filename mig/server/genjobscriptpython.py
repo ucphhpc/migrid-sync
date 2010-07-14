@@ -248,6 +248,19 @@ io_log.flush()'''\
                  + '", "r")\n'
         return cmd
 
+    def get_io_files(self, result='get_io_status'):
+        """Get live files from server during job execution"""
+
+        cmd = ''
+        cmd += 'dst = sys.argv[-1]\n'
+        cmd += 'for name in sys.argv[1:-1]:\n'
+        cmd += '  name_on_resource = os.path.join(dst, os.path.basename(name))\n'
+        cmd += '  os.popen("' + curl_cmd_get('name',
+                                             'name_on_resource',
+                                             https_sid_url_arg)\
+                                             + '")\n'
+        return cmd
+
     def chmod_executables(self, result='chmod_status'):
         """Make sure EXECUTABLES are actually executable"""
 
@@ -361,8 +374,10 @@ io_log.flush()'''\
 
         cmd = ''
         cmd += 'dst = sys.argv[-1]\n'
-        cmd += 'for name in sys.argv[1:-1]:\n'
-        cmd += '  name_on_mig_server = os.path.join(dst, os.path.basename(name))\n'
+        cmd += 'for src in sys.argv[1:-1]:\n'
+        cmd += '  # stored in flat structure on FE\n'
+        cmd += '  name = os.path.basename(src)\n'
+        cmd += '  name_on_mig_server = os.path.join(dst, name)\n'
         cmd += '  if (os.path.isfile(name) and os.path.getsize(name) > 0):\n'
         cmd += '    os.popen("' + curl_cmd_send('name',
                     'name_on_mig_server', https_sid_url_arg)\

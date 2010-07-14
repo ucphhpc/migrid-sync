@@ -242,6 +242,14 @@ def create_job_script(
     linkloc4 = configuration.webserver_home + sessionid + '.job'
     make_symlink(linkdest4, linkloc4, logger)
 
+    # link sessionid to .getupdatefiles file
+
+    linkdest5 = configuration.mig_system_files + str(job_dict['JOB_ID'])\
+         + '.getupdatefiles'
+    linkloc5 = configuration.webserver_home + sessionid\
+         + '.getupdatefiles'
+    make_symlink(linkdest5, linkloc5, logger)
+
     # link sessionid to .sendoutputfiles file
 
     linkdest4 = configuration.mig_system_files + str(job_dict['JOB_ID'])\
@@ -635,6 +643,30 @@ def gen_job_script(
     job_array.append(generator.comment('exit script'))
     job_array.append(generator.exit_script('0', 'job'))
 
+    getupdatefiles_array = []
+
+    # We need to make sure that curl failures lead to retry while
+    # missing output (from say a failed job) is logged but
+    # ignored in relation to getupdatefiles success.
+
+    getupdatefiles_array.append(generator.print_start('get update files'
+                                 ))
+    getupdatefiles_array.append(generator.init_io_log())
+
+    getupdatefiles_array.append(generator.comment('get io files'))
+    getupdatefiles_array.append(generator.get_io_files('get_io_status'))
+    getupdatefiles_array.append(generator.log_io_status('get_io_files'
+                                 , 'get_io_status'))
+    getupdatefiles_array.append(generator.print_on_error('get_io_status'
+                                 , '0',
+                                 'failed to get one or more IO files'))
+    getupdatefiles_array.append(generator.exit_on_error('get_io_status'
+                                 , '0', 'get_io_status'))
+
+    getupdatefiles_array.append(generator.comment('exit script'))
+    getupdatefiles_array.append(generator.exit_script('0',
+                                 'get update files'))
+
     sendoutputfiles_array = []
 
     # We need to make sure that curl failures lead to retry while
@@ -763,6 +795,9 @@ def gen_job_script(
 
     write_file('\n'.join(getinputfiles_array), path_without_extension
                 + '.getinputfiles', logger)
+    write_file('\n'.join(getupdatefiles_array),
+               configuration.mig_system_files + job_dictionary['JOB_ID']
+                + '.getupdatefiles', logger)
     write_file('\n'.join(sendoutputfiles_array),
                configuration.mig_system_files + job_dictionary['JOB_ID']
                 + '.sendoutputfiles', logger)

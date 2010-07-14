@@ -58,7 +58,8 @@ def curl_cmd_send(resource_filename, mig_server_filename,
 
         sid_put_marker = '-X SIDPUT'
 
-    # live output requires variabe expansion in filenames (double quotes)
+    # Live output requires variable expansion in filenames (double quotes)
+
     return 'curl --location --connect-timeout 30 --max-time 3600 '\
          + upload_bw_limit + ' --fail --silent --insecure '\
          + ' --upload-file "' + resource_filename + '" '\
@@ -92,9 +93,11 @@ def curl_cmd_get(mig_server_filename, resource_filename,
         src_url = https_sid_url_arg + '/sid_redirect/'\
              + job_dict['MIGSESSIONID'] + '/' + mig_server_filename
 
+    # Live input requires variable expansion in filenames (double quotes)
+
     cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
-         + download_bw_limit + ' --fail --silent --insecure ' + " -o '"\
-         + resource_filename + "' '" + src_url + "'"
+         + download_bw_limit + ' --fail --silent --insecure ' + ' -o "'\
+         + resource_filename + '" "' + src_url + '"'
     return cmd
 
 
@@ -332,6 +335,11 @@ class GenJobScriptSh:
                  + '.job', https_sid_url_arg)
         cmd += '''
 %s
+''' % curl_cmd_get_special('.getupdatefiles',
+                localjobname + '.getupdatefiles',
+                https_sid_url_arg)
+        cmd += '''
+%s
 ''' % curl_cmd_get_special('.sendupdatefiles',
                 localjobname + '.sendupdatefiles',
                 https_sid_url_arg)
@@ -385,6 +393,36 @@ class GenJobScriptSh:
 
 """ % result
 
+        return cmd
+
+    def get_io_files(self, result='get_io_status'):
+        """Get live files from server during job execution"""
+
+        cmd = '%s=0\n' % result
+        cmd += '# All but last input args are sources and last is dest\n'
+        cmd += 'i=0\n'
+        cmd += 'last=$((${#@}-1))\n'
+        cmd += 'for name in $@; do\n'
+        cmd += '    if [ $i -lt $last ]; then\n'
+        cmd += '        src[$i]=$name\n'
+        cmd += '    else\n'
+        cmd += '        dst=$name\n'
+        cmd += '    fi\n'
+        cmd += '    i=$((i+1))\n'
+        cmd += 'done\n'
+        cmd += 'for name in ${src[@]}; do\n'
+        cmd += '    name_on_resource=$dst/`basename $name`\n'
+        cmd += '    %s\n' % curl_cmd_get('$name', '$name_on_resource',
+                                         https_sid_url_arg)
+        cmd += '    last_get_status=$?\n'
+        cmd += '    if [ $last_get_status -ne 0 ]; then\n'
+        cmd += '        %s=$last_get_status\n' % result
+        cmd += '    fi\n'
+        cmd += 'done\n'
+
+        cmd += """# Now 'return' status is available in %s
+
+""" % result
         return cmd
 
     def generate_input_filelist(self, result='generate_input_filelist'):
@@ -778,7 +816,8 @@ class GenJobScriptSh:
         cmd += 'last=$((${#@}-1))\n'
         cmd += 'for name in $@; do\n'
         cmd += '    if [ $i -lt $last ]; then\n'
-        cmd += '        src[$i]=$name\n'
+        cmd += '        # stored in flat structure on FE\n'
+        cmd += '        src[$i]=`basename $name`\n'
         cmd += '    else\n'
         cmd += '        dst=$name\n'
         cmd += '    fi\n'

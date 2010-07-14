@@ -46,7 +46,7 @@ from shared.validstring import valid_user_path
 def signature():
     """Signature of the main function"""
 
-    defaults = {'job_id': REJECT_UNSET, 'src':[], 'dst': []}
+    defaults = {'job_id': REJECT_UNSET, 'src':[], 'dst': ['']}
     return ['text', defaults]
 
 
@@ -243,7 +243,7 @@ def main(client_id, user_arguments_dict):
                                    % job_id})
             continue
 
-        local_file = '%s.update' % job_dict['LOCALJOBNAME']
+        local_file = '%s.sendupdate' % job_dict['LOCALJOBNAME']
         if not os.path.exists(local_file):
 
             # create
@@ -295,12 +295,12 @@ def main(client_id, user_arguments_dict):
 
         if not os.path.exists(local_file):
             output_objects.append({'object_type': 'error_text', 'text'
-                                : '.update file not available on %s server' %\
+                                : '.sendupdate file not available on %s server' %\
                                   configuration.short_title
                                   })
             continue
 
-        scpstatus = copy_file_to_resource(local_file, '%s.update'
+        scpstatus = copy_file_to_resource(local_file, '%s.sendupdate'
                  % job_dict['LOCALJOBNAME'], resource_config, logger)
         if not scpstatus:
             output_objects.append({'object_type': 'error_text', 'text'

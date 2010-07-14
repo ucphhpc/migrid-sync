@@ -266,6 +266,16 @@ def server_cleanup(
         logger.error('error removing %s %s' % (jobfile, err))
         success = False
     try:
+        getupdatefileslink = os.path.join(configuration.webserver_home,
+                                           sessionid + '.getupdatefiles')
+        getupdatefilesfile = os.path.realpath(getupdatefileslink)
+        os.remove(getupdatefileslink)
+        os.remove(getupdatefilesfile)
+    except Exception, err:
+        logger.error('error removing %s %s' % (getupdatefilesfile,
+                     err))
+        success = False
+    try:
         sendoutputfileslink = os.path.join(configuration.webserver_home,
                                            sessionid + '.sendoutputfiles')
         sendoutputfilesfile = os.path.realpath(sendoutputfileslink)

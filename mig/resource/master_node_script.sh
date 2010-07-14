@@ -114,50 +114,89 @@ clean_and_exit() {
     exit $exit_code
 }
 
-handle_updates() {
+handle_update() {
+    localjobname=$1
+        
+    # any .sendupdate file available?
+    sendreq="${localjobname}.sendupdate"
+    if [ -f "$sendreq" ]; then
+        runreq="${localjobname}.runsendupdate"
+        echo "$sendreq found! Send files to frontend" 1>> $exehostlog 2>> $exehostlog
+        force_refresh .
+        reqjobid=`awk '/^#MIG_JOBID/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
+        reqsrc=`awk '/source_files/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./$sendreq`
+        if [ -z "$reqsrc" ]; then
+            reqsrc=`echo ${reqjobid}.{stdout,stderr}`
+        fi
+        echo "$copy_command ${reqsrc} ${copy_frontend_prefix}${frontend_dir}/job-dir_${localjobname}/" >> $exehostlog
+        
+        $copy_command ${reqsrc} ${copy_frontend_prefix}${frontend_dir}/job-dir_${localjobname}/ >> $exehostlog 2>> $exehostlog
+        retval=$?
+        if [ ! $retval -eq 0 ]; then
+            echo "ERROR ($retval) copying update files to frontend ${copy_frontend_prefix}${frontend_dir}/job-dir_${localjobname}/" >> $exehostlog
+            echo "DEBUG: dir contents: " * >> $exehostlog
+            return 1
+        fi
+        
+        cat $sendreq > $runreq
+        grep 'copy_command' $sendreq 1> /dev/null 2> /dev/null || { \
+            echo "execution_user $execution_user" >> $runreq && \
+            echo "execution_node $execution_node" >> $runreq && \
+            echo "execution_dir $execution_dir" >> $runreq && \
+            echo "copy_command $copy_command" >> $runreq && \
+            echo "copy_frontend_prefix $copy_frontend_prefix" >> $runreq && \
+            echo "copy_execution_prefix $copy_execution_prefix" >> $runreq && \
+            echo "move_command $move_command" >> $runreq; }
+        echo "$end_marker" >> $runreq
+        sync_complete $runreq
+        $copy_command "$runreq" ${copy_frontend_prefix}${frontend_dir}/ >> $exehostlog 2>> $exehostlog
+        retval=$?
+        if [ ! $retval -eq 0 ]; then
+            echo "ERROR ($retval) copying $runreq to frontend ${copy_frontend_prefix}${frontend_dir}/" >> $exehostlog
+            return 1
+        fi
+        $clean_command "$sendreq" "$runreq"
+        sync_clean "$sendreq"
+        sync_clean "$runreq"
+    fi
+    # any .getupdate file available?
+    getreq="${localjobname}.getupdate"
+    if [ -f "$getreq" ]; then
+        runreq="${localjobname}.rungetupdate"
+        echo "$getreq found! Get files from frontend" 1>> $exehostlog 2>> $exehostlog
+        cat $getreq > $runreq
+        grep 'copy_command' $getreq 1> /dev/null 2> /dev/null || { \
+            echo "execution_user $execution_user" >> $runreq && \
+            echo "execution_node $execution_node" >> $runreq && \
+            echo "execution_dir $execution_dir" >> $runreq && \
+            echo "copy_command $copy_command" >> $runreq && \
+            echo "copy_frontend_prefix $copy_frontend_prefix" >> $runreq && \
+            echo "copy_execution_prefix $copy_execution_prefix" >> $runreq && \
+            echo "move_command $move_command" >> $runreq; }
+        echo "$end_marker" >> $runreq
+        sync_complete $runreq
+        $copy_command "$runreq" ${copy_frontend_prefix}${frontend_dir}/ >> $exehostlog 2>> $exehostlog
+        retval=$?
+        if [ ! $retval -eq 0 ]; then
+            echo "ERROR ($retval) copying $runreq to frontend ${copy_frontend_prefix}${frontend_dir}/" >> $exehostlog
+            return 1
+        fi
+        $clean_command "$getreq" "$runreq"
+        sync_clean "$getreq"
+        sync_clean "$runreq"
+    fi
+}
+
+handle_update_loop() {
     localjobname=$1
     loop_count=0
-    sync_limit=5
     while [ 1 ]; do
         if [ ! -f "${execution_dir}/run_handle_updates.${localjobname}" ]; then
             echo "exit update loop" 1>> $exehostlog 2>> $exehostlog
             exit 0
         fi
         
-        # any .update file available?
-        if [ -f "${localjobname}.update" ]; then
-            echo "${localjobname}.update found! Send files to frontend" 1>> $exehostlog 2>> $exehostlog
-            force_refresh .
-            reqjobid=`awk '/^#MIG_JOBID/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
-            reqsrc=`awk '/source_files/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.update`
-            if [ -z "$reqsrc" ]; then
-                reqsrc=`echo ${reqjobid}.{stdout,stderr}`
-            fi
-            echo "$copy_command ${reqsrc} ${copy_frontend_prefix}${frontend_dir}/job-dir_${localjobname}/" >> $exehostlog
-        
-            $copy_command ${reqsrc} ${copy_frontend_prefix}${frontend_dir}/job-dir_${localjobname}/ >> $exehostlog 2>> $exehostlog
-            retval=$?
-            if [ ! $retval -eq 0 ]; then
-                echo "ERROR ($retval) copying update files to frontend ${copy_frontend_prefix}${frontend_dir}/job-dir_${localjobname}/" >> $exehostlog
-                echo "DEBUG: dir contents: " * >> $exehostlog
-                sleep 9
-                continue
-            fi
-         
-            cat ${localjobname}.update > ${localjobname}.updatedone
-            echo "$end_marker" >> ${localjobname}.updatedone
-            sync_complete ${localjobname}.updatedone
-            $copy_command ${localjobname}.updatedone ${copy_frontend_prefix}${frontend_dir}/ >> $exehostlog 2>> $exehostlog
-            retval=$?
-            if [ ! $retval -eq 0 ]; then
-                echo "ERROR ($retval) copying updatedone to frontend ${copy_frontend_prefix}${frontend_dir}/" >> $exehostlog
-                sleep 11
-                continue
-            fi
-            $clean_command "${localjobname}.update" "${localjobname}.updatedone"
-            sync_clean "${localjobname}.update"
-            sync_clean "${localjobname}.updatedone"
-        fi
+        handle_update $localjobname
         loop_count=$((loop_count+1))
         # slow down
         sleep 60
@@ -333,7 +372,7 @@ if [ ! -z "$submit_job_command" ]; then
         echo "empty job: running ${command} locally" >> $exehostlog
     fi
 fi
-handle_updates $localjobname
+handle_update_loop $localjobname
   
 #echo "run with job dir contents: `ls`" >> $exehostlog
 echo "`date`: ${prepend_execute} ${command}" >> $exehostlog
