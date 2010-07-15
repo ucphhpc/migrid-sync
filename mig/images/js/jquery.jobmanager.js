@@ -199,7 +199,8 @@ if (jQuery) (function($){
                     windowWrapper(job_id, "#cmd_dialog", url);
                 },
                 liveoutput: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "liveoutput.py", {job_id: job_id})
+                    url = "liveio.py?job_id="+job_id;
+                    windowWrapper(job_id, "#cmd_dialog", url);
                 },
                 schedule: function (job_id) {
                     jsonWrapper(job_id, "#cmd_dialog", "jobschedule.py", {job_id: job_id})

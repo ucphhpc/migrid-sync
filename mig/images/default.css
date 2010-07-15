@@ -149,6 +149,10 @@ table.monitorruntimeenvreq {
   border: 0px solid #000;
 }
 
+table.liveio table {
+  border: 0px solid #000;
+}
+
 
 .menublock {
   width: 160px;

@@ -104,10 +104,10 @@ def html_tmpl():
       <li class="schedule single">
           <a href="#schedule">Schedule Status</a>
       </li>
-      <li class="liveoutput single">
+      <li class="liveoutput single separator">
           <a href="#liveoutput">Live Output</a>
       </li>
-      <li class="statusfiles single separator">
+      <li class="statusfiles single">
           <a href="#statusfiles">Status Files</a>
       </li>
       <li class="outputfiles single">

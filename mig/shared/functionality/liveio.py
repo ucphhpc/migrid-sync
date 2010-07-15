@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# liveoutput - [insert a few words of module description on this line]
+# liveio - communication with running jobs
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Request job live output from resource"""
+"""Request job live input or output from resource"""
 
 import glob
 import os
@@ -46,7 +46,8 @@ from shared.validstring import valid_user_path
 def signature():
     """Signature of the main function"""
 
-    defaults = {'job_id': REJECT_UNSET, 'src':[], 'dst': ['']}
+    defaults = {'job_id': [], 'action': [''], 'src':[],
+                'dst': ['']}
     return ['text', defaults]
 
 
@@ -68,14 +69,122 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     job_ids = accepted['job_id']
+    action = accepted['action'][-1]
     src = accepted['src']
     dst = accepted['dst'][-1]
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s live output' % configuration.short_title
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Requesting live output for %s'
+                           : 'Request live communication with jobs'})
+
+    if not job_ids or not action:
+        job_id = ''
+        if job_ids:
+            job_id = job_ids[-1]
+        output_objects.append({'object_type': 'text', 'text'
+                          : '''
+Fill in the live I/O details below to request communication with a running
+job.
+Job ID can be a full ID or a wild card pattern using "*" and "?" to match one
+or more of your job IDs.
+Use send output without source and destination paths to request upload of the
+default stdio files from the job on the resource to the associated job_output
+directory in your MiG home.
+Destination is a always handled as a directory path to put source files into.
+Source and destination paths are always taken relative to the job execution
+directory on the resource and your MiG home respectively.
+'''})
+        html = '''
+<table class="liveio">
+<tr>
+<td>
+<table class="liveio">
+<tr><td class=centertext>
+<form method="post" action="liveio.py" id="miginput">
+</td></tr>
+<tr><td>
+Action:<br />
+<input type=radio name=action checked value="send" />send output
+<input type=radio name=action value="get" />get input
+</td></tr>
+<tr><td>
+Job ID:<br />
+<input type=text size=60 name=job_id value="%s" />
+</td></tr>
+<tr><td>
+Source path(s):<br />
+<div id="srcfields">
+<input type=text size=60 name=src value="" /><br />
+</div>
+</td></tr>
+<tr><td>
+Destination path:<br />
+<input type=text size=60 name=dst value="" />
+</td></tr>
+<tr><td>
+<input type="submit" value="Send request" />
+</form>
+</td></tr>
+</table>
+</td>
+<td>
+<script language="javascript">
+fields = 1;
+max_fields = 64;
+function addInput() {
+    if (fields < max_fields) {
+        document.getElementById("srcfields").innerHTML += "<input type=text size=60 name=src value='' /><br />";
+        fields += 1;
+    } else {
+        alert("Maximum " + max_fields + " source fields allowed!");
+        document.form.add.disabled=true;
+    }
+}
+</script>
+<form name="addsrcform">
+<input type="button" onclick="addInput()" name="add" value="Add another source field" />
+</form>
+</td>
+</tr>
+</table>
+''' % job_id
+        output_objects.append({'object_type': 'html_form', 'text'
+                              : html})
+        return (output_objects, returnvalues.OK)
+    elif action in ['get', 'receive', 'input']:
+        action = 'get'
+        action_desc = 'will be downloaded to the job on the resource'
+    elif action in ['put', 'send', 'output']:
+        action = 'send'
+        action_desc = 'will be uploaded from the job on the resource'
+    else:
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Invalid live io action: %s' % action})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    output_objects.append({'object_type': 'text', 'text'
+                          : 'Requesting live I/O for %s'
                            % ', '.join(job_ids)})
+
+
+    if action == 'get' and (not src or not dst):
+        output_objects.append(
+            {'object_type': 'error_text',
+             'text': 'src and dst parameters required for live input'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # Automatic fall back to stdio files if output with no path provided
+                
+    if src:
+        src_text = 'The files ' + ' '.join(src)
+    else:
+        src_text = 'The job stdio files'
+
+    if dst:
+        dst_text = 'the ' + dst + ' directory'
+    else:
+        dst_text = 'the corresponding job_output directory'
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -83,14 +192,6 @@ def main(client_id, user_arguments_dict):
     base_dir = \
         os.path.abspath(os.path.join(configuration.mrsl_files_dir,
                         client_dir)) + os.sep
-
-    if not os.path.isdir(base_dir):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'You have not been created as a user on the %s server!' % \
-                                 configuration.short_title
-                               + ' Please contact the %s team.' % \
-                                 configuration.short_title })
-        return (output_objects, returnvalues.USER_NOT_CREATED)
 
     filelist = []
     for job_id in job_ids:
@@ -148,9 +249,7 @@ def main(client_id, user_arguments_dict):
 
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'You can only list status of your own jobs.'
-
                                    + ' Please verify that you submitted the mRSL file '
-
                                    + "with job id '%s' (Could not unpickle mRSL file %s)"
                                    % (job_id, filepath)})
             continue
@@ -159,7 +258,7 @@ def main(client_id, user_arguments_dict):
 
         if client_id != job_dict['USER_CERT']:
             output_objects.append({'object_type': 'text', 'text'
-                                  : 'The job you are trying to get status for does not belong to you!'
+                                  : 'The job you are trying to contact does not belong to you!'
                                   })
             status = returnvalues.CLIENT_ERROR
             continue
@@ -223,12 +322,12 @@ def main(client_id, user_arguments_dict):
                             last_live_update_file, logger)
         if not pickle_ret:
             output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Error saving live output request timestamp to last_live_update file, request not send!'
+                                  : 'Error saving live io request timestamp to last_live_update file, request not send!'
                                   })
             continue
 
         # #
-        # ## job is being executed right now, send live output request to frontend
+        # ## job is being executed right now, send live io request to frontend
         # #
 
         # get resource_config, needed by scp_file_to_resource
@@ -243,7 +342,7 @@ def main(client_id, user_arguments_dict):
                                    % job_id})
             continue
 
-        local_file = '%s.sendupdate' % job_dict['LOCALJOBNAME']
+        local_file = '%s.%supdate' % (job_dict['LOCALJOBNAME'], action)
         if not os.path.exists(local_file):
 
             # create
@@ -261,18 +360,11 @@ def main(client_id, user_arguments_dict):
                 filehandle.write('execution_dir ' + exe['execution_dir']
                                   + '\n')
 
-                # Automatic fall back to stdio files with no path provided
+                # Leave defaults src and dst to FE script if not provided
                 
-                src_text = 'The job status files'
                 if src:
-                    src_text = 'The ' + ' '.join(src) + ' files'
                     filehandle.write('source_files ' + ' '.join(src) + '\n')
-
-                # Automatic fall back to job_output/JOBID/ with no dst provided
-                
-                dst_text = 'the corresponding job_output directory'
                 if dst:
-                    dst_text = 'the ' + dst + ' directory'
                     filehandle.write('destination_dir ' + dst + '\n')
 
                 # Backward compatible test for shared_fs - fall back to scp
@@ -295,29 +387,38 @@ def main(client_id, user_arguments_dict):
 
         if not os.path.exists(local_file):
             output_objects.append({'object_type': 'error_text', 'text'
-                                : '.sendupdate file not available on %s server' %\
-                                  configuration.short_title
+                                : '.%supdate file not available on %s server' %\
+                                  (action, configuration.short_title)
                                   })
             continue
 
-        scpstatus = copy_file_to_resource(local_file, '%s.sendupdate'
-                 % job_dict['LOCALJOBNAME'], resource_config, logger)
+        scpstatus = copy_file_to_resource(local_file, '%s.%supdate'
+                 % (job_dict['LOCALJOBNAME'], action), resource_config, logger)
         if not scpstatus:
             output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Error sending request for live output to ressource!'
+                                  : 'Error sending request for live io to resource!'
                                   })
             continue
         else:
             output_objects.append({'object_type': 'text', 'text'
-                                  : 'Request for live output was successfully sent to the ressource!'
+                                  : 'Request for live io was successfully sent to the resource!'
                                   })
             output_objects.append({'object_type': 'text', 'text'
-                                  : '%s will be uploaded from the executing resource and should become available in %s in a minute.' % (src_text, dst_text)
+                                  : '%s %s and should become available in %s in a minute.' % \
+                                   (src_text, action_desc, dst_text)
                                   })
-            output_objects.append({'object_type': 'link', 'destination'
-                                  : 'ls.py?path=%s/%s/*'
-                                   % (output_dir, job_id), 'text': 'View status files'
-                                  })
+            if action == 'send':
+                if not dst:
+                    target_path = '%s/%s/*' % (output_dir, job_id)
+                else:
+                    target_path = dst
+                output_objects.append({'object_type': 'link', 'destination'
+                                       : 'ls.py?path=%s' % target_path,
+                                       'text': 'View uploaded files'})
+            else:
+                output_objects.append({'object_type': 'link', 'destination'
+                                       : 'ls.py?path=%s' % ';path='.join(src),
+                                       'text': 'View files for download'})
 
         try:
             os.remove(local_file)
