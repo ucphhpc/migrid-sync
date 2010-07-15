@@ -427,7 +427,7 @@ True
                     time.sleep(2)
 
     # (inlist, retval) = server.resubmit({"job_id":["%s" % sys.argv[1]]})
-    # (inlist, retval) = server.liveoutput({"job_id":["%s" % sys.argv[1]]})
+    # (inlist, retval) = server.liveio({"action": "send", "job_id":["%s" % sys.argv[1]]})
 
     # print inlist
 

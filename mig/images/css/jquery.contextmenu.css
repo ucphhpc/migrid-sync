@@ -79,4 +79,4 @@
 .contextMenu LI.schedule a { background-image: url(/images/icons/calendar.png); }
 .contextMenu LI.resubmit a { background-image: url(/images/icons/arrow_redo.png); }
 .contextMenu LI.cancel a { background-image: url(/images/icons/cancel.png); }
-.contextMenu LI.liveoutput a { background-image: url(/images/icons/page_white_go.png); }
+.contextMenu LI.liveio a { background-image: url(/images/icons/page_white_go.png); }

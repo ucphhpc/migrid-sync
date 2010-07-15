@@ -199,7 +199,7 @@ handle_update_loop() {
         handle_update $localjobname
         loop_count=$((loop_count+1))
         # slow down
-        sleep 60
+        sleep 20
     done &
 }
 
@@ -364,7 +364,7 @@ if [ ! -z "$submit_job_command" ]; then
         command="`eval echo ${submit_job_command}` ${command}"
         echo "MiG submit environment settings:" >> $exehostlog
         env|grep -E '^MIG_' >> $exehostlog
-        # Mark job as locally queued to avoid problems with missing liveoutput
+        # Mark job as locally queued to avoid problems with missing liveio
         # These files will be truncated when job actually runs
         echo '(No output yet: MiG job still waiting in LRMS)' > ${MIG_JOBID}.stdout
         cat ${MIG_JOBID}.stdout > ${MIG_JOBID}.stderr

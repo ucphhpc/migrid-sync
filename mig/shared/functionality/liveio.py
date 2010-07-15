@@ -74,7 +74,7 @@ def main(client_id, user_arguments_dict):
     dst = accepted['dst'][-1]
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s live output' % configuration.short_title
+    title_entry['text'] = '%s live I/O' % configuration.short_title
     output_objects.append({'object_type': 'header', 'text'
                            : 'Request live communication with jobs'})
 

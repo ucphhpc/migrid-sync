@@ -109,10 +109,10 @@ Job ID: <input type="text" name="job_id" size="30" /><br />
 </form>
     """})
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Request live output'})
+                          : 'Request live I/O'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<form method="post" action="liveoutput.py">
+<form method="post" action="liveio.py">
 Job ID: <input type="text" name="job_id" size="30" /><br />
 <input type="hidden" name="output_format" value="html" />
 <input type="submit" value="Request" />

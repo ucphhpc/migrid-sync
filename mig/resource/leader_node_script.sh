@@ -376,7 +376,7 @@ control_submit() {
             echo "MiG submit environment settings:" >> $exehostlog
             env|grep -E '^MIG_' >> $exehostlog
             #echo "MiG submit command: $command" >> $exehostlog
-            # Mark job as locally queued to avoid problems with missing liveoutput
+            # Mark job as locally queued to avoid problems with missing liveio
             # These files will be truncated when job actually runs
             echo '(No output yet: MiG job still waiting in LRMS)' > ${MIG_JOBID}.stdout
             cat ${MIG_JOBID}.stdout > ${MIG_JOBID}.stderr

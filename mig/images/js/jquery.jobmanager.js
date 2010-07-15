@@ -198,7 +198,7 @@ if (jQuery) (function($){
                     url = "fileman.py?"+job_output.match(/^ls.py\?(.*)$/)[1];
                     windowWrapper(job_id, "#cmd_dialog", url);
                 },
-                liveoutput: function (job_id) {
+                liveio: function (job_id) {
                     url = "liveio.py?job_id="+job_id;
                     windowWrapper(job_id, "#cmd_dialog", url);
                 },

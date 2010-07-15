@@ -142,10 +142,10 @@ def ls(user_arguments_dict):
     return stub('shared.functionality.ls', user_arguments_dict)
 
 
-def liveoutput(user_arguments_dict):
+def liveio(user_arguments_dict):
     """Wrap backend of same name"""
 
-    return stub('shared.functionality.liveoutput', user_arguments_dict)
+    return stub('shared.functionality.liveio', user_arguments_dict)
 
 
 def tail(user_arguments_dict):
@@ -526,7 +526,7 @@ if '__main__' == __name__:
     server.register_function(my_id)
     server.register_function(jobstatus)
     server.register_function(ls)
-    server.register_function(liveoutput)
+    server.register_function(liveio)
     server.register_function(tail)
     server.register_function(head)
     server.register_function(addresowner)

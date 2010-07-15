@@ -526,7 +526,7 @@ Exit code: %s Description: %s<br />
                     lines.append('%s<br />'
                                   % html_link(obj['jobschedulelink']))
                     lines.append('%s<br />'
-                                  % html_link(obj['liveoutputlink']))
+                                  % html_link(obj['liveiolink']))
                     if obj.has_key('outputfileslink'):
                         lines.append('<br />%s'
                                  % html_link(obj['outputfileslink']))
