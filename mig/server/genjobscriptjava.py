@@ -153,6 +153,9 @@ class GenJobScriptJava:
     def chmod_executables(self, result='chmod_status'):
         return ''
 
+    def set_core_environments(self):
+        return
+
     def set_environments(self, result='env_result'):
         return ''
 

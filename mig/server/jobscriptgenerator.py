@@ -614,6 +614,7 @@ def gen_job_script(
 
     job_array = []
     job_array.append(generator.script_init())
+    job_array.append(generator.set_core_environments())
     job_array.append(generator.print_start('job'))
     job_array.append(generator.comment('TODO: switch to job directory here'
                      ))

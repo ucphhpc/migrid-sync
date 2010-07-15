@@ -602,6 +602,39 @@ class GenJobScriptSh:
 """ % result
         return cmd
 
+    def set_core_environments(self):
+        """Set missing core environments: LRMS may strip them during submit"""
+        requested = {'CPUTIME': job_dict['CPUTIME']}
+        requested['NODECOUNT'] = job_dict.get('NODECOUNT', 1)
+        requested['CPUCOUNT'] = job_dict.get('CPUCOUNT', 1)
+        requested['MEMORY'] = job_dict.get('MEMORY', 1)
+        requested['DISK'] = job_dict.get('DISK', 1)
+        requested['JOBID'] = job_dict.get('JOB_ID', 'UNKNOWN')
+        requested['LOCALJOBNAME'] = localjobname
+        requested['EXE'] = exe
+        requested['EXECUTION_DIR'] = ''
+        exe_list = resource_conf.get('EXECONFIG', [])
+        for exe_conf in exe_list:
+            if exe_conf['name'] == exe:
+                requested['EXECUTION_DIR'] = exe_conf['execution_dir']
+                break
+        requested['JOBDIR'] = '%(EXECUTION_DIR)s/job-dir_%(LOCALJOBNAME)s' % \
+                              requested
+        cmd = '''
+[ -z "$MIG_JOBNODES" ] && export MIG_JOBNODES="%(NODECOUNT)s"
+[ -z "$MIG_JOBNODECOUNT" ] && export MIG_JOBNODECOUNT="%(NODECOUNT)s"
+[ -z "$MIG_JOBCPUTIME" ] && export MIG_JOBCPUTIME="%(CPUTIME)s"
+[ -z "$MIG_JOBCPUCOUNT" ] && export MIG_JOBCPUCOUNT="%(CPUCOUNT)s"
+[ -z "$MIG_JOBMEMORY" ] && export MIG_JOBMEMORY="%(MEMORY)s"
+[ -z "$MIG_JOBDISK" ] && export MIG_JOBDISK="%(DISK)s"
+[ -z "$MIG_JOBID" ] && export MIG_JOBID="%(JOBID)s"
+[ -z "$MIG_LOCALJOBNAME" ] && export MIG_LOCALJOBNAME="%(LOCALJOBNAME)s"
+[ -z "$MIG_EXEUNIT" ] && export MIG_EXEUNIT="%(EXE)s"
+[ -z "$MIG_EXENODE" ] && export MIG_EXENODE="%(EXE)s"
+[ -z "$MIG_JOBDIR" ] && export MIG_JOBDIR="%(JOBDIR)s"
+''' % requested
+        return cmd
+
     def set_environments(self, result='env_status'):
         """Set environments"""
 

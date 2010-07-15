@@ -269,6 +269,50 @@ io_log.flush()'''\
             cmd += 'os.chmod("' + executables + '", stat.S_IRWXU)'
         return cmd
 
+    def set_core_environments(self):
+        """Set missing core environments: LRMS may strip them during submit"""
+        requested = {'CPUTIME': job_dict['CPUTIME']}
+        requested['NODECOUNT'] = job_dict.get('NODECOUNT', 1)
+        requested['CPUCOUNT'] = job_dict.get('CPUCOUNT', 1)
+        requested['MEMORY'] = job_dict.get('MEMORY', 1)
+        requested['DISK'] = job_dict.get('DISK', 1)
+        requested['JOBID'] = job_dict.get('JOB_ID', 'UNKNOWN')
+        requested['LOCALJOBNAME'] = localjobname
+        requested['EXE'] = exe
+        requested['EXECUTION_DIR'] = ''
+        exe_list = resource_conf.get('EXECONFIG', [])
+        for exe_conf in exe_list:
+            if exe_conf['name'] == exe:
+                requested['EXECUTION_DIR'] = exe_conf['execution_dir']
+                break
+        requested['JOBDIR'] = '%(EXECUTION_DIR)s/job-dir_%(LOCALJOBNAME)s' % \
+                              requested
+        cmd = '''
+if not os.environ.get("MIG_JOBNODES", ""):
+  os.putenv("MIG_JOBNODES", "%(NODECOUNT)s")
+if not os.environ.get("MIG_JOBNODECOUNT", ""):
+  os.putenv("MIG_JOBNODECOUNT", "%(NODECOUNT)s")
+if not os.environ.get("MIG_JOBCPUTIME", ""):
+  os.putenv("MIG_JOBCPUTIME", "%(CPUTIME)s")
+if not os.environ.get("MIG_JOBCPUCOUNT", ""):
+  os.putenv("MIG_JOBCPUCOUNT", "%(CPUCOUNT)s")
+if not os.environ.get("MIG_JOBMEMORY", ""):
+  os.putenv("MIG_JOBMEMORY", "%(MEMORY)s")
+if not os.environ.get("MIG_JOBDISK", ""):
+  os.putenv("MIG_JOBDISK", "%(DISK)s")
+if not os.environ.get("MIG_JOBID", ""):
+  os.putenv("MIG_JOBID", "%(JOBID)s")
+if not os.environ.get("MIG_LOCALJOBNAME", ""):
+  os.putenv("MIG_LOCALJOBNAME", "%(LOCALJOBNAME)s")
+if not os.environ.get("MIG_EXEUNIT", ""):
+  os.putenv("MIG_EXEUNIT", "%(EXE)s")
+if not os.environ.get("MIG_EXENODE", ""):
+  os.putenv("MIG_EXENODE", "%(EXE)s")
+if not os.environ.get("MIG_JOBDIR", ""):
+  os.putenv("MIG_JOBDIR", "%(JOBDIR)s")
+''' % requested
+        return cmd
+
     def set_environments(self, result='env_result'):
         """Set environments"""
 
