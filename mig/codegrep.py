@@ -41,6 +41,8 @@ code_files = [
     'simulation/%s' % plain,
     'resource/frontend_script.sh',
     'resource/master_node_script.sh',
+    'resource/leader_node_script.sh',
+    'resource/dummy_node_script.sh',
     'user/%s' % plain,
     'webserver/%s' % plain,
     ]
