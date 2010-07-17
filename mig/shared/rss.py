@@ -40,15 +40,11 @@ rss_defaults = {'title': 'no title', 'link': '', 'description': '',
                 'publish_date': datetime.datetime.now(), 'guid': None,
                 'build_date': datetime.datetime.now(), 'entries': []}
 
-def create_rss_feed(contents, destination):
-    """Create rss feed from contents dictionary in destination file"""
+def append_rss_items(rss_feed, items):
+    """Append items to rss feed object"""
     if not rssgen:
-        return False
-
-    filled = rss_defaults.copy()
-    filled.update(contents)
-    filled['items'] = []
-    for raw_entry in filled['entries']:
+        return None
+    for raw_entry in items:
         entry = rss_defaults.copy()
         entry.update(raw_entry)
         item = rssgen.RSSItem(
@@ -57,7 +53,17 @@ def create_rss_feed(contents, destination):
             description=entry["description"],
             guid=rssgen.Guid(entry["guid"]),
             pubDate=entry["publish_date"])
-        filled["items"].append(item)
+        rss_feed.items.append(item)
+    return rss_feed
+
+def create_rss_feed(contents):
+    """Create rss feed object from contents dictionary"""
+    if not rssgen:
+        return None
+
+    filled = rss_defaults.copy()
+    filled.update(contents)
+    filled['items'] = []
     rss = rssgen.RSS2(
         title=filled["title"],
         link=filled["link"],
@@ -65,21 +71,29 @@ def create_rss_feed(contents, destination):
         lastBuildDate=filled["build_date"],
         items=filled["items"],
         docs=filled["docs"])
+    append_rss_items(rss, contents['entries'])
+    return rss
+
+def write_rss_feed(rss_feed, destination, insert_header=''):
+    """Write rss feed object in destination file"""
+    if not rssgen:
+        return None
 
     feed = open(destination, 'w+')
-    rss.write_xml(feed)
-    # Insert stylesheet tag right after initial xml declaration line
-    feed.seek(0)
-    output = []
-    output.append(feed.readline())
-    css = '<?xml-stylesheet href="%(css_url)s" type="text/css" media="screen"?>\n' % filled
-    output.append(css)
-    output += feed.readlines()
-    feed.truncate(0)
-    feed.seek(0)
-    feed.writelines(output)
+    rss_feed.write_xml(feed)
+    if insert_header:
+        # Insert header right after initial xml declaration line
+        feed.seek(0)
+        output = []
+        output.append(feed.readline())
+        css = insert_header
+        output.append(css)
+        output += feed.readlines()
+        feed.truncate(0)
+        feed.seek(0)
+        feed.writelines(output)
     feed.close()
-    return True
+    return rss_feed
 
 
 if __name__ == "__main__":
@@ -98,7 +112,10 @@ if __name__ == "__main__":
     data = {'title': 'Demo feed', 'link': 'demofeed.xml', 'docs': 'Demo output',
             'css_url': feed_css_style, 'description': 'MiG demo feed',
             'entries': entries}
-    create_rss_feed(data, feed_raw)
+    rss_feed = create_rss_feed(data)
+    #css_header = '<?xml-stylesheet href="%(css_url)s" type="text/css" media="screen"?>\n' % data
+    css_header = ''
+    write_rss_feed(rss_feed, feed_raw, insert_header=css_header)
     css_stylesheet = '''
 rss {
 display: block;
