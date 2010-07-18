@@ -39,6 +39,8 @@ from shared.parseflags import all, long_list, recursive
 from shared.validstring import valid_user_path
 from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
+from shared.functionality.editor import advanced_editor_deps, lock_info, \
+     edit_file
 import shared.returnvalues as returnvalues
 from shared.settings import load_settings
 from shared.useradm import client_id_dir
@@ -197,32 +199,13 @@ def html_tmpl():
   </form>
   <div id="rename_output"></div>
   </div>
-  
+  '''
+  html += '''
   <div id="editor_dialog" title="Editor" style="display: none;">
-  <form id="editor_form" action="editfile.py" method="post">
   <div class="spinner" style="padding-left: 20px;">Loading file...</div>
-  <fieldset>
-
-    <input type="hidden" name="output_format" value="json" />
-
-    <label for="path">Select file:</label>
-    <input type="text" size="80" name="path" value="" /><br />
-    
-    <label for="editarea">Edit contents:</label>
-    <textarea cols="80" rows="20" wrap="off" name="editarea"></textarea>
-    
-    <label for="newline">Newline mode:</label>
-    <select name="newline">
-      <option selected value="unix">UNIX</option>
-      <option value="mac">Mac OS (pre OS X)</option>
-      <option value="windows">DOS / Windows</option>
-    </select>
-    
-    <label for="name">Submit file as job after saving </label>
-    <input type="checkbox" name="submitjob" />
-            
-  </fieldset>
-  </form>
+  %s
+''' % edit_file('', '', output_format='json', includes=['switcher', 'submit'])
+  html += '''
   <div id="editor_output"></div>
   </div>
   '''
@@ -244,7 +227,10 @@ def js_tmpl(entry_path='/'):
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
-
+'''
+  js += advanced_editor_deps(include_jquery=False)
+  js += lock_info('this file', -1)
+  js += '''
   <script type="text/javascript">
   
   $.ui.dialog.defaults.bgiframe = true;

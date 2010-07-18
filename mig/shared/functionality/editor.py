@@ -41,6 +41,8 @@ from shared.init import initialize_main_variables, find_entry
 from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 
+edit_includes = ['switcher', 'newline', 'submit', 'discard', 'spellcheck',
+                 'save']
 
 def signature():
     """Signature of the main function"""
@@ -48,11 +50,103 @@ def signature():
     defaults = {'path': [''], 'current_dir': ['']}
     return ['html_form', defaults]
 
+def advanced_editor_deps(include_jquery=True):
+    """Add js and css dependencies for advanced editor"""
+    out = ''
+    if include_jquery:
+        out += '<script type="text/javascript" src="/images/js/jquery.js"></script>'
+    out += '''<!--- MartkItUp configuration --->
+<link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/skins/markitup/style.css" />
+<link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/txt2tags/style.css" title="txt2tags"/>
+<link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/html/style.css" title="html"/>
+
+<script type="text/javascript" src="/images/lib/markitup/markitup/jquery.markitup.pack.js"></script>
+<script type="text/javascript" src="/images/lib/markitup/markitup/sets/html/set.js"></script>
+<script type="text/javascript">
+var myHtmlSettings = mySettings;
+myHtmlSettings["nameSpace"] = "html";
+</script>
+<script type="text/javascript" src="/images/lib/markitup/markitup/sets/txt2tags/set.js"></script>
+<script type="text/javascript">
+var myTxt2TagsSettings = mySettings;
+myTxt2TagsSettings["nameSpace"] = "txt2tags";
+</script>
+
+<script type="text/javascript">
+    function enableStyleSheet(title) {
+        var i, a, main;
+        for(i=0; (a = document.getElementsByTagName("link")[i]); i++) {
+            if(a.getAttribute("rel").indexOf("style") != -1 && a.getAttribute("title")) {
+                if(a.getAttribute("title") == title) a.disabled = false;
+            }
+        }
+    }
+    function disableStyleSheet(title) {
+       var i, a, main;
+       for(i=0; (a = document.getElementsByTagName("link")[i]); i++) {
+           if(a.getAttribute("rel").indexOf("style") != -1 && a.getAttribute("title")) {
+               if(a.getAttribute("title") == title) a.disabled = true;
+           }
+       }
+   }
+
+    $(document).ready(function() {
+        $("#switcher li").click(function() {
+            $("#switcher li").removeClass("currentSet");
+            newSet = $(this).attr("class");
+            $(this).addClass("currentSet");
+
+            $("#editorarea").markItUpRemove();
+            /* stylesheet button settings collide for different sets
+            disable all set stylesheets and  enable only selected one */
+            disableStyleSheet("html");
+            disableStyleSheet("txt2tags");
+            switch(newSet) {
+                case "html":
+                    enableStyleSheet("html");
+                    $("#editorarea").markItUp(myHtmlSettings);
+                    break;
+                case "txt2tags":
+                    enableStyleSheet("txt2tags");
+                    $("#editorarea").markItUp(myTxt2TagsSettings);
+                    break;
+            }
+            return false;
+        });
+    $("#switcher .currentSet").click();
+    });
+</script>
+<style type="text/css">
+<!--
+/* fancy editor switcher */
+#switcher {
+    padding: 2px;
+}
+#switcher li {
+    list-style:none;
+    float:left;
+    padding: 4px;
+}
+#switcher .currentSet {
+    font-weight:bold;
+    color:#990066;
+}
+
+
+/* prevent menu float from interfering with editor button header */
+.markItUp {
+    overflow: auto;
+}
+
+-->
+</style>
+''' 
+    return out
 
 def lock_info(real_path, time_left):
-
-    # This function generates javascript similar to that used in Moin Moin Wiki
-    # (http://moinmoin.wikiwikiweb.de)
+    """This function generates javascript similar to that used in Moin Moin Wiki
+    (http://moinmoin.wikiwikiweb.de)
+    """
 
     lock_timeout = time_left / 60
     lock_expire = 'Your edit lock on __file__ has expired!'
@@ -127,7 +221,7 @@ function newcountdown(path, minutes) {
     return script
 
 
-def edit_file(path, real_path):
+def edit_file(path, real_path, output_format='html', includes=edit_includes):
     """Format and return the contents of a given file"""
 
     text = ['']
@@ -141,17 +235,26 @@ def edit_file(path, real_path):
 
     html = \
         '''Select file:<br />
-<form method="post" action="editfile.py">
-<input type="text" size='120' name="path" value="%s" />
+<form id="editor_form" method="post" action="editfile.py">
+<input type="hidden" name="output_format" value="%(output_format)s" />
+<input id="editorpath" type="text" size="80" name="path" value="%(path)s" />
 <p>
 Edit contents:<br />
-<textarea cols="120" rows="25" wrap="off" name="editarea">'''\
-         % path
+<textarea id="editorarea" cols="80" rows="25" wrap="off" name="editarea">'''
     for line in text:
         html += line
 
-    html += \
-        '''</textarea>
+    html += '</textarea>'
+    if 'switcher' in includes:
+        html += '''
+<ul id="switcher">
+<li class="html currentSet"><a href="#">HTML Editor</a></li>
+<li class="txt2tags"><a href="#">Txt2Tags Editor</a></li>
+<li class="remove"><a href="#">Raw text field</a></li>
+</ul>
+'''
+    if 'newline' in includes:
+        html += '''
 <br />
 Newline mode:
 <select name="newline">
@@ -160,8 +263,14 @@ Newline mode:
 <option value="windows">DOS / Windows</option>
 </select>
 (<a class="infolink" href="http://en.wikipedia.org/wiki/Newline">help</a>)
+'''
+    if 'submit' in includes:
+        html += '''
 <br />
 Submit file as job after saving <input type=checkbox name="submitjob" />
+'''
+    if 'save' in includes:
+        html += '''
 <br />
 "Save changes" stores the edited contents in the selected file.<br />
 "Forget changes" reloads the last saved version of the selected file.<br />
@@ -169,14 +278,21 @@ Submit file as job after saving <input type=checkbox name="submitjob" />
 ----------
 <input type="reset" value="Forget changes" />
 </form>
-<form method="post" action="rm.py">
-<input type="hidden" name="output_format" value="html" />
+'''
+    if 'discard' in includes:
+        html += '''
+<form id="discard_form" method="post" action="rm.py">
+<input type="hidden" name="output_format" value="%(output_format)s" />
 <input type="hidden" name="flags" value="rf" />
 <input type="hidden" name="path" value="%(path)s%(lock_suffix)s" />
 <input type="submit" value="Discard changes" />
 </form>
+'''
+    if 'spellcheck' in includes:
+        html += '''
 <p>
-<form method="post" action="spell.py">
+<form id="spell_form" method="post" action="spell.py">
+<input type="hidden" name="output_format" value="%(output_format)s" />
 Spell check (last saved) contents:<br />
 <input type="hidden" name="path" value="%(path)s" />
 Language:
@@ -198,9 +314,9 @@ Type:
 <input type="submit" value="Check" />
 </form>
 <p>
-'''\
-         % {'path': path, 'lock_suffix': get_edit_lock_suffix()}
-    return html
+'''
+    return html % {'path': path, 'lock_suffix': get_edit_lock_suffix(),
+                   'output_format': output_format}
 
 
 def main(client_id, user_arguments_dict):
@@ -246,7 +362,9 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s file web editor' % configuration.short_title
-    title_entry['javascript'] = lock_info('this file', -1)
+    title_entry['javascript'] = ''
+    title_entry['javascript'] += advanced_editor_deps()
+    title_entry['javascript'] += lock_info('this file', -1)
     output_objects.append({'object_type': 'header', 'text'
                           : 'Editing file in %s home directory' % \
                             configuration.short_title })
@@ -292,5 +410,3 @@ setTimeout("newcountdown('%s', %d)", 1)
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     return (output_objects, returnvalues.OK)
-
-
