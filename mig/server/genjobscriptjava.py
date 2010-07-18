@@ -154,7 +154,7 @@ class GenJobScriptJava:
         return ''
 
     def set_core_environments(self):
-        return
+        return ''
 
     def set_environments(self, result='env_result'):
         return ''
