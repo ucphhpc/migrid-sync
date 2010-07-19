@@ -165,9 +165,6 @@ def main(client_id, user_arguments_dict):
     title_entry['javascript'] = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 
-<style type="text/css">
-.hidden { display:none; }
-</style>
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 
 <script type="text/javascript" >
@@ -183,7 +180,7 @@ def main(client_id, user_arguments_dict):
 
 #def vgrid_add_remove_table(vgrid_name,item_string,script_suffix, configuration):
 
-    for item,scr in zip(['owner','member','resource'],
+    for (item, scr) in zip(['owner','member','resource'],
                         ['vgridowner','vgridmember', 'vgridres']):
         
         # section header == title(item_string)
