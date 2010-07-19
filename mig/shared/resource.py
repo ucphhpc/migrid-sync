@@ -834,10 +834,11 @@ def write_resource_config(configuration, resource_conf, conf_path):
 
     return lines
 
-def list_resources(resource_home):
+def list_resources(resource_home, only_valid=False):
     """Return a list of all resources by listing the resource configuration
     directories in resource_home. Uses dircache for efficiency when used more
     than once per session.
+    Use only_valid parameter to filter out deleted and broken resources.
     """
     resources = []
     children = dircache.listdir(resource_home)
@@ -849,6 +850,8 @@ def list_resources(resource_home):
         if not os.path.isdir(path):
             continue
         if path.find(os.sep + '.') != -1:
+            continue
+        if only_valid and not os.path.isfile(os.path.join(path, 'config')):
             continue
         resources.append(name)
     return resources
@@ -987,7 +990,7 @@ Failure:
         return (False, msg)
 
     (status, conf_msg, config_dict) = \
-        get_resource_config_dict(pending_file)
+       get_resource_config_dict(pending_file)
     if not status:
         msg += '\n%s' % conf_msg
         return (False, msg)

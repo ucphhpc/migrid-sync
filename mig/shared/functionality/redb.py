@@ -29,7 +29,7 @@
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
-from shared.functionality.showre import build_reitem_object_from_re_dict
+from shared.functionality.showre import build_reitem_object
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import list_runtime_environments, get_re_dict
 
@@ -63,20 +63,23 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : 'Runtime Environments'})
 
-    output_objects.append({'object_type': 'text', 'text' :
-                           'Runtime environments specify software packages installed on resources.'})
-    output_objects.append({'object_type': 'link',
-                           'destination': 'docs.py?show=Runtime+Environments',
-                           'class': 'infolink',
-                           'title': 'Show information about runtime environment', 
-                           'text': 'Documentation on runtime environments'})
+    output_objects.append(
+        {'object_type': 'text', 'text' :
+         'Runtime environments specify software/data available on resources.'
+         })
+    output_objects.append(
+        {'object_type': 'link',
+         'destination': 'docs.py?show=Runtime+Environments',
+         'class': 'infolink',
+         'title': 'Show information about runtime environment',
+         'text': 'Documentation on runtime environments'})
 
     if configuration.site_swrepo_url:
         output_objects.append({'object_type': 'sectionheader', 'text': ''})
         output_objects.append({'object_type': 'link',
                                'destination': configuration.site_swrepo_url,
                                'class': 'swrepolink',
-                               'title': 'Browse available software packages', 
+                               'title': 'Browse available software packages',
                                'text': 'Open software catalogue for %s' % \
                                configuration.short_title,
                                })
@@ -104,7 +107,7 @@ def main(client_id, user_arguments_dict):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : msg})
             return (output_objects, returnvalues.SYSTEM_ERROR)
-        runtimeenvironments.append(build_reitem_object_from_re_dict(re_dict))
+        runtimeenvironments.append(build_reitem_object(re_dict))
     output_objects.append({'object_type': 'runtimeenvironments',
                           'runtimeenvironments': runtimeenvironments})
     return (output_objects, returnvalues.OK)

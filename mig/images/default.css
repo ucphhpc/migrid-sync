@@ -472,6 +472,10 @@ table.liveio table {
   color: blue;
 }
 
+.hidden { 
+  display:none;
+}
+
 .scrollselect {
     height: 120px;
     width: 600px;

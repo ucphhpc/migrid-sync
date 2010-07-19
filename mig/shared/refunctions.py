@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# refunctions - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# refunctions - runtime environment functions
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,14 +29,16 @@
 
 import os
 import datetime
+import fcntl
 
-import shared.parser as parser
 import shared.rekeywords as rekeywords
-from shared.fileio import pickle, unpickle
-from shared.validstring import valid_dir_input
+import shared.parser as parser
+from shared.serial import load, dump
 
+WRITE_LOCK = 'write.lock'
 
 def list_runtime_environments(configuration):
+    """Find all runtime environments"""
     re_list = []
     dir_content = []
 
@@ -47,47 +49,70 @@ def list_runtime_environments(configuration):
             try:
                 os.mkdir(configuration.re_home)
             except Exception, err:
-                configuration.logger.info('refunctions.py: not able to create directory %s: %s'
-                         % (configuration.re_home, err))
+                configuration.logger.info(
+                    'refunctions.py: not able to create directory %s: %s'
+                    % (configuration.re_home, err))
 
     for entry in dir_content:
 
-        # Skip dot files/dirs
+        # Skip dot files/dirs and the write lock
 
-        if entry.startswith('.'):
+        if (entry.startswith('.')) or (entry == WRITE_LOCK):
             continue
-        if os.path.isfile(configuration.re_home + entry):
+        if os.path.isfile(os.path.join(configuration.re_home, entry)):
 
-            # entry is a file and hence a re
+            # entry is a file and hence a runtime environment
 
             re_list.append(entry)
         else:
-            configuration.logger.info('%s in %s is not a plain file, move it?'
-                     % (entry, configuration.re_home))
+            configuration.logger.warning(
+                '%s in %s is not a plain file, move it?'
+                % (entry, configuration.re_home))
 
     return (True, re_list)
 
 
 def is_runtime_environment(re_name, configuration):
-    if not valid_dir_input(configuration.re_home, re_name):
-        configuration.logger.warning("registered possible illegal directory traversal attempt re_name '%s'"
-                 % re_name)
-        return False
-    if os.path.isfile(configuration.re_home + re_name):
+    """Check that re_name is an existing runtime environment"""
+    if os.path.isfile(os.path.join(configuration.re_home, re_name)):
         return True
     else:
         return False
 
 
 def get_re_dict(name, configuration):
-    dict = unpickle(configuration.re_home + name, configuration.logger)
-    if not dict:
-        return (False, 'Could not open runtimeenvironment %s' % name)
+    """Helper to extract a saved runtime environment"""
+    re_dict = load(os.path.join(configuration.re_home, name))
+    if not re_dict:
+        return (False, 'Could not open runtime environment %s' % name)
     else:
-        return (dict, '')
+        return (re_dict, '')
 
+def delete_runtimeenv(re_name, configuration):
+    """Delete an existing runtime environment"""
+    status, msg = True, ""
+    # Lock the access to the runtime env files, so that deletion is done
+    # with exclusive access.
+    lock_path = os.path.join(configuration.re_home, WRITE_LOCK)
+    lock_handle = open(lock_path, 'a')
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+
+    filename = os.path.join(configuration.re_home, re_name)
+    if os.path.isfile(filename):
+        try:
+            os.remove(filename)
+        except Exception, err:
+            msg = "Exception during deletion of runtime enviroment '%s': %s"\
+                  % (re_name, err)
+    else:
+        msg = "Tried to delete unexisting runtime enviroment '%s'" % re_name
+        configuration.logger.warning(msg)
+    lock_handle.close()
+    return (status, msg)
+    
 
 def create_runtimeenv(filename, client_id, configuration):
+    """Create a new runtime environment"""
     result = parser.parse(filename)
     external_dict = rekeywords.get_keywords_dict()
 
@@ -100,8 +125,6 @@ def create_runtimeenv(filename, client_id, configuration):
         msg = \
             'Exception removing temporary runtime environment file %s, %s'\
              % (filename, err)
-
-        # should we exit because of this? o.reply_and_exit(o.ERROR)
 
     if not status:
         msg = 'Parse failed (typecheck) %s' % parsemsg
@@ -119,45 +142,25 @@ def create_runtimeenv(filename, client_id, configuration):
 
     re_name = new_dict['RENAME']
 
-    pickle_filename = configuration.re_home + re_name
+    re_filename = os.path.join(configuration.re_home, re_name)
 
-    if os.path.exists(pickle_filename):
+    # Lock the access to the runtime env files, so that creation is done
+    # with exclusive access.
+    lock_path = os.path.join(configuration.re_home, WRITE_LOCK)
+    lock_handle = open(lock_path, 'a')
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+
+    status, msg = True, ''
+    if os.path.exists(re_filename):
+        status = False
         msg = \
-            "'%s' not created because a runtime environment with the same name exists!"\
-             % re_name
-        return (False, msg)
+            "can not recreate existing runtime environment '%s'!" % re_name
 
-    if not pickle(new_dict, pickle_filename, configuration.logger):
-        msg = 'Error pickling and/or saving new runtime environment'
-        return (False, msg)
-
-    # everything ok
-
-    return (True, '')
-
-
-def get_active_re_list(re_home):
-    result = []
     try:
-        re_list = os.listdir(re_home)
-        for re in re_list:
-            re_version_list = os.listdir(re_home + re)
-            maxcounter = -1
-            for re_version in re_version_list:
-                if -1 != re_version.find('.RE.MiG'):
-                    lastdot = re_version.rindex('.RE.MiG')
-                    counter = int(re_version[:lastdot])
-                    if counter > maxcounter:
-                        maxcounter = counter
-
-        if -1 < maxcounter:
-            result.append(re + '_' + str(maxcounter))
+        dump(new_dict, re_filename)
     except Exception, err:
+        status = False
+        msg = 'Internal error saving new runtime environment: %s' % err
 
-        return (False,
-                'Could not retrieve Runtime environment list! Failure: %s'
-                 % str(err), [])
-
-    return (True, 'Active RE list retrieved with success.', result)
-
-
+    lock_handle.close()
+    return (status, msg)

@@ -33,7 +33,6 @@ administrating owners.
 """
 
 import os
-import time
 
 import shared.returnvalues as returnvalues
 from shared.base import sandbox_resource
@@ -46,7 +45,7 @@ from shared.vgridaccess import get_resource_map, CONF, OWNERS, RESID
 def signature():
     """Signature of the main function"""
 
-    defaults = {'benchmark': ['false'], 'unique_resource_name': []}
+    defaults = {'unique_resource_name': []}
     return ['html_form', defaults]
 
 
@@ -92,21 +91,24 @@ def display_resource(
     elif hosturl:
         identifier = resourcename.replace(hosturl + sep, '')
     else:
-        print 'WARNING: failed to find host identifier from unique resource name!'
+        configuration.logger.warning(
+            'failed to find host identifier from unique resource name!')
         (hosturl, identifier) = (None, 0)
 
     html += '<a name="%s"></a>' % resourcename
     html += '<h1>%s</h1>\n' % resourcename
     html += '<h3>Configuration</h3>'
-    html += \
-        'Use the <a class="editlink" href="resedit.py?hosturl=%s;hostidentifier=%s">editing interface</a> '\
-         % (hosturl, identifier)
-    html += 'or make any changes manually in the text box below.<br />'
-    html += \
-        '<a class="infolink" href="docs.py?show=Resource">Resource configuration docs</a>'
+    html += '''
+Use the <a class="editlink" href="resedit.py?hosturl=%s;hostidentifier=%s">
+editing interface
+</a>
+or make any changes manually in the text box below.<br />
+<a class="infolink" href="docs.py?show=Resource">
+Resource configuration docs
+</a>
+''' % (hosturl, identifier)  
     html += '<table class=resources>\n<tr><td class=centertext>'
-    html += \
-        '''
+    html += '''
 <form method="post" action="updateresconfig.py">
 <textarea cols="100" rows="25" wrap="off" name="resconfig">'''
     for line in raw_conf:
@@ -121,10 +123,11 @@ def display_resource(
 </form>
 '''\
          % resourcename
-    html += '</td></tr></table><p>'
 
-    html += \
-        '<table class=resources><tr class=title><td colspan="5">Front End</td></tr>\n'
+    html += '''
+</td></tr></table><p>
+<table class=resources><tr class=title><td colspan="5">Front End</td></tr>
+'''
 
     if not frontend:
         html += '<tr><td colspan=5>Not specified</td></tr>\n'
@@ -300,12 +303,12 @@ from the certificate.<br />
 
     # list runtime environments that have a testprocedure
 
-    for re in re_list:
-        (re_dict, re_msg) = get_re_dict(re, configuration)
+    for env in re_list:
+        (re_dict, re_msg) = get_re_dict(env, configuration)
         if re_dict:
             if re_dict.has_key('TESTPROCEDURE'):
                 if re_dict['TESTPROCEDURE'] != []:
-                    html += '<option value=%s>%s' % (re, re)
+                    html += '<option value=%s>%s' % (env, env)
 
     html += """</select></td>"""
     html += '<td><input type="submit" name="submit" value="verify" />'
@@ -314,7 +317,9 @@ from the certificate.<br />
     # create html to select and call script to display testprocedure history
 
     html += \
-        """Show testprocedure history for the selected runtime environment and the resource with its current configuration.
+        """
+Show testprocedure history for the selected runtime environment and the
+resource with its current configuration.
     <table class=resources>
     <tr><td>
     <form method="get" action="showresupporthistory.py">
@@ -324,12 +329,12 @@ from the certificate.<br />
 
     # list runtime environments that have a testprocedure
 
-    for re in re_list:
-        (re_dict, re_msg) = get_re_dict(re, configuration)
+    for env in re_list:
+        (re_dict, re_msg) = get_re_dict(env, configuration)
         if re_dict:
             if re_dict.has_key('TESTPROCEDURE'):
                 if re_dict['TESTPROCEDURE'] != []:
-                    html += '<option value=%s>%s' % (re, re)
+                    html += '<option value=%s>%s' % (env, env)
 
     html += """</select></td>"""
     html += '<td><input type="submit" name="submit" value="Show" />'
@@ -354,12 +359,11 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    benchmark = accepted['benchmark'][-1].lower() != 'false'
     unique_res_names = accepted['unique_resource_name']
-    start_time = time.time()
 
     (re_stat, re_list) = list_runtime_environments(configuration)
     if not re_stat:
+        logger.warning('Failed to load list of runtime environments')
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Error getting list of runtime environments'
                               })
@@ -369,18 +373,61 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = 'Resource Management'
     title_entry['javascript'] = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-1.7.2.custom.css" media="screen"/>
 
-<style type="text/css">
-.hidden { display:none; }
-</style>
-<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui-1.7.2.custom.min.js"></script>
 
 <script type="text/javascript" >
-
-    var toggleHidden = function( classname ) {
-        // classname supposed to have a leading dot 
-        $( classname ).toggleClass('hidden');
+var toggleHidden = function(classname) {
+    // classname supposed to have a leading dot 
+        $(classname).toggleClass("hidden");
     }
+    
+var runConfirmDialog = function(text, link, textFieldName) {
+
+    if (link == undefined) {
+        link = "#";
+    }
+    if (text == undefined) {
+        text = "Are you sure?";
+    }
+    $("#confirm_text").html(text);
+
+    var addField = function() { /* doing nothing... */ };
+    if (textFieldName != undefined) {
+        $("#confirm_input").show();
+        addField = function() {
+            link += textFieldName + "=" + $("#confirm_input")[0].value;
+        }
+    }
+
+    $("#confirm_dialog").dialog("option", "buttons", {
+              "No": function() { $("#confirm_input").hide();
+                                 $("#confirm_text").html("");
+                                 $("#confirm_dialog").dialog("close");
+                               },
+              "Yes": function() { addField();
+                                  window.location = link;
+                                }
+            });
+    $("#confirm_dialog").dialog("open");
+}
+
+$(document).ready(function() {
+
+          // init confirmation dialog
+          $("#confirm_dialog").dialog(
+              // see http://jqueryui.com/docs/dialog/ for options
+              { autoOpen: false,
+                modal: true, closeOnEscape: true,
+                width: 500,
+                buttons: {
+                   "Cancel": function() { $("#" + name).dialog("close"); }
+	        }
+              });
+     }
+);
 </script>
 '''
     output_objects.append({'object_type': 'header', 'text'
@@ -403,6 +450,14 @@ def main(client_id, user_arguments_dict):
     quick_res = {}
     quick_links_index = len(output_objects)
     output_objects.append({'object_type': 'sectionheader', 'text': ''})
+
+    output_objects.append({'object_type': 'html_form',
+                           'text':'''
+ <div id="confirm_dialog" title="Confirm" style="background:#fff;">
+  <div id="confirm_text"><!-- filled by js --></div>
+   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"/></textarea>
+ </div>
+'''                       })
 
     owned = 0
     res_map = get_resource_map(configuration)
@@ -455,6 +510,27 @@ def main(client_id, user_arguments_dict):
                     )
                 output_objects.append({'object_type': 'html_form',
                                        'text': res_html})
+
+
+                output_objects.append({'object_type': 'sectionheader', 'text':
+                                       'Retire resource'})
+                output_objects.append({'object_type': 'text', 'text': '''
+Use the link below to permanently remove the resource from the grid after
+stopping all units and the front end.
+'''
+                                       })
+                output_objects.append(
+                    {'object_type': 'link',
+                     'destination':
+                     "javascript:runConfirmDialog('%s','%s');" % \
+                     ("Really delete %s? (fails if it is busy)" % \
+                      unique_resource_name, 
+                      'delres.py?unique_resource_name=%s' % \
+                      (unique_resource_name)),
+                     'class': 'removelink',
+                     'title': 'Delete %s' % unique_resource_name, 
+                     'text': 'Delete %s' % unique_resource_name}
+                    )
             owned += 1
 
     if owned == 0:
@@ -484,12 +560,6 @@ def main(client_id, user_arguments_dict):
 
         output_objects = output_objects[:quick_links_index]\
              + quick_links + output_objects[quick_links_index:]
-
-    finish_time = time.time()
-    if benchmark:
-        output_objects.append({'object_type': 'text', 'text'
-                              : 'Resource admin back end delivered data in %.2f seconds'
-                               % (finish_time - start_time)})
 
     return (output_objects, returnvalues.OK)
 

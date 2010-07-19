@@ -997,7 +997,6 @@ def start_resource(
 
 def resource_fe_action(
     unique_resource_name,
-    exe_name,
     resource_home,
     action,
     logger,
@@ -1565,7 +1564,7 @@ def status_resource_frontend(unique_resource_name, configuration,
 def status_resource(unique_resource_name, resource_home, logger):
     """Get status of resource front end"""
 
-    (status, msg) = resource_fe_action(unique_resource_name, '',
+    (status, msg) = resource_fe_action(unique_resource_name,
             resource_home, 'status', logger)
     return (status, msg)
 
@@ -1574,7 +1573,7 @@ def clean_resource_frontend(unique_resource_name, resource_home,
                             logger):
     """Clean resource front end"""
 
-    (status, msg) = resource_fe_action(unique_resource_name, '',
+    (status, msg) = resource_fe_action(unique_resource_name,
             resource_home, 'clean', logger)
     return (status, msg)
 
@@ -1589,7 +1588,7 @@ def stop_resource_frontend(unique_resource_name, configuration, logger):
 def stop_resource(unique_resource_name, resource_home, logger):
     """Stop resource front end"""
 
-    (status, msg) = resource_fe_action(unique_resource_name, '',
+    (status, msg) = resource_fe_action(unique_resource_name,
             resource_home, 'stop', logger)
     return (status, msg)
 

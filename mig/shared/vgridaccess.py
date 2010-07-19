@@ -67,7 +67,8 @@ def refresh_resource_map(configuration):
 
     # Find all resources and their configurations
     
-    all_resources = list_resources(configuration.resource_home)
+    all_resources = list_resources(configuration.resource_home,
+                                   only_valid=True)
     real_map = real_to_anon_res_map(configuration.resource_home)
     for res in all_resources:
         # Sandboxes do not change their configuration
@@ -177,7 +178,7 @@ def refresh_vgrid_map(configuration):
     # Find all resources and their vgrid assignments
     
     # TODO: use get_resource_map output instead?
-    all_resources = list_resources(configuration.resource_home)
+    all_resources = list_resources(configuration.resource_home, only_valid=True)
     real_map = real_to_anon_res_map(configuration.resource_home)
     for res in all_resources:
         # Sandboxes do not change their vgrid participation
@@ -218,7 +219,7 @@ def refresh_vgrid_map(configuration):
                     if i not in update_res]:
             if vgrid_allowed(res, old) != vgrid_allowed(res, new):
                 update_res.append(res)
-    for res in [i for i in update_res]:
+    for res in [i for i in update_res if i not in missing_res]:
         allow = []
         for vgrid in vgrid_map[RESOURCES][res][ASSIGN]:
             if vgrid_allowed(res, vgrid_map[VGRIDS][vgrid]):
@@ -312,6 +313,30 @@ def user_visible_resources(configuration, client_id):
     visible.update(user_owned_resources(configuration, client_id))
     return visible
 
+def resources_using_re(configuration, re_name):
+    """Find resources implementing the re_name runtime environment.
+
+    Resources are anonymized unless explicitly configured otherwise.
+    """
+    resources = []
+    resource_map = get_resource_map(configuration)
+
+    # Map only contains the raw resource names - anonomize as requested
+
+    anon_map = {}
+    for res in resource_map.keys():
+        anon_map[res] = resource_map[res][RESID]
+    for (res_id, res) in resource_map.items():
+        for env in resource_map[res_id][CONF]['RUNTIMEENVIRONMENT']:
+            if env[0] == re_name:
+                resources.append(anon_map[res_id])
+    return resources
+
+def unmap_resource(configuration, res_id):
+    """Remove res_id from resource and vgrid maps - simply force refresh"""
+    refresh_resource_map(configuration)
+    refresh_vgrid_map(configuration)
+
 
 if "__main__" == __name__:
     import sys
@@ -319,6 +344,9 @@ if "__main__" == __name__:
     user_id = 'anybody'
     if len(sys.argv) > 1:
         user_id = sys.argv[1]
+    runtime_env = 'PYTHON'
+    if len(sys.argv) > 2:
+        runtime_env = sys.argv[2]
     conf = get_configuration_object()
     res_map = get_resource_map(conf)
     print "raw resource map: %s" % res_map
@@ -345,3 +373,6 @@ if "__main__" == __name__:
     user_visible = user_visible_resources(conf, user_id)
     print "%s can view: %s" % \
           (user_id, ', '.join([i for i in user_visible.keys()]))
+    re_resources = resources_using_re(conf, runtime_env)
+    print "%s in use on resources: %s" % \
+          (runtime_env, ', '.join([i for i in re_resources]))

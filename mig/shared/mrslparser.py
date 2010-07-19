@@ -122,7 +122,7 @@ def parse(
 
     # convert specified runtime environments to upper-case and verify they actually exist
 
-    # do not check REs if the job is for ARC (submission will fail later) 
+    # do not check runtime envs if the job is for ARC (submission will fail later)
     if global_dict.get('JOBTYPE', 'unset') != 'arc' \
         and global_dict.has_key('RUNTIMEENVIRONMENT'):
         re_entries_uppercase = []

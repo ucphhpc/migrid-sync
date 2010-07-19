@@ -75,14 +75,14 @@ def run(localfile_spaces, unique_resource_name, outfile='AUTOMATIC'
     if not status:
         return (False, msg)
 
-    # verify runtimeenvironments are specified correctly
+    # verify runtime environments are specified correctly
 
     if conf.has_key('RUNTIMEENVIRONMENT'):
         for re in conf['RUNTIMEENVIRONMENT']:
             try:
                 (name, value) = re
             except Exception, err:
-                return (False, 'Runtimeenvironment error: %s' % err)
+                return (False, 'Runtime environment error: %s' % err)
             if not refunctions.is_runtime_environment(name,
                     configuration):
                 return (False,
@@ -93,7 +93,7 @@ def run(localfile_spaces, unique_resource_name, outfile='AUTOMATIC'
                     configuration)
             if not re_dict:
                 return (False,
-                        'Runtimeenvironment error, could not open (%s) %s'
+                        'Runtime environment error, could not open (%s) %s'
                          % (name, msg))
 
             if not re_dict.has_key('ENVIRONMENTVARIABLE'):

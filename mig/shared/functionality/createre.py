@@ -25,6 +25,8 @@
 # -- END_HEADER ---
 #
 
+"""Creation of runtime environments"""
+
 import os
 import base64
 import tempfile
@@ -33,6 +35,7 @@ import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables
 from shared.refunctions import create_runtimeenv
+from shared.validstring import valid_dir_input
 
 
 def signature():
@@ -78,11 +81,20 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : 'Create runtime environment'})
 
+    if not valid_dir_input(configuration.re_home, re_name):
+        logger.warning(
+            "possible illegal directory traversal attempt re_name '%s'"
+            % re_name)
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : 'Illegal runtime environment name: "%s"'
+                               % re_name})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     software_entries = len(software)
     max_software_entries = 40
     if software_entries > max_software_entries:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Too many software entries specified (%s), max %s'
+                              : 'Too many software entries (%s), max %s'
                                % (software_entries,
                               max_software_entries)})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -91,7 +103,7 @@ def main(client_id, user_arguments_dict):
     max_environment_entries = 40
     if environment_entries > max_environment_entries:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Too many environment entries specified (%s), max %s'
+                              : 'Too many environment entries (%s), max %s'
                                % (environment_entries,
                               max_environment_entries)})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -138,8 +150,10 @@ def main(client_id, user_arguments_dict):
         for to_verify in verify_specified:
             testprocedure += '%s\n' % to_verify
 
-        # testprocedure must be encoded since it contains mRSL code and keywords that may interfere with the runtime environment keywords
-        # in reality it is \n::KEYWORD::\n lines that may cause problems. For now the string is simply base64 encoded
+        # testprocedure must be encoded since it contains mRSL code and
+        # keywords that may interfere with the runtime environment keywords
+        # in reality it is \n::KEYWORD::\n lines that may cause problems.
+        # For now the string is simply base64 encoded
 
         content += '''::TESTPROCEDURE::
 %s
@@ -147,7 +161,9 @@ def main(client_id, user_arguments_dict):
 '''\
              % base64.encodestring(testprocedure).strip()
 
-        # print "testprocedure %s decoded %s" % (testprocedure, base64.decodestring(base64.encodestring(testprocedure).strip()))
+        #print "testprocedure %s decoded %s" % \
+        #      (testprocedure,
+        #      base64.decodestring(base64.encodestring(testprocedure).strip()))
 
     for software_ele in software:
         content += '''::SOFTWARE::
@@ -168,7 +184,7 @@ def main(client_id, user_arguments_dict):
         os.close(filehandle)
     except Exception, err:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Exception writing temporary runtime environment file. New runtime environment not created! %s'
+                              : 'Error preparing new runtime environment! %s'
                                % err})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -176,13 +192,13 @@ def main(client_id, user_arguments_dict):
             configuration)
     if not retval:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error during creation of new runtime environment: %s'
+                              : 'Error creating new runtime environment: %s'
                                % retmsg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     try:
         os.remove(tmpfile)
-    except Exception, exc:
+    except Exception:
         pass
 
     output_objects.append({'object_type': 'text', 'text'
@@ -192,7 +208,8 @@ def main(client_id, user_arguments_dict):
                            'destination': 'showre.py?re_name=%s' % re_name,
                            'class': 'viewlink',
                            'title': 'View your new runtime environment',
-                           'text': 'View new %s runtime environment' % re_name,
+                           'text': 'View new %s runtime environment'
+                           % re_name,
                            })
     return (output_objects, returnvalues.OK)
 
