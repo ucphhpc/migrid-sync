@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileio - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,6 +35,7 @@ import fcntl
 from shared.serial import dump, load
 
 def write_file(content, filename, logger):
+    """Wrapper to handle writing of contents to filename"""
     logger.debug('writing file: %s' % filename)
 
     # create dir if it does not exists
@@ -58,6 +59,7 @@ def write_file(content, filename, logger):
 
 
 def delete_file(filename, logger):
+    """Wrapper to handle deletion of filename"""
     logger.debug('deleting file: %s' % filename)
     if os.path.exists(filename):
         try:
@@ -74,6 +76,7 @@ def delete_file(filename, logger):
 
 
 def make_symlink(dest, src, logger):
+    """Wrapper to make src a symlink to dest path"""
     try:
         logger.debug('creating symlink: %s %s' % (dest, src))
         os.symlink(dest, src)
@@ -84,8 +87,8 @@ def make_symlink(dest, src, logger):
 
 
 def filter_pickled_list(filename, changes):
-    """Filter pickled list on disk with provided changes where changes is a dictionary
-    mapping existing list entries and the value to replace it with.
+    """Filter pickled list on disk with provided changes where changes is a
+    dictionary mapping existing list entries and the value to replace it with.
     """
 
     saved_list = load(filename)
@@ -95,8 +98,10 @@ def filter_pickled_list(filename, changes):
 
 
 def filter_pickled_dict(filename, changes):
-    """Filter pickled dictionary on disk with provided changes where changes is a
-    dictionary mapping existing dictionary values to a value to replace it with"""
+    """Filter pickled dictionary on disk with provided changes where changes
+    is a dictionary mapping existing dictionary values to a value to replace
+    it with.
+    """
 
     saved_dict = load(filename)
     for (key, val) in saved_dict.items():
@@ -133,6 +138,7 @@ def unpickle_and_change_status(filename, newstatus, logger):
 
 
 def unpickle(filename, logger):
+    """Unpack pickled object in filename"""
     try:
         job_dict = load(filename)
         logger.debug('%s was unpickled successfully' % filename)
@@ -144,6 +150,7 @@ def unpickle(filename, logger):
 
 
 def pickle(job_dict, filename, logger):
+    """Pack job_dict as pickled object in filename"""
     try:
         dump(job_dict, filename)
         logger.debug('pickle success: %s' % filename)
@@ -154,6 +161,7 @@ def pickle(job_dict, filename, logger):
 
 
 def send_message_to_grid_script(message, logger, configuration):
+    """Write an instruction to the grid_script name pipe input"""
     try:
         filehandle = open(configuration.grid_stdin, 'a')
         fcntl.flock(filehandle.fileno(), fcntl.LOCK_EX)
@@ -162,12 +170,13 @@ def send_message_to_grid_script(message, logger, configuration):
         return True
     except Exception, err:
         print 'could not get exclusive access or write to grid_stdin!'
-        logger.error('could not get exclusive access or write to grid_stdin: %s %s'
-                      % (message, err))
+        logger.error('could not write "%s" to grid_stdin: %s' % \
+                     (message, err))                     
         return False
 
 
 def touch(filepath, timestamp=None):
+    """Create or update timestamp for filepath"""
     try:
         if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
             filehandle = open(filepath, 'r+w')
@@ -187,3 +196,35 @@ def touch(filepath, timestamp=None):
 
         print "could not touch file: '%s', Error: %s" % (filepath, err)
         return False
+
+
+def remove_rec(dir_path, configuration):
+    """
+    Remove the given dir_path, and all subdirectories, recursively.
+    This function sets the permissions on files and subdirectories
+    before using shutil.rmtree, which is necessary when removing
+    VGrid directories (wiki script and mercurial script).
+
+    Returns Boolean to indicate success, writes messages to log.
+    """
+
+    try:
+        if not os.path.isdir(dir_path):
+            raise Exception("Directory %s does not exist" % dir_path)
+
+        os.chmod(dir_path, 0777)
+
+        # extend permissions top-down
+        for root, dirs, files in os.walk(dir_path, topdown=True):
+            for name in files:
+                os.chmod(os.path.join(root, name), 0777)
+            for name in dirs:
+                os.chmod(os.path.join(root, name), 0777)
+        shutil.rmtree(dir_path)
+
+    except Exception, err:
+        configuration.logger.error("Could not remove_rec %s: %s" % \
+                                   (dir_path, err))
+        return False
+
+    return True
