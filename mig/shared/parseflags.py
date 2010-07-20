@@ -62,6 +62,10 @@ def long_list(flags, letter='l'):
     return contains_letter(flags, letter)
 
 
+def force(flags, letter='f'):
+    return contains_letter(flags, letter)
+
+
 def file_info(flags, letter='f'):
     return contains_letter(flags, letter)
 

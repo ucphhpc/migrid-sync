@@ -66,7 +66,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
     vgrid_name = accepted['vgrid_name'][-1]
 
-    output_objects.append({'object_type': 'header', 'text'
+    output_objects.append({'object_type': 'sectionheader', 'text'
                           : "Update '%s'" % vgrid_name })
 
     if not vgrid_is_owner(vgrid_name, client_id, configuration):

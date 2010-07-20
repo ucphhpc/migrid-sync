@@ -34,6 +34,7 @@ from shared.fileio import remove_rec, unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables
 from shared.listhandling import remove_item_from_pickled_list
+from shared.parseflags import force
 from shared.useradm import client_id_dir
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
        vgrid_owners, vgrid_list_subvgrids
@@ -41,7 +42,8 @@ from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
 def signature():
     """Signature of the main function"""
 
-    defaults = {'vgrid_name': REJECT_UNSET, 'cert_id': REJECT_UNSET}
+    defaults = {'vgrid_name': REJECT_UNSET, 'cert_id': REJECT_UNSET,
+                'flags': []}
     return ['text', defaults]
 
 def unlink_shared_folders(user_dir, vgrid):
@@ -186,6 +188,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     vgrid_name = accepted['vgrid_name'][-1]
+    flags = ''.join(accepted['flags'])
     cert_id = accepted['cert_id'][-1]
     cert_dir = client_id_dir(cert_id)
 
@@ -200,7 +203,7 @@ def main(client_id, user_arguments_dict):
                               : msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # don't add if already an owner
+    # don't remove if not already an owner
 
     if not vgrid_is_owner(vgrid_name, cert_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
@@ -293,6 +296,22 @@ Owner removal has to be performed at the topmost vgrid''' % cert_id})
 
         logger.debug('Last owner %s wants to leave %s. Attempting deletion' %
                      (cert_id, vgrid_name))
+
+        if not force(flags):
+            output_objects.append({'object_type': 'text', 'text' : '''
+You are the last owner of %s - leaving will result in the vgrid getting
+deleted. Please use either of the links below to confirm or cancel.
+''' % vgrid_name})
+            output_objects.append({'object_type': 'link', 'destination':
+                                   '?cert_id=%s;vgrid_name=%s;flags=f'
+                                   % (cert_id, vgrid_name), 'text':
+                                   'Really leave and delete %s' % vgrid_name})
+            output_objects.append({'object_type': 'text', 'text' : ''})
+            output_objects.append({'object_type': 'link', 'destination':
+                                   'adminvgrid.py?vgrid_name=%s' % vgrid_name,
+                                   'text': 'Back to administration for %s'
+                                   % vgrid_name})
+            return (output_objects, returnvalues.OK)
 
         # check if any resources participate or sub-vgrids depend on this one
 
