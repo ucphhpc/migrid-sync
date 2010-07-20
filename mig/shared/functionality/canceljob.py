@@ -162,7 +162,7 @@ def main(client_id, user_arguments_dict):
 
         # Is the job status QUEUED or RETRY?
 
-        possible_cancel_states = ['QUEUED', 'RETRY', 'EXECUTING']
+        possible_cancel_states = ['PARSE', 'QUEUED', 'RETRY', 'EXECUTING']
         if not dict['STATUS'] in possible_cancel_states:
             changedstatusjob['message'] = \
                 'You can only cancel jobs with status: %s.'\
@@ -209,5 +209,3 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'changedstatusjobs',
                           'changedstatusjobs': changedstatusjobs})
     return (output_objects, status)
-
-

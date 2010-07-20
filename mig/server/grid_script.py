@@ -1333,10 +1333,16 @@ while True:
                                 unique_resource_name, 'config')
         resource_config = unpickle(res_file, logger)
 
+        no_action_status_list = ['PARSE']
         just_dequeue_status_list = ['QUEUED', 'RETRY']
         kill_executing_status_list = ['EXECUTING']
 
-        if original_status in just_dequeue_status_list:
+        if original_status in no_action_status_list:
+
+            # no action
+            
+            pass
+        elif original_status in just_dequeue_status_list:
 
             # dequeue
 
