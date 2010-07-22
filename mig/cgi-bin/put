@@ -481,8 +481,8 @@ Please contact the server administrator.""")
                 break
             upload_fd.write(chunk)
         upload_fd.close()
-    except Exception, e:
-        o.out('Could not write %s' % filename, str(e))
+    except Exception, exc:
+        o.out('Could not write %s' % filename, str(exc))
         o.reply_and_exit(o.ERROR)
 
     submitmrsl = False
@@ -501,8 +501,9 @@ Please contact the server administrator.""")
     if extractpackage and (filename.upper().endswith('.ZIP')
                             or filename.upper().endswith('.TAR.GZ')
                             or filename.upper().endswith('.TAR.BZ2')):
-        (status, msg) = handle_package_upload(real_path, real_path,
-                client_id, configuration, submitmrsl)
+        (status, msg) = handle_package_upload(real_path, filename, client_id,
+                                              configuration, submitmrsl,
+                                              os.path.dirname(real_path))
         if not status:
             o.out('Error: %s' % msg)
             o.reply_and_exit(o.ERROR)

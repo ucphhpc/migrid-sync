@@ -39,32 +39,45 @@ from shared.useradm import client_id_dir
 
 
 def handle_package_upload(
-    file_name,
-    remote_filename,
+    real_path,
+    relative_path,
     client_id,
     configuration,
     submit_mrslfiles,
+    dest_path,
     ):
     """ A file package was uploaded (eg. .zip file). Extract the content and
     submit mrsl files if submit_mrsl_files is True
     """
 
     client_dir = client_id_dir(client_id)
-    base_dir = os.path.abspath(os.path.dirname(file_name)) + os.sep
 
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                               client_dir)) + os.sep
+
+    # Unpack in same directory unless dest_path is given
+    
+    if not dest_path:
+        dest_path = os.path.abspath(os.path.dirname(real_path)) + os.sep
+    else:
+        dest_path = os.path.abspath(dest_path) + os.sep
+    
     msg = ''
     mrslfiles_to_parse = []
 
     # Handle .zip file
 
-    if file_name.upper().endswith('.ZIP'):
+    if real_path.upper().endswith('.ZIP'):
         msg += \
             ".ZIP file '%s' received, it was specified that it should be extracted!\n"\
-             % remote_filename
+             % relative_path
         try:
-            zip_object = zipfile.ZipFile(file_name, 'r')
-        except Exception, e:
-            msg += 'Could not open zipfile! %s' % e
+            zip_object = zipfile.ZipFile(real_path, 'r')
+        except Exception, exc:
+            msg += 'Could not open zipfile! %s' % exc
             return (False, msg)
 
         for zip_entry in zip_object.infolist():
@@ -72,8 +85,7 @@ def handle_package_upload(
 
             # write zip_entry to disk
 
-            local_zip_entry_name = os.path.abspath(base_dir
-                     + zip_entry.filename)
+            local_zip_entry_name = os.path.join(dest_path, zip_entry.filename)
             if not valid_user_path(local_zip_entry_name, base_dir):
                 msg += \
                     'Are you trying to circumvent permissions on the file system? Do not use .. in the path string!'
@@ -87,8 +99,8 @@ def handle_package_upload(
                 msg += 'creating dir %s\n' % zip_entry_dir
                 try:
                     os.mkdir(zip_entry_dir, 0777)
-                except Exception, e:
-                    msg += 'error creating directory %s' % e
+                except Exception, exc:
+                    msg += 'error creating directory %s' % exc
                     return (False, msg)
 
             # TODO: can we detect and ignore symlinks?
@@ -113,10 +125,10 @@ def handle_package_upload(
             try:
                 msg += 'Size: %s\n'\
                      % os.path.getsize(local_zip_entry_name)
-            except Exception, e:
+            except Exception, exc:
                 msg += \
                     'File seems to be saved, but could not get file size %s\n'\
-                     % e
+                     % exc
                 return (False, msg)
 
             # Check if the extension is .mRSL
@@ -126,32 +138,32 @@ def handle_package_upload(
                 # A .mrsl file was included in the package!
 
                 mrslfiles_to_parse.append(local_zip_entry_name)
-    elif file_name.upper().endswith('.TAR.GZ')\
-         or file_name.upper().endswith('.TGZ')\
-         or file_name.upper().endswith('.TAR.BZ2'):
+    elif real_path.upper().endswith('.TAR.GZ')\
+         or real_path.upper().endswith('.TGZ')\
+         or real_path.upper().endswith('.TAR.BZ2'):
 
     # Handle .tar.gz and tar.bz2 files
 
-        if file_name.upper().endswith('.TAR.GZ')\
-             or file_name.upper().endswith('.TGZ'):
+        if real_path.upper().endswith('.TAR.GZ')\
+             or real_path.upper().endswith('.TGZ'):
             msg += \
                 ".TAR.GZ file '%s' received, it was specified that it should be extracted!\n"\
-                 % remote_filename
+                 % relative_path
             try:
-                tar_object = tarfile.open(file_name, 'r:gz')
-                tar_file_content = tarfile.TarFile.gzopen(file_name)
-            except Exception, e:
-                msg += 'Could not open .tar.gz file! %s\n' % e
+                tar_object = tarfile.open(real_path, 'r:gz')
+                tar_file_content = tarfile.TarFile.gzopen(real_path)
+            except Exception, exc:
+                msg += 'Could not open .tar.gz file! %s\n' % exc
                 return (False, msg)
-        elif file_name.upper().endswith('.TAR.BZ2'):
+        elif real_path.upper().endswith('.TAR.BZ2'):
             msg += \
                 ".TAR.BZ2 file '%s' received, it was specified that it should be extracted!\n"\
-                 % remote_filename
+                 % relative_path
             try:
-                tar_object = tarfile.open(file_name, 'r:bz2')
-                tar_file_content = tarfile.TarFile.bz2open(file_name)
-            except Exception, e:
-                msg += 'Could not open .tar.bz2 file! %s\n' % e
+                tar_object = tarfile.open(real_path, 'r:bz2')
+                tar_file_content = tarfile.TarFile.bz2open(real_path)
+            except Exception, exc:
+                msg += 'Could not open .tar.bz2 file! %s\n' % exc
                 return (False, msg)
         else:
             msg += \
@@ -179,8 +191,8 @@ def handle_package_upload(
                 msg += 'creating dir %s\n' % tar_entry_dir
                 try:
                     os.mkdir(tar_entry_dir, 0777)
-                except Exception, e:
-                    msg += 'error creating directory %s\n' % e
+                except Exception, exc:
+                    msg += 'error creating directory %s\n' % exc
                     return (False, msg)
             if not tar_entry.isreg():
 
@@ -203,10 +215,10 @@ def handle_package_upload(
             try:
                 msg += 'Size: %s\n'\
                      % os.path.getsize(local_tar_entry_name)
-            except Exception, e:
+            except Exception, exc:
                 msg += \
                     'File seems to be saved, but could not get file size %s\n'\
-                     % e
+                     % exc
                 return (False, msg)
 
             # Check if the extension is .mRSL

@@ -365,7 +365,7 @@ def main(client_id, user_arguments_dict):
                        or local_filename.upper().endswith('.TAR.BZ2')):
                 (status, msg) = handle_package_upload(local_filename,
                         remote_filename, client_id, configuration,
-                        submit_mrslfiles)
+                        submit_mrslfiles, os.path.dirname(local_filename))
                 if not status:
                     output_objects.append({'object_type': 'error_text',
                             'text': 'Error: %s' % msg})

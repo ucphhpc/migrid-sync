@@ -44,8 +44,8 @@ from shared.validstring import valid_user_path
 def signature():
     """Signature of the main function"""
 
-    defaults = {'path': [REJECT_UNSET], 'flags': [''],
-                'dst': REJECT_UNSET}
+    defaults = {'path': REJECT_UNSET, 'flags': [''],
+                'dst': REJECT_UNSET, 'current_dir': ['.']}
     return ['link', defaults]
 
 
@@ -89,7 +89,13 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
     flags = ''.join(accepted['flags'])
     dst = accepted['dst'][-1]
-    patterns = accepted['path']
+    pattern_list = accepted['path']
+    current_dir = accepted['current_dir'][-1]
+
+    # All paths are relative to current_dir
+    
+    pattern_list = [os.path.join(current_dir, i) for i in pattern_list]
+    dst = os.path.join(current_dir, dst)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -111,29 +117,25 @@ def main(client_id, user_arguments_dict):
     if 'h' in flags:
         usage(output_objects)
 
-    real_dest = base_dir + dst
-    dst_list = glob.glob(real_dest)
-    if not dst_list:
+    real_dir = os.path.abspath(os.path.join(base_dir,
+                                            current_dir.lstrip(os.sep)))
+    if not valid_user_path(real_dir, base_dir, True):
 
-        # New destination?
+        # out of bounds
 
-        if not glob.glob(os.path.dirname(real_dest)):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Illegal dst path provided - directory part does not exist!'
-                                  })
-            return (output_objects, returnvalues.CLIENT_ERROR)
-        else:
-            dst_list = [real_dest]
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : "You're not allowed to work in %s!"
+                               % current_dir})
+        logger.error(
+            'Warning: %s tried to %s with current_dir %s outside own home!'
+            % (client_id, op_name, current_dir))
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # Use last match in case of multiple matches
+    output_objects.append({'object_type': 'text', 'text'
+                              : "working in %s"
+                               % current_dir})
 
-    dest = dst_list[-1]
-    if len(dst_list) > 1:
-        output_objects.append({'object_type': 'warning', 'text'
-                              : 'dst (%s) matches multiple targets - using last: %s'
-                               % (dst, dest)})
-
-    real_dest = os.path.abspath(dest)
+    real_dest = os.path.join(base_dir, dst.lstrip(os.sep))
 
     # Don't use real_path in output as it may expose underlying
     # fs layout.
@@ -144,24 +146,31 @@ def main(client_id, user_arguments_dict):
         # out of bounds
 
         output_objects.append({'object_type': 'error_text', 'text'
-                              : "You're only allowed to write to your own home directory! dest (%s) expands to an illegal path (%s)"
-                               % (dst, relative_dest)})
-        logger.error('Warning: %s tried to %s file(s) to destination %s outside own home! (using pattern %s)'
-                      % (client_id, op_name, real_dest, dst))
+                              : """
+You're only allowed to write to your own home directory!
+dst (%s) expands to an illegal path (%s)""" % (dst, relative_dest)})
+        logger.error(
+            'Warning: %s tried to %s file(s) to dest %s outside own home!'
+            % (client_id, op_name, real_dest))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    zip_file = zipfile.ZipFile(real_dest, 'w')
+
+    if not os.path.isdir(os.path.dirname(real_dest)):
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : "No such destination directory: %s"
+                               % os.path.dirname(relative_dest)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     status = returnvalues.OK
 
-    for pattern in patterns:
+    zip_file = zipfile.ZipFile(real_dest, 'w')
+    for pattern in pattern_list:
 
-        # Check directory traversal attempts before actual handling
-        # to avoid leaking information about file system layout while
-        # allowing consistent error messages
-        # NB: Globbing disabled on purpose here
+        # Check directory traversal attempts before actual handling to avoid
+        # leaking information about file system layout while allowing
+        # consistent error messages
 
-        unfiltered_match = [base_dir + pattern]
+        unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
             real_path = os.path.abspath(server_path)
@@ -171,53 +180,63 @@ def main(client_id, user_arguments_dict):
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                logger.error('Warning: %s tried to %s %s outside own home! (%s)'
-                              % (client_id, op_name, real_path,
-                             pattern))
+                logger.error(
+                    'Warning: %s tried to %s %s outside own home! (%s)'
+                    % (client_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
 
-    # Now actually treat list of allowed matchings and notify if
-    # no (allowed) match
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match
 
-    if not match:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : "%s: cannot zip '%s': no valid paths"
-                               % (op_name, pattern)})
-        status = returnvalues.CLIENT_ERROR
-
-    for real_path in match:
-        relative_path = real_path.replace(base_dir, '')
-        if verbose(flags):
-            output_objects.append({'object_type': 'file', 'name'
-                                  : relative_path})
-
-        try:
-            if os.path.isdir(real_path):
-
-                # Directory write is not supported - add each file manually
-                # TODO: This only catches subfiles not suddirs!
-
-                for subpath in os.listdir(real_path):
-                    zip_file.write(real_path + os.sep + subpath,
-                                   relative_path + os.sep + subpath)
-            else:
-                zip_file.write(real_path, relative_path)
-        except Exception, exc:
+        if not match:
             output_objects.append({'object_type': 'error_text', 'text'
-                                  : "%s: '%s': %s" % (op_name,
-                                  relative_path, exc)})
-            logger.error("%s: failed on '%s': %s" % (op_name,
-                         relative_path, exc))
-            status = returnvalues.SYSTEM_ERROR
+                                   : "%s: cannot zip '%s': no valid paths"
+                                   % (op_name, pattern)})
+            status = returnvalues.CLIENT_ERROR
+            continue
+
+        for real_path in match:
+            relative_path = real_path.replace(base_dir, '')
+            if verbose(flags):
+                output_objects.append({'object_type': 'file', 'name'
+                                       : relative_path})
+
+            try:
+                if os.path.isdir(real_path):
+                    for root, dirs, files in os.walk(real_path):
+                        # TODO: no pure (empty) directory support yet
+                        for entry in files:
+                            zip_file.write(os.path.join(root, entry),
+                                           os.path.join(root.replace(real_dir,
+                                                                     ''),
+                                                        entry))
+                else:
+                    zip_file.write(real_path, real_path.replace(real_dir, ''))
+            except Exception, exc:
+                output_objects.append({'object_type': 'error_text', 'text'
+                                       : "%s: '%s': %s" % (op_name,
+                                                           relative_path, exc)
+                                       })
+                logger.error("%s: failed on '%s': %s" % (op_name,
+                                                         relative_path, exc))
+                status = returnvalues.SYSTEM_ERROR
+                continue
+
+            output_objects.append({'object_type': 'text', 'text'
+                                   : 'Added %s to %s'
+                                   % (relative_path, relative_dest)})
 
     zip_file.close()
 
     # Verify CRC
 
-    zip_file = zipfile.ZipFile(real_dest, 'r')
-    err = zip_file.testzip()
-    zip_file.close()
+    try:
+        zip_file = zipfile.ZipFile(real_dest, 'r')
+        err = zip_file.testzip()
+        zip_file.close()
+    except Exception, exc:
+        err = "Could not open zip file: %s" % exc
     if err:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Zip file integrity check failed! (%s)'
@@ -226,12 +245,10 @@ def main(client_id, user_arguments_dict):
     else:
         output_objects.append({'object_type': 'text', 'text'
                               : 'Zip archive of %s is now available in %s'
-                               % (', '.join(patterns), relative_path)})
+                               % (', '.join(pattern_list), relative_dest)})
         output_objects.append({'object_type': 'link', 'text'
-                              : 'Download zip archive', 'destination'
-                              : os.path.join('..', client_dir,
-                              relative_dest)})
+                               : 'Download zip archive', 'destination'
+                               : os.path.join('..', client_dir,
+                                              relative_dest)})
 
     return (output_objects, status)
-
-

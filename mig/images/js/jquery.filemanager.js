@@ -290,12 +290,48 @@ if (jQuery) (function($){
 		jsonWrapper(el, '#cmd_dialog', 'head.py'); },
             tail:   function (action, el, pos) { 
 		jsonWrapper(el, '#cmd_dialog', 'tail.py'); },
+            zip:   function (action, el, pos) { 
+                /* zip file or directory to user specified file */
+                var current_dir = '';
+                var target = $(el).attr(pathAttribute);
+                var path_name = '';
+                pathEl = target.split('/');
+                if (target.lastIndexOf("/") == (target.length-1)) {
+                    path_name = pathEl[pathEl.length-2];
+                    target = target.substring(0, target.lastIndexOf('/'));
+                } else {
+                    path_name = pathEl[pathEl.length-1];
+                }
+                current_dir = target.substring(0, target.lastIndexOf('/'));
+            
+                // Initialize the form
+                $('#zip_form input[name=current_dir]').val(current_dir);
+                $('#zip_form input[name=path]').val(path_name);
+                $('#zip_form input[name=dst]').val(path_name + '.zip');
+                $("#zip_output").html('');
+                $("#zip_dialog").dialog('destroy');
+                $("#zip_dialog").dialog(
+		    { buttons: {
+                          Ok: function() { 
+			      $("#zip_form").submit(); },
+                          Cancel: function() {
+			      $(this).dialog('close');}
+                      },
+                      autoOpen: false, closeOnEscape: true,
+                      modal: true}
+                );
+                $("#zip_dialog").dialog('open');
+
+            },
+            unzip:   function (action, el, pos) { 
+                var dst = $('.fm_addressbar input[name=fm_current_path]').val();
+		jsonWrapper(el, '#cmd_dialog', 'unzip.py', {dst: dst}); 
+            },
             submit: function (action, el, pos) { 
 		jsonWrapper(el, '#cmd_dialog', 'submit.py'); },
-            
             copy:   function (action, el, pos) {
                 clipboard['is_dir'] = $(el).hasClass('directory');
-                clipboard['path']       = $(el).attr(pathAttribute);
+                clipboard['path'] = $(el).attr(pathAttribute);
             },
             paste:  function (action, el, pos) {
                 copy(clipboard['path'], $(el).attr(pathAttribute));
@@ -765,6 +801,19 @@ if (jQuery) (function($){
           }
          });
 			 
+     $('#zip_form').ajaxForm(
+         {target: '#zip_output', dataType: 'json',
+          success: function(responseObject, statusText) {
+              var errors = $(this).renderError(responseObject);
+              if (errors.length > 0) {
+                  $('#zip_output').html(errors);
+              } else {
+                  $('#zip_dialog').dialog('close');
+                  $('.fm_files').parent().reload('');
+              }
+          }
+     });
+
      $('#rename_form').ajaxForm(
          {target: '#rename_output', dataType: 'json',
           success: function(responseObject, statusText) {

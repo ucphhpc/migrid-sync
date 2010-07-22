@@ -91,6 +91,9 @@ def html_tmpl():
     <li class="upload">
       <a href="#upload">Upload File</a>
     </li>
+    <li class="zip">
+      <a href="#zip">Zip</a>
+    </li>
     <li class="copy separator">
       <a href="#copy">Copy</a>
     </li>
@@ -122,7 +125,13 @@ def html_tmpl():
       <a href="#rm">Delete</a>
     </li>
     <li class="rename separator">
-      <a href="#rename">Rename...</a>
+      <a href="#rename">Rename</a>
+    </li>
+    <li class="zip">
+      <a href="#zip">Zip</a>
+    </li>
+    <li class="unzip">
+      <a href="#unzip">Unzip</a>
     </li>
     <li class="cat separator">
       <a href="#cat">cat</a>
@@ -198,6 +207,23 @@ def html_tmpl():
   </fieldset>
   </form>
   <div id="rename_output"></div>
+  </div>
+
+  <div id="zip_dialog" title="Zip" style="display: none;">
+  <form id="zip_form" action="zip.py">
+  <fieldset>
+  
+    <input type="hidden" name="output_format" value="json" />
+    <input type="hidden" name="flags" value="" />
+    <input type="hidden" name="path" value="" />
+    <input type="hidden" name="current_dir" value="" />
+    
+    <label for="dst">Enter the zip file name:</label>
+    <input type="text" name="dst" value="" />
+    
+  </fieldset>
+  </form>
+  <div id="zip_output"></div>
   </div>
   '''
   html += '''
