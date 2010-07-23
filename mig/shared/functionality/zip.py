@@ -198,6 +198,11 @@ dst (%s) expands to an illegal path (%s)""" % (dst, relative_dest)})
 
         for real_path in match:
             relative_path = real_path.replace(base_dir, '')
+            if real_dest == real_path:
+                    output_objects.append({'object_type': 'text', 'text'
+                                           : 'skipping destination file %s'
+                                           % relative_dest})
+                    continue
             if verbose(flags):
                 output_objects.append({'object_type': 'file', 'name'
                                        : relative_path})
@@ -207,10 +212,16 @@ dst (%s) expands to an illegal path (%s)""" % (dst, relative_dest)})
                     for root, dirs, files in os.walk(real_path):
                         # TODO: no pure (empty) directory support yet
                         for entry in files:
-                            zip_file.write(os.path.join(root, entry),
-                                           os.path.join(root.replace(real_dir,
-                                                                     ''),
-                                                        entry))
+                            real_target = os.path.join(root, entry)
+                            relative_target = os.path.join(root.replace(
+                                real_dir, ''), entry)
+                            if real_dest == real_target:
+                                output_objects.append(
+                                    {'object_type': 'text', 'text'
+                                     : 'skipping destination file %s'
+                                     % relative_dest})
+                                continue
+                            zip_file.write(real_target, relative_target)
                 else:
                     zip_file.write(real_path, real_path.replace(real_dir, ''))
             except Exception, exc:
