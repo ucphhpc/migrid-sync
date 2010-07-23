@@ -125,11 +125,20 @@ ___%s___
                 lines += pprint_table(txt_table_if_have_keys(header,
                                   submitstatuslist, ['name', 'status',
                                                      'job_id', 'message']))
+        elif i['object_type'] == 'resubmitobjs':
+            resubmitobjs = i['resubmitobjs']
+            if len(resubmitobjs) == 0:
+                continue
+            header = [['Job ID', 'Resubmit status', 'New job ID',
+                      'Message']]
+            lines += pprint_table(txt_table_if_have_keys(header,
+                                  resubmitobjs, ['job_id',
+                                  'status', 'new_job_id', 'message']))
         elif i['object_type'] == 'changedstatusjobs':
             changedstatusjobs = i['changedstatusjobs']
             if len(changedstatusjobs) == 0:
                 continue
-            header = [['Job ID', 'Old status', 'New status Message',
+            header = [['Job ID', 'Old status', 'New status',
                       'Message']]
             lines += pprint_table(txt_table_if_have_keys(header,
                                   changedstatusjobs, ['job_id',
@@ -538,7 +547,7 @@ Exit code: %s Description: %s<br />
             resubmitobjs = i['resubmitobjs']
             if len(resubmitobjs) == 0:
                 continue
-            lines.append("<table class='resubmit'><tr><th>Job ID</th><th>Resubmit status</th><th>New jobid</th><th>Message</th></tr>"
+            lines.append("<table class='resubmit'><tr><th>Job ID</th><th>Resubmit status</th><th>New job ID</th><th>Message</th></tr>"
                          )
             for resubmitobj in resubmitobjs:
                 lines.append('<tr>%s</tr>'

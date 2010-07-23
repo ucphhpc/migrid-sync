@@ -263,7 +263,7 @@ def put_usage_function(lang, extension):
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
-    usage_str = 'Usage: %s%s.%s FILE [FILE ...] FILE' % (mig_prefix,
+    usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...] FILE' % (mig_prefix,
             op, extension)
     s = ''
     s += begin_function(lang, 'usage', [])
@@ -310,7 +310,7 @@ def resubmit_usage_function(lang, extension):
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
-    usage_str = 'Usage: %s%s.%s JOBID [JOBID ...]' % (mig_prefix, op,
+    usage_str = 'Usage: %s%s.%s [OPTIONS] JOBID [JOBID ...]' % (mig_prefix, op,
             extension)
     s = ''
     s += begin_function(lang, 'usage', [])
@@ -410,7 +410,7 @@ def submit_usage_function(lang, extension):
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
-    usage_str = 'Usage: %s%s.%s FILE [FILE ...]' % (mig_prefix, op,
+    usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]' % (mig_prefix, op,
             extension)
     s = ''
     s += begin_function(lang, 'usage', [])
@@ -570,16 +570,17 @@ def cancel_function(lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = \
-            '"output_format=txt;flags=$server_flags;job_id=$job_id"'
+            '"output_format=txt;flags=$server_flags;$job_list"'
     elif lang == 'python':
         post_data = \
-            "'output_format=txt;flags=%s;job_id=%s' % (server_flags, job_id)"
+            "'output_format=txt;flags=%s;%s' % (server_flags, job_list)"
     else:
         print 'Error: %s not supported!' % lang
         return ''
 
     s = ''
-    s += begin_function(lang, 'cancel_job', ['job_id'])
+    s += begin_function(lang, 'cancel_job', ['job_list'])
+    s += format_list(lang, 'job_list', 'job_id')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -977,16 +978,17 @@ def resubmit_function(lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = \
-            '"output_format=txt;flags=$server_flags;job_id=$job_id"'
+            '"output_format=txt;flags=$server_flags;$job_list"'
     elif lang == 'python':
         post_data = \
-            "'output_format=txt;flags=%s;job_id=%s' % (server_flags, job_id)"
+            "'output_format=txt;flags=%s;%s' % (server_flags, job_list)"
     else:
         print 'Error: %s not supported!' % lang
         return ''
 
     s = ''
-    s += begin_function(lang, 'resubmit_job', ['job_id'])
+    s += begin_function(lang, 'resubmit_job', ['job_list'])
+    s += format_list(lang, 'job_list', 'job_id')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -2245,27 +2247,29 @@ def resubmit_main(lang):
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
-
-    # TODO: wildcard expansion!
-
     if lang == 'sh':
         s += \
             """
-src_list="$@"
-
-
-for src in ${src_list}; do
-   resubmit_job $src
+# Build the job_id string used directly:
+# 'job_id="$1";job_id="$2";...;job_id=$N'
+orig_args=("$@")
+job_id_list=\"job_id=$1\"
+shift
+while [ \"$#\" -gt \"0\" ]; do
+    job_id_list=\"$job_id_list;job_id=$1\"
+    shift
 done
+resubmit_job $job_id_list
 """
     elif lang == 'python':
         s += \
             """
-src_list = sys.argv[1:]
-
-for src in src_list:
-   (status, out) = resubmit_job(src)
-   print ''.join(out),
+# Build the job_id_list string used in wild card expansion:
+# 'job_id="$1";job_id="$2";...;job_id=$N'
+job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[1:])
+(status, out) = resubmit_job(job_id_list)
+print ''.join(out),
+sys.exit(status)
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -3178,7 +3182,7 @@ def generate_read(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_resubmit(scripts_languages):
+def generate_resubmit(scripts_languages, dest_dir='.'):
 
     # Extract op from function name
 
@@ -3200,7 +3204,7 @@ def generate_resubmit(scripts_languages):
         script += shared_op_function(op, lang, curl_cmd)
         script += shared_main(op, lang)
 
-        write_script(script, script_name)
+        write_script(script, dest_dir + os.sep + script_name)
 
     return True
 
@@ -3540,7 +3544,6 @@ shared_lib = True
 test_script = True
 
 # Supported MiG operations (don't add 'test' as it is optional)
-# add resubmit?
 
 script_ops = [
     'cancel',
@@ -3558,6 +3561,7 @@ script_ops = [
     'stat',
     'status',
     'submit',
+    'resubmit',
     'tail',
     'touch',
     'truncate',
