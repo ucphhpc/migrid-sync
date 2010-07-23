@@ -215,7 +215,7 @@ def html_tmpl():
   
     <input type="hidden" name="output_format" value="json" />
     <input type="hidden" name="flags" value="" />
-    <input type="hidden" name="path" value="" />
+    <input type="hidden" name="src" value="" />
     <input type="hidden" name="current_dir" value="" />
     
     <label for="dst">Enter the zip file name:</label>

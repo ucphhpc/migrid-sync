@@ -192,6 +192,22 @@ def head_usage_function(lang, extension):
     return s
 
 
+def liveio_usage_function(lang, extension):
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION JOBID SRC [SRC ...] DST' % \
+                (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [])
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
 def ls_usage_function(lang, extension):
 
     # Extract op from function name
@@ -494,6 +510,22 @@ def truncate_usage_function(lang, extension):
     return s
 
 
+def unzip_usage_function(lang, extension):
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] SRC [SRC...] DST'\
+         % (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [])
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
 def wc_usage_function(lang, extension):
 
     # Extract op from function name
@@ -537,17 +569,22 @@ def write_usage_function(lang, extension):
     return s
 
 
-def liveio_usage_function(lang, extension):
+def zip_usage_function(lang, extension):
 
     # Extract op from function name
 
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
-    usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION JOBID SRC [SRC ...] DST' % \
-                (mig_prefix, op, extension)
+    usage_str = 'Usage: %s%s.%s [OPTIONS] SRC [SRC...] DST'\
+         % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [])
     s += basic_usage_options(usage_str, lang)
+    curdir_usage_string = '-w PATH\t\tUse PATH as remote working directory'
+    if lang == 'sh':
+        s += '\n\techo "%s"' % curdir_usage_string
+    elif lang == 'python':
+        s += '\n\tprint "%s"' % curdir_usage_string
     s += end_function(lang, 'usage')
 
     return s
@@ -762,6 +799,36 @@ def head_function(lang, curl_cmd, curl_flags='--compressed'):
         curl_flags,
         )
     s += end_function(lang, 'head_file')
+    return s
+
+
+def liveio_function(lang, curl_cmd, curl_flags='--compressed'):
+    relative_url = '"cgi-bin/liveio.py"'
+    query = '""'
+    if lang == 'sh':
+        post_data = '"output_format=txt;flags=$server_flags;$action;$job_id;$src_list;$dst"'
+    elif lang == 'python':
+        post_data = \
+            "'output_format=txt;flags=%s;%s;%s;%s;%s' % (server_flags, action, job_id, src_list, dst)"
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'job_liveio', ['action', 'job_id', 'src_list', 'dst'])
+    s += format_list(lang, 'src_list', 'src')
+    s += ca_check_init(lang)
+    s += password_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'job_liveio')
     return s
 
 
@@ -1436,6 +1503,44 @@ def truncate_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
+def unzip_function(lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with the string 'src_list' as argument. Thus
+    the variable 'src_list' should be on the form
+    \"src=pattern1[;src=pattern2[ ... ]]\"
+    This may seem a bit awkward but it's difficult to do in a better way when
+    begin_function() doesn't support variable length or array args.
+    """
+
+    relative_url = '"cgi-bin/unzip.py"'
+    query = '""'
+    if lang == 'sh':
+        post_data = \
+            '"output_format=txt;flags=$server_flags;dst=$dst;$src_list"'
+    elif lang == 'python':
+        post_data = \
+            "'output_format=txt;flags=%s;dst=%s;%s' % (server_flags, dst, src_list)"
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'unzip_file', ['src_list', 'dst'])
+    s += format_list(lang, 'src_list', 'src')
+    s += ca_check_init(lang)
+    s += password_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'unzip_file')
+    return s
+
+
 def wc_function(lang, curl_cmd, curl_flags=''):
     relative_url = '"cgi-bin/wc.py"'
     query = '""'
@@ -1500,20 +1605,28 @@ def write_function(lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def liveio_function(lang, curl_cmd, curl_flags='--compressed'):
-    relative_url = '"cgi-bin/liveio.py"'
+def zip_function(lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with the string 'src_list' as argument. Thus
+    the variable 'src_list' should be on the form
+    \"src=pattern1[;src=pattern2[ ... ]]\"
+    This may seem a bit awkward but it's difficult to do in a better way when
+    begin_function() doesn't support variable length or array args.
+    """
+
+    relative_url = '"cgi-bin/zip.py"'
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;$action;$job_id;$src_list;$dst"'
+        post_data = \
+            '"output_format=txt;flags=$server_flags;current_dir=$current_dir;dst=$dst;$src_list"'
     elif lang == 'python':
         post_data = \
-            "'output_format=txt;flags=%s;%s;%s;%s;%s' % (server_flags, action, job_id, src_list, dst)"
+            "'output_format=txt;flags=%s;current_dir=%s;dst=%s;%s' % (server_flags, current_dir, dst, src_list)"
     else:
         print 'Error: %s not supported!' % lang
         return ''
 
     s = ''
-    s += begin_function(lang, 'job_liveio', ['action', 'job_id', 'src_list', 'dst'])
+    s += begin_function(lang, 'zip_file', ['current_dir', 'src_list', 'dst'])
     s += format_list(lang, 'src_list', 'src')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -1526,7 +1639,7 @@ def liveio_function(lang, curl_cmd, curl_flags='--compressed'):
         curl_cmd,
         curl_flags,
         )
-    s += end_function(lang, 'job_liveio')
+    s += end_function(lang, 'zip_file')
     return s
 
 
@@ -1653,7 +1766,7 @@ cancel_job $job_id_list
     elif lang == 'python':
         s += \
             """
-# Build the job_id_list string used in wild card expansion:
+# Build the job_id string used directly:
 # 'job_id="$1";job_id="$2";...;job_id=$N'
 job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[1:])
 (status, out) = cancel_job(job_id_list)
@@ -1696,7 +1809,7 @@ cat_file $path_list
     elif lang == 'python':
         s += \
             """
-# Build the path_list string used in wild card expansion:
+# Build the path string used directly:
 # 'path="$1";path="$2";...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = cat_file(path_list)
@@ -1871,10 +1984,61 @@ head_file $lines $path_list
     elif lang == 'python':
         s += \
             """
-# Build the path_list string used in wild card expansion:
+# Build the path string used directly:
 # 'path="$1";path="$2";...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = head_file(lines, path_list)
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
+def liveio_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 4, None)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += \
+            """
+# Build the action, job_id, src and dst strings used directly:
+# action="$1" job_id="$2" src="$2";src="$3";...;src=$((N-1) dst="$N"
+orig_args=("$@")
+action=\"action=$1\"
+shift
+job_id=\"job_id=$1\"
+shift
+src_list=\"src=$1\"
+shift
+while [ \"$#\" -gt \"1\" ]; do
+    src_list=\"$src_list;src=$1\"
+    shift
+done
+dst=\"dst=$1\"
+job_liveio $action $job_id $src_list $dst
+"""
+    elif lang == 'python':
+        s += \
+            """
+# Build the action, job_id, src and dst strings used directly:
+# action="$1" job_id="$2" src="$2";src="$3";...;src=$((N-1) dst="$N"
+action = \"action=%s\" % sys.argv[1]
+job_id = \"job_id=%s\" % sys.argv[2]
+src_list = \"src=%s\" % \";src=\".join(sys.argv[3:-1])
+dst = \"dst=%s\" % sys.argv[-1]
+(status, out) = job_liveio(action, job_id, src_list, dst)
 print ''.join(out),
 sys.exit(status)
 """
@@ -1918,7 +2082,7 @@ def ls_main(lang):
     if lang == 'sh':
         s += \
             """
-# Build the path string used in ls directly:
+# Build the path string used directly:
 # 'path="$1";path="$2";...;path=$N'
 orig_args=("$@")
 if [ $# -gt 0 ]; then
@@ -1936,7 +2100,7 @@ ls_file $path_list
     elif lang == 'python':
         s += \
             """
-# Build the path_list string used in wild card expansion:
+# Build the path string used directly:
 # 'path="$1";path="$2";...;path=$N'
 if len(sys.argv) == 1:
     sys.argv.append(".")
@@ -1976,7 +2140,7 @@ def mkdir_main(lang):
     if lang == 'sh':
         s += \
             """
-# Build the path string used in rm directly:
+# Build the path string used directly:
 # 'path=$1;path=$2;...;path=$N'
 orig_args=(\"$@\")
 path_list=\"path=$1\"
@@ -1990,7 +2154,7 @@ mk_dir $path_list
     elif lang == 'python':
         s += \
             """
-# Build the path_list string used in wild card expansion:
+# Build the path string used directly:
 # 'path=$1;path=$2;...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = mk_dir(path_list)
@@ -2022,7 +2186,7 @@ def mv_main(lang):
     if lang == 'sh':
         s += \
             """
-# Build the src_list string used in mv directly:
+# Build the src string used directly:
 # 'src="$1";src="$2";...;src=$N'
 orig_args=("$@")
 src_list="src=$1"
@@ -2037,7 +2201,7 @@ mv_file $src_list $dst
     elif lang == 'python':
         s += \
             """
-# Build the path_list string used in wild card expansion:
+# Build the src string used directly:
 # 'src="$1";src="$2";...;src=$N'
 src_list = \"src=%s\" % \";src=\".join(sys.argv[1:-1])
 dst = sys.argv[-1]
@@ -2264,7 +2428,7 @@ resubmit_job $job_id_list
     elif lang == 'python':
         s += \
             """
-# Build the job_id_list string used in wild card expansion:
+# Build the job_id_list string used directly:
 # 'job_id="$1";job_id="$2";...;job_id=$N'
 job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[1:])
 (status, out) = resubmit_job(job_id_list)
@@ -2303,7 +2467,7 @@ def rm_main(lang):
     if lang == 'sh':
         s += \
             """
-# Build the path string used in rm directly:
+# Build the path string used directly:
 # 'path=$1;path=$2;...;path=$N'
 orig_args=(\"$@\")
 path_list=\"path=$1\"
@@ -2317,7 +2481,7 @@ rm_file $path_list
     elif lang == 'python':
         s += \
             """
-# Build the path_list string used in wild card expansion:
+# Build the path string used directly:
 # 'path=$1;path=$2;...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = rm_file(path_list)
@@ -2355,7 +2519,7 @@ def rmdir_main(lang):
     if lang == 'sh':
         s += \
             """
-# Build the path string used in rm directly:
+# Build the path string used directly:
 # 'path=$1;path=$2;...;path=$N'
 orig_args=(\"$@\")
 path_list=\"path=$1\"
@@ -2369,7 +2533,7 @@ rm_dir $path_list
     elif lang == 'python':
         s += \
             """
-# Build the path_list string used in wild card expansion:
+# Build the path string used directly:
 # 'path=$1;path=$2;...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = rm_dir(path_list)
@@ -2412,7 +2576,7 @@ stat_file $path_list
     elif lang == 'python':
         s += \
             """
-# Build the path_list string used in wild card expansion:
+# Build the path string used directly:
 # 'path="$1";path="$2";...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = stat_file(path_list)
@@ -2467,7 +2631,7 @@ job_status $job_id_list $max_job_count
     elif lang == 'python':
         s += \
             """
-# Build the job_id_list string used in wild card expansion:
+# Build the job_id string used directly:
 # 'job_id="$1";job_id="$2";...;job_id=$N'
 job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[1:])
 (status, out) = job_status(job_id_list, max_job_count)
@@ -2564,7 +2728,7 @@ tail_file $lines $path_list
     elif lang == 'python':
         s += \
             """
-# Build the path_list string used in wild card expansion:
+# Build the path string used directly:
 # 'path="$1";path="$2";...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = tail_file(lines, path_list)
@@ -2656,7 +2820,7 @@ def touch_main(lang):
     if lang == 'sh':
         s += \
             """
-# Build the path string used in url directly:
+# Build the path string used directly:
 # 'path=$1;path=$2;...;path=$N'
 orig_args=(\"$@\")
 path_list=\"path=$1\"
@@ -2670,7 +2834,7 @@ touch_file $path_list
     elif lang == 'python':
         s += \
             """
-# Build the path_list string used in wild card expansion:
+# Build the path string used directly:
 # 'path=$1;path=$2;...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = touch_file(path_list)
@@ -2721,10 +2885,58 @@ truncate_file $size $path_list
     elif lang == 'python':
         s += \
             """
-# Build the path_list string used in wild card expansion:
+# Build the path string used directly:
 # 'path="$1";path="$2";...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = truncate_file(size, path_list)
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
+def unzip_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    # unzip cgi supports wild cards natively so no need to use
+    # expand here
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 2, None)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += \
+            """
+# Build the src string used directly:
+# 'src="$1";src="$2";...;src=$N'
+orig_args=("$@")
+src_list="src=$1"
+shift
+while [ $# -gt 1 ]; do
+    src_list="$src_list;src=$1"
+    shift
+done
+dst=$1
+unzip_file $src_list $dst
+"""
+    elif lang == 'python':
+        s += \
+            """
+# Build the src string used directly:
+# 'src="$1";src="$2";...;src=$N'
+src_list = \"src=%s\" % \";src=\".join(sys.argv[1:-1])
+dst = sys.argv[-1]
+(status, out) = unzip_file(src_list, dst)
 print ''.join(out),
 sys.exit(status)
 """
@@ -2765,7 +2977,7 @@ def wc_main(lang):
     if lang == 'sh':
         s += \
             """
-# Build the path string used in wc directly:
+# Build the path string used directly:
 # 'path=$1;path=$2;...;path=$N'
 orig_args=(\"$@\")
 path_list=\"path=$1\"
@@ -2779,7 +2991,7 @@ wc_file $path_list
     elif lang == 'python':
         s += \
             """
-# Build the path_list string used in wild card expansion:
+# Build the path string used directly:
 # 'path=$1;path=$2;...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = wc_file(path_list)
@@ -2822,48 +3034,54 @@ sys.exit(status)
     return s
 
 
-def liveio_main(lang):
+def zip_main(lang):
     """
     Generate main part of corresponding scripts.
 
     lang specifies which script language to generate in.
     """
 
+    # zip cgi supports wild cards natively so no need to use
+    # expand here
+
     s = ''
     s += basic_main_init(lang)
-    s += parse_options(lang, None, None)
-    s += arg_count_check(lang, 4, None)
+    if lang == 'sh':
+        s += 'current_dir=""\n'
+        s += parse_options(lang, 'w:', '          w) current_dir="$OPTARG";;')
+    elif lang == 'python':
+        s += 'current_dir = ""\n'
+        s += parse_options(lang, 'w:',
+                           '''        elif opt == "-w":
+                current_dir = val
+''')
+    s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
     if lang == 'sh':
         s += \
             """
-# Build the action, job_id, src and dst strings used directly:
-# action="$1" job_id="$2" src="$2";src="$3";...;src=$((N-1) dst="$N"
+# Build the src string used directly:
+# 'src="$1";src="$2";...;src=$N'
 orig_args=("$@")
-action=\"action=$1\"
+src_list="src=$1"
 shift
-job_id=\"job_id=$1\"
-shift
-src_list=\"src=$1\"
-shift
-while [ \"$#\" -gt \"1\" ]; do
-    src_list=\"$src_list;src=$1\"
+while [ $# -gt 1 ]; do
+    src_list="$src_list;src=$1"
     shift
 done
-dst=\"dst=$1\"
-job_liveio $action $job_id $src_list $dst
+dst=$1
+# current_dir may be empty
+zip_file \"$current_dir\" $src_list $dst
 """
     elif lang == 'python':
         s += \
             """
-# Build the action, job_id, src and dst strings used directly:
-# action="$1" job_id="$2" src="$2";src="$3";...;src=$((N-1) dst="$N"
-action = \"action=%s\" % sys.argv[1]
-job_id = \"job_id=%s\" % sys.argv[2]
-src_list = \"src=%s\" % \";src=\".join(sys.argv[3:-1])
-dst = \"dst=%s\" % sys.argv[-1]
-(status, out) = job_liveio(action, job_id, src_list, dst)
+# Build the src string used directly:
+# 'src="$1";src="$2";...;src=$N'
+src_list = \"src=%s\" % \";src=\".join(sys.argv[1:-1])
+dst = sys.argv[-1]
+(status, out) = zip_file(current_dir, src_list, dst)
 print ''.join(out),
 sys.exit(status)
 """
@@ -3039,6 +3257,33 @@ def generate_lib(script_ops, scripts_languages, dest_dir='.'):
         script += configure(lang)
 
         write_script(script, dest_dir + os.sep + script_name, mode=0644)
+
+    return True
+
+
+def generate_liveio(scripts_languages, dest_dir='.'):
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
 
     return True
 
@@ -3456,6 +3701,33 @@ def generate_truncate(scripts_languages, dest_dir='.'):
     return True
 
 
+def generate_unzip(scripts_languages, dest_dir='.'):
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
 def generate_wc(scripts_languages, dest_dir='.'):
 
     # Extract op from function name
@@ -3510,7 +3782,7 @@ def generate_write(scripts_languages, dest_dir='.'):
     return True
 
 
-def generate_liveio(scripts_languages, dest_dir='.'):
+def generate_zip(scripts_languages, dest_dir='.'):
 
     # Extract op from function name
 
@@ -3551,6 +3823,7 @@ script_ops = [
     'doc',
     'get',
     'head',
+    'liveio',
     'ls',
     'mkdir',
     'mv',
@@ -3565,9 +3838,10 @@ script_ops = [
     'tail',
     'touch',
     'truncate',
+    'unzip',
     'wc',
     'write',
-    'liveio',
+    'zip',
     ]
 
 # Script prefix for all user scripts

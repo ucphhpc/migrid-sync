@@ -91,14 +91,14 @@ def handle_package_upload(
                     'Are you trying to circumvent permissions on the file system? Do not use .. in the path string!'
                 return (False, msg)
 
-            # create sub dir if it does not exist
+            # create sub dir(s) if missing
 
             zip_entry_dir = os.path.dirname(local_zip_entry_name)
 
             if not os.path.isdir(zip_entry_dir):
                 msg += 'creating dir %s\n' % zip_entry_dir
                 try:
-                    os.mkdir(zip_entry_dir, 0777)
+                    os.makedirs(zip_entry_dir, 0777)
                 except Exception, exc:
                     msg += 'error creating directory %s' % exc
                     return (False, msg)
@@ -183,14 +183,14 @@ def handle_package_upload(
                     'Are you trying to circumvent permissions on the file system? Do not use .. in the path string!\n'
                 return (False, msg)
 
-            # create sub dir if it does not exist
+            # create sub dir(s) if missing
 
             tar_entry_dir = os.path.dirname(local_tar_entry_name)
 
             if not os.path.isdir(tar_entry_dir):
                 msg += 'creating dir %s\n' % tar_entry_dir
                 try:
-                    os.mkdir(tar_entry_dir, 0777)
+                    os.makedirs(tar_entry_dir, 0777)
                 except Exception, exc:
                     msg += 'error creating directory %s\n' % exc
                     return (False, msg)

@@ -306,7 +306,7 @@ if (jQuery) (function($){
             
                 // Initialize the form
                 $('#zip_form input[name=current_dir]').val(current_dir);
-                $('#zip_form input[name=path]').val(path_name);
+                $('#zip_form input[name=src]').val(path_name);
                 $('#zip_form input[name=dst]').val(path_name + '.zip');
                 $("#zip_output").html('');
                 $("#zip_dialog").dialog('destroy');
@@ -325,7 +325,8 @@ if (jQuery) (function($){
             },
             unzip:   function (action, el, pos) { 
                 var dst = $('.fm_addressbar input[name=fm_current_path]').val();
-		jsonWrapper(el, '#cmd_dialog', 'unzip.py', {dst: dst}); 
+                // unzip uses src instead of path parameter
+		jsonWrapper(el, '#cmd_dialog', 'unzip.py', {dst: dst, src: $(el).attr(pathAttribute), path: ''}); 
             },
             submit: function (action, el, pos) { 
 		jsonWrapper(el, '#cmd_dialog', 'submit.py'); },

@@ -44,7 +44,7 @@ from shared.validstring import valid_user_path
 def signature():
     """Signature of the main function"""
 
-    defaults = {'path': REJECT_UNSET, 'flags': [''],
+    defaults = {'src': REJECT_UNSET, 'flags': [''],
                 'dst': REJECT_UNSET, 'current_dir': ['.']}
     return ['link', defaults]
 
@@ -53,7 +53,7 @@ def usage(output_objects):
     output_objects.append({'object_type': 'header', 'text': 'zip usage:'
                           })
     output_objects.append({'object_type': 'text', 'text'
-                          : 'SERVER_URL/zip.py?[output_format=(html|txt|xmlrpc|..);][flags=h;][path=src_path;[...]]path=src_path;dst=dst_path'
+                          : 'SERVER_URL/zip.py?[output_format=(html|txt|xmlrpc|..);][flags=h;][src=src_path;[...]]src=src_path;dst=dst_path'
                           })
     output_objects.append({'object_type': 'text', 'text'
                           : '- output_format specifies how the script should format the output'
@@ -62,7 +62,7 @@ def usage(output_objects):
                           : '- flags is a string of one character flags to be passed to the script'
                           })
     output_objects.append({'object_type': 'text', 'text'
-                          : '- each path specifies a file or directory in your home to include in the zip archive'
+                          : '- each src specifies a file or directory in your home to include in the zip archive'
                           })
     output_objects.append({'object_type': 'text', 'text'
                           : '- dst is the path where the generated zip archive will be stored'
@@ -89,7 +89,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
     flags = ''.join(accepted['flags'])
     dst = accepted['dst'][-1]
-    pattern_list = accepted['path']
+    pattern_list = accepted['src']
     current_dir = accepted['current_dir'][-1]
 
     # All paths are relative to current_dir
@@ -191,7 +191,7 @@ dst (%s) expands to an illegal path (%s)""" % (dst, relative_dest)})
 
         if not match:
             output_objects.append({'object_type': 'error_text', 'text'
-                                   : "%s: cannot zip '%s': no valid paths"
+                                   : "%s: cannot zip '%s': no valid src paths"
                                    % (op_name, pattern)})
             status = returnvalues.CLIENT_ERROR
             continue
