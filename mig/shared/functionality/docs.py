@@ -171,8 +171,8 @@ def license_information(output_objects, configuration):
                           : 'License'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-%s is based on the Minimum intrusion Grid (MiG) middleware. You can read about MiG at 
-<a class="urllink" href="http://code.google.com/p/migrid/">its web site</a>.<br />
+%s is based on the Minimum intrusion Grid (MiG) middleware. You can read about MiG at the
+<a class="urllink" href="http://code.google.com/p/migrid/">project web site</a>.<br />
 The MiG software license follows below.
 """ % configuration.site_title })
     output_objects.append({'object_type': 'text', 'text'
@@ -221,7 +221,13 @@ web interfaces additionally rely on JavaScript from:""" })
                            'destination' : 'http://marijn.haverbeke.nl/codemirror/',
                            'class': 'urllink',
                            'title': 'CodeMirror Home Page',
-                           'text': 'CodeMirror web editor (BSD compatible license)'})
+                           'text': 'CodeMirror web code editor (BSD compatible license)'})
+    output_objects.append({'object_type': 'text', 'text' : ''})
+    output_objects.append({'object_type': 'link', 
+                           'destination' : 'http://markitup.jaysalvat.com/',
+                           'class': 'urllink',
+                           'title': 'markItUp! Home Page',
+                           'text': 'markItUp! web markup editor (GPL/MIT license)'})
     output_objects.append({'object_type': 'text', 'text' : """
 and icons from the following sources:""" })
 
