@@ -25,9 +25,8 @@
 # -- END_HEADER ---
 #
 
-# Initial version: Henrik Hoey Karlsen karlsen@imada.sdu.dk 2005
-
-"""Forward valid cancel requests to grid_script for consistent job status changes"""
+"""Forward valid cancel requests to grid_script for consistent job status
+changes"""
 
 import os
 import glob
@@ -99,9 +98,9 @@ def main(client_id, user_arguments_dict):
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                logger.error('%s tried to use %s %s outside own home! (pattern %s)'
-                              % (client_id, op_name, real_path,
-                             pattern))
+                logger.error(
+                    '%s tried to use %s %s outside own home! (pattern %s)'
+                    % (client_id, op_name, real_path, pattern))
                 continue
 
             # Insert valid job files in filelist for later treatment
@@ -139,18 +138,18 @@ def main(client_id, user_arguments_dict):
         changedstatusjob = {'object_type': 'changedstatusjob',
                             'job_id': job_id}
 
-        dict = unpickle(filepath, logger)
-        if not dict:
-            changedstatusjob['message'] = \
-                'The file containing the information for job id %s could not be opened! You can only cancel your own jobs!'\
-                 % job_id
+        job_dict = unpickle(filepath, logger)
+        if not job_dict:
+            changedstatusjob['message'] = '''The file containing the
+information for job id %s could not be opened! You can only cancel your own
+jobs!''' % job_id
             changedstatusjobs.append(changedstatusjob)
             status = returnvalues.CLIENT_ERROR
             continue
 
         # Check that file belongs to the user requesting the job cancel
 
-        if client_id != dict['USER_CERT']:
+        if client_id != job_dict['USER_CERT']:
             changedstatusjob['message'] = \
                 '%s the job you are trying to cancel does not belong to you!'\
                  % client_id
@@ -158,12 +157,12 @@ def main(client_id, user_arguments_dict):
             changedstatusjobs.append(changedstatusjob)
             continue
 
-        changedstatusjob['oldstatus'] = dict['STATUS']
+        changedstatusjob['oldstatus'] = job_dict['STATUS']
 
         # Is the job status QUEUED or RETRY?
 
         possible_cancel_states = ['PARSE', 'QUEUED', 'RETRY', 'EXECUTING']
-        if not dict['STATUS'] in possible_cancel_states:
+        if not job_dict['STATUS'] in possible_cancel_states:
             changedstatusjob['message'] = \
                 'You can only cancel jobs with status: %s.'\
                  % ' or '.join(possible_cancel_states)
@@ -171,12 +170,12 @@ def main(client_id, user_arguments_dict):
             changedstatusjobs.append(changedstatusjob)
             continue
 
-        # job cancel is handled by changing the STATUS field to CANCELED, notifying
-        # the job queue and making sure the server never submits a job with status
-        # CANCELED.
+        # job cancel is handled by changing the STATUS field to CANCELED,
+        # notifying the job queue and making sure the server never submits a
+        # job with status CANCELED.
 
-        # file is repickled to ensure newest information is used, "dict" might be
-        # old if  another script has modified the file.
+        # file is repickled to ensure newest information is used, job_dict
+        # might be old if another script has modified the file.
 
         if not unpickle_and_change_status(filepath, 'CANCELED', logger):
             output_objects.append({'object_type': 'error_text', 'text'
@@ -186,20 +185,20 @@ def main(client_id, user_arguments_dict):
         # Avoid keyerror and make sure grid_script gets
         # expected number of arguments
 
-        if not dict.has_key('UNIQUE_RESOURCE_NAME'):
-            dict['UNIQUE_RESOURCE_NAME'] = \
+        if not job_dict.has_key('UNIQUE_RESOURCE_NAME'):
+            job_dict['UNIQUE_RESOURCE_NAME'] = \
                 'UNIQUE_RESOURCE_NAME_NOT_FOUND'
-        if not dict.has_key('EXE'):
-            dict['EXE'] = 'EXE_NAME_NOT_FOUND'
+        if not job_dict.has_key('EXE'):
+            job_dict['EXE'] = 'EXE_NAME_NOT_FOUND'
 
         # notify queue
 
         if not send_message_to_grid_script('CANCELJOB ' + job_id + ' '
-                 + dict['STATUS'] + ' ' + dict['UNIQUE_RESOURCE_NAME']
-                 + ' ' + dict['EXE'] + '\n', logger, configuration):
+                 + job_dict['STATUS'] + ' ' + job_dict['UNIQUE_RESOURCE_NAME']
+                 + ' ' + job_dict['EXE'] + '\n', logger, configuration):
             output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Error sending message to grid_script, job may still be in the job queue.'
-                                  })
+                                   : '''Error sending message to grid_script,
+job may still be in the job queue.'''})
             status = returnvalues.SYSTEM_ERROR
             continue
 
