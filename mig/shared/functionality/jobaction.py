@@ -74,7 +74,8 @@ def main(client_id, user_arguments_dict):
 
     if not action in valid_actions.keys():
         output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Invalid job action (%s)!' % action})
+                               : 'Invalid job action "%s" (only %s supported)'
+                               % (action, ', '.join(valid_actions.keys()))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     new_state = valid_actions[action]
