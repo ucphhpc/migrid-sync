@@ -192,6 +192,22 @@ def head_usage_function(lang, extension):
     return s
 
 
+def jobaction_usage_function(lang, extension):
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION JOBID [JOBID ...]'\
+         % (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [])
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
 def liveio_usage_function(lang, extension):
 
     # Extract op from function name
@@ -603,14 +619,14 @@ def shared_op_function(op, lang, curl_cmd):
 
 
 def cancel_function(lang, curl_cmd, curl_flags=''):
-    relative_url = '"cgi-bin/canceljob.py"'
+    relative_url = '"cgi-bin/jobaction.py"'
     query = '""'
     if lang == 'sh':
         post_data = \
-            '"output_format=txt;flags=$server_flags;$job_list"'
+            '"output_format=txt;flags=$server_flags;action=cancel;$job_list"'
     elif lang == 'python':
         post_data = \
-            "'output_format=txt;flags=%s;%s' % (server_flags, job_list)"
+            "'output_format=txt;flags=%s;action=cancel;%s' % (server_flags, job_list)"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -799,6 +815,37 @@ def head_function(lang, curl_cmd, curl_flags='--compressed'):
         curl_flags,
         )
     s += end_function(lang, 'head_file')
+    return s
+
+
+def jobaction_function(lang, curl_cmd, curl_flags=''):
+    relative_url = '"cgi-bin/jobaction.py"'
+    query = '""'
+    if lang == 'sh':
+        post_data = \
+            '"output_format=txt;flags=$server_flags;$action;$job_list"'
+    elif lang == 'python':
+        post_data = \
+            "'output_format=txt;flags=%s;%s;%s' % (server_flags, action, job_list)"
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'job_action', ['action', 'job_list'])
+    s += format_list(lang, 'job_list', 'job_id')
+    s += ca_check_init(lang)
+    s += password_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'job_action')
     return s
 
 
@@ -1299,6 +1346,10 @@ def test_function(lang, curl_cmd, curl_flags=''):
               pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
               cmd_args[1]='mig-test.txt'
               post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+              ;;
+           'jobaction')
+              pre_cmd=\"$path_prefix/migsubmit.sh mig-test.mRSL\"
+              cmd_args[1]='cancel DUMMY_JOB_ID'
               ;;
            'ls')
               pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
@@ -1988,6 +2039,54 @@ head_file $lines $path_list
 # 'path="$1";path="$2";...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = head_file(lines, path_list)
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
+def jobaction_main(lang):
+    """
+    Generate main part of corresponding scripts.
+    
+    lang specifies which script language to generate in.
+    Currently 'sh' and 'python' are supported.
+    
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 2, None)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += \
+            """
+# Build the action and job_id strings used directly:
+# action="$1" job_id="$2";job_id="$3";...;job_id="$N"
+orig_args=("$@")
+action=\"action=$1\"
+shift
+job_id_list=\"job_id=$1\"
+shift
+while [ \"$#\" -gt \"0\" ]; do
+    job_id_list=\"$job_id_list;job_id=$1\"
+    shift
+done
+job_action $action $job_id_list
+"""
+    elif lang == 'python':
+        s += \
+            """
+# Build the action and job_id strings used directly:
+# action=$1 job_id="$2";job_id="$3";...;job_id="$N"
+action = \"action=%s\" % sys.argv[1]
+job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[2:])
+(status, out) = job_action(action, job_id_list)
 print ''.join(out),
 sys.exit(status)
 """
@@ -3232,6 +3331,33 @@ def generate_head(scripts_languages, dest_dir='.'):
     return True
 
 
+def generate_jobaction(scripts_languages, dest_dir='.'):
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
 def generate_lib(script_ops, scripts_languages, dest_dir='.'):
 
     # Extract op from function name
@@ -3823,6 +3949,7 @@ script_ops = [
     'doc',
     'get',
     'head',
+    'jobaction',
     'liveio',
     'ls',
     'mkdir',

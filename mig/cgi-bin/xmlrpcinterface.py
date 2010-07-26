@@ -245,6 +245,12 @@ def canceljob(user_arguments_dict):
     return stub('shared.functionality.canceljob', user_arguments_dict)
 
 
+def jobaction(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.jobaction', user_arguments_dict)
+
+
 def submit(user_arguments_dict):
     """Wrap backend of same name"""
 

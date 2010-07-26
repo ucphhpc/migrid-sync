@@ -356,7 +356,8 @@ def main(client_id, user_arguments_dict):
                                     % job_id, 'text': 'Resubmit job'}
 
         job_obj['cancellink'] = {'object_type': 'link',
-                                 'destination': 'canceljob.py?job_id=%s'\
+                                 'destination':
+                                 'jobaction.py?action=cancel;job_id=%s'\
                                   % job_id, 'text': 'Cancel job'}
         job_obj['jobschedulelink'] = {'object_type': 'link',
                 'destination': 'jobschedule.py?job_id=%s' % job_id,

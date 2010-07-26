@@ -900,7 +900,7 @@ while True:
             # Schedule and create appropriate job script
             # loop until a non-cancelled job is scheduled (fixes small
             # race condition if a job has not been dequeued after the
-            # status in the mRSL file has been changed to CANCELED)
+            # status in the mRSL file has been changed to FROZEN or CANCELED)
 
             while True:
                 job_dict = scheduler.schedule(resource_config)
@@ -1314,27 +1314,28 @@ while True:
         logger.info(
             'After restart exe failed: %d job(s) in the executing queue.' % \
             executing_queue.queue_length())
-    elif cap_line.find('CANCELJOB') == 0:
+    elif cap_line.find('JOBACTION') == 0:
 
         # *********                       *********
-        # *********      CANCEL JOB       *********
+        # *********   JOB STATE CHANGE    *********
         # *********                       *********
 
         print cap_line
         logger.info(cap_line)
-        logger.info('Cancel job: %d job(s) in the queue.',
+        logger.info('Job action: %d job(s) in the queue.' % \
                     job_queue.queue_length())
 
-        if len(linelist) != 5:
-            logger.error('Invalid cancel job request')
+        if len(linelist) != 6:
+            logger.error('Invalid job action request')
             continue
 
         # read values
 
         job_id = linelist[1]
         original_status = linelist[2]
-        unique_resource_name = linelist[3]
-        exe = linelist[4]
+        new_status = linelist[3]
+        unique_resource_name = linelist[4]
+        exe = linelist[5]
 
         # read resource config file
 
@@ -1342,21 +1343,27 @@ while True:
                                 unique_resource_name, 'config')
         resource_config = unpickle(res_file, logger)
 
-        no_action_status_list = ['PARSE']
-        just_dequeue_status_list = ['QUEUED', 'RETRY']
-        kill_executing_status_list = ['EXECUTING']
+        other_status_list = ['PARSE']
+        queued_status_list = ['QUEUED', 'RETRY', 'FROZEN']
+        executing_status_list = ['EXECUTING']
 
-        if original_status in no_action_status_list:
+        # Only cancel is accepted for non-queued states
+        
+        if original_status not in queued_status_list and \
+               new_status != 'CANCELED':
+            logger.error('change to %s not supported for jobs in %s states'
+                         % (new_status, ', '.join(other_status_list)))
 
-            # no action
-            
+        if original_status in other_status_list:
             pass
-        elif original_status in just_dequeue_status_list:
-
-            # dequeue
-
-            job_dict = job_queue.dequeue_job_by_id(job_id)
-        elif original_status in kill_executing_status_list:
+        elif original_status in queued_status_list:
+            if new_status == 'CANCELED':
+                job_dict = job_queue.dequeue_job_by_id(job_id)
+            else:
+                job_dict = job_queue.get_job_by_id(job_id)
+                scheduler.clear_schedule(job_dict)
+                job_dict['STATUS'] = new_status
+        elif original_status in executing_status_list:
 
             # Retrieve job_dict
 

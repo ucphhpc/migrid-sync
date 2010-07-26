@@ -1740,6 +1740,12 @@ class Scheduler:
 
                 job['SCHEDULE_HINT'] = 'STAY'
                 continue
+            elif job['STATUS'] == 'FROZEN':
+
+                # self.logger.debug("hold frozen job %s" % job_id)
+                
+                job['SCHEDULE_HINT'] = 'STAY'
+                continue
 
             if best['dist'] > 0:
                 server = self.resource_direction(best['res'])

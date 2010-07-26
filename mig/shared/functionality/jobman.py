@@ -95,6 +95,12 @@ def html_tmpl():
       <li class="resubmit single">
           <a href="#resubmit">Resubmit</a>
       </li>
+      <li class="freeze single">
+          <a href="#freeze">Freeze</a>
+      </li>
+      <li class="thaw single">
+          <a href="#thaw">Thaw</a>
+      </li>
       <li class="cancel single">
           <a href="#cancel">Cancel</a>
       </li>
@@ -120,9 +126,15 @@ def html_tmpl():
       <li class="resubmit multi">
           <a href="#resubmit">Resubmit All</a>
       </li>
+      <li class="freeze multi">
+          <a href="#freeze">Freeze All</a>
+      </li>
+      <li class="thaw multi">
+          <a href="#thaw">Thaw All</a>
+      </li>
       <li class="cancel multi separator">
           <a href="#cancel">Cancel All</a>
-      </li>        
+      </li>
   </ul>
   
   <div id="cmd_helper" title="Command output" style="display: none;"></div>

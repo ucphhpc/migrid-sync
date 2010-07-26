@@ -182,7 +182,13 @@ if (jQuery) (function($){
 
             var actions = {
                 cancel: function (job_id) {                    
-                    jsonWrapper(job_id, "#cmd_dialog", "canceljob.py", {job_id: job_id})
+                    jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'cancel'})
+                },
+                freeze: function (job_id) {                    
+                    jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'freeze'})
+                },
+                thaw: function (job_id) {                    
+                    jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'thaw'})
                 },
                 mrsl: function (job_id) {
                   jsonWrapper(job_id, "#cmd_dialog", "mrslview.py", {job_id: job_id})

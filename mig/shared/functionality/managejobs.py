@@ -99,11 +99,34 @@ Job ID: <input type="text" name="job_id" size="30" /><br />
 </form>
     """})
     output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Freeze pending job'})
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : """
+<form method="post" action="jobaction.py">
+Job ID: <input type="text" name="job_id" size="30" /><br />
+<input type="hidden" name="action" value="freeze" />
+<input type="hidden" name="output_format" value="html" />
+<input type="submit" value="Freeze job" />
+</form>
+    """})
+    output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Thaw frozen job'})
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : """
+<form method="post" action="jobaction.py">
+Job ID: <input type="text" name="job_id" size="30" /><br />
+<input type="hidden" name="action" value="thaw" />
+<input type="hidden" name="output_format" value="html" />
+<input type="submit" value="Thaw job" />
+</form>
+    """})
+    output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Cancel pending or executing job'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<form method="post" action="canceljob.py">
+<form method="post" action="jobaction.py">
 Job ID: <input type="text" name="job_id" size="30" /><br />
+<input type="hidden" name="action" value="cancel" />
 <input type="hidden" name="output_format" value="html" />
 <input type="submit" value="Cancel job" />
 </form>
