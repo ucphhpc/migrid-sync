@@ -75,10 +75,10 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg, output_ob
     headers = start_entry['headers']
 
     output = format_output(configuration, ret_code, ret_msg, output_objs, output_format)
-    if not output:
+    
+    # Explicit None means error during output formatting - empty string is okay
 
-        # Error occured during output formatting
-
+    if output == None:
         output = 'Output could _not_ be extracted!'
 
     for (key, val) in headers:

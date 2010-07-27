@@ -1337,8 +1337,9 @@ def format_output(
         return eval('%s_format(configuration, ret_val, ret_msg, out_obj)' % \
                     outputformat)
     except Exception, err:
-        msg = outputformat + \
-              ' failed on server! Defaulting to .txt output. (%s)' % err
+        msg = '%s failed on server! Defaulting to txt output. (%s)' % \
+              (outputformat, err)
+        configuration.logger.error(msg)
         return (txt_format(configuration, ret_val, msg, out_obj))
 
 def format_timedelta(timedelta):

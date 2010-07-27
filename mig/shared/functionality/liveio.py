@@ -426,5 +426,3 @@ function addInput() {
             pass
 
     return (output_objects, returnvalues.OK)
-
-

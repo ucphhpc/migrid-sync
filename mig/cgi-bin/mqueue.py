@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# defaults - default constant values used in many locations
+# mqueue - POSIX like message queue for job inter-communication
 # Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,24 +25,11 @@
 # -- END_HEADER ---
 #
 
+import cgi
+import cgitb
+cgitb.enable()
 
-"""Default values for use in other modules"""
+from shared.functionality.mqueue import main
+from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
-
-# IMPORTANT: do not import anything here - to avoid import loops
-
-
-keyword_any = 'ANY'
-keyword_all = 'ALL'
-
-default_vgrid = 'Generic'
-any_vgrid = keyword_any
-all_vgrids = keyword_all
-
-all_jobs = keyword_all
-
-sandbox_names = ['sandbox', 'oneclick', 'ps3live']
-
-mqueue_prefix = '.mqueue'
-default_mqueue = 'default'
-mqueue_empty = 'NO MESSAGES'
+run_cgi_script_possibly_with_cert(main)
