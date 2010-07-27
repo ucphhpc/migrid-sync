@@ -43,6 +43,7 @@ from shared.validstring import valid_user_path
 
 
 valid_actions = ['create', 'remove', 'send', 'receive']
+lock_name = 'mqueue.lock'
 
 def signature():
     """Signature of the main function"""
@@ -134,6 +135,10 @@ def main(client_id, user_arguments_dict):
         output_objects.append(file_entry)
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    lock_path = os.path.join(mqueue_base, lock_name)
+    lock_handle = open(lock_path, 'a')
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+
     status = returnvalues.OK
     if action == 'create':
         try:
@@ -200,5 +205,7 @@ def main(client_id, user_arguments_dict):
                               : 'Unexpected mqueue action: "%s"' % action})
         status = returnvalues.SYSTEM_ERROR
 
+    lock_handle.close()
+    
     output_objects.append(file_entry)
     return (output_objects, returnvalues.OK)
