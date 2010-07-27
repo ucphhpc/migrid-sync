@@ -359,13 +359,14 @@ function addInput() {
                                   + exe['execution_node'] + '\n')
                 filehandle.write('execution_dir ' + exe['execution_dir']
                                   + '\n')
+                filehandle.write('target liveio\n')
 
                 # Leave defaults src and dst to FE script if not provided
                 
                 if src:
-                    filehandle.write('source_files ' + ' '.join(src) + '\n')
+                    filehandle.write('source ' + ' '.join(src) + '\n')
                 if dst:
-                    filehandle.write('destination_dir ' + dst + '\n')
+                    filehandle.write('destination ' + dst + '\n')
 
                 # Backward compatible test for shared_fs - fall back to scp
 

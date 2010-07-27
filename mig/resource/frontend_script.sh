@@ -367,10 +367,11 @@ while [ 1 ]; do
             cd job-dir_${localjobname} 1>> $frontendlog 2>> $frontendlog
             
             reqjobid=`awk '/job_id/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ../${localjobname}.jobdone`
+            reqtarget="result"
             reqsrc=`echo ${reqjobid}.{stdout,stderr}`
             reqdst="/job_output/${reqjobid}"
 
-            execute_transfer_files_script $localjobname "sendoutputfiles" $reqsrc $reqdst
+            execute_transfer_files_script $localjobname "sendoutputfiles" $reqtarget $reqsrc $reqdst
             
             #echo "removing ${localjobname}.sendoutputfiles" 1>> $frontendlog 2>> $frontendlog
             $clean_command ${localjobname}.sendoutputfiles
@@ -424,13 +425,19 @@ while [ 1 ]; do
             copy_execution_prefix="$exe_copy_execution_prefix"
         fi
         reqjobid=`awk '/job_id/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $runrequest`
-        reqsrc=`awk '/source_files/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $runrequest`
-        reqdst=`awk '/destination_dir/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $runrequest`
-        if [ -z "$reqsrc" ]; then
-            reqsrc=`echo ${reqjobid}.{stdout,stderr,io-status}`
+        reqtarget=`awk '/target/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $runrequest`
+        reqsrc=`awk '/source/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $runrequest`
+        reqdst=`awk '/destination/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $runrequest`
+        if [ -z "$reqtarget" ]; then
+            reqtarget="liveio"
         fi
-        if [ -z "$reqdst" ]; then
-            reqdst="/job_output/${reqjobid}"
+        if [ "$reqtarget" = 'liveio' ]; then
+            if [ -z "$reqsrc" ]; then
+                reqsrc=`echo ${reqjobid}.{stdout,stderr,io-status}`
+            fi
+            if [ -z "$reqdst" ]; then
+                reqdst="/job_output/${reqjobid}"
+            fi
         fi
         
         requestdone="${localjobname}.sendupdatedone"
@@ -439,7 +446,7 @@ while [ 1 ]; do
         
         if [ -d job-dir_${localjobname} ]; then
             cd job-dir_${localjobname} 1>> $frontendlog 2>> $frontendlog
-            execute_transfer_files_script $localjobname "sendupdatefiles" $reqsrc $reqdst        
+            execute_transfer_files_script $localjobname "sendupdatefiles" $reqtarget $reqsrc $reqdst
             cd ..
             echo "forwarding $runrequest done signal to exe" 1>> $frontendlog 2>> $frontendlog
             $copy_command $runrequest ${copy_execution_prefix}${execution_dir}/job-dir_${localjobname}/$requestdone 1>> $frontendlog 2>> $frontendlog
@@ -492,9 +499,12 @@ while [ 1 ]; do
             move_command="$exe_move_command"
         fi
 
-        reqsrc=`awk '/source_files/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $runrequest`
-        reqdst=`awk '/destination_dir/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $runrequest`
-        
+        reqtarget=`awk '/target/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $runrequest`
+        reqsrc=`awk '/source/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $runrequest`
+        reqdst=`awk '/destination/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $runrequest`
+        if [ -z "$reqtarget" ]; then
+            reqtarget="liveio"
+        fi
         requestdone="${localjobname}.getupdatedone"
 
         echo "Executing getupdatefiles for job with localjobname: $localjobname" 1>> $frontendlog 2>> $frontendlog
@@ -504,7 +514,7 @@ while [ 1 ]; do
             tmpbase="updatetmp"
             tmpdst="$tmpbase/$reqdst"
             mkdir -p "$tmpdst"
-            execute_transfer_files_script $localjobname "getupdatefiles" $reqsrc $tmpdst
+            execute_transfer_files_script $localjobname "getupdatefiles" $reqtarget $reqsrc $tmpdst
 
             # Try to force disk flush - updatefiles *must* be written 
             # before forwarding to exe

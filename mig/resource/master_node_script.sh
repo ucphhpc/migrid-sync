@@ -124,7 +124,7 @@ handle_update() {
         echo "$sendreq found! Send files to frontend" 1>> $exehostlog 2>> $exehostlog
         force_refresh .
         reqjobid=`awk '/^#MIG_JOBID/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
-        reqsrc=`awk '/source_files/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./$sendreq`
+        reqsrc=`awk '/source/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./$sendreq`
         if [ -z "$reqsrc" ]; then
             reqsrc=`echo ${reqjobid}.{stdout,stderr}`
         fi

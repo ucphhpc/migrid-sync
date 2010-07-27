@@ -49,7 +49,7 @@ def signature():
     """Signature of the main function"""
 
     defaults = {'queue': [default_mqueue], 'action': REJECT_UNSET,
-                'sessionid': [''], 'msg': ['']}
+                'iosessionid': [''], 'msg': ['']}
     return ['file_output', defaults]
 
 
@@ -66,7 +66,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
     queue = accepted['queue'][-1]
     action = accepted['action'][-1]
-    sessionid = accepted.get('sessionid', [''])[-1]
+    iosessionid = accepted.get('iosessionid', [''])[-1]
     msg = accepted.get('msg', [''])[-1]
 
     # Web format for cert access and no header for SID access
@@ -91,9 +91,9 @@ def main(client_id, user_arguments_dict):
 
     # Find user home from session or certificate
 
-    if sessionid:
+    if iosessionid:
         client_home = os.path.realpath(os.path.join(configuration.webserver_home,
-                                                  sessionid))
+                                                  iosessionid))
         client_dir = os.path.basename(client_home)
     elif client_id:
         client_dir = client_id_dir(client_id)

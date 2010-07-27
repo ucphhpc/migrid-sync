@@ -62,8 +62,25 @@ def curl_cmd_send(resource_filename, mig_server_filename,
 
     return 'curl --location --connect-timeout 30 --max-time 3600 '\
          + upload_bw_limit + ' --fail --silent --insecure '\
-         + ' --upload-file "' + resource_filename + '" '\
+         + '--upload-file "' + resource_filename + '" '\
          + sid_put_marker + ' "' + dst_url + '"'
+
+
+def curl_cmd_send_mqueue(resource_filename, queue, https_sid_url_arg):
+    """Send message to mqueue"""
+
+    upload_bw_limit = ''
+    if resource_conf.has_key('MAXUPLOADBANDWIDTH')\
+         and resource_conf['MAXUPLOADBANDWIDTH'] > 0:
+        upload_bw_limit = '--limit-rate %ik'\
+             % resource_conf['MAXUPLOADBANDWIDTH']
+
+    return 'curl --location --connect-timeout 30 --max-time 3600 '\
+           + upload_bw_limit + ' --fail --silent --insecure '\
+           + '-F "action=send" -F "iosessionid=' + job_dict['MIGSESSIONID']\
+           + '" -F "queue=' + queue + '" -F "msg=<' + resource_filename\
+           + '" -F "output_format=txt" ' + https_sid_url_arg\
+           + '/cgi-sid/mqueue.py'
 
 
 def curl_cmd_get(mig_server_filename, resource_filename,
@@ -76,11 +93,7 @@ def curl_cmd_get(mig_server_filename, resource_filename,
         download_bw_limit = '--limit-rate %ik'\
              % resource_conf['MAXDOWNLOADBANDWIDTH']
 
-    dest_path = os.path.dirname(resource_filename)
     cmd = ''
-    if dest_path:
-        cmd += "mkdir -p '%s' && \\" % dest_path
-        cmd += '\n'
     if mig_server_filename.find('://') != -1:
 
         # Pass URLs for external sources directly to curl
@@ -96,8 +109,8 @@ def curl_cmd_get(mig_server_filename, resource_filename,
     # Live input requires variable expansion in filenames (double quotes)
 
     cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
-         + download_bw_limit + ' --fail --silent --insecure ' + ' -o "'\
-         + resource_filename + '" "' + src_url + '"'
+         + download_bw_limit + ' --fail --silent --insecure --create-dirs '\
+         + '-o "' + resource_filename + '" "' + src_url + '"'
     return cmd
 
 
@@ -111,16 +124,30 @@ def curl_cmd_get_special(file_extension, resource_filename,
         download_bw_limit = '--limit-rate %ik'\
              % resource_conf['MAXDOWNLOADBANDWIDTH']
 
-    dest_path = os.path.dirname(resource_filename)
     cmd = ''
-    if dest_path:
-        cmd += "mkdir -p '%s' && \\" % dest_path
-        cmd += '\n'
     cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
-         + download_bw_limit + ' --fail --silent --insecure ' + " -o '"\
-         + resource_filename + "' '" + https_sid_url_arg\
-         + '/sid_redirect/' + job_dict['MIGSESSIONID'] + file_extension\
-         + "'"
+           + download_bw_limit + ' --fail --silent --insecure --create-dirs '\
+           + "-o '" + resource_filename + "' '" + https_sid_url_arg\
+           + '/sid_redirect/' + job_dict['MIGSESSIONID'] + file_extension + "'"
+    return cmd
+
+
+def curl_cmd_get_mqueue(queue, resource_filename, https_sid_url_arg):
+    """Receive message from mqueue"""
+
+    download_bw_limit = ''
+    if resource_conf.has_key('MAXDOWNLOADBANDWIDTH')\
+         and resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
+        download_bw_limit = '--limit-rate %ik'\
+             % resource_conf['MAXDOWNLOADBANDWIDTH']
+
+    cmd = ''
+    cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
+           + download_bw_limit + ' --fail --silent --insecure --create-dirs '\
+           + '-o "' + resource_filename + '" -F "action=receive" '\
+           + '-F "iosessionid=' + job_dict['MIGSESSIONID'] + '" -F "queue='\
+           + queue + '" -F "output_format=file" ' + https_sid_url_arg\
+           + '/cgi-sid/mqueue.py'
     return cmd
 
 
@@ -399,6 +426,9 @@ class GenJobScriptSh:
         """Get live files from server during job execution"""
 
         cmd = '%s=0\n' % result
+        cmd += '# First parameter is target: liveio or mqueue\n'
+        cmd += 'target=$1\n'
+        cmd += 'shift\n'
         cmd += '# All but last input args are sources and last is dest\n'
         cmd += 'i=0\n'
         cmd += 'last=$((${#@}-1))\n'
@@ -412,8 +442,13 @@ class GenJobScriptSh:
         cmd += 'done\n'
         cmd += 'for name in ${src[@]}; do\n'
         cmd += '    name_on_resource=$dst/`basename $name`\n'
-        cmd += '    %s\n' % curl_cmd_get('$name', '$name_on_resource',
+        cmd += '    if [ "$target" = "mqueue" ]; then\n'
+        cmd += '        %s\n' % curl_cmd_get_mqueue('$name', '$name_on_resource',
+                                                    https_sid_url_arg)
+        cmd += '    else\n'
+        cmd += '        %s\n' % curl_cmd_get('$name', '$name_on_resource',
                                          https_sid_url_arg)
+        cmd += '    fi\n'
         cmd += '    last_get_status=$?\n'
         cmd += '    if [ $last_get_status -ne 0 ]; then\n'
         cmd += '        %s=$last_get_status\n' % result
@@ -844,6 +879,9 @@ class GenJobScriptSh:
         """
 
         cmd = '%s=0\n' % result
+        cmd += '# First parameter is target: result, liveio or mqueue\n'
+        cmd += 'target=$1\n'
+        cmd += 'shift\n'
         cmd += '# All but last input args are sources and last is dest\n'
         cmd += 'i=0\n'
         cmd += 'last=$((${#@}-1))\n'
@@ -858,9 +896,15 @@ class GenJobScriptSh:
         cmd += 'done\n'
         cmd += 'for name in ${src[@]}; do\n'
         cmd += '    name_on_mig_server=$dst/`basename $name`\n'
-        cmd += '    [ ! -e "$name" ] || '
+        cmd += '    if [ "$target" = "mqueue" ]; then\n'
+        cmd += '        %s\n' % curl_cmd_send_mqueue('$name', '$dst',
+                                                     https_sid_url_arg)
+        cmd += '    else\n'
+
+        cmd += '        [ ! -e "$name" ] || '
         cmd += '%s\n' % curl_cmd_send('$name', '$name_on_mig_server',
                                       https_sid_url_arg)
+        cmd += '    fi\n'
         cmd += '    last_send_status=$?\n'
         cmd += '    if [ $last_send_status -ne 0 ]; then\n'
         cmd += '        %s=$last_send_status\n' % result

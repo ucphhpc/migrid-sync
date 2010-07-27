@@ -806,6 +806,8 @@ def guess_type(name):
         return valid_email_address
     elif name.lower().find('comment') != -1:
         return valid_plain_text
+    elif name.lower().find('msg') != -1:
+        return valid_plain_text
     elif name.lower().find('password') != -1:
         return valid_password
     elif name.lower().find('verifypassword') != -1:
