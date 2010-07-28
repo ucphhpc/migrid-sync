@@ -151,6 +151,16 @@ function addInput() {
 ''' % job_id
         output_objects.append({'object_type': 'html_form', 'text'
                               : html})
+        output_objects.append({'object_type': 'text', 'text': '''
+Further live job control is avalable through your personal message queues.
+They provide a basic interface for centrally storing messages under your grid
+account and can be used to pass messages between jobs or for orchestrating
+jobs before and during execution.
+'''
+                               })
+        output_objects.append({'object_type': 'link', 'destination':
+                               'mqueue.py',
+                               'text': 'Message queue interface'})
         return (output_objects, returnvalues.OK)
     elif action in ['get', 'receive', 'input']:
         action = 'get'

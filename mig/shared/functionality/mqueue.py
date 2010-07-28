@@ -42,13 +42,13 @@ from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 
 
-valid_actions = ['create', 'remove', 'send', 'receive']
+valid_actions = ['interactive', 'create', 'remove', 'send', 'receive']
 lock_name = 'mqueue.lock'
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'queue': [default_mqueue], 'action': REJECT_UNSET,
+    defaults = {'queue': [default_mqueue], 'action': ['interactive'],
                 'iosessionid': [''], 'msg': ['']}
     return ['file_output', defaults]
 
@@ -140,7 +140,55 @@ def main(client_id, user_arguments_dict):
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
 
     status = returnvalues.OK
-    if action == 'create':
+    if action == "interactive":
+        output_objects.append({'object_type': 'text', 'text'
+                               : '''
+Fill in the fields below to control and access your personal message queues.
+Jobs can receive from and send to the message queues during execution, and use
+them as a means of job inter-communication. Expect message queue operations to
+take several seconds on the resources, however. That is, use it for tasks like
+orchestrating long running jobs, and not for low latency communication.
+'''})
+        html = '''
+<table class="mqueue">
+<tr><td class=centertext>
+<form name="mqueueform" method="post" action="mqueue.py" id="miginput">
+</td></tr>
+<tr><td>
+Action:<br />
+<input type=radio name=action value="create" onclick="javascript:document.mqueueform.msg.disabled=true" />create queue
+<input type=radio name=action checked value="send" onclick="javascript:document.mqueueform.msg.disabled=false" />send message to queue
+<input type=radio name=action value="receive" onclick="javascript:document.mqueueform.msg.disabled=true" />receive message from queue
+<input type=radio name=action value="remove" onclick="javascript:document.mqueueform.msg.disabled=true" />remove queue
+</td></tr>
+<tr><td>
+Queue:<br />
+<input type=text size=60 name=queue value="%s" />
+</td></tr>
+<tr><td>
+<div id="msgfieldf">
+<input type=text size=60 name=msg value="%s" /><br />
+</div>
+</td></tr>
+<tr><td>
+<input type="submit" value="Apply" />
+</form>
+</td></tr>
+</table>
+''' % (queue, msg)
+        output_objects.append({'object_type': 'html_form', 'text'
+                               : html})
+        output_objects.append({'object_type': 'text', 'text': '''
+Further live job control is avalable through the live I/O interface.
+They provide a basic interface for centrally managing input and output files
+for active jobs.
+'''
+                               })
+        output_objects.append({'object_type': 'link', 'destination':
+                               'liveio.py',
+                               'text': 'Live I/O interface'})
+        return (output_objects, returnvalues.OK)
+    elif action == 'create':
         try:
             os.mkdir(queue_path)
             output_objects.append({'object_type': 'text', 'text':
@@ -178,7 +226,7 @@ def main(client_id, user_arguments_dict):
     elif action == 'receive':
         try:
             now = int(time.time())
-            msg, msg_path = [mqueue_empty], ''
+            message, message_path = [mqueue_empty], ''
             oldest_name, oldest_value = '', now
             for entry in os.listdir(queue_path):
                 if not entry.isdigit():
@@ -187,14 +235,14 @@ def main(client_id, user_arguments_dict):
                 if entry_value < oldest_value:
                     oldest_name, oldest_value = entry, entry_value
             if oldest_name:
-                msg_path = os.path.join(queue_path, oldest_name)
-                msg_fd = open(msg_path, 'r')
-                msg = msg_fd.readlines()
-                msg_fd.close()
-                os.remove(msg_path)
-                file_entry['path'] = os.path.basename(msg_path)
+                message_path = os.path.join(queue_path, oldest_name)
+                message_fd = open(message_path, 'r')
+                message = message_fd.readlines()
+                message_fd.close()
+                os.remove(message_path)
+                file_entry['path'] = os.path.basename(message_path)
             # Update file_output entry for raw data with output_format=file
-            file_entry['lines'] = msg
+            file_entry['lines'] = message
         except Exception, err:
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'Could not receive from "%s" queue: "%s"'
@@ -208,4 +256,7 @@ def main(client_id, user_arguments_dict):
     lock_handle.close()
     
     output_objects.append(file_entry)
+    output_objects.append({'object_type': 'link', 'destination'
+                           : 'mqueue.py?queue=%s;msg=%s' % (queue, msg),
+                           'text': 'Back to message queue interaction'})
     return (output_objects, returnvalues.OK)
