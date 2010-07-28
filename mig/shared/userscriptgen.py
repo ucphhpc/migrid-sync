@@ -273,6 +273,22 @@ def mkdir_usage_function(lang, extension):
     return s
 
 
+def mqueue_usage_function(lang, extension):
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION QUEUE [MSG]' % \
+                (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [])
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
 def mv_usage_function(lang, extension):
 
     # Extract op from function name
@@ -945,6 +961,35 @@ def mkdir_function(lang, curl_cmd, curl_flags=''):
         curl_flags,
         )
     s += end_function(lang, 'mk_dir')
+    return s
+
+
+def mqueue_function(lang, curl_cmd, curl_flags='--compressed'):
+    relative_url = '"cgi-bin/mqueue.py"'
+    query = '""'
+    if lang == 'sh':
+        post_data = '"output_format=txt;flags=$server_flags;action=$action;queue=$queue;msg=$msg"'
+    elif lang == 'python':
+        post_data = \
+            "'output_format=txt;flags=%s;%s;%s;%s' % (server_flags, action, queue, msg)"
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'job_mqueue', ['action', 'queue', 'msg'])
+    s += ca_check_init(lang)
+    s += password_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'job_mqueue')
     return s
 
 
@@ -2266,6 +2311,39 @@ sys.exit(status)
     return s
 
 
+def mqueue_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 2, 3)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += """
+# optional third argument depending on action - add dummy
+job_mqueue $@ ''
+"""
+    elif lang == 'python':
+        s += \
+            """
+# optional third argument depending on action - add dummy
+sys.argv.append('')
+(status, out) = job_mqueue(*(sys.argv[1:4]))
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
 def mv_main(lang):
     """
     Generate main part of corresponding scripts.
@@ -3468,6 +3546,33 @@ def generate_mkdir(scripts_languages, dest_dir='.'):
     return True
 
 
+def generate_mqueue(scripts_languages, dest_dir='.'):
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
 def generate_mv(scripts_languages, dest_dir='.'):
 
     # Extract op from function name
@@ -3953,6 +4058,7 @@ script_ops = [
     'liveio',
     'ls',
     'mkdir',
+    'mqueue',
     'mv',
     'put',
     'read',

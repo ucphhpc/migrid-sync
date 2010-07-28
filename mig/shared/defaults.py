@@ -43,6 +43,6 @@ all_jobs = keyword_all
 
 sandbox_names = ['sandbox', 'oneclick', 'ps3live']
 
-mqueue_prefix = '.mqueue'
+mqueue_prefix = 'message_queues'
 default_mqueue = 'default'
 mqueue_empty = 'NO MESSAGES'
