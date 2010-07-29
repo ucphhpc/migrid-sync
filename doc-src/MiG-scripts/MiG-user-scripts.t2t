@@ -2,7 +2,7 @@ MiG User Scripts
 
 Last updated %%date(%d-%m-%Y %H:%M)
 % End of the three default header lines
-%! Encoding: iso88591
+%! Encoding: UTF-8
 %! Options : --toc --enum-title
 % End of the optional settings lines
 
@@ -25,18 +25,20 @@ Last updated %%date(%d-%m-%Y %H:%M)
 %%toc
 
 = Introduction =
-MiG provides two user interfaces for all user interaction with MiG: The
+MiG provides multiple interfaces for all user interaction: The
 non-intrusive web interface most appropriate when handling a limited number
-of jobs and files, and a set of scripts that are more suitable for big
-projects with too many jobs and files to handle manually.
+of jobs and files and the library and command line interfaces more
+suitable for big projects with too many jobs and files to handle
+manually.
+
 
 This document focuses on the MiG scripts, and includes examples of the
 basic usage.
 
 
 = Prerequisites =
-In order to access MiG you need a MiG key/certificate pair: please
-contact us if you haven't already been handed one.
+In order to access MiG you generally need a MiG key/certificate pair: please
+contact us if you haven't already got one.
 
 The user scripts rely heavily on [curl http://curl.haxx.se] for communication
 with the MiG servers. Any recent version of curl should work without problems,
@@ -53,7 +55,7 @@ and //sh//. The python scripts provide platform independent script access
 to MiG, but may require the user to install 
 [python http://www.python.org]
  if not already available. The sh scripts on the
-other hand are un*x only, but seldom require anything to be installed
+other hand are un*x primarily, but seldom require anything to be installed
 as an sh-interpreter is normally readily available.
 The sh-scripts are intended to be //pure// sh, but our testing is somewhat
 limited to bash and zsh, so we may have missed some bash'isms. Again,
@@ -61,7 +63,7 @@ please feel free to report any problems.
 
 
 = Obtaining the scripts =
-All MiG scripts are provided on a //on demand// basis through a generator cgi
+All MiG scripts are provided on a //on-demand// basis through a generator cgi
 script. To obtain the latest version, simply point your browser to
 [user-scripts https://dk.migrid.org/cgi-bin/scripts.py?flavor=user]
 . It is possible to pass options to the generator in order to change the
@@ -80,7 +82,7 @@ You receive information about the address of the MiG server that you
 should use along with the key/certificate pair. In order to use the
 scripts you need to create a configuration file including the server
 address and paths to your key and certificate. The default configuration
-is location is ~/.mig/miguser.conf, but you can override it with the -c
+location is ~/.mig/miguser.conf, but you can override it with the -c
 flag to all user scripts. After saving the certificate and key in
 ~/.mig/cert.pem and ~/.mig/key.pem an example configuration could look
 like:
@@ -100,7 +102,7 @@ configuration file to read your password!!
 Please make sure to protect the configuration file with suitable read
 permission if you choose to include the password.
 
-Additionally it is possible to verify the identity of the MiG server by
+Additionally it is recommended to verify the identity of the MiG server by
 providing a CA certificate path in the configuration:
 ```
 cacertfile /home/LOGIN/.mig/cacert.pem
@@ -114,7 +116,7 @@ First of all change directory to the unpacked MiG-user-scripts
 directory.
 In general all MiG scripts include a short usage help which is shown if
 the script is called with the //-h// flag or if incorrect syntax is used.
-In the following sections each of the MiG user scripts are shown in
+In the following sections most of the MiG user scripts are shown in
 action. Each section contains examples using both the sh and python
 version. The two versions work in a very similar way under the hood, so
 the example output can be expected to be identical or very similar. Thus
@@ -144,11 +146,10 @@ python migsubmit.py hellogrid.mRSL
 Example output:
 ```
 0
-
-2452_11_15_2005__15_54_23_dk.migrid.org.0 is the job id assigned.
+332635_7_29_2010__9_2_4_dk.migrid.org.0 is the job id assigned.
 ```
 Now the job can be referenced by the unique string 
-2452_11_15_2005__15_54_23_dk.migrid.org.0 in status and cancel
+332635_7_29_2010__9_2_4_dk.migrid.org.0 in status and cancel
 requests.
 
 
@@ -156,24 +157,27 @@ requests.
 
 - python
 ```
-python migstatus.py 2452_11_15_2005__15_54_23_dk.migrid.org.0
+python migstatus.py 332635_7_29_2010__9_2_4_dk.migrid.org.0
 ```
 
 - sh
 ```
-./migstatus.sh 2452_11_15_2005__15_54_23_dk.migrid.org.0
+./migstatus.sh 332635_7_29_2010__9_2_4_dk.migrid.org.0
 ```
 
 
 Example output:
 ```
-0
+Exit code: 0 Description OK
+Title: jobstatus
 
+___MIG UNSORTED  JOB STATUS___
 
+Job Id: 332635_7_29_2010__9_2_4_dk.migrid.org.0
 Status: EXECUTING
-Received: Tue Nov 15 15:59:19 2005
-Queued: Tue Nov 15 15:59:19 2005
-Executing: Tue Nov 15 15:59:21 2005
+Received: Thu Jul 29 09:02:05 2010
+Queued: Thu Jul 29 09:02:06 2010
+Executing: Thu Jul 29 09:03:30 2010
 ```
 In this case the job has moved to the EXECUTING state meaning that it
 has been sent to a resource for execution.
@@ -194,49 +198,49 @@ python migstatus.py
 
 Example output:
 ```
-0
+Exit code: 0 Description OK
+Title: jobstatus
 
+___MIG UNSORTED  JOB STATUS___
+
+Job Id: 332635_7_29_2010__9_2_4_dk.migrid.org.0
 Status: FINISHED
-Verified: NO
-Received: Tue Nov 15 15:59:19 2005
-Queued: Tue Nov 15 15:59:19 2005
-Executing: Tue Nov 15 15:59:21 2005
-Finished: Tue Nov 15 15:59:55 2005
+Received: Thu Jul 29 09:02:05 2010
+Queued: Thu Jul 29 09:02:06 2010
+Executing: Thu Jul 29 09:03:30 2010
+Finished: Thu Jul 29 09:04:01 2010
 ```
 In this case the job is FINISHED executing so any results are now
-available in the home directory. The 'NO' in the Verified field of the
-job indicates that the job didn't include any templates to verify the
-output and exit values against.
+available in the home directory.
 
 == cancel a job ==
 
 - python
 ```
-python migcancel.py 2453_11_15_2005__15_59_19_dk.migrid.org.0
+python migcancel.py 332635_7_29_2010__9_2_4_dk.migrid.org.0
 ```
 
 - sh
 ```
-./migcancel.sh 2453_11_15_2005__15_59_19_dk.migrid.org.0
+./migcancel.sh 332635_7_29_2010__9_2_4_dk.migrid.org.0
 ```
 
 
 Example output:
 ```
-1
+Exit code: 100 Description Client error
+Title: jobaction
 
-Trying to cancel job with job
-id:2453_11_15_2005__15_59_19_dk.migrid.org.0
+___JOBACTION___
 
-You can only cancel jobs with QUEUED or RETRY status, status of job
-you are trying to cancel: FINISHED
-
+Job ID                                    Old status  New status	Message
+332635_7_29_2010__9_2_4_dk.migrid.org.0     FINISHED			You can
+only cancel jobs with status: PARSE or QUEUED or RETRY or EXECUTING or FROZEN.
 ```
-As seen above the cancel failed with exit code 1 since the job already
-finished. Furthermore the output indicates that only jobs that are
-queued can be cancelled. Executing jobs can not be cancelled
-either. Please refer to the kill section for information about stopping
-jobs during execution.
+As seen above the cancel failed with exit code 100 since the job already
+finished. Furthermore the output indicates that jobs that are either
+queued or executing can be cancelled. The latter will both stop the
+running job and cancel it.
 
 
 == list the contents of your MiG home directory ==
@@ -254,63 +258,79 @@ python migls.py
 
 Example output:
 ```
-0
+Exit code: 0 Description OK
+Title: File Management
 
-.:
-.
-..
+___FILE MANAGEMENT___
+
+MiG-user-scripts-26072010-101706
+MiG-user-scripts-26072010-101706.zip
 hellogrid.mRSL
-2453_11_15_2005__15_59_19_dk.migrid.org.0.stdout
-2453_11_15_2005__15_59_19_dk.migrid.org.0.status
+job_output
 ```
 The zero tells us that the operation succeeded and the rest are
 the actual contents of the MiG home directory. hellogrid.mRSL is the job
-description file we implicitly uploaded in the submit script. he other
-two files contain the stdout and exit codes of that job.
+description file we implicitly uploaded in the submit script. The
+job_output directory contains individual job directories with
+a.o. output and exit codes for the job execution. 
 
 
 == concatenate and print file contents ==
 
 - python
 ```
-python migcat.py '*'
+python migcat.py '*.mRSL' 'job_output/332635_*/*'
 ```
 
 - sh
 ```
-./migcat.sh '*'
+./migcat.sh '*.mRSL' 'job_output/332635_*/*'
 ```
 
 
 Example output:
 ```
+Exit code: 0 Description OK
+Title: cat
+
+___CAT___
+
 ::EXECUTE::
 echo "Hello grid"
-"Hello grid"
+Hello grid
+get_special_input_files 0
+get_input_files 0
+get_executables 0
+output_files_missing 0
+send_output_files 0
+send_io_files 0
 echo "Hello grid" 0
 ```
 The first two lines are from the job description, while the two last
-lines are from the stdout and status files respectively. In the status
-file it is indicated that the exit code of the echo command was 0.
+lines are from the stdout, io-status and status files respectively. In
+the status file it is indicated that the exit code of the echo command
+was 0. The get_input_files 0 and similar lines indicate that job
+preparation like downloading any input files and sending results
+succeeded. 
 
 
 == download files ==
 
 - python
 ```
-python migget.py '2453_11_15_2005__15_59_19_dk.migrid.org.0*' .
+python migget.py 'job_output/332635_*/*.st*' .
 ```
 
 - sh
 ```
-./migget.sh '2453_11_15_2005__15_59_19_dk.migrid.org.0*' .
+./migget.sh 'job_output/332635_*/*.st*' .
 ```
 
 
 Example output:
 ```
 ```
-Now the two files with output and exit codes from the previous job are
+Now the job stdout file with output and exit codes from the previous job are
 locally available. Please note that file operation like migget support
 wild cards in remote filenames, but that it may be necessary to escape or
 quote the names with wild cards in them to avoid local shell wild card
@@ -318,8 +338,6 @@ expansion.
 
 
 == upload files ==
-% TODO: migput localfile remotefile -> localfile is uploaded 
-% to remotefile/localfile !
 In this example we create a local file and upload it to the MiG home.
 ```
 touch somefile
@@ -330,7 +348,7 @@ done
 
 - python
 ```
-python migput.py somefile .
+python migput.py somefile ,
 ```
 
 - sh
@@ -342,9 +360,8 @@ python migput.py somefile .
 Example output:
 ```
 0
-
-A 'normal' file was uploaded (/./somefile). It can now be used as an
-inputfile in your .mRSL files.
+A 'normal' file was uploaded (//somefile). It can now be used as an
+inputfile in your .mRSL files
 ```
 
 
@@ -363,7 +380,10 @@ python mighead.py somefile
 
 Example output:
 ```
-0
+Exit code: 0 Description OK
+Title: head
+
+___HEAD___
 
 test line 1
 test line 2
@@ -385,10 +405,11 @@ test line 17
 test line 18
 test line 19
 test line 20
-
 ```
 The output contains the first 20 lines of the uploaded file, somefile.
-% TODO: support '-n' on client side
+You can use the -n N parameter to limit the output to the first N lines
+of the file just like the local head command.
+
 
 == print last lines of files ==
 
@@ -405,7 +426,10 @@ python migtail.py somefile
 
 Example output:
 ```
-0
+Exit code: 0 Description OK
+Title: tail
+
+___TAIL___
 
 test line 81
 test line 82
@@ -427,10 +451,9 @@ test line 97
 test line 98
 test line 99
 test line 100
-
 ```
-The output contains the last 20 lines of the uploaded file, somefile.
-% TODO: support '-n' on client side
+The output contains the last 20 lines of the uploaded file, somefile,
+unless the -n parameter is used.
 
 
 == delete files ==
@@ -448,12 +471,23 @@ python migrm.py somefile
 
 Example output:
 ```
-0
+Exit code: 0 Description OK
+Title: rm
 
+___RM___
 
 ```
-A subsequent migls will show that somefile is no longer available in the
+A subsequent migls somefile will show that it is no longer available in the
 MiG home directory.
+
+```
+Exit code: 105 Description File not found
+Title: File Management
+
+___FILE MANAGEMENT___
+
+somefile: No such file or directory
+```
 
 
 == show online documentation ==
@@ -472,10 +506,30 @@ python migdoc.py
 
 Example output:
 ```
-Documentation topics:
-Resource configuration
-Job description: mRSL
+Exit code: 0 Description OK
+Title: docs
 
+___MIG ON-DEMAND DOCUMENTATION___
+
+
+This is the integrated help system for MiG dev.
+You can search for a documentation topic or select the particular
+section directly.
+Please note that the integrated help is rather limited to short
+overviews and
+technical specifications.
+
+You can find more user friendly tutorials and examples on the
+official site support pages:
+http://code.google.com/p/migrid/wiki/FrontPage
+
+___DOCUMENTATION TOPICS:___
+
+Valid outputformats
+Resource configuration
+Runtime Environments
+Job description: mRSL
+License and Acknowledgements
 ```
 
 To see the documentation for one or more of the topics, run the script
@@ -494,54 +548,104 @@ python migdoc.py mrsl conf
 
 Example output:
 ```
-Documentation:
-Job description: mRSL
+Exit code: 0 Description OK
+Title: docs
 
-ARCHITECTURE
+___MIG ON-DEMAND DOCUMENTATION___
+
+
+___JOB DESCRIPTION: MRSL___
+
+
+___ARCHITECTURE___
+
+Description: CPU architecture required for execution
+Title: CPU Architecture
 Required: False
-Type: string
-Description: i386/.., 64bit
 Value: 
-Example: i386
+Editor: select
+Type: string
+Example: 
+::ARCHITECTURE::
+X86
 
-CPUCOUNT
-Required: False
-Type: int
+This particular server supports the following values:
+X86, AMD64, IA64, SPARC, SPARC64, ITANIUM, SUN4U, SPARC-T1, SPARC-T2, PS3, CELL
+
+___CPUCOUNT___
+
 Description: Number of CPU's the job requires on each node.
+Title: Number of CPU Cores
+Required: False
 Value: 1
+Editor: input
+Type: int
 Example: 4
 
-CPUTIME
-Required: False
-Type: int
+___CPUTIME___
+
 Description: The time required to execute the job. The time is specified
-in !!
-Value: 0
+in seconds
+Title: CPU/Wall Time (s)
+Required: False
+Value: 600
+Editor: input
+Type: int
 Example: 60
 
 [ ...  ]
 
 
-Documentation:
-Resource configuration
+Exit code: 0 Description OK
+Title: docs
 
-ARCHITECTURE
-Required: True
-Type: string
-Description: The resource's architecture (eg. i386).
+___MIG ON-DEMAND DOCUMENTATION___
+
+
+___RESOURCE CONFIGURATION___
+
+
+___ADMINEMAIL___
+
+Description: A space separated list of email addresses of resource
+administrators - used to notify about internal errors.
+Title: Administrator E-mail
+Required: False
 Value: 
-Example: i386
+Editor: invisible
+Type: string
+Example: admin@yourdomain.org
 
-CPUCOUNT
+___ANONYMOUS___
+
+Description: Enable anonymous resource ID for this resource in all grid
+interfaces. When enabled the unique resource name will be hashed to a
+long string of apparently random characters. Default vlaue is True.
+Title: Anonymize ID in grid
+Required: False
+Value: True
+Editor: select
+Type: boolean
+Example: False
+
+___ARCHITECTURE___
+
+Description: The CPU architecture of the execution nodes.
+Title: CPU Architecture of the Nodes
 Required: True
-Type: int
-Description: Number of CPU's on each node.
-Value: 1
-Example: 4
+Value: X86
+Editor: select
+Type: string
+Example: Valid architectures: ['X86', 'AMD64', 'IA64', 'SPARC',
+'SPARC64', 'ITANIUM', 'SUN4U', 'SPARC-T1', 'SPARC-T2', 'PS3', 'CELL']
 
 [ ... ]
 
 ```
+
+Multiple topcis can be specified and they are treated as case
+insensitive values.
+
 
 == flags ==
 All the scripts support a few common flags in order to provide a more
@@ -557,6 +661,21 @@ python migls.py -h
 - sh
 ```
 ./migls.sh -h
+```
+
+Example output:
+```
+Usage: migls.py [OPTIONS] [FILE ...]
+Where OPTIONS include:
+-c CONF         read configuration from CONF instead of
+                default (~/.mig/miguser.conf).
+-h              display this help
+-s MIG_SERVER   force use of MIG_SERVER.
+-v              verbose mode
+-V              display version
+-a              Do not hide entries starting with '.'
+-l              Display long format
+-r              act recursively
 ```
 
 
@@ -606,7 +725,8 @@ python migls.py -v
 
 
 = Changing key/certificate passphrase =
-You need [openssl www.openssl.org] in order to change the passphrase on your key and certificates. 
+You need [openssl www.openssl.org] in order to change the passphrase on
+your key and certificates.
 
 To create a copy of the key with a new passphrase:
 ```
@@ -615,7 +735,8 @@ openssl rsa -in key.pem -des3 -out key.pem.new
 [enter new passphrase]
 [verify new passphrase]
 ```
-Now you can use the new key (and thus the new passphrase) along with the original pem certificate for the MiG scripts.
+Now you can use the new key (and thus the new passphrase) along with the
+original pem certificate for the MiG scripts.
 
 To create a copy of the P12 certificate with a new import password:
 ```
@@ -624,8 +745,12 @@ openssl pkcs12 -export -in cert.pem -inkey key.pem -out cert.p12.new
 [enter new export password]
 [verify new export password]
 ```
-Now you can import the new P12 certificate using the new password. In case you wish to change both the key and P12 passwords, you should replace the -inkey argument in the latter command with the path to the newly created key.
+Now you can import the new P12 certificate using the new password. In
+case you wish to change both the key and P12 passwords, you should
+replace the -inkey argument in the latter command with the path to the
+newly created key. 
 
 
 = Feedback =
-Please send any feedback to the MiG community at http://groups.google.com/group/migrid/
+Please send any feedback to the MiG community at 
+http://groups.google.com/group/migrid/
