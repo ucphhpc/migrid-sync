@@ -2,7 +2,7 @@ MiG User Scripts
 
 Last updated %%date(%d-%m-%Y %H:%M)
 % End of the three default header lines
-%! Encoding: UTF-8
+%! Encoding: utf8
 %! Options : --toc --enum-title
 % End of the optional settings lines
 
@@ -330,11 +330,11 @@ python migget.py 'job_output/332635_*/*.st*' .
 Example output:
 ```
 ```
-Now the job stdout file with output and exit codes from the previous job are
-locally available. Please note that file operation like migget support
-wild cards in remote filenames, but that it may be necessary to escape or
-quote the names with wild cards in them to avoid local shell wild card
-expansion. 
+Now the job .stdout and .status files with output and exit codes from the
+previous job are locally available. Please note that file operation like
+migget support wild cards in remote filenames, but that it may be
+necessary to escape or quote the names with wild cards in them to avoid
+local shell wild card expansion. 
 
 
 == upload files ==
@@ -512,7 +512,7 @@ Title: docs
 ___MIG ON-DEMAND DOCUMENTATION___
 
 
-This is the integrated help system for MiG dev.
+This is the integrated help system for MiG.
 You can search for a documentation topic or select the particular
 section directly.
 Please note that the integrated help is rather limited to short
@@ -662,6 +662,7 @@ python migls.py -h
 ```
 ./migls.sh -h
 ```
+
 
 Example output:
 ```
