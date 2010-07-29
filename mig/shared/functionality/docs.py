@@ -55,6 +55,7 @@ def display_topic(output_objects, subject, all_docs):
                                'class': 'urllink',
                                'title': '%s Documentation' % subject,
                                'text': subject,
+                               'plain_text': subject,
                                })
     else:
         output_objects.append({'object_type': 'text', 'text'
@@ -287,10 +288,11 @@ def main(client_id, user_arguments_dict):
     if not show:
         output_objects.append({'object_type': 'text',
                                'text': '''
-This is the integrated help system for %s. You can search for a topic in the
-search field or select the particular section directly. Please note that the
-integrated help is rather limited to short overviews and technical
-specifications.''' % configuration.short_title })
+This is the integrated help system for %s.
+You can search for a documentation topic or select the particular
+section directly.
+Please note that the integrated help is rather limited to short overviews and
+technical specifications.''' % configuration.short_title })
 
         output_objects.append({'object_type': 'text',
                                'text': '''
@@ -300,7 +302,8 @@ official site support pages:''' })
                                configuration.site_external_doc,
                                'class': 'urllink', 'title': 'external documentation',
                                'text': 'external %s documentation' % \
-                               configuration.site_title })
+                               configuration.site_title,
+                               'plain_text': configuration.site_external_doc})
 
     html = '<p>Filter (using *,? etc.)'
     html += "<form method='post' action='docs.py'>"

@@ -223,7 +223,7 @@ To submit with execution on the first suitable and allowed VGrid.
         }))
     specs.append(('ARCHITECTURE', {
         'Title': 'CPU Architecture',
-        'Description': 'CPU architecture requred for execution',
+        'Description': 'CPU architecture required for execution',
         'Example': '''
 ::ARCHITECTURE::
 X86

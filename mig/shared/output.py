@@ -103,7 +103,9 @@ ___%s___
             # We do not want link junk in plain text
             # lines.append('%s\n' % txt_link(i))
 
-            continue
+            # Show any explicit plain_text contents
+            if i.get('plain_text', False):
+                lines.append('%s\n' % i['plain_text'])
         elif i['object_type'] == 'multilinkline':
 
             # We do not want link junk in plain text
