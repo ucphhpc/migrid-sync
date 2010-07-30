@@ -659,7 +659,7 @@ if __name__ == '__main__':
         generate_single_argument(op[0], op[1], languages, dest_dir)
 
     for op in script_ops_single_upload_arg:
-        generate_single_argument_upload(op[0], op[1], languages,
+        generate_single_argument_upload(op[0], op[1], op[2], languages,
                 dest_dir)
 
     for op in script_ops_two_args:

@@ -2535,8 +2535,10 @@ for src in src_list:
                 src_path = os.path.join(root, name)
                 dst_path = os.path.join(dst, rel_root, name)
                 (status, out) = put_file(src_path, dst_path, submit_mrsl, extract_package)
+                print ''.join(out),
     else:
         (status, out) = put_file(src, dst, submit_mrsl, extract_package)
+        print ''.join(out),
 sys.exit(status)
 """
     else:
