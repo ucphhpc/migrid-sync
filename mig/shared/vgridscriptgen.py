@@ -64,7 +64,7 @@ def version():
 
 def version_function(lang):
     s = ''
-    s += begin_function(lang, 'version', [])
+    s += begin_function(lang, 'version', [], 'Show version details')
     if lang == 'sh':
         s += '    echo "MiG VGrid Scripts: %s"\n' % __version__
     elif lang == 'python':
@@ -92,7 +92,7 @@ def vgrid_single_argument_usage_function(
     usage_str = 'Usage: %s%s.%s [OPTIONS] %s' % (mig_prefix, op,
             extension, first_arg)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -113,7 +113,7 @@ def vgrid_two_arguments_usage_function(
     usage_str = 'Usage: %s%s.%s [OPTIONS] %s %s' % (mig_prefix, op,
             extension, first_arg, second_arg)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -132,40 +132,32 @@ def vgrid_single_argument_function(
     first_arg,
     curl_flags='',
     ):
-
-    s = ''
-    s += begin_function(lang, 'submit_command', [first_arg])
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    relative_url = '"cgi-bin/%s.py"' % command
+    query = '""'
     if lang == 'sh':
-        s += """
-    curl=\"%s %s\"""" % (curl_cmd, curl_flags)
-        s += \
-            """
-    $curl \\
-            --location \\
-            --fail \\
-            --cert $cert_file \\
-            --key $key_file \\
-            $ca_check \\
-            $password_check \\
-            --url \"$mig_server/cgi-bin/%s.py?%s=$%s;output_format=txt\" 
-"""\
-             % (command, first_arg, first_arg)
+        post_data = \
+            '"output_format=txt;%s=$%s"' % (first_arg, first_arg)
     elif lang == 'python':
-        s += """
-    curl = \"%s %s\"""" % (curl_cmd, curl_flags)
+        post_data = \
+            "'output_format=txt;%s=' + %s" % (first_arg, first_arg)
     else:
-
-    # TODO: create valid python code
-    #        s += """
-    #        status = os.system("%%s --location --fail --cert %%s --key %%s %%s %%s --url '%%s/cgi-bin/%s.py?%s=$%s&%s=$%s;output_format=txt;with_html=false'" % (curl, cert_file, key_file, ca_check, password_check, mig_server))
-    #        return status >> 8
-    # """ % (command, first_arg, first_arg, second_arg, second_arg, second_arg)
-
         print 'Error: %s not supported!' % lang
         return ''
 
+    s = ''
+    s += begin_function(lang, 'submit_command', [first_arg],
+                        'Call corresponding server operation')
+    s += ca_check_init(lang)
+    s += password_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
     s += end_function(lang, 'submit_command')
     return s
 
@@ -178,42 +170,34 @@ def vgrid_single_argument_upload_function(
     first_arg,
     curl_flags='',
     ):
-
-    s = ''
-    s += begin_function(lang, 'submit_command', [first_arg])
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    relative_url = '""'
+    query = '""'
+    post_data = '""'
     if lang == 'sh':
-        s += """
-    curl=\"%s %s\"""" % (curl_cmd, curl_flags)
-        s += \
-            """
-    $curl \\
-            -H "Content-Type: %s" \\
-            --location \\
-            --fail \\
-            --cert $cert_file \\
-            --key $key_file \\
-            $ca_check \\
-            $password_check \\
-    	--upload-file $%s \\
-            --url \"$mig_server\" 
-"""\
-             % (content_type, first_arg)
+        curl_target = '"--header Content-Type:%s --upload-file $%s"' % \
+                      (content_type, first_arg)
     elif lang == 'python':
-        s += """
-    curl = \"%s %s\"""" % (curl_cmd, curl_flags)
+        curl_target = '"--header Content-Type:%s --upload-file " + %s' % \
+                      (content_type, first_arg)
     else:
-
-    # TODO: create valid python code
-    #        s += """
-    #        status = os.system("%%s --location --fail --cert %%s --key %%s %%s %%s --url '%%s/cgi-bin/%s.py?%s=$%s&%s=$%s;output_format=txt;with_html=false'" % (curl, cert_file, key_file, ca_check, password_check, mig_server))
-    #        return status >> 8
-    # """ % (command, first_arg, first_arg, second_arg, second_arg, second_arg)
-
         print 'Error: %s not supported!' % lang
         return ''
 
+    s = ''
+    s += begin_function(lang, 'submit_command', [first_arg],
+                        'Call corresponding server operation')
+    s += ca_check_init(lang)
+    s += password_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        curl_target,
+        )
     s += end_function(lang, 'submit_command')
     return s
 
@@ -226,40 +210,37 @@ def vgrid_two_arguments_function(
     second_arg,
     curl_flags='',
     ):
-
-    s = ''
-    s += begin_function(lang, 'submit_command', [first_arg, second_arg])
-    s += ca_check_init(lang)
-    s += password_check_init(lang)
+    relative_url = '"cgi-bin/%s.py"' % command
+    query = '""'
     if lang == 'sh':
-        s += """
-    curl=\"%s %s\"""" % (curl_cmd, curl_flags)
-        s += \
-            """
-    $curl \\
-            --location \\
-            --fail \\
-            --cert $cert_file \\
-            --key $key_file \\
-            $ca_check \\
-            $password_check \\
-            --url \"$mig_server/cgi-bin/%s.py?%s=$%s&%s=$%s;output_format=txt\" 
-"""\
-             % (command, first_arg, first_arg, second_arg, second_arg)
+        post_data = \
+            '"output_format=txt;%s=$%s;%s=$%s"' % (first_arg, first_arg,
+                                                   second_arg, second_arg)
     elif lang == 'python':
-        s += """
-    curl = \"%s %s\"""" % (curl_cmd, curl_flags)
+        post_data = \
+            "'output_format=txt;%s=' + %s + ';%s=' + %s" % (first_arg,
+                                                            first_arg,
+                                                            second_arg,
+                                                            second_arg)
     else:
-
-    # TODO: create valid python code
-    #        s += """
-    #        status = os.system("%%s --location --fail --cert %%s --key %%s %%s %%s --url '%%s/cgi-bin/%s.py?%s=$%s&%s=$%s;output_format=txt;with_html=false'" % (curl, cert_file, key_file, ca_check, password_check, mig_server))
-    #        return status >> 8
-    # """ % (command, first_arg, first_arg, second_arg, second_arg, second_arg)
-
         print 'Error: %s not supported!' % lang
         return ''
 
+
+    s = ''
+    s += begin_function(lang, 'submit_command', [first_arg, second_arg],
+                        'Call corresponding server operation')
+    s += ca_check_init(lang)
+    s += password_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
     s += end_function(lang, 'submit_command')
     return s
 
@@ -293,7 +274,9 @@ submit_command $first_arg
         s += """
 first_arg = sys.argv[1]
 
-submit_command(first_arg)
+(status, out) = submit_command(first_arg)
+print ''.join(out),
+sys.exit(status)
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -329,7 +312,9 @@ submit_command $first_arg $second_arg
 first_arg = sys.argv[1]
 second_arg = sys.argv[2]
 
-submit_command(first_arg, second_arg)
+(status, out) = submit_command(first_arg, second_arg)
+print ''.join(out),
+sys.exit(status)
 """
     else:
         print 'Error: %s not supported!' % lang

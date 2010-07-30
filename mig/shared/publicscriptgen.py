@@ -68,7 +68,7 @@ def begin_function(lang, name, arguments, doc=''):
     else:
         print 'Error: %s not supported!' % lang
 
-    if doc_string:
+    if doc:
         s += doc_string(lang, doc, 4)
 
     # sh needs variable extraction from stack
