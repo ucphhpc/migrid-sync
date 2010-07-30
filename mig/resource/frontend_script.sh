@@ -34,14 +34,15 @@ send_pgid() {
     # TODO: can we supply ca-cert to avoid insecure here?
     command="curl --location --insecure --stderr $curllog --connect-timeout $contimeout -m $contimeout $migserver/cgi-sid/put_resource_pgid?type=$type&amp;unique_resource_name=${unique_resource_name}&amp;pgid=$pgid"
     
-    if [ $type == "EXE" ]; then
+    if [ "$type" = "EXE" ]; then
         exe=$3
         command="$command&amp;exe_name=$exe"
     fi
     
     echo $command >> $frontendlog
     status=`$command`
-    echo "\n$status" >> $frontendlog
+    echo "" >> $frontendlog
+    echo "$status" >> $frontendlog
     
     # return only exit_code
     return ${status:0:1}
@@ -330,7 +331,7 @@ while [ 1 ]; do
     for e in *.leader_pgid; do
         # No matching expansion results in raw pattern value - just 
         # ignore
-        if [ "$e" == '*.leader_pgid' ]; then
+        if [ "$e" = '*.leader_pgid' ]; then
             continue
         fi
         
@@ -348,7 +349,7 @@ while [ 1 ]; do
     for e in *.jobdone; do
         # No matching expansion results in raw pattern value - just 
         # ignore
-        if [ "$e" == '*.jobdone' ]; then
+        if [ "$e" = '*.jobdone' ]; then
             continue
         fi
         
@@ -368,7 +369,7 @@ while [ 1 ]; do
             
             reqjobid=`awk '/job_id/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ../${localjobname}.jobdone`
             reqtarget="result"
-            reqsrc=`echo ${reqjobid}.{stdout,stderr}`
+            reqsrc="${reqjobid}.stdout ${reqjobid}.stderr"
             reqdst="/job_output/${reqjobid}"
 
             execute_transfer_files_script $localjobname "sendoutputfiles" $reqtarget $reqsrc $reqdst
@@ -395,7 +396,7 @@ while [ 1 ]; do
     for runrequest in *.runsendupdate; do
         # No matching expansion results in raw pattern value - just 
         # ignore
-        if [ "$runrequest" == '*.runsendupdate' ]; then
+        if [ "$runrequest" = '*.runsendupdate' ]; then
             continue
         fi
         
@@ -433,7 +434,7 @@ while [ 1 ]; do
         fi
         if [ "$reqtarget" = 'liveio' ]; then
             if [ -z "$reqsrc" ]; then
-                reqsrc=`echo ${reqjobid}.{stdout,stderr,io-status}`
+		reqsrc="${reqjobid}.stdout ${reqjobid}.stderr ${reqjobid}.io-status"
             fi
             if [ -z "$reqdst" ]; then
                 reqdst="/job_output/${reqjobid}"
@@ -467,7 +468,7 @@ while [ 1 ]; do
     for runrequest in *.rungetupdate; do
         # No matching expansion results in raw pattern value - just 
         # ignore
-        if [ "$runrequest" == '*.rungetupdate' ]; then
+        if [ "$runrequest" = '*.rungetupdate' ]; then
             continue
         fi
         
@@ -550,7 +551,7 @@ while [ 1 ]; do
     for updaterequest in *.sendupdate *.getupdate; do
         # No matching expansion results in raw pattern value - just 
         # ignore
-        if [ "$updaterequest" == '*.sendupdate' -o "$updaterequest" == '*.getupdate' ]; then
+        if [ "$updaterequest" = '*.sendupdate' -o "$updaterequest" = '*.getupdate' ]; then
             continue
         fi
         # ignore partial update requests
@@ -598,7 +599,7 @@ while [ 1 ]; do
     for givejobrequest in *.givejob; do
         # No matching expansion results in raw pattern value - just 
         # ignore
-        if [ "$givejobrequest" == '*.givejob' ]; then
+        if [ "$givejobrequest" = '*.givejob' ]; then
             continue
         fi
         

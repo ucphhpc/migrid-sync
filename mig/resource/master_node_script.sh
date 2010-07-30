@@ -126,7 +126,7 @@ handle_update() {
         reqjobid=`awk '/^#MIG_JOBID/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./${localjobname}.job`
         reqsrc=`awk '/source/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' ./$sendreq`
         if [ -z "$reqsrc" ]; then
-            reqsrc=`echo ${reqjobid}.{stdout,stderr}`
+            reqsrc="${reqjobid}.stdout ${reqjobid}.stderr"
         fi
         echo "$copy_command ${reqsrc} ${copy_frontend_prefix}${frontend_dir}/job-dir_${localjobname}/" >> $exehostlog
         
