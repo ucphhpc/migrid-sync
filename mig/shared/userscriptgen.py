@@ -843,10 +843,10 @@ def jobaction_function(lang, curl_cmd, curl_flags=''):
     query = '""'
     if lang == 'sh':
         post_data = \
-            '"output_format=txt;flags=$server_flags;$action;$job_list"'
+            '"output_format=txt;flags=$server_flags;action=$action;$job_list"'
     elif lang == 'python':
         post_data = \
-            "'output_format=txt;flags=%s;%s;%s' % (server_flags, action, job_list)"
+            "'output_format=txt;flags=%s;action=%s;%s' % (server_flags, action, job_list)"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -874,10 +874,10 @@ def liveio_function(lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"cgi-bin/liveio.py"'
     query = '""'
     if lang == 'sh':
-        post_data = '"output_format=txt;flags=$server_flags;$action;$job_id;$src_list;$dst"'
+        post_data = '"output_format=txt;flags=$server_flags;action=$action;job_id=$job_id;$src_list;dst=$dst"'
     elif lang == 'python':
         post_data = \
-            "'output_format=txt;flags=%s;%s;%s;%s;%s' % (server_flags, action, job_id, src_list, dst)"
+            "'output_format=txt;flags=%s;action=%s;job_id=%s;%s;dst=%s' % (server_flags, action, job_id, src_list, dst)"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -979,7 +979,7 @@ def mqueue_function(lang, curl_cmd, curl_flags='--compressed'):
         post_data = '"output_format=txt;flags=$server_flags;action=$action;queue=$queue;msg=$msg"'
     elif lang == 'python':
         post_data = \
-            "'output_format=txt;flags=%s;%s;%s;%s' % (server_flags, action, queue, msg)"
+            "'output_format=txt;flags=%s;action=%s;queue=%s;msg=%s' % (server_flags, action, queue, msg)"
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -2137,7 +2137,7 @@ def jobaction_main(lang):
 # Build the action and job_id strings used directly:
 # action="$1" job_id="$2";job_id="$3";...;job_id="$N"
 orig_args=("$@")
-action=\"action=$1\"
+action=\"$1\"
 shift
 job_id_list=\"job_id=$1\"
 shift
@@ -2152,7 +2152,7 @@ job_action $action $job_id_list
             """
 # Build the action and job_id strings used directly:
 # action=$1 job_id="$2";job_id="$3";...;job_id="$N"
-action = \"action=%s\" % sys.argv[1]
+action = \"%s\" % sys.argv[1]
 job_id_list = \"job_id=%s\" % \";job_id=\".join(sys.argv[2:])
 (status, out) = job_action(action, job_id_list)
 print ''.join(out),
@@ -2183,9 +2183,9 @@ def liveio_main(lang):
 # Build the action, job_id, src and dst strings used directly:
 # action="$1" job_id="$2" src="$2";src="$3";...;src=$((N-1) dst="$N"
 orig_args=("$@")
-action=\"action=$1\"
+action=\"$1\"
 shift
-job_id=\"job_id=$1\"
+job_id=\"$1\"
 shift
 src_list=\"src=$1\"
 shift
@@ -2193,7 +2193,7 @@ while [ \"$#\" -gt \"1\" ]; do
     src_list=\"$src_list;src=$1\"
     shift
 done
-dst=\"dst=$1\"
+dst=\"$1\"
 job_liveio $action $job_id $src_list $dst
 """
     elif lang == 'python':
@@ -2201,10 +2201,10 @@ job_liveio $action $job_id $src_list $dst
             """
 # Build the action, job_id, src and dst strings used directly:
 # action="$1" job_id="$2" src="$2";src="$3";...;src=$((N-1) dst="$N"
-action = \"action=%s\" % sys.argv[1]
-job_id = \"job_id=%s\" % sys.argv[2]
+action = \"%s\" % sys.argv[1]
+job_id = \"%s\" % sys.argv[2]
 src_list = \"src=%s\" % \";src=\".join(sys.argv[3:-1])
-dst = \"dst=%s\" % sys.argv[-1]
+dst = \"%s\" % sys.argv[-1]
 (status, out) = job_liveio(action, job_id, src_list, dst)
 print ''.join(out),
 sys.exit(status)
