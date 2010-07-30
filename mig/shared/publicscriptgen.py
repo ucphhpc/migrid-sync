@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # publicscriptgen - Basic script generator functions
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,24 +33,55 @@ for the supported programming languages.
 
 import os
 
+
+# Generator version (automagically updated by svn)
+
+__version__ = '$Revision$'
+
+# $Id: userscriptgen.py 2591 2009-02-25 10:56:13Z jones $
+
+
 # ##########################
 # Script helper functions #
 # ##########################
 
+def doc_string(lang, string, indent=0):
 
-def begin_function(lang, name, arguments):
+    # Insert doc string or comment in the script
+    # Multi line comments (string with newlines) also work
+
+    s = indent * ' '
+    
+    if lang == 'sh':
+        s += '# %s\n' % string.replace('\n', '\n' + indent * ' ' + '# ')
+    elif lang == 'python':
+        s += '"""%s"""\n' % string.replace('\n', '\n' + indent * ' ')
+    else:
+        print 'Error: %s not supported!' % lang
+    return s
+
+
+def begin_function(lang, name, arguments, doc=''):
     s = ''
     if lang == 'sh':
         s += '%s(' % name
         s += ') {\n'
-        i = 1
-        for arg in arguments:
-            s += '\t%s=$%d\n' % (arg, i)
-            i += 1
     elif lang == 'python':
         s += 'def %s(%s):\n' % (name, ', '.join(arguments))
     else:
         print 'Error: %s not supported!' % lang
+
+    if doc_string:
+        s += doc_string(lang, doc, 4)
+
+    # sh needs variable extraction from stack
+
+    if lang == 'sh':
+        i = 1
+        for arg in arguments:
+            s += '    %s=$%d\n' % (arg, i)
+            i += 1
+
     return s
 
 
@@ -71,37 +102,37 @@ def end_function(lang, name):
 
 def read_conf_function(lang):
     s = ''
-    s += begin_function(lang, 'read_conf', ['conf', 'option'])
+    s += begin_function(lang, 'read_conf', ['conf', 'option'],
+                        '''Extract a value from the user conf file: format is KEY and VALUE
+separated by whitespace''')
     if lang == 'sh':
         s += \
             """
-        # This function reads the supplied configuration
-        # file and returns the value of option in the
-        # conf_value variable
-        conf_value=\"\"
-        while read opt val bogus; do
-                if [ \"$opt\" = \"$option\" ]; then
-                        conf_value=\"$val\"
-                        return
-                fi
-        done < $conf
+    # This function reads the supplied configuration
+    # file and returns the value of option in the
+    # conf_value variable
+    conf_value=\"\"
+    while read opt val bogus; do
+            if [ \"$opt\" = \"$option\" ]; then
+                    conf_value=\"$val\"
+                    return
+            fi
+    done < $conf
 """
     elif lang == 'python':
-        s += \
-            """
-        '''Extract a value from the user conf file: format is KEY and VALUE separated by whitespace'''
-        try:
-            conf_file = open(conf, 'r')
-            for line in conf_file:
-                line = line.strip()
-                # split on any whitespace and assure at least two parts
-                parts = line.split() + ['', '']
-                opt, val = parts[0], parts[1]
-                if opt == option:
-                    return val
-            conf_file.close()
-        except Exception:
-            return ''
+        s += """
+    try:
+        conf_file = open(conf, 'r')
+        for line in conf_file:
+            line = line.strip()
+            # split on any whitespace and assure at least two parts
+            parts = line.split() + ['', '']
+            opt, val = parts[0], parts[1]
+            if opt == option:
+                return val
+        conf_file.close()
+    except Exception:
+        return ''
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -113,21 +144,23 @@ def read_conf_function(lang):
 
 def check_var_function(lang):
     s = ''
-    s += begin_function(lang, 'check_var', ['name', 'var'])
+    s += begin_function(lang, 'check_var', ['name', 'var'],
+                        'Check that conf variable, name, is set')
     if lang == 'sh':
         s += \
             """
-        if [ -z \"$var\" ]; then
-           echo \"Error: Variable \'$name\' not set!\"
-           echo \"Please set in configuration file or through the command line\"
-           exit 1
-        fi"""
+    if [ -z \"$var\" ]; then
+        echo \"Error: Variable \'$name\' not set!\"
+        echo \"Please set in configuration file or through the command line\"
+        exit 1
+    fi"""
     elif lang == 'python':
         s += \
             """
-        if not var:
-           print name + \" not set! Please set in configuration file or through the command line\"
-           sys.exit(1)"""
+    if not var:
+        print \"Error: Variable %s not set!\" % name
+        print \"Please set in configuration file or through the command line\"
+        sys.exit(1)"""
     s += end_function(lang, 'check_var')
 
     return s
@@ -139,25 +172,25 @@ def format_list(lang, target_arg, var_name):
     if lang == 'sh':
         s += \
           """
-        # Build the %(target)s string used in wild card expansion:
-        # '%(var)s="$1";%(var)s="$2";...;%(var)s=$N'
-        # %(target)s may be a string or array
-        tmp_var=''
-        for i in ${%(target)s[*]}; do
-           tmp_var=\"${tmp_var};%(var)s=${i#%(var)s=}\"
-        done
-        unset %(target)s
-        %(target)s=\"$tmp_var\"
-        """ % fill
+    # Build the %(target)s string used in wild card expansion:
+    # '%(var)s="$1";%(var)s="$2";...;%(var)s=$N'
+    # %(target)s may be a string or array
+    tmp_var=''
+    for i in ${%(target)s[*]}; do
+        tmp_var=\"${tmp_var};%(var)s=${i#%(var)s=}\"
+    done
+    unset %(target)s
+    %(target)s=\"$tmp_var\"
+    """ % fill
     elif lang == 'python':
         s += \
           """
-        # Build the %(target)s string used in wild card expansion:
-        # '%(var)s="$1";%(var)s="$2";...;%(var)s=$N'
-        # %(target)s may be a string or array
-        if not isinstance(%(target)s, basestring):
-           %(target)s = \";%(var)s=%%s\" %% \";%(var)s=\".join(%(target)s)
-        """ % fill
+    # Build the %(target)s string used in wild card expansion:
+    # '%(var)s="$1";%(var)s="$2";...;%(var)s=$N'
+    # %(target)s may be a string or array
+    if not isinstance(%(target)s, basestring):
+        %(target)s = \";%(var)s=%%s\" %% \";%(var)s=\".join(%(target)s)
+    """ % fill
     return s
 
 
@@ -170,26 +203,26 @@ def basic_usage_options(usage_str, lang):
     if lang == 'sh':
         s += \
             """
-        echo \"%s\"
-        echo \"Where OPTIONS include:\"
-        echo \"-c CONF\t\tread configuration from CONF instead of\"
-        echo \"\t\t\tdefault (~/.mig/miguser.conf).\"
-        echo \"-h\t\tdisplay this help\"
-        echo \"-s MIG_SERVER\tforce use of MIG_SERVER.\"
-        echo \"-v\t\tverbose mode\"
-        echo \"-V\t\tdisplay version\""""\
+    echo \"%s\"
+    echo \"Where OPTIONS include:\"
+    echo \"-c CONF\t\tread configuration from CONF instead of\"
+    echo \"\t\t\tdefault (~/.mig/miguser.conf).\"
+    echo \"-h\t\tdisplay this help\"
+    echo \"-s MIG_SERVER\tforce use of MIG_SERVER.\"
+    echo \"-v\t\tverbose mode\"
+    echo \"-V\t\tdisplay version\""""\
              % usage_str
     elif lang == 'python':
         s += \
             """
-        print \"%s\"
-        print \"Where OPTIONS include:\"
-        print \"-c CONF\t\tread configuration from CONF instead of\"
-        print \"\t\tdefault (~/.mig/miguser.conf).\"
-        print \"-h\t\tdisplay this help\"
-        print \"-s MIG_SERVER\tforce use of MIG_SERVER.\"
-        print \"-v\t\tverbose mode\"
-        print \"-V\t\tdisplay version\""""\
+    print \"%s\"
+    print \"Where OPTIONS include:\"
+    print \"-c CONF\t\tread configuration from CONF instead of\"
+    print \"\t\tdefault (~/.mig/miguser.conf).\"
+    print \"-h\t\tdisplay this help\"
+    print \"-s MIG_SERVER\tforce use of MIG_SERVER.\"
+    print \"-v\t\tverbose mode\"
+    print \"-V\t\tdisplay version\""""\
              % usage_str
     else:
         print 'Error: %s not supported!' % lang
@@ -207,19 +240,19 @@ def ca_check_init(lang):
     if lang == 'sh':
         s += \
             """
-        if [ -z \"$ca_cert_file\" ]; then
-           ca_check='--insecure'
-        else
-           ca_check=\"--cacert $ca_cert_file\"
-        fi
-        """
+    if [ -z \"$ca_cert_file\" ]; then
+        ca_check='--insecure'
+    else
+        ca_check=\"--cacert $ca_cert_file\"
+    fi
+    """
     elif lang == 'python':
         s += \
             """
-        if not ca_cert_file:
-           ca_check = '--insecure'
-        else:
-           ca_check = \"--cacert %s\" % (ca_cert_file)
+    if not ca_cert_file:
+        ca_check = '--insecure'
+    else:
+        ca_check = \"--cacert %s\" % (ca_cert_file)
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -233,19 +266,19 @@ def password_check_init(lang):
     if lang == 'sh':
         s += \
             """
-        if [ -z \"$password\" ]; then
-                password_check=''
-        else
-                password_check=\"--pass $password\"
-        fi
-        """
+    if [ -z \"$password\" ]; then
+        password_check=''
+    else
+        password_check=\"--pass $password\"
+    fi
+    """
     elif lang == 'python':
         s += \
             """
-        if not password:
-           password_check = ''
-        else:
-           password_check = \"--pass %s\" % (password)
+    if not password:
+        password_check = ''
+    else:
+        password_check = \"--pass %s\" % (password)
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -259,48 +292,22 @@ def timeout_check_init(lang):
     if lang == 'sh':
         s += \
             """
-        timeout=''
-        if [ -n \"$max_time\" ]; then
-                timeout=\"--max-time $max_time\"
-        fi
-        if [ -n \"$connect_timeout\" ]; then
-                timeout=\"$timeout --connect-timeout $connect_timeout\"
-        fi
-        """
+    timeout=''
+    if [ -n \"$max_time\" ]; then
+        timeout=\"--max-time $max_time\"
+    fi
+    if [ -n \"$connect_timeout\" ]; then
+        timeout=\"$timeout --connect-timeout $connect_timeout\"
+    fi
+    """
     elif lang == 'python':
         s += \
             """
-        timeout = ''
-        if max_time:
-           timeout += \"--max-time %s\" % (max_time)
-        if connect_timeout:
-           timeout += \" --connect-timeout %s\" % (connect_timeout)
-"""
-    else:
-        print 'Error: %s not supported!' % lang
-        return ''
-
-    return s
-
-
-def max_jobs_check_init(lang):
-    s = ''
-    if lang == 'sh':
-        s += \
-            """
-        if [ -z \"$max_job_count\" ]; then
-                max_jobs=''
-        else
-                max_jobs=\"max_jobs=$max_job_count\"
-        fi
-        """
-    elif lang == 'python':
-        s += \
-            """
-        if not max_job_count:
-           max_jobs = ''
-        else:
-           max_jobs = \"max_jobs=%s\" % (max_job_count)
+    timeout = ''
+    if max_time:
+        timeout += \"--max-time %s\" % (max_time)
+    if connect_timeout:
+        timeout += \" --connect-timeout %s\" % (connect_timeout)
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -327,28 +334,28 @@ def curl_perform(
     if lang == 'sh':
         s += \
             """
-        curl=\"%s %s\"
-        target=%s
-        location=%s
-        post_data=%s
-        query=%s
-        data=""
-        if [ ! -z "$post_data" ]; then
-                data="--data \"$post_data\""
-        fi
-        $curl \\
-                --location \\
-                --fail \\
-                --silent \\
-                --show-error \\
-                --cert $cert_file \\
-                --key $key_file \\
-                $data \\
-                $ca_check \\
-                $password_check \\
-                $timeout \\
-                $target \\
-                --url \"$mig_server/$location$query\"
+    curl=\"%s %s\"
+    target=%s
+    location=%s
+    post_data=%s
+    query=%s
+    data=""
+    if [ ! -z "$post_data" ]; then
+            data="--data \"$post_data\""
+    fi
+    $curl \\
+            --location \\
+            --fail \\
+            --silent \\
+            --show-error \\
+            --cert $cert_file \\
+            --key $key_file \\
+            $data \\
+            $ca_check \\
+            $password_check \\
+            $timeout \\
+            $target \\
+            --url \"$mig_server/$location$query\"
 """\
              % (
             curl_cmd,
@@ -362,23 +369,26 @@ def curl_perform(
         s += \
             """
 
-        curl = '%s %s'
-        target = %s
-        location = %s
-        post_data = %s
-        query = %s
-        data = ''
-        if post_data:
-            data = '--data "%%s"' %% post_data
-        command = \"%%s --location --fail --silent --show-error --cert %%s --key %%s %%s %%s %%s %%s %%s --url '%%s/%%s%%s'\" %% (curl, cert_file, key_file, data, ca_check, password_check, timeout, target, mig_server, location, query)
-        proc = subprocess.Popen(command, shell=True, bufsize=0,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
-        buffer = StringIO.StringIO(proc.communicate()[0])
-        proc.stdout.close()
-        out = buffer.readlines()
-        exit_code = proc.returncode
+    curl = '%s %s'
+    target = %s
+    location = %s
+    post_data = %s
+    query = %s
+    data = ''
+    if post_data:
+        data = '--data "%%s"' %% post_data
+    curl_opts = \"--location --fail --silent --show-error\"
+    command = \"%%s %%s --cert %%s --key %%s %%s %%s %%s %%s %%s --url '%%s/%%s%%s'\" %% \\
+        (curl, curl_opts, cert_file, key_file, data, ca_check, password_check,
+        timeout, target, mig_server, location, query)
+    proc = subprocess.Popen(command, shell=True, bufsize=0,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
+    out_buffer = StringIO.StringIO(proc.communicate()[0])
+    proc.stdout.close()
+    out = out_buffer.readlines()
+    exit_code = proc.returncode
 
-        return (exit_code, out)
+    return (exit_code, out)
 """\
              % (
             curl_cmd,
@@ -449,22 +459,22 @@ def parse_options(lang, extra_opts, extra_opts_handler):
         s += \
             """
     case \"$opt\" in
-          c) conf=\"$OPTARG\"
-             flags="$flags -c $conf";;
-          h) usage
-             exit 0;;
-          s) mig_server=\"$OPTARG\";;
-          v) verbose=1
-             server_flags="${server_flags}v"
-             flags="$flags -v";;
-          V) version
-             exit 0;;
+        c)  conf=\"$OPTARG\"
+            flags="$flags -c $conf";;
+        h)  usage
+            exit 0;;
+        s)  mig_server=\"$OPTARG\";;
+        v)  verbose=1
+            server_flags="${server_flags}v"
+            flags="$flags -v";;
+        V)  version
+            exit 0;;
 """
         if extra_opts_handler:
             s += extra_opts_handler
         s += \
             """
-          \?) # unknown flag
+        \?)  # unknown flag
              usage
              exit 1;;
     esac
@@ -485,35 +495,35 @@ shift `expr $OPTIND - 1`
 arg_zero = sys.argv[0]
 args = sys.argv[1:]
 try:
-        opts, args = getopt.getopt(args, opt_args)
+    opts, args = getopt.getopt(args, opt_args)
 except getopt.GetoptError, e:
-        print \"Error: \", e.msg
-        usage()
-        sys.exit(1)
+    print \"Error: \", e.msg
+    usage()
+    sys.exit(1)
 
 for (opt, val) in opts:
-        if opt == \"-c\":
-                conf = val
-        elif opt == \"-h\":
-                usage()
-                sys.exit(0)
-        elif opt == \"-s\":
-                mig_server = val
-        elif opt == \"-v\":
-                verbose = True
-        elif opt == \"-V\":
-                version()
-                sys.exit(0)
+    if opt == \"-c\":
+        conf = val
+    elif opt == \"-h\":
+        usage()
+        sys.exit(0)
+    elif opt == \"-s\":
+        mig_server = val
+    elif opt == \"-v\":
+        verbose = True
+    elif opt == \"-V\":
+        version()
+        sys.exit(0)
 """
         if extra_opts_handler:
             s += extra_opts_handler
         s += \
             """
-        else:
-                print \"Error: %s not supported!\" % (opt)
+    else:
+        print \"Error: %s not supported!\" % (opt)
 
-        # Drop options while preserving original sys.argv[0] 
-        sys.argv = [arg_zero] + args
+    # Drop options while preserving original sys.argv[0] 
+    sys.argv = [arg_zero] + args
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -527,11 +537,11 @@ def check_conf_readable(lang):
         s += \
             """
 if [ ! -r \"$conf\" ]; then
-   echo \"Failed to read configuration file: $conf\"
-   exit 1
+    echo \"Failed to read configuration file: $conf\"
+    exit 1
 fi
 
-if [ "$verbose" -eq "1" ]; then
+if [ \"$verbose\" -eq \"1\" ]; then
     echo \"using configuration in $conf\"
 fi
 """
@@ -539,8 +549,8 @@ fi
         s += \
             """
 if not os.path.isfile(conf):
-   print \"Failed to read configuration file: %s\" % (conf)
-   sys.exit(1)
+    print \"Failed to read configuration file: %s\" % (conf)
+    sys.exit(1)
 
 if verbose:
     print \"using configuration in %s\" % (conf)
@@ -556,9 +566,9 @@ def configure(lang):
     if lang == 'sh':
         s += \
             """
-if [ -z "$mig_server" ]; then
-   read_conf $conf 'migserver'
-   mig_server=\"$conf_value\"
+if [ -z \"$mig_server\" ]; then
+    read_conf $conf 'migserver'
+    mig_server=\"$conf_value\"
 fi
 
 read_conf $conf 'certfile'
@@ -582,7 +592,7 @@ check_var keyfile \"$key_file\"
         s += \
             """
 if not mig_server:
-   mig_server = read_conf(conf, 'migserver')
+    mig_server = read_conf(conf, 'migserver')
 
 cert_file = read_conf(conf, 'certfile')
 key_file = read_conf(conf, 'keyfile')
@@ -591,9 +601,9 @@ password = read_conf(conf, 'password')
 connect_timeout = read_conf(conf, 'connect_timeout')
 max_time = read_conf(conf, 'max_time')
 
-check_var("migserver", mig_server)
-check_var("certfile", cert_file)
-check_var("keyfile", key_file)
+check_var('migserver', mig_server)
+check_var('certfile', cert_file)
+check_var('keyfile', key_file)
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -609,9 +619,9 @@ def arg_count_check(lang, mincount, maxcount):
             s += \
                 """
 if [ $arg_count -lt $min_count ]; then
-   echo \"Too few arguments: got $arg_count, expected $min_count!\"
-   usage
-   exit 1
+    echo \"Too few arguments: got $arg_count, expected $min_count!\"
+    usage
+    exit 1
 fi
 """
         if maxcount:
@@ -619,9 +629,9 @@ fi
             s += \
                 """
 if [ $arg_count -gt $max_count ]; then
-   echo \"Too many arguments: got $arg_count, expected $max_count!\"
-   usage
-   exit 1
+    echo \"Too many arguments: got $arg_count, expected $max_count!\"
+    usage
+    exit 1
 fi
 """
     elif lang == 'python':
@@ -632,18 +642,18 @@ fi
             s += \
                 """
 if arg_count < min_count:
-   print \"Too few arguments: got %d, expected %d!\" % (arg_count, min_count)
-   usage()
-   sys.exit(1)
+    print \"Too few arguments: got %d, expected %d!\" % (arg_count, min_count)
+    usage()
+    sys.exit(1)
 """
         if maxcount:
             s += 'max_count = %d\n' % maxcount
             s += \
                 """
 if arg_count > max_count:
-   print \"Too many arguments: got %d, expected %d!\" % (arg_count, max_count)
-   usage()
-   sys.exit(1)
+    print \"Too many arguments: got %d, expected %d!\" % (arg_count, max_count)
+    usage()
+    sys.exit(1)
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -686,7 +696,7 @@ def init_script(
     header = \
         """
 mig%s - a part of the MiG scripts
-Copyright (C) 2004-2009  MiG Core Developers lead by Brian Vinter
+Copyright (C) 2004-2010  MiG Core Developers lead by Brian Vinter
 
 This file is part of MiG.
 
@@ -712,7 +722,8 @@ Any changes should be made in the generator and not here !!!
 """\
          % lang
     s += comment(lang, header)
-    s += comment(lang, intro)
+    s += '\n'
+    s += doc_string(lang, intro)
     s += '\n'
 
     if lang == 'sh':

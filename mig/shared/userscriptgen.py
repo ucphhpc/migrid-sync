@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userscriptgen - Generator backend for user scripts
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,9 +40,9 @@ as arguments, only those languages will be generated.
 import sys
 import getopt
 
-# Generator version (automagically updated by cvs)
+# Generator version (automagically updated by svn)
 
-__version__ = '$Revision: 2591 $'
+__version__ = '$Revision$'
 
 # $Id: userscriptgen.py 2591 2009-02-25 10:56:13Z jones $
 
@@ -79,11 +79,11 @@ def version():
 
 def version_function(lang):
     s = ''
-    s += begin_function(lang, 'version', [])
+    s += begin_function(lang, 'version', [], 'Show version details')
     if lang == 'sh':
-        s += '\techo "MiG User Scripts: %s"\n' % __version__
+        s += "    echo 'MiG User Scripts: %s'" % __version__
     elif lang == 'python':
-        s += '\tprint "MiG User Scripts: %s"\n' % __version__
+        s += "    print 'MiG User Scripts: %s'" % __version__
     s += end_function(lang, 'version')
 
     return s
@@ -110,7 +110,7 @@ def cancel_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] JOBID [JOBID ...]'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -126,7 +126,7 @@ def cat_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -142,7 +142,7 @@ def doc_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] [TOPIC ...]' % (mig_prefix,
             op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -158,13 +158,13 @@ def get_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...] FILE'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     recursive_usage_string = '-r\t\tact recursively'
     if lang == 'sh':
-        s += '\n\techo "%s"' % recursive_usage_string
+        s += '\n    echo "%s"' % recursive_usage_string
     elif lang == 'python':
-        s += '\n\tprint "%s"' % recursive_usage_string
+        s += '\n    print "%s"' % recursive_usage_string
 
     s += end_function(lang, 'usage')
 
@@ -180,13 +180,13 @@ def head_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     lines_usage_string = '-n N\t\tShow first N lines of the file(s)'
     if lang == 'sh':
-        s += '\n\techo "%s"' % lines_usage_string
+        s += '\n    echo "%s"' % lines_usage_string
     elif lang == 'python':
-        s += '\n\tprint "%s"' % lines_usage_string
+        s += '\n    print "%s"' % lines_usage_string
     s += end_function(lang, 'usage')
 
     return s
@@ -201,7 +201,7 @@ def jobaction_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION JOBID [JOBID ...]'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -217,7 +217,7 @@ def liveio_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION JOBID SRC [SRC ...] DST' % \
                 (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -233,19 +233,19 @@ def ls_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] [FILE ...]' % (mig_prefix,
             op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     all_usage_string = "-a\t\tDo not hide entries starting with '.'"
     long_usage_string = '-l\t\tDisplay long format'
     recursive_usage_string = '-r\t\tact recursively'
     if lang == 'sh':
-        s += '\n\techo "%s"' % all_usage_string
-        s += '\n\techo "%s"' % long_usage_string
-        s += '\n\techo "%s"' % recursive_usage_string
+        s += '\n    echo "%s"' % all_usage_string
+        s += '\n    echo "%s"' % long_usage_string
+        s += '\n    echo "%s"' % recursive_usage_string
     elif lang == 'python':
-        s += '\n\tprint "%s"' % all_usage_string
-        s += '\n\tprint "%s"' % long_usage_string
-        s += '\n\tprint "%s"' % recursive_usage_string
+        s += '\n    print "%s"' % all_usage_string
+        s += '\n    print "%s"' % long_usage_string
+        s += '\n    print "%s"' % recursive_usage_string
 
     s += end_function(lang, 'usage')
 
@@ -261,13 +261,13 @@ def mkdir_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] DIRECTORY [DIRECTORY ...]'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     parents_usage_string = '-p\t\tmake parent directories as needed'
     if lang == 'sh':
-        s += '\n\techo "%s"' % parents_usage_string
+        s += '\n    echo "%s"' % parents_usage_string
     elif lang == 'python':
-        s += '\n\tprint "%s"' % parents_usage_string
+        s += '\n    print "%s"' % parents_usage_string
     s += end_function(lang, 'usage')
 
     return s
@@ -282,7 +282,7 @@ def mqueue_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION QUEUE [MSG]' % \
                 (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -298,7 +298,7 @@ def mv_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] SRC [SRC...] DST'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -314,7 +314,7 @@ def put_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...] FILE' % (mig_prefix,
             op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
 
     package_usage_string = \
@@ -323,13 +323,13 @@ def put_usage_function(lang, extension):
     extract_usage_string = \
         '-x\t\tExtract package (.zip etc) after upload'
     if lang == 'sh':
-        s += '\n\techo "%s"' % package_usage_string
-        s += '\n\techo "%s"' % recursive_usage_string
-        s += '\n\techo "%s"' % extract_usage_string
+        s += '\n    echo "%s"' % package_usage_string
+        s += '\n    echo "%s"' % recursive_usage_string
+        s += '\n    echo "%s"' % extract_usage_string
     elif lang == 'python':
-        s += '\n\tprint "%s"' % package_usage_string
-        s += '\n\tprint "%s"' % recursive_usage_string
-        s += '\n\tprint "%s"' % extract_usage_string
+        s += '\n    print "%s"' % package_usage_string
+        s += '\n    print "%s"' % recursive_usage_string
+        s += '\n    print "%s"' % extract_usage_string
 
     s += end_function(lang, 'usage')
 
@@ -345,7 +345,7 @@ def read_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] START END SRC DST'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -361,7 +361,7 @@ def resubmit_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] JOBID [JOBID ...]' % (mig_prefix, op,
             extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -377,13 +377,13 @@ def rm_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     recursive_usage_string = '-r\t\tact recursively'
     if lang == 'sh':
-        s += '\n\techo "%s"' % recursive_usage_string
+        s += '\n    echo "%s"' % recursive_usage_string
     elif lang == 'python':
-        s += '\n\tprint "%s"' % recursive_usage_string
+        s += '\n    print "%s"' % recursive_usage_string
     s += end_function(lang, 'usage')
 
     return s
@@ -398,13 +398,13 @@ def rmdir_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] DIRECTORY [DIRECTORY ...]'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     parents_usage_string = '-p\t\tremove parent directories as needed'
     if lang == 'sh':
-        s += '\n\techo "%s"' % parents_usage_string
+        s += '\n    echo "%s"' % parents_usage_string
     elif lang == 'python':
-        s += '\n\tprint "%s"' % parents_usage_string
+        s += '\n    print "%s"' % parents_usage_string
 
     s += end_function(lang, 'usage')
 
@@ -420,7 +420,7 @@ def stat_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [...]' % (mig_prefix,
             op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -436,16 +436,16 @@ def status_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] [JOBID ...]' % (mig_prefix,
             op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     max_jobs_usage_string = '-m M\t\tShow status for at most M jobs'
     sort_jobs_usage_string = '-S\t\tSort jobs by modification time'
     if lang == 'sh':
-        s += '\n\techo "%s"' % max_jobs_usage_string
-        s += '\n\techo "%s"' % sort_jobs_usage_string
+        s += '\n    echo "%s"' % max_jobs_usage_string
+        s += '\n    echo "%s"' % sort_jobs_usage_string
     elif lang == 'python':
-        s += '\n\tprint "%s"' % max_jobs_usage_string
-        s += '\n\tprint "%s"' % sort_jobs_usage_string
+        s += '\n    print "%s"' % max_jobs_usage_string
+        s += '\n    print "%s"' % sort_jobs_usage_string
 
     s += end_function(lang, 'usage')
 
@@ -461,7 +461,7 @@ def submit_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]' % (mig_prefix, op,
             extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -477,13 +477,13 @@ def tail_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     lines_usage_string = '-n N\t\tShow last N lines of the file(s)'
     if lang == 'sh':
-        s += '\n\techo "%s"' % lines_usage_string
+        s += '\n    echo "%s"' % lines_usage_string
     elif lang == 'python':
-        s += '\n\tprint "%s"' % lines_usage_string
+        s += '\n    print "%s"' % lines_usage_string
     s += end_function(lang, 'usage')
 
     return s
@@ -498,7 +498,7 @@ def test_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] [OPERATION ...]'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -514,7 +514,7 @@ def touch_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] [FILE ...]' % (mig_prefix,
             op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -530,13 +530,13 @@ def truncate_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     lines_usage_string = '-n N\t\tTruncate file(s) to at most N bytes'
     if lang == 'sh':
-        s += '\n\techo "%s"' % lines_usage_string
+        s += '\n    echo "%s"' % lines_usage_string
     elif lang == 'python':
-        s += '\n\tprint "%s"' % lines_usage_string
+        s += '\n    print "%s"' % lines_usage_string
     s += end_function(lang, 'usage')
 
     return s
@@ -551,7 +551,7 @@ def unzip_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] SRC [SRC...] DST'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -567,19 +567,19 @@ def wc_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     bytes_usage_string = '-b N\t\tShow byte count'
     lines_usage_string = '-l N\t\tShow line count'
     words_usage_string = '-w N\t\tShow word count'
     if lang == 'sh':
-        s += '\n\techo "%s"' % bytes_usage_string
-        s += '\n\techo "%s"' % lines_usage_string
-        s += '\n\techo "%s"' % words_usage_string
+        s += '\n    echo "%s"' % bytes_usage_string
+        s += '\n    echo "%s"' % lines_usage_string
+        s += '\n    echo "%s"' % words_usage_string
     elif lang == 'python':
-        s += '\n\tprint "%s"' % bytes_usage_string
-        s += '\n\tprint "%s"' % lines_usage_string
-        s += '\n\tprint "%s"' % words_usage_string
+        s += '\n    print "%s"' % bytes_usage_string
+        s += '\n    print "%s"' % lines_usage_string
+        s += '\n    print "%s"' % words_usage_string
     s += end_function(lang, 'usage')
 
     return s
@@ -594,7 +594,7 @@ def write_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] START END SRC DST'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
@@ -610,13 +610,13 @@ def zip_usage_function(lang, extension):
     usage_str = 'Usage: %s%s.%s [OPTIONS] SRC [SRC...] DST'\
          % (mig_prefix, op, extension)
     s = ''
-    s += begin_function(lang, 'usage', [])
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
     curdir_usage_string = '-w PATH\t\tUse PATH as remote working directory'
     if lang == 'sh':
-        s += '\n\techo "%s"' % curdir_usage_string
+        s += '\n    echo "%s"' % curdir_usage_string
     elif lang == 'python':
-        s += '\n\tprint "%s"' % curdir_usage_string
+        s += '\n    print "%s"' % curdir_usage_string
     s += end_function(lang, 'usage')
 
     return s
@@ -648,7 +648,8 @@ def cancel_function(lang, curl_cmd, curl_flags=''):
         return ''
 
     s = ''
-    s += begin_function(lang, 'cancel_job', ['job_list'])
+    s += begin_function(lang, 'cancel_job', ['job_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'job_list', 'job_id')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -678,7 +679,8 @@ def cat_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'cat_file', ['path_list'])
+    s += begin_function(lang, 'cat_file', ['path_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -709,7 +711,8 @@ def doc_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'show_doc', ['search', 'show'])
+    s += begin_function(lang, 'show_doc', ['search', 'show'],
+                        'Execute the corresponding server operation')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -747,7 +750,8 @@ def expand_function(lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'expand_name', ['path_list',
-                        'server_flags', 'destinations'])
+                        'server_flags', 'destinations'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -786,7 +790,8 @@ def get_function(lang, curl_cmd, curl_flags='--compressed --create-dirs'
         return ''
 
     s = ''
-    s += begin_function(lang, 'get_file', ['src_path', 'dst_path'])
+    s += begin_function(lang, 'get_file', ['src_path', 'dst_path'],
+                        'Execute the corresponding server operation')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -817,7 +822,8 @@ def head_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'head_file', ['lines', 'path_list'])
+    s += begin_function(lang, 'head_file', ['lines', 'path_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -848,7 +854,8 @@ def jobaction_function(lang, curl_cmd, curl_flags=''):
         return ''
 
     s = ''
-    s += begin_function(lang, 'job_action', ['action', 'job_list'])
+    s += begin_function(lang, 'job_action', ['action', 'job_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'job_list', 'job_id')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -878,7 +885,8 @@ def liveio_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'job_liveio', ['action', 'job_id', 'src_list', 'dst'])
+    s += begin_function(lang, 'job_liveio', ['action', 'job_id', 'src_list', 'dst'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'src_list', 'src')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -915,7 +923,8 @@ def ls_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'ls_file', ['path_list'])
+    s += begin_function(lang, 'ls_file', ['path_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -947,7 +956,8 @@ def mkdir_function(lang, curl_cmd, curl_flags=''):
         return ''
 
     s = ''
-    s += begin_function(lang, 'mk_dir', ['path_list'])
+    s += begin_function(lang, 'mk_dir', ['path_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -977,7 +987,8 @@ def mqueue_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'job_mqueue', ['action', 'queue', 'msg'])
+    s += begin_function(lang, 'job_mqueue', ['action', 'queue', 'msg'],
+                        'Execute the corresponding server operation')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1014,7 +1025,8 @@ def mv_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'mv_file', ['src_list', 'dst'])
+    s += begin_function(lang, 'mv_file', ['src_list', 'dst'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'src_list', 'src')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -1055,32 +1067,33 @@ def put_function(lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'put_file', ['src_path', 'dst_path',
-                        'submit_mrsl', 'extract_package'])
+                        'submit_mrsl', 'extract_package'],
+                        'Execute the corresponding server operation')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
     if lang == 'sh':
         s += \
             """
-        content_type="''"
-        if [ $submit_mrsl -eq 1 ] && [ $extract_package -eq 1 ]; then
-           content_type='Content-Type:submitandextract'
-        elif [ $submit_mrsl -eq 1 ]; then
-           content_type='Content-Type:submitmrsl'
-        elif [ $extract_package -eq 1 ]; then
-           content_type='Content-Type:extractpackage'
-        fi
+    content_type="''"
+    if [ $submit_mrsl -eq 1 ] && [ $extract_package -eq 1 ]; then
+        content_type='Content-Type:submitandextract'
+    elif [ $submit_mrsl -eq 1 ]; then
+        content_type='Content-Type:submitmrsl'
+    elif [ $extract_package -eq 1 ]; then
+        content_type='Content-Type:extractpackage'
+    fi
 """
     elif lang == 'python':
         s += \
             """
-        content_type = "''"
-        if submit_mrsl and extract_package:
-           content_type = 'Content-Type:submitandextract'
-        elif submit_mrsl:
-           content_type = 'Content-Type:submitmrsl'
-        elif extract_package:
-           content_type = 'Content-Type:extractpackage'
+    content_type = "''"
+    if submit_mrsl and extract_package:
+        content_type = 'Content-Type:submitandextract'
+    elif submit_mrsl:
+        content_type = 'Content-Type:submitmrsl'
+    elif extract_package:
+        content_type = 'Content-Type:extractpackage'
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -1115,7 +1128,8 @@ def read_function(lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'read_file', ['first', 'last', 'src_path'
-                        , 'dst_path'])
+                        , 'dst_path'],
+                        'Execute the corresponding server operation')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1146,7 +1160,8 @@ def resubmit_function(lang, curl_cmd, curl_flags=''):
         return ''
 
     s = ''
-    s += begin_function(lang, 'resubmit_job', ['job_list'])
+    s += begin_function(lang, 'resubmit_job', ['job_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'job_list', 'job_id')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -1183,7 +1198,8 @@ def rm_function(lang, curl_cmd, curl_flags=''):
         return ''
 
     s = ''
-    s += begin_function(lang, 'rm_file', ['path_list'])
+    s += begin_function(lang, 'rm_file', ['path_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -1215,7 +1231,8 @@ def rmdir_function(lang, curl_cmd, curl_flags=''):
         return ''
 
     s = ''
-    s += begin_function(lang, 'rm_dir', ['path_list'])
+    s += begin_function(lang, 'rm_dir', ['path_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -1252,7 +1269,8 @@ def stat_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'stat_file', ['path_list'])
+    s += begin_function(lang, 'stat_file', ['path_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -1284,12 +1302,11 @@ def status_function(lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'job_status', ['job_list', 'max_job_count'
-                        ])
+                        ], 'Execute the corresponding server operation')
     s += format_list(lang, 'job_list', 'job_id')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
-    s += max_jobs_check_init(lang)
     s += curl_perform(
         lang,
         relative_url,
@@ -1324,7 +1341,8 @@ def tail_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'tail_file', ['lines', 'path_list'])
+    s += begin_function(lang, 'tail_file', ['lines', 'path_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -1346,187 +1364,188 @@ def test_function(lang, curl_cmd, curl_flags=''):
     # TODO: pass original -c and -s options on to tested scripts
 
     s = ''
-    s += begin_function(lang, 'test_op', ['op'])
+    s += begin_function(lang, 'test_op', ['op'],
+                        'Execute simple function tests')
     if lang == 'sh':
         s += \
             """
-        valid=0
-        valid_ops=(%s)
-        for valid_op in ${valid_ops[*]}; do
-           if [ $op = $valid_op ]; then
-              valid=1
-              break
-           fi
-        done
-
-        if [ $valid -eq 0 ]; then
-           echo \"Ignoring test of invalid operation: $op\"
-           return 1
+    valid=0
+    valid_ops=(%s)
+    for valid_op in ${valid_ops[*]}; do
+        if [ $op = $valid_op ]; then
+            valid=1
+            break
         fi
-           
-        path_prefix=`dirname $0`
-        echo \"running $op test(s)\"
-        cmd=\"$path_prefix/%s${op}.%s\"
-        declare -a cmd_args
-        declare -a verify_cmd
-        case $op in
-           'cancel')
-              pre_cmd=\"$path_prefix/migsubmit.sh mig-test.mRSL\"
-              cmd_args[1]='DUMMY_JOB_ID'
-              ;;
-           'cat')
-              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
-              cmd_args[1]='mig-test.txt'
-              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
-              ;;
-           'doc')
-              cmd_args[1]=''
-              ;;
-           'get')
-              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
-              cmd_args[1]='mig-test.txt .'
-              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
-              ;;
-           'head')
-              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
-              cmd_args[1]='mig-test.txt'
-              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
-              ;;
-           'jobaction')
-              pre_cmd=\"$path_prefix/migsubmit.sh mig-test.mRSL\"
-              cmd_args[1]='cancel DUMMY_JOB_ID'
-              ;;
-           'ls')
-              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
-              cmd_args[1]='mig-test.txt'
-              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
-              ;;
-           'mkdir')
-              pre_cmd=\"$path_prefix/migrm.sh -r mig-test-dir\"
-              cmd_args[1]='mig-test-dir'
-              verify_cmd[1]=\"$path_prefix/migls.sh mig-test-dir\"
-              post_cmd=\"$path_prefix/migrm.sh -r mig-test-dir\"
-              ;;
-           'mv')
-              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
-              cmd_args[1]='mig-test.txt mig-test-new.txt'
-              post_cmd=\"$path_prefix/migrm.sh mig-test-new.txt\"
-              ;;
-           'put')
-              pre_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
-              cmd_args[1]='mig-test.txt .'
-              verify_cmd[1]=\"$path_prefix/migls.sh mig-test.txt\"
-              post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
-              cmd_args[2]='mig-test.t*t mig-test.txt'
-              verify_cmd[2]=\"$path_prefix/migrm.sh mig-test.txt\"
-              cmd_args[3]='mig-test.txt mig-test.txt'
-              verify_cmd[3]=\"$path_prefix/migrm.sh mig-test.txt\"
-              cmd_args[4]='mig-test.txt mig-remote-test.txt'
-              verify_cmd[4]=\"$path_prefix/migrm.sh mig-remote-test.txt\"
-              cmd_args[5]='mig-test.txt mig-test-dir/'
-              verify_cmd[5]=\"$path_prefix/migrm.sh mig-test-dir/mig-test.txt\"
-              cmd_args[6]='mig-test.txt mig-test-dir/mig-remote-test.txt'
-              verify_cmd[6]=\"$path_prefix/migrm.sh mig-test-dir/mig-remote-test.txt\"
+    done
 
-              # Disabled since put doesn't support wildcards in destination (yet?)
-              # cmd_args[]='mig-test.txt 'mig-test-d*/''
-              # cmd_args[]='mig-test.txt 'mig-test-d*/mig-remote-test.txt''
-              # verify_cmd[]=\"$path_prefix/migrm.sh mig-test-dir/mig-remote-test.txt\"
-              # verify_cmd[]=\"$path_prefix/migrm.sh mig-test-dir/mig-remote-test.txt\"
-              ;;
-           'read')
-              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
-              cmd_args[1]='0 16 mig-test.txt -'
-              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
-              ;;
-           'rm')
-              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
-              cmd_args[1]='mig-test.txt'
-              verify_cmd[1]=\"$path_prefix/migls.sh mig-test.txt\"
-              ;;
-           'rmdir')
-              pre_cmd=\"$path_prefix/migmkdir.sh mig-test-dir\"
-              cmd_args[1]='mig-test-dir'
-              verify_cmd[1]=\"$path_prefix/migls.sh mig-test-dir\"
-              post_cmd=\"$path_prefix/migrm.sh -r mig-test-dir\"
-              ;;
-           'stat')
-              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
-              cmd_args[1]='mig-test.txt'
-              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
-              ;;
-           'status')
-              cmd_args[1]=''
-              ;;
-           'submit')
-              cmd_args[1]='mig-test.mRSL'
-              ;;
-           'tail')
-              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
-              cmd_args[1]='mig-test.txt'
-              post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
-              ;;
-           'touch')
-              pre_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
-              cmd_args[1]='mig-test.txt'
-              verify_cmd[1]=\"$path_prefix/migls.sh mig-test.txt\"
-              post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
-              ;;
-           'truncate')
-              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
-              cmd_args[1]='mig-test.txt'
-              post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
-              ;;
-           'wc')
-              pre_cmd=\"$path_prefix/migput.sh mig-test.txt\"
-              cmd_args[1]='mig-test.txt'
-              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
-              ;;
-           'write')
-              pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
-              cmd_args[1]='4 8 mig-test.txt mig-test.txt'
-              post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
-              ;;
-           *)
-           echo \"No test available for $op!\"
-              return 1
-              ;;
-        esac
-    
+    if [ $valid -eq 0 ]; then
+        echo \"Ignoring test of invalid operation: $op\"
+        return 1
+    fi
+       
+    path_prefix=`dirname $0`
+    echo \"running $op test(s)\"
+    cmd=\"$path_prefix/%s${op}.%s\"
+    declare -a cmd_args
+    declare -a verify_cmd
+    case $op in
+        'cancel')
+            pre_cmd=\"$path_prefix/migsubmit.sh mig-test.mRSL\"
+            cmd_args[1]='DUMMY_JOB_ID'
+            ;;
+        'cat')
+            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            cmd_args[1]='mig-test.txt'
+            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            ;;
+        'doc')
+            cmd_args[1]=''
+            ;;
+        'get')
+            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            cmd_args[1]='mig-test.txt .'
+            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            ;;
+        'head')
+            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            cmd_args[1]='mig-test.txt'
+            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            ;;
+        'jobaction')
+            pre_cmd=\"$path_prefix/migsubmit.sh mig-test.mRSL\"
+            cmd_args[1]='cancel DUMMY_JOB_ID'
+            ;;
+        'ls')
+            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            cmd_args[1]='mig-test.txt'
+            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            ;;
+        'mkdir')
+            pre_cmd=\"$path_prefix/migrm.sh -r mig-test-dir\"
+            cmd_args[1]='mig-test-dir'
+            verify_cmd[1]=\"$path_prefix/migls.sh mig-test-dir\"
+            post_cmd=\"$path_prefix/migrm.sh -r mig-test-dir\"
+            ;;
+        'mv')
+            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            cmd_args[1]='mig-test.txt mig-test-new.txt'
+            post_cmd=\"$path_prefix/migrm.sh mig-test-new.txt\"
+            ;;
+        'put')
+            pre_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
+            cmd_args[1]='mig-test.txt .'
+            verify_cmd[1]=\"$path_prefix/migls.sh mig-test.txt\"
+            post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
+            cmd_args[2]='mig-test.t*t mig-test.txt'
+            verify_cmd[2]=\"$path_prefix/migrm.sh mig-test.txt\"
+            cmd_args[3]='mig-test.txt mig-test.txt'
+            verify_cmd[3]=\"$path_prefix/migrm.sh mig-test.txt\"
+            cmd_args[4]='mig-test.txt mig-remote-test.txt'
+            verify_cmd[4]=\"$path_prefix/migrm.sh mig-remote-test.txt\"
+            cmd_args[5]='mig-test.txt mig-test-dir/'
+            verify_cmd[5]=\"$path_prefix/migrm.sh mig-test-dir/mig-test.txt\"
+            cmd_args[6]='mig-test.txt mig-test-dir/mig-remote-test.txt'
+            verify_cmd[6]=\"$path_prefix/migrm.sh mig-test-dir/mig-remote-test.txt\"
 
-        index=1
-        for args in \"${cmd_args[@]}\"; do
-            echo \"test $index: $cmd $test_flags $args\"
-            pre=\"${pre_cmd[index]}\"
-            if [ -n \"$pre\" ]; then
-                echo \"setting up with: $pre\"
-                $pre >& /dev/null
-            fi
-            ./$cmd $test_flags $args >& /dev/null
-            ret=$?
-            if [ $ret -eq 0 ]; then
-                echo \"   $op test $index SUCCEEDED\"
-            else
-                echo \"   $op test $index FAILED!\"
-            fi
-            verify=\"${verify_cmd[index]}\"
-            if [ -n \"$verify\" ]; then
-                echo \"verifying with: $verify\"
-                $verify
-            fi
-            post=\"${post_cmd[index]}\"
-            if [ -n \"$post\" ]; then
-                echo \"cleaning up with: $post\"
-                $post >& /dev/null
-            fi
-            index=$((index+1))
-        done
-        return $ret
+            # Disabled since put doesn't support wildcards in destination (yet?)
+            # cmd_args[]='mig-test.txt 'mig-test-d*/''
+            # cmd_args[]='mig-test.txt 'mig-test-d*/mig-remote-test.txt''
+            # verify_cmd[]=\"$path_prefix/migrm.sh mig-test-dir/mig-remote-test.txt\"
+            # verify_cmd[]=\"$path_prefix/migrm.sh mig-test-dir/mig-remote-test.txt\"
+            ;;
+        'read')
+            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            cmd_args[1]='0 16 mig-test.txt -'
+            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            ;;
+        'rm')
+            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            cmd_args[1]='mig-test.txt'
+            verify_cmd[1]=\"$path_prefix/migls.sh mig-test.txt\"
+            ;;
+        'rmdir')
+            pre_cmd=\"$path_prefix/migmkdir.sh mig-test-dir\"
+            cmd_args[1]='mig-test-dir'
+            verify_cmd[1]=\"$path_prefix/migls.sh mig-test-dir\"
+            post_cmd=\"$path_prefix/migrm.sh -r mig-test-dir\"
+            ;;
+        'stat')
+            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            cmd_args[1]='mig-test.txt'
+            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            ;;
+        'status')
+            cmd_args[1]=''
+            ;;
+        'submit')
+            cmd_args[1]='mig-test.mRSL'
+            ;;
+        'tail')
+            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            cmd_args[1]='mig-test.txt'
+            post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
+            ;;
+        'touch')
+            pre_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
+            cmd_args[1]='mig-test.txt'
+            verify_cmd[1]=\"$path_prefix/migls.sh mig-test.txt\"
+            post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
+            ;;
+        'truncate')
+            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            cmd_args[1]='mig-test.txt'
+            post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
+            ;;
+        'wc')
+            pre_cmd=\"$path_prefix/migput.sh mig-test.txt\"
+            cmd_args[1]='mig-test.txt'
+            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            ;;
+        'write')
+            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            cmd_args[1]='4 8 mig-test.txt mig-test.txt'
+            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            ;;
+        *)
+            echo \"No test available for $op!\"
+            return 1
+            ;;
+    esac
+
+
+    index=1
+    for args in \"${cmd_args[@]}\"; do
+        echo \"test $index: $cmd $test_flags $args\"
+        pre=\"${pre_cmd[index]}\"
+        if [ -n \"$pre\" ]; then
+            echo \"setting up with: $pre\"
+            $pre >& /dev/null
+        fi
+        ./$cmd $test_flags $args >& /dev/null
+        ret=$?
+        if [ $ret -eq 0 ]; then
+            echo \"   $op test $index SUCCEEDED\"
+        else
+            echo \"   $op test $index FAILED!\"
+        fi
+        verify=\"${verify_cmd[index]}\"
+        if [ -n \"$verify\" ]; then
+            echo \"verifying with: $verify\"
+            $verify
+        fi
+        post=\"${post_cmd[index]}\"
+        if [ -n \"$post\" ]; then
+            echo \"cleaning up with: $post\"
+            $post >& /dev/null
+        fi
+        index=$((index+1))
+    done
+    return $ret
 """\
              % (' '.join(script_ops), mig_prefix, 'sh')
     elif lang == 'python':
         s += """
-        print \"running %s test\" % (op)
+    print \"running %s test\" % (op)
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -1551,7 +1570,8 @@ def touch_function(lang, curl_cmd, curl_flags=''):
         return ''
 
     s = ''
-    s += begin_function(lang, 'touch_file', ['path_list'])
+    s += begin_function(lang, 'touch_file', ['path_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -1582,7 +1602,8 @@ def truncate_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'truncate_file', ['size', 'path_list'])
+    s += begin_function(lang, 'truncate_file', ['size', 'path_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -1620,7 +1641,8 @@ def unzip_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'unzip_file', ['src_list', 'dst'])
+    s += begin_function(lang, 'unzip_file', ['src_list', 'dst'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'src_list', 'src')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -1650,7 +1672,8 @@ def wc_function(lang, curl_cmd, curl_flags=''):
         return ''
 
     s = ''
-    s += begin_function(lang, 'wc_file', ['path_list'])
+    s += begin_function(lang, 'wc_file', ['path_list'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'path_list', 'path')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -1684,7 +1707,8 @@ def write_function(lang, curl_cmd, curl_flags='--compressed'):
 
     s = ''
     s += begin_function(lang, 'write_file', ['first', 'last', 'src_path'
-                        , 'dst_path'])
+                        , 'dst_path'],
+                        'Execute the corresponding server operation')
     s += ca_check_init(lang)
     s += password_check_init(lang)
     s += timeout_check_init(lang)
@@ -1722,7 +1746,8 @@ def zip_function(lang, curl_cmd, curl_flags='--compressed'):
         return ''
 
     s = ''
-    s += begin_function(lang, 'zip_file', ['current_dir', 'src_list', 'dst'])
+    s += begin_function(lang, 'zip_file', ['current_dir', 'src_list', 'dst'],
+                        'Execute the corresponding server operation')
     s += format_list(lang, 'src_list', 'src')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -1943,29 +1968,29 @@ else
 fi
 
 for Search in \"${SearchList[@]}\"; do
-   show_doc \"$Search\" \"\"
+    show_doc \"$Search\" \"\"
 done
 for Topic in \"${TopicList[@]}\"; do
-   show_doc \"\" \"$Topic\"
+    show_doc \"\" \"$Topic\"
 done
 """
     elif lang == 'python':
         s += \
             """
 if len(sys.argv) - 1 > 0:
-   SearchList = ""
-   TopicList = sys.argv[1:]
+    SearchList = ""
+    TopicList = sys.argv[1:]
 else:
-   SearchList = '*'
-   TopicList = ""
+    SearchList = '*'
+    TopicList = ""
 
 out = []
 for Search in SearchList:
-   (status, search_out) = show_doc(Search, "")
-   out += search_out
+    (status, search_out) = show_doc(Search, "")
+    out += search_out
 for Topic in TopicList:
-   (status, topic_out) = show_doc("", Topic)
-   out += topic_out
+    (status, topic_out) = show_doc("", Topic)
+    out += topic_out
 print ''.join(out),
 sys.exit(status)
 """
@@ -1986,12 +2011,12 @@ def get_main(lang):
     s += basic_main_init(lang)
     if lang == 'sh':
         s += parse_options(lang, 'r',
-                           '          r) server_flags="${server_flags}r";;'
+                           '        r)  server_flags="${server_flags}r";;'
                            )
     elif lang == 'python':
         s += parse_options(lang, 'r',
-                           '''        elif opt == "-r":
-                server_flags += "r"''')
+                           '''    elif opt == "-r":
+        server_flags += "r"''')
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -2053,12 +2078,12 @@ def head_main(lang):
     s += basic_main_init(lang)
     if lang == 'sh':
         s += 'lines=20\n'
-        s += parse_options(lang, 'n:', '          n) lines="$OPTARG";;')
+        s += parse_options(lang, 'n:', '        n)  lines="$OPTARG";;')
     elif lang == 'python':
         s += 'lines = 20\n'
         s += parse_options(lang, 'n:',
-                           '''        elif opt == "-n":
-                lines = val
+                           '''    elif opt == "-n":
+        lines = val
 ''')
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
@@ -2206,20 +2231,20 @@ def ls_main(lang):
     s += basic_main_init(lang)
     if lang == 'sh':
         s += parse_options(lang, 'alr',
-                           '''          a) server_flags="${server_flags}a"
-             flags="${flags} -a";;
-          l) server_flags="${server_flags}l"
-             flags="${flags} -l";;
-          r) server_flags="${server_flags}r"
-             flags="${flags} -r";;''')
+                           '''        a)  server_flags="${server_flags}a"
+            flags="${flags} -a";;
+        l)  server_flags="${server_flags}l"
+            flags="${flags} -l";;
+        r)  server_flags="${server_flags}r"
+            flags="${flags} -r";;''')
     elif lang == 'python':
         s += parse_options(lang, 'alr',
-                           '''        elif opt == "-a":
-                server_flags += "a"
-        elif opt == "-l":
-                server_flags += "l"
-        elif opt == "-r":
-                server_flags += "r"''')
+                           '''    elif opt == "-a":
+        server_flags += "a"
+    elif opt == "-l":
+        server_flags += "l"
+    elif opt == "-r":
+        server_flags += "r"''')
     s += arg_count_check(lang, None, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -2272,11 +2297,11 @@ def mkdir_main(lang):
     s += basic_main_init(lang)
     if lang == 'sh':
         s += parse_options(lang, 'p',
-                           '          p) server_flags="${server_flags}p"\n             flags="${flags} -p";;'
+                           '        p)  server_flags="${server_flags}p"\n            flags="${flags} -p";;'
                            )
     elif lang == 'python':
         s += parse_options(lang, 'p',
-                           '        elif opt == "-p":\n                server_flags += "p"'
+                           '    elif opt == "-p":\n        server_flags += "p"'
                            )
     s += arg_count_check(lang, 1, 2)
     s += check_conf_readable(lang)
@@ -2425,19 +2450,19 @@ def put_main(lang):
         s += 'recursive=0\n'
         s += 'extract_package=0\n'
         s += parse_options(lang, 'prx',
-                           '          p) submit_mrsl=1;;\n          r) recursive=1;;\n          x) extract_package=1;;'
+                           '        p)  submit_mrsl=1;;\n        r)  recursive=1;;\n        x)  extract_package=1;;'
                            )
     elif lang == 'python':
         s += 'submit_mrsl = False\n'
         s += 'recursive = False\n'
         s += 'extract_package = False\n'
         s += parse_options(lang, 'prx',
-                           '''        elif opt == "-p":
-                submit_mrsl = True
-        elif opt == "-r":
-                recursive = True
-        elif opt == "-x":
-                extract_package = True''')
+                           '''    elif opt == "-p":
+        submit_mrsl = True
+    elif opt == "-r":
+        recursive = True
+    elif opt == "-x":
+        extract_package = True''')
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -2634,11 +2659,11 @@ def rm_main(lang):
     s += basic_main_init(lang)
     if lang == 'sh':
         s += parse_options(lang, 'r',
-                           '          r) server_flags="${server_flags}r"\n             flags="${flags} -r";;'
+                           '        r)  server_flags="${server_flags}r"\n           flags="${flags} -r";;'
                            )
     elif lang == 'python':
         s += parse_options(lang, 'r',
-                           '        elif opt == "-r":\n                server_flags += "r"'
+                           '    elif opt == "-r":\n        server_flags += "r"'
                            )
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
@@ -2686,11 +2711,11 @@ def rmdir_main(lang):
     s += basic_main_init(lang)
     if lang == 'sh':
         s += parse_options(lang, 'p',
-                           '          p) server_flags="${server_flags}p"\n             flags="${flags} -p";;'
+                           '        p)  server_flags="${server_flags}p"\n            flags="${flags} -p";;'
                            )
     elif lang == 'python':
         s += parse_options(lang, 'p',
-                           '        elif opt == "-p":\n                server_flags += "p"'
+                           '    elif opt == "-p":\n        server_flags += "p"'
                            )
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
@@ -2780,16 +2805,16 @@ def status_main(lang):
     if lang == 'sh':
         s += "max_job_count=''\n"
         s += parse_options(lang, 'm:S',
-                           '''          m) max_job_count="$OPTARG";;
-          S) server_flags="${server_flags}s"
-             flags="${flags} -S";;''')
+                           '''        m)  max_job_count="$OPTARG";;
+        S)  server_flags="${server_flags}s"
+            flags="${flags} -S";;''')
     elif lang == 'python':
         s += "max_job_count = ''\n"
         s += parse_options(lang, 'm:S',
-                           '''        elif opt == "-m":
-                max_job_count = val
-        elif opt == "-S":
-                server_flags += "s"''')
+                           '''    elif opt == "-m":
+        max_job_count = val
+    elif opt == "-S":
+        server_flags += "s"''')
     s += arg_count_check(lang, None, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -2845,8 +2870,8 @@ submit_mrsl=1
 src_list=(\"$@\")
 
 for src in \"${src_list[@]}\"; do
-   dst=`basename \"$src\"`
-   submit_file \"$src\" $dst $submit_mrsl $extract_package
+    dst=`basename \"$src\"`
+    submit_file \"$src\" $dst $submit_mrsl $extract_package
 done
 """
     elif lang == 'python':
@@ -2858,9 +2883,9 @@ submit_mrsl = True
 src_list = sys.argv[1:]
 
 for src in src_list:
-   dst = os.path.basename(src)
-   (status, out) = submit_file(src, dst, submit_mrsl, extract_package)
-   print ''.join(out),
+    dst = os.path.basename(src)
+    (status, out) = submit_file(src, dst, submit_mrsl, extract_package)
+    print ''.join(out),
 sys.exit(status)
 """
     else:
@@ -2880,12 +2905,12 @@ def tail_main(lang):
     s += basic_main_init(lang)
     if lang == 'sh':
         s += 'lines=20\n'
-        s += parse_options(lang, 'n:', '          n) lines="$OPTARG";;')
+        s += parse_options(lang, 'n:', '        n)  lines="$OPTARG";;')
     elif lang == 'python':
         s += 'lines = 20\n'
         s += parse_options(lang, 'n:',
-                           '''        elif opt == "-n":
-                lines = val
+                           '''    elif opt == "-n":
+        lines = val
 ''')
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
@@ -2944,20 +2969,20 @@ echo 'pwd' >> mig-test.mRSL
 echo 'Upload test file used in other tests'
 put_file mig-test.txt .  0 0 >& /dev/null
 if [ $? -ne 0 ]; then
-   echo 'Upload failed!'
-   exit 1
+    echo 'Upload failed!'
+    exit 1
 else
-   echo 'Upload succeeded'
+    echo 'Upload succeeded'
 fi
 
 if [ $# -eq 0 ]; then
-   op_list=(%s)
+    op_list=(%s)
 else
-   op_list=(\"$@\")
+    op_list=(\"$@\")
 fi
 
 for op in \"${op_list[@]}\"; do
-   test_op \"$op\"
+    test_op \"$op\"
 done
 """\
              % ' '.join(script_ops)
@@ -2965,12 +2990,12 @@ done
         s += \
             """
 if len(sys.argv) - 1 == 0:
-   op_list = %s
+    op_list = %s
 else:   
-   op_list = sys.argv[1:]
+    op_list = sys.argv[1:]
 
 for op in op_list:
-   test_op(op)
+    test_op(op)
 """\
              % script_ops
     else:
@@ -3037,12 +3062,12 @@ def truncate_main(lang):
     s += basic_main_init(lang)
     if lang == 'sh':
         s += 'size=0\n'
-        s += parse_options(lang, 'n:', '          n) size="$OPTARG";;')
+        s += parse_options(lang, 'n:', '        n)  size="$OPTARG";;')
     elif lang == 'python':
         s += 'size = 0\n'
         s += parse_options(lang, 'n:',
-                           '''        elif opt == "-n":
-                size = val
+                           '''    elif opt == "-n":
+        size = val
 ''')
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
@@ -3136,20 +3161,20 @@ def wc_main(lang):
     s += basic_main_init(lang)
     if lang == 'sh':
         s += parse_options(lang, 'blw',
-                           '''          b) server_flags="${server_flags}b"
-             flags="${flags} -b";;
-          l) server_flags="${server_flags}l"
-             flags="${flags} -l";;
-          w) server_flags="${server_flags}w"
-             flags="${flags} -w";;''')
+                           '''        b)  server_flags="${server_flags}b"
+            flags="${flags} -b";;
+        l)  server_flags="${server_flags}l"
+            flags="${flags} -l";;
+        w)  server_flags="${server_flags}w"
+            flags="${flags} -w";;''')
     elif lang == 'python':
         s += parse_options(lang, 'blw',
-                           '''        elif opt == "-b":
-                server_flags += "b"
-        elif opt == "-l":
-                server_flags += "l"
-        elif opt == "-w":
-                server_flags += "w"''')
+                           '''    elif opt == "-b":
+        server_flags += "b"
+    elif opt == "-l":
+        server_flags += "l"
+    elif opt == "-w":
+        server_flags += "w"''')
     s += arg_count_check(lang, 1, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -3227,12 +3252,12 @@ def zip_main(lang):
     s += basic_main_init(lang)
     if lang == 'sh':
         s += 'current_dir=""\n'
-        s += parse_options(lang, 'w:', '          w) current_dir="$OPTARG";;')
+        s += parse_options(lang, 'w:', '        w)  current_dir="$OPTARG";;')
     elif lang == 'python':
         s += 'current_dir = ""\n'
         s += parse_options(lang, 'w:',
-                           '''        elif opt == "-w":
-                current_dir = val
+                           '''    elif opt == "-w":
+        current_dir = val
 ''')
     s += arg_count_check(lang, 2, None)
     s += check_conf_readable(lang)

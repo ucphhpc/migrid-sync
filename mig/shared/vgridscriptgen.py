@@ -25,12 +25,15 @@
 # -- END_HEADER ---
 #
 
-# Generator version (automagically updated by cvs)
-
-"""Generate MiG vgrid scripts for the speficied programming languages. Called without arguments the generator creates scripts for all supported languages. If one or more languages are supplied as arguments, only those languages will be generated.
+"""Generate MiG vgrid scripts for the speficied programming languages. Called
+without arguments the generator creates scripts for all supported languages. If
+one or more languages are supplied as arguments, only those languages will be
+generated.
 """
 
-__version__ = '$Revision: 2590 $'
+# Generator version (automagically updated by svn)
+
+__version__ = '$Revision$'
 
 # $Id: vgridscriptgen.py 2590 2009-02-25 10:45:03Z jones $
 
@@ -57,14 +60,8 @@ def usage():
     print ' -V\t\t: Show version'
 
 
-# end usage
-
-
 def version():
     print 'MiG VGrid Script Generator: %s' % __version__
-
-
-# end version
 
 
 def version_function(lang):
@@ -78,8 +75,6 @@ def version_function(lang):
 
     return s
 
-
-# end version_function
 
 # ##########################
 # Script helper functions #
@@ -106,9 +101,6 @@ def vgrid_single_argument_usage_function(
     return s
 
 
-# end vgrid_single_argument_usage_function
-
-
 def vgrid_two_arguments_usage_function(
     lang,
     extension,
@@ -129,8 +121,6 @@ def vgrid_two_arguments_usage_function(
 
     return s
 
-
-# end vgrid_two_arguments_usage_function
 
 # ##########################
 # Communication functions #
