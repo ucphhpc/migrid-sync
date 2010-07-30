@@ -44,8 +44,6 @@ import getopt
 
 __version__ = '$Revision$'
 
-# $Id: userscriptgen.py 2591 2009-02-25 10:56:13Z jones $
-
 # Save original __version__ before truncate with wild card import
 
 _userscript_version = __version__

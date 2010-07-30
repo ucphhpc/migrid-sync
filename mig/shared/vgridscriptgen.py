@@ -35,8 +35,6 @@ generated.
 
 __version__ = '$Revision$'
 
-# $Id: vgridscriptgen.py 2590 2009-02-25 10:45:03Z jones $
-
 import os
 import sys
 import getopt
@@ -68,9 +66,9 @@ def version_function(lang):
     s = ''
     s += begin_function(lang, 'version', [])
     if lang == 'sh':
-        s += '\techo "MiG VGrid Scripts: %s"\n' % __version__
+        s += '    echo "MiG VGrid Scripts: %s"\n' % __version__
     elif lang == 'python':
-        s += '\tprint "MiG VGrid Scripts: %s"\n' % __version__
+        s += '    print "MiG VGrid Scripts: %s"\n' % __version__
     s += end_function(lang, 'version')
 
     return s
@@ -141,22 +139,22 @@ def vgrid_single_argument_function(
     s += password_check_init(lang)
     if lang == 'sh':
         s += """
-        curl=\"%s %s\"""" % (curl_cmd, curl_flags)
+    curl=\"%s %s\"""" % (curl_cmd, curl_flags)
         s += \
             """
-        $curl \\
-                --location \\
-                --fail \\
-                --cert $cert_file \\
-                --key $key_file \\
-                $ca_check \\
-                $password_check \\
-                --url \"$mig_server/cgi-bin/%s.py?%s=$%s;output_format=txt\" 
+    $curl \\
+            --location \\
+            --fail \\
+            --cert $cert_file \\
+            --key $key_file \\
+            $ca_check \\
+            $password_check \\
+            --url \"$mig_server/cgi-bin/%s.py?%s=$%s;output_format=txt\" 
 """\
              % (command, first_arg, first_arg)
     elif lang == 'python':
         s += """
-        curl = \"%s %s\"""" % (curl_cmd, curl_flags)
+    curl = \"%s %s\"""" % (curl_cmd, curl_flags)
     else:
 
     # TODO: create valid python code
@@ -187,24 +185,24 @@ def vgrid_single_argument_upload_function(
     s += password_check_init(lang)
     if lang == 'sh':
         s += """
-        curl=\"%s %s\"""" % (curl_cmd, curl_flags)
+    curl=\"%s %s\"""" % (curl_cmd, curl_flags)
         s += \
             """
-        $curl \\
-	        -H "Content-Type: %s" \\
-                --location \\
-                --fail \\
-                --cert $cert_file \\
-                --key $key_file \\
-                $ca_check \\
-                $password_check \\
-		--upload-file $%s \\
-                --url \"$mig_server\" 
+    $curl \\
+            -H "Content-Type: %s" \\
+            --location \\
+            --fail \\
+            --cert $cert_file \\
+            --key $key_file \\
+            $ca_check \\
+            $password_check \\
+    	--upload-file $%s \\
+            --url \"$mig_server\" 
 """\
              % (content_type, first_arg)
     elif lang == 'python':
         s += """
-        curl = \"%s %s\"""" % (curl_cmd, curl_flags)
+    curl = \"%s %s\"""" % (curl_cmd, curl_flags)
     else:
 
     # TODO: create valid python code
@@ -235,22 +233,22 @@ def vgrid_two_arguments_function(
     s += password_check_init(lang)
     if lang == 'sh':
         s += """
-        curl=\"%s %s\"""" % (curl_cmd, curl_flags)
+    curl=\"%s %s\"""" % (curl_cmd, curl_flags)
         s += \
             """
-        $curl \\
-                --location \\
-                --fail \\
-                --cert $cert_file \\
-                --key $key_file \\
-                $ca_check \\
-                $password_check \\
-                --url \"$mig_server/cgi-bin/%s.py?%s=$%s&%s=$%s;output_format=txt\" 
+    $curl \\
+            --location \\
+            --fail \\
+            --cert $cert_file \\
+            --key $key_file \\
+            $ca_check \\
+            $password_check \\
+            --url \"$mig_server/cgi-bin/%s.py?%s=$%s&%s=$%s;output_format=txt\" 
 """\
              % (command, first_arg, first_arg, second_arg, second_arg)
     elif lang == 'python':
         s += """
-        curl = \"%s %s\"""" % (curl_cmd, curl_flags)
+    curl = \"%s %s\"""" % (curl_cmd, curl_flags)
     else:
 
     # TODO: create valid python code
