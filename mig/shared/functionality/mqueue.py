@@ -42,8 +42,8 @@ from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 
 
-valid_actions = ['interactive', 'create', 'remove', 'send', 'receive', 'list',
-                 'show']
+valid_actions = ['interactive', 'create', 'remove', 'send', 'receive',
+                 'listqueues', 'listmessages', 'show']
 lock_name = 'mqueue.lock'
 
 def signature():
@@ -274,7 +274,7 @@ for active jobs.
                                    : 'Could not show %s from "%s" queue: "%s"'
                                    % (msg_id, queue, err)})
             status = returnvalues.CLIENT_ERROR
-    elif action == 'list':
+    elif action == 'listmessages':
         try:
             messages = os.listdir(queue_path)
             messages.sort()
@@ -283,6 +283,16 @@ for active jobs.
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'Could not list "%s" queue: "%s"' % \
                                    (queue, err)})
+            status = returnvalues.CLIENT_ERROR
+    elif action == 'listqueues':
+        try:
+            queues = [i for i in os.listdir(mqueue_base) if \
+                      os.path.isdir(os.path.join(mqueue_base, i))]
+            queues.sort()
+            output_objects.append({'object_type': 'list', 'list': queues})
+        except Exception, err:
+            output_objects.append({'object_type': 'error_text', 'text'
+                                   : 'Could not list queues: "%s"' % err})
             status = returnvalues.CLIENT_ERROR
     else:
         output_objects.append({'object_type': 'error_text', 'text'
