@@ -39,38 +39,38 @@ if (jQuery) (function($){
           break;
           
           case "file_output":
-            file_output += "<p>Contents:</p>";  
-            for(j=0; j<jsonRes[i].lines.length; j++) {
+            file_output += "<p>Contents:</p>";
+            for(j = 0; j < jsonRes[i].lines.length; j++) {
               file_output += jsonRes[i].lines[j];
             }
           break;
           
           case "dir_listings":
             
-            for(j=0; j<jsonRes[i]["dir_listings"].length; j++) {
+            for(j = 0; j < jsonRes[i]["dir_listings"].length; j++) {
               dir_listings += jsonRes[i]["dir_listings"][j];
             }
-            if (dir_listings.length >0) {
-              dir_listings = "<p>Directory Listings</p>"+dir_listings;  
+            if (dir_listings.length > 0) {
+              dir_listings = "<p>Directory Listings</p>"+dir_listings;
             }
           break;
           
           case "submitstatuslist":
           
-            for(j=0; j<jsonRes[i]["submitstatuslist"].length; j++) {
+            for(j = 0; j < jsonRes[i]["submitstatuslist"].length; j++) {
             
               if (jsonRes[i]["submitstatuslist"][j]["status"]) {
                 misc_output +=  "<p>Submitted '"
-                            +           jsonRes[i]["submitstatuslist"][j]["name"]
-                            +           "'</p>"
-                            +           "<p>Job identfier: '"+jsonRes[i]["submitstatuslist"][j]["job_id"]
-                            +           "'</p>";
+                            + jsonRes[i]["submitstatuslist"][j]["name"]
+                            + "'</p>"
+                            + "<p>Job identfier: '"+jsonRes[i]["submitstatuslist"][j]["job_id"]
+                            + "'</p>";
               } else {
                 misc_output +=  "<p>Failed submitting:</p><p>"
-                            +           jsonRes[i]["submitstatuslist"][j]["name"]
-                            +           " "+jsonRes[i]["submitstatuslist"][j]["message"]
-                            +           "</p>";
-              }                                                                                                 
+                            + jsonRes[i]["submitstatuslist"][j]["name"]
+                            + " "+jsonRes[i]["submitstatuslist"][j]["message"]
+                            + "</p>";
+              }
             
             }
               
@@ -78,7 +78,7 @@ if (jQuery) (function($){
           
           case "changedstatusjobs":
           
-            for(j=0; j<jsonRes[i]["changedstatusjobs"].length; j++) {
+            for(j = 0; j < jsonRes[i]["changedstatusjobs"].length; j++) {
               if (jsonRes[i]["changedstatusjobs"][j]["message"]) {
                 misc_output += jsonRes[i]["changedstatusjobs"][j]["message"];
               } else {
@@ -89,7 +89,7 @@ if (jQuery) (function($){
           break;
           
           case "saveschedulejobs":
-            for(j=0; j<jsonRes[i]["saveschedulejobs"].length; j++) {
+            for(j = 0; j < jsonRes[i]["saveschedulejobs"].length; j++) {
               if (jsonRes[i]["saveschedulejobs"][j]["message"]) {
                 misc_output += jsonRes[i]["saveschedulejobs"][j]["message"];
               } else {
@@ -99,18 +99,18 @@ if (jQuery) (function($){
           break;
           
           case "resubmitobjs":
-            for(j=0; j<jsonRes[i]["resubmitobjs"].length; j++) {
+            for(j = 0; j < jsonRes[i]["resubmitobjs"].length; j++) {
               if (jsonRes[i]["resubmitobjs"][j]["status"]) {
                 success_message = "<br />Resubmitted job as: "+jsonRes[i]["resubmitobjs"][j]["new_job_id"];
               } else {
-                misc_output += jsonRes[i]["resubmitobjs"][j]["message"];  
+                misc_output += jsonRes[i]["resubmitobjs"][j]["message"];
               }
               
             }
           break;
           
           case "text":
-            misc_output += jsonRes[i]["text"];                        
+            misc_output += jsonRes[i]["text"];
           break;
           
           case "file_not_found":
@@ -121,18 +121,18 @@ if (jQuery) (function($){
           
       }
         
-      if ((errors.length + file_output.length + misc_output.length + dir_listings.length) >0){
-                    
-        if (file_output.length>0) {
-          file_output = "<pre>"+file_output+"</pre>";   
+      if ((errors.length + file_output.length + misc_output.length + dir_listings.length) > 0){
+        
+        if (file_output.length > 0) {
+          file_output = "<pre>"+file_output+"</pre>";
         }
         
-        if (dir_listings.length>0) {
-          dir_listings = "<pre>"+dir_listings+"</pre>"; 
+        if (dir_listings.length > 0) {
+          dir_listings = "<pre>"+dir_listings+"</pre>";
         }
         
-        if ((errors.length>0) || (misc_output.length>0)) {
-          $("#cmd_helper div[title="+el_id+"]").removeClass("spinner").addClass("error");  
+        if ((errors.length > 0) || (misc_output.length > 0)) {
+          $("#cmd_helper div[title="+el_id+"]").removeClass("spinner").addClass("error");
         } else {
           $("#cmd_helper div[title="+el_id+"]").removeClass("spinner").addClass("ok");
         }
@@ -161,7 +161,7 @@ if (jQuery) (function($){
 
                 var job_id = $(this).parent().parent().attr("id");
                 var is_checked = $("#"+job_id+" input").attr("checked");
-                                
+                
                 if (is_checked) {
                     $("#"+job_id).addClass("ui-selected");
                 } else {
@@ -178,16 +178,16 @@ if (jQuery) (function($){
     $.tablesorter.addWidget({ 
 
         id: "contextual", 
-        format: function(table) { 
+        format: function(table) {
 
             var actions = {
-                cancel: function (job_id) {                    
+                cancel: function (job_id) {
                     jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'cancel'})
                 },
-                freeze: function (job_id) {                    
+                freeze: function (job_id) {
                     jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'freeze'})
                 },
-                thaw: function (job_id) {                    
+                thaw: function (job_id) {
                     jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'thaw'})
                 },
                 mrsl: function (job_id) {
@@ -196,11 +196,11 @@ if (jQuery) (function($){
                 resubmit: function (job_id) {
                     jsonWrapper(job_id, "#cmd_dialog", "resubmit.py", {job_id: job_id})
                 },
-                statusfiles: function (job_id) {    
+                statusfiles: function (job_id) {
                     url = "fileman.py?path=job_output/"+job_id+"/";
                     windowWrapper(job_id, "#cmd_dialog", url);
                 },
-                outputfiles: function (job_id, job_output) {    
+                outputfiles: function (job_id, job_output) {
                     url = "fileman.py?"+job_output.match(/^ls.py\?(.*)$/)[1];
                     windowWrapper(job_id, "#cmd_dialog", url);
                 },
@@ -222,27 +222,27 @@ if (jQuery) (function($){
                     $("#cmd_helper").dialog({buttons: {Close: function() {$(this).dialog("close");} }, width: "800px", autoOpen: false, closeOnEscape: true, modal: true, position: [300, 70]});
                     $("#cmd_helper").dialog("open");
                     $("#cmd_helper").html("");
-                                                        
+                    
                     if (single_selection) {
                     
                         job_id = $("input[name=job_identifier]", $(el).parent()).val();
-                                                
+                        
                         $("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>JobId: "+job_id+"</p></div>");
                         // Output files redirect to the filemanager with extra args.
-                        // All other actions are handled by the general case.    
+                        // All other actions are handled by the general case.
                         if (action == "outputfiles") {
                           actions[action](job_id, $("input[name=job_output]", $(el).parent()).val());
                         } else {
                           actions[action](job_id);
-                        }                        
+                        }
                     } else {
                         var selected_rows = $("#jm_jobmanager tbody tr.ui-selected");
                         $("#cmd_helper").append("<p>"+action+": "+selected_rows.length+" jobs, see individual status below:</p>");
                         selected_rows.each(function(i) {
-                            job_id = $("input[name=job_identifier]", this).val();                            
+                            job_id = $("input[name=job_identifier]", this).val();
                             $("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>"+job_id+"</p></div>");
                             actions[action](job_id);
-                        });                        
+                        });
                     }
                     
                     $("#append").click();
@@ -251,7 +251,7 @@ if (jQuery) (function($){
                 function(el) {
                     if ($(el).parent().hasClass("ui-selected")) {
                         $("#job_context .single").hide();
-                        $("#job_context .multi").show();    
+                        $("#job_context .multi").show();
                     } else {
                         $("#job_context .single").show();
                         $("#job_context .multi").hide();
@@ -260,7 +260,7 @@ if (jQuery) (function($){
                 }
             );
             
-        } 
+        }
     });
     
     $("table")
@@ -268,7 +268,7 @@ if (jQuery) (function($){
                     textExtraction: function(node) {
                                     var stuff = $("div", node).html();
                                     if (stuff == null) {
-                                      stuff = ""; 
+                                      stuff = "";
                                     }
                                     return stuff;
                                   },
@@ -281,7 +281,7 @@ if (jQuery) (function($){
     // Check CheckAll when read all
     $("table").bind("sortEnd", function() { $("#checkAll").attr("checked", false); });
     
-    $("#append").click(function() { 
+    $("#append").click(function() {
 
         // Busy marker while loading jobs from server
         $("#jm_jobmanager tbody").html("<tr class='odd'><td class='wait'></td><td>Loading jobs...</td><td></td><td></td></tr>");
@@ -301,7 +301,7 @@ if (jQuery) (function($){
         if (filter_id != '') {
             limit_opts = "job_id=" + filter_id + ';';
         }
-        // add some html      
+        // add some html
         $.getJSON("jobstatus.py?output_format=json;"+limit_opts, {}, function(jsonRes, textStatus) {
         
             var jobList = new Array();
@@ -309,11 +309,11 @@ if (jQuery) (function($){
             
             // Grab jobs from json response and place them in jobList.
             for(i=0; i<jsonRes.length; i++) {
-                if ((jsonRes[i].object_type == "job_list") && (jsonRes[i].jobs.length >0)) {    
+                if ((jsonRes[i].object_type == "job_list") && (jsonRes[i].jobs.length > 0)) {
                   jobList = jobList.concat(jsonRes[i].jobs);
                   job_count++;
                 }
-            }   
+            }
     
             // Remove busy marker
             $("#jm_jobmanager tbody").html("");
@@ -327,30 +327,30 @@ if (jQuery) (function($){
                 if (item.outputfileslink != null) {
                     output_url = item.outputfileslink.destination;
                 } else {
-                    /* dummy value of user home for jobs without output files*/
+                    /* dummy value of user home for jobs without output files */
                     output_url = "ls.py?path=";
                 }
                 $("#jm_jobmanager tbody").append("<tr id='"+item.job_id.match(/^([0-9_]+)__/)[1]+"'>"+
                   "<td><div class='sortkey'></div><input type='checkbox' name='job_identifier' value='"+item.job_id+"' /></td>"+
-                  "<td><div class='sortkey'>"+item.job_id.match(/^([0-9]+)_/)[1]+"</div>"+item.job_id+"</td>"+                 
+                  "<td><div class='sortkey'>"+item.job_id.match(/^([0-9]+)_/)[1]+"</div>"+item.job_id+"</td>"+
                   "<input type='hidden' name='job_output' value='"+output_url+"' />"+
                   "<td><div class='sortkey'>"+item.status+"</div><div class='jobstatus'>"+item.status+sched_hint+"</div></td>"+
-                  "<td><div class='sortkey'>"+toTimestamp(item.received_timestamp)+"</div>"+item.received_timestamp+"</td>"+                 
-                  "</tr>"                  
+                  "<td><div class='sortkey'>"+toTimestamp(item.received_timestamp)+"</div>"+item.received_timestamp+"</td>"+
+                  "</tr>"
                   );
 
             });
 
-        var sorting = [[1,1]]; 
+        var sorting = [[1,1]];
         // Inform tablesorter of new data
         $("table").trigger("update");
-        if (job_count>0) {
-          $("table").trigger("sorton",[sorting]);
+        if (job_count > 0) {
+          $("table").trigger("sorton", [sorting]);
         }
         
       });
 
-    }); 
+    });
 
     $("#append").click();
     
@@ -367,5 +367,5 @@ if (jQuery) (function($){
     });
     
   });
-      
+  
 })(jQuery);
