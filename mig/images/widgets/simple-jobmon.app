@@ -9,8 +9,8 @@ function latestJobsPattern() {
     return '*_'+now.getFullYear()+'_*';
 }
 function refreshJobs(jobs, max_jobs) {
-    $("#jobmonitor tbody").html("<tr><td colspan=3>Loading ...</tr>");
-    $.getJSON("/cgi-bin/jobstatus.py", {job_id: jobs, output_format: 'json',
+    $("#jobmonitor tbody tr").html("<td colspan=3>Loading ...</td>");
+    $.getJSON("jobstatus.py", {job_id: jobs, output_format: 'json',
     	  'flags': 's', max_jobs: max_jobs},
     function(jsonRes, textStatus) {
         var jobList = new Array();
@@ -34,7 +34,6 @@ function refreshJobs(jobs, max_jobs) {
     });
 }
 $(document).ready(function() {
-    $("#jobmonitor tbody").html("<tr><td colspan=3>Loading ...</td></tr>");
     refreshJobs(latestJobsPattern(), 5);
     setInterval("refreshJobs('" + latestJobsPattern() + "', 5)", 120000);
 });
@@ -45,12 +44,11 @@ $(document).ready(function() {
       <thead>
         <tr>
           <th>Job ID</th>
-          <th style="width: 120px;">Status</th>
-          <th style="width: 180px;">Date</th>
+          <th style="width: 150px;">Status</th>
+          <th style="width: 250px;">Date</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>Job ID</td><td>Status</td><td>Date</td></tr>
         <tr><td colspan=3>Please enable Javascript to view this job monitor widget.</td></tr>
       </tbody>
     </table>
