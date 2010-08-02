@@ -83,29 +83,20 @@ def wrap_edit_area(name, area, edit_opts=edit_defaults, toolbar_buttons='ALL'):
     init_buttons = ''
     button_impl = ''
     if toolbar_buttons:
+        # TODO: switch to python generated html with icon buttons!
         init_buttons = '''  
   this.spellcheck;
-  makeField(this.searchid);
+  makeField(this.searchid, 15);
   makeButton("Search", "search");
-  makeField(this.replaceid);
+  makeField(this.replaceid, 15);
   makeButton("Replace", "replace");
   makeButton("Replace All", "replaceall");
   makeSpace("SearchSep");
-  makeField(this.jumpid);
-  makeButton("Jump to line", "jump");
-  makeSpace("JumpSep");
-  makeButton("Re-Indent all", "reindent");
-  makeSpace("IndentSep");
-  makeButton("Toggle line numbers", "line");
-  makeSpace("LineSep");
-  makeButton("Toggle spell check", "spell");
-  makeSpace("SpellSep");
   makeButton("Undo", "undo");
   makeButton("Redo", "redo");
   makeSpace("UndoSep");
   makeButton("Help", "help");
 '''
-
         button_impl = '''
   search: function() {
     var text = document.getElementById(this.searchid).value;
@@ -154,6 +145,32 @@ def wrap_edit_area(name, area, edit_opts=edit_defaults, toolbar_buttons='ALL'):
     }
   },
 
+  undo: function() {
+    this.editor.undo();
+  },
+  
+  redo: function() {
+    this.editor.redo();
+  },
+  
+  help: function() {
+    alert("Quick help:\\n\\nShortcuts:\\nCtrl-z: undo\\nCtrl-y: redo\\nTab re-indents line\\nEnter inserts a new indented line\\n\\nPlease refer the CodeMirror manual for more detailed help.");
+  },
+'''
+
+    if toolbar_buttons == 'ALL':
+        init_buttons += '''
+  makeSpace("HelpSep");
+  makeField(this.jumpid, 2);
+  makeButton("Jump to line", "jump");
+  makeSpace("JumpSep");
+  makeButton("Re-Indent all", "reindent");
+  makeSpace("IndentSep");
+  makeButton("Toggle line numbers", "line");
+  //makeSpace("LineSep");
+  //makeButton("Toggle spell check", "spell");
+'''
+        button_impl += '''
   jump: function() {
     var line = document.getElementById(this.jumpid).value;
     if (line && !isNaN(Number(line)))
@@ -176,18 +193,6 @@ def wrap_edit_area(name, area, edit_opts=edit_defaults, toolbar_buttons='ALL'):
     this.spellcheck = !this.spellcheck
     this.editor.setSpellcheck(this.spellcheck);
     this.editor.focus();
-  },
-
-  undo: function() {
-    this.editor.undo();
-  },
-  
-  redo: function() {
-    this.editor.redo();
-  },
-  
-  help: function() {
-    alert("Quick help:\\n\\nShortcuts:\\nCtrl-z: undo\\nCtrl-y: redo\\nTab re-indents line\\nEnter inserts a new indented line\\n\\nPlease refer the CodeMirror manual for more detailed help.");
   },
 '''
 
@@ -215,14 +220,14 @@ function TextAreaEditor(toolbar, textarea, options) {
     var button = document.createElement("INPUT");
     button.type = "button";
     button.value = name;
-    button.class = action + "button";
     self.bar.appendChild(button);
     button.onclick = function() { self[action].call(self); };
   }
-  function makeField(name) {
+  function makeField(name, size) {
     var field = document.createElement("INPUT");
     field.type = "text";
     field.id = name;
+    field.size = size;
     self.bar.appendChild(field);
   }
   function makeSpace(name) {
@@ -243,7 +248,6 @@ TextAreaEditor.prototype = {
 <div class="inlineeditor" id="%sinlineeditor">
 <div class="editortoolbar" id="%stoolbar">
 <!--- filled by script --->
-<span id="bla"></span>
 </div>
 %s
 <script type="text/javascript">
@@ -389,7 +393,7 @@ def main(client_id, user_arguments_dict):
                     if current_settings_dict.has_key(keyword):
                         area += '\n'.join(current_settings_dict[keyword])
                     area += '</textarea><br />'
-                    html += wrap_edit_area(keyword, area, general_edit, None)
+                    html += wrap_edit_area(keyword, area, general_edit, 'BASIC')
 
             elif val['Type'] == 'string':
 
@@ -453,7 +457,7 @@ If you use the same fields and values in many of your jobs, you can save your pr
 %(default_mrsl)s
 </textarea>
 '''
-        html += wrap_edit_area(keyword, area)
+        html += wrap_edit_area(keyword, area, edit_defaults, 'BASIC')
         
         html += '''
 </td></tr>
