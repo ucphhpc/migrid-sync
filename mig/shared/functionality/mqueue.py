@@ -42,14 +42,15 @@ from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 
 
-valid_actions = ['interactive', 'create', 'remove', 'send', 'receive']
+valid_actions = ['interactive', 'create', 'remove', 'send', 'receive', 'list',
+                 'show']
 lock_name = 'mqueue.lock'
 
 def signature():
     """Signature of the main function"""
 
     defaults = {'queue': [default_mqueue], 'action': ['interactive'],
-                'iosessionid': [''], 'msg': ['']}
+                'iosessionid': [''], 'msg': [''], 'msg_id': ['']}
     return ['file_output', defaults]
 
 
@@ -66,14 +67,15 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
     queue = accepted['queue'][-1]
     action = accepted['action'][-1]
-    iosessionid = accepted.get('iosessionid', [''])[-1]
-    msg = accepted.get('msg', [''])[-1]
+    iosessionid = accepted['iosessionid'][-1]
+    msg = accepted['msg'][-1]
+    msg_id = accepted['msg_id'][-1]
 
     # Web format for cert access and no header for SID access
 
     if client_id:
         output_objects.append({'object_type': 'header', 'text'
-                               : 'Message queue interaction'})
+                               : 'Message queue %s' % action})
     else:
         output_objects.append({'object_type': 'start'})
 
@@ -160,6 +162,8 @@ Action:<br />
 <input type=radio name=action checked value="send" onclick="javascript:document.mqueueform.msg.disabled=false" />send message to queue
 <input type=radio name=action value="receive" onclick="javascript:document.mqueueform.msg.disabled=true" />receive message from queue
 <input type=radio name=action value="remove" onclick="javascript:document.mqueueform.msg.disabled=true" />remove queue
+<input type=radio name=action value="list" onclick="javascript:document.mqueueform.msg.disabled=true" />list queue
+<input type=radio name=action value="show" onclick="javascript:document.mqueueform.msg.disabled=true" />show message
 </td></tr>
 <tr><td>
 Queue:<br />
@@ -212,7 +216,9 @@ for active jobs.
             status = returnvalues.CLIENT_ERROR
     elif action == 'send':
         try:
-            msg_path = os.path.join(queue_path, "%.0f" % time.time())
+            if not msg_id:
+                msg_id = "%.0f" % time.time()
+            msg_path = os.path.join(queue_path, msg_id)
             msg_fd = open(msg_path, 'w')
             msg_fd.write(msg)
             msg_fd.close()
@@ -225,28 +231,58 @@ for active jobs.
             status = returnvalues.CLIENT_ERROR
     elif action == 'receive':
         try:
-            now = int(time.time())
-            message, message_path = [mqueue_empty], ''
-            oldest_name, oldest_value = '', now
-            for entry in os.listdir(queue_path):
-                if not entry.isdigit():
-                    continue
-                entry_value = int(entry)
-                if entry_value < oldest_value:
-                    oldest_name, oldest_value = entry, entry_value
-            if oldest_name:
-                message_path = os.path.join(queue_path, oldest_name)
+            if not msg_id:
+                messages = os.listdir(queue_path)
+                messages.sort()
+                if messages:
+                    msg_id = messages[0]
+            if msg_id:
+                message_path = os.path.join(queue_path, msg_id)
                 message_fd = open(message_path, 'r')
                 message = message_fd.readlines()
                 message_fd.close()
                 os.remove(message_path)
                 file_entry['path'] = os.path.basename(message_path)
+            else:
+                message = [mqueue_empty]
             # Update file_output entry for raw data with output_format=file
             file_entry['lines'] = message
         except Exception, err:
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'Could not receive from "%s" queue: "%s"'
                                    % (queue, err)})
+            status = returnvalues.CLIENT_ERROR
+    elif action == 'show':
+        try:
+            if not msg_id:
+                messages = os.listdir(queue_path)
+                messages.sort()
+                if messages:
+                    msg_id = messages[0]
+            if msg_id:                    
+                message_path = os.path.join(queue_path, msg_id)
+                message_fd = open(message_path, 'r')
+                message = message_fd.readlines()
+                message_fd.close()
+                file_entry['path'] = os.path.basename(message_path)
+            else:
+                message = [mqueue_empty]
+            # Update file_output entry for raw data with output_format=file
+            file_entry['lines'] = message
+        except Exception, err:
+            output_objects.append({'object_type': 'error_text', 'text'
+                                   : 'Could not show %s from "%s" queue: "%s"'
+                                   % (msg_id, queue, err)})
+            status = returnvalues.CLIENT_ERROR
+    elif action == 'list':
+        try:
+            messages = os.listdir(queue_path)
+            messages.sort()
+            output_objects.append({'object_type': 'list', 'list': messages})
+        except Exception, err:
+            output_objects.append({'object_type': 'error_text', 'text'
+                                   : 'Could not list "%s" queue: "%s"' % \
+                                   (queue, err)})
             status = returnvalues.CLIENT_ERROR
     else:
         output_objects.append({'object_type': 'error_text', 'text'
