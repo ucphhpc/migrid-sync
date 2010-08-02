@@ -287,6 +287,17 @@ table.liveio table {
   color: black;
 }
 
+.inlineeditor {
+  border: 1px inset grey;
+  padding: 3px;
+  background: white;
+}
+
+.editortoolbar {
+  -moz-border-radius: 4px;
+  padding: 6px;
+  background: #ddd;
+}
 
 
 /* Used in one place... maybe that place should be fixed? to use h1 instead */

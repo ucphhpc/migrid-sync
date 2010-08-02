@@ -147,6 +147,33 @@ div.container {
   float: left;
 }
 
+.premenuwidgets {
+  color: black;
+}
+
+.postmenuwidgets {
+  color: black;
+}
+
+.precontentwidgets {
+  color: black;
+}
+
+.postcontentwidgets {
+  color: black;
+}
+
+.inlineeditor {
+  border: 1px inset grey;
+  padding: 3px;
+  background: white;
+}
+
+.editortoolbar {
+  -moz-border-radius: 4px;
+  padding: 6px;
+  background: #ddd;
+}
 
 
 #migheader {

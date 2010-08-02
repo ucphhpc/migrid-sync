@@ -104,7 +104,6 @@ def wrap_edit_area(name, area, edit_opts=edit_defaults, toolbar_buttons='ALL'):
   makeButton("Redo", "redo");
   makeSpace("UndoSep");
   makeButton("Help", "help");
-  makeRuler("TextSep");
 '''
 
         button_impl = '''
@@ -188,7 +187,7 @@ def wrap_edit_area(name, area, edit_opts=edit_defaults, toolbar_buttons='ALL'):
   },
   
   help: function() {
-    alert("Quick help:\\n\\nShort cuts:\\nCtrl-z: undo\\nCtrl-y: redo\\nTab re-indents line\\nEnter inserts a new indented line\\n\\nPlease refer the CodeMirror manual for more detailed help.");
+    alert("Quick help:\\n\\nShortcuts:\\nCtrl-z: undo\\nCtrl-y: redo\\nTab re-indents line\\nEnter inserts a new indented line\\n\\nPlease refer the CodeMirror manual for more detailed help.");
   },
 '''
 
@@ -216,6 +215,7 @@ function TextAreaEditor(toolbar, textarea, options) {
     var button = document.createElement("INPUT");
     button.type = "button";
     button.value = name;
+    button.class = action + "button";
     self.bar.appendChild(button);
     button.onclick = function() { self[action].call(self); };
   }
@@ -229,10 +229,6 @@ function TextAreaEditor(toolbar, textarea, options) {
     var elem = document.createTextNode(" | ");
     self.bar.appendChild(elem);
   }
-  function makeRuler(name) {
-    var elem = document.createElement("HR");
-    self.bar.appendChild(elem);
-  }
 
 %s  
 
@@ -244,8 +240,8 @@ TextAreaEditor.prototype = {
 };
 ''' % (init_buttons, button_impl)
     out = '''
-<div id="%sinlineeditor" style="border: 1px inset grey; padding: 3px; background: white;">
-<div id="%stoolbar">
+<div class="inlineeditor" id="%sinlineeditor">
+<div class="editortoolbar" id="%stoolbar">
 <!--- filled by script --->
 <span id="bla"></span>
 </div>
