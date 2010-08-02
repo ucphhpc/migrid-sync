@@ -29,7 +29,7 @@ if (jQuery) (function($){
       var submit_output = "";
       var success_message = "<br />Success!";
       
-      for(var i=0; i<jsonRes.length; i++) {
+      for(var i = 0; i < jsonRes.length; i++) {
       
         switch(jsonRes[i]["object_type"]) {
             
@@ -308,7 +308,7 @@ if (jQuery) (function($){
             var i = 0;
             
             // Grab jobs from json response and place them in jobList.
-            for(i=0; i<jsonRes.length; i++) {
+            for(i = 0; i < jsonRes.length; i++) {
                 if ((jsonRes[i].object_type == "job_list") && (jsonRes[i].jobs.length > 0)) {
                   jobList = jobList.concat(jsonRes[i].jobs);
                   job_count++;
