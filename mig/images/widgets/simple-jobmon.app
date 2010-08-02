@@ -1,42 +1,42 @@
 <!-- 
 Name: Job Monitor
-Description: Basic job monitor showing latest jobs
+Description: Basic job monitor showing latest five jobs
 Requires: jquery.js
 -->
 <script type="text/javascript">
+function latestJobsPattern() {
+    var now = new Date();
+    return '*_'+now.getFullYear()+'_*';
+}
+function refreshJobs(jobs, max_jobs) {
+    $("#jobmonitor tbody").html("<tr><td colspan=3>Loading ...</tr>");
+    $.getJSON("/cgi-bin/jobstatus.py", {job_id: jobs, output_format: 'json',
+    	  'flags': 's', max_jobs: max_jobs},
+    function(jsonRes, textStatus) {
+        var jobList = new Array();
+        for(var i = 0; i < jsonRes.length; i++) {
+            if ((jsonRes[i].object_type == "job_list") &&
+    		    (jsonRes[i].jobs.length > 0)) {
+                jobList = jobList.concat(jsonRes[i].jobs);
+            } else if (jsonRes[i].object_type=='error_text') {
+                var error = jsonRes[i].text;
+                alert('load job status error:' + error);
+            }
+        }
+        $("#jobmonitor tbody").html("");
+        // Wrap each json result into html
+        $.each(jobList, function(i, item) {
+            $("#jobmonitor tbody").append("<tr>"+"<td>"+item.job_id+"</td>"+
+              "<td><div class='jobstatus'>"+item.status+"</div></td>"+
+              "<td>"+item.received_timestamp+"</td>"+"</tr>"
+              );
+        });
+    });
+}
 $(document).ready(function() {
-    function latestJobsPattern() {
-        var now = new Date();
-        return '*_'+now.getFullYear()+'_*';
-    }
-    function refreshJobs(jobs, max_jobs) {
-          $.getJSON("/cgi-bin/jobstatus.py", {job_id: jobs, output_format: 'json',
-	  'flags': 's', max_jobs: max_jobs},
-          function(jsonRes, textStatus) {
-              var jobList = new Array();
-              for(var i = 0; i < jsonRes.length; i++) {
-                  if ((jsonRes[i].object_type == "job_list") &&
-		    (jsonRes[i].jobs.length > 0)) {
-                      jobList = jobList.concat(jsonRes[i].jobs);
-                  } else if (jsonRes[i].object_type=='error_text') {
-                      var error = jsonRes[i].text;
-                      alert('load job status error:' + error);
-                  }
-              }
-              $("#jobmonitor tbody").html("");
-              // Wrap each json result into html
-              $.each(jobList, function(i, item) {
-                  $("#jobmonitor tbody").append("<tr>"+
-                    "<td>"+item.job_id+"</td>"+
-                    "<td><div class='jobstatus'>"+item.status+"</div></td>"+
-                    "<td>"+item.received_timestamp+"</td>"+
-                    "</tr>"
-                    );
-              });
-          });
-    }
-    $("#jobmonitor tbody").html("<tr class='odd'><td>Loading jobs...</td><td></td><td></td></tr>");
-    refreshJobs(latestJobsPattern(), 4);
+    $("#jobmonitor tbody").html("<tr><td colspan=3>Loading ...</td></tr>");
+    refreshJobs(latestJobsPattern(), 5);
+    setInterval("refreshJobs('" + latestJobsPattern() + "', 5)", 120000);
 });
 </script>
 <div id="jobstatusmonitor">
