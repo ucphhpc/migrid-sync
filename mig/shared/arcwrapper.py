@@ -39,6 +39,11 @@ from shared.conf import get_configuration_object
 config = get_configuration_object()
 logger = config.logger
 
+# Avoid massive log spam when unconditionally importing arcwrapper in other
+# modules like jobstatus and jobscriptgenerator
+if not config.arc_clusters:
+    raise Exception('ignoring arcwrapper import without ARC enabled!')
+
 # to make this succeed: 
 # install nordugrid-arc-client and nordugrid-arc-python
 # set LD_LIBRARY_PATH="$NORDUGRID_LOCATION/lib:$GLOBUS_LOCATION/lib

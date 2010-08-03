@@ -25,8 +25,6 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
 """Takes job fields and submits it with the usual submit status"""
 
 import os
