@@ -6,6 +6,13 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
+=== August 3rd, 2010 ===
+Feature and interface improvement release with thanks to grid.dk for a
+considerable contribution especially in the usability and interface areas.
+New feautures are mainly focused on improving VGrid usability, making job
+execution more flexible and administrating resources.
+
+
 === March 15th, 2010 ===
 Our previous shared virtual host for Session ID and certificate based
 access could *potentially* open up for a Man-in-the-Middle attack like:
@@ -77,7 +84,27 @@ for other users.
 
 == Changelogs ==
 More detailed changelogs for the public releases.
-The full changelog is available from the repository.
+The full changelog is available from the repository:
+http://code.google.com/p/migrid/source/list
+
+== 1.3.0 ==
+-New central message queues for synchronized job communication
+-Full live I/O support in jobs
+-Added python version of generated resource admin script
+-Support for job freeze/thaw in queue
+-Full zip/unzip support in user homes
+-New fancy file and settings editors
+-New user defined widgets using html/css/javascript
+-Integrated resource removal from grid.dk
+-Integrated runtime env removal from grid.dk
+-Integrated VGrid removal from grid.dk
+-Merged improved Submit job, Docs, VGrids and Resources pages from grid.dk
+-Merged site specific settings for SSS and VGrid components from grid.dk
+-New public resource viewer for ordinary users
+-New optional VGrid SCM
+-Support repair/update VGrid Wiki and SCM
+-Bugfixes in user scripts, nested vgrid web pages, LRMS job scripts, etc.
+-General page layout polish and code clean up
 
 == 1.2.0 ==
 -Work around potential Man-in-the-Middle apache issue (separate vhosts)
