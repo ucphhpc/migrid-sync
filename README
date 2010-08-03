@@ -171,9 +171,12 @@ tweak the system wide wikiconfig template in
 using /moin_staticXYZ instead of /wiki and front page setup right.
 Similarly the mercurial package provides all required components for 
 VGrid SCMs on Debian.
+In case you want to run MiG with VGrid wikis on another distribution you can
+download a MoinMoin wiki tarball from our Downloads page:
+http://code.google.com/p/migrid/downloads/list
+It includes step-by-step installation instructions in the README.
 
 The four CLAUSE arguments can be used to comment out the explicit
-
 setting of user, group, serveralias and ports in the apache conf by
 providing a '# User', '# Group', '# ServerAlias' and '# Listen'. This is
 mostly relevant if using apache2 with WSGI.
