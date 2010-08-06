@@ -117,17 +117,16 @@ class Migsession:
             shutil.copyfile(f ,cp_filename)
             files.append(cp_filename)
         
-        return files    
+        return files
     
-
     ######## OUTPUT ##########
 
     def handle_output(self,job):
         #import resultHandle
         files = []
         for f in job["output_files"]:
-            output_filename =  job["job_dir"]+f
-            outputfile = self.mig.get_output(output_filename, job["job_dir"]+f)
+            output_filename =  f
+            outputfile = self.mig.get_output(output_filename, f)
             log(self.logfile, "Retrieved output file for job "+job["id"],self.debug_mode)
               #print "opening ", destDir+filepath, "to", destDir
             files.append(outputfile)

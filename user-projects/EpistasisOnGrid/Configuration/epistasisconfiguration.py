@@ -9,12 +9,14 @@ r_files = ["EpiCRnew_R_edit.R","DistrPost07_R_edit.R","EpiLW.R"]
 
 program_files = ["RfilesAndscripts/EpiMain.R", "RfilesAndscripts/EpiCRnew_R_edit.R","RfilesAndscripts/EpiLW.R","RfilesAndscripts/DistrPost07_R_edit.R", "RfilesAndscripts/epistasis.py"]
 
+running_jobs_dir = "status_files"
+
 monitor_polling_frequency = 20
 gene_first_index = 5
-gene_last_index = 1005
+gene_last_index = 600
 
 trait_first_index = 3 #11 bt30
-trait_last_index = 3#53 bt47 incl puls 46-47
+trait_last_index = 5#53 bt47 incl puls 46-47
 
 
 default_job_size = 1
@@ -31,11 +33,11 @@ Epistasis_working_dir = "Epistasis_tmp/"
 output_dir = "epifiles/"
 # MiG specifications
 resource_specs = {}
-resource_specs["ARCHITECTURE"] ="AMD64"
-resource_specs["RUNTIMEENVIRONMENT"] = "GNU_R"
+#resource_specs["ARCHITECTURE"] ="AMD64"
+resource_specs["RUNTIMEENVIRONMENT"] = "GNU_R\nPYTHON-2"
 resource_specs["VGRID"] = "DCSC"
 resource_specs["CPUTIME"] = 120000
-resource_specs["MEMORY"] = 5000
+resource_specs["MEMORY"] = 2000
 resource_specs["DISK"] = 1
 
 #resource_specs["ARCHITECTURE"] = "AMD64"

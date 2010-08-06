@@ -6,8 +6,8 @@ import createmrsl
 import sys 
 #sys.path.append("Gridinterface/migscripts/")
 #import miglib
-import migscripts.miglib as miglib
-import string 
+import miglib
+
 
 from mylogger import log
 
@@ -63,7 +63,7 @@ def create_job(exec_commands, input_files, executables, local_working_dir, mig_w
     #cleanUpInputFiles(files_to_upload) # delete job input files 
     remove_files([mig_archive_dest, mrsl_file])
     #remove_files_local(files_to_upload)
-    remove_files_local([archive, mrsl_file])
+    #remove_files_local([archive, mrsl_file])
     
     return job_id
 
@@ -210,9 +210,9 @@ def ls(path):
 def path_exists(path):
     path_str = "path="+path
     exit_code, output = mig_function_wrapper_allow_error(miglib.ls_file, path_str)  # handle the remote exit code here
-    not_found_error = "105"
-    exists = not_found_error != exit_code
-    
+    not_found_error = 105
+    exists = not (not_found_error == exit_code)
+    #print "exit code",  exit_code, "exists", exists, "type", type(exit_code)
     #if not exists: # maybe path is a dir
     #    exists = files != []
     #print "output", output
@@ -231,7 +231,7 @@ def get_output(mig_filelocation, local_filelocation):
     #else: 
     #    print "Can't get file : "+filename
     #    return ""
-    #MiG.removeFiles(filename)
+    #remove_files([mig_filelocation])
     #MiG.removeDir(job["workingDir"]) # directory
     #allfiles.extend(job["outputfiles"])  # output
     return local_filelocation

@@ -1,13 +1,14 @@
 import os
 import tarfile
+import subprocess
+import pickle
 
 def main():
     job = load_job_data()
     run_epistasis_job(job)
 
-
 def run_epistasis_job(job):
-    create_dir(job["output_dir"], True) # create and enter output dir
+    create_dir(job["output_dir"], enter_directory=True) # create and enter output dir
     
     job_args_file = "job_arguments.dat"
     gene_list = map(str,job["gene_list"])
@@ -16,12 +17,9 @@ def run_epistasis_job(job):
     create_job_arguments_file(filename=job_args_file, selection_variable=select_var, sel_variable_values= job["class"], genes=gene_list, traits=trait_list)
     argstr = "../"+job["data_file"]+" "+job_args_file
     execute_epistasis(job["r_files"], "../", argstr, job["r_bin"], job["main_r_file"]) # execute program
-    archive_name = job["output_files"][0]
-        
-    os.chdir("../")
+    archive_name = os.path.basename(job["output_files"][0]) # epifilesN.tar.gz
+    os.chdir("../") # go to back to original working dir
     archive_output(target_dir=job["output_dir"], dest_dir="./",arc_name=archive_name) # archive output dir
-    clean_up_epistasis(job["output_dir"], [archive_name, job["main_script"]]) # delete all excess files
-
 
 def extract_job_files(filepath, dest_dir):
     prog_files = tarfile.open(dest_dir+filepath, "r")
@@ -38,9 +36,13 @@ def create_dir(dir_path, enter_directory=False):
             os.chdir(dir_path)
 
 def archive_output(target_dir, arc_name, dest_dir):
-    output_files = tarfile.open(dest_dir+arc_name, 'w:gz')
+    print "archiving"
+    output_files = tarfile.open(os.path.join(dest_dir,arc_name), 'w:gz')
+    
     output_files.add(target_dir, arcname="")
     output_files.close()
+    print "done archiving"
+    print os.listdir(".")
 
 def clean_up_epistasis(working_dir_path, exceptions_list):    
     for root, dirs, files in  os.walk(working_dir_path, topdown=False):
@@ -55,20 +57,28 @@ def clean_up_epistasis(working_dir_path, exceptions_list):
 #            print "removed "+direct
         
     os.rmdir(working_dir_path)
-                    
+
 def execute_epistasis(r_files, path, arg_str, r_bin, r_main): 
     cmd_begin = r_bin+" --save CMD BATCH "
     try:
         for f in r_files:
             cmd = cmd_begin+path+f
             print "Running "+cmd
-            proc=os.popen(cmd, "w")
-            proc.close()
+            proc=subprocess.Popen(cmd, shell=True,  stdout=subprocess.PIPE)
+            proc.wait()
  
         run_cmd = r_bin+" --save <"+path+r_main+"  --args "+arg_str
         print run_cmd
-        prc= os.popen(run_cmd, "w")
-        prc.close()
+        #prc= subprocess.Popen(run_cmd, "w")
+        #prc.wait()
+        proc = subprocess.Popen(run_cmd, shell=True) # takes a list cmdline args
+        #    while True:
+         #       line = proc.stdout.readline()
+         #       if not line:
+          #          break
+          #      print line,
+        proc.wait()
+        
     except:
         print "error in executeEpistasis()"
         
@@ -103,9 +113,9 @@ def create_job_arguments_file(filename, selection_variable, sel_variable_values,
     f.close()
 
 def load_job_data():
-    import pickle
-    
-    pkl_file = open('job_file.pkl', 'rb')
+    #import pickle
+    #job_file = sys.argv[1]
+    pkl_file = open("job_file.pkl", 'rb')
     data1 = pickle.load(pkl_file)
     pkl_file.close()
 #    print "loaded job data: ", data1

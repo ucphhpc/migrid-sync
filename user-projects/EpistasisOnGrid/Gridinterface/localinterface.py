@@ -56,7 +56,7 @@ def create_job(exec_commands, input_files, executables, local_working_dir, mig_w
                 print line,
 
             #print str(proc.stdout.read())
-            proc.close()
+            proc.wait()
     
     if olddir != "": # restore to initial working dir
         os.chdir(olddir)
