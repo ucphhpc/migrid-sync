@@ -474,6 +474,7 @@ if (jQuery) (function($){
                 
       $(folder_pane).addClass('wait');
 
+      statusbar.html('loading directory entries...');
       $.getJSON(options.connector,
         { path: t, output_format: 'json', flags: 'fa' },
 	function(jsonRes, textStatus) {
@@ -490,6 +491,7 @@ if (jQuery) (function($){
 	      }
 	  }
 		
+          statusbar.html('updating directory entries...');
           var folders = '';
 		
           // Root node                    
@@ -500,7 +502,6 @@ if (jQuery) (function($){
 
           // Regular nodes from here on after
           folders += '<ul class="jqueryFileTree">';          
-          var files = '<ul class="jqueryFileList">';
 
           var total_file_size = 0;
           var file_count = 0.0;          
@@ -508,13 +509,17 @@ if (jQuery) (function($){
           var base_css_style = 'file';
           var extra_css_style = '';
           var entry_title = '';
+          var entry_html = '';
 
           var dir_prefix = '';
           var path = '';
           
+	  // .html('') is extremely slow with >1000 entries in filelisting!
+          // use DOM innerHTML instead to avoid unresponsive script warnings
+          //$('.fm_files table tbody').html('');
+	  document.getElementById('fm_filelistbody').innerHTML = '';
           $(".jqueryFileTree.start").remove();
           $('.fm_files div').remove();
-          $('.fm_files table tbody').html('');
           
           for (i=0;i<listing.length;i++) {
             
@@ -543,9 +548,10 @@ if (jQuery) (function($){
                   extra_css_style = listing[i]['extra_class'];
 
                   path += '/';
-                  folders +=  '<li class="'+base_css_style+' ' +extra_css_style+' collapsed" rel_path="'+path+'" title="'+entry_title+'"><div>'
-                      + listing[i]['name']
-                      +'</div></li>\n';
+                  folders +=  '<li class="recent ' + base_css_style + ' ' +
+		      extra_css_style + ' collapsed" rel_path="' + path +
+		      '" title="' + entry_title + '"><div>' 
+                      + listing[i]['name'] + '</div></li>\n';
                   dir_prefix = '##';
                   
                   cur_folder_names.push(listing[i]['name']);
@@ -554,25 +560,29 @@ if (jQuery) (function($){
               else {
                   cur_file_names.push(listing[i]['name']);
               }
-                        
-              $('.fm_files table tbody').append($('<tr></tr>')
-                                                .attr('rel_path', path)
-                                                .addClass(base_css_style)
-                                                .addClass(extra_css_style)
-                                                .attr('title', entry_title)
-                                                .addClass('ext_'+listing[i]['ext'])
-                                                .dblclick( function() { doubleClickEvent(this); } )
-                                                .append(
-                                                    $( '<td style="padding-left: 20px;"><div>'+dir_prefix+listing[i]['name']+'</div>'+listing[i]['name']+'</td>'+
-                                                       '<td><div>'+listing[i]['file_info']['size']+'</div>'+pp_bytes(listing[i]['file_info']['size'])+'</td>'+
-                                                       '<td><div>'+listing[i]['file_info']['ext']+'</div>'+listing[i]['file_info']['ext']+'</td>'+
-                                                       '<td><div>'+listing[i]['file_info']['created']+'</div>'+pp_date(listing[i]['file_info']['created'])+'</td>'
-                                                     )
-                                                ));
+
+	      /* manually build entry to reduce risk of script timeout warnings
+                 from excessive html DOM manipulation. Mark the entry as
+                 recent to ease targetted context menu and drag n' drop later
+              */
+              entry_html = '<tr class="recent ' + base_css_style + ' ' +
+		  extra_css_style + ' ' + 'ext_' + listing[i]['ext'] +
+		  '" title="' + entry_title + '" rel_path="'+path+'">' +
+		  '<td style="padding-left: 20px;"><div>' + dir_prefix +
+		  listing[i]['name'] + '</div>' + listing[i]['name'] +
+		  '</td>' + '<td><div>' + listing[i]['file_info']['size'] +
+		  '</div>' + pp_bytes(listing[i]['file_info']['size']) +
+		  '</td>' + '<td><div>' + listing[i]['file_info']['ext'] +
+		  '</div>' + listing[i]['file_info']['ext'] + '</td>'+
+		  '<td><div>' + listing[i]['file_info']['created'] + '</div>' +
+		  pp_date(listing[i]['file_info']['created']) + '</td>' +
+		  '</tr>';
+              $('.fm_files table tbody').append($(entry_html)
+						.dblclick( function() { doubleClickEvent(this); } ));
               emptyDir = false;
           }
 
-            folders, files += '</ul>';
+            folders += '</ul>';
 
             // End the root node
             if (t=='/') {
@@ -586,7 +596,8 @@ if (jQuery) (function($){
                 addressbar.find('input[name=fm_current_path]').val('/'+t);  
             }
             
-            folder_pane.removeClass('wait').append(folders);
+            folder_pane.removeClass('wait');
+            folder_pane.append(folders);
             
             // Inform tablesorter of new data
             var sorting = [[0, 0]]; 
@@ -626,47 +637,77 @@ if (jQuery) (function($){
                     });
             }
             
-            // Associate context-menus
-            $("tr.directory, li.directory div").contextMenu(
-		{ menu: 'folder_context'},
-		function(action, el, pos) {
-                    if ($(el).tagName() == 'DIV') {
-                        (options['actions'][action])(action, el.parent(), pos);
-                    } else {
-                        (options['actions'][action])(action, el, pos);
-                    }                                                                                           
-                });
-            
-            $("tr.file").contextMenu(
-		{ menu: 'file_context'},
-                function(action, el, pos) {
-                    (options['actions'][action])(action, el, pos);                                                                                      
-                });
+            // Bind actions to entries in a non-blocking way to avoid 
+            // unresponsive script warnings with many entries
+
+            // Associate context menus
+            $("tr.recent.directory, li.recent.directory div").each(function() { 
+		var t = $(this); 
+		setTimeout( function() {
+		    t.contextMenu(
+			{ menu: 'folder_context'},
+			function(action, el, pos) {
+			    if ($(el).tagName() == 'DIV') {
+				(options['actions'][action])(action, el.parent(), pos);
+			    } else {
+				(options['actions'][action])(action, el, pos);
+			    }                                                                                           
+			})
+		}, 10);
+	    });
+            $("tr.recent.file").each(function() { 
+		var t = $(this); 
+		setTimeout( function() {
+		    t.contextMenu(
+			{ menu: 'file_context'},
+			function(action, el, pos) {
+			    (options['actions'][action])(action, el, pos);
+			})
+		}, 10);
+	    });
             
             // Associate drag'n'drop
-            $('tr.file, tr.directory, li.directory').draggable(
-		{cursorAt: 
-		   { cursor: 'move', top: 0, left: -10 },
-                 distance: 5,
-                 helper: function(event) {
-                     return $('<div style="display: block;">&nbsp;</div>')
-                         .attr('rel_path', $(this).attr('rel_path'))
-                         .attr('class', $(this).attr('class'))
-                         .css('width', '20px');
-                 }
-                }
-            );
+            $('tr.recent.file, tr.recent.directory, li.recent.directory').each(function() { 
+		var t = $(this); 
+		setTimeout( function() {
+			t.draggable(
+			    {cursorAt: 
+			     { cursor: 'move', top: 0, left: -10 },
+			     distance: 5,
+			     helper: function(event) {
+				 return $('<div style="display: block;">&nbsp;</div>')
+				     .attr('rel_path', $(this).attr('rel_path'))
+				     .attr('class', $(this).attr('class'))
+				     .css('width', '20px');
+			     }
+			    }
+			)
+		}, 10);
+	    });
 
-            $('tr.directory, li.directory').droppable(
-		{ greedy: true,
-                  drop: function(event, ui) {
-                      clipboard['is_dir'] = $(ui.helper).hasClass('directory');
-                      clipboard['path']   = $(ui.helper).attr(pathAttribute);
-                      copy($(ui.helper).attr('rel_path'), 
-			   $(this).attr('rel_path'));
-                  }
-                }); 
-            
+            $('tr.recent.directory, li.recent.directory').each(function() { 
+		var t = $(this); 
+		setTimeout( function() {
+		    t.droppable(
+			{ greedy: true,
+			  drop: function(event, ui) {
+			      clipboard['is_dir'] = $(ui.helper).hasClass('directory');
+			      clipboard['path'] = $(ui.helper).attr(pathAttribute);
+			      copy($(ui.helper).attr('rel_path'), 
+				   $(this).attr('rel_path'));
+			  }
+			})
+		}, 10);
+	    });
+
+	    // remove recent markers
+            $('tr.recent, li.recent').each(function() { 
+		var t = $(this); 
+		setTimeout( function() {
+		    t.removeClass('recent');
+		}, 10);
+	    });
+
             // Binds: Expands and a call to showbranch
             // or
             // Binds: Collapse
