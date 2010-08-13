@@ -109,6 +109,16 @@
 		              interpreter-mode-alist))
 (autoload 'python-mode "python-mode" "Python editing mode." t)
 
+;; javascript mode from http://www.brgeight.se/downloads/emacs/javascript.el
+;; with fall back to built-in generic-x mode if javascript mode is unavailable
+(require 'generic-x)
+(when (locate-library "javascript")
+	(setq auto-mode-alist
+		(append '(("\\.js$"  . javascript-mode)
+		) auto-mode-alist))
+	(autoload 'javascript-mode "javascript" "JavaScript editing mode." t)
+	)
+
 (setq auto-mode-alist
 	(append '(("\\.c$"  . c-mode)
 	("\\.h$"  . c-mode)
