@@ -566,6 +566,7 @@ You can simply copy/paste from the available widget file links below if you want
 <a class="urllink" href="/images/widgets/simple-move.app">simple-move</a>,
 <a class="urllink" href="/images/widgets/portlets.app">portlets</a>,
 <a class="urllink" href="/images/widgets/countdown.app">countdown</a>,
+<a class="urllink" href="/images/widgets/piechart.app">pie chart</a>,
 <a class="urllink" href="/images/widgets/simple-jobmon.app">simple-jobmon</a>
 </td></tr>
 <tr><td>
