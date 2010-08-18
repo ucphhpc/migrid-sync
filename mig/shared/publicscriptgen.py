@@ -568,12 +568,13 @@ if [ -z \"$mig_server\" ]; then
     mig_server=\"$conf_value\"
 fi
 
+# Force tilde and variable expansion on path vars
 read_conf $conf 'certfile'
-cert_file=\"$conf_value\"
+eval cert_file=\"$conf_value\"
 read_conf $conf 'keyfile'
-key_file=\"$conf_value\"
+eval key_file=\"$conf_value\"
 read_conf $conf 'cacertfile'
-ca_cert_file=\"$conf_value\"
+eval ca_cert_file=\"$conf_value\"
 read_conf $conf 'password'
 password=\"$conf_value\"
 read_conf $conf 'connect_timeout'
@@ -591,9 +592,13 @@ check_var keyfile \"$key_file\"
 if not mig_server:
     mig_server = read_conf(conf, 'migserver')
 
-cert_file = read_conf(conf, 'certfile')
-key_file = read_conf(conf, 'keyfile')
-ca_cert_file = read_conf(conf, 'cacertfile')
+def expand_path(path):
+    return os.path.expanduser(os.path.expandvars(path))
+
+# Force tilde and variable expansion on path vars
+cert_file = expand_path(read_conf(conf, 'certfile'))
+key_file = expand_path(read_conf(conf, 'keyfile'))
+ca_cert_file = expand_path(read_conf(conf, 'cacertfile'))
 password = read_conf(conf, 'password')
 connect_timeout = read_conf(conf, 'connect_timeout')
 max_time = read_conf(conf, 'max_time')
