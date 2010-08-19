@@ -1,7 +1,6 @@
 <!--
 Name: Pie chart
-Description: Pie chart using JQuery Google Charts plugin (modification
-of default demo)
+Description: Pie chart using JQuery Google Charts plugin (modification of default demo)
 Requires: jquery.js, jquery.jgcharts.js
 -->
 <script type="text/javascript">
