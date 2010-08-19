@@ -1,5 +1,7 @@
 <!-- 
 Name: Calculator
+Author: Jonas Bardino <bardino AT diku DOT dk>
+License: GPLv2
 Description: Simple calculator using JQuery calculator plugin (modification of plugin demo)
 Requires: jquery.js, jquery.calculator.js, jquery.calculator.css
 -->

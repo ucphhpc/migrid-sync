@@ -1,5 +1,7 @@
 <!-- 
 Name: RSS Feed Reader
+Author: Jonas Bardino <bardino AT diku DOT dk>
+License: GPLv2
 Description: Pulls in MiG changelog with JQuery zrssfeed plugin (modification of plugin demo)
 Requires: jquery.js, jquery.zrssfeed.js, jquery.zrssfeed.css
 -->

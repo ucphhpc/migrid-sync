@@ -1,5 +1,7 @@
 <!-- 
 Name: Weather
+Author: Jonas Bardino <bardino AT diku DOT dk>
+License: GPLv2
 Description: Copenhagen weather using JQuery zweatherfeed plugin (modification of plugin demo)
 Requires: jquery.js, jquery.zweatherfeed.js, jquery.zweatherfeed.css
 -->

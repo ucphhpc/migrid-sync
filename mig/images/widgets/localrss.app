@@ -1,5 +1,7 @@
 <!--
 Name: Local RSS Feed Reader
+Author: Jonas Bardino <bardino AT diku DOT dk>
+License: GPLv2
 Description: Pulls in a local RSS feed (only works for local URLs, but allows client cert support)
 Requires: jquery.js
 -->

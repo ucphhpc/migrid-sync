@@ -1,5 +1,7 @@
 <!-- 
 Name: Calendar
+Author: Jonas Bardino <bardino AT diku DOT dk>
+License: GPLv2
 Description: Shiny calendar using JQuery UI Datepicker (modification of default demo)
 Requires: jquery.js, jquery-ui.js, jquery-ui.css
 -->
