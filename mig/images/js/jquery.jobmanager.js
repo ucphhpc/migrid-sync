@@ -263,7 +263,7 @@ if (jQuery) (function($){
         }
     });
     
-    $("table")
+    $("#jm_jobmanager")
     .tablesorter({  widgets: ["zebra", "multiselect", "contextual"],
                     textExtraction: function(node) {
                                     var stuff = $("div", node).html();
@@ -279,7 +279,7 @@ if (jQuery) (function($){
                     });
 
     // Check CheckAll when read all
-    $("table").bind("sortEnd", function() { $("#checkAll").attr("checked", false); });
+    $("#jm_jobmanager").bind("sortEnd", function() { $("#checkAll").attr("checked", false); });
     
     $("#append").click(function() {
 
@@ -343,9 +343,9 @@ if (jQuery) (function($){
 
         var sorting = [[1,1]];
         // Inform tablesorter of new data
-        $("table").trigger("update");
+        $("#jm_jobmanager").trigger("update");
         if (job_count > 0) {
-          $("table").trigger("sorton", [sorting]);
+          $("#jm_jobmanager").trigger("sorton", [sorting]);
         }
         
       });
