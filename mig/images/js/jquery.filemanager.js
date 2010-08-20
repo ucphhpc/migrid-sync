@@ -72,14 +72,14 @@ if (jQuery) (function($){
         //       The stated workaround is used in jsonWrapper.
         var dialogOptions = { width: '800px', autoOpen: false, 
                               closeOnEscape: true, modal: true };
-        var okDialog      = { buttons: {Ok: function() 
-                                        {$(this).dialog('close');} },
-                              width: '800px', autoOpen: false, 
-                              closeOnEscape: true, modal: true};
-        var closeDialog   = { buttons: {Close: function() 
-                                        {$(this).dialog('close');} }, 
-                              width: '800px', autoOpen: false, 
-                              closeOnEscape: true, modal: true};
+        var okDialog = { buttons: {Ok: function() 
+                                   {$(this).dialog('close');} },
+                         width: '800px', autoOpen: false, 
+                         closeOnEscape: true, modal: true};
+        var closeDialog = { buttons: {Close: function() 
+                                      {$(this).dialog('close');} }, 
+                            width: '800px', autoOpen: false, 
+                            closeOnEscape: true, modal: true};
         
         function doubleClickEvent(el) {
             if (clickaction != undefined) {
@@ -529,8 +529,8 @@ if (jQuery) (function($){
               }
               
               is_dir = listing[i]['type'] == 'directory';
-              base_css_style  = 'file';
-              dir_prefix      = '__';
+              base_css_style = 'file';
+              dir_prefix = '__';
                         
               // Stats for the statusbar
               file_count++;
