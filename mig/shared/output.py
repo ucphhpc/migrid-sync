@@ -1026,8 +1026,8 @@ Exit code: %s Description: %s<br />
                 lines.append('''
 <thead class="title">
   <th>Name</th>
-  <th width="8"><!-- Member --></th>
   <th width="8"><!-- Owner --></th>
+  <th width="8"><!-- Member --></th>
   <th class=centertext colspan="2">Private web pages</th>
   <th class=centertext colspan="2">Public web pages</th>
   <th class=centertext colspan="1">Owner Wiki</th>
@@ -1043,15 +1043,15 @@ Exit code: %s Description: %s<br />
                     lines.append('<tr>')
                     lines.append('<td>%s</td>' % obj['name'])
                     lines.append('<td>')
+                    if obj.has_key('administratelink'):
+                        lines.append('%s'
+                                 % html_link(obj['administratelink']))
+                    lines.append('</td>')
+                    lines.append('<td>')
                     # membership links: should be there in any case
                     if obj.has_key('memberlink'):
                         lines.append('%s'
                                  % html_link(obj['memberlink']))
-                    lines.append('</td>')
-                    lines.append('<td>')
-                    if obj.has_key('administratelink'):
-                        lines.append('%s'
-                                 % html_link(obj['administratelink']))
                     lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('editprivatelink'):

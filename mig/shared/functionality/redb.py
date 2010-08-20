@@ -116,7 +116,7 @@ $(document).ready(function() {
 	        }
               });
 
-          // table initially sorted by col. 1 (admin), then 0
+          // table initially sorted by col. 1 (admin), then 0 (name)
           var sortOrder = [[2,1],[0,0]];
 
           // use image path for sorting if there is any inside
@@ -159,16 +159,6 @@ $(document).ready(function() {
          'title': 'Show information about runtime environment',
          'text': 'Documentation on runtime environments'})
 
-    if configuration.site_swrepo_url:
-        output_objects.append({'object_type': 'sectionheader', 'text': ''})
-        output_objects.append({'object_type': 'link',
-                               'destination': configuration.site_swrepo_url,
-                               'class': 'swrepolink',
-                               'title': 'Browse available software packages',
-                               'text': 'Open software catalogue for %s' % \
-                               configuration.short_title,
-                               })
-
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Existing runtime environments'})
 
@@ -206,6 +196,16 @@ $(document).ready(function() {
 
     output_objects.append({'object_type': 'runtimeenvironments',
                           'runtimeenvironments': runtimeenvironments})
+
+    if configuration.site_swrepo_url:
+        output_objects.append({'object_type': 'sectionheader', 'text': 'Software Packages'})
+        output_objects.append({'object_type': 'link',
+                               'destination': configuration.site_swrepo_url,
+                               'class': 'swrepolink',
+                               'title': 'Browse available software packages',
+                               'text': 'Open software catalogue for %s' % \
+                               configuration.short_title,
+                               })
 
     output_objects.append({'object_type': 'sectionheader', 'text': 'Additional Runtime Environments'})
     output_objects.append({'object_type': 'link',

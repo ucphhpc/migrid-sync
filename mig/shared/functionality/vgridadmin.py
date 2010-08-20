@@ -287,8 +287,8 @@ $(document).ready(function() {
 	        }
               });
 
-          // table initially sorted by col. 2 (admin), then 1 (member), then 0
-          var sortOrder = [[2,1],[1,1],[0,0]];
+          // table initially sorted by col. 1 (admin), then 2 (member), then 0 (name)
+          var sortOrder = [[1,1],[2,1],[0,0]];
 
           // use image path for sorting if there is any inside
           var imgTitle = function(contents) {
