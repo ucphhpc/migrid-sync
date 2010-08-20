@@ -339,16 +339,15 @@ VGrids share files and resources. Members can access web pages, files and resour
                            })
 
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Create a new VGrid'})
+                          : 'Additional VGrids'})
+    output_objects.append({'object_type': 'text', 'text'
+                          : 'Please enter a name for the new VGrid to add, using slashes to specify nesting. I.e. if you own a VGrid called ABC, you can create a sub-VGrid called DEF by entering ABC/DEF below.'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : '''<form method="get" action="createvgrid.py">
     <input type="text" size=40 name="vgrid_name" />
     <input type="hidden" name="output_format" value="html" />
     <input type="submit" value="Create VGrid" />
     </form>
-    <br />
     '''})
-
-    # print "DEBUG: %s" % output_objects
 
     return (output_objects, status)

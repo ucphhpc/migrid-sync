@@ -96,7 +96,6 @@ def build_reitem_object(re_dict):
                 'example': environment_item['example'],
                 'description': environment_item['description'],
                 })
-
     return {
         'object_type': 'runtimeenvironment',
         'name': re_dict['RENAME'],
@@ -151,70 +150,9 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Runtime environment details'
-    title_entry['javascript'] = '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-1.7.2.custom.css" media="screen"/>
 
-<script type="text/javascript" src="/images/js/jquery-1.3.2.min.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui-1.7.2.custom.min.js"></script>
-
-<script type="text/javascript" >
-var runConfirmDialog = function(text, link, textFieldName) {
-
-    if (link == undefined) {
-        link = "#";
-    }
-    if (text == undefined) {
-        text = "Are you sure?";
-    }
-    $("#confirm_text").html(text);
-
-    var addField = function() { /* doing nothing... */ };
-    if (textFieldName != undefined) {
-        $("#confirm_input").show();
-        addField = function() {
-            link += textFieldName + "=" + $("#confirm_input")[0].value;
-        }
-    }
-
-    $("#confirm_dialog").dialog("option", "buttons", {
-              "No": function() { $("#confirm_input").hide();
-                                 $("#confirm_text").html("");
-                                 $("#confirm_dialog").dialog("close");
-                               },
-              "Yes": function() { addField();
-                                  window.location = link;
-                                }
-            });
-    $("#confirm_dialog").dialog("open");
-}
-
-$(document).ready(function() {
-
-          // init confirmation dialog
-          $("#confirm_dialog").dialog(
-              // see http://jqueryui.com/docs/dialog/ for options
-              { autoOpen: false,
-                modal: true, closeOnEscape: true,
-                width: 500,
-                buttons: {
-                   "Cancel": function() { $("#" + name).dialog("close"); }
-	        }
-              });
-     }
-);
-</script>
-'''
     output_objects.append({'object_type': 'header', 'text'
                           : 'Show runtime environment details'})
-    output_objects.append({'object_type': 'html_form',
-                           'text':'''
- <div id="confirm_dialog" title="Confirm" style="background:#fff;">
-  <div id="confirm_text"><!-- filled by js --></div>
-   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"/></textarea>
- </div>
-'''
-                           })
 
     (re_dict, msg) = get_re_dict(re_name, configuration)
     if not re_dict:
@@ -224,18 +162,4 @@ $(document).ready(function() {
 
     output_objects.append(build_reitem_object(re_dict))
 
-    if client_id ==  re_dict['CREATOR']:
-        
-        output_objects.append({'object_type': 'link',
-                               'destination':
-                               "javascript:runConfirmDialog('%s','%s');" % \
-                               ("Really delete runtime environment %s?"
-                                % re_name, 
-                                'deletere.py?re_name=%s'\
-                                % (re_name)),
-                               'class': 'removelink',
-                               'title': 'Delete runtime environment %s'
-                               % re_name,
-                               'text': 'Delete %s' % re_name})
-    
     return (output_objects, returnvalues.OK) 

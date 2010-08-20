@@ -60,6 +60,91 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Runtime Environments'
+
+    # jquery support for tablesorter and confirmation on "leave":
+
+    title_entry['javascript'] = '''
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+
+<script type="text/javascript" >
+
+var runConfirmDialog = function(text, link, textFieldName) {
+
+    if (link == undefined) {
+        link = "#";
+    }
+    if (text == undefined) {
+        text = "Are you sure?";
+    }
+    $( "#confirm_text").html(text);
+
+    var addField = function() { /* doing nothing... */ };
+    if (textFieldName != undefined) {
+        $("#confirm_input").show();
+        addField = function() {
+            link += textFieldName + "=" + $("#confirm_input")[0].value;
+        }
+    }
+
+    $( "#confirm_dialog").dialog("option", "buttons", {
+              "No": function() { $("#confirm_input").hide();
+                                 $("#confirm_text").html("");
+                                 $("#confirm_dialog").dialog("close");
+                               },
+              "Yes": function() { addField();
+                                  window.location = link;
+                                }
+            });
+    $( "#confirm_dialog").dialog("open");
+}
+
+$(document).ready(function() {
+
+          // init confirmation dialog
+          $( "#confirm_dialog" ).dialog(
+              // see http://jqueryui.com/docs/dialog/ for options
+              { autoOpen: false,
+                modal: true, closeOnEscape: true,
+                width: 500,
+                buttons: {
+                   "Cancel": function() { $( "#" + name ).dialog("close"); }
+	        }
+              });
+
+          // table initially sorted by col. 1 (admin), then 0
+          var sortOrder = [[2,1],[0,0]];
+
+          // use image path for sorting if there is any inside
+          var imgTitle = function(contents) {
+              var key = $(contents).find("a").attr("class");
+              if (key == null) {
+                  key = $(contents).html();
+              }
+              return key;
+          }
+
+          $("#runtimeenvtable").tablesorter({widgets: ["zebra"],
+                                        sortList:sortOrder,
+                                        textExtraction: imgTitle
+                                       });
+     }
+);
+</script>
+'''
+
+    output_objects.append({'object_type': 'html_form',
+                           'text':'''
+ <div id="confirm_dialog" title="Confirm" style="background:#fff;">
+  <div id="confirm_text"><!-- filled by js --></div>
+   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"/></textarea>
+ </div>
+'''                       })
+
     output_objects.append({'object_type': 'header', 'text'
                           : 'Runtime Environments'})
 
@@ -84,13 +169,6 @@ def main(client_id, user_arguments_dict):
                                configuration.short_title,
                                })
 
-    output_objects.append({'object_type': 'sectionheader', 'text': ''})
-    output_objects.append({'object_type': 'link',
-                           'destination': 'adminre.py',
-                           'class': 'addlink',
-                           'title': 'Specify a new runtime environment', 
-                           'text': 'Create a new runtime environment'})
-
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Existing runtime environments'})
 
@@ -107,9 +185,35 @@ def main(client_id, user_arguments_dict):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : msg})
             return (output_objects, returnvalues.SYSTEM_ERROR)
-        runtimeenvironments.append(build_reitem_object(re_dict))
+        re_item = build_reitem_object(re_dict)
+        re_name = re_item['name']
+        
+        re_item['viewruntimeenvlink'] = {'object_type': 'link',
+                                         'destination': "showre.py?re_name=%s" % re_name,
+                                         'class': 'infolink',
+                                         'title': 'View %s runtime environment' % re_name, 
+                                         'text': ''}
+        if client_id == re_item['creator']:
+            re_item['ownerlink'] = {'object_type': 'link',
+                                    'destination':
+                                    "javascript:runConfirmDialog('%s','%s');" % \
+                                    ("Really delete " + re_name + "?", 
+                                     'deletere.py?re_name=%s' % re_name),
+                                    'class': 'removelink',
+                                    'title': 'Delete %s runtime environment' % re_name, 
+                                    'text': ''}
+        runtimeenvironments.append(re_item)
+
     output_objects.append({'object_type': 'runtimeenvironments',
                           'runtimeenvironments': runtimeenvironments})
+
+    output_objects.append({'object_type': 'sectionheader', 'text': 'Additional Runtime Environments'})
+    output_objects.append({'object_type': 'link',
+                           'destination': 'adminre.py',
+                           'class': 'addlink',
+                           'title': 'Specify a new runtime environment', 
+                           'text': 'Create a new runtime environment'})
+
     return (output_objects, returnvalues.OK)
 
 

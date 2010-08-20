@@ -838,18 +838,32 @@ Exit code: %s Description: %s<br />
             if len(runtimeenvironments) == 0:
                 lines.append('No runtime environments found!')
             else:
-                lines.append('<table class="runtimeenvs"><tr><th>Name</th><th>Description</th><th>Details</th><th>Creator</th></tr>'
+                lines.append('''<table class="runtimeenvs" id="runtimeenvtable">
+<thead class="title">
+    <tr>
+        <th>Name</th>
+        <th width="8"><!-- View --></th>
+        <th width="8"><!-- Owner --></th>
+        <th>Description</th>
+        <th>Created</th>
+    </tr>
+</thead>
+<tbody>
+'''
                              )
                 row_number = 1
                 for single_re in runtimeenvironments:
-                    row_class = row_name[row_number % 2]
-                    lines.append('<tr class=%s><td>%s</td><td>%s</td><td><a class="viewlink" href="showre.py?re_name=%s">View</a></td><td>%s</td></tr>'
-                                  % (row_class, single_re['name'],
-                                 single_re['description'],
-                                 single_re['name'], single_re['creator'
-                                 ]))
+                    viewlink = html_link(single_re['viewruntimeenvlink'])
+                    ownerlink = single_re.get('ownerlink', '')
+                    if ownerlink:
+                        ownerlink = html_link(ownerlink)
+                    lines.append('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>'
+                                  % (single_re['name'], viewlink, ownerlink,
+                                 single_re['description'], single_re['created']))
                     row_number += 1
-                lines.append('</table>')
+                lines.append('''
+</tbody>
+</table>''')
         elif i['object_type'] == 'runtimeenvironment':
 
             software_html = \
