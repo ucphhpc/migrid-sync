@@ -299,7 +299,7 @@ if (jQuery) (function($){
         }
         filter_id = $(".filterid", config.container).val();
         if (filter_id != '') {
-            limit_opts = "job_id=" + filter_id + ';';
+            limit_opts += "job_id=" + filter_id + ';';
         }
         // add some html
         $.getJSON("jobstatus.py?output_format=json;"+limit_opts, {}, function(jsonRes, textStatus) {
