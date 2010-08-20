@@ -143,8 +143,10 @@ def check_mrsl_files(
 
                 logger.info('Found a file with PARSE status: %s'
                              % job_dict['JOB_ID'])
-                relative_path = filename.replace(root, '').lstrip('/')
-                message = 'USERJOBFILE %s\n' % relative_path
+                job_id = job_dict['JOB_ID']
+                client_id = job_dict['USER_CERT']
+                client_dir = client_id_dir(client_id)
+                message = 'USERJOBFILE %s/%s\n' % (client_dir, job_id)
                 if not send_message_to_grid_script(message, logger,
                         configuration):
                     print 'Fatal error: Could not write to grid stdin'
