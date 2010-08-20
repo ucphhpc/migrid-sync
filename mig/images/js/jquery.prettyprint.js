@@ -28,9 +28,10 @@ function pp_bytes(bytes) {
 function pp_date(time) {
   
   var aDate = new Date(time*1000);
+  // getMonth returns zero indexed number
   return  aDate.getFullYear() + '-'+
           pp_prefix(aDate.getDate()) + '-'+
-          pp_prefix(aDate.getMonth()) + ' '+
+          pp_prefix(aDate.getMonth()+1) + ' '+
           pp_prefix(aDate.getHours()) + ':'+
           pp_prefix(aDate.getMinutes());
   
