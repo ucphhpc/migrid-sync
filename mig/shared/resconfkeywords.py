@@ -116,8 +116,8 @@ def get_resource_specs(configuration):
         }))
     specs.append(('SCRIPTLANGUAGE', {
         'Title': 'Script Language',
-        'Description': 'The language the %s server should use to create the job scripts. Valid languages: %s'\
-             % (configuration.short_title, configuration.scriptlanguages),
+        'Description': "The language the %s server will use to create the control and job scripts to be executed on the resource. Please note that bourne compatible shell, 'sh', is the only fully supported language for dedicated resources at the moment. So you should not use any other value unless you really know what you are doing! Valid languages: %s"\
+             % (configuration.short_title, ', '.join(configuration.scriptlanguages)),
         'Example': 'sh',
         'Type': 'string',
         'Value': configuration.scriptlanguages[0],

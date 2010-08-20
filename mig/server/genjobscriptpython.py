@@ -261,6 +261,145 @@ io_log.flush()'''\
                                              + '")\n'
         return cmd
 
+    def generate_input_filelist(self, result='generate_input_filelist'):
+        """Generate filelist (user/system) of which files 
+        should be transfered from FE to EXE before job execution."""
+
+        cmd = \
+            '# Create files used by master_node_script (input/executables/systemfiles)\n'
+        fe_move_dict = {}
+
+        for infile in job_dict['INPUTFILES']:
+
+            # "filename" or "mig_server_filename resource_filename"
+
+            parts = infile.split()
+            mig_server_filename = str(parts[0])
+            try:
+                resource_filename = str(parts[1])
+            except:
+                resource_filename = mig_server_filename
+
+            # Source may be external in which case implicit destination needs attention
+
+            if resource_filename.find('://') != -1:
+
+                # Strip any protocol prefixes in destination for external sources
+
+                resource_filename = resource_filename.split('://', 1)[1]
+
+            # Always strip leading slashes to avoid absolute paths
+
+            resource_filename = resource_filename.lstrip('/')
+
+            # move entire top dir if resource_filename is a nested path
+
+            fe_move = resource_filename.split('/', 1)[0]
+
+            if not fe_move_dict.has_key(fe_move):
+                fe_move_dict[fe_move] = True
+
+        for executables in job_dict['EXECUTABLES']:
+
+            # "filename" or "mig_server_filename resource_filename"
+
+            parts = executables.split()
+            mig_server_filename = str(parts[0])
+            try:
+                resource_filename = str(parts[1])
+            except:
+                resource_filename = mig_server_filename
+
+            # Source may be external in which case implicit destination needs attention
+
+            if resource_filename.find('://') != -1:
+
+                # Strip any protocol prefixes in destination for external sources
+
+                resource_filename = resource_filename.split('://', 1)[1]
+
+            # Always strip leading slashes to avoid absolute paths
+
+            resource_filename = resource_filename.lstrip('/')
+
+            # move entire top dir if resource_filename is a nested path
+
+            fe_move = resource_filename.split('/', 1)[0]
+
+            if not fe_move_dict.has_key(fe_move):
+                fe_move_dict[fe_move] = True
+
+        cmd += 'input_fd = open("%s.inputfiles", "w")\n' % localjobname
+        for filename in fe_move_dict.keys():
+            cmd += '''
+if os.path.isfile("%s"):
+    input_fd.write("%s ")
+''' % (filename, filename)
+        cmd += 'input_fd.close()\n'
+
+        # Systemfiles
+
+        cmd += 'output_fd = open("%s.outputfiles", "w")\n' % localjobname
+        cmd += 'output_fd.write("%s.user.outputfiles ")\n' % localjobname
+        cmd += 'output_fd.write("%s.system.outputfiles ")\n' % localjobname
+        cmd += 'output_fd.write("%s.job")\n' % localjobname
+        cmd += 'output_fd.close()\n'
+        return cmd
+
+    def generate_output_filelists(self, real_job,
+                                  result='generate_output_filelists'):
+        """Generate filelists (user/system) of which files
+        should be transfered from EXE to FE upon job finish."""
+
+        exe_move_dict = {}
+        cmd = \
+            '# Create files used by master_node_script to determine which output files to transfer to FE\n'
+
+        cmd += 'output_fd = open("%s.user.outputfiles", "w")\n' % localjobname
+        for outputfile in job_dict['OUTPUTFILES']:
+
+            # "filename" or "resource_filename mig_server_filename"
+
+            parts = outputfile.split()
+            resource_filename = str(parts[0])
+
+            # We don't need mig_server_filename here so just skip mangling
+
+            # Always strip leading slashes to avoid absolute paths
+
+            resource_filename = resource_filename.lstrip('/')
+
+            # move entire top dir if resource_filename is a nested path
+
+            exe_move = resource_filename.split('/', 1)[0]
+
+            if not exe_move_dict.has_key(exe_move):
+                exe_move_dict[exe_move] = True
+
+        for filename in exe_move_dict.keys():
+            cmd += 'output_fd.write("%s ")\n' % filename
+        cmd += 'output_fd.close()\n'
+        cmd += 'output_fd = open("%s.system.outputfiles", "w")\n' % localjobname
+
+        # Sleep jobs only generate .status
+
+        if real_job:
+            cmd += 'output_fd.write("%s.stderr ")\n' % job_dict['JOB_ID']
+            cmd += 'output_fd.write("%s.stdout ")\n' % job_dict['JOB_ID']
+            cmd += 'output_fd.write("%s.status ")\n' % job_dict['JOB_ID']
+        cmd += 'output_fd.close()\n'
+        return cmd
+
+    def generate_iosessionid_file(self,
+                                  result='generate_iosessionid_file'):
+        """Generate file containing io-sessionid."""
+
+        cmd = '# Create file used containing io-sessionid.\n'
+        cmd += 'iosid_fd = open("%s.iosessionid", "w")\n' % localjobname
+        cmd += 'iosid_fd.write("%s")\n' % job_dict['MIGIOSESSIONID']
+        cmd += 'iosid_fd.close()\n'
+        return cmd
+
     def chmod_executables(self, result='chmod_status'):
         """Make sure EXECUTABLES are actually executable"""
 
