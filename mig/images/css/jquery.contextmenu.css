@@ -56,7 +56,7 @@
 
 .contextMenu LI.edit A { background-image: url(/images/icons/page_white_edit.png); }
 .contextMenu LI.cut A { background-image: url(/images/icons/cut.png); }
-.contextMenu LI.show A { background-image: url(/images/icons/arrow_down.png); }
+.contextMenu LI.show A { background-image: url(/images/icons/txt.png); }
 .contextMenu LI.resubmit A { background-image: url(/images/icons/arrow_redo.png); }
 .contextMenu LI.mkdir A { background-image: url(/images/icons/folder_add.png); }
 .contextMenu LI.rmdir A { background-image: url(/images/icons/folder_delete.png); }
@@ -75,7 +75,6 @@
 .contextMenu LI.rename A { background-image: url(/images/icons/drive_rename.png); }
 .contextMenu LI.quit A { background-image: url(/images/icons/door.png); }
 .contextMenu LI.mrsl a { background-image: url('/images/icons/page_white_text.png'); }
-.contextMenu LI.viewmrls a { background-image: url(/images/icons/file.png); }
 .contextMenu LI.statusfiles a{ background-image: url(/images/icons/drive.png); }
 .contextMenu LI.outputfiles a{ background-image: url(/images/icons/download.png); }
 .contextMenu LI.schedule a { background-image: url(/images/icons/calendar.png); }

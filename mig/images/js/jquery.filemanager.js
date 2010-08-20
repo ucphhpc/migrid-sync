@@ -86,12 +86,12 @@ if (jQuery) (function($){
                 clickaction(el);
                 return;
             } 
-            // if no clickaction is provided, default to opening and editing
+            // if no clickaction is provided, default to opening and showing
             if ($(el).hasClass('directory')) {
                 $('.fm_folders li [rel_path='+$(el).attr(pathAttribute)+']').click();
             } else {
                 // Do stuff with files.
-                callbacks['edit']('action', el, null);              
+                callbacks['show']('action', el, null);
             }
         }
 
@@ -196,9 +196,13 @@ if (jQuery) (function($){
         var callbacks = {
             
             show:   function (action, el, pos) { 
+		window.open('/cert_redirect/'+$(el).attr(pathAttribute))
+	    },
+            download:   function (action, el, pos) { 
                 document.location = 
                     'cat.py?path='
-                    +$(el).attr(pathAttribute)+'&output_format=file' },
+                    +$(el).attr(pathAttribute)+'&output_format=file'
+	    },
             edit:   function (action, el, pos) {
                 
                 $("#editor_dialog textarea[name=editarea]").val('');

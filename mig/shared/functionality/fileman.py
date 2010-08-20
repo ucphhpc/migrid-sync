@@ -109,8 +109,11 @@ def html_tmpl():
   </ul>
   
   <ul id="file_context" class="contextMenu">        
+    <li class="show">
+      <a href="#show">Show</a>
+    </li>
     <li class="download">
-      <a href="#show">Download</a>
+      <a href="#download">Download</a>
     </li>
     <li class="edit">
       <a href="#edit">Edit</a>
