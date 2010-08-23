@@ -45,10 +45,12 @@ RES_SPECIALS = (ALLOW, ASSIGN, RESID, OWNERS, CONF, MODTIME) = \
                ('__allow__', '__assign__', '__resid__', '__owners__',
                 '__conf__', '__modtime__')
 
-# Never repeatedly refresh maps within this number of seconds
+# Never repeatedly refresh maps within this number of seconds in same process
 # Used to avoid refresh floods with e.g. runtime envs page calling
-# refresh for each env when extracting providers
+# refresh for each env when extracting providers.
 MAP_CACHE_SECONDS = 30
+
+last_refresh = {RESOURCES: 0, VGRIDS: 0}
 
 def refresh_resource_map(configuration):
     """Refresh map of resources and their configuration. Uses a pickled
@@ -71,9 +73,12 @@ def refresh_resource_map(configuration):
         resource_map = {}
         map_stamp = -1
 
-    if map_stamp + MAP_CACHE_SECONDS > time.time():
+    if last_refresh[RESOURCES] + MAP_CACHE_SECONDS > time.time():
+        configuration.logger.info("Using cached resource map")
         lock_handle.close()
         return resource_map
+
+    configuration.logger.info("Refreshing resource map contents (%s vs %s)"  % (map_stamp + MAP_CACHE_SECONDS, time.time()))
 
     # Find all resources and their configurations
     
@@ -124,6 +129,7 @@ def refresh_resource_map(configuration):
         except Exception, exc:
             configuration.logger.error("Could not save resource map: %s" % exc)
 
+    last_refresh[RESOURCES] = time.time()
     lock_handle.close()
 
     return resource_map
@@ -150,7 +156,8 @@ def refresh_vgrid_map(configuration):
         vgrid_map = {RESOURCES: {}, VGRIDS: {default_vgrid: '*'}}
         map_stamp = -1
 
-    if map_stamp + MAP_CACHE_SECONDS > time.time():
+    if last_refresh[VGRIDS] + MAP_CACHE_SECONDS > time.time():
+        configuration.logger.info("Using cached vgrid map")
         lock_handle.close()
         return vgrid_map
 
@@ -246,6 +253,7 @@ def refresh_vgrid_map(configuration):
         except Exception, exc:
             configuration.logger.error("Could not save vgrid map: %s" % exc)
 
+    last_refresh[VGRIDS] = time.time()
     lock_handle.close()
 
     return vgrid_map
