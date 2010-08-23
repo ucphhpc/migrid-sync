@@ -51,6 +51,7 @@ RES_SPECIALS = (ALLOW, ASSIGN, RESID, OWNERS, CONF, MODTIME) = \
 MAP_CACHE_SECONDS = 30
 
 last_refresh = {RESOURCES: 0, VGRIDS: 0}
+last_map = {RESOURCES: {}, VGRIDS: {}}
 
 def refresh_resource_map(configuration):
     """Refresh map of resources and their configuration. Uses a pickled
@@ -72,13 +73,6 @@ def refresh_resource_map(configuration):
         configuration.logger.warn("No resource map to load - ok first time")
         resource_map = {}
         map_stamp = -1
-
-    if last_refresh[RESOURCES] + MAP_CACHE_SECONDS > time.time():
-        configuration.logger.info("Using cached resource map")
-        lock_handle.close()
-        return resource_map
-
-    configuration.logger.info("Refreshing resource map contents (%s vs %s)"  % (map_stamp + MAP_CACHE_SECONDS, time.time()))
 
     # Find all resources and their configurations
     
@@ -155,11 +149,6 @@ def refresh_vgrid_map(configuration):
         configuration.logger.warn("No vgrid map to load - ok first time")
         vgrid_map = {RESOURCES: {}, VGRIDS: {default_vgrid: '*'}}
         map_stamp = -1
-
-    if last_refresh[VGRIDS] + MAP_CACHE_SECONDS > time.time():
-        configuration.logger.info("Using cached vgrid map")
-        lock_handle.close()
-        return vgrid_map
 
     # Temporary backwards compatibility - old format had resource ID's as keys
     if not vgrid_map.has_key(VGRIDS):
@@ -260,11 +249,25 @@ def refresh_vgrid_map(configuration):
 
 def get_resource_map(configuration):
     """Returns the current map of resources and their configurations"""
-    return refresh_resource_map(configuration)
+    if last_refresh[RESOURCES] + MAP_CACHE_SECONDS > time.time():
+        #configuration.logger.info("Using cached resource map")
+        resource_map = last_map[RESOURCES]
+    else:
+        #configuration.logger.info("Refreshing resource map contents")
+        resource_map = refresh_resource_map(configuration)
+        last_map[RESOURCES] = resource_map
+    return resource_map
 
 def get_vgrid_map(configuration):
     """Returns the current map of resources and their vgrid participations"""
-    return refresh_vgrid_map(configuration)
+    if last_refresh[VGRIDS] + MAP_CACHE_SECONDS > time.time():
+        #configuration.logger.info("Using cached vgrid map")
+        vgrid_map = last_map[VGRIDS]
+    else:
+        #configuration.logger.info("Refreshing vgrid map contents")
+        vgrid_map = refresh_vgrid_map(configuration)
+        last_map[VGRIDS] = vgrid_map
+    return vgrid_map
 
 def user_owned_resources(configuration, client_id):
     """Extract a list of resources that client_id owns.
