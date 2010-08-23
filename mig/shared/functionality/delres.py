@@ -31,6 +31,7 @@ import os
 import fcntl
 
 import shared.returnvalues as returnvalues
+from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.vgridaccess import user_owned_resources, unmap_resource
@@ -65,10 +66,17 @@ def main(client_id, user_arguments_dict):
 
     res_dir = os.path.join(configuration.resource_home, res_name)
 
-    # Checking that the user owns the resource he is trying to delete.
-    users_resources = user_owned_resources(configuration, client_id)
-
-    if not res_name in users_resources:
+    # Prevent unauthorized access
+    
+    owners_path = os.path.join(res_dir, 'owners')
+    owner_list = unpickle(owners_path, logger)
+    if not owner_list:
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : "Could not look up '%s' owners - no such resource?" % res_name
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    elif client_id not in owner_list:
         logger.warning('user %s tried to delete resource "%s" not owned' % \
                        (client_id, res_name))
         output_objects.append({'object_type': 'error_text', 'text'
