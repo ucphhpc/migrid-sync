@@ -250,10 +250,8 @@ def refresh_vgrid_map(configuration):
 def get_resource_map(configuration):
     """Returns the current map of resources and their configurations"""
     if last_refresh[RESOURCES] + MAP_CACHE_SECONDS > time.time():
-        #configuration.logger.info("Using cached resource map")
         resource_map = last_map[RESOURCES]
     else:
-        #configuration.logger.info("Refreshing resource map contents")
         resource_map = refresh_resource_map(configuration)
         last_map[RESOURCES] = resource_map
     return resource_map
@@ -261,10 +259,8 @@ def get_resource_map(configuration):
 def get_vgrid_map(configuration):
     """Returns the current map of resources and their vgrid participations"""
     if last_refresh[VGRIDS] + MAP_CACHE_SECONDS > time.time():
-        #configuration.logger.info("Using cached vgrid map")
         vgrid_map = last_map[VGRIDS]
     else:
-        #configuration.logger.info("Refreshing vgrid map contents")
         vgrid_map = refresh_vgrid_map(configuration)
         last_map[VGRIDS] = vgrid_map
     return vgrid_map
