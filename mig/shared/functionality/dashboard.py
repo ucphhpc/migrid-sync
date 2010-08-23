@@ -97,7 +97,7 @@ $(document).ready(function() {
                     jobs = jsonRes[i].jobs;
                     //alert("inspect stats result: " + jobs);
                     $("#jobs_stats").removeClass("spinner").css("padding-left", "0px");
-                    $("#jobs_stats").html("");
+                    $("#jobs_stats").empty();
                     $("#jobs_stats").append("You have submitted a total of " + jobs.total +
                     " jobs: " + jobs.parse + " parse, " + jobs.queued + " queued, " +
                     jobs.executing + " executing, " + jobs.finished + " finished, " + jobs.retry +
@@ -118,7 +118,7 @@ $(document).ready(function() {
                     resources = jsonRes[i].resources;
                     //alert("inspect resources stats result: " + resources);
                     $("#res_stats").removeClass("spinner").css("padding-left", "0px");
-                    $("#res_stats").html("");
+                    $("#res_stats").empty();
                     $("#res_stats").append(resources.resources + " resources providing " +
                     resources.exes + " execution units in total allow execution of your jobs.");
                     break;
@@ -135,7 +135,7 @@ $(document).ready(function() {
                     disk = jsonRes[i].disk;
                     //alert("inspect disk stats result: " + disk);
                     $("#disk_stats").removeClass("spinner").css("padding-left", "0px");
-                    $("#disk_stats").html("");
+                    $("#disk_stats").empty();
                     $("#disk_stats").append("Your own " + disk.own_files +" files and " +
                     disk.own_directories + " directories take up " + roundNumber(disk.own_megabytes, 2) +
                     " MB in total and you additionally share " + disk.vgrid_files +
@@ -155,7 +155,7 @@ $(document).ready(function() {
                     certificate = jsonRes[i].certificate;
                     //alert("inspect certificate stats result: " + certificate);
                     $("#cert_stats").removeClass("spinner").css("padding-left", "0px");
-                    $("#cert_stats").html("");
+                    $("#cert_stats").empty();
                     $("#cert_stats").append("Your user certificate expires on " +
                     certificate.expire + ".");
                     break;

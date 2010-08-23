@@ -404,7 +404,7 @@ var runConfirmDialog = function(text, link, textFieldName) {
 
     $("#confirm_dialog").dialog("option", "buttons", {
               "No": function() { $("#confirm_input").hide();
-                                 $("#confirm_text").html("");
+                                 $("#confirm_text").empty();
                                  $("#confirm_dialog").dialog("close");
                                },
               "Yes": function() { addField();
