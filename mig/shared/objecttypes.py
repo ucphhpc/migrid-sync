@@ -174,6 +174,7 @@ user_stats = {'object_type': 'user_stats', 'required': ['disk', 'jobs',
                                                         'resources',
                                                         'certificate'],
               'optional': []}
+table_pager = {'object_type': 'table_pager', 'required': ['entry_name']}
 object_types = {'object_type': 'object_types',
                 'required_list': [('object_types', 'objects')]}
 
@@ -230,6 +231,7 @@ valid_types_list = [
     resource_info,
     vgrid_list,
     user_stats,
+    table_pager,
     ]
 
 # valid_types_dict = {"title":title, "link":link, "header":header}

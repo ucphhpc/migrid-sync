@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# redb - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# redb - manage runtime environments
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,9 +25,10 @@
 # -- END_HEADER ---
 #
 
-"""Show all available runtime environments"""
+"""Manage all available runtime environments"""
 
 import shared.returnvalues as returnvalues
+from shared.defaults import default_pager_entries
 from shared.functional import validate_input_and_cert
 from shared.functionality.showre import build_reitem_object
 from shared.init import initialize_main_variables, find_entry
@@ -69,6 +70,7 @@ def main(client_id, user_arguments_dict):
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 
 <script type="text/javascript" >
@@ -113,7 +115,7 @@ $(document).ready(function() {
                 width: 500,
                 buttons: {
                    "Cancel": function() { $( "#" + name ).dialog("close"); }
-	        }
+                }
               });
 
           // table initially sorted by col. 1 (admin), then 0 (name)
@@ -131,11 +133,14 @@ $(document).ready(function() {
           $("#runtimeenvtable").tablesorter({widgets: ["zebra"],
                                         sortList:sortOrder,
                                         textExtraction: imgTitle
-                                       });
+                                        })
+                               .tablesorterPager({ container: $("#pager"),
+                                        size: %s
+                                        });
      }
 );
 </script>
-'''
+''' % default_pager_entries
 
     output_objects.append({'object_type': 'html_form',
                            'text':'''
@@ -194,6 +199,8 @@ $(document).ready(function() {
                                     'text': ''}
         runtimeenvironments.append(re_item)
 
+    output_objects.append({'object_type': 'table_pager', 'entry_name': 'runtime envs',
+                           'default_entries': default_pager_entries})
     output_objects.append({'object_type': 'runtimeenvironments',
                           'runtimeenvironments': runtimeenvironments})
 

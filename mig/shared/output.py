@@ -926,6 +926,38 @@ Exit code: %s Description: %s<br />
             lines.append('<tr><td>Resource&nbsp;count</td><td>%s</td></tr>'
                           % i['resource_count'])
             lines.append('</table>')
+        elif i['object_type'] == 'table_pager':
+            page_entries = i.get('page_entries', [5, 10, 20, 25, 40, 50, 80,
+                                                  100, 250, 500, 1000])
+            default_entries = i.get('default_entries', 20)
+            if not default_entries in page_entries:
+                page_entries.append(default_entries)
+            toolbar = '''
+  <div>
+    <div class="toolbar">        
+      <div class="pager" id="pager">
+      <form style="display: inline;" action="">
+        <img class="first" src="/images/icons/arrow_left.png"/>
+        <img class="prev" src="/images/icons/arrow_left.png"/>
+        <input type="text" class="pagedisplay" />
+        <img class="next" src="/images/icons/arrow_right.png"/>
+        <img class="last" src="/images/icons/arrow_right.png"/>
+        <select class="pagesize">
+'''
+            for value in page_entries:
+                selected = ''
+                if value == default_entries:
+                    selected = 'selected'
+                toolbar += '<option %s value="%d">%d %s per page</option>\n'\
+                           % (selected, value, value, '%(entry_name)s')
+            toolbar += '''
+        </select>
+      </form>
+      </div>
+    </div>
+  </div>
+'''
+            lines.append(toolbar % {'entry_name': i['entry_name']})
         elif i['object_type'] == 'resource_list':
             if len(i['resources']) > 0:
                 res_fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK',

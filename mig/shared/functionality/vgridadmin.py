@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# vgridadmin - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# vgridadmin - manage vgrids
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,7 +28,7 @@
 """VGrid administration back end functionality"""
 
 import shared.returnvalues as returnvalues
-from shared.defaults import default_vgrid
+from shared.defaults import default_vgrid, default_pager_entries
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_list_vgrids, vgrid_is_owner, \
@@ -228,7 +228,6 @@ Please write a message to the owners (field below).""",
 
         member_list['vgrids'].append(vgrid_obj)
 
-
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'VGrid administration'
 
@@ -240,6 +239,7 @@ Please write a message to the owners (field below).""",
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 
 <script type="text/javascript" >
@@ -284,7 +284,7 @@ $(document).ready(function() {
                 width: 500,
                 buttons: {
                    "Cancel": function() { $( "#" + name ).dialog("close"); }
-	        }
+                }
               });
 
           // table initially sorted by col. 1 (admin), then 2 (member), then 0 (name)
@@ -302,11 +302,14 @@ $(document).ready(function() {
           $("#vgridtable").tablesorter({widgets: ["zebra"],
                                         sortList:sortOrder,
                                         textExtraction: imgTitle
-                                       });
+                                        })
+                          .tablesorterPager({ container: $("#pager"),
+                                        size: %s
+                                        });
      }
 );
 </script>
-'''
+''' % default_pager_entries
 
     output_objects.append({'object_type': 'html_form',
                            'text':'''
@@ -326,6 +329,8 @@ VGrids share files and resources. Members can access web pages, files and resour
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'VGrids managed on this server'})
+    output_objects.append({'object_type': 'table_pager', 'entry_name': 'VGrids',
+                           'default_entries': default_pager_entries})
     output_objects.append(member_list)
 
     output_objects.append({'object_type': 'sectionheader', 'text'

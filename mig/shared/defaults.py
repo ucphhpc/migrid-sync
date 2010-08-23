@@ -46,3 +46,5 @@ sandbox_names = ['sandbox', 'oneclick', 'ps3live']
 mqueue_prefix = 'message_queues'
 default_mqueue = 'default'
 mqueue_empty = 'NO MESSAGES'
+
+default_pager_entries = 25

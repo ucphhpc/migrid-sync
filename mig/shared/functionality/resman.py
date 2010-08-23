@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# resman - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# resman - manage resources
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,7 @@
 
 import shared.returnvalues as returnvalues
 from shared.base import sandbox_resource
+from shared.defaults import default_pager_entries
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.resource import anon_to_real_res_map
@@ -181,7 +182,7 @@ $(document).ready(function() {
                 width: 500,
                 buttons: {
                    "Cancel": function() { $( "#" + name ).dialog("close"); }
-	        }
+                }
               });
 
           // table initially sorted by col. 1 (admin), then 0 (name)
@@ -199,14 +200,14 @@ $(document).ready(function() {
           $("#resourcetable").tablesorter({widgets: ["zebra"],
                                         sortList:sortOrder,
                                         textExtraction: imgTitle
-                                       })
-                              .tablesorterPager({ container: $("#pager"),
-                        size: 20
-                    });
+                                        })
+                             .tablesorterPager({ container: $("#pager"),
+                                        size: %s
+                                        });
      }
 );
 </script>
-'''
+''' % default_pager_entries
 
     output_objects.append({'object_type': 'html_form',
                            'text':'''
@@ -227,32 +228,8 @@ All available resources are listed below with overall hardware specifications. A
 '''
                        })
 
-    toolbar = '''
-  <div>
-    <div class="toolbar">        
-      <div class="pager" id="pager">
-      <form style="display: inline;" action="">
-        <img class="first" src="/images/icons/arrow_left.png"/>
-        <img class="prev" src="/images/icons/arrow_left.png"/>
-        <input type="text" class="pagedisplay" />
-        <img class="next" src="/images/icons/arrow_right.png"/>
-        <img class="last" src="/images/icons/arrow_right.png"/>
-        <select class="pagesize">
-          <option value="10">10 resources per page</option>
-          <option value="20" selected>20 resources per page</option>
-          <option value="40">40 resources per page</option>
-          <option value="80">80 resources per page</option>
-          <option value="100">100 resources per page</option>
-          <option value="250">250 resources per page</option>
-          <option value="500">500 resources per page</option>
-          <option value="1000">1000 resources per page</option>
-        </select>
-      </form>
-      </div>
-    </div>
-  </div>
-'''
-    output_objects.append({'object_type': 'html_form', 'text': toolbar})
+    output_objects.append({'object_type': 'table_pager', 'entry_name': 'resources',
+                           'default_entries': default_pager_entries})
     output_objects.append(res_list)
 
     if configuration.site_enable_sandboxes:
