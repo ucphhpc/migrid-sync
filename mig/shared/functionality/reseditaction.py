@@ -226,11 +226,14 @@ def main(client_id, user_arguments_dict):
 
         # Prevent unauthorized access to existing resources
 
-        owners_path = os.path.join(configuration.resource_home, resource_id, 'owners')
+        owners_path = os.path.join(configuration.resource_home, resource_id,
+                                   'owners')
         owner_list = unpickle(owners_path, logger)
         if not owner_list:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Could not look up resource owners'})
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : "Could not look up '%s' owners - no such resource?" % \
+                 resource_id})
             status = returnvalues.SYSTEM_ERROR
         elif client_id in owner_list:
             if not update_resource(configuration, client_id, resource_id, conf, output_objects, False):
