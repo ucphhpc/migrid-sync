@@ -261,8 +261,14 @@ def js_tmpl(entry_path='/'):
   js += lock_info('this file', -1)
   js += '''
   <script type="text/javascript">
-  
-  $.ui.dialog.defaults.bgiframe = true;
+
+  try {
+      /* jquery-ui-1.8.x option format */
+      $.ui.dialog.prototype.options.bgiframe = true;
+  } catch(err) {
+      /* jquery-ui-1.7.x option format */
+      $.ui.dialog.defaults.bgiframe = true;
+  }
 
   $(document).ready( function() {
   
