@@ -518,10 +518,7 @@ if (jQuery) (function($){
           var dir_prefix = '';
           var path = '';
           
-          // .html('') is extremely slow with >1000 entries in filelisting!
-          // use DOM innerHTML instead to avoid unresponsive script warnings
-          //$('.fm_files table tbody').html('');
-          document.getElementById('fm_filelistbody').innerHTML = '';
+          $('.fm_files table tbody').empty();
           $(".jqueryFileTree.start").remove();
           $('.fm_files div').remove();
           for (i = 0; i < listing.length; i++) {
