@@ -34,6 +34,7 @@ import time
 
 import shared.confparser as confparser
 import shared.returnvalues as returnvalues
+from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_resource_create_request_mail
@@ -212,15 +213,33 @@ def main(client_id, user_arguments_dict):
                     (client_id, hosturl, conf))
         output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Creating resource configuration'})
+
+        # We only get here if hostidentifier is dynamic so no access control
+
         if not update_resource(configuration, client_id, resource_id, conf, output_objects, True):
             status = returnvalues.SYSTEM_ERROR
     elif 'update' == action:
         logger.info('%s is trying to update resource %s (%s)' % \
                     (client_id, resource_id, conf))
         output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Updating existing resource configuration'})
-        if not update_resource(configuration, client_id, resource_id, conf, output_objects, False):
+                               : 'Updating existing resource configuration'})
+
+        # Prevent unauthorized access to existing resources
+
+        owners_path = os.path.join(configuration.resource_home, resource_id, 'owners')
+        owner_list = unpickle(owners_path, logger)
+        if not owner_list:
+            output_objects.append({'object_type': 'error_text', 'text'
+                                   : 'Could not look up resource owners'})
             status = returnvalues.SYSTEM_ERROR
+        elif client_id in owner_list:
+            if not update_resource(configuration, client_id, resource_id, conf, output_objects, False):
+                status = returnvalues.SYSTEM_ERROR
+        else:
+            status = returnvalues.CLIENT_ERROR
+            output_objects.append({'object_type': 'error_text', 'text'
+                                   : 'You can only update your own resources!'
+                                   })
     else:
         status = returnvalues.CLIENT_ERROR
         output_objects.append({'object_type': 'error_text', 'text'
