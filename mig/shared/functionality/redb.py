@@ -180,7 +180,7 @@ $(document).ready(function() {
             output_objects.append({'object_type': 'error_text', 'text'
                                   : msg})
             return (output_objects, returnvalues.SYSTEM_ERROR)
-        re_item = build_reitem_object(re_dict)
+        re_item = build_reitem_object(configuration, re_dict)
         re_name = re_item['name']
         
         re_item['viewruntimeenvlink'] = {'object_type': 'link',

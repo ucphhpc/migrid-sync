@@ -35,6 +35,7 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import is_runtime_environment, get_re_dict
 from shared.validstring import valid_dir_input
+from shared.vgridaccess import resources_using_re
 
 
 def signature():
@@ -44,7 +45,7 @@ def signature():
     return ['runtimeenvironment', defaults]
 
 
-def build_reitem_object(re_dict):
+def build_reitem_object(configuration, re_dict):
     """Build a runtimeenvironment object based on input re_dict"""
 
     software_list = []
@@ -96,6 +97,7 @@ def build_reitem_object(re_dict):
                 'example': environment_item['example'],
                 'description': environment_item['description'],
                 })
+    providers = resources_using_re(configuration, re_dict['RENAME'])
     return {
         'object_type': 'runtimeenvironment',
         'name': re_dict['RENAME'],
@@ -104,7 +106,8 @@ def build_reitem_object(re_dict):
         'created': time.asctime(re_dict['CREATED_TIMESTAMP'
                                 ].timetuple()),
         'job_count': '(not implemented yet)',
-        'resource_count': '(not implemented yet)',
+        'providers': providers,
+        'resource_count': len(providers),
         'testprocedure': testprocedure,
         'verifystdout': verifystdout,
         'verifystderr': verifystderr,
@@ -160,6 +163,6 @@ def main(client_id, user_arguments_dict):
                                : 'Could not read details for "%s"' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    output_objects.append(build_reitem_object(re_dict))
+    output_objects.append(build_reitem_object(configuration, re_dict))
 
     return (output_objects, returnvalues.OK) 

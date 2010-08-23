@@ -835,33 +835,33 @@ Exit code: %s Description: %s<br />
             lines.append('</table>')
         elif i['object_type'] == 'runtimeenvironments':
             runtimeenvironments = i['runtimeenvironments']
-            if len(runtimeenvironments) == 0:
-                lines.append('No runtime environments found!')
-            else:
-                lines.append('''<table class="runtimeenvs" id="runtimeenvtable">
+            lines.append('''<table class="runtimeenvs" id="runtimeenvtable">
 <thead class="title">
     <tr>
         <th>Name</th>
         <th width="8"><!-- View --></th>
         <th width="8"><!-- Owner --></th>
         <th>Description</th>
+        <th width="8">Resources</th>
         <th>Created</th>
     </tr>
 </thead>
 <tbody>
 '''
-                             )
-                row_number = 1
-                for single_re in runtimeenvironments:
-                    viewlink = html_link(single_re['viewruntimeenvlink'])
-                    ownerlink = single_re.get('ownerlink', '')
-                    if ownerlink:
-                        ownerlink = html_link(ownerlink)
-                    lines.append('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>'
-                                  % (single_re['name'], viewlink, ownerlink,
-                                 single_re['description'], single_re['created']))
-                    row_number += 1
+                         )
+            for single_re in runtimeenvironments:
+                viewlink = html_link(single_re['viewruntimeenvlink'])
+                ownerlink = single_re.get('ownerlink', '')
+                if ownerlink:
+                    ownerlink = html_link(ownerlink)
                 lines.append('''
+<tr>
+<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td title="%s">%s</td><td>%s</td>
+</tr>''' % (single_re['name'], viewlink, ownerlink, single_re['description'],
+            ', '.join(single_re['providers']), single_re['resource_count'],
+            single_re['created']))
+                
+            lines.append('''
 </tbody>
 </table>''')
         elif i['object_type'] == 'runtimeenvironment':
@@ -923,8 +923,8 @@ Exit code: %s Description: %s<br />
                           % i['creator'])
             lines.append('<tr><td>Job&nbsp;count</td><td>%s</td></tr>'
                           % i['job_count'])
-            lines.append('<tr><td>Resource&nbsp;count</td><td>%s</td></tr>'
-                          % i['resource_count'])
+            lines.append('<tr><td>Resources</td><td>%s</td></tr>'
+                          % ', '.join(i['providers']))
             lines.append('</table>')
         elif i['object_type'] == 'table_pager':
             page_entries = i.get('page_entries', [5, 10, 20, 25, 40, 50, 80,
