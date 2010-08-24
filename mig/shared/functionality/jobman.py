@@ -45,7 +45,7 @@ def html_tmpl():
       <form style="display: inline;" action="">
         <img class="first" src="/images/icons/arrow_left.png"/>
         <img class="prev" src="/images/icons/arrow_left.png"/>
-        <input type="text" class="pagedisplay" />
+        <input type="text" class="pagedisplay" size=5 />
         <img class="next" src="/images/icons/arrow_right.png"/>
         <img class="last" src="/images/icons/arrow_right.png"/>
         <select class="pagesize">
@@ -67,7 +67,7 @@ def html_tmpl():
           <option value="10000">10000</option>
           <option value="-1">all</option>
         </select> last jobs
-        matching <input class="filterid" name="filterid" size=10 value="*_%s_*"/>
+        matching <input class="filterid" name="filterid" size=16 value="*_%s_*"/>
       </form>
       <div id="append"  style="display: inline;"><img src="/images/icons/arrow_refresh.png" /></div>
       </div>
