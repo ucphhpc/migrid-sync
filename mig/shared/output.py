@@ -835,7 +835,7 @@ Exit code: %s Description: %s<br />
             lines.append('</table>')
         elif i['object_type'] == 'runtimeenvironments':
             runtimeenvironments = i['runtimeenvironments']
-            lines.append('''<table class="runtimeenvs" id="runtimeenvtable">
+            lines.append('''<table class="runtimeenvs columnsort" id="runtimeenvtable">
 <thead class="title">
     <tr>
         <th>Name</th>
@@ -963,7 +963,7 @@ Exit code: %s Description: %s<br />
                 res_fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK',
                               'ARCHITECTURE']
                 resources = i['resources']
-                lines.append("<table class='resources' id='resourcetable'>")
+                lines.append("<table class='resources columnsort' id='resourcetable'>")
                 lines.append('''
 <thead class="title">
 <tr>
@@ -1039,7 +1039,7 @@ Exit code: %s Description: %s<br />
         elif i['object_type'] == 'vgrid_list':
             if len(i['vgrids']) > 0:
                 vgrids = i['vgrids']
-                lines.append("<table class='vgrids' id='vgridtable'>")
+                lines.append("<table class='vgrids columnsort' id='vgridtable'>")
                 # Hide public wiki column as it is disabled
                 #public_wiki = '<th class=centertext colspan="1">Public Wiki</th>'
                 public_wiki = ''
