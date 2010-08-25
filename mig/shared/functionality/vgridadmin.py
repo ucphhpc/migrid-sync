@@ -213,13 +213,13 @@ Please write a message to the owners (field below).""",
                                              'title': 'Administrate %s' % vgrid_name,
                                              'text': ''}
             vgrid_obj['editprivatelink'] = {'object_type': 'link',
-                                            'destination': 'editor.py?path=private_base/%s/index.html'\
+                                            'destination': 'fileman.py?path=private_base/%s/'\
                                             % vgrid_name,
                                             'class': 'editlink',
                                             'title': 'Edit private %s web page' % vgrid_name,
                                             'text': 'Edit'}
             vgrid_obj['editpubliclink'] = {'object_type': 'link',
-                                           'destination': 'editor.py?path=public_base/%s/index.html'\
+                                           'destination': 'fileman.py?path=public_base/%s/'\
                                            % vgrid_name,
                                            'class': 'editlink',
                                            'title': 'Edit public %s web page' % vgrid_name,

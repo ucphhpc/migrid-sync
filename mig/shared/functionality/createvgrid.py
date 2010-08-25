@@ -413,6 +413,20 @@ def main(client_id, user_arguments_dict):
 
     try:
         os.mkdir(public_base_dir)
+        pub_readme = os.path.join(public_base_dir, 'README')
+        if not os.path.exists(pub_readme):
+            write_file("""= Public Web Page =
+This directory is used for hosting the public web page for the %s VGrid.
+It is accessible by the public from the VGrids page or directly using the URL
+%s/vgrid/%s/
+
+Just update the index.html file to suit your wishes for an entry page. It can
+link to any other material in this folder or subfolders with relative
+addresses. So it is possible to create a full web site with multiple pages and
+rich content like on other web hosting services. However, there's no support
+for server side scripting with Python, ASP or PHP for security reasons.
+""" % (vgrid_name, configuration.migserver_http_url, vgrid_name),
+                       pub_readme, logger)
         pub_entry_page = os.path.join(public_base_dir, 'index.html')
         if not os.path.exists(pub_entry_page):
             write_file("<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>\n<html><head><title>Public entry page not created yet..</title></head><body>No public entrypage created yet! (If you are owner of the vgrid, overwrite public_base/%s/index.html to place it here)</body></html>"
@@ -427,6 +441,21 @@ def main(client_id, user_arguments_dict):
 
     try:
         os.mkdir(private_base_dir)
+        priv_readme = os.path.join(private_base_dir, 'README')
+        if not os.path.exists(priv_readme):
+            write_file("""= Private Web Page =
+This directory is used for hosting the private web page for the %s VGrid.
+It is only accessible for members and owners either from the VGrids page or
+directly using the URL
+%s/vgrid/%s/path/index.html
+
+Just update the index.html file to suit your wishes for an entry page. It can
+link to any other material in this folder or subfolders with relative
+addresses. So it is possible to create a full web site with multiple pages and
+rich content like on other web hosting services. However, there's no support
+for server side scripting with Python, ASP or PHP for security reasons.
+""" % (vgrid_name, configuration.migserver_https_cert_url, vgrid_name),
+                       priv_readme, logger)
         priv_entry_page = os.path.join(private_base_dir, 'index.html')
         if not os.path.exists(priv_entry_page):
             write_file("<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>\n<html><head><title>Private entry page not created yet..</title></head><body>No private entrypage created yet! (If you are owner of the vgrid, overwrite private_base/%s/index.html to place it here)<br>  <p><a href='http://validator.w3.org/check?uri=referer'><img src='http://www.w3.org/Icons/valid-html401' alt='Valid HTML 4.01 Transitional' height='31' width='88' /></a> </p></body></html>"
@@ -441,6 +470,14 @@ def main(client_id, user_arguments_dict):
 
     try:
         os.mkdir(vgrid_files_dir)
+        share_readme = os.path.join(vgrid_files_dir, 'README')
+        if not os.path.exists(share_readme):
+            write_file("""= Private Share =
+This directory is used for hosting private files for the %s VGrid.
+It is accessible for all members and owners as a virtual %s directory in the
+user home directory. Therefore it is also usable as source and destination
+for job input and output.
+""" % (vgrid_name, vgrid_name), share_readme, logger)
     except Exception, exc:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not create vgrid files directory.'
