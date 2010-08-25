@@ -253,6 +253,22 @@ and icons from the following sources:""" })
                            'text': 'KDE Crystal Icons, LGPL'})
     output_objects.append({'object_type': 'text', 'text' : ''})
 
+    if configuration.moin_share and configuration.moin_etc:
+        output_objects.append({'object_type': 'text', 'text' :
+                               """Wikis are delivered using MoinMoin:""" })
+        output_objects.append({'object_type': 'link', 
+                               'destination' : 'http://moinmo.in/',
+                               'class': 'urllink',
+                               'title': 'MoinMoin Wiki Home Page',                           
+                               'text': 'MoinMoin Wiki Engine (GPL)' })
+    if configuration.hg_path and configuration.hgweb_path:
+        output_objects.append({'object_type': 'text', 'text' :
+                               """SCM repositories are delivered using Mercurial:""" })
+        output_objects.append({'object_type': 'link', 
+                               'destination' : 'http://mercurial.selenic.com/',
+                               'class': 'urllink',
+                               'title': 'Mercurial SCM Home Page',                           
+                               'text': 'Mercurial SCM (GPLv2)' })
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
