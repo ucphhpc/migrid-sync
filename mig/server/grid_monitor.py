@@ -83,7 +83,42 @@ def create_monitor(vgrid_name):
         '%(short_title)s Monitor, VGrid %(vgrid_name)s' % html_vars,
         '',
         True,
-        '<meta http-equiv="refresh" content="%(sleep_secs)s">',
+        '''<meta http-equiv="refresh" content="%(sleep_secs)s" />
+
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+
+<script type="text/javascript" >
+
+$(document).ready(function() {
+
+          // table initially sorted by col. 1 (name)
+          var sortOrder = [[1,0]];
+
+          // use image path for sorting if there is any inside
+          var imgTitle = function(contents) {
+              var key = $(contents).find("a").attr("class");
+              if (key == null) {
+                  key = $(contents).html();
+              }
+              return key;
+          }
+          $("table.monitor").tablesorter({widgets: ["zebra"],
+                                          textExtraction: imgTitle,
+                                         });
+          $("table.monitor").each(function () {
+              try {
+                  $(this).trigger("sorton", [sortOrder]);
+              } catch(err) {
+                  /* tablesorter chokes on empty tables - just continue */
+              }
+          });
+     }
+);
+</script>
+''' % html_vars,
         '',
         False,
         )
@@ -263,11 +298,25 @@ Automatic refresh every %(sleep_secs)s secs.<br />
 <h2>Resource job request</h2>
 Listing the last request from each resource<br />
 <br />
-<table class=monitor>
-<tr class=title><td><!-- status icon --></td><td>Resource ID with exe unit</td><td>Last seen</td><td>VGrid</td><td>CPU time</td>
-<td>Node count</td><td>CPU count</td><td>GB Disk</td>
-<td>MB Memory</td><td>Arch</td><td>Status</td>
-<td>Time</td><td>Time remaining</td></tr>
+<table class="monitor columnsort">
+<thead class="title">
+<tr>
+  <th width="1"><!-- Status icon --></th>
+  <th>Resource ID with exe unit</th>
+  <th>Last seen</th>
+  <th>VGrid</th>
+  <th>CPU time (s)</th>
+  <th>Node count</th>
+  <th>CPU count</th>
+  <th>Disk (GB)</th>
+  <th>Memory (MB)</th>
+  <th>Arch</th>
+  <th>Status</th>
+  <th>Job (s)</th>
+  <th>Remaining</th>
+</tr>
+</thead>
+<tbody>
 """
 
     total_number_of_resources = 0
@@ -275,8 +324,6 @@ Listing the last request from each resource<br />
 
     vgrid_name_list = vgrid_name.split('/')
     current_dir = ''
-    row_number = 1
-    row_name = ('even_row', 'odd_row')
 
     for vgrid_name_part in vgrid_name_list:
         current_dir = os.path.join(current_dir, vgrid_name_part)
@@ -354,8 +401,6 @@ Listing the last request from each resource<br />
                 else:
                     unique_res_name_and_exe_list = \
                         filename.split('monitor_last_request_', 1)
-                    row_class = row_name[row_number % 2]
-                    row_number += 1
                     if cpusec == 0:
                         resource_status = 'unavailable'
                     elif time_remaining.days < 0:
@@ -375,7 +420,7 @@ Listing the last request from each resource<br />
                         resource_status = 'online'
                         up_count = up_count + 1
 
-                    html += '<tr class=%s>' % row_class
+                    html += '<tr>'
                     html += \
                         '<td><img src=/images/status-icons/%s.png /></td>'\
                          % resource_status
@@ -392,7 +437,7 @@ Listing the last request from each resource<br />
                     resource_name += "<br />%s" % resource_parts[1]
                     html += '<td>%s</td>' % resource_name
 
-                    html += '<td>%s<br />(%s days, %s hours, %s min, %s secs ago)</td>' % \
+                    html += '<td>%s<br />(%sd %sh %sm %ss ago)</td>' % \
                             (time.asctime(last_request_dict['CREATED_TIME'].timetuple()),
                              days, hours, minutes, seconds)
                     html += '<td>' + vgrid_name + '</td>'
@@ -423,7 +468,7 @@ Listing the last request from each resource<br />
                     elif 'offline' == resource_status:
                         html += 'down?'
                     else:
-                        html += '%s days, %s hours, %s minutes, %s secs'\
+                        html += '%sd, %sh, %sm, %ss'\
                              % (days_rem, hours_rem, minutes_rem,
                                 seconds_rem)
                     html += '</td>'
@@ -445,7 +490,7 @@ Listing the last request from each resource<br />
                          * int(last_request_dict['RESOURCE_CONFIG'
                                ]['CPUCOUNT'])
 
-    html += '</table>\n'
+    html += '</tbody>\n</table>\n'
 
     html += '''<br />
 <hr />

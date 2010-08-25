@@ -60,12 +60,46 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    refresh = '<meta http-equiv="refresh" content="%s" />'\
-         % configuration.sleep_secs
+    script = '''<meta http-equiv="refresh" content="%s" />
+    
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+
+<script type="text/javascript" >
+
+$(document).ready(function() {
+
+          // table initially sorted by col. 1 (name)
+          var sortOrder = [[1,0]];
+
+          // use image path for sorting if there is any inside
+          var imgTitle = function(contents) {
+              var key = $(contents).find("a").attr("class");
+              if (key == null) {
+                  key = $(contents).html();
+              }
+              return key;
+          }
+          $("table.monitor").tablesorter({widgets: ["zebra"],
+                                          textExtraction: imgTitle,
+                                         });
+          $("table.monitor").each(function () {
+              try {
+                  $(this).trigger("sorton", [sortOrder]);
+              } catch(err) {
+                  /* tablesorter chokes on empty tables - just continue */
+              }
+          });
+     }
+);
+</script>
+''' % configuration.sleep_secs
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s Monitor' % configuration.short_title
-    title_entry['javascript'] = refresh
+    title_entry['javascript'] = script
 
     allowed_vgrids = user_allowed_vgrids(configuration, client_id)
     vgrid_list = accepted['vgrid_name']

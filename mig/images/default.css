@@ -136,7 +136,6 @@ table.runtimeenvvars {
 
 table.monitor {
   font-size: 10px;
-  border-collapse: collapse;
 }
 table.monitorstats {}
 table.monitorjobs {
