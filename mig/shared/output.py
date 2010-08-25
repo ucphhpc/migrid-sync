@@ -966,6 +966,7 @@ Exit code: %s Description: %s<br />
                 lines.append("<table class='resources' id='resourcetable'>")
                 lines.append('''
 <thead class="title">
+<tr>
   <th>Name</th>
   <th width="8"><!-- View / Admin --></th>
   <th width="8"><!-- Remove owner --></th>
@@ -976,6 +977,7 @@ Exit code: %s Description: %s<br />
   <th class=centertext>Mem (MB)</th>
   <th class=centertext>Disk (GB)</th>
   <th class=centertext>Arch</th>
+</tr>
 </thead>
 <tbody>
 '''
@@ -1057,6 +1059,7 @@ Exit code: %s Description: %s<br />
 
                 lines.append('''
 <thead class="title">
+<tr>
   <th>Name</th>
   <th width="8"><!-- Owner --></th>
   <th width="8"><!-- Member --></th>
@@ -1067,6 +1070,7 @@ Exit code: %s Description: %s<br />
   %s
   %s
   <th class=centertext colspan="1">Monitor</th>
+</tr>
 </thead>
 <tbody>
 ''' % (public_wiki, scm)
