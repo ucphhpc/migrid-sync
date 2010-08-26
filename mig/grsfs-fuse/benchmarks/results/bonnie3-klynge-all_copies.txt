@@ -1,0 +1,56 @@
+# 3 COPIES
+Version 1.03c       ------Sequential Output------ --Sequential Input- --Random-
+                    -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
+Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
+n2               1M   694   0   635   0   642   0 +++++ +++ +++++ +++ 776.8   0
+                    ------Sequential Create------ --------Random Create--------
+                    -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
+              files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
+                 16    98   0  6587   5   216   0    97   0  7009   6   219   0
+n2,1M,694,0,635,0,642,0,+++++,+++,+++++,+++,776.8,0,16,98,0,6587,5,216,0,97,0,7009,6,219,0
+
+# 2 COPIES
+Version 1.03c       ------Sequential Output------ --Sequential Input- --Random-
+                    -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
+Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
+n0               1M  1284   3  1104   0  1112   0 +++++ +++ +++++ +++  1374   2
+                    ------Sequential Create------ --------Random Create--------
+                    -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
+              files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
+                 16   183   0  9185   8   420   0   182   0  6606   2   422   0
+n0,1M,1284,3,1104,0,1112,0,+++++,+++,+++++,+++,1374.0,2,16,183,0,9185,8,420,0,182,0,6606,2,422,0
+
+# 1 COPY
+
+Version 1.03c       ------Sequential Output------ --Sequential Input- --Random-
+                    -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
+Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
+n3               1M +++++ +++ +++++ +++ +++++ +++ +++++ +++ +++++ +++  5309   1
+                    ------Sequential Create------ --------Random Create--------
+                    -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
+              files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
+                 16  1257   2  6427   4  3419   4  1230   3  6712   6  3534   6
+n3,1M,+++++,+++,+++++,+++,+++++,+++,+++++,+++,+++++,+++,5308.6,1,16,1257,2,6427,4,3419,4,1230,3,6712,6,3534,6
+
+
+# NFS
+Version 1.03c       ------Sequential Output------ --Sequential Input- --Random-
+                    -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
+Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
+n0               1M +++++ +++ +++++ +++ +++++ +++ +++++ +++ +++++ +++ +++++ +++
+                    ------Sequential Create------ --------Random Create--------
+                    -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
+              files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
+                 16  3727  11 13838   8  3848   6  3642  12 19696  16  3778   4
+n0,1M,+++++,+++,+++++,+++,+++++,+++,+++++,+++,+++++,+++,+++++,+++,16,3727,11,13838,8,3848,6,3642,12,19696,16,3778,4
+
+# FULLY NATIVE
+Version 1.03c       ------Sequential Output------ --Sequential Input- --Random-
+                    -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
+Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
+n0               1M +++++ +++ +++++ +++ +++++ +++ +++++ +++ +++++ +++ +++++ +++
+                    ------Sequential Create------ --------Random Create--------
+                    -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
+              files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
+                 16 +++++ +++ +++++ +++ +++++ +++ +++++ +++ +++++ +++ +++++ +++
+n0,1M,+++++,+++,+++++,+++,+++++,+++,+++++,+++,+++++,+++,+++++,+++,16,+++++,+++,+++++,+++,+++++,+++,+++++,+++,+++++,+++,+++++,+++

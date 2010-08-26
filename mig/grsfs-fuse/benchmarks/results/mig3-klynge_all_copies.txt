@@ -1,0 +1,19 @@
+# 3 COPIES
+jaws@n2:~/src/fs/mount$ ../../benchmarks/benchmark_mig.py 
+[337.60577178001404]
+
+# 2 COPIES:
+jaws@n0:~/src/fs/mount$ ../../benchmarks/benchmark_mig.py 
+[193.95886301994324]
+
+# 1 COPY
+jaws@n3:~/src/fs/mount$ ../../benchmarks/benchmark_mig.py 
+[38.229972839355469]
+
+# NFS
+jaws@n7:~$ /home/jaws/src/benchmarks/benchmark_mig.py 
+[26.155627012252808]
+
+# NATIVE
+jaws@n7:/tmp$ /home/jaws/src/benchmarks/benchmark_mig.py 
+[1.3576591014862061]

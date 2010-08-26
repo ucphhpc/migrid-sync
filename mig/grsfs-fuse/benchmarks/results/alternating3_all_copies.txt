@@ -1,0 +1,64 @@
+# 1 COPY
+jaws@n0:~/src/fs/mount$ ../../benchmarks/benchmark_alternating.py 
+Write finished at 9597.011
+Time for pure writes 9
+Read finished at 13817.638
+Read finished at 13955.816
+Read finished at 14378.676
+Read finished at 14842.684
+Write finished at 21673.271
+Time for mixed reads/writes 21
+Read finished at 8760.361
+Read finished at 8884.273
+Read finished at 8955.704
+Read finished at 9444.426
+Read finished at 9448.928
+Time for just reads 9
+
+# 2 COPIES
+Read finished at 36197.404
+Read finished at 88157.841
+Read finished at 118568.756
+Read finished at 124589.905
+Write finished at 243496.677
+Time for mixed reads/writes 243
+Read finished at 7893.382
+Read finished at 8030.504
+Read finished at 8278.675
+Read finished at 8382.948
+Read finished at 9130.389
+Time for just reads 9
+
+# 1 COPIES CACHE SIM
+jaws@n0:~/src/fs/mount$ ../../benchmarks/benchmark_alternating.py 
+Write finished at 13556.575
+Time for pure writes 13
+Read finished at 5918.847
+Read finished at 6018.255
+Read finished at 6265.633
+Read finished at 6425.658
+Write finished at 14093.448
+Time for mixed reads/writes 14
+Read finished at 5090.343
+Read finished at 5193.717
+Read finished at 5203.309
+Read finished at 5265.313
+Read finished at 5303.990
+Time for just reads 5
+
+# 2 COPIES CACHE SIM
+jaws@n0:~/src/fs/mount$ ../../benchmarks/benchmark_alternating.py 
+Write finished at 235031.141
+Time for pure writes 235
+Read finished at 4312.749
+Read finished at 4455.396
+Read finished at 4713.691
+Read finished at 5172.115
+Write finished at 236959.487
+Time for mixed reads/writes 236
+Read finished at 4351.342
+Read finished at 4918.860
+Read finished at 5032.892
+Read finished at 5297.622
+Read finished at 5360.909
+Time for just reads 5

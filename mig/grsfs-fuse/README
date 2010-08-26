@@ -1,0 +1,6 @@
+= Grid Replicated Storage for MiG =
+This directory contains the Grid Replicated Storage (GRSfs) code developed by
+Jan Wiberg in his thesis. It is intended for phasing into the MiG failover
+server configuration, but that part is still work in progress.
+Do not use it in production just yet!
+
