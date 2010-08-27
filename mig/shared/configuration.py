@@ -73,6 +73,7 @@ def fix_missing(config_file, verbose=True):
         'sessid_to_mrsl_link_home': '~/state/sessid_to_mrsl_link_home/',
         'mig_system_files': '~/state/mig_system_files/',
         'wwwpublic': '~/state/wwwpublic/',
+        'vm_home': '~/state/vm_home',
         'server_cert': '~/certs/cert.pem',
         'server_key': '~/certs/key.pem',
         'ca_cert': '~/certs/ca.pem',
@@ -190,6 +191,7 @@ class Configuration:
     myfiles_py_location = ''
     public_key_file = ''
     wwwpublic = ''
+    vm_home = ''
     enable_server_dist = False
     sleep_secs = 0
     sleep_update_totals = 0
