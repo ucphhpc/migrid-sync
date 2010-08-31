@@ -4,3 +4,17 @@ Jan Wiberg in his thesis. It is intended for phasing into the MiG failover
 server configuration, but that part is still work in progress.
 Do not use it in production just yet!
 
+
+== System Requirements ==
+GRSfs requires python (>=2.6) and python bindings for FUSE, python-fuse
+(>=0.2). This imposes additional python requirements in relation to the MiG
+server software, but this component will likely remain experimental
+until common Linux distributions have completely moved to python-2.6 or
+above anyway.
+
+
+== Further Information ==
+Jan's thesis is included as a PDF in mig/public-doc/ for background
+information.
+
+
