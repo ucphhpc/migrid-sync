@@ -531,6 +531,7 @@ if (jQuery) (function($){
               
               is_dir = listing[i]['type'] == 'directory';
               base_css_style = 'file';
+              extra_css_style = '';
               dir_prefix = '__';
                         
               // Stats for the statusbar
