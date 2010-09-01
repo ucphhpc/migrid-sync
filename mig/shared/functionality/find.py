@@ -43,7 +43,7 @@ def signature():
     """Signature of the main function"""
 
     defaults = {'path': ['.'], 'flags': [''], 'name': ['*']}
-    return ['', defaults]
+    return ['dir_listings', defaults]
 
 
 def main(client_id, user_arguments_dict):
@@ -81,6 +81,13 @@ def main(client_id, user_arguments_dict):
                                   : '%s using flag: %s' % (op_name,
                                   flag)})
 
+    dir_listings = []
+    output_objects.append({
+        'object_type': 'dir_listings',
+        'dir_listings': dir_listings,
+        'flags': flags,
+        })
+
     for pattern in patterns:
 
         # Check directory traversal attempts before actual handling
@@ -114,6 +121,14 @@ def main(client_id, user_arguments_dict):
         for real_path in match:
             output_lines = []
             relative_path = real_path.replace(base_dir, '')
+            entries = []
+            dir_listing = {
+                'object_type': 'dir_listing',
+                'relative_path': relative_path,
+                'entries': entries,
+                'flags': flags,
+                }
+            dir_listings.append(dir_listing)
             try:
                 for (root, dirs, files) in os.walk(real_path):
                     for filename in fnmatch.filter(files, name_pattern):
@@ -122,7 +137,15 @@ def main(client_id, user_arguments_dict):
                         if not valid_user_path(real_path, base_dir,
                                 True):
                             continue
-                        output_lines.append(relative_path)
+                        file_obj = {
+                            'object_type': 'direntry',
+                            'type': 'file',
+                            'name': filename,
+                            'file_with_dir': relative_path,
+                            'flags': flags,
+                            'special': '',
+                            }
+                        entries.append(file_obj)
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s': %s" % (op_name,

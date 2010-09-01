@@ -166,6 +166,18 @@ def head(user_arguments_dict):
     return stub('shared.functionality.head', user_arguments_dict)
 
 
+def find(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.find', user_arguments_dict)
+
+
+def grep(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.grep', user_arguments_dict)
+
+
 def addresowner(user_arguments_dict):
     """Wrap backend of same name"""
 
@@ -560,6 +572,8 @@ if '__main__' == __name__:
     server.register_function(mqueue)
     server.register_function(tail)
     server.register_function(head)
+    server.register_function(find)
+    server.register_function(grep)
     server.register_function(addresowner)
     server.register_function(rmresowner)
     server.register_function(lsresowners)
