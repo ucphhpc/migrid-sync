@@ -271,6 +271,11 @@ def js_tmpl(entry_path='/'):
   }
 
   $(document).ready( function() {
+
+  /* wrap in try/catch for debugging - disabled in prodution */
+  /*
+  try {
+  */
   
     $("#fm_filemanager").filemanager({
                                       root: "/",
@@ -282,10 +287,15 @@ def js_tmpl(entry_path='/'):
                                       subPath: "%s"
                                       }
     );
-  
-  });
 
-  </script>
+  /*
+  } catch(err) {
+      alert("Internal error in file manager: " + err);
+  }
+  */
+
+  });
+</script>
   ''' % entry_path
   return js
     
@@ -332,5 +342,5 @@ def main(client_id, user_arguments_dict):
       output_objects.append({'object_type': 'link', 'text': path,
                              'destination': 'fileman.py?path=%s' % path})
       output_objects.append({'object_type': 'text', 'text': ''})
-      
+
   return (output_objects, status)
