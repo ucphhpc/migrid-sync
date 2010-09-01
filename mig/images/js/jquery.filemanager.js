@@ -501,7 +501,7 @@ if (jQuery) (function($){
           // Root node                    
           if (t == '/') {
              folders += '<ul class="jqueryFileTree">' +
-                  '<li class="directory expanded userhome" rel_path="" title="Home"><div>/</div>';
+                  '<li class="directory expanded userhome recent" rel_path="" title="Home"><div>/</div>';
           }
 
           // Regular nodes from here on after
@@ -621,21 +621,24 @@ if (jQuery) (function($){
             /* UI stuff: contextmenu, drag'n'drop. */
             
             // Create an element for the whitespace below the list of files in the file pane
-            var spacerHeight = $("#fm_filelisting").height() - $(".fm_files").height();
-            if (spacerHeight < 0) {
-                spacerHeight = $(".fm_files").height() - $("#fm_filelisting").height()-20;
-                if (t != '/') { // Do not prepend the fake-root.
-                    $('.fm_files').append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path="'+t+'" title="'+t+'"+></div>');
-                } else {
-                    $('.fm_files').append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path="" title=""></div>');  
-                }
+            // Always preserve a small space for pasting into the folder, etc
+            var headerHeight = 20;
+            var spacerHeight = 40;
+            if ($("#fm_filelisting").height() + spacerHeight < $(".fm_files").height() - headerHeight) {
+                spacerHeight = $(".fm_files").height() - $("#fm_filelisting").height() - headerHeight;
+	    }
 
-                $("div.filespacer").contextMenu(
+            if (t != '/') { // Do not prepend the fake-root.
+                $('.fm_files').append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path="'+t+'" title="'+t+'"+></div>');
+            } else {
+                $('.fm_files').append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path="" title=""></div>');  
+            }
+
+            $("div.filespacer").contextMenu(
                     { menu: 'folder_context'},
                     function(action, el, pos) {
                         (options['actions'][action])(action, el, pos);                                            
                     });
-            }
             
             // Bind actions to entries in a non-blocking way to avoid 
             // unresponsive script warnings with many entries
