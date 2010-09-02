@@ -104,9 +104,11 @@ def delete_runtimeenv(re_name, configuration):
         except Exception, err:
             msg = "Exception during deletion of runtime enviroment '%s': %s"\
                   % (re_name, err)
+            status = False
     else:
-        msg = "Tried to delete unexisting runtime enviroment '%s'" % re_name
+        msg = "Tried to delete non-existing runtime enviroment '%s'" % re_name
         configuration.logger.warning(msg)
+        status = False
     lock_handle.close()
     return (status, msg)
     
