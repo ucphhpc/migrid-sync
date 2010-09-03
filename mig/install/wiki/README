@@ -1,0 +1,14 @@
+= VGrid Wikis =
+The optional VGrid Wiki component is provided by MoinMoin.
+If you install the default Debian moinmoin-common package you may want to edit
+the wikiconfig file used for all such future Wikis.
+This directory includes a diff between the packaged version in 
+/usr/share/moin/config/wikiconfig.py
+and a version usable with MiG.
+Please manually apply the relevant changes to your local copy of wikiconfig.py
+used for MiG (path as configured by moin_share in the SITE section of your
+MiGserver.conf). You will likely want to at least use other email settings to
+fit your particular server.
+The changes from /moin_static171 to /wiki in a couple of locations is necessary
+to fit the apache configuration no matter what version of MoinMoin is used.
+The other changes cover default page and mail support setup.

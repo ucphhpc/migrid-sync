@@ -1,0 +1,50 @@
+--- /usr/share/moin/config/wikiconfig.py.dpkg-dist	2010-09-03 13:30:16.000000000 +0200
++++ /usr/share/moin/config/wikiconfig.py.MiG	2010-09-03 13:33:07.000000000 +0200
+@@ -38,7 +38,8 @@
+     # Wiki logo. You can use an image, text or both. [Unicode]
+     # For no logo or text, use '' - the default is to show the sitename.
+     # See also url_prefix setting below!
+-    logo_string = u'<img src="/moin_static171/common/moinmoin.png" alt="MoinMoin Logo">'
++    #logo_string = u'<img src="/moin_static171/common/moinmoin.png" alt="MoinMoin Logo">'
++    logo_string = u'<img src="/wiki/common/moinmoin.png" alt="MoinMoin Logo">'
+ 
+     # name of entry page / front page [Unicode], choose one of those:
+ 
+@@ -46,7 +47,7 @@
+     #page_front_page = u"MyStartingPage"
+ 
+     # b) if wiki content is maintained in many languages
+-    #page_front_page = u"FrontPage"
++    page_front_page = u"FrontPage"
+ 
+     # The interwiki name used in interwiki links
+     #interwikiname = 'UntitledWiki'
+@@ -82,6 +83,7 @@
+     # For others, you should make a matching server config (e.g. an Apache
+     # Alias definition pointing to the directory with the static stuff).
+     #url_prefix_static = '/moin_static171'
++    url_prefix_static = '/wiki'
+ 
+ 
+     # Security ----------------------------------------------------------
+@@ -112,9 +114,11 @@
+ 
+     # SMTP server, e.g. "mail.provider.com" (None to disable mail)
+     #mail_smarthost = ""
++    mail_smarthost = "localhost"
+ 
+     # The return address, e.g u"Jürgen Wiki <noreply@mywiki.org>" [Unicode]
+     #mail_from = u""
++    mail_from = u"MiG dev wiki <mig@dk.migrid.org>"
+ 
+     # "user pwd" if you need to use SMTP AUTH
+     #mail_login = ""
+@@ -130,7 +134,7 @@
+     # according to the user selected language. [Unicode]
+     navi_bar = [
+         # If you want to show your page_front_page here:
+-        #u'%(page_front_page)s',
++        u'%(page_front_page)s',
+         u'RecentChanges',
+         u'FindPage',
+         u'HelpContents',
