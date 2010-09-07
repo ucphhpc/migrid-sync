@@ -50,6 +50,7 @@ def read_user_conf():
 
     needed_settings = ['migserver', 'certfile', 'keyfile']
     optional_settings = ['password', 'cacertfile', 'connect_timeout']
+    expand_paths = ['certfile', 'keyfile', 'cacertfile']
     try:
         conf_fd = open(conf_path, 'r')
         for thisline in conf_fd:
@@ -64,8 +65,12 @@ def read_user_conf():
                 continue
             parts = thisline.split(None)
             (key, val) = parts[:2]
-            if key.strip() in needed_settings + optional_settings:
-                user_conf_dict[key.strip()] = val.strip()
+            (key, val) = key.strip(), val.strip()
+            if not key in needed_settings + optional_settings:
+                continue
+            if key in expand_paths:
+                val = os.path.expandvars(os.path.expanduser(val))
+            user_conf_dict[key] = val
         conf_fd.close()
     except IOError, exc:
         print 'Could not read miguser conf: %s, %s' % (conf_path, exc)
