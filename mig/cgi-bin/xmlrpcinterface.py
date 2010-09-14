@@ -68,8 +68,9 @@ class MiGCGIXMLRPCRequestHandler(CGIXMLRPCRequestHandler):
 
 def serverMethodSignatures(server):
     """List all methods as well as signatures"""
-    methods=CGIXMLRPCRequestHandler.system_listMethods(server)
-    methods_and_signatures=[(method, server.system_methodSignature(method)) for method in methods]
+    methods = CGIXMLRPCRequestHandler.system_listMethods(server)
+    methods_and_signatures = [(method, server.system_methodSignature(method)) \
+                              for method in methods]
     return methods_and_signatures
 
 def object_type_info(object_type):
