@@ -26,6 +26,7 @@
 #
 
 # showstats.py by Jost Berthold (berthold@diku.dk)
+# Extended by Jesper Rude Selknnæs, 06.2010, to include statistics per VO
 #
 """Read usage statistics from couchdb and display it in html table and
    graphics. Uses jquery visualization module and views defined in
@@ -48,7 +49,7 @@ from shared.functional import validate_input
 import shared.vgrid as vgrid
 
 # allowed parameters, first value is default
-displays = ['machine','user','summary']
+displays = ['machine','user', 'vgrid', 'summary']
 time_groups = ['month', 'week', 'day']
 
 
@@ -83,12 +84,12 @@ def main(client_id, user_arguments_dict):
     group_in_time = accepted['group_in_time'][-1] # day, week, month
     time_start    = accepted['time_start'][-1]
     time_end      = accepted['time_end'][-1]
-    display       = accepted['display'][-1] # machine, user, summary
+    display       = accepted['display'][-1] # machine, user, vgrid, summary
 
     # check arguments against configured lists of valid inputs:
     reject = False
 
-    # make sure: grouping in ['user','machine']
+    # make sure: grouping in ['user','machine', 'vgrid']
     if not display in displays:
         output_objects.append({'object_type': 'error_text', 'text'
                    : 'invalid display grouping specified: %s' % display })
@@ -415,6 +416,8 @@ The query you have requested did not return any data.
         w = None
     if w: bar_default += ',width:"%s"' % w
 
+    height = (len(datarows) * 13) + 70
+
     # predefine 30 colours ( lazy way )
     seq = [0,9,12,2,11,4,6,13,15,1,8,10,14,3,5,7]
     colours = [ ('#%1X0%1X0%1X0' % (x,y,z))
@@ -445,6 +448,15 @@ The query you have requested did not return any data.
                  });
          </script>
 """
+
+
+    include_viz += """
+    <style>
+    .visualize {padding: 70px 40px %(height)spx;}
+    </style>
+    """%{'height': height}
+    
+    
     title_entry['javascript'] = include_viz
 
     # and done
