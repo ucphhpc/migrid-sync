@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # usagerecord - generating Usage Records from mRSLs, and XSL conversion helpers
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,6 +32,9 @@
 #
 # SGAS is licensed under the Apache License, Version 2.0
 # (the "License"); http://www.apache.org/licenses/LICENSE-2.0
+#
+# Extended 06/2010 by Jesper Rude Selknæs, to include VGRID information
+# in the xml records.
 
 # infrastructure imports
 
@@ -251,7 +254,7 @@ class UsageRecord:
         self.start_time = None
         self.end_time = None
         self.project_name = None
-
+        self.vgrid = None
         self.machine_name = None
         self.host = None
 
@@ -379,6 +382,10 @@ class UsageRecord:
                                 namespace_prefix + 'usageType', 
                                 'system')
 
+        if self.vgrid:
+            set_element(record, 'VGRID', text=self.vgrid) 
+        
+
         return self.__doc.toxml()
 
     def write_xml(self, filename):
@@ -462,6 +469,7 @@ class UsageRecord:
         self.project_name = job.get('PROJECT',None)
 
         self.node_count = job.get('NODECOUNT', None)
+        self.vgrid = job.get('VGRID', [None])[0]
 
         # global JOB_ID should always be there if we get here...
         self.global_job_id = job.get('JOB_ID', None)
@@ -573,13 +581,16 @@ if __name__ == '__main__':
         conf = Configuration('MiGserver.conf')
         usage_record = UsageRecord(conf, conf.logger)
 
-        # make sure we can write out something...
+        #make sure we can write out something...
 
         usage_record.record_id = 'uninitialised'
         usage_record.status = 'unknown'
         usage_record.fill_from_mrsl(fname)
+
+
         if len(sys.argv) > 2:
             target = sys.argv[2]
         else:
             target = '.'.join([fname,'xml'])
+            
         usage_record.write_xml(target)

@@ -870,7 +870,7 @@ def guess_type(name):
         return lambda x:__valid_contents(x, "monthweekdayall")
     # display: machine, user, summary
     elif name.lower().find('display') != -1:
-        return lambda x:__valid_contents(x, "machineusersummary")
+        return lambda x:__valid_contents(x, "machineusersummaryvgrid")
     # autocreate.py: proxy_upload and proxy_uploadfilename, contain cert/key
     elif name.lower().find('proxy_upload') != -1:
         return valid_printable

@@ -488,11 +488,16 @@ table.liveio table {
 
 .scrollselect {
     height: 120px;
-    width: 600px;
+    width: 570px; /* matches 80col textarea width in default text size */
     padding: 5px;
     overflow: auto;
     background: #fff;
     border: 1px inset grey;
+}
+
+.centertext .scrollselect { 
+  /* hackaround to get the div centered, not its contents */
+  margin:0 auto;
 }
 
 /* Job manager */
