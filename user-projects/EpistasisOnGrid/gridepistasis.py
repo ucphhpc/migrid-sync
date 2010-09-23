@@ -78,24 +78,24 @@ def monitor_epistasis(self):
         try:
             mig_session.update_jobs(jobs)
             for j in jobs:
-                if j['status']['STATUS'] == 'FINISHED':
+                if j['status']['STATUS'] == 'FINISHED' and j not in jobs_done:
                     output_files = mig_session.handle_output(j)
                     for f in output_files:
                         self.extract_output(f,  self.main_output_dir+j['results_dir'])
 
                     jobs_done.append(j)
-                    jobs.remove(j)
+                    #jobs.remove(j)
 
                     #log(self.logfile, 'Job ' + j['id'] + ' done.', self.debug_mode)
                     print 'Job ' + j['id'] + ' done.'
-            if jobs == []:
+            if len(jobs) == len(jobs_done):
 
             # mylogger.logprint(logfile, "All jobs completed")
                 self.print_status(jobs_done)
                 print 'all jobs completed'
                 return
             self.print_status(jobs)
-            self.print_status(jobs_done)
+            #self.print_status(jobs_done)
             time.sleep(configuration.monitor_polling_frequency)
         except KeyboardInterrupt:
             print 'User initiated cancellation of jobs'
