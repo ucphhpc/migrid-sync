@@ -1,54 +1,54 @@
-
 						The Python MiG Interface Module
 
 INTRODUCTION
 The MiG Interface Module contains a set of functions intended for MiG users who want to 
-develop grid applications.
+develop grid applications. By grid application is meant a local client script that uses the grid 
+as a computational resource by dispatching jobs to the grid server.
 
 The module sits on top of the Minimum intrusion Grid's "miglib.py" 
-python module and tries to simplify some of the operations.
+python module and tries to simplify the operations to make them more
+approachable to new users.
+
 
 REQUIREMENTS
-- Python (At least 2.6)
-- curl
+- Python (>=v2.6)
+- Curl (remote communcation).
 - A Minimum intrusion Grid user account with a valid 
-certificate.
-- The miglib.py python module
+certificate (for authentication).
+- The miglib.py python module (base MiG operations).
 
 
 MOTIVATION
 The learning curve of creating a grid application can be steep for
-inexperienced developers because they need to learn how to 
+inexperienced grid developers because they need to learn how to 
 perform job and file management on the respective grid middle-ware. By 
 building on top of the miglib.py module the Mig interface offers 
-simple intuitive functions that require little knowledge of the underlying 
+simple and intuitive functions that require little knowledge of the underlying 
 platform.
 
-For instance, the main grid operation is to start a grid job. This 
-operation requires writing an mRSL script that is read by the server. It 
-contains specifications about the commands to execute on the grid 
-resource and input/output files to be used in the job. Also, before the job 
-can be submitted, the user must upload the input files to the server. 
-Setting up the proper submission environment on the server often takes 
-some iterations of trial-and-error.  
+For instance, the main grid operation, to start a grid job. This 
+operation requires a series of steps. These include oploading input 
+files for the job, configuring a job specification file (.mRSL-script) and 
+then submitting the job. Setting up the proper submission environment 
+on the server often take some iterations of trial-and-error. 
 
 The mig interface tries to avoid this by replacing the procedure with a 
-single function mig_create_job(), which relieves the user of the details of job 
-submission.
+single function mig_create_job(), which relieves the user from the 
+details of job submission.
 
 
 EXAMPLES
 Example client grid applications using mig interface module can be found 
-in the files example1.py and example2.py.  They are intended for learning 
-how to use the mig interface module. However, they may also be useful 
-as templates for developing grid applications. 
+in the files example1.py and example2.py in the same folder as the 
+module file. They are intended for learning how to use the mig 
+interface module. However, they may also be useful as templates for 
+developing grid applications.
 
 
 DOCUMENTATION
 For documentation please use pydoc to read the function 
 descriptions available in the code.
 	Example : pydoc miginterface
-
 
 
 
