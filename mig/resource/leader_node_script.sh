@@ -9,6 +9,7 @@ copy_command="$debug ${copy_command}"
 move_command="$debug ${move_command}"
 clean_command="$debug rm -f"
 clean_recursive="${clean_command} -r"
+file_move="$debug mv -f"
 end_marker="### END OF SCRIPT ###"
 leader_pgid="$exe.leader_pgid"
 # Global work dir used by most functions
@@ -396,7 +397,23 @@ control_submit() {
             # disable monitor mode again
             set +m
         else
+
             ${prepend_execute} ${command} >> $joblog 2>> $joblog
+	    exec_ok=$?
+	    if [ $exec_ok -ne 0 ]; then
+		echo "failure executing ${prepend_execute} ${command}" >> $exehostlog
+		
+		# clean up the job cruft and go on
+		cd ${work_dir}
+		clean_job $localjobname
+
+		# request a new job right-away 
+		# (will make this job fail at the server)
+		$file_move "$dummywaitinput" "${exe}.dummyrequest"
+
+		continue
+	    fi
+	    
         fi
 
         cd ${work_dir}
@@ -498,10 +515,6 @@ control_finished() {
         fi
         echo "`date`: job $localjobname finished" >> $exehostlog 2>> $exehostlog
         
-        #echo "removing waitjob file" >> $exehostlog 2>> $exehostlog
-        $clean_command $dummywaitjob
-        sync_clean $dummywaitjob
-
         #echo "removing .job file" >> $exehostlog 2>> $exehostlog
         $clean_command ${localjobname}.job
         sync_clean ${localjobname}.job
@@ -510,6 +523,11 @@ control_finished() {
         touch ${localjobname}.done
 
         cd ${work_dir}
+
+        # remove dummywaitjob from work_dir
+        #echo "removing waitjob file" >> $exehostlog 2>> $exehostlog
+        $clean_command $dummywaitjob
+        sync_clean $dummywaitjob
 
         dummysend="$exe.dummysend"
         cp $dummywaitdone $dummysend && \
