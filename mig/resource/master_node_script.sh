@@ -291,6 +291,7 @@ done
 echo "givejob contents:" >> $exehostlog 2>> $exehostlog
 echo cat $givejob >> $exehostlog 2>> $exehostlog
 echo "givejob written, waiting for ${localjobname}.inputfiles_available" >> $exehostlog 2>> $exehostlog
+# IMPORTANT: leave local givejob file alone for LRMS submit error handling below!
 
 ### Sleep until inputfiles and jobscript are available
 loop_count=0
@@ -374,9 +375,22 @@ if [ ! -z "$submit_job_command" ]; then
 fi
 handle_update_loop $localjobname
   
+# LRMS submit with aggressive error handling:
+# Force immediate job failure on submit errors to give other 
+# resources a chance to execute the job instead of just waiting for
+# the potentially long job time out.
 #echo "run with job dir contents: `ls`" >> $exehostlog
 echo "`date`: ${prepend_execute} ${command}" >> $exehostlog
 ${prepend_execute} ${command} >> $joblog 2>> $joblog
+exec_ok=$?
+if [ $exec_ok -ne 0 ]; then
+    echo "failure executing ${prepend_execute} ${command}" >> $exehostlog
+    echo "requesting new job to force immediate job retry" >> $exehostlog
+    $copy_command $givejob ${copy_frontend_prefix}${frontend_dir} >> $exehostlog 2>> $exehostlog
+    # We will get a sleep job so we can just exit and let job time out
+    # handling take care of restart and clean up after that one
+    clean_and_exit 1
+fi
 
 # Simple resources only get here after job is done, but strict fill
 # LRMS resources just submitted job here - must wait for job to finish
