@@ -397,23 +397,25 @@ control_submit() {
             # disable monitor mode again
             set +m
         else
-
+            # LRMS submit with aggressive error handling:
+            # Force immediate job failure on submit errors to give other 
+            # resources a chance to execute the job instead of just waiting for
+            # the potentially long job time out.
             ${prepend_execute} ${command} >> $joblog 2>> $joblog
-	    exec_ok=$?
-	    if [ $exec_ok -ne 0 ]; then
-		echo "failure executing ${prepend_execute} ${command}" >> $exehostlog
-		
-		# clean up the job cruft and go on
-		cd ${work_dir}
-		clean_job $localjobname
+            exec_ok=$?
+            if [ $exec_ok -ne 0 ]; then
+                echo "failure executing ${prepend_execute} ${command}" >> $exehostlog
+                
+                # clean up the job cruft and go on
+                cd ${work_dir}
+                clean_job $localjobname
 
-		# request a new job right-away 
-		# (will make this job fail at the server)
-		$file_move "$dummywaitinput" "${exe}.dummyrequest"
+                # request a new job right-away 
+                # (will make this job fail at the server)
+                $file_move "$dummywaitinput" "${exe}.dummyrequest"
 
-		continue
-	    fi
-	    
+                continue
+            fi
         fi
 
         cd ${work_dir}
