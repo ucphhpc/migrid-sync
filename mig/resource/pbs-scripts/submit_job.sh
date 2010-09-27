@@ -22,3 +22,7 @@ fi
 qsub -l walltime=$MIG_JOBCPUTIME -l nodes=${MIG_JOBNODECOUNT}:ppn=${MIG_JOBCPUCOUNT} \
     -l mem=${MIG_JOBMEMORY}mb -l pmem=${MIG_JOBMEMORY}mb -r n -N $MIG_JOBNAME \
     -o $MIG_JOBNAME.out -e $MIG_JOBNAME.err -d $MIG_JOBDIR $mail_opt $@
+if [ $? -ne 0 ]; then
+    echo "Failed to submit to PBS - try again later"
+    exit 1 
+fi
