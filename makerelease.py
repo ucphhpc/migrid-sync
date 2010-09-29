@@ -49,8 +49,14 @@ if '__main__' == __name__:
         for exclude in exclude_dirs:
             if exclude in dirs:
                 dirs.remove(exclude)
-        for name in files:
-            if name == tar_path:
+        include_paths = files
+        # Preserve e.g. 'shared' symlinks
+        for name in dirs:
+            path = os.path.normpath(os.path.join(root, name))
+            if os.path.islink(path):
+                include_paths.append(name)
+        for name in include_paths:
+            if name.startswith(tar_path):
                 continue
             path = os.path.normpath(os.path.join(root, name))
             rel_path = path.replace(os.path.dirname(target), '')

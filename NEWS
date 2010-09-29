@@ -6,6 +6,12 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
+=== September 29th, 2010 ===
+Bugfix release to add missing 'shared' symlinks in various locations and fix
+a number of smaller bugs.
+Minor updates in layout and widgets.
+
+
 === August 3rd, 2010 ===
 Feature and interface improvement release with thanks to grid.dk for a
 considerable contribution especially in the usability and interface areas.
@@ -86,6 +92,21 @@ for other users.
 More detailed changelogs for the public releases.
 The full changelog is available from the repository:
 http://code.google.com/p/migrid/source/list
+
+== 1.3.1 ==
+-Add missing symlinks to the mig/shared directory
+-Fix handling of old jobs in PARSE state during start up
+-Fix access control in resource editor back end
+-Fix time stamps in job manager (off by one month)
+-Actually honour max jobs in job manager
+-Sanitize file manager action handlers
+-Allow delete resource for anonymized resources
+-Fixed occasional wrong icons in fileman
+-Enable tilde and variable expansion of miguser.conf variables in user scripts
+-Upgrade to latest JQuery and JQuery UI
+-More consistent use of jquery tablesorters on main pages
+-Improved handling of submit errors on LRMS resources
+-More user widgets
 
 == 1.3.0 ==
 -New central message queues for synchronized job communication
