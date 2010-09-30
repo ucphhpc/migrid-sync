@@ -18,6 +18,31 @@ especially the wiki pages including:
 http://code.google.com/p/migrid/wiki/GettingStarted
 
 
+= Requirements =
+A MiG server basically requires an Apache web server, the OpenSSH client
+tools and a Python interpreter with a few external modules.
+-Apache 1.3.x or 2.x (http://httpd.apache.org/)
+-Apache SSL module (http://httpd.apache.org/docs/2.0/mod/mod_ssl.html)
+-Apache Rewrite module (http://httpd.apache.org/docs/2.0/mod/mod_rewrite.html)
+-OpenSSH clients (http://openssh.org/)
+-Python 2.5 or later but not 3.x
+-Python JSON module
+--json-py (http://sourceforge.net/projects/json-py/)
+--simplejson (http://undefined.org/python/#simplejson)
+--... others may also work
+-Python Enchant module (http://pyenchant.sourceforge.net/). 
+
+Optional WSGI interface, Wiki and SCM VGrid features require:
+-Apache WSGI module (http://code.google.com/p/modwsgi/)
+-MoinMoin (http://moinmo.in/)
+-Mercurial (http://mercurial.selenic.com/)
+
+On Debian servers the corresponding packages can be installed with:
+sudo aptitude install apache2-mpm-prefork libapache2-mod-wsgi \
+     openssh-client python-json python-enchant python-moinmoin \
+     mercurial
+
+
 = Installing MiG =
 If you want to run your own MiG server for your own grid or to develop
 MiG you should download and unpack the source code (including this
