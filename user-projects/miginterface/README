@@ -1,6 +1,14 @@
-						The Python MiG Interface Module
+The Python MiG Interface Module
 
-INTRODUCTION
+Last updated %%date(%d-%m-%Y %H:%M)
+% End of the three default header lines
+%! Encoding: utf8
+%! Options : --toc --enum-title
+% End of the optional settings lines
+
+%%toc
+
+= Introduction =
 The MiG Interface Module contains a set of functions intended for MiG users who want to 
 develop grid applications. By grid application is meant a local client script that uses the grid 
 as a computational resource by dispatching jobs to the grid server.
@@ -10,15 +18,15 @@ python module and tries to simplify the operations to make them more
 approachable to new users.
 
 
-REQUIREMENTS
-- Python (>=v2.6)
+= Requirements =
+- Python (>=v2.5)
 - Curl (remote communcation).
 - A Minimum intrusion Grid user account with a valid 
 certificate (for authentication).
 - The miglib.py python module (base MiG operations).
 
 
-MOTIVATION
+= Motivation = 
 The learning curve of creating a grid application can be steep for
 inexperienced grid developers because they need to learn how to 
 perform job and file management on the respective grid middle-ware. By 
@@ -37,15 +45,26 @@ single function mig_create_job(), which relieves the user from the
 details of job submission.
 
 
-EXAMPLES
+= Getting Started =
+Before you start using the MiG Interface Module, miginterface.py, make sure you 
+have the miglib.py API properly installed. If you installed the MiG user scripts you 
+can also test by running the list directory script, migls.py. Second, 
+link or copy miglib.py into the miginterface directory. Finally, to verify that the MiG Interface 
+Module works, run the examples mentioned below in the EXAMPLES section. 
+
+
+= Examples =
 Example client grid applications using mig interface module can be found 
 in the files example1.py and example2.py in the same folder as the 
 module file. They are intended for learning how to use the mig 
 interface module. However, they may also be useful as templates for 
 developing grid applications.
 
+To run an example file:
+	python example1.py
 
-DOCUMENTATION
+
+= Documentation = 
 For documentation please use pydoc to read the function 
 descriptions available in the code.
 	Example : pydoc miginterface
