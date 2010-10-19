@@ -36,8 +36,6 @@
 
 import os
 import time
-import tempfile
-import pickle
 
 import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables
@@ -77,8 +75,8 @@ def handle_proxy(proxy_string, client_id, config):
 
     output = []
     client_dir = client_id_dir(client_id)
-    dir = os.path.join(config.user_home,client_dir)
-    path = os.path.join(config.user_home,client_dir, arc.Ui.proxy_name)
+    proxy_dir = os.path.join(config.user_home, client_dir)
+    proxy_path = os.path.join(config.user_home, client_dir, arc.Ui.proxy_name)
 
     if not config.arc_clusters:
         output.append({'object_type': 'error_text', 'text':
@@ -87,18 +85,18 @@ def handle_proxy(proxy_string, client_id, config):
 
     # store the file
     try:
-        write_file(proxy_string, path, config.logger)
-        os.chmod(path, 0600)
+        write_file(proxy_string, proxy_path, config.logger)
+        os.chmod(proxy_path, 0600)
     except Exception, exc:
         output.append({'object_type': 'error_text', 'text'
                               : 'Proxy file could not be written (%s)!'
-                               % str(exc).replace(dir, '')})
+                               % str(exc).replace(proxy_dir, '')})
         return output
 
     # provide information about the uploaded proxy
     try:
-        session_Ui = arc.Ui(dir)
-        proxy = session_Ui.getProxy()
+        session_ui = arc.Ui(proxy_dir)
+        proxy = session_ui.getProxy()
         if proxy.IsExpired():
             # can rarely happen, constructor will throw exception
             output.append({'object_type': 'warning', 
@@ -141,8 +139,6 @@ def main(client_id, user_arguments_dict):
     logger.debug('Accepted arguments: %s' % accepted)
 
     admin_email = configuration.admin_email
-    smtp_server = configuration.smtp_server
-    user_pending = os.path.abspath(configuration.user_pending)
 
     # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
 
@@ -178,7 +174,8 @@ def main(client_id, user_arguments_dict):
     except:
         output_objects.append({'object_type': 'error_text', 'text'
                               : '''Illegal Distinguished name:
-Please note that the distinguished name must be a valid certificate DN with multiple "key=val" fields separated by "/".
+Please note that the distinguished name must be a valid certificate DN with
+multiple "key=val" fields separated by "/".
 '''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -218,8 +215,9 @@ Please note that the distinguished name must be a valid certificate DN with mult
         except Exception, err:
             logger.error('Failed to create user with existing certificate %s: %s'
                      % (cert_id, err))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : '''Could not create the user account for you:
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : '''Could not create the user account for you:
 Please report this problem to the grid administrators (%s).''' % admin_email})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 

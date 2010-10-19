@@ -116,9 +116,10 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text'
                               : '''Illegal email and organization combination:
 Please read and follow the instructions in red on the request page!
-If you are a DIKU student with only a @*.ku.dk address please just use KU as organization.
-As long as you state that you want the certificate for DIKU purposes in the comment field, you
-will be given access to the necessary resources anyway.
+If you are a DIKU student with only a @*.ku.dk address please just use KU as
+organization.
+As long as you state that you want the certificate for DIKU purposes in the
+comment field, you will be given access to the necessary resources anyway.
 '''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -127,7 +128,8 @@ will be given access to the necessary resources anyway.
     except:
         output_objects.append({'object_type': 'error_text', 'text'
                               : '''Illegal Distinguished name:
-Please note that the distinguished name must be a valid certificate DN with multiple "key=val" fields separated by "/".
+Please note that the distinguished name must be a valid certificate DN with
+multiple "key=val" fields separated by "/".
 '''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -153,12 +155,14 @@ Please note that the distinguished name must be a valid certificate DN with mult
 
         db_path = os.path.join(configuration.mig_server_home, db_name)
         try:
-            create_user(user_dict, configuration.config_file, db_path, ask_renew=False)
+            create_user(user_dict, configuration.config_file, db_path,
+                        ask_renew=False)
         except Exception, err:
-            logger.error('Failed to create user with existing certificate %s: %s'
+            logger.error('Failed to create user with existing cert %s: %s'
                      % (cert_id, err))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : '''Could not create the user account for you:
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : '''Could not create the user account for you:
 Please report this problem to the grid administrators (%s).''' % admin_email})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -177,16 +181,16 @@ Please use the navigation menu to the left to proceed using it.
     except Exception, err:
         logger.error('Failed to write existing certificate request to %s: %s'
                      % (req_path, err))
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Request could not be sent to grid administrators. Please contact them manually on %s if this error persists.'
-                               % admin_email})
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : """Request could not be sent to grid administrators. Please
+contact them manually on %s if this error persists.""" % admin_email})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     logger.info('Wrote existing certificate sign up request to %s' % req_path)
     tmp_id = req_path.replace(user_pending, '')
     user_dict['tmp_id'] = tmp_id
 
-    dest = 'karlsen@erda.imada.sdu.dk'
     mig_user = os.environ.get('USER', 'mig')
     command_user_create = \
         """
@@ -237,12 +241,19 @@ Command to delete user again on %(site)s server:
                  % (admin_email, email_header, email_msg, smtp_server))
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'An error occured trying to send the email requesting the grid administrators to sign up with an existing certificate. Please email the grid administrators (%s) manually and include the session ID: %s'
-                               % (admin_email, tmp_id)})
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : """An error occured trying to send the email requesting the
+grid administrators to sign up with an existing certificate. Please email the
+grid administrators (%s) manually and include the session ID: %s"""
+             % (admin_email, tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : "Request sent to grid administrators: Your request for a %s user account with your existing certificate will be verified and handled as soon as possible, so please be patient. In case of inquiries about this request, please email the grid administrators (%s) and include the session ID: %s"
-                           % (configuration.short_title, admin_email, tmp_id)})
+    output_objects.append(
+        {'object_type': 'text', 'text'
+         : """Request sent to grid administrators: Your request for a %s user
+account with your existing certificate will be verified and handled as soon as
+possible, so please be patient. In case of inquiries about this request,
+please email the grid administrators (%s) and include the session ID: %s"""
+         % (configuration.short_title, admin_email, tmp_id)})
     return (output_objects, returnvalues.OK)
