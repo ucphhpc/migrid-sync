@@ -36,6 +36,7 @@ try:
 except ImportError:
     from md5 import new as hash_algo
 
+from shared.defaults import exe_leader_name
 from shared.fileio import pickle
 from shared.confparser import get_resource_config_dict, run
 from shared.ssh import default_ssh_options
@@ -62,9 +63,24 @@ def anon_resource_id(res_id, keep_exe=True):
         anon_id += "_%s" % exe_part
     return anon_id
 
+def exclude_exe_leader(exe_nodes):
+    """Remove any occurences of execution leader from the exe_nodes list of
+    exe node names"""
+    while exe_leader_name in exe_nodes:
+        exe_nodes.remove(exe_leader_name)
+    return exe_nodes
+    
+def include_exe_leader(exe_nodes):
+    """Insert execution leader into the exe_nodes list of exe node names if
+    not there already"""
+    if not exe_leader_name in exe_nodes:
+        exe_nodes.insert(0, exe_leader_name)
+    return exe_nodes
+    
+
 def retrieve_execution_nodes(exe_nodes, prepend_leader=False):
     """Return an ordered list of exe nodes from the allowed range formats.
-    Prepend execution-leader node if prepend_leader is set.
+    Prepend execution leader node if prepend_leader is set.
     """
 
     execution_nodes = []
@@ -72,7 +88,7 @@ def retrieve_execution_nodes(exe_nodes, prepend_leader=False):
     index = 0
 
     if prepend_leader:
-        execution_nodes.append('execution-leader')
+        execution_nodes.append(exe_leader_name)
 
     for noderange in exe_nodes.split(';'):
         noderange = noderange.replace(' ', '')
@@ -120,7 +136,7 @@ def generate_execution_node_string(exe_nodes, hide_leader=True):
     regex_nonnumeric = get_regex_non_numeric()
 
     if hide_leader:
-        exe_nodes = [exe for exe in exe_nodes if 'execution-leader'
+        exe_nodes = [exe for exe in exe_nodes if exe_leader_name
                       != exe['execution_node']]
     for execution_node in exe_nodes:
 
@@ -689,7 +705,7 @@ def prepare_conf(configuration, input_args, resource_id):
             # replace exe dir name with "all" but keep trailing slash
 
             execution_dir = os.path.join(execution_dir, 'all')
-            if exe['name'] == 'execution-leader':
+            if exe['name'] == exe_leader_name:
                 script_prefix = 'leader'
             else:
                 script_prefix = 'dummy'

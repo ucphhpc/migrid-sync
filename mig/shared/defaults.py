@@ -48,3 +48,6 @@ default_mqueue = 'default'
 mqueue_empty = 'NO MESSAGES'
 
 default_pager_entries = 25
+
+exe_leader_name = "execution-leader"
+
