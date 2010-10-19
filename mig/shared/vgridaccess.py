@@ -265,10 +265,13 @@ def get_vgrid_map(configuration):
         last_map[VGRIDS] = vgrid_map
     return vgrid_map
 
-def user_owned_resources(configuration, client_id):
-    """Extract a list of resources that client_id owns.
+def user_owned_res_confs(configuration, client_id):
+    """Extract a map of resources that client_id owns.
 
-    Resources are anonymized unless explicitly configured otherwise.
+    Returns a map from resource IDs to resource conf dictionaries.
+
+    Resource IDs are anonymized unless explicitly configured otherwise, but
+    the resource confs are always raw.
     """
     owned = {}
     resource_map = get_resource_map(configuration)
@@ -281,14 +284,17 @@ def user_owned_resources(configuration, client_id):
 
     for (res_id, res) in resource_map.items():
         if vgrid_allowed(client_id, res[OWNERS]):
-            owned[anon_map[res_id]] = res
+            owned[anon_map[res_id]] = res[CONF]
     return owned
 
-def user_allowed_resources(configuration, client_id):
-    """Extract a list of resources that client_id can really submit to.
+def user_allowed_res_confs(configuration, client_id):
+    """Extract a map of resources that client_id can really submit to.
     There is no guarantee that they will ever accept any further jobs.
 
-    Resources are anonymized unless explicitly configured otherwise.
+    Returns a map from resource IDs to resource conf dictionaries.
+
+    Resources are anonymized unless explicitly configured otherwise, but
+    the resource confs are always raw.
     
     Please note that vgrid participation is a mutual agreement between vgrid
     owners and resource owners, so that a resource only truly participates
@@ -300,17 +306,80 @@ def user_allowed_resources(configuration, client_id):
     # Find all potential resources from vgrid sign up
 
     vgrid_map = get_vgrid_map(configuration)
-    map_resources = vgrid_map[RESOURCES]
+    vgrid_map_res = vgrid_map[RESOURCES]
+    resource_map = get_resource_map(configuration)
 
     # Map only contains the raw resource names - anonomize as requested
 
     anon_map = {}
-    for res in map_resources.keys():
-        anon_map[res] = map_resources[res][RESID]
+    for res in vgrid_map_res.keys():
+        anon_map[res] = vgrid_map_res[res][RESID]
 
     # Now select only the ones that actually still are allowed for that vgrid
 
-    for (res, all_exes) in map_resources.items():
+    for (res, all_exes) in vgrid_map_res.items():
+        shared = [i for i in all_exes[ALLOW] if i in allowed_vgrids]
+        if not shared:
+            continue
+        allowed[anon_map[res]] = resource_map.get(res, {CONF: {}})[CONF]
+    return allowed
+
+def user_visible_res_confs(configuration, client_id):
+    """Extract a map of resources that client_id owns or can submit jobs to.
+    This is a wrapper combining user_owned_res_confs and
+    user_allowed_res_confs.
+
+    Returns a map from resource IDs to resource conf dictionaries.
+    
+    Resource IDs are anonymized unless explicitly configured otherwise, but
+    the resource confs are always raw.
+    """
+    visible = user_allowed_res_confs(configuration, client_id)
+    visible.update(user_owned_res_confs(configuration, client_id))
+    return visible
+
+def user_owned_res_exes(configuration, client_id):
+    """Extract a map of resources that client_id owns.
+
+    Returns a map from resource IDs to lists of exe node names.
+
+    Resource IDs are anonymized unless explicitly configured otherwise.
+    """
+    owned = {}
+    owned_confs = user_owned_res_confs(configuration, client_id)
+    for (res_id, res) in owned_confs.items():
+        owned[res_id] = [exe["name"] for exe in res["EXECONFIG"]]
+    return owned
+
+def user_allowed_res_exes(configuration, client_id):
+    """Extract a map of resources that client_id can really submit to.
+    There is no guarantee that they will ever accept any further jobs.
+
+    Returns a map from resource IDs to lists of exe node names.
+
+    Resource IDs are anonymized unless explicitly configured otherwise.
+    
+    Please note that vgrid participation is a mutual agreement between vgrid
+    owners and resource owners, so that a resource only truly participates
+    in a vgrid if the vgrid *and* resource owners configured it so.
+    """
+    allowed = {}
+    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
+
+    # Find all potential resources from vgrid sign up
+
+    vgrid_map = get_vgrid_map(configuration)
+    vgrid_map_res = vgrid_map[RESOURCES]
+
+    # Map only contains the raw resource names - anonomize as requested
+
+    anon_map = {}
+    for res in vgrid_map_res.keys():
+        anon_map[res] = vgrid_map_res[res][RESID]
+
+    # Now select only the ones that actually still are allowed for that vgrid
+
+    for (res, all_exes) in vgrid_map_res.items():
         shared = [i for i in all_exes[ALLOW] if i in allowed_vgrids]
         if not shared:
             continue
@@ -318,20 +387,20 @@ def user_allowed_resources(configuration, client_id):
         for exe in [i for i in all_exes.keys() if i not in RES_SPECIALS]:
             if [i for i in shared if i in all_exes[exe]]:
                 match.append(exe)
-        if res in allowed:
-            continue
         allowed[anon_map[res]] = match
     return allowed
 
-def user_visible_resources(configuration, client_id):
-    """Extract a list of resources that client_id owns or can submit jobs to.
-    This is a wrapper combining user_owned_resources and
-    user_allowed_resources.
+def user_visible_res_exes(configuration, client_id):
+    """Extract a map of resources that client_id owns or can submit jobs to.
+    This is a wrapper combining user_owned_res_exes and
+    user_allowed_res_exes.
+
+    Returns a map from resource IDs to resource exe node names.
     
-    Resources are anonymized unless explicitly configured otherwise.
+    Resource IDs are anonymized unless explicitly configured otherwise.
     """
-    visible = user_allowed_resources(configuration, client_id)
-    visible.update(user_owned_resources(configuration, client_id))
+    visible = user_allowed_res_exes(configuration, client_id)
+    visible.update(user_owned_res_exes(configuration, client_id))
     return visible
 
 def resources_using_re(configuration, re_name):
@@ -383,17 +452,24 @@ if "__main__" == __name__:
     all_vgrids = full_map[VGRIDS].keys()
     print "raw vgrid names: %s" % ', '.join(all_vgrids)
     print
-    user_access = user_allowed_resources(conf, user_id)
+    user_access_exes = user_allowed_res_exes(conf, user_id)
+    user_access_confs = user_allowed_res_confs(conf, user_id)
     print "%s can access: %s" % \
           (user_id, ', '.join(["%s: %s" % (i, j) for (i, j) \
-                               in user_access.items()]))
-    user_owned = user_owned_resources(conf, user_id)
+                               in user_access_exes.items()]))
+    user_owned_exes = user_owned_res_exes(conf, user_id)
+    user_owned_confs = user_owned_res_confs(conf, user_id)
     print "%s owns: %s" % \
-          (user_id, ', '.join(["%s: %s" % (i, j[MODTIME]) for (i, j) \
-                               in user_owned.items()]))
-    user_visible = user_visible_resources(conf, user_id)
+          (user_id, ', '.join(["%s" % i for i in \
+                               user_owned_confs.keys()]))
+    user_visible_exes = user_visible_res_exes(conf, user_id)
+    user_visible_confs = user_visible_res_confs(conf, user_id)
     print "%s can view: %s" % \
-          (user_id, ', '.join([i for i in user_visible.keys()]))
+          (user_id, ', '.join([i for i in user_visible_exes.keys()]))
+    print "full access exe dicts for %s:\n%s\n%s\n%s" % \
+          (user_id, user_access_exes, user_owned_exes, user_visible_exes)
+    print "full access conf dicts for %s:\n%s\n%s\n%s" % \
+          (user_id, user_access_confs, user_owned_confs, user_visible_confs)
     re_resources = resources_using_re(conf, runtime_env)
     print "%s in use on resources: %s" % \
           (runtime_env, ', '.join([i for i in re_resources]))

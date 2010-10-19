@@ -33,7 +33,7 @@ from shared.defaults import default_pager_entries
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.resource import anon_to_real_res_map
-from shared.vgridaccess import user_visible_resources, get_resource_map, \
+from shared.vgridaccess import user_visible_res_exes, get_resource_map, \
      OWNERS, CONF
 
 
@@ -64,17 +64,17 @@ def main(client_id, user_arguments_dict):
 
     show_sandboxes = (accepted['show_sandboxes'][-1] != 'false')
 
-    visible = user_visible_resources(configuration, client_id)
+    visible_exes = user_visible_res_exes(configuration, client_id)
     res_map = get_resource_map(configuration)
     anon_map = anon_to_real_res_map(configuration.resource_home)
 
     # Iterate through resources and show management for each one requested
 
     res_list = {'object_type': 'resource_list', 'resources': []}
-    fields = ['PUBLICNAME', 'CPUCOUNT', 'MEMORY', 'DISK', 'ARCHITECTURE',
+    fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK', 'ARCHITECTURE',
               'SANDBOX', 'RUNTIMEENVIRONMENT']
     # Leave the sorting to jquery tablesorter
-    for visible_res_name in visible.keys():
+    for visible_res_name in visible_exes.keys():
         unique_resource_name = visible_res_name
         if visible_res_name in anon_map.keys():
             unique_resource_name = anon_map[visible_res_name]
@@ -120,8 +120,6 @@ def main(client_id, user_arguments_dict):
         # fields for everyone: public status
         for name in fields:
             res_obj[name] = res_map[unique_resource_name][CONF].get(name, '')
-        # Use visible nodes in contrast to connected nodes
-        res_obj['NODECOUNT'] = len(visible[visible_res_name])
         # Use runtimeenvironment names instead of actual definitions
         res_obj['RUNTIMEENVIRONMENT'] = [i[0] for i in res_obj['RUNTIMEENVIRONMENT']]
         res_list['resources'].append(res_obj)

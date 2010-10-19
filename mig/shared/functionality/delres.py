@@ -34,7 +34,7 @@ import shared.returnvalues as returnvalues
 from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
-from shared.vgridaccess import user_owned_resources, unmap_resource
+from shared.vgridaccess import unmap_resource
 
 
 def signature():

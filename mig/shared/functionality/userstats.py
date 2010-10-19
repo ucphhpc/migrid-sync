@@ -35,7 +35,7 @@ from shared.init import initialize_main_variables
 from shared.usercache import refresh_disk_stats, refresh_job_stats, \
      format_bytes, OWN, VGRID, JOBS, FILES, DIRECTORIES, BYTES, PARSE, \
      QUEUED, EXECUTING, FINISHED, RETRY, CANCELED, EXPIRED, FAILED
-from shared.vgridaccess import user_allowed_resources
+from shared.vgridaccess import user_allowed_res_exes
 
 
 def signature():
@@ -89,7 +89,7 @@ def main(client_id, user_arguments_dict):
                       }
         user_stats['jobs'] = total_jobs
     if 'resources' in stats:
-        allowed_res = user_allowed_resources(configuration, client_id)
+        allowed_res = user_allowed_res_exes(configuration, client_id)
         # allowed_res is dictionary of res ID and list of attached exe names
         resource_count = len(allowed_res.keys())
         exe_count = 0
