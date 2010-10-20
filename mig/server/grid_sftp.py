@@ -61,14 +61,10 @@
 
 import base64
 import glob
-import logging
 import os
 import socket
-import sys
-import tempfile
 import threading
 import time
-from optparse import OptionParser
 from StringIO import StringIO
 import paramiko
 import paramiko.util
@@ -108,9 +104,12 @@ class SFTPHandle(paramiko.SFTPHandle):
 
 
 class SimpleSftpServer(paramiko.SFTPServerInterface):
-    def __init__(self, server, transport, fs_root, users, *largs, **kwargs):
+    def __init__(self, server, transport, fs_root, users, *largs,
+                 **kwargs):
+        conf = kwargs.get('conf', {})
         self.transport = transport
         self.root = fs_root
+        self.chroot_exceptions = conf.get('chroot_exceptions', [])
         self.user_name = self.transport.get_username()
         self.users = users
 
@@ -120,10 +119,17 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     def get_fs_path(self, sftp_path):
         real_path = "%s/%s" % (self.root, sftp_path)
         real_path = real_path.replace('//', '/')
-        
-        if not os.path.realpath(real_path).startswith(self.root):
-            raise Exception("Invalid path")
 
+        accept_roots = [self.root] + self.chroot_exceptions
+
+        accepted = False
+        for accept_path in accept_roots:
+            if os.path.realpath(real_path).startswith(accept_path):
+                accepted = True
+                break
+        if not accepted:
+            logger.warning("rejecting illegal path: %s" % real_path)
+            raise Exception("Invalid path")
         logger.debug("real_path :: %s" % real_path)
         return(real_path)
 
@@ -169,7 +175,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     def mkdir(self, path, mode):
         logger.debug("mkdir %s" % path)
         real_path = self.get_fs_path(path)
-	# Force MiG default mode
+        # Force MiG default mode
         os.mkdir(real_path, 0755)
         return paramiko.SFTP_OK
 
@@ -181,7 +187,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def chattr(self, path, attr):
         logger.debug("chattr %s" % path)
-	# Prevent users from messing with access modes
+        # Prevent users from messing with access modes
         return paramiko.SFTP_OP_UNSUPPORTED
          
     #def canonicalize(self, path):
@@ -191,27 +197,30 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     def readlink(self, path):
         logger.debug("readlink %s" % path)
         real_path = self.get_fs_path(path)
-	relative_path = os.readlink(path).replace(self.root, '')
-	return relative_path
+        relative_path = os.readlink(path).replace(self.root, '')
+        return relative_path
 
     def symlink(self, target_path, path):
         logger.debug("symlink %s" % target_path)
-	# Prevent users from creating symlinks for security reasons
+        # Prevent users from creating symlinks for security reasons
         return paramiko.SFTP_OP_UNSUPPORTED
 
 
 class SimpleSSHServer(paramiko.ServerInterface):
-    def __init__(self, users):
+    def __init__(self, users, *largs, **kwargs):
+        conf = kwargs.get('conf', {})
         self.event = threading.Event()
         self.users = users
         self.authenticated_user = None
+        self.allow_password = conf.get('allow_password', True)
+        self.allow_publickey = conf.get('allow_publickey', True)
 
     def check_channel_request(self, kind, chanid):
         logger.info("channel_request: %s, %s" % (kind, chanid))
         return paramiko.OPEN_SUCCEEDED
 
     def check_auth_password(self, username, password):
-        if self.users.has_key(username):
+        if self.allow_password and self.users.has_key(username):
             if self.users[username].password == password:
                 logger.info("Authenticated %s" % username)
                 return paramiko.AUTH_SUCCESSFUL
@@ -219,7 +228,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
-        if self.users.has_key(username):
+        if self.allow_publickey and self.users.has_key(username):
             u = self.users[username]
             if u.public_key is not None:
                 if u.public_key.get_base64() == key.get_base64():
@@ -229,23 +238,18 @@ class SimpleSSHServer(paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def get_allowed_auths(self, username):
-        return 'password,publickey'
+        auths = []
+        if self.allow_password:
+            auths.append('password')
+        if self.allow_publickey:
+            auths.append('publickey')
+        return ','.join(auths)
 
     def get_authenticated_user(self):
         return self.authenticated_user
 
     def check_channel_shell_request(self, channel):
         self.event.set()
-        return True
-
-    #def check_channel_subsystem_request(self, channel, name):
-    #    print channel
-    #    print name
-    #    self.event.set()
-    #    return True
-
-    def check_channel_pty_request(self, channel, term, width, height, pixelwidth,
-                                  pixelheight, modes):
         return True
 
 
@@ -273,9 +277,11 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
         logger.info("Custom implementation: %s" % conf['sftp_implementation'])
     else:
         impl = SimpleSftpServer
-    transport.set_subsystem_handler("sftp", paramiko.SFTPServer, sftp_si=impl, transport=transport, fs_root=root_dir, users=usermap)
+    transport.set_subsystem_handler("sftp", paramiko.SFTPServer, sftp_si=impl,
+                                    transport=transport, fs_root=root_dir,
+                                    users=usermap, conf=conf)
 
-    server = SimpleSSHServer(users=usermap)
+    server = SimpleSSHServer(users=usermap, conf=conf)
     transport.start_server(server=server)
     channel = transport.accept()
     while(transport.is_active()):
@@ -284,7 +290,7 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
     username = server.get_authenticated_user()
     if username is not None:
         user = usermap[username]
-        logger.info("Login from %s" % username)
+        logger.info("Login for %s from %s" % (username, addr))
         # Ignore user connection here as we only care about sftp 
 
 def refresh_users(conf):
@@ -303,9 +309,9 @@ def refresh_users(conf):
         cur_usernames.append(user_hex)
         if last_update >= os.path.getmtime(path):
             continue
-        # TODO: move to user settings
+        # TODO: move to user settings?
+        # Create user entry for each valid key
         key_fd = open(path, 'r')
-        # TODO: consider multiple keys?
         all_keys = key_fd.readlines()
         key_fd.close()
         # Clean up all old entries for this user
@@ -331,25 +337,25 @@ def refresh_users(conf):
     return conf
 
 def start_service(service_conf):
-     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-     # Allow reuse of socket to avoid TCP time outs
-     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
-     server_socket.bind((service_conf['address'], service_conf['port']))
-     server_socket.listen(10)
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Allow reuse of socket to avoid TCP time outs
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
+    server_socket.bind((service_conf['address'], service_conf['port']))
+    server_socket.listen(10)
 
-     logger.info("Accepting connections")
-     while True:
-         client, addr = server_socket.accept()
-         # automatic reload of users if more than five minutes old
-         if service_conf['time_stamp'] + 300 < time.time():
-             service_conf = refresh_users(service_conf)
-         t = threading.Thread(target=accept_client, args=[client, 
-                                                          addr, 
-                                                          service_conf['root_dir'],
-                                                          service_conf['users'],
-                                                          service_conf['host_rsa_key'],
-                                                          service_conf,])
-         t.start()
+    logger.info("Accepting connections")
+    while True:
+        client, addr = server_socket.accept()
+        # automatic reload of users if more than five minutes old
+        if service_conf['time_stamp'] + 300 < time.time():
+            service_conf = refresh_users(service_conf)
+        t = threading.Thread(target=accept_client, args=[client, 
+                                                         addr, 
+                                                         service_conf['root_dir'],
+                                                         service_conf['users'],
+                                                         service_conf['host_rsa_key'],
+                                                         service_conf,])
+        t.start()
 
 
 if __name__ == "__main__":
@@ -387,9 +393,15 @@ cLz1fOlcctHsIQBMFxEBR0dM7RNX/kdvWfhiPDl1VgDQIyrAEC9euig92hKhmA2E
 Myw1d5t46XP97y6Szrhcsrt15pmSKD+zLYXD26qoxKJOP9a6+A==
 -----END RSA PRIVATE KEY-----
 """
+    chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
+                         os.path.abspath(configuration.vgrid_public_base),
+                         os.path.abspath(configuration.vgrid_files_home)]
     sftp_conf = {'address': address,
                  'port': port,
                  'root_dir': os.path.abspath(configuration.user_home),
+                 'chroot_exceptions': chroot_exceptions,
+                 'allow_password': False,
+                 'allow_publickey': True,
                  'host_rsa_key': host_rsa_key,
                  'users': [],
                  'time_stamp': 0}
