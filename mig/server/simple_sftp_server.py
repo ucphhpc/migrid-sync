@@ -51,6 +51,8 @@ logger = logging.getLogger("sftpserver")
 
 configuration_template = """# simple sftp_server.py configuration
 
+# Bind to all interfaces by default
+address = ""
 port = 2222
 root_dir = "/path/to/your/mig/state/user_home"
 
@@ -390,7 +392,7 @@ def start_service(configuration):
      server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
      # Allow reuse of socket to avoid TCP time outs
      server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
-     server_socket.bind(('', configuration['port']))
+     server_socket.bind((configuration['address'], configuration['port']))
      server_socket.listen(10)
 
      logger.info("Accepting connections")
@@ -416,6 +418,8 @@ def main():
     usage = """usage: %prog [options]
  One of --config-file or --new-config must be specified"""
     oparser = OptionParser(usage=usage)
+    oparser.add_option("-a", "--address", dest="address",
+                       help="listen on ADDRESS (leave empty for all)", metavar="ADDRESS")
     oparser.add_option("-p", "--port", dest="port",
                        help="listen on PORT", metavar="PORT")
     oparser.add_option("-c", "--config-file", dest="config_file",
