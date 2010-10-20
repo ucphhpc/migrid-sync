@@ -340,8 +340,9 @@ def start_service(service_conf):
      logger.info("Accepting connections")
      while True:
          client, addr = server_socket.accept()
-         # automatic reload of users
-         service_conf = refresh_users(service_conf)
+         # automatic reload of users if more than five minutes old
+         if service_conf['time_stamp'] + 300 < time.time():
+             service_conf = refresh_users(service_conf)
          t = threading.Thread(target=accept_client, args=[client, 
                                                           addr, 
                                                           service_conf['root_dir'],
