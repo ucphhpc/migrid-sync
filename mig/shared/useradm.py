@@ -31,6 +31,7 @@ import os
 import sys
 import shutil
 import fnmatch
+import datetime
 
 from shared.base import client_id_dir, old_id_format, sandbox_resource
 from shared.conf import get_configuration_object
@@ -207,6 +208,7 @@ def create_user(
     pending_dir = os.path.join(configuration.resource_pending,
                                client_dir)
     htaccess_path = os.path.join(home_dir, '.htaccess')
+    settings_path = os.path.join(home_dir, '.settings')
     css_path = os.path.join(home_dir, css_template)
     if not renew:
         if verbose:        
@@ -277,6 +279,24 @@ def create_user(
             raise Exception('Error: could not create htaccess file: %s' % \
                             htaccess_path)
 
+    # Always write basic settings with email to support various mail requests
+    # and to avoid log errors.
+    # Please note that we rely on anything from shared.settings here since it
+    # would introduce a module import cycle
+
+    try:
+        settings_dict = {}
+        user_email = user.get('email', '')
+        if user_email:
+            settings_dict['EMAIL'] = [user_email]
+        settings_dict['CREATOR'] = client_id
+        settings_dict['CREATED_TIMESTAMP'] = datetime.datetime.now()
+        dump(settings_dict, settings_path)
+    except:
+        if not force:
+            raise Exception('Error: could not create settings file: %s' % \
+                            settings_path)
+        
     # Always write default css to avoid apache error log entries
 
     try:
