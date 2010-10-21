@@ -63,6 +63,7 @@ import base64
 import glob
 import os
 import socket
+import sys
 import threading
 import time
 from StringIO import StringIO
@@ -301,7 +302,6 @@ def refresh_users(conf):
     old_usernames = [i.username for i in conf['users']]
     cur_usernames = []
     for path in glob.glob(os.path.join(conf['root_dir'], '*', auth_name)):
-        # TODO: use persistent regexp match instead
         user_home = path.replace(os.sep + auth_name, '')
         user_dir = user_home.replace(conf['root_dir'] + os.sep, '')
         user_id = client_dir_id(user_dir)
@@ -310,6 +310,8 @@ def refresh_users(conf):
         if last_update >= os.path.getmtime(path):
             continue
         # TODO: move to user settings?
+        # TODO: allow user supplied username in settings? or show it there
+        # ... could use a ssh/sftp sub page on Settings like widgets
         # Create user entry for each valid key
         key_fd = open(path, 'r')
         all_keys = key_fd.readlines()
@@ -359,40 +361,52 @@ def start_service(service_conf):
 
 
 if __name__ == "__main__":
+    print """
+Running grid sftp server for user sftp access to their MiG homes.
+
+Set the MIG_CONF environment to the server configuration path
+unless it is available in mig/server/MiGserver.conf
+"""
     configuration = get_configuration_object()
     logger = configuration.logger
-    # TODO: move all options to configuration
-    address = ""
-    port = 2222
-    host_rsa_key = """
+    address = configuration.user_sftp_address
+    port = configuration.user_sftp_port
+    default_host_key = """
 -----BEGIN RSA PRIVATE KEY-----
-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
+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
 -----END RSA PRIVATE KEY-----
 """
+    try:
+        host_key_fd = open(configuration.user_sftp_key, 'r')
+        host_rsa_key = host_key_fd.read()
+        host_key_fd.close()
+    except IOError:
+        logger.info("No valid host key provided - using default")
+        host_rsa_key = default_host_key
     chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
                          os.path.abspath(configuration.vgrid_public_base),
                          os.path.abspath(configuration.vgrid_files_home)]
@@ -405,4 +419,6 @@ Myw1d5t46XP97y6Szrhcsrt15pmSKD+zLYXD26qoxKJOP9a6+A==
                  'host_rsa_key': host_rsa_key,
                  'users': [],
                  'time_stamp': 0}
+    logger.info("Listening on address '%s' and port %d" % \
+                (address, port))
     start_service(sftp_conf)

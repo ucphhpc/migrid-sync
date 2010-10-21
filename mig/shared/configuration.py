@@ -92,6 +92,9 @@ def fix_missing(config_file, verbose=True):
         'empty_job_name': 'no_suitable_job-',
         'smtp_server': fqdn,
         'smtp_sender': 'MiG Server <%s@%s>' % (user, fqdn),
+        'user_sftp_address': fqdn,
+        'user_sftp_port': 2222,
+        'user_sftp_key': '~/certs/key.pem',
         'logfile': 'server.log',
         'loglevel': 'info',
         'sleep_period_for_empty_jobs': '80',
@@ -175,6 +178,9 @@ class Configuration:
     moin_share = ''
     smtp_server = ''
     smtp_sender = ''
+    user_sftp_address = ''
+    user_sftp_port = 2222
+    user_sftp_key = ''
     server_home = ''
     sessid_to_mrsl_link_home = ''
     mig_system_files = ''
@@ -400,13 +406,21 @@ class Configuration:
                                                        'migserver_https_sid_url')
         else:
             self.migserver_https_sid_url = self.migserver_https_url
+        if config.has_option('GLOBAL', 'user_sftp_address'):
+            self.user_sftp_address = config.get('GLOBAL', 
+                                                 'user_sftp_address')
+        if config.has_option('GLOBAL', 'user_sftp_port'):
+            self.user_sftp_port = config.getint('GLOBAL', 
+                                                 'user_sftp_port')
+        if config.has_option('GLOBAL', 'user_sftp_key'):
+            self.user_sftp_key = config.getint('GLOBAL', 
+                                                 'user_sftp_key')
         if config.has_option('GLOBAL', 'mig_code_base'):
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:
             self.mig_code_base = os.path.dirname(self.mig_server_home.rstrip(os.sep))
         if config.has_option('GLOBAL', 'public_key_file'):
-            self.public_key_file = config.get('GLOBAL',
-                    'public_key_file')
+            self.public_key_file = config.get('GLOBAL', 'public_key_file')
         if config.has_option('GLOBAL', 'smtp_sender'):
             self.smtp_sender = config.get('GLOBAL', 'smtp_sender')
         else:
