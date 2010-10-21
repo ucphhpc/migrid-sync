@@ -688,7 +688,7 @@ From then on you can use sftp and sshfs to access your MiG home:
 sftp %(sftp_server)s
 </pre>
 <pre>
-sshfs %(sftp_server)s: mig-home
+sshfs %(sftp_server)s: mig-home -o uid=$(id -u) -o gid=$(id -g)
 </pre>
 </p>
 </td></tr>
