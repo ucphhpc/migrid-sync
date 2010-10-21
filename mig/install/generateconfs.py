@@ -92,6 +92,7 @@ def generate_confs(
     mig_code='/home/mig/mig',
     mig_state='/home/mig/state',
     mig_certs='/home/mig/certs',
+    enable_sftp='True',
     moin_etc='',
     moin_share='',
     hg_path='',
@@ -121,6 +122,7 @@ def generate_confs(
     user_dict['__APACHE_ETC__'] = apache_etc
     user_dict['__APACHE_RUN__'] = apache_run
     user_dict['__APACHE_LOG__'] = apache_log
+    user_dict['__ENABLE_SFTP__'] = enable_sftp
     user_dict['__MOIN_ETC__'] = moin_etc
     user_dict['__MOIN_SHARE__'] = moin_share
     user_dict['__HG_PATH__'] = hg_path
@@ -191,6 +193,7 @@ if '__main__' == __name__:
         'mig_code',
         'mig_state',
         'mig_certs',
+        'enable_sftp',
         'moin_etc',
         'moin_share',
         'hg_path',
@@ -251,6 +254,7 @@ apache_log: %(apache_log)s
 mig_code: %(mig_code)s
 mig_state: %(mig_state)s
 mig_certs: %(mig_certs)s
+enable_sftp: %(enable_sftp)s
 moin_etc: %(moin_etc)s
 moin_share: %(moin_share)s
 hg_path: %(hg_path)s

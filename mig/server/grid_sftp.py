@@ -70,8 +70,9 @@ from StringIO import StringIO
 import paramiko
 import paramiko.util
 
+from shared.base import client_dir_id, client_alias
 from shared.conf import get_configuration_object
-from shared.base import client_dir_id
+from shared.useradm import ssh_authkeys, get_ssh_authkeys
 
 
 configuration, logger = None, None
@@ -298,36 +299,32 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
 def refresh_users(conf):
     '''Reload users from conf if it changed on disk'''
     last_update = conf['time_stamp']
-    auth_name = '.authorized_keys'
     old_usernames = [i.username for i in conf['users']]
     cur_usernames = []
-    for path in glob.glob(os.path.join(conf['root_dir'], '*', auth_name)):
-        user_home = path.replace(os.sep + auth_name, '')
+    authkeys_pattern = os.path.join(conf['root_dir'], '*', ssh_authkeys)
+    for path in glob.glob(authkeys_pattern):
+        logger.debug("Checking %s" % path)
+        user_home = path.replace(os.sep + ssh_authkeys, '')
         user_dir = user_home.replace(conf['root_dir'] + os.sep, '')
         user_id = client_dir_id(user_dir)
-        user_hex = base64.b16encode(user_id).lower()
-        cur_usernames.append(user_hex)
+        user_alias = client_alias(user_id)
+        cur_usernames.append(user_alias)
         if last_update >= os.path.getmtime(path):
             continue
-        # TODO: move to user settings?
-        # TODO: allow user supplied username in settings? or show it there
-        # ... could use a ssh/sftp sub page on Settings like widgets
-        # Create user entry for each valid key
-        key_fd = open(path, 'r')
-        all_keys = key_fd.readlines()
-        key_fd.close()
         # Clean up all old entries for this user
-        conf['users'] = [i for i in conf['users'] if i.username != user_hex]
+        conf['users'] = [i for i in conf['users'] if i.username != user_alias]
+        # Create user entry for each valid key
+        all_keys = get_ssh_authkeys(path)
         for user_key in all_keys:
             if not user_key.startswith('ssh-rsa '):
                 logger.warning("Skipping broken key %s for user %s" % \
                                (user_key, user_id))
                 continue
             user_key = user_key.strip()
-            logger.info("Adding user:\nname: %s\nhex: %s\nhome: %s\nkey: %s"\
-                        % (user_id, user_hex, user_dir, user_key))
+            logger.info("Adding user:\nname: %s\nalias: %s\nhome: %s\nkey: %s"\
+                        % (user_id, user_alias, user_dir, user_key))
             conf['users'].append(
-                User(username=user_hex, home=user_dir, password=None,
+                User(username=user_alias, home=user_dir, password=None,
                      public_key=user_key, chroot=True),
                 )
     removed = [i for i in old_usernames if not i in cur_usernames]
@@ -348,8 +345,9 @@ def start_service(service_conf):
     logger.info("Accepting connections")
     while True:
         client, addr = server_socket.accept()
-        # automatic reload of users if more than five minutes old
-        if service_conf['time_stamp'] + 300 < time.time():
+        # automatic reload of users if more than refresh_delay seconds old
+        refresh_delay = 60
+        if service_conf['time_stamp'] + refresh_delay < time.time():
             service_conf = refresh_users(service_conf)
         t = threading.Thread(target=accept_client, args=[client, 
                                                          addr, 
@@ -361,14 +359,17 @@ def start_service(service_conf):
 
 
 if __name__ == "__main__":
+    configuration = get_configuration_object()
+    logger = configuration.logger
+    if not configuration.site_enable_sftp:
+        print "SFTP access to user homes is disabled in configuration!"
+        sys.exit(1)
     print """
 Running grid sftp server for user sftp access to their MiG homes.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
 """
-    configuration = get_configuration_object()
-    logger = configuration.logger
     address = configuration.user_sftp_address
     port = configuration.user_sftp_port
     default_host_key = """

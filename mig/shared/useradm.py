@@ -42,6 +42,8 @@ from shared.serial import load, dump
 db_name = 'MiG-users.db'
 mrsl_template = '.default.mrsl'
 css_template = '.default.css'
+ssh_conf_dir = '.ssh'
+ssh_authkeys = os.path.join(ssh_conf_dir, 'authorized_keys')
 cert_field_order = [
     ('country', 'C'),
     ('state', 'ST'),
@@ -238,6 +240,12 @@ def create_user(
             if not force:
                 raise Exception('Error: could not create resource dir: %s' % \
                                 pending_dir)
+        try:
+            os.mkdir(ssh_conf_dir)
+        except:
+            if not force:
+                raise Exception('Error: could not create ssh conf dir: %s' % \
+                                ssh_conf_dir)
     else:
 
         # Allow temporary write access
@@ -687,5 +695,18 @@ def get_default_css(template_path):
         default_css = '/* No changes - use default */'
 
     return default_css
+
+def get_ssh_authkeys(authkeys_path):
+    """Return the ssh authorized keys from authkeys_path"""
+
+    try:
+        authkeys_fd = open(authkeys_path, 'rb')
+        authorized_keys = authkeys_fd.readlines()
+        authkeys_fd.close()
+        # Remove extra space and skip blank lines
+        authorized_keys = [i.strip() for i in authorized_keys if i.strip()]
+    except:
+        authorized_keys = []
+    return authorized_keys
 
 

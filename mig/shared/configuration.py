@@ -509,6 +509,10 @@ class Configuration:
             self.site_enable_sandboxes = config.getboolean('SITE', 'enable_sandboxes')
         else:
             self.site_enable_sandboxes = True
+        if config.has_option('SITE', 'enable_sftp'):
+            self.site_enable_sftp = config.getboolean('SITE', 'enable_sftp')
+        else:
+            self.site_enable_sftp = True
         if config.has_option('SITE', 'swrepo_url'):
             self.site_swrepo_url = config.get('SITE', 'swrepo_url')
         else:

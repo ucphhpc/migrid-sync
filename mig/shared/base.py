@@ -27,6 +27,8 @@
 
 """Base helper functions"""
 
+import base64
+
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from shared.defaults import sandbox_names
 
@@ -56,6 +58,13 @@ def client_dir_id(client_dir, remap=dir_id_remap):
     for (key, val) in remap.items():
         client_id = client_id.replace(key, val)
     return client_id
+
+def client_alias(client_id):
+    """Map client ID to a version containing only simple ASCII characters.
+    This is for e.g. commandline friendly use and it is a one-to-one mapping.
+    """
+    # sftp and friends choke on potential '=' padding - replace by underscore
+    return base64.urlsafe_b64encode(client_id+' ').replace('=', '_')
 
 # TODO: old_id_format should be eliminated after complete migration to full DN
 

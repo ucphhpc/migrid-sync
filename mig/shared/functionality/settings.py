@@ -28,13 +28,14 @@
 import os
 
 import shared.returnvalues as returnvalues
+from shared.base import client_alias
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.settings import load_settings, load_widgets
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
 from shared.useradm import client_id_dir, mrsl_template, css_template, \
-    get_default_mrsl, get_default_css
+    ssh_authkeys, get_default_mrsl, get_default_css, get_ssh_authkeys
 
 try:
     import shared.arcwrapper as arc
@@ -57,6 +58,8 @@ edit_defaults = {'parserfile': txt_parsers, 'stylesheet': txt_stylesheets,
                   'tabMode': "spaces", 'indentUnit': 4, 'height': '600px'}
 general_edit = edit_defaults.copy()
 general_edit['height'] = '50px'
+ssh_edit = edit_defaults.copy()
+ssh_edit['height'] = '200px'
 style_edit = edit_defaults.copy()
 style_edit['parserfile'] = css_parsers
 style_edit['stylesheet'] = css_stylesheets
@@ -303,6 +306,8 @@ def main(client_id, user_arguments_dict):
         valid_topics.append('widgets')
     if configuration.arc_clusters:
         valid_topics.append('arc')
+    if configuration.site_enable_sftp:
+        valid_topics.append('ssh')
     topics = accepted['topic']
     topics = [i for i in topics if i in valid_topics]
     output_objects.append({'object_type': 'header', 'text'
@@ -634,6 +639,91 @@ You can simply copy/paste from the available widget file links below if you want
 </table>
 </div>
 '''
+        output_objects.append({'object_type': 'html_form', 'text': html})
+
+    if 'ssh' in topics:
+        authkeys_path = os.path.join(base_dir, ssh_authkeys)
+        default_authkeys = '\n'.join(get_ssh_authkeys(authkeys_path))
+        sftp_server = configuration.user_sftp_address
+        # address may be empty to use all interfaces - then use FQDN
+        if not sftp_server:
+            sftp_server = configuration.server_fqdn
+        sftp_port = configuration.user_sftp_port
+        html = \
+        '''
+<div id="sshaccess">
+<table class="sshsettings">
+<tr class="title"><td class="centertext">
+SSH/SFTP access to your MiG account
+</td></tr>
+<tr><td>
+</td></tr>
+<tr><td>
+<p>
+Allow SSH/SFTP login to your %(site)s account with provided public key(s)
+and your automatic username:
+<pre>%(username)s</pre>
+</p>
+<p>
+You can use any existing SSH RSA keys you may have or create a new one with:
+<pre>
+ssh-keygen -t rsa -f ~/.mig/id_rsa
+</pre>
+Then save the contents of the public key (id_rsa.pub) below.
+</p>
+<p>
+Finally save something like the following lines in your local ~/.ssh/config
+to avoid typing the full login details each time:<br />
+<pre>
+Host %(sftp_server)s
+Hostname %(sftp_server)s
+User %(username)s
+Port %(sftp_port)s
+IdentityFile ~/.mig/id_rsa
+</pre>
+</p>
+<p>
+From then on you can use sftp and sshfs to access your MiG home:
+<pre>
+sftp %(sftp_server)s
+</pre>
+<pre>
+sshfs %(sftp_server)s: mig-home
+</pre>
+</p>
+</td></tr>
+<tr><td>
+<form method="post" action="editfile.py">
+<input type="hidden" name="path" value="%(ssh_authkeys)s" />
+<input type="hidden" name="newline" value="unix" />
+'''
+        keyword = "authkeys"
+        area = '''
+<textarea id="%(keyword)s" cols=82 rows=5 name="editarea">
+%(default_authkeys)s
+</textarea>
+'''
+        html += wrap_edit_area(keyword, area, ssh_edit, 'BASIC')
+        
+        html += '''
+</td></tr>
+<tr><td>
+<input type="submit" value="Save keys" />
+</form>
+</td></tr>
+</table>
+</div>
+'''
+        html = html % {
+            'default_authkeys': default_authkeys,
+            'ssh_authkeys': ssh_authkeys,
+            'site': configuration.short_title,
+            'keyword': keyword,
+            'username': client_alias(client_id),
+            'sftp_server': sftp_server,
+            'sftp_port': sftp_port,
+            }
+
         output_objects.append({'object_type': 'html_form', 'text': html})
 
     # if ARC-enabled server:
