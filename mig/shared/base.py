@@ -64,7 +64,7 @@ def client_alias(client_id):
     This is for e.g. commandline friendly use and it is a one-to-one mapping.
     """
     # sftp and friends choke on potential '=' padding - replace by underscore
-    return base64.urlsafe_b64encode(client_id+' ').replace('=', '_')
+    return base64.urlsafe_b64encode(client_id).replace('=', '_')
 
 # TODO: old_id_format should be eliminated after complete migration to full DN
 
