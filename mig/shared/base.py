@@ -30,15 +30,32 @@
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from shared.defaults import sandbox_names
 
+id_dir_remap = {'/': '+', ' ': '_'}
+dir_id_remap = dict([(val, key) for (key, val) in id_dir_remap.items()])
 
-def client_id_dir(client_id):
+def client_id_dir(client_id, remap=id_dir_remap):
     """Map client ID to a valid directory name:
     client_id is a distinguished name on the form /X=ab/Y=cdef ghi/Z=klmn...
     so we just replace slashes with plus signs and space with underscore
-    to avoid file system problems.
+    in line with remap dictionary to avoid file system problems.
     """
 
-    return client_id.replace('/', '+').replace(' ', '_')
+    client_dir = client_id
+    for (key, val) in remap.items():
+        client_dir = client_dir.replace(key, val)
+    return client_dir
+
+def client_dir_id(client_dir, remap=dir_id_remap):
+    """Map client directory name to valid client ID:
+    client_dir is a distinguished name on the form +X=ab+Y=cdef_ghi+Z=klmn...
+    so we just replace slashes with plus signs and space with underscore
+    in line with remap dictionary to avoid file system problems.
+    """
+
+    client_id = client_dir
+    for (key, val) in remap.items():
+        client_id = client_id.replace(key, val)
+    return client_id
 
 # TODO: old_id_format should be eliminated after complete migration to full DN
 
@@ -59,3 +76,10 @@ def sandbox_resource(unique_resource_name):
     """Returns boolean indicating if the resource is a sandbox"""
     fqdn = unique_resource_name.rsplit('.', 1)[0]
     return fqdn in sandbox_names
+
+if __name__ == '__main__':
+    orig_id = '/X=ab/Y=cdef ghi/Z=klmn'
+    client_dir = client_id_dir(orig_id)
+    client_id = client_dir_id(client_dir)
+    print "orig id %s, dir %s, id %s (match %s)" % \
+          (orig_id, client_dir, client_id, orig_id == client_id)

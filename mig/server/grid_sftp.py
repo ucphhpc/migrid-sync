@@ -70,6 +70,7 @@ import paramiko
 import paramiko.util
 
 from shared.conf import get_configuration_object
+from shared.base import client_dir_id
 
 
 configuration, logger = None, None
@@ -303,8 +304,7 @@ def refresh_users(conf):
         # TODO: use persistent regexp match instead
         user_home = path.replace(os.sep + auth_name, '')
         user_dir = user_home.replace(conf['root_dir'] + os.sep, '')
-        # TODO: use real DN version instead?
-        user_id = user_dir
+        user_id = client_dir_id(user_dir)
         user_hex = base64.b16encode(user_id).lower()
         cur_usernames.append(user_hex)
         if last_update >= os.path.getmtime(path):
