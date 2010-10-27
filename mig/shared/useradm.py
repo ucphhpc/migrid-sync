@@ -209,6 +209,7 @@ def create_user(
     mrsl_dir = os.path.join(configuration.mrsl_files_dir, client_dir)
     pending_dir = os.path.join(configuration.resource_pending,
                                client_dir)
+    ssh_dir = os.path.join(home_dir, ssh_conf_dir)
     htaccess_path = os.path.join(home_dir, '.htaccess')
     settings_path = os.path.join(home_dir, '.settings')
     css_path = os.path.join(home_dir, css_template)
@@ -241,15 +242,14 @@ def create_user(
                 raise Exception('Error: could not create resource dir: %s' % \
                                 pending_dir)
         try:
-            os.mkdir(ssh_conf_dir)
+            os.mkdir(ssh_dir)
         except:
             if not force:
                 raise Exception('Error: could not create ssh conf dir: %s' % \
-                                ssh_conf_dir)
-    else:
+                                ssh_dir)
 
+    elif os.path.exists(htaccess_path):
         # Allow temporary write access
-
         os.chmod(htaccess_path, 0644)
 
     # Always write htaccess to catch any updates
