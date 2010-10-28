@@ -11,8 +11,8 @@ import os
 
 def main():
     """
-    Executes bash file test_executable.sh in a grid job. 
-    Afterwards the result is downloaded and printed to screen.
+    Executes the bash file test_executable.sh in a grid job. 
+    Afterwards, the result is downloaded and printed to screen.
     """
 
     # Dissable verbose print outs
@@ -37,7 +37,7 @@ def main():
     while not mig.mig_job_finished(job_id):
         job_info = mig.mig_job_info(job_id) # get an info dictionary
         print 'Grid job : %(ID)s \t %(STATUS)s ' % job_info
-        time.sleep(polling_frequency) # wait a while before polling
+        time.sleep(polling_frequency) # wait a while before polling again
 
     # Download the result file and print
     output_file = mig.mig_get_file("out.txt")

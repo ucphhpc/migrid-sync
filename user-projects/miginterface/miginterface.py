@@ -95,8 +95,8 @@ def mig_create_job(exec_commands, input_files=[], output_files=[], executables=[
     
     # create the mRSL file
     mrsl.generate_mrsl(mrsl_path, exec_commands, all_input_files, output_files, executables=executables, resource_specifics=resource_specifications)
-    print input_files
-    print executables
+    #print input_files
+    #print executables
     
     # Gather all files we need to upload
     upload_files = []
@@ -114,6 +114,9 @@ def mig_create_job(exec_commands, input_files=[], output_files=[], executables=[
     output = __miglib_function(miglib.submit_file, tar_file, mig_tar_file_destination, True, True) 
     
     __debug(output)
+    
+    __verify_submit(output)
+        
     # extract the job id given by the server
     job_id = __extract_job_id(output) 
     # remove the tarball that contained the uploaded files
@@ -265,7 +268,7 @@ def mig_jobs_status(job_ids):
     job_ids - a list of job ids.
     """
 
-    job_info_list = mig_job_info(job_ids)
+    job_info_list = mig_jobs_info(job_ids)
     job_status_list = [info["STATUS"] for info in job_info_list]
     return job_status_list
 
@@ -289,7 +292,7 @@ def mig_cancel_job(job_id):
     
     job_id - the job id given by the MiG server (see mig_create_job()).
     """
-    out = __miglib_function(miglib.cancel_job, job_id)
+    out = __miglib_function(miglib.cancel_job, [job_id]) # miglib only takes a list at this point
     return out 
 
 
@@ -360,6 +363,29 @@ def set_debug_mode(enable):
 ##############################################
 
 
+
+def __verify_submit(server_output):
+    """
+    Checks the server message to verify that the submit was successful. Raises exception if an error is found.
+    
+    server_message - server output message from the job submission in a list. 
+    """
+    
+    if len(server_output) > 1: # output should be of the format [exit_code, output_str]
+        server_message = eval(server_output[1]) # get the server message
+        if server_message[0].has_key('status'):
+            if not server_message[0]['status']: # false on failure
+                raise MigError("Submit status false", "Server reported unsuccessful job submission : %s\n" % server_output)
+        
+        else: # no 'status' key found
+            MigError("Unexpected return message format", "Could not find the status keyword in output : %s\n" % server_output)
+                
+    else:
+        raise MigError("Unexpected return message format", "Could not find message from server : %s\n" % server_output)
+    
+    __debug("Successful job submit.")
+        
+
 def __extract_job_id(output):
     """
     Parses the the output from the MiG server and extracts the job id.
@@ -368,12 +394,13 @@ def __extract_job_id(output):
     output - the output given by the MiG server after a successful job submission.
     """
     job_id = ""
-       
-    if len(output) > 1: # output should be of the format <exit_code output_str>
-        server_output = eval(output[1])
+    
+    if len(output) > 1: # output should be of the format <exit_code, output_str>
+        server_output = eval(output[1]) # 
+        
         if server_output[0].has_key("job_id"):
             job_id = server_output[0]["job_id"] # extract the job id given by the server
-    
+        
     if job_id == "":
         raise MigError("Unable to parse", "Could not extract job id from : %s\n" % output)
     

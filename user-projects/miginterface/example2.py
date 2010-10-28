@@ -38,7 +38,7 @@ def main():
         output_file = "output%s.txt" % i
         # The shell command to start the script on the resource
         cmd = "./parameter_sweep_script.sh %i > %s" % (i, output_file)
-        # Run the job the resources beloning to any vgrid 
+        # Run the job resources on any vgrid 
         resource_requirements = {"VGRID":"ANY"}
         
         # Start the grid job

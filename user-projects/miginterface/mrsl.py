@@ -18,7 +18,8 @@ def generate_mrsl(mrsl_file_path, exec_commands, input_files, output_files, mig_
     mrsl.append("\n::INPUTFILES::"+"\n")
     for path in input_files:
         filename = os.path.basename(path)
-        mrsl.append(path+" "+filename+"\n")
+        #mrsl.append(filename+" "+filename+"\n")
+        mrsl.append(filename+"\n")
 
     mrsl.append("\n::OUTPUTFILES::"+"\n")
     for path in output_files:
