@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobscriptgenerator - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,12 +30,14 @@
 import os
 import time
 from binascii import hexlify
+from copy import deepcopy
 
 import genjobscriptpython
 import genjobscriptsh
 import genjobscriptjava
-from shared.ssh import copy_file_to_resource
 from shared.fileio import write_file, pickle, make_symlink
+from shared.mrslparser import expand_variables
+from shared.ssh import copy_file_to_resource
 from shared.useradm import client_id_dir
 
 try:
@@ -170,37 +172,18 @@ def create_job_script(
                                         unique_resource_name,
                                         'empty_job_helper_dict.%s' % exe)
 
-    # TODO: What decides that only these fields should be copied???
-    #  Since job_dict is used to generate the job script we may very
-    #  well loose some job fields here!
+    
+    # Deep copy job for local changes
+    job_dict = deepcopy(job)
 
-    job_dict['JOB_ID'] = job['JOB_ID']
-    job_dict['EXECUTE'] = job['EXECUTE']
-    job_dict['INPUTFILES'] = job['INPUTFILES']
-    job_dict['OUTPUTFILES'] = job['OUTPUTFILES']
-    job_dict['EXECUTABLES'] = job['EXECUTABLES']
-    job_dict['CPUTIME'] = job['CPUTIME']
-    job_dict['JOBNAME'] = job['JOBNAME']
-    job_dict['ENVIRONMENT'] = job['ENVIRONMENT']
-    job_dict['RUNTIMEENVIRONMENT'] = job['RUNTIMEENVIRONMENT']
     job_dict['MIGSESSIONID'] = sessionid
     job_dict['MIGIOSESSIONID'] = iosessionid
-
-    if job.has_key('JOBTYPE'):
-        job_dict['JOBTYPE'] = job['JOBTYPE']
-
-    # ... Recently added missing fields here, but others may still be missing!
-    # -Jonas
-
-    for field in ['CPUCOUNT', 'NODECOUNT', 'MEMORY', 'DISK']:
-        if job.has_key(field):
-            job_dict[field] = job[field]
-
-    if job_dict.has_key('MAXPRICE'):
-        job_dict['MAXPRICE'] = job['MAXPRICE']
-    else:
+    if not job_dict.has_key('MAXPRICE'):
         job_dict['MAXPRICE'] = '0'
-    client_id = str(job['USER_CERT'])
+    # Finally expand reserved job variables like +JOBID+ and +JOBNAME+
+    job_dict = expand_variables(job_dict)
+    # ... no more changes to job_dict from here on
+    client_id = str(job_dict['USER_CERT'])
     client_dir = client_id_dir(client_id)
 
     # if not job:
@@ -412,8 +395,13 @@ def create_arc_job(
         return ('No ARC support!', None)
     if not job['JOBTYPE'] == 'arc':
         return ('Error. This is not an ARC job', None)
-    
-    client_id = str(job['USER_CERT'])
+
+    # Deep copy job for local changes
+    job_dict = deepcopy(job)
+    # Finally expand reserved job variables like +JOBID+ and +JOBNAME+
+    job_dict = expand_variables(job_dict)
+    # ... no more changes to job_dict from here on
+    client_id = str(job_dict['USER_CERT'])
 
     # we do not want to see empty jobs here. Test as done in create_job_script.
     if client_id == configuration.empty_job_name:
@@ -431,8 +419,9 @@ def create_arc_job(
     # we need: link to owner's dir. to receive results, 
     #          job mRSL inside sessid_to_mrsl_link_home
     linklist = [(configuration.user_home + client_dir, 
-                 configuration.webserver_home + sessionid)
-               ,(configuration.mrsl_files_dir + client_dir + '/' + str(job['JOB_ID']) + '.mRSL',
+                 configuration.webserver_home + sessionid),
+                (configuration.mrsl_files_dir + client_dir + '/' + \
+                 str(job_dict['JOB_ID']) + '.mRSL',
                  configuration.sessid_to_mrsl_link_home + sessionid + '.mRSL')
                ]
 
@@ -444,7 +433,7 @@ def create_arc_job(
     # be uploaded to sid_redirect/sessionid/job_output/job_id  
 
     try:
-        (xrsl, script, script_name) = mrsltoxrsl.translate(job, sessionid)
+        (xrsl, script, script_name) = mrsltoxrsl.translate(job_dict, sessionid)
         logger.debug('translated to xRSL: %s' % xrsl)
         logger.debug('script:\n %s' % script)
 

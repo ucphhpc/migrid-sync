@@ -322,7 +322,7 @@ This particular server supports the following values:
         }))
     specs.append(('JOBNAME', {
         'Title': 'Job Name',
-        'Description': 'Name identifying the job',
+        'Description': 'Name identifying the job (white space is not allowed)',
         'Example': 'JOB23',
         'Type': 'string',
         'Value': '',

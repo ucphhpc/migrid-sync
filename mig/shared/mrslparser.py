@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# mrslparser - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# mrslparser - Parse mRSL job descriptions
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +27,7 @@
 
 import os
 import time
+import types
 
 import shared.mrslkeywords as mrslkeywords
 import shared.parser as parser
@@ -42,6 +43,58 @@ try:
 except:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass
+
+
+def replace_variables(text, replace_list):
+    """Replace all occurrences of variables from replace_list keys in text
+    with the corresponding value. replace_list is an ordered list of tuples
+    with variable names and their expanded values.
+    """
+    out = text
+    for (key, val) in replace_list:
+        out = out.replace(key, val)
+    return out
+
+def expand_variables(job_dict):
+    """Expand reserved job variables like +JOBID+ and + JOBNAME+ to actual
+    values from the job dictionary.
+    The expansion is in-place so caller should consider any side effects.
+    """
+    # Users can specify "special keywords" in all string and list fields.
+    # There are two "special keywords" at the moment: +JOBNAME+ and +JOBID+
+    # The function replaces these keywords with the runtime assigned jobname
+    # and jobid.
+    # Please be careful if adding new expansions here:
+    # They are expanded *after* parsing and accepting the raw job so they
+    # must be safe against abuse. Simple replacement of keywords with
+    # constant string values should be safe. 
+    var_map = [('+JOBID+', job_dict.get('JOB_ID', '+JOBID+')),
+               ('+JOBNAME+', job_dict.get('JOBNAME', '+JOBNAME+'))]
+    for (key, value) in job_dict.iteritems():
+        if isinstance(value, list):
+            newlist = []
+            for elem in value[:]:
+                if type(elem) is types.TupleType:
+
+                    # Environment? tuple
+
+                    (name, val) = elem
+                    name = replace_variables(name, var_map)
+                    val = replace_variables(val, var_map)
+                    env = (name, val)
+                    newlist.append(env)
+                elif type(elem) is types.StringType:
+                    newlist.append(replace_variables(str(elem),
+                                                     var_map))
+                else:
+
+                    # elem was not a tuple/string, dont try to replace
+
+                    newlist.append(elem)
+            job_dict[key] = newlist
+        elif isinstance(value, str):
+            job_dict[key] = replace_variables(str(value), var_map)
+    return job_dict
 
 def parse(
     localfile_spaces,
@@ -83,6 +136,9 @@ def parse(
 
     for (key, value_dict) in external_dict.iteritems():
         global_dict[key] = value_dict['Value']
+
+    # We do not expand any job variables yet in order to allow any future
+    # resubmits to properly expand job ID.
 
     vgrid_list = global_dict['VGRID']
     allowed_vgrids = user_allowed_vgrids(configuration, client_id)
@@ -184,7 +240,12 @@ def parse(
         normalized_field = []
         for line in global_dict[field]:
             normalized_parts = []
-            for part in line.split():
+            line_parts = line.split()
+            if len(line_parts) < 1 or len(line_parts) > 2:
+                return (False,
+                        '%s entries must contain 1 or 2 space-separated items'\
+                        % field)
+            for part in line_parts:
 
                 # deny leading slashes i.e. force absolute to relative paths
 
@@ -202,14 +263,10 @@ def parse(
             normalized_field.append(' '.join(normalized_parts))
         global_dict[field] = normalized_field
 
-    # replace special keywords
-
-    replaced_dict = parser.replace_special(global_dict)
-
     # if this is an ARC job (indicated by a flag), check proxy existence 
     # and lifetime. grid_script will submit the job directly.
     
-    if replaced_dict.get('JOBTYPE', 'unset') == 'arc':
+    if global_dict.get('JOBTYPE', 'unset') == 'arc':
         if not configuration.arc_clusters:
             return (False, 'No ARC support!')
             
@@ -218,7 +275,7 @@ def parse(
         try:
             session = arc.Ui(user_home)
             timeleft = session.getProxy().getTimeleft()
-            req_time = int(replaced_dict.get('CPUTIME','0')) 
+            req_time = int(global_dict.get('CPUTIME', '0')) 
             logger.debug('CPU time (%s), proxy lifetime (%s)' \
                          % (req_time, timeleft))
             if timeleft < req_time:
@@ -240,7 +297,7 @@ def parse(
     else:
         filename = outfile
 
-    if not pickle(replaced_dict, filename, logger):
+    if not pickle(global_dict, filename, logger):
         return (False, 'Fatal error: Could not write %s' % filename)
 
     if not outfile == 'AUTOMATIC':

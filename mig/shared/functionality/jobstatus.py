@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobstatus - Display status of jobs
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,6 +37,7 @@ from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables
 from shared.job import output_dir, get_job_ids_with_specified_project_name
+from shared.mrslparser import expand_variables
 from shared.parseflags import verbose, sorted
 from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
@@ -221,6 +222,9 @@ def main(client_id, user_arguments_dict):
                                   })
             status = returnvalues.CLIENT_ERROR
             continue
+
+        # Expand any job variables before use
+        job_dict = expand_variables(job_dict)
 
         job_obj = {'object_type': 'job', 'job_id': job_id}
         job_obj['status'] = job_dict['STATUS']

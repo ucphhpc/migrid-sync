@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # parser - General parser functions for jobs and resource confs
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,7 +28,6 @@
 """Parser helper functions"""
 
 import re
-import types
 import os
 import base64
 import StringIO
@@ -36,6 +35,7 @@ import tempfile
 
 from shared.rekeywords import get_keywords_dict
 from shared.resconfkeywords import get_keywords_dict as resconf_get_keywords_dict
+from shared.safeinput import valid_job_id
 
 comment_char = '#'
 
@@ -44,16 +44,6 @@ comment_char = '#'
 escape_char = '\\'
 valid_escape_chars = [comment_char]
 used_env_names = []
-
-# Users can specify "special keywords" in all string and list fields.
-# There are two "special keywords" at the moment: +JOBNAME+ and +JOBID+
-# The function replaces these keywords with the runtime assigned jobname and jobid
-
-
-def replace(inputstr, jobname, jobid):
-    output = inputstr.replace('+JOBNAME+', jobname)
-    return output.replace('+JOBID+', jobid)
-
 
 def get_config_sub_level_dict(
     input_list,
@@ -102,39 +92,6 @@ def get_config_sub_level_dict(
                      % (specified_keywords,
                     ', '.join(required_keywords), req_key))
     return (True, modify_dict)
-
-
-def replace_special(global_dict):
-    for (key, value) in global_dict.iteritems():
-        if isinstance(value, list):
-            newlist = []
-            for elem in value[:]:
-                if type(elem) is types.TupleType:
-
-                    # Environment? tuple
-
-                    (name, val) = elem
-                    name = replace(name, global_dict['JOBNAME'],
-                                   global_dict['JOB_ID'])
-                    val = replace(val, global_dict['JOBNAME'],
-                                  global_dict['JOB_ID'])
-                    env = (name, val)
-                    newlist.append(env)
-                elif type(elem) is types.StringType:
-                    newlist.append(replace(str(elem),
-                                   global_dict['JOBNAME'],
-                                   global_dict['JOB_ID']))
-                else:
-
-                    # elem was not a tuple/string, dont try to replace
-
-                    newlist.append(elem)
-            global_dict[key] = newlist
-        elif isinstance(value, str):
-            global_dict[key] = replace(str(value), global_dict['JOBNAME'
-                    ], global_dict['JOB_ID'])
-
-    return global_dict
 
 
 def handle_escapes(inputstring, strip_comments):
@@ -407,6 +364,14 @@ def check_types(parse_output, external_keyword_dict, configuration):
                         msg += print_type_error(job_keyword,
                                 'specified jobtype not valid, should be %s'
                                  % configuration.jobtypes,
+                                keyword_dict, keyword_data)
+                if job_keyword == 'JOBNAME':
+                    try:
+                        valid_job_id(str(keyword_data[0]), min_length=0)
+                    except Exception, err:
+                        status = False
+                        msg += print_type_error(job_keyword,
+                                'specified jobname not valid: %s' % err,
                                 keyword_dict, keyword_data)
             elif keyword_type == 'multiplestrings':
 
