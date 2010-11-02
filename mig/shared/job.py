@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# job - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# job - Core job helper functions
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,12 +27,11 @@
 
 """Job functions"""
 
-import time
 import fcntl
 import os
+import time
 
 from shared.fileio import send_message_to_grid_script, unpickle
-from shared.mrslkeywords import get_keywords_dict
 from shared.mrslparser import parse
 from shared.useradm import client_id_dir
 
