@@ -41,9 +41,13 @@ import miglib
 import logging 
 from migerror import MigError
 import tempfile
+import random
+
 
 LOG_FILE = os.path.join(tempfile.gettempdir(), "miginterface_log.txt")
 DEBUG_MODE = True
+
+
 
 def mig_create_job(exec_commands, input_files=[], output_files=[], executables=[], cached_files=[], resource_specifications={}, name=""):
     """
@@ -74,12 +78,14 @@ def mig_create_job(exec_commands, input_files=[], output_files=[], executables=[
             
     # name of the mrsl file and working directory
     if name == "":
-        timestamp = str(int(time.time()*100))
-        name = "gridjob_"+timestamp
+        timestamp = int(time.time()*100)
+        random.seed()
+        r_num = random.randint(0, timestamp)
+        name = "gridjob_"+str(timestamp)+str(r_num)
     mrsl_filename = name+".mRSL"
     mig_job_directory = name 
 
-    tmp_dir = tempfile.gettempdir()
+    tmp_dir = tempfile.gettempdir() # /tmp/
     working_dir = os.path.join(tmp_dir, name)
     # creating local temporary working directory
     os.mkdir(working_dir) 
@@ -96,7 +102,7 @@ def mig_create_job(exec_commands, input_files=[], output_files=[], executables=[
     # create the mRSL file
     mrsl.generate_mrsl(mrsl_path, exec_commands, all_input_files, output_files, executables=executables, resource_specifics=resource_specifications)
     #print input_files
-    #print executables
+    
     
     # Gather all files we need to upload
     upload_files = []
@@ -347,22 +353,52 @@ def set_log_file(path):
     LOG_FILE = path
 
 
-def set_debug_mode(enable):
+def debug_mode_on():
     """
-    Edit debug mode.
+    Enter debug mode. Enable screen debug print outs. 
+    Otherwise they will be written to the log file.
+    """
     
-    enable - boolean value. True to enable screen debug print outs. 
-    If dissabled debug prints will be written in the log file LOG_FILE.
-    """
     global DEBUG_MODE
-    DEBUG_MODE = enable
+    DEBUG_MODE = True
+
+
+def debug_mode_off():
+    """
+    Exit debug mode. Disable screen debug print outs. 
+    Prints will be written in the log file LOG_FILE.
+    """
+
+    global DEBUG_MODE
+    DEBUG_MODE = False
+
+
+def local_mode_on():
+    """
+    Enter local mode execution. All execution is done on the local system by emulating MiG. 
     
-        
+    A new OS process is spawned for each created grid job. Useful for testing before submitting to 
+    actual grid execution. Utilizes multi-processing.
+   
+    """
+    global miglib
+    import migliblocal as miglib
+
+
+def local_mode_off():
+    """
+    Go to grid execution (default).
+    """
+    
+    global miglib
+    import miglib as miglib
+
+
+
+    
 ##############################################
 ############# HELPER FUNCTIONS ####################
 ##############################################
-
-
 
 def __verify_submit(server_output):
     """
@@ -384,7 +420,7 @@ def __verify_submit(server_output):
         raise MigError("Unexpected return message format", "Could not find message from server : %s\n" % server_output)
     
     __debug("Successful job submit.")
-        
+
 
 def __extract_job_id(output):
     """

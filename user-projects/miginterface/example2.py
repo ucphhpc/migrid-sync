@@ -15,8 +15,12 @@ def main():
     When a job has finished executing, the corresponding output file is downloaded.
     Finally, the output contents are printed.
     """
-    # Dissable verbose print outs
-    mig.set_debug_mode(False)
+    
+    # Disable verbose print outs
+    mig.debug_mode_off()
+
+    # uncomment the following lines to enable local mode execution
+    #mig.local_mode_on()
 
     # Check if we can connect to the MiG server
     if not mig.mig_test_connection():

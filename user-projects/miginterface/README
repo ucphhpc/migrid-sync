@@ -19,7 +19,8 @@ approachable to new users.
 
 
 = Requirements =
-- Python (>=v2.5)
+- Python (>=v2.5).
+- Python (>=v2.6) for local mode execution.
 - Curl (remote communcation).
 - A Minimum intrusion Grid user account with a valid 
 certificate (for authentication).
@@ -62,6 +63,12 @@ developing grid applications.
 
 To run an example file:
 	python example1.py
+
+
+== Local mode ==
+A tool for developing grid application is the migliblocal.py module. It emulates the methods of miglib.py, but executes all operations on the local host. This is useful in the development and debugging as we reduce the wait for jobs. If needed, it can also be used to utilize the local host as a multiprocessing computational resource.
+
+Local mode is enabled by calling the miginterface.py method local_mode_on() in your python script (see example1.py or example2.py in this folder). 
 
 
 = Documentation = 
