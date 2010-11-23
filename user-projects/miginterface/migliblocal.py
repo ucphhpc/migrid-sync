@@ -22,9 +22,9 @@
 #
 
 """
-This is the MiG lib local module. It aimes to emulate the behavior of the miglib api module, while
-performing all execution on the local system. Useful for developing and debugging MiG client applications.
-Should not be imported directly. It will be used when enabling local mode execution in the miginterface.py module. 
+This is the MiG lib local module. It aims to emulate the behavior of the miglib.py api module by generating output similar to MiG, but
+performing all execution on the local system. It is useful for developing and debugging MiG client applications.
+It should not be imported directly, but by enabling local mode execution in the miginterface.py module. 
 """
 
 import sys
@@ -76,7 +76,7 @@ def job_status(job_ids, max_job_count):
             break
         
         
-    # example mig job output to emulate : 
+    # example mig output format to emulate : 
     #   (0, ['Exit code: 0 Description OK\n', 'Title: jobstatus\n', '\n', '___MIG UNSORTED  JOB STATUS___\n', '\n', 
     #       'Only showing first 1 of the 11686 matching jobs as requested\n', 
     #       'Job Id: 349459_9_29_2008__20_42_37_mig-1.imada.sdu.dk.0\n', 'Status: FINISHED\n', 
@@ -105,7 +105,7 @@ def submit_file(src_path, dst_path, submit_mrsl, extract_package):
     exit_code = 0
     server_out = ["0"]
     server_out.append(str([{"job_id": str(proc.pid), "status": True}]))
-    # example mig out we want to emulate : 
+    # example mig output format we want to emulate : 
     #   (0, ['0\n', "[{'status': True, 'object_type': 'submitstatus', 'name': '/gridjob_128989893464.mRSL', 
     #       'job_id': '334719_11_16_2010__12_20_54_dk.migrid.org.0'}]\n"])
 
@@ -118,8 +118,8 @@ def get_file(src_path, dst_path):
     src_path - path to the file relative to the mig home directory.
     dst_path - path to target file on the local system.
     """
-    
-    shutil.copy(os.path.join(MIG_HOME, src_path), dst_path) # get the file from out fake mig home dir
+    # get the file from the fake mig home dir
+    shutil.copy(os.path.join(MIG_HOME, src_path), dst_path) 
     server_out = ["Exit code: 0"]
     exit_code = 0
     return (exit_code, server_out)
@@ -174,21 +174,24 @@ def __job_process(input, working_dir):
 
     os.chdir(working_dir)
     tar_path = input
-    # extract input files
+    # unpack the input files
     tar_file = tarfile.open(tar_path, "r")
     tar_file.extractall(working_dir)
     prog_files = tar_file.getnames()
     tar_file.close()
 
     mrsl_file = ""
-    # find mRSL file
+    # locate the .mRSL file
     for f in prog_files:
         if f.find(".mRSL") != -1:
             mrsl_file = f
     
+    
+    # parse the mRSL file
     f = open(os.path.join(working_dir,mrsl_file))
     lines = f.readlines()
     
+    # extract commands
     first_cmd = lines.index("::EXECUTE::\n")+1
     commands = []
     for line in lines[first_cmd:]:
@@ -197,6 +200,7 @@ def __job_process(input, working_dir):
         if line.strip() != "":
             commands.append(line.strip())
     
+    # extract output files
     first_outputfile = lines.index("::OUTPUTFILES::\n")+1
     outputfiles = []
     for line in lines[first_outputfile:]:
@@ -205,12 +209,13 @@ def __job_process(input, working_dir):
         if line.strip() != "":
             outputfiles.append(line.strip())
         
+    # run the commands
     for cmd in commands:
         proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
         #proc = subprocess.Popen(cmd, shell=True)
         proc.wait()
         
-    
+    # copy output files from mig home dir
     for f in outputfiles:
         filepath = f.strip().split()
         src_path = filepath[0]
