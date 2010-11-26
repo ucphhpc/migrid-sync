@@ -13,10 +13,10 @@ running_jobs_dir = "status_files"
 
 monitor_polling_frequency = 20
 gene_first_index = 5
-gene_last_index = 600
+gene_last_index = 10
 
-trait_first_index = 3 #11 bt30
-trait_last_index = 5#53 bt47 incl puls 46-47
+trait_first_index = 11 #11 bt30
+trait_last_index = 53#53 bt47 incl puls 46-47
 
 
 default_job_size = 1
@@ -26,9 +26,7 @@ default_trait_list = range(trait_first_index,trait_last_index+1,1)#["Heigth","Al
 
 default_selection_variable_index = 2
 #default_selection_variable_label = "Gender"
-
-default_variable_values = ["1","2"]#,"3","4","5","6","7","8","9","10","11","12","13","14"]#,"15"]
-Epistasis_working_dir = "Epistasis_tmp/"
+default_variable_values = ["1","2"]#,"4","5","6","7","8","9","10","11","12","13","14"]#,"15"]
 
 output_dir = "epifiles/"
 # MiG specifications
@@ -44,10 +42,11 @@ resource_specs["DISK"] = 1
 
 default_user_output_dir = "epifiles/"
 
-selection_variable_range = {'2':[1,2], '9':range(1,14)}
+#selection_variable_range = {'2':[1,2], '9':range(1,14)}
 
 resultsdir_prefix_name = "EpistasisFiles"
 tmp_local_job_dir = "EpiMigJobFiles"
 main_results_dir = "epifiles/"
-
 logfile_name = "logfile.txt"
+gui_update_timer = 10000 #miliseconds
+polling_update_timer = 10 #seconds

@@ -1,4 +1,20 @@
+import sys, os, cPickle
+sys.path.append('../Configuration/')
+import Configuration.epistasisconfiguration as configuration
 
+def create_init_job():
+    """Return an initial epistasis job."""
+    init_job = {}
+    init_job["main_r_file"] = configuration.main_r_file
+    init_job['r_files'] = configuration.r_files
+    init_job['main_script'] = configuration.main_script
+    init_job['output_dir'] = configuration.output_dir
+    init_job["started"] = "---"
+    init_job["finished"] = "---"
+    init_job["status"] = "init"
+    
+    
+    return init_job
 
 def fragment_epistasis(job_size, values):
     """Return a list of sub jobs of size job_size."""
@@ -98,6 +114,84 @@ def get_job_specs(job):
     return list(classes), list(genes), j[2]
 
 
+# ##### CREATE JOBS#############
+
+def create_epistasis_jobs(
+    job_size,
+    genelist,
+    traitlist,
+    selection_var,
+    variable_values,
+    data_file,
+    output_dir,
+    project_tag,
+    run_local=False,
+    ):
+    """Return epistasis jobs that execute the epistasis procedure."""
+    #values = configuration.selection_variable_range[str(selection_var)]
+    #job_fragments = fragment_epistasis(classes=variable_values, genes=genelist, traits=traitlist, job_size=job_size)
+    
+    #partition the workload
+    job_fragments = fragment_epistasis(job_size, values=variable_values)
+    
+    jobs = []
+    ser_number = 1
+
+    for j in job_fragments:
+        # create basic job entities
+        job = create_init_job()
+        classes = j
+        
+        # global project name
+        job['project_tag'] = project_tag
+        job['class'] = classes
+        job['gene_list'] = genelist
+        job['trait_list'] = traitlist
+        job['user_output_dir'] = output_dir
+        # data set file
+        job['data_file'] = os.path.basename(data_file)
+        job['selection_variable'] = selection_var
+        job['selection_var_values'] = variable_values
+        # output file name
+        output_filename = 'epifiles' + str(ser_number) + '.tar.gz'
+        job_directory = configuration.tmp_local_job_dir\
+             + str(ser_number) + '_' + project_tag + '/'
+        # the jobs local pre execution working directory
+        #job['job_dir'] = os.path.join(configuration.Epistasis_working_dir, job_directory)
+        # output file for the job
+        job['output_files'] = [output_filename]
+        
+        # directory to gather the results
+        job_results_dir = configuration.resultsdir_prefix_name + project_tag +"/"
+        job['results_dir'] = job_results_dir
+
+        input_files = list(configuration.program_files)
+        input_files.append(data_file)
+        job['input_files'] = input_files
+        job['resource_specs'] = configuration.resource_specs
+        job['r_bin'] = '$R_HOME/bin/R'
+        
+        # write the job to a pickle file for storing input arguments and data needed on execution
+        tmp_dir = "/tmp/"
+        
+        job_filename = "job_file%s.pkl"%ser_number
+        
+        job_filepath = os.path.join(tmp_dir,job_filename)
+        output = open(job_filepath, 'w')
+        cPickle.dump(job, output)
+        job['input_files'].append(job_filepath)
+        output.close()
+
+        # the execution command on the grid resource
+        job_cmds = ['$PYTHON '+ job['main_script'] + ' '+job_filename]
+
+        # mig settings
+        job['commands'] = job_cmds
+        
+        jobs.append(job)
+        ser_number += 1
+
+    return jobs, job_results_dir
 
 
 

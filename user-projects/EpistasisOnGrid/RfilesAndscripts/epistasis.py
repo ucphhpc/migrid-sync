@@ -1,4 +1,4 @@
-import os
+import os, sys
 import tarfile
 import subprocess
 import pickle
@@ -114,8 +114,10 @@ def create_job_arguments_file(filename, selection_variable, sel_variable_values,
 
 def load_job_data():
     #import pickle
-    #job_file = sys.argv[1]
-    pkl_file = open("job_file.pkl", 'rb')
+    job_file = sys.argv[1]
+    #pkl_file = open("job_file.pkl", 'rb')
+    
+    pkl_file = open(job_file, 'rb')
     data1 = pickle.load(pkl_file)
     pkl_file.close()
 #    print "loaded job data: ", data1
