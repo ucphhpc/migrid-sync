@@ -15,7 +15,7 @@ def main():
     Afterwards, the result is downloaded and printed to screen.
     """
 
-    # Dissable verbose print outs
+    # Disable verbose print outs
     mig.debug_mode_off()
     
     # enable the following line for local excecution

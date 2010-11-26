@@ -212,7 +212,6 @@ def __job_process(input, working_dir):
     # run the commands
     for cmd in commands:
         proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
-        #proc = subprocess.Popen(cmd, shell=True)
         proc.wait()
         
     # copy output files from mig home dir
@@ -221,19 +220,19 @@ def __job_process(input, working_dir):
         src_path = filepath[0]
         dest_path = filepath[0]
         
-        # if there are two file names, we are using the mig format of <resource_scr mig_home_dest>
+        # if there are two file names, we are using the mig format of <path_on_resource path_on_mig_home>
         if len(filepath) > 1:
             dest_path = filepath[1]
-        #proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
         shutil.copy(os.path.join(working_dir, src_path), os.path.join(MIG_HOME, dest_path))
-        #print "copied output file "+f+" to "+ os.path.join(mig_home, dest_path)
 
 def cancel_job(job_list):
-    
+    # not implemented yet
+       
     return (exit_code, out)
 
 
 def rm_file(path_list):
+    # not implemented yet
     
     exit_code = 0
     out = ["Exit code: 0"]
@@ -241,102 +240,118 @@ def rm_file(path_list):
     return (exit_code, out)
 
 def put_file(src_path, dst_path, submit_mrsl, extract_package):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 def expand_name(path_list, server_flags, destinations):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 def cat_file(path_list):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
 def show_doc(search, show):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 def head_file(lines, path_list):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
 def job_action(action, job_list):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
 def job_liveio(action, job_id, src_list, dst):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 def job_mqueue(action, queue, msg):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
 def mv_file(src_list, dst):
-
+# not implemented yet
+    
     return (exit_code, out)
-
-
 
 
 def read_file(first, last, src_path, dst_path):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
-
-
 def rm_dir(path_list):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
 def stat_file(path_list):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
 def resubmit_job(job_list):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
 def tail_file(lines, path_list):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
 def touch_file(path_list):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
 def truncate_file(size, path_list):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
 def unzip_file(src_list, dst):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
 def wc_file(path_list):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
 def write_file(first, last, src_path, dst_path):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 
 def zip_file(current_dir, src_list, dst):
-
+# not implemented yet
+    
     return (exit_code, out)
 
 

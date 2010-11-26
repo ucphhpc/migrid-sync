@@ -19,8 +19,8 @@ def main():
     # Disable verbose print outs
     mig.debug_mode_off()
 
-    # uncomment the following lines to enable local mode execution
-    #mig.local_mode_on()
+    # uncomment the following line to enable local mode execution
+    # mig.local_mode_on()
 
     # Check if we can connect to the MiG server
     if not mig.mig_test_connection():
@@ -28,7 +28,7 @@ def main():
         exit(1)
 
     # Input parameters
-    input_values = [1, 2, 3, 4, 5]
+    input_values = range(5)
 
     # The program we want to execute on grid resources
     executable_file = "parameter_sweep_script.sh"
