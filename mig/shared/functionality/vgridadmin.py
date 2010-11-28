@@ -122,7 +122,7 @@ def main(client_id, user_arguments_dict):
           "javascript:runConfirmDialog('%s','%s','%s');" % \
             ("Request membership of " + vgrid_name + """:<br/>
 Please write a message to the owners (field below).""",
-             'vgridmemberrequestaction.py?vgrid_name=%s&request_type=member&'\
+             'accessrequestaction.py?vgrid_name=%s&request_type=vgridmember&'\
              % vgrid_name,
              "request_text"),
           'class': 'addlink',
@@ -135,7 +135,7 @@ Please write a message to the owners (field below).""",
           "javascript:runConfirmDialog('%s','%s','%s');" % \
             ("Request ownership of " + vgrid_name + """:<br/>
 Please write a message to the owners (field below).""",
-             'vgridmemberrequestaction.py?vgrid_name=%s&request_type=owner&'\
+             'accessrequestaction.py?vgrid_name=%s&request_type=vgridowner&'\
              % vgrid_name,
              "request_text"),
                                          'class': 'addadminlink',

@@ -87,7 +87,7 @@ def main(client_id, user_arguments_dict):
 
             # Admin of resource when owner
 
-            res_obj['rmresownerlink'] = \
+            res_obj['resownerlink'] = \
                                     {'object_type': 'link',
                                      'destination':
                                      "javascript:runConfirmDialog('%s','%s');" % \
@@ -98,7 +98,7 @@ def main(client_id, user_arguments_dict):
                                      'class': 'removeadminlink',
                                      'title': 'Leave %s owners' % unique_resource_name, 
                                      'text': ''}
-            res_obj['resadminlink'] = \
+            res_obj['resdetailslink'] = \
                                     {'object_type': 'link',
                                      'destination':
                                      'resadmin.py?unique_resource_name=%s'\
@@ -107,7 +107,23 @@ def main(client_id, user_arguments_dict):
                                      'title': 'Administrate %s' % unique_resource_name, 
                                      'text': ''}
         else:
-            res_obj['viewreslink'] = \
+
+            # link to become owner
+
+            res_obj['resownerlink'] = {
+                'object_type': 'link',
+                'destination': "javascript:runConfirmDialog('%s','%s','%s');"\
+                % ("Request ownership of " + visible_res_name + ":<br/>" + \
+                   "\nPlease write a message to the owners (field below).",
+                   ('accessrequestaction.py?unique_resource_name=%s&' + \
+                   'request_type=resourceowner&') % \
+                   visible_res_name,
+                   'request_text'),
+                'class': 'addlink',
+                'title': 'Request ownership of %s' % visible_res_name,
+                'text': ''}
+
+            res_obj['resdetailslink'] = \
                                     {'object_type': 'link',
                                      'destination':
                                      'viewres.py?unique_resource_name=%s'\

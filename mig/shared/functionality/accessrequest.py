@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# vgridmemberrequest - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# accessrequest - let user request access to vgrid or resource
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Request VGrid membership back end"""
+"""Request access (ownership or membership) back end"""
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
@@ -57,28 +57,53 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s VGrid membership request' % \
+    title_entry['text'] = '%s access request' % \
                           configuration.short_title
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Request VGrid member or ownership'})
+                          : 'Request access (membership/ownership)'})
 
     output_objects.append({'object_type': 'warning', 'text'
                           : '''
-Remember that sending a vgrid membership or ownership request
-generates a message to the owners of the VGrid. All requests are 
-logged together with the submitters name. Spamming and other misuse
+Remember that sending a membership or ownership request
+generates a message to the owners of the target. All requests are 
+logged together with the ID of the submitter. Spamming and other abuse
 will not be tolerated!'''})
 
+    output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Request VGrid membership/ownership'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-    <form method='post' action='vgridmemberrequestaction.py'>
-<table align='center'><tr><td>
-VGrid name</td><td><input name=vgrid_name /> </td></tr>
-<tr><td>Type</td><td><select name=request_type><option name=member>Member</option><option name=owner>Owner</option></select></td></tr>
-<tr><td>Reason (text to VGrid owner)</td><td><input name=request_text size=40 /></td></tr>
+<form method='post' action='accessrequestaction.py'>
+<table align='center'>
+<tr><td>Request type</td><td><select name=request_type>
+<option value=vgridmember>VGrid membership</option>
+<option value=vgridowner>VGrid ownership</option>
+</select></td></tr>
+<tr><td>
+VGrid name </td><td><input name=vgrid_name />
+</td></tr>
+<tr>
+<td>Reason (text to owners)</td><td><input name=request_text size=40 /></td>
+</tr>
+<tr><td><input type='submit' value='Submit' /></td><td></td></tr></table>
+</form>"""})
+
+    output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Request resource ownership'})
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : """
+<form method='post' action='accessrequestaction.py'>
+<table align='center'>
+<tr><td>Request type</td><td><select name=request_type>
+<option value=resourceowner>Resource ownership</option>
+</select></td></tr>
+<tr><td>
+Resource ID </td><td><input name=unique_resource_name />
+</td></tr>
+<tr>
+<td>Reason (text to owners)</td><td><input name=request_text size=40 /></td>
+</tr>
 <tr><td><input type='submit' value='Submit' /></td><td></td></tr></table>
 </form>"""})
 
     return (output_objects, returnvalues.OK)
-
-

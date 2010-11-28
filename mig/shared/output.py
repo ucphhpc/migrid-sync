@@ -991,17 +991,12 @@ Exit code: %s Description: %s<br />
                                  (res_type, res_type, obj['name']))
                     lines.append('<td>')
                     # view or admin link depending on ownership
-                    if obj.has_key('viewreslink'):
-                        lines.append('%s'
-                                 % html_link(obj['viewreslink']))
-                    elif obj.has_key('resadminlink'):
-                        lines.append('%s'
-                                 % html_link(obj['resadminlink']))
+                    if obj.has_key('resdetailslink'):
+                        lines.append('%s' % html_link(obj['resdetailslink']))
                     lines.append('</td>')
                     lines.append('<td>')
-                    if obj.has_key('rmresownerlink'):
-                        lines.append('%s'
-                                 % html_link(obj['rmresownerlink']))
+                    if obj.has_key('resownerlink'):
+                        lines.append('%s' % html_link(obj['resownerlink']))
                     lines.append('</td>')
                     # List number of runtime environments in field and add
                     # actual names as mouse-over

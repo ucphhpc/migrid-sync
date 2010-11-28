@@ -115,15 +115,15 @@ Please contact the %(site)s team for details about expire policies.
 Replies to this message will not be read!!!
 '''\
              % var_dict
-    elif status == 'VGRIDMEMBERREQUEST':
+    elif status == 'ACCESSREQUEST':
         from_cert = myfiles_py_location[0]
-        vgrid_name = myfiles_py_location[1]
+        target_name = myfiles_py_location[1]
         request_type = myfiles_py_location[2]
         request_text = myfiles_py_location[3]
-        header = '%s VGrid member request' % configuration.short_title
+        header = '%s access request' % configuration.short_title
         txt += \
-            "This is a request from %s who would like to be added to your VGrid '%s' as a %s\n"\
-             % (from_cert, vgrid_name, request_type)
+            "This is a %s request from %s who would like to be added to '%s'\n"\
+            % (request_type, from_cert, target_name)
         if request_text:
             txt += '''The following reason was submitted by %s:
 %s
@@ -131,15 +131,20 @@ Replies to this message will not be read!!!
                  % (from_cert, request_text)
         txt += \
             'If you want to authorize this request visit the following link in a browser: \n'
-        if request_type == 'member':
+        if request_type == 'vgridmember':
             txt += \
                 '%s/cgi-bin/addvgridmember.py?vgrid_name=%s&cert_id=%s'\
-                 % (configuration.migserver_https_cert_url, quote(vgrid_name),
+                 % (configuration.migserver_https_cert_url, quote(target_name),
                     quote(from_cert))
-        elif request_type == 'owner':
+        elif request_type == 'vgridowner':
             txt += \
                 '%s/cgi-bin/addvgridowner.py?vgrid_name=%s&cert_id=%s'\
-                 % (configuration.migserver_https_cert_url, quote(vgrid_name),
+                 % (configuration.migserver_https_cert_url, quote(target_name),
+                    quote(from_cert))
+        elif request_type == 'resourceowner':
+            txt += \
+                '%s/cgi-bin/addresowner.py?unique_resource_name=%s&cert_id=%s'\
+                 % (configuration.migserver_https_cert_url, quote(target_name),
                     quote(from_cert))
         else:
             txt += 'INVALID REQUEST TYPE: %s' % request_type

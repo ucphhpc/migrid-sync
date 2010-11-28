@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# resadmin - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# resadmin - Administrate a MiG Resource
+# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
