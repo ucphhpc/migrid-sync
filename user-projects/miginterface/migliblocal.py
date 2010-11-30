@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# miglib - a part of the MiG scripts
+# migliblocal - a part of the MiG interface module
 # Copyright (C) 2004-2010  MiG Core Developers lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -23,7 +23,7 @@
 
 """
 This is the MiG lib local module. It aims to emulate the behavior of the miglib.py api module by generating output similar to MiG, but
-performing all execution on the local system. It is useful for developing and debugging MiG client applications.
+it performs all execution on the local system. It is useful for developing and debugging MiG client applications.
 It should not be imported directly, but by enabling local mode execution in the miginterface.py module. 
 """
 

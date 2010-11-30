@@ -24,12 +24,7 @@
 """
 The Python MiG Interface Module
 
-A high-level library for writing python client applications for the Minimum intrusion Grid. Functions that operate on the grid have the prefix "mig_".
-Some of the the most relevant functions are:
-
-mig_create_job() - creates and submits a job
-mig_get_file() - download a file from the server
-mig_remove() - remove a file from the server
+A high-level library for writing python client applications for the Minimum intrusion Grid.
 
 """
 
@@ -37,17 +32,27 @@ import os
 import time
 import tarfile
 import mrsl
-import miglib
 import logging 
 from migerror import MigError
 import tempfile
 import random
 
+mig_config = os.path.expanduser("~/.mig/miguser.conf")
+if os.path.isfile(mig_config):
+    try:
+        import miglib
+    except ImportError:
+        print "Warning: Could not import the miglib module. Please verify that it is installed in your python environment."
+        print "Importing migliblocal module. MiG operations will only run locally."
+        import migliblocal as miglib
+else:
+    print "Warning: could not find your MiG configuration file. It should be in %s." % mig_config
+    print "Importing migliblocal module. MiG operations will only run locally."
+    import migliblocal as miglib
+
 
 LOG_FILE = os.path.join(tempfile.gettempdir(), "miginterface_log.txt")
 DEBUG_MODE = True
-
-
 
 def mig_create_job(exec_commands, input_files=[], output_files=[], executables=[], cached_files=[], resource_specifications={}, name=""):
     """
@@ -503,7 +508,7 @@ def __miglib_function(func, *args):
     func - a miglib function.
     *args - one or more arguments to the miglib function.
     """
-
+    
     local_exit_code, server_out = func(*args)
 
     __debug("function %s \n args: %s \n miglib exit code : %s\n server message : %s\n" % (str(func), str(args), str(local_exit_code), "".join(server_out)))
