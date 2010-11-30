@@ -41,15 +41,14 @@ mig_config = os.path.expanduser("~/.mig/miguser.conf")
 if os.path.isfile(mig_config):
     try:
         import miglib
-    except ImportError:
-        print "Warning: Could not import the miglib module. Please verify that it is installed in your python environment."
+    except ImportError, msg:
+        print "Could not import the miglib module : \n\t %s " % msg
         print "Importing migliblocal module. MiG operations will only run locally."
         import migliblocal as miglib
 else:
-    print "Warning: could not find your MiG configuration file. It should be in %s." % mig_config
+    print "Could not find your MiG configuration file. It should be in %s." % mig_config
     print "Importing migliblocal module. MiG operations will only run locally."
     import migliblocal as miglib
-
 
 LOG_FILE = os.path.join(tempfile.gettempdir(), "miginterface_log.txt")
 DEBUG_MODE = True
