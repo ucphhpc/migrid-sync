@@ -211,8 +211,13 @@ def __job_process(input, working_dir):
         
     # run the commands
     for cmd in commands:
-        proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
-        proc.wait()
+        proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+        output = proc.communicate()[0]
+        f = open("gridjob.stdout", "w")
+        f.write(output)
+        f.close()
+        #proc.wait()
+        #output
         
     # copy output files from mig home dir
     for f in outputfiles:

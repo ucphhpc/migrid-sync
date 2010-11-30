@@ -19,7 +19,7 @@ def main():
     mig.debug_mode_off()
     
     # enable the following line for local excecution
-    #mig.local_mode_on() 
+    mig.local_mode_on() 
     
     # Check if we can connect to the MiG server
     if not mig.mig_test_connection():
