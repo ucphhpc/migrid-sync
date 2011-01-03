@@ -145,7 +145,7 @@ def stop_epistasis(jobs):
     """Stop the epistasis procedure."""
     mig_session.cancel_jobs(jobs)
 
-# ##### PRINT ###########
+###### PRINT ###########
 
 def print_jobs(self, jobs):
     """Print jobs."""
@@ -168,10 +168,9 @@ def clean_up_epistasis(jobs):
     """Delete files used in the epistasis procedure that are no longer needed."""
     mig_session.clean_up(jobs)
 
+###### MAIN ###############
 
-# ##### MAIN ###############
-
-    # Arguments are entered in the order: selectionvariableindex jobsize
+# Arguments are entered in the order: selectionvariableindex jobsize
 
 local = False
 debug = False
