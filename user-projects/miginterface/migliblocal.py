@@ -105,7 +105,7 @@ def submit_file(src_path, dst_path, submit_mrsl, extract_package):
     proc.start()
     exit_code = 0
     server_out = ["0"]
-    job_id = str(proc.pid)+"__localjob.0"
+    job_id = str(proc.pid)
     server_out.append(str([{"job_id": job_id, "status": True}]))
     # example mig output format we want to emulate : 
     #   (0, ['0\n', "[{'status': True, 'object_type': 'submitstatus', 'name': '/gridjob_128989893464.mRSL', 
