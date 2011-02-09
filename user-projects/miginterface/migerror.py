@@ -1,16 +1,22 @@
 """
-Exception raised for errors with MiG.
+Exceptions raised for errors with Mig inteface.
 """
-class MigError(Exception):
-    """
-      Attributes:
-                error_type -- the nature of the error
-                msg  -- explanation of the error
-    """
 
-    def __init__(self, error_type, msg):
-        self.type = error_type
+
+class MigInterfaceError(Exception):
+    def __init__(self, msg, error_code=-1):
         self.msg = msg
-
+        self.error_code = error_code
+        
     def __str__(self):
-        return self.type+"\t"+self.msg
+        return self.msg+"\nExit code:"+str(self.error_code)
+
+
+class MigLocalError(MigInterfaceError):
+    pass
+
+class MigServerError(MigInterfaceError):
+    pass
+
+class MigUnknownJobIdError(MigServerError):
+    pass

@@ -43,7 +43,8 @@ import signal
 MIG_HOME = os.path.join(tempfile.gettempdir(), "mig_home")
 
 if not os.path.exists(MIG_HOME):
-    os.mkdir(MIG_HOME)
+    job_status_files_dir = "job_output"
+    os.makedirs(os.path.join(MIG_HOME, job_status_files_dir))
 
 
 def job_status(job_ids, max_job_count):
@@ -104,7 +105,8 @@ def submit_file(src_path, dst_path, submit_mrsl, extract_package):
     proc.start()
     exit_code = 0
     server_out = ["0"]
-    server_out.append(str([{"job_id": str(proc.pid), "status": True}]))
+    job_id = str(proc.pid)+"__localjob.0"
+    server_out.append(str([{"job_id": job_id, "status": True}]))
     # example mig output format we want to emulate : 
     #   (0, ['0\n', "[{'status': True, 'object_type': 'submitstatus', 'name': '/gridjob_128989893464.mRSL', 
     #       'job_id': '334719_11_16_2010__12_20_54_dk.migrid.org.0'}]\n"])
@@ -132,10 +134,13 @@ def ls_file(path):
     path - path to file from fake mig home.
     """
     
-    path = os.path.join(MIG_HOME, path.strip("path="))
+    path = os.path.join(MIG_HOME, path.lstrip("path="))
     server_out = []
     if os.path.exists(path):
-        files = os.listdir(os.path.join(MIG_HOME, path))
+        if os.path.isfile(path):
+            files = [os.path.basename(path)]
+        else: 
+            files = os.listdir(os.path.join(MIG_HOME, path))
         server_out = ["Exit code: 0"]
         server_out.extend(files) # mig outputs (<local exit code>, [<Server exit code>, ...])
     else:
@@ -208,15 +213,34 @@ def __job_process(input, working_dir):
             break
         if line.strip() != "":
             outputfiles.append(line.strip())
-        
+    
+    
+    job_id = str(os.getpid())
+    
+    status_files_directory = os.path.join(MIG_HOME, "job_output", job_id)
+    os.makedirs(status_files_directory)
+    
+    stdout_path = os.path.join(status_files_directory, job_id+".stdout")
+    stderr_path = os.path.join(status_files_directory, job_id+".stderr")
+    
+    stdout_file = open(stdout_path, "w")
+    stderr_file = open(stderr_path, "w")
+    
     # run the commands
     for cmd in commands:
-        proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-        output = proc.communicate()[0]
-        f = open("gridjob.stdout", "w")
-        f.write(output)
-        f.close()
-        #proc.wait()
+        #proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=stdout_file, stderr=stderr_file)
+        proc.wait()
+        #output = proc.communicate()[0]
+        
+        #job_id = os.getpid()
+        #status_files_directory = os.path.join(MIG_HOME, "job_output", job_id)
+        
+        #os.makedirs(status_files_directory)
+        #f = open(job_id+".stdout", "w")
+        #f.write(output)
+        #f.close()
+        
         #output
         
     # copy output files from mig home dir
@@ -255,9 +279,17 @@ def expand_name(path_list, server_flags, destinations):
     return (exit_code, out)
 
 def cat_file(path_list):
-# not implemented yet
-    
-    return (exit_code, out)
+    out = []
+    for path in path_list:
+        abs_path = os.path.join(MIG_HOME, path)
+        cmd = "cat "+abs_path
+        p = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out.append(p.communicate()[0])
+        
+    server_out = ["Exit code : 0 "]
+    server_out.extend(out)
+    exit_code = 0
+    return (exit_code, server_out)
 
 
 def show_doc(search, show):
@@ -301,9 +333,18 @@ def read_file(first, last, src_path, dst_path):
 
 
 def rm_dir(path_list):
-# not implemented yet
+    out = []
+    for path in path_list:
+        abs_path = os.path.join(MIG_HOME, path)
+        cmd = "rmdir "+abs_path
+        p = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out.append(p.communicate()[0])
+        
+    server_out = ["Exit code : 0 "]
+    server_out.extend(out)
+    exit_code = 0
     
-    return (exit_code, out)
+    return (exit_code, server_out)
 
 
 def stat_file(path_list):
