@@ -31,7 +31,7 @@ def main():
         # The shell command to start the script on the resource
         cmd = "./parameter_sweep_script.sh %i > %s" % (i, output_file)
         # Run the job resources on any vgrid 
-        resource_requirements = {"VGRID":"ANY", "JOBTYPE": "ARC"}
+        resource_requirements = {"VGRID":"ANY"}
         # Start the grid job
         job_id = mig.create_job(cmd, output_files=[output_file], executables=[executable_file], resource_specifications=resource_requirements)
         jobs.append((job_id, output_file))
