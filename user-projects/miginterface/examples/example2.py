@@ -46,7 +46,7 @@ def main():
 
 if __name__ == "__main__":
     if "-l" in sys.argv:
-        mig.local_mode_on() 
+        mig.local_mode_on()
     if "-d" in sys.argv:
         mig.debug_mode_on()
         

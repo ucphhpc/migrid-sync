@@ -99,7 +99,7 @@ def main():
 
 if __name__ == "__main__":
     if "-l" in sys.argv:
-        mig.local_mode_on() 
+        mig.local_mode_on()
         if not os.getenv("PYTHON"):
             os.putenv("PYTHON", "/usr/bin/python")
     if "-d" in sys.argv:

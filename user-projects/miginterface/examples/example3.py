@@ -8,34 +8,9 @@ import miginterface as mig
 import time, os, sys
 
 
-def create_blocks(reference_file):
-    
-    block_size = 200
-    block_num = 0
-    
-    ref_file = open(reference_file)
-    block_files = []
-    
-    
-    while True:  
-       
-        block_filename = "block%s.txt"+block_num
-        block_num += 1
-        
-        block = ref_file.readlines(block_size)
-        if not block:  
-            break
-        block_file = open(block_filename, "w")
-        block_file.writelines(block)
-        block_file.close()
-        block_files.append(block_filename)
-        
-    return block_files
-
-
 def main():
     """
-    Run grid jobs executing the bash file parameter_sweet_script.sh with different input arguments.
+    Run five grid jobs executing the bash file parameter_sweet_script.sh with different input arguments.
     When a job has finished executing, the corresponding output file is downloaded.
     Finally, the output contents are printed.
     """

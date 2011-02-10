@@ -9,40 +9,42 @@ Last updated %%date(%d-%m-%Y %H:%M)
 %%toc
 
 = Introduction =
-The MiG Interface Module contains a set of functions intended for MiG users who want to 
+The MiG Interface Module contains a set of functions intended for Minimun intrusion Grid users who want to 
 develop grid applications. By grid application is meant a local client script that uses the grid 
 as a computational resource by dispatching jobs to the grid server.
 
 The module sits on top of the Minimum intrusion Grid's "miglib.py" 
-python module and tries to simplify the operations to make them more
-approachable to new users.
+python module to simplify grid operations and make them more
+approachable to new users by encapsulating the underlying complexity.
 
 = Motivation = 
-The learning curve of creating a grid application can be steep for
-inexperienced grid developers because they need to learn how to 
-perform job and file management on the respective grid middleware. By 
-building on top of the miglib.py module the Mig interface offers 
+The learning curve for creating a grid application can be steep for
+inexperienced grid developers because they must learn 
+job and file management on the respective grid middleware. By 
+building on top of the miglib.py module the MiG interface offers 
 simple and intuitive functions that require little knowledge of the underlying 
 platform.
 
 =Features=
-In the general the MiG interface module provides overall complexity reduction allowing shorter programs and less user expertize.
-In addition it provides the following main features.
+The MiG interface module offers three main features:
+- Simulated user-to-resource communication
+- Local execution mode
+- Error detection
 
-==Complexity hiding==
-The MiG middleware is designed to ensure anonymity by making users and resources unaware of each other. The MiG server is
-hereby the only link between the two meaning that jobs are submitted through the MiG server user mRSL scripts to get 
-from user to resource. To simplify job submission the MiG interface module seeks to hide this intermediate step. 
-Jobs are submitted as if the user was directly communicating with the resource without use for mRSL scripts.
+==Simulated user-to-resource communication==
+An important part of the MiG middleware is to ensure anonymity between users and resources. Communication between the two goes through 
+a server. Jobs are thus submitted through the MiG server using mRSL scripts to get 
+from user to resource. To simplify job submission the MiG interface module hides this intermediate step. 
+Jobs are created as if the user was directly communicating with the resource without use for mRSL scripts.
 
 ==Local execution mode== 
-This mode makes it easier to develop and debug grid applications by locally emulating the behavior of MiG.
-This ensures that debugging is fast and responsive by avoiding the delay of remote communication. 
-When the application is working properly in local mode switch it off to submit to the actual grid. 
-Local mode utilizes parallel execution for multiprocessors.   
+Local mode execution makes it easier to develop and debug grid applications by locally emulating the behaviour of MiG.
+This ensures that debugging is fast and responsive avoiding the delay of remote communication. 
+When the application is working properly in local mode, switch it off to submit to the actual grid. 
+Local mode utilises parallel asynchronous job execution.
 
 ==Error detection==
-The Mig interface module is suited with increased error detection at various critical stages to ensure that the 
+The Mig interface module has increased error detection at various critical stages to ensure that the 
 user gets quick and precise error information. 
 
 = Requirements =
@@ -51,20 +53,27 @@ user gets quick and precise error information.
 - Curl (remote communication).
 - A Minimum intrusion Grid user account with a valid 
 certificate (for authentication).
-- The miglib.py python module (base MiG operations).
+- The miglib.py python module (for basic MiG operations).
 
 = Getting Started =
+To run MiG jobs make sure that you have a MiG account and certificate. 
+Go to the web site for more information (http://www.migrid.org) 
+
 Before you start using the MiG Interface Module, make sure you 
-have the miglib.py API properly installed. If you installed the MiG user scripts you 
-can also test by running the list directory script, migls.py. Second, 
-link or copy miglib.py into the miginterface directory or your PYTHONPATH environment variable. Finally, to verify that the MiG Interface 
-Module works, run the examples mentioned below in the EXAMPLES section. 
+have the mig user scripts and certificate properly installed. Find a tutorial here
+http://dk.migrid.org/public/doc/user_scripts/MiG-user-scripts.html
+
+Test by running 
+the directory listing script, migls.py. The mig interface module, miginterface.py,
+must be able to find miglib.py, so either put it in the same directory or add it to the $PYTHONPATH 
+environment variable. Finally, to verify that the MiG Interface Module works, 
+run the examples mentioned below in the EXAMPLES section. 
 
 = Examples =
 Example grid applications using the mig interface module can be found 
 in the examples directory. They are intended for learning how to use the mig 
 interface module and may also be useful as starting templates for 
-developing more customized grid applications.
+developing customised grid applications.
 
 To run an example file:
 	python example1.py
