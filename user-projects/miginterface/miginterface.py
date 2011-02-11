@@ -381,11 +381,15 @@ def job_output(job_id):
     job_id - the job id
     """
     path_list = []
-    path_list.append(os.path.join("job_output",job_id,job_id+".stderr"))
-    path_list.append(os.path.join("job_output",job_id,job_id+".stdout")) 
-        
+    path_list.append(os.path.join("job_output", job_id, job_id+".stderr"))
+    path_list.append(os.path.join("job_output", job_id, job_id+".stdout")) 
+    
     out = __miglib_function(miglib.cat_file, path_list)
-    return "\n".join(out)
+    out_str = "\n".join(out)
+    str_list = out_str.split("___CAT___") # filter out the information part
+    if len(str_list) > 1 :
+        str_list.pop(0)
+    return "".join(str_list).strip()
     
 def test_connection():
     """
