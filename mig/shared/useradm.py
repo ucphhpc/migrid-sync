@@ -186,12 +186,19 @@ def create_user(
             else:
                 renew = False
             if renew:
+                if user_db[client_id]['password'] != user['password']:
+                    if verbose:
+                        print 'Renewal request supplied a different password: '
+                        print 'Please re-request with the original password '
+                        print 'to assure authenticity!'
+                    raise Exception('Cannot renew certificate with a new password')
                 if verbose:
                     print 'Renewing existing user'
             elif not force:
                 if verbose:
-                    print 'Nothing more to do for existing user'
-                return
+                    print 'Nothing more to do for existing user %s' % client_id
+                raise Exception('Nothing more to do for existing user %s' % \
+                                client_id)
 
     try:
         user_db[client_id] = user
