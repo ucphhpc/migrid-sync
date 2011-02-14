@@ -19,7 +19,7 @@ def main():
     mpi_file = "example.c" # mpi program source file
     
     # The shell command to execute on the grid resource using 4 processes. We need to it compile on the resource first.
-    cmds = ["mpicc -O2 example.c -o example", "$MPI_WRAP mpirun -n 4 ./example Hello"]
+    cmds = ["mpicc -O2 example.c -o example", "$MPI_WRAP mpirun -np 4 ./example Hello"]
 
     # specify that we need require MPI as a runtime env and use the DIKU vgrid cluster
     specifications = {"RUNTIMEENVIRONMENT":"MPI-WRAP-2.0", "VGRID":"DIKU"}
