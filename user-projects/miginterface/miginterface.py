@@ -604,12 +604,16 @@ def __extract_exit_code(output_lines): # get internal MiG server exit code
     
     output_lines - a list of strings for each line in the server output message.
     """
+    code = 0
+        
     if len(output_lines) > 0:
-        exit_code_str = output_lines[0]
-        code = exit_code_str.strip("'Exit code: ").split()[0]
+        output_lines_str = " ".join(output_lines)
+        if output_lines_str.find('Exit code: ') != -1:
+            tail = output_lines_str.split('Exit code:')[1]
+            tokens = tail.strip(" ").split()
+            code = tokens[0]     
     else:
         __debug("Empty output message (Not an error).")
-        code = 0
         
     return int(code)
 
