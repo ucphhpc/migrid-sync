@@ -55,5 +55,3 @@ def create_vnc_password():
         return (True, (password, passwdfile))
     except Exception, err:
         return (False, 'Error creating vnc password (%s)' % err)
-
-
