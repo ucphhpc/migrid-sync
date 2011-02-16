@@ -40,7 +40,8 @@ from multiprocessing.sharedctypes import Value, Array
 import signal
 
 # the path to the fake local mig home directory
-MIG_HOME = os.path.join(tempfile.gettempdir(), "mig_home")
+user = os.getlogin()
+MIG_HOME = os.path.join(tempfile.gettempdir(), user+"_mig_home")
 
 if not os.path.exists(MIG_HOME):
     job_status_files_dir = "job_output"
