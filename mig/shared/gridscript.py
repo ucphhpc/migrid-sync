@@ -114,6 +114,13 @@ def check_mrsl_files(
 
         if root.find(os.sep + '.') != -1:
             continue
+
+        # skip all dirs without any recent changes
+
+        if only_new and os.path.getmtime(root) < last_start:
+            logger.info('check mRSL files: skipping unchanged dir: %s' % root)
+            continue
+        
         logger.info('check mRSL files: inspecting %d files in %s' % \
                     (len(files), root))
         file_count = 0
