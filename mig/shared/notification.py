@@ -46,7 +46,7 @@ except Exception, err:
 
 
 def create_notify_message(
-    jobid,
+    jobdict,
     myfiles_py_location,
     status,
     statusfile,
@@ -55,9 +55,11 @@ def create_notify_message(
 
     header = ''
     txt = ''
+    jobid = jobdict['JOB_ID']
+    job_retries = jobdict.get('RETRIES', configuration.job_retries)
 
     var_dict = {'https_cert_url': configuration.migserver_https_cert_url,
-                'jobid': jobid, 'retries': configuration.job_retries,
+                'jobid': jobid, 'retries': job_retries,
                 'output_dir': output_dir,
                 'site' : configuration.short_title}
 
@@ -272,7 +274,7 @@ def notify_user(
     jobid = jobdict['JOB_ID']
     for notify_line in jobdict['NOTIFY']:
         logger.debug('notify line: %s' % notify_line)
-        (header, message) = create_notify_message(jobid,
+        (header, message) = create_notify_message(jobdict,
                 myfiles_py_location, status, statusfile, configuration)
 
         supported_protocols = ['jabber', 'msn', 'icq', 'aol', 'yahoo']
