@@ -68,7 +68,7 @@ def main(client_id, user_arguments_dict):
                           : """
 <form method="post" action="jobstatus.py">
 Sort by modification time: <input type="radio" name="flags" value="sv" />yes
-<input type="radio" name="flags" checked="checked" value="v" />no<br />
+<input type="radio" name="flags" checked="checked" value="vi" />no<br />
 <input type="hidden" name="job_id" value="*" />
 <input type="hidden" name="output_format" value="html" />
 <input type="submit" value="Show All" />
@@ -82,8 +82,8 @@ Filter job IDs (* and ? wildcards are supported)<br />
 <form method="post" action="jobstatus.py">
 Job ID: <input type="text" name="job_id" value="*" size="30" /><br />
 Show only <input type="text" name="max_jobs" size="6" value=5 /> first matching jobs<br />
-Sort by modification time: <input type="radio" name="flags" checked="checked" value="vs" />yes
-<input type="radio" name="flags" value="v" />no<br />
+Sort by modification time: <input type="radio" name="flags" checked="checked" value="vsi" />yes
+<input type="radio" name="flags" value="vi" />no<br />
 <input type="hidden" name="output_format" value="html" />
 <input type="submit" value="Show" />
 </form>

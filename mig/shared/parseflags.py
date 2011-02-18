@@ -54,6 +54,10 @@ def format(flags, letter='l'):
         return 'basic'
 
 
+def interactive(flags, letter='i'):
+    return contains_letter(flags, letter)
+
+
 def line_count(flags, letter='l'):
     return contains_letter(flags, letter)
 

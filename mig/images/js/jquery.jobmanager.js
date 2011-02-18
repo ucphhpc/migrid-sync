@@ -191,7 +191,7 @@ if (jQuery) (function($){
                     jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'thaw'})
                 },
                 mrsl: function (job_id) {
-                  jsonWrapper(job_id, "#cmd_dialog", "mrslview.py", {job_id: job_id})
+                    jsonWrapper(job_id, "#cmd_dialog", "mrslview.py", {job_id: job_id})
                 },
                 resubmit: function (job_id) {
                     jsonWrapper(job_id, "#cmd_dialog", "resubmit.py", {job_id: job_id})
@@ -210,6 +210,10 @@ if (jQuery) (function($){
                 },
                 schedule: function (job_id) {
                     jsonWrapper(job_id, "#cmd_dialog", "jobschedule.py", {job_id: job_id})
+                },
+                verbosestatus: function (job_id) {
+                    url = "jobstatus.py?flags=v;job_id="+job_id;
+                    windowWrapper(job_id, "#cmd_dialog", url);
                 },
             };
 

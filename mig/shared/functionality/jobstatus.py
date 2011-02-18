@@ -38,7 +38,7 @@ from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables
 from shared.job import output_dir, get_job_ids_with_specified_project_name
 from shared.mrslparser import expand_variables
-from shared.parseflags import verbose, sorted
+from shared.parseflags import verbose, sorted, interactive
 from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 
@@ -329,46 +329,47 @@ def main(client_id, user_arguments_dict):
 
         job_obj['execution_histories'] = execution_histories
 
-        job_obj['statuslink'] = {'object_type': 'link',
-                                 'destination': 'ls.py?path=%s/%s/*'\
-                                  % (output_dir, job_id), 'text': 'View status files'}
-        job_obj['mrsllink'] = {'object_type': 'link',
-                               'destination': 'mrslview.py?job_id=%s'\
-                                % job_id,
-                               'text': 'View parsed mRSL contents'}
+        if interactive(flags):
+            job_obj['statuslink'] = {'object_type': 'link',
+                                     'destination': 'ls.py?path=%s/%s/*'\
+                                     % (output_dir, job_id), 'text': 'View status files'}
+            job_obj['mrsllink'] = {'object_type': 'link',
+                                   'destination': 'mrslview.py?job_id=%s'\
+                                   % job_id,
+                                   'text': 'View parsed mRSL contents'}
 
-        if job_dict.has_key('OUTPUTFILES') and job_dict['OUTPUTFILES']:
+            if job_dict.has_key('OUTPUTFILES') and job_dict['OUTPUTFILES']:
 
-            # Create a single ls link with all supplied outputfiles
+                # Create a single ls link with all supplied outputfiles
 
-            path_string = ''
-            for path in job_dict['OUTPUTFILES']:
+                path_string = ''
+                for path in job_dict['OUTPUTFILES']:
 
-                # OUTPUTFILES is either just combo path or src dst paths
+                    # OUTPUTFILES is either just combo path or src dst paths
+                    
+                    parts = path.split()
+                    
+                    # Always take last part as destination
 
-                parts = path.split()
+                    path_string += 'path=%s;' % parts[-1]
 
-                # Always take last part as destination
+                job_obj['outputfileslink'] = {'object_type': 'link',
+                                              'destination': 'ls.py?%s' % path_string,
+                                              'text': 'View output files'}
+            job_obj['resubmitlink'] = {'object_type': 'link',
+                                       'destination': 'resubmit.py?job_id=%s'\
+                                       % job_id, 'text': 'Resubmit job'}
 
-                path_string += 'path=%s;' % parts[-1]
-
-            job_obj['outputfileslink'] = {'object_type': 'link',
-                    'destination': 'ls.py?%s' % path_string,
-                    'text': 'View output files'}
-        job_obj['resubmitlink'] = {'object_type': 'link',
-                                   'destination': 'resubmit.py?job_id=%s'\
-                                    % job_id, 'text': 'Resubmit job'}
-
-        job_obj['cancellink'] = {'object_type': 'link',
-                                 'destination':
-                                 'jobaction.py?action=cancel;job_id=%s'\
-                                  % job_id, 'text': 'Cancel job'}
-        job_obj['jobschedulelink'] = {'object_type': 'link',
-                'destination': 'jobschedule.py?job_id=%s' % job_id,
-                'text': 'Request schedule information'}
-        job_obj['liveiolink'] = {'object_type': 'link',
-                'destination': 'liveio.py?job_id=%s' % job_id,
-                'text': 'Request live I/O'}
+            job_obj['cancellink'] = {'object_type': 'link',
+                                     'destination':
+                                     'jobaction.py?action=cancel;job_id=%s'\
+                                     % job_id, 'text': 'Cancel job'}
+            job_obj['jobschedulelink'] = {'object_type': 'link',
+                                          'destination': 'jobschedule.py?job_id=%s' % job_id,
+                                          'text': 'Request schedule information'}
+            job_obj['liveiolink'] = {'object_type': 'link',
+                                     'destination': 'liveio.py?job_id=%s' % job_id,
+                                     'text': 'Request live I/O'}
         job_list['jobs'].append(job_obj)
     output_objects.append(job_list)
 

@@ -110,6 +110,9 @@ def html_tmpl():
       <li class="schedule single">
           <a href="#schedule">Schedule Status</a>
       </li>
+      <li class="verbosestatus single">
+          <a href="#verbosestatus">Verbose Status</a>
+      </li>
       <li class="liveio single separator">
           <a href="#liveio">Live I/O</a>
       </li>

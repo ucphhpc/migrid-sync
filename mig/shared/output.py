@@ -526,18 +526,19 @@ Exit code: %s Description: %s<br />
                                      % (count,
                                     single_history['failed_message']))
 
-                    lines.append('<tr><td>Links</td><td>')
-                    lines.append('%s<br />' % html_link(obj['statuslink'
-                                 ]))
-                    lines.append('%s<br />' % html_link(obj['mrsllink']))
-                    lines.append('%s<br />' % html_link(obj['resubmitlink'
-                                 ]))
-                    lines.append('%s<br />' % html_link(obj['cancellink'
-                                 ]))
-                    lines.append('%s<br />'
-                                  % html_link(obj['jobschedulelink']))
-                    lines.append('%s<br />'
-                                  % html_link(obj['liveiolink']))
+                    if obj.has_key('statuslink'):
+                        lines.append('<tr><td>Links</td><td>')
+                        lines.append('%s<br />' % html_link(obj['statuslink'
+                                                                ]))
+                        lines.append('%s<br />' % html_link(obj['mrsllink']))
+                        lines.append('%s<br />' % html_link(obj['resubmitlink'
+                                                                ]))
+                        lines.append('%s<br />' % html_link(obj['cancellink'
+                                                                ]))
+                        lines.append('%s<br />'
+                                     % html_link(obj['jobschedulelink']))
+                        lines.append('%s<br />'
+                                     % html_link(obj['liveiolink']))
                     if obj.has_key('outputfileslink'):
                         lines.append('<br />%s'
                                  % html_link(obj['outputfileslink']))
