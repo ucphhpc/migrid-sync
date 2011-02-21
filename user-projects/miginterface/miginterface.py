@@ -118,8 +118,6 @@ def create_job(exec_commands, input_files=[], output_files=[], executables=[], c
     
     # create the mRSL file
     mrsl.generate_mrsl(mrsl_path, exec_commands, all_input_files, output_files, executables=executables, resource_specifics=resource_specifications)
-    #print input_files
-    
     
     # Gather all files we need to upload
     upload_files = []

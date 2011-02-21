@@ -85,8 +85,7 @@ def job_status(job_ids, max_job_count):
     #       'Received: Mon Sep 29 20:42:37 2008\n', 'Queued: Mon Sep 29 20:42:38 2008\n', 
     #       'Executing: Mon Sep 29 20:47:03 2008\n', 'Finished: Mon Sep 29 20:49:25 2008\n', '\n'])
     exit_code = 0
-    server_out = ["Exit code: 0"]
-    server_out.extend(job_info_list)
+    server_out = __server_output_msg(0,job_info_list)
     return (exit_code, server_out)
 
 
@@ -123,7 +122,7 @@ def get_file(src_path, dst_path):
     """
     # get the file from the fake mig home dir
     shutil.copy(os.path.join(MIG_HOME, src_path), dst_path) 
-    server_out = ["Exit code: 0"]
+    server_out = __server_output_msg(0,"")
     exit_code = 0
     return (exit_code, server_out)
 
@@ -142,10 +141,9 @@ def ls_file(path):
             files = [os.path.basename(path)]
         else: 
             files = os.listdir(os.path.join(MIG_HOME, path))
-        server_out = ["Exit code: 0"]
-        server_out.extend(files) # mig outputs (<local exit code>, [<Server exit code>, ...])
+        server_out = __server_output_msg(0, files)
     else:
-        server_out = ["Exit code: 105"] # file not found error
+        server_out = __server_output_msg(105, "file not found")
         
     exit_code = 0
 
@@ -164,120 +162,48 @@ def mk_dir(path):
     if not os.path.exists(path):
         os.mkdir(path)
     
-    server_out = ["Exit code : 0"]
+    server_out = __server_output_msg(0,"")
     exit_code = 0
 
     return (exit_code, server_out)
 
 
-def __job_process(input, working_dir):
-    """
-    Method for emulating a grid job. Will be run in a new process.
-
-    input - input files for the job
-    working_dir - the directory where the execution commands will be executed.
-    """
-
-    os.chdir(working_dir)
-    tar_path = input
-    # unpack the input files
-    tar_file = tarfile.open(tar_path, "r")
-    tar_file.extractall(working_dir)
-    prog_files = tar_file.getnames()
-    tar_file.close()
-
-    mrsl_file = ""
-    # locate the .mRSL file
-    for f in prog_files:
-        if f.find(".mRSL") != -1:
-            mrsl_file = f
-    
-    
-    # parse the mRSL file
-    f = open(os.path.join(working_dir,mrsl_file))
-    lines = f.readlines()
-    
-    # extract commands
-    first_cmd = lines.index("::EXECUTE::\n")+1
-    commands = []
-    for line in lines[first_cmd:]:
-        if line.find("::") != -1:
-            break
-        if line.strip() != "":
-            commands.append(line.strip())
-    
-    # extract output files
-    first_outputfile = lines.index("::OUTPUTFILES::\n")+1
-    outputfiles = []
-    for line in lines[first_outputfile:]:
-        if line.find("::") != -1:
-            break
-        if line.strip() != "":
-            outputfiles.append(line.strip())
-    
-    
-    job_id = str(os.getpid())
-    
-    status_files_directory = os.path.join(MIG_HOME, "job_output", job_id)
-    os.makedirs(status_files_directory)
-    
-    stdout_path = os.path.join(status_files_directory, job_id+".stdout")
-    stderr_path = os.path.join(status_files_directory, job_id+".stderr")
-    
-    stdout_file = open(stdout_path, "w")
-    stderr_file = open(stderr_path, "w")
-    
-    # run the commands
-    for cmd in commands:
-        #proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=stdout_file, stderr=stderr_file)
-        proc.wait()
-        #output = proc.communicate()[0]
-        
-        #job_id = os.getpid()
-        #status_files_directory = os.path.join(MIG_HOME, "job_output", job_id)
-        
-        #os.makedirs(status_files_directory)
-        #f = open(job_id+".stdout", "w")
-        #f.write(output)
-        #f.close()
-        
-        #output
-        
-    # copy output files from mig home dir
-    for f in outputfiles:
-        filepath = f.strip().split()
-        src_path = filepath[0]
-        dest_path = filepath[0]
-        
-        # if there are two file names, we are using the mig format of <path_on_resource path_on_mig_home>
-        if len(filepath) > 1:
-            dest_path = filepath[1]
-        shutil.copy(os.path.join(working_dir, src_path), os.path.join(MIG_HOME, dest_path))
-
-def cancel_job(job_list):
-    # not implemented yet
-       
+def cancel_job(job_ids):
+    if isinstance(job_ids, str):
+        job_ids = [job_ids]
+    out = []
+    exit_code = 0
+    try :
+        for j in job_ids:
+            os.kill(int(j), signal.SIGTERM)
+            out.append("Cancelled job %s." % j)
+        out.insert(0, "Exit code: 0")
+    except OSError, e :
+        out.append("Error cancelling job %s." % j)
+        out.insert(0, "Exit code: 1")
     return (exit_code, out)
 
 
 def rm_file(path_list):
-    # not implemented yet
-    
+    out = []
+    for p in path_list.split(";"):
+        path = os.path.join(MIG_HOME, p.strip("path="))
+        if os.path.exists(path):
+            os.remove(path)
+            out.append("Removed %s" % path)
+        else: 
+            out.append("File not found %s" % path)
     exit_code = 0
-    out = ["Exit code: 0"]
+    server_out = __server_output_msg(0, out)
     
-    return (exit_code, out)
+    return (exit_code, server_out)
 
 def put_file(src_path, dst_path, submit_mrsl, extract_package):
-# not implemented yet
-    
-    return (exit_code, out)
-
-def expand_name(path_list, server_flags, destinations):
-# not implemented yet
-    
-    return (exit_code, out)
+    mig_home_target = os.path.join(MIG_HOME, dst_path)
+    shutil.copy(src_path, mig_home_target)
+    server_out = __server_output_msg(0, "uploaded file %s"%src_path)
+    exit_code = 0
+    return (exit_code, server_out)
 
 def cat_file(path_list):
     out = []
@@ -287,10 +213,29 @@ def cat_file(path_list):
         p = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out.append(p.communicate()[0])
         
-    server_out = ["Exit code : 0 "]
-    server_out.extend(out)
+    server_out = __server_output_msg(0, out)
     exit_code = 0
     return (exit_code, server_out)
+
+def rm_dir(path_list):
+    out = []
+    for path in path_list:
+        abs_path = os.path.join(MIG_HOME, path)
+        cmd = "rmdir "+abs_path
+        p = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out.append(p.communicate()[0])
+    
+    server_out = __server_output_msg(0, out)
+    exit_code = 0
+    
+    return (exit_code, server_out)
+
+
+
+def expand_name(path_list, server_flags, destinations):
+# not implemented yet
+    
+    return (exit_code, out)
 
 
 def show_doc(search, show):
@@ -331,21 +276,6 @@ def read_file(first, last, src_path, dst_path):
 # not implemented yet
     
     return (exit_code, out)
-
-
-def rm_dir(path_list):
-    out = []
-    for path in path_list:
-        abs_path = os.path.join(MIG_HOME, path)
-        cmd = "rmdir "+abs_path
-        p = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out.append(p.communicate()[0])
-        
-    server_out = ["Exit code : 0 "]
-    server_out.extend(out)
-    exit_code = 0
-    
-    return (exit_code, server_out)
 
 
 def stat_file(path_list):
@@ -432,3 +362,99 @@ def read_conf(conf, option):
         conf_file.close()
     except Exception:
         return ''
+    
+    
+def __server_output_msg(exit_code, output):
+    """
+    Format the message so it looks like a message from the mig server
+    
+    exit_code - the exit code of some action
+    output - the output message 
+    """
+    if not isinstance(output, list):
+        output = list(str(output))
+        
+    server_out = ["Exit code: %s " % str(exit_code)]
+    server_out.extend(output)
+    return server_out
+
+
+def __job_process(input, working_dir):
+    """
+    Method for emulating a grid job. Will be run in a new process.
+
+    input - input files for the job
+    working_dir - the directory where the execution commands will be executed.
+    """
+
+    os.chdir(working_dir)
+    tar_path = input
+    # unpack the input files
+    tar_file = tarfile.open(tar_path, "r")
+    tar_file.extractall(working_dir)
+    prog_files = tar_file.getnames()
+    tar_file.close()
+
+    mrsl_file = ""
+    # locate the .mRSL file
+    for f in prog_files:
+        if f.find(".mRSL") != -1:
+            mrsl_file = f
+    
+    
+    # parse the mRSL file
+    f = open(os.path.join(working_dir,mrsl_file))
+    lines = f.readlines()
+    
+    # extract commands
+    first_cmd = lines.index("::EXECUTE::\n")+1
+    commands = []
+    for line in lines[first_cmd:]:
+        if line.find("::") != -1:
+            break
+        if line.strip() != "":
+            commands.append(line.strip())
+    
+    # extract output files
+    first_outputfile = lines.index("::OUTPUTFILES::\n")+1
+    outputfiles = []
+    for line in lines[first_outputfile:]:
+        if line.find("::") != -1:
+            break
+        if line.strip() != "":
+            outputfiles.append(line.strip())
+    
+    
+    job_id = str(os.getpid())
+    
+    status_files_directory = os.path.join(MIG_HOME, "job_output", job_id)
+    os.makedirs(status_files_directory)
+    
+    stdout_path = os.path.join(status_files_directory, job_id+".stdout")
+    stderr_path = os.path.join(status_files_directory, job_id+".stderr")
+    
+    stdout_file = open(stdout_path, "w")
+    stderr_file = open(stderr_path, "w")
+    
+    # run the commands
+    try :
+        for cmd in commands:
+            proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=stdout_file, stderr=stderr_file, close_fds=True)
+            proc.wait()
+    
+    except Exception, e:
+        "Process error : %s. Terminating.", e.err()
+    except KeyboardInterrupt :
+        print "Keyboard interrupt. Terminating."
+        return
+        
+    # copy output files from mig home dir
+    for f in outputfiles:
+        filepath = f.strip().split()
+        src_path = filepath[0]
+        dest_path = filepath[0]
+        
+        # if there are two file names, we are using the mig format of <path_on_resource path_on_mig_home>
+        if len(filepath) > 1:
+            dest_path = filepath[1]
+        shutil.copy(os.path.join(working_dir, src_path), os.path.join(MIG_HOME, dest_path))

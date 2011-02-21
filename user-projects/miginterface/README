@@ -48,6 +48,7 @@ The Mig interface module has increased error detection at various critical stage
 user gets quick and precise error information. 
 
 = Requirements =
+- A unix platform operating system.
 - Python (>=v2.5).
 - Python (>=v2.6) for local mode execution.
 - Curl (remote communication).
@@ -55,24 +56,22 @@ user gets quick and precise error information.
 certificate (for authentication).
 - The miglib.py python module (for basic MiG operations).
 
-= Getting Started =
+= Getting Started = 
 To run MiG jobs make sure that you have a MiG account and certificate. 
-Go to the web site for more information (http://www.migrid.org) 
+If not, go to the web site for more information (http://www.migrid.org) 
 
 Before you start using the MiG Interface Module, make sure you 
-have the mig user scripts and certificate properly installed. Find a tutorial here
+have miglib.py and certificate properly installed. Find a tutorial here
 http://dk.migrid.org/public/doc/user_scripts/MiG-user-scripts.html
 
-Test by running 
-the directory listing script, migls.py. The mig interface module, miginterface.py,
-must be able to find miglib.py, so either put it in the same directory or add it to the $PYTHONPATH 
-environment variable. Finally, to verify that the MiG Interface Module works, 
-run the examples mentioned below in the EXAMPLES section. 
+Test by running the directory listing script, migls.py. The mig interface module, miginterface.py,
+must be able to find miglib.py, so either put it in the same directory or add it to the $PYTHONPATH environment variable. Finally, to verify that the MiG Interface Module works, 
+run the examples below in the EXAMPLES section. 
 
 = Examples =
 Example grid applications using the mig interface module can be found 
 in the examples directory. They are intended for learning how to use the mig 
-interface module and may also be useful as starting templates for 
+interface module and can be a useful starting templates for 
 developing customised grid applications.
 
 To run an example file:
