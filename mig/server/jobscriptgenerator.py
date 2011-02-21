@@ -92,6 +92,8 @@ def create_empty_job(
     job_dict['ARGUMENTS'] = ''
     job_dict['EXECUTABLES'] = ''
     job_dict['CPUTIME'] = str(cputime)
+    job_dict['MEMORY'] = 16
+    job_dict['DISK'] = 1
     job_dict['EXECUTION_DELAY'] = str(execution_delay)
     job_dict['ENVIRONMENT'] = ''
     job_dict['RUNTIMEENVIRONMENT'] = []
@@ -628,6 +630,8 @@ def gen_job_script(
     job_array.append(generator.print_on_error('re_status', '0',
                      'failed to initialize one or more RUNTIMEENVIRONMENTs'
                      ))
+    job_array.append(generator.comment('enforce some basic job limits'))
+    job_array.append(generator.set_limits())
     job_array.append(generator.comment('execute!'))
     job_array.append(generator.execute('EXECUTING: ', '--Exit code:'))
     job_array.append(generator.comment('exit script'))

@@ -464,6 +464,11 @@ if not os.environ.get("MIG_JOBDIR", ""):
 
         return cmd
 
+    def set_limits(self):
+        """Set local resource limits to prevent fork bombs, OOM and such"""
+        # TODO: implement limits!
+        return ''
+
     def set_runtime_environments(self, resource_runtimeenvironment,
                                  result='re_result'):
         """Set Runtimeenvironments"""

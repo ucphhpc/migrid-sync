@@ -694,6 +694,32 @@ class GenJobScriptSh:
 
         return cmd
 
+    def set_limits(self):
+        """Set local resource limits to prevent fork bombs, OOM and such.
+        Limits are set slightly higher to avoid overhead problems.
+        """
+        requested = {'CPUTIME': int(job_dict['CPUTIME']) + 10}
+        requested['MEMORY'] = int(job_dict.get('MEMORY', 1)) + 16
+        requested['DISK'] = int(job_dict.get('DISK', 1)) + 1
+        # Arbitrary values low enough to prevent fork bombs
+        requested['MAXPROCS'] = 1024
+        # Multipliers for expected units in seconds and kb
+        requested['SECS'] = 1
+        requested['MEGS'] = 1024
+        requested['GIGS'] = 1024*1024
+        cmd = '''
+# Prevent fork bombs
+ulimit -u %(MAXPROCS)d
+
+# Actual request limits - not accurate but better than nothing
+ulimit -t $((%(CPUTIME)d*%(SECS)d))
+ulimit -v $((%(MEMORY)d*%(MEGS)d))
+ulimit -f $((%(DISK)d*%(GIGS)d))
+''' % requested
+        return cmd
+
+        
+        
     def set_runtime_environments(self, resource_runtimeenvironment,
                                  result='re_result'):
         """Set Runtimeenvironments"""

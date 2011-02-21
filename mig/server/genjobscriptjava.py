@@ -159,6 +159,10 @@ class GenJobScriptJava:
     def set_environments(self, result='env_result'):
         return ''
 
+    def set_limits(self):
+        """Set local resource limits to prevent fork bombs, OOM and such"""
+        return ''
+
     def set_runtime_environments(self, resource_runtimeenvironment,
                                  result='re_result'):
         return ''
