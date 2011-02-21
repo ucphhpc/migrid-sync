@@ -577,7 +577,8 @@ You can simply copy/paste from the available widget file links below if you want
 <a class="urllink" href="/images/widgets/cert-countdown.app">certificate countdown</a>,
 <a class="urllink" href="/images/widgets/disk-use.app">disk use progress bar</a>,
 <a class="urllink" href="/images/widgets/jobs-stats.app">jobs stats table</a>,
-<a class="urllink" href="/images/widgets/jobs-stats-chart.app">jobs stats chart</a>
+<a class="urllink" href="/images/widgets/jobs-stats-chart.app">jobs stats chart</a>,
+<a class="urllink" href="/images/widgets/kunet-login.app">KUnet login</a>
 </td></tr>
 <tr><td>
 <div class="warningtext">Please note that the widgets parser is rather grumpy so you may have to avoid blank lines in your widget code below. Additionally any errors in your widgets code may cause severe corruption in your pages, so it may be a good idea to keep another browser tab/window open on this page while experimenting.</div> 
