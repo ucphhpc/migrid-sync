@@ -40,7 +40,8 @@ import sys
  
 MIG_CONFIG = os.path.expanduser("~/.mig/miguser.conf")
 
-LOG_FILE = os.path.join(tempfile.gettempdir(), "miginterface_log.txt")
+user = os.getlogin()
+LOG_FILE = os.path.join(tempfile.gettempdir(), "miginterface_log_%s.txt" % user)
 DEBUG_MODE = False
 LOCAL_MODE = False
 

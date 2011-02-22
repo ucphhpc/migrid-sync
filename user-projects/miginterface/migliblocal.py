@@ -121,7 +121,7 @@ def get_file(src_path, dst_path):
     dst_path - path to target file on the local system.
     """
     # get the file from the fake mig home dir
-    shutil.copy(os.path.join(MIG_HOME, src_path), dst_path) 
+    shutil.copy(os.path.join(MIG_HOME, src_path), dst_path)
     server_out = __server_output_msg(0,"")
     exit_code = 0
     return (exit_code, server_out)
