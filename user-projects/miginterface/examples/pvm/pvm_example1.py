@@ -6,7 +6,7 @@ An example script for running an MPI grid job using the mig interface module.
 
 import miginterface as mig
 import time, sys
-
+import subprocess
 
 def main():
     """
@@ -19,8 +19,11 @@ def main():
     
     mig.test_connection() # Check if we can connect to the MiG server
     
-    pvm_program = "example" # The PVM executable
-    cmd = "$PVM_WRAP ./example 4 Hello" # The shell command to execute on the grid resource
+
+    proc = subprocess.Popen("gcc example.c -o pvm_example -lpvm3 -lgpvm3", shell= True, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    pvm_program = "pvm_example" # The PVM executable
+    cmd = "$PVM_WRAP ./pvm_example 4 Hello" # The shell command to execute on the grid resource
 
     # specify to the job that we want PVM as RTE and we want to use the DIKU VGRID
     specifications = {"RUNTIMEENVIRONMENT":"PVM-WRAP-1.0", "VGRID":"DIKU"}
