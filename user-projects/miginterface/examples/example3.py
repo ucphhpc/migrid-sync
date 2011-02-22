@@ -1,4 +1,4 @@
-#!/usr/python
+#!/usr/bin/python 
 
 """
 Example script for running multiple MiG jobs using the python miginterface module.

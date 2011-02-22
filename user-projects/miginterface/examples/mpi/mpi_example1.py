@@ -1,4 +1,4 @@
-#!/usr/python
+#!/usr/bin/python 
 
 """
 An example script for running an MPI grid job using the mig interface module.
