@@ -99,11 +99,26 @@ def main(client_id, user_arguments_dict):
     fcntl.flock(lock_handle_res.fileno(), fcntl.LOCK_EX)
 
     # Only resources that are down may be deleted.
-    # A "FE.PGID" file in the resource's home directory means that
+    # A "FE.PGID" file with a PGID in the resource's home directory means that
     # the FE is running.
 
     pgid_path = os.path.join(res_dir, 'FE.PGID')
-    if os.path.exists(pgid_path):
+    fe_running = True
+    try:
+
+        # determine if fe runs by finding out if pgid is numerical
+
+        pgid_file = open(pgid_path, 'r')
+        fcntl.flock(pgid_file, fcntl.LOCK_EX)
+        pgid = pgid_file.readline().strip()
+        fcntl.flock(pgid_file, fcntl.LOCK_UN)
+        pgid_file.close()
+        if not pgid.isdigit():
+            raise Exception('FE already stopped')
+    except:
+        fe_running = False
+
+    if fe_running:
         output_objects.append({'object_type': 'error_text', 'text'
                                : "Can't delete the running resource %s!"
                                % res_name})
