@@ -46,12 +46,7 @@ DEBUG_MODE = False
 LOCAL_MODE = False
 
 if os.path.isfile(MIG_CONFIG):
-    try:
-        import miglib
-    except ImportError, err:
-        print "Could not import the miglib module : \n\t %s " % err
-        print "Importing migliblocal module. miginterface operations will only run in local mode."
-        import migliblocal as miglib
+    import miglib
 else:
     print "Could not find your MiG configuration file. It should be in %s." % MIG_CONFIG
     print "Importing migliblocal module. miginterface will only be able to run in local mode."
@@ -635,9 +630,9 @@ def __check_configuration():
     
     if not os.path.exists(MIG_CONFIG):
         raise MigLocalError("Cannot find mig configuration file miguser.conf. It should be located at %s."% MIG_CONFIG)
-    try:
-        sys.modules["miglib"]
-    except KeyError:
-        raise MigLocalError("Cannot find miglib module")
+    #try:
+    #    sys.modules["miglib"]
+    #except KeyError:
+    #    raise MigLocalError("Cannot find miglib module")
     
     
