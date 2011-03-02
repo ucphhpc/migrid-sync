@@ -1,5 +1,5 @@
 The Python MiG Interface Module
-Last updated 02-03-2011 11:12
+Last updated 02-03-2011 11:35
 
   1. Introduction
   2. Motivation
@@ -15,7 +15,7 @@ Last updated 02-03-2011 11:12
   1. Introduction
   ===============
 
-The Python MiG Interface Module contains a set of functions intended for Minimun intrusion Grid users who want to develop grid applications. By grid application is meant a local client script that uses the grid as a computational resource by dispatching jobs to the grid server.
+The Python MiG Interface Module contains a set of functions intended for Minimum intrusion Grid users who want to develop grid applications. By grid application is meant a local client script that uses the grid as a computational resource by dispatching jobs to the grid server.
 
 The module extends the Minimum intrusion Grid's "miglib.py" 
 python module to further simplify grid operations and make them more
@@ -57,7 +57,7 @@ In local mode execution, the behaviour of MiG is emulated locally. Using an alte
 	3.3. Error detection
 	====================
 
-The Mig interface module has increased error detection at various critical stages to ensure that the user gets quick and precise error information. 
+The MiG interface module has increased error detection at various critical stages to ensure that the user gets quick and precise error information. 
 
 
   4. Requirements
@@ -77,7 +77,9 @@ If not, go to the web site for more information (http://www.migrid.org)
 Make sure your certificate is properly installed to run MiG user scripts. Find a tutorial here
 http://dk.migrid.org/public/doc/user_scripts/MiG-user-scripts.html
 
-Test by running the directory listing script, migls.py. Finally, to verify that the MiG Interface Module works, run the examples in the Examples section below. It can be helpful to add the miginterface directory to your $PYTHONPATH environment variable, so it is globally accesible.
+Test by running the directory listing script, migls.py. Finally, to verify that the MiG Interface Module works, run the examples in the Examples section below. It can be helpful to add the miginterface directory to your $PYTHONPATH environment variable, so it is globally accessible.
+
+export PYTHONPATH=$PYTHONPATH:/path/to/miginterface
 
 = Examples =
 Example grid applications using the mig interface module can be found 
