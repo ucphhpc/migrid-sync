@@ -16,13 +16,13 @@ function refreshJobs(jobs, max_jobs) {
     	  'flags': 's', max_jobs: max_jobs},
     function(jsonRes, textStatus) {
         var jobList = new Array();
+        var errors = '';
         for(var i = 0; i < jsonRes.length; i++) {
             if ((jsonRes[i].object_type == "job_list") &&
     		    (jsonRes[i].jobs.length > 0)) {
                 jobList = jobList.concat(jsonRes[i].jobs);
             } else if (jsonRes[i].object_type=='error_text') {
-                var error = jsonRes[i].text;
-                alert('load job status error:' + error);
+                errors = errors + 'job status error: ' + jsonRes[i].text + '<br/>';
             }
         }
         $("#jobmonitor tbody").html("");
@@ -33,6 +33,7 @@ function refreshJobs(jobs, max_jobs) {
               "<td>"+item.received_timestamp+"</td>"+"</tr>"
               );
         });
+        $("#jobmonitor tbody").append("<tr><td class=warningtext colspan=3>"+errors+"</td></tr>");
     });
 }
 $(document).ready(function() {
