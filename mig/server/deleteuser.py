@@ -43,7 +43,7 @@ Usage:
 %(name)s [OPTIONS] FULL_NAME [ORGANIZATION] [STATE] [COUNTRY] \
     [EMAIL]
 or
-%(name)s -u USER_ID
+%(name)s -i USER_ID
 Where OPTIONS may be one or more of:
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
@@ -64,7 +64,7 @@ if '__main__' == __name__:
     verbose = False
     user_id = None
     user_dict = {}
-    opt_args = 'c:d:fhi:u:v'
+    opt_args = 'c:d:fhi:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
