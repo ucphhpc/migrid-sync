@@ -176,10 +176,12 @@ def create_scm(
     cgi_template_script = os.path.abspath(configuration.hgweb_path)
 
     # Depending on the Mercurial installation some of the
-    # configuration strings may vary slightly
+    # configuration strings may vary slightly.
+    # We try to catch common variations with multiple targets
 
     cgi_template_name = 'repository name'
     cgi_template_repo = '/path/to/repo'
+    cgi_template_repo_alt = '/path/to/repo/or/config'
     cgi_scm_name = '%s %s SCM repository' % (vgrid_name, kind)
     repo_base = 'repo'
     cgi_scm_repo = os.path.join(scm_dir, repo_base)
@@ -252,6 +254,7 @@ the commands and work flows of this distributed SCM.
         for line in template_script:
             line = line.replace(cgi_template_name,
                                 cgi_scm_name)
+            line = line.replace(cgi_template_repo_alt, cgi_scm_repo)
             line = line.replace(cgi_template_repo, cgi_scm_repo)
             cgi_script.append(line)
         cgi_fd = open(cgi_scm_script, 'w')
