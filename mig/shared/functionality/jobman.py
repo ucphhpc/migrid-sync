@@ -74,7 +74,7 @@ def html_tmpl():
       
     </div>
     <div class="stuff">
-      <table id="jm_jobmanager">      
+      <table id="jm_jobmanager">
       <thead>
         <tr>
           <th style="width: 20px;"><input type="checkbox" id="checkAll" /></th>
@@ -89,6 +89,7 @@ def html_tmpl():
     </table>
     </div>
     
+    <div id="jm_touchscreen"><input type="checkbox">Enable touch screen interface (all clicks trigger menu)</div>
   </div>
   
   <ul id="job_context" class="contextMenu">

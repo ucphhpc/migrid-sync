@@ -1,5 +1,12 @@
 if (jQuery) (function($){
   
+    // Use touchscreen interface without need for right clicking
+    function touchscreenChecker() {
+        var touchscreen = $("#fm_touchscreen input[type='checkbox']").is(":checked");
+
+        return touchscreen;
+    }
+
     $.fn.renderError = function(jsonRes) {
         
         var errors = '';
@@ -636,7 +643,8 @@ if (jQuery) (function($){
             }
 
             $("div.filespacer").contextMenu(
-                    { menu: 'folder_context'},
+                    { menu: 'folder_context',
+		    leftButtonChecker: touchscreenChecker},
                     function(action, el, pos) {
                         (options['actions'][action])(action, el, pos);                                            
                     });
@@ -649,7 +657,8 @@ if (jQuery) (function($){
                 var t = $(this); 
                 setTimeout(function() {
                     t.contextMenu(
-                        { menu: 'folder_context'},
+                        { menu: 'folder_context',
+			  leftButtonChecker: touchscreenChecker},
                         function(action, el, pos) {
                             if ($(el).tagName() == 'DIV') {
                                 (options['actions'][action])(action, el.parent(), pos);
@@ -663,7 +672,8 @@ if (jQuery) (function($){
                 var t = $(this); 
                 setTimeout(function() {
                     t.contextMenu(
-                        { menu: 'file_context'},
+                        { menu: 'file_context',
+			  leftButtonChecker: touchscreenChecker},
                         function(action, el, pos) {
                             (options['actions'][action])(action, el, pos);
                         })

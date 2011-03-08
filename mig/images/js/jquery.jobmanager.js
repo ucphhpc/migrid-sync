@@ -1,5 +1,12 @@
 if (jQuery) (function($){
   
+    // Use touchscreen interface without need for right clicking
+    function touchscreenChecker() {
+        var touchscreen = $("#jm_touchscreen input[type='checkbox']").is(":checked");
+        //alert("use touchscreen interface: " + touchscreen);
+        return touchscreen;
+    }
+
   function toTimestamp(strDate) {
       return Date.parse(strDate);
   }
@@ -217,7 +224,8 @@ if (jQuery) (function($){
                 },
             };
 
-            $("#jm_jobmanager tbody tr td").contextMenu({ menu: "job_context"},
+            $("#jm_jobmanager tbody tr td").contextMenu({ menu: "job_context", 
+							  leftButtonChecker: touchscreenChecker},
                 function(action, el, pos) {
                     
                     var single_selection = !$(el).parent().hasClass("ui-selected");

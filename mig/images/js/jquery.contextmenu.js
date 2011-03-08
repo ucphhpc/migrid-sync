@@ -14,6 +14,10 @@
 //
 // For details, visit http://creativecommons.org/licenses/by/3.0/us/
 //
+//
+// Modified for MiG to allow left click support as suggested on:
+// http://beckelman.net/post/2008/11/04/Right-or-Left-Click-Context-Menu-Using-jQuery-Demo.aspx
+//
 if(jQuery)( function() {
 	$.extend($.fn, {
 		
@@ -25,6 +29,8 @@ if(jQuery)( function() {
 			// 0 needs to be -1 for expected results (no fade)
 			if( o.inSpeed == 0 ) o.inSpeed = -1;
 			if( o.outSpeed == 0 ) o.outSpeed = -1;
+			// Allow left click support
+		        if (o.leftButtonChecker == undefined) o.leftButtonChecker = function() { return false; };
 			// Loop each context menu
 			$(this).each( function() {
 				var el = $(this);
@@ -37,7 +43,8 @@ if(jQuery)( function() {
 					$(this).mouseup( function(e) {
 						var srcElement = $(this);
 						$(this).unbind('mouseup');
-						if( evt.button == 2 ) {
+						// Accept left click if explicitly requested
+					        if( evt.button == 2 || o.leftButtonChecker()) {
 							// Hide context menus that may be showing
 							$(".contextMenu").hide();
 							// Get this context menu

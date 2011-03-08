@@ -78,8 +78,9 @@ def html_tmpl():
       </table>            
     
     </div>        
-    <div class="fm_statusbar">&nbsp;</div>    
+    <div class="fm_statusbar">&nbsp;</div>
   </div>
+  <div id="fm_touchscreen"><input type="checkbox">Enable touch screen interface (all clicks trigger menu)</div>
   
   <ul id="folder_context" class="contextMenu">
     <li class="mkdir separator">
