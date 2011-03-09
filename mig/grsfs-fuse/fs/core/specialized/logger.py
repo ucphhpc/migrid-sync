@@ -24,14 +24,14 @@ class Logger:
         # Conversion to pythonic logging levels
         verbosity_conversion = [logging.ERROR,logging.WARNING,logging.INFO,logging.DEBUG]        
         level = verbosity_conversion[ verbosity ]
+        #longformatter = logging.Formatter('%(asctime)s %(name)-12s: %(levelname)-8s %(message)s', '%Y-%m-%d %H:%M:%S')
+        formatter = logging.Formatter('%(asctime)s %(name)-10s: %(levelname)-7s %(message)s', '%H:%M:%S')
         
         # Decide where to put and what to call the logfile 
         if logdir is not None and os.path.exists(logdir) and os.path.isdir(logdir):
             filepath = logdir + "/" + logname
         
             filelog = logging.FileHandler(filepath)
-            #longformatter = logging.Formatter('%(asctime)s %(name)-12s: %(levelname)-8s %(message)s', '%Y-%m-%d %H:%M:%S')
-            formatter = logging.Formatter('%(asctime)s %(name)-10s: %(levelname)-7s %(message)s', '%H:%M:%S')
             filelog.setFormatter(formatter)
             filelog.setLevel(level)
             logging.getLogger(logname).addHandler(filelog)
