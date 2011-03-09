@@ -24,7 +24,7 @@ class Configuration:
         self.backingstorestate = None # directory where to store all scratch data
         self.initial_connect_list = []
         self.contact = None # the string version of the initial connect list
-        self.serveraddress = socket.gethostname() # autodetect the hostname
+        self.serveraddress = socket.getfqdn() # autodetect the FQDN
         self.serverport = -1
         self.mincopies = 2
         self.maxcopies = 3
