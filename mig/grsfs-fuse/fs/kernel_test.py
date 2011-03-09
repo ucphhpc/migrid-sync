@@ -31,6 +31,8 @@ def main():
     
     k = kernel.Kernel(opt)
     k.fsinit()
+    test_filename = 'hello'
+    test_path = os.path.join(os.sep, test_filename)
     print "Instance started"
     try:        
         
@@ -38,14 +40,17 @@ def main():
 
         print "!! Readdir on '/': %s" % k.readdir("/", 0, None)
 
-        f = GRSFile('/hello', os.O_RDONLY)
-    
-        assert f.file is not None and f.file >= 1
-        print "!! Read: ", f.read(-1, 0)
-        print "!! Success on last test"
         
-        attrs = f.fgetattr()
-        print "!! Fgetattrs %s" % attrs
+        # Root dir may be empty
+        if test_filename in k.readdir("/", 0, None):
+            f = GRSFile(test_path, os.O_RDONLY)
+    
+            assert f.file is not None and f.file >= 1
+            print "!! Read %s:\n%s" % (test_path, f.read(-1, 0))
+            print "!! Success on last test"
+        
+            attrs = f.fgetattr()
+            print "!! Fgetattrs %s" % attrs
 
 
         import random
@@ -83,9 +88,17 @@ def main():
         assert r_f.file is not None and r_f.file >= 1
         print "!! Read: ", r_f.read(-1, 0)
         r_f.release(r_f.open_args[1])
-        
-        k.utime("/hello", (time.time(), time.time()), None)
-    
+
+        # Root dir may be empty
+        if test_filename in k.readdir("/", 0, None):
+            k.utime(test_path, (time.time(), time.time()), None)
+        else:
+            print "!! Creating test file %s for future runs" % test_path
+            w_f = GRSFile(test_path, os.O_CREAT|os.O_WRONLY)
+            assert w_f.file is not None and w_f.file >= 1
+            w_f.write("Hello grid file system!\n", 0)
+            w_f.flush()
+            w_f.release(w_f.open_args[1])
     finally:
         k.fshalt()
     
