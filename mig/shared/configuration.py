@@ -600,6 +600,8 @@ class Configuration:
             self.nordugrid_cert = config.get('GLOBAL', 'nordugrid_cert')
         if config.has_option('GLOBAL', 'nordugrid_key'):
             self.nordugrid_key = config.get('GLOBAL', 'nordugrid_key')
+        if config.has_option('GLOBAL', 'nordugrid_proxy'):
+            self.nordugrid_proxy = config.get('GLOBAL', 'nordugrid_proxy')
 
 
         # if usage record dir is configured, generate them:
