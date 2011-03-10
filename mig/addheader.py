@@ -75,9 +75,9 @@ def add_header(path, var_dict):
     act = action_text % var_dict
     enc = encoding_text % var_dict
     lic = license_text % var_dict
-    if module_lines[0].startswith(act):
+    if module_lines and module_lines[0].startswith(act):
         module_lines = module_lines[1:]
-    if module_lines[0].startswith(enc):
+    if module_lines and module_lines[0].startswith(enc):
         module_lines = module_lines[1:]
 
     module_header = [act, enc, lic]
