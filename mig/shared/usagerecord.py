@@ -33,7 +33,7 @@
 # SGAS is licensed under the Apache License, Version 2.0
 # (the "License"); http://www.apache.org/licenses/LICENSE-2.0
 #
-# Extended 06/2010 by Jesper Rude Selknæs, to include VGRID information
+# Extended 10/2010 by Jesper Rude Selknæs, to include VGRID information
 # in the xml records.
 
 # infrastructure imports
@@ -217,6 +217,9 @@ ET = getDOMImplementation()
 namespace_ogf = 'http://schema.ogf.org/urf/2003/09/urf'
 namespace_prefix= 'ur:'
 
+SGAS_VO_NAMESPACE   = "http://www.sgas.se/namespaces/2009/05/ur/vo"
+SGAS_VO_PREFIX = "vo:"
+
 class UsageRecord:
 
     """
@@ -237,6 +240,11 @@ class UsageRecord:
         self.__doc.documentElement.setAttributeNS(XMLNS_NAMESPACE, 
                           'xmlns:' + namespace_prefix[:-1],
                           namespace_ogf)
+
+        self.__doc.documentElement.setAttributeNS(XMLNS_NAMESPACE, 
+                          'xmlns:' + SGAS_VO_PREFIX[:-1],
+                          SGAS_VO_NAMESPACE)
+        
 
         # XML data which we intend to use:
 
@@ -270,13 +278,13 @@ class UsageRecord:
         Generates the XML tree for usage record.
         """
 
-        def set_element(parent, name, text):
+        def set_element(parent, name, text, namespace=namespace_ogf, prefix=namespace_prefix):
             """ utility function, adds a child node with text content"""
 
             # DOM implementation:
 
-            element = self.__doc.createElementNS(namespace_ogf,
-                                                 namespace_prefix + name)
+            element = self.__doc.createElementNS(namespace,
+                                                 prefix + name)
             element.appendChild(self.__doc.createTextNode(str(text)))
             parent.appendChild(element)
             return element  # in case we want to add attributes...
@@ -334,7 +342,23 @@ class UsageRecord:
             if self.local_user_id:
                 set_element(user_identity, 'LocalUserId',
                             self.local_user_id)
+
+                #If the VGRID property is set, the VO
+                #element in the tree is set according to the SGAS
+                #definition.
+                if self.vgrid:
+                    vo = self.__doc.createElementNS(SGAS_VO_NAMESPACE, \
+                                            SGAS_VO_PREFIX + 'VO')
+
+                    vo.setAttributeNS(SGAS_VO_NAMESPACE,\
+                                      SGAS_VO_PREFIX + 'type', "vgrid")
+            
+                    set_element(vo, 'Name', self.vgrid, \
+                                SGAS_VO_NAMESPACE,SGAS_VO_PREFIX )
+
+            user_identity.appendChild(vo)
             record.appendChild(user_identity)
+            
 
         if self.charge:
             temp = set_element(record, 'Charge', text=self.charge)
@@ -382,8 +406,7 @@ class UsageRecord:
                                 namespace_prefix + 'usageType', 
                                 'system')
 
-        if self.vgrid:
-            set_element(record, 'VO_NAME', text=self.vgrid) 
+        
         
 
         return self.__doc.toxml()
@@ -469,7 +492,7 @@ class UsageRecord:
         self.project_name = job.get('PROJECT',None)
 
         self.node_count = job.get('NODECOUNT', None)
-        self.vgrid = job.get('VO_NAME', [None])[0]
+        self.vgrid = job.get('VGRID', [None])[0]
 
         # global JOB_ID should always be there if we get here...
         self.global_job_id = job.get('JOB_ID', None)
@@ -546,6 +569,7 @@ class UsageRecord:
         # CPUCOUNT - ? (requested)
         # MEMORY - ? (requested)
 
+        
         return
 
 
@@ -579,6 +603,7 @@ if __name__ == '__main__':
         fname = sys.argv[1]
 
         conf = Configuration('MiGserver.conf')
+
         usage_record = UsageRecord(conf, conf.logger)
 
         #make sure we can write out something...
@@ -592,5 +617,6 @@ if __name__ == '__main__':
             target = sys.argv[2]
         else:
             target = '.'.join([fname,'xml'])
+
             
         usage_record.write_xml(target)
