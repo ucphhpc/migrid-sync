@@ -193,13 +193,19 @@ and SCMs should not be enabled. On Debian the moinmoin-common package
 provides all the necessary wiki requirements. It is still necessary to
 tweak the system wide wikiconfig template in
 /usr/share/moin/config/wikiconfig.py to get the moin underlay links
-using /moin_staticXYZ instead of /wiki and front page setup right.
+using /moin_staticXYZ instead of /wiki and front page setup right. With
+recent version of moin you may also need to change the instance_dir
+variable to point to the parent of the wikiconfig_dir instead of the
+same dir.
 Similarly the mercurial package provides all required components for 
 VGrid SCMs on Debian.
 In case you want to run MiG with VGrid wikis on another distribution you can
 download a MoinMoin wiki tarball from our Downloads page:
 http://code.google.com/p/migrid/downloads/list
 It includes step-by-step installation instructions in the README.
+Paramiko is required for the optional grid_sftp daemon to work and the
+python-paramiko package provides all required components for it on
+Debian.
 
 The four CLAUSE arguments can be used to comment out the explicit
 setting of user, group, serveralias and ports in the apache conf by
