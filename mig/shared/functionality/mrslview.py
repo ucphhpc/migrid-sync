@@ -128,6 +128,8 @@ def main(client_id, user_arguments_dict):
                 for (key, val) in mrsl_dict.items():
                     if not key in mrsl_keywords_dict.keys():
                         continue
+                    if not val:
+                        continue
                     output_lines.append('::%s::\n' % key)
                     if 'multiplestrings' == mrsl_keywords_dict[key]['Type']:
                         for line in val:
@@ -137,6 +139,7 @@ def main(client_id, user_arguments_dict):
                             output_lines.append('%s=%s\n' % (left, right))
                     else:
                         output_lines.append('%s\n' % val)
+                    output_lines.append('\n')
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text', 'text'
                                       : "%s: '%s': %s" % (op_name,
