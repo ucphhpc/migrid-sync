@@ -117,6 +117,6 @@ for (root, dirs, files) in os.walk(target):
                 var_dict['module_name'] = name.replace('.py', '')
                 var_dict['authors'] = \
                     'The MiG Project lead by Brian Vinter'
-                var_dict['copyright_year'] = '2003-2009'
+                var_dict['copyright_year'] = '2003-2011'
                 add_header(path, var_dict)
 
