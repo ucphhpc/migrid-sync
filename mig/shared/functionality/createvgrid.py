@@ -61,7 +61,8 @@ def create_wiki(
             'config', 'wikiconfig.py')
 
     # Depending on the MoinMoin installation some of the
-    # configuration strings may vary slightly
+    # configuration strings may vary slightly.
+    # We try to catch all with multiple targets
 
     cgi_template_etc = configuration.moin_etc
     cgi_template_etc_alternative = '/path/to/wikiconfig'

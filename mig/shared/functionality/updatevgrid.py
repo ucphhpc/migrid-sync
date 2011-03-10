@@ -153,3 +153,63 @@ def main(client_id, user_arguments_dict):
     return (output_objects, returnvalues.OK)
 
 
+def dummy_owner_check(vgrid_name, client_id, configuration):
+    """Fake owner check"""
+    return True
+
+
+if __name__ == "__main__":
+    # Force update of all vgrids if run from command line
+    # Useful in relation to e.g. dist-upgrades breaking Moin and Mercurial
+    #
+
+    import sys
+
+    from shared.conf import get_configuration_object
+    from shared.defaults import default_vgrid
+    from shared.output import txt_format
+    from shared.vgrid import vgrid_list_vgrids
+    
+    # use dummy owner check
+    vgrid_is_owner = dummy_owner_check
+    try:
+        configuration = get_configuration_object()
+    except IOError, ioe:
+        print "Error loading conf: %s" % ioe
+        print "maybe you need to set MIG_CONF environment?"
+        sys.exit(1)
+
+    script = __file__
+    query = ""
+    if sys.argv[1:]:
+        client_id = sys.argv[1]
+    else:
+        print "you must supply a valid user ID to fake run as"
+        sys.exit(1)
+    extra_environment = {
+        'REQUEST_METHOD': 'GET',
+        'SSL_CLIENT_S_DN': client_id,
+        'SERVER_PROTOCOL': 'HTTP/1.1',
+        'PATH': '/bin:/usr/bin:/usr/local/bin',
+        }
+    
+    extra_environment['SCRIPT_FILENAME'] = script
+    extra_environment['QUERY_STRING'] = query
+    extra_environment['REQUEST_URI'] = '%s%s' % (script, query)
+    extra_environment['SCRIPT_URL'] = script
+    extra_environment['SCRIPT_NAME'] = script
+    extra_environment['SCRIPT_URI'] = 'https://localhost/cgi-bin/%s'\
+                                      % script
+    os.environ.update(extra_environment)
+
+    (list_status, all_vgrids) = vgrid_list_vgrids(configuration)
+    if not list_status:
+        print "Error: could not load vgrid list"
+        sys.exit(1)
+    for vgrid_name in all_vgrids:
+        if vgrid_name == default_vgrid:
+            continue
+        print "update %s" % vgrid_name
+        ret_msg = ''
+        (output_objects, ret_val) = main(client_id, {'vgrid_name': [vgrid_name]})
+        print txt_format(configuration, ret_val, ret_msg, output_objects)
