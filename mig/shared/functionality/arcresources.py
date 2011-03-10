@@ -136,6 +136,9 @@ def queue_resource(queue):
                 # this would actually need a precise mapping between
                 # ARC and MiG, as done for the translation
                 'ARCHITECTURE': queue.cluster.architecture,
+                # indicating whether the queue active/inactive 
+                
+                'STATUS' : queue.status
                 }
     # instead of a view link, we indicate "ARC"
     resource['viewreslink'] = {'object_type': 'link',
