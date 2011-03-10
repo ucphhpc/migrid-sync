@@ -461,8 +461,8 @@ while True:
                 dict_userjob['EXE'] = arc_id
 
                 # this one is used by the timeout thread as well
-                # We put in a wild guess, 1 minute. Perhaps not enough
-                dict_userjob['EXECUTION_DELAY'] = 60 
+                # We put in a wild guess, 10 minutes. Perhaps not enough
+                dict_userjob['EXECUTION_DELAY'] = 600
 
                 # set to executing even though it is kind-of wrong...
                 dict_userjob['STATUS'] = 'EXECUTING'

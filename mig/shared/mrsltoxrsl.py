@@ -118,7 +118,7 @@ def translate(mrsl_dict, session_id = None):
             for targetstring in mrsl_dict['RESOURCE']:
                 l = targetstring.rsplit('/',1)
                 if len(l) == 2:
-                    tmp_str += '(&(cluster=%s)(queue=%s))' % (l[0],l[1])
+                    tmp_str += '(&(cluster=%s)(queue=%s))' % (l[1],l[0])
 
                     logger.debug("added to targets: %s" % tmp_str)
                 else:
@@ -355,8 +355,9 @@ if __name__ == '__main__':
                 mrsl_dict = fileio.unpickle(parsed,logger)
                 (xrsl,script,name) = translate(mrsl_dict,'test-name')
                 print '\n'.join(['Job name',name,'script',script,'XRSL'])
-                print xrsl
+                fileio.write_file(script, "test-id.sh", logger)
                 print (format_xrsl(xrsl))
+                fileio.write_file("%s" % xrsl, translated, logger)
                 print 'done'
         except Exception, err:
             print 'Error.'

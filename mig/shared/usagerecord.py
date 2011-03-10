@@ -492,7 +492,13 @@ class UsageRecord:
         self.project_name = job.get('PROJECT',None)
 
         self.node_count = job.get('NODECOUNT', None)
-        self.vgrid = job.get('VGRID', [None])[0]
+
+        # Nota bene: use the VGrid that actually executed the job, as 
+        # opposed to job['VGRID'] which contains a list of potential ones.
+        # see http://code.google.com/p/migrid/issues/detail?id=32
+
+        if job.has_key('RESOURCE_VGRID'):
+            self.vgrid = job['RESOURCE_VGRID']
 
         # global JOB_ID should always be there if we get here...
         self.global_job_id = job.get('JOB_ID', None)

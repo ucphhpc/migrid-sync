@@ -229,5 +229,13 @@ def main(client_id, user_arguments_dict):
           <input type="submit" value="Repair components" />
       </form>
 ''' % {'vgrid': vgrid_name}})
-            
+
+    output_objects.append({'object_type': 'sectionheader',
+                           'text': "Delete %s " % vgrid_name})
+    output_objects.append({'object_type': 'html_form',
+                           'text': '''
+      To delete <b>%(vgrid)s</b> remove all members and owners ending with yourself.
+''' % {'vgrid': vgrid_name}})
+
+
     return (output_objects, returnvalues.OK)
