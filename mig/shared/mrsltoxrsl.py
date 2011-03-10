@@ -97,8 +97,9 @@ def translate(mrsl_dict, session_id = None):
         # specific ARC queues.
 
         # queues can be given in the 'RESOURCE' field, in the format
-        # <queue_name>/<host_fqdn> (separated by "/"). Example:
-        # ['daughter/benedict.grid.aau.dk','other/fyrgrid.grid.aau.dk']
+        # <queue.name>:<queue.cluster.hostname> (separated by ":", 
+        # see arcresources.py and safeinput.py). Example:
+        # ['daughter:benedict.grid.aau.dk','other:fyrgrid.grid.aau.dk']
         # Each entry leads to a cluster/queue combination, and all
         # entries will be disjoint for the resulting xrsl.
 
@@ -116,7 +117,7 @@ def translate(mrsl_dict, session_id = None):
 
             # this is a list. iterate through all entries (if any)
             for targetstring in mrsl_dict['RESOURCE']:
-                l = targetstring.rsplit('/',1)
+                l = targetstring.rsplit(':',1)
                 if len(l) == 2:
                     tmp_str += '(&(cluster=%s)(queue=%s))' % (l[1],l[0])
 

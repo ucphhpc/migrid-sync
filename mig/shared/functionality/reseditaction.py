@@ -147,10 +147,13 @@ the %s server can SSH to your resource without a passphrase. The %s
 server's public key should be in ~/.ssh/authorized_keys for the mig user
 on the resource frontend. %s
 <br />
-<a href='resadmin.py'>View existing resources</a> where your new resource will also eventually
-show up.
-        """ % (configuration.short_title, configuration.short_title, 
-                configuration.short_title, public_key_info)
+Also, please note that %s resources require the 
+<a href="http://www.curl.haxx.se">Curl</a> library. 
+<br />
+<a href='resadmin.py'>View existing resources</a> where your new resource 
+will also eventually show up.
+""" % (configuration.short_title, configuration.short_title, 
+       configuration.short_title, configuration.short_title, public_key_info)
 
     output_objects.append({'object_type': 'html_form', 'text': output})
 

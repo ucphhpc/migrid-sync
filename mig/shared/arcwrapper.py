@@ -33,6 +33,7 @@ import string
 import commands
 import threading
 import tempfile
+import subprocess
 
 # MiG utilities:
 from shared.conf import get_configuration_object
@@ -211,6 +212,38 @@ voms-proxy-init, and can be found in /tmp/x509up_u&lt;your UID&gt;.<br>
                               """})
         return output_objects
 
+
+def create_grid_proxy(cert_path, key_path):
+    """
+    Call the system executable grid-proxy-init to create a minimal proxy cert. 
+    In this way no additional voms information is added.  
+    
+    Returns the absolute path of the generated proxy. By standard placed in the /tmp/ folder.
+    """
+
+    shell_cmd = "grid-proxy-init -cert %s -key %s" % (cert_path, key_path)
+    proc = subprocess.Popen(shell_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output = proc.communicate()
+    
+    logger.debug("Generated a default proxy. \n".join(output))
+    path = grid_proxy_path()
+    return path
+
+
+def grid_proxy_path():
+    """
+    Call the system executable grid-proxy-info to check if there is a proxy and get its location.
+    
+    Returns the absolute path to the proxy or an empty string if no valid proxy is found.  
+    """
+    
+    shell_cmd = "grid-proxy-info -path"
+    proc = subprocess.Popen(shell_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out,_) = proc.communicate()
+    
+    return out.strip()
+
+
 class Ui:
 
     """ARC middleware user interface class."""
@@ -226,7 +259,7 @@ class Ui:
     # hard-wired: expected proxy name
     proxy_name = '.proxy.pem'
 
-    def __init__(self, userdir):
+    def __init__(self, userdir, require_user_proxy=False):
         """Class constructor"""
 
         # would be nice to hold the Ui instance and have the resources 
@@ -247,19 +280,40 @@ class Ui:
         self._proxy = None    # determines user permissions
 
         self._arclibLock = threading.Lock()
-
+        proxy_path = os.path.join(userdir, self.proxy_name)
+        
         try:
+                
             if not os.path.isdir(userdir):
                 raise ARCWrapperError('Given user directory ' + userdir
-                                      + ' does not exist.')
+                                          + ' does not exist.')
             self._userdir = userdir
-
+        
+        
+            # if a proxy is not explicitly required and the user does not have a valid one 
+            # then use the shared default proxy cert        
+            if not require_user_proxy and \
+                ( not os.path.exists(proxy_path) or Proxy(proxy_path).IsExpired() ):
+                
+                logger.debug("Using the shared default proxy certificate.")
+                                               
+                # Check if there is already a default proxy certificate and get its location
+                proxy_path = grid_proxy_path()
+                
+                # it there is no default proxy or it is expired
+                if not proxy_path or Proxy(proxy_path).IsExpired():
+                    cert_path = config.nordugrid_cert
+                    key_path = config.nordugrid_key
+                    # generate a new one
+                    proxy_path = create_grid_proxy(cert_path, key_path)
+            else:
+                logger.debug("Using the uploaded personal proxy certificate.")
+                
             # proxy constructor might raise an exception as well
-            self._proxy = \
-                Proxy(os.path.join(self._userdir, Ui.proxy_name))
-            if self._proxy.IsExpired():
+            self._proxy = Proxy(proxy_path)
+            if self._proxy.IsExpired(): # should not happen
                 raise NoProxyError('Expired.')
-
+    
         except NoProxyError, err:
             logger.error('Proxy error: %s' % err.what())
             raise err
@@ -270,6 +324,7 @@ class Ui:
             logger.error('Unexpected error during initialisation.\n %s' % other)
             raise ARCWrapperError(other.__str__())
 
+            
     def __initQueues(self):
         """ Initialises possible queues for a job submission."""
 
@@ -574,7 +629,7 @@ class Ui:
         self.__lockArclib()
         job_ = arclib.GetJobIDs([jobId])
         self.__unlockArclib()
-
+        
         # ugly! GetJobIDs return some crap if not found...
         jobName = [ j for j in job_ ][0]
         if jobName == '': # job not found

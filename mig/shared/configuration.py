@@ -593,6 +593,14 @@ class Configuration:
                 else:
                     logger.error('ca_path is neither a file or directory!'
                                  )
+            
+        # cert and key for generating a default proxy for nordugrid/ARC resources 
+
+        if config.has_option('GLOBAL', 'nordugrid_cert'):
+            self.nordugrid_cert = config.get('GLOBAL', 'nordugrid_cert')
+        if config.has_option('GLOBAL', 'nordugrid_key'):
+            self.nordugrid_key = config.get('GLOBAL', 'nordugrid_key')
+
 
         # if usage record dir is configured, generate them:
 

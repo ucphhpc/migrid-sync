@@ -732,7 +732,7 @@ sshfs %(sftp_server)s: mig-home -o uid=$(id -u) -o gid=$(id -g)
         # provide information about the available proxy, offer upload
         try:
             home_dir = os.path.normpath(base_dir)
-            session_Ui = arc.Ui(home_dir)
+            session_Ui = arc.Ui(home_dir, require_user_proxy=True)
             proxy = session_Ui.getProxy()
             if proxy.IsExpired():
                 # can rarely happen, constructor will throw exception
