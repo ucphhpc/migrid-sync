@@ -48,7 +48,7 @@ def signature():
 
 # shared functions to name things:
 def q_anchor(q):
-    return ('__'.join([q.name,q.cluster.hostname]))
+    return ('__'.join([q.name] + q.cluster.hostname.split(".")))
 def q_displayname(q):
     return ('%s on %s' % (q.name, q.cluster.alias))
 
@@ -60,7 +60,8 @@ def display_arc_queue(queue):
     """Format and print detailed information about an ARC queue.
     """
 
-    html = '<p><a name="%s"></a>\n' % (q_anchor(queue))
+    html = '<div id=%(n)s class="queue"><a name="%(n)s"></a>\n' % \
+           {'n':q_anchor(queue)}
     html += \
     '<table class=resources><tr class=title><td colspan=2>' + \
     '<h3>%s</h3></td>' % q_displayname(queue)
@@ -110,7 +111,7 @@ def display_arc_queue(queue):
     else:
         html += row('Node Memory: %s' % queue.node_memory)
 
-    html += '</table></p>'
+    html += '</table></div>'
     return html
 
 def queue_resource(queue):
@@ -143,6 +144,8 @@ def queue_resource(queue):
     # instead of a view link, we indicate "ARC"
     resource['viewreslink'] = {'object_type': 'link',
                                'destination': '#%s' % q_anchor(queue),
+                               'class': 'infolink arclink '
+                                    + queue.cluster.alias, # HACK for sorting
                                'title': 'Show queue details', 
                                'text': '(details)'}
     
