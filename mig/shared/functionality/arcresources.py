@@ -118,11 +118,11 @@ def queue_resource(queue):
 
     Information mapping is straightforward, and most of it is
     independent of other parts. Exception: the name has to follow the
-    format <queue.name>/<queue.cluster.hostname> to match submit page
+    format <queue.name>:<queue.cluster.hostname> to match submit page
     and mrsltoxrsl translation"""
 
     resource = {'object_type' :'resource',
-                'name'        : queue.name + '/' + queue.cluster.hostname,
+                'name'        : queue.name + ':' + queue.cluster.hostname,
                 'PUBLICNAME'  : 'ARC: ' + \
                                 queue.name + ' on ' + queue.cluster.alias,
 
