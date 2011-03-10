@@ -46,8 +46,18 @@ def signature():
     defaults = {'benchmark': 'false'}
     return ['html_form', defaults]
 
+# shared functions to name things:
+def q_anchor(q):
+    return ('__'.join([q.name,q.cluster.hostname]))
+def q_displayname(q):
+    return ('%s on %s' % (q.name, q.cluster.alias))
+
+# HARDCODED STRING to name the zero-install ARC runtime environment
+# We already use a hardcoded string in jobscriptgenerator. Merge/configure?
+zero_install_arc = 'ENV/ZERO-INSTALL' 
+
 def display_arc_queue(queue):
-    """Format and print information about a queue to submit to.
+    """Format and print detailed information about an ARC queue.
     """
 
     html = '<p><a name="%s"></a>\n' % (q_anchor(queue))
@@ -55,6 +65,19 @@ def display_arc_queue(queue):
     '<table class=resources><tr class=title><td colspan=2>' + \
     '<h3>%s</h3></td>' % q_displayname(queue)
     html += '<td>Status: %s</td></tr>\n' % queue.status
+
+    # figure out the real CPU characteristics...
+
+    # The information "cores per node" is provided per-cluster in ARC.
+    # through the field cpu_distribution (which is a mapping of
+    # number_of_cores -> number_of_nodes. There we only use the first
+    # of possibly several values
+
+    d = dict(queue.cluster.cpu_distribution)
+    if d.keys():
+        cores = d.keys()[0]
+    else:
+        cores = 1
 
     def row(col1, col2=None, col3=None):
         if col2 and col3:
@@ -66,30 +89,82 @@ def display_arc_queue(queue):
 
     html += \
     row('Architecture: %s' % queue.cluster.architecture,
-        'Running Jobs: %s' % queue.grid_running,
-        'Max. runnable jobs: %s' % queue.max_running)
+        'Max. runnable jobs: %s' % queue.max_running,
+        'Running Jobs: %s' % queue.grid_running)
+
+    if (queue.total_cpus == -1):
+        cpus = queue.cluster.total_cpus
+    else:
+        cpus = queue.total_cpus
     html += \
-    row('Total CPUs: %s' %  queue.total_cpus, 
-        'Queued Jobs:  %s' % queue.grid_queued,
-        'Max. time per job: %s sec.' % queue.max_wall_time)
+    row('Total Cores: %s (%s cores/node)' % (cpus, cores),
+        'Max. time per job: %s sec.' % queue.max_wall_time, 
+        'Queued Jobs:  %s' % queue.grid_queued)
     html += \
     row('%s' % queue.node_cpu,
-        '(%s)' % queue.mds_validfrom,' ')
-    html += \
-    row('Node Memory: %s' % queue.node_memory,' ', ' ')
-    html += \
-    row('<b>Available runtime env.s:</b> ' +
-        ', '.join([re.__str__()
-                   for re in queue.cluster.runtime_environments]))
+        ' ', '(%s)' % queue.mds_validfrom)
+
+    if zero_install_arc in map(str, queue.cluster.runtime_environments):
+        html += row('Node Memory: %s' % queue.node_memory,
+                    'Provides Zero-Install runtime environment')
+    else:
+        html += row('Node Memory: %s' % queue.node_memory)
 
     html += '</table></p>'
     return html
 
-# shared functions to name things:
-def q_anchor(q):
-    return ('__'.join([q.name,q.cluster.hostname]))
-def q_displayname(q):
-    return ('%s on %s' % (q.name, q.cluster.alias))
+def queue_resource(queue):
+    """Return a 'resource' dictionary for an ARC queue.
+
+    Information mapping is straightforward, and most of it is
+    independent of other parts. Exception: the name has to follow the
+    format <queue.name>/<queue.cluster.hostname> to match submit page
+    and mrsltoxrsl translation"""
+
+    resource = {'object_type' :'resource',
+                'name'        : queue.name + '/' + queue.cluster.hostname,
+                'PUBLICNAME'  : 'ARC: ' + \
+                                queue.name + ' on ' + queue.cluster.alias,
+
+                'MEMORY'      : queue.node_memory,
+
+                # information not available for queues, and 
+                # queue.cluster.session_dir_total is astronomic!
+                # '%.3f' % (float(queue.cluster.session_dir_total)/2**30),
+                'DISK'        : '',
+                                
+                # this would actually need a precise mapping between
+                # ARC and MiG, as done for the translation
+                'ARCHITECTURE': queue.cluster.architecture,
+                }
+    # instead of a view link, we indicate "ARC"
+    resource['viewreslink'] = {'object_type': 'link',
+                               'destination': '#%s' % q_anchor(queue),
+                               'title': 'Show queue details', 
+                               'text': '(details)'}
+    
+    # 'NODECOUNT' : queue.total_cpus is sometimes -1.
+    # ... we use another provided value, queue.cluster.total_cpus,
+    # even though this one is not always correct either (not all CPUs
+    # might be assigned to the queue)
+
+    if (queue.total_cpus == -1):
+        resource['NODECOUNT'] = queue.cluster.total_cpus
+    else:
+        resource['NODECOUNT'] = queue.total_cpus
+
+    # ARC does not provide this readily, only through cpu_distribution
+    # (which is a mapping of number_of_cores -> number_of_nodes. There
+    # is no way to reserve cores on the same node, we set it to 1
+
+    resource['CPUCOUNT'] = 1
+
+    resource['RUNTIMEENVIRONMENT'] = []
+    z_i = 'ENV/ZERO-INSTALL' # hard-wired name, same as in jobscriptgenerator
+    if z_i in map(str, queue.cluster.runtime_environments):
+        resource['RUNTIMEENVIRONMENT'] = ['ZERO-INSTALL (ARC)']
+        
+    return resource
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -114,7 +189,9 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'ARC Queues'
     output_objects.append({'object_type': 'header', 'text'
-                          : 'ARC Resources available'})
+                          : 'Available ARC queues'})
+
+    # could factor out from here, to be usable from outside
     if not configuration.arc_clusters:
         output_objects.append({'object_type': 'error_text', 'text':
                                'No ARC support!'})
@@ -135,19 +212,20 @@ def main(client_id, user_arguments_dict):
                                :'Could not retrieve information: %s' % err})
         return(output_objects, returnvalues.ERROR)
         
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                              : 'Job queues discovered'})
-
+    res_list = {'object_type': 'resource_list', 'resources':[]}
     for q in queues:
-        output_objects.append({'object_type': 'html_form', 'text' 
-                               :'<p><a href="#%s">%s</a>' % \
-                               (q_anchor(q),q_displayname(q))})
+        res_list['resources'].append(queue_resource(q))
+
+    output_objects.append(res_list)
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                               : 'Queue details'})
+
+    # queue details (current usage and some machine information) 
     for q in queues:
         output_objects.append({'object_type': 'html_form', 'text' 
                                : display_arc_queue(q) })
+    # end of "factoring out"
 
     return (output_objects, returnvalues.OK)
 

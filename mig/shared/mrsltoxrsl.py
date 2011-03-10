@@ -50,6 +50,32 @@ except:
     except:
         raise Exception('arclib not found - no problem unless using ARC')
 
+def format_xrsl(xrsl):
+    """An indenter for xrsl files.
+       Rules:
+       0) remove original indentation (strip lines, remove \\n)
+       1) indent every line by 2 spaces for every open bracket '('
+       2) insert \\n before the opening bracket (unless there is one)
+       3) insert \\n after a closing bracket ')' (unless there is one)
+    """
+
+    # raw string, without old indentation and newlines
+    raw = ''.join(map(string.strip, ('%s' % xrsl).split('\n')))
+    
+    def indent(acc, n, s):
+        if not s:
+            return acc
+        if s[0] == '(':
+            start = '\n' + ' '*n
+            return(indent(acc + start + '(', n+2, s[1:]))
+        elif s[0] == ')':
+            return(indent(acc + ')', n-2, s[1:]))
+
+        return(indent(acc + s[0], n, s[1:]))
+
+    return(indent('', 0, raw))
+
+
 # translate :: (checked Dictionary, session_ID) 
 #              -> (Xrsl,Job Script,name for Job script)
 def translate(mrsl_dict, session_id = None):
@@ -64,7 +90,46 @@ def translate(mrsl_dict, session_id = None):
     
     try:
         # every xrsl-specified job is a conjunction at the top level
+
         xrsl = arclib.Xrsl(arclib.operator_and)
+
+        # First action: include inner OR of ANDs for targetting
+        # specific ARC queues.
+
+        # queues can be given in the 'RESOURCE' field, in the format
+        # <queue_name>/<host_fqdn> (separated by "/"). Example:
+        # ['daughter/benedict.grid.aau.dk','other/fyrgrid.grid.aau.dk']
+        # Each entry leads to a cluster/queue combination, and all
+        # entries will be disjoint for the resulting xrsl.
+
+        # Why we do it first: the arclib Xrsl API does not allow to
+        # construct relations with inner AND and OR, only relations
+        # like =,<,<= to specify fields are supported (globus was more
+        # clever here... XrslRelation being the same as Xrsl).
+        
+        if 'RESOURCE' in mrsl_dict:
+
+            # we build a string containing Xrsl, which will replace
+            # the "xrsl" above (if it contains anything)
+
+            tmp_str = ''
+
+            # this is a list. iterate through all entries (if any)
+            for targetstring in mrsl_dict['RESOURCE']:
+                l = targetstring.rsplit('/',1)
+                if len(l) == 2:
+                    tmp_str += '(&(cluster=%s)(queue=%s))' % (l[0],l[1])
+
+                    logger.debug("added to targets: %s" % tmp_str)
+                else:
+                    logger.debug("ignoring malformed target %s" % l)
+
+            # did we add something at all? (might be all malformed)
+            if tmp_str != '':
+
+                xrsl = arclib.Xrsl('&(|%s)' % tmp_str)
+
+        logger.debug('starting with this Xrsl:\n%s' % xrsl)
 
         if 'JOB_ID' in mrsl_dict:
             j_name = mrsl_dict['JOB_ID']
@@ -284,14 +349,14 @@ if __name__ == '__main__':
             (presult,errors) = p.parse(fname, 'test-id',
                                        '+No+Client+Id',None,parsed)
             if not presult:
-                print('Errors: \n',errors)
+                print 'Errors:\n%s' % errors
             else:
                 print 'Parsing OK, now translating'
                 mrsl_dict = fileio.unpickle(parsed,logger)
                 (xrsl,script,name) = translate(mrsl_dict,'test-name')
                 print '\n'.join(['Job name',name,'script',script,'XRSL'])
                 print xrsl
-                print (str(xrsl).replace('(', '\t').replace(')', '\n'))
+                print (format_xrsl(xrsl))
                 print 'done'
         except Exception, err:
             print 'Error.'

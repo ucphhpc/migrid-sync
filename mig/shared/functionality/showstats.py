@@ -425,8 +425,8 @@ The query you have requested did not return any data.
 
     cols = ",colors:%s" % str(colours)
     viz_options = { 'machine': [bar_default + cols]
-                       ,'user': [bar_default + cols, pie_default + cols]
-                       ,'summary': [bar_default + cols]
+                    ,'user': [bar_default + cols, pie_default + cols]
+                    ,'summary': [bar_default + cols]
                     ,'vgrid': [bar_default + cols]
                        }
     include_viz = """

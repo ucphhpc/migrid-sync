@@ -383,7 +383,7 @@ class UsageRecord:
                                 'system')
 
         if self.vgrid:
-            set_element(record, 'VGRID', text=self.vgrid) 
+            set_element(record, 'VO_NAME', text=self.vgrid) 
         
 
         return self.__doc.toxml()
@@ -469,7 +469,7 @@ class UsageRecord:
         self.project_name = job.get('PROJECT',None)
 
         self.node_count = job.get('NODECOUNT', None)
-        self.vgrid = job.get('VGRID', [None])[0]
+        self.vgrid = job.get('VO_NAME', [None])[0]
 
         # global JOB_ID should always be there if we get here...
         self.global_job_id = job.get('JOB_ID', None)
