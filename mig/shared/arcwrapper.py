@@ -35,6 +35,7 @@ import threading
 import tempfile
 import subprocess
 
+
 # MiG utilities:
 from shared.conf import get_configuration_object
 config = get_configuration_object()
@@ -220,15 +221,22 @@ def create_grid_proxy(cert_path, key_path):
     
     Returns the absolute path of the generated proxy. By standard placed in the /tmp/ folder.
     """
-
-    shell_cmd = "grid-proxy-init -cert %s -key %s" % (cert_path, key_path)
-    proc = subprocess.Popen(shell_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output = proc.communicate()
+    try:
+        
+        import imp
+        csubprocess = imp.load_dynamic("csubprocess", "../java-bin/csubprocess.so")
+        
+        shell_cmd = "grid-proxy-init -cert %s -key %s" % (cert_path, key_path)
+        out = csubprocess.cPopen(shell_cmd, 0) # (COMMAND, UID) we need to be able to access server cert 
+        
+        logger.debug(out.replace("\n", "."))
+        path = grid_proxy_path()
+        return path
     
-    logger.debug("Generated a default proxy. \n".join(output))
-    path = grid_proxy_path()
-    return path
-
+    except Exception, e: 
+        logger.error("Could not generate a proxy certificate: \n"+str(e))
+        raise e
+    
 
 def grid_proxy_path():
     """
@@ -288,7 +296,6 @@ class Ui:
                 raise ARCWrapperError('Given user directory ' + userdir
                                           + ' does not exist.')
             self._userdir = userdir
-        
         
             # if a proxy is not explicitly required and the user does not have a valid one 
             # then use the shared default proxy cert        
