@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# benchmark_mig - [insert a few words of module description on this line]
+# benchmark_mig - benchmark typical MiG file access
 # Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 # 
 # This file is part of MiG.
@@ -25,24 +25,40 @@
 # -- END_HEADER ---
 #
 
+"""Benchmark emulating typical MiG file access"""
 
-import os, sys, timeit, pprint
+import os
+import sys
+import getopt
+import timeit
+import pprint
 
 # dd if=/dev/urandom of=readfile bs=1048576 count=100
 
     
+def default_configuration():
+    """Return dictionary with default configuration values"""
+    conf = {'repeat': 3, 'number': 10000, 'data_bytes': 1130}
+    return conf
+
+def usage():
+    """Usage help"""
+    print("Usage: %s" % sys.argv[0])
+    print("Run MiG emulating benchmark")
+    print("Options and default values:")
+    for (key, val) in default_configuration().items():
+        print("--%s: %s" % (key, val))
+                
 def cycle(data):
-    #sys.stdout.write('.')
-    def nodot(item): return item[0] != '.'
-    
+    """Run create, symlink, stat, read, rename and unlink cycle"""
     write_fd = open("./file", "wb")
     write_fd.write(data)
     write_fd.close()
     
     os.symlink("./file", "./symlinkedfile")
     os.stat("./symlinkedfile")
-    for f in filter(nodot, os.listdir('.')):
-        os.lstat(f)
+    for name in [i for i in os.listdir('.') if i[0] != '.']:
+        os.lstat(name)
     read_fd = open("./symlinkedfile", "rb")
     read_fd.close()
     
@@ -52,17 +68,65 @@ def cycle(data):
     os.rename("./symlinkedfile", "./symlinkedfile2")
     os.unlink("./symlinkedfile2")
     os.unlink("./file")
-    #done
     
-def main():
-    """docstring for main"""
-    setup = "import os; from __main__ import cycle; data_fd = open('/dev/urandom', 'rb'); data = data_fd.read(1130); data_fd.close()"
-    
+def main(conf):
+    """Run timed benchmark"""
     read_results = []
-    read_results.append(min(timeit.repeat("cycle(data)", setup = setup, repeat=3, number=10000)))
+    read_results.append(min(timeit.repeat("cycle(data)", setup = conf['setup'],
+                        repeat=conf['repeat'], number=conf['number'])))
 
-    pp = pprint.PrettyPrinter()
-    pp.pprint(read_results)
-    
+    out = pprint.PrettyPrinter()
+    out.pprint(read_results)
+
+
 if __name__ == '__main__':
-    main()
+    conf = default_configuration()
+
+    # Parse command line
+
+    try:
+        (opts, args) = getopt.getopt(sys.argv[1:],
+                                     'd:hn:r:', [
+            'data-bytes=',
+            'help',
+            'number=',
+            'repeat=',
+            ])
+    except getopt.GetoptError, err:
+        print('Error in option parsing: ' + err.msg)
+        usage()
+        sys.exit(1)
+        
+    for (opt, val) in opts:
+        if opt in ('-d', '--data-bytes'):
+            try:
+                conf["data_bytes"] = int(val)
+            except ValueError, err:
+                print('Error in parsing %s value: %s' % (opt, err))
+                sys.exit(1)
+        elif opt in ('-h', '--help'):
+            usage()
+            sys.exit(0)
+        elif opt in ('-n', '--number'):
+            try:
+                conf["number"] = int(val)
+            except ValueError, err:
+                print('Error in parsing %s value: %s' % (opt, err))
+                sys.exit(1)
+        elif opt in ('-r', '--repeat'):
+            try:
+                conf["repeat"] = int(val)
+            except ValueError, err:
+                print('Error in parsing %s value: %s' % (opt, err))
+                sys.exit(1)
+        else:
+            print("unknown option: %s" % opt)
+            usage()
+            sys.exit(1)
+    conf['setup'] = """
+import os
+from __main__ import cycle
+data_fd = open('/dev/urandom', 'rb')
+data = data_fd.read(%(data_bytes)d)
+data_fd.close()""" % conf
+    main(conf)

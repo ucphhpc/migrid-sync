@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# benchmark_alternating - [insert a few words of module description on this line]
+# benchmark_alternating - benchmark alternating read/write
 # Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 # 
 # This file is part of MiG.
@@ -25,62 +25,100 @@
 # -- END_HEADER ---
 #
 
-import sys, os, threading, time
+"""Benchmark alternating file reads and writes"""
 
-COUNTER = 100000
-BYTES = 512
+import os
+import sys
+import threading
+import time
+import getopt
+
 clock_fun = time.time
+    
+def default_configuration():
+    """Return dictionary with default configuration values"""
+    conf = {'number': 100000, 'data_bytes': 512}
+    return conf
 
-class write_t(threading.Thread):
-    def __init__(self, start_time, writefile, data):
+def usage():
+    """Usage help"""
+    print("Usage: %s" % sys.argv[0])
+    print("Run alternating benchmark")
+    print("Options and default values:")
+    for (key, val) in default_configuration().items():
+        print("--%s: %s" % (key, val))
+                
+
+class Writer(threading.Thread):
+    """Writer thread"""
+    def __init__(self, start_time, writefile, data, conf):
         threading.Thread.__init__(self)
         self.writefile = writefile
         self.data = data
         self.start_time = start_time
+        self.endtime = -1
+        self.conf = conf
         
     def run(self):
-        for n in xrange(COUNTER):
+        """Runner"""
+        for _ in xrange(self.conf['number']):
             self.writefile.write(self.data)
             self.writefile.flush()
             #time.sleep(0.001)
         self.endtime = (clock_fun() - self.start_time)
         print "Write finished at %0.3f" % (self.endtime * 1000)
             
-class read_t(threading.Thread):
-    def __init__(self, start_time, readfile):
+
+class Reader(threading.Thread):
+    """Reader thread"""
+    def __init__(self, start_time, readfile, conf):
         threading.Thread.__init__(self)
         self.readfile = readfile
         self.start_time = start_time
+        self.endtime = -1
+        self.conf = conf
 
     def run(self):
-        for n in xrange(COUNTER):
-            l = len(self.readfile.read(BYTES))
-            if  l < BYTES:
+        """Runner"""
+        for _ in xrange(self.conf['number']):
+            nbytes = len(self.readfile.read(self.conf['data_bytes']))
+            if nbytes < self.conf['data_bytes']:
                 self.readfile.seek(0)
             #time.sleep(0.001)
         self.endtime = (clock_fun() - self.start_time)
         print "Read finished at %0.3f" % (self.endtime * 1000)
+
+def prepare_files(conf):
+    """Set up files used in benchmark"""
+    if not os.path.exists("readfile"):
+        data = open("/dev/urandom").read(conf['data_bytes'])
+        readfile = open("readfile", "wb")
+        readfile.write(data)
+        readfile.close()
           
-def main():
-    """docstring for main"""
-    
+def main(conf):
+    """Run timed benchmark"""
+
     # WRITES ONLY
+
     threads = []
+
+    prepare_files(conf)
     readfile = open("readfile", "rb")
     writefile = open("writefile", "wb")
-    data = open("/dev/urandom").read(BYTES/8)
+    data = open("/dev/urandom").read(conf['data_bytes']/8)
 
     start_time =  clock_fun()
 
-    for n in xrange(1):
-        t = write_t(start_time, writefile, data)
-        threads.append(t)
+    for _ in xrange(1):
+        worker = Writer(start_time, writefile, data, conf)
+        threads.append(worker)
 
-    for t in threads:
-        t.start()
+    for worker in threads:
+        worker.start()
 
-    for t in threads:
-        t.join()
+    for worker in threads:
+        worker.join()
 
     end = time.time()
     print "Time for pure writes %d" % (end - start_time)    
@@ -89,20 +127,20 @@ def main():
     threads = []
     readfile = open("readfile", "rb")
     writefile = open("writefile", "wb")
-    data = open("/dev/urandom").read(BYTES/8)
+    data = open("/dev/urandom").read(conf['data_bytes']/8)
 
     start_time =  clock_fun()
-    t = write_t(start_time, writefile, data)
-    threads.append(t)
-    for n in xrange(4):
-        t = read_t(start_time, readfile)
-        threads.append(t)
+    worker = Writer(start_time, writefile, data, conf)
+    threads.append(worker)
+    for _ in xrange(4):
+        worker = Reader(start_time, readfile, conf)
+        threads.append(worker)
 
-    for t in threads:
-        t.start()
+    for worker in threads:
+        worker.start()
         
-    for t in threads:
-        t.join()
+    for worker in threads:
+        worker.join()
 
     end = time.time()
     
@@ -113,19 +151,56 @@ def main():
 
     start_time =  clock_fun()
 
-    for n in xrange(5):
-        t = read_t(start_time, readfile)
-        threads.append(t)
+    for _ in xrange(5):
+        worker = Reader(start_time, readfile, conf)
+        threads.append(worker)
 
-    for t in threads:
-        t.start()
+    for worker in threads:
+        worker.start()
 
-    for t in threads:
-        t.join()
+    for worker in threads:
+        worker.join()
 
     end = time.time()
 
     print "Time for just reads %d" % (end - start_time)
-            
+
+
 if __name__ == '__main__':
-    main()
+    conf = default_configuration()
+
+    # Parse command line
+
+    try:
+        (opts, args) = getopt.getopt(sys.argv[1:],
+                                     'd:hn:', [
+            'data-bytes=',
+            'help',
+            'number=',
+            ])
+    except getopt.GetoptError, err:
+        print('Error in option parsing: ' + err.msg)
+        usage()
+        sys.exit(1)
+        
+    for (opt, val) in opts:
+        if opt in ('-d', '--data-bytes'):
+            try:
+                conf["data_bytes"] = int(val)
+            except ValueError, err:
+                print('Error in parsing %s value: %s' % (opt, err))
+                sys.exit(1)
+        elif opt in ('-h', '--help'):
+            usage()
+            sys.exit(0)
+        elif opt in ('-n', '--number'):
+            try:
+                conf["number"] = int(val)
+            except ValueError, err:
+                print('Error in parsing %s value: %s' % (opt, err))
+                sys.exit(1)
+        else:
+            print("unknown option: %s" % opt)
+            usage()
+            sys.exit(1)
+    main(conf)

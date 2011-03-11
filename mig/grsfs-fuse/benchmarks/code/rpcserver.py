@@ -30,7 +30,6 @@
 
 import sys
 import getopt
-import xmlrpclib
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 
 def default_configuration():
@@ -47,34 +46,30 @@ def usage():
     for (key, val) in default_configuration().items():
         print("--%s: %s" % (key, val))
                 
-def x():
-        return True
+def true():
+    """Minimal dummy function"""
+    return True
 
 def main(conf):
     """Run minimal benchmark server"""
     server = SimpleXMLRPCServer((conf['address'], conf['port']))
     print("Listening on '%(address)s:%(port)d..." % conf)
-    server.register_function(x, "x")
+    server.register_function(true, "x")
     server.serve_forever()
 
 
 if __name__ == '__main__':
     conf = default_configuration()
 
-    try:
-        raise Exception("test")
-    except Exception as err:
-        print("caught error: %s" % err)
-        
     # Parse command line
 
     try:
-            (opts, args) = getopt.getopt(sys.argv[1:],
-                                         'a:hp:', [
-                    'address=',
-                    'help',
-                    'port=',
-                    ])
+        (opts, args) = getopt.getopt(sys.argv[1:],
+                                     'a:hp:', [
+            'address=',
+            'help',
+            'port=',
+            ])
     except getopt.GetoptError as err:
         print('Error in option parsing: ' + err.msg)
         usage()
@@ -85,12 +80,12 @@ if __name__ == '__main__':
             usage()
             sys.exit(0)
         elif opt in ('-a', '--address'):
-                conf["address"] = val
+            conf["address"] = val
         elif opt in ('-p', '--port'):
             try:
                 conf["port"] = int(val)
-            except Exception, err:
-                print('Error in parsing port value: %s' % err)
+            except ValueError, err:
+                print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
         elif opt in ('-u', '--url'):
             conf["url"] = val
@@ -99,3 +94,4 @@ if __name__ == '__main__':
             usage()
             sys.exit(1)
     main(conf)
+    

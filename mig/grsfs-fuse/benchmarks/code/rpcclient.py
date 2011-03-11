@@ -30,7 +30,6 @@
 
 import sys
 import getopt
-import xmlrpclib
 import timeit
 
 def default_configuration():
@@ -77,14 +76,14 @@ if __name__ == '__main__':
         elif opt in ('-n', '--number'):
             try:
                 conf["number"] = int(val)
-            except Exception, err:
-                print('Error in parsing number value: %s' % err)
+            except ValueError, err:
+                print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
         elif opt in ('-r', '--repeat'):
             try:
                 conf["repeat"] = int(val)
-            except Exception, err:
-                print('Error in parsing repeat value: %s' % err)
+            except ValueError, err:
+                print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
         elif opt in ('-u', '--url'):
             conf["url"] = val
@@ -92,5 +91,8 @@ if __name__ == '__main__':
             print("unknown option: %s" % opt)
             usage()
             sys.exit(1)
-    conf['setup'] = """import xmlrpclib; proxy = xmlrpclib.ServerProxy('%(url)s')""" % conf
+    conf['setup'] = """
+import xmlrpclib
+proxy = xmlrpclib.ServerProxy('%(url)s')
+""" % conf
     main(conf)
