@@ -11,11 +11,13 @@ SOURCE_DIR="${DIST}/${SECTION}/source"
 echo '= Scanning binaries ='
 for ARCH in $ARCHITECTURES; do
         BINARY_DIR="${DIST}/${SECTION}/binary-${ARCH}"
+	mkdir -p $BINARY_DIR
 	apt-ftparchive -o APT::FTPArchive::Release::Origin='Minimum intrusion Grid' -o APT::FTPArchive::Release::Label='MiG' -o APT::FTPArchive::Release::Suite='stable' -o APT::FTPArchive::Release::Codename='stable' -o APT::FTPArchive::Release::Architectures="${ARCHITECTURES}" -o APT::FTPArchive::Release::Components='main stable' packages ${POOL_DIR} | gzip -9c > ${BINARY_DIR}/Packages.gz
 	gunzip -c ${BINARY_DIR}/Packages.gz > ${BINARY_DIR}/Packages
 done
 
 echo '= Scanning sources ='
+mkdir -p $SOURCE_DIR
 apt-ftparchive -o APT::FTPArchive::Release::Origin='Minimum intrusion Grid' -o APT::FTPArchive::Release::Label='MiG' -o APT::FTPArchive::Release::Suite='stable' -o APT::FTPArchive::Release::Codename='stable' -o APT::FTPArchive::Release::Architectures="${ARCHITECTURES}" -o APT::FTPArchive::Release::Components='main stable' sources ${POOL_DIR} | gzip -9c > ${SOURCE_DIR}/Sources.gz
 gunzip -c ${SOURCE_DIR}/Sources.gz > ${SOURCE_DIR}/Sources
 
