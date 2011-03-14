@@ -240,6 +240,10 @@ def main(client_id, user_arguments_dict):
                                   : 'Unknown flavor: %s' % flavor})
             continue
 
+        # Always include license conditions file
+        
+        usergen.write_license(dest_dir)
+        
         output_objects.append({'object_type': 'text', 'text': '... Done'
                               })
         output_objects.append({'object_type': 'text', 'text'
