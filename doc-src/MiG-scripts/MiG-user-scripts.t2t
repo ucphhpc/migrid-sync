@@ -76,6 +76,21 @@ to the location of the generated scripts. Simply select the zip link to
 download a zip archive of the scripts.
 Unpack the archive and you're ready to start using the scripts.
 
+For Debian and Ubuntu users the scripts are also available as native
+packages. 
+It is recommended to download and import the
+[software signing key https://dk-sid.migrid.org/mig-pubring.gpg] first
+to avoid 'untrusted source' warnings:
+```
+cat mig-pubring.gpg  | sudo apt-key add -
+```
+Then install the user scripts by adding the APT source line:
+```
+deb http://dk.migrid.org/deb stable main
+```
+to your /etc/apt/sources.list or similar, refresh the available packages
+and install the mig-user-script package with your favorite system
+software manager.
 
 = Configuration =
 You receive information about the address of the MiG server that you
