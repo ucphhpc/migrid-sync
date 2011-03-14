@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # publicscriptgen - Basic script generator functions
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -698,7 +698,7 @@ def init_script(
     header = \
         """
 mig%s - a part of the MiG scripts
-Copyright (C) 2004-2010  MiG Core Developers lead by Brian Vinter
+Copyright (C) 2004-2011  MiG Core Developers lead by Brian Vinter
 
 This file is part of MiG.
 
@@ -761,3 +761,19 @@ def write_script(contents, filename, mode=0755):
 def verbose(verbose_mode, txt):
     if verbose_mode:
         print txt
+
+
+def write_license(dst_dir, name='COPYING'):
+    """Write license file to dst_dir/name"""
+    src_path = os.path.join(os.path.dirname(__file__), '..', '..', name)
+    dst_path = os.path.abspath(os.path.join(dst_dir, name))
+    try:
+        src_fd = open(src_path, 'r')
+        dst_fd = open(dst_path, 'w')
+        dst_fd.write(src_fd.read())
+        src_fd.close()
+        dst_fd.close()
+    except Exception, exc:
+        print 'Error: failed to write license %s: %s' % (dst_path, exc)
+        return False
+        

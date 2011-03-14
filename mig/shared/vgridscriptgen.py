@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridscriptgen - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -457,6 +457,7 @@ def generate_two_arguments(
 
 verbose_mode = False
 test_script = False
+include_license= True
 
 # Supported MiG operations (don't add 'test' as it is optional)
 
@@ -569,6 +570,8 @@ if __name__ == '__main__':
             curl_cmd = val
         elif opt == '-d':
             dest_dir = val
+        elif opt == '-i':
+            include_license = False
         elif opt == '-p':
             python_cmd = val
         elif opt == '-s':
@@ -640,5 +643,8 @@ if __name__ == '__main__':
 
     # if test_script:
     #    generate_test(languages)
+
+    if include_license:
+        write_license(dest_dir)
 
     sys.exit(0)

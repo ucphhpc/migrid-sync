@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userscriptgen - Generator backend for user scripts
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -4070,6 +4070,7 @@ def generate_zip(scripts_languages, dest_dir='.'):
 verbose_mode = False
 shared_lib = True
 test_script = True
+include_license = True
 
 # Supported MiG operations (don't add 'test' as it is optional)
 
@@ -4142,6 +4143,8 @@ if __name__ == '__main__':
             curl_cmd = val
         elif opt == '-d':
             dest_dir = val
+        elif opt == '-i':
+            include_license = False
         elif opt == '-l':
             shared_lib = False
         elif opt == '-p':
@@ -4213,4 +4216,7 @@ if __name__ == '__main__':
     if test_script:
         generate_test(languages, dest_dir)
 
+    if include_license:
+        write_license(dest_dir)
+        
     sys.exit(0)
