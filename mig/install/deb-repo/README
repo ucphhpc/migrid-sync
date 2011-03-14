@@ -4,6 +4,8 @@ easier for users.
 
 The packages should be *locally* built but signed with the official MiG
 software signing key from mig@distlab4:.gnupg/ .
+The corresponding passphrase is included in the MiG developers VGrid SCM.
+
 It can be achieved by mounting the mig user home on the build host during build:
 [prepare ssh login as mig at distlab4]
 mkdir -p  ~/mnt/mig@distlab4
