@@ -37,6 +37,7 @@ from migerror import *
 import tempfile
 import random
 import sys
+import string
  
 MIG_CONFIG = os.path.expanduser("~/.mig/miguser.conf")
 
@@ -79,16 +80,16 @@ def create_job(exec_commands, input_files=[], output_files=[], executables=[], c
         
     if isinstance(output_files, str):
         output_files = [output_files]
+
+    if isinstance(output_files, str):
+        output_files = [output_files]
         
     # check if the files exist
-    for f in input_files:
-        if not os.path.exists(f):
-            raise MigLocalError("Cannot find input file: "+f)
-    
-    for f in executables:
-        if not os.path.exists(f):
-            raise MigLocalError("Cannot find executable file: "+f)
-            
+    __check_files(input_files)
+    __check_files(cached_files)
+    __check_files(executables)
+        
+                
     # name of the mrsl file and working directory
     if name == "":
         timestamp = int(time.time()*100)
@@ -97,7 +98,7 @@ def create_job(exec_commands, input_files=[], output_files=[], executables=[], c
         name = "gridjob_"+str(timestamp)+str(r_num)
     mrsl_filename = name+".mRSL"
     #mig_job_directory = name 
-
+    
     tmp_dir = tempfile.gettempdir() # /tmp/
     local_working_dir = os.path.join(tmp_dir, name)
     # creating local temporary working directory
@@ -111,15 +112,16 @@ def create_job(exec_commands, input_files=[], output_files=[], executables=[], c
     all_input_files = []
     all_input_files.extend(input_files)
     all_input_files.extend(cached_files)
-    
+        
     # create the mRSL file
-    mrsl.generate_mrsl(mrsl_path, exec_commands, all_input_files, output_files, executables=executables, resource_specifics=resource_specifications)
+    mrsl.generate_mrsl(mrsl_path, exec_commands, all_input_files, output_files,  
+                       executables=executables, resource_specifics=resource_specifications)
     
     # Gather all files we need to upload
     upload_files = []
     upload_files.append(mrsl_path)
-    upload_files.extend(executables)
-    upload_files.extend(input_files)
+    upload_files.extend(string.split(f)[0] for f in executables) # only get the local paths
+    upload_files.extend(string.split(f)[0] for f in input_files) # only get the local paths
     
     tar_name = name+".tar.gz"
     # path to tarball
@@ -367,6 +369,24 @@ def remove_dir(dirname):
     return __miglib_function(miglib.rm_dir, path_list)
 
 
+def cat_file(path):
+    """
+    Concat files
+    
+    path - one or more file paths 
+    """
+    
+    if isinstance(path, str):
+        path = [path]
+    
+    out = __miglib_function(miglib.cat_file, path)
+    out_str = "\n".join(out)
+    str_list = out_str.split("___CAT___") # filter out the information part
+    if len(str_list) > 1 :
+        str_list.pop(0)
+    return "".join(str_list).strip()
+
+
 def job_output(job_id):
     """
     Get the standard out and standard error from the job. 
@@ -378,12 +398,7 @@ def job_output(job_id):
     path_list.append(os.path.join("job_output", job_id, job_id+".stderr"))
     path_list.append(os.path.join("job_output", job_id, job_id+".stdout")) 
     
-    out = __miglib_function(miglib.cat_file, path_list)
-    out_str = "\n".join(out)
-    str_list = out_str.split("___CAT___") # filter out the information part
-    if len(str_list) > 1 :
-        str_list.pop(0)
-    return "".join(str_list).strip()
+    return cat_file(path_list)
     
 def test_connection():
     """
@@ -635,4 +650,15 @@ def __check_configuration():
     #except KeyError:
     #    raise MigLocalError("Cannot find miglib module")
     
+
+def __check_files(files):
+    """
+    check if the files exist
+    """
+    for f in files:
+        if len(string.split(f)) > 2:
+            raise MigLocalError("Too many tokens. File path format not accepted : %s  Either <local_path> or <local_path rescource_path>. " % f)
+        path = string.split(f)[0] # get the local file in case the (src, dest) format is used
+        if not os.path.exists(path):
+            raise MigLocalError("Cannot find input file: "+path)
     

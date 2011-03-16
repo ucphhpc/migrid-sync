@@ -89,6 +89,7 @@ def job_status(job_ids, max_job_count):
     return (exit_code, server_out)
 
 
+
 def submit_file(src_path, dst_path, submit_mrsl, extract_package):
     """
     Submit an emulated grid job to the local system. The job will start in a new process.
@@ -379,6 +380,30 @@ def __server_output_msg(exit_code, output):
     return server_out
 
 
+def __parse_mrsl(path):
+    mrsl_fields = ["EXECUTE", "INPUTFILES", "EXECUTABLES", "OUTPUTFILES"]
+    mrsl_dict = {}
+    
+    # parse the mRSL file
+    f = open(path)
+    lines = f.readlines()
+    
+    
+    for field in mrsl_fields:
+    # extract commands
+        first_entry = lines.index("::%s::\n" % field)+1
+        entries = []
+        for line in lines[first_entry:]:
+            if line.find("::") != -1:
+                break
+            if line.strip() != "":
+                entries.append(line.strip())
+        if entries:
+            mrsl_dict[field] = entries
+                
+    return mrsl_dict
+    
+
 def __job_process(input, working_dir):
     """
     Method for emulating a grid job. Will be run in a new process.
@@ -400,31 +425,26 @@ def __job_process(input, working_dir):
     for f in prog_files:
         if f.find(".mRSL") != -1:
             mrsl_file = f
-    
-    
+        
     # parse the mRSL file
-    f = open(os.path.join(working_dir,mrsl_file))
-    lines = f.readlines()
-    
-    # extract commands
-    first_cmd = lines.index("::EXECUTE::\n")+1
-    commands = []
-    for line in lines[first_cmd:]:
-        if line.find("::") != -1:
-            break
-        if line.strip() != "":
-            commands.append(line.strip())
-    
-    # extract output files
-    first_outputfile = lines.index("::OUTPUTFILES::\n")+1
-    outputfiles = []
-    for line in lines[first_outputfile:]:
-        if line.find("::") != -1:
-            break
-        if line.strip() != "":
-            outputfiles.append(line.strip())
-    
-    
+    mrsl_entries = __parse_mrsl(os.path.join(working_dir,mrsl_file))
+
+
+    all_input_files = []
+    if mrsl_entries.has_key("INPUTFILES"):
+        all_input_files.extend(mrsl_entries["INPUTFILES"])
+
+    if mrsl_entries.has_key("EXECUTABLES"):
+        all_input_files.extend(mrsl_entries["EXECUTABLES"])
+     
+    # stage the input files if needed
+    for f in all_input_files:
+        path = f.split()
+        if len(path) > 1: # user provided a destination preference
+            directory = os.path.dirname(path[1]) # destination dir
+            os.makedirs(directory) 
+            shutil.move(path[0], path[1])
+
     job_id = str(os.getpid())
     
     status_files_directory = os.path.join(MIG_HOME, "job_output", job_id)
@@ -438,7 +458,7 @@ def __job_process(input, working_dir):
     
     # run the commands
     try :
-        for cmd in commands:
+        for cmd in mrsl_entries["EXECUTE"]:
             proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=stdout_file, stderr=stderr_file, close_fds=True)
             proc.wait()
     
@@ -447,14 +467,18 @@ def __job_process(input, working_dir):
     except KeyboardInterrupt :
         print "Keyboard interrupt. Terminating."
         return
-        
-    # copy output files from mig home dir
-    for f in outputfiles:
-        filepath = f.strip().split()
-        src_path = filepath[0]
-        dest_path = filepath[0]
-        
-        # if there are two file names, we are using the mig format of <path_on_resource path_on_mig_home>
-        if len(filepath) > 1:
-            dest_path = filepath[1]
-        shutil.copy(os.path.join(working_dir, src_path), os.path.join(MIG_HOME, dest_path))
+    
+    if mrsl_entries.has_key("OUTPUTFILES"):
+        # copy output files from mig home dir
+        for f in mrsl_entries["OUTPUTFILES"]:
+            filepath = f.strip().split()
+            src_path = filepath[0]
+            dest_path = filepath[0]
+            
+            # if there are two file names, we are using the mig format of <path_on_resource path_on_mig_home>
+            if len(filepath) > 1:
+                dest_path = filepath[1]
+                dest_directory = os.path.dirname(os.path.join(MIG_HOME, dest_path))
+                if not os.path.exists(dest_directory):
+                    os.makedirs(dest_directory)
+            shutil.copy(os.path.join(working_dir, src_path), os.path.join(MIG_HOME, dest_path))

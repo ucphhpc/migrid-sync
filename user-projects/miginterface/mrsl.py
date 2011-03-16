@@ -19,9 +19,9 @@ def generate_mrsl(mrsl_file_path, exec_commands, input_files="", output_files=""
         mrsl.append("\n::INPUTFILES::"+"\n")
         if isinstance(input_files, list):
             for path in input_files:
-                filename = os.path.basename(path)
+                #filename = os.path.basename(path)
                 #mrsl.append(filename+" "+filename+"\n")
-                mrsl.append(filename+"\n")
+                mrsl.append(path+"\n")
         else:
             mrsl.append(input_files+"\n")
         
@@ -40,9 +40,9 @@ def generate_mrsl(mrsl_file_path, exec_commands, input_files="", output_files=""
         mrsl.append("\n::EXECUTABLES::"+"\n")
         if isinstance(executables, list):
             for path in executables:
-                filename = os.path.basename(path)
+                #filename = os.path.basename(path)
                 #mrsl.append(filename+" "+filename+"\n")
-                mrsl.append(filename+"\n")
+                mrsl.append(path+"\n")
         else:
             mrsl.append(input_files+"\n")
     
