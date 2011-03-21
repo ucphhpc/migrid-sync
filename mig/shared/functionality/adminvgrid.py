@@ -138,6 +138,7 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
     vgrid_name = accepted['vgrid_name'][-1]
 
     output_objects.append({'object_type': 'header', 'text'
@@ -150,7 +151,7 @@ def main(client_id, user_arguments_dict):
 
         output_objects.append({'object_type': 'link',
                                'destination':
-                               'vgridmemberrequestaction.py?vgrid_name=%s&request_type=owner&request_text=no+text' % vgrid_name,
+                               'accessrequestaction.py?vgrid_name=%s&request_type=vgridowner&request_text=no+text' % vgrid_name,
                                'class': 'addadminlink',
                                'title': 'Request ownership of %s' % vgrid_name,
                                'text': 'Apply to become an owner'})
