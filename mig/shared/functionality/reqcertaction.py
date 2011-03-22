@@ -34,6 +34,7 @@ import base64
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input, REJECT_UNSET
+from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_email
 from shared.serial import dumps
@@ -66,6 +67,12 @@ def main(client_id, user_arguments_dict):
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s certificate request' % configuration.short_title

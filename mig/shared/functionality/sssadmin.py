@@ -181,8 +181,7 @@ def show_download(configuration, userdb, user, passwd, expert):
     # Download sandbox section
 
     html = \
-        """<form action='ssscreateimg.py?MiG-SSS.zip' 
-          method='post'>
+        """<form method='post' action='ssscreateimg.py?MiG-SSS.zip'> 
     <table class=sandboxcreateimg>
     <tr class=title><td align='center' colspan='2'>
     Download new sandbox

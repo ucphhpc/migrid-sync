@@ -37,6 +37,7 @@ import shared.returnvalues as returnvalues
 import shared.userscriptgen as usergen
 import shared.vgridscriptgen as vgridgen
 from shared.functional import validate_input_and_cert
+from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.useradm import client_id_dir
 
@@ -105,6 +106,13 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     flags = ''.join(accepted['flags'])
     langs = accepted['lang']
     flavor_list = accepted['flavor']

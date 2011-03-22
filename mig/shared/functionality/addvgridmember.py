@@ -30,13 +30,14 @@
 import os
 
 from shared.fileio import make_symlink
+from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.handlers import correct_handler
+from shared.init import initialize_main_variables
 from shared.listhandling import add_item_to_pickled_list
+from shared.useradm import client_id_dir
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
     vgrid_is_member, vgrid_list_subvgrids
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert, REJECT_UNSET
 import shared.returnvalues as returnvalues
-from shared.useradm import client_id_dir
 
 
 def signature():
@@ -62,6 +63,13 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     vgrid_name = accepted['vgrid_name'][-1]
     cert_id = accepted['cert_id'][-1]
     cert_dir = client_id_dir(cert_id)

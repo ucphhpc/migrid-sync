@@ -28,10 +28,13 @@
 """Remove an owner from a given vgrid"""
 
 import os
+from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.fileio import remove_rec, unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.handlers import correct_handler
+from shared.html import html_post_helper
 from shared.init import initialize_main_variables
 from shared.listhandling import remove_item_from_pickled_list
 from shared.parseflags import force
@@ -187,6 +190,13 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     vgrid_name = accepted['vgrid_name'][-1]
     flags = ''.join(accepted['flags'])
     cert_id = accepted['cert_id'][-1]
@@ -302,9 +312,14 @@ Owner removal has to be performed at the topmost vgrid''' % cert_id})
 You are the last owner of %s - leaving will result in the vgrid getting
 deleted. Please use either of the links below to confirm or cancel.
 ''' % vgrid_name})
+            js_name = 'rmvgridowner%s' % hexlify(vgrid_name)
+            helper = html_post_helper(js_name, 'rmvgridowner.py',
+                                      {'vgrid_name': vgrid_name,
+                                       'cert_id': client_id, 'flags': 'f'})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
             output_objects.append({'object_type': 'link', 'destination':
-                                   '?cert_id=%s;vgrid_name=%s;flags=f'
-                                   % (cert_id, vgrid_name), 'text':
+                                   "javascript: %s();" % js_name, 'class':
+                                   'removelink', 'text':
                                    'Really leave and delete %s' % vgrid_name})
             output_objects.append({'object_type': 'text', 'text' : ''})
             output_objects.append({'object_type': 'link', 'destination':

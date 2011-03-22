@@ -30,11 +30,13 @@
 import glob
 import os
 import time
+from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.defaults import all_jobs
 from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert
+from shared.html import html_post_helper
 from shared.init import initialize_main_variables
 from shared.job import output_dir, get_job_ids_with_specified_project_name
 from shared.mrslparser import expand_variables
@@ -356,16 +358,31 @@ def main(client_id, user_arguments_dict):
                 job_obj['outputfileslink'] = {'object_type': 'link',
                                               'destination': 'ls.py?%s' % path_string,
                                               'text': 'View output files'}
-            job_obj['resubmitlink'] = {'object_type': 'link',
-                                       'destination': 'resubmit.py?job_id=%s'\
-                                       % job_id, 'text': 'Resubmit job'}
 
+            js_name = 'resubmit%s' % hexlify(job_id)
+            helper = html_post_helper(js_name, 'resubmit.py',
+                                      {'job_id': job_id})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
+            job_obj['resubmitlink'] = {'object_type': 'link',
+                                       'destination':
+                                       "javascript: %s();" % js_name,
+                                       'text': 'Resubmit job'}
+
+            js_name = 'cancel%s' % hexlify(job_id)
+            helper = html_post_helper(js_name, 'jobaction.py',
+                                      {'action': 'cancel','job_id': job_id})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
             job_obj['cancellink'] = {'object_type': 'link',
                                      'destination':
-                                     'jobaction.py?action=cancel;job_id=%s'\
-                                     % job_id, 'text': 'Cancel job'}
+                                     "javascript: %s();" % js_name,
+                                     'text': 'Cancel job'}
+            js_name = 'jobschedule%s' % hexlify(job_id)
+            helper = html_post_helper(js_name, 'jobschedule.py',
+                                      {'job_id': job_id})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
             job_obj['jobschedulelink'] = {'object_type': 'link',
-                                          'destination': 'jobschedule.py?job_id=%s' % job_id,
+                                          'destination':
+                                          "javascript: %s();" % js_name,
                                           'text': 'Request schedule information'}
             job_obj['liveiolink'] = {'object_type': 'link',
                                      'destination': 'liveio.py?job_id=%s' % job_id,

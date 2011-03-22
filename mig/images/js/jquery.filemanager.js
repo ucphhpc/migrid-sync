@@ -126,7 +126,7 @@ if (jQuery) (function($){
             $('#cmd_dialog').dialog('open');
             $('#cmd_dialog').html('<p class="spinner" style="padding-left: 26px;">Copying... "'+src+'" <br />To: "'+dst+'"</p>');           
             
-            $.getJSON('cp.py', { src: src,
+            $.post('cp.py', { src: src,
                                  dst: dst,
                                  output_format: 'json',
                                  flags: flag
@@ -143,8 +143,8 @@ if (jQuery) (function($){
                                   $('.fm_files').parent().reload($('.fm_addressbar input[name=fm_current_path]').val().substr(1));
                               $('#cmd_dialog').dialog('close');
                           }
-                      }
-                     );
+                      }, "json"
+                  );
         }
         
         function jsonWrapper(el, dialog, url, jsonOptions) {
@@ -154,7 +154,8 @@ if (jQuery) (function($){
             
             $.fn.extend(jsonSettings, jsonOptions);
             
-            $.getJSON(url, jsonSettings,
+	    /* We used to use $.getJSON() here but now some back ends require POST */
+            $.post(url, jsonSettings,
                       function(jsonRes, textStatus) {
                           
                           var errors = $(this).renderError(jsonRes);
@@ -195,8 +196,8 @@ if (jQuery) (function($){
                           } else {
                               $('.fm_files').parent().reload($(this).parentPath($(el).attr(pathAttribute))); 
                           }
-                      }
-                     );
+                      }, "json"
+                  );
         }
       
         // Callback helpers for context menu

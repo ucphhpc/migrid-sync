@@ -35,6 +35,7 @@ import glob
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input, REJECT_UNSET
+from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.parseflags import verbose, recursive
 from shared.useradm import client_id_dir
@@ -66,6 +67,12 @@ def main(client_id, user_arguments_dict):
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     flags = ''.join(accepted['flags'])
     pattern_list = accepted['path']

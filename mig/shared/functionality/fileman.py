@@ -184,7 +184,7 @@ def html_tmpl():
       
   <div id="mkdir_dialog" title="Create New Folder" style="display: none;">
   
-    <form id="mkdir_form" action="mkdir.py">
+    <form id="mkdir_form" method="post" action="mkdir.py">
     <fieldset>
       <input type="hidden" name="output_format" value="json" />
       <input type="hidden" name="current_dir" value="./" />
@@ -197,7 +197,7 @@ def html_tmpl():
   </div>
   
   <div id="rename_dialog" title="Rename" style="display: none;">
-  <form id="rename_form" action="mv.py">
+  <form id="rename_form" method="post" action="mv.py">
   <fieldset>
   
     <input type="hidden" name="output_format" value="json" />
@@ -214,7 +214,7 @@ def html_tmpl():
   </div>
 
   <div id="zip_dialog" title="Zip" style="display: none;">
-  <form id="zip_form" action="zip.py">
+  <form id="zip_form" method="post" action="zip.py">
   <fieldset>
   
     <input type="hidden" name="output_format" value="json" />

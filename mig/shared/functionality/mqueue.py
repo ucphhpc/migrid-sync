@@ -36,14 +36,15 @@ import fcntl
 import shared.returnvalues as returnvalues
 from shared.defaults import default_mqueue, mqueue_prefix, mqueue_empty
 from shared.functional import validate_input, REJECT_UNSET
+from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.job import output_dir
 from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 
-
-valid_actions = ['interactive', 'create', 'remove', 'send', 'receive',
-                 'listqueues', 'listmessages', 'show']
+get_actions = ['interactive', 'listqueues', 'listmessages', 'show']
+post_actions = ['create', 'remove', 'send', 'receive']
+valid_actions = get_actions + post_actions
 lock_name = 'mqueue.lock'
 
 def signature():
@@ -80,15 +81,23 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'start'})
 
     # Always return at least a basic file_output entry
+
     file_entry = {'object_type': 'file_output',
                   'lines': [],
                   'wrap_binary': True,
                   'wrap_targets': ['lines']}
+
     if not action in valid_actions:
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Invalid action "%s" (supported: %s)' % \
                                (action, ', '.join(valid_actions))})
         output_objects.append(file_entry)
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if action in post_actions and not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Find user home from session or certificate
@@ -158,12 +167,13 @@ orchestrating long running jobs, and not for low latency communication.
 </td></tr>
 <tr><td>
 Action:<br />
-<input type=radio name=action value="create" onclick="javascript:document.mqueueform.msg.disabled=true" />create queue
-<input type=radio name=action checked value="send" onclick="javascript:document.mqueueform.msg.disabled=false" />send message to queue
-<input type=radio name=action value="receive" onclick="javascript:document.mqueueform.msg.disabled=true" />receive message from queue
-<input type=radio name=action value="remove" onclick="javascript:document.mqueueform.msg.disabled=true" />remove queue
-<input type=radio name=action value="list" onclick="javascript:document.mqueueform.msg.disabled=true" />list queue
-<input type=radio name=action value="show" onclick="javascript:document.mqueueform.msg.disabled=true" />show message
+<input type=radio name=action value="create" onclick="javascript: document.mqueueform.queue.disabled=false; document.mqueueform.msg.disabled=true;" />create queue
+<input type=radio name=action checked value="send" onclick="javascript: document.mqueueform.queue.disabled=false; document.mqueueform.msg.disabled=false;" />send message to queue
+<input type=radio name=action value="receive" onclick="javascript: document.mqueueform.queue.disabled=false; document.mqueueform.msg.disabled=true;" />receive message from queue
+<input type=radio name=action value="remove" onclick="javascript: document.mqueueform.queue.disabled=false; document.mqueueform.msg.disabled=true;" />remove queue
+<input type=radio name=action value="listqueues" onclick="javascript: document.mqueueform.queue.disabled=true; document.mqueueform.msg.disabled=true;" />list queues
+<input type=radio name=action value="listmessages" onclick="javascript: document.mqueueform.queue.disabled=false; document.mqueueform.msg.disabled=true;" />list messages
+<input type=radio name=action value="show" onclick="javascript: document.mqueueform.queue.disabled=false; document.mqueueform.msg.disabled=true;" />show message
 </td></tr>
 <tr><td>
 Queue:<br />

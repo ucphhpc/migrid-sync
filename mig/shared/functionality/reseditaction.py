@@ -36,6 +36,7 @@ import shared.confparser as confparser
 import shared.returnvalues as returnvalues
 from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_resource_create_request_mail
 from shared.resource import prepare_conf, write_resource_config
@@ -188,6 +189,12 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     hosturl = accepted['HOSTURL'][-1]
     hostidentifier = accepted['HOSTIDENTIFIER'][-1]

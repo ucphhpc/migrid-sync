@@ -24,7 +24,8 @@ if (jQuery) (function($){
     
     $.fn.extend(jsonSettings, jsonOptions);
     
-    $.getJSON(
+    /* We used to use $.getJSON() here but now some back ends require POST */
+    $.post(
     url,
     jsonSettings,
     function(jsonRes, textStatus) {
@@ -150,9 +151,8 @@ if (jQuery) (function($){
         $("#cmd_helper div[title="+el_id+"]").removeClass("spinner").addClass("ok");
         $("#cmd_helper div[title="+el_id+"] p").append(success_message);
         
-      }
-      
-    });
+      }      
+    }, "json");
       
   }
 

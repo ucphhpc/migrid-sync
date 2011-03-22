@@ -30,11 +30,14 @@
 import os
 import shutil
 import subprocess
+from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.fileio import write_file, pickle, make_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables
+from shared.handlers import correct_handler
+from shared.html import html_post_helper
+from shared.init import initialize_main_variables, find_entry
 from shared.useradm import client_id_dir
 from shared.validstring import valid_dir_input
 from shared.vgrid import vgrid_is_owner
@@ -65,7 +68,53 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     vgrid_name = accepted['vgrid_name'][-1]
+
+    # prepare support for confirm dialog (by css/jquery)
+
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = "Update VGrid: %s" % vgrid_name
+
+    title_entry['javascript'] = '''
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
+
+<script type="text/javascript" >
+
+$(document).ready(function() {
+
+          // init confirmation dialog
+          $( "#confirm_dialog" ).dialog(
+              // see http://jqueryui.com/docs/dialog/ for options
+              { autoOpen: false,
+                modal: true, closeOnEscape: true,
+                width: 500,
+                buttons: {
+                   "Cancel": function() { $( "#" + name ).dialog("close"); }
+                }
+              });
+     }
+);
+</script>
+'''
+
+    output_objects.append({'object_type': 'html_form',
+                           'text':'''
+ <div id="confirm_dialog" title="Confirm" style="background:#fff;">
+  <div id="confirm_text"><!-- filled by js --></div>
+   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"/></textarea>
+ </div>
+'''                       })
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : "Update '%s'" % vgrid_name })
@@ -75,9 +124,19 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text': 
                     'Only owners of %s can administrate it.' % vgrid_name })
 
+        js_name = 'reqvgridowner%s' % hexlify(vgrid_name)
+        helper = html_post_helper(js_name, 'accessrequestaction.py',
+                                  {'vgrid_name': vgrid_name,
+                                   'request_type': 'vgridowner',
+                                   'request_text': ''})
+        output_objects.append({'object_type': 'html_form', 'text': helper})
         output_objects.append({'object_type': 'link',
                                'destination':
-                               'accessrequestaction.py?vgrid_name=%s&request_type=vgridowner&request_text=no+text' % vgrid_name,
+                               "javascript: confirmDialog(%s, '%s', '%s');"\
+                               % (js_name, "Request ownership of " + \
+                                  vgrid_name + ":<br/>" + \
+                                  "\nPlease write a message to the owners (field below).",
+                                  'request_text'),
                                'class': 'addadminlink',
                                'title': 'Request ownership of %s' % vgrid_name,
                                'text': 'Apply to become an owner'})
@@ -197,6 +256,7 @@ if __name__ == "__main__":
     extra_environment['SCRIPT_FILENAME'] = script
     extra_environment['QUERY_STRING'] = query
     extra_environment['REQUEST_URI'] = '%s%s' % (script, query)
+    extra_environment['REQUEST_METHOD'] = 'POST'
     extra_environment['SCRIPT_URL'] = script
     extra_environment['SCRIPT_NAME'] = script
     extra_environment['SCRIPT_URI'] = 'https://localhost/cgi-bin/%s'\

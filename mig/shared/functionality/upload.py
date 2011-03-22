@@ -34,6 +34,7 @@ import glob
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
@@ -94,6 +95,12 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     path = accepted['path'][-1]
     restrict = accepted['restrict'][-1]

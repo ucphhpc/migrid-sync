@@ -27,10 +27,13 @@
 
 """Manage all available runtime environments"""
 
+from binascii import hexlify
+
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries
 from shared.functional import validate_input_and_cert
 from shared.functionality.showre import build_reitem_object
+from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import list_runtime_environments, get_re_dict
 
@@ -72,38 +75,9 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
 
 <script type="text/javascript" >
-
-var runConfirmDialog = function(text, link, textFieldName) {
-
-    if (link == undefined) {
-        link = "#";
-    }
-    if (text == undefined) {
-        text = "Are you sure?";
-    }
-    $( "#confirm_text").html(text);
-
-    var addField = function() { /* doing nothing... */ };
-    if (textFieldName != undefined) {
-        $("#confirm_input").show();
-        addField = function() {
-            link += textFieldName + "=" + $("#confirm_input")[0].value;
-        }
-    }
-
-    $( "#confirm_dialog").dialog("option", "buttons", {
-              "No": function() { $("#confirm_input").hide();
-                                 $("#confirm_text").empty();
-                                 $("#confirm_dialog").dialog("close");
-                               },
-              "Yes": function() { addField();
-                                  window.location = link;
-                                }
-            });
-    $( "#confirm_dialog").dialog("open");
-}
 
 $(document).ready(function() {
 
@@ -189,11 +163,14 @@ $(document).ready(function() {
                                          'title': 'View %s runtime environment' % re_name, 
                                          'text': ''}
         if client_id == re_item['creator']:
+            js_name = 'delete%s' % hexlify(re_name)
+            helper = html_post_helper(js_name, 'deletere.py',
+                                      {'re_name': re_name})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
             re_item['ownerlink'] = {'object_type': 'link',
                                     'destination':
-                                    "javascript:runConfirmDialog('%s','%s');" % \
-                                    ("Really delete " + re_name + "?", 
-                                     'deletere.py?re_name=%s' % re_name),
+                                    "javascript: confirmDialog(%s, '%s');"\
+                                    % (js_name, 'Really delete %s?' % re_name),
                                     'class': 'removelink',
                                     'title': 'Delete %s runtime environment' % re_name, 
                                     'text': ''}

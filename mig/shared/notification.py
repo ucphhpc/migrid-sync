@@ -122,6 +122,7 @@ Replies to this message will not be read!!!
         target_name = myfiles_py_location[1]
         request_type = myfiles_py_location[2]
         request_text = myfiles_py_location[3]
+        entity = request_type.replace('vgrid', '').replace('resource', '')
         header = '%s access request' % configuration.short_title
         txt += \
             "This is a %s request from %s who would like to be added to '%s'\n"\
@@ -133,25 +134,19 @@ Replies to this message will not be read!!!
                  % (from_cert, request_text)
         txt += \
             'If you want to authorize this request visit the following link in a browser: \n'
-        if request_type == 'vgridmember':
+        if request_type in ['vgridmember', 'vgridowner']:
             txt += \
-                '%s/cgi-bin/addvgridmember.py?vgrid_name=%s&cert_id=%s'\
-                 % (configuration.migserver_https_cert_url, quote(target_name),
-                    quote(from_cert))
-        elif request_type == 'vgridowner':
-            txt += \
-                '%s/cgi-bin/addvgridowner.py?vgrid_name=%s&cert_id=%s'\
-                 % (configuration.migserver_https_cert_url, quote(target_name),
-                    quote(from_cert))
+                '%s/cgi-bin/adminvgrid.py?vgrid_name=%s'\
+                 % (configuration.migserver_https_cert_url, quote(target_name))
         elif request_type == 'resourceowner':
             txt += \
-                '%s/cgi-bin/addresowner.py?unique_resource_name=%s&cert_id=%s'\
-                 % (configuration.migserver_https_cert_url, quote(target_name),
-                    quote(from_cert))
+                '%s/cgi-bin/resadmin.py?unique_resource_name=%s'\
+                 % (configuration.migserver_https_cert_url, quote(target_name))
         else:
             txt += 'INVALID REQUEST TYPE: %s' % request_type
 
-        txt += ' Replies to this message will not be read!!!\n'
+        txt += ' and add %s as %s.\n\n' % (from_cert, entity)
+        txt += 'Replies to this message will not be read!!!\n'
     else:
         header = '%s Unknown message type' % configuration.short_title
         txt += 'unknown status'

@@ -27,10 +27,13 @@
 
 """Resource management back end functionality"""
 
+from binascii import hexlify
+
 import shared.returnvalues as returnvalues
 from shared.base import sandbox_resource
 from shared.defaults import default_pager_entries
 from shared.functional import validate_input_and_cert
+from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.resource import anon_to_real_res_map
 from shared.vgridaccess import user_visible_res_exes, get_resource_map, \
@@ -87,15 +90,19 @@ def main(client_id, user_arguments_dict):
 
             # Admin of resource when owner
 
+            js_name = 'rmresowner%s' % hexlify(unique_resource_name)
+            helper = html_post_helper(js_name, 'rmresowner.py',
+                                      {'unique_resource_name':
+                                       unique_resource_name,
+                                       'cert_id': client_id})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
             res_obj['resownerlink'] = \
                                     {'object_type': 'link',
                                      'destination':
-                                     "javascript:runConfirmDialog('%s','%s');" % \
-                                     ("Really leave " + unique_resource_name + " owners?", 
-                                      'rmresowner.py?unique_resource_name=%s;cert_id=%s'\
-                                      % (unique_resource_name, client_id),
-                                      ),
-                                     'class': 'removeadminlink',
+                                     "javascript: confirmDialog(%s, '%s');"\
+                                     % (js_name, 'Really leave %s owners?' % \
+                                        unique_resource_name),
+                                     'class': 'removelink',
                                      'title': 'Leave %s owners' % unique_resource_name, 
                                      'text': ''}
             res_obj['resdetailslink'] = \
@@ -110,19 +117,25 @@ def main(client_id, user_arguments_dict):
 
             # link to become owner
 
-            res_obj['resownerlink'] = {
-                'object_type': 'link',
-                'destination': "javascript:runConfirmDialog('%s','%s','%s');"\
-                % ("Request ownership of " + visible_res_name + ":<br/>" + \
-                   "\nPlease write a message to the owners (field below).",
-                   ('accessrequestaction.py?unique_resource_name=%s&' + \
-                   'request_type=resourceowner&') % \
-                   visible_res_name,
-                   'request_text'),
-                'class': 'addlink',
-                'title': 'Request ownership of %s' % visible_res_name,
-                'text': ''}
-
+            js_name = 'reqresowner%s' % hexlify(unique_resource_name)
+            helper = html_post_helper(js_name, 'accessrequestaction.py',
+                                      {'unique_resource_name':
+                                       visible_res_name,
+                                       'request_type': 'resourceowner',
+                                       'request_text': ''})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
+            res_obj['resownerlink'] = \
+                                    {'object_type': 'link',
+                                     'destination':
+                                     "javascript: confirmDialog(%s, '%s', '%s');"\
+                                     % (js_name, "Request ownership of " + \
+                                        visible_res_name + ":<br/>" + \
+                                        "\nPlease write a message to the owners (field below).",
+                                        'request_text'),
+                                     'class': 'addlink',
+                                     'title': 'Request ownership of %s' % visible_res_name,
+                                     'text': ''}
+            
             res_obj['resdetailslink'] = \
                                     {'object_type': 'link',
                                      'destination':
@@ -153,38 +166,9 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
 
 <script type="text/javascript" >
-
-var runConfirmDialog = function(text, link, textFieldName) {
-
-    if (link == undefined) {
-        link = "#";
-    }
-    if (text == undefined) {
-        text = "Are you sure?";
-    }
-    $( "#confirm_text").html(text);
-
-    var addField = function() { /* doing nothing... */ };
-    if (textFieldName != undefined) {
-        $("#confirm_input").show();
-        addField = function() {
-            link += textFieldName + "=" + $("#confirm_input")[0].value;
-        }
-    }
-
-    $( "#confirm_dialog").dialog("option", "buttons", {
-              "No": function() { $("#confirm_input").hide();
-                                 $("#confirm_text").empty();
-                                 $("#confirm_dialog").dialog("close");
-                               },
-              "Yes": function() { addField();
-                                  window.location = link;
-                                }
-            });
-    $( "#confirm_dialog").dialog("open");
-}
 
 $(document).ready(function() {
 

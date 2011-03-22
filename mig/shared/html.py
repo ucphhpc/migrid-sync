@@ -274,3 +274,28 @@ def html_encode(raw_string):
     result = raw_string.replace("'", '&#039;')
     result = result.replace('"', '&#034;')
     return result
+
+def html_post_helper(function_name, destination, fields):
+    """Create a hidden html form and a corresponding javascript function,
+    function_name, that can be called to POST the form.
+    """
+    html = '''<script type="text/javascript">
+    function %s(input)
+        {
+            for(var key in input) {
+                if (input.hasOwnProperty(key)) {
+                    var value = input[key];
+                    document.getElementById("%s"+key+"field").value = value;
+                }
+            }
+            document.getElementById("%sform").submit();
+        }
+</script>
+''' % (function_name, function_name, function_name)
+    html += '<form id="%sform" method="post" action="%s">\n' % (function_name,
+                                                                destination)
+    for (key, val) in fields.items():
+        html += '<input id="%s%sfield" type="hidden" name="%s" value="%s" />\n'\
+                % (function_name, key, key, val)
+    html += '</form>\n'
+    return html

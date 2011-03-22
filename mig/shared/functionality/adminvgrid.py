@@ -27,8 +27,11 @@
 
 """List owners, members, res's and show html controls to administrate a vgrid"""
 
+from binascii import hexlify
+
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_list, vgrid_is_owner
 
@@ -84,7 +87,7 @@ def vgrid_add_remove_table(vgrid_name,
                     })
     else:
         form = '''
-      <form method="get" action="rm%(scriptname)s.py">
+      <form method="post" action="rm%(scriptname)s.py">
         <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
         Current %(item)ss of %(vgrid)s:
         <table class="vgrid%(item)s">
@@ -111,7 +114,7 @@ def vgrid_add_remove_table(vgrid_name,
 
     out.append({'object_type': 'html_form',
                 'text': '''
-      <form method="get" action="add%(script)s.py">
+      <form method="post" action="add%(script)s.py">
           <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
           <input type="text" size=70 name="%(qu_string)s" />
           <input type="submit" value="Add vgrid %(item)s" />
@@ -141,6 +144,51 @@ def main(client_id, user_arguments_dict):
 
     vgrid_name = accepted['vgrid_name'][-1]
 
+    # prepare support for confirm dialog and toggling the views (by css/jquery)
+
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = "Administrate VGrid: %s" % vgrid_name
+
+    title_entry['javascript'] = '''
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
+
+<script type="text/javascript" >
+
+    var toggleHidden = function( classname ) {
+        // classname supposed to have a leading dot 
+        $( classname ).toggleClass('hidden');
+    }
+
+$(document).ready(function() {
+
+          // init confirmation dialog
+          $( "#confirm_dialog" ).dialog(
+              // see http://jqueryui.com/docs/dialog/ for options
+              { autoOpen: false,
+                modal: true, closeOnEscape: true,
+                width: 500,
+                buttons: {
+                   "Cancel": function() { $( "#" + name ).dialog("close"); }
+                }
+              });
+     }
+);
+</script>
+'''
+
+    output_objects.append({'object_type': 'html_form',
+                           'text':'''
+ <div id="confirm_dialog" title="Confirm" style="background:#fff;">
+  <div id="confirm_text"><!-- filled by js --></div>
+   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"/></textarea>
+ </div>
+'''                       })
+    
     output_objects.append({'object_type': 'header', 'text'
                           : "Administrate '%s'" % vgrid_name })
 
@@ -149,34 +197,25 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text': 
                     'Only owners of %s can administrate it.' % vgrid_name })
 
+        js_name = 'reqvgridowner%s' % hexlify(vgrid_name)
+        helper = html_post_helper(js_name, 'accessrequestaction.py',
+                                  {'vgrid_name': vgrid_name,
+                                   'request_type': 'vgridowner',
+                                   'request_text': ''})
+        output_objects.append({'object_type': 'html_form', 'text': helper})
         output_objects.append({'object_type': 'link',
                                'destination':
-                               'accessrequestaction.py?vgrid_name=%s&request_type=vgridowner&request_text=no+text' % vgrid_name,
+                               "javascript: confirmDialog(%s, '%s', '%s');"\
+                               % (js_name, "Request ownership of " + \
+                                  vgrid_name + ":<br/>" + \
+                                  "\nPlease write a message to the owners (field below).",
+                                  'request_text'),
                                'class': 'addadminlink',
                                'title': 'Request ownership of %s' % vgrid_name,
                                'text': 'Apply to become an owner'})
 
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    # prepare support for toggling the views (by css/jquery):
-
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = "Administrate VGrid: %s" % vgrid_name
-
-    title_entry['javascript'] = '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-
-<script type="text/javascript" >
-
-    var toggleHidden = function( classname ) {
-        // classname supposed to have a leading dot 
-        $( classname ).toggleClass('hidden');
-    }
-</script>
-'''
-    
 #    (ret, msg) = create_html(vgrid_name, configuration)
 
 #def vgrid_add_remove_table(vgrid_name,item_string,script_suffix, configuration):
@@ -225,7 +264,7 @@ def main(client_id, user_arguments_dict):
                            'text': "Repair/Add Components"})
     output_objects.append({'object_type': 'html_form',
                            'text': '''
-      <form method="get" action="updatevgrid.py">
+      <form method="post" action="updatevgrid.py">
           <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
           <input type="submit" value="Repair components" />
       </form>

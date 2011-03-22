@@ -36,6 +36,7 @@ from shared.conf import get_resource_exe
 from shared.defaults import all_jobs
 from shared.fileio import unpickle, pickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.job import output_dir
 from shared.ssh import copy_file_to_resource
@@ -43,10 +44,15 @@ from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 
 
+interactive_actions = ['interactive', '']
+get_actions = interactive_actions
+post_actions = ['put', 'send', 'output', 'get', 'receive', 'input']
+valid_actions = get_actions + post_actions
+
 def signature():
     """Signature of the main function"""
 
-    defaults = {'job_id': [], 'action': [''], 'src':[],
+    defaults = {'job_id': [], 'action': ['interactive'], 'src':[],
                 'dst': ['']}
     return ['text', defaults]
 
@@ -68,6 +74,7 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
     job_ids = accepted['job_id']
     action = accepted['action'][-1]
     src = accepted['src']
@@ -78,7 +85,20 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                            : 'Request live communication with jobs'})
 
-    if not job_ids or not action:
+    if not action in valid_actions:
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : 'Invalid action "%s" (supported: %s)' % \
+                               (action, ', '.join(valid_actions))})
+        output_objects.append(file_entry)
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if action in post_actions and not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if not job_ids or action in interactive_actions:
         job_id = ''
         if job_ids:
             job_id = job_ids[-1]
@@ -143,7 +163,7 @@ function addInput() {
 }
 </script>
 <form name="addsrcform">
-<input type="button" onclick="addInput()" name="add" value="Add another source field" />
+<input type="button" onclick="addInput(); return false;" name="add" value="Add another source field" />
 </form>
 </td>
 </tr>
@@ -176,7 +196,6 @@ jobs before and during execution.
     output_objects.append({'object_type': 'text', 'text'
                           : 'Requesting live I/O for %s'
                            % ', '.join(job_ids)})
-
 
     if action == 'get' and (not src or not dst):
         output_objects.append(

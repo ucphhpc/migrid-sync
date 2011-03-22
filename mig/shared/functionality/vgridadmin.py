@@ -27,9 +27,12 @@
 
 """VGrid administration back end functionality"""
 
+from binascii import hexlify
+
 import shared.returnvalues as returnvalues
 from shared.defaults import default_vgrid, default_pager_entries
 from shared.functional import validate_input_and_cert
+from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_list_vgrids, vgrid_is_owner, \
     vgrid_is_member, vgrid_is_owner_or_member
@@ -115,32 +118,45 @@ def main(client_id, user_arguments_dict):
                                         'title': 'View public %s web page' % vgrid_name,
                                         'text': 'View'}
 
-        # link to become member. overwritten later for members
+        # link to become member: overwritten later for members
 
-        vgrid_obj['memberlink'] = {'object_type': 'link',
-          'destination':
-          "javascript:runConfirmDialog('%s','%s','%s');" % \
-            ("Request membership of " + vgrid_name + """:<br/>
-Please write a message to the owners (field below).""",
-             'accessrequestaction.py?vgrid_name=%s&request_type=vgridmember&'\
-             % vgrid_name,
-             "request_text"),
-          'class': 'addlink',
-          'title': 'Request membership of %s' % vgrid_name,
-          'text': ''}
-        # link to become owner. overwritten later for owners
+        js_name = 'reqvgridmember%s' % hexlify(vgrid_name)
+        helper = html_post_helper(js_name, 'accessrequestaction.py',
+                                  {'vgrid_name': vgrid_name,
+                                   'request_type': 'vgridmember',
+                                   'request_text': ''})
+        output_objects.append({'object_type': 'html_form', 'text': helper})
+        vgrid_obj['memberlink'] = \
+                                {'object_type': 'link',
+                                 'destination':
+                                 "javascript: confirmDialog(%s, '%s', '%s');"\
+                                 % (js_name, "Request membership of " + \
+                                    vgrid_name + ":<br/>" + \
+                                    "\nPlease write a message to the owners (field below).",
+                                    'request_text'),
+                                 'class': 'addlink',
+                                 'title': 'Request membership of %s' % vgrid_name,
+                                 'text': ''}
 
-        vgrid_obj['administratelink'] = {'object_type': 'link',
-          'destination':
-          "javascript:runConfirmDialog('%s','%s','%s');" % \
-            ("Request ownership of " + vgrid_name + """:<br/>
-Please write a message to the owners (field below).""",
-             'accessrequestaction.py?vgrid_name=%s&request_type=vgridowner&'\
-             % vgrid_name,
-             "request_text"),
-                                         'class': 'addadminlink',
-                                         'title': 'Request ownership of %s' % vgrid_name, 
-                                         'text': ''}
+        # link to become owner: overwritten later for owners
+
+        js_name = 'reqvgridowner%s' % hexlify(vgrid_name)
+        helper = html_post_helper(js_name, 'accessrequestaction.py',
+                                  {'vgrid_name': vgrid_name,
+                                   'request_type': 'vgridowner',
+                                   'request_text': ''})
+        output_objects.append({'object_type': 'html_form', 'text': helper})
+        vgrid_obj['administratelink'] = \
+                                      {'object_type': 'link',
+                                       'destination':
+                                       "javascript: confirmDialog(%s, '%s', '%s');"\
+                                       % (js_name, "Request ownership of " + \
+                                          vgrid_name + ":<br/>" + \
+                                          "\nPlease write a message to the owners (field below).",
+                                          'request_text'),
+                                       'class': 'addadminlink',
+                                       'title': 'Request ownership of %s' % vgrid_name,
+                                       'text': ''}
 
         # members/owners are allowed to view private pages and monitor
 
@@ -170,15 +186,19 @@ Please write a message to the owners (field below).""",
             # to leave this VGrid (remove ourselves). Note that we are
             # going to overwrite the link later for owners.
 
-            vgrid_obj['memberlink'] = {'object_type': 'link',
-                                       'destination':
-                                       "javascript:runConfirmDialog('%s','%s');" % \
-                                       ("Really leave " + vgrid_name + "?", 
-                                        'rmvgridmember.py?vgrid_name=%s&cert_id=%s'\
-                                        % (vgrid_name, client_id)),
-                                       'class': 'removelink',
-                                       'title': 'Leave %s members' % vgrid_name, 
-                                       'text': ''}
+            js_name = 'rmvgridmember%s' % hexlify(vgrid_name)
+            helper = html_post_helper(js_name, 'rmvgridmember.py',
+                                      {'vgrid_name': vgrid_name,
+                                       'cert_id': client_id})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
+            vgrid_obj['memberlink'] = \
+                                    {'object_type': 'link',
+                                     'destination':
+                                     "javascript: confirmDialog(%s, '%s');"\
+                                     % (js_name, "Really leave " + vgrid_name + "?"),
+                                     'class': 'removelink',
+                                     'title': 'Leave %s members' % vgrid_name, 
+                                     'text': ''}
             
         # owners are allowed to edit pages and administrate
 
@@ -196,11 +216,14 @@ Please write a message to the owners (field below).""",
 
             # correct the link to leave the VGrid
 
+            js_name = 'rmvgridowner%s' % hexlify(vgrid_name)
+            helper = html_post_helper(js_name, 'rmvgridowner.py',
+                                      {'vgrid_name': vgrid_name,
+                                       'cert_id': client_id})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
             vgrid_obj['memberlink']['destination'] = \
-                      "javascript:runConfirmDialog('%s','%s');" % \
-                      ("Really leave " + vgrid_name + "?", 
-                       'rmvgridowner.py?vgrid_name=%s&cert_id=%s'\
-                       % (vgrid_name, client_id))
+                      "javascript: confirmDialog(%s,'%s');" % \
+                      (js_name, "Really leave " + vgrid_name + "?")
             vgrid_obj['memberlink']['class'] = 'removeadminlink'
             vgrid_obj['memberlink']['title'] = 'Leave %s owners' % vgrid_name
 
@@ -241,38 +264,9 @@ Please write a message to the owners (field below).""",
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
 
 <script type="text/javascript" >
-
-var runConfirmDialog = function(text, link, textFieldName) {
-
-    if (link == undefined) {
-        link = "#";
-    }
-    if (text == undefined) {
-        text = "Are you sure?";
-    }
-    $( "#confirm_text").html(text);
-
-    var addField = function() { /* doing nothing... */ };
-    if (textFieldName != undefined) {
-        $("#confirm_input").show();
-        addField = function() {
-            link += textFieldName + "=" + $("#confirm_input")[0].value;
-        }
-    }
-
-    $( "#confirm_dialog").dialog("option", "buttons", {
-              "No": function() { $("#confirm_input").hide();
-                                 $("#confirm_text").empty();
-                                 $("#confirm_dialog").dialog("close");
-                               },
-              "Yes": function() { addField();
-                                  window.location = link;
-                                }
-            });
-    $( "#confirm_dialog").dialog("open");
-}
 
 $(document).ready(function() {
 
@@ -348,7 +342,7 @@ VGrids share files and resources. Members can access web pages, files and resour
     output_objects.append({'object_type': 'text', 'text'
                           : 'Please enter a name for the new VGrid to add, using slashes to specify nesting. I.e. if you own a VGrid called ABC, you can create a sub-VGrid called DEF by entering ABC/DEF below.'})
     output_objects.append({'object_type': 'html_form', 'text'
-                          : '''<form method="get" action="createvgrid.py">
+                          : '''<form method="post" action="createvgrid.py">
     <input type="text" size=40 name="vgrid_name" />
     <input type="hidden" name="output_format" value="html" />
     <input type="submit" value="Create VGrid" />

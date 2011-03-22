@@ -103,8 +103,8 @@ def askProxy():
                                'text':'Proxy upload'})
         output_objects.append({'object_type':'html_form',
                               'text':"""
-<form action="upload.py"
-enctype="multipart/form-data" method="post">
+<form method="post" action="upload.py"
+enctype="multipart/form-data">
 <p>
 Please specify a proxy file to upload:<br>
 Such a proxy file can be created using the command-line tool 

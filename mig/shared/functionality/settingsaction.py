@@ -30,6 +30,7 @@ import tempfile
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
+from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.settings import parse_and_save_settings, parse_and_save_widgets
 from shared.settingskeywords import get_keywords_dict as settings_keywords
@@ -79,6 +80,12 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     topic = accepted['topic'][-1]
     topic_mrsl = ''

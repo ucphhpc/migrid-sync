@@ -41,6 +41,7 @@ from shared.conf import get_resource_configuration, get_resource_exe
 from shared.defaults import default_vgrid
 from shared.fileio import make_symlink
 from shared.functional import validate_input, REJECT_UNSET
+from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.resource import create_resource, remove_resource
 from shared.sandbox import load_sandbox_db, save_sandbox_db
@@ -82,6 +83,12 @@ def main(client_id, user_arguments_dict):
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     username = accepted['username'][-1]
     password = accepted['password'][-1]

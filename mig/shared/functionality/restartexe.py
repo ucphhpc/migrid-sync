@@ -31,6 +31,7 @@ import shared.returnvalues as returnvalues
 from shared.conf import get_all_exe_names
 from shared.findtype import is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.resadm import start_resource_exe, stop_resource_exe
 from shared.worker import Worker, throttle_max_concurrent
@@ -69,6 +70,12 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     unique_resource_name = accepted['unique_resource_name'][-1]
     cputime = accepted['cputime'][-1]

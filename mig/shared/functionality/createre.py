@@ -33,6 +33,7 @@ import tempfile
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.refunctions import create_runtimeenv
 from shared.validstring import valid_dir_input
@@ -70,6 +71,13 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     re_name = accepted['re_name'][-1].strip().upper()
     redescription = accepted['redescription'][-1].strip()
     testprocedure = accepted['testprocedure'][-1].strip()

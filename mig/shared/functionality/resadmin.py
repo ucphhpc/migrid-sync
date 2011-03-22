@@ -33,10 +33,12 @@ administrating owners.
 """
 
 import os
+from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.base import sandbox_resource
 from shared.functional import validate_input_and_cert
+from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import get_re_dict, list_runtime_environments
 from shared.vgridaccess import get_resource_map, CONF, OWNERS, RESID
@@ -141,7 +143,7 @@ Resource configuration docs
                 action_str = action.capitalize()
             html += \
                 '''<td>
-            <form method="get" action="%sfe.py">
+            <form method="post" action="%sfe.py">
             <input type="hidden" name="unique_resource_name" value="%s" />
             <input type="submit" value="%s" />
             </form>
@@ -159,7 +161,7 @@ Resource configuration docs
         for action in ['restart', 'status', 'stop', 'clean']:
             html += \
                 '''<td>
-            <form method="get" action="%sexe.py">
+            <form method="post" action="%sexe.py">
             <input type="hidden" name="unique_resource_name" value="%s" />
             <input type="hidden" name="all" value="true" />
             <input type="hidden" name="parallel" value="true" />'''\
@@ -188,7 +190,7 @@ Resource configuration docs
                     action_str = action.capitalize()
                 html += \
                     '''<td>
-                <form method="get" action="%sexe.py">
+                <form method="post" action="%sexe.py">
                 <input type="hidden" name="unique_resource_name" value="%s" />
                 <input type="hidden" name="exe_name" value="%s" />
                 <input type="submit" value="%s" />
@@ -208,7 +210,7 @@ Resource configuration docs
         for action in ['restart', 'status', 'stop', 'clean']:
             html += \
                 '''<td>
-            <form method="get" action="%sstore.py">
+            <form method="post" action="%sstore.py">
             <input type="hidden" name="unique_resource_name" value="%s" />
             <input type="hidden" name="all" value="true" />
             <input type="hidden" name="parallel" value="true" />'''\
@@ -237,7 +239,7 @@ Resource configuration docs
                     action_str = action.capitalize()
                 html += \
                     '''<td>
-                <form method="get" action="%sstore.py">
+                <form method="post" action="%sstore.py">
                 <input type="hidden" name="unique_resource_name" value="%s" />
                 <input type="hidden" name="store_name" value="%s" />
                 <input type="submit" value="%s" />
@@ -260,7 +262,7 @@ from the certificate.<br />
 
     html += \
         '''<tr><td>
-<form method="get" action="addresowner.py">
+<form method="post" action="addresowner.py">
 <input type="hidden" name="unique_resource_name" value="%s" />
 <input type="hidden" name="output_format" value="html" />
 <input type="text" name="cert_id" size="30" />
@@ -275,7 +277,7 @@ from the certificate.<br />
     for owner_id in owners:
         html += \
             '''<tr><td>
-<form method="get" action="rmresowner.py">
+<form method="post" action="rmresowner.py">
 <input type="hidden" name="unique_resource_name" value="%s" />
 <input type="hidden" name="cert_id" value="%s" />
 <input type="hidden" name="output_format" value="html" />
@@ -377,6 +379,7 @@ def main(client_id, user_arguments_dict):
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
 
 <script type="text/javascript" >
 var toggleHidden = function(classname) {
@@ -384,36 +387,6 @@ var toggleHidden = function(classname) {
         $(classname).toggleClass("hidden");
     }
     
-var runConfirmDialog = function(text, link, textFieldName) {
-
-    if (link == undefined) {
-        link = "#";
-    }
-    if (text == undefined) {
-        text = "Are you sure?";
-    }
-    $("#confirm_text").html(text);
-
-    var addField = function() { /* doing nothing... */ };
-    if (textFieldName != undefined) {
-        $("#confirm_input").show();
-        addField = function() {
-            link += textFieldName + "=" + $("#confirm_input")[0].value;
-        }
-    }
-
-    $("#confirm_dialog").dialog("option", "buttons", {
-              "No": function() { $("#confirm_input").hide();
-                                 $("#confirm_text").empty();
-                                 $("#confirm_dialog").dialog("close");
-                               },
-              "Yes": function() { addField();
-                                  window.location = link;
-                                }
-            });
-    $("#confirm_dialog").dialog("open");
-}
-
 $(document).ready(function() {
 
           // init confirmation dialog
@@ -519,14 +492,16 @@ Use the link below to permanently remove the resource from the grid after
 stopping all units and the front end.
 '''
                                        })
+                js_name = 'delres%s' % hexlify(unique_resource_name)
+                helper = html_post_helper(js_name, 'delres.py',
+                                          {'unique_resource_name':
+                                           unique_resource_name})
+                output_objects.append({'object_type': 'html_form', 'text': helper})
                 output_objects.append(
-                    {'object_type': 'link',
-                     'destination':
-                     "javascript:runConfirmDialog('%s','%s');" % \
-                     ("Really delete %s? (fails if it is busy)" % \
-                      unique_resource_name, 
-                      'delres.py?unique_resource_name=%s' % \
-                      (unique_resource_name)),
+                    {'object_type': 'link', 'destination':
+                     "javascript: confirmDialog(%s, '%s');" % \
+                     (js_name, 'Really delete %s? (fails if it is busy)' % \
+                      unique_resource_name),
                      'class': 'removelink',
                      'title': 'Delete %s' % unique_resource_name, 
                      'text': 'Delete %s' % unique_resource_name}

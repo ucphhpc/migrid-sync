@@ -28,6 +28,7 @@
 import shared.returnvalues as returnvalues
 from shared.findtype import is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.resadm import clean_resource_frontend, \
     stop_resource_frontend
@@ -59,6 +60,12 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     unique_resource_name = accepted['unique_resource_name'][-1]
 
