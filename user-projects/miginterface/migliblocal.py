@@ -20,6 +20,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
+from migerror import MigLocalError
 
 """
 This is the MiG lib local module. It aims to emulate the behavior of the miglib.py api module by generating output similar to MiG, but
@@ -29,15 +30,12 @@ It should not be imported directly, but by enabling local mode execution in the 
 
 import sys
 import os
-import getopt
 import subprocess
-import StringIO
 import tarfile
 import shutil
 import tempfile
-from multiprocessing import Process
-from multiprocessing.sharedctypes import Value, Array
-import signal
+from multiprocessing import Process, active_children
+import time
 
 # the path to the fake local mig home directory
 user = os.getlogin()
@@ -58,22 +56,17 @@ def job_status(job_ids, max_job_count):
 
     job_info_list = []
     status = "FINISHED"
-
+    
     for job_id in job_ids:
-        # use the unix os process monitor to watch the process.
-        out = subprocess.Popen("ps axo pid,stat | grep %s" % job_id, shell=True, stdout=subprocess.PIPE).communicate()[0]
-        ps_info = out.strip().split()
-        
-        if ps_info != []:
-            # check if the process is in zombie state. This means that it has terminated.
-            if ps_info[1].find("Z") == -1:
+        procs = active_children()
+        for p in procs:
+            if p.pid == int(job_id):
                 status = "EXECUTING"
-            else: 
-                os.kill(int(job_id), signal.SIGTERM)
+                
 
         job_info = ["Job Id: "+job_id+"\n", "Status: "+status+"\n"] # we need the newlines for parsing in miginterface- same as mig outputs
         job_info_list.extend(job_info)
-    
+        
         if len(job_info_list) == max_job_count:
             break
         
@@ -85,9 +78,8 @@ def job_status(job_ids, max_job_count):
     #       'Received: Mon Sep 29 20:42:37 2008\n', 'Queued: Mon Sep 29 20:42:38 2008\n', 
     #       'Executing: Mon Sep 29 20:47:03 2008\n', 'Finished: Mon Sep 29 20:49:25 2008\n', '\n'])
     exit_code = 0
-    server_out = __server_output_msg(0,job_info_list)
+    server_out = __server_output_msg(exit_code,job_info_list)
     return (exit_code, server_out)
-
 
 
 def submit_file(src_path, dst_path, submit_mrsl, extract_package):
@@ -95,14 +87,68 @@ def submit_file(src_path, dst_path, submit_mrsl, extract_package):
     Submit an emulated grid job to the local system. The job will start in a new process.
     
     src_path - the local file system path to an input file.
-    dst_path (not used) - not relevant for local execution. Only there to match miglib.
-    submit_mrsl (not used) - not relevant for local execution. Only there to match miglib.
-    extract_package (not used) - not relevant for local execution. Only there to match miglib.
+    dst_path - the path to put the src_path file in the fake mig home dir.
+    submit_mrsl (not used) - the mrsl file is always submitted in local mode
+    extract_package - this must be true when submitting a job through an archive
     """
     
     working_dir = os.path.dirname(src_path)
+    
+    start_of_suffix = os.path.basename(src_path).find(".") 
+    job_name = src_path[:start_of_suffix]
+    
+    exec_dir = os.path.join(tempfile.gettempdir(), job_name+"_localexec")
+    if os.path.exists(exec_dir): # create unique folder name
+        timestamp = int(time.time()*100)
+        exec_dir += "_"+str(timestamp) 
+    os.mkdir(exec_dir)
+    
+    # copy the file to fake mig home
+    shutil.copy(src_path, os.path.join(MIG_HOME,dst_path))
+    mrsl_file = ""
+    
+    if extract_package :
+        # unpack the input files
+        tar_file = tarfile.open(os.path.join(MIG_HOME,dst_path), "r")
+        tar_file.extractall(MIG_HOME)
+        prog_files = tar_file.getnames()
+        tar_file.close()
+        
+        for f in prog_files:
+            if f.find(".mRSL") != -1:
+                mrsl_file = f
+    
+    else:
+        if os.path.basename(src_path.lower()).find(".mrsl") == -1:
+            raise MigLocalError("Must submit an mRSL file")
+        
+        
+        mrsl_file = dst_path
+    
+    mrsl_entries = __parse_mrsl(os.path.join(MIG_HOME, mrsl_file))
+    all_input_files = []
+    if mrsl_entries.has_key("INPUTFILES"):
+        all_input_files.extend(mrsl_entries["INPUTFILES"])
+
+    if mrsl_entries.has_key("EXECUTABLES"):
+        all_input_files.extend(mrsl_entries["EXECUTABLES"])
+    
+    all_input_files.append(mrsl_file)
+    
+    # stage the input files by copying from mig home to execution dir
+    for f in all_input_files:
+        paths = f.split()
+        src = paths[0]
+        dest = paths[0]
+        if len(paths) > 1: # user provided a destination preference
+            dest = paths[1]
+            directory = os.path.join(exec_dir, os.path.dirname(dest)) # destination dir
+            if not os.path.exists(directory):
+                os.makedirs(directory) 
+        shutil.copy(os.path.join(MIG_HOME, src), os.path.join(exec_dir, dest))
+                
     # start a new process
-    proc = Process(target=__job_process, args=(src_path, working_dir,)) # the comma is not a typo
+    proc = Process(target=__job_process, args=(mrsl_file, exec_dir,)) # the comma is not a typo
     proc.start()
     exit_code = 0
     server_out = ["0"]
@@ -135,7 +181,7 @@ def ls_file(path):
     path - path to file from fake mig home.
     """
     
-    path = os.path.join(MIG_HOME, path.lstrip("path="))
+    path = os.path.join(MIG_HOME, path.replace("path=", ""))
     server_out = []
     if os.path.exists(path):
         if os.path.isfile(path):
@@ -158,7 +204,7 @@ def mk_dir(path):
     path - path to directory relative to the mig home dir.
     """
 
-    path = os.path.join(MIG_HOME, path.strip("path="))
+    path = os.path.join(MIG_HOME, path.replace("path=", ""))
     server_out = []
     if not os.path.exists(path):
         os.mkdir(path)
@@ -174,29 +220,33 @@ def cancel_job(job_ids):
         job_ids = [job_ids]
     out = []
     exit_code = 0
+    procs = active_children()
     try :
-        for j in job_ids:
-            os.kill(int(j), signal.SIGTERM)
-            out.append("Cancelled job %s." % j)
+        for job_id in job_ids: 
+            for p in procs:
+                if int(job_id) == p.pid :
+                    p.terminate()
+                    out.append("Cancelled job %s." % job_id)
         out.insert(0, "Exit code: 0")
     except OSError, e :
-        out.append("Error cancelling job %s." % j)
+        out.append("Error cancelling job %s." % job_id)
         out.insert(0, "Exit code: 1")
     return (exit_code, out)
 
 
 def rm_file(path_list):
     out = []
+    server_exit_code = 0
+    exit_code = 0
     for p in path_list.split(";"):
-        path = os.path.join(MIG_HOME, p.strip("path="))
+        path = os.path.join(MIG_HOME, p.replace("path=", ""))
         if os.path.exists(path):
             os.remove(path)
             out.append("Removed %s" % path)
         else: 
             out.append("File not found %s" % path)
-    exit_code = 0
-    server_out = __server_output_msg(0, out)
-    
+            server_exit_code = 105
+    server_out = __server_output_msg(server_exit_code, out)
     return (exit_code, server_out)
 
 def put_file(src_path, dst_path, submit_mrsl, extract_package):
@@ -207,24 +257,29 @@ def put_file(src_path, dst_path, submit_mrsl, extract_package):
     return (exit_code, server_out)
 
 def cat_file(path_list):
-    out = []
+    exit_code = 0    
+    server_exit_code = 0
+    concat_str = ""
     for path in path_list:
         abs_path = os.path.join(MIG_HOME, path)
-        cmd = "cat "+abs_path
-        p = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out.append(p.communicate()[0])
-        
-    server_out = __server_output_msg(0, out)
-    exit_code = 0
+        contents = "cat: %s: No such file or directory" % abs_path 
+        if os.path.exists(abs_path):
+            f = open(abs_path)
+            contents = f.read()
+            f.close()
+        else: 
+            server_exit_code = 105
+        concat_str += contents + "\n"
+    out = [concat_str]      
+    server_out = __server_output_msg(server_exit_code, out)
+
     return (exit_code, server_out)
 
 def rm_dir(path_list):
     out = []
     for path in path_list:
         abs_path = os.path.join(MIG_HOME, path)
-        cmd = "rmdir "+abs_path
-        p = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out.append(p.communicate()[0])
+        os.rmdir(path)
     
     server_out = __server_output_msg(0, out)
     exit_code = 0
@@ -381,30 +436,27 @@ def __server_output_msg(exit_code, output):
 
 
 def __parse_mrsl(path):
-    mrsl_fields = ["EXECUTE", "INPUTFILES", "EXECUTABLES", "OUTPUTFILES"]
+    #mrsl_fields = ["EXECUTE", "INPUTFILES", "EXECUTABLES", "OUTPUTFILES"]
     mrsl_dict = {}
     
     # parse the mRSL file
     f = open(path)
     lines = f.readlines()
-    
-    
-    for field in mrsl_fields:
-    # extract commands
-        first_entry = lines.index("::%s::\n" % field)+1
-        entries = []
-        for line in lines[first_entry:]:
-            if line.find("::") != -1:
-                break
-            if line.strip() != "":
-                entries.append(line.strip())
-        if entries:
-            mrsl_dict[field] = entries
-                
+    f.close()
+    key = "MISSINGFIELDNAME"
+    for l in lines:
+        if l.find("::") != -1:
+            key = l.replace("::", "").strip()
+            mrsl_dict[key] = []
+        else:
+            value = l.strip()
+            if value:
+                mrsl_dict[key].append(value)    
+                 
     return mrsl_dict
     
 
-def __job_process(input, working_dir):
+def __job_process(mrsl_file, working_dir):
     """
     Method for emulating a grid job. Will be run in a new process.
 
@@ -413,37 +465,8 @@ def __job_process(input, working_dir):
     """
 
     os.chdir(working_dir)
-    tar_path = input
-    # unpack the input files
-    tar_file = tarfile.open(tar_path, "r")
-    tar_file.extractall(working_dir)
-    prog_files = tar_file.getnames()
-    tar_file.close()
-
-    mrsl_file = ""
-    # locate the .mRSL file
-    for f in prog_files:
-        if f.find(".mRSL") != -1:
-            mrsl_file = f
-        
     # parse the mRSL file
     mrsl_entries = __parse_mrsl(os.path.join(working_dir,mrsl_file))
-
-
-    all_input_files = []
-    if mrsl_entries.has_key("INPUTFILES"):
-        all_input_files.extend(mrsl_entries["INPUTFILES"])
-
-    if mrsl_entries.has_key("EXECUTABLES"):
-        all_input_files.extend(mrsl_entries["EXECUTABLES"])
-     
-    # stage the input files if needed
-    for f in all_input_files:
-        path = f.split()
-        if len(path) > 1: # user provided a destination preference
-            directory = os.path.dirname(path[1]) # destination dir
-            os.makedirs(directory) 
-            shutil.move(path[0], path[1])
 
     job_id = str(os.getpid())
     
@@ -459,26 +482,55 @@ def __job_process(input, working_dir):
     # run the commands
     try :
         for cmd in mrsl_entries["EXECUTE"]:
-            proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=stdout_file, stderr=stderr_file, close_fds=True)
-            proc.wait()
+            __check_rte_vars(cmd)
+            
+            proc = subprocess.Popen(cmd, shell=True, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
+            out, err = proc.communicate()
+            if err : 
+                print "WARNING: Local grid job process wrote to standard error:\n", err
+            
+            stdout_file.write(out)
+            stdout_file.close()
+            stderr_file.write(err)
+            stderr_file.close()
     
+        if mrsl_entries.has_key("OUTPUTFILES"):
+            # copy output files from mig home dir
+            for f in mrsl_entries["OUTPUTFILES"]:
+                filepath = f.strip().split()
+                src_path = filepath[0]
+                dest_path = filepath[0]
+                
+                # if there are two file names, we are using the mig format of <path_on_resource path_on_mig_home>
+                if len(filepath) > 1:
+                    dest_path = filepath[1]
+                    dest_directory = os.path.dirname(os.path.join(MIG_HOME, dest_path))
+                    if not os.path.exists(dest_directory):
+                        os.makedirs(dest_directory)
+                if os.path.exists(os.path.join(working_dir, src_path)):
+                    shutil.copy(os.path.join(working_dir, src_path), os.path.join(MIG_HOME, dest_path))
+                else:
+                    print "WARNING: Missing output file.",src_path
     except Exception, e:
-        "Process error : %s. Terminating.", e.err()
+        print "Process error : Terminating.", e
     except KeyboardInterrupt :
         print "Keyboard interrupt. Terminating."
         return
-    
-    if mrsl_entries.has_key("OUTPUTFILES"):
-        # copy output files from mig home dir
-        for f in mrsl_entries["OUTPUTFILES"]:
-            filepath = f.strip().split()
-            src_path = filepath[0]
-            dest_path = filepath[0]
             
-            # if there are two file names, we are using the mig format of <path_on_resource path_on_mig_home>
-            if len(filepath) > 1:
-                dest_path = filepath[1]
-                dest_directory = os.path.dirname(os.path.join(MIG_HOME, dest_path))
-                if not os.path.exists(dest_directory):
-                    os.makedirs(dest_directory)
-            shutil.copy(os.path.join(working_dir, src_path), os.path.join(MIG_HOME, dest_path))
+            
+def __check_rte_vars(cmd):
+    """
+    Searches for alias variables in the commands cmd and checks if they are in the local os environment. 
+    Fx "$PYTHON" 
+    
+    cmd - a string format shell command
+    """
+    tokens = cmd.split()
+    for t in tokens:
+        if t.find("$") != -1:
+            rte_var = t
+            if not os.getenv(rte_var.lstrip("$")):
+                print "WARNING: found undefined runtime environment variable ", rte_var
+            
+    

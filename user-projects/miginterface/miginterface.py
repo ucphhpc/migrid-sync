@@ -92,19 +92,14 @@ def create_job(exec_commands, input_files=[], output_files=[], executables=[], c
                 
     # name of the mrsl file and working directory
     if name == "":
-        timestamp = int(time.time()*100)
-        random.seed()
-        r_num = random.randint(0, timestamp)
-        name = "gridjob_"+str(timestamp)+str(r_num)
+        name = __generate_joblabel()
     mrsl_filename = name+".mRSL"
-    #mig_job_directory = name 
     
     tmp_dir = tempfile.gettempdir() # /tmp/
     local_working_dir = os.path.join(tmp_dir, name)
     # creating local temporary working directory
     os.mkdir(local_working_dir) 
-    # create job directory on MiG
-    #mk_dir(mig_job_directory) 
+
     # the path of the mRSL file
     mrsl_path = os.path.join(local_working_dir, mrsl_filename) 
     
@@ -150,7 +145,7 @@ def create_job(exec_commands, input_files=[], output_files=[], executables=[], c
     return job_id
 
 
-def submit_job(mrsl_file, dest_dir=""):
+def submit_job(mrsl_file, dest=""):
     """
     Submits a MiG job using an mrsl_file. 
     Returns a job id given by the MiG server.
@@ -159,9 +154,13 @@ def submit_job(mrsl_file, dest_dir=""):
     This will implicitly generate an mRSL file and submit the job.
     
     mrsl_file - path to an mrsl file containing the job configuration
-    dest_dir (optional) - the target directory to put the mrsl file in the MiG user home. 
+    dest (optional) - name of the target file to put the mrsl file in the MiG user home. 
     """
-    output = __miglib_function(miglib.submit_file, mrsl_file, dest_dir, True, False) 
+
+    if dest == "":
+        dest = os.path.basename(mrsl_file) 
+    
+    output = __miglib_function(miglib.submit_file, mrsl_file, dest, True, False) 
     __debug(output)
     __verify_submit(output)
     job_id = __extract_job_id(output)
@@ -180,6 +179,7 @@ def upload_file(path, mig_path=""):
     path - local path to the file
     mig_path - path to the MiG destination relative to the MiG user home directory
     """
+    
     if mig_path == "":
         mig_path = os.path.basename(path)
     submit = False
@@ -208,7 +208,6 @@ def ls(path):
     
     path - path to a location in the MiG user home directory.
     """
-    #path_str = "path="+path
     out = __miglib_function(miglib.ls_file, path) 
     files = map(lambda x : x.strip("\t\n"), out)
     return files 
@@ -472,8 +471,6 @@ def local_mode_off():
     import miglib as miglib
 
 
-
-    
 ##############################################
 ############# HELPER FUNCTIONS ####################
 ##############################################
@@ -645,10 +642,6 @@ def __check_configuration():
     
     if not os.path.exists(MIG_CONFIG):
         raise MigLocalError("Cannot find mig configuration file miguser.conf. It should be located at %s."% MIG_CONFIG)
-    #try:
-    #    sys.modules["miglib"]
-    #except KeyError:
-    #    raise MigLocalError("Cannot find miglib module")
     
 
 def __check_files(files):
@@ -662,3 +655,10 @@ def __check_files(files):
         if not os.path.exists(path):
             raise MigLocalError("Cannot find input file: "+path)
     
+
+def __generate_joblabel():
+    timestamp = int(time.time()*100)
+    random.seed()
+    r_num = random.randint(0, timestamp)
+    name = "gridjob_"+str(timestamp)+str(r_num)
+    return name
