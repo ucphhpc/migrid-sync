@@ -1,0 +1,83 @@
+This directory contains helper scripts for job submission, job query, 
+cancellation, and estimation of job delay, for the LoadLeveler queueing 
+system, in correspondance to the PBS scripts in another folder.
+
+Scripts can be 'installed' at the resources and specified as the
+commands used in the LRMSX fields of the resource configuration.
+They should preferably be copied to and used from a read-only location on the
+resource, because they should be auto executed as a part of
+master_node_script.
+
+One particularity of LoadLeveler is that it uses job/user "classes", so 
+the scripts for submission, query and delay take the class name as a mandatory
+first argument. This can be added inside the resource configuration, in oder to 
+set up one and the same resource with different classes.
+This directory contains helper scripts for job submission, job query, 
+cancellation, and estimation of job delay, for the LoadLeveler queueing 
+system, in correspondance to the PBS scripts in another folder.
+
+Scripts can be 'installed' at the resources and specified as the
+commands used in the LRMSX fields of the resource configuration.
+They should preferably be copied to and used from a read-only location on the
+resource, because they should be auto executed as a part of
+master_node_script.
+
+One particularity of LoadLeveler is that it uses job/user "classes", so 
+the scripts for submission, query and delay take the class name as a mandatory
+first argument. This can be added inside the resource configuration, in oder to 
+set up one and the same resource with different classes.
+This directory contains helper scripts for job submission, job query, 
+cancellation, and estimation of job delay, for the LoadLeveler queueing 
+system, in correspondance to the PBS scripts in another folder.
+
+Scripts can be 'installed' at the resources and specified as the
+commands used in the LRMSX fields of the resource configuration.
+They should preferably be copied to and used from a read-only location on the
+resource, because they should be auto executed as a part of
+master_node_script.
+
+One particularity of LoadLeveler is that it uses job/user "classes", so 
+the scripts for submission, query and delay take the class name as a mandatory
+first argument. This can be added inside the resource configuration, in oder to 
+set up one and the same resource with different classes.
+This directory contains helper scripts for job submission, job query, 
+cancellation, and estimation of job delay, for the LoadLeveler queueing 
+system, in correspondance to the PBS scripts in another folder.
+
+Scripts can be 'installed' at the resources and specified as the
+commands used in the LRMSX fields of the resource configuration.
+They should preferably be copied to and used from a read-only location on the
+resource, because they should be auto executed as a part of
+master_node_script.
+
+One particularity of LoadLeveler is that it uses job/user "classes", so 
+the scripts for submission, query and delay take the class name as a mandatory
+first argument. This can be added inside the resource configuration, in oder to 
+set up one and the same resource with different classes.
+This directory contains helper scripts for job submission, job query, 
+cancellation, and estimation of job delay, for the LoadLeveler queueing 
+system, in correspondance to the PBS scripts in another folder.
+
+Scripts can be 'installed' at the resources and specified as the
+commands used in the LRMSX fields of the resource configuration.
+They should preferably be copied to and used from a read-only location on the
+resource, because they should be auto executed as a part of
+master_node_script.
+
+One particularity of LoadLeveler is that it uses job/user "classes", so 
+the scripts for submission, query and delay take the class name as a mandatory
+first argument. This can be added inside the resource configuration, in oder
+to set up one and the same resource with different classes.
+For instance, to feed jobs into LL using a class "kemi", the calls would be
+
+LRMS Execution Delay Command:
+	MiGllqueue_delay.sh kemi
+LRMS Submit Job Command:
+	MiGllsubmit.sh kemi
+LRMS Remove Job Command: 
+	MiGllremove.sh kemi
+LRMS Query Job Command:
+	MiGllquery.sh kemi
+
+All scripts depend on environment variables being set by the calling MiG
+resource script, see the usage messages.
