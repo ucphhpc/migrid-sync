@@ -39,7 +39,8 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_resource_create_request_mail
-from shared.resource import prepare_conf, write_resource_config
+from shared.resource import prepare_conf, write_resource_config, \
+     create_resource
 from shared.useradm import client_id_dir
 
 
@@ -50,7 +51,8 @@ def signature():
     return ['html_form', defaults]
 
 
-def update_resource(configuration, client_id, resource_id, user_vars, output_objects, new_resource=False):
+def update_resource(configuration, client_id, resource_id, user_vars,
+                    output_objects, new_resource=False):
     """Update existing resource configuration from request"""
 
     logger = configuration.logger
@@ -60,11 +62,13 @@ def update_resource(configuration, client_id, resource_id, user_vars, output_obj
                                 tmp_id)
     conf_file = os.path.join(configuration.resource_home, resource_id,
                              'config.MiG')
+    output = ''
     try:
         logger.info('write to file: %s' % pending_file)
         write_resource_config(configuration, user_vars, pending_file)
     except Exception, err:
-        logger.error('Resource conf %s could not be written: %s' % (pending_file, err))
+        logger.error('Resource conf %s could not be written: %s' % \
+                     (pending_file, err))
         output_objects.append({'object_type': 'error_text', 'text':
                                'Could not write configuration!'})
         return False
@@ -91,26 +95,42 @@ def update_resource(configuration, client_id, resource_id, user_vars, output_obj
             os.rename(pending_file, conf_file)
         except:
             return False
+        unique_resource_name = '(HOSTURL)s.%(HOSTIDENTIFIER)s' % user_vars
         output_objects.append({'object_type': 'text', 'text':
-                               'Updated resource configuration: %s' % msg})
+                               'Updated %s resource configuration: %s' % \
+                               (unique_resource_name, msg)})
         output_objects.append({'object_type': 'link',
                                'destination':
-                               'resadmin.py?unique_resource_name=%(HOSTURL)s.%(HOSTIDENTIFIER)s' % user_vars,
+                               'resadmin.py?unique_resource_name=%s' % \
+                               unique_resource_name,
                                'class': 'adminlink',
                                'title': 'Administrate resource',
                                'text': 'Manage resource',
                                })
         return True
-
-    logger.info('Sending create request for %s to admins' % resource_id)
-    (status, msg) = send_resource_create_request_mail(client_id,
-                                                      user_vars['HOSTURL'],
-                                                      pending_file, logger,
-                                                      configuration)
-    logger.info(msg)
-    if not status:
-        output_objects.append({'object_type': 'error_text', 'text':
-                               '''Failed to send request with ID "%s" to the %s administrator(s):
+    elif configuration.auto_add_resource:
+        resource_name = user_vars['HOSTURL']
+        logger.info('Auto creating resource %s from %s' % (resource_id,
+                                                           pending_file))
+        (create_status, msg) = create_resource(configuration, client_id,
+                                               resource_name, pending_file)
+        if not create_status:
+            output_objects.append({'object_type': 'text', 'error_text':
+                               'Resource creation failed: %s' % msg})
+            return False
+        output += '''Your resource was added as %s.%s
+<hr />''' % (resource_name, msg)
+    else:
+        logger.info('Sending create request for %s to admins' % resource_id)
+        (status, msg) = send_resource_create_request_mail(client_id,
+                                                          user_vars['HOSTURL'],
+                                                          pending_file, logger,
+                                                          configuration)
+        logger.info(msg)
+        if not status:
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '''Failed to send request with ID "%s" to
+the %s administrator(s):
 %s
 Please manually contact the %s server administrator(s) (%s)
 and provide this information''' % (tmp_id, msg, 
@@ -118,7 +138,12 @@ and provide this information''' % (tmp_id, msg,
                                    configuration.short_title,
                                    configuration.admin_email )
                                })
-        return False
+            return False
+        output += """Your creation request of the resource: <b>%s</b>
+has been sent to the %s server administration and will be processed as
+soon as possible.
+<hr />""" % (user_vars['HOSTURL'], configuration.short_title) \
+
 
     public_key_file_content = ''
     try:
@@ -130,31 +155,29 @@ and provide this information''' % (tmp_id, msg,
 
     # Avoid line breaks in displayed key
     if public_key_file_content:
-        public_key_info = \
-                        'The public key you must add:<br />***BEGIN KEY***<br />%s<br />***END KEY***<br /><br />'\
-                        % public_key_file_content.replace(' ', '&nbsp;')
+        public_key_info = '''
+The public key you must add:<br />
+***BEGIN KEY***<br />
+%s<br />
+***END KEY***<br />
+<br />''' % public_key_file_content.replace(' ', '&nbsp;')
     else:
-        public_key_info = \
-                        '<br />Please request an SSH public key from the %s administrator(s) (%s)<br /><br />'\
-                        % (configuration.short_title, configuration.admin_email)
+        public_key_info = '''<br />
+Please request an SSH public key from the %s administrator(s) (%s)<br />
+<br />''' % (configuration.short_title, configuration.admin_email)
 
-    output = """Your creation request of the resource: <b>%s</b>
-has been sent to the %s server administration and will be processed as
-soon as possible.
-<hr />""" % (user_vars['HOSTURL'], configuration.short_title) \
-            + """
-Until you get a confirmation from a %s administrator, please make sure
-the %s server can SSH to your resource without a passphrase. The %s
-server's public key should be in ~/.ssh/authorized_keys for the mig user
-on the resource frontend. %s
+    output += """
+Please make sure the %s server can SSH to your resource without a passphrase.
+The %s server's public key should be in ~/.ssh/authorized_keys for the MiG
+user on the resource frontend. %s
 <br />
 Also, please note that %s resources require the curl command line tool from
 <a href="http://www.curl.haxx.se">cURL</a>. 
 <br />
 <a href='resadmin.py'>View existing resources</a> where your new resource 
 will also eventually show up.
-""" % (configuration.short_title, configuration.short_title, 
-       configuration.short_title, configuration.short_title, public_key_info)
+""" % (configuration.short_title, configuration.short_title, public_key_info,
+       configuration.short_title)
 
     output_objects.append({'object_type': 'html_form', 'text': output})
 
@@ -215,8 +238,8 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Resource edit actions'
-    output_objects.append({'object_type': 'header', 'text': 'Resource edit actions'
-                          })
+    output_objects.append({'object_type': 'header', 'text':
+                           'Resource edit actions'})
     conf = prepare_conf(configuration, user_arguments_dict, resource_id)
     if 'create' == action:
         logger.info('%s is trying to create resource %s (%s)' % \
@@ -226,7 +249,8 @@ def main(client_id, user_arguments_dict):
 
         # We only get here if hostidentifier is dynamic so no access control
 
-        if not update_resource(configuration, client_id, resource_id, conf, output_objects, True):
+        if not update_resource(configuration, client_id, resource_id, conf,
+                               output_objects, True):
             status = returnvalues.SYSTEM_ERROR
     elif 'update' == action:
         logger.info('%s is trying to update resource %s (%s)' % \
@@ -246,7 +270,8 @@ def main(client_id, user_arguments_dict):
                  resource_id})
             status = returnvalues.SYSTEM_ERROR
         elif client_id in owner_list:
-            if not update_resource(configuration, client_id, resource_id, conf, output_objects, False):
+            if not update_resource(configuration, client_id, resource_id, conf,
+                                   output_objects, False):
                 status = returnvalues.SYSTEM_ERROR
         else:
             status = returnvalues.CLIENT_ERROR

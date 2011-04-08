@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# createresource - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# createresource - Create resource from user request file
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,19 +28,18 @@
 # Initial version by Henrik Hoey Karlsen
 # Modifications by Martin Rehr
 
-"""Add MiG resource"""
+"""Add MiG resource from pending request file"""
 
 import sys
 
 from shared.conf import get_configuration_object
-from shared.resource import create_resource, \
-    create_new_resource_configuration, remove_resource
-from shared.cgioutput import CGIOutput
+from shared.resource import create_resource
 
 
 def usage(name='createresource.py'):
+    """Usage help"""
     return """Usage:
-%(name)s RESOURCE_FQDN OWNER_ID [RESOURCE_CONFIG]
+%(name)s RESOURCE_FQDN OWNER_ID RESOURCE_CONFIG
 
 The script adds .COUNTER to the resources unique id"""\
          % {'name': name}
@@ -48,47 +47,20 @@ The script adds .COUNTER to the resources unique id"""\
 
 # ## Main ###
 
-argc = len(sys.argv)
-if not (argc == 3 or argc == 4):
-    print usage()
-    sys.exit(1)
+if '__main__' == __name__:
+    if not sys.argv[3:]:
+        print usage()
+        sys.exit(1)
+        
+    resource_name = sys.argv[1].strip().lower()
+    client_id = sys.argv[2].strip()
+    pending_file = sys.argv[3].strip()
+    
+    configuration = get_configuration_object()
 
-if argc == 4:
-    resource_configfilename = sys.argv[3].strip()
-else:
-    resource_configfilename = ''
-
-resource_name = sys.argv[1].strip().lower()
-client_id = sys.argv[2].strip()
-
-configuration = get_configuration_object()
-logger = configuration.logger
-o = CGIOutput(logger)
-
-(status, msg, resource_identifier) = create_resource(resource_name,
-        client_id, configuration.resource_home, logger)
-o.out(msg)
-
-if status and argc == 4:
-    (status, msg) = create_new_resource_configuration(
-        resource_name,
-        client_id,
-        configuration.resource_home,
-        configuration.resource_pending,
-        resource_identifier,
-        resource_configfilename,
-        )
-    o.out(msg)
-
-    if not status:
-        (status2, msg) = remove_resource(configuration.resource_home,
-                resource_name, resource_identifier)
-        o.out(msg)
-
-if status:
-    o.client('\n - you might need to do a SSH to the resource before starting the resource to get it in known_hosts!'
-              + '\n (this is because SSH hostkey checking is disabled)')
-    o.reply_and_exit(o.OK)
-else:
-    o.reply_and_exit(o.CLIENT_ERROR)
-
+    (create_status, msg) = create_resource(configuration, client_id,
+                                           resource_name, pending_file)
+    if create_status:
+        print 'Resource created with ID: %s.%s' % (resource_name, msg)
+    else:
+        print 'Resource creation failed: %s' % msg

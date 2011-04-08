@@ -33,7 +33,7 @@ from binascii import hexlify
 from conf import get_configuration_object
 from shared.defaults import default_vgrid
 from shared.fileio import make_symlink
-from shared.resource import create_resource
+from shared.resource import create_resource_home
 from shared.serial import load, dump
 import shared.confparser as confparser
 
@@ -91,13 +91,12 @@ def create_oneclick_resource(
 
     resource_name = 'oneclick'
 
-    result = create_resource(resource_name, sandboxkey,
-                             configuration.resource_home, logger)
+    result = create_resource_home(configuration, sandboxkey, resource_name)
 
     if not result[0]:
         return (False, result[1])
 
-    resource_identifier = result[2]
+    resource_identifier = result[1]
     unique_resource_name = resource_name + '.'\
          + str(resource_identifier)
 
@@ -176,7 +175,7 @@ continuous=False
 shared_fs=False
 vgrid=%s
     """\
-         % (result[2], sandboxkey, exe_name, cputime, default_vgrid)
+         % (resource_identifier, sandboxkey, exe_name, cputime, default_vgrid)
 
     # write the conf string to a conf file
 

@@ -48,6 +48,7 @@ def fix_missing(config_file, verbose=True):
     global_section = {
         'enable_server_dist': False,
         'auto_add_cert_user': False,
+        'auto_add_resource': False,
         'server_fqdn': fqdn,
         'admin_email': '%s@%s' % (user, fqdn),
         'mrsl_files_dir': '~/state/mrsl_files/',
@@ -236,6 +237,7 @@ class Configuration:
     usage_record_dir = None
 
     auto_add_cert_user = False
+    auto_add_resource = False
 
     # ARC resource configuration (list)
     # wired-in shorthands in arcwrapper: 
@@ -615,6 +617,9 @@ class Configuration:
         if config.has_option('GLOBAL', 'auto_add_cert_user'):
             self.auto_add_cert_user = config.getboolean('GLOBAL',
                     'auto_add_cert_user')
+        if config.has_option('GLOBAL', 'auto_add_resource'):
+            self.auto_add_resource = config.getboolean('GLOBAL',
+                    'auto_add_resource')
 
         # if arc cluster URLs configured, read them in:
 

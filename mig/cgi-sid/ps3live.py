@@ -37,7 +37,7 @@ from shared.cgishared import init_cgiscript_possibly_with_cert, \
     cgiscript_header
 from shared.defaults import default_vgrid
 from shared.fileio import make_symlink
-from shared.resource import create_resource
+from shared.resource import create_resource_home
 from shared.sandbox import get_resource_name
 from shared.resadm import get_frontend_script, get_master_node_script
 from shared.resadm import fill_frontend_script, \
@@ -94,15 +94,14 @@ def create_ps3_resource(sandboxkey):
     exe_shared_fs = True
     exe_vgrid = default_vgrid
 
-    result = create_resource(resource_name, sandboxkey,
-                             configuration.resource_home, logger)
+    result = create_resource_home(configuration, sandboxkey, resource_name)
 
     if not result[0]:
         o.out(result[1])
         cgiscript_header()
         o.reply_and_exit(o.ERROR)
 
-    resource_identifier = result[2]
+    resource_identifier = result[1]
     unique_resource_name = resource_name + '.'\
          + str(resource_identifier)
 
@@ -181,7 +180,7 @@ vgrid=%s"""\
          % (
         mig_user,
         hosturl,
-        result[2],
+        resource_identifier,
         resource_home,
         script_language,
         str(ssh_port),

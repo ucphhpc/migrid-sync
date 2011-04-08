@@ -212,8 +212,7 @@ def local_exe_status_command(dir, node, name='master'):
             'name': name,
             'pgid': '$mig_exe_pgid',
             }
-    return r'if [ \\`ps -o pid= -g $mig_exe_pgid | wc -l \\` -eq 0 ]; then exit 1; else exit 0;fi'\
-         % {'dir': dir, 'node': node, 'name': name}
+    return r'if [ \\`ps -o pid= -g $mig_exe_pgid | wc -l \\` -eq 0 ]; then exit 1; else exit 0;fi'
 
 
 def default_exe_status_command(execution_dir, execution_node):
@@ -231,8 +230,7 @@ def local_exe_stop_command(dir, node, name='master'):
             'name': name,
             'pgid': '$mig_exe_pgid',
             }
-    return 'kill -9 -$mig_exe_pgid ' % {'dir': dir, 'node': node,
-            'name': name}
+    return 'kill -9 -$mig_exe_pgid '
 
 
 def default_exe_stop_command(execution_dir, execution_node):
@@ -886,17 +884,10 @@ def real_to_anon_res_map(resource_home):
         res_map[name] = anon_resource_id(name)
     return res_map
 
-def create_resource(
-    resource_name,
-    client_id,
-    resource_home,
-    logger,
-    ):
-    """Create unique resource home dir and return hostidentifier"""
+def create_resource_home(configuration, client_id, resource_name):
+    """Create unique resource home dir and return host identifier"""
 
-    status = True
-
-    names = list_resources(resource_home)
+    names = list_resources(configuration.resource_home)
 
     # This is a bit dangerous, but if all administrators use this script to
     # create resources it should not be a problem.
@@ -912,50 +903,61 @@ def create_resource(
     resource_identifier = maxcounter + 1
     unique_resource_name = resource_name + '.'\
          + str(resource_identifier)
-    newdir = os.path.join(resource_home, unique_resource_name)
+    newdir = os.path.join(configuration.resource_home, unique_resource_name)
     try:
         os.mkdir(newdir)
-    except Exception, err:
-
-        msg = 'could not create: %s\n' % newdir
-        status = False
+    except:
+        return (False, 'could not create: %s\n' % newdir)
 
     owner_list = []
     owner_list.append(client_id)
-    owner_file = os.path.join(resource_home, unique_resource_name, 'owners')
-    status = pickle(owner_list, owner_file, logger)
-    if status == False:
-        msg = 'could not pickle: %s\n' % owner_file
-        status = False
-
-    # Tell if any errors was encountered
-
-    if status:
-        msg = \
-            "Resource '%s' was successfully created (%s added as the owner)"\
-             % (unique_resource_name, client_id)
+    owner_file = os.path.join(configuration.resource_home,
+                              unique_resource_name, 'owners')
+    status = pickle(owner_list, owner_file, configuration.logger)
+    if not status:
+        msg = """
+Resource '%s' was NOT successfully created. Please take a look at the lines
+above - there should be some error output
+""" % unique_resource_name
+        try:
+            os.rmdir(newdir)
+        except Exception, err:
+            pass
+        return (status, msg)
     else:
-
-        # msg += """\n\n\Tell resource owner: You should also verify that you have the needed directories %s and %s. If not, you can create the
-        # directories by running the following command on the frontend: <br>mkdir -p %s
-        # and this command on the execution unit: <br>%s
-        # """ % ("a", "b", "c", "d")
-        # if len(resource_configfile):
-
-        msg = \
-            "Resource '%s' was NOT successfully created. Please take a look at the lines above- there should be some error output"\
-             % unique_resource_name
-
-    return (status, msg, resource_identifier)
+        return (status, resource_identifier)
 
 
-def remove_resource(resource_home, resource_name, resource_identifier):
+# TODO: switch oneclick, sss and ps3 sandboxes to use create_resource()
+
+def create_resource(configuration, client_id, resource_name, pending_file):
+    """Create unique resource home dir and fill with resource config based on
+    resource request in pending_file.
+    If pending_file is a relative path it will prefixed with the
+    resource_pending dir of the client_id. Thus sandbox confs with no required
+    user can use e.g. /tmp for the pending file and still use this function.
+    Returns creation status and host identifier for the new resource.
+    """
+    
+    (status, id_msg) = create_resource_home(configuration, client_id,
+                                         resource_name)
+    if not status:
+        return (False, id_msg)
+    (status, msg) = create_resource_conf(configuration, client_id,
+                                         resource_name, id_msg, pending_file)
+    if not status:
+        remove_resource(configuration, client_id, resource_name, id_msg)
+        return (False, msg)
+    return (True, id_msg)
+
+
+def remove_resource(configuration, client_id, resource_name, resource_identifier):
     """Remove a resource home dir"""
     msg = "\nRemoving host: '%s.%s'" % (resource_name,
             resource_identifier)
 
     unique_resource_name = resource_name + '.' + str(resource_identifier)
-    resource_path = os.path.join(resource_home, unique_resource_name)
+    resource_path = os.path.join(configuration.resource_home, unique_resource_name)
 
     for (root, dirs, files) in os.walk(resource_path):
         for filename in files:
@@ -974,28 +976,31 @@ def remove_resource(resource_home, resource_name, resource_identifier):
     return (True, msg)
 
 
-def create_new_resource_configuration(
-    resource_name,
+def create_resource_conf(
+    configuration,
     client_id,
-    resource_home,
-    resource_pending,
+    resource_name,
     resource_identifier,
     resource_configfile,
     ):
-    """Create a resource from conf in pending file"""
-
-    msg = \
-        "\nTrying to create configuration for new resource: '%s.%s' from file: '%s'"\
-         % (resource_name, str(resource_identifier),
+    """Create a resource from conf in pending file. If pending_file is a
+    relative path it will prefixed with the resource_pending dir of the
+    client_id.
+    """
+    msg = """
+Trying to create configuration for new resource: '%s.%s' from file: '%s'
+""" % (resource_name, str(resource_identifier),
             resource_configfile)
     client_dir = client_id_dir(client_id)
 
-    pending_file = os.path.join(resource_pending, client_dir,
-                                resource_configfile)
-    tmpfile = os.path.join(resource_pending, client_dir,
-                           resource_configfile + '.tmp')
-    new_configfile = os.path.join(resource_home, resource_name + '.'
-                                   + str(resource_identifier),
+    if os.path.isabs(resource_configfile):
+        pending_file = resource_configfile
+    else:
+        pending_file = os.path.join(configuration.resource_pending, client_dir,
+                                    resource_configfile)
+    tmpfile = pending_file + '.tmp'
+    new_configfile = os.path.join(configuration.resource_home, '%s.%s' % \
+                                  (resource_name, resource_identifier),
                                   'config.MiG')
 
     if not os.path.exists(pending_file):
@@ -1005,8 +1010,7 @@ Failure:
              % pending_file
         return (False, msg)
 
-    (status, conf_msg, config_dict) = \
-       get_resource_config_dict(pending_file)
+    (status, conf_msg, config_dict) = get_resource_config_dict(pending_file)
     if not status:
         msg += '\n%s' % conf_msg
         return (False, msg)

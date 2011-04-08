@@ -43,7 +43,7 @@ from shared.fileio import make_symlink
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.resource import create_resource, remove_resource
+from shared.resource import create_resource_home
 from shared.sandbox import load_sandbox_db, save_sandbox_db
 from shared.vgrid import vgrid_list_vgrids
 
@@ -151,21 +151,17 @@ def main(client_id, user_arguments_dict):
                                                 hd_size, memory, username,
                                                 ip_address, operating_system))
 
-    # Send a request for creating the resource
+    # Fake a request for creating the resource
 
-    (create_status, msg, resource_identifier) = create_resource(
-        resource_name, 'SANDBOX_' + username, configuration.resource_home,
-                                                         logger)
+    # TODO: write conf to tempfile and use create_resource() for this!
+    
+    (create_status, resource_identifier) = create_resource_home(
+        configuration, 'SANDBOX_' + username, resource_name)
     if create_status:
-        output_objects.append({'object_type': 'text', 'text': msg})
-        logger.info('Created %s sandbox resource request' % \
-                    configuration.short_title)
+        logger.info('Created sandbox resource home')
     else:
-        output_objects.append({'object_type': 'error_text', 'text': msg})
-        (remove_status, msg) = remove_resource(configuration.resource_home,
-                                               resource_name,
-                                               resource_identifier)
-        output_objects.append({'object_type': 'text', 'text': msg})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               resource_identifier})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     unique_host_name = resource_name + '.' + str(resource_identifier)
@@ -198,7 +194,7 @@ def main(client_id, user_arguments_dict):
     
     old_path = os.getcwd()
 
-    #TODO: We can not rely on chdir to work consistently!
+    # TODO: We can not rely on chdir to work consistently!
     
     os.chdir(configuration.sss_home)
 
