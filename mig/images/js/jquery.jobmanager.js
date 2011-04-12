@@ -112,7 +112,7 @@ if (jQuery) (function($){
                 misc_output += jsonRes[i]["checkcondjobs"][j]["message"];
               } else {
 		  var cond_item = jsonRes[i]["checkcondjobs"][j];
-                success_message = "<p><img src='"+cond_item["icon"]+"' /> Job feasibility: '"+ cond_item["verdict"]+ "<br />";
+                success_message = "<p><img src='"+cond_item["icon"]+"' /> Job feasibility:<br />"+ cond_item["verdict"]+ "<br />";
 		  var err_item = cond_item["error_desc"];
 		  for(var k in err_item) {
 		      success_message += err_item[k] + "<br />";

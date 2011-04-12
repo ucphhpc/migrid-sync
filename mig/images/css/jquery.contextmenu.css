@@ -78,6 +78,7 @@
 .contextMenu LI.statusfiles a{ background-image: url(/images/icons/drive.png); }
 .contextMenu LI.outputfiles a{ background-image: url(/images/icons/download.png); }
 .contextMenu LI.schedule a { background-image: url(/images/icons/calendar.png); }
+.contextMenu LI.feasible a { background-image: url(/images/icons/green.png); }
 .contextMenu LI.resubmit a { background-image: url(/images/icons/arrow_redo.png); }
 .contextMenu LI.freeze a { background-image: url(/images/icons/hourglass_delete.png); }
 .contextMenu LI.thaw a { background-image: url(/images/icons/hourglass_add.png); }
