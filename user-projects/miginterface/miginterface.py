@@ -98,14 +98,27 @@ def create_job(exec_commands, input_files=[], output_files=[], executables=[], c
     tmp_dir = tempfile.gettempdir() # /tmp/
     local_working_dir = os.path.join(tmp_dir, name)
     # creating local temporary working directory
-    os.mkdir(local_working_dir) 
+    os.mkdir(local_working_dir)
 
     # the path of the mRSL file
     mrsl_path = os.path.join(local_working_dir, mrsl_filename) 
+        
     
     # make a list with both input_files and cached_files
     all_input_files = []
-    all_input_files.extend(input_files)
+    
+    # too keep it simple, strip the path to put the input files in the mig home root before writing to the mrsl
+    # must match where we put the uploaded files extracted from the .tar 
+    input_files_mrsl = [] 
+    for f in input_files:
+        inputfile_path = f.split()
+        path = os.path.basename(inputfile_path[0])        
+        if len(inputfile_path) > 1: 
+           path += " "+inputfile_path[1]
+        input_files_mrsl.append(path)
+        
+        
+    all_input_files.extend(input_files_mrsl)
     all_input_files.extend(cached_files)
         
     # create the mRSL file
@@ -121,7 +134,7 @@ def create_job(exec_commands, input_files=[], output_files=[], executables=[], c
     tar_name = name+".tar.gz"
     # path to tarball
     tar_file = os.path.join(local_working_dir, tar_name) 
-    __create_archive(tar_file, upload_files) 
+    __create_archive(tar_file, upload_files)
     
     mig_tar_file_destination = tar_name # os.path.join(mig_job_directory, tar_name)
     # upload job archive and submit mrsl

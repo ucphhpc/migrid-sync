@@ -476,11 +476,14 @@ def __job_process(mrsl_file, working_dir):
     stdout_path = os.path.join(status_files_directory, job_id+".stdout")
     stderr_path = os.path.join(status_files_directory, job_id+".stderr")
     
-    stdout_file = open(stdout_path, "w")
-    stderr_file = open(stderr_path, "w")
+
     
     # run the commands
     try :
+        
+        stdout_file = open(stdout_path, "w")
+        stderr_file = open(stderr_path, "w")
+        
         for cmd in mrsl_entries["EXECUTE"]:
             __check_rte_vars(cmd)
             
@@ -491,32 +494,33 @@ def __job_process(mrsl_file, working_dir):
                 print "WARNING: Local grid job process wrote to standard error:\n", err
             
             stdout_file.write(out)
-            stdout_file.close()
             stderr_file.write(err)
-            stderr_file.close()
-    
-        if mrsl_entries.has_key("OUTPUTFILES"):
-            # copy output files from mig home dir
-            for f in mrsl_entries["OUTPUTFILES"]:
-                filepath = f.strip().split()
-                src_path = filepath[0]
-                dest_path = filepath[0]
-                
-                # if there are two file names, we are using the mig format of <path_on_resource path_on_mig_home>
-                if len(filepath) > 1:
-                    dest_path = filepath[1]
-                    dest_directory = os.path.dirname(os.path.join(MIG_HOME, dest_path))
-                    if not os.path.exists(dest_directory):
-                        os.makedirs(dest_directory)
-                if os.path.exists(os.path.join(working_dir, src_path)):
-                    shutil.copy(os.path.join(working_dir, src_path), os.path.join(MIG_HOME, dest_path))
-                else:
-                    print "WARNING: Missing output file.",src_path
+            
+        stdout_file.close()
+        stderr_file.close()
     except Exception, e:
         print "Process error : Terminating.", e
     except KeyboardInterrupt :
         print "Keyboard interrupt. Terminating."
         return
+        
+    if mrsl_entries.has_key("OUTPUTFILES"):
+        # copy output files from mig home dir
+        for f in mrsl_entries["OUTPUTFILES"]:
+            filepath = f.strip().split()
+            src_path = filepath[0]
+            dest_path = filepath[0]
+            
+            # if there are two file names, we are using the mig format of <path_on_resource path_on_mig_home>
+            if len(filepath) > 1:
+                dest_path = filepath[1]
+                dest_directory = os.path.join(MIG_HOME, os.path.dirname(dest_path))
+                if not os.path.exists(dest_directory):
+                    os.makedirs(dest_directory)
+            if os.path.exists(os.path.join(working_dir, src_path)):
+                shutil.copy(os.path.join(working_dir, src_path), os.path.join(MIG_HOME, dest_path))
+            else:
+                print "WARNING: Missing output file.",src_path
             
             
 def __check_rte_vars(cmd):
