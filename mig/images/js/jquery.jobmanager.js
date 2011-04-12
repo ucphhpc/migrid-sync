@@ -106,6 +106,21 @@ if (jQuery) (function($){
             }
           break;
           
+          case "checkcondjobs":
+            for(j = 0; j < jsonRes[i]["checkcondjobs"].length; j++) {
+              if (jsonRes[i]["checkcondjobs"][j]["message"]) {
+                misc_output += jsonRes[i]["checkcondjobs"][j]["message"];
+              } else {
+		  var cond_item = jsonRes[i]["checkcondjobs"][j];
+                success_message = "<p><img src='"+cond_item["icon"]+"' /> Job feasibility: '"+ cond_item["verdict"]+ "<br />";
+		  var err_item = cond_item["error_desc"];
+		  for(var k in err_item) {
+		      success_message += err_item[k] + "<br />";
+		  }
+              }
+            }
+          break;
+          
           case "resubmitobjs":
             for(j = 0; j < jsonRes[i]["resubmitobjs"].length; j++) {
               if (jsonRes[i]["resubmitobjs"][j]["status"]) {
@@ -217,6 +232,9 @@ if (jQuery) (function($){
                 },
                 schedule: function (job_id) {
                     jsonWrapper(job_id, "#cmd_dialog", "jobschedule.py", {job_id: job_id})
+                },
+                feasible: function (job_id) {
+                    jsonWrapper(job_id, "#cmd_dialog", "jobfeasible.py", {job_id: job_id})
                 },
                 verbosestatus: function (job_id) {
                     url = "jobstatus.py?flags=v;job_id="+job_id;

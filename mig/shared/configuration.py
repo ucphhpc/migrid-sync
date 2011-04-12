@@ -114,12 +114,24 @@ def fix_missing(config_file, verbose=True):
                        'slackperiod': '600'}
     settings_section = {'language': 'English', 'submitui': ['fields',
                         'textarea', 'files']}
+    feasibility_section = {'resource_seen_within_hours': '24',
+                          'skip_validation': 'ALL',
+                          'job_cond_green': 'ARCHITECTURE PLATFORM \
+                          RUNTIMEENVIRONMENT VERIFYFILES VGRID SANDBOX',
+                          'job_cond_yellow': 'DISK MEMORY CPUTIME',
+                          'job_cond_orange': 'CPUCOUNT NODECOUNT',
+                          'job_cond_red': 'EXECUTABLES INPUTFILES REGISTERED \
+                          SEEN_WITHIN_X',
+                          'enable_suggest': 'True',
+                          'suggest_threshold': 'GREEN',
+                          }
 
     defaults = {
         'GLOBAL': global_section,
         'SCHEDULER': scheduler_section,
         'MONITOR': monitor_section,
         'SETTINGS': settings_section,
+        'FEASIBILITY': feasibility_section,
         }
     for section in defaults.keys():
         if not section in config.sections():
@@ -221,6 +233,17 @@ class Configuration:
     logger_obj = None
     logger = None
     peers = None
+
+    # feasibility
+
+    resource_seen_within_hours = 24
+    skip_validation = []
+    job_cond_green = []
+    job_cond_yellow = []
+    job_cond_orange = []
+    job_cond_red = []
+    enable_suggest = True
+    suggest_threshold = 'GREEN'
 
     # Max number of jobs to migrate in each migration batch
 
@@ -387,6 +410,7 @@ class Configuration:
             self.slackperiod = config.get('MONITOR', 'slackperiod')
             self.language = config.get('SETTINGS', 'language').split()
             self.submitui = config.get('SETTINGS', 'submitui').split()
+
         except Exception, err:
 
             # logger.info("done reading settings from config")
@@ -448,6 +472,30 @@ class Configuration:
         if config.has_option('SCHEDULER', 'job_retries'):
             self.job_retries = config.getint('SCHEDULER', 'job_retries')
 
+        if config.has_option('FEASIBILITY', 'resource_seen_within_hours'):
+            self.resource_seen_within_hours = config.getint(
+                'FEASIBILITY', 'resource_seen_within_hours')
+        if config.has_option('FEASIBILITY', 'skip_validation'):
+            self.skip_validation = config.get('FEASIBILITY',
+                                              'skip_validation').split()
+        if config.has_option('FEASIBILITY', 'enable_suggest'):
+            self.enable_suggest = config.getboolean('FEASIBILITY',
+                                                    'enable_suggest')
+        if config.has_option('FEASIBILITY', 'suggest_threshold'):
+            self.suggest_threshold = config.get('FEASIBILITY', 
+                                                'suggest_threshold')
+        if config.has_option('FEASIBILITY', 'job_cond_green'):
+            self.job_cond_green = config.get('FEASIBILITY', 
+                                                   'job_cond_green').split()
+        if config.has_option('FEASIBILITY', 'job_cond_yellow'):
+            self.job_cond_yellow = config.get('FEASIBILITY', 
+                                                   'job_cond_yellow').split()
+        if config.has_option('FEASIBILITY', 'job_cond_orange'):
+            self.job_cond_orange = config.get('FEASIBILITY', 
+                                                   'job_cond_orange').split()
+        if config.has_option('FEASIBILITY', 'job_cond_red'):
+            self.job_cond_red = config.get('FEASIBILITY', 
+                                                   'job_cond_red').split()
         if config.has_option('WIKI', 'moin_etc'):
             self.moin_etc = config.get('WIKI', 'moin_etc')
         else:

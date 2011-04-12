@@ -111,6 +111,9 @@ def html_tmpl():
       <li class="schedule single">
           <a href="#schedule">Schedule Status</a>
       </li>
+      <li class="feasible single">
+          <a href="#feasible">Feasibility Check</a>
+      </li>
       <li class="verbosestatus single">
           <a href="#verbosestatus">Verbose Status</a>
       </li>
@@ -126,6 +129,9 @@ def html_tmpl():
       
       <li class="schedule multi">
           <a href="#schedule">Schedule Status All</a>
+      </li>
+      <li class="feasible multi">
+          <a href="#feasible">Feasibility Check All</a>
       </li>
       <li class="resubmit multi">
           <a href="#resubmit">Resubmit All</a>

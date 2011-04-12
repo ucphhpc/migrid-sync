@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# defaults - default constant values used in many locations
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# jobfeasible - Check current job feasibility for queued job
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,28 +25,11 @@
 # -- END_HEADER ---
 #
 
+import cgi
+import cgitb
+cgitb.enable()
 
-"""Default values for use in other modules"""
+from shared.functionality.jobfeasible import main
+from shared.cgiscriptstub import run_cgi_script
 
-
-# IMPORTANT: do not import anything here - to avoid import loops
-
-
-keyword_any = 'ANY'
-keyword_all = 'ALL'
-
-default_vgrid = 'Generic'
-any_vgrid = keyword_any
-all_vgrids = keyword_all
-
-all_jobs = keyword_all
-
-sandbox_names = ['sandbox', 'oneclick', 'ps3live']
-
-mqueue_prefix = 'message_queues'
-default_mqueue = 'default'
-mqueue_empty = 'NO MESSAGES'
-
-default_pager_entries = 25
-
-exe_leader_name = "execution-leader"
+run_cgi_script(main)

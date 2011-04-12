@@ -102,6 +102,7 @@ changedstatusjob = {'object_type': 'changedstatusjob',
                     'required': ['job_id'], 'optional': []}
 saveschedulejob = {'object_type': 'saveschedulejob',
                    'required': ['job_id'], 'optional': []}
+checkcondjob = {'object_type': 'checkcondjob', 'required': ['job_id']}
 resubmitobj = {'object_type': 'resubmitobj', 'required': ['job_id'],
                'optional': []}
 submitstatus = {'object_type': 'submitstatus', 'required': ['name',
@@ -150,6 +151,8 @@ changedstatusjobs = {'object_type': 'changedstatusjobs',
 saveschedulejobs = {'object_type': 'saveschedulejobs',
                     'required_list': [('saveschedulejobs',
                     'saveschedulejob')]}
+checkcondjobs = {'object_type': 'checkcondjobs',
+                    'required_list': [('checkcondjobs', 'checkcondjob')]}
 submitstatuslist = {'object_type': 'submitstatuslist',
                     'required_list': [('submitstatuslist',
                     'submitstatus')]}
@@ -209,6 +212,8 @@ valid_types_list = [
     changedstatusjob,
     saveschedulejobs,
     saveschedulejob,
+    checkcondjobs,
+    checkcondjob,
     resubmitobj,
     resubmitobjs,
     submitstatuslist,

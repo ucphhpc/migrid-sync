@@ -153,6 +153,15 @@ ___%s___
             lines += pprint_table(txt_table_if_have_keys(header,
                                   saveschedulejobs, ['job_id', 'message'
                                   ]))
+        elif i['object_type'] == 'checkcondjobs':
+            checkcondjobs = i['checkcondjobs']
+            if len(checkcondjobs) == 0:
+                continue
+            header = [['Job ID', 'Feasibility', 'Message']]
+            lines += pprint_table(txt_table_if_have_keys(header,
+                                  checkcondjobs, ['job_id', 'job_cond_msg',
+                                                  'message'
+                                  ]))
         elif i['object_type'] == 'stats':
             stats = i['stats']
             if len(stats) == 0:
@@ -368,6 +377,41 @@ def html_link(obj):
                                        ' '.join(extra_params), obj['text'])
     return link
 
+def html_cond_summary(job_cond_msg):
+    """Pretty format job feasibilty condition"""
+    lines = []
+    if not job_cond_msg:
+        lines.append('No job_cond message.')
+    else:
+        lines.append('<table class="job_cond_verdict">')
+        lines.append('<tr><th>Job Id: %s</th></tr>' % \
+                     job_cond_msg['job_id'])
+        if job_cond_msg.has_key('suggestion'):
+            lines.append('<tr><td>%s</td></tr>' % \
+                         job_cond_msg['suggestion'])
+        lines.append('<tr><td><img src="%s" alt="%s %s" />&nbsp;%s</td></tr>' % \
+                     (job_cond_msg['icon'], 'Job readiness condition', \
+                     job_cond_msg['color'], job_cond_msg['verdict']))
+        if job_cond_msg.has_key('error_desc'):
+            lines.append('<tr><td><dl>')
+            for (mrsl_attrib, desc) in job_cond_msg['error_desc'].items():
+                lines.append('<dt>%s</dt>' % mrsl_attrib)
+                if desc.find('[') is not -1 or desc.find(']') is not -1:
+                    desc = desc.replace('[', '').replace(']', '')
+                if desc.find("'") is not -1:
+                    desc = desc.replace("'", "")
+                if desc.find(', ') is not -1:
+                    for item in desc.split(', '):
+                        lines.append('<dd>%s</dd>' % item)
+                else:
+                    lines.append('<dd>%s</dd>' % desc)
+            lines.append('</dl></td></tr>')
+        if job_cond_msg.has_key('cancel'):
+            lines.append('<tr><td>%s</td></tr>' % \
+                         html_link(job_cond_msg['cancel']))
+        lines.append('</table>')
+    return '\n'.join(lines)
+
 def html_table_if_have_keys(dictionary, keywordlist):
     """create html table contents based on keys in a dictionary"""
 
@@ -580,6 +624,18 @@ Exit code: %s Description: %s<br />
                 lines.append('<tr>%s</tr>'
                               % html_table_if_have_keys(saveschedule,
                              ['job_id', 'message']))
+            lines.append('</table>')
+        elif i['object_type'] == 'checkcondjobs':
+            checkcondjobs = i['checkcondjobs']
+            if len(checkcondjobs) == 0:
+                continue
+            lines.append("<table class='checkcondjobs'><tr><th>Job ID</th><th>Feasibility</th><th>Message</th></tr>"
+                         )
+            for checkcond in checkcondjobs:
+                checkcond['cond_summary'] = html_cond_summary(checkcond)
+                lines.append('<tr>%s</tr>'
+                              % html_table_if_have_keys(checkcond,
+                             ['job_id', 'cond_summary', 'message']))
             lines.append('</table>')
         elif i['object_type'] == 'stats':
             stats = i['stats']
