@@ -66,12 +66,11 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    # TMP!! 
-    #if not correct_handler('POST'):
-    #    output_objects.append(
-    #        {'object_type': 'error_text', 'text'
-    #         : 'Only accepting POST requests to prevent unintended updates'})
-    #    return (output_objects, returnvalues.CLIENT_ERROR)
+    if not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     patterns = accepted['job_id']
 
