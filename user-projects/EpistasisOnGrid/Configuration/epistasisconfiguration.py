@@ -34,8 +34,8 @@ resource_specs = {}
 #resource_specs["ARCHITECTURE"] ="AMD64"
 resource_specs["RUNTIMEENVIRONMENT"] = "GNU_R\nPYTHON-2"
 resource_specs["VGRID"] = "DCSC"
-resource_specs["CPUTIME"] = 120000
-resource_specs["MEMORY"] = 2000
+resource_specs["CPUTIME"] = 600
+resource_specs["MEMORY"] = 4000
 resource_specs["DISK"] = 1
 
 #resource_specs["ARCHITECTURE"] = "AMD64"

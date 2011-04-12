@@ -23,8 +23,8 @@ class Migsession:
 
     def create_mig_job(self,job):
         self.validate_job(job)
-      
-        job["id"]= mig.mig_create_job(exec_commands=job["commands"], input_files=job["input_files"],                                     
+
+        job["id"]= mig.create_job(exec_commands=job["commands"], input_files=job["input_files"],                                     
                                       output_files=job["output_files"],
                                       resource_specifications=job["resource_specs"])
         job["started"] = self.get_time()
@@ -45,7 +45,7 @@ class Migsession:
         files = []
         for f in job["output_files"]:
             output_filename =  f
-            outputfile = mig.mig_get_file(output_filename, f)
+            outputfile = mig.get_file(output_filename, f)
             log(self.logfile, "Retrieved output file for job "+job["id"],self.debug_mode)
               #print "opening ", destDir+filepath, "to", destDir
             files.append(outputfile)
@@ -56,7 +56,7 @@ class Migsession:
     def update_jobs(self,jobs):
         new_status = False
         job_ids = map(lambda x : x["id"], jobs)
-        job_info_list = mig.mig_jobs_status(job_ids)
+        job_info_list = mig.jobs_status(job_ids)
         if len(job_info_list) != len(job_ids):
             print str(job_info_list)
             print str(jobs)
@@ -65,7 +65,7 @@ class Migsession:
         for i in range(len(jobs)):
             jobs[i]["status"] = job_info_list[i]
 
-            if mig.mig_job_finished(jobs[i]["id"]):
+            if mig.job_finished(jobs[i]["id"]):
                 jobs[i]["finished"] = self.get_time()
         
         print "update jobs", jobs
@@ -79,7 +79,7 @@ class Migsession:
             self.cancel_job(j)
 
     def cancel_job(self,job):
-        success = mig.mig_cancel_job(job["id"])
+        success = mig.cancel_job(job["id"])
         if success: 
             #print "Cancelled job : "+job["id"]
             log(self.logfile,"Cancelled job : "+job["id"],self.debug_mode)
@@ -102,10 +102,10 @@ class Migsession:
             job_files.append(outputfile)
         
         log(self.logfile, "Cleaning up for job (id:"+job["id"]+")")
-        mig.mig_remove_files(job_files)
+        mig.remove_files(job_files)
         self.remove_local_files(job_files)
                
-        #mig.mig_remove_dir(job["job_dir"]) # directory
+        #mig.remove_dir(job["job_dir"]) # directory
         #os.rmdir(job["job_dir"])
         
         
@@ -125,6 +125,6 @@ class Migsession:
         
 
     def check_connection(self):
-        success = mig.mig_test_connection()
+        success = mig.test_connection()
         if not success:
             raise Exception("MiG connection error. Could not execute remote test command :"+str(func)+". You are propably not connected to MiG.")
