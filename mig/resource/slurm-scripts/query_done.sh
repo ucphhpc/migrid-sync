@@ -10,10 +10,10 @@ if [ -z "$MIG_JOBNAME" -o -z "$MIG_SUBMITUSER" ]; then
     exit 1
 fi
 
-# Find job in queue - prints numeric job PID if not yet done.
+# Find job in queue - prints numeric job PID if not yet done. -o prints full jobname which is otherwise shortened.
 # We return false in case of squeue errors in order to avoid false 
 # positives if SLURM daemon is temporarily unavailable
-jobs=`squeue -u "$MIG_SUBMITUSER" $@`
+jobs=`squeue -u "$MIG_SUBMITUSER" -o "%j" $@`
 if [ $? -ne 0 ]; then
     echo "Failed to query SLURM for job status - try again later"
     exit 1 
