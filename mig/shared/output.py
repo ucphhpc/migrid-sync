@@ -406,9 +406,6 @@ def html_cond_summary(job_cond_msg):
                 else:
                     lines.append('<dd>%s</dd>' % desc)
             lines.append('</dl></td></tr>')
-        if job_cond_msg.has_key('cancel'):
-            lines.append('<tr><td>%s</td></tr>' % \
-                         html_link(job_cond_msg['cancel']))
         lines.append('</table>')
     return '\n'.join(lines)
 

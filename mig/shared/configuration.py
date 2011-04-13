@@ -115,14 +115,14 @@ def fix_missing(config_file, verbose=True):
     settings_section = {'language': 'English', 'submitui': ['fields',
                         'textarea', 'files']}
     feasibility_section = {'resource_seen_within_hours': '24',
-                          'skip_validation': 'ALL',
+                          'skip_validation': '',
                           'job_cond_green': 'ARCHITECTURE PLATFORM \
                           RUNTIMEENVIRONMENT VERIFYFILES VGRID SANDBOX',
                           'job_cond_yellow': 'DISK MEMORY CPUTIME',
                           'job_cond_orange': 'CPUCOUNT NODECOUNT',
                           'job_cond_red': 'EXECUTABLES INPUTFILES REGISTERED \
                           SEEN_WITHIN_X',
-                          'enable_suggest': 'True',
+                          'enable_suggest': 'False',
                           'suggest_threshold': 'GREEN',
                           }
 
@@ -238,11 +238,12 @@ class Configuration:
 
     resource_seen_within_hours = 24
     skip_validation = []
-    job_cond_green = []
-    job_cond_yellow = []
-    job_cond_orange = []
-    job_cond_red = []
-    enable_suggest = True
+    job_cond_green = ['ARCHITECTURE', 'PLATFORM', 'RUNTIMEENVIRONMENT',
+                      'VERIFYFILES', 'VGRID', 'SANDBOX']
+    job_cond_yellow = ['DISK', 'MEMORY', 'CPUTIME']
+    job_cond_orange = ['CPUCOUNT', 'NODECOUNT']
+    job_cond_red = ['EXECUTABLES', 'INPUTFILES', 'REGISTERED', 'SEEN_WITHIN_X']
+    enable_suggest = False
     suggest_threshold = 'GREEN'
 
     # Max number of jobs to migrate in each migration batch

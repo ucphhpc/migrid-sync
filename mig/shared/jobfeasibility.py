@@ -29,9 +29,9 @@
 
 """Validation of job specifications against available resources - Returns a
 'Job Readiness Condition' and a dictionary containing error descriptions.
-Via the job_cond colors in the configuration each color can specify an arbitrary
-number of validations that the particular level has to pass. Thus the
-granularity of the validation at each level can be customized.
+Via the job_cond colors in the configuration each color can specify an
+arbitrary number of validations that the particular level has to pass. Thus
+the granularity of the validation at each level can be customized.
 All or individual validations can be omitted through configuration.
 Each job_cond color is a subset of the one above it; in numerical ascension
 i.e. job_cond orange is a subset of job_cond yellow.
@@ -80,7 +80,7 @@ def job_feasibility(configuration, job):
     if configuration.enable_suggest and \
            threshold_color_to_value(job_cond['JOB_COND']) < \
            threshold_color_to_value(configuration.suggest_threshold):
-        suggestion = suggestion_envelope(configuration, job, job_cond, errors, \
+        suggestion = suggestion_envelope(configuration, job, job_cond, errors,
                                          vgrid_resource_dict)
 
     error_desc = assemble_errors(job_cond, errors)
@@ -119,9 +119,6 @@ def standard_implementation(configuration, job):
 
     for vgrid in vgrids:
         resources = set(validate_resource(configuration, job, vgrid, errors))
-        if not resources:
-            return none_available(job_cond, errors, 'RESOURCE', fake_dict=True)
-
         vgrid_resource_dict[vgrid] = list(resources)
 
     (job_cond, errors) = validate(configuration, job, vgrid_resource_dict,
@@ -192,13 +189,14 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
     best_job_cond = {}
     best_job_cond['JOB_COND'] = RED
     best_errors = errors
+    found_best = False
 
     for (vgrid, resources) in vgrid_resource_map.items():
 
         if not resources:
             best_job_cond['RESOURCE'] = False
             best_errors['RESOURCE'] = \
-            'There are no valid/allowed resources for VGrid \'%s\' available.' \
+            'There are no valid/allowed resources for VGrid "%s" available.' \
             % (vgrid)
             return (best_job_cond, best_errors)
 
@@ -220,39 +218,55 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
 
             # mRSL
 
-            job_cond['ARCHITECTURE'] = validate_architecture(configuration, job, resource, errors)
-            job_cond['CPUCOUNT'] = validate_cpucount(configuration, job, resource, errors)
-            job_cond['CPUTIME'] = validate_cputime(configuration, job, resource, errors)
-            job_cond['DISK'] = validate_disk(configuration, job, resource, errors)
-            job_cond['EXECUTABLES'] = validate_executables(configuration, job, errors)
-            job_cond['INPUTFILES'] = validate_inputfiles(configuration, job, errors)
-            job_cond['JOBTYPE'] = validate_jobtype(configuration, job, resource, errors)
-            job_cond['MAXPRICE'] = validate_maxprice(configuration, job, resource, errors)
-            job_cond['MEMORY'] = validate_memory(configuration, job, resource, errors)
-            job_cond['NODECOUNT'] = validate_nodecount(configuration, job, resource, errors)
+            job_cond['ARCHITECTURE'] = validate_architecture(configuration,
+                                                             job, resource,
+                                                             errors)
+            job_cond['CPUCOUNT'] = validate_cpucount(configuration, job,
+                                                     resource, errors)
+            job_cond['CPUTIME'] = validate_cputime(configuration, job,
+                                                   resource, errors)
+            job_cond['DISK'] = validate_disk(configuration, job, resource,
+                                             errors)
+            job_cond['EXECUTABLES'] = validate_executables(configuration, job,
+                                                           errors)
+            job_cond['INPUTFILES'] = validate_inputfiles(configuration, job,
+                                                         errors)
+            job_cond['JOBTYPE'] = validate_jobtype(configuration, job,
+                                                   resource, errors)
+            job_cond['MAXPRICE'] = validate_maxprice(configuration, job,
+                                                     resource, errors)
+            job_cond['MEMORY'] = validate_memory(configuration, job, resource,
+                                                 errors)
+            job_cond['NODECOUNT'] = validate_nodecount(configuration, job,
+                                                       resource, errors)
             job_cond['NOTIFY'] = validate_notify(configuration, job, errors)
-            job_cond['PLATFORM'] = validate_platform(configuration, job, resource, errors)
+            job_cond['PLATFORM'] = validate_platform(configuration, job,
+                                                     resource, errors)
             job_cond['RETRIES'] = validate_retries(configuration, job, errors)
-            job_cond['RUNTIMEENVIRONMENT'] = validate_runtimeenvironment(configuration, job, \
-                                                                resource, errors)
-            job_cond['VERIFYFILES'] = validate_verifyfiles(configuration, job, errors)
-            job_cond['SANDBOX'] = validate_sandbox(configuration, job, resource, errors)
+            job_cond['RUNTIMEENVIRONMENT'] = validate_runtimeenvironment(
+                configuration, job, resource, errors)
+            job_cond['VERIFYFILES'] = validate_verifyfiles(configuration, job,
+                                                           errors)
+            job_cond['SANDBOX'] = validate_sandbox(configuration, job,
+                                                   resource, errors)
 
             # job_cond
 
             job_cond['suggested_vgrid'] = vgrid
-            job_cond['suggested_resource'] = anon_resource_id(resource_id, False)
-            job_cond['JOB_COND'] = RED # init
+            job_cond['suggested_resource'] = anon_resource_id(resource_id,
+                                                              False)
 
             set_pass_level(configuration, job_cond)
 
             if threshold_color_to_value(job_cond['JOB_COND']) >= \
                    threshold_color_to_value(best_job_cond['JOB_COND']):
-                best_job_cond = job_cond.copy()
-                best_errors = errors.copy()
+                if not found_best or (len(errors) <= len(best_errors)):
+                    found_best = True
+                    best_job_cond = job_cond.copy()
+                    best_errors = errors.copy()
 
-                if best_job_cond['JOB_COND'] == GREEN:
-                    break
+                    if best_job_cond['JOB_COND'] == GREEN:
+                        break
 
             job_cond.clear()
             errors.clear()
@@ -270,7 +284,8 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
 def validate_architecture(configuration, job, resource, errors):
     """Validates job request vs. what resource provides; should be =="""
 
-    return validate_str_case(configuration, job, resource, errors, 'ARCHITECTURE', True)
+    return validate_str_case(configuration, job, resource, errors,
+                             'ARCHITECTURE', True)
 
 
 def validate_cpucount(configuration, job, resource, errors):
@@ -288,7 +303,8 @@ def validate_cputime(configuration, job, resource, errors):
 def validate_disk(configuration, job, resource, errors):
     """Validates job request vs. resource limit of disk space; should be <="""
 
-    return validate_int_case(configuration, job, resource, errors, 'DISK', True)
+    return validate_int_case(configuration, job, resource, errors, 'DISK',
+                             True)
 
 
 def validate_executables(configuration, job, errors):
@@ -336,7 +352,8 @@ def validate_maxprice(configuration, job, resource, errors):
     if skip_validation(configuration, job, 'MAXPRICE'):
         return True
 
-    # The economy is not yet enforced, so until then this is just for completeness
+    # The economy is not yet enforced, so until then this is just for
+    # completeness
 
     return True
 
@@ -350,7 +367,8 @@ def validate_memory(configuration, job, resource, errors):
 def validate_nodecount(configuration, job, resource, errors):
     """Validates job request vs. resource limit of nodes; should be <="""
 
-    return validate_int_case(configuration, job, resource, errors, 'NODECOUNT')
+    return validate_int_case(configuration, job, resource, errors,
+                             'NODECOUNT')
 
 
 def validate_notify(configuration, job, errors):
@@ -383,7 +401,8 @@ def validate_notify(configuration, job, errors):
 
         elif notify_line_first_part in email_keyword_list:
             recipients = notify_line.replace('%s: ' % \
-                                             notify_line_first_part, '').strip()
+                                             notify_line_first_part,
+                                             '').strip()
 
             if recipients.strip().upper() in ['SETTINGS', '']:
                 continue
@@ -394,7 +413,8 @@ def validate_notify(configuration, job, errors):
                         break
                     else:
                         syntax_is_valid = \
-                        is_valid_email_address(recipient, configuration.logger)
+                        is_valid_email_address(recipient,
+                                               configuration.logger)
 
         else:
             syntax_is_valid = False
@@ -407,7 +427,8 @@ def validate_platform(configuration, job, resource, errors):
     should be ==
     """
 
-    return validate_str_case(configuration, job, resource, errors, 'PLATFORM', True)
+    return validate_str_case(configuration, job, resource, errors, 'PLATFORM',
+                             True)
 
 
 def validate_resource(configuration, job, vgrid, errors):
@@ -433,7 +454,8 @@ def validate_resource(configuration, job, vgrid, errors):
         return list(allowed_resources)
 
 
-    specified_resources = anon_to_real_resources(configuration, job['RESOURCE'])
+    specified_resources = anon_to_real_resources(configuration,
+                                                 job['RESOURCE'])
 
     not_allowed = specified_resources.difference(allowed_resources)
     if not_allowed:
@@ -482,6 +504,8 @@ def validate_runtimeenvironment(configuration, job, resource, errors):
     # Validation code taken from mig/server/scheduler.job_fits_resource()
     # It has been slightly modified to fit the validation context.
 
+    runtime_env_errors = []
+
     for job_runtimeenv in job['RUNTIMEENVIRONMENT']:
         found = False
 
@@ -491,10 +515,13 @@ def validate_runtimeenvironment(configuration, job, resource, errors):
                 break
 
         if not found:
-            errors['RUNTIMEENVIRONMENT'] += \
-            'Job/Resource values: %s / %s,' % (job['RUNTIMEENVIRONMENT'], \
-                                              resource['RUNTIMEENVIRONMENT'])
-            continue
+            res_envs = [env[0] for env in resource['RUNTIMEENVIRONMENT']]
+            runtime_env_errors.append('Job/Resource values: %s / %s' % \
+                                      (job_runtimeenv, 
+                                       ' '.join(res_envs)))
+
+    if runtime_env_errors:
+        errors['RUNTIMEENVIRONMENT'] = '; \n'.join(runtime_env_errors)
 
     return not errors.has_key('RUNTIMEENVIRONMENT')
 
@@ -548,7 +575,10 @@ def validate_sandbox(configuration, job, resource, errors):
     job_value = bool(job['SANDBOX'])
     res_value = bool(resource['SANDBOX'])
 
-    if job_value ^ res_value:
+    # do not allow non-sandbox jobs on a sandbox resource
+    # sandbox jobs on non-sandbox resources are ok, however
+
+    if not job_value and res_value:
         errors['SANDBOX'] = std_err_desc(job_value, res_value)
 
     return not errors.has_key('SANDBOX')
@@ -561,7 +591,7 @@ def validate_resource_seen(configuration, resource, errors, resource_id):
         return True
 
 
-    # use if and when LAST_SEEN and FIRST_SEEN are moved to shared/scheduling.py
+    # use if/when LAST_SEEN and FIRST_SEEN are moved to shared/scheduling.py
 
 #    elif resource.has_key('FIRST_SEEN') and bool(resource['FIRST_SEEN']):
 #        resource_seen = now - resource['FIRST_SEEN']
@@ -584,7 +614,7 @@ def validate_resource_seen_within_x_hours(configuration, resource, errors,
         return True
 
 
-    # use if and when LAST_SEEN and FIRST_SEEN are moved to shared/scheduling.py
+    # use if/when LAST_SEEN and FIRST_SEEN are moved to shared/scheduling.py
 
 #    if resource.has_key('LAST_SEEN') and bool(resource['LAST_SEEN']):
 #        resource_seen = now - resource['LAST_SEEN']
@@ -603,7 +633,8 @@ def validate_resource_seen_within_x_hours(configuration, resource, errors,
     return not errors.has_key('SEEN_WITHIN_X')
 
 
-def validate_files(configuration, job, errors, mrsl_attribute, verify_file=False):
+def validate_files(configuration, job, errors, mrsl_attribute,
+                   verify_file=False):
     """Validates the presense of specific input-, execute- and verify-files
     at local and remote locations.
     """
@@ -622,8 +653,9 @@ def validate_files(configuration, job, errors, mrsl_attribute, verify_file=False
         if os.path.isfile(os.path.join(configuration.user_home, \
                         client_id_dir(job['USER_CERT']), filename)):
 
-            if verify_file and not filename.split('.')[1] in ['status', 'stdout', \
-            'stderr']:
+            if verify_file and not filename.split('.')[1] in ['status',
+                                                              'stdout',
+                                                              'stderr']:
                 missing_files.append(filename)
 
             continue
@@ -653,7 +685,8 @@ def validate_files(configuration, job, errors, mrsl_attribute, verify_file=False
     return not errors.has_key(mrsl_attribute)
 
 
-def validate_str_case(configuration, job, resource, errors, mrsl_attribute, empty_str=False):
+def validate_str_case(configuration, job, resource, errors, mrsl_attribute,
+                      empty_str=False):
     """Validates job request vs. what resource provides; should be =="""
 
     if skip_validation(configuration, job, mrsl_attribute, resource):
@@ -672,7 +705,8 @@ def validate_str_case(configuration, job, resource, errors, mrsl_attribute, empt
     return not errors.has_key(mrsl_attribute)
 
 
-def validate_int_case(configuration, job, resource, errors, mrsl_attribute, geq=False):
+def validate_int_case(configuration, job, resource, errors, mrsl_attribute,
+                      geq=False):
     """Validates job request vs. resource limit; should be <= or < depending
     on value of parameter qeq.
     """
@@ -721,16 +755,14 @@ def set_pass_level(configuration, job_cond):
     level being the exception.
     """
 
-    for (level, color) in zip(range(len(job_cond_colors)), job_cond_colors):
+    job_color = RED
+    for color in job_cond_colors:
         if pass_job_cond(configuration, job_cond, color):
-            job_cond['JOB_COND'] = job_cond_colors[level - 1]
+            job_color = color
         else:
-            if color == 'RED':
-                job_cond['JOB_COND'] = RED
-                break
-            job_cond['JOB_COND'] = job_cond_colors[level - 2]
             break
-
+    job_cond['JOB_COND'] = job_color
+    
 
 def pass_job_cond(configuration, job_cond, job_cond_color):
     """Validates whether the constructed job_cond dictionary passes
@@ -742,13 +774,13 @@ def pass_job_cond(configuration, job_cond, job_cond_color):
     else:
         job_cond_config = []
 
-        if job_cond_color == 'RED':
+        if job_cond_color == RED:
             job_cond_config = configuration.job_cond_red
-        elif job_cond_color == 'ORANGE':
+        elif job_cond_color == ORANGE:
             job_cond_config = configuration.job_cond_orange
-        elif job_cond_color == 'YELLOW':
+        elif job_cond_color == YELLOW:
             job_cond_config = configuration.job_cond_yellow
-        elif job_cond_color == 'GREEN':
+        elif job_cond_color == GREEN:
             job_cond_config = configuration.job_cond_green
 
         try:
@@ -763,7 +795,8 @@ def pass_job_cond(configuration, job_cond, job_cond_color):
             return True
 
 
-def none_available(job_cond, errors, mrsl_attribute, suggest=False, fake_dict=False):
+def none_available(job_cond, errors, mrsl_attribute, suggest=False,
+                   fake_dict=False):
     """Prepares the job_cond and errors dictionaries for non-existing
     vgrids and resources.
     """
@@ -949,13 +982,13 @@ def get_job_cond_color_icon(job_cond):
     icon_path = '/images/icons'
     icon = ''
 
-    if job_cond == 'GREEN':
+    if job_cond == GREEN:
         icon = os.path.join(icon_path, 'green.png')
-    elif job_cond == 'YELLOW':
+    elif job_cond == YELLOW:
         icon = os.path.join(icon_path, 'yellow.png')
-    elif job_cond == 'ORANGE':
+    elif job_cond == ORANGE:
         icon = os.path.join(icon_path, 'orange.png')
-    elif job_cond == 'RED':
+    elif job_cond == RED:
         icon = os.path.join(icon_path, 'red.png')
 
     return icon
