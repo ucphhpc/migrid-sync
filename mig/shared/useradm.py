@@ -27,6 +27,7 @@
 
 """User administration functions"""
 
+import base64
 import os
 import sys
 import shutil
@@ -36,6 +37,7 @@ import datetime
 from shared.base import client_id_dir, old_id_format, sandbox_resource
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
+from shared.defaults import keyword_auto
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.serial import load, dump
 
@@ -645,6 +647,44 @@ def search_users(search_filter, conf_path, db_path, verbose=False):
             continue
         hits.append((uid, user_dict))
     return hits
+
+
+def user_password_reminder(user_id, targets, conf_path, db_path, verbose=False):
+    """Find notification addresses for user_id and targets"""
+
+    errors = []
+    if conf_path:
+        configuration = Configuration(conf_path)
+    else:
+        configuration = get_configuration_object()
+    try:
+        user_db = load_user_db(db_path)
+        if verbose:
+            print 'Loaded existing user DB from: %s' % db_path
+    except Exception, err:
+        print 'Failed to load user DB: %s' % err
+        return []
+
+    if not user_db.has_key(user_id):
+        errors.append('No such user: %s' % user_id)
+    else:
+        password = user_db[user_id].get('password', '')
+        password = base64.b64decode(password)
+        addresses = dict(zip(configuration.notify_protocols,
+                             [[] for _ in configuration.notify_protocols]))
+        addresses['email'] = []
+        for (proto, address_list) in targets.items():
+            if not proto in configuration.notify_protocols + ['email']:
+                errors.append('unsupported protocol: %s' % proto)
+                continue
+            for address in address_list:
+                if proto == 'email' and address == keyword_auto:
+                    address = user_db[user_id].get('email', '')
+                    if not address:
+                        errors.append('missing email address in db!')
+                        continue
+                addresses[proto].append(address)
+    return (configuration, password, addresses, errors)
 
 
 def get_default_mrsl(template_path):

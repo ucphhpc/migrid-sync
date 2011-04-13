@@ -34,6 +34,7 @@
 
 keyword_any = 'ANY'
 keyword_all = 'ALL'
+keyword_auto = 'AUTO'
 
 default_vgrid = 'Generic'
 any_vgrid = keyword_any

@@ -41,11 +41,12 @@ Usage:
 %(name)s [SEARCH_OPTIONS]
 Where SEARCH_OPTIONS may be one or more of:
    -C COUNTRY          Search for country
+   -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_PATH          Use DB_PATH as user data base file path
    -E EMAIL            Search for email
    -F FULLNAME         Search for full name
    -h                  Show this help
-   -I                  Search for user ID (distinguished name)
+   -I CERT_DN          Search for user ID (distinguished name)
    -n                  Show only name
    -O ORGANIZATION     Search for organization
    -S STATE            Search for state

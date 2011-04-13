@@ -147,6 +147,19 @@ Replies to this message will not be read!!!
 
         txt += ' and add %s as %s.\n\n' % (from_cert, entity)
         txt += 'Replies to this message will not be read!!!\n'
+    elif status == 'PASSWORDREMINDER':
+        from_cert = myfiles_py_location[0]
+        password = myfiles_py_location[1]
+        header = '%s pasword reminder' % configuration.short_title
+        txt += \
+            """This is an auto generated password reminder from the %s server:
+%s
+""" % (configuration.short_title, password)
+        txt += \
+            """Feel free to locally change the password as described in the
+user scripts tutorial online.
+"""
+        txt += """Replies to this message will not be read!!!"""
     else:
         header = '%s Unknown message type' % configuration.short_title
         txt += 'unknown status'
