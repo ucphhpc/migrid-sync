@@ -37,13 +37,15 @@ from shared.conf import get_all_exe_vgrids, get_resource_fields, \
 from shared.defaults import default_vgrid
 from shared.resource import list_resources, real_to_anon_res_map
 from shared.serial import load, dump
+from shared.user import list_users, real_to_anon_user_map, get_user_conf
 from shared.vgrid import vgrid_list_vgrids, vgrid_allowed, vgrid_resources, \
      user_allowed_vgrids
 
-MAP_SECTIONS = (RESOURCES, VGRIDS) = ("__resources__", "__vgrids__")
-RES_SPECIALS = (ALLOW, ASSIGN, RESID, OWNERS, CONF, MODTIME) = \
-               ('__allow__', '__assign__', '__resid__', '__owners__',
-                '__conf__', '__modtime__')
+MAP_SECTIONS = (USERS, RESOURCES, VGRIDS) = ("__users__", "__resources__",
+                                             "__vgrids__")
+RES_SPECIALS = (ALLOW, ASSIGN, USERID, RESID, OWNERS, CONF, MODTIME) = \
+               ('__allow__', '__assign__', '__userid__', '__resid__',
+                '__owners__', '__conf__', '__modtime__')
 
 # Never repeatedly refresh maps within this number of seconds in same process
 # Used to avoid refresh floods with e.g. runtime envs page calling
@@ -52,6 +54,67 @@ MAP_CACHE_SECONDS = 30
 
 last_refresh = {RESOURCES: 0, VGRIDS: 0}
 last_map = {RESOURCES: {}, VGRIDS: {}}
+
+def refresh_user_map(configuration):
+    """Refresh map of users and their configuration. Uses a pickled
+    dictionary for efficiency. 
+    User IDs are stored in their raw (non-anonymized form).
+    Only update map for users that updated conf after last map save.
+    """
+    dirty = []
+    map_path = os.path.join(configuration.user_home, "user.map")
+    lock_path = os.path.join(configuration.user_home, "user.lock")
+    lock_handle = open(lock_path, 'a')
+
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+
+    try:
+        user_map = load(map_path)
+        map_stamp = os.path.getmtime(map_path)
+    except IOError:
+        configuration.logger.warn("No user map to load - ok first time")
+        user_map = {}
+        map_stamp = -1
+
+    # Find all users and their configurations
+    
+    all_users = list_users(configuration.user_home)
+    real_map = real_to_anon_user_map(configuration.user_home)
+    for user in all_users:
+        conf_path = os.path.join(configuration.user_home, user, ".userprofile")
+        if not os.path.isfile(conf_path):
+            continue
+        conf_mtime = os.path.getmtime(conf_path)
+        # init first time
+        user_map[user] = user_map.get(user, {})
+        if not user_map[user].has_key(CONF) or conf_mtime >= map_stamp:
+            user_conf = get_user_dict(user, configuration)
+            if not user_conf:
+                continue
+            user_map[user][CONF] = user_conf
+            public_id = user
+            if user_conf.get('ANONYMOUS', True):
+                public_id = real_map[user]
+            user_map[user][USERID] = public_id
+            user_map[user][MODTIME] = map_stamp
+            dirty += [user]
+    # Remove any missing users from map
+    missing_user = [user for user in user_map.keys() \
+                   if not user in all_users]
+    for user in missing_user:
+        del user_map[user]
+        dirty += [user]
+
+    if dirty:
+        try:
+            dump(user_map, map_path)
+        except Exception, exc:
+            configuration.logger.error("Could not save user map: %s" % exc)
+
+    last_refresh[USERS] = time.time()
+    lock_handle.close()
+
+    return user_map
 
 def refresh_resource_map(configuration):
     """Refresh map of resources and their configuration. Uses a pickled
@@ -129,8 +192,8 @@ def refresh_resource_map(configuration):
     return resource_map
 
 def refresh_vgrid_map(configuration):
-    """Refresh map of resources and their vgrid participation. Uses a pickled
-    dictionary for efficiency. 
+    """Refresh map of resources and their vgrid participation. Uses a
+    pickled dictionary for efficiency. 
     Resource IDs are stored in their raw (non-anonymized form).
     Only update map for resources that updated conf after last map save.
     """

@@ -34,8 +34,8 @@ try:
 except ImportError:
     from md5 import new as hash_algo
 
+from shared.settings import load_settings
 from shared.useradm import client_id_dir
-import shared.profilekeywords as profilekeywords
 
 def anon_user_id(user_id):
     """Generates an anonymous but (practically) unique user ID for user with
@@ -77,3 +77,6 @@ def real_to_anon_user_map(user_home):
         user_map[name] = anon_user_id(name)
     return user_map
 
+def get_user_conf(user_id, configuration):
+    """Return user profile and settings"""
+    return load_settings(user_id, configuration)

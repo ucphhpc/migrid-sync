@@ -106,6 +106,14 @@ def get_settings_specs():
         'Context': 'appearance',
         'Required': False,
         }))
+    specs.append(('ANONYMOUS', {
+        'Description': 'VGrids where user profile is visible to other users.',
+        'Example': 'ANY',
+        'Type': 'multiplestrings',
+        'Value': [],
+        'Context': 'appearance',
+        'Required': False,
+        }))
     return specs
 
 def get_keywords_dict():
