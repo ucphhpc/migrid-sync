@@ -59,6 +59,34 @@ def txt_link(obj):
             ])
 
 
+def txt_cond_summary(job_cond_msg):
+    """Pretty format job feasibilty condition"""
+    lines = []
+    if not job_cond_msg:
+        lines.append('No job_cond message.')
+    else:
+        lines.append('Job Id: %s' % job_cond_msg['job_id'])
+        if job_cond_msg.has_key('suggestion'):
+            lines.append('%s' % job_cond_msg['suggestion'])
+        if job_cond_msg.has_key('verdict'):
+            lines.append('%s %s' % ('Job readiness condition',
+                                    job_cond_msg['color']))
+            lines.append(job_cond_msg['verdict'])
+        if job_cond_msg.has_key('error_desc'):
+            for (mrsl_attrib, desc) in job_cond_msg['error_desc'].items():
+                lines.append('%s' % mrsl_attrib)
+                if desc.find('[') is not -1 or desc.find(']') is not -1:
+                    desc = desc.replace('[', '').replace(']', '')
+                if desc.find("'") is not -1:
+                    desc = desc.replace("'", "")
+                if desc.find(', ') is not -1:
+                    for item in desc.split(', '):
+                        lines.append('%s' % item)
+                else:
+                    lines.append('%s' % desc)
+    return '\n'.join(lines)
+
+
 def resource_format(ret_val, ret_msg, out_obj):
     txt = ret_val
     for i in out_obj:
@@ -158,8 +186,10 @@ ___%s___
             if len(checkcondjobs) == 0:
                 continue
             header = [['Job ID', 'Feasibility', 'Message']]
+            for checkcond in checkcondjobs:
+                checkcond['cond_summary'] = txt_cond_summary(checkcond)
             lines += pprint_table(txt_table_if_have_keys(header,
-                                  checkcondjobs, ['job_id', 'job_cond_msg',
+                                  checkcondjobs, ['job_id', 'cond_summary',
                                                   'message'
                                   ]))
         elif i['object_type'] == 'stats':
@@ -389,9 +419,12 @@ def html_cond_summary(job_cond_msg):
         if job_cond_msg.has_key('suggestion'):
             lines.append('<tr><td>%s</td></tr>' % \
                          job_cond_msg['suggestion'])
-        lines.append('<tr><td><img src="%s" alt="%s %s" />&nbsp;%s</td></tr>' % \
-                     (job_cond_msg['icon'], 'Job readiness condition', \
-                     job_cond_msg['color'], job_cond_msg['verdict']))
+        if job_cond_msg.has_key('verdict'):
+            img_tag = '<img src="%s" alt="%s %s" />' % \
+                      (job_cond_msg['icon'], 'Job readiness condition', 
+                       job_cond_msg['color'])
+            lines.append('<tr><td>%s&nbsp;%s</td></tr>' % \
+                         (img_tag, job_cond_msg['verdict']))
         if job_cond_msg.has_key('error_desc'):
             lines.append('<tr><td><dl>')
             for (mrsl_attrib, desc) in job_cond_msg['error_desc'].items():
