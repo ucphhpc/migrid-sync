@@ -28,6 +28,8 @@
 """Module with functions to generate output in format
 specified by the client."""
 
+import traceback
+
 import shared.returnvalues as returnvalues
 from shared.html import get_cgi_html_header, get_cgi_html_footer
 from shared.objecttypes import validate
@@ -155,6 +157,8 @@ ___%s___
                 lines += pprint_table(txt_table_if_have_keys(header,
                                   submitstatuslist, ['name', 'status',
                                                      'job_id', 'message']))
+        elif i['object_type'] == 'table_pager':
+            continue
         elif i['object_type'] == 'resubmitobjs':
             resubmitobjs = i['resubmitobjs']
             if len(resubmitobjs) == 0:
@@ -1054,7 +1058,7 @@ Exit code: %s Description: %s<br />
                 lines.append('''
 <thead class="title">
 <tr>
-  <th>Name</th>
+  <th>Resource ID</th>
   <th width="8"><!-- View / Admin --></th>
   <th width="8"><!-- Remove owner --></th>
   <th class=centertext>Runtime envs</th>
@@ -1118,6 +1122,54 @@ Exit code: %s Description: %s<br />
                                   (key, val)
             resource_html += '</table>'
             lines.append(resource_html)
+        elif i['object_type'] == 'user_list':
+            if len(i['users']) > 0:
+                user_fields = []
+                notify_headers = ''
+                for proto in configuration.notify_protocols:
+                    user_fields.append(proto)
+                    notify_headers += '  <th class=centertext>%s</th>' % proto
+                users = i['users']
+                lines.append("<table class='users columnsort' id='usertable'>")
+                lines.append('''
+<thead class="title">
+<tr>
+  <th>User ID</th>
+  <th width="8"><!-- View --></th>
+  %s
+</tr>
+</thead>
+<tbody>
+''' % notify_headers
+                             )
+                for obj in users:
+                    lines.append('<tr>')
+                    lines.append('<td class="user" title="user">%s</td>' % \
+                                 obj['name'])
+                    lines.append('<td>')
+                    if obj.has_key('userdetailslink'):
+                        lines.append('%s' % html_link(obj['userdetailslink']))
+                    lines.append('</td>')
+                    # Remaining fields
+                    for name in user_fields:
+                        lines.append('<td class=centertext>')
+                        lines.append('%s' % obj.get(name, '---'))
+                        lines.append('</td>')
+                    lines.append('</tr>')
+                lines.append('</tbody></table>')
+            else:
+                lines.append('No matching users found')
+        elif i['object_type'] == 'user_info':
+            user_html = ''
+            user_html += '<h3>%s</h3>' % i['user_id']
+            user_html += \
+                          '<table class="user" frame=hsides rules=none cellpadding=5>'
+            for (key, val) in i['fields']:
+                user_html += \
+                          '<tr><td>%s</td><td>%s</td></tr>' % \
+                          (key, val)
+            user_html += '</table>'
+            lines.append(user_html)
         elif i['object_type'] == 'vgrid_list':
             if len(i['vgrids']) > 0:
                 vgrids = i['vgrids']
@@ -1474,6 +1526,7 @@ def format_output(
         msg = '%s failed on server! Defaulting to txt output. (%s)' % \
               (outputformat, err)
         configuration.logger.error(msg)
+        configuration.logger.error(traceback.format_exc())
         return (txt_format(configuration, ret_val, msg, out_obj))
 
 def format_timedelta(timedelta):

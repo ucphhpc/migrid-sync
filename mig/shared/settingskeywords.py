@@ -35,6 +35,7 @@ def get_settings_specs():
 
     specs = []
     specs.append(('EMAIL', {
+        'Title': 'E-mail address',
         'Description': 'List of E-mail addresses',
         'Example': 'my@email.com, my_other@email.com',
         'Type': 'multiplestrings',
@@ -43,6 +44,7 @@ def get_settings_specs():
         'Required': False,
         }))
     specs.append(('JABBER', {
+        'Title': 'Jabber address',
         'Description': 'List of Jabber addresses',
         'Example': 'me@jabber.com, me2@jabber.com',
         'Type': 'multiplestrings',
@@ -51,6 +53,7 @@ def get_settings_specs():
         'Required': False,
         }))
     specs.append(('MSN', {
+        'Title': 'MSN address',
         'Description': 'List of MSN addresses',
         'Example': 'me@hotmail.com, me2@hotmail.com',
         'Type': 'multiplestrings',
@@ -59,6 +62,7 @@ def get_settings_specs():
         'Required': False,
         }))
     specs.append(('ICQ', {
+        'Title': 'ICQ address',
         'Description': 'List of ICQ numbers',
         'Example': '2364236, 2342342',
         'Type': 'multiplestrings',
@@ -67,6 +71,7 @@ def get_settings_specs():
         'Required': False,
         }))
     specs.append(('AOL', {
+        'Title': 'AOL address',
         'Description': 'List of AOL addresses',
         'Example': 'me@aol.com, me2@aol.com',
         'Type': 'multiplestrings',
@@ -75,6 +80,7 @@ def get_settings_specs():
         'Required': False,
         }))
     specs.append(('YAHOO', {
+        'Title': 'Yahoo messenger address',
         'Description': 'List of Yahoo! addresses',
         'Example': 'me@yahoo.com, me2@hotmail.com',
         'Type': 'multiplestrings',
@@ -83,6 +89,7 @@ def get_settings_specs():
         'Required': False,
         }))
     specs.append(('LANGUAGE', {
+        'Title': 'Language',
         'Description': 'Your preferred interface language',
         'Example': 'English',
         'Type': 'string',
@@ -91,6 +98,7 @@ def get_settings_specs():
         'Required': False,
         }))
     specs.append(('SUBMITUI', {
+        'Title': 'Submit interface',
         'Description': 'Your preferred Submit Job interface',
         'Example': 'fields',
         'Type': 'string',
@@ -99,6 +107,7 @@ def get_settings_specs():
         'Required': False,
         }))
     specs.append(('SITE_USER_MENU', {
+        'Title': 'User menu items',
         'Description': 'Additional menu items.', # can be chosen from configuration.user_menu
         'Example': '...choose from the list',
         'Type': 'multiplestrings',
@@ -106,11 +115,21 @@ def get_settings_specs():
         'Context': 'appearance',
         'Required': False,
         }))
-    specs.append(('ANONYMOUS', {
+    specs.append(('VISIBLE_VGRIDS', {
+        'Title': 'Visible on VGrids ',
         'Description': 'VGrids where user profile is visible to other users.',
         'Example': 'ANY',
         'Type': 'multiplestrings',
         'Value': [],
+        'Context': 'appearance',
+        'Required': False,
+        }))
+    specs.append(('ANONYMOUS', {
+        'Title': 'User ID visible to other user? ',
+        'Description': 'Disbable to unmask your user ID to other users.',
+        'Example': 'True',
+        'Type': 'boolean',
+        'Value': True,
         'Context': 'appearance',
         'Required': False,
         }))

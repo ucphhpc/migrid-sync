@@ -72,6 +72,9 @@ menu_items['statistics'] = {'class': 'statistics', 'url': 'showstats.py',
 menu_items['docs'] = {'class': 'docs', 'url': 'docs.py',
                           'title': 'Docs',
                           'hover': 'some built-in documentation for reference'}
+menu_items['people'] = {'class': 'people', 'url': 'people.py',
+                           'title': 'People', 
+                           'hover': 'view and communicate with other users'}
 
 
 def html_print(formatted_text, html=True):

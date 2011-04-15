@@ -418,6 +418,21 @@ def main(client_id, user_arguments_dict):
                         html += '<option %s value=%s>%s</option>'\
                              % (selected, choice, choice)
                     html += '</select><br />'
+            elif val['Type'] == 'boolean':
+                valid_choices = [True, False]
+                current_choice = ''
+                if current_settings_dict.has_key(keyword):
+                    current_choice = current_settings_dict[keyword]
+
+                if len(valid_choices) > 0:
+                    html += '<select name=%s>' % keyword
+                    for choice in valid_choices:
+                        selected = ''
+                        if choice == current_choice:
+                            selected = 'selected'
+                        html += '<option %s value=%s>%s</option>'\
+                             % (selected, choice, choice)
+                    html += '</select><br />'
             html += """
             </td></tr>
             """

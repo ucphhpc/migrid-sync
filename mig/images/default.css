@@ -102,6 +102,10 @@ table.resources {
   padding: 2px;
   text-align: left;
 }
+table.people {
+  padding: 2px;
+  text-align: left;
+}
 table.sandboxlogintext {
   width: 80%;
 }
@@ -229,6 +233,9 @@ table.liveio table {
 }
 .navmenu ul li.shell a {
   background-image: url('/images/icons/application_osx_terminal.png');
+}
+.navmenu ul li.people a {
+  background-image: url('/images/icons/personal.png');
 }
 
 .navmenu ul li.statistics a {

@@ -34,6 +34,8 @@ try:
 except ImportError:
     from md5 import new as hash_algo
 
+from shared.base import client_dir_id
+from shared.findtype import is_user
 from shared.settings import load_settings
 from shared.useradm import client_id_dir
 
@@ -60,7 +62,9 @@ def list_users(user_home):
             continue
         if path.find(os.sep + '.') != -1:
             continue
-        users.append(name)
+        if path.find('no_grid_jobs_in_grid_scheduler') != -1:
+            continue
+        users.append(client_dir_id(name))
     return users
 
 def anon_to_real_user_map(user_home):
@@ -77,6 +81,6 @@ def real_to_anon_user_map(user_home):
         user_map[name] = anon_user_id(name)
     return user_map
 
-def get_user_conf(user_id, configuration):
+def get_user_conf(user_id, configuration, include_meta=False):
     """Return user profile and settings"""
-    return load_settings(user_id, configuration)
+    return load_settings(user_id, configuration, include_meta)

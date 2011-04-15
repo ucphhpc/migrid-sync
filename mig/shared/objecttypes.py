@@ -171,6 +171,10 @@ resource_list = {'object_type': 'resource_list', 'required_list': [('resources',
               'resource')]}
 resource_info = {'object_type': 'resource_info',
                  'required': ['unique_resource_name', 'fields', 'exes']}
+user_list = {'object_type': 'user_list', 'required_list': [('users',
+              'user')]}
+user_info = {'object_type': 'user_info',
+                 'required': ['user_id', 'fields']}
 vgrid_list = {'object_type': 'vgrid_list', 'required_list': [('vgrids',
               'vgrid')]}
 user_stats = {'object_type': 'user_stats', 'required': ['disk', 'jobs',
@@ -234,6 +238,8 @@ valid_types_list = [
     jobobj,
     resource_list,
     resource_info,
+    user_list,
+    user_info,
     vgrid_list,
     user_stats,
     table_pager,

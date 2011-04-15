@@ -30,12 +30,13 @@
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues
-from shared.defaults import default_pager_entries
+from shared.defaults import default_pager_entries, any_vgrid
 from shared.functional import validate_input_and_cert
-from shared.functionality.showuser import build_useritem_object
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
-from shared.user import anon_to_real_user_map, get_user_dict
+from shared.user import anon_to_real_user_map, get_user_conf
+from shared.vgridaccess import user_visible_user_confs, user_allowed_vgrids, \
+     CONF
 
 
 def signature():
@@ -92,8 +93,8 @@ $(document).ready(function() {
                 }
               });
 
-          // table initially sorted by col. 1 (view), then 0 (name)
-          var sortOrder = [[2,1],[0,0]];
+          // table initially sorted by 0 (name)
+          var sortOrder = [[0,0]];
 
           // use image path for sorting if there is any inside
           var imgTitle = function(contents) {
@@ -135,46 +136,54 @@ $(document).ready(function() {
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'All users'})
 
-    user_map = anon_to_real_user_map(configuration.user_home)
-    if not user_map:
+    visible_user = user_visible_user_confs(configuration, client_id)
+    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
+    anon_map = anon_to_real_user_map(configuration.user_home)
+    if not visible_user:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'no users found!'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     users = []
-    for (anon_user, real_user) in user_map.items():
-        user_dict) = get_user_dict(real_user, configuration)
-        if not user_dict:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'failed to load user settings for %s' % \
-                                   anon_user})
-            return (output_objects, returnvalues.SYSTEM_ERROR)
-        user_item = build_useritem_object(configuration, user_dict)
-        user_id = anon_user
-        
-        user_item['viewuserlink'] = {'object_type': 'link',
-                                         'destination': "showuser.py?user_id=%s" % user_id,
-                                         'class': 'infolink',
-                                         'title': 'View %s user' % user_id, 
-                                         'text': ''}
-        if user_item['email']:
-            js_name = 'sendemail%s' % hexlify(user_id)
+    for (visible_user_id, user_dict) in visible_user.items():
+        user_id = visible_user_id
+        if visible_user_id in anon_map.keys():
+            user_id = anon_map[visible_user_id]
+        user_obj = {'object_type': 'user', 'name': visible_user_id}
+        user_obj.update(user_dict)        
+        user_obj['userdetailslink'] = \
+                                    {'object_type': 'link',
+                                     'destination':
+                                     'viewuser.py?cert_id=%s'\
+                                     % visible_user_id,
+                                     'class': 'infolink',
+                                     'title': 'View details for %s' % \
+                                     visible_user_id, 
+                                     'text': ''}
+        visible_vgrids = user_dict[CONF].get('VISIBLE_VGRIDS', [])
+        if any_vgrid in visible_vgrids:
+            shared_vgrids = allowed_vgrids
+        else:
+            shared_vgrids = set(visible_vgrids).intersection(allowed_vgrids)
+        if shared_vgrids and user_obj.get('email', None):
+            js_name = 'sendemail%s' % hexlify(visible_user_id)
             helper = html_post_helper(js_name, 'accessrequestaction.py',
-                                      {'user_id': user_id})
+                                      {'user_id': visible_user_id})
             output_objects.append({'object_type': 'html_form', 'text': helper})
-            re_item['sendemaillink'] = {'object_type': 'link',
+            user_obj['sendemaillink'] = {'object_type': 'link',
                                     'destination':
                                     "javascript: confirmDialog(%s, '%s');"\
                                     % (js_name, 'Really send email to %s?' % \
-                                       user_id),
+                                       visible_user_id),
                                     'class': 'sendemaillink',
-                                    'title': 'Send email to %s' % user_id, 
+                                    'title': 'Send email to %s' % \
+                                         visible_user_id, 
                                     'text': ''}
-        users.append(user_item)
+        users.append(user_obj)
 
     output_objects.append({'object_type': 'table_pager', 'entry_name': 'people',
                            'default_entries': default_pager_entries})
-    output_objects.append({'object_type': 'users',
+    output_objects.append({'object_type': 'user_list',
                           'users': users})
 
     return (output_objects, returnvalues.OK)
