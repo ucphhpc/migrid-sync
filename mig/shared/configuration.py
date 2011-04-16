@@ -540,7 +540,7 @@ class Configuration:
         else:
             self.site_default_menu = ['dashboard', 'submitjob', 'files',
                                       'jobs', 'vgrids', 'resources',
-                                      'downloads', 'runtimeenvs',
+                                      'downloads', 'runtimeenvs', 'people'
                                       'settings', 'shell', 'docs']
         if config.has_option('SITE', 'user_menu'):
             req = config.get('SITE', 'user_menu').split()

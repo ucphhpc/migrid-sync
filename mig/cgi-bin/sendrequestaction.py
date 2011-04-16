@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# accessrequest - member or ownership request to vgrid or resource
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# sendrequestaction - handle user requests e.g. for vgrid or resource access
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,7 +29,7 @@ import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.accessrequest import main
+from shared.functionality.sendrequestaction import main
 from shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

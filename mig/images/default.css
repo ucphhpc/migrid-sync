@@ -646,4 +646,27 @@ table.liveio table {
   background: url('/images/icons/box.png') no-repeat;
   padding-left: 18px;
 }
-
+.sendemaillink {
+  background: url('/images/icons/email_protocol.png') no-repeat;
+  padding-left: 18px;
+}
+.sendjabberlink {
+  background: url('/images/icons/jabber_protocol.png') no-repeat;
+  padding-left: 18px;
+}
+.sendmsnlink {
+  background: url('/images/icons/msn_protocol.png') no-repeat;
+  padding-left: 18px;
+}
+.sendaollink {
+  background: url('/images/icons/aol_protocol.png') no-repeat;
+  padding-left: 18px;
+}
+.sendyahoolink {
+  background: url('/images/icons/yahoo_protocol.png') no-repeat;
+  padding-left: 18px;
+}
+.sendicqlink {
+  background: url('/images/icons/icq_protocol.png') no-repeat;
+  padding-left: 18px;
+}

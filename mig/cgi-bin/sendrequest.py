@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# accessrequestaction - handle membership and ownership requests
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# sendrequest - send request to other user
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,7 +29,7 @@ import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.accessrequestaction import main
+from shared.functionality.sendrequest import main
 from shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)
