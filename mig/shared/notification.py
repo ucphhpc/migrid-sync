@@ -117,35 +117,48 @@ Please contact the %(site)s team for details about expire policies.
 Replies to this message will not be read!!!
 '''\
              % var_dict
-    elif status == 'ACCESSREQUEST':
+    elif status == 'SENDREQUEST':
         from_cert = myfiles_py_location[0]
         target_name = myfiles_py_location[1]
         request_type = myfiles_py_location[2]
         request_text = myfiles_py_location[3]
         entity = request_type.replace('vgrid', '').replace('resource', '')
-        header = '%s access request' % configuration.short_title
-        txt += \
-            "This is a %s request from %s who would like to be added to '%s'\n"\
-            % (request_type, from_cert, target_name)
-        if request_text:
-            txt += '''The following reason was submitted by %s:
-%s
-'''\
-                 % (from_cert, request_text)
-        txt += \
-            'If you want to authorize this request visit the following link in a browser: \n'
-        if request_type in ['vgridmember', 'vgridowner']:
-            txt += \
-                '%s/cgi-bin/adminvgrid.py?vgrid_name=%s'\
-                 % (configuration.migserver_https_cert_url, quote(target_name))
-        elif request_type == 'resourceowner':
-            txt += \
-                '%s/cgi-bin/resadmin.py?unique_resource_name=%s'\
-                 % (configuration.migserver_https_cert_url, quote(target_name))
-        else:
-            txt += 'INVALID REQUEST TYPE: %s' % request_type
+        if request_type == "plain":
+            header = '%s user message' % configuration.short_title
+            txt += """This is a message sent on behalf of %s:
 
-        txt += ' and add %s as %s.\n\n' % (from_cert, entity)
+---
+
+%s
+
+---
+
+""" % (from_cert, request_text)
+        else:
+            header = '%s %s request' % (configuration.short_title, request_type)
+            txt += \
+                """This is a %s request from %s who would like to be added to
+'%s'
+""" % (request_type, from_cert, target_name)
+            if request_text:
+                txt += '''The following reason was submitted by %s:
+%s
+''' % (from_cert, request_text)
+            txt += \
+                '''If you want to authorize this request visit the following
+URL in a browser:
+'''
+            if request_type in ['vgridmember', 'vgridowner']:
+                txt += \
+                    '%s/cgi-bin/adminvgrid.py?vgrid_name=%s'\
+                    % (configuration.migserver_https_cert_url, quote(target_name))
+            elif request_type == 'resourceowner':
+                txt += \
+                    '%s/cgi-bin/resadmin.py?unique_resource_name=%s'\
+                    % (configuration.migserver_https_cert_url, quote(target_name))
+            else:
+                txt += 'INVALID REQUEST TYPE: %s' % request_type
+            txt += ' and add %s as %s.\n\n' % (from_cert, entity)
         txt += 'Replies to this message will not be read!!!\n'
     elif status == 'PASSWORDREMINDER':
         from_cert = myfiles_py_location[0]

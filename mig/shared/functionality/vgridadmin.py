@@ -121,7 +121,7 @@ def main(client_id, user_arguments_dict):
         # link to become member: overwritten later for members
 
         js_name = 'reqvgridmember%s' % hexlify(vgrid_name)
-        helper = html_post_helper(js_name, 'accessrequestaction.py',
+        helper = html_post_helper(js_name, 'sendrequestaction.py',
                                   {'vgrid_name': vgrid_name,
                                    'request_type': 'vgridmember',
                                    'request_text': ''})
@@ -141,7 +141,7 @@ def main(client_id, user_arguments_dict):
         # link to become owner: overwritten later for owners
 
         js_name = 'reqvgridowner%s' % hexlify(vgrid_name)
-        helper = html_post_helper(js_name, 'accessrequestaction.py',
+        helper = html_post_helper(js_name, 'sendrequestaction.py',
                                   {'vgrid_name': vgrid_name,
                                    'request_type': 'vgridowner',
                                    'request_text': ''})

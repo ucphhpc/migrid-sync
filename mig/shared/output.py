@@ -1127,7 +1127,7 @@ Exit code: %s Description: %s<br />
                 user_fields = []
                 notify_headers = ''
                 for proto in configuration.notify_protocols:
-                    user_fields.append(proto)
+                    user_fields.append('send%slink' % proto)
                     notify_headers += '  <th class=centertext>%s</th>' % proto
                 users = i['users']
                 lines.append("<table class='users columnsort' id='usertable'>")
@@ -1153,7 +1153,10 @@ Exit code: %s Description: %s<br />
                     # Remaining fields
                     for name in user_fields:
                         lines.append('<td class=centertext>')
-                        lines.append('%s' % obj.get(name, '---'))
+                        if obj.has_key(name):
+                            lines.append('%s' % html_link(obj[name]))
+                        else:
+                            lines.append('---')
                         lines.append('</td>')
                     lines.append('</tr>')
                 lines.append('</tbody></table>')

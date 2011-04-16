@@ -118,7 +118,7 @@ def main(client_id, user_arguments_dict):
             # link to become owner
 
             js_name = 'reqresowner%s' % hexlify(unique_resource_name)
-            helper = html_post_helper(js_name, 'accessrequestaction.py',
+            helper = html_post_helper(js_name, 'sendrequestaction.py',
                                       {'unique_resource_name':
                                        visible_res_name,
                                        'request_type': 'resourceowner',

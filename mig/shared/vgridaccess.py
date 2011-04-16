@@ -31,7 +31,7 @@ import os
 import time
 import fcntl
 
-from shared.base import sandbox_resource
+from shared.base import sandbox_resource, client_id_dir
 from shared.conf import get_all_exe_vgrids, get_resource_fields, \
      get_resource_configuration
 from shared.defaults import default_vgrid
@@ -81,7 +81,8 @@ def refresh_user_map(configuration):
     all_users = list_users(configuration.user_home)
     real_map = real_to_anon_user_map(configuration.user_home)
     for user in all_users:
-        conf_path = os.path.join(configuration.user_home, user, ".settings")
+        conf_path = os.path.join(configuration.user_home, client_id_dir(user),
+                                 ".settings")
         if os.path.isfile(conf_path):
             conf_mtime = os.path.getmtime(conf_path)
         else:
@@ -314,7 +315,8 @@ def refresh_vgrid_map(configuration):
     all_users = list_users(configuration.user_home)
     real_map = real_to_anon_user_map(configuration.user_home)
     for user in all_users:
-        conf_path = os.path.join(configuration.user_home, user, ".settings")
+        conf_path = os.path.join(configuration.user_home, client_id_dir(user),
+                                 ".settings")
         if os.path.isfile(conf_path):
             conf_mtime = os.path.getmtime(conf_path)
             user_conf = get_user_conf(user, configuration)

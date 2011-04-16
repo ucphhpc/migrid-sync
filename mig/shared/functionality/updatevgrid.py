@@ -125,7 +125,7 @@ $(document).ready(function() {
                     'Only owners of %s can administrate it.' % vgrid_name })
 
         js_name = 'reqvgridowner%s' % hexlify(vgrid_name)
-        helper = html_post_helper(js_name, 'accessrequestaction.py',
+        helper = html_post_helper(js_name, 'sendrequestaction.py',
                                   {'vgrid_name': vgrid_name,
                                    'request_type': 'vgridowner',
                                    'request_text': ''})

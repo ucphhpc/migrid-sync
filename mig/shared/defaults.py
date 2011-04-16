@@ -42,6 +42,8 @@ all_vgrids = keyword_all
 
 all_jobs = keyword_all
 
+any_protocol = keyword_any
+
 sandbox_names = ['sandbox', 'oneclick', 'ps3live']
 
 mqueue_prefix = 'message_queues'

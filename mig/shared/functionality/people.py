@@ -87,7 +87,7 @@ $(document).ready(function() {
               // see http://jqueryui.com/docs/dialog/ for options
               { autoOpen: false,
                 modal: true, closeOnEscape: true,
-                width: 500,
+                width: 640,
                 buttons: {
                    "Cancel": function() { $( "#" + name ).dialog("close"); }
                 }
@@ -121,7 +121,7 @@ $(document).ready(function() {
                            'text':'''
  <div id="confirm_dialog" title="Confirm" style="background:#fff;">
   <div id="confirm_text"><!-- filled by js --></div>
-   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"/></textarea>
+   <textarea cols="72" rows="10" id="confirm_input" style="display:none;"/></textarea>
  </div>
 '''                       })
 
@@ -165,20 +165,29 @@ $(document).ready(function() {
             shared_vgrids = allowed_vgrids
         else:
             shared_vgrids = set(visible_vgrids).intersection(allowed_vgrids)
-        if shared_vgrids and user_obj.get('email', None):
-            js_name = 'sendemail%s' % hexlify(visible_user_id)
-            helper = html_post_helper(js_name, 'accessrequestaction.py',
-                                      {'user_id': visible_user_id})
-            output_objects.append({'object_type': 'html_form', 'text': helper})
-            user_obj['sendemaillink'] = {'object_type': 'link',
-                                    'destination':
-                                    "javascript: confirmDialog(%s, '%s');"\
-                                    % (js_name, 'Really send email to %s?' % \
-                                       visible_user_id),
-                                    'class': 'sendemaillink',
-                                    'title': 'Send email to %s' % \
-                                         visible_user_id, 
-                                    'text': ''}
+        for proto in configuration.notify_protocols:
+            if not shared_vgrids:
+                continue
+            if user_obj[CONF].get(proto.upper(), None):
+                js_name = 'send%s%s' % (proto, hexlify(visible_user_id))
+                helper = html_post_helper(js_name, 'sendrequestaction.py',
+                                          {'cert_id': visible_user_id,
+                                           'request_type': 'plain',
+                                           'protocol': proto,
+                                           'request_text': ''})
+                output_objects.append({'object_type': 'html_form', 'text':
+                                       helper})
+                link = 'send%slink' % proto
+                user_obj[link] = {'object_type': 'link',
+                                  'destination':
+                                  "javascript: confirmDialog(%s, '%s', '%s');"\
+                                  % (js_name, 'Really send %s message to %s?'\
+                                     % (proto, visible_user_id),
+                                     'request_text'),
+                                  'class': link,
+                                  'title': 'Send %s message to %s' % \
+                                  (proto, visible_user_id), 
+                                  'text': ''}
         users.append(user_obj)
 
     output_objects.append({'object_type': 'table_pager', 'entry_name': 'people',

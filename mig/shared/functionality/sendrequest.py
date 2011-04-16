@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# accessrequest - let user request access to vgrid or resource
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# sendrequest - let user send request to other user or vgrid/resource admin
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Request access (ownership or membership) back end"""
+"""Send request e.g. for access (ownership or membership) back end"""
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
@@ -57,10 +57,10 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s access request' % \
+    title_entry['text'] = '%s send request' % \
                           configuration.short_title
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Request access (membership/ownership)'})
+                          : 'Send request'})
 
     output_objects.append({'object_type': 'warning', 'text'
                           : '''
@@ -73,7 +73,7 @@ will not be tolerated!'''})
                           : 'Request VGrid membership/ownership'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<form method='post' action='accessrequestaction.py'>
+<form method='post' action='sendrequestaction.py'>
 <table align='center'>
 <tr><td>Request type</td><td><select name=request_type>
 <option value=vgridmember>VGrid membership</option>
@@ -92,7 +92,7 @@ VGrid name </td><td><input name=vgrid_name />
                           : 'Request resource ownership'})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<form method='post' action='accessrequestaction.py'>
+<form method='post' action='sendrequestaction.py'>
 <table align='center'>
 <tr><td>Request type</td><td><select name=request_type>
 <option value=resourceowner>Resource ownership</option>
@@ -105,5 +105,30 @@ Resource ID </td><td><input name=unique_resource_name />
 </tr>
 <tr><td><input type='submit' value='Submit' /></td><td></td></tr></table>
 </form>"""})
+
+    output_objects.append({'object_type': 'sectionheader', 'text'
+                          : 'Send message'})
+    protocol_options = ''
+    for proto in configuration.notify_protocols:
+        protocol_options += '<option value=%s>%s</option>\n' % (proto, proto)
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : """
+<form method='post' action='sendrequestaction.py'>
+<table align='center'>
+<tr><td>Request type</td><td><select name=request_type>
+<option value=plain>Plain message</option>
+</select></td></tr>
+<tr><td>
+User ID </td><td><input name=cert_id size=50 />
+</td></tr>
+<tr><td>Protocol</td><td><select name=protocol>
+%s
+</select></td></tr>
+<tr>
+<td>Message</td>
+<td><textarea name=request_text cols=72 rows=10 /></textarea></td>
+</tr>
+<tr><td><input type='submit' value='Send' /></td><td></td></tr></table>
+</form>""" % protocol_options})
 
     return (output_objects, returnvalues.OK)

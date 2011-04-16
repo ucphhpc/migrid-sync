@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# accessrequestaction - request memebership or ownership action handler
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# sendrequestaction - send request for e.g. member or ownership action handler
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,27 +25,30 @@
 # -- END_HEADER ---
 #
 
-"""Request access (ownership or membership) action back end"""
+"""Send request e.g. for ownership or membership action back end"""
 
 import shared.returnvalues as returnvalues
-from shared.defaults import default_vgrid
+from shared.defaults import default_vgrid, any_vgrid, any_protocol
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import notify_user_thread
 from shared.resource import anon_to_real_res_map
+from shared.user import anon_to_real_user_map
 from shared.vgrid import vgrid_list, vgrid_is_owner, vgrid_is_member
-from shared.vgridaccess import get_resource_map, OWNERS
+from shared.vgridaccess import user_allowed_vgrids, get_user_map, \
+     get_resource_map, CONF, OWNERS
 
 
 def signature():
     """Signature of the main function"""
 
     defaults = {'unique_resource_name': [''],
-                'vgrid_name': [''],
+                'vgrid_name': [''], 'cert_id': [''],
+                'protocol': [''],
                 'request_type': REJECT_UNSET,
                 'request_text': REJECT_UNSET}
-    return ['', defaults]
+    return ['html_form', defaults]
 
 
 def main(client_id, user_arguments_dict):
@@ -73,18 +76,21 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s access request' % \
+    title_entry['text'] = '%s send request' % \
                             configuration.short_title
     output_objects.append({'object_type': 'header', 'text'
-                          : '%s access request' % \
+                          : '%s send request' % \
                             configuration.short_title})
 
     vgrid_name = accepted['vgrid_name'][-1].strip()
+    visible_user_name = accepted['cert_id'][-1].strip()
     visible_res_name = accepted['unique_resource_name'][-1].strip()
     request_type = accepted['request_type'][-1].strip().lower()
     request_text = accepted['request_text'][-1].strip()
+    protocol = accepted['protocol'][-1].strip()
 
-    valid_request_types = ['resourceowner', 'vgridowner', 'vgridmember']
+    valid_request_types = ['resourceowner', 'vgridowner', 'vgridmember',
+                           'plain']
     if not request_type in valid_request_types:
         output_objects.append({
             'object_type': 'error_text', 'text'
@@ -93,7 +99,53 @@ def main(client_id, user_arguments_dict):
                valid_request_types)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if request_type == "resourceowner":
+    if request_type == "plain":
+        if not visible_user_name:
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                'No user ID specified!'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        if not protocol:
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                'No protocol specified!'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+        user_id = visible_user_name
+        anon_map = anon_to_real_user_map(configuration.user_home)
+        if anon_map.has_key(visible_user_name):
+            user_id = anon_map[visible_user_name]
+        target_name = user_id
+        user_map = get_user_map(configuration)
+        if not user_map.has_key(user_id):
+            output_objects.append({'object_type': 'error_text',
+                                   'text': 'No such user: %s' % \
+                                   visible_user_name
+                                   })
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        user_dict = user_map[user_id][CONF]
+        allowed_vgrids = user_allowed_vgrids(configuration, client_id)
+        visible_vgrids = user_dict.get('VISIBLE_VGRIDS', [])
+        if any_vgrid in visible_vgrids:
+            shared_vgrids = allowed_vgrids
+        else:
+            shared_vgrids = set(visible_vgrids).intersection(allowed_vgrids)
+        if not shared_vgrids:
+            output_objects.append({
+                'object_type': 'error_text', 'text'
+                : 'You are not allowed to send messages to %s!' % \
+                visible_user_name
+                })
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        if not user_dict[protocol.upper()]:
+            output_objects.append({
+                'object_type': 'error_text', 'text'
+                : 'User %s does not accept %s messages!' % \
+                (visible_user_name, protocol)
+                })
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        target_list = [user_id]
+    elif request_type == "resourceowner":
         if not visible_res_name:
             output_objects.append({
                 'object_type': 'error_text', 'text':
@@ -112,8 +164,8 @@ def main(client_id, user_arguments_dict):
                                    visible_res_name
                                    })
             return (output_objects, returnvalues.CLIENT_ERROR)
-        owner_list = res_map[unique_resource_name][OWNERS]
-        if client_id in owner_list:
+        target_list = res_map[unique_resource_name][OWNERS]
+        if client_id in target_list:
             output_objects.append({
                 'object_type': 'error_text', 'text'
                 : 'You are already an owner of %s!' % unique_resource_name
@@ -157,7 +209,7 @@ def main(client_id, user_arguments_dict):
         # Find all VGrid owners
 
         target_name = vgrid_name
-        (status, owner_list) = vgrid_list(vgrid_name, 'owners', configuration)
+        (status, target_list) = vgrid_list(vgrid_name, 'owners', configuration)
         if not status:
             output_objects.append({
                 'object_type': 'error_text', 'text'
@@ -171,31 +223,24 @@ def main(client_id, user_arguments_dict):
             request_type})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # Now send request to all owners in turn
+    # Now send request to all targets in turn
     # TODO: inform requestor if no owners have mail/IM set in their settings
     
-    owner_number = 1
-    for owner in owner_list:
-        output_objects.append({'object_type': 'text', 'text'
-                              : 'Sending message to owner number %s'
-                               % owner_number})
-        owner_number += 1
-
+    for target in target_list:
         # USER_CERT entry is destination
 
-        job_dict = {'NOTIFY': [
-            'jabber: SETTINGS',
-            'msn: SETTINGS',
-            'email: SETTINGS',
-            'icq: SETTINGS',
-            'aol: SETTINGS',
-            'yahoo: SETTINGS',
-            ], 'JOB_ID': 'NOJOBID', 'USER_CERT': owner}
+        notify = []
+        if protocol:
+            notify.append('%s: SETTINGS' % protocol)
+        else:
+            for proto in configuration.notify_protocols:
+                notify.append('%s: SETTINGS' % proto)
+        job_dict = {'NOTIFY': notify, 'JOB_ID': 'NOJOBID', 'USER_CERT': target}
 
         notifier = notify_user_thread(
             job_dict,
             [client_id, target_name, request_type, request_text],
-            'ACCESSREQUEST',
+            'SENDREQUEST',
             logger,
             '',
             configuration,
@@ -203,7 +248,8 @@ def main(client_id, user_arguments_dict):
 
         # Try finishing delivery but do not block forever on one message
         notifier.join(30)
-        
+    output_objects.append({'object_type': 'text', 'text':
+                           'Sent %s message to %d people' % \
+                           (request_type, len(target_list))})
+    
     return (output_objects, returnvalues.OK)
-
-
