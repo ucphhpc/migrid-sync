@@ -137,7 +137,7 @@ $(document).ready(function() {
                           : 'All users'})
 
     visible_user = user_visible_user_confs(configuration, client_id)
-    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
+    allow_vgrids = user_allowed_vgrids(configuration, client_id)
     anon_map = anon_to_real_user_map(configuration.user_home)
     if not visible_user:
         output_objects.append({'object_type': 'error_text', 'text'
@@ -160,13 +160,20 @@ $(document).ready(function() {
                                      'title': 'View details for %s' % \
                                      visible_user_id, 
                                      'text': ''}
-        visible_vgrids = user_dict[CONF].get('VISIBLE_VGRIDS', [])
-        if any_vgrid in visible_vgrids:
-            shared_vgrids = allowed_vgrids
+        vgrids_allow_email = user_dict[CONF].get('VGRIDS_ALLOW_EMAIL', [])
+        vgrids_allow_im = user_dict[CONF].get('VGRIDS_ALLOW_IM', [])
+        if any_vgrid in vgrids_allow_email:
+            email_vgrids = allow_vgrids
         else:
-            shared_vgrids = set(visible_vgrids).intersection(allowed_vgrids)
+            email_vgrids = set(vgrids_allow_email).intersection(allow_vgrids)
+        if any_vgrid in vgrids_allow_im:
+            im_vgrids = allow_vgrids
+        else:
+            im_vgrids = set(vgrids_allow_im).intersection(allow_vgrids)
         for proto in configuration.notify_protocols:
-            if not shared_vgrids:
+            if not email_vgrids and proto == 'email':
+                continue
+            if not im_vgrids and proto != 'email':
                 continue
             if user_obj[CONF].get(proto.upper(), None):
                 js_name = 'send%s%s' % (proto, hexlify(visible_user_id))

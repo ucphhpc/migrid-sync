@@ -29,6 +29,7 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_alias
+from shared.defaults import any_vgrid
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.settings import load_settings, load_widgets
@@ -36,6 +37,7 @@ from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
 from shared.useradm import client_id_dir, mrsl_template, css_template, \
     ssh_authkeys, get_default_mrsl, get_default_css, get_ssh_authkeys
+from shared.vgrid import vgrid_list_vgrids
 
 try:
     import shared.arcwrapper as arc
@@ -356,8 +358,16 @@ def main(client_id, user_arguments_dict):
         </td></tr>
         ''' % configuration.site_title
         settings_entries = get_settings_specs()
+        (got_list, all_vgrids) = vgrid_list_vgrids(configuration)
+        if not got_list:
+            all_vgrids = []
+        all_vgrids.append(any_vgrid)
+        all_vgrids.sort()
+        configuration.vgrids_allow_email = all_vgrids
+        configuration.vgrids_allow_im = all_vgrids
         for (keyword, val) in settings_entries:
-            if 'notify' == val['Context'] and keyword.lower() not in configuration.notify_protocols:
+            if 'notify' == val['Context'] and \
+                   keyword.lower() not in configuration.notify_protocols:
                 continue
             html += \
                 """

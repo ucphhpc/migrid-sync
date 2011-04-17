@@ -55,24 +55,29 @@ def build_useritem_object_from_user_dict(configuration, user_id,
         'fields': [],
         }
     user_item['fields'].append(('Public user ID', user_id))
-    visible_vgrids = user_dict[CONF].get('VISIBLE_VGRIDS', [])
-    if any_vgrid in visible_vgrids:
-        shared_vgrids = allow_vgrids
+    vgrids_allow_email = user_dict[CONF].get('VGRIDS_ALLOW_EMAIL', [])
+    vgrids_allow_im = user_dict[CONF].get('VGRIDS_ALLOW_IM', [])
+    if any_vgrid in vgrids_allow_email:
+        email_vgrids = allow_vgrids
     else:
-        shared_vgrids = set(visible_vgrids).intersection(allow_vgrids)
+        email_vgrids = set(vgrids_allow_email).intersection(allow_vgrids)
+    if any_vgrid in vgrids_allow_im:
+        im_vgrids = allow_vgrids
+    else:
+        im_vgrids = set(vgrids_allow_im).intersection(allow_vgrids)
     show_contexts = ['notify']
-    if shared_vgrids:
-        for (key, val) in user_keywords.items():
-            if not val['Context'] in show_contexts:
-                continue
-            entry = user_dict[CONF].get(key, 'unknown')
+    for (key, val) in user_keywords.items():
+        if not val['Context'] in show_contexts:
+            continue
+        if not email_vgrids and key == 'EMAIL':
+            entry = 'User settings prevent display of email address'
+        elif not im_vgrids and key != 'EMAIL':
+            entry = 'User settings prevent display of IM address'
+        else:
+            entry = user_dict[CONF].get(key, None)
             if val['Type'] == 'multiplestrings':
                 entry = ' '.join(entry)
-            if entry:
-                user_item['fields'].append((user_keywords[key]['Title'], entry))
-    else:
-        user_item['fields'].append(('User settings prevent communication info',
-                                    'hiding notification details'))
+        user_item['fields'].append((user_keywords[key]['Title'], entry))
     return user_item
 
 

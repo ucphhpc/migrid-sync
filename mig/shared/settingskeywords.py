@@ -115,9 +115,18 @@ def get_settings_specs():
         'Context': 'appearance',
         'Required': False,
         }))
-    specs.append(('VISIBLE_VGRIDS', {
-        'Title': 'Visible on VGrids ',
-        'Description': 'VGrids where user profile is visible to other users.',
+    specs.append(('VGRIDS_ALLOW_EMAIL', {
+        'Title': 'VGrids allowed to email you',
+        'Description': 'List of VGrids for which members can send you emails.',
+        'Example': 'ANY',
+        'Type': 'multiplestrings',
+        'Value': [],
+        'Context': 'appearance',
+        'Required': False,
+        }))
+    specs.append(('VGRIDS_ALLOW_IM', {
+        'Title': 'VGrids allowed to send you instant messages',
+        'Description': 'List of VGrids for which members can send you IMs.',
         'Example': 'ANY',
         'Type': 'multiplestrings',
         'Value': [],

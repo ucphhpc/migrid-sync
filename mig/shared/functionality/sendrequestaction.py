@@ -125,21 +125,33 @@ def main(client_id, user_arguments_dict):
                                    })
             return (output_objects, returnvalues.CLIENT_ERROR)
         target_name = user_id
-        user_dict = user_map[user_id][CONF]
-        allowed_vgrids = user_allowed_vgrids(configuration, client_id)
-        visible_vgrids = user_dict.get('VISIBLE_VGRIDS', [])
-        if any_vgrid in visible_vgrids:
-            shared_vgrids = allowed_vgrids
+        user_dict = user_map[user_id]
+        allow_vgrids = user_allowed_vgrids(configuration, client_id)
+        vgrids_allow_email = user_dict[CONF].get('VGRIDS_ALLOW_EMAIL', [])
+        vgrids_allow_im = user_dict[CONF].get('VGRIDS_ALLOW_IM', [])
+        if any_vgrid in vgrids_allow_email:
+            email_vgrids = allow_vgrids
         else:
-            shared_vgrids = set(visible_vgrids).intersection(allowed_vgrids)
-        if not shared_vgrids:
+            email_vgrids = set(vgrids_allow_email).intersection(allow_vgrids)
+        if any_vgrid in vgrids_allow_im:
+            im_vgrids = allow_vgrids
+        else:
+            im_vgrids = set(vgrids_allow_im).intersection(allow_vgrids)
+        if not email_vgrids and protocol.upper() == 'EMAIL':
             output_objects.append({
                 'object_type': 'error_text', 'text'
-                : 'You are not allowed to send messages to %s!' % \
+                : 'You are not allowed to send emails to %s!' % \
                 visible_user_name
                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
-        if not user_dict[protocol.upper()]:
+        if not im_vgrids and protocol.upper() != 'EMAIL':
+            output_objects.append({
+                'object_type': 'error_text', 'text'
+                : 'You are not allowed to send instant messages to %s!' % \
+                visible_user_name
+                })
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        if not user_dict[CONF][protocol.upper()]:
             output_objects.append({
                 'object_type': 'error_text', 'text'
                 : 'User %s does not accept %s messages!' % \
