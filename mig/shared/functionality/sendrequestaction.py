@@ -37,7 +37,7 @@ from shared.resource import anon_to_real_res_map
 from shared.user import anon_to_real_user_map
 from shared.vgrid import vgrid_list, vgrid_is_owner, vgrid_is_member
 from shared.vgridaccess import user_allowed_vgrids, get_user_map, \
-     get_resource_map, CONF, OWNERS
+     get_resource_map, CONF, OWNERS, USERID
 
 
 def signature():
@@ -99,6 +99,9 @@ def main(client_id, user_arguments_dict):
                valid_request_types)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    user_map = get_user_map(configuration)
+    reply_to = user_map[client_id][USERID]
+
     if request_type == "plain":
         if not visible_user_name:
             output_objects.append({
@@ -115,14 +118,13 @@ def main(client_id, user_arguments_dict):
         anon_map = anon_to_real_user_map(configuration.user_home)
         if anon_map.has_key(visible_user_name):
             user_id = anon_map[visible_user_name]
-        target_name = user_id
-        user_map = get_user_map(configuration)
         if not user_map.has_key(user_id):
             output_objects.append({'object_type': 'error_text',
                                    'text': 'No such user: %s' % \
                                    visible_user_name
                                    })
             return (output_objects, returnvalues.CLIENT_ERROR)
+        target_name = user_id
         user_dict = user_map[user_id][CONF]
         allowed_vgrids = user_allowed_vgrids(configuration, client_id)
         visible_vgrids = user_dict.get('VISIBLE_VGRIDS', [])
@@ -239,7 +241,7 @@ def main(client_id, user_arguments_dict):
 
         notifier = notify_user_thread(
             job_dict,
-            [client_id, target_name, request_type, request_text],
+            [client_id, target_name, request_type, request_text, reply_to],
             'SENDREQUEST',
             logger,
             '',
@@ -251,5 +253,8 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'text', 'text':
                            'Sent %s message to %d people' % \
                            (request_type, len(target_list))})
+    output_objects.append({'object_type': 'text', 'text':
+                           """Please make sure you have notifications
+configured on your Setings page if you expect a reply to this message"""})
     
     return (output_objects, returnvalues.OK)

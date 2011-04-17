@@ -122,6 +122,7 @@ Replies to this message will not be read!!!
         target_name = myfiles_py_location[1]
         request_type = myfiles_py_location[2]
         request_text = myfiles_py_location[3]
+        reply_to = myfiles_py_location[4]
         entity = request_type.replace('vgrid', '').replace('resource', '')
         if request_type == "plain":
             header = '%s user message' % configuration.short_title
@@ -159,7 +160,13 @@ URL in a browser:
             else:
                 txt += 'INVALID REQUEST TYPE: %s' % request_type
             txt += ' and add %s as %s.\n\n' % (from_cert, entity)
-        txt += 'Replies to this message will not be read!!!\n'
+        txt += """IMPORTANT: direct replies to this message will not be read!!
+        
+If the message didn't include any contact information you may still be able to
+reply using one of the message links for the user
+%s
+on your People page.
+        """ % reply_to
     elif status == 'PASSWORDREMINDER':
         from_cert = myfiles_py_location[0]
         password = myfiles_py_location[1]
