@@ -35,9 +35,10 @@ from shared.init import initialize_main_variables, find_entry
 from shared.notification import notify_user_thread
 from shared.resource import anon_to_real_res_map
 from shared.user import anon_to_real_user_map
-from shared.vgrid import vgrid_list, vgrid_is_owner, vgrid_is_member
-from shared.vgridaccess import user_allowed_vgrids, get_user_map, \
-     get_resource_map, CONF, OWNERS, USERID
+from shared.vgrid import vgrid_list, vgrid_is_owner, vgrid_is_member, \
+     vgrid_is_resource, user_allowed_vgrids
+from shared.vgridaccess import get_user_map, get_resource_map, CONF, OWNERS, \
+     USERID
 
 
 def signature():
@@ -82,6 +83,7 @@ def main(client_id, user_arguments_dict):
                           : '%s send request' % \
                             configuration.short_title})
 
+    target_id = client_id
     vgrid_name = accepted['vgrid_name'][-1].strip()
     visible_user_name = accepted['cert_id'][-1].strip()
     visible_res_name = accepted['unique_resource_name'][-1].strip()
@@ -90,7 +92,7 @@ def main(client_id, user_arguments_dict):
     protocol = accepted['protocol'][-1].strip()
 
     valid_request_types = ['resourceowner', 'vgridowner', 'vgridmember',
-                           'plain']
+                           'vgridresource', 'plain']
     if not request_type in valid_request_types:
         output_objects.append({
             'object_type': 'error_text', 'text'
@@ -185,7 +187,8 @@ def main(client_id, user_arguments_dict):
                 : 'You are already an owner of %s!' % unique_resource_name
                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
-    elif request_type in ["vgridmember", "vgridowner"]:
+    elif request_type in ["vgridmember", "vgridowner", "vgridresource"]:
+        unique_resource_name = visible_res_name
         if not vgrid_name:
             output_objects.append({
                 'object_type': 'error_text', 'text': 'No VGrid specified!'})
@@ -196,19 +199,20 @@ def main(client_id, user_arguments_dict):
         if vgrid_name.upper() == default_vgrid.upper():
             output_objects.append({
                 'object_type': 'error_text', 'text'
-                : 'Member and owner requests for %s are not allowed!' % \
+                : 'No requests for %s are not allowed!' % \
                 default_vgrid
                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        # stop if already an owner
+        # stop owner or member request if already an owner
 
-        if vgrid_is_owner(vgrid_name, client_id, configuration):
-            output_objects.append({
-                'object_type': 'error_text', 'text'
-                : 'You are already an owner of %s or a parent vgrid!' % \
-                vgrid_name})
-            return (output_objects, returnvalues.CLIENT_ERROR)
+        if request_type != 'vgridresource':
+            if vgrid_is_owner(vgrid_name, client_id, configuration):
+                output_objects.append({
+                    'object_type': 'error_text', 'text'
+                    : 'You are already an owner of %s or a parent vgrid!' % \
+                    vgrid_name})
+                return (output_objects, returnvalues.CLIENT_ERROR)
 
         # only ownership requests are allowed for existing members
 
@@ -217,6 +221,18 @@ def main(client_id, user_arguments_dict):
                 output_objects.append({
                     'object_type': 'error_text', 'text'
                     : 'You are already a member of %s or a parent vgrid.' % \
+                    vgrid_name})
+                return (output_objects, returnvalues.CLIENT_ERROR)
+
+        # set target to resource and prevent repeated resource access requests
+
+        if request_type == 'vgridresource':
+            target_id = unique_resource_name
+            if vgrid_is_resource(vgrid_name, unique_resource_name,
+                                 configuration):
+                output_objects.append({
+                    'object_type': 'error_text', 'text'
+                    : 'You already have access to %s or a parent vgrid.' % \
                     vgrid_name})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -253,7 +269,7 @@ def main(client_id, user_arguments_dict):
 
         notifier = notify_user_thread(
             job_dict,
-            [client_id, target_name, request_type, request_text, reply_to],
+            [target_id, target_name, request_type, request_text, reply_to],
             'SENDREQUEST',
             logger,
             '',

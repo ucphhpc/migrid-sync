@@ -41,6 +41,7 @@ from shared.functional import validate_input_and_cert
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.refunctions import get_re_dict, list_runtime_environments
+from shared.vgrid import res_allowed_vgrids, vgrid_list_vgrids
 from shared.vgridaccess import get_resource_map, CONF, OWNERS, RESID
 
 
@@ -289,6 +290,37 @@ from the certificate.<br />
         html += '<td>' + owner_id + '</td></tr>'
     html += '</table>'
 
+    # create html to request vgrid resource access
+
+    html += '<h3>VGrids</h3>'
+
+    html += \
+        """Request resource access to additional VGrids.
+    <table class=resources>
+    <tr><td>
+    <form method="post" action="sendrequestaction.py">
+    <input type="hidden" name="unique_resource_name" value="%s" />
+    <input type="hidden" name="request_type" value="vgridresource" />
+    <select name="vgrid_name">"""\
+         % resourcename
+
+    # list all vgrids without access
+
+    allowed_vgrids = res_allowed_vgrids(configuration, resourcename)
+    (vgrid_status, vgrid_list) = vgrid_list_vgrids(configuration)
+    if not vgrid_status:
+        vgrid_list = []
+    for vgrid_name in vgrid_list:
+        if not vgrid_name in allowed_vgrids:
+            html += '<option value=%s>%s' % (vgrid_name, vgrid_name)
+
+    html += """</select></td>"""
+    html += '''<td>Message to owners:
+<input type="text" name="request_text" size=50 value="" />
+<input type="submit" value="send" /></td>
+'''
+    html += '</form></tr></table><p>'
+
     # create html to select and execute a runtime environment testprocedure
 
     html += '<h3>Runtime environments</h3>'
@@ -297,7 +329,7 @@ from the certificate.<br />
         """Verify that resource supports the selected runtime environment.
     <table class=resources>
     <tr><td>
-    <form method="get" action="testresupport.py">
+    <form method="post" action="testresupport.py">
     <input type="hidden" name="with_html" value="true" />
     <input type="hidden" name="unique_resource_name" value="%s" />
     <select name="re_name">"""\
@@ -313,8 +345,8 @@ from the certificate.<br />
                     html += '<option value=%s>%s' % (env, env)
 
     html += """</select></td>"""
-    html += '<td><input type="submit" name="submit" value="verify" />'
-    html += '</form></table><p>'
+    html += '<td><input type="submit" name="submit" value="verify" /></td>'
+    html += '</form></tr></table><p>'
 
     # create html to select and call script to display testprocedure history
 
@@ -324,7 +356,7 @@ Show testprocedure history for the selected runtime environment and the
 resource with its current configuration.
     <table class=resources>
     <tr><td>
-    <form method="get" action="showresupporthistory.py">
+    <form method="post" action="showresupporthistory.py">
     <input type="hidden" name="unique_resource_name" value="%s" />
     <select name="re_name">"""\
          % resourcename
@@ -339,8 +371,8 @@ resource with its current configuration.
                     html += '<option value=%s>%s' % (env, env)
 
     html += """</select></td>"""
-    html += '<td><input type="submit" name="submit" value="Show" />'
-    html += '</form></table><p>'
+    html += '<td><input type="submit" name="submit" value="Show" /></td>'
+    html += '</form></tr></table><p>'
     return html
 
 

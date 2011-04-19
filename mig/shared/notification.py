@@ -63,6 +63,9 @@ def create_notify_message(
                 'output_dir': output_dir,
                 'site' : configuration.short_title}
 
+    entity_mapper = {'vgridmember': 'member', 'vgridowner': 'owner',
+                     'vgridresource': 'resource', 'resourceowner': 'owner'}
+
     if status == 'SUCCESS':
         header = '%s JOB finished' % configuration.short_title
         txt += \
@@ -118,12 +121,12 @@ Replies to this message will not be read!!!
 '''\
              % var_dict
     elif status == 'SENDREQUEST':
-        from_cert = myfiles_py_location[0]
+        from_id = myfiles_py_location[0]
         target_name = myfiles_py_location[1]
         request_type = myfiles_py_location[2]
         request_text = myfiles_py_location[3]
         reply_to = myfiles_py_location[4]
-        entity = request_type.replace('vgrid', '').replace('resource', '')
+        entity = entity_mapper[request_type]
         if request_type == "plain":
             header = '%s user message' % configuration.short_title
             txt += """This is a message sent on behalf of %s:
@@ -134,32 +137,34 @@ Replies to this message will not be read!!!
 
 ---
 
-""" % (from_cert, request_text)
-        else:
+""" % (from_id, request_text)
+        elif request_type in entity_mapper.keys():
             header = '%s %s request' % (configuration.short_title, request_type)
             txt += \
                 """This is a %s request from %s who would like to be added to
 '%s'
-""" % (request_type, from_cert, target_name)
+""" % (request_type, from_id, target_name)
             if request_text:
                 txt += '''The following reason was submitted by %s:
 %s
-''' % (from_cert, request_text)
+''' % (from_id, request_text)
             txt += \
                 '''If you want to authorize this request visit the following
 URL in a browser:
 '''
-            if request_type in ['vgridmember', 'vgridowner']:
+            if request_type.startswith('vgrid'):
                 txt += \
                     '%s/cgi-bin/adminvgrid.py?vgrid_name=%s'\
-                    % (configuration.migserver_https_cert_url, quote(target_name))
-            elif request_type == 'resourceowner':
+                    % (configuration.migserver_https_cert_url,
+                       quote(target_name))
+            elif request_type.startswith('resource'):
                 txt += \
                     '%s/cgi-bin/resadmin.py?unique_resource_name=%s'\
-                    % (configuration.migserver_https_cert_url, quote(target_name))
-            else:
-                txt += 'INVALID REQUEST TYPE: %s' % request_type
-            txt += ' and add %s as %s.\n\n' % (from_cert, entity)
+                    % (configuration.migserver_https_cert_url,
+                       quote(target_name))
+            txt += ' and add %s as %s.\n\n' % (from_id, entity)
+        else:
+            txt += 'INVALID REQUEST TYPE: %s\n\n' % request_type
         txt += """IMPORTANT: direct replies to this message will not be read!!
         
 If the message didn't include any contact information you may still be able to
@@ -168,7 +173,7 @@ reply using one of the message links for the user
 on your People page.
         """ % reply_to
     elif status == 'PASSWORDREMINDER':
-        from_cert = myfiles_py_location[0]
+        from_id = myfiles_py_location[0]
         password = myfiles_py_location[1]
         header = '%s pasword reminder' % configuration.short_title
         txt += \
