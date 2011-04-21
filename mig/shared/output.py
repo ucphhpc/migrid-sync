@@ -240,6 +240,12 @@ ctime\t%(ctime)s
                     if obj.has_key('schedule_hint'):
                         lines.append('Schedule hint: %(schedule_hint)s\n'
                                  % obj)
+                    if obj.has_key('schedule_hits'):
+                        lines.append('Suitable resources: %(schedule_hits)s\n'
+                                 % obj)
+                    if obj.has_key('expected_delay'):
+                        lines.append('Expected delay: %(expected_delay)s\n'
+                                 % obj)
                     if obj.has_key('executing_timestamp'):
                         lines.append('Executing: %(executing_timestamp)s\n'
                                  % obj)
@@ -555,6 +561,12 @@ Exit code: %s Description: %s<br />
                     if obj.has_key('schedule_hint'):
                         lines.append('<tr><td>Schedule result</td><td>%s</td></tr>'
                                  % obj['schedule_hint'])
+                    if obj.has_key('schedule_hits'):
+                        lines.append('<tr><td>Suitable resources</td><td>%s</td></tr>'
+                                 % obj['schedule_hits'])
+                    if obj.has_key('expected_delay'):
+                        lines.append('<tr><td>Expected delay</td><td>%s</td></tr>'
+                                 % obj['expected_delay'])
                     if obj.has_key('executing_timestamp'):
                         lines.append('<tr><td>Executing</td><td>%s</td></tr>'
                                  % obj['executing_timestamp'])

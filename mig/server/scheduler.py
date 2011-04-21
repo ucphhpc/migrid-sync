@@ -135,6 +135,7 @@ class Scheduler:
     __schedule_fields = {
         'SCHEDULE_TIMESTAMP': None,
         'SCHEDULE_HINT': None,
+        'EXPECTED_DELAY': None,
         'SCHEDULE_TARGETS': [],
         'EXEC_PRICE': None,
         'EXEC_DIFF': None,
@@ -1747,6 +1748,8 @@ class Scheduler:
                 job['SCHEDULE_HINT'] = 'STAY'
                 continue
 
+            # Found best resource if we got this far
+
             if best['dist'] > 0:
                 server = self.resource_direction(best['res'])
 
@@ -1763,6 +1766,7 @@ class Scheduler:
                 job['SCHEDULE_HINT'] = 'GO'
 
             job['SCHEDULE_TARGETS'] = [best['id']] + best['equiv']
+            job['EXPECTED_DELAY'] = best['res']['EXPECTED_DELAY']
             job['EXEC_PRICE'] = best['price']
             job['EXEC_DIFF'] = best['diff']
             job['EXEC_RAWDIFF'] = best['raw']

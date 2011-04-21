@@ -328,6 +328,11 @@ def main(client_id, user_arguments_dict):
                     counter += 1
         if job_dict.has_key('SCHEDULE_HINT'):
             job_obj['schedule_hint'] = job_dict['SCHEDULE_HINT']
+        # We should not show raw schedule_targets due to lack of anonymization 
+        if job_dict.has_key('SCHEDULE_TARGETS'):
+            job_obj['schedule_hits'] = len(job_dict['SCHEDULE_TARGETS'])
+        if job_dict.has_key('EXPECTED_DELAY'):
+            job_obj['expected_delay'] = int(job_dict['EXPECTED_DELAY'])
 
         job_obj['execution_histories'] = execution_histories
 
