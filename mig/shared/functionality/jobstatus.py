@@ -332,7 +332,11 @@ def main(client_id, user_arguments_dict):
         if job_dict.has_key('SCHEDULE_TARGETS'):
             job_obj['schedule_hits'] = len(job_dict['SCHEDULE_TARGETS'])
         if job_dict.has_key('EXPECTED_DELAY'):
-            job_obj['expected_delay'] = int(job_dict['EXPECTED_DELAY'])
+            # Catch None value
+            if not job_dict['EXPECTED_DELAY']:
+                job_obj['expected_delay'] = 0
+            else:
+                job_obj['expected_delay'] = int(job_dict['EXPECTED_DELAY'])
 
         job_obj['execution_histories'] = execution_histories
 
