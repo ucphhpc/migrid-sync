@@ -90,9 +90,18 @@ access the forum.''' % vgrid_name})
     javascript = '''
   <link rel="stylesheet" href="%s/css/forum.css" type="text/css" />
   <script type="text/javascript">
-  function show(elem_id) {
-    elem = document.getElementById(elem_id);
-    if (elem) elem.style.display = 'block';
+  function toggle_new(form_elem_id, link_elem_id) {
+    form_elem = document.getElementById(form_elem_id);
+    link_elem = document.getElementById(link_elem_id);
+    if (!form_elem || !link_elem)
+      retun;
+    if (form_elem.style.display != 'block') {
+      form_elem.style.display = 'block';
+      link_elem.style.display = 'none';
+    } else {
+      form_elem.style.display = 'none';
+      link_elem.style.display = 'block';
+    }
   }
   </script>
 ''' % configuration.site_styles
@@ -122,17 +131,13 @@ access the forum.''' % vgrid_name})
             try:
                 thread_hash = new_subject(forum_base, client_id,
                                           msg_subject, msg_body)
-                lines.append("<a href='?vgrid_name=%sthread=%s'" % \
-                             (vgrid_name, thread_hash))
             except ValueError, error:
                 post_error = str( error )
         elif action == 'reply':
             try:
                 thread_hash = reply(forum_base, client_id, msg_body,
                                     thread)
-                # TODO: should include new offset.
-                lines.append("<a href='?vgrid_name=%sthread=%s'" % \
-                             (vgrid_name, thread_hash))
+                offset = -1
             except ValueError, error:
                 post_error = str( error )
 
