@@ -784,6 +784,12 @@ def guess_type(name):
         return valid_plain_text
     elif name.lower().find('editarea') != -1:
         return valid_free_text
+    elif name.lower().find('msg_subject') != -1:
+        return valid_plain_text
+    elif name.lower().find('msg_body') != -1:
+        return valid_plain_text
+    elif name.lower().find('offset') != -1:
+        return valid_numeric
     elif name.lower().find('software_entries') != -1:
         return valid_numeric
     elif name.lower().find('environment_entries') != -1:

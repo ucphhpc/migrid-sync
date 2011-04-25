@@ -1219,6 +1219,7 @@ Exit code: %s Description: %s<br />
   <th class=centertext colspan="1">Member Wiki</th>
   %s
   %s
+  <th class=centertext colspan="1">Forum</th>
   <th class=centertext colspan="1">Monitor</th>
 </tr>
 </thead>
@@ -1312,6 +1313,13 @@ Exit code: %s Description: %s<br />
                         #else:
                         #    lines.append('---')
                         #lines.append('</td>')
+                    lines.append('<td class=centertext>')
+                    if obj.has_key('privateforumlink'):
+                        lines.append('%s '
+                                 % html_link(obj['privateforumlink']))
+                    else:
+                        lines.append('---')
+                    lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('privatemonitorlink'):
                         lines.append('%s '

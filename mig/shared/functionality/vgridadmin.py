@@ -176,6 +176,12 @@ def main(client_id, user_arguments_dict):
                                           'class': 'scmlink',
                                           'title': 'View %s members scm' % vgrid_name,
                                           'text': 'View'}
+            vgrid_obj['privateforumlink'] = {'object_type': 'link',
+                                               'destination': 'vgridforum.py?vgrid_name=%s'\
+                                               % vgrid_name,
+                                               'class': 'forumlink',
+                                               'title': 'Open %s private forum' % vgrid_name, 
+                                               'text': 'Open'}
             vgrid_obj['privatemonitorlink'] = {'object_type': 'link',
                                                'destination': 'showvgridmonitor.py?vgrid_name=%s'\
                                                % vgrid_name,
