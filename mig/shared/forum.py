@@ -72,8 +72,6 @@ import time
 # Configuration
 # ============================================================================
 
-# Where the main stylesheet is kept (as a URL).
-CSS_PATH = '/images/css/forum.css'
 # How dates are stored (see python time module for details)
 DATE_FORMAT = '%d %b %Y %H:%M:%S'
 
@@ -92,7 +90,7 @@ MAX_BODY_LEN = 10000
 # ============================================================================
 HTML_THREADS_TOP = '''<table width="95%" class="threads_table">
  <tr class="threads_header">
-  <th width="60%">Subject</th><th>Author</th><th>Date</th><th>Replies</th><th>Last Reply</th>
+  <th width="50%">Subject</th><th>Author</th><th>Date</th><th>Replies</th><th>Last Reply</th>
  </tr>
 '''
 HTML_THREADS_ROW = '''
@@ -143,8 +141,8 @@ onclick="javascript:toggle_new('hidden_form', 'new_link'); return false;"/>
 HTML_THREADS_BOTTOM = '</table>'
 HTML_THREAD_TOP = '''
 <table width="95%%" class="threads_table">
- <col width="15%%" />
- <col width="85%%" />
+ <col width="35%%" />
+ <col width="65%%" />
  <tr><td colspan="2"><a href="?%s">&lt;&lt; Main</a></td></tr>
  <tr class="thread_header"><td colspan="2">%s</td></tr>
 '''
