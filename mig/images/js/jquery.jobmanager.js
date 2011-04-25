@@ -101,9 +101,11 @@ if (jQuery) (function($){
               if (jsonRes[i]["saveschedulejobs"][j]["message"]) {
                 misc_output += jsonRes[i]["saveschedulejobs"][j]["message"];
               } else {
-                success_message = "<p>Job schedule '"+ jsonRes[i]["saveschedulejobs"][j]["oldstatus"]+"'.";
+                success_message = "<p>Job schedule requested for '"+ jsonRes[i]["saveschedulejobs"][j]["oldstatus"]+"' job.</p>";
               }
             }
+	    if (jsonRes[i]["savescheduleinfo"])
+		success_message += '<p>'+jsonRes[i]["savescheduleinfo"]+'</p>';
           break;
           
           case "checkcondjobs":

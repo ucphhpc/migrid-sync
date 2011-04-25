@@ -671,6 +671,7 @@ Exit code: %s Description: %s<br />
                               % html_table_if_have_keys(saveschedule,
                              ['job_id', 'message']))
             lines.append('</table>')
+            lines.append(i['savescheduleinfo'])
         elif i['object_type'] == 'checkcondjobs':
             checkcondjobs = i['checkcondjobs']
             if len(checkcondjobs) == 0:

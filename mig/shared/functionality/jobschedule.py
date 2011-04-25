@@ -187,8 +187,11 @@ def main(client_id, user_arguments_dict):
 
         saveschedulejobs.append(saveschedulejob)
 
+    savescheduleinfo = """Please find any available job schedule status in
+verbose job status output."""
     output_objects.append({'object_type': 'saveschedulejobs',
-                          'saveschedulejobs': saveschedulejobs})
+                          'saveschedulejobs': saveschedulejobs,
+                           'savescheduleinfo': savescheduleinfo})
     return (output_objects, status)
 
 
