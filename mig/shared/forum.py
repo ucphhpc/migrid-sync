@@ -162,9 +162,9 @@ HTML_THREAD_BOTTOM = '''
 # Error messages
 # ============================================================================
 
-ERR_INVALID_THREAD = '<h3 class="error">Invalid Thread Specified</h3>'
-ERR_NO_SUBJECT = '<h3 class="error">No Subject Given</h3>'
-ERR_NO_BODY = '<h3 class="error">No body text!</h3>'
+ERR_INVALID_THREAD = 'Invalid Thread Specified'
+ERR_NO_SUBJECT = 'No Subject Given'
+ERR_NO_BODY = 'No body text!'
 
 # ============================================================================
 # Misc. globals
