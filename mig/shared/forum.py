@@ -65,9 +65,20 @@ OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import fcntl
-import md5
+try:
+    from hashlib import md5 as md5_hash
+except ImportError:
+    from md5 import new as md5_hash
 import os
 import time
+
+# TODO: use jquery sortable table (move all html out of here!)
+# TODO: enable search in message bodies too
+# TODO: enable search in dates too
+# TODO: add delete thread/post to admin version
+# TODO: can we mark new posts somehow?
+# TODO: can we add sticky posts somehow?
+# TODO: should we anonymize user IDs?
 
 # ============================================================================
 # Configuration
@@ -327,7 +338,7 @@ def update_thread(data_dir, author, subject=None, key=None):
     if key:
         row_hash = key
     else:
-        row_hash = md5.new('%s%s%s' % (now, author, subject)).hexdigest()
+        row_hash = md5_hash('%s%s%s' % (now, author, subject)).hexdigest()
 
     # Read the index of threads in.
     try:
@@ -602,7 +613,6 @@ def list_single_thread(data_dir, extra_input, thread_hash, offset=0):
 
 def search_threads(data_dir, extra_input, subject, body, offset=0):
     """Search the existing threads."""
-    # TODO: enable search in message bodies too
     lines = []
     lock_handle = open(get_lock_path(data_dir), 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_SH)
