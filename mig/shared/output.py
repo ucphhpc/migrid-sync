@@ -1186,6 +1186,151 @@ Exit code: %s Description: %s<br />
                           (key, val)
             user_html += '</table>'
             lines.append(user_html)
+        elif i['object_type'] == 'forum_threads':
+            thread_fields = ['last', 'subject', 'author', 'date',
+                             'replies']
+            if i.get('status', None):
+                lines.append('<p class="status_message">%s</p>' % i['status'])
+            if len(i['threads']) > 0:
+                threads = i['threads']
+                lines.append("<table class='forum_threads columnsort' id='forumtable'>")
+                lines.append('''
+<thead class="title">
+<tr>
+  <th>Last Update</th>
+  <th>Subject</th>
+  <th>Author</th>
+  <th>Created</th>
+  <th>Replies</th>
+</tr>
+</thead>
+<tbody>
+''')
+                for entry in threads:
+                    lines.append('<tr>')
+                    # Remaining fields
+                    for name in thread_fields:
+                        lines.append('<td class=centertext>')
+                        if entry.has_key(name):
+                            if name == 'subject':
+                                link_entry = {'object_type': 'link', 'text':
+                                              entry['subject'], 'destination':
+                                               '%s&vgrid_name=%s' % \
+                                              (entry['link'], i['vgrid_name'])}
+                                lines.append('%s' % html_link(link_entry))
+                            else:
+                                lines.append('%s' % entry[name])
+                        else:
+                            lines.append('---')
+                        lines.append('</td>')
+                    lines.append('</tr>')
+                lines.append('</tbody></table>')
+            else:
+                lines.append('No matching threads found')
+            max_subject_len, max_body_len = 100, 10000
+            if i.has_key('vgrid_name'):
+                lines.append('''
+<div id="search_threads">
+<a href="javascript:toggle_new('search_form', 'search_threads');">
+Search threads</a>
+</div>
+<div class="hidden_form" id="search_form">
+<form method="post" action="?">
+<input type="hidden" name="action" value="search"/>
+<input type="hidden" name="vgrid_name" value="%s"/>
+<p>Subject: <input id="search_form_main" name="msg_subject" maxlength="%s"
+size="80" value=""/></p>
+<p class="hidden_form">Body: <input name="msg_body" maxlength="%s" size="80" value=""/></p>
+<p>
+<input class="submit_button" type="submit" value="Search threads"/>
+<input class="submit_button" type="submit" value="Cancel"
+onclick="javascript:toggle_new('search_form', 'search_threads');
+return false;"/>
+</p>
+</form>
+</div>
+''' % (i['vgrid_name'], max_subject_len, max_body_len))
+                lines.append('''<div id="new_link">
+<a href="javascript:toggle_new('new_form', 'new_link');">
+Start a new thread</a>
+</div>
+<div class="hidden_form" id="new_form">
+<form method="post" action="?">
+<input type="hidden" name="action" value="new_thread"/>
+<input type="hidden" name="vgrid_name" value="%s"/>
+<p>Subject: <input id="new_form_main" name="msg_subject" maxlength="%s"
+size="80"/>
+</p>
+<p><textarea name="msg_body" rows="10" cols="80"></textarea></p>
+<p>
+<input class="submit_button" type="submit" value="New Thread"/>
+<input class="submit_button" type="reset" value="Clear"/>
+<input class="submit_button" type="submit" value="Cancel"
+onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
+</p>
+</form>
+</div>
+''' % (i['vgrid_name'], max_subject_len))
+                lines.append('''
+<div id="subscribe_form">
+<form method="post" action="?">
+<input type="hidden" name="action" value="toggle_subscribe"/>
+<input type="hidden" name="vgrid_name" value="%s"/>
+<input class="submit_button" type="submit" value="Subscribe/unsubscribe to updates"/>
+</form>
+</div>
+''' % i['vgrid_name'])
+        elif i['object_type'] == 'forum_thread_messages':
+            message_fields = ['date', 'author', 'body']
+            if i.get('status', None):
+                lines.append('<p class="status_message">%s</p>' % i['status'])
+            if len(i['messages']) > 0:
+                lines.append("<h3>%s</h3>" % i['messages'][0]['subject'])
+                lines.append("<table class='forum_messages columnsort' id='forumtable'>")
+                lines.append('''
+<thead class="title">
+<tr>
+  <th>Date</th>
+  <th>Author</th>
+  <th>Message</th>
+</tr>
+</thead>
+<tbody>
+''')
+                for message in i['messages']:
+                    lines.append('<tr>')
+                    for name in message_fields:
+                        lines.append('<td>%s</td>' % message.get(name, '---'))
+                    lines.append('</tr>')
+                lines.append('</table>')
+            else:
+                lines.append('No messages in thread')
+            if i.has_key('vgrid_name') and i.has_key('thread'):
+                lines.append('''
+<p>
+<div id="new_link">
+<a href="javascript:toggle_new('reply_form', 'new_link')">
+Reply to this thread</a></p>
+</div>
+<div class="hidden_form" id="reply_form">
+<form method="post" action="?">
+<input type="hidden" name="action" value="reply"/>
+<input type="hidden" name="vgrid_name" value="%s"/>
+<input type="hidden" name="thread" value="%s"/>
+<p><textarea id="reply_form_main" name="msg_body" rows="10"
+cols="80"></textarea></p>
+<p>
+<input class="submit_button" type="submit" value="Post"/>
+<input class="submit_button" type="reset" value="Clear"/>
+<input class="submit_button" type="submit" value="Cancel"
+onclick="javascript:toggle_new('reply_form', 'new_link'); return false;"/>
+</p>
+</form>
+</div>
+''' % (i['vgrid_name'], i['thread']))
+                lines.append('''
+<p><a href="?vgrid_name=%s">Return to forum index</a></p>
+''' % i['vgrid_name'])
         elif i['object_type'] == 'vgrid_list':
             if len(i['vgrids']) > 0:
                 vgrids = i['vgrids']

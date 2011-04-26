@@ -106,6 +106,10 @@ table.people {
   padding: 2px;
   text-align: left;
 }
+table.forum {
+  padding: 2px;
+  text-align: left;
+}
 table.sandboxlogintext {
   width: 80%;
 }

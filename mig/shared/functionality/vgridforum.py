@@ -45,14 +45,14 @@ from shared.vgrid import vgrid_is_owner_or_member
 get_actions = ['show_all', 'show_thread', 'search']
 post_actions = ['new_thread', 'reply', 'toggle_subscribe']
 valid_actions = get_actions + post_actions
+default_pager_entries = 20
 
 def signature():
     """Signature of the main function"""
 
     defaults = {'vgrid_name': REJECT_UNSET, 'action': ['show_all'],
-                'thread': [''], 'offset': ['0'], 'msg_subject': [''],
-                'msg_body': ['']}
-    return ['html_form', defaults]
+                'thread': [''], 'msg_subject': [''], 'msg_body': ['']}
+    return ['forumview', defaults]
 
 def notify_subscribers(configuration, forum_base, vgrid_name, author, url):
     """Send notifications to all users subscribing to forum in forum_base"""
@@ -100,7 +100,6 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1]
     action = accepted['action'][-1]
     thread = accepted['thread'][-1]
-    offset = int(accepted['offset'][-1])
     msg_subject = accepted['msg_subject'][-1]
     msg_body = accepted['msg_body'][-1]
         
@@ -131,31 +130,81 @@ access the forum.''' % vgrid_name})
 
     forum_base = os.path.abspath(os.path.join(base_dir, '.vgridforum'))
 
-    javascript = '''
-  <link rel="stylesheet" href="%s/css/forum.css" type="text/css" />
-  <script type="text/javascript">
-  function toggle_new(form_elem_id, link_elem_id) {
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'VGrid Forum'
+    title_entry['javascript'] = '''
+<link rel="stylesheet" href="/images/css/forum.css" type="text/css" />
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
+
+<script type="text/javascript">
+function toggle_new(form_elem_id, link_elem_id) {
     form_elem = document.getElementById(form_elem_id);
     form_focus = document.getElementById(form_elem_id + "_main");
     link_elem = document.getElementById(link_elem_id);
     if (!form_elem || !link_elem)
-      return;
+        return;
     if (form_elem.style.display != 'block') {
-      form_elem.style.display = 'block';
-      form_focus.focus();
-      link_elem.style.display = 'none';
+        form_elem.style.display = 'block';
+        form_focus.focus();
+        link_elem.style.display = 'none';
     } else {
-      form_elem.style.display = 'none';
-      link_elem.style.display = 'block';
-      link_elem.focus();
+        form_elem.style.display = 'none';
+        link_elem.style.display = 'block';
+        link_elem.focus();
     }
-  }
-  </script>
-''' % configuration.site_styles
+}
 
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'VGrid Forum'
-    title_entry['javascript'] = javascript
+$(document).ready(function() {
+
+          // init confirmation dialog
+          $( "#confirm_dialog" ).dialog(
+              // see http://jqueryui.com/docs/dialog/ for options
+              { autoOpen: false,
+                modal: true, closeOnEscape: true,
+                width: 640,
+                buttons: {
+                   "Cancel": function() { $( "#" + name ).dialog("close"); }
+                }
+              });
+
+          // table initially sorted by 0 (last update / date) 
+          var sortOrder = [[0,1]];
+
+          // use image path for sorting if there is any inside
+          var imgTitle = function(contents) {
+              var key = $(contents).find("a").attr("class");
+              if (key == null) {
+                  key = $(contents).html();
+              }
+              return key;
+          }
+
+          $("#forumtable").tablesorter({widgets: ["zebra"],
+                                        sortList:sortOrder,
+                                        textExtraction: imgTitle
+                                        })
+                               .tablesorterPager({ container: $("#pager"),
+                                        size: %s
+                                        });
+     }
+);
+</script>
+''' % default_pager_entries
+
+    output_objects.append({'object_type': 'html_form',
+                           'text':'''
+ <div id="confirm_dialog" title="Confirm" style="background:#fff;">
+  <div id="confirm_text"><!-- filled by js --></div>
+   <textarea cols="72" rows="10" id="confirm_input" style="display:none;"/></textarea>
+ </div>
+'''                       })
                           
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'VGrid Forum for %s' % vgrid_name})
@@ -169,9 +218,8 @@ access the forum.''' % vgrid_name})
                                '''No forum available for %s!''' % vgrid_name})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    extra_fields = {'vgrid_name': vgrid_name}
-    lines = []
     post_error = None
+    msg = ''
 
     logger.info("vgridforum %s %s %s" % (vgrid_name, action, thread))
     
@@ -180,8 +228,8 @@ access the forum.''' % vgrid_name})
             try:
                 (thread_hash, msg) = new_subject(forum_base, client_id,
                                                  msg_subject, msg_body)
-                query = 'vgrid_name=%s&action=show_thread&thread=%s&offset=%d'\
-                        % (vgrid_name,thread_hash, offset)
+                query = 'vgrid_name=%s&action=show_thread&thread=%s'\
+                        % (vgrid_name,thread_hash)
                 url = "%s?%s" % (os.environ['SCRIPT_URI'], query)
                 notify_subscribers(configuration, forum_base, vgrid_name,
                                        client_id, url)
@@ -191,9 +239,8 @@ access the forum.''' % vgrid_name})
             try:
                 (thread_hash, msg) = reply(forum_base, client_id, msg_body,
                                            thread)
-                offset = -1
-                query = 'vgrid_name=%s&action=show_thread&thread=%s&offset=%d'\
-                        % (vgrid_name,thread_hash, offset)
+                query = 'vgrid_name=%s&action=show_thread&thread=%s'\
+                        % (vgrid_name,thread_hash)
                 url = "%s?%s" % (os.environ['SCRIPT_URI'], query)
                 notify_subscribers(configuration, forum_base, vgrid_name,
                                    client_id, url)
@@ -206,23 +253,38 @@ access the forum.''' % vgrid_name})
                 post_error = str(error)
         else:
             msg = 'unexpected action: %s' % action
-        lines.append(msg)
 
     if action == 'search':
-        lines += search_threads(forum_base, extra_fields, msg_subject,
+        thread_list = search_threads(forum_base, msg_subject,
                                 msg_body)
+        msg = "Found %d thread(s) matching subject '%s'" % (len(thread_list),
+                                                            msg_subject)
     elif thread:
-        lines += list_single_thread(forum_base, extra_fields, thread,
-                                    offset)
+        try:
+            message_list = list_single_thread(forum_base, thread)
+        except ValueError, error:
+            post_error = str(error)
     else:
-        lines += list_threads(forum_base, extra_fields, offset)
+        thread_list = list_threads(forum_base)
 
-    output_objects.append({'object_type': 'html_form', 'text':
-                           '\n'.join(lines)})
     if post_error:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error handling VGrid forum post: %s'
+                              : 'Error handling VGrid forum operation: %s'
                                % post_error})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    if thread:
+        output_objects.append({'object_type': 'table_pager',
+                               'entry_name': 'messages',
+                               'default_entries': default_pager_entries})
+        output_objects.append({'object_type': 'forum_thread_messages',
+                               'messages': message_list, 'status': msg,
+                               'vgrid_name': vgrid_name, 'thread': thread})
+    else:
+        output_objects.append({'object_type': 'table_pager',
+                               'entry_name': 'threads',
+                               'default_entries': default_pager_entries})
+        output_objects.append({'object_type': 'forum_threads',
+                               'threads': thread_list, 'status': msg,
+                               'vgrid_name': vgrid_name})
     return (output_objects, returnvalues.OK)

@@ -175,6 +175,10 @@ user_list = {'object_type': 'user_list', 'required_list': [('users',
               'user')]}
 user_info = {'object_type': 'user_info',
                  'required': ['user_id', 'fields']}
+forum_threads = {'object_type': 'forum_threads', 'required':
+                 ['threads', 'status', 'vgrid_name']}
+forum_thread_messages = {'object_type': 'forum_thread_messages',
+                 'required': ['messages', 'status', 'vgrid_name']}
 vgrid_list = {'object_type': 'vgrid_list', 'required_list': [('vgrids',
               'vgrid')]}
 user_stats = {'object_type': 'user_stats', 'required': ['disk', 'jobs',
@@ -240,6 +244,8 @@ valid_types_list = [
     resource_info,
     user_list,
     user_info,
+    forum_threads,
+    forum_thread_messages,
     vgrid_list,
     user_stats,
     table_pager,

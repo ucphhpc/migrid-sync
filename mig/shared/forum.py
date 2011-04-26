@@ -26,7 +26,8 @@
 #
 
 """VGrid forum specific helper functions:
-This module builds on the Forest forum CGI software from
+This module is a heavily modified extension of the simple Forest forum CGI
+software from
 http://www.triv.org.uk/~nelis/forest/
 Original description and credits follow here:
 
@@ -72,18 +73,16 @@ except ImportError:
 import os
 import time
 
-# TODO: use jquery sortable table (move all html out of here!)
 # TODO: enable search in message bodies too
 # TODO: enable search in dates too
 # TODO: add delete thread/post to admin version
+# TODO: fancy editor, html, smilies, markup, etc
+# TODO: enable edits of own messages?
 # TODO: can we mark new posts somehow?
-# TODO: can we add sticky posts somehow?
+# TODO: can we add sticky posts somehow? add priority field for admins?
 # TODO: should we anonymize user IDs?
 
-# ============================================================================
-# Configuration
-# ============================================================================
-
+### Constants
 # File lock to avoid races on writes
 LOCK_NAME = 'forum.lock'
 
@@ -96,155 +95,15 @@ SUBSCRIBER_NAME = 'subscribers.txt'
 # How dates are stored (see python time module for details)
 DATE_FORMAT = '%d %b %Y %H:%M:%S'
 
-# How many entries to show on the index?
-INDEX_PAGE_SIZE = 20
-# How many entries to show on the thread page?
-THREAD_PAGE_SIZE = 20
-
 # Maximum lengths for subjects and message bodies.
 # (currently we chop them off without warning)
 MAX_SUBJECT_LEN = 100
 MAX_BODY_LEN = 10000
 
-# ============================================================================
-# HTML Elements.
-# ============================================================================
-HTML_THREADS_TOP = '''<table width="95%" class="threads_table">
- <tr class="threads_header">
-  <th width="50%">Subject</th><th>Author</th><th>Date</th><th>Replies</th><th>Last Reply</th>
- </tr>
-'''
-HTML_THREADS_ROW = '''
- <tr class="%s">
-  <td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
- </tr>
-'''
-HTML_NEW_THREAD = '''
-<div id="new_link">
-<a href="javascript:toggle_new('new_form', 'new_link');">
-Start a new thread</a>
-</div>
-<div class="hidden_form" id="new_form">
-<form method="post" action="?">
-<input type="hidden" name="action" value="new_thread"/>
-%%s
-<p>Subject: <input id="new_form_main" name="msg_subject" maxlength="%s"
-size="80"/>
-</p>
-<p><textarea name="msg_body" rows="10" cols="80"></textarea></p>
-<p>
-<input class="submit_button" type="submit" value="New Thread"/>
-<input class="submit_button" type="reset" value="Clear"/>
-<input class="submit_button" type="submit" value="Cancel"
-onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
-</p>
-</form>
-</div>
-''' % MAX_SUBJECT_LEN
-
-HTML_NEW_REPLY = '''
-<p>
-<div id="new_link">
-<a href="javascript:toggle_new('reply_form', 'new_link')">
-Reply to this thread</a></p>
-</div>
-<div class="hidden_form" id="reply_form">
-<form method="post" action="?">
-<input type="hidden" name="action" value="reply"/>
-<input type="hidden" name="thread" value="%s"/>
-%%s
-<p><textarea id="reply_form_main" name="msg_body" rows="10"
-cols="80"></textarea></p>
-<p>
-<input class="submit_button" type="submit" value="Post"/>
-<input class="submit_button" type="reset" value="Clear"/>
-<input class="submit_button" type="submit" value="Cancel"
-onclick="javascript:toggle_new('reply_form', 'new_link'); return false;"/>
-</p>
-</form>
-</div>
-'''
-
-HTML_TOGGLE_SUBSCRIBE = '''
-<div id="subscribe_form">
-<form method="post" action="?">
-<input type="hidden" name="action" value="toggle_subscribe"/>
-%s
-<input class="submit_button" type="submit" value="Subscribe/unsubscribe to updates"/>
-</form>
-</div>
-'''
-
-HTML_SEARCH_THREADS = '''
-<div id="search_threads">
-<a href="javascript:toggle_new('search_form', 'search_threads');">
-Search threads</a>
-</div>
-<div class="hidden_form" id="search_form">
-<form method="post" action="?">
-<input type="hidden" name="action" value="search"/>
-%%s
-<p>Subject: <input id="search_form_main" name="msg_subject" maxlength="%s"
-size="80" value=""/></p>
-<p class="hidden_form">Body: <input name="msg_body" maxlength="%s" size="80" value=""/></p>
-<p>
-<input class="submit_button" type="submit" value="Search threads"/>
-<input class="submit_button" type="submit" value="Cancel"
-onclick="javascript:toggle_new('search_form', 'search_threads');
-return false;"/>
-</p>
-</form>
-</div>
-''' % (MAX_SUBJECT_LEN, MAX_SUBJECT_LEN)
-
-HTML_THREADS_BOTTOM = '</table>'
-HTML_THREAD_TOP = '''
-<table width="95%%" class="threads_table">
- <col width="35%%" />
- <col width="65%%" />
- <tr><td colspan="2"><a href="?action=show_all&%s">&lt;&lt; Main</a></td></tr>
- <tr class="thread_header"><td colspan="2">%s</td></tr>
-'''
-HTML_THREAD_ROW = '''
- <tr class="%s">
-  <td valign="top"><b>%s</b><br/><small>%s</small></td>
-  <td>%s</td>
- </tr>
-'''
-HTML_THREAD_BOTTOM = '''
-</table>
-'''
-HTML_SEARCH_SUMMARY = '''
-<a href="%s">&lt;&lt; Main</a>
-<p class="status_message">
-Found %d thread(s) matching subject "%s" and body "%s"
-</p>
-'''
-
-HTML_POST_STATUS = '''<p class="status_message">%s</p>'''
-
-HTML_SUBSCRIBE_STATUS = '''<p class="status_message">
-Succesfully %s forum updates
-</p>'''
-
-# ============================================================================
-# Error messages
-# ============================================================================
-
 ERR_INVALID_THREAD = 'Invalid Thread Specified'
 ERR_NO_SUBJECT = 'No Subject Given'
 ERR_NO_BODY = 'No body text!'
 
-# ============================================================================
-# Misc. globals
-# ============================================================================
-
-# No need to fiddle with these though.
-ROW_STYLES = {0: 'thread_row', 1: 'thread_row_alt'}
-
-# ============================================================================
-# Function definitions
-# ============================================================================
 
 def get_thread_path(data_dir, hash_string):
     """build thread path from data_dir and hash_string"""
@@ -265,23 +124,6 @@ def get_lock_path(data_dir):
     """build lock path from data_dir"""
     return os.path.join(data_dir, LOCK_NAME)
 
-def add_extra_fields(form_template, extra_fields):
-    """Add each of the key/value pairs in extra_fields dictionary as hidden
-    form input to form_template with a single expandable string variable.
-    """
-    hidden = ''
-    for (key, val) in extra_fields.items():
-        hidden += '<input type="hidden" name="%s" value="%s"/>\n' % (key, val)
-    return form_template % hidden
-
-def add_extra_args(url, extra_fields):
-    """Append each of the key/value pairs in extra_fields dictionary to url
-    with query arguments.
-    """
-    hidden = ''
-    for (key, val) in extra_fields.items():
-        hidden += '&%s=%s' % (key, val)
-    return url + hidden
 
 
 def strip_html(text):
@@ -399,7 +241,7 @@ def new_subject(data_dir, author, subject, body):
     new_post(data_dir, author, subject, body, row_hash)
     lock_handle.close()
     msg = 'Succesfully created new thread: "%s"' % subject
-    return (row_hash, HTML_POST_STATUS % msg)
+    return (row_hash, msg)
 
 
 def new_post(data_dir, author, subject, body, key):
@@ -435,7 +277,7 @@ def reply(data_dir, author, body, key):
     """
     # Check that the thread id is valid.
     if not body:
-        return ERR_NO_BODY
+        raise ValueError(ERR_NO_BODY)
     lock_handle = open(get_lock_path(data_dir), 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     if not (key and is_valid_hash(data_dir, key)):
@@ -444,7 +286,7 @@ def reply(data_dir, author, body, key):
     update_thread(data_dir, author, key=key)
     new_post(data_dir, author, '', body, key)
     lock_handle.close()
-    return (key, HTML_POST_STATUS % 'Succesfully posted reply')
+    return (key, 'Succesfully posted reply')
 
 def list_subscribers(data_dir, key=''):
     """Load a list of authors subscribing to the forum or a specific thread if
@@ -469,7 +311,6 @@ def toggle_subscribe(data_dir, author, key=''):
     author, key - Strings
     """
     new_lines = []
-    msg = ''
     subscribe_filename = get_subscriber_path(data_dir, key)
     add_author = True
     if not os.path.exists(subscribe_filename):
@@ -483,48 +324,19 @@ def toggle_subscribe(data_dir, author, key=''):
             new_lines.append(line)
     if add_author:
         new_lines.append('%s\n' % author)
-        msg += HTML_SUBSCRIBE_STATUS % \
-               'subscribed any addresses from your personal settings to'
+        out = '''Succesfully subscribed any addresses from your personal
+settings to forum updates'''
     else:
-        msg += HTML_SUBSCRIBE_STATUS % 'unsubscribed from'
+        out = 'Succesfully unsubscribed from forum updates'
     subscribe_file.seek(0)
     subscribe_file.truncate(0)
     subscribe_file.writelines(new_lines)
     subscribe_file.close()
-    return msg
+    return out
 
-def display_paging_links(extra_fields, current_offset, num_items, page_length,
-                         thread=None):
-    """Display a list of links to go to a given page number"""
-    pages = num_items / page_length
-    # Any left over pages?
-    if (num_items % page_length):
-        pages += 1
-
-    if pages < 2:
-        # Only one page. Don't bother showing links.
-        return ''
-
-    links = []
-    if thread:
-        url = '?action=show_thread&thread=%s&offset=%%d' % thread
-    else:
-        url = '?action=show_all&offset=%d'
-    url = add_extra_args(url, extra_fields)
-    for page_number in range(pages):
-        offset = page_number * page_length
-        if offset != current_offset:
-            links.append('<a href="%s">%s</a>' % \
-                    (url % offset, page_number + 1))
-        else:
-            links.append(str(page_number + 1))
-
-    return ' | '.join(links)
-
-
-def list_threads(data_dir, extra_input, offset=0):
+def list_threads(data_dir):
     """List the existing threads."""
-    lines = []
+    thread_list = []
     lock_handle = open(get_lock_path(data_dir), 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_SH)
     if os.path.exists(get_index_path(data_dir)):
@@ -535,18 +347,7 @@ def list_threads(data_dir, extra_input, offset=0):
         threads = []
     lock_handle.close()
 
-    num_threads = len(threads)
-
-    lines.append(display_paging_links(extra_input, offset, num_threads,
-                                  INDEX_PAGE_SIZE))
-
-    lines.append(HTML_THREADS_TOP)
-
-    thread_index = -1
-
-    for thread in threads[offset:offset + INDEX_PAGE_SIZE]:
-        thread_index += 1
-
+    for thread in threads:
         thread_items = thread.split('\t')
         if len(thread_items) != 6:
             continue
@@ -554,30 +355,25 @@ def list_threads(data_dir, extra_input, offset=0):
         thread_hash, date, num_replies, last_reply, author, subject = \
             thread_items
 
-        url = add_extra_args('?action=show_thread&thread=%s' % thread_hash,
-                             extra_input)
-        link = '<a href="%s">%s</a>' % (url, subject)
-
+        url = "?thread=%s" % thread_hash
         #  Date Author Subject Replies Last Reply
-        lines.append(HTML_THREADS_ROW % (ROW_STYLES[thread_index % 2], link,
-                                         author, date, num_replies,
-                                         last_reply))
+        last_update = last_reply
+        if last_reply == '-':
+            last_update = date
+        entry = {'subject': subject, 'link': url, 'author': author, 'date':
+                 date, 'replies': num_replies, 'last': last_update}
+        thread_list.append(entry)
 
-    lines.append(HTML_THREADS_BOTTOM)
-    lines.append(add_extra_fields(HTML_SEARCH_THREADS, extra_input))
-    lines.append(add_extra_fields(HTML_NEW_THREAD, extra_input))
-    lines.append(add_extra_fields(HTML_TOGGLE_SUBSCRIBE, extra_input))
-    return lines
+    return thread_list
 
 
-def list_single_thread(data_dir, extra_input, thread_hash, offset=0):
+def list_single_thread(data_dir, thread_hash):
     """Output the HTMl for a given thread id"""
-    lines = []
+    message_list = []
     lock_handle = open(get_lock_path(data_dir), 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_SH)
     if not is_valid_hash(data_dir, thread_hash):
-        lines.append(ERR_INVALID_THREAD)
-        return lines
+        raise ValueError(ERR_INVALID_THREAD)
 
     thread_file = file(get_thread_path(data_dir, thread_hash), 'r')
     threads = thread_file.read().split('\n')
@@ -587,33 +383,22 @@ def list_single_thread(data_dir, extra_input, thread_hash, offset=0):
     # The first item in the file is actually the hash and the subject. But we
     # don't need it really.
     _, subject = threads.pop(0).split('\t')
-    num_posts = len(threads)
-    # Show last page if offset is negative (e.g. after reply)
-    if offset < 0:
-        offset = THREAD_PAGE_SIZE * ((num_posts - 2) / THREAD_PAGE_SIZE)
-    lines.append(display_paging_links(extra_input, offset, num_posts,
-                                  THREAD_PAGE_SIZE, thread_hash))
-    url = add_extra_args('', extra_input)
-    lines.append(HTML_THREAD_TOP % (url, subject.strip()))
 
-    row_index = -1
-    for line in threads[offset : offset + THREAD_PAGE_SIZE]:
-        row_index += 1
+    for line in threads:
         split_line = line.split('\t')
         if len(split_line) != 3:
             continue
 
         date, author, body = split_line
-        lines.append(HTML_THREAD_ROW % (ROW_STYLES[row_index % 2], author, date,
-                                        body.decode('string_escape')))
+        entry = {'subject': subject, 'author': author, 'date': date, 'body':
+                 body.decode('string_escape')}
+        message_list.append(entry)
 
-    lines.append(HTML_THREAD_BOTTOM)
-    lines.append(add_extra_fields(HTML_NEW_REPLY % thread_hash, extra_input))
-    return lines
+    return message_list
 
-def search_threads(data_dir, extra_input, subject, body, offset=0):
+def search_threads(data_dir, subject, body):
     """Search the existing threads."""
-    lines = []
+    thread_list = []
     lock_handle = open(get_lock_path(data_dir), 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_SH)
     if os.path.exists(get_index_path(data_dir)):
@@ -627,21 +412,7 @@ def search_threads(data_dir, extra_input, subject, body, offset=0):
     # Filter using search terms
     threads = [i for i in threads if i.find(subject) != -1]
 
-    num_hits = len(threads)
-
-    lines.append(HTML_SEARCH_SUMMARY % (add_extra_args('?action=show_all',
-                                                       extra_input),num_hits,
-                                        subject, body))
-    lines.append(display_paging_links(extra_input, offset, num_hits,
-                                  INDEX_PAGE_SIZE))
-
-    lines.append(HTML_THREADS_TOP)
-
-    thread_index = -1
-
-    for thread in threads[offset:offset + INDEX_PAGE_SIZE]:
-        thread_index += 1
-
+    for thread in threads:
         thread_items = thread.split('\t')
         if len(thread_items) != 6:
             continue
@@ -649,17 +420,13 @@ def search_threads(data_dir, extra_input, subject, body, offset=0):
         thread_hash, date, num_replies, last_reply, author, subject = \
             thread_items
 
-        url = add_extra_args('?action=show_thread&thread=%s' % thread_hash,
-                             extra_input)
-        link = '<a href="%s">%s</a>' % (url, subject)
-
+        url = '?action=show_thread&thread=%s' % thread_hash
         #  Date Author Subject Replies Last Reply
-        lines.append(HTML_THREADS_ROW % (ROW_STYLES[thread_index % 2], link,
-                                         author, date, num_replies,
-                                         last_reply))
+        last_update = last_reply
+        if last_reply == '-':
+            last_update = date
+        entry = {'subject': subject, 'link': url, 'author': author, 'date':
+                 date, 'replies': num_replies, 'last': last_update}
+        thread_list.append(entry)
 
-    lines.append(HTML_THREADS_BOTTOM)
-    lines.append(add_extra_fields(HTML_SEARCH_THREADS, extra_input))
-    lines.append(add_extra_fields(HTML_NEW_THREAD, extra_input))
-    return lines
-
+    return thread_list
