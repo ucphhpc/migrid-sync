@@ -239,7 +239,7 @@ table.liveio table {
   background-image: url('/images/icons/application_osx_terminal.png');
 }
 .navmenu ul li.people a {
-  background-image: url('/images/icons/personal.png');
+  background-image: url('/images/icons/group.png');
 }
 
 .navmenu ul li.statistics a {
@@ -550,7 +550,7 @@ table.liveio table {
   padding-left: 18px;
 }
 .forumlink {
-  background: url('/images/icons/forum.png') no-repeat;
+  background: url('/images/icons/comments.png') no-repeat;
   padding-left: 18px;
 }
 .monitorlink {
