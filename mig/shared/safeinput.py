@@ -63,14 +63,17 @@ name_extras = ' -@.'
 
 dn_extras = name_extras + '/=@.:'
 
+integer_extras = '+-'
 password_extras = ' -_#.,:;!@%/()[]{}+=?<>'
 password_min_len = 4
 password_max_len = 64
 dn_max_len = 96
 
+valid_integer_chars = digits + integer_extras
 valid_password_chars = letters + digits + password_extras
 valid_name_chars = letters + digits + name_extras
 valid_dn_chars = letters + digits + dn_extras
+VALID_INTEGER_CHARACTERS = valid_integer_chars
 VALID_PASSWORD_CHARACTERS = valid_password_chars
 VALID_NAME_CHARACTERS = valid_name_chars
 VALID_DN_CHARACTERS = valid_dn_chars
@@ -253,13 +256,20 @@ def valid_distinguished_name(
                      max_length)
 
 
+def valid_integer(contents, min_length=0, max_length=-1, extra_chars=''):
+    """Verify that supplied integer only contain valid characters"""
+
+    valid_chars = VALID_INTEGER_CHARACTERS + extra_chars
+    __valid_contents(contents, valid_chars, min_length, max_length)
+
+
 def valid_password(
     password,
     min_length=password_min_len,
     max_length=password_max_len,
     extra_chars='',
     ):
-    """Verify that supplied commonname only contains
+    """Verify that supplied password only contains
     characters that we consider valid. 
     """
 
@@ -789,7 +799,7 @@ def guess_type(name):
     elif name.lower().find('msg_body') != -1:
         return valid_plain_text
     elif name.lower().find('offset') != -1:
-        return valid_numeric
+        return valid_integer
     elif name.lower().find('software_entries') != -1:
         return valid_numeric
     elif name.lower().find('environment_entries') != -1:

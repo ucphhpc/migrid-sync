@@ -47,7 +47,7 @@ except Exception, err:
 
 def create_notify_message(
     jobdict,
-    myfiles_py_location,
+    args_list,
     status,
     statusfile,
     configuration,
@@ -121,11 +121,11 @@ Replies to this message will not be read!!!
 '''\
              % var_dict
     elif status == 'SENDREQUEST':
-        from_id = myfiles_py_location[0]
-        target_name = myfiles_py_location[1]
-        request_type = myfiles_py_location[2]
-        request_text = myfiles_py_location[3]
-        reply_to = myfiles_py_location[4]
+        from_id = args_list[0]
+        target_name = args_list[1]
+        request_type = args_list[2]
+        request_text = args_list[3]
+        reply_to = args_list[4]
         entity = entity_mapper[request_type]
         if request_type == "plain":
             header = '%s user message' % configuration.short_title
@@ -173,8 +173,8 @@ reply using one of the message links for the user
 on your People page.
         """ % reply_to
     elif status == 'PASSWORDREMINDER':
-        from_id = myfiles_py_location[0]
-        password = myfiles_py_location[1]
+        from_id = args_list[0]
+        password = args_list[1]
         header = '%s pasword reminder' % configuration.short_title
         txt += \
             """This is an auto generated password reminder from the %s server:
@@ -184,6 +184,23 @@ on your People page.
             """Feel free to locally change the password as described in the
 user scripts tutorial online.
 """
+        txt += """Replies to this message will not be read!!!"""
+    elif status == 'FORUMUPDATE':
+        vgrid_name = args_list[0]
+        author = args_list[1]
+        url = args_list[2]
+        header = "New post in %s VGrid forum on %s server" % \
+                 (vgrid_name, configuration.short_title)
+        txt += """This is an automated notification message from the %s server
+
+User %s
+posted a new message in the private %s forum. You may see the details at
+%s
+The main forum page includes a button to change your subscription state in
+case you don't want to receive these notifications in the future.
+""" % (configuration.short_title, author, vgrid_name, url)
+
+
         txt += """Replies to this message will not be read!!!"""
     else:
         header = '%s Unknown message type' % configuration.short_title
@@ -245,8 +262,7 @@ To: %s
 Subject: %s
 
 %s
-'''\
-         % (configuration.smtp_sender, recipients, subject, message)
+''' % (configuration.smtp_sender, recipients, subject, message)
 
     recipients_list = recipients.split(', ')
 
@@ -272,7 +288,7 @@ Subject: %s
 
 def notify_user(
     jobdict,
-    myfiles_py_location,
+    args_list,
     status,
     logger,
     statusfile,
@@ -308,7 +324,7 @@ def notify_user(
     for notify_line in jobdict['NOTIFY']:
         logger.debug('notify line: %s' % notify_line)
         (header, message) = create_notify_message(jobdict,
-                myfiles_py_location, status, statusfile, configuration)
+                args_list, status, statusfile, configuration)
 
         supported_protocols = ['jabber', 'msn', 'icq', 'aol', 'yahoo']
         notify_line_colon_split = notify_line.split(':', 1)
@@ -417,7 +433,7 @@ def notify_user(
 
 def notify_user_thread(
     jobdict,
-    myfiles_py_location,
+    args_list,
     status,
     logger,
     statusfile,
@@ -430,7 +446,7 @@ def notify_user_thread(
 
     notify_thread = threading.Thread(target=notify_user, args=(
         jobdict,
-        myfiles_py_location,
+        args_list,
         status,
         logger,
         statusfile,
@@ -448,6 +464,7 @@ def send_resource_create_request_mail(
     logger,
     configuration,
     ):
+    """Send request for new resource to admins"""
 
     recipients = configuration.admin_email
 
