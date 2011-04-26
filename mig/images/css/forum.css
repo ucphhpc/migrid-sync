@@ -1,0 +1,77 @@
+/* 
+This forum style sheet is based on the one provided with the Forest forum
+software. Please refer to the license details in mig/shared/forum.py for 
+details.
+*/
+body {
+    font-family: Arial, sans-serif;
+    font-size: 10pt;
+}
+
+a {
+    font-weight: bold;
+    text-decoration: none;
+    color: #000099;
+}
+
+a:hover {
+    color: #0000EE;
+}
+
+form {
+    background-color: #EEEEEE;
+}
+
+.threads_table {
+    font-size: 10pt;
+}
+
+.threads_header {
+    background-color: #000099;
+    color: white;
+}
+
+.thread_header {
+    background-color: #000099;
+    color: white;
+    font-weight: bold;
+    font-size: 110%;
+}
+
+.thread_row {
+    background-color: #dddddd;
+}
+.thread_row_alt {
+    background-color: #eeeeee;
+}
+
+.submit_button {
+    border: solid 1px black;
+    background: #0000AA;
+    color: white;
+    font-weight: bold;
+}
+
+.error {
+    color: red;
+}
+
+.copy {
+    font-size: 8pt;
+    text-align: center;
+}
+
+.hidden_form {
+    display: none;
+}
+
+.status_message {
+    -moz-border-radius: 8px;
+    padding: 5px;
+    background-color: #eeeeee;
+    border: 2px solid #dddddd;
+}
+
+.date {
+    font-size: 85%;
+}
