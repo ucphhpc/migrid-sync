@@ -289,6 +289,23 @@ the commands and work flows of this distributed SCM.
         return False
 
 
+def create_forum(
+    configuration,
+    vgrid_name,
+    forum_dir,
+    output_objects,
+    ):
+    """Create new forum - just the base dir"""
+    try:
+        os.mkdir(forum_dir)
+        return True
+    except Exception, exc:
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Could not create vgrid forum: %s'
+                               % exc})
+        return False
+
+
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
@@ -348,6 +365,9 @@ def main(client_id, user_arguments_dict):
     private_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name, '.vgridscm')) + os.sep
+    private_forum_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_private_base,
+                        vgrid_name, '.vgridforum')) + os.sep
     vgrid_files_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
                         vgrid_name)) + os.sep
@@ -516,6 +536,11 @@ for job input and output.
             if not create_scm(configuration, vgrid_name, scm_dir,
                                output_objects):
                 return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    for forum_dir in [private_forum_dir]:
+        if not create_forum(configuration, vgrid_name, forum_dir,
+                            output_objects):
+            return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # create pickled owners list with client_id as owner
     # only add user in owners list if new vgrid is a base vgrid (because symlinks to

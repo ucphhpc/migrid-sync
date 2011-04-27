@@ -54,9 +54,10 @@ def signature():
                 'thread': [''], 'msg_subject': [''], 'msg_body': ['']}
     return ['forumview', defaults]
 
-def notify_subscribers(configuration, forum_base, vgrid_name, author, url):
+def notify_subscribers(configuration, forum_base, vgrid_name, thread, author,
+                       url):
     """Send notifications to all users subscribing to forum in forum_base"""
-    subscribers = list_subscribers(forum_base)
+    subscribers = list_subscribers(forum_base, thread)
     threads = []
     notify = []
     for proto in configuration.notify_protocols:
@@ -100,8 +101,8 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1]
     action = accepted['action'][-1]
     thread = accepted['thread'][-1]
-    msg_subject = accepted['msg_subject'][-1]
-    msg_body = accepted['msg_body'][-1]
+    msg_subject = accepted['msg_subject'][-1].strip()
+    msg_body = accepted['msg_body'][-1].strip()
         
     if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                     configuration):
@@ -231,8 +232,9 @@ $(document).ready(function() {
                 query = 'vgrid_name=%s&action=show_thread&thread=%s'\
                         % (vgrid_name,thread_hash)
                 url = "%s?%s" % (os.environ['SCRIPT_URI'], query)
-                notify_subscribers(configuration, forum_base, vgrid_name,
-                                       client_id, url)
+                notify_subscribers(configuration, forum_base, vgrid_name, '',
+                                   client_id, url)
+                thread = thread_hash
             except ValueError, error:
                 post_error = str(error)
         elif action == 'reply':
@@ -242,8 +244,10 @@ $(document).ready(function() {
                 query = 'vgrid_name=%s&action=show_thread&thread=%s'\
                         % (vgrid_name,thread_hash)
                 url = "%s?%s" % (os.environ['SCRIPT_URI'], query)
-                notify_subscribers(configuration, forum_base, vgrid_name,
+                notify_subscribers(configuration, forum_base, vgrid_name, '',
                                    client_id, url)
+                notify_subscribers(configuration, forum_base, vgrid_name,
+                                   thread_hash, client_id, url)
             except ValueError, error:
                 post_error = str(error)
         elif action == 'toggle_subscribe':
@@ -256,16 +260,16 @@ $(document).ready(function() {
 
     if action == 'search':
         thread_list = search_threads(forum_base, msg_subject,
-                                msg_body)
+                                msg_body, client_id)
         msg = "Found %d thread(s) matching subject '%s'" % (len(thread_list),
                                                             msg_subject)
     elif thread:
         try:
-            message_list = list_single_thread(forum_base, thread)
+            message_list = list_single_thread(forum_base, thread, client_id)
         except ValueError, error:
             post_error = str(error)
     else:
-        thread_list = list_threads(forum_base)
+        thread_list = list_threads(forum_base, client_id)
 
     if post_error:
         output_objects.append({'object_type': 'error_text', 'text'

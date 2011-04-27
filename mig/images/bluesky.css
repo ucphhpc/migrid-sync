@@ -464,6 +464,15 @@ table.liveio table {
   display:none;
 }
 
+.highlight_message {
+  font-weight: bold;
+}
+
+.new_message {
+  background: url('/images/icons/new.png') left center no-repeat;
+  padding-left: 16px;
+}
+
 .scrollselect {
     height: 120px;
     width: 600px;
@@ -601,6 +610,22 @@ table.liveio table {
 }
 .arcsettingslink {
   background: url('/images/icons/ng-arc.png') no-repeat;
+  padding-left: 18px;
+}
+.newpostlink {
+  background: url('/images/icons/comment.png') no-repeat;
+  padding-left: 18px;
+}
+.replylink {
+  background: url('/images/icons/comment_add.png') no-repeat;
+  padding-left: 18px;
+}
+.searchlink {
+  background: url('/images/icons/magnifier.png') no-repeat;
+  padding-left: 18px;
+}
+.refreshlink {
+  background: url('/images/icons/arrow_refresh.png') no-repeat;
   padding-left: 18px;
 }
 

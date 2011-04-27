@@ -1207,22 +1207,26 @@ Exit code: %s Description: %s<br />
 <tbody>
 ''')
                 for entry in threads:
-                    lines.append('<tr>')
+                    message_class, marker_class = '', 'class="centertext"'
+                    if entry['new']:
+                        message_class = 'class="highlight_message"'
+                        marker_class = 'class="centertext new_message"'
+                    lines.append('<tr %s>' % message_class)
                     # Remaining fields
                     for name in thread_fields:
-                        lines.append('<td class=centertext>')
-                        if entry.has_key(name):
-                            if name == 'subject':
-                                link_entry = {'object_type': 'link', 'text':
-                                              entry['subject'], 'destination':
-                                               '%s&vgrid_name=%s' % \
-                                              (entry['link'], i['vgrid_name'])}
-                                lines.append('%s' % html_link(link_entry))
-                            else:
-                                lines.append('%s' % entry[name])
+                        val = entry.get(name, '---')
+                        lines.append('<td %s>' % marker_class)
+                        if name == 'subject':
+                            link_entry = {'object_type': 'link', 'text':
+                                          val, 'destination':
+                                          '%s&vgrid_name=%s' % \
+                                          (entry['link'], i['vgrid_name'])}
+                            lines.append('%s' % html_link(link_entry))
                         else:
-                            lines.append('---')
+                            lines.append('%s' % val)
                         lines.append('</td>')
+                        # Reset marker after first entry
+                        marker_class = ''
                     lines.append('</tr>')
                 lines.append('</tbody></table>')
             else:
@@ -1230,8 +1234,10 @@ Exit code: %s Description: %s<br />
             max_subject_len, max_body_len = 100, 10000
             if i.has_key('vgrid_name'):
                 lines.append('''
+<p>
 <div id="search_threads">
-<a href="javascript:toggle_new('search_form', 'search_threads');">
+<a class="searchlink"
+href="javascript:toggle_new('search_form', 'search_threads');">
 Search threads</a>
 </div>
 <div class="hidden_form" id="search_form">
@@ -1249,9 +1255,12 @@ return false;"/>
 </p>
 </form>
 </div>
+</p>
 ''' % (i['vgrid_name'], max_subject_len, max_body_len))
-                lines.append('''<div id="new_link">
-<a href="javascript:toggle_new('new_form', 'new_link');">
+                lines.append('''
+<p>
+<div id="new_link">
+<a class="new_post" href="javascript:toggle_new('new_form', 'new_link');">
 Start a new thread</a>
 </div>
 <div class="hidden_form" id="new_form">
@@ -1263,20 +1272,24 @@ size="80"/>
 </p>
 <p><textarea name="msg_body" rows="10" cols="80"></textarea></p>
 <p>
-<input class="submit_button" type="submit" value="New Thread"/>
+<input class="submit_button" type="submit" value="Post"/>
 <input class="submit_button" type="reset" value="Clear"/>
 <input class="submit_button" type="submit" value="Cancel"
 onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
 </p>
 </form>
 </div>
+</p>
 ''' % (i['vgrid_name'], max_subject_len))
+                lines.append('''<p>
+<a class="refreshlink" href="?show_all&vgrid_name=%s">Reload threads</a>
+</p>''' % i['vgrid_name'])
                 lines.append('''
 <div id="subscribe_form">
 <form method="post" action="?">
 <input type="hidden" name="action" value="toggle_subscribe"/>
 <input type="hidden" name="vgrid_name" value="%s"/>
-<input class="submit_button" type="submit" value="Subscribe/unsubscribe to updates"/>
+<input class="submit_button" type="submit" value="Subscribe/unsubscribe to forum updates"/>
 </form>
 </div>
 ''' % i['vgrid_name'])
@@ -1285,7 +1298,7 @@ onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
             if i.get('status', None):
                 lines.append('<p class="status_message">%s</p>' % i['status'])
             if len(i['messages']) > 0:
-                lines.append("<h3>%s</h3>" % i['messages'][0]['subject'])
+                lines.append("<h2>%s</h2>" % i['messages'][0]['subject'])
                 lines.append("<table class='forum_messages columnsort' id='forumtable'>")
                 lines.append('''
 <thead class="title">
@@ -1297,10 +1310,17 @@ onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
 </thead>
 <tbody>
 ''')
-                for message in i['messages']:
-                    lines.append('<tr>')
+                for entry in i['messages']:
+                    message_class, marker_class = '', 'class="centertext"'
+                    if entry['new']:
+                        message_class = 'class="highlight_message"'
+                        marker_class = 'class="centertext new_message"'
+                    lines.append('<tr %s>' % message_class)
                     for name in message_fields:
-                        lines.append('<td>%s</td>' % message.get(name, '---'))
+                        val = entry.get(name, '---')
+                        lines.append('<td %s>%s</td>' % (marker_class, val))
+                        # Reset marker after first entry
+                        marker_class = ''
                     lines.append('</tr>')
                 lines.append('</table>')
             else:
@@ -1309,7 +1329,7 @@ onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
                 lines.append('''
 <p>
 <div id="new_link">
-<a href="javascript:toggle_new('reply_form', 'new_link')">
+<a class="replylink" href="javascript:toggle_new('reply_form', 'new_link')">
 Reply to this thread</a></p>
 </div>
 <div class="hidden_form" id="reply_form">
@@ -1329,8 +1349,21 @@ onclick="javascript:toggle_new('reply_form', 'new_link'); return false;"/>
 </div>
 ''' % (i['vgrid_name'], i['thread']))
                 lines.append('''
-<p><a href="?vgrid_name=%s">Return to forum index</a></p>
+<p><a class="refreshlink" href="?show_thread&vgrid_name=%s&thread=%s">
+Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
+                lines.append('''
+<p><a class="backlink" href="?vgrid_name=%s">Return to forum index</a></p>
 ''' % i['vgrid_name'])
+                lines.append('''
+<div id="subscribe_form">
+<form method="post" action="?">
+<input type="hidden" name="action" value="toggle_subscribe"/>
+<input type="hidden" name="vgrid_name" value="%s"/>
+<input type="hidden" name="thread" value="%s"/>
+<input class="submit_button" type="submit" value="Subscribe/unsubscribe to thread updates"/>
+</form>
+</div>
+''' % (i['vgrid_name'], i['thread']))
         elif i['object_type'] == 'vgrid_list':
             if len(i['vgrids']) > 0:
                 vgrids = i['vgrids']
