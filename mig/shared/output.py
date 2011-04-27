@@ -1260,7 +1260,7 @@ return false;"/>
                 lines.append('''
 <p>
 <div id="new_link">
-<a class="new_post" href="javascript:toggle_new('new_form', 'new_link');">
+<a class="newpostlink" href="javascript:toggle_new('new_form', 'new_link');">
 Start a new thread</a>
 </div>
 <div class="hidden_form" id="new_form">
