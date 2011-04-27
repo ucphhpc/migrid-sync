@@ -83,6 +83,11 @@ def real_to_anon_user_map(user_home):
 
 def get_user_conf(user_id, configuration, include_meta=False):
     """Return user profile and settings"""
-    conf = load_profile(user_id, configuration, include_meta)
-    conf.update(load_settings(user_id, configuration, include_meta))
+    conf = {}
+    profile = load_profile(user_id, configuration, include_meta)
+    if profile:
+        conf.update(profile)
+    settings = load_settings(user_id, configuration, include_meta)
+    if settings:
+        conf.update(settings)
     return conf
