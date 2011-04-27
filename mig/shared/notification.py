@@ -126,7 +126,6 @@ Replies to this message will not be read!!!
         request_type = args_list[2]
         request_text = args_list[3]
         reply_to = args_list[4]
-        entity = entity_mapper[request_type]
         if request_type == "plain":
             header = '%s user message' % configuration.short_title
             txt += """This is a message sent on behalf of %s:
@@ -139,6 +138,7 @@ Replies to this message will not be read!!!
 
 """ % (from_id, request_text)
         elif request_type in entity_mapper.keys():
+            entity = entity_mapper[request_type]
             header = '%s %s request' % (configuration.short_title, request_type)
             txt += \
                 """This is a %s request from %s who would like to be added to
