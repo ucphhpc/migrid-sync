@@ -666,8 +666,14 @@ table.liveio table {
   padding-left: 18px;
 }
 .public_profile{
-  border: 1px inset grey;
+  float: left;
+  border: 1px inset blue;
+  padding: 20px;
 }
 .public_image{
+  float: right;
   border: 1px inset grey;
+}
+.public_frame{
+  width: 90%;
 }

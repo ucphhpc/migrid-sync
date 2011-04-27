@@ -30,7 +30,7 @@ import os
 import shared.returnvalues as returnvalues
 from shared.base import client_alias
 from shared.defaults import any_vgrid, default_mrsl_filename, \
-     default_css_filename
+     default_css_filename, profile_img_max_kb, profile_img_extensions
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.settings import load_settings, load_widgets, load_profile
@@ -674,9 +674,13 @@ You can simply copy/paste from the available widget file links below if you want
         all_vgrids.sort()
         configuration.vgrids_allow_email = all_vgrids
         configuration.vgrids_allow_im = all_vgrids
-        configuration.public_image = [i for i in os.listdir(base_dir) if \
-                                      i.endswith('.png') or i.endswith('.jpg')]
-
+        images = []
+        for path in os.listdir(base_dir):
+            real_path = os.path.join(base_dir, path)
+            if os.path.splitext(path)[1].strip('.') in profile_img_extensions \
+                   and os.path.getsize(real_path) < profile_img_max_kb*1024:
+                images.append(path)
+        configuration.public_image = images
         html = \
              '''
 <div id="profile">

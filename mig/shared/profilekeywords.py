@@ -27,6 +27,7 @@
 
 """Keywords in the profile files"""
 
+from shared.defaults import profile_img_max_kb
 
 def get_profile_specs():
     """Return an ordered list of (keywords, spec) tuples. The order is
@@ -45,7 +46,7 @@ def get_profile_specs():
         }))
     specs.append(('PUBLIC_IMAGE', {
         'Title': 'Public profile image visible to other users',
-        'Description': 'Path to image in your user home.',
+        'Description': 'Path to small (<%dkb) png or jpg image in your user home.' % profile_img_max_kb,
         'Example': 'pics/me.png',
         'Type': 'multiplestrings',
         'Value': [],

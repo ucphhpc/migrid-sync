@@ -27,7 +27,11 @@
 
 """Get info about a user"""
 
+import base64
+import os
+
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.defaults import any_vgrid
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
@@ -44,9 +48,14 @@ def signature():
     defaults = {'cert_id': REJECT_UNSET}
     return ['user_info', defaults]
 
+def inline_image(path):
+    """Create inline image base64 string from file in path"""
+    data = 'data:image/%s;base64,' % os.path.splitext(path)[1].strip('.')
+    data += base64.b64encode(open(path).read())
+    return data
 
-def build_useritem_object_from_user_dict(configuration, user_id,
-                                       user_dict, allow_vgrids):
+def build_useritem_object_from_user_dict(configuration, user_id, user_home,
+                                         user_dict, allow_vgrids):
     """Build a user object based on input user_dict"""
 
     profile_specs = get_profile_specs()
@@ -57,21 +66,29 @@ def build_useritem_object_from_user_dict(configuration, user_id,
         'fields': [],
         }
     user_item['fields'].append(('Public user ID', user_id))
+    user_image = True
     public_image = user_dict[CONF].get('PUBLIC_IMAGE', [])
     if not public_image:
+        user_image = False
         public_image = ['/images/anonymous.png']
     img_html = '<div class="public_image">'
     for img_path in public_image:
-        img_html += '<img src="%s"' % img_path
+        if user_image:
+            img_data = inline_image(os.path.join(user_home, img_path))
+        else:
+            img_data = img_path
+        img_html += '<img src="%s">' % img_data
     img_html += '</div>'
-    user_item['fields'].append(('Public image', img_html))
     public_profile = user_dict[CONF].get('PUBLIC_PROFILE', [])
     if not public_profile:
         public_profile = ['No public information provided']
     profile_html = '<div class="public_profile">'
     profile_html += '<br />'.join(public_profile)
-    profile_html += '</div>'    
-    user_item['fields'].append(('Public information', profile_html))
+    profile_html += '</div>'
+    public_html = '<div class="public_frame">\n%s\n%s\n</div>' % (profile_html,
+                                                                  img_html)
+    profile_html += '<div class="clear"></div>'
+    user_item['fields'].append(('Public information', public_html))
     vgrids_allow_email = user_dict[CONF].get('VGRIDS_ALLOW_EMAIL', [])
     vgrids_allow_im = user_dict[CONF].get('VGRIDS_ALLOW_IM', [])
     hide_email = user_dict[CONF].get('HIDE_EMAIL_ADDRESS', True)
@@ -109,12 +126,7 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
-
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'User details'
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Show user details'})
-
+    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -127,7 +139,19 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     user_list = accepted['cert_id']
+
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                               client_dir)) + os.sep
     status = returnvalues.OK
+
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'User details'
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Show user details'})
+
     visible_user = user_visible_user_confs(configuration, client_id)
     allowed_vgrids = user_allowed_vgrids(configuration, client_id)
 
@@ -139,9 +163,10 @@ def main(client_id, user_arguments_dict):
             continue
         user_dict = visible_user[visible_user_name]
         user_item = build_useritem_object_from_user_dict(configuration,
-                                                      visible_user_name,
-                                                      user_dict,
-                                                      allowed_vgrids)
+                                                         visible_user_name,
+                                                         base_dir,
+                                                         user_dict,
+                                                         allowed_vgrids)
         output_objects.append(user_item)
         
     return (output_objects, status)

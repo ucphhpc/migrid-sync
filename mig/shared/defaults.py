@@ -61,3 +61,6 @@ profile_filename = '.userprofile'
 default_mrsl_filename = '.default.mrsl'
 default_css_filename = '.default.css'
 ssh_conf_dir = '.ssh'
+
+profile_img_max_kb = 128
+profile_img_extensions = ['png', 'jpg']
