@@ -776,6 +776,10 @@ def guess_type(name):
         return valid_email_address
     elif name.lower().find('email') != -1:
         return valid_email_address
+    elif name.lower().find('public_profile') != -1:
+        return valid_plain_text
+    elif name.lower().find('public_image') != -1:
+        return valid_path
     elif name.lower().find('resconfig') != -1:
         return valid_plain_text
     elif name.lower().find('redescription') != -1:

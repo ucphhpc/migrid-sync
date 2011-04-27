@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,14 +28,15 @@
 import os
 import datetime
 
-import parser
-from settingskeywords import get_keywords_dict as get_settings_fields
+import shared.parser as parser
+from shared.base import client_id_dir
+from shared.defaults import settings_filename, profile_filename, \
+     widgets_filename
 from shared.fileio import pickle, unpickle
-from shared.useradm import client_id_dir
-from widgetskeywords import get_keywords_dict as get_widgets_fields
+from shared.profilekeywords import get_keywords_dict as get_profile_fields
+from shared.settingskeywords import get_keywords_dict as get_settings_fields
+from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 
-settings_filename = '.settings'
-widgets_filename = '.widgets'
 
 
 def parse_and_save_pickle(source, destination, keywords, client_id, configuration, strip_space, strip_comments):
@@ -88,6 +89,11 @@ def parse_and_save_widgets(filename, client_id, configuration):
                                  get_widgets_fields(), client_id,
                                  configuration, False, False)
 
+def parse_and_save_profile(filename, client_id, configuration):
+    return parse_and_save_pickle(filename, profile_filename,
+                                 get_profile_fields(), client_id,
+                                 configuration, False, False)
+
 
 def load_settings(client_id, configuration, include_meta=False):
     """Load settings from pickled settings file. Optional include_meta
@@ -120,3 +126,19 @@ def load_widgets(client_id, configuration, include_meta=False):
             if not key in real_keys:
                 del widgets_dict[key]
     return widgets_dict
+
+def load_profile(client_id, configuration, include_meta=False):
+    """Load profile from pickled profile file. Optional include_meta
+    controls the inclusion of meta data like creator and creation time.
+    """
+
+    client_dir = client_id_dir(client_id)
+    profile_path = os.path.join(configuration.user_home, client_dir,
+                                 profile_filename)
+    profile_dict = unpickle(profile_path, configuration.logger)
+    if profile_dict and not include_meta:
+        real_keys = get_profile_fields().keys()
+        for key in profile_dict.keys():
+            if not key in real_keys:
+                del profile_dict[key]
+    return profile_dict

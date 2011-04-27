@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ls - emulate ls command
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,6 +35,7 @@ import glob
 import stat
 
 import shared.returnvalues as returnvalues
+from shared.defaults import htaccess_filename
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive, file_info
@@ -188,7 +189,7 @@ def handle_file(
 
     # Build entire line before printing to avoid newlines
 
-    if os.path.basename(file_with_dir) == '.htaccess':
+    if os.path.basename(file_with_dir) == htaccess_filename:
 
         # Always hide .htaccess
 

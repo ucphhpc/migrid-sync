@@ -34,7 +34,7 @@ import fcntl
 from shared.base import sandbox_resource, client_id_dir
 from shared.conf import get_all_exe_vgrids, get_resource_fields, \
      get_resource_configuration
-from shared.defaults import default_vgrid
+from shared.defaults import settings_filename, profile_filename, default_vgrid
 from shared.resource import list_resources, real_to_anon_res_map
 from shared.serial import load, dump
 from shared.user import list_users, real_to_anon_user_map, get_user_conf
@@ -81,10 +81,18 @@ def refresh_user_map(configuration):
     all_users = list_users(configuration.user_home)
     real_map = real_to_anon_user_map(configuration.user_home)
     for user in all_users:
-        conf_path = os.path.join(configuration.user_home, client_id_dir(user),
-                                 ".settings")
-        if os.path.isfile(conf_path):
-            conf_mtime = os.path.getmtime(conf_path)
+        settings_path = os.path.join(configuration.user_home,
+                                     client_id_dir(user), settings_filename)
+        profile_path = os.path.join(configuration.user_home,
+                                    client_id_dir(user), profile_filename)
+        settings_mtime, profile_mtime = 0, 0
+        if os.path.isfile(settings_path):
+            settings_mtime = os.path.getmtime(settings_path)
+        if os.path.isfile(profile_path):
+            profile_mtime = os.path.getmtime(profile_path)
+
+        if settings_mtime + profile_mtime > 0:
+            conf_mtime = max(settings_mtime, profile_mtime)
         else:
             conf_mtime = -1
         # init first time
@@ -315,10 +323,18 @@ def refresh_vgrid_map(configuration):
     all_users = list_users(configuration.user_home)
     real_map = real_to_anon_user_map(configuration.user_home)
     for user in all_users:
-        conf_path = os.path.join(configuration.user_home, client_id_dir(user),
-                                 ".settings")
-        if os.path.isfile(conf_path):
-            conf_mtime = os.path.getmtime(conf_path)
+        settings_path = os.path.join(configuration.user_home,
+                                     client_id_dir(user), settings_filename)
+        profile_path = os.path.join(configuration.user_home,
+                                    client_id_dir(user), profile_filename)
+        settings_mtime, profile_mtime = 0, 0
+        if os.path.isfile(settings_path):
+            settings_mtime = os.path.getmtime(settings_path)
+        if os.path.isfile(profile_path):
+            profile_mtime = os.path.getmtime(profile_path)
+
+        if settings_mtime + profile_mtime > 0:
+            conf_mtime = max(settings_mtime, profile_mtime)
             user_conf = get_user_conf(user, configuration)
         else:
             conf_mtime = -1

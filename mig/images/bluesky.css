@@ -600,6 +600,10 @@ table.liveio table {
   background: url('/images/icons/psd.png') no-repeat;
   padding-left: 18px;
 }
+.profilesettingslink {
+  background: url('/images/icons/user.png') no-repeat;
+  padding-left: 18px;
+}
 .widgetssettingslink {
   background: url('/images/icons/application.png') no-repeat;
   padding-left: 18px;
@@ -660,4 +664,10 @@ table.liveio table {
 .sendicqlink {
   background: url('/images/icons/icq_protocol.png') no-repeat;
   padding-left: 18px;
+}
+.public_profile{
+  border: 1px inset grey;
+}
+.public_image{
+  border: 1px inset grey;
 }

@@ -29,6 +29,7 @@
 
 import os.path
 
+from shared.defaults import htaccess_filename
 
 def cert_name_format(input_string):
     """ Spaces in certificate names are replaced with underscore internally """
@@ -115,7 +116,7 @@ def valid_user_path(path, home_dir, allow_equal=False):
 
     real_path = os.path.abspath(path)
 
-    if '.htaccess' == os.path.basename(real_path):
+    if htaccess_filename == os.path.basename(real_path):
         return False
 
     real_home = os.path.abspath(home_dir)

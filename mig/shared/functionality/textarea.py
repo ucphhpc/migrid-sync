@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # textarea - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,13 +39,14 @@ import base64
 
 import shared.mrslkeywords as mrslkeywords
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
+from shared.defaults import default_mrsl_filename
 from shared.fileio import write_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.job import new_job
 from shared.upload import handle_package_upload
-from shared.useradm import mrsl_template, client_id_dir
 from shared.validstring import valid_user_path
 
 
@@ -227,7 +228,8 @@ def main(client_id, user_arguments_dict):
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             local_filename = base_dir\
-                 + convert_control_value_to_line(filename_key)
+                 + convert_control_value_to_line(filename_key,
+                                                 user_arguments_dict)
 
             if not valid_user_path(local_filename, base_dir):
                 output_objects.append({'object_type': 'error_text',
@@ -247,7 +249,8 @@ def main(client_id, user_arguments_dict):
             # msg += "%s created!" % local_filename
 
             fileuploadobj['name'] = os.sep\
-                 + convert_control_value_to_line(filename_key)
+                 + convert_control_value_to_line(filename_key,
+                                                 user_arguments_dict)
 
             if local_filename.upper().endswith('.MRSL')\
                  and submit_mrslfiles:
@@ -496,7 +499,7 @@ def main(client_id, user_arguments_dict):
     # save to default job template file if requested
 
     if save_as_default:
-        template_path = os.path.join(base_dir, mrsl_template)
+        template_path = os.path.join(base_dir, default_mrsl_filename)
         try:
             template_fd = open(template_path, 'wb')
             template_fd.write(mrsl)

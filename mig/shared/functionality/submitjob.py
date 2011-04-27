@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # submitjob - Job submission interfaces
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,14 +30,15 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.defaults import any_vgrid
+from shared.useradm import client_id_dir
+from shared.defaults import any_vgrid, default_mrsl_filename
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.mrslkeywords import get_job_specs
 from shared.parser import parse_lines
 from shared.refunctions import list_runtime_environments
 from shared.settings import load_settings
-from shared.useradm import mrsl_template, get_default_mrsl, client_id_dir
+from shared.useradm import get_default_mrsl
 from shared.vgrid import user_allowed_vgrids
 from shared.vgridaccess import user_allowed_res_exes
 
@@ -99,7 +100,7 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                client_dir)) + os.sep
 
-    template_path = os.path.join(base_dir, mrsl_template)
+    template_path = os.path.join(base_dir, default_mrsl_filename)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Submit Job'

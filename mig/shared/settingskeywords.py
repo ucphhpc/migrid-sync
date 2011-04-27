@@ -115,33 +115,6 @@ def get_settings_specs():
         'Context': 'appearance',
         'Required': False,
         }))
-    specs.append(('VGRIDS_ALLOW_EMAIL', {
-        'Title': 'VGrids allowed to email you',
-        'Description': 'List of VGrids for which members can send you emails.',
-        'Example': 'ANY',
-        'Type': 'multiplestrings',
-        'Value': [],
-        'Context': 'appearance',
-        'Required': False,
-        }))
-    specs.append(('VGRIDS_ALLOW_IM', {
-        'Title': 'VGrids allowed to send you instant messages',
-        'Description': 'List of VGrids for which members can send you IMs.',
-        'Example': 'ANY',
-        'Type': 'multiplestrings',
-        'Value': [],
-        'Context': 'appearance',
-        'Required': False,
-        }))
-    specs.append(('ANONYMOUS', {
-        'Title': 'User ID visible to other user? ',
-        'Description': 'Disbable to unmask your user ID to other users.',
-        'Example': 'True',
-        'Type': 'boolean',
-        'Value': True,
-        'Context': 'appearance',
-        'Required': False,
-        }))
     return specs
 
 def get_keywords_dict():

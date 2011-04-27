@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,14 +29,16 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_alias
-from shared.defaults import any_vgrid
+from shared.defaults import any_vgrid, default_mrsl_filename, \
+     default_css_filename
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
-from shared.settings import load_settings, load_widgets
+from shared.settings import load_settings, load_widgets, load_profile
+from shared.profilekeywords import get_profile_specs
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
-from shared.useradm import client_id_dir, mrsl_template, css_template, \
-    ssh_authkeys, get_default_mrsl, get_default_css, get_ssh_authkeys
+from shared.useradm import client_id_dir, ssh_authkeys, get_default_mrsl, \
+     get_default_css, get_ssh_authkeys
 from shared.vgrid import vgrid_list_vgrids
 
 try:
@@ -69,6 +71,10 @@ widgets_edit = edit_defaults.copy()
 widgets_edit['parserfile'] = web_parsers
 widgets_edit['stylesheet'] = web_stylesheets
 widgets_edit['height'] = '400px'
+profile_edit = edit_defaults.copy()
+profile_edit['parserfile'] = web_parsers
+profile_edit['stylesheet'] = web_stylesheets
+profile_edit['height'] = '200px'
 
 
 def py_to_js(options):
@@ -304,6 +310,9 @@ def main(client_id, user_arguments_dict):
     title_entry['javascript'] = javascript
 
     valid_topics = ['general', 'job', 'style']
+    if 'people' in configuration.site_user_menu + \
+           configuration.site_default_menu:
+        valid_topics.append('profile')
     if configuration.site_script_deps:
         valid_topics.append('widgets')
     if configuration.arc_clusters:
@@ -352,19 +361,14 @@ def main(client_id, user_arguments_dict):
         <tr><td>
         <form method="post" action="settingsaction.py">
         <input type="hidden" name="topic" value="general" />
-        Please note that if you want to set multiple values (e.g. addresses) in the same field, you must write each value on a separate line.
+        Please note that if you want to set multiple values (e.g. addresses)
+        in the same field, you must write each value on a separate line but
+        without blank lines.
         </td></tr>
         <tr><td>
         </td></tr>
         ''' % configuration.site_title
         settings_entries = get_settings_specs()
-        (got_list, all_vgrids) = vgrid_list_vgrids(configuration)
-        if not got_list:
-            all_vgrids = []
-        all_vgrids.append(any_vgrid)
-        all_vgrids.sort()
-        configuration.vgrids_allow_email = all_vgrids
-        configuration.vgrids_allow_im = all_vgrids
         for (keyword, val) in settings_entries:
             if 'notify' == val['Context'] and \
                    keyword.lower() not in configuration.notify_protocols:
@@ -428,21 +432,6 @@ def main(client_id, user_arguments_dict):
                         html += '<option %s value=%s>%s</option>'\
                              % (selected, choice, choice)
                     html += '</select><br />'
-            elif val['Type'] == 'boolean':
-                valid_choices = [True, False]
-                current_choice = ''
-                if current_settings_dict.has_key(keyword):
-                    current_choice = current_settings_dict[keyword]
-
-                if len(valid_choices) > 0:
-                    html += '<select name=%s>' % keyword
-                    for choice in valid_choices:
-                        selected = ''
-                        if choice == current_choice:
-                            selected = 'selected'
-                        html += '<option %s value=%s>%s</option>'\
-                             % (selected, choice, choice)
-                    html += '</select><br />'
             html += """
             </td></tr>
             """
@@ -459,7 +448,7 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'html_form', 'text': html})
 
     if 'job' in topics:
-        mrsl_path = os.path.join(base_dir, mrsl_template)
+        mrsl_path = os.path.join(base_dir, default_mrsl_filename)
 
         default_mrsl = get_default_mrsl(mrsl_path)
         html = \
@@ -500,7 +489,7 @@ If you use the same fields and values in many of your jobs, you can save your pr
 '''
         html = html % {
             'default_mrsl': default_mrsl,
-            'mrsl_template': mrsl_template,
+            'mrsl_template': default_mrsl_filename,
             'site': configuration.short_title,
             'keyword': keyword
             }
@@ -508,7 +497,7 @@ If you use the same fields and values in many of your jobs, you can save your pr
         output_objects.append({'object_type': 'html_form', 'text': html})
 
     if 'style' in topics:
-        css_path = os.path.join(base_dir, css_template)
+        css_path = os.path.join(base_dir, default_css_filename)
         default_css = get_default_css(css_path)
         html = \
              '''
@@ -552,7 +541,7 @@ Please note that you can not save an empty style file, but must at least leave a
 '''
         html = html % {
             'default_css': default_css,
-            'css_template': css_template,
+            'css_template': default_css_filename,
             'site': configuration.short_title,
             'keyword': keyword
             }
@@ -660,6 +649,117 @@ You can simply copy/paste from the available widget file links below if you want
              '''
         <tr><td>
         <input type="submit" value="Save Widgets" />
+        </form>
+</td></tr>
+</table>
+</div>
+'''
+        output_objects.append({'object_type': 'html_form', 'text': html})
+
+    if 'profile' in topics:
+
+        # load current profile
+
+        current_profile_dict = load_profile(client_id, configuration)
+        if not current_profile_dict:
+            
+            # no current profile found
+            
+            current_profile_dict = {}
+
+        (got_list, all_vgrids) = vgrid_list_vgrids(configuration)
+        if not got_list:
+            all_vgrids = []
+        all_vgrids.append(any_vgrid)
+        all_vgrids.sort()
+        configuration.vgrids_allow_email = all_vgrids
+        configuration.vgrids_allow_im = all_vgrids
+        configuration.public_image = [i for i in os.listdir(base_dir) if \
+                                      i.endswith('.png') or i.endswith('.jpg')]
+
+        html = \
+             '''
+<div id="profile">
+<table class="profile">
+<tr class="title"><td class="centertext">
+Public profile information visible to other users.
+</td></tr>
+<tr><td>
+</td></tr>
+<tr><td>
+If you want to let other users know more about you can add your own text here. If you leave the text area blank you will just get the default empty profile information.<br />
+</td></tr>
+<tr><td>
+<div class="warningtext">Please note that the profile parser is rather grumpy so you may have to avoid blank lines in your text below.
+</div> 
+</td></tr>
+<tr><td>
+<form method="post" action="settingsaction.py">
+<input type="hidden" name="topic" value="profile" />
+</td></tr>
+<tr><td>
+'''
+
+        profile_entries = get_profile_specs()
+        for (keyword, val) in profile_entries:
+            html += \
+                """
+            <tr class=title><td>
+            %s
+            </td></tr>
+            <tr><td>
+            %s
+            </td></tr>
+            <tr><td>
+            """\
+                 % (keyword, val['Description'])
+            if val['Type'] == 'multiplestrings':
+                try:
+
+                    # get valid choices from conf. multiple selections
+
+                    valid_choices = eval('configuration.%s' % keyword.lower())
+                    current_choice = []
+                    if current_profile_dict.has_key(keyword):
+                        current_choice = current_profile_dict[keyword]
+
+                    if len(valid_choices) > 0:
+                        html += '<div class="scrollselect">'
+                        for choice in valid_choices:
+                            selected = ''
+                            if choice in current_choice:
+                                selected = 'checked'
+                            html += '<input type="checkbox" name="%s" %s value=%s>%s<br />'\
+                                    % (keyword, selected, choice, choice)
+                        html += '</div>'
+                except:
+                    area = \
+                         """<textarea id='%s' cols=78 rows=10 name='%s'>""" % \
+                         (keyword, keyword)
+                    if current_profile_dict.has_key(keyword):
+                        area += '\n'.join(current_profile_dict[keyword])
+                    area += '</textarea><br />'
+                    html += wrap_edit_area(keyword, area, profile_edit)
+            elif val['Type'] == 'boolean':
+                valid_choices = [True, False]
+                current_choice = ''
+                if current_profile_dict.has_key(keyword):
+                    current_choice = current_profile_dict[keyword]
+
+                if len(valid_choices) > 0:
+                    html += '<select name=%s>' % keyword
+                    for choice in valid_choices:
+                        selected = ''
+                        if choice == current_choice:
+                            selected = 'selected'
+                        html += '<option %s value=%s>%s</option>'\
+                             % (selected, choice, choice)
+                    html += '</select><br />'
+
+        html += \
+             '''
+        <tr><td>
+        <input type="submit" value="Save Profile" />
         </form>
 </td></tr>
 </table>

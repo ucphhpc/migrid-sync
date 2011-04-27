@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # upload - Plain and efficient file upload back end
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,6 +33,7 @@ import os
 import glob
 
 import shared.returnvalues as returnvalues
+from shared.defaults import htaccess_filename
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
@@ -136,7 +137,7 @@ def main(client_id, user_arguments_dict):
 
     # Do not allow modification of htaccess files
 
-    if '.htaccess' == os.path.basename(real_path):
+    if htaccess_filename == os.path.basename(real_path):
         logger.error('Warning: %s tried to %s htaccess! (path %s)'
                       % (client_id, op_name, path))
         output_objects.append({'object_type': 'error_text', 'text'

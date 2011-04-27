@@ -53,3 +53,11 @@ mqueue_empty = 'NO MESSAGES'
 default_pager_entries = 25
 
 exe_leader_name = "execution-leader"
+
+htaccess_filename = '.htaccess'
+settings_filename = '.settings'
+widgets_filename = '.widgets'
+profile_filename = '.userprofile'
+default_mrsl_filename = '.default.mrsl'
+default_css_filename = '.default.css'
+ssh_conf_dir = '.ssh'

@@ -37,14 +37,12 @@ import datetime
 from shared.base import client_id_dir, old_id_format, sandbox_resource
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
-from shared.defaults import keyword_auto
+from shared.defaults import keyword_auto, ssh_conf_dir, htaccess_filename, \
+     settings_filename, default_css_filename, ssh_conf_dir
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.serial import load, dump
 
 db_name = 'MiG-users.db'
-mrsl_template = '.default.mrsl'
-css_template = '.default.css'
-ssh_conf_dir = '.ssh'
 ssh_authkeys = os.path.join(ssh_conf_dir, 'authorized_keys')
 cert_field_order = [
     ('country', 'C'),
@@ -219,9 +217,9 @@ def create_user(
     pending_dir = os.path.join(configuration.resource_pending,
                                client_dir)
     ssh_dir = os.path.join(home_dir, ssh_conf_dir)
-    htaccess_path = os.path.join(home_dir, '.htaccess')
-    settings_path = os.path.join(home_dir, '.settings')
-    css_path = os.path.join(home_dir, css_template)
+    htaccess_path = os.path.join(home_dir, htaccess_filename)
+    settings_path = os.path.join(home_dir, settings_filename)
+    css_path = os.path.join(home_dir, default_css_filename)
     if not renew:
         if verbose:        
             print 'Creating dirs and files for new user: %s' % client_id
@@ -298,8 +296,9 @@ def create_user(
 
     # Always write basic settings with email to support various mail requests
     # and to avoid log errors.
-    # Please note that we rely on anything from shared.settings here since it
-    # would introduce a module import cycle
+    # Please note that we can't rely on anything from shared.settings here
+    # since it would introduce a module import cycle
+    ### THIS SHOULD NO LONGER BE A PROBLEM!!
 
     try:
         settings_dict = {}

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # submitfields - Submit a job through the fields interface
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,13 +31,14 @@ import os
 import tempfile
 
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.conf import get_configuration_object
+from shared.defaults import default_mrsl_filename
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.job import new_job, fields_to_mrsl
 from shared.mrslkeywords import get_job_specs, get_keywords_dict
-from shared.useradm import mrsl_template, client_id_dir
 
 
 def signature():
@@ -148,7 +149,7 @@ def main(client_id, user_arguments_dict):
     # save to default job template file if requested
 
     if save_as_default:
-        template_path = os.path.join(base_dir, mrsl_template)
+        template_path = os.path.join(base_dir, default_mrsl_filename)
         try:
             template_fd = open(template_path, 'wb')
             template_fd.write(mrsl)

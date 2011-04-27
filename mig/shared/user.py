@@ -36,7 +36,7 @@ except ImportError:
 
 from shared.base import client_dir_id
 from shared.findtype import is_user
-from shared.settings import load_settings
+from shared.settings import load_settings, load_profile
 from shared.useradm import client_id_dir
 
 def anon_user_id(user_id):
@@ -83,4 +83,6 @@ def real_to_anon_user_map(user_home):
 
 def get_user_conf(user_id, configuration, include_meta=False):
     """Return user profile and settings"""
-    return load_settings(user_id, configuration, include_meta)
+    conf = load_profile(user_id, configuration, include_meta)
+    conf.update(load_settings(user_id, configuration, include_meta))
+    return conf

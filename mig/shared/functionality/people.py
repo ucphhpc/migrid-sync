@@ -34,7 +34,7 @@ from shared.defaults import default_pager_entries, any_vgrid
 from shared.functional import validate_input_and_cert
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
-from shared.user import anon_to_real_user_map, get_user_conf
+from shared.user import anon_to_real_user_map
 from shared.vgridaccess import user_visible_user_confs, user_allowed_vgrids, \
      CONF
 

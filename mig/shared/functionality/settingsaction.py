@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settingsaction - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,7 +32,9 @@ import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.settings import parse_and_save_settings, parse_and_save_widgets
+from shared.settings import parse_and_save_settings, parse_and_save_widgets, \
+     parse_and_save_profile
+from shared.profilekeywords import get_keywords_dict as profile_keywords
 from shared.settingskeywords import get_keywords_dict as settings_keywords
 from shared.widgetskeywords import get_keywords_dict as widgets_keywords
 
@@ -46,6 +48,8 @@ def extend_defaults(defaults, user_args):
         keywords_dict = settings_keywords()
     elif topic == 'widgets':
         keywords_dict = widgets_keywords()
+    elif topic == 'profile':
+        keywords_dict = profile_keywords()
     else:
         # should never get here
         keywords_dict = {}
@@ -94,6 +98,8 @@ def main(client_id, user_arguments_dict):
         keywords_dict = settings_keywords()
     elif topic == 'widgets':
         keywords_dict = widgets_keywords()
+    elif topic == 'profile':
+        keywords_dict = profile_keywords()
     else:
         # should never get here
         keywords_dict = {}
@@ -128,6 +134,10 @@ def main(client_id, user_arguments_dict):
     elif topic == 'widgets':
         (parse_status, parse_msg) = \
                        parse_and_save_widgets(tmptopicfile, client_id,
+                                              configuration)
+    elif topic == 'profile':
+        (parse_status, parse_msg) = \
+                       parse_and_save_profile(tmptopicfile, client_id,
                                               configuration)
     else:
         output_objects.append({'object_type': 'error_text', 'text'

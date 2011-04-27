@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # put - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,6 +37,7 @@ import fcntl
 import time
 
 import shared.confparser as confparser
+from shared.defaults import htaccess_filename
 from shared.putfuncs import verify_results, migrated_job
 from shared.resadm import start_resource_exe_if_continuous
 from shared.refunctions import create_runtimeenv
@@ -103,7 +104,7 @@ rel_name = filename.lstrip('/')
 
 # Prevent modification of htaccess files, even if apache allows it
 
-if '.htaccess' == os.path.basename(filename):
+if htaccess_filename == os.path.basename(filename):
     o.out('Upload of .htaccess files is prohibited!')
     o.reply_and_exit(o.CLIENT_ERROR)
 
@@ -362,7 +363,8 @@ elif is_user(client_id, configuration.user_home):
         elif '$HOSTIDENTIFIER' == str(config_dict['HOSTIDENTIFIER']):
             (status, msg) = \
                 send_resource_create_request_mail(client_id,
-                    config_dict['HOSTURL'], pending_file, configuration)
+                    config_dict['HOSTURL'], pending_file, logger,
+                                                  configuration)
             o.internal(msg)
             if not status:
                 o.client("""Failed to send an email to the Grid server administrator, your configuration was saved on the server in:
@@ -595,7 +597,7 @@ elif is_server(client_id, configuration.server_home):
             o.reply_and_exit(o.ERROR)
 
         if not send_instant_message(address, protocol, header, msg,
-                                    logger):
+                                    logger, configuration):
             o.out('IM handler not responding!')
             o.reply_and_exit(o.ERROR)
     else:

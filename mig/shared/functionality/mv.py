@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mv - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,6 +32,7 @@ import glob
 import shutil
 
 import shared.returnvalues as returnvalues
+from shared.defaults import htaccess_filename
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
@@ -152,7 +153,7 @@ def main(client_id, user_arguments_dict):
                 output_objects.append({'object_type': 'file', 'name'
                                        : relative_path})
 
-            if os.path.basename(real_path) == '.htaccess':
+            if os.path.basename(real_path) == htaccess_filename:
                 output_objects.append({'object_type': 'warning', 'text'
                         : "You're not allowed to move your .htaccess file!"
                         })

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # statpath - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,6 +31,7 @@ import os
 import glob
 
 import shared.returnvalues as returnvalues
+from shared.defaults import htaccess_filename
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables
 from shared.parseflags import verbose
@@ -48,7 +49,7 @@ def signature():
 def stat_path(real_path, logger):
     """Call OS stat on provided path"""
 
-    if os.path.basename(real_path) == '.htaccess':
+    if os.path.basename(real_path) == htaccess_filename:
 
         # Always hide .htaccess files from user
 

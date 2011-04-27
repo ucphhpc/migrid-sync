@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewuser - Display public details about a user
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,8 @@ import shared.returnvalues as returnvalues
 from shared.defaults import any_vgrid
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
-from shared.settingskeywords import get_keywords_dict
+from shared.profilekeywords import get_profile_specs
+from shared.settingskeywords import get_settings_specs
 from shared.vgrid import vgrid_request_and_job_match
 from shared.vgridaccess import user_visible_user_confs, user_allowed_vgrids, \
      CONF
@@ -48,25 +49,47 @@ def build_useritem_object_from_user_dict(configuration, user_id,
                                        user_dict, allow_vgrids):
     """Build a user object based on input user_dict"""
 
-    user_keywords = get_keywords_dict()
+    profile_specs = get_profile_specs()
+    user_specs = get_settings_specs()
     user_item = {
         'object_type': 'user_info',
         'user_id': user_id,
         'fields': [],
         }
     user_item['fields'].append(('Public user ID', user_id))
+    public_image = user_dict[CONF].get('PUBLIC_IMAGE', [])
+    if not public_image:
+        public_image = ['/images/anonymous.png']
+    img_html = '<div class="public_image">'
+    for img_path in public_image:
+        img_html += '<img src="%s"' % img_path
+    img_html += '</div>'
+    user_item['fields'].append(('Public image', img_html))
+    public_profile = user_dict[CONF].get('PUBLIC_PROFILE', [])
+    if not public_profile:
+        public_profile = ['No public information provided']
+    profile_html = '<div class="public_profile">'
+    profile_html += '<br />'.join(public_profile)
+    profile_html += '</div>'    
+    user_item['fields'].append(('Public information', profile_html))
     vgrids_allow_email = user_dict[CONF].get('VGRIDS_ALLOW_EMAIL', [])
     vgrids_allow_im = user_dict[CONF].get('VGRIDS_ALLOW_IM', [])
-    if any_vgrid in vgrids_allow_email:
+    hide_email = user_dict[CONF].get('HIDE_EMAIL_ADDRESS', True)
+    hide_im = user_dict[CONF].get('HIDE_IM_ADDRESS', True)
+    if hide_email:
+        email_vgrids = []
+    elif any_vgrid in vgrids_allow_email:
         email_vgrids = allow_vgrids
     else:
         email_vgrids = set(vgrids_allow_email).intersection(allow_vgrids)
-    if any_vgrid in vgrids_allow_im:
+    if hide_im:
+        im_vgrids = []
+    elif any_vgrid in vgrids_allow_im:
         im_vgrids = allow_vgrids
     else:
         im_vgrids = set(vgrids_allow_im).intersection(allow_vgrids)
     show_contexts = ['notify']
-    for (key, val) in user_keywords.items():
+    for (key, val) in user_specs:
         if not val['Context'] in show_contexts:
             continue
         if not email_vgrids and key == 'EMAIL':
@@ -77,7 +100,7 @@ def build_useritem_object_from_user_dict(configuration, user_id,
             entry = user_dict[CONF].get(key, None)
             if val['Type'] == 'multiplestrings':
                 entry = ' '.join(entry)
-        user_item['fields'].append((user_keywords[key]['Title'], entry))
+        user_item['fields'].append((val['Title'], entry))
     return user_item
 
 
