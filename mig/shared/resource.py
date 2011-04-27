@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# resource - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# resource - resource configuration functions
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

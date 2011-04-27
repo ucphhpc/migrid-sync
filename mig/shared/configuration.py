@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# configuration - Configuration wrapper
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# configuration - configuration wrapper
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -591,7 +591,7 @@ class Configuration:
         if config.has_option('SITE', 'credits_text'):
             self.site_credits_text = config.get('SITE', 'credits_text')
         else:
-            self.site_credits_text = '2003-2010, <a href="http://www.migrid.org">The MiG Project</a>'
+            self.site_credits_text = '2003-2011, <a href="http://www.migrid.org">The MiG Project</a>'
         if config.has_option('SITE', 'credits_image'):
             self.site_credits_image = config.get('SITE', 'credits_image')
         else:

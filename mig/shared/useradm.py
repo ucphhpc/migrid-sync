@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# useradm - User administration functions
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# useradm - user administration functions
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

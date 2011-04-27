@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

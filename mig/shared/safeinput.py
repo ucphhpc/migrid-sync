@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
