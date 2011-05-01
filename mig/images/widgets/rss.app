@@ -9,7 +9,8 @@ Requires: jquery.js, jquery.zrssfeed.js, jquery.zrssfeed.css
 $(document).ready(function() {
     $(".rssfeed").html("");
     $(".rssfeed").rssfeed('https://code.google.com/feeds/p/migrid/svnchanges/basic', {
-    limit: 3
+    limit: 3,
+    ssl: true
   });
 });
 </script>
