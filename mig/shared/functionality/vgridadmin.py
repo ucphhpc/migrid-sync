@@ -109,8 +109,16 @@ def main(client_id, user_arguments_dict):
                 'destination': '%s/vgridpublicwiki/%s'\
                                        % (configuration.migserver_http_url,
                                           vgrid_name),
-                                       'class': 'wikilink',
+                                       'class': 'wikilink public',
                                        'title': 'Open %s public wiki' % \
+                                       vgrid_name,
+                                       'text': 'Open'}
+        vgrid_obj['publicscmlink'] = {'object_type': 'link',
+                'destination': '%s/vgridpublicscm/%s'\
+                                       % (configuration.migserver_http_url,
+                                          vgrid_name),
+                                       'class': 'scmlink public',
+                                       'title': 'Open %s public SCM' % \
                                        vgrid_name,
                                        'text': 'Open'}
         vgrid_obj['enterpubliclink'] = {'object_type': 'link',
@@ -118,7 +126,7 @@ def main(client_id, user_arguments_dict):
                                         '%s/vgrid/%s/path/index.html' % \
                                         (configuration.migserver_http_url,
                                          vgrid_name),
-                                        'class': 'urllink',
+                                        'class': 'urllink member',
                                         'title': 'View public %s web page' % \
                                         vgrid_name,
                                         'text': 'View'}
@@ -172,22 +180,29 @@ def main(client_id, user_arguments_dict):
                                              'destination':
                                              '../vgrid/%s/path/index.html' % \
                                              vgrid_name,
-                                             'class': 'urllink',
+                                             'class': 'urllink owner',
                                              'title':
                                              'View private %s web page' % \
                                              vgrid_name, 
                                              'text': 'View'}
+            vgrid_obj['sharedfolderlink'] = {'object_type': 'link',
+                                             'destination':
+                                             'fileman.py?path=%s/' % vgrid_name,
+                                             'class': 'sharedfolderlink',
+                                             'title': 'Open shared %s folder' \
+                                             % vgrid_name, 
+                                             'text': 'Open'}
             vgrid_obj['memberwikilink'] = {'object_type': 'link',
                                            'destination': '/vgridwiki/%s' % \
                                            vgrid_name,
-                                           'class': 'wikilink',
+                                           'class': 'wikilink member',
                                            'title': 'Open %s members wiki' % \
                                            vgrid_name,
                                            'text': 'Open'}
             vgrid_obj['memberscmlink'] = {'object_type': 'link',
                                           'destination': '/vgridscm/%s' % \
                                           vgrid_name,
-                                          'class': 'scmlink',
+                                          'class': 'scmlink member',
                                           'title': 'View %s members scm' % \
                                           vgrid_name,
                                           'text': 'View'}
@@ -231,14 +246,14 @@ def main(client_id, user_arguments_dict):
             vgrid_obj['ownerwikilink'] = {'object_type': 'link',
                                           'destination': '/vgridownerwiki/%s' \
                                           % vgrid_name,
-                                          'class': 'wikilink',
+                                          'class': 'wikilink owner',
                                           'title': 'Open %s owners wiki' % \
                                           vgrid_name,
                                           'text': 'Open'}
             vgrid_obj['ownerscmlink'] = {'object_type': 'link',
                                          'destination': '/vgridownerscm/%s' % \
                                          vgrid_name,
-                                         'class': 'scmlink',
+                                         'class': 'scmlink owner',
                                          'title': 'View %s owners scm' % \
                                          vgrid_name,
                                           'text': 'View'}
@@ -267,13 +282,13 @@ def main(client_id, user_arguments_dict):
             vgrid_obj['editprivatelink'] = {'object_type': 'link',
                                             'destination': 'fileman.py?path=private_base/%s/'\
                                             % vgrid_name,
-                                            'class': 'editlink',
+                                            'class': 'editlink owner',
                                             'title': 'Edit private %s web page' % vgrid_name,
                                             'text': 'Edit'}
             vgrid_obj['editpubliclink'] = {'object_type': 'link',
                                            'destination': 'fileman.py?path=public_base/%s/'\
                                            % vgrid_name,
-                                           'class': 'editlink',
+                                           'class': 'editlink member',
                                            'title': 'Edit public %s web page' % vgrid_name,
                                            'text': 'Edit'}
 
@@ -346,7 +361,7 @@ $(document).ready(function() {
                           })
     output_objects.append({'object_type': 'text', 'text'
                           : '''
-VGrids share files and resources. Members can access web pages, files and resources, owners can also edit pages, as well as add and remove members or resources.
+VGrids share files, a number of collaboration tools and resources. Members can access web pages, files, tools and resources. Owners can additionally edit pages, as well as add and remove members or resources.
 '''
                        })
 

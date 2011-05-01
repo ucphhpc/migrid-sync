@@ -512,6 +512,14 @@ table.liveio table {
   background: url('/images/icons/page_edit.png') no-repeat;
   padding-left: 18px;
 }
+.sharedfolderlink {
+  background: url('/images/icons/folder_link.png') no-repeat;
+  padding-left: 18px;
+}
+.folderlink {
+  background: url('/images/icons/folder.png') no-repeat;
+  padding-left: 18px;
+}
 .wikilink {
   background: url('/images/icons/overlays.png') no-repeat;
   padding-left: 18px;
@@ -676,4 +684,15 @@ table.liveio table {
 }
 .public_frame{
   width: 90%;
+}
+
+/* IMPORTANT: these overrides must come after .*link settings to work */
+.owner {
+  background-color: gold;
+}
+.member {
+  background-color: none;
+}
+.public {
+  background-color: silver;
 }
