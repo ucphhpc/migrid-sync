@@ -107,15 +107,20 @@ def main(client_id, user_arguments_dict):
 
         vgrid_obj['publicwikilink'] = {'object_type': 'link',
                 'destination': '%s/vgridpublicwiki/%s'\
-                                       % (configuration.migserver_http_url, vgrid_name),
+                                       % (configuration.migserver_http_url,
+                                          vgrid_name),
                                        'class': 'wikilink',
-                                       'title': 'Open %s public wiki' % vgrid_name,
+                                       'title': 'Open %s public wiki' % \
+                                       vgrid_name,
                                        'text': 'Open'}
         vgrid_obj['enterpubliclink'] = {'object_type': 'link',
-                                        'destination': '%s/vgrid/%s/path/index.html'\
-                                        % (configuration.migserver_http_url, vgrid_name),
+                                        'destination':
+                                        '%s/vgrid/%s/path/index.html' % \
+                                        (configuration.migserver_http_url,
+                                         vgrid_name),
                                         'class': 'urllink',
-                                        'title': 'View public %s web page' % vgrid_name,
+                                        'title': 'View public %s web page' % \
+                                        vgrid_name,
                                         'text': 'View'}
 
         # link to become member: overwritten later for members
@@ -135,7 +140,8 @@ def main(client_id, user_arguments_dict):
                                     "\nPlease write a message to the owners (field below).",
                                     'request_text'),
                                  'class': 'addlink',
-                                 'title': 'Request membership of %s' % vgrid_name,
+                                 'title': 'Request membership of %s' % \
+                                 vgrid_name,
                                  'text': ''}
 
         # link to become owner: overwritten later for owners
@@ -155,38 +161,51 @@ def main(client_id, user_arguments_dict):
                                           "\nPlease write a message to the owners (field below).",
                                           'request_text'),
                                        'class': 'addadminlink',
-                                       'title': 'Request ownership of %s' % vgrid_name,
+                                       'title': 'Request ownership of %s' % \
+                                       vgrid_name,
                                        'text': ''}
 
         # members/owners are allowed to view private pages and monitor
 
         if vgrid_is_owner_or_member(vgrid_name, client_id, configuration):
             vgrid_obj['enterprivatelink'] = {'object_type': 'link',
-                                             'destination': '../vgrid/%s/path/index.html' % vgrid_name,
+                                             'destination':
+                                             '../vgrid/%s/path/index.html' % \
+                                             vgrid_name,
                                              'class': 'urllink',
-                                             'title': 'View private %s web page' % vgrid_name, 
+                                             'title':
+                                             'View private %s web page' % \
+                                             vgrid_name, 
                                              'text': 'View'}
             vgrid_obj['memberwikilink'] = {'object_type': 'link',
-                                           'destination': '/vgridwiki/%s' % vgrid_name,
+                                           'destination': '/vgridwiki/%s' % \
+                                           vgrid_name,
                                            'class': 'wikilink',
-                                           'title': 'Open %s members wiki' % vgrid_name,
+                                           'title': 'Open %s members wiki' % \
+                                           vgrid_name,
                                            'text': 'Open'}
             vgrid_obj['memberscmlink'] = {'object_type': 'link',
-                                          'destination': '/vgridscm/%s' % vgrid_name,
+                                          'destination': '/vgridscm/%s' % \
+                                          vgrid_name,
                                           'class': 'scmlink',
-                                          'title': 'View %s members scm' % vgrid_name,
+                                          'title': 'View %s members scm' % \
+                                          vgrid_name,
                                           'text': 'View'}
             vgrid_obj['privateforumlink'] = {'object_type': 'link',
-                                               'destination': 'vgridforum.py?vgrid_name=%s'\
-                                               % vgrid_name,
-                                               'class': 'forumlink',
-                                               'title': 'Open %s private forum' % vgrid_name, 
+                                             'destination':
+                                             'vgridforum.py?vgrid_name=%s' % \
+                                             vgrid_name,
+                                             'class': 'forumlink',
+                                             'title': 'Open %s private forum' \
+                                             % vgrid_name, 
                                                'text': 'Open'}
             vgrid_obj['privatemonitorlink'] = {'object_type': 'link',
-                                               'destination': 'showvgridmonitor.py?vgrid_name=%s'\
+                                               'destination':
+                                               'showvgridmonitor.py?vgrid_name=%s'\
                                                % vgrid_name,
                                                'class': 'monitorlink',
-                                               'title': 'View %s monitor' % vgrid_name, 
+                                               'title': 'View %s monitor' % \
+                                               vgrid_name, 
                                                'text': 'View'}
 
             # to leave this VGrid (remove ourselves). Note that we are
@@ -210,14 +229,18 @@ def main(client_id, user_arguments_dict):
 
         if vgrid_is_owner(vgrid_name, client_id, configuration):
             vgrid_obj['ownerwikilink'] = {'object_type': 'link',
-                                          'destination': '/vgridownerwiki/%s' % vgrid_name,
+                                          'destination': '/vgridownerwiki/%s' \
+                                          % vgrid_name,
                                           'class': 'wikilink',
-                                          'title': 'Open %s owners wiki' % vgrid_name,
+                                          'title': 'Open %s owners wiki' % \
+                                          vgrid_name,
                                           'text': 'Open'}
             vgrid_obj['ownerscmlink'] = {'object_type': 'link',
-                                         'destination': '/vgridownerscm/%s' % vgrid_name,
-                                          'class': 'scmlink',
-                                          'title': 'View %s owners scm' % vgrid_name,
+                                         'destination': '/vgridownerscm/%s' % \
+                                         vgrid_name,
+                                         'class': 'scmlink',
+                                         'title': 'View %s owners scm' % \
+                                         vgrid_name,
                                           'text': 'View'}
 
             # correct the link to leave the VGrid
