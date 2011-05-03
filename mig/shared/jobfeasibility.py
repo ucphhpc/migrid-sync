@@ -44,7 +44,8 @@ from shared.base import client_id_dir
 from shared.defaults import default_vgrid, keyword_all
 from shared.mrslkeywords import get_keywords_dict
 from shared.resource import anon_resource_id, list_resources, \
-anon_to_real_res_map
+     anon_to_real_res_map
+from shared.resconfkeywords import get_resource_keywords
 from shared.validstring import is_valid_email_address
 from shared.vgrid import user_allowed_vgrids, vgrid_resources
 from shared.vgridaccess import get_vgrid_map, get_resource_map, \
@@ -54,7 +55,6 @@ from shared.vgridaccess import get_vgrid_map, get_resource_map, \
 
 (RED, ORANGE, YELLOW, GREEN) = ('RED', 'ORANGE', 'YELLOW', 'GREEN')
 job_cond_colors = (RED, ORANGE, YELLOW, GREEN)
-
 
 __all__ = ['job_feasibility']
 
@@ -206,6 +206,11 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
         for resource_id in resources:
 
             resource = get_resource_configuration(configuration, resource_id)
+
+            # vgrid_resource_map may contain e.g. deleted resources
+            
+            if not resource:
+                continue
 
             # resource
 
@@ -687,13 +692,20 @@ def validate_files(configuration, job, errors, mrsl_attribute,
 
 def validate_str_case(configuration, job, resource, errors, mrsl_attribute,
                       empty_str=False):
-    """Validates job request vs. what resource provides; should be =="""
+    """Validates job request vs. what resource provides; should be == .
+    Automatic fall back to resource conf default value for optional settings.
+    """
 
     if skip_validation(configuration, job, mrsl_attribute, resource):
         return True
 
     job_value = job[mrsl_attribute].upper()
-    res_value = resource[mrsl_attribute].upper()
+    if resource.has_key(mrsl_attribute):
+        res_value = resource[mrsl_attribute].upper()
+    else:
+        resource_keywords = get_resource_keywords(configuration)
+        res_value = resource_keywords[mrsl_attribute]['Value'].upper()
+
 
     if empty_str:
         if not job_value == '' and not job_value == res_value:
@@ -826,7 +838,8 @@ def none_available(job_cond, errors, mrsl_attribute, suggest=False,
 
 
 def get_resource_configuration(configuration, resource_id):
-    return get_resource_map(configuration)[resource_id][CONF]
+    """Returns empty dict if resource_id is missing/deleted"""
+    return get_resource_map(configuration).get(resource_id, {CONF: {}})[CONF]
 
 
 def default_vgrid_resources(configuration):
