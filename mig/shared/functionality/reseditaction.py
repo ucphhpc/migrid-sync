@@ -95,7 +95,7 @@ def update_resource(configuration, client_id, resource_id, user_vars,
             os.rename(pending_file, conf_file)
         except:
             return False
-        unique_resource_name = '(HOSTURL)s.%(HOSTIDENTIFIER)s' % user_vars
+        unique_resource_name = '%(HOSTURL)s.%(HOSTIDENTIFIER)s' % user_vars
         output_objects.append({'object_type': 'text', 'text':
                                'Updated %s resource configuration: %s' % \
                                (unique_resource_name, msg)})
