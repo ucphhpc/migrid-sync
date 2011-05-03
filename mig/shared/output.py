@@ -623,10 +623,14 @@ Exit code: %s Description: %s<br />
                         lines.append('%s<br />' % html_link(obj['mrsllink']))
                         lines.append('%s<br />' % html_link(obj['resubmitlink'
                                                                 ]))
+                        lines.append('%s<br />' % html_link(obj['freezelink']))
+                        lines.append('%s<br />' % html_link(obj['thawlink']))
                         lines.append('%s<br />' % html_link(obj['cancellink'
                                                                 ]))
                         lines.append('%s<br />'
                                      % html_link(obj['jobschedulelink']))
+                        lines.append('%s<br />'
+                                     % html_link(obj['jobfeasiblelink']))
                         lines.append('%s<br />'
                                      % html_link(obj['liveiolink']))
                     if obj.has_key('outputfileslink'):

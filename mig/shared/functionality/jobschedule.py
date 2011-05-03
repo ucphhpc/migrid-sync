@@ -165,9 +165,9 @@ def main(client_id, user_arguments_dict):
 
         saveschedulejob['oldstatus'] = dict['STATUS']
 
-        # Is the job status QUEUED or RETRY?
+        # Is the job status pending?
 
-        possible_schedule_states = ['QUEUED', 'RETRY']
+        possible_schedule_states = ['QUEUED', 'RETRY', 'FROZEN']
         if not dict['STATUS'] in possible_schedule_states:
             saveschedulejob['message'] = \
                 'You can only read schedule for jobs with status: %s.'\

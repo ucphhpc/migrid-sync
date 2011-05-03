@@ -164,9 +164,9 @@ def main(client_id, user_arguments_dict):
             checkcondjobs.append(checkcondjob)
             continue
 
-        # Is the job status QUEUED or RETRY?
+        # Is the job status pending?
 
-        possible_check_states = ['QUEUED', 'RETRY']
+        possible_check_states = ['QUEUED', 'RETRY', 'FROZEN']
         if not dict['STATUS'] in possible_check_states:
             checkcondjob['message'] = \
                 'You can only check feasibility of jobs with status: %s.'\

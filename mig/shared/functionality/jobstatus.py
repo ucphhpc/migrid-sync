@@ -377,6 +377,22 @@ def main(client_id, user_arguments_dict):
                                        "javascript: %s();" % js_name,
                                        'text': 'Resubmit job'}
 
+            js_name = 'freeze%s' % hexlify(job_id)
+            helper = html_post_helper(js_name, 'jobaction.py',
+                                      {'action': 'freeze','job_id': job_id})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
+            job_obj['freezelink'] = {'object_type': 'link',
+                                     'destination':
+                                     "javascript: %s();" % js_name,
+                                     'text': 'Freeze job in queue'}
+            js_name = 'thaw%s' % hexlify(job_id)
+            helper = html_post_helper(js_name, 'jobaction.py',
+                                      {'action': 'thaw','job_id': job_id})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
+            job_obj['thawlink'] = {'object_type': 'link',
+                                     'destination':
+                                     "javascript: %s();" % js_name,
+                                     'text': 'Thaw job in queue'}
             js_name = 'cancel%s' % hexlify(job_id)
             helper = html_post_helper(js_name, 'jobaction.py',
                                       {'action': 'cancel','job_id': job_id})
@@ -393,6 +409,14 @@ def main(client_id, user_arguments_dict):
                                           'destination':
                                           "javascript: %s();" % js_name,
                                           'text': 'Request schedule information'}
+            js_name = 'jobfeasible%s' % hexlify(job_id)
+            helper = html_post_helper(js_name, 'jobfeasible.py',
+                                      {'job_id': job_id})
+            output_objects.append({'object_type': 'html_form', 'text': helper})
+            job_obj['jobfeasiblelink'] = {'object_type': 'link',
+                                          'destination':
+                                          "javascript: %s();" % js_name,
+                                          'text': 'Check job feasibility'}
             job_obj['liveiolink'] = {'object_type': 'link',
                                      'destination': 'liveio.py?job_id=%s' % job_id,
                                      'text': 'Request live I/O'}
