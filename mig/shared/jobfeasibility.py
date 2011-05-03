@@ -997,7 +997,9 @@ def get_job_cond_color_icon(job_cond):
 def threshold_color_to_value(job_cond_color):
     """Returns the index of job_cond_color in list of all colors"""
 
-    return job_cond_colors.index(job_cond_color.upper())
+    # tuple does not support index() before python-2.6
+    
+    return list(job_cond_colors).index(job_cond_color.upper())
 
 
 def assemble_suggest_msg(job_cond):
