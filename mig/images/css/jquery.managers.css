@@ -259,8 +259,8 @@ UL.jqueryFileList A:hover {
 .jqueryFileList .cdate,.size { float:right; margin-top: -20px; }
 
 /* File Extensions */
-.directory { background: url(/images/icons/folder.png) left center no-repeat; }
-.file { background: url(/images/icons/file.png) left center no-repeat; }
+.directoryicon { background: url(/images/icons/folder.png) left center no-repeat; }
+.fileicon { background: url(/images/icons/file.png) left center no-repeat; }
 
 /* override folder icon for user home and vgrid folders */
 .userhome { background: url(/images/icons/folder_user.png) left center no-repeat; }

@@ -519,7 +519,7 @@ if (jQuery) (function($){
           var file_count = 0.0;          
           var is_dir = false;
           var base_css_style = 'file';
-          var extra_css_style = '';
+          var icon = '';
           var entry_title = '';
           var entry_html = '';
 
@@ -539,7 +539,7 @@ if (jQuery) (function($){
               
               is_dir = listing[i]['type'] == 'directory';
               base_css_style = 'file';
-              extra_css_style = '';
+              icon = '';
               dir_prefix = '__';
                         
               // Stats for the statusbar
@@ -554,19 +554,20 @@ if (jQuery) (function($){
               entry_title = path + ' ' + listing[i]['special'];
               if (is_dir) {
                   base_css_style = 'directory';
-                  extra_css_style = listing[i]['extra_class'];
+                  icon = 'directoryicon ' + listing[i]['extra_class'];
 
                   path += '/';
-                  folders +=  '<li class="recent ' + base_css_style + ' ' +
-                      extra_css_style + ' collapsed" rel_path="' + path +
-                      '" title="' + entry_title + '"><div>' 
-                      + listing[i]['name'] + '</div></li>\n';
+                  folders +=  '<li class="recent ' + icon + ' ' +
+                      base_css_style + ' collapsed" rel_path="' + path +
+                      '" title="' + entry_title + '"><div>' +
+                      listing[i]['name'] + '</div></li>\n';
                   dir_prefix = '##';
                   
                   cur_folder_names.push(listing[i]['name']);
                   
               }
               else {
+                  icon = 'fileicon';
                   cur_file_names.push(listing[i]['name']);
               }
 
@@ -574,11 +575,10 @@ if (jQuery) (function($){
                  from excessive html DOM manipulation. Mark the entry as
                  recent to ease targetted context menu and drag n' drop later
               */
-              entry_html = '<tr class="recent ' + base_css_style + ' ' +
-                  extra_css_style + ' ' + 'ext_' +
-		  listing[i]['file_info']['ext'] +
-                  '" title="' + entry_title + '" rel_path="'+path+'">' +
-                  '<td style="padding-left: 20px;"><div>' + dir_prefix +
+              entry_html = '<tr class="recent ' + base_css_style +
+                  '" title="' + entry_title + '" rel_path="' + path + '">' + 
+                  '<td style="padding-left: 20px;" class="' + icon + ' ext_' + 
+                  listing[i]['file_info']['ext'] + '"><div>' + dir_prefix +
                   listing[i]['name'] + '</div>' + listing[i]['name'] +
                   '</td>' + '<td><div>' + listing[i]['file_info']['size'] +
                   '</div>' + pp_bytes(listing[i]['file_info']['size']) +
