@@ -575,7 +575,8 @@ if (jQuery) (function($){
                  recent to ease targetted context menu and drag n' drop later
               */
               entry_html = '<tr class="recent ' + base_css_style + ' ' +
-                  extra_css_style + ' ' + 'ext_' + listing[i]['ext'] +
+                  extra_css_style + ' ' + 'ext_' +
+		  listing[i]['file_info']['ext'] +
                   '" title="' + entry_title + '" rel_path="'+path+'">' +
                   '<td style="padding-left: 20px;"><div>' + dir_prefix +
                   listing[i]['name'] + '</div>' + listing[i]['name'] +
