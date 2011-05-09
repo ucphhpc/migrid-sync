@@ -112,22 +112,18 @@ function selectedFilesAction() {
 """
 
 def fileinfo_stat(path):
-        
-    file_information = {'size'     : 0,
-                        'created'  : 0,
-                        'modified' : 0,
-                        'accessed' : 0,
-                        'ext'      : ''}
-    
+    """Additional stat information for file manager"""
+    file_information = {'size': 0, 'created': 0, 'modified': 0, 'accessed': 0,
+                        'ext': ''}
     if os.path.exists(path):
         ext = 'dir'
         if not os.path.isdir(path):
-            ext = os.path.splitext(path)[1].replace('.','')
-        file_information = {'size'      : os.path.getsize(path),
-                            'created'   : os.path.getctime(path),
-                            'modified'  : os.path.getmtime(path),
-                            'accessed'  : os.path.getatime(path),
-                            'ext'       : ext
+            ext = os.path.splitext(path)[1].replace('.', '')
+        file_information = {'size': os.path.getsize(path),
+                            'created': os.path.getctime(path),
+                            'modified': os.path.getmtime(path),
+                            'accessed': os.path.getatime(path),
+                            'ext': ext
         }
         
     return file_information

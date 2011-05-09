@@ -93,7 +93,7 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.resource_home,
                                             unique_resource_name)) + os.sep
 
-    # Add owner
+    # Remove owner
 
     owners_file = os.path.join(base_dir, 'owners')
     (status, msg) = remove_item_from_pickled_list(owners_file, cert_id,
