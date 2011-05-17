@@ -91,15 +91,24 @@ $(document).ready(function() {
           $.getJSON("userstats.py?output_format=json;stats=certificate", {}, function(jsonRes, textStatus) {
             var i = 0;
             var certificate = null;
+            var renew_days = 30;
+            var day_msecs = 24*60*60*1000;
             // Grab results from json response and place them in resource status.
             for(i=0; i<jsonRes.length; i++) {
                 if (jsonRes[i].object_type == "user_stats") {    
                     certificate = jsonRes[i].certificate;
+                    var expire_date = new Date(certificate.expire);
                     //alert("inspect certificate stats result: " + certificate);
                     $("#cert_stats").removeClass("spinner").css("padding-left", "0px");
                     $("#cert_stats").empty();
                     $("#cert_stats").append("Your user certificate expires on " +
-                    certificate.expire + ".");
+                    expire_date + ".");
+                    // Use date from time diff in ms to avoid calendar mangling
+                    var show_renew = new Date(expire_date.getTime() - renew_days*day_msecs);
+                    if(new Date().getTime() > show_renew.getTime()) {
+                        $("#cert_stats").addClass("warningtext");
+                        $("#cert_stats").append("&nbsp;<a class='certrenewlink' href='reqcert.py'>Renew certificate</a>.");
+                    }
                     break;
                 }
             }
@@ -199,6 +208,7 @@ of the numbers are cached for a while to keep server load down.
 </p>
 <p>
 <div id="cert_stats"><!-- for jquery --></div>
+<div id="cert_renew" class="hidden"><a href="reqcert.py">renew certificate</a></div>
 </p>
 '''})
 

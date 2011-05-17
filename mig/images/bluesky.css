@@ -640,6 +640,10 @@ table.liveio table {
   background: url('/images/icons/arrow_refresh.png') no-repeat;
   padding-left: 18px;
 }
+.certrenewlink {
+  background: url('/images/icons/arrow_refresh.png') no-repeat;
+  padding-left: 18px;
+}
 
 .realres {
   background: url('/images/icons/computer.png') no-repeat;

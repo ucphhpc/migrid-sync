@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqcert - Certificate request backend
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,10 +30,12 @@
 import os
 
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.certreq import valid_password_chars, valid_name_chars, \
     password_min_len, password_max_len
 from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input
+from shared.useradm import distinguished_name_to_user
 
 
 def signature():
@@ -48,6 +50,7 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
+    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
@@ -62,14 +65,22 @@ def main(client_id, user_arguments_dict):
                             configuration.short_title
                           })
     
-    # Redirect to extcert page with certificate requirement but without
-    # changing access method (CGI vs. WSGI).
-    
-    extcert_url = os.environ['REQUEST_URI'].replace('-sid', '-bin')
-    extcert_url = os.path.join(os.path.dirname(extcert_url), 'extcert.py')
-    extcert_link = {'object_type': 'link', 'destination': extcert_url,
-                    'text': 'Sign up with existing certificate'}
-    if client_id:
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                               client_dir)) + os.sep
+
+    user_fields = {'full_name': '', 'organization': '', 'email': '',
+                   'state': '', 'country': '', 'password': '',
+                   'verifypassword': ''}
+    if not os.path.isdir(base_dir) and client_id:
+        # Redirect to extcert page with certificate requirement but without
+        # changing access method (CGI vs. WSGI).
+        extcert_url = os.environ['REQUEST_URI'].replace('-sid', '-bin')
+        extcert_url = os.path.join(os.path.dirname(extcert_url), 'extcert.py')
+        extcert_link = {'object_type': 'link', 'destination': extcert_url,
+                        'text': 'Sign up with existing certificate'}
         output_objects.append({'object_type': 'warning', 'text'
                               : 'Apparently you already have a suitable %s certificate that you may sign up with:' % \
                                 configuration.short_title
@@ -79,7 +90,25 @@ def main(client_id, user_arguments_dict):
                               : 'However, if you want a dedicated %s certificate you can still request one below:' % \
                                 configuration.short_title
                               })
+    elif client_id:
+        output_objects.append({'object_type': 'html_form', 'text'
+                              : '''<p>
+Apparently you already have a valid %s certificate, but if it is about to
+expire you can renew it by posting the form below. Renewal with changed fields
+is <span class=mandatory>not</span> supported, so all fields including your
+original password must remain unchanged for renew to work. Otherwise it
+results in a request for a new account and certificate without access to your
+old files, jobs and privileges.</p>''' % \
+                               configuration.short_title})
+        user_fields.update(distinguished_name_to_user(client_id))
 
+    user_fields.update({
+        'valid_name_chars': valid_name_chars,
+        'valid_password_chars': valid_password_chars,
+        'password_min_len': password_min_len,
+        'password_max_len': password_max_len,
+        'site': configuration.short_title
+        })
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the certificate request to the %(site)s administrators.<p>
@@ -90,13 +119,13 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <!-- use post here to avoid field contents in URL -->
 <form method=post action=reqcertaction.py>
 <table>
-<tr><td>Full name</td><td><input type=text name=cert_name /> <sup class=mandatory>1</sup></td></tr>
-<tr><td>Organization</td><td><input type=text name=org /> <sup class=mandatory>2</sup></td></tr>
-<tr><td>Email address</td><td><input type=text name=email /> <sup class=mandatory>3</sup></td></tr>
-<tr><td>State</td><td><input type=text name=state /> <sup class=optional>4</sup></td></tr>
-<tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2 /> <sup class=mandatory>5</sup></td></tr>
-<tr><td>Password</td><td><input type=password name=password maxlength=%(password_max_len)s /> <sup class=mandatory>6, 7</sup></td></tr>
-<tr><td>Verify password</td><td><input type=password name=verifypassword maxlength=%(password_max_len)s /> <sup class=mandatory>6, 7</sup></td></tr>
+<tr><td>Full name</td><td><input type=text name=cert_name value='%(full_name)s' /> <sup class=mandatory>1</sup></td></tr>
+<tr><td>Organization</td><td><input type=text name=org value='%(organization)s' /> <sup class=mandatory>2</sup></td></tr>
+<tr><td>Email address</td><td><input type=text name=email value='%(email)s' /> <sup class=mandatory>3</sup></td></tr>
+<tr><td>State</td><td><input type=text name=state value='%(state)s' /> <sup class=optional>4</sup></td></tr>
+<tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2 value='%(country)s' /> <sup class=mandatory>5</sup></td></tr>
+<tr><td>Password</td><td><input type=password name=password maxlength=%(password_max_len)s value='%(password)s' /> <sup class=mandatory>6, 7</sup></td></tr>
+<tr><td>Verify password</td><td><input type=password name=verifypassword maxlength=%(password_max_len)s value='%(verifypassword)s' /> <sup class=mandatory>6, 7</sup></td></tr>
 <tr><td>Comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea rows=4 cols=%(password_max_len)s name=comment></textarea> <sup class=optional>8</sup></td></tr>
 <tr><td><input type=submit value=Send /></td><td></td></tr>
 </table>
@@ -119,13 +148,7 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 </font>
 </p>
 """
-                           % {
-        'valid_name_chars': valid_name_chars,
-        'valid_password_chars': valid_password_chars,
-        'password_min_len': password_min_len,
-        'password_max_len': password_max_len,
-        'site': configuration.short_title
-        }})
+                           % user_fields})
 
     return (output_objects, returnvalues.OK)
 
