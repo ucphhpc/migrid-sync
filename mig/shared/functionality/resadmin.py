@@ -292,7 +292,7 @@ from the certificate.<br />
 
     # create html to request vgrid resource access
 
-    html += '<h3>VGrids</h3>'
+    html += '<h3>VGrid access</h3>'
 
     html += \
         """Request resource access to additional VGrids.
