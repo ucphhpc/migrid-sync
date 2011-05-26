@@ -26,6 +26,7 @@ img {
 
 h1 {
   border: 1px solid darkgrey;
+  border-radius: 4px;
   -moz-border-radius: 4px;
   margin-top: 0;
   
@@ -185,6 +186,7 @@ table.liveio table {
 /* Navigational menu... */
 .navmenu {
   background: #aaa url('/images/background_greypattern.png');
+  border-radius: 5px;
   -moz-border-radius: 5px;
   border: 1px solid grey;
   padding: 0;
@@ -260,6 +262,7 @@ table.liveio table {
 }
 
 .navmenu ul li a, .navsubmenu ul li a {
+  border-radius: 4px;
   -moz-border-radius: 4px;
   display: block;
   
@@ -304,6 +307,7 @@ table.liveio table {
 }
 
 .editortoolbar {
+  border-radius: 4px;
   -moz-border-radius: 4px;
   padding: 6px;
   background: #ddd;
@@ -314,6 +318,7 @@ table.liveio table {
 #migheader {
   font-size: 28px;
   border: 0;
+  border-radius: 4px;
   -moz-border-radius: 4px;
   color: #eee;
   background: #eee url('/images/background.png');
@@ -405,6 +410,7 @@ table.liveio table {
 #content {
   background: white;
   border: 1px solid black;
+  border-radius: 4px;
   -moz-border-radius: 4px;
   padding: 8px; 
 }
@@ -429,6 +435,7 @@ table.liveio table {
   font-size: 17px;
   font-weight: bold;
   color: red;
+  border-radius: 4px;
   -moz-border-radius: 4px;
 }
 
@@ -734,7 +741,9 @@ table.liveio table {
 
 /* IMPORTANT: these overrides must come after .*link settings to work */
 .owner {
-  background-color: gold;
+  border: 1px solid gold;
+  border-radius: 4px;
+  -moz-border-radius: 4px;
 }
 .member {
   background-color: none;

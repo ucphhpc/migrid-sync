@@ -63,6 +63,8 @@ div.container {
   width: 98%;
   font-size: 16px;
   background: none;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
 }
 
 .navmenu ul {
@@ -129,6 +131,7 @@ div.container {
 }
 
 .navmenu ul li a, .navsubmenu ul li a {
+  border-radius: 4px;
   -moz-border-radius: 4px;
   display: inline;
   
@@ -173,6 +176,7 @@ div.container {
 }
 
 .editortoolbar {
+  border-radius: 4px;
   -moz-border-radius: 4px;
   padding: 6px;
   background: #ddd;
@@ -181,6 +185,8 @@ div.container {
 
 #migheader {
   font-size: 30px;
+  border-radius: 4px;
+  -moz-border-radius: 4px;
   letter-spacing: 0.2em;
   margin: 0;
   /*padding: 20px 10px 10px 10px;*/
@@ -347,6 +353,8 @@ table.liveio table {
   /* background: #ccc; */
   background: #fff;
   border: 2px ridge #63a4f0;
+  border-radius: 4px;
+  -moz-border-radius: 4px;
   margin: 2%;
   padding: 5px 5px;
   text-align: center;
@@ -374,6 +382,8 @@ table.liveio table {
   background: #fff;
   padding: 0px 0px 5px 0px;
   border: 0px;
+  border-radius: 4px;
+  -moz-border-radius: 4px;
   width: 98%;
   text-align: center;
   font-size: 17px;
@@ -482,6 +492,11 @@ table.liveio table {
     border: 1px inset grey;
 }
 
+.centertext .scrollselect { 
+  /* hackaround to get the div centered, not its contents */
+  margin:0 auto;
+}
+
 /* Job manager */
 .jm {
   margin-top: -15px; 
@@ -526,6 +541,10 @@ table.liveio table {
 }
 .scmlink {
   background: url('/images/icons/calendar.png') no-repeat;
+  padding-left: 18px;
+}
+.forumlink {
+  background: url('/images/icons/comments.png') no-repeat;
   padding-left: 18px;
 }
 .monitorlink {
@@ -692,7 +711,9 @@ table.liveio table {
 
 /* IMPORTANT: these overrides must come after .*link settings to work */
 .owner {
-  background-color: gold;
+  border: 1px solid gold;
+  border-radius: 4px;
+  -moz-border-radius: 4px;
 }
 .member {
   background-color: none;
