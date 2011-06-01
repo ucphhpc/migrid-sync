@@ -592,6 +592,7 @@ You can simply copy/paste from the available widget file links below if you want
 <a class="urllink" href="/images/widgets/disk-use.app">disk use progress bar</a>,
 <a class="urllink" href="/images/widgets/jobs-stats.app">jobs stats table</a>,
 <a class="urllink" href="/images/widgets/jobs-stats-chart.app">jobs stats chart</a>,
+<a class="urllink" href="/images/widgets/daily-wm-comic.app">Daily WulffMorgenthaler comic</a>,
 <a class="urllink" href="/images/widgets/kunet-login.app">KUnet login</a>
 </td></tr>
 <tr><td>
