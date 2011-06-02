@@ -15,11 +15,11 @@ a {
 }
 
 a:hover {
-    color: #0000EE;
+    color: #0000ee;
 }
 
-form {
-    background-color: #EEEEEE;
+.framed_form {
+    background-color: #eeeeee;
 }
 
 .threads_table {
@@ -46,8 +46,10 @@ form {
 }
 
 .submit_button {
+    border-radius: 5px;
+    -moz-border-radius: 5px;
     border: solid 1px black;
-    background: #0000AA;
+    background: #0000aa;
     color: white;
     font-weight: bold;
 }

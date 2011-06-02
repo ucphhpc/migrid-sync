@@ -1244,7 +1244,7 @@ Exit code: %s Description: %s<br />
 href="javascript:toggle_new('search_form', 'search_threads');">
 Search threads</a>
 </div>
-<div class="hidden_form" id="search_form">
+<div class="hidden_form framed_form" id="search_form">
 <form method="post" action="?">
 <input type="hidden" name="action" value="search"/>
 <input type="hidden" name="vgrid_name" value="%s"/>
@@ -1267,7 +1267,7 @@ return false;"/>
 <a class="newpostlink" href="javascript:toggle_new('new_form', 'new_link');">
 Start a new thread</a>
 </div>
-<div class="hidden_form" id="new_form">
+<div class="hidden_form framed_form" id="new_form">
 <form method="post" action="?">
 <input type="hidden" name="action" value="new_thread"/>
 <input type="hidden" name="vgrid_name" value="%s"/>
@@ -1336,7 +1336,7 @@ onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
 <a class="replylink" href="javascript:toggle_new('reply_form', 'new_link')">
 Reply to this thread</a></p>
 </div>
-<div class="hidden_form" id="reply_form">
+<div class="hidden_form framed_form" id="reply_form">
 <form method="post" action="?">
 <input type="hidden" name="action" value="reply"/>
 <input type="hidden" name="vgrid_name" value="%s"/>
