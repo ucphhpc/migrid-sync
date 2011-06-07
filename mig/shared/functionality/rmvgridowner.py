@@ -31,6 +31,7 @@ import os
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.fileio import remove_rec, unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
@@ -38,7 +39,6 @@ from shared.html import html_post_helper
 from shared.init import initialize_main_variables
 from shared.listhandling import remove_item_from_pickled_list
 from shared.parseflags import force
-from shared.useradm import client_id_dir
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
        vgrid_owners, vgrid_list_subvgrids
 

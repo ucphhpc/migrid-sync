@@ -34,12 +34,12 @@ import time
 import fcntl
 
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.defaults import default_mqueue, mqueue_prefix, mqueue_empty
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.job import output_dir
-from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 
 get_actions = ['interactive', 'listqueues', 'listmessages', 'show']

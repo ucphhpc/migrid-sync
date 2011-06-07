@@ -34,7 +34,7 @@ import time
 import re
 
 import shared.fileio as io
-from shared.useradm import client_id_dir
+from shared.base import client_id_dir
 
 
 def template_fits_file(template, filename, allowed_time=3.0):

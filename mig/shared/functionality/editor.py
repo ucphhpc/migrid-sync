@@ -35,10 +35,10 @@ import os
 import time
 
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.editing import acquire_edit_lock, get_edit_lock_suffix
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
-from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 
 edit_includes = ['switcher', 'newline', 'submit', 'discard', 'spellcheck',

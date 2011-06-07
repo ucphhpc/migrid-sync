@@ -32,6 +32,7 @@ import os
 import datetime
 
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.conf import get_resource_exe
 from shared.defaults import all_jobs
 from shared.fileio import unpickle, pickle
@@ -40,7 +41,6 @@ from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.job import output_dir
 from shared.ssh import copy_file_to_resource
-from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 
 

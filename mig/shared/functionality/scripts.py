@@ -36,10 +36,10 @@ import time
 import shared.returnvalues as returnvalues
 import shared.userscriptgen as usergen
 import shared.vgridscriptgen as vgridgen
+from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
-from shared.useradm import client_id_dir
 
 sh_cmd_def = '/bin/bash'
 python_cmd_def = '/usr/bin/python'

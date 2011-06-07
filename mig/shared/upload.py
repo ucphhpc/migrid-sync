@@ -32,10 +32,10 @@ import os
 import zipfile
 import tarfile
 
-from shared.validstring import valid_user_path
+from shared.base import client_id_dir
 from shared.fileio import write_file
 from shared.job import new_job
-from shared.useradm import client_id_dir
+from shared.validstring import valid_user_path
 
 
 def handle_package_upload(

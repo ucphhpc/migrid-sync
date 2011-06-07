@@ -31,12 +31,12 @@ import os
 import socket
 
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.livedisplaysfunctions import get_users_display_dict, \
     get_dict_from_display_number, set_user_display_active, \
     set_user_display_inactive
-from shared.useradm import client_id_dir
 from shared.vncfunctions import create_vnc_password
 
 

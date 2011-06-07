@@ -31,10 +31,10 @@ import os
 import time
 
 import shared.fileio as io
+from shared.base import client_id_dir
 from shared.fileio import send_message_to_grid_script
 from shared.job import output_dir
 from shared.notification import notify_user_thread
-from shared.useradm import client_id_dir
 try:
     import shared.arcwrapper as arc
 except Exception, exc:

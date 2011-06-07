@@ -34,6 +34,7 @@ import time
 
 import shared.confparser as confparser
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
@@ -41,7 +42,6 @@ from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_resource_create_request_mail
 from shared.resource import prepare_conf, write_resource_config, \
      create_resource
-from shared.useradm import client_id_dir
 
 
 def signature():

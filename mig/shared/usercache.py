@@ -31,9 +31,9 @@ import os
 import fcntl
 import time
 
+from shared.base import client_id_dir
 from shared.resource import list_resources
 from shared.serial import load, dump
-from shared.useradm import client_id_dir
 
 # Only refresh stats if at least this many seconds since last refresh
 JOB_REFRESH_DELAY = 120

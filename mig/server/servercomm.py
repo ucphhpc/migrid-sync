@@ -38,8 +38,8 @@ import ConfigParser
 
 import pycurl
 
+from shared.base import client_id_dir
 from shared.fileio import pickle
-from shared.useradm import client_id_dir
 
 server_section = 'serverstatus'
 http_success = 200

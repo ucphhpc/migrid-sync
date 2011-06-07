@@ -37,6 +37,7 @@ import fcntl
 import time
 
 import shared.confparser as confparser
+from shared.base import client_id_dir
 from shared.defaults import htaccess_filename
 from shared.putfuncs import verify_results, migrated_job
 from shared.resadm import start_resource_exe_if_continuous
@@ -50,7 +51,6 @@ from shared.job import new_job, finished_job, failed_restart
 from shared.findtype import is_user, is_server, is_owner
 from shared.upload import handle_package_upload
 from shared.settings import parse_and_save_settings
-from shared.useradm import client_id_dir
 
 
 block_size = 1024 * 1024

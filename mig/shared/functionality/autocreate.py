@@ -38,10 +38,11 @@ import os
 import time
 
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.init import initialize_main_variables
 from shared.functional import validate_input, REJECT_UNSET
 from shared.useradm import db_name, distinguished_name_to_user, \
-     create_user, fill_user, client_id_dir
+     create_user, fill_user
 from shared.fileio import write_file
 try:
     import shared.arcwrapper as arc

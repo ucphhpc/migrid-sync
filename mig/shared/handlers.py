@@ -32,8 +32,8 @@ handlers.
 import os
 import urllib
 
+from shared.base import client_id_dir
 from shared.findtype import is_user, is_server
-from shared.useradm import client_id_dir
 
 
 def correct_handler(name):

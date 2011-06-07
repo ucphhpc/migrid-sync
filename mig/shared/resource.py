@@ -36,12 +36,12 @@ try:
 except ImportError:
     from md5 import new as hash_algo
 
+import shared.resconfkeywords as resconfkeywords
+from shared.base import client_id_dir
+from shared.confparser import get_resource_config_dict, run
 from shared.defaults import exe_leader_name
 from shared.fileio import pickle
-from shared.confparser import get_resource_config_dict, run
 from shared.ssh import default_ssh_options
-from shared.useradm import client_id_dir
-import shared.resconfkeywords as resconfkeywords
 
 def get_regex_non_numeric():
     """Match everything except numbers"""

@@ -35,10 +35,10 @@ from copy import deepcopy
 import genjobscriptpython
 import genjobscriptsh
 import genjobscriptjava
+from shared.base import client_id_dir
 from shared.fileio import write_file, pickle, make_symlink
 from shared.mrslparser import expand_variables
 from shared.ssh import copy_file_to_resource
-from shared.useradm import client_id_dir
 
 try:
     import shared.mrsltoxrsl as mrsltoxrsl

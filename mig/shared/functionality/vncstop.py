@@ -30,9 +30,9 @@
 import os
 
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables
-from shared.useradm import client_id_dir
 
 
 def signature():

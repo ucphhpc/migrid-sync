@@ -38,6 +38,7 @@ import copy
 
 import jobscriptgenerator
 from jobqueue import JobQueue
+from shared.base import client_id_dir
 from shared.conf import get_configuration_object, get_resource_exe
 from shared.defaults import default_vgrid
 from shared.fileio import pickle, unpickle, unpickle_and_change_status, \
@@ -48,7 +49,6 @@ from shared.gridscript import clean_grid_stdin, \
     save_schedule_cache, arc_job_status, clean_arc_job
 from shared.notification import notify_user_thread
 from shared.resadm import atomic_resource_exe_restart, put_exe_pgid
-from shared.useradm import client_id_dir
 from shared.vgrid import job_fits_res_vgrid
 
 try:

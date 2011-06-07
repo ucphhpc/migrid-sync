@@ -39,13 +39,13 @@ import glob
 
 import shared.mrslkeywords as mrslkeywords
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.defaults import all_jobs
 from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.job import new_job
-from shared.useradm import client_id_dir
 from shared.validstring import valid_user_path
 
 

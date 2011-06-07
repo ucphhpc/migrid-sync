@@ -28,7 +28,7 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.base import client_alias
+from shared.base import client_alias, client_id_dir
 from shared.defaults import any_vgrid, default_mrsl_filename, \
      default_css_filename, profile_img_max_kb, profile_img_extensions
 from shared.functional import validate_input_and_cert
@@ -37,8 +37,8 @@ from shared.settings import load_settings, load_widgets, load_profile
 from shared.profilekeywords import get_profile_specs
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
-from shared.useradm import client_id_dir, ssh_authkeys, get_default_mrsl, \
-     get_default_css, get_ssh_authkeys
+from shared.useradm import ssh_authkeys, get_default_mrsl, get_default_css, \
+     get_ssh_authkeys
 from shared.vgrid import vgrid_list_vgrids
 
 try:

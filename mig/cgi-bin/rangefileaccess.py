@@ -44,9 +44,9 @@ import sys
 
 # MiG imports
 
+from shared.base import client_id_dir
 from shared.scriptinput import fieldstorage_to_dict
 from shared.cgishared import init_cgiscript_possibly_with_cert
-from shared.useradm import client_id_dir
 
 
 def get(o, fileinfo_dict):

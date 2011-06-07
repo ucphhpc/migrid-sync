@@ -33,11 +33,11 @@ import os
 
 import shared.mrslkeywords as mrslkeywords
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.conf import get_configuration_object
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables
 from shared.job import create_job_object_from_pickled_mrsl
-from shared.useradm import client_id_dir
 
 
 def signature():

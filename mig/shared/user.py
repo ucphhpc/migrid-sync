@@ -34,10 +34,9 @@ try:
 except ImportError:
     from md5 import new as hash_algo
 
-from shared.base import client_dir_id
+from shared.base import client_dir_id, client_id_dir
 from shared.findtype import is_user
 from shared.settings import load_settings, load_profile
-from shared.useradm import client_id_dir
 
 def anon_user_id(user_id):
     """Generates an anonymous but (practically) unique user ID for user with
