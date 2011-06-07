@@ -34,8 +34,8 @@ from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.listhandling import remove_item_from_pickled_list
-from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_member
+from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_member, \
+     vgrid_remove_members
 
 
 def signature():
@@ -124,28 +124,28 @@ def main(client_id, user_arguments_dict):
                       % dst)
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    vgrid_name_splitted = vgrid_name.split('/')
+    vgrid_name_parts = vgrid_name.split('/')
 
     # make sure there are no "" entries in list
 
     while True:
         try:
-            vgrid_name_splitted.remove('')
-            vgrid_name_splitted.remove('/')
+            vgrid_name_parts.remove('')
+            vgrid_name_parts.remove('/')
         except:
 
             # no such item
 
             break
 
-    is_subvgrid = len(vgrid_name_splitted) >= 2
+    is_subvgrid = len(vgrid_name_parts) >= 2
     if is_subvgrid:
 
         # remove placeholder dirs (empty dirs created to hold subvgrid)
 
         # reverse list to remove files and directories of subdirs first
 
-        list = range(len(vgrid_name_splitted))
+        list = range(len(vgrid_name_parts))
         list.reverse()
         reverse_list = list
 
@@ -162,7 +162,7 @@ def main(client_id, user_arguments_dict):
                 # note that loop_count is decreasing!
 
                 current_vgrid_path = \
-                    '/'.join(vgrid_name_splitted[0:loop_count + 1])
+                    '/'.join(vgrid_name_parts[0:loop_count + 1])
                 current_path = base_dir + current_vgrid_path
                 if not os.path.isdir(current_path):
                     output_objects.append({'object_type': 'error_text',
@@ -195,11 +195,11 @@ def main(client_id, user_arguments_dict):
 
     # remove from list
 
-    (status, msg) = remove_item_from_pickled_list(members_file,
-            cert_id, logger)
-    if not status:
+    (rm_status, rm_msg) = vgrid_remove_members(configuration, vgrid_name,
+                                               [cert_id])
+    if not rm_status:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s of member of %s' % (msg,
+                              : '%s of member of %s' % (rm_msg,
                               vgrid_name)})
         output_objects.append({'object_type': 'error_text', 'text'
                               : '(If Vgrid %s has sub-vgrids then removal must be performed from the most significant VGrid possible.)'

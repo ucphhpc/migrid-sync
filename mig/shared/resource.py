@@ -40,7 +40,9 @@ import shared.resconfkeywords as resconfkeywords
 from shared.base import client_id_dir
 from shared.confparser import get_resource_config_dict, run
 from shared.defaults import exe_leader_name
-from shared.fileio import pickle
+from shared.fileio import pickle, move
+from shared.modified import mark_resource_modified, mark_vgrid_modified
+from shared.serial import load, dump
 from shared.ssh import default_ssh_options
 
 def get_regex_non_numeric():
@@ -951,6 +953,19 @@ def create_resource(configuration, client_id, resource_name, pending_file):
     return (True, id_msg)
 
 
+def update_resource(configuration, client_id, resource_name,
+                    resource_identifier, pending_file):
+    """Update configuration for existing resource based on config request in
+    pending_file.
+    If pending_file is a relative path it will prefixed with the
+    resource_pending dir of the client_id. Thus sandbox confs with no required
+    user can use e.g. /tmp for the pending file and still use this function.
+    Returns update status and a message string.
+    """
+    return create_resource_conf(configuration, client_id, resource_name,
+                                  resource_identifier, pending_file,
+                                  new_resource=False)
+
 def remove_resource(configuration, client_id, resource_name, resource_identifier):
     """Remove a resource home dir"""
     msg = "\nRemoving host: '%s.%s'" % (resource_name,
@@ -973,6 +988,8 @@ def remove_resource(configuration, client_id, resource_name, resource_identifier
              % (resource_path, err)
         return (False, msg)
 
+    mark_resource_modified(configuration, unique_resource_name)
+    mark_vgrid_modified(configuration, unique_resource_name)
     return (True, msg)
 
 
@@ -982,15 +999,22 @@ def create_resource_conf(
     resource_name,
     resource_identifier,
     resource_configfile,
+    new_resource=True
     ):
     """Create a resource from conf in pending file. If pending_file is a
     relative path it will prefixed with the resource_pending dir of the
     client_id.
     """
-    msg = """
-Trying to create configuration for new resource: '%s.%s' from file: '%s'
+    if new_resource:
+        msg = """
+Trying to create configuration for new resource: '%s.%s' from file '%s':
 """ % (resource_name, str(resource_identifier),
             resource_configfile)
+    else:
+        msg = """
+Trying to update configuration for existing resource '%s.%s':
+""" % (resource_name, str(resource_identifier))
+        
     client_dir = client_id_dir(client_id)
 
     if os.path.isabs(resource_configfile):
@@ -1015,7 +1039,7 @@ Failure:
         msg += '\n%s' % conf_msg
         return (False, msg)
 
-    if not config_dict['HOSTURL'] == resource_name:
+    if config_dict['HOSTURL'] != resource_name:
         msg += \
             """
 Failure:
@@ -1023,6 +1047,18 @@ Failure:
   does'nt match hosturl: '%s'
   in configfile: '%s'"""\
              % (resource_name, config_dict['HOSTURL'], pending_file)
+        return (False, msg)
+
+    if not new_resource and \
+           config_dict['HOSTIDENTIFIER'] != resource_identifier:
+        msg += \
+            """
+Failure:
+  resource_identifier: '%s'
+  does'nt match hostidentifier: '%s'
+  in configfile: '%s'"""\
+             % (resource_identifier, config_dict['HOSTIDENTIFIER'],
+                pending_file)
         return (False, msg)
 
     try:
@@ -1042,8 +1078,8 @@ Failure:
              % err
         return (False, msg)
 
-    (status, run_msg) = run(tmpfile, resource_name + '.'
-                             + str(resource_identifier))
+    unique_resource_name = resource_name + '.' + str(resource_identifier)
+    (status, run_msg) = run(tmpfile, unique_resource_name)
     msg += '\n' + run_msg
     if not status:
         return (False, msg)
@@ -1051,19 +1087,47 @@ Failure:
     # truncate old conf with new accepted file
 
     try:
-        os.rename(tmpfile, new_configfile)
+        move(tmpfile, new_configfile)
     except Exception, err:
-        msg += '\nAccepted config, but failed to save it! Failed:%s'\
+        msg += '\nAccepted config, but failed to save it! Failed: %s'\
              % err
         return (False, msg)
+
+    mark_resource_modified(configuration, unique_resource_name)
+    mark_vgrid_modified(configuration, unique_resource_name)
 
     try:
         os.remove(pending_file)
     except Exception, err:
-        msg += \
-            '\nAccepted config and saved it, but failed to remove pending file! Failed:%s'\
-             % err
-        return (False, msg)
-
+        pass
     msg += '\nNew configfile successfully applied.'
     return (True, msg)
+
+def resource_add_owners(configuration, unique_resource_name, clients):
+    """Append list of clients to pickled list of resource owners"""
+    owners_file = os.path.join(configuration.resource_home,
+                               unique_resource_name, 'owners')
+    try:
+        owners = load(owners_file)
+        owners += [i for i in clients if not i in owners]
+        dump(owners, owners_file)
+        mark_resource_modified(configuration, unique_resource_name)
+        return (True, '')
+    except Exception, exc:
+        return (False, "could not add owners for %s: %s" % \
+                (unique_resource_name, exc))
+
+def resource_remove_owners(configuration, unique_resource_name, clients):
+    """Remove list of clients from pickled list of resource owners"""
+    owners_file = os.path.join(configuration.resource_home,
+                               unique_resource_name, 'owners')
+    try:
+        owners = load(owners_file)
+        owners = [i for i in owners if not i in clients]
+        dump(owners, owners_file)
+        mark_resource_modified(configuration, unique_resource_name)
+        return (True, '')
+    except Exception, exc:
+        return (False, "could not remove owenrs for %s: %s" % \
+                (unique_resource_name, exc))
+

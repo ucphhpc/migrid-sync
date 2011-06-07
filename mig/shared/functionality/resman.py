@@ -27,6 +27,7 @@
 
 """Resource management back end functionality"""
 
+import time
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues

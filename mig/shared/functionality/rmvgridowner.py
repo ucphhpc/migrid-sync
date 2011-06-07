@@ -37,10 +37,10 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables
-from shared.listhandling import remove_item_from_pickled_list
 from shared.parseflags import force
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-       vgrid_owners, vgrid_list_subvgrids
+       vgrid_owners, vgrid_list_subvgrids, vgrid_remove_owners
+from shared.vgridaccess import unmap_vgrid
 
 def signature():
     """Signature of the main function"""
@@ -281,14 +281,12 @@ Owner removal has to be performed at the topmost vgrid''' % cert_id})
 
             # remove user from pickled list
             # remove this owner, also from the owners file
-            (status, msg) = remove_item_from_pickled_list(owners_file, 
-                                                          cert_id, logger, 
-                                                          False)
-            if not status:
-
+            (rm_status, rm_msg) = vgrid_remove_owners(configuration, vgrid_name,
+                                                     [cert_id])
+            if not rm_status:
                 output_objects.append({'object_type': 'error_text', 'text'
                                        : '%s of owners of %s' 
-                                         % (msg, vgrid_name)})
+                                       % (rm_msg, vgrid_name)})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
 
             output_objects.append({'object_type': 'text', 'text'
@@ -439,4 +437,6 @@ via mail about what you wanted to do when the error happened.'''})
 
         else:
 
+            # Remove vgrid from vgrid cache (after deleting all)
+            unmap_vgrid(configuration, vgrid_name)
             return (output_objects, returnvalues.OK)

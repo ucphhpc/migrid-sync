@@ -41,7 +41,7 @@ from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_resource_create_request_mail
 from shared.resource import prepare_conf, write_resource_config, \
-     create_resource
+     create_resource, update_resource
 
 
 def signature():
@@ -51,7 +51,7 @@ def signature():
     return ['html_form', defaults]
 
 
-def update_resource(configuration, client_id, resource_id, user_vars,
+def handle_update(configuration, client_id, resource_id, user_vars,
                     output_objects, new_resource=False):
     """Update existing resource configuration from request"""
 
@@ -73,32 +73,19 @@ def update_resource(configuration, client_id, resource_id, user_vars,
                                'Could not write configuration!'})
         return False
 
-    logger.info('Parsing conf %s for %s' % (pending_file, resource_id))
-    if new_resource:
-        destination = ''
-    else:
-        destination = 'AUTOMATIC'
-    (status, msg) = confparser.run(pending_file, resource_id, destination)
-    if not status:
-        logger.error(msg)
-        output_objects.append({'object_type': 'error_text', 'text':
-                               'Failed to parse new configuration: %s' % msg})
-        try:
-            os.remove(pending_file)
-        except:
-            pass
-        return False
-
     if not new_resource:
-        logger.info('Updating conf %s for %s' % (conf_file, resource_id))
-        try:
-            os.rename(pending_file, conf_file)
-        except:
+        (update_status, msg) = update_resource(configuration, client_id,
+                                               user_vars["HOSTURL"],
+                                               user_vars["HOSTIDENTIFIER"],
+                                               pending_file)
+        if not update_status:
+            output_objects.append({'object_type': 'text', 'error_text':
+                               'Resource update failed: %s' % msg})
             return False
         unique_resource_name = '%(HOSTURL)s.%(HOSTIDENTIFIER)s' % user_vars
         output_objects.append({'object_type': 'text', 'text':
-                               'Updated %s resource configuration: %s' % \
-                               (unique_resource_name, msg)})
+                               'Updated %s resource configuration!' % \
+                               unique_resource_name})
         output_objects.append({'object_type': 'link',
                                'destination':
                                'resadmin.py?unique_resource_name=%s' % \
@@ -121,6 +108,18 @@ def update_resource(configuration, client_id, resource_id, user_vars,
         output += '''Your resource was added as %s.%s
 <hr />''' % (resource_name, msg)
     else:
+        logger.info('Parsing conf %s for %s' % (pending_file, resource_id))
+        (status, msg) = confparser.run(pending_file, resource_id, '')
+        if not status:
+            logger.error(msg)
+            output_objects.append({'object_type': 'error_text', 'text':
+                               'Failed to parse new configuration: %s' % msg})
+            try:
+                os.remove(pending_file)
+            except:
+                pass
+            return False
+
         logger.info('Sending create request for %s to admins' % resource_id)
         (status, msg) = send_resource_create_request_mail(client_id,
                                                           user_vars['HOSTURL'],
@@ -249,7 +248,7 @@ def main(client_id, user_arguments_dict):
 
         # We only get here if hostidentifier is dynamic so no access control
 
-        if not update_resource(configuration, client_id, resource_id, conf,
+        if not handle_update(configuration, client_id, resource_id, conf,
                                output_objects, True):
             status = returnvalues.SYSTEM_ERROR
     elif 'update' == action:
@@ -270,7 +269,7 @@ def main(client_id, user_arguments_dict):
                  resource_id})
             status = returnvalues.SYSTEM_ERROR
         elif client_id in owner_list:
-            if not update_resource(configuration, client_id, resource_id, conf,
+            if not handle_update(configuration, client_id, resource_id, conf,
                                    output_objects, False):
                 status = returnvalues.SYSTEM_ERROR
         else:

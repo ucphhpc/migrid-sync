@@ -31,6 +31,7 @@ import time
 import os
 import shutil
 import fcntl
+import zipfile
 
 from shared.serial import dump, load
 
@@ -228,3 +229,36 @@ def remove_rec(dir_path, configuration):
         return False
 
     return True
+
+def move(src, dst):
+    """Recursively move a file or directory from src to dst. This version works
+    even in cases rename does not - e.g. for src and dst on different devices.
+    """
+    return shutil.move(src, dst)
+
+def copy(src, dst):
+    """Copy a file from src to dst where dst my be a directory"""
+    return shutil.copy(src, dst)
+
+def write_zipfile(zip_path, paths, archive_base=''):
+    """Write each of the files/dirs in paths to a zip file with zip_path.
+    Given a non-empty archive_base string, that string will be used as the
+    directory path of the archived files.
+    """
+    try:
+        zip_file = zipfile.ZipFile(zip_path, 'w')
+        # Directory write is not supported - add each file manually
+        for script in paths:
+
+            # Replace real directory path with archive_base if specified
+
+            if archive_base:
+                archive_path = '%s/%s' % (archive_base, 
+                        os.path.basename(script))
+            else:
+                archive_path = script
+            zip_file.write(script, archive_path)
+        zip_file.close()
+        return (True, '')        
+    except Exception, err:
+        return (False, err)

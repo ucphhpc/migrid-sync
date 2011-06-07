@@ -34,9 +34,8 @@ from shared.fileio import make_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.listhandling import add_item_to_pickled_list
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-    vgrid_is_member, vgrid_list_subvgrids
+    vgrid_is_member, vgrid_list_subvgrids, vgrid_add_owners
 import shared.returnvalues as returnvalues
 
 
@@ -174,15 +173,15 @@ def main(client_id, user_arguments_dict):
 
     # Add
 
-    (status, msg) = add_item_to_pickled_list(owners_file, cert_id,
-            logger)
-    if not status:
+    (add_status, add_msg) = vgrid_add_owners(configuration, vgrid_name,
+                                             [cert_id])
+    if not add_status:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : msg})
+                              : add_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    vgrid_name_splitted = vgrid_name.split('/')
-    is_subvgrid = len(vgrid_name_splitted) > 1
+    vgrid_name_parts = vgrid_name.split('/')
+    is_subvgrid = len(vgrid_name_parts) > 1
 
     # create public_base in cert_ids home dir if it does not exists
 
@@ -205,13 +204,13 @@ def main(client_id, user_arguments_dict):
             # vgrid_name_last_fragment = BACH
 
             vgrid_name_last_fragment = \
-                vgrid_name_splitted[len(vgrid_name_splitted)
+                vgrid_name_parts[len(vgrid_name_parts)
                                      - 1].strip()
 
             # vgrid_name_without_last_fragment = IMADA/STUD/
 
             vgrid_name_without_last_fragment = \
-                ('/'.join(vgrid_name_splitted[0:len(vgrid_name_splitted)
+                ('/'.join(vgrid_name_parts[0:len(vgrid_name_parts)
                   - 1]) + os.sep).strip()
 
             # create dirs if they do not exist

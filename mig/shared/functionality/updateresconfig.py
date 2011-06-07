@@ -29,10 +29,13 @@ import os
 
 import shared.confparser as confparser
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
+from shared.fileio import write_file
 from shared.findtype import is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
+from shared.resource import update_resource
 
 
 def signature():
@@ -48,6 +51,7 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
+    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -84,52 +88,38 @@ def main(client_id, user_arguments_dict):
 
     # TODO: race if two confs are uploaded concurrently!
 
-    tmp_path = os.path.join(configuration.resource_home,
+    host_url, host_identifier = unique_resource_name.rsplit('.', 1)
+    pending_file = os.path.join(configuration.resource_home,
                             unique_resource_name, 'config.tmp')
 
     # write new proposed config file to disk
-
     try:
-        fh = open(tmp_path, 'w')
-        fh.write(resconfig)
-        fh.close()
+        logger.info('write to file: %s' % pending_file)
+        if not write_file(resconfig, pending_file, logger):
+                output_objects.append({'object_type': 'error_text',
+                        'text': 'Could not write: %s' % pending_file})
+                return (output_objects, returnvalues.SYSTEM_ERROR)
     except Exception, err:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'File: %s was not written! %s'
-                               % (tmp_path, err)})
+        logger.error('Resource conf %s could not be written: %s' % \
+                     (pending_file, err))
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Could not write configuration!'})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    (update_status, msg) = update_resource(configuration, client_id,
+                                           host_url, host_identifier,
+                                           pending_file)
+    if not update_status:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Resource update failed: %s' % msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    (status, msg) = confparser.run(tmp_path, unique_resource_name)
-    if not status:
-
-        # leave existing config alone
-
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : msg})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
-    accepted_path = os.path.join(configuration.resource_home,
-                                 unique_resource_name, 'config.MiG')
-
-    # truncate old conf with new accepted file
-
-    try:
-        os.rename(tmp_path, accepted_path)
-    except Exception, err:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Accepted config, but failed to save it! %s'
-                               % err})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
-    # everything ok
-
-    output_objects.append({'object_type': 'text', 'text': 'Success: %s'
-                           % msg})
+    output_objects.append({'object_type': 'text', 'text':
+                           'Updated %s resource configuration!' % \
+                           unique_resource_name})
     output_objects.append({'object_type': 'link', 'text':
                            'Manage resource', 'destination':
                            'resadmin.py?unique_resource_name=%s' % \
                            unique_resource_name
                            })
     return (output_objects, returnvalues.OK)
-
-

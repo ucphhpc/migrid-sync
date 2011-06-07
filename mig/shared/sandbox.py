@@ -28,14 +28,14 @@
 """Sandbox functions"""
 
 import os
+import tempfile
 from binascii import hexlify
 
 from conf import get_configuration_object
 from shared.defaults import default_vgrid
 from shared.fileio import make_symlink
-from shared.resource import create_resource_home
+from shared.resource import create_resource
 from shared.serial import load, dump
-import shared.confparser as confparser
 
 sandbox_db_name = 'sandbox_users.pkl'
 
@@ -91,15 +91,6 @@ def create_oneclick_resource(
 
     resource_name = 'oneclick'
 
-    result = create_resource_home(configuration, sandboxkey, resource_name)
-
-    if not result[0]:
-        return (False, result[1])
-
-    resource_identifier = result[1]
-    unique_resource_name = resource_name + '.'\
-         + str(resource_identifier)
-
     # create a resource configuration string that we can write to a file
 
     exe_name = 'jvm'
@@ -112,7 +103,7 @@ N/A
 oneclick
 
 ::HOSTIDENTIFIER::
-%s
+$HOSTIDENTIFIER
 
 ::RESOURCEHOME::
 N/A
@@ -175,29 +166,166 @@ continuous=False
 shared_fs=False
 vgrid=%s
     """\
-         % (resource_identifier, sandboxkey, exe_name, cputime, default_vgrid)
+         % (sandboxkey, exe_name, cputime, default_vgrid)
 
-    # write the conf string to a conf file
+    # write the conf string to a temporary conf file
+    # create_resource removes the tempfile automatically
 
-    conf_file_src = configuration.resource_home + unique_resource_name\
-         + os.sep + 'config.MiG'
+    tmp_file = tempfile.NamedTemporaryFile(delete=False)
+    tmp_file.write(res_conf_string)
+    tmp_file.close()
+    pending_file = tmp_file.name
+
+    (status, id_msg) = create_resource(configuration, sandboxkey,
+                                       resource_name, pending_file)
+    if not status:
+        return (False, '%s (%s)' % (id_msg, pending_file))
+
+    # Create PGID file in resource_home
+
+    resource_identifier = id_msg
+    unique_resource_name = resource_name + '.' + str(resource_identifier)
+                
+    exe_pgid_file = configuration.resource_home + unique_resource_name\
+         + os.sep + 'EXE_%s.PGID' % exe_name
     try:
-        fd = open(conf_file_src, 'w')
-        fd.write(res_conf_string)
+        fd = open(exe_pgid_file, 'w')
+        fd.write('stopped')
         fd.close()
     except Exception, exc:
         return (False, str(exc))
 
-    # parse and pickle the conf file
+    return (True, resource_name + '.' + str(resource_identifier))
 
-    (status, msg) = confparser.run(conf_file_src, resource_name + '.'
-                                    + str(resource_identifier))
+def create_sss_resource(
+    sandboxkey,
+    cputime,
+    memory,
+    hd_size,
+    net_bw,
+    vgrid_list,
+    configuration,
+    logger,
+    ):
 
+    resource_name = 'sandbox'
+    unique_host_name = "%s.%s" % (resource_name, "$HOSTIDENTIFIER")
+
+    # create a resource configuration string that we can write to a file
+
+    exe_name = 'localhost'
+    res_conf_string = \
+                        """\
+::MIGUSER::
+mig
+
+::HOSTURL::
+%s
+
+::HOSTIDENTIFIER::
+$HOSTIDENTIFIER
+
+::RESOURCEHOME::
+/opt/mig/MiG/mig_frontend/
+
+::SCRIPTLANGUAGE::
+sh
+
+::SSHPORT::
+22
+
+::MEMORY::
+%s
+
+::DISK::
+%s
+
+::MAXDOWNLOADBANDWIDTH::
+%s
+
+::MAXUPLOADBANDWIDTH::
+%s
+
+::CPUCOUNT::
+1
+
+::SANDBOX::
+True
+
+::SANDBOXKEY::
+%s
+
+::ARCHITECTURE::
+X86
+
+::NODECOUNT::
+1
+
+::RUNTIMEENVIRONMENT::
+
+
+::HOSTKEY::
+N/A
+
+::FRONTENDNODE::
+localhost
+
+::FRONTENDLOG::
+/opt/mig/MiG/mig_frontend/frontendlog
+
+::EXECONFIG::
+name=%s
+nodecount=1
+cputime=%d
+execution_precondition=''
+prepend_execute=""
+exehostlog=/opt/mig/MiG/mig_exe/exechostlog
+joblog=/opt/mig/MiG/mig_exe/joblog
+execution_user=mig
+execution_node=localhost
+execution_dir=/opt/mig/MiG/mig_exe/
+start_command=cd /opt/mig/MiG/mig_exe/; chmod 700 master_node_script_%s.sh; ./master_node_script_%s.sh
+status_command=exit \\\\\`ps -o pid= -g $mig_exe_pgid | wc -l \\\\\`
+stop_command=kill -9 -$mig_exe_pgid
+clean_command=true
+continuous=False
+shared_fs=True
+vgrid=%s
+
+"""\
+    % (
+        resource_name,
+        memory,
+        int(hd_size) / 1000,
+        net_bw,
+        str(int(net_bw) / 2),
+        sandboxkey,
+        exe_name,
+        cputime,
+        unique_host_name,
+        unique_host_name,
+        ', '.join(vgrid_list),
+        )
+
+
+    # write the conf string to a temporary conf file
+    # create_resource removes the tempfile automatically
+
+    tmp_file = tempfile.NamedTemporaryFile(delete=False)
+    tmp_file.write(res_conf_string)
+    tmp_file.close()
+    pending_file = tmp_file.name
+
+    (status, id_msg) = create_resource(configuration, sandboxkey,
+                                       resource_name, pending_file)
     if not status:
-        return (False, '%s (%s)' % (msg, conf_file_src))
+        return (False, '%s (%s)' % (id_msg, pending_file))
 
     # Create PGID file in resource_home
 
+    resource_identifier = id_msg
+    unique_resource_name = resource_name + '.' + str(resource_identifier)
+                
     exe_pgid_file = configuration.resource_home + unique_resource_name\
          + os.sep + 'EXE_%s.PGID' % exe_name
     try:

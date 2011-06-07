@@ -35,6 +35,10 @@ from shared.base import sandbox_resource, client_id_dir
 from shared.conf import get_all_exe_vgrids, get_resource_fields, \
      get_resource_configuration
 from shared.defaults import settings_filename, profile_filename, default_vgrid
+from shared.modified import home_paths, mark_resource_modified, \
+     mark_vgrid_modified, check_users_modified, check_resources_modified, \
+     check_vgrids_modified, reset_users_modified, reset_resources_modified, \
+     reset_vgrids_modified
 from shared.resource import list_resources, real_to_anon_res_map
 from shared.serial import load, dump
 from shared.user import list_users, real_to_anon_user_map, get_user_conf
@@ -53,7 +57,59 @@ RES_SPECIALS = (ALLOW, ASSIGN, USERID, RESID, OWNERS, MEMBERS, CONF, MODTIME) = 
 MAP_CACHE_SECONDS = 30
 
 last_refresh = {USERS: 0, RESOURCES: 0, VGRIDS: 0}
+last_load = {USERS: 0, RESOURCES: 0, VGRIDS: 0}
 last_map = {USERS: {}, RESOURCES: {}, VGRIDS: {}}
+
+def load_entity_map(configuration, kind, do_lock):
+    """Load map of given entities and their configuration. Uses a pickled
+    dictionary for efficiency. The do_lock option is used to enable and
+    disable locking during load.
+    Entity IDs are stored in their raw (non-anonymized form).
+    Returns tuple with map and time stamp of last map modification.
+    """
+    home_map = home_paths(configuration)
+    map_path = os.path.join(home_map[kind], "%s.map" % kind)
+    lock_path = os.path.join(home_map[kind], "%s.lock" % kind)
+    if do_lock:
+        lock_handle = open(lock_path, 'a')
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+    try:
+        configuration.logger.info("before %s map load" % kind)
+        entity_map = load(map_path)
+        configuration.logger.info("after %s map load" % kind)
+        map_stamp = os.path.getmtime(map_path)
+    except IOError:
+        configuration.logger.warn("No %s map to load" % kind)
+        entity_map = {}
+        map_stamp = -1
+    if do_lock:
+        lock_handle.close()
+    return (entity_map, map_stamp)
+
+def load_user_map(configuration, do_lock=True):
+    """Load map of users and their configuration. Uses a pickled
+    dictionary for efficiency. Optional do_lock option is used to enable and
+    disable locking during load.
+    User IDs are stored in their raw (non-anonymized form).
+    Returns tuple with map and time stamp of last map modification.
+    """
+    return load_entity_map(configuration, 'user', do_lock)
+
+def load_resource_map(configuration, do_lock=True):
+    """Load map of resources and their configuration. Uses a pickled
+    dictionary for efficiency. Optional do_lock option is used to enable and
+    disable locking during load.
+    Resource IDs are stored in their raw (non-anonymized form).
+    """
+    return load_entity_map(configuration, 'resource', do_lock)
+
+def load_vgrid_map(configuration, do_lock=True):
+    """Load map of vgrids and their configuration. Uses a pickled
+    dictionary for efficiency. Optional do_lock option is used to enable and
+    disable locking during load.
+    Resource IDs are stored in their raw (non-anonymized form).
+    """
+    return load_entity_map(configuration, 'vgrid', do_lock)
 
 def refresh_user_map(configuration):
     """Refresh map of users and their configuration. Uses a pickled
@@ -65,16 +121,8 @@ def refresh_user_map(configuration):
     map_path = os.path.join(configuration.user_home, "user.map")
     lock_path = os.path.join(configuration.user_home, "user.lock")
     lock_handle = open(lock_path, 'a')
-
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
-
-    try:
-        user_map = load(map_path)
-        map_stamp = os.path.getmtime(map_path)
-    except IOError:
-        configuration.logger.warn("No user map to load - ok first time")
-        user_map = {}
-        map_stamp = -1
+    user_map, map_stamp = load_user_map(configuration, do_lock=False)
 
     # Find all users and their configurations
     
@@ -134,18 +182,11 @@ def refresh_resource_map(configuration):
     """
     dirty = []
     map_path = os.path.join(configuration.resource_home, "resource.map")
+    dirty_path = os.path.join(configuration.resource_home, "resource.dirty")
     lock_path = os.path.join(configuration.resource_home, "resource.lock")
     lock_handle = open(lock_path, 'a')
-
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
-
-    try:
-        resource_map = load(map_path)
-        map_stamp = os.path.getmtime(map_path)
-    except IOError:
-        configuration.logger.warn("No resource map to load - ok first time")
-        resource_map = {}
-        map_stamp = -1
+    resource_map, map_stamp = load_resource_map(configuration, do_lock=False)
 
     # Find all resources and their configurations
     
@@ -211,20 +252,13 @@ def refresh_vgrid_map(configuration):
     dirty = {}
     vgrid_changes = {}
     map_path = os.path.join(configuration.vgrid_home, "vgrid.map")
+    dirty_path = os.path.join(configuration.vgrid_home, "vgrid.dirty")
     lock_path = os.path.join(configuration.vgrid_home, "vgrid.lock")
     lock_handle = open(lock_path, 'a')
-
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
-
+    vgrid_map, map_stamp = load_vgrid_map(configuration, do_lock=False)
+    
     vgrid_helper = {default_vgrid: {RESOURCES: '*', OWNERS: '', MEMBERS: '*'}}
-    try:
-        vgrid_map = load(map_path)
-        map_stamp = os.path.getmtime(map_path)
-    except IOError:
-        configuration.logger.warn("No vgrid map to load - ok first time")
-        vgrid_map = {USERS: {}, RESOURCES: {}, VGRIDS: vgrid_helper}
-        map_stamp = -1
-
     if not vgrid_map.has_key(VGRIDS):
         vgrid_map[VGRIDS] = vgrid_helper
         dirty[VGRIDS] = dirty.get(VGRIDS, []) + [default_vgrid]
@@ -386,31 +420,67 @@ def refresh_vgrid_map(configuration):
 
     return vgrid_map
 
-def get_resource_map(configuration):
-    """Returns the current map of resources and their configurations"""
-    if last_refresh[RESOURCES] + MAP_CACHE_SECONDS > time.time():
-        resource_map = last_map[RESOURCES]
-    else:
-        resource_map = refresh_resource_map(configuration)
-        last_map[RESOURCES] = resource_map
-    return resource_map
-
 def get_user_map(configuration):
-    """Returns the current map of users and their configurations"""
-    if last_refresh[USERS] + MAP_CACHE_SECONDS > time.time():
-        user_map = last_map[USERS]
-    else:
+    """Returns the current map of users and their configurations. Caches the
+    map for load prevention with repeated calls within short time span.
+    """
+    if last_load[USERS] + MAP_CACHE_SECONDS > time.time():
+        configuration.logger.info("using cached user map")
+        return last_map[USERS]
+    modified_users, modified_stamp_ = check_users_modified(configuration)
+    if modified_users:
+        configuration.logger.info("refreshing user map (%s)" % modified_users)
         user_map = refresh_user_map(configuration)
+        reset_users_modified(configuration)
         last_map[USERS] = user_map
+    else:
+        configuration.logger.info("No changes - not refreshing")
+        user_map, map_stamp = load_user_map(configuration)
+        last_map[USERS] = user_map
+        last_refresh[USERS] = map_stamp
+    last_load[USERS] = time.time()
     return user_map
 
-def get_vgrid_map(configuration):
-    """Returns the current map of resources and their vgrid participations"""
-    if last_refresh[VGRIDS] + MAP_CACHE_SECONDS > time.time():
-        vgrid_map = last_map[VGRIDS]
+def get_resource_map(configuration):
+    """Returns the current map of resources and their configurations. Caches the
+    map for load prevention with repeated calls within short time span.
+    """
+    if last_load[RESOURCES] + MAP_CACHE_SECONDS > time.time():
+        configuration.logger.info("using cached resource map")
+        return last_map[RESOURCES]
+    modified_resources, modified_stamp_ = check_resources_modified(configuration)
+    if modified_resources:
+        configuration.logger.info("refreshing resource map (%s)" % modified_resources)
+        resource_map = refresh_resource_map(configuration)
+        reset_resources_modified(configuration)
+        last_map[RESOURCES] = resource_map
     else:
+        configuration.logger.info("No changes - not refreshing")
+        resource_map, map_stamp = load_resource_map(configuration)
+        last_map[RESOURCES] = resource_map
+        last_refresh[RESOURCES] = map_stamp
+    last_load[RESOURCES] = time.time()
+    return resource_map
+
+def get_vgrid_map(configuration):
+    """Returns the current map of vgrids and their configurations. Caches the
+    map for load prevention with repeated calls within short time span.
+    """
+    if last_load[VGRIDS] + MAP_CACHE_SECONDS > time.time():
+        configuration.logger.info("using cached vgrid map")
+        return last_map[VGRIDS]
+    modified_vgrids, modified_stamp_ = check_vgrids_modified(configuration)
+    if modified_vgrids:
+        configuration.logger.info("refreshing vgrid map (%s)" % modified_vgrids)
         vgrid_map = refresh_vgrid_map(configuration)
+        reset_vgrids_modified(configuration)
         last_map[VGRIDS] = vgrid_map
+    else:
+        configuration.logger.info("No changes - not refreshing")
+        vgrid_map, map_stamp = load_vgrid_map(configuration)
+        last_map[VGRIDS] = vgrid_map
+        last_refresh[VGRIDS] = map_stamp
+    last_load[VGRIDS] = time.time()
     return vgrid_map
 
 def user_owned_res_confs(configuration, client_id):
@@ -610,8 +680,12 @@ def resources_using_re(configuration, re_name):
 
 def unmap_resource(configuration, res_id):
     """Remove res_id from resource and vgrid maps - simply force refresh"""
-    refresh_resource_map(configuration)
-    refresh_vgrid_map(configuration)
+    mark_resource_modified(configuration, res_id)
+    mark_vgrid_modified(configuration, res_id)
+
+def unmap_vgrid(configuration, vgrid_name):
+    """Remove vgrid_name from vgrid map - simply force refresh"""
+    mark_vgrid_modified(configuration, vgrid_name)
 
 
 if "__main__" == __name__:

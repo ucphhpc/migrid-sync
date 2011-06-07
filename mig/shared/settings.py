@@ -33,10 +33,10 @@ from shared.base import client_id_dir
 from shared.defaults import settings_filename, profile_filename, \
      widgets_filename
 from shared.fileio import pickle, unpickle
+from shared.modified import mark_user_modified
 from shared.profilekeywords import get_keywords_dict as get_profile_fields
 from shared.settingskeywords import get_keywords_dict as get_settings_fields
 from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
-
 
 
 def parse_and_save_pickle(source, destination, keywords, client_id, configuration, strip_space, strip_comments):
@@ -80,9 +80,12 @@ def parse_and_save_pickle(source, destination, keywords, client_id, configuratio
     return (True, '')
 
 def parse_and_save_settings(filename, client_id, configuration):
-    return parse_and_save_pickle(filename, settings_filename,
-                                 get_settings_fields(), client_id,
-                                 configuration, True, True)
+    status = parse_and_save_pickle(filename, settings_filename,
+                                   get_settings_fields(), client_id,
+                                   configuration, True, True)
+    if status[0]:
+        mark_user_modified(configuration, client_id)
+    return status
 
 def parse_and_save_widgets(filename, client_id, configuration):
     return parse_and_save_pickle(filename, widgets_filename,
@@ -90,10 +93,12 @@ def parse_and_save_widgets(filename, client_id, configuration):
                                  configuration, False, False)
 
 def parse_and_save_profile(filename, client_id, configuration):
-    return parse_and_save_pickle(filename, profile_filename,
-                                 get_profile_fields(), client_id,
-                                 configuration, False, False)
-
+    status = parse_and_save_pickle(filename, profile_filename,
+                                   get_profile_fields(), client_id,
+                                   configuration, False, False)
+    if status[0]:
+        mark_user_modified(configuration, client_id)
+    return status
 
 def load_settings(client_id, configuration, include_meta=False):
     """Load settings from pickled settings file. Optional include_meta

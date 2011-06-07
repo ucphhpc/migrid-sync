@@ -30,9 +30,8 @@ import os
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.listhandling import add_item_to_pickled_list
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_resource, \
-     vgrid_list_subvgrids
+     vgrid_list_subvgrids, vgrid_add_resources
 import shared.returnvalues as returnvalues
 
 
@@ -119,9 +118,9 @@ def main(client_id, user_arguments_dict):
 
     # Add to list and pickle
 
-    (status, msg) = add_item_to_pickled_list(resources_file,
-            unique_resource_name, logger)
-    if not status:
+    (add_status, add_msg) = vgrid_add_resources(configuration, vgrid_name,
+                                                [unique_resource_name])
+    if not add_status:
         output_objects.append({'object_type': 'error_text', 'text': '%s'
                                % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)

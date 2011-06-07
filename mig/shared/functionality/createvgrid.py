@@ -38,7 +38,8 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.validstring import valid_dir_input
-from shared.vgrid import vgrid_is_owner
+from shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
+     vgrid_set_resources
 
 
 def signature():
@@ -546,35 +547,36 @@ for job input and output.
     # only add user in owners list if new vgrid is a base vgrid (because symlinks to
     # subdirs are not necessary, and an owner is per definition owner of sub vgrids).
 
-    owner_file = os.path.join(base_dir, 'owners')
     owner_list = []
     if new_base_vgrid == True:
         owner_list.append(client_id)
     else:
         owner_list.append('')
 
-    status = pickle(owner_list, owner_file, logger)
-    if not status:
+    (owner_status, owner_msg) = vgrid_set_owners(configuration, vgrid_name,
+                                                 owner_list)
+    if not owner_status:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not save new list of owners'})
+                              : 'Could not save owner list: %s' % owner_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # create empty pickled members list
 
-    member_file = os.path.join(base_dir, 'members')
-    status2 = pickle([], member_file, logger)
-    if not status2:
+    (member_status, member_msg) = vgrid_set_members(configuration, vgrid_name,
+                                                    [])
+    if not member_status:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not pickle and save list'})
+                              : 'Could not save member list: %s' % member_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # create empty pickled resources list
 
-    resources_file = os.path.join(base_dir, 'resources')
-    status3 = pickle([], resources_file, logger)
-    if not status3:
+    (resource_status, resource_msg) = vgrid_set_resources(configuration,
+                                                          vgrid_name, [])
+    if not resource_status:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not pickle and save list'})
+                              : 'Could not save resource list: %s' % \
+                               resource_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if new_base_vgrid:

@@ -33,12 +33,12 @@ resource.
 
 import os
 
+import shared.returnvalues as returnvalues
 from shared.findtype import is_user, is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.listhandling import add_item_to_pickled_list
-import shared.returnvalues as returnvalues
+from shared.resource import resource_add_owners
 
 
 def signature():
@@ -100,14 +100,13 @@ def main(client_id, user_arguments_dict):
 
     # Add owner
 
-    owners_file = base_dir + 'owners'
-    (status, msg) = add_item_to_pickled_list(owners_file, cert_id,
-            logger)
-
-    if not status:
+    (add_status, add_msg) = resource_add_owners(configuration,
+                                                unique_resource_name,
+                                                [cert_id])
+    if not add_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not add new owner, reason: %s'
-                               % msg})
+                               % add_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'

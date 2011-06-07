@@ -33,6 +33,8 @@ import fnmatch
 from shared.defaults import default_vgrid
 from shared.findtype import is_user, is_resource
 from shared.listhandling import list_items_in_pickled_list
+from shared.modified import mark_vgrid_modified
+from shared.serial import load, dump
 from shared.validstring import valid_dir_input
 
 
@@ -410,3 +412,80 @@ def vgrid_access_match(configuration, job_owner, job, res_id, res):
         else:
             break
     return answer
+
+def vgrid_add_entities(configuration, vgrid_name, kind, clients):
+    """Append list of clients to pickled list of kind for vgrid_name"""
+    entity_file = os.path.join(configuration.vgrid_home, vgrid_name, kind)
+    try:
+        entities = load(entity_file)
+        entities += [i for i in clients if not i in entities]
+        dump(entities, entity_file)
+        mark_vgrid_modified(configuration, vgrid_name)
+        return (True, '')
+    except Exception, exc:
+        return (False, "could not add %s for %s: %s" % (kind, vgrid_name, exc))
+
+def vgrid_add_owners(configuration, vgrid_name, clients):
+    """Append clients to pickled list of owners for vgrid_name"""
+    return vgrid_add_entities(configuration, vgrid_name, 'owners',
+                              clients)
+
+def vgrid_add_members(configuration, vgrid_name, clients):
+    """Append clients to pickled list of members for vgrid_name"""
+    return vgrid_add_entities(configuration, vgrid_name, 'members',
+                              clients)
+
+def vgrid_add_resources(configuration, vgrid_name, clients):
+    """Append clients to pickled list of resources for vgrid_name"""
+    return vgrid_add_entities(configuration, vgrid_name, 'resources',
+                              clients)
+
+def vgrid_remove_entities(configuration, vgrid_name, kind, clients):
+    """Remove list of clients from pickled list of kind for vgrid_name"""
+    entity_file = os.path.join(configuration.vgrid_home, vgrid_name, kind)
+    try:
+        entities = load(entity_file)
+        entities = [i for i in entities if not i in clients]
+        dump(entities, entity_file)
+        mark_vgrid_modified(configuration, vgrid_name)
+        return (True, '')
+    except Exception, exc:
+        return (False, "could not remove %s for %s: %s" % (kind, vgrid_name,
+                                                           exc))
+
+def vgrid_remove_owners(configuration, vgrid_name, clients):
+    """Remove clients from pickled list of owners for vgrid_name"""
+    return vgrid_remove_entities(configuration, vgrid_name, 'owners',
+                              clients)
+
+def vgrid_remove_members(configuration, vgrid_name, clients):
+    """Remove clients from pickled list of members for vgrid_name"""
+    return vgrid_remove_entities(configuration, vgrid_name, 'members',
+                              clients)
+
+def vgrid_remove_resources(configuration, vgrid_name, clients):
+    """Remove clients from pickled list of resources for vgrid_name"""
+    return vgrid_remove_entities(configuration, vgrid_name, 'resources',
+                              clients)
+
+def vgrid_set_entities(configuration, vgrid_name, kind, clients):
+    """Set kind list to provided clients for given vgrid"""
+    entity_file = os.path.join(configuration.vgrid_home, vgrid_name, kind)
+    try:
+        dump(clients, entity_file)
+        mark_vgrid_modified(configuration, vgrid_name)
+        return (True, '')
+    except Exception, exc:
+        return (False, "could not set %s for %s: %s" % (kind, vgrid_name, exc))
+
+def vgrid_set_owners(configuration, vgrid_name, clients):
+    """Set list of owners for given vgrid"""
+    return vgrid_set_entities(configuration, vgrid_name, 'owners', clients)
+
+def vgrid_set_members(configuration, vgrid_name, clients):
+    """Set list of members for given vgrid"""
+    return vgrid_set_entities(configuration, vgrid_name, 'members', clients)
+
+def vgrid_set_resources(configuration, vgrid_name, clients):
+    """Set list of resources for given vgrid"""
+    return vgrid_set_entities(configuration, vgrid_name, 'resources', clients)

@@ -92,3 +92,4 @@ if __name__ == '__main__':
     client_id = client_dir_id(client_dir)
     print "orig id %s, dir %s, id %s (match %s)" % \
           (orig_id, client_dir, client_id, orig_id == client_id)
+

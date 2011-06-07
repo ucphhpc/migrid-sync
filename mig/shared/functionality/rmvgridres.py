@@ -33,8 +33,8 @@ import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.listhandling import remove_item_from_pickled_list
-from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner
+from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
+     vgrid_remove_resources
 
 
 def signature():
@@ -98,11 +98,11 @@ def main(client_id, user_arguments_dict):
 
     resources_file = configuration.vgrid_home + os.sep + vgrid_name\
          + os.sep + 'resources'
-    (status, msg) = remove_item_from_pickled_list(resources_file,
-            unique_resource_name, logger)
-    if not status:
+    (rm_status, rm_msg) = vgrid_remove_resources(configuration, vgrid_name,
+                                                 unique_resource_name)
+    if not rm_status:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : msg})
+                              : rm_msg})
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s might be listed as a resource of this VGrid because it is a resource of a parent VGrid. Removal must be performed from the most significant VGrid possible.'
                                % unique_resource_name})

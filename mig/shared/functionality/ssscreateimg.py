@@ -34,17 +34,16 @@ import shutil
 from binascii import hexlify
 import fcntl
 
-import shared.confparser as confparser
 import shared.resadm as resadm
 import shared.returnvalues as returnvalues
 from shared.conf import get_resource_configuration, get_resource_exe
 from shared.defaults import default_vgrid
-from shared.fileio import make_symlink
+from shared.fileio import make_symlink, write_zipfile, copy
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.resource import create_resource_home
-from shared.sandbox import load_sandbox_db, save_sandbox_db
+from shared.sandbox import load_sandbox_db, save_sandbox_db, \
+    create_sss_resource
 from shared.vgrid import vgrid_list_vgrids
 
 # sandbox db has the format: {username: (password, [list_of_resources])}
@@ -99,6 +98,8 @@ def main(client_id, user_arguments_dict):
     operating_system = accepted['operating_system'][-1]
     win_solution = accepted['win_solution'][-1]
     vgrid_list = accepted['vgrid']
+    cputime = 1000000
+    sandboxkey = hexlify(open('/dev/urandom').read(32))
     ip_address = 'UNKNOWN'
     if os.environ.has_key('REMOTE_ADDR'):
         ip_address = os.environ['REMOTE_ADDR']
@@ -144,6 +145,7 @@ def main(client_id, user_arguments_dict):
 
     # provide a resource name
 
+
     resource_name = 'sandbox'
 
     logger.info('''Generating %s linux sandbox dist with hd size %s and mem
@@ -151,21 +153,18 @@ def main(client_id, user_arguments_dict):
                                                 hd_size, memory, username,
                                                 ip_address, operating_system))
 
-    # Fake a request for creating the resource
-
-    # TODO: write conf to tempfile and use create_resource() for this!
-    
-    (create_status, resource_identifier) = create_resource_home(
-        configuration, 'SANDBOX_' + username, resource_name)
+    (create_status, unique_host_name) = create_sss_resource(
+        sandboxkey, cputime, memory, hd_size, net_bw, vgrid_list,
+        configuration, logger)
     if create_status:
-        logger.info('Created sandbox resource home')
+        logger.info('Created sandbox resource configuration')
     else:
         output_objects.append({'object_type': 'error_text', 'text':
-                               resource_identifier})
+                               unique_host_name})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    unique_host_name = resource_name + '.' + str(resource_identifier)
-
+    host_url, resource_identifier = unique_host_name.rsplit('.', 1)
+    
     # add the resource to the list of the users resources
 
     userdb[username][1].append(unique_host_name)
@@ -181,8 +180,6 @@ def main(client_id, user_arguments_dict):
     logger.debug('building resource specific files for %s'
                  % unique_host_name)
 
-    sandboxkey = hexlify(open('/dev/urandom').read(32))
-
     # create sandboxlink
 
     sandbox_link = configuration.sandbox_home + sandboxkey
@@ -194,127 +191,7 @@ def main(client_id, user_arguments_dict):
     
     old_path = os.getcwd()
 
-    # TODO: We can not rely on chdir to work consistently!
-    
-    os.chdir(configuration.sss_home)
-
     # log_dir = "log/"
-
-    # create a resource configuration string that we can write to a file
-
-    res_conf_string = \
-    """::MIGUSER::
-mig
-
-::HOSTURL::
-%s
-
-::HOSTIDENTIFIER::
-%s
-
-::RESOURCEHOME::
-/opt/mig/MiG/mig_frontend/
-
-::SCRIPTLANGUAGE::
-sh
-
-::SSHPORT::
-22
-
-::MEMORY::
-%s
-
-::DISK::
-%s
-
-::MAXDOWNLOADBANDWIDTH::
-%s
-
-::MAXUPLOADBANDWIDTH::
-%s
-
-::CPUCOUNT::
-1
-
-::SANDBOX::
-True
-
-::SANDBOXKEY::
-%s
-
-::ARCHITECTURE::
-X86
-
-::NODECOUNT::
-1
-
-::RUNTIMEENVIRONMENT::
-
-
-::HOSTKEY::
-N/A
-
-::FRONTENDNODE::
-localhost
-
-::FRONTENDLOG::
-/opt/mig/MiG/mig_frontend/frontendlog
-
-::EXECONFIG::
-name=localhost
-nodecount=1
-cputime=1000000
-execution_precondition=''
-prepend_execute=""
-exehostlog=/opt/mig/MiG/mig_exe/exechostlog
-joblog=/opt/mig/MiG/mig_exe/joblog
-execution_user=mig
-execution_node=localhost
-execution_dir=/opt/mig/MiG/mig_exe/
-start_command=cd /opt/mig/MiG/mig_exe/; chmod 700 master_node_script_%s.sh; ./master_node_script_%s.sh
-status_command=exit \\\\\`ps -o pid= -g $mig_exe_pgid | wc -l \\\\\`
-stop_command=kill -9 -$mig_exe_pgid
-clean_command=true
-continuous=False
-shared_fs=True
-vgrid=%s
-
-"""\
-    % (
-        resource_name,
-        resource_identifier,
-        memory,
-        int(hd_size) / 1000,
-        net_bw,
-        str(int(net_bw) / 2),
-        sandboxkey,
-        unique_host_name,
-        unique_host_name,
-        ', '.join(vgrid_list),
-        )
-
-    # write the conf string to a conf file
-
-    conf_file_src = os.path.join(configuration.resource_home,
-                                 unique_host_name, 'config.MiG')
-    try:
-        fd = open(conf_file_src, 'w')
-        fd.write(res_conf_string)
-        fd.close()
-        logger.debug('wrote conf: %s' % res_conf_string)
-    except Exception, err:
-        output_objects.append({'object_type': 'error_text', 'text': err})
-        return (output_objects, returnvalues.SYSTEM_ERROR)
-
-
-    # parse and pickle the conf file
-
-    (status, msg) = confparser.run(conf_file_src, resource_name + '.'
-                                   + str(resource_identifier))
-    logger.debug('res conf parser returned: %s' % status)
-    if not status:
-        output_objects.append({'object_type': 'error_text', 'text': msg})
-        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # read pickled resource conf file (needed to create
     # master_node_script.sh)
@@ -337,23 +214,6 @@ vgrid=%s
                                "No 'localhost' EXE config for: '%s'" % \
                                unique_host_name})
         return (output_objects, returnvalues.SYSTEM_ERROR)
-
-    # HACK: a PGID file is required in the resource home directory
-    # write the conf string to a conf file
-
-    
-    pgid_file = os.path.join(configuration.resource_home, unique_host_name,
-                             'EXE_localhost.PGID')
-    try:
-        fd = open(pgid_file, 'w')
-        fd.write('')
-        fd.close()
-        logger.debug('wrote fake pgid file %s' % pgid_file)
-    except Exception, err:
-        output_objects.append({'object_type': 'error_text', 'text': err})
-        return (output_objects, returnvalues.SYSTEM_ERROR)
-
-    os.chdir(old_path)
 
     resource_dir = os.path.join(configuration.resource_home, unique_host_name)
 
@@ -404,8 +264,14 @@ vgrid=%s
 
     logger.debug('modifying hda image for this sandbox')
 
+    '''
+    # TODO: We can not rely on chdir to work consistently!
+    
     os.chdir(configuration.sss_home)
 
+    '''
+    mnt_path = os.path.join(configuration.sss_home, 'mnt')
+    
     lock_path = os.path.join(configuration.sss_home, 'lockfile.txt')
     if not os.path.isfile(lock_path):
         try:
@@ -424,19 +290,21 @@ vgrid=%s
 
     # unmount leftover disk image mounts if any
 
-    if os.path.ismount('mnt'):
+    if os.path.ismount(mnt_path):
         logger.warning('unmounting leftover mount point')
         os.system('sync')
-        os.system('umount mnt')
+        os.system('umount %s' % mnt_path)
         os.system('sync')
 
     # create individual key files
 
     try:
-        fd = open('keyfile', 'w')
+        key_path = os.path.join(configuration.sss_home, 'keyfile')
+        server_path = os.path.join(configuration.sss_home, 'serverfile')
+        fd = open(key_path, 'w')
         fd.write(sandboxkey)
         fd.close()
-        fd = open('serverfile', 'w')
+        fd = open(server_path, 'w')
         fd.write(configuration.migserver_https_sid_url)
         fd.close()
     except Exception, err:
@@ -447,21 +315,22 @@ vgrid=%s
 
     # use a disk of the requested size
 
-    src_path = os.path.join('MiG-SSS', 'hda_' + hd_size + '.img')
-    dst_path = os.path.join('MiG-SSS', 'hda.img')
-    command = 'cp -f %s %s' % (src_path, dst_path)
-    os.system(command)
+    src_path = os.path.join(configuration.sss_home, 'MiG-SSS',
+                            'hda_' + hd_size + '.img')
+    dst_path = os.path.join(configuration.sss_home, 'MiG-SSS', 'hda.img')
+    copy(src_path, dst_path)
 
     # mount hda and copy scripts to it
 
-    os.system('mount mnt')
+    logger.info('calling mount %s' % mnt_path)
+    os.system('mount %s' % mnt_path)
 
     for i in range(60):
-        if not os.path.ismount('mnt'):
+        if not os.path.ismount(mnt_path):
             logger.warning('waiting for mount point to appear...')
             time.sleep(1)
 
-    if not os.path.ismount('mnt'):
+    if not os.path.ismount(mnt_path):
         output_objects.append({'object_type': 'error_text', 'text':
                                'Failed to mount sandbox disk image!'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -471,21 +340,21 @@ vgrid=%s
 
         # save master_node_script to hd image
 
-        master_dst = os.path.join('mnt', 'mig', 'MiG', 'mig_exe',
+        master_dst = os.path.join(mnt_path, 'mig', 'MiG', 'mig_exe',
                                   'master_node_script_localhost.sh')
         shutil.copyfile(mns_fname, master_dst)
 
         # save frontend_script to hd image
 
-        fe_dst = os.path.join('mnt', 'mig', 'MiG', 'mig_frontend',
+        fe_dst = os.path.join(mnt_path, 'mig', 'MiG', 'mig_frontend',
                                   'frontend_script.sh')
         shutil.copyfile(fes_fname, fe_dst)
 
         # copy the sandboxkey to the keyfile:
 
-        key_dst = os.path.join('mnt', 'mig', 'etc', 'keyfile')
+        key_dst = os.path.join(mnt_path, 'mig', 'etc', 'keyfile')
         shutil.copyfile('keyfile', key_dst)
-        server_dst = os.path.join('mnt', 'mig', 'etc', 'serverfile')
+        server_dst = os.path.join(mnt_path, 'mig', 'etc', 'serverfile')
         shutil.copyfile('serverfile', server_dst)
     except Exception, err:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -496,11 +365,11 @@ vgrid=%s
     # unmount disk image
 
     os.system('sync')
-    os.system('umount mnt')
+    os.system('umount %s' % mnt_path)
     os.system('sync')    
 
     for i in range(60):
-        if os.path.ismount('mnt'):
+        if os.path.ismount(mnt_path):
             logger.warning('waiting for mount point to disappear...')
             time.sleep(1)
 
@@ -514,7 +383,7 @@ vgrid=%s
 
     if 'raw' != image_format:
         logger.debug('Converting disk image to %s format' % image_format)
-        image_path = os.path.join('MiG-SSS', 'hda.img')
+        image_path = os.path.join(configuration.sss_home, 'MiG-SSS', 'hda.img')
         tmp_path = image_path + '.' + image_format
         command = 'qemu-img convert -f raw ' + image_path + ' -O '\
                   + image_format + ' ' + tmp_path
@@ -523,14 +392,27 @@ vgrid=%s
         os.rename(tmp_path, image_path)
         logger.debug('converted hda image to %s format' % image_format)
 
-    file_name = 'MiG-SSS_' + str(resource_identifier) + '.zip'
+    zip_path = os.path.join(configuration.sss_home,
+                             'MiG-SSS_' + str(resource_identifier) + '.zip')
+    iso_path = os.path.join(configuration.sss_home, 'MiG-SSS', 'MiG.iso')
+    img_path = os.path.join(configuration.sss_home, 'MiG-SSS', 'hda.img')
+    xsss_path = os.path.join(configuration.sss_home, 'MiG-SSS', 'mig_xsss.py')
+    readme_path = os.path.join(configuration.sss_home, 'MiG-SSS', 'readme.txt')
+    setup_path = os.path.join(configuration.sss_home, 'MiG-SSS',
+                              'MiG-SSS_Setup.exe')
+    service_path = os.path.join(configuration.sss_home, 'MiG-SSS',
+                                'MiG-SSS-Service_Setup.exe')
     if operating_system == 'linux':
 
         # Put all linux-related files in a zip archive
 
-        os.system('/usr/bin/zip ' + file_name
-                  + ' MiG-SSS/MiG.iso MiG-SSS/hda.img MiG-SSS/mig_xsss.py MiG-SSS/readme.txt'
-                  )
+        (zip_status, zip_msg) = write_zipfile(zip_path,
+                                              [iso_path, img_path, xsss_path,
+                                               readme_path],
+                                              'MiG-SSS')
+        if not zip_status:
+            logger.error('Failed to create zip file: %s' % zip_msg)
+            
     else:
 
         if win_solution == 'screensaver':
@@ -538,16 +420,16 @@ vgrid=%s
             # Put all win-related files in the archive (do not store dir
             # name: -j)
             
-            os.system('/usr/bin/zip -j ' + file_name
-                      + ' MiG-SSS/MiG-SSS_Setup.exe MiG-SSS/hda.img MiG-SSS/MiG.iso'
-                      )
+            (zip_status, zip_msg) = write_zipfile(zip_path, [setup_path,
+                                                             iso_path,
+                                                             img_path], '')
         else:
 
             # windows service
             
-            os.system('/usr/bin/zip -j ' + file_name
-                      + ' MiG-SSS/MiG-SSS-Service_Setup.exe MiG-SSS/hda.img MiG-SSS/MiG.iso'
-                      )
+            (zip_status, zip_msg) = write_zipfile(zip_path, [service_path,
+                                                             iso_path,
+                                                             img_path], '')
 
     # ## Leave critical region ###
 
@@ -558,16 +440,16 @@ vgrid=%s
 
     ### Everything went as planned - switch to raw output for download
 
-    file_size = os.stat(file_name).st_size
+    file_size = os.stat(zip_path).st_size
     headers = [('Content-Type', 'application/zip'),
                ('Content-Type', 'application/force-download'),
                ('Content-Type', 'application/octet-stream'),
                ('Content-Type', 'application/download'),
-               ('Content-Disposition', 'attachment; filename=%s' % file_name),
+               ('Content-Disposition', 'attachment; filename=%s' % zip_path),
                ('Content-Length', '%s' % file_size)]
     output_objects = [{'object_type': 'start', 'headers': headers}]
-    fd = open(file_name, 'rb')
+    fd = open(zip_path, 'rb')
     output_objects.append({'object_type': 'binary', 'data': fd.read()})
     fd.close()
-    os.system('rm -f ' + file_name)
+    os.remove(zip_path)
     return (output_objects, returnvalues.OK)

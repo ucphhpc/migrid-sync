@@ -38,8 +38,9 @@ from shared.base import client_id_dir, old_id_format, sandbox_resource
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.defaults import keyword_auto, ssh_conf_dir, htaccess_filename, \
-     settings_filename, default_css_filename, ssh_conf_dir
+     settings_filename, profile_filename, default_css_filename, ssh_conf_dir
 from shared.fileio import filter_pickled_list, filter_pickled_dict
+from shared.modified import mark_user_modified
 from shared.serial import load, dump
 
 db_name = 'MiG-users.db'
@@ -219,6 +220,7 @@ def create_user(
     ssh_dir = os.path.join(home_dir, ssh_conf_dir)
     htaccess_path = os.path.join(home_dir, htaccess_filename)
     settings_path = os.path.join(home_dir, settings_filename)
+    profile_path = os.path.join(home_dir, profile_filename)
     css_path = os.path.join(home_dir, default_css_filename)
     if not renew:
         if verbose:        
@@ -313,6 +315,17 @@ def create_user(
             raise Exception('Error: could not create settings file: %s' % \
                             settings_path)
         
+    # Always write default profile to avoid error log entries
+    try:
+        profile_dict = {}
+        profile_dict['CREATOR'] = client_id
+        profile_dict['CREATED_TIMESTAMP'] = datetime.datetime.now()
+        dump(profile_dict, profile_path)
+    except:
+        if not force:
+            raise Exception('Error: could not create profile file: %s' % \
+                            profile_path)
+        
     # Always write default css to avoid apache error log entries
 
     try:
@@ -324,6 +337,8 @@ def create_user(
         if not force:
             raise Exception('Error: could not create custom css file: %s' % \
                             css_path)
+
+    mark_user_modified(configuration, client_id)
 
 
 def delete_user(
@@ -390,6 +405,7 @@ def delete_user(
     if verbose:
         print 'User dirs for %s was successfully removed!'\
                   % client_id
+    mark_user_modified(configuration, client_id)
 
 
 def migrate_users(

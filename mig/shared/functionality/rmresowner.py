@@ -36,7 +36,7 @@ from shared.findtype import is_user, is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.listhandling import remove_item_from_pickled_list
+from shared.resource import resource_remove_owners
 
 
 def signature():
@@ -96,13 +96,13 @@ def main(client_id, user_arguments_dict):
     # Remove owner
 
     owners_file = os.path.join(base_dir, 'owners')
-    (status, msg) = remove_item_from_pickled_list(owners_file, cert_id,
-            logger, False)
-
-    if not status:
+    (rm_status, rm_msg) = resource_remove_owners(configuration,
+                                                 unique_resource_name,
+                                                 [cert_id])
+    if not rm_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not remove owner, reason: %s'
-                               % msg})
+                               % rm_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
