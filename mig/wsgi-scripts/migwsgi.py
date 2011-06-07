@@ -28,6 +28,7 @@
 import os
 import sys
 import cgi
+import time
 
 import shared.returnvalues as returnvalues
 from shared.conf import get_configuration_object
@@ -52,6 +53,8 @@ def my_id():
 def stub(function, user_arguments_dict):
     """Run backend function with supplied arguments"""
 
+    before_time = time.time()
+
     # get ID of user currently logged in
 
     main = id
@@ -71,12 +74,11 @@ def stub(function, user_arguments_dict):
                               }])
         return (output_objects, returnvalues.INVALID_ARGUMENT)
 
-    return_val = returnvalues.OK
     try:
 
         # return (user_arguments_dict)
 
-        (output_objects, return_val) = main(client_id,
+        (output_objects, (ret_code, ret_msg)) = main(client_id,
                 user_arguments_dict)
     except Exception, err:
         output_objects.extend([{'object_type': 'error_text', 'text'
@@ -85,7 +87,7 @@ def stub(function, user_arguments_dict):
 
     (val_ret, val_msg) = validate(output_objects)
     if not val_ret:
-        return_val = returnvalues.OUTPUT_VALIDATION_ERROR
+        (ret_code, ret_msg) = returnvalues.OUTPUT_VALIDATION_ERROR
 
         # remove previous output
         # output_objects = []
@@ -94,7 +96,9 @@ def stub(function, user_arguments_dict):
                               : 'Validation error! %s' % val_msg},
                               {'object_type': 'title', 'text'
                               : 'Validation error!'}])
-    return (output_objects, return_val)
+    after_time = time.time()
+    ret_msg += " (done in %.3fs)" % (after_time - before_time)
+    return (output_objects, (ret_code, ret_msg))
 
 
 # ## Main ###
