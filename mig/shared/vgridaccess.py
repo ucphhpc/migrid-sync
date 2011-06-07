@@ -564,7 +564,7 @@ def user_allowed_user_confs(configuration, client_id):
 
     # Find all potential users from vgrid member and ownership
 
-    user_map = refresh_user_map(configuration)
+    user_map = get_user_map(configuration)
 
     # Map only contains the raw user names - anonymize as requested
 
