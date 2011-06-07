@@ -31,6 +31,7 @@ import sys
 import cgi
 import cgitb
 cgitb.enable()
+import time
 
 import shared.returnvalues as returnvalues
 from shared.scriptinput import fieldstorage_to_dict
@@ -99,6 +100,7 @@ def run_cgi_script(main, delayed_input=None):
     form.
     """
     
+    before_time = time.time()
     (configuration, logger, client_id, user_arguments_dict) = \
                     init_cgi_script(delayed_input)
 
@@ -114,6 +116,8 @@ def run_cgi_script(main, delayed_input=None):
         out_obj = [{'object_type': 'error_text', 'text':
                     'No client ID available from SSL env - not authenticated!'
                     }]
+    after_time = time.time()
+    ret_msg += " (done in %.3fs)" % (after_time - before_time)
     finish_cgi_script(configuration, output_format, ret_code, ret_msg, out_obj)
 
 
