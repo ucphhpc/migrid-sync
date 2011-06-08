@@ -70,26 +70,25 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     resource_list = accepted['unique_resource_name']
-    res_name = resource_list.pop()
+    resource_id = resource_list.pop()
 
-    res_dir = os.path.join(configuration.resource_home, res_name)
+    res_dir = os.path.join(configuration.resource_home, resource_id)
 
     # Prevent unauthorized access
     
-    (owner_status, owner_list) = resource_owners(configuration,
-                                                 unique_resource_name)
+    (owner_status, owner_list) = resource_owners(configuration, resource_id)
     if not owner_status:
         output_objects.append(
             {'object_type': 'error_text', 'text'
-             : "Could not look up '%s' owners - no such resource?" % res_name
+             : "Could not look up '%s' owners - no such resource?" % resource_id
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif client_id not in owner_list:
         logger.warning('user %s tried to delete resource "%s" not owned' % \
-                       (client_id, res_name))
+                       (client_id, resource_id))
         output_objects.append({'object_type': 'error_text', 'text'
                                : "You can't delete '%s' - you don't own it!"
-                               % res_name})
+                               % resource_id})
         output_objects.append({'object_type': 'link', 'destination':
                                'resman.py', 'class': 'infolink', 'title':
                                'Show resources', 'text': 'Show resources'})
@@ -129,7 +128,7 @@ def main(client_id, user_arguments_dict):
     if fe_running:
         output_objects.append({'object_type': 'error_text', 'text'
                                : "Can't delete the running resource %s!"
-                               % res_name})
+                               % resource_id})
         output_objects.append({'object_type': 'link', 'destination':
                                'resman.py', 'class': 'infolink', 'title':
                                'Show resources', 'text': 'Show resources'})
@@ -161,7 +160,7 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : 'Deleting resource'})
     output_objects.append({'object_type': 'text', 'text'
-                           : 'Sucessfully deleted resource: ' + res_name})
+                           : 'Sucessfully deleted resource: ' + resource_id})
     output_objects.append({'object_type': 'link', 'destination': 'resman.py',
                            'class': 'infolink', 'title': 'Show resources',
                            'text': 'Show resources'})
@@ -171,6 +170,6 @@ def main(client_id, user_arguments_dict):
     lock_handle_res.close()
 
     # Remove resource from resource and vgrid caches (after realeasing locks)
-    unmap_resource(configuration, res_name)
+    unmap_resource(configuration, resource_id)
 
     return (output_objects, returnvalues.OK)
