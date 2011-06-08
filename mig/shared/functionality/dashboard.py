@@ -126,8 +126,9 @@ $(document).ready(function() {
                     $("#jobs_stats").empty();
                     $("#jobs_stats").append("You have submitted a total of " + jobs.total +
                     " jobs: " + jobs.parse + " parse, " + jobs.queued + " queued, " +
-                    jobs.executing + " executing, " + jobs.finished + " finished, " + jobs.retry +
-                    " retry, " + jobs.canceled + " canceled, " + jobs.expired + " expired and " +
+                     jobs.frozen + " frozen, " + jobs.executing + " executing, " +
+                     jobs.finished + " finished, " + jobs.retry + " retry, " +
+                     jobs.canceled + " canceled, " + jobs.expired + " expired and " +
                     jobs.failed + " failed.");
                     break;
                 }

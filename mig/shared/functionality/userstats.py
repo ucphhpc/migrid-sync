@@ -34,7 +34,7 @@ from shared.functional import validate_input
 from shared.init import initialize_main_variables
 from shared.usercache import refresh_disk_stats, refresh_job_stats, \
      format_bytes, OWN, VGRID, JOBS, FILES, DIRECTORIES, BYTES, PARSE, \
-     QUEUED, EXECUTING, FINISHED, RETRY, CANCELED, EXPIRED, FAILED
+     QUEUED, EXECUTING, FINISHED, RETRY, CANCELED, EXPIRED, FAILED, FROZEN
 from shared.vgridaccess import user_allowed_res_exes
 
 
@@ -86,6 +86,7 @@ def main(client_id, user_arguments_dict):
                       'canceled': job_stats[JOBS][CANCELED],
                       'expired': job_stats[JOBS][EXPIRED],
                       'failed': job_stats[JOBS][FAILED],
+                      'frozen': job_stats[JOBS][FROZEN],
                       }
         user_stats['jobs'] = total_jobs
     if 'resources' in stats:
