@@ -29,6 +29,7 @@
 
 start = {'object_type': 'start', 'required': [], 'optional': ['headers']}
 end = {'object_type': 'end', 'required': [], 'optional': []}
+timing_info = {'object_type': 'timing_info', 'required': [], 'optional': []}
 title = {'object_type': 'title', 'required': ['text'],
          'optional': ['javascript', 'bodyfunctions']}
 text = {'object_type': 'text', 'required': ['text'], 'optional': []}
@@ -192,6 +193,7 @@ object_types = {'object_type': 'object_types',
 valid_types_list = [
     start,
     end,
+    timing_info,
     title,
     text,
     verbatim,

@@ -101,7 +101,9 @@ def txt_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in txt format"""
 
     lines = []
-    status_line = 'Exit code: %s Description %s\n' % (ret_val, ret_msg)
+    timing_info = 'no timing information'
+    status_line = 'Exit code: %s Description %s (TIMING_INFO)\n' % (ret_val,
+                                                                    ret_msg)
 
     for i in out_obj:
         if i['object_type'] == 'error_text':
@@ -393,12 +395,15 @@ ctime\t%(ctime)s
                 lines.append(certificate_info)
         elif i['object_type'] == 'script_status':
             status_line = i.get('text')
+        elif i['object_type'] == 'timing_info':
+            timing_info = i.get('text')
         elif i['object_type'] == 'end':
             pass
         else:
             lines.append('unknown object %s\n' % i)
             
     if status_line:
+        status_line = status_line.replace('TIMING_INFO', timing_info)
         lines = [status_line] + lines
     return ''.join(lines)
 
@@ -470,10 +475,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     lines = []
     include_widgets = True
     user_widgets = {}
+    timing_info = 'no timing information'
     status_line = \
         """
     <div id="exitcode">
-Exit code: %s Description: %s<br />
+Exit code: %s Description: %s (TIMING_INFO)<br />
     </div>
 <br />    
 """\
@@ -1516,12 +1522,15 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                 lines.append(certificate_info)
         elif i['object_type'] == 'script_status':
             status_line = i.get('text')
+        elif i['object_type'] == 'timing_info':
+            timing_info = i.get('text')
         elif i['object_type'] == 'end':
             pass
         else:
             lines.append('unknown object %s' % i)
 
     if status_line:
+        status_line = status_line.replace('TIMING_INFO', timing_info)
         lines.append(get_cgi_html_footer(configuration, status_line, True, include_widgets, user_widgets))
     return '\n'.join(lines)
 

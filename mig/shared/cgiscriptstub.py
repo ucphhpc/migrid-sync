@@ -117,7 +117,8 @@ def run_cgi_script(main, delayed_input=None):
                     'No client ID available from SSL env - not authenticated!'
                     }]
     after_time = time.time()
-    ret_msg += " (done in %.3fs)" % (after_time - before_time)
+    out_obj.append({'object_type': 'timing_info', 'text':
+                    "done in %.3fs" % (after_time - before_time)})
     finish_cgi_script(configuration, output_format, ret_code, ret_msg, out_obj)
 
 
@@ -131,6 +132,7 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None):
     form.
     """
 
+    before_time = time.time()
     (configuration, logger, client_id, user_arguments_dict) = \
                     init_cgi_script(delayed_input)
 
@@ -140,6 +142,9 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None):
 
     (out_obj, (ret_code, ret_msg)) = main(client_id,
             user_arguments_dict)
+    after_time = time.time()
+    out_obj.append({'object_type': 'timing_info', 'text':
+                    "done in %.3fs" % (after_time - before_time)})
 
     finish_cgi_script(configuration, output_format, ret_code, ret_msg, out_obj)
 

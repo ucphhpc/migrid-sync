@@ -97,7 +97,8 @@ def stub(function, user_arguments_dict):
                               {'object_type': 'title', 'text'
                               : 'Validation error!'}])
     after_time = time.time()
-    ret_msg += " (done in %.3fs)" % (after_time - before_time)
+    output_objects.append({'object_type': 'timing_info', 'text':
+                           "done in %.3fs" % (after_time - before_time)})
     return (output_objects, (ret_code, ret_msg))
 
 
