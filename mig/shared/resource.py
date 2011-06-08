@@ -1117,17 +1117,23 @@ def resource_add_owners(configuration, unique_resource_name, clients):
         return (False, "could not add owners for %s: %s" % \
                 (unique_resource_name, exc))
 
-def resource_remove_owners(configuration, unique_resource_name, clients):
-    """Remove list of clients from pickled list of resource owners"""
+def resource_remove_owners(configuration, unique_resource_name, clients,
+                           allow_empty=False):
+    """Remove list of clients from pickled list of resource owners. The
+    optional allow_empty option is used to prevent or allow removal of last
+    owner.
+    """
     owners_file = os.path.join(configuration.resource_home,
                                unique_resource_name, 'owners')
     try:
         owners = load(owners_file)
         owners = [i for i in owners if not i in clients]
+        if not owners and not allow_empty:
+            raise ValueError("not allowed to remove last owner")
         dump(owners, owners_file)
         mark_resource_modified(configuration, unique_resource_name)
         return (True, '')
     except Exception, exc:
-        return (False, "could not remove owenrs for %s: %s" % \
+        return (False, "could not remove owners for %s: %s" % \
                 (unique_resource_name, exc))
 

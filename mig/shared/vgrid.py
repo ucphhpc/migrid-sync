@@ -440,12 +440,18 @@ def vgrid_add_resources(configuration, vgrid_name, clients):
     return vgrid_add_entities(configuration, vgrid_name, 'resources',
                               clients)
 
-def vgrid_remove_entities(configuration, vgrid_name, kind, clients):
-    """Remove list of clients from pickled list of kind for vgrid_name"""
+def vgrid_remove_entities(configuration, vgrid_name, kind, clients,
+                          allow_empty):
+    """Remove list of clients from pickled list of kind for vgrid_name.
+    The allow_empty argument can be used to prevent removal of e.g. the last
+    owner.
+    """
     entity_file = os.path.join(configuration.vgrid_home, vgrid_name, kind)
     try:
         entities = load(entity_file)
         entities = [i for i in entities if not i in clients]
+        if not entities and not allow_empty:
+            raise ValueError("not allowed to remove last entry of %s" % kind)
         dump(entities, entity_file)
         mark_vgrid_modified(configuration, vgrid_name)
         return (True, '')
@@ -453,39 +459,47 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, clients):
         return (False, "could not remove %s for %s: %s" % (kind, vgrid_name,
                                                            exc))
 
-def vgrid_remove_owners(configuration, vgrid_name, clients):
+def vgrid_remove_owners(configuration, vgrid_name, clients, allow_empty=False):
     """Remove clients from pickled list of owners for vgrid_name"""
     return vgrid_remove_entities(configuration, vgrid_name, 'owners',
-                              clients)
+                              clients, allow_empty)
 
-def vgrid_remove_members(configuration, vgrid_name, clients):
+def vgrid_remove_members(configuration, vgrid_name, clients, allow_empty=True):
     """Remove clients from pickled list of members for vgrid_name"""
     return vgrid_remove_entities(configuration, vgrid_name, 'members',
-                              clients)
+                              clients, allow_empty)
 
-def vgrid_remove_resources(configuration, vgrid_name, clients):
+def vgrid_remove_resources(configuration, vgrid_name, clients,
+                           allow_empty=True):
     """Remove clients from pickled list of resources for vgrid_name"""
     return vgrid_remove_entities(configuration, vgrid_name, 'resources',
-                              clients)
+                              clients, allow_empty)
 
-def vgrid_set_entities(configuration, vgrid_name, kind, clients):
-    """Set kind list to provided clients for given vgrid"""
+def vgrid_set_entities(configuration, vgrid_name, kind, clients, allow_empty):
+    """Set kind list to provided clients for given vgrid. The allow_empty
+    argument cam be used to e.g. prevent empty owners lists.
+    """
     entity_file = os.path.join(configuration.vgrid_home, vgrid_name, kind)
     try:
+        if not clients and not allow_empty:
+            raise ValueError("not allowed to set empty list of %s" % kind)
         dump(clients, entity_file)
         mark_vgrid_modified(configuration, vgrid_name)
         return (True, '')
     except Exception, exc:
         return (False, "could not set %s for %s: %s" % (kind, vgrid_name, exc))
 
-def vgrid_set_owners(configuration, vgrid_name, clients):
+def vgrid_set_owners(configuration, vgrid_name, clients, allow_empty=False):
     """Set list of owners for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 'owners', clients)
+    return vgrid_set_entities(configuration, vgrid_name, 'owners', clients,
+                              allow_empty)
 
-def vgrid_set_members(configuration, vgrid_name, clients):
+def vgrid_set_members(configuration, vgrid_name, clients, allow_empty=True):
     """Set list of members for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 'members', clients)
+    return vgrid_set_entities(configuration, vgrid_name, 'members', clients,
+                              allow_empty)
 
-def vgrid_set_resources(configuration, vgrid_name, clients):
+def vgrid_set_resources(configuration, vgrid_name, clients, allow_empty=True):
     """Set list of resources for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 'resources', clients)
+    return vgrid_set_entities(configuration, vgrid_name, 'resources', clients,
+                              allow_empty)
