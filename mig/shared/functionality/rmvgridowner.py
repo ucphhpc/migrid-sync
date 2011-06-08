@@ -32,14 +32,15 @@ from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.fileio import remove_rec, unpickle
+from shared.fileio import remove_rec
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables
 from shared.parseflags import force
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-       vgrid_owners, vgrid_list_subvgrids, vgrid_remove_owners
+       vgrid_owners, vgrid_members, vgrid_resources, vgrid_list_subvgrids, \
+       vgrid_remove_owners
 from shared.vgridaccess import unmap_vgrid
 
 def signature():
@@ -229,14 +230,11 @@ def main(client_id, user_arguments_dict):
 
     # we need the local owners file to detect inherited ownerships
 
-    owners_file = os.path.join(base_dir, 'owners')
-    owners_direct = unpickle(owners_file, configuration.logger)
-
-    (status, owners) = vgrid_owners(vgrid_name, configuration)
-
-    if not status:
-        logger.error('Error loading owners for %s: %s'
-                     % (vgrid_name, owners))
+    (status, owners_direct) = vgrid_owners(vgrid_name, configuration, False)
+    (all_status, owners) = vgrid_owners(vgrid_name, configuration, True)
+    if not status or not all_status:
+        logger.error('Error loading owners for %s: %s / %s'
+                     % (vgrid_name, owners_direct, owners))
         output_objects.append({'object_type': 'error_text', 'text'
          : 'An internal error occurred, error conditions have been logged.'})
         output_objects.append({'object_type': 'text', 'text'
@@ -244,7 +242,7 @@ def main(client_id, user_arguments_dict):
          You can help us fix the problem by notifying the administrators
          via mail about what you wanted to do when the error happened.'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    
+
     # find out whether to just remove an owner or delete the whole thing
 
     if len(owners) > 1:
@@ -279,8 +277,7 @@ Owner removal has to be performed at the topmost vgrid''' % cert_id})
                                          % msg})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
 
-            # remove user from pickled list
-            # remove this owner, also from the owners file
+            # remove user from saved owners list
             (rm_status, rm_msg) = vgrid_remove_owners(configuration, vgrid_name,
                                                      [cert_id])
             if not rm_status:
@@ -354,13 +351,19 @@ To leave (and delete) %s, first remove its sub-structures: %s.'''
 
         # we consider the local members and resources here, not inherited ones
         
-        members_direct   = unpickle(os.path.join(base_dir, 'members'), 
-                                    configuration.logger)
-        resources_direct = unpickle(os.path.join(base_dir, 'resources'), 
-                                    configuration.logger)
-
+        (member_status, members_direct) = vgrid_members(vgrid_name,
+                                                        configuration,
+                                                        False)
+        (resource_status, resources_direct) = vgrid_resources(vgrid_name,
+                                                              configuration,
+                                                              False)
+        if not member_status or resource_status:
+            logger.warning('failed to load vgrid members or resources: %s %s'
+                           % (members_direct, resources_direct))
+            output_objects.append({'object_type': 'error_text', 'text' : \
+    'could not load vgrid members or resources for %s.' % vgrid_name})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
         if len(resources_direct) > 0:
-
             logger.debug('Cannot delete: still has direct resources %s.'
                          % resources_direct)
             output_objects.append({'object_type': 'error_text', 'text' : \

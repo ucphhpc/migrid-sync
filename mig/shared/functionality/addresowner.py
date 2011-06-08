@@ -38,7 +38,7 @@ from shared.findtype import is_user, is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.resource import resource_add_owners
+from shared.resource import resource_is_owner, resource_add_owners
 
 
 def signature():
@@ -91,6 +91,14 @@ def main(client_id, user_arguments_dict):
                                % (cert_id, configuration.short_title)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    # don't add if already an owner
+
+    if resource_is_owner(unique_resource_name, cert_id, configuration):
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : '%s is already an owner of %s.'
+                               % (cert_id, unique_resource_name)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     # Please note that base_dir must end in slash to avoid access to other
     # resource dirs when own name is a prefix of another user name
 
@@ -112,6 +120,10 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'text', 'text'
                           : 'New owner %s successfully added to %s!'
                            % (cert_id, unique_resource_name)})
+    output_objects.append({'object_type': 'link', 'destination':
+                           'resadmin.py?unique_resource_name=%s' % \
+                           unique_resource_name, 'class': 'adminlink', 'title':
+                           'Administrate resource', 'text': 'Manage resource'})
     return (output_objects, returnvalues.OK)
 
 

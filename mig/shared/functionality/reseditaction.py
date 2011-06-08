@@ -41,7 +41,7 @@ from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_resource_create_request_mail
 from shared.resource import prepare_conf, write_resource_config, \
-     create_resource, update_resource
+     create_resource, update_resource, resource_owners
 
 
 def signature():
@@ -259,10 +259,9 @@ def main(client_id, user_arguments_dict):
 
         # Prevent unauthorized access to existing resources
 
-        owners_path = os.path.join(configuration.resource_home, resource_id,
-                                   'owners')
-        owner_list = unpickle(owners_path, logger)
-        if not owner_list:
+        (owner_status, owner_list) = resource_owners(configuration,
+                                                     resource_id)
+        if not owner_status:
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : "Could not look up '%s' owners - no such resource?" % \

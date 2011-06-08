@@ -74,6 +74,7 @@ def vgrid_is_cert_in_list(
     client_id,
     group,
     configuration,
+    recursive=True
     ):
     """Return True if specified client_id is in group
     ('owners', 'members', 'resources') of vgrid.
@@ -83,7 +84,7 @@ def vgrid_is_cert_in_list(
 
     # Get the list of entities of specified type (group) in vgrid (vgrid_name)
 
-    (status, entries) = vgrid_list(vgrid_name, group, configuration)
+    (status, entries) = vgrid_list(vgrid_name, group, configuration, recursive)
 
     if not status:
         configuration.logger.error(
@@ -252,8 +253,11 @@ def init_vgrid_script_list(vgrid_name, client_id, configuration):
     return (True, msg, [])
 
 
-def vgrid_list(vgrid_name, group, configuration):
-    """Shared helper function to get a list of group entities in vgrid"""
+def vgrid_list(vgrid_name, group, configuration, recursive=True):
+    """Shared helper function to get a list of group entities in vgrid. The
+    optional recursive argument is used to switch between direct vgrid and
+    recursive vgrid operation including entities from parent vgrids.
+    """
 
     if group == 'owners':
         name = 'owners'
@@ -263,13 +267,15 @@ def vgrid_list(vgrid_name, group, configuration):
         name = 'resources'
     else:
         return (False, "vgrid_list: unknown 'group'")
-    vgrid_parts = vgrid_name.split('/')
+    if recursive:
+        vgrid_parts = vgrid_name.split('/')
+    else:
+        vgrid_parts = vgrid_name
     vgrid_dir = ''
     output = []
     for sub_vgrid in vgrid_parts:
-        vgrid_dir += '/' + sub_vgrid
-        owners_path = configuration.vgrid_home + '/' + vgrid_dir + '/'\
-             + name
+        vgrid_dir = os.path.join(vgrid_dir, sub_vgrid)
+        owners_path = os.path.join(configuration.vgrid_home, vgrid_dir, name)
         (status, msg) = list_items_in_pickled_list(owners_path,
                 configuration.logger)
         if status:
@@ -288,17 +294,17 @@ def vgrid_list(vgrid_name, group, configuration):
             return (False, msg)
     return (True, output)
 
-def vgrid_owners(vgrid_name, configuration):
+def vgrid_owners(vgrid_name, configuration, recursive=True):
     """Extract owners list for a vgrid"""
-    return vgrid_list(vgrid_name, 'owners', configuration)
+    return vgrid_list(vgrid_name, 'owners', configuration, recursive)
 
-def vgrid_members(vgrid_name, configuration):
+def vgrid_members(vgrid_name, configuration, recursive=True):
     """Extract members list for a vgrid"""
-    return vgrid_list(vgrid_name, 'members', configuration)
+    return vgrid_list(vgrid_name, 'members', configuration, recursive)
 
-def vgrid_resources(vgrid_name, configuration):
+def vgrid_resources(vgrid_name, configuration, recursive=True):
     """Extract resources list for a vgrid"""
-    return vgrid_list(vgrid_name, 'resources', configuration)
+    return vgrid_list(vgrid_name, 'resources', configuration, recursive)
 
 def vgrid_match_resources(vgrid_name, resources, configuration):
     """Return a list of resources filtered to only those allowed in

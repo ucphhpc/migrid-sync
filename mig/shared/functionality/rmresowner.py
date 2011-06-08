@@ -36,7 +36,7 @@ from shared.findtype import is_user, is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.resource import resource_remove_owners
+from shared.resource import resource_is_owner, resource_remove_owners
 
 
 def signature():
@@ -90,6 +90,14 @@ def main(client_id, user_arguments_dict):
                                 (cert_id, configuration.short_title) })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    # reject remove if cert_id is not an owner
+
+    if not resource_is_owner(unique_resource_name, cert_id, configuration):
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : '%s is not an owner of %s.'
+                               % (cert_id, unique_resource_name)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     base_dir = os.path.abspath(os.path.join(configuration.resource_home,
                                             unique_resource_name)) + os.sep
 
@@ -108,6 +116,10 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'text', 'text'
                           : '%s was successfully removed and is no longer an owner of %s!'
                            % (cert_id, unique_resource_name)})
+    output_objects.append({'object_type': 'link', 'destination':
+                        'resadmin.py?unique_resource_name=%s' % \
+                           unique_resource_name, 'class': 'adminlink', 'title':
+                           'Administrate resource', 'text': 'Manage resource'})
     return (output_objects, returnvalues.OK)
 
 

@@ -911,11 +911,9 @@ def create_resource_home(configuration, client_id, resource_name):
     except:
         return (False, 'could not create: %s\n' % newdir)
 
-    owner_list = []
-    owner_list.append(client_id)
-    owner_file = os.path.join(configuration.resource_home,
-                              unique_resource_name, 'owners')
-    status = pickle(owner_list, owner_file, configuration.logger)
+    owner_list = [client_id]
+    (status, add_msg) = resource_set_owners(configuration,
+                                            unique_resource_name, owner_list)
     if not status:
         msg = """
 Resource '%s' was NOT successfully created. Please take a look at the lines
@@ -1103,6 +1101,22 @@ Failure:
     msg += '\nNew configfile successfully applied.'
     return (True, msg)
 
+def resource_owners(configuration, unique_resource_name):
+    """Load list of resource owners for unique_resource_name"""
+    owners_file = os.path.join(configuration.resource_home,
+                               unique_resource_name, 'owners')
+    try:
+        owners = load(owners_file)
+        return (True, owners)
+    except Exception, exc:
+        return (False, "could not load owners for %s: %s" % \
+                (unique_resource_name, exc))
+
+def resource_is_owner(unique_resource_name, client_id, configuration):
+    """Check if client_id is an owner of unique_resource_name"""
+    (status, owners) = resource_owners(configuration, unique_resource_name)
+    return (status and client_id in owners)
+                             
 def resource_add_owners(configuration, unique_resource_name, clients):
     """Append list of clients to pickled list of resource owners"""
     owners_file = os.path.join(configuration.resource_home,
@@ -1135,5 +1149,17 @@ def resource_remove_owners(configuration, unique_resource_name, clients,
         return (True, '')
     except Exception, exc:
         return (False, "could not remove owners for %s: %s" % \
+                (unique_resource_name, exc))
+
+def resource_set_owners(configuration, unique_resource_name, clients):
+    """Set list of owners for given resource"""
+    owners_file = os.path.join(configuration.resource_home,
+                               unique_resource_name, 'owners')
+    try:
+        dump(clients, owners_file)
+        mark_resource_modified(configuration, unique_resource_name)
+        return (True, '')
+    except Exception, exc:
+        return (False, "could not set owners for %s: %s" % \
                 (unique_resource_name, exc))
 

@@ -266,7 +266,7 @@ from the certificate.<br />
 <form method="post" action="addresowner.py">
 <input type="hidden" name="unique_resource_name" value="%s" />
 <input type="hidden" name="output_format" value="html" />
-<input type="text" name="cert_id" size="30" />
+<input type="text" name="cert_id" size="72" />
 </td><td>
 <input type="submit" value=" Add " />
 </form>

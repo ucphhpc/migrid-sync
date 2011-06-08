@@ -130,8 +130,6 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
                                vgrid_name)) + os.sep
 
-    owners_file = base_dir + 'owners'
-
     public_base_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
                         vgrid_name)) + os.sep
@@ -200,14 +198,14 @@ def main(client_id, user_arguments_dict):
     if is_subvgrid:
         try:
 
-            # vgrid_name = IMADA/STUD/BACH
-            # vgrid_name_last_fragment = BACH
+            # Example:
+            #    vgrid_name = IMADA/STUD/BACH
+            #    vgrid_name_last_fragment = BACH
+            #    vgrid_name_without_last_fragment = IMADA/STUD/
 
             vgrid_name_last_fragment = \
-                vgrid_name_parts[len(vgrid_name_parts)
-                                     - 1].strip()
+                vgrid_name_parts[len(vgrid_name_parts)- 1].strip()
 
-            # vgrid_name_without_last_fragment = IMADA/STUD/
 
             vgrid_name_without_last_fragment = \
                 ('/'.join(vgrid_name_parts[0:len(vgrid_name_parts)

@@ -31,10 +31,10 @@ import os
 import fcntl
 
 import shared.returnvalues as returnvalues
-from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
+from shared.resource import resource_owners
 from shared.vgridaccess import unmap_resource
 
 
@@ -76,9 +76,9 @@ def main(client_id, user_arguments_dict):
 
     # Prevent unauthorized access
     
-    owners_path = os.path.join(res_dir, 'owners')
-    owner_list = unpickle(owners_path, logger)
-    if not owner_list:
+    (owner_status, owner_list) = resource_owners(configuration,
+                                                 unique_resource_name)
+    if not owner_status:
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : "Could not look up '%s' owners - no such resource?" % res_name
