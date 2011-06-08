@@ -208,8 +208,8 @@ def main(client_id, user_arguments_dict):
 
 
             vgrid_name_without_last_fragment = \
-                ('/'.join(vgrid_name_parts[0:len(vgrid_name_parts)
-                  - 1]) + os.sep).strip()
+                ('/'.join(vgrid_name_parts[0:len(vgrid_name_parts) - 1]) + \
+                 os.sep).strip()
 
             # create dirs if they do not exist
 

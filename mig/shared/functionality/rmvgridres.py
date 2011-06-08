@@ -34,7 +34,7 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-     vgrid_remove_resources
+     vgrid_is_resource, vgrid_remove_resources
 
 
 def signature():
@@ -94,10 +94,16 @@ def main(client_id, user_arguments_dict):
                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    # don't remove if not a participant
+
+    if not vgrid_is_resource(vgrid_name, unique_resource_name, configuration):
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : '%s is not a resource in %s or a parent vgrid.'
+                               % (unique_resource_name, vgrid_name)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     # remove
 
-    resources_file = configuration.vgrid_home + os.sep + vgrid_name\
-         + os.sep + 'resources'
     (rm_status, rm_msg) = vgrid_remove_resources(configuration, vgrid_name,
                                                  unique_resource_name)
     if not rm_status:

@@ -43,9 +43,9 @@ TOTALS = (OWN, VGRID, JOBS) = ('__user_totals__', '__vgrid_totals__', '__jobs__'
 (FILES, DIRECTORIES, BYTES, KIND) = \
         ('__files__', '__directories__', '__bytes__', '__kind__')
 STATES = (PARSE, QUEUED, EXECUTING, FINISHED, RETRY, CANCELED, EXPIRED,
-          FAILED) = \
+          FAILED, FROZEN) = \
           ("PARSE", "QUEUED", "EXECUTING", "FINISHED", "RETRY", "CANCELED",
-           "EXPIRED", "FAILED")
+           "EXPIRED", "FAILED", "FROZEN")
 FINAL_STATES = (FINISHED, CANCELED, EXPIRED, FAILED)
 JOBFIELDS = ["STATUS"]
 
@@ -241,13 +241,17 @@ def refresh_job_stats(configuration, client_id):
 
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
 
+    job_stats = {PARSE: 0, QUEUED: 0, EXECUTING:0, FINISHED: 0, RETRY: 0,
+                    CANCELED: 0, EXPIRED: 0, FAILED: 0, FROZEN: 0}
     try:
         stats = load(stats_path)
         stats_stamp = os.path.getmtime(stats_path)
+        # Backwards compatible update
+        job_stats.update(stats[JOBS])
+        stats[JOBS] = job_stats
     except IOError:
         configuration.logger.warn("No job stats to load - ok first time")
-        stats = {JOBS: {PARSE: 0, QUEUED: 0, EXECUTING:0, FINISHED: 0,
-                        RETRY: 0, CANCELED: 0, EXPIRED: 0, FAILED: 0}}
+        stats = {JOBS: job_stats}
         stats_stamp = -1
 
     now = time.time()

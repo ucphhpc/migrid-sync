@@ -357,9 +357,9 @@ To leave (and delete) %s, first remove its sub-structures: %s.'''
         (resource_status, resources_direct) = vgrid_resources(vgrid_name,
                                                               configuration,
                                                               False)
-        if not member_status or resource_status:
-            logger.warning('failed to load vgrid members or resources: %s %s'
-                           % (members_direct, resources_direct))
+        if not member_status or not resource_status:
+            logger.warning('failed to load %s members or resources: %s %s'
+                           % (vgrid_name, members_direct, resources_direct))
             output_objects.append({'object_type': 'error_text', 'text' : \
     'could not load vgrid members or resources for %s.' % vgrid_name})
             return (output_objects, returnvalues.SYSTEM_ERROR)

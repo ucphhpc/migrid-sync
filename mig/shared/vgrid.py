@@ -270,13 +270,13 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True):
     if recursive:
         vgrid_parts = vgrid_name.split('/')
     else:
-        vgrid_parts = vgrid_name
+        vgrid_parts = [vgrid_name]
     vgrid_dir = ''
     output = []
     for sub_vgrid in vgrid_parts:
         vgrid_dir = os.path.join(vgrid_dir, sub_vgrid)
-        owners_path = os.path.join(configuration.vgrid_home, vgrid_dir, name)
-        (status, msg) = list_items_in_pickled_list(owners_path,
+        name_path = os.path.join(configuration.vgrid_home, vgrid_dir, name)
+        (status, msg) = list_items_in_pickled_list(name_path,
                 configuration.logger)
         if status:
 

@@ -97,8 +97,6 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
                                vgrid_name)) + os.sep
 
-    members_file = os.path.join(base_dir, 'members')
-
     # remove symlink from users home directory to vgrid directory
 
     # Please note that base_dir must end in slash to avoid access to other
