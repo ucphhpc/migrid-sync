@@ -39,7 +39,11 @@ from shared.settingskeywords import get_keywords_dict as get_settings_fields
 from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 
 
-def parse_and_save_pickle(source, destination, keywords, client_id, configuration, strip_space, strip_comments):
+def parse_and_save_pickle(source, destination, keywords, client_id,
+                          configuration, strip_space, strip_comments):
+    """Use conf parser to parse settings in mRSL file and save resulting
+    dictionary in a pickled file in user_settings.
+    """
     client_dir = client_id_dir(client_id)
     result = parser.parse(source, strip_space, strip_comments)
 
@@ -68,7 +72,14 @@ def parse_and_save_pickle(source, destination, keywords, client_id, configuratio
     new_dict['CREATOR'] = client_id
     new_dict['CREATED_TIMESTAMP'] = datetime.datetime.now()
 
-    pickle_filename = os.path.join(configuration.user_home, client_dir,
+    # Create settings dir for any old users
+    try:
+        settings_dir = os.path.join(configuration.user_settings, client_dir)
+        os.mkdir(settings_dir)
+    except:
+        pass
+                                    
+    pickle_filename = os.path.join(configuration.user_settings, client_dir,
                                    destination)
 
     if not pickle(new_dict, pickle_filename, configuration.logger):
@@ -106,7 +117,7 @@ def load_settings(client_id, configuration, include_meta=False):
     """
 
     client_dir = client_id_dir(client_id)
-    settings_path = os.path.join(configuration.user_home, client_dir,
+    settings_path = os.path.join(configuration.user_settings, client_dir,
                                  settings_filename)
     settings_dict = unpickle(settings_path, configuration.logger)
     if settings_dict and not include_meta:
@@ -122,7 +133,7 @@ def load_widgets(client_id, configuration, include_meta=False):
     """
 
     client_dir = client_id_dir(client_id)
-    widgets_path = os.path.join(configuration.user_home, client_dir,
+    widgets_path = os.path.join(configuration.user_settings, client_dir,
                                  widgets_filename)
     widgets_dict = unpickle(widgets_path, configuration.logger)
     if widgets_dict and not include_meta:
@@ -138,7 +149,7 @@ def load_profile(client_id, configuration, include_meta=False):
     """
 
     client_dir = client_id_dir(client_id)
-    profile_path = os.path.join(configuration.user_home, client_dir,
+    profile_path = os.path.join(configuration.user_settings, client_dir,
                                  profile_filename)
     profile_dict = unpickle(profile_path, configuration.logger)
     if profile_dict and not include_meta:

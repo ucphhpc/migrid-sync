@@ -34,7 +34,6 @@ import glob
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import htaccess_filename
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
@@ -125,31 +124,18 @@ def main(client_id, user_arguments_dict):
     for server_path in unfiltered_match:
         real_path = os.path.abspath(server_path)
         if not valid_user_path(real_path, base_dir, True):
-
-            # ../*/* is technically allowed to match own files.
-
-            logger.error('Warning: %s tried to %s outside own home! (path %s)'
-                          % (client_id, op_name, path))
+            logger.error('Warning: %s tried to %s to restricted path %s! (%s)'
+                         % (client_id, op_name, real_path, path))
             output_objects.append({'object_type': 'error_text', 'text'
                                   : "You're only allowed to write your own files! (%s expands to an illegal path)"
                                    % path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # Do not allow modification of htaccess files
-
-    if htaccess_filename == os.path.basename(real_path):
-        logger.error('Warning: %s tried to %s htaccess! (path %s)'
-                      % (client_id, op_name, path))
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Access to .htaccess files is prohibited!'
-                              })
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     if real_path == '':
         real_path = base_dir + path
         if not valid_user_path(real_path, base_dir, True):
-            logger.error('Warning: %s tried to %s outside own home! (path %s)'
-                          % (client_id, op_name, path))
+            logger.error('Warning: %s tried to %s restricted path %s! (%s)'
+                          % (client_id, op_name, real_path, path))
             output_objects.append({'object_type': 'error_text', 'text'
                                   : "You're only allowed to write your own files! (%s expands to an illegal path)"
                                    % path})
@@ -158,8 +144,8 @@ def main(client_id, user_arguments_dict):
     if os.path.isdir(real_path):
         real_path = os.path.join(real_path, os.path.basename(file_name))
         if not valid_user_path(real_path, base_dir, True):
-            logger.error('Warning: %s tried to %s outside own home! (path %s)'
-                          % (client_id, op_name, path))
+            logger.error('Warning: %s tried to %s restricted path %s! (path %s)'
+                         % (client_id, op_name, real_path, path))
             output_objects.append({'object_type': 'error_text', 'text'
                                   : "You're only allowed to write your own files! (%s expands to an illegal path)"
                                    % path})
@@ -194,5 +180,3 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     return (output_objects, returnvalues.OK)
-
-

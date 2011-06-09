@@ -55,12 +55,17 @@ default_pager_entries = 25
 exe_leader_name = "execution-leader"
 
 htaccess_filename = '.htaccess'
-settings_filename = '.settings'
-widgets_filename = '.widgets'
-profile_filename = '.userprofile'
 default_mrsl_filename = '.default.mrsl'
 default_css_filename = '.default.css'
+spell_dictionary_filename = '.personal_dictionary'
 ssh_conf_dir = '.ssh'
+settings_filename = 'settings'
+widgets_filename = 'widgets'
+profile_filename = 'userprofile'
+# The htaccess file prevents illegal http access to user files. We completely
+# hide it to not confuse users and to prevent all modification. It is 'only'
+# a matter of users not accidentally giving away file privacy, though.
+user_invisible_files = [htaccess_filename]
 
 profile_img_max_kb = 128
 profile_img_extensions = ['png', 'jpg']

@@ -29,7 +29,7 @@
 
 import os.path
 
-from shared.defaults import htaccess_filename
+from shared.base import invisible_file
 
 def cert_name_format(input_string):
     """ Spaces in certificate names are replaced with underscore internally """
@@ -99,13 +99,14 @@ def is_valid_email_address(addr, logger):
 
 def valid_user_path(path, home_dir, allow_equal=False):
     """This is a convenience function for making sure that users do
-    not access files outside their own file tree(s): Check that
-    path is a valid path inside user home directory, home_dir.
+    not access restricted files including files outside their own file
+    tree(s): Check that path is a valid path inside user home directory,
+    home_dir.
     In  a few situations it may be relevant to not allow an exact
     match, e.g. to prevent users from deleting the base of their
     home directory.
 
-    This check also rejects all .htaccess files.
+    This check also rejects all 'invisible' files like htaccess files.
 
     NB: This check relies on the home_dir already verified from
     certificate data.
@@ -116,7 +117,7 @@ def valid_user_path(path, home_dir, allow_equal=False):
 
     real_path = os.path.abspath(path)
 
-    if htaccess_filename == os.path.basename(real_path):
+    if invisible_file(os.path.basename(real_path)):
         return False
 
     real_home = os.path.abspath(home_dir)

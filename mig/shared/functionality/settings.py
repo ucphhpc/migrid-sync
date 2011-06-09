@@ -511,7 +511,8 @@ Default CSS (style) for all pages
 <tr><td>
 If you want to customize the look and feel of the %(site)s web interfaces you can override default values here. If you leave the style file blank you will just use the default style.<br />
 You can copy paste from the available style file links below if you want to override specific parts.<br />
-Please note that you can not save an empty style file, but must at least leave a blank line to use defaults.
+<div class="warningtext">Please note that you can not save an empty style file, but must at least leave a blank line to use defaults. Additionally any errors in your style code may cause severe corruption in your pages, so it may be a good idea to keep another browser tab/window open on this page while experimenting.
+</div>
 </td></tr>
 <tr><td>
 <a class="urllink" href="/images/default.css">default</a> , <a class="urllink" href="/images/bluesky.css">bluesky</a>

@@ -33,7 +33,6 @@ import shutil
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import htaccess_filename
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
@@ -113,14 +112,11 @@ def main(client_id, user_arguments_dict):
 
     relative_dest = real_dest.replace(base_dir, '')
     if not valid_user_path(real_dest, base_dir, True):
-
-        # out of bounds
-
+        logger.error('Warning: %s tried to %s to restricted path %s! (%s)'
+                     % (client_id, op_name, real_dest, dst))
         output_objects.append({'object_type': 'error_text', 'text'
-                              : "Warning: You're only allowed to write to your own home directory! dest (%s) expands to an illegal path (%s)"
+                               : "Warning: You're only allowed to write to your own home directory! dest (%s) expands to an illegal path (%s)"
                                % (dst, relative_dest)})
-        logger.error('Warning: %s tried to copy file(s) to destination %s outside own home! (using pattern %s)'
-                      % (client_id, real_dest, dst))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     for pattern in src_list:
@@ -129,13 +125,8 @@ def main(client_id, user_arguments_dict):
         for server_path in unfiltered_match:
             real_path = os.path.abspath(server_path)
             if not valid_user_path(real_path, base_dir):
-
-                # out of bounds - save user warning for later to allow partial match:
-                # ../*/* is technically allowed to match own files.
-
-                logger.error('Warning: %s tried to %s %s outside own home! (%s)'
-                              % (client_id, op_name, real_path,
-                             pattern))
+                logger.error('Warning: %s tried to %s restricted path %s! (%s)'
+                              % (client_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
 
@@ -153,12 +144,6 @@ def main(client_id, user_arguments_dict):
                 output_objects.append({'object_type': 'file', 'name'
                                        : relative_path})
 
-            if os.path.basename(real_path) == htaccess_filename:
-                output_objects.append({'object_type': 'warning', 'text'
-                        : "You're not allowed to move your .htaccess file!"
-                        })
-                status = returnvalues.CLIENT_ERROR
-                continue
             if os.path.islink(real_path):
                 output_objects.append({'object_type': 'warning', 'text'
                         : "You're not allowed to move entire VGrid dirs!"

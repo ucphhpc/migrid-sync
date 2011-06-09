@@ -150,13 +150,8 @@ def main(client_id, user_arguments_dict):
         for server_path in unfiltered_match:
             real_path = os.path.abspath(server_path)
             if not valid_user_path(real_path, base_dir, True):
-
-                # out of bounds - save user warning for later to allow partial match:
-                # ../*/* is technically allowed to match own files.
-
-                logger.error('Warning: %s tried to %s %s outside own home! (using pattern %s)'
-                              % (client_id, op_name, real_path,
-                             pattern))
+                logger.error('Warning: %s tried to %s restricted path %s! (%s)'
+                              % (client_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
 

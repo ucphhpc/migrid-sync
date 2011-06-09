@@ -129,9 +129,9 @@ def refresh_user_map(configuration):
     all_users = list_users(configuration.user_home)
     real_map = real_to_anon_user_map(configuration.user_home)
     for user in all_users:
-        settings_path = os.path.join(configuration.user_home,
+        settings_path = os.path.join(configuration.user_settings,
                                      client_id_dir(user), settings_filename)
-        profile_path = os.path.join(configuration.user_home,
+        profile_path = os.path.join(configuration.user_settings,
                                     client_id_dir(user), profile_filename)
         settings_mtime, profile_mtime = 0, 0
         if os.path.isfile(settings_path):
@@ -357,9 +357,9 @@ def refresh_vgrid_map(configuration):
     all_users = list_users(configuration.user_home)
     real_map = real_to_anon_user_map(configuration.user_home)
     for user in all_users:
-        settings_path = os.path.join(configuration.user_home,
+        settings_path = os.path.join(configuration.user_settings,
                                      client_id_dir(user), settings_filename)
-        profile_path = os.path.join(configuration.user_home,
+        profile_path = os.path.join(configuration.user_settings,
                                     client_id_dir(user), profile_filename)
         settings_mtime, profile_mtime = 0, 0
         if os.path.isfile(settings_path):

@@ -30,7 +30,7 @@
 import base64
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
-from shared.defaults import sandbox_names
+from shared.defaults import sandbox_names, user_invisible_files
 
 id_dir_remap = {'/': '+', ' ': '_'}
 dir_id_remap = dict([(val, key) for (key, val) in id_dir_remap.items()])
@@ -85,6 +85,14 @@ def sandbox_resource(unique_resource_name):
     """Returns boolean indicating if the resource is a sandbox"""
     fqdn = unique_resource_name.rsplit('.', 1)[0]
     return fqdn in sandbox_names
+
+def invisible_file(filename):
+    """Returns boolean indicating if the file with filename is among restricted
+    files to completely hide. Such files can not safely be removed or modified
+    by users and should only be changed through fixed interfaces.
+    Provided filename is expected to be without directory prefix.
+    """
+    return filename in user_invisible_files
 
 if __name__ == '__main__':
     orig_id = '/X=ab/Y=cdef ghi/Z=klmn'

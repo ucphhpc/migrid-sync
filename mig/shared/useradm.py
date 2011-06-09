@@ -213,14 +213,16 @@ def create_user(
                             (client_id, err))
 
     home_dir = os.path.join(configuration.user_home, client_dir)
+    settings_dir = os.path.join(configuration.user_settings, client_dir)
     cache_dir = os.path.join(configuration.user_cache, client_dir)
     mrsl_dir = os.path.join(configuration.mrsl_files_dir, client_dir)
     pending_dir = os.path.join(configuration.resource_pending,
                                client_dir)
     ssh_dir = os.path.join(home_dir, ssh_conf_dir)
     htaccess_path = os.path.join(home_dir, htaccess_filename)
-    settings_path = os.path.join(home_dir, settings_filename)
-    profile_path = os.path.join(home_dir, profile_filename)
+    settings_path = os.path.join(settings_dir, settings_filename)
+    profile_path = os.path.join(settings_dir, profile_filename)
+    widgets_path = os.path.join(settings_dir, widgets_filename)
     css_path = os.path.join(home_dir, default_css_filename)
     if not renew:
         if verbose:        
@@ -231,6 +233,12 @@ def create_user(
             if not force:
                 raise Exception('Error: could not create home dir: %s' % \
                                 home_dir)
+        try:
+            os.mkdir(settings_dir)
+        except:
+            if not force:
+                raise Exception('Error: could not create settings dir: %s' % \
+                                settings_dir)
         try:
             os.mkdir(cache_dir)
         except:
@@ -325,6 +333,17 @@ def create_user(
         if not force:
             raise Exception('Error: could not create profile file: %s' % \
                             profile_path)
+
+    # Always write default widgets to avoid error log entries
+    try:
+        widgets_dict = {}
+        widgets_dict['CREATOR'] = client_id
+        widgets_dict['CREATED_TIMESTAMP'] = datetime.datetime.now()
+        dump(widgets_dict, widgets_path)
+    except:
+        if not force:
+            raise Exception('Error: could not create widgets file: %s' % \
+                            widgets_path)
         
     # Always write default css to avoid apache error log entries
 

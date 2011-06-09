@@ -35,12 +35,11 @@ import glob
 import stat
 
 import shared.returnvalues as returnvalues
-from shared.defaults import htaccess_filename
+from shared.base import client_id_dir, invisible_file
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive, file_info
 from shared.settings import load_settings
-from shared.base import client_id_dir
 from shared.validstring import valid_user_path
 
 
@@ -185,10 +184,9 @@ def handle_file(
 
     # Build entire line before printing to avoid newlines
 
-    if os.path.basename(file_with_dir) == htaccess_filename:
-
-        # Always hide .htaccess
-
+    # Recursion can get here when called without explicit invisible files
+    
+    if invisible_file(os.path.basename(file_with_dir)):
         return
     special = ''
     file_obj = {
@@ -461,13 +459,8 @@ Action on paths selected below
         for server_path in unfiltered_match:
             real_path = os.path.abspath(server_path)
             if not valid_user_path(real_path, base_dir, True):
-
-                # out of bounds - save user warning for later to allow partial match:
-                # ../*/* is technically allowed to match own files.
-
-                logger.error('Warning: %s tried to %s %s outside own home! (using pattern %s)'
-                              % (client_id, op_name, real_path,
-                             pattern))
+                logger.error('Warning: %s tried to %s restricted path %s! (%s)'
+                             % (client_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
             if not first_match:
