@@ -38,7 +38,8 @@ from shared.base import client_id_dir, old_id_format, sandbox_resource
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.defaults import keyword_auto, ssh_conf_dir, htaccess_filename, \
-     settings_filename, profile_filename, default_css_filename, ssh_conf_dir
+     settings_filename, profile_filename, default_css_filename, \
+     widgets_filename, ssh_conf_dir
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
 from shared.serial import load, dump
