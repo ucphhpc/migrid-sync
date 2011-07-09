@@ -50,7 +50,6 @@ def main(conf):
     print timeit.repeat("proxy.x()", setup = conf['setup'],
                         repeat=conf['repeat'], number=conf['number'])
 
-
 if __name__ == '__main__':
     conf = default_configuration()
 
@@ -91,7 +90,15 @@ if __name__ == '__main__':
             print("unknown option: %s" % opt)
             usage()
             sys.exit(1)
+    # Manual garbage collection is required with pypy to avoid permanent
+    # hang waiting for client shutdown when keep-alive is enabled on server
     conf['setup'] = """
+try:
+    proxy = None
+    import gc
+    gc.collect()
+except Exception, exc:
+    print 'proxy shutdown failed: ', exc
 import xmlrpclib
 proxy = xmlrpclib.ServerProxy('%(url)s')
 """ % conf

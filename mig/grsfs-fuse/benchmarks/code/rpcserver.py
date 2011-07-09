@@ -30,7 +30,7 @@
 
 import sys
 import getopt
-from SimpleXMLRPCServer import SimpleXMLRPCServer
+from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 def default_configuration():
     """Return dictionary with default configuration values"""
@@ -52,7 +52,12 @@ def true():
 
 def main(conf):
     """Run minimal benchmark server"""
-    server = SimpleXMLRPCServer((conf['address'], conf['port']))
+    handler = SimpleXMLRPCRequestHandler
+    # Force keep-alive support - please note that pypy clients may need to
+    # force garbage collection to actually close connection
+    handler.protocol_version = 'HTTP/1.1'
+    server = SimpleXMLRPCServer((conf['address'], conf['port']),
+                                requestHandler=handler)
     print("Listening on '%(address)s:%(port)d..." % conf)
     server.register_function(true, "x")
     server.serve_forever()
