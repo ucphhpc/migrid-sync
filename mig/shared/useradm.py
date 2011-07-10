@@ -230,8 +230,6 @@ def create_user(
             print 'Creating dirs and files for new user: %s' % client_id
         try:
             os.mkdir(home_dir)
-            if not os.path.isdir(home_dir):
-                raise Exception('Error: mkdir did not create home dir!')
         except:
             if not force:
                 raise Exception('Error: could not create home dir: %s' % \
