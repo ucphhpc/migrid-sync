@@ -116,10 +116,6 @@ class SecureXMLRPCServer(ThreadingMixIn, SimpleXMLRPCServer,
             print "server activated"
 
 
-def echo(input_string):
-    """Simple test function that simply echoes input_string"""
-    return input_string
-
 if __name__ == '__main__':
     addr = ("localhost", 8000)
     if sys.argv[1:]:
@@ -129,15 +125,13 @@ if __name__ == '__main__':
     if 'client' in sys.argv[3:]:
         import xmlrpclib
         proxy = xmlrpclib.ServerProxy('https://%s:%d' % addr)
-        msg = 'hello world!'
-        print "sending message to echo server: %s" % msg
-        reply = proxy.echo(msg)
-        print "echo server replied: %s" % reply
+        print "requesting list of methods from server: %s"
+        reply = proxy.system.listMethods()
+        print "server replied: %s" % reply
     else:
         # Create server
         server = SecureXMLRPCServer(addr)
         server.register_introspection_functions()
-        server.register_function(echo)
         # Run the server's main loop
         server.serve_forever()
 
