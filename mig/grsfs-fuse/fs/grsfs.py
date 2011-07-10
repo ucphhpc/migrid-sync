@@ -203,6 +203,10 @@ def main():
                         help="Where to put log files. If not specified, no logging [default %default]")
     server.parser.add_option(mountopt="pdb", action="callback", callback=break_into_debugger,
                         help="whether to break into debugger upon start")
+    server.parser.add_option(mountopt="key", default="key.pem", 
+                             help="Which SSL key for secure network communication library to use [default: %default]")
+    server.parser.add_option(mountopt="cert", default="cert.pem", 
+                             help="Which SSL certificate for secure network communication library to use [default: %default]")
     server.parse(values=cfg, errex=1)
     
     if server.fuse_args.mount_expected(): 
