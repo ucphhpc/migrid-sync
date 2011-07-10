@@ -177,6 +177,8 @@ def main():
 
     server.parser.add_option(mountopt="network", default="XMLRPC", 
                              help="Which network communication library to use [default: %default]")
+    server.parser.add_option(mountopt="network_timeout", default=5, 
+                             help="Network communication timeout to use [default: %default]")
     server.parser.add_option(mountopt="backingstore", metavar="PATH", default=cfg.backingstore,
                              help="location of local datastore [default: %default]")
     server.parser.add_option(mountopt="backingstorestate", metavar="PATH", default=cfg.backingstorestate,
