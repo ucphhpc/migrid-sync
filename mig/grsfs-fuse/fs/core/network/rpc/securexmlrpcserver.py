@@ -122,7 +122,11 @@ def echo(input_string):
 
 if __name__ == '__main__':
     addr = ("localhost", 8000)
-    if 'client' in sys.argv[1:]:
+    if sys.argv[1:]:
+        addr = (sys.argv[1], addr[1])
+    if sys.argv[2:]:
+        addr = (addr[0], int(sys.argv[2]))
+    if 'client' in sys.argv[3:]:
         import xmlrpclib
         proxy = xmlrpclib.ServerProxy('https://%s:%d' % addr)
         msg = 'hello world!'
