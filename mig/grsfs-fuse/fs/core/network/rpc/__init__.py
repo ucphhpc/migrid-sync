@@ -32,8 +32,7 @@ Copyright (c) 2010 Jan Wiberg. All rights reserved.
 
 import socket, threading, select, time, xmlrpclib, re
 import SocketServer
-from SimpleXMLRPCServer import SimpleXMLRPCServer
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
+from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 import cPickle as pickle
 
 # Binary wrapping
@@ -100,11 +99,10 @@ class GRSServerProxy (xmlrpclib.ServerProxy):
 
 # Restrict to a particular path.
 class RequestHandler(SimpleXMLRPCRequestHandler):
-    # FIXME Implement request unwrapping here?
-    pass
     #rpc_paths = ('/RPC2',)
     # Force HTTP v 1.1 and thus automatic keep-alive if available
     protocol_version = 'HTTP/1.1'
+    # FIXME Implement request unwrapping here?
 
     
 class AsyncXMLRPCServer(SocketServer.ThreadingMixIn, SimpleXMLRPCServer): 
