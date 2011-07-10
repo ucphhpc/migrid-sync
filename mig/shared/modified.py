@@ -27,8 +27,9 @@
 
 """Functions for marking and checking modification status of entities"""
 
-import os
 import fcntl
+import os
+import time
 
 from shared.serial import load, dump
 
@@ -87,8 +88,9 @@ def check_entities_modified(configuration, kind):
         modified_list = load(modified_path)
         modified_stamp = os.path.getmtime(modified_path)
     except Exception, exc:
-        modified_list = []
-        modified_stamp = -1
+        # No modified list - probably first time so force update
+        modified_list = ['UNKNOWN']
+        modified_stamp = time.time()
     lock_handle.close()
     return (modified_list, modified_stamp)
 
