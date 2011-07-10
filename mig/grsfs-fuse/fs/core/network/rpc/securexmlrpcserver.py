@@ -30,12 +30,9 @@ python-2.6 or later to provide the ssl module.
 """
 
 import os
-import socket
 import sys
-from BaseHTTPServer import HTTPServer
-from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler, \
-     SimpleXMLRPCDispatcher
-from SocketServer import BaseServer, ThreadingMixIn
+from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
+from SocketServer import ThreadingMixIn
 # Expose extra ssl constants for optional overriding of server attributes
 from ssl import wrap_socket, CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED, \
      PROTOCOL_SSLv2, PROTOCOL_SSLv3, PROTOCOL_SSLv23, PROTOCOL_TLSv1
@@ -51,9 +48,8 @@ class KeepAliveRequestHandler(SimpleXMLRPCRequestHandler):
     pass
 
 
-class SecureXMLRPCServer(ThreadingMixIn, SimpleXMLRPCServer,
-                         SimpleXMLRPCDispatcher): 
-    """Threaded Secure XMLRPC server with automatic keep-alive support.
+class BlockingSecureXMLRPCServer(SimpleXMLRPCServer):
+    """Blocking Secure XMLRPC server with automatic keep-alive support.
 
     SSL key and certificate paths are exposed as key_path and cert_path
     attributes that must be overriden before instantiation if they are not
@@ -77,13 +73,17 @@ class SecureXMLRPCServer(ThreadingMixIn, SimpleXMLRPCServer,
     ca_certs = None
     cert_reqs = CERT_NONE
 
-    def __init__(self, addr, requestHandler=SimpleXMLRPCRequestHandler,
+    def __init__(self, addr, requestHandler=KeepAliveRequestHandler,
                  logRequests=True, allow_none=False, encoding=None,
                  bind_and_activate=True):
-        """Overriding __init__ method of the SimpleXMLRPCServer"""
-        print "starting SecureXMLRPCServer on %s:%s" % addr
-        self.logRequests = logRequests
-
+        """Overriding __init__ method of the SimpleXMLRPCServer to add SSL in
+        between basic init and network activation.
+        """
+         # Initializing SecureXMLRPCServer *without* network
+        SimpleXMLRPCServer.__init__(self, addr, requestHandler=requestHandler,
+                                    logRequests=logRequests,
+                                    allow_none=allow_none, encoding=encoding,
+                                    bind_and_activate=False)
         # Validate attributes possibly overridden by user
         if not os.path.isfile(self.key_path):
             raise ValueError("No such server key: %s" % self.key_path)
@@ -97,24 +97,38 @@ class SecureXMLRPCServer(ThreadingMixIn, SimpleXMLRPCServer,
         if not self.cert_reqs in (CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED):
             raise ValueError("Invalid cert_reqs value: %s" % \
                              self.cert_reqs)
-
-        SimpleXMLRPCDispatcher.__init__(self, allow_none, encoding)
-        # Wrap the original socket in SSL/TLS
-        BaseServer.__init__(self, addr, KeepAliveRequestHandler)
-        self.socket = wrap_socket(socket.socket(self.address_family,
-                                                self.socket_type),
-                                  server_side=True,
+        self.socket = wrap_socket(self.socket, server_side=True,
                                   keyfile=self.key_path,
                                   certfile=self.cert_path,
                                   cert_reqs=self.cert_reqs,
                                   ssl_version=self.ssl_version,
-                                  ca_certs=self.ca_certs
-                                  )
+                                  ca_certs=self.ca_certs)
         if bind_and_activate:
             self.server_bind()
             self.server_activate()
-            print "server activated"
+            
 
+class SecureXMLRPCServer(ThreadingMixIn, BlockingSecureXMLRPCServer): 
+    """Threaded secure XMLRPC server"""
+    pass
+
+
+class BlockingInsecureXMLRPCServer(SimpleXMLRPCServer): 
+    """Blocking insecure XMLRPC server"""
+    def __init__(self, addr, requestHandler=KeepAliveRequestHandler,
+                 logRequests=True, allow_none=False, encoding=None,
+                 bind_and_activate=True):
+        SimpleXMLRPCServer.__init__(self, addr,
+                                    requestHandler=requestHandler,
+                                    logRequests=logRequests,
+                                    allow_none=allow_none,
+                                    encoding=encoding,
+                                    bind_and_activate=bind_and_activate)
+
+
+class InsecureXMLRPCServer(ThreadingMixIn, BlockingInsecureXMLRPCServer):
+    """Threaded insecure XMLRPC server"""
+    pass
 
 if __name__ == '__main__':
     addr = ("localhost", 8000)
@@ -125,7 +139,7 @@ if __name__ == '__main__':
     if 'client' in sys.argv[3:]:
         import xmlrpclib
         proxy = xmlrpclib.ServerProxy('https://%s:%d' % addr)
-        print "requesting list of methods from server: %s"
+        print "requesting list of methods from server"
         reply = proxy.system.listMethods()
         print "server replied: %s" % reply
     else:
@@ -133,6 +147,7 @@ if __name__ == '__main__':
         server = SecureXMLRPCServer(addr)
         server.register_introspection_functions()
         # Run the server's main loop
+        print "Starting SecureXMLRPCServer on %s:%s" % addr
         server.serve_forever()
 
         

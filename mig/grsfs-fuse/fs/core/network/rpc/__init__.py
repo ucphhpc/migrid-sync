@@ -35,7 +35,7 @@ import re
 import socket
 import threading
 import xmlrpclib
-from securexmlrpcserver import SecureXMLRPCServer
+from securexmlrpcserver import SecureXMLRPCServer, InsecureXMLRPCServer
 
 # Binary wrapping
 def wrapbinary(data):
@@ -86,8 +86,10 @@ class GRSUnmarshaller (xmlrpclib.Unmarshaller):
         return tuple(self._stack)
 
 
-class ExceptionTransport (xmlrpclib.Transport):
-    """Exception handling transport"""
+
+class GRSExceptionTransport (xmlrpclib.SafeTransport):
+#class GRSExceptionTransport (xmlrpclib.Transport):
+    """Exception handling transport using the HTTPS specific SafeTransport"""
     # Override user-agent if desired
     ##user_agent = "xmlrpc-exceptions/0.0.1"
 
@@ -97,16 +99,17 @@ class ExceptionTransport (xmlrpclib.Transport):
         parser = xmlrpclib.ExpatParser(unmarshaller)
         return parser, unmarshaller
 
-        
+
 class GRSServerProxy (xmlrpclib.ServerProxy):
     """Proxy with internal exception handling"""
     def __init__ (self, *args, **kwargs):
         """Supply our own transport"""
-        kwargs['transport'] = ExceptionTransport()
+        kwargs['transport'] = GRSExceptionTransport()
         xmlrpclib.ServerProxy.__init__(self, *args, **kwargs)
 
 
 class GRSRPCServer(SecureXMLRPCServer, threading.Thread):
+#class GRSRPCServer(InsecureXMLRPCServer, threading.Thread):
     """GRSfs RPC server wrapping our secure XMLRPC server"""
     def __init__(self, kernel, options):
         """Initializes the RPC server"""
@@ -115,6 +118,8 @@ class GRSRPCServer(SecureXMLRPCServer, threading.Thread):
         SecureXMLRPCServer.cert_path = options.cert
         SecureXMLRPCServer.__init__(self, ('', options.serverport),
                                     allow_none=True)
+        #InsecureXMLRPCServer.__init__(self, ('', options.serverport),
+        #                              allow_none=True)
         threading.Thread.__init__(self)
         # Disable log to stdout every time somebody connects
         self.logRequests = 0
@@ -167,16 +172,16 @@ def connect_to_peer(peer, ident):
     logger = Logger()
     try:
         v = None
-        logger.info ("%s connecting to %s" % (__name__, peer))
+        logger.info ("%s connecting to %s (%s)" % (__name__, peer, peer.connection))
         (address, port) = peer.connection
         try:        
             proxy_link = GRSServerProxy('https://%s:%d' % (address, port),
-                                        allow_none = True)        
-            logger.debug ("%s link established. Node_register(%s)" % \
+                                        allow_none=True)        
+            logger.debug("%s link established. Node_register(%s)" % \
                           (__name__, ident))
             if peer.recontact:
                 v = proxy_link.node_register(ident)
-            logger.debug( "%s connected - %s returned  '%s'" % (__name__,
+            logger.debug("%s connected - %s returned  '%s'" % (__name__,
                                                                 peer, v))
             return (proxy_link, v)
         except Exception, serr:
