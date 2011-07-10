@@ -54,6 +54,7 @@ allowed_errors = [ValueError, TypeError, IOError, OSError]
 # Example of a typical FUSE error: <type 'exception.OSError'>: [Errno 2] File not found or something else
 error_pat = re.compile(r"<type 'exceptions.(?P<exception>[^:]*)'>:(\[Errno (?P<errno>\d+)\])?(?P<rest>.*$)")
 
+
 class GRSUnmarshaller (xmlrpclib.Unmarshaller):
     def close(self):
         # return response tuple and target method
@@ -77,6 +78,7 @@ class GRSUnmarshaller (xmlrpclib.Unmarshaller):
             raise xmlrpclib.Fault(**d)
         return tuple(self._stack)
 
+
 class ExceptionTransport (xmlrpclib.Transport):
     # Override user-agent if desired
     ##user_agent = "xmlrpc-exceptions/0.0.1"
@@ -86,6 +88,7 @@ class ExceptionTransport (xmlrpclib.Transport):
         unmarshaller = GRSUnmarshaller()
         parser = xmlrpclib.ExpatParser(unmarshaller)
         return parser, unmarshaller
+
         
 class GRSServerProxy (xmlrpclib.ServerProxy):
     def __init__ (self, *args, **kwargs):
@@ -100,9 +103,11 @@ class RequestHandler(SimpleXMLRPCRequestHandler):
     # FIXME Implement request unwrapping here?
     pass
     #rpc_paths = ('/RPC2',)
+
     
 class AsyncXMLRPCServer(SocketServer.ThreadingMixIn, SimpleXMLRPCServer): 
     pass
+
         
 class GRSRPCServer(AsyncXMLRPCServer, threading.Thread):
     def __init__(self, kernel, options):
