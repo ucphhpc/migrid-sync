@@ -92,7 +92,8 @@ class Configuration:
                     assert len(host.strip()) >= 2
                     assert int(port) > 1024
                     self.initial_connect_list.append((host, port))
-                    
+            # Force timeout to float
+            self.network_timeout = float(self.network_timeout)
             
         except Exception:
             print ">>>>>>>> Configuration validation failed, error follows"
