@@ -58,6 +58,9 @@ class SecureXMLRPCServer(ThreadingMixIn, SimpleXMLRPCServer,
     SSL key and certificate paths are exposed as key_path and cert_path
     attributes that must be overriden before instantiation if they are not
     the default key.pem and cert.pem in the current directory.
+
+    You can create suitable key and cert files with:
+    openssl req -new -x509 -days 365 -nodes -out cert.pem -keyout key.pem
     
     The ssl_version, ca_certs and cert_reqs attributes can be used to control
     additional low level settings if overriden before instantiation.
@@ -118,16 +121,17 @@ def echo(input_string):
     return input_string
 
 if __name__ == '__main__':
+    addr = ("localhost", 8000)
     if 'client' in sys.argv[1:]:
         import xmlrpclib
-        proxy = xmlrpclib.ServerProxy('https://localhost:8000')
+        proxy = xmlrpclib.ServerProxy('https://%s:%d' % addr)
         msg = 'hello world!'
         print "sending message to echo server: %s" % msg
         reply = proxy.echo(msg)
         print "echo server replied: %s" % reply
     else:
         # Create server
-        server = SecureXMLRPCServer(("localhost", 8000))
+        server = SecureXMLRPCServer(addr)
         server.register_introspection_functions()
         server.register_function(echo)
         # Run the server's main loop
