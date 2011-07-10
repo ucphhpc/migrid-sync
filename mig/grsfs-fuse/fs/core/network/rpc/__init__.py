@@ -111,6 +111,8 @@ class GRSRPCServer(SecureXMLRPCServer, threading.Thread):
     def __init__(self, kernel, options):
         """Initializes the RPC server"""
         print "Init rpcServer at port %s" % options.serverport
+        SecureXMLRPCServer.key_path = options.key_path
+        SecureXMLRPCServer.cert_path = options.cert_path
         SecureXMLRPCServer.__init__(self, ('', options.serverport),
                                     allow_none=True)
         threading.Thread.__init__(self)
