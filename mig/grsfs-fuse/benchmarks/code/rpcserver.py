@@ -61,6 +61,8 @@ def main(conf):
         handler.protocol_version = 'HTTP/1.1'
         server = SimpleXMLRPCServer((conf['address'], conf['port']),
                                     requestHandler=handler)
+        # Do not log requests
+        server.logRequests = 0
         print("Listening on '%(address)s:%(port)d..." % conf)
         server.register_function(true, 'x')
         server.serve_forever()
@@ -77,7 +79,7 @@ def main(conf):
 
 
         if conf["transport"] == "pyrossl":
-            # requires m2crypto module and concatenated ssl key/cert
+            # requires m2crypto module, concatenated ssl key/cert and cacert
             proto = 'PYROSSL'
             Pyro.config.PYROSSL_CERTDIR = '.'
             Pyro.config.PYROSSL_CA_CERT = 'cacert.pem'
