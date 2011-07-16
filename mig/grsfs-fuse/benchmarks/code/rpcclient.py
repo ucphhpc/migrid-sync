@@ -104,9 +104,13 @@ if __name__ == '__main__':
     # Use default transport specific uri if left unset
     if not conf['uri']:
         conf['uri'] = allowed_transports[conf["transport"]]
-    # Manual garbage collection is required with pypy to avoid permanent
-    # hang waiting for client shutdown when keep-alive is enabled on server
-    conf['setup'] = """
+    # Extra code between intitial setup and proxy instantiation 
+    conf['extra_setup'] = ""
+    conf['setup'] = ""
+    if conf["transport"] == "xmlrpc":
+        # Manual garbage collection is required with pypy to avoid permanent
+        # hang waiting for client shutdown when keep-alive is enabled on server
+        conf['extra_setup'] = """
 try:
     proxy = None
     import gc
@@ -114,13 +118,12 @@ try:
 except Exception, exc:
     print 'proxy shutdown failed: ', exc
 """
-    if conf["transport"] == "xmlrpc":
         conf['setup'] += """
 import xmlrpclib
+%(extra_setup)s
 proxy = xmlrpclib.ServerProxy('%(uri)s')
 """ % conf
     elif conf["transport"] in ["pyro", "pyrossl"]:
-        conf['extra_setup'] = ""
         if conf["transport"] == "pyrossl":
             conf['extra_setup'] = """
 # requires m2crypto module and concatenated ssl key/cert
