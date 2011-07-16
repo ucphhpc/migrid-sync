@@ -125,6 +125,8 @@ proxy = xmlrpclib.ServerProxy('%(uri)s')
             conf['extra_setup'] = """
 # requires m2crypto module and concatenated ssl key/cert
 Pyro.config.PYROSSL_CERTDIR = '.'
+Pyro.config.PYROSSL_SERVER_CERT = 'combined.pem'
+Pyro.config.PYROSSL_CA_CERT = 'cacert.pem'
 Pyro.config.PYROSSL_CLIENT_CERT = 'combined.pem'
 Pyro.config.PYRO_DNS_URI = True
 """

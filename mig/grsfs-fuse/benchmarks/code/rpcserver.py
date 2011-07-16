@@ -80,6 +80,7 @@ def main(conf):
             # requires m2crypto module and concatenated ssl key/cert
             proto = 'PYROSSL'
             Pyro.config.PYROSSL_CERTDIR = '.'
+            Pyro.config.PYROSSL_CA_CERT = 'cacert.pem'
             Pyro.config.PYROSSL_SERVER_CERT = "combined.pem"
             Pyro.config.PYROSSL_CLIENT_CERT = "combined.pem"
             Pyro.config.PYRO_DNS_URI = True
