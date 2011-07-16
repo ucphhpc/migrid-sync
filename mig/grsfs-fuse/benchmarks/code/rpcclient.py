@@ -32,9 +32,9 @@ import sys
 import getopt
 import timeit
 
-allowed_transports ={'xmlrpc': "http://localhost:8000/",
-                     'pyro': "PYROLOC://localhost:8000/all",
-                     'pyrossl': "PYROLOCSSL://localhost:8000/all"}
+allowed_transports ={'xmlrpc': "http://localhost:8001/",
+                     'pyro': "PYROLOC://localhost:8001/all",
+                     'pyrossl': "PYROLOCSSL://localhost:8001/all"}
 
 def default_configuration():
     """Return dictionary with default configuration values"""

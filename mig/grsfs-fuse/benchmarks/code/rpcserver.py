@@ -34,7 +34,7 @@ import getopt
 def default_configuration():
     """Return dictionary with default configuration values"""
     # Use empty address to listen on all interfaces
-    conf = {'address': "", 'port': 8000}
+    conf = {'address': "", 'port': 8001, 'transport': 'xmlrpc'}
     return conf
 
 def usage():
