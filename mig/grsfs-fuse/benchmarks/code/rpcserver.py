@@ -30,7 +30,6 @@
 
 import sys
 import getopt
-from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 def default_configuration():
     """Return dictionary with default configuration values"""
@@ -50,18 +49,54 @@ def true():
     """Minimal dummy function"""
     return True
 
+
 def main(conf):
     """Run minimal benchmark server"""
-    handler = SimpleXMLRPCRequestHandler
-    # Force keep-alive support - please note that pypy clients may need to
-    # force garbage collection to actually close connection
-    handler.protocol_version = 'HTTP/1.1'
-    server = SimpleXMLRPCServer((conf['address'], conf['port']),
-                                requestHandler=handler)
-    print("Listening on '%(address)s:%(port)d..." % conf)
-    server.register_function(true, "x")
-    server.serve_forever()
+    if conf["transport"] == "xmlrpc":
+        from SimpleXMLRPCServer import SimpleXMLRPCServer, \
+             SimpleXMLRPCRequestHandler
+        handler = SimpleXMLRPCRequestHandler
+        # Force keep-alive support - please note that pypy clients may need to
+        # force garbage collection to actually close connection
+        handler.protocol_version = 'HTTP/1.1'
+        server = SimpleXMLRPCServer((conf['address'], conf['port']),
+                                    requestHandler=handler)
+        print("Listening on '%(address)s:%(port)d..." % conf)
+        server.register_function(true, 'x')
+        server.serve_forever()
+    elif conf["transport"] in ["pyro", "pyrossl"]:
+        import Pyro.core
+        import Pyro.protocol
 
+
+        class AllWrap(Pyro.core.ObjBase):
+            """Pyro needs an object to expose functions/methods"""
+            def x(self):
+                """Minimal dummy method"""
+                return True
+
+
+        if conf["transport"] == "pyrossl":
+            # requires m2crypto module and ssl key/cert
+            proto = 'PYROSSL'
+            Pyro.config.PYROSSL_KEY="key.key"
+            Pyro.config.PYROSSL_CERT="cert.pem"            
+        else:
+            proto = 'PYRO'
+        Pyro.core.initServer(banner=0)
+        server = Pyro.core.Daemon(prtcol=proto, host=conf["address"],
+                                  port=conf["port"])
+        # Optional client certificate check
+        #if conf["transport"] == "pyrossl":
+        #    server.setNewConnectionValidator(Pyro.protocol.BasicSSLValidator())
+        print("Listening on '%(address)s:%(port)d..." % conf)
+        # Skip name server and bind wrap object to 'all' with method x.
+        # client must open proxy to URI/all to enable use of proxy.x() 
+        server.connectPersistent(AllWrap(), "all")
+        server.requestLoop()
+    else:
+        print("unknown transport: %(transport)s" % conf)
+        sys.exit(1)
 
 if __name__ == '__main__':
     conf = default_configuration()
@@ -70,10 +105,11 @@ if __name__ == '__main__':
 
     try:
         (opts, args) = getopt.getopt(sys.argv[1:],
-                                     'a:hp:', [
+                                     'a:hp:t:', [
             'address=',
             'help',
             'port=',
+            'transport=',
             ])
     except getopt.GetoptError as err:
         print('Error in option parsing: ' + err.msg)
@@ -92,8 +128,8 @@ if __name__ == '__main__':
             except ValueError, err:
                 print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
-        elif opt in ('-u', '--url'):
-            conf["url"] = val
+        elif opt in ('-t', '--transport'):
+            conf["transport"] = val
         else:
             print("unknown option: %s" % opt)
             usage()

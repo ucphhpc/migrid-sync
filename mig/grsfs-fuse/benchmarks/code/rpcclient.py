@@ -32,9 +32,13 @@ import sys
 import getopt
 import timeit
 
+allowed_transports ={'xmlrpc': "http://localhost:8000/",
+                     'pyro': "PYROLOC://localhost:8000/all",
+                     'pyrossl': "PYROLOCSSL://localhost:8000/all"}
+
 def default_configuration():
     """Return dictionary with default configuration values"""
-    conf = {'url': "http://localhost:8000/", 'repeat': 3, 'number': 10000}
+    conf = {'uri': '', 'repeat': 3, 'number': 10000, 'transport': 'xmlrpc'}
     return conf
 
 def usage():
@@ -57,11 +61,12 @@ if __name__ == '__main__':
 
     try:
         (opts, args) = getopt.getopt(sys.argv[1:],
-                                     'hn:r:u:', [
+                                     'hn:r:t:u:', [
             'help',
             'number=',
             'repeat=',
-            'url=',
+            'transport=',
+            'uri=',
             ])
     except getopt.GetoptError, err:
         print('Error in option parsing: ' + err.msg)
@@ -84,12 +89,21 @@ if __name__ == '__main__':
             except ValueError, err:
                 print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
-        elif opt in ('-u', '--url'):
-            conf["url"] = val
+        elif opt in ('-t', '--transport'):
+            if not val in allowed_transports.keys():
+                print("unknown transport: %s" % val)
+                usage()
+                sys.exit(1)
+            conf["transport"] = val
+        elif opt in ('-u', '--uri'):
+            conf["uri"] = val
         else:
             print("unknown option: %s" % opt)
             usage()
             sys.exit(1)
+    # Use default transport specific uri if left unset
+    if not conf['uri']:
+        conf['uri'] = allowed_transports[conf["transport"]]
     # Manual garbage collection is required with pypy to avoid permanent
     # hang waiting for client shutdown when keep-alive is enabled on server
     conf['setup'] = """
@@ -99,7 +113,18 @@ try:
     gc.collect()
 except Exception, exc:
     print 'proxy shutdown failed: ', exc
+"""
+    if conf["transport"] == "xmlrpc":
+        conf['setup'] += """
 import xmlrpclib
-proxy = xmlrpclib.ServerProxy('%(url)s')
+proxy = xmlrpclib.ServerProxy('%(uri)s')
 """ % conf
+    elif conf["transport"] in ["pyro", "pyrossl"]:
+        conf['setup'] += """
+import Pyro.core
+proxy = Pyro.core.getProxyForURI('%(uri)s')
+""" % conf
+    else:
+        print("Unsupported transport: %(transport)s" % conf)
+        sys.exit(1)
     main(conf)
