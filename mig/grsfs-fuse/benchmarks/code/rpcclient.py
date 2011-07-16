@@ -120,8 +120,17 @@ import xmlrpclib
 proxy = xmlrpclib.ServerProxy('%(uri)s')
 """ % conf
     elif conf["transport"] in ["pyro", "pyrossl"]:
+        conf['extra_setup'] = ""
+        if conf["transport"] == "pyrossl":
+            conf['extra_setup'] = """
+# requires m2crypto module and concatenated ssl key/cert
+Pyro.config.PYROSSL_CERTDIR = '.'
+Pyro.config.PYROSSL_CLIENT_CERT = 'combined.pem'
+Pyro.config.PYRO_DNS_URI = True
+"""
         conf['setup'] += """
 import Pyro.core
+%(extra_setup)s
 proxy = Pyro.core.getProxyForURI('%(uri)s')
 """ % conf
     else:

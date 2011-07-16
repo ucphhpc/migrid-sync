@@ -77,10 +77,12 @@ def main(conf):
 
 
         if conf["transport"] == "pyrossl":
-            # requires m2crypto module and ssl key/cert
+            # requires m2crypto module and concatenated ssl key/cert
             proto = 'PYROSSL'
-            Pyro.config.PYROSSL_KEY="key.key"
-            Pyro.config.PYROSSL_CERT="cert.pem"            
+            Pyro.config.PYROSSL_CERTDIR = '.'
+            Pyro.config.PYROSSL_SERVER_CERT = "combined.pem"
+            Pyro.config.PYROSSL_CLIENT_CERT = "combined.pem"
+            Pyro.config.PYRO_DNS_URI = True
         else:
             proto = 'PYRO'
         Pyro.core.initServer(banner=0)
