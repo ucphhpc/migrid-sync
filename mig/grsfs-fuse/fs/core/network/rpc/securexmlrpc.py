@@ -110,7 +110,7 @@ class SecureXMLRPCServerProxy(xmlrpclib.ServerProxy):
         kwargs['transport'] = SecureXMLRPCExceptionTransport()
         kwargs['allow_none'] = True
         kwargs['uri'] = 'https://%s:%d' % address_tuple
-        xmlrpclib.ServerProxy.__init__(self, kwargs)
+        xmlrpclib.ServerProxy.__init__(self, **kwargs)
 
 
 class KeepAliveRequestHandler(SimpleXMLRPCRequestHandler):
