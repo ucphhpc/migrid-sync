@@ -31,95 +31,27 @@ Copyright (c) 2010 Jan Wiberg. All rights reserved.
 """
 
 import cPickle as pickle
-import re
 import socket
 import threading
-import xmlrpclib
-from securexmlrpcserver import SecureXMLRPCServer, InsecureXMLRPCServer
-
-# Binary wrapping
-def wrapbinary(data):
-    """Pack binary data"""
-    return xmlrpclib.Binary(data)
-    
-def unwrapbinary(binary):
-    """Unpack binary data"""
-    return binary.data
-
-# Exception marshalling partially by http://code.activestate.com/recipes/365244/
-__all__ = ['Server']
-
-# List of exceptions that are allowed.
-# Only exceptions listed here will be reconstructed from an xmlrpclib.Fault
-# instance.
-allowed_errors = [ValueError, TypeError, IOError, OSError]
-
-# changed to properly reconstruct FUSE understandable exceptions
-# Example of a typical FUSE error:
-# <type 'exception.OSError'>: [Errno 2] File not found or something else
-error_pat = re.compile(r"<type 'exceptions.(?P<exception>[^:]*)'>:" + \
-                       "(\[Errno (?P<errno>\d+)\])?(?P<rest>.*$)")
+# Select actual RPC implementation here and keep details hidden in the rest 
+from securexmlrpc import SecureXMLRPCServer as SecureRPCServer
+from securexmlrpc import SecureXMLRPCServerProxy as SecureRPCServerProxy
+from securexmlrpc import wrapbinary, unwrapbinary
 
 
-class GRSUnmarshaller (xmlrpclib.Unmarshaller):
-    """Custom unmarshaller to handle exceptions"""
-    def close(self):
-        """return response tuple and target method"""
-        if self._type is None or self._marks:
-            raise xmlrpclib.ResponseError()
-        if self._type == "fault":
-            d = self._stack[0]
-            m = error_pat.match(d['faultString'])
-            if m:
-                exception_name = m.group('exception')
-                errno = m.group('errno')
-                rest = m.group('rest')
-                for exc in allowed_errors:
-                    if exc.__name__ == exception_name:
-                        if errno is not None:
-                            raise exc(int(errno), rest)
-                        else:
-                            raise exc(rest)
-
-            # Fall through and just raise the fault
-            raise xmlrpclib.Fault(**d)
-        return tuple(self._stack)
+class GRSServerProxy(SecureRPCServerProxy):
+    """GRSfs RPC server proxy wrapping our secure transport"""
+    pass
 
 
-
-class GRSExceptionTransport (xmlrpclib.SafeTransport):
-#class GRSExceptionTransport (xmlrpclib.Transport):
-    """Exception handling transport using the HTTPS specific SafeTransport"""
-    # Override user-agent if desired
-    ##user_agent = "xmlrpc-exceptions/0.0.1"
-
-    def getparser (self):
-        """We want to use our own custom unmarshaller"""
-        unmarshaller = GRSUnmarshaller()
-        parser = xmlrpclib.ExpatParser(unmarshaller)
-        return parser, unmarshaller
-
-
-class GRSServerProxy (xmlrpclib.ServerProxy):
-    """Proxy with internal exception handling"""
-    def __init__ (self, *args, **kwargs):
-        """Supply our own transport"""
-        kwargs['transport'] = GRSExceptionTransport()
-        xmlrpclib.ServerProxy.__init__(self, *args, **kwargs)
-
-
-class GRSRPCServer(SecureXMLRPCServer, threading.Thread):
-#class GRSRPCServer(InsecureXMLRPCServer, threading.Thread):
-    """GRSfs RPC server wrapping our secure XMLRPC server"""
-    def __init__(self, kernel, options):
+class GRSRPCServer(SecureRPCServer, threading.Thread):
+    """GRSfs RPC server wrapping our secure RPC server"""
+    def __init__(self, kernel, options, **kwargs):
         """Initializes the RPC server"""
         print "Init rpcServer at port %s" % options.serverport
-        SecureXMLRPCServer.key_path = options.key
-        SecureXMLRPCServer.cert_path = options.cert
-        SecureXMLRPCServer.__init__(self, ('', options.serverport),
-                                    allow_none=True)
-        #InsecureXMLRPCServer.__init__(self, ('', options.serverport),
-        #                              allow_none=True)
+        kwargs["key_path"] = options.key
+        kwargs["cert_path"] = options.cert
+        SecureRPCServer.__init__(self, ('', options.serverport), **kwargs)
         threading.Thread.__init__(self)
         # Disable log to stdout every time somebody connects
         self.logRequests = 0
@@ -171,19 +103,20 @@ def connect_to_peer(peer, ident):
     from core.specialized.logger import Logger
     logger = Logger()
     try:
-        v = None
-        logger.info ("%s connecting to %s (%s)" % (__name__, peer, peer.connection))
+        val = None
+        logger.info ("%s connecting to %s (%s)" % (__name__, peer,
+                                                   peer.connection))
         (address, port) = peer.connection
         try:        
-            proxy_link = GRSServerProxy('https://%s:%d' % (address, port),
-                                        allow_none=True)        
+            proxy_link = GRSServerProxy((address, port),
+                                        allow_none=True)
             logger.debug("%s link established. Node_register(%s)" % \
                           (__name__, ident))
             if peer.recontact:
-                v = proxy_link.node_register(ident)
+                val = proxy_link.node_register(ident)
             logger.debug("%s connected - %s returned  '%s'" % (__name__,
-                                                                peer, v))
-            return (proxy_link, v)
+                                                                peer, val))
+            return (proxy_link, val)
         except Exception, serr:
             logger.error( "%s unable to connect to %s (%s)"  % (__name__,
                                                                 peer, serr))
