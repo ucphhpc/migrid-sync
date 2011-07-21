@@ -425,7 +425,7 @@ def get_user_map(configuration):
     map for load prevention with repeated calls within short time span.
     """
     if last_load[USERS] + MAP_CACHE_SECONDS > time.time():
-        configuration.logger.info("using cached user map")
+        configuration.logger.debug("using cached user map")
         return last_map[USERS]
     modified_users, modified_stamp_ = check_users_modified(configuration)
     if modified_users:
@@ -434,7 +434,7 @@ def get_user_map(configuration):
         reset_users_modified(configuration)
         last_map[USERS] = user_map
     else:
-        configuration.logger.info("No changes - not refreshing")
+        configuration.logger.debug("No changes - not refreshing")
         user_map, map_stamp = load_user_map(configuration)
         last_map[USERS] = user_map
         last_refresh[USERS] = map_stamp
@@ -446,7 +446,7 @@ def get_resource_map(configuration):
     map for load prevention with repeated calls within short time span.
     """
     if last_load[RESOURCES] + MAP_CACHE_SECONDS > time.time():
-        configuration.logger.info("using cached resource map")
+        configuration.logger.debug("using cached resource map")
         return last_map[RESOURCES]
     modified_resources, modified_stamp_ = check_resources_modified(configuration)
     if modified_resources:
@@ -455,7 +455,7 @@ def get_resource_map(configuration):
         reset_resources_modified(configuration)
         last_map[RESOURCES] = resource_map
     else:
-        configuration.logger.info("No changes - not refreshing")
+        configuration.logger.debug("No changes - not refreshing")
         resource_map, map_stamp = load_resource_map(configuration)
         last_map[RESOURCES] = resource_map
         last_refresh[RESOURCES] = map_stamp
@@ -467,7 +467,7 @@ def get_vgrid_map(configuration):
     map for load prevention with repeated calls within short time span.
     """
     if last_load[VGRIDS] + MAP_CACHE_SECONDS > time.time():
-        configuration.logger.info("using cached vgrid map")
+        configuration.logger.debug("using cached vgrid map")
         return last_map[VGRIDS]
     modified_vgrids, modified_stamp_ = check_vgrids_modified(configuration)
     if modified_vgrids:
@@ -476,7 +476,7 @@ def get_vgrid_map(configuration):
         reset_vgrids_modified(configuration)
         last_map[VGRIDS] = vgrid_map
     else:
-        configuration.logger.info("No changes - not refreshing")
+        configuration.logger.debug("No changes - not refreshing")
         vgrid_map, map_stamp = load_vgrid_map(configuration)
         last_map[VGRIDS] = vgrid_map
         last_refresh[VGRIDS] = map_stamp
