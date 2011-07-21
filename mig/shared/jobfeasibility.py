@@ -191,6 +191,8 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
     best_errors = errors
     found_best = False
 
+    # Avoid repeated get_resource_map calls for every single resource
+    resource_map = get_resource_map(configuration)
     for (vgrid, resources) in vgrid_resource_map.items():
 
         if not resources:
@@ -205,7 +207,7 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
 
         for resource_id in resources:
 
-            resource = get_resource_configuration(configuration, resource_id)
+            resource = get_resource_configuration(configuration, resource_id, resource_map)
 
             # vgrid_resource_map may contain e.g. deleted resources
             
@@ -837,9 +839,11 @@ def none_available(job_cond, errors, mrsl_attribute, suggest=False,
     return (job_cond, errors)
 
 
-def get_resource_configuration(configuration, resource_id):
+def get_resource_configuration(configuration, resource_id, resource_map=None):
     """Returns empty dict if resource_id is missing/deleted"""
-    return get_resource_map(configuration).get(resource_id, {CONF: {}})[CONF]
+    if not resource_map:
+        resource_map = get_resource_map(configuration)
+    return resource_map.get(resource_id, {CONF: {}})[CONF]
 
 
 def default_vgrid_resources(configuration):
