@@ -34,6 +34,7 @@ import sys
 import Pyro.core
 import Pyro.protocol
 
+default_name = 'all'
 
 # Binary wrapping (for symmetry with xmlrpc implementation)
 def wrapbinary(data):
@@ -49,7 +50,9 @@ class InsecurePyroServerProxy(Pyro.core.DynamicProxyWithAttrs):
     """Insecure XMLRPC server proxy suitable for our use cases"""
     def __init__(self, address_tuple, **kwargs):
         """Translate address_tuple to suitable uri"""
-        kwargs['uri'] = 'PYROLOC://%s:%d/base' % address_tuple
+        kwargs['uri'] = 'PYROLOC://%s:%d/%s' % (address_tuple[0],
+                                                address_tuple[1],
+                                                default_name)
         Pyro.core.DynamicProxyWithAttrs.__init__(self, '%(uri)s' % kwargs)
 
 
@@ -57,7 +60,9 @@ class SecurePyroServerProxy(Pyro.core.DynamicProxyWithAttrs):
     """Secure XMLRPC server proxy suitable for our use cases"""
     def __init__(self, address_tuple, **kwargs):
         """Prepare secure socket and translate address_tuple to suitable uri"""
-        kwargs['uri'] = 'PYROLOCSSL://%s:%d/base' % address_tuple
+        kwargs['uri'] = 'PYROLOCSSL://%s:%d/%s' % (address_tuple[0],
+                                                   address_tuple[1],
+                                                   default_name)
         # requires m2crypto module and concatenated ssl key/cert
         Pyro.config.PYROSSL_CERTDIR = '.'
         Pyro.config.PYROSSL_SERVER_CERT = 'combined.pem'
@@ -67,23 +72,44 @@ class SecurePyroServerProxy(Pyro.core.DynamicProxyWithAttrs):
         Pyro.core.DynamicProxyWithAttrs.__init__(self, '%(uri)s' % kwargs)
 
 
-class BaseHelper(Pyro.core.ObjBase):
-    """Wrapper for all exposed objects and functions"""
-    def __init__(self):
-        """Prepare public base"""
-        Pyro.core.ObjBase.__init__(self)
+class DummyHelper:
+    """Wrapper object"""
+    def echo_test(self, text):
+        """For testing only"""
+        return text
 
 
 class IntrospectionHelper:
     """For introspection functions"""
+    introspect = {'system.listMethods': ('None', 'list of method names'),
+                  'system.listSignatures': ('None', 'list of signatures'),
+                  'system.methodHelp': ('method name', 'method help string')}
     def __init__(self):
         """Prepare public introspection functions"""
         pass
 
     def listMethods(self):
         """List available methods"""
+        methods = self.introspect.keys()
+        # TODO: should look up methods from parent, too
+        return methods
+
+    def listSignatures(self):
+        """List available signatures"""
+        methods = self.introspect.keys()
+        signatures = []
+        # TODO: should look up methods from parent, too
+        for name in methods:
+            signatures.append((name, 'unknown', 'unknown'))
+        return signatures
+
+    def methodHelp(self, method):
+        """Show method docs"""
+        methods = self.introspect.keys()
         # TODO: should look up methods from parent
-        return ['listMethods']
+        if method in methods:
+            return 'doc for %s: none' % method
+        return 'no help available for %s' % method
 
 
 class SecurePyroServer(Pyro.core.Daemon):
@@ -130,23 +156,24 @@ class SecurePyroServer(Pyro.core.Daemon):
         Pyro.core.initServer(banner=0)
         Pyro.core.Daemon.__init__(self, prtcol=proto, host=addr[0],
                                   port=addr[1])
-        # Expose everything as attributes of base object
-        self.base = BaseHelper()
-        self.connectPersistent(self.base, 'base')
+        # Expose internal Pyro socket like xmlrpc socket
+        self.socket = self.sock
         
-    def register_instance(self, obj, name=None):
+    def register_instance(self, obj, name=default_name):
         """Fake object registration interface like xmlrpc"""
-        # Skip name server and bind wrap object to 'all' with method x.
-        # client must open proxy to URI/all to enable use of proxy.x() 
-        instance_name = name
-        if not name:
-            instance_name = obj.__name__
-        setattr(self.base, instance_name, obj)
+        # Skip name server and bind wrap object with method x() to name.
+        # client must open proxy to URI/name to enable use of proxy.x() 
+        # Expose everything as attributes of base object
+        if self.__introspection:
+            obj.system =  IntrospectionHelper()
+        pyro_obj = Pyro.core.ObjBase()
+        pyro_obj.delegateTo(obj)
+        self.connectPersistent(pyro_obj, name)
 
     def register_introspection_functions(self):
         """Fake introspection registration interface like xmlrpc"""
-        system = IntrospectionHelper()
-        self.register_instance(system, 'system')
+        self.__introspection = True
+        self.register_instance(DummyHelper())
 
     def serve_forever(self):
         """Fake xmlrpc server request loop interface"""
@@ -161,23 +188,23 @@ class InsecurePyroServer(Pyro.core.Daemon):
         """
         Pyro.core.initServer(banner=0)
         Pyro.core.Daemon.__init__(self, host=addr[0], port=addr[1])
-        # Expose everything as attributes of base object
-        self.base = BaseHelper()
-        self.connectPersistent(self.base, 'base')
+        # Expose internal Pyro socket like xmlrpc socket
+        self.socket = self.sock
         
-    def register_instance(self, obj, name=None):
+    def register_instance(self, obj, name=default_name):
         """Fake object registration interface like xmlrpc"""
-        # Skip name server and bind wrap object to 'all' with method x.
-        # client must open proxy to URI/all to enable use of proxy.x() 
-        instance_name = name
-        if not name:
-            instance_name = obj.__name__
-        setattr(self.base, instance_name, obj)
+        # Skip name server and bind wrap object with method x to name.
+        # client must open proxy to URI/name to enable use of proxy.x() 
+        if self.__introspection:
+            obj.system = IntrospectionHelper()
+        pyro_obj = Pyro.core.ObjBase()
+        pyro_obj.delegateTo(obj)
+        self.connectPersistent(pyro_obj, name)
 
     def register_introspection_functions(self):
         """Fake introspection registration interface like xmlrpc"""
-        system = IntrospectionHelper()
-        self.register_instance(system, 'system')
+        self.__introspection = True
+        self.register_instance(DummyHelper())
 
     def serve_forever(self):
         """Fake xmlrpc server request loop interface"""
@@ -200,8 +227,8 @@ if __name__ == '__main__':
         print "requesting list of methods from server on %s:%d" % address_tuple
         reply = proxy.system.listMethods()
         print "server replied: %s" % reply
-        #reply = proxy.true()
-        #print "server replied: %s" % reply
+        reply = proxy.echo_test("hello world!")
+        print "server replied: %s" % reply
     else:
         if 'insecure' in sys.argv[3:]:
             print "Starting InsecurePyroServer on %s:%s" % address_tuple
