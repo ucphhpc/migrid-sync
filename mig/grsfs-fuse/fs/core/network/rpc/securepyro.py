@@ -237,4 +237,5 @@ if __name__ == '__main__':
             print "Starting SecurePyroServer on %s:%s" % address_tuple
             server = SecurePyroServer(address_tuple)
         server.register_introspection_functions()
+        server.register_instance(DummyHelper())
         server.serve_forever()
