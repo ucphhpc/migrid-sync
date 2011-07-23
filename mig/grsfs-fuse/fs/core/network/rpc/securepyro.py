@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# securepyro - a secure version of the built-in pyro server and proxy
+# securepyro - a secure version of the external pyro server and proxy
 # Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 # 
 # This file is part of MiG.
@@ -25,8 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""A SSL/TLS secured version of the built-in XMLRPC server and proxy. Requires
-python-2.6 or later to provide the ssl module.
+"""A SSL/TLS secured version of the external Pyro server and proxy. Requires
+Pyro and m2crypto to provide the SSL functionality.
 """
 
 import os
@@ -109,6 +109,7 @@ class SecurePyroServer(Pyro.core.Daemon):
                  ssl_version=None):
         """Overriding __init__ method of the Pyro server Daemon to add SSL in
         between basic init and network activation.
+        Exposes all functionality through the 'base' object.
         """
         # Validate arguments possibly supplied by user
         if not os.path.isfile(key_path):
@@ -155,9 +156,11 @@ class SecurePyroServer(Pyro.core.Daemon):
 class InsecurePyroServer(Pyro.core.Daemon): 
     """Insecure Pyro server"""
     def __init__(self, addr, allow_none=True):
+        """Overriding __init__ method of the Pyro server Daemon.
+        Exposes all functionality through the 'base' object.
+        """
         Pyro.core.initServer(banner=0)
         Pyro.core.Daemon.__init__(self, host=addr[0], port=addr[1])
-
         # Expose everything as attributes of base object
         self.base = BaseHelper()
         self.connectPersistent(self.base, 'base')
