@@ -35,10 +35,12 @@ import tarfile
 import shutil
 import tempfile
 from multiprocessing import Process, active_children
-import time
+import time, pwd
 
 # the path to the fake local mig home directory
-user = os.getlogin()
+#user = os.getlogin()
+user = pwd.getpwuid(os.getuid())[0]
+
 MIG_HOME = os.path.join(tempfile.gettempdir(), user+"_mig_home")
 
 if not os.path.exists(MIG_HOME):
@@ -285,7 +287,6 @@ def rm_dir(path_list):
     exit_code = 0
     
     return (exit_code, server_out)
-
 
 
 def expand_name(path_list, server_flags, destinations):

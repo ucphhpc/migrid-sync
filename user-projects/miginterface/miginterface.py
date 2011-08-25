@@ -38,10 +38,13 @@ import tempfile
 import random
 import sys
 import string
- 
+import pwd 
+
 MIG_CONFIG = os.path.expanduser("~/.mig/miguser.conf")
 
-user = os.getlogin()
+# user = os.getlogin()
+user = pwd.getpwuid(os.getuid())[0]
+
 LOG_FILE = os.path.join(tempfile.gettempdir(), "miginterface_log_%s.txt" % user)
 DEBUG_MODE = False
 LOCAL_MODE = False
