@@ -1,0 +1,91 @@
+#compile_output {
+	width:50%;
+	height:70%;
+	border:1px solid black;
+	background-color: white;
+	
+}
+
+
+#submit_output {
+	width:400px;
+	/*height:40%;*/
+	border:0px solid black;
+	background-color: white;
+	-moz-border-radius: 0.4em;
+	padding: 2em;
+	margin: 3em;
+	text-align: right;
+}
+
+
+#submit_form {
+	
+	width:400px;
+	/*height:40%;*/
+	border:1px solid black;
+	background-color: white;
+	-moz-border-radius: 0.4em;
+	padding: 2em;
+	margin: 3em;
+	text-align: right;
+	
+}
+
+
+
+input[name='process_name'] {
+	right:20em;
+	width : 300px;
+	text-align: center;
+}
+
+input[name='num_jobs'] {
+	
+	width : 50px;
+	text-align: right;
+}
+
+
+
+#info_dialog {
+	/*width:80%;
+	height:20%;*/
+	border:0px solid black;
+	background-color: white;
+	opacity: 0.5;
+}
+
+#info_local {
+	font: bold;
+	color : red;
+	display: inline; 
+	border:0px solid white;
+	background-color: white;
+	/*opacity: 0.5;*/
+}
+
+
+
+
+table {
+	font-size: 12;
+}
+
+label {
+	left: auto;
+/*width:100%;
+float:left;*/
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+}
+
+ul li {
+  /*margin: 4px;*/
+  list-style-type: none;
+}
+
+

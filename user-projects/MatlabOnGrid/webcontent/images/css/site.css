@@ -1,0 +1,634 @@
+/* MiG default style sheet */
+
+body {
+  background: #ccc;
+  background: transparent url('/images/pattern.png');
+  color: #000;
+  font-family: verdana, helvetica, serif, times;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+}
+
+a {
+  color: #0b76AE;
+  text-decoration: none;
+}
+
+a:hover, a:active {
+  color: #000;
+  text-decoration: underline;
+}
+
+img {
+  border: 0;
+}
+
+h1 {
+  border: 1px solid darkgrey;
+  -moz-border-radius: 4px;
+  margin-top: 0;
+  
+  color: #eee;
+  background: #eee url('/images/background.png');
+  font-size: 16px;  
+
+  padding: 4px;
+}
+
+h2 {
+  border-bottom: 1px solid darkgrey;
+  font-size: 14px;  
+  padding: 2px;
+}
+
+h3 {
+  border-bottom: 1px solid darkgrey;
+  font-size: 16px;  
+  padding: 3px;
+}
+
+div.container {
+  width: 98%;
+  margin: 1%;
+}
+
+th {
+
+}
+
+thead {
+
+}
+
+tbody {
+
+}
+
+tfoot {
+
+}
+
+
+table {
+  background: #eef;
+  color: #000;
+  margin-right: auto;
+  margin-left: auto;
+  text-align: left;
+  border: 1px solid #000;
+  width: 100%;
+}
+
+table.submitstatus {}
+
+table.files {}
+table.fileupload {}
+table.stats {}
+table.wc {}
+
+table.jobs {
+  padding: 2px;
+}
+table.resubmit {}
+table.changedstatusjobs {}
+table.saveschedulejobs {}
+
+table.vgrids {
+  padding: 2px;
+}
+
+table.resources {
+  padding: 2px;
+  text-align: left;
+}
+table.sandboxlogintext {
+  width: 80%;
+}
+table.sandboxlogin {}
+table.sandboxinfo {}
+table.sandboxcreateimg {}
+
+
+table.downloads {
+  text-align: center;
+}
+
+table.runtimeenvs {
+  padding: 2px;
+}
+
+table.runtimeenvdetails {
+  padding: 2px;
+}
+table.runtimeenvdetails td {
+  vertical-align: top;
+}
+table.runtimeenvsw {
+  border: 0px solid #000;
+}
+table.runtimeenventry {
+  border: 0px solid #000;
+}
+table.runtimeenvvars {
+  border: 0px solid #000;
+}
+
+table.monitor {
+  font-size: 10px;
+  border-collapse: collapse;
+}
+table.monitorstats {}
+table.monitorjobs {
+  border: 0px solid #000;
+}
+table.monitorresreq {
+  border: 0px solid #000;
+}
+table.monitorruntimeenvreq {
+  border: 0px solid #000;
+}
+
+table.liveio table {
+  border: 0px solid #000;
+}
+
+
+.menublock {
+  width: 160px;
+  float: left;
+  margin: 4px;
+  padding: 0;
+}
+
+.contentblock {
+  margin: 4px;
+  margin-left: 168px;
+  padding: 0;
+  /* Prevent footer overlap with menu */
+  min-height: 500px;
+}
+
+/* override block layout for maximized areas like wshell */
+#nomenu {
+  margin: 4px;
+}
+
+
+/* Navigational menu... */
+.navmenu {
+  background: #aaa url('/images/background_greypattern.png');
+  -moz-border-radius: 5px;
+  border: 1px solid grey;
+  padding: 0;
+  margin: 0;
+}
+
+.navmenu ul {
+  margin: 0;
+  padding: 0;
+}
+
+.navsubmenu ul {
+  padding: 0;
+}
+
+.navmenu ul li, .navsubmenu ul li {
+  margin: 4px;
+  list-style-type: none;
+}
+
+.navmenu ul li.dashboard a {
+  background-image: url('/images/icons/application.png');
+}
+.navmenu ul li.submitjob a {
+  background-image: url('/images/icons/cog_add.png');
+}
+.navmenu ul li.files a {
+  background-image: url('/images/icons/drive.png');
+}
+.navmenu ul li.jobs a {
+  background-image: url('/images/icons/cog.png');
+}
+.navmenu ul li.vgrids a {
+  background-image: url('/images/icons/chart_organisation.png');
+}
+.navmenu ul li.vmachines a {
+  background-image: url('/images/icons/computer.png');
+}
+.navmenu ul li.resources a {
+  background-image: url('/images/icons/server.png');
+}
+.navmenu ul li.downloads a {
+  background-image: url('/images/icons/download.png');
+}
+.navmenu ul li.runtimeenvs a {
+  background-image: url('/images/icons/database.png');
+}
+.navmenu ul li.settings a {
+  background-image: url('/images/icons/wrench.png');
+}
+.navmenu ul li.shell a {
+  background-image: url('/images/icons/application_osx_terminal.png');
+}
+
+.navmenu ul li.statistics a {
+  background-image: url('/images/icons/statistics-icon.png');
+}
+.navmenu ul li.docs a {
+  background-image: url('/images/icons/txt.png');
+}
+
+.navmenu ul li a:hover, .navsubmenu ul li a:hover {
+  background-color: #369;
+  color: white;
+}
+
+.navmenu ul li a.selected {
+  background-color: #147;
+  color: white;
+}
+
+.navmenu ul li a, .navsubmenu ul li a {
+  -moz-border-radius: 4px;
+  display: block;
+  
+  background-repeat: no-repeat;
+  background-image: url('/images/icons/bullet_black.png');
+  background-position: 5px 50%;
+  
+  border: 1px solid darkgrey;
+  color: white;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 3px 5px 3px 24px;
+  text-decoration: none;
+  background-color: rgb(100,100,100);
+}
+
+.navsubmenu ul li a {
+  display: inline;
+  float: left;
+}
+
+.premenuwidgets {
+  color: black;
+}
+
+.postmenuwidgets {
+  color: black;
+}
+
+.precontentwidgets {
+  color: black;
+}
+
+.postcontentwidgets {
+  color: black;
+}
+
+.inlineeditor {
+  border: 1px inset grey;
+  padding: 3px;
+  background: white;
+}
+
+.editortoolbar {
+  -moz-border-radius: 4px;
+  padding: 6px;
+  background: #ddd;
+}
+
+
+/* Used in one place... maybe that place should be fixed? to use h1 instead */
+#migheader {
+  font-size: 28px;
+  border: 0;
+  -moz-border-radius: 4px;
+  color: #eee;
+  background: #eee url('/images/background.png');
+}
+
+/* MiG logo */
+#topspace {
+  padding: 0px;
+}
+#toplogo {
+  border: 0;
+  background: #eee url('/images/background.png');
+  background-position: left;
+  padding: 0px 10px;
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+  border-spacing: 0;
+  text-align: left;
+}
+#logoimage {
+  opacity: 0.7;
+  z-index: 1;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0px;
+  display: inline;
+  vertical-align: middle;
+}
+#logotitle {
+  margin-left: auto;
+  margin-right: auto;
+  padding: 20px;
+  vertical-align: middle;
+}
+
+.migtable {
+  border: 1px solid darkgrey;
+  width: 100%;
+  border-spacing: 0;
+}
+
+.odd {
+  background-color: white;
+}
+
+.even {
+  background-color: #ccc;
+}
+
+#exitcode {
+  font-family: Small Fonts, VT100, Arial, Helvetica;
+  font-size: 8px;
+  color: #333;
+}
+#bottomspace {
+  padding: 10px;
+}
+#bottomlogo {
+  border: 0;
+  background: #eee url('/images/background.png');
+  padding: 8px 10px;
+  font-size: 10px;
+  font-weight: normal;
+  color: white;
+  border-spacing: 0;
+  text-align: right;
+}
+#creditsimage {
+  opacity: 0.7;
+  z-index: 1;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0px;
+  display: inline;
+  vertical-align: middle;
+}
+#credits {
+  /*font-family: Small Fonts, VT100, Arial, Helvetica;*/
+  margin-left: auto;
+  margin-right: auto;
+  color: black;
+}
+
+#credits a {
+  color: white;
+}
+
+#content {
+  background: white;
+  border: 1px solid black;
+  -moz-border-radius: 4px;
+  padding: 8px; 
+}
+
+.migcontent {}
+
+.rawtext {
+  background: #fff;
+  border: 0;
+  padding: 5px;
+  text-align: left;
+}
+
+.smallcontent{
+  font-size: 10px;
+}
+
+.subsection{
+  background: #ccc;
+  padding: 5px;
+  border: 0;
+  font-size: 17px;
+  font-weight: bold;
+  color: red;
+  -moz-border-radius: 4px;
+}
+
+.lefttext {
+  text-align: left;
+}
+
+.centertext {
+  text-align: center;
+}
+
+.righttext {
+  text-align: right;
+}
+
+.centerall {
+  margin: 0;
+  text-align: center;
+}
+
+.title {
+  font-weight: bold;
+}
+
+.errortext {
+  color: red;
+}
+
+.warningtext {
+  color: orange;
+}
+
+.even_row {
+  background: #eef;
+}
+
+.odd_row {
+  background: #ddf;
+}
+
+.status_unavailable {
+  color: grey;
+}
+
+.status_online {
+  color: green;
+}
+
+.status_slack {
+  color: orange;
+}
+
+.status_offline {
+  color: red;
+}
+
+.optional {
+  color: black;
+}
+
+.mandatory {
+  color: blue;
+}
+
+.hidden { 
+  display:none;
+}
+
+.scrollselect {
+    height: 120px;
+    width: 600px;
+    padding: 5px;
+    overflow: auto;
+    background: #fff;
+    border: 1px inset grey;
+}
+
+/* Job manager */
+.jm {
+  margin-top: -15px; 
+}
+
+/* General helper icons */
+.error { background: url('/images/icons/exclamation.png') no-repeat; }
+.warn { background: url('/images/icons/error.png') no-repeat; }
+.info { background: url('/images/icons/information.png') no-repeat; }
+.ok { background: url('/images/icons/accept.png') no-repeat; }
+.urllink {
+  background: url('/images/icons/html.png') no-repeat;
+  padding-left: 18px;
+}
+.infolink {
+  background: url('/images/icons/information.png') no-repeat;
+  padding-left: 18px;
+}
+.viewlink {
+  background: url('/images/icons/html.png') no-repeat;
+  padding-left: 18px;
+}
+.openlink {
+  background: url('/images/icons/txt.png') no-repeat;
+  padding-left: 18px;
+}
+.editlink {
+  background: url('/images/icons/page_edit.png') no-repeat;
+  padding-left: 18px;
+}
+.wikilink {
+  background: url('/images/icons/overlays.png') no-repeat;
+  padding-left: 18px;
+}
+.scmlink {
+  background: url('/images/icons/calendar.png') no-repeat;
+  padding-left: 18px;
+}
+.monitorlink {
+  background: url('/images/icons/server_chart.png') no-repeat;
+  padding-left: 18px;
+}
+.adminlink {
+  background: url('/images/icons/wrench.png') no-repeat;
+  padding-left: 18px;
+}
+.computerlink {
+  background: url('/images/icons/computer.png') no-repeat;
+  padding-left: 18px;
+}
+.sandboxlink {
+  background: url('/images/icons/hourglass_go.png') no-repeat;
+  padding-left: 18px;
+}
+.danishlink {
+  background: url('/images/crystal-icons/unknown.png') no-repeat;
+  padding-left: 18px;
+}
+.englishlink {
+  background: url('/images/crystal-icons/unknown.png') no-repeat;
+  padding-left: 18px;
+}
+.backlink {
+  background: url('/images/icons/arrow_left.png') no-repeat;
+  padding-left: 18px;
+}
+.swrepolink {
+  background: url('/images/icons/table_go.png') no-repeat;
+  padding-left: 18px;
+}
+.addlink {
+  background: url('/images/icons/add.png') no-repeat;
+  padding-left: 18px;
+}
+.addadminlink {
+  background: url('/images/icons/cog_add.png') no-repeat;
+  padding-left: 18px;
+}
+.additemlink {
+  background: url('/images/icons/page_white_add.png') no-repeat;
+  padding-left: 18px;
+}
+.removelink {
+  background: url('/images/icons/delete.png') no-repeat;
+  padding-left: 18px;
+}
+.removeadminlink {
+  background: url('/images/icons/cog_delete.png') no-repeat;
+  padding-left: 18px;
+}
+.removeitemlink {
+  background: url('/images/icons/page_white_delete.png') no-repeat;
+  padding-left: 18px;
+}
+.submitfieldslink {
+  background: url('/images/icons/table.png') no-repeat;
+  padding-left: 18px;
+}
+.submittextarealink {
+  background: url('/images/icons/txt.png') no-repeat;
+  padding-left: 18px;
+}
+.submitfileslink {
+  background: url('/images/icons/page_white_get.png') no-repeat;
+  padding-left: 18px;
+}
+.generalsettingslink {
+  background: url('/images/icons/table.png') no-repeat;
+  padding-left: 18px;
+}
+.jobsettingslink {
+  background: url('/images/icons/cog.png') no-repeat;
+  padding-left: 18px;
+}
+.stylesettingslink {
+  background: url('/images/icons/psd.png') no-repeat;
+  padding-left: 18px;
+}
+.widgetssettingslink {
+  background: url('/images/icons/application.png') no-repeat;
+  padding-left: 18px;
+}
+.arcsettingslink {
+  background: url('/images/icons/ng-arc.png') no-repeat;
+  padding-left: 18px;
+}
+
+.realres {
+  background: url('/images/icons/computer.png') no-repeat;
+  padding-left: 18px;
+}
+.sandboxres {
+  background: url('/images/icons/box.png') no-repeat;
+  padding-left: 18px;
+}
+

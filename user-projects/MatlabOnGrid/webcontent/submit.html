@@ -1,0 +1,92 @@
+<html>
+<head>
+<title> Matlab submit </title>
+
+
+<link rel="stylesheet" type="text/css" href="http://dk.migrid.org/images/site.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/matlab_on_grid.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="http://dk.migrid.org/images/default.css" media="screen"/>
+
+<script type="text/javascript" src="/images/js/jquery-1.6.2.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui-1.8.16.custom.min.js"></script>
+<!-- <script type="text/javascript" src="/images/js/jquery.form.js"></script> -->
+<script type="text/javascript" src="/images/js/matlab.js"></script>
+
+
+<script type="text/javascript">
+
+
+function defaultName(){
+	var now = new Date;
+	var timestamp = "";
+	timestamp += (now.getHours() < 10) ? "0"+now.getHours() : now.getHours();
+	timestamp += (now.getMinutes() > 9) ? now.getMinutes() : "0" + now.getMinutes();
+	timestamp += (now.getSeconds() > 9) ? now.getSeconds() : "0" + now.getSeconds();
+	timestamp += "_"+(now.getMonth()+1)+"_"+now.getDate()+"_"+now.getFullYear();
+    
+    var name = "grid_matlab_"+timestamp;
+    //resfile = "result_"+timestamp+".tar";
+/*
+	document.getElementById("procname").value = name;
+	document.getElementById("procname").select();
+	document.getElementById("outputname").value = resfile;
+	document.getElementById("inputfile").value = "";
+	*/
+	
+	return name;
+}
+
+
+function init() {
+//	document.getElementById('compile_form').onsubmit=function() {
+//		document.getElementById('compile_form').target = 'compile_output'; //'upload_target' is the name of the iframe
+//	}
+
+	document.getElementById('submit_form').onsubmit=function() {
+		document.getElementById('submit_form').target = 'submit_output'; //'upload_target' is the name of the iframe
+	}
+
+	document.getElementById("name").value = defaultName();
+
+	
+}
+window.onload=init;
+
+
+
+
+</script>
+
+</head>
+
+<body>
+
+<div id="content">
+<h1>Run solver</h1>
+<form id="submit_form" method="post" enctype="multipart/form-data" action="/cgi-bin/submit.py">
+<!-- <input name="file" id="file" size="27" type="file" /><br /> -->
+<label>Name : </label><input id="name" name="process_name" type="text"  /> <br><br>
+<label>Number of jobs : </label><input name="num_jobs" type="text" /> </br> </br>
+Local mode <input name="local_mode" type="checkbox"/> <div id='info_local'>?</div>
+<br><br>
+
+<p class="inputfiles">
+
+</p>
+
+<a class="addinputfile">Add input file</a>
+<p>
+<br>
+<input type="submit" name="action" value="Start solver" />
+</p>
+</form>
+<div id='info_dialog' style="width: 0px;height: 0px;"></div>
+
+
+<iframe id="submit_output" name="submit_output"></iframe>
+
+</div>
+
+
+</body>
+</html>
