@@ -19,7 +19,7 @@ Requires: jquery.js
 	*/
         username="INSERT_YOUR_KU_USERNAME_HERE";
         password="";
-       $(".kunetlogin").html('<h2>KUnet login</h2><form action="https://intranet.ku.dk/CookieAuth.dll?Logon" method="post" id="logonForm" ><input id="rdoPrvt" type="hidden" name="trusted" value="4" />username:<br /><input class="logininput" type="text" size="10" id="username" name="username" value="'+username+'" /><br />password:<br /><input class="logininput" id="password" name="password" type="password" size="10" value="'+password+'"><input type="hidden" id="curl" name="curl" value="Z2FsiderZ2Fdefault.aspx" /><input type="hidden" id="flags" name="flags" value="0" /><input type="hidden" id="forcedownlevel" name="forcedownlevel" value="0" /><input type="hidden" id="formdir" name="formdir" value="8" /><input class="logininput loginsubmit" type="submit" value="Log in" onclick="clkLgn()" />');
+	$(".kunetlogin").html('<h2>KUnet login</h2><form action="https://intranet.ku.dk/CookieAuth.dll?Logon" method="post" id="logonForm" ><input id="rdoPrvt" type="hidden" name="trusted" value="4" />username:<br /><input class="logininput" type="text" size="10" id="username" name="username" value="'+username+'" /><br />password:<br /><input class="logininput" id="password" name="password" type="password" size="10" value="'+password+'"><input type="hidden" id="curl" name="curl" value="Z2FSiderZ2Fdefault.aspx" /><input type="hidden" id="flags" name="flags" value="0" /><input type="hidden" id="forcedownlevel" name="forcedownlevel" value="0" /><input type="hidden" id="formdir" name="formdir" value="7" /><input class="logininput loginsubmit" type="submit" value="Log in" onclick="clkLgn()" />');
     });
 </script>
 <div id="content">
