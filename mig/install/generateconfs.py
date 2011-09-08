@@ -88,6 +88,7 @@ def generate_confs(
     group='mig',
     apache_etc='/etc/apache2',
     apache_run='/var/run',
+    apache_lock='/var/lock',
     apache_log='/var/log/apache2',
     mig_code='/home/mig/mig',
     mig_state='/home/mig/state',
@@ -121,6 +122,7 @@ def generate_confs(
     user_dict['__MIG_CERTS__'] = mig_certs
     user_dict['__APACHE_ETC__'] = apache_etc
     user_dict['__APACHE_RUN__'] = apache_run
+    user_dict['__APACHE_LOCK__'] = apache_lock
     user_dict['__APACHE_LOG__'] = apache_log
     user_dict['__ENABLE_SFTP__'] = enable_sftp
     user_dict['__MOIN_ETC__'] = moin_etc
@@ -189,6 +191,7 @@ if '__main__' == __name__:
         'group',
         'apache_etc',
         'apache_run',
+        'apache_lock',
         'apache_log',
         'mig_code',
         'mig_state',
@@ -250,6 +253,7 @@ user: %(user)s
 group: %(group)s
 apache_etc: %(apache_etc)s
 apache_run: %(apache_run)s
+apache_lock: %(apache_lock)s
 apache_log: %(apache_log)s
 mig_code: %(mig_code)s
 mig_state: %(mig_state)s

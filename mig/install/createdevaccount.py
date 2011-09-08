@@ -130,6 +130,7 @@ def create_user(
     apache_etc = '/etc/apache2'
     apache_dir = '%s-%s' % (apache_etc, user)
     apache_run = '%s/run' % apache_dir
+    apache_lock = '%s/lock' % apache_dir
     apache_log = '%s/log' % apache_dir
     cert_dir = '%s/MiG-certificates' % apache_dir
     moin_etc = '/etc/moin'
@@ -178,6 +179,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         group,
         apache_dir,
         apache_run,
+        apache_lock,
         apache_log,
         mig_dir,
         state_dir,
@@ -217,7 +219,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     print 'sudo cp -f -d %s %s/' % (apache_ports_conf, apache_dir)
     print 'sudo cp -f -d %s %s/conf.d/' % (apache_mig_conf, apache_dir)
     print 'sudo cp -f -d %s %s/' % (apache_initd_script, apache_dir)
-    print 'sudo mkdir -p %s %s' % (apache_run, apache_log)
+    print 'sudo mkdir -p %s %s %s ' % (apache_run, apache_lock, apache_log)
 
     # allow read access to logs
 
