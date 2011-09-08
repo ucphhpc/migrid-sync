@@ -126,6 +126,7 @@ settings:
 --group=GROUP
 --apache_etc=APACHE_ETC
 --apache_run=APACHE_RUN
+--apache_lock=APACHE_LOCK
 --apache_log=APACHE_LOG
 --mig_code=MIG_CODE
 --mig_state=MIG_STATE
@@ -149,6 +150,7 @@ defaults, this could be:
 		   --sid_fqdn=mig-1.imada.sdu.dk --user=mig \
 		   --group=mig --apache_etc=/etc/apache \
 		   --apache_run=/var/run/apache \
+		   --apache_lock=/var/lock/apache \
 		   --apache_log=/var/log/apache \
 		   --mig_code=/home/mig/mig \
 		   --mig_state=/home/mig/state \
@@ -168,6 +170,7 @@ or similarly with apache 2.x:
 		   --sid_fqdn=dk-sid.migrid.org --user=mig --group=mig \
 		   --apache_etc=/etc/apache2 \
 		   --apache_run=/var/run/apache2 \
+		   --apache_lock=/var/lock/apache2 \
 		   --apache_log=/var/log/apache2 \
 		   --mig_code=/home/mig/mig \
 		   --mig_state=/home/mig/state \
