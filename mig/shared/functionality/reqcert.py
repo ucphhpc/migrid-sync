@@ -132,7 +132,7 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 </form>
 </p>
 <p>
-<font color='red'>Please note that passwords will be visible to the %(site)s administrators!</font>
+<div class='warn_message'>Please note that passwords may be accessible to the %(site)s administrators!</div>
 </p>
 <hr />
 <p>

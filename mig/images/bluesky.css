@@ -483,6 +483,12 @@ table.liveio table {
   padding-left: 16px;
 }
 
+.warn_message {
+  background: url('/images/icons/error.png') left center no-repeat;
+  padding-left: 20px;
+  color: orange;
+}
+
 .scrollselect {
     height: 120px;
     width: 600px;
