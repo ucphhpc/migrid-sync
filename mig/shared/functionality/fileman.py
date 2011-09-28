@@ -51,8 +51,10 @@ def html_tmpl():
   html = '''
   <div id="debug"></div>
   <div id="fm_filemanager">
+    <div class="fm_path_breadcrumbs">
+    </div>
     <div class="fm_addressbar">
-      <ul><li class="fm_path"><input type="text" value="/" name="fm_current_path" readonly="readonly" /></li></ul>
+      <input type="hidden" value="/" name="fm_current_path" readonly="true"/>
     </div>
     <div class="fm_folders">
       <ul class="jqueryFileTree">
@@ -248,6 +250,27 @@ def js_tmpl(entry_path='/'):
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.contextmenu.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.xbreadcrumbs.css" media="screen"/>
+
+<style type="text/css">
+.xbreadcrumbs LI {
+  border-right: none;
+  background: url(/images/icons/separator.gif) no-repeat right center;
+  padding-right: 15px;
+  padding-left: 10px;
+}
+.xbreadcrumbs LI.current { background: none; }
+.xbreadcrumbs LI A.home {
+  background: url(/images/icons/folder_user.png) no-repeat left center;
+  padding-left: 20px;
+}
+/*  Hide unused sub-level background */
+.xbreadcrumbs LI UL {
+  background: none;
+  visible: false;
+}
+.xbreadcrumbs LI UL LI { background: none; }
+</style>
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
@@ -257,6 +280,7 @@ def js_tmpl(entry_path='/'):
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
+<script type="text/javascript" src="/images/js/jquery.xbreadcrumbs.js"></script>
 '''
   js += advanced_editor_deps(include_jquery=False)
   js += lock_info('this file', -1)

@@ -76,23 +76,14 @@
   background-image: url('/images/icons/desc.gif'); 
   background-color: #3399FF; 
 }
+.fm_path_breadcrumbs {
+  width: 100%;
+  float:left;
+  padding-bottom: 2px;
+}
 .fm_addressbar {
   padding-bottom: 2px;
   border: 0;
-}
-.fm_addressbar ul {
-  margin: 0;
-  padding: 0;
-  list-style:none;
-}
-.fm_addressbar li {
-  display:inline;
-  margin:0;
-  padding:0;
-}
-.fm_addressbar ul li {
-  list-style-type: none;
-  display: inline;
 }
 .fm_addressbar input {
   width: 98%;

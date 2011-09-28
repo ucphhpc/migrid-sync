@@ -478,10 +478,38 @@ if (jQuery) (function($){
                 
          var file_pane = $('.fm_files', obj);        
          var statusbar = $('.fm_statusbar', obj);
+	 var path_breadcrumbs = $('.fm_path_breadcrumbs', obj);
          var addressbar = $('.fm_addressbar', obj);
          var timestamp = 0;
          var emptyDir = true;
-         
+         var bc_html = '';
+         var onclick_action = '';
+         var subdir = t;
+
+         // init path breadcrumbs
+         onclick_action = "$.fn.reload('/');alert('home');";
+         bc_html = '<ul id="fm_xbreadcrumbs" class="xbreadcrumbs">';
+         bc_html += '  <li>';
+         bc_html += '    <a href="#" class="home" onclick="'+onclick_action+'">/</a>';
+         bc_html += '    <ul>';
+         bc_html += '    </ul>';
+         bc_html += '  </li>';
+	 
+         // append current subdir
+         if (t != '/') {
+             onclick_action = "$('.fm_addressbar input[name=fm_current_path]').val('"+subdir+"');";
+             onclick_action += "$.fn.reload('');alert('clicked: "+subdir+"');";
+             bc_html += '  <li>';
+             bc_html += '    <a href="#" onclick="'+onclick_action+'">'+subdir+'</a>';
+             bc_html += '    <ul>';
+             bc_html += '    </ul>';
+             bc_html += '  </li>';
+         }
+	 
+	 // finalize breadcrumbs
+         bc_html += '</ul>';
+         path_breadcrumbs.html(bc_html);
+
          // Refix the root
                 
          $(folder_pane).addClass('wait');
@@ -728,7 +756,7 @@ if (jQuery) (function($){
             // or
             // Binds: Collapse
             bindBranch(folder_pane);                    
-            
+
             // Go to subPath                    
             var current_dir = addressbar.find('input[name=fm_current_path]').val();
             var first_child = options.subPath.slice(0, options.subPath.indexOf('/'));
@@ -827,6 +855,8 @@ if (jQuery) (function($){
          options.subPath = '';
      }
      
+     $("#fm_xbreadcrumbs").xBreadcrumbs({ collapsible: true, collapsedWidth: 28 });
+
      showBranch($('.fm_folders', obj), escape(options.root));
             
      /**
