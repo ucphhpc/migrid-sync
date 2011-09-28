@@ -154,7 +154,7 @@ if (jQuery) (function($){
             
             $.fn.extend(jsonSettings, jsonOptions);
             
-	    /* We used to use $.getJSON() here but now some back ends require POST */
+            /* We used to use $.getJSON() here but now some back ends require POST */
             $.post(url, jsonSettings,
                       function(jsonRes, textStatus) {
                           
@@ -204,13 +204,13 @@ if (jQuery) (function($){
         var callbacks = {
             
             show:   function (action, el, pos) { 
-		window.open('/cert_redirect/'+$(el).attr(pathAttribute))
-	    },
+                window.open('/cert_redirect/'+$(el).attr(pathAttribute))
+            },
             download:   function (action, el, pos) { 
                 document.location = 
                     'cat.py?path='
                     +$(el).attr(pathAttribute)+'&output_format=file'
-	    },
+            },
             edit:   function (action, el, pos) {
                 
                 $("#editor_dialog textarea[name=editarea]").val('');
@@ -478,37 +478,47 @@ if (jQuery) (function($){
                 
          var file_pane = $('.fm_files', obj);        
          var statusbar = $('.fm_statusbar', obj);
-	 var path_breadcrumbs = $('.fm_path_breadcrumbs', obj);
+         var path_breadcrumbs = $('#fm_xbreadcrumbs', obj);
          var addressbar = $('.fm_addressbar', obj);
          var timestamp = 0;
          var emptyDir = true;
          var bc_html = '';
+         var entry_html = '';
          var onclick_action = '';
-         var subdir = t;
+         var subdir_path = t;
+         var subdir_name = '';
+         var a_class = '';
+         var li_class = 'class="current"';
+         var found_root = false;
 
-         // init path breadcrumbs
-         onclick_action = "$.fn.reload('/');alert('home');";
-         bc_html = '<ul id="fm_xbreadcrumbs" class="xbreadcrumbs">';
-         bc_html += '  <li>';
-         bc_html += '    <a href="#" class="home" onclick="'+onclick_action+'">/</a>';
-         bc_html += '    <ul>';
-         bc_html += '    </ul>';
-         bc_html += '  </li>';
-	 
-         // append current subdir
-         if (t != '/') {
-             onclick_action = "$('.fm_addressbar input[name=fm_current_path]').val('"+subdir+"');";
-             onclick_action += "$.fn.reload('');alert('clicked: "+subdir+"');";
-             bc_html += '  <li>';
-             bc_html += '    <a href="#" onclick="'+onclick_action+'">'+subdir+'</a>';
-             bc_html += '    <ul>';
-             bc_html += '    </ul>';
-             bc_html += '  </li>';
+         // append current subdir parts to breadcrumbs (from right to left)
+         while (!found_root) {
+             if (subdir_path == '/') {
+                 a_class = 'class="home"';
+                 subdir_name = '/';
+                 found_root = true;
+             } else {
+                 // remove trailing slash
+                 subdir_name = subdir_path.substring(0, subdir_path.length-1);
+                 subdir_name = subdir_name.substring(subdir_name.lastIndexOf('/')+1, subdir_name.length);
+             }
+             onclick_action = "$('.fm_addressbar input[name=fm_current_path]').val('"+subdir_path+"');";
+             onclick_action += "$.fn.reload('"+subdir_path+"');";
+             entry_html = '  <li '+li_class+'>';
+             entry_html += '    <a href="#" '+a_class+' onclick="'+onclick_action+'">'+subdir_name+'</a>';
+             entry_html += '    <ul>';
+             entry_html += '    </ul>';
+             entry_html += '  </li>';
+             bc_html = entry_html + '\n' + bc_html;
+             subdir_path = $.fn.parentPath(subdir_path);
+             // remove current class after first
+             li_class = '';
          }
-	 
-	 // finalize breadcrumbs
-         bc_html += '</ul>';
+
          path_breadcrumbs.html(bc_html);
+         // Must reinit every time to make collapsible work 
+         $("#fm_xbreadcrumbs").xBreadcrumbs({ collapsible: true, 
+                                              collapsedWidth: 20 });
 
          // Refix the root
                 
@@ -664,7 +674,7 @@ if (jQuery) (function($){
             var spacerHeight = 40;
             if ($("#fm_filelisting").height() + spacerHeight < $(".fm_files").height() - headerHeight) {
                 spacerHeight = $(".fm_files").height() - $("#fm_filelisting").height() - headerHeight;
-	    }
+            }
 
             if (t != '/') { // Do not prepend the fake-root.
                 $('.fm_files').append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path="'+t+'" title="'+t+'"+></div>');
@@ -674,7 +684,7 @@ if (jQuery) (function($){
 
             $("div.filespacer").contextMenu(
                     { menu: 'folder_context',
-		    leftButtonChecker: touchscreenChecker},
+                    leftButtonChecker: touchscreenChecker},
                     function(action, el, pos) {
                         (options['actions'][action])(action, el, pos);                                            
                     });
@@ -688,7 +698,7 @@ if (jQuery) (function($){
                 setTimeout(function() {
                     t.contextMenu(
                         { menu: 'folder_context',
-			  leftButtonChecker: touchscreenChecker},
+                          leftButtonChecker: touchscreenChecker},
                         function(action, el, pos) {
                             if ($(el).tagName() == 'DIV') {
                                 (options['actions'][action])(action, el.parent(), pos);
@@ -703,7 +713,7 @@ if (jQuery) (function($){
                 setTimeout(function() {
                     t.contextMenu(
                         { menu: 'file_context',
-			  leftButtonChecker: touchscreenChecker},
+                          leftButtonChecker: touchscreenChecker},
                         function(action, el, pos) {
                             (options['actions'][action])(action, el, pos);
                         })
@@ -855,8 +865,6 @@ if (jQuery) (function($){
          options.subPath = '';
      }
      
-     $("#fm_xbreadcrumbs").xBreadcrumbs({ collapsible: true, collapsedWidth: 28 });
-
      showBranch($('.fm_folders', obj), escape(options.root));
             
      /**

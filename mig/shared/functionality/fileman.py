@@ -52,6 +52,8 @@ def html_tmpl():
   <div id="debug"></div>
   <div id="fm_filemanager">
     <div class="fm_path_breadcrumbs">
+      <ul id="fm_xbreadcrumbs" class="xbreadcrumbs">
+      </ul>
     </div>
     <div class="fm_addressbar">
       <input type="hidden" value="/" name="fm_current_path" readonly="true"/>
