@@ -261,6 +261,10 @@ def js_tmpl(entry_path='/'):
   padding-right: 15px;
   padding-left: 10px;
 }
+.xbreadcrumbs LI A {
+  padding: 1px;
+  font-size: 12px;
+}
 .xbreadcrumbs LI.current { background: none; }
 .xbreadcrumbs LI A.home {
   background: url(/images/icons/folder_user.png) no-repeat left center;

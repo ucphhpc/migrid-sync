@@ -518,7 +518,7 @@ if (jQuery) (function($){
          path_breadcrumbs.html(bc_html);
          // Must reinit every time to make collapsible work 
          $("#fm_xbreadcrumbs").xBreadcrumbs({ collapsible: true, 
-                                              collapsedWidth: 20 });
+                                              collapsedWidth: 28 });
 
          // Refix the root
                 
