@@ -76,6 +76,13 @@
   background-image: url('/images/icons/desc.gif'); 
   background-color: #3399FF; 
 }
+#fm_debug {
+  display: none;
+  width: 100%;
+  float:left;
+  padding: 0;
+  margin: 0;
+}
 .fm_path_breadcrumbs {
   width: 100%;
   float:left;

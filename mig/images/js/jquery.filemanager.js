@@ -7,6 +7,18 @@ if (jQuery) (function($){
         return touchscreen;
     }
 
+    $.fn.dump = function(element) {
+        var a = ["Element dump:"];
+        a.push("Raw: " + element);
+        for (var k in element) {
+            if (element.hasOwnProperty(k)) {
+                a.push(k + ": " + element[k]);
+            }
+        }
+        a.push("HTML: " + element.innerHTML);
+        return(a.join('\n'));
+    }
+
     $.fn.renderError = function(jsonRes) {
         
         var errors = '';
@@ -39,12 +51,12 @@ if (jQuery) (function($){
     $.fn.parentPath = function(path) {
         // Extract the parent of the path
         if (path.lastIndexOf("/") == (path.length-1)) { // is directory?
-            reloadPath = path.substring(0, path.length-1);
-            reloadPath = path.substring(0, reloadPath.lastIndexOf('/'))+'/';
+            dirPath = path.substring(0, path.length-1);
+            dirPath = path.substring(0, dirPath.lastIndexOf('/'))+'/';
         } else {
-            reloadPath = path.substring(0, path.lastIndexOf('/'))+'/';
+            dirPath = path.substring(0, path.lastIndexOf('/'))+'/';
         }
-        return reloadPath;
+        return dirPath;
     }
 
     $.fn.reload = function reload(path) {
@@ -54,14 +66,14 @@ if (jQuery) (function($){
             reloadPath = $('.fm_addressbar input[name=fm_current_path]').val().substr(1);
         }
         
-        // Root is a special-case.
-        if (reloadPath == '/') {
-            reloadPath = '';
+        // Make sure slash remains for home
+        if (reloadPath == '') {
+            reloadPath = '/';
         }
 
         // Trigger the click-event twice for obtaining the original state (collapse+expand).
-        $('.fm_folders li [rel_path='+reloadPath+']').click();
-        $('.fm_folders li [rel_path='+reloadPath+']').click();
+        $('.fm_folders [rel_path='+reloadPath+']').click();
+        $('.fm_folders [rel_path='+reloadPath+']').click();
         
     }
     
@@ -95,7 +107,7 @@ if (jQuery) (function($){
             } 
             // if no clickaction is provided, default to opening and showing
             if ($(el).hasClass('directory')) {
-                $('.fm_folders li [rel_path='+$(el).attr(pathAttribute)+']').click();
+                $('.fm_folders [rel_path='+$(el).attr(pathAttribute)+']').click();
             } else {
                 // Do stuff with files.
                 callbacks['show']('action', el, null);
@@ -386,7 +398,9 @@ if (jQuery) (function($){
                 $("#upload_dialog").dialog(
                     {buttons: {
                          Upload: function() { 
-                             $('#upload_form').submit(); },
+                             $('#upload_form').submit(); 
+                             $('.fm_files').parent().reload('');
+                         },
                          Cancel: function() {
                              $(this).dialog('close');}
                      },
@@ -405,7 +419,9 @@ if (jQuery) (function($){
                 $("#mkdir_dialog").dialog(
                     { buttons: {
                           Ok: function() { 
-                              $('#mkdir_form').submit(); },
+                              $('#mkdir_form').submit(); 
+                              $('.fm_files').parent().reload('');
+                          },
                           Cancel: function() {
                               $(this).dialog('close');}
                       },
@@ -435,7 +451,9 @@ if (jQuery) (function($){
                 $("#rename_dialog").dialog(
                     { buttons: {
                           Ok: function() { 
-                              $("#rename_form").submit(); },
+                              $("#rename_form").submit();
+                              $('.fm_files').parent().reload('');
+                          },
                           Cancel: function() {
                               $(this).dialog('close');}
                       },
@@ -475,7 +493,7 @@ if (jQuery) (function($){
      // Create the tree structure on the left and populate the table
      // list of files on the right
      function showBranch(folder_pane, t) {
-                
+
          var file_pane = $('.fm_files', obj);        
          var statusbar = $('.fm_statusbar', obj);
          var path_breadcrumbs = $('#fm_xbreadcrumbs', obj);
@@ -544,14 +562,13 @@ if (jQuery) (function($){
           statusbar.html('updating directory entries...');
           var folders = '';
 
-          // Root node                    
-          if (t == '/') {
-             folders += '<ul class="jqueryFileTree">' +
-                  '<li class="directory expanded userhome recent" rel_path="" title="Home"><div>/</div>';
+          // Root node if not already created
+          if (t == '/' && $('.fm_folders li.userhome').length == 0) {
+              folders += '<ul class="jqueryFileTree"><li class="directory expanded userhome recent" rel_path="/" title="Home"><div>/</div>\n';
           }
 
           // Regular nodes from here on after
-          folders += '<ul class="jqueryFileTree">';          
+          folders += '<ul class="jqueryFileTree">\n';
 
           var total_file_size = 0;
           var file_count = 0.0;          
@@ -630,11 +647,11 @@ if (jQuery) (function($){
               emptyDir = false;
           }
 
-            folders += '</ul>';
+            folders += '</ul>\n';
 
             // End the root node
             if (t == '/') {
-                folders += '</li></ul>';
+                folders += '</li></ul>\n';
             }
             
             // Prefix '/' for the visual presentation of the current path.
@@ -646,7 +663,8 @@ if (jQuery) (function($){
             
             folder_pane.removeClass('wait');
             folder_pane.append(folders);
-            
+            //$("#fm_debug").html("<textarea cols=200 rows=15>"+$.fn.dump($('.fm_folders [rel_path=/]'))+"\n"+$(".fm_folders").html()+"</textarea>").show();
+
             // Inform tablesorter of new data
             var sorting = [[0, 0]]; 
             $(".fm_files table").trigger("update");
@@ -802,7 +820,7 @@ if (jQuery) (function($){
             }
             if (descend) {
                 options.subPath = options.subPath.slice(first_child.length+1);
-                $('.fm_folders li [rel_path='+current_dir.slice(1)
+                $('.fm_folders [rel_path='+current_dir.slice(1)
                   +first_child+'/]').click();                       
             }
             
@@ -856,7 +874,7 @@ if (jQuery) (function($){
           sortColumn: 'Name'});
 
      // Loading message
-     $('.fm_folders', obj).html('<ul class="jqueryFileTree start"><li class="wait">' + options.loadMessage + '<li></ul>');
+     $('.fm_folders', obj).html('<ul class="jqueryFileTree start"><li class="wait">' + options.loadMessage + '<li></ul>\n');
             
      // Sanitize the subfolder path, simple checks, a malicious user would only hurt himself..
             

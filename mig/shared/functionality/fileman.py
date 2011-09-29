@@ -49,7 +49,7 @@ def html_tmpl():
   """HTML page base"""
 
   html = '''
-  <div id="debug"></div>
+  <div id="fm_debug"></div>
   <div id="fm_filemanager">
     <div class="fm_path_breadcrumbs">
       <ul id="fm_xbreadcrumbs" class="xbreadcrumbs">
