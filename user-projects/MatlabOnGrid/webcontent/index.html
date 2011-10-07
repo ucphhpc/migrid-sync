@@ -4,15 +4,15 @@
 
 
 <link rel="stylesheet" type="text/css" href="http://dk.migrid.org/images/site.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/matlab_on_grid.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="http://dk.migrid.org/images/default.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/matlab_on_grid.css" media="screen"/>
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
 <script type="text/javascript">
 
-function init() {
+/*function init() {
 	document.getElementById('compile_form').onsubmit=function() {
 		document.getElementById('compile_form').target = 'compile_output'; //'upload_target' is the name of the iframe
 	}
@@ -22,7 +22,7 @@ function init() {
 	}
 }
 window.onload=init;
-
+*/
 </script>
 
 </head>
@@ -32,7 +32,7 @@ window.onload=init;
 <div id="topspace">
 </div>
 <div id="toplogo">
-<img src="https://dk.migrid.org/images/site-logo.png" id="logoimage" alt="site logo"/>
+<img src="http://dk.migrid.org/images/site-logo.png" id="logoimage" alt="site logo"/>
 <span id="logotitle">
 Minimum intrusion Grid <font size="2" face="Verdana" color="red"> Matlab On Grid</font>
 </span>
@@ -41,12 +41,11 @@ Minimum intrusion Grid <font size="2" face="Verdana" color="red"> Matlab On Grid
 <div class="menublock">
 <div class="navmenu">
 <ul>
-	<li  class="jobs"><a href="compiler.html"  target="main">Compile</a></li>
+	<li  class="dashboard"><a href="welcome.html"  target="main">Start</a></li>
+	<li  class="submitjob"><a href="compiler.html"  target="main">Compile</a></li>
 	<li  class="submitjob"><a href="submit.html"  target="main"> Submit</a></li>
-	<li  class="jobman"><a href="/cgi-bin/monitor.py" target="main"> Monitor</a></li>
-
-	<li  class="dashboard"><a href="https://dk.migrid.org"> Go to MiG web site</a> </li>
-
+	<li  class="jobs"><a href="/cgi-bin/monitor.py" target="main"> Monitor</a></li>
+	<li  class="docs"><a href="/logs/" target="main"> Logs</a> </li>
 </ul>
 </div>
 </div>
@@ -62,7 +61,7 @@ Minimum intrusion Grid <font size="2" face="Verdana" color="red"> Matlab On Grid
 
 </div>
 
-<iframe src="welcome.html" name="main" height="90%%" width="100%%" style="margin:4px" frameborder="0" scrolling="yes"></iframe>
+<iframe src="welcome.html" class="contentframe" name="main" frameborder="0" scrolling="auto"></iframe>
 
 <!-- 
 

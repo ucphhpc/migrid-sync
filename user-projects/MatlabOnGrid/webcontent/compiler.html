@@ -7,9 +7,12 @@
 <link rel="stylesheet" type="text/css" href="/images/css/matlab_on_grid.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="http://dk.migrid.org/images/default.css" media="screen"/>
 
-<script type="text/javascript" src="/images/js/jquery-1.6.2.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui-1.8.16.custom.min.js"></script>
 <script type="text/javascript" src="/images/js/matlab.js"></script>
-<script type="text/javascript" src="/images/js/jquery.form.js"></script>
+<!--  <script type="text/javascript" src="/images/js/jquery.form.js"></script>  -->
+
+
 <script type="text/javascript">
 
 function init() {
@@ -29,19 +32,21 @@ window.onload=init;
 
 <body>
 
-<div id="content">
+<div id="mycontent">
 <h1>Matlab compiler</h1>
 Upload the executable matlab file. It will compiled into a binary using the Matlab compiler <b>mcc</b>. 
 After you have compiled, submit the executable using to the submit page.
 
 <form id="compile_form" method="post" enctype="multipart/form-data" action="/cgi-bin/upload_and_compile.py">
-<input name="file" id="file" size="35" type="file" /><br />
-<input id="compile_button" type="submit" name="action" value="Compile" /><br />
+<label>Matlab file : </label><input name="file" id="file" size="25" type="file" />
+<p>
+<input id="compile_button" class="compile_button" type="submit" name="action" value="Compile" /><br />
+</p>
 <!-- <iframe id="upload_target" name="upload_target" src="" style="width:0;height:0;border:0px solid #fff;"></iframe>  -->
- <iframe id="compile_output" name="compile_output" ></iframe>
 </form>
+ <iframe id="compile_output" name="compile_output" ></iframe>
 
-</div>
+<div>
 
 </body>
 </html>

@@ -1,8 +1,44 @@
-#compile_output {
-	width:50%;
-	height:70%;
+
+.contentframe {
+  background: white;
+  border: 1px solid black;
+  border-radius: 4px;
+  -moz-border-radius: 4px;
+	width:100%;
+	height:90%;
+}
+
+#mycontent {
+  background: white;
+/*  border: 1px solid black;
+  border-radius: 4px;
+  -moz-border-radius: 4px;*/
+  padding: 8px; 
+  width:90%;
+  height:90%;
+}
+
+.status_summary{
+	width:400px;
+	/*height:40%;*/
 	border:1px solid black;
 	background-color: white;
+	-moz-border-radius: 0.4em;
+	padding: 1em;
+	margin: 1em;
+	text-align: left;
+	font-size: 14;
+	
+}
+
+#compile_output {
+	width:400px;
+	height:200px;
+	border:0px solid black;
+	background-color: silver;
+	-moz-border-radius: 0.4em;
+	padding: 2em;
+	margin: 3em;
 	
 }
 
@@ -11,7 +47,7 @@
 	width:400px;
 	/*height:40%;*/
 	border:0px solid black;
-	background-color: white;
+	background-color: silver;
 	-moz-border-radius: 0.4em;
 	padding: 2em;
 	margin: 3em;
@@ -20,6 +56,18 @@
 
 
 #submit_form {
+	
+	width:400px;
+	/*height:40%;*/
+	border:1px solid black;
+	background-color: white;
+	-moz-border-radius: 0.4em;
+	padding: 2em;
+	margin: 3em;
+	text-align: right;
+	
+}
+#compile_form {
 	
 	width:400px;
 	/*height:40%;*/
@@ -66,11 +114,32 @@ input[name='num_jobs'] {
 }
 
 
+.spinner {
+background-image: url('/images/icons/spinner.gif');
+background-repeat: no-repeat;
+width:25px;
+height:25px;
+}
 
+
+.proc_table {
+text-align: left;
+width:400px;
+border:1px solid black;
+background-color: white;
+-moz-border-radius: 0.4em;
+background-color: white;
+padding: 1em;
+margin: 1em;
+
+float:left;
+}	
 
 table {
 	font-size: 12;
+/*	text-align: center;*/
 }
+
 
 label {
 	left: auto;
@@ -87,5 +156,7 @@ ul li {
   /*margin: 4px;*/
   list-style-type: none;
 }
+
+
 
 

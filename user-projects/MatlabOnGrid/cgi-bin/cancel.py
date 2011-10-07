@@ -5,6 +5,7 @@ import cgi
 import cgitb
 import time
 import gridmatlab.configuration as config
+from gridmatlab.miscfunctions import load_solver_data, update_solver_data
 import miginterface as mig
 import json
 import cPickle
@@ -21,13 +22,8 @@ def main(form, output_format="json"):
     if form.has_key("output_format"):
         output_format = form["output_format"].value
     
-    grid_proc_file = config.grid_application_exec
-    
-    job_data_dir = os.path.join(config.jobdata_directory, name)
-    solver_data_path = os.path.join(job_data_dir, config.solver_data_file)
-    data_file = open(solver_data_path)
-    data_dict = cPickle.load(data_file)
-    jobs = data_dict["timesteps"][-1]["jobs"]
+    data_dict = load_solver_data(name)
+    #jobs = data_dict["timesteps"][-1]["jobs"]
     output = ""
     try:
         os.kill(data_dict["pid"], signal.SIGTERM)
@@ -37,16 +33,25 @@ def main(form, output_format="json"):
             output += "\n Grid solver process is not running."
         else:
             output += "Error: "+str(err)
-        
-    try:
-        for j in jobs:
-            output += mig.cancel_job(j["job_id"])
+    for j in data_dict["timesteps"][-1]["jobs"]:    
+        try:
     
-    except Exception, e:
-        output += "Error : "+str(e)
-        output += str(traceback.format_exc())
+            output += str(mig.cancel_job(j["job_id"]))
+            #j["status"] = mig.job_status(j["job_id"])
+    
+        except Exception, e:
+            output += "Error : "+str(e)
+        #output += str(traceback.format_exc())
         
-        traceback.print_exc()
+        #traceback.print_exc()
+    
+    #solver_data["timesteps"][-1]["status"] = "The server process has been cancelled."
+    #data_dict["state"] = "Cancelled"
+    try : 
+        update_solver_data(name, status="The server process has been cancelled.", state="Cancelled")
+    except Exception, e :
+        output += str(e)
+    
     
     if output_format == "json":
         output_dict = {"text" : output}

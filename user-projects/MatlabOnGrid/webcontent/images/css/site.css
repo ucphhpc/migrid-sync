@@ -26,6 +26,7 @@ img {
 
 h1 {
   border: 1px solid darkgrey;
+  border-radius: 4px;
   -moz-border-radius: 4px;
   margin-top: 0;
   
@@ -102,6 +103,14 @@ table.resources {
   padding: 2px;
   text-align: left;
 }
+table.people {
+  padding: 2px;
+  text-align: left;
+}
+table.forum {
+  padding: 2px;
+  text-align: left;
+}
 table.sandboxlogintext {
   width: 80%;
 }
@@ -136,7 +145,6 @@ table.runtimeenvvars {
 
 table.monitor {
   font-size: 10px;
-  border-collapse: collapse;
 }
 table.monitorstats {}
 table.monitorjobs {
@@ -178,6 +186,7 @@ table.liveio table {
 /* Navigational menu... */
 .navmenu {
   background: #aaa url('/images/background_greypattern.png');
+  border-radius: 5px;
   -moz-border-radius: 5px;
   border: 1px solid grey;
   padding: 0;
@@ -231,6 +240,9 @@ table.liveio table {
 .navmenu ul li.shell a {
   background-image: url('/images/icons/application_osx_terminal.png');
 }
+.navmenu ul li.people a {
+  background-image: url('/images/icons/group.png');
+}
 
 .navmenu ul li.statistics a {
   background-image: url('/images/icons/statistics-icon.png');
@@ -250,6 +262,7 @@ table.liveio table {
 }
 
 .navmenu ul li a, .navsubmenu ul li a {
+  border-radius: 4px;
   -moz-border-radius: 4px;
   display: block;
   
@@ -294,6 +307,7 @@ table.liveio table {
 }
 
 .editortoolbar {
+  border-radius: 4px;
   -moz-border-radius: 4px;
   padding: 6px;
   background: #ddd;
@@ -304,6 +318,7 @@ table.liveio table {
 #migheader {
   font-size: 28px;
   border: 0;
+  border-radius: 4px;
   -moz-border-radius: 4px;
   color: #eee;
   background: #eee url('/images/background.png');
@@ -395,6 +410,7 @@ table.liveio table {
 #content {
   background: white;
   border: 1px solid black;
+  border-radius: 4px;
   -moz-border-radius: 4px;
   padding: 8px; 
 }
@@ -419,6 +435,7 @@ table.liveio table {
   font-size: 17px;
   font-weight: bold;
   color: red;
+  border-radius: 4px;
   -moz-border-radius: 4px;
 }
 
@@ -487,13 +504,27 @@ table.liveio table {
   display:none;
 }
 
+.highlight_message {
+  font-weight: bold;
+}
+
+.new_message {
+  background: url('/images/icons/new.png') left center no-repeat;
+  padding-left: 16px;
+}
+
 .scrollselect {
     height: 120px;
-    width: 600px;
+    width: 570px; /* matches 80col textarea width in default text size */
     padding: 5px;
     overflow: auto;
     background: #fff;
     border: 1px inset grey;
+}
+
+.centertext .scrollselect { 
+  /* hackaround to get the div centered, not its contents */
+  margin:0 auto;
 }
 
 /* Job manager */
@@ -526,12 +557,24 @@ table.liveio table {
   background: url('/images/icons/page_edit.png') no-repeat;
   padding-left: 18px;
 }
+.sharedfolderlink {
+  background: url('/images/icons/folder_link.png') no-repeat;
+  padding-left: 18px;
+}
+.folderlink {
+  background: url('/images/icons/folder.png') no-repeat;
+  padding-left: 18px;
+}
 .wikilink {
   background: url('/images/icons/overlays.png') no-repeat;
   padding-left: 18px;
 }
 .scmlink {
   background: url('/images/icons/calendar.png') no-repeat;
+  padding-left: 18px;
+}
+.forumlink {
+  background: url('/images/icons/comments.png') no-repeat;
   padding-left: 18px;
 }
 .monitorlink {
@@ -614,12 +657,40 @@ table.liveio table {
   background: url('/images/icons/psd.png') no-repeat;
   padding-left: 18px;
 }
+.profilesettingslink {
+  background: url('/images/icons/user.png') no-repeat;
+  padding-left: 18px;
+}
 .widgetssettingslink {
   background: url('/images/icons/application.png') no-repeat;
   padding-left: 18px;
 }
+.sshsettingslink {
+  background: url('/images/icons/computer_link.png') no-repeat;
+  padding-left: 18px;
+}
 .arcsettingslink {
   background: url('/images/icons/ng-arc.png') no-repeat;
+  padding-left: 18px;
+}
+.newpostlink {
+  background: url('/images/icons/comment.png') no-repeat;
+  padding-left: 18px;
+}
+.replylink {
+  background: url('/images/icons/comment_add.png') no-repeat;
+  padding-left: 18px;
+}
+.searchlink {
+  background: url('/images/icons/magnifier.png') no-repeat;
+  padding-left: 18px;
+}
+.refreshlink {
+  background: url('/images/icons/arrow_refresh.png') no-repeat;
+  padding-left: 18px;
+}
+.certrenewlink {
+  background: url('/images/icons/arrow_refresh.png') no-repeat;
   padding-left: 18px;
 }
 
@@ -631,4 +702,52 @@ table.liveio table {
   background: url('/images/icons/box.png') no-repeat;
   padding-left: 18px;
 }
+.sendemaillink {
+  background: url('/images/icons/email_protocol.png') no-repeat;
+  padding-left: 18px;
+}
+.sendjabberlink {
+  background: url('/images/icons/jabber_protocol.png') no-repeat;
+  padding-left: 18px;
+}
+.sendmsnlink {
+  background: url('/images/icons/msn_protocol.png') no-repeat;
+  padding-left: 18px;
+}
+.sendaollink {
+  background: url('/images/icons/aol_protocol.png') no-repeat;
+  padding-left: 18px;
+}
+.sendyahoolink {
+  background: url('/images/icons/yahoo_protocol.png') no-repeat;
+  padding-left: 18px;
+}
+.sendicqlink {
+  background: url('/images/icons/icq_protocol.png') no-repeat;
+  padding-left: 18px;
+}
+.public_profile{
+  float: left;
+  border: 1px inset blue;
+  padding: 20px;
+}
+.public_image{
+  float: right;
+  border: 1px inset grey;
+}
+.public_frame{
+  width: 90%;
+}
 
+/* IMPORTANT: these overrides must come after .*link settings to work */
+.owner {
+  border: 1px solid gold;
+  border-radius: 4px;
+  -moz-border-radius: 4px;
+}
+.member {
+  background-color: none;
+}
+.public {
+  background-color: silver;
+}

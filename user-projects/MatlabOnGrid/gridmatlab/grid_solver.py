@@ -6,9 +6,22 @@ import miginterface as mig
 import time, logging, os, sys, shutil
 import cPickle
 import configuration as config
-from miscfunctions import log 
+from miscfunctions import log, load_solver_data, update_solver_data, save_solver_data
 import subprocess
 
+
+# process states
+STATE_RUNNING = "Running"
+STATE_CANCELLED = "Cancelled"
+STATE_FINISHED = "Finished"
+STATE_FAILED = "Failed"
+
+
+def update(status,state):
+    update_solver_data(proc_name, status=status, state=state)
+
+#def save(status="",state=""):
+#    u_solver_data(proc_name, status, state)
 
 def create_grid_execution_dir(name):
     if os.path.exists(os.path.join(config.jobdata_directory, name)):
@@ -33,31 +46,6 @@ def prepare_execution(name, files):
     os.chdir(exec_dir) # jump to the jobs own execution dir
 
 
-def dump_data(data, filename):
-    fh = open(filename, "w")
-    cPickle.dump(data, fh)
-    fh.close()
-
-
-def update_solver_data(utility_file="", status=""):
-    """
-    Write the current status to the status file. 
-    """
-    timestep_data = solver_data["timesteps"][-1] # get the last element
-        
-    for job in timestep_data["jobs"]: #= mig.jobs_info(job_ids)
-        job["status"] = mig.job_status(job["job_id"])
-    
-    if utility_file:
-        timestep_data["utility_file"] = utility_file
-    
-    if status:
-        timestep_data["status"] = status
-   
-    global solver_data_file
-    dump_data(solver_data, solver_data_file)
-
-
 def submit_job(exec_sh, exec_bin, files, output, argstr):
     """
     start a grid job that runs the matlab code
@@ -65,7 +53,7 @@ def submit_job(exec_sh, exec_bin, files, output, argstr):
 
     matlab_RTE = config.matlab_rte
     execute_cmd = "./%s %s %s" % (exec_sh, matlab_RTE, argstr)
-    job_id = mig.create_job(execute_cmd, executables=[exec_sh, exec_bin], input_files=files, output_files=output, resource_specifications={"VGRID":"DIKU", "RUNTIMEENVIRONMENT":"MATLAB_MCR", "MEMORY":"2000"})
+    job_id = mig.create_job(execute_cmd, executables=[exec_sh, exec_bin], input_files=files, output_files=output, resource_specifications=config.mig_specifications)
     
     return job_id
     
@@ -75,11 +63,15 @@ def submit_jobs(exec_sh, exec_bin, input_files, numjobs, timestep):
     """
     
     job_nr = 0
-    job_ids = []
     jobs = []
     print input_files
     for i in range(1, numjobs+1):
-        output = ["value_rent_index_job"+str(i)+".txt", "policy_rent_index_job"+str(i)+".txt"]
+        
+        # these names must match the ones in the matlab executable
+        output1 = "value_rent_index_job"+str(i)+".txt"
+        output2 = "policy_rent_index_job"+str(i)+".txt"
+        
+        output = [output1, output2]
         
         jid = submit_job(exec_sh, exec_bin, input_files, output, argstr="%s %s" % (i, timestep))
         job = {"job_id" : jid, "result_files" : output, "status":"submitted", "worker_index": i }
@@ -116,7 +108,7 @@ def download_result(job):
 # monitor jobs
 
 def monitor_timestep(jobs):
-    SLEEP_INTERVAL = 5
+  
 
     while True:
         finished = [] 
@@ -124,15 +116,15 @@ def monitor_timestep(jobs):
             
             if mig.job_finished(j["job_id"]):
                 if not download_result(j):
-                    update_solver_data(status="Error: Could not find result")
+                    update(status="Error: Could not find result", state=STATE_FAILED)
                     return 1 # error
                 finished.append(j)
             
-        update_solver_data(status="waiting for jobs")
+        update(status="waiting for jobs", state=STATE_RUNNING)
         if len(jobs) == len(finished):
-            update_solver_data(status="iteration finished")
+            update(status="iteration finished", state=STATE_RUNNING)
             return 0 # success
-        time.sleep(SLEEP_INTERVAL)
+        time.sleep(config.POLLING_INTERVAL)
     
        
 def postprocess():
@@ -153,18 +145,28 @@ def main_solver(matlab_sh, matlab_bin, files, number_of_jobs, timesteps=80):
     The main solver file start grid jobs for every timestep.
     """
 
-    final_step = 20
+    final_step = config.FINAL_TIMESTEP
+    solver_data = {}
     solver_data["timesteps"] = []
+    solver_data["pid"] = os.getpid()
+    solver_data["name"] = proc_name
+    solver_data["total_timesteps"] = timesteps
+    solver_data["grid_enabled"] = grid_enabled
+    
+    save_solver_data(proc_name, solver_data)
     for t in range(timesteps, final_step, -1): # decending from timesteps         print "starting new time step: ",t
         global timestep
         timestep = str(t)#solver_data["timestep"] = t
-        solver_data["pid"] = os.getpid()
+        
         
         grid_jobs = submit_jobs(matlab_sh, matlab_bin, files, number_of_jobs, timestep)
         timestep_data = {"jobs" : grid_jobs, "timestep" : timestep}
+        solver_data = load_solver_data(proc_name)
         solver_data["timesteps"].append(timestep_data)
-       
-        update_solver_data(status="starting iteration")
+        
+        save_solver_data(proc_name, solver_data)
+        
+        update(status="starting iteration", state=STATE_RUNNING)
         exit_code = monitor_timestep(grid_jobs) # returns when jobs are done
         
         if exit_code:
@@ -175,7 +177,7 @@ def main_solver(matlab_sh, matlab_bin, files, number_of_jobs, timesteps=80):
         
         log(timestep+" done. starting next")
         
-    update_solver_data(status="grid execution completed")
+    update(status="grid execution completed", state=STATE_FINISHED)
     
     clean_up(files)
     return
@@ -187,12 +189,11 @@ matlab_files = config.upload_directory
 #mig.debug_mode_on()
 #mig.local_mode_on()
 
-solver_data = {}
-solver_data_file = config.solver_data_file
-INIT_TIMESTEP = config.INIT_TIMESTEP
-timestep = str(INIT_TIMESTEP)
+timestep = str(config.INIT_TIMESTEP)
 input_files = []
 num_jobs = 2
+proc_name = None
+grid_enabled = True
 
 if len(sys.argv) > 1:
     proc_name = sys.argv[1]
@@ -207,6 +208,8 @@ if len(sys.argv) > 1:
         mig.local_mode_on()
         if not os.getenv("MATLAB_MCR"):
             os.putenv("MATLAB_MCR", config.MCR_path)
+            grid_enabled = False
+        print "Local mode!"
         
     if "-i" in sys.argv:
         pos = sys.argv.index("-i")
@@ -222,4 +225,4 @@ input_files.append(matlab_exec_bin)
 prepare_execution(proc_name, input_files) # copy all files to execution directory
 files = [os.path.basename(f) for f in input_files]
 
-main_solver(os.path.basename(matlab_exec_sh), os.path.basename(matlab_exec_bin), files, num_jobs, INIT_TIMESTEP)
+main_solver(os.path.basename(matlab_exec_sh), os.path.basename(matlab_exec_bin), files, num_jobs, config.INIT_TIMESTEP)

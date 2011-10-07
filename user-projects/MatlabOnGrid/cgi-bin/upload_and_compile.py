@@ -27,12 +27,17 @@ def main(form):
         returncode, msg = upload_file(file_item, path)
     
         if returncode == 0:
-            msg = compile_file(path, config.matlab_binary)
+            msg, mcc_returncode = compile_file(path, config.matlab_binary)
             clean_dir(config.upload_directory)
-
+            
+            if mcc_returncode == 0:
+                msg += "<p><b>Compilation successful.</b></p>" 
+            else:
+                msg += "<p><b>Compilation failed.</b></p>"
+            
     else:
         msg = "No file found."
-        
+    
     head = "<html><head></head>"
     text = "<body>%s</body></html>" % msg
     print "Content-type: text/html"
@@ -45,7 +50,7 @@ def clean_dir(path):
     files = os.listdir(path)
     for f in files:
         file_path = os.path.join(path, f)
-        if os.path.exists(file_path):
+        if os.path.exists(file_path) and os.path.isfile(file_path):
             os.remove(file_path)
 
 
@@ -59,9 +64,10 @@ def compile_file(path, output_path):
     log(out)
     if err: 
         log("Error message: "+err)
-    output = " ".join([out,err, str(proc.returncode)])
-    
-    return output
+    output = " ".join([out,err])
+
+        
+    return output, proc.returncode
     
 
 main(cgi.FieldStorage())

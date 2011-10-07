@@ -5,7 +5,8 @@ import cgi
 import cgitb
 import time
 import gridmatlab.configuration as config
-from gridmatlab.miscfunctions import upload_file
+from gridmatlab.miscfunctions import upload_file, log, load_solver_data
+
 
 cgitb.enable()
 
@@ -25,7 +26,8 @@ def create_unique_name(name):
             
     
 def main(form):
-    num_jobs = "10" # default
+    log(form)
+    num_jobs = "2" # default
     local_mode = False
     local_mode_flag = ""
     name = ""
@@ -57,24 +59,33 @@ def main(form):
      
     if local_mode:
         local_mode_flag = "-l"
+        log("local mode!")
     
     files.append(config.matlab_binary) # get the bin file launched by the bash file
     
     cmd = "python %s %s %s %s -n %s %s -i %s" % (grid_solver, name, config.matlab_executable, config.matlab_binary , num_jobs, local_mode_flag, " ".join(files))#" ".join(index_files))
     
+    log("starting : "+cmd)
     
-    log_file = config.log_file
-    out_file = open(log_file, "w")
-    proc = subprocess.Popen(cmd, cwd=work_dir, shell=True, stdout=out_file, stderr=out_file, close_fds=True)
+    output_file = config.server_proc_output
+    output_handle = open(output_file, "a")
+    proc = subprocess.Popen(cmd, cwd=work_dir, shell=True, stdout=output_handle, stderr=output_handle, close_fds=True)
     
-    time.sleep(2) # sleep for a minute while process initializes 
-    return_code = proc.poll() 
+    time.sleep(5) # sleep for a short period while process starts 
+    return_code = proc.poll()  # check if it terminated already
     output = ""
     if return_code != None: 
-        output += "\nProcess terminated. Return code %i. \n " % return_code
-    
-    monitor_link = "<a target='_blank' href='/cgi-bin/monitor.py?solver_name=%s'>%s</a>" % (name, name)
-    output = "Process started. Click to go to grid process monitor: "+monitor_link
+        output = "\nProcess terminated. Return code %i. \n " % return_code
+    else : 
+        
+        # wait for the monitor to get ready
+        solver_data_file = os.path.join(config.jobdata_directory, name, config.solver_data_file)
+        while not os.path.exists(solver_data_file): 
+            time.sleep(2)
+            
+        #monitor_link = "<a target='_blank' href='/cgi-bin/monitor.py?solver_name=%s'>%s</a>" % (name, name)
+        monitor_link = "<a target='main' href='/cgi-bin/monitor.py?solver_name=%s'>%s</a>" % (name, name)
+        output = "Process started. Click to go to grid process monitor: "+monitor_link
     
     head = "<html><head></head>"
     text = "<body>%s</body>" % output
