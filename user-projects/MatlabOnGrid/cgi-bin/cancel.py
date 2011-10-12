@@ -33,9 +33,11 @@ def main(form, output_format="json"):
             output += "\n Grid solver process is not running."
         else:
             output += "Error: "+str(err)
-    for j in data_dict["timesteps"][-1]["jobs"]:    
-        try:
-    
+    for j in data_dict["timesteps"][-1]["jobs"]:
+        if data_dict.has_key("grid_enabled") and not data_dict["grid_enabled"]:
+            mig.local_mode_on()    
+        
+        try:    
             output += str(mig.cancel_job(j["job_id"]))
             #j["status"] = mig.job_status(j["job_id"])
     
