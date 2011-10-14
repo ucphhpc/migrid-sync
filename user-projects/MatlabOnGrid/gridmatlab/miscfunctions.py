@@ -1,6 +1,7 @@
 import configuration as config
 import logging, time, cPickle, os
 import miginterface as mig
+import migerror
 import fcntl
 
 
@@ -50,12 +51,24 @@ def update_solver_data(name, status="", state=""):
     solver_data = cPickle.load(data_file)
     data_file.close()
     
-    
+    retries = 3
     if solver_data.has_key("grid_enabled") and not solver_data["grid_enabled"]:
         mig.local_mode_on()
     for job in solver_data["timesteps"][-1]["jobs"]: # Go through the jobs in the current time step (indexed last: -1)
-        job_info = mig.job_info(job["job_id"])
+        # there seems to be incidents where MiG does not recognize the job id even though it should. 
+        # in such a case we let it pass unless the error is consistent across 3 retries. 
+        if not retries:  
+            break
+        
+        try :
+        
+            job_info = mig.job_info(job["job_id"])
 
+        except migerror.MigUnknownJobIdError, e:
+            log(str(e))
+            retries -= 1
+            continue
+        
         for (key, value) in job_info.items():
             job_info.pop(key)
             job_info[key.lower()] = value

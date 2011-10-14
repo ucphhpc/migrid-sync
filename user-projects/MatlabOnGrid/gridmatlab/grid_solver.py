@@ -3,6 +3,7 @@ matlab on grid
 """
 
 import miginterface as mig
+import migerror
 import time, logging, os, sys, shutil
 import cPickle
 import configuration as config
@@ -109,16 +110,25 @@ def download_result(job):
 
 def monitor_timestep(jobs):
   
-
     while True:
         finished = [] 
         for j in jobs:
             
-            if mig.job_finished(j["job_id"]):
+           
+            try: 
+                j_done = mig.job_finished(j["job_id"])
+            
+            except migerror.MigInterfaceError, e:
+                log(str(e))
+                j_done = False
+                
+            if j_done:
                 if not download_result(j):
                     update(status="Error: Could not find result", state=STATE_FAILED)
                     return 1 # error
                 finished.append(j)
+            
+                
             
         update(status="waiting for jobs", state=STATE_RUNNING)
         if len(jobs) == len(finished):
@@ -171,16 +181,15 @@ def main_solver(matlab_sh, matlab_bin, files, number_of_jobs, timesteps=80):
         
         if exit_code:
             print "Monitor error."
-            return
+            return 1
         
         postprocess()
         
         log(timestep+" done. starting next")
         
-    update(status="grid execution completed", state=STATE_FINISHED)
     
     clean_up(files)
-    return
+    return 0
     
 
 matlab_exec_sh = config.matlab_executable
@@ -225,4 +234,16 @@ input_files.append(matlab_exec_bin)
 prepare_execution(proc_name, input_files) # copy all files to execution directory
 files = [os.path.basename(f) for f in input_files]
 
-main_solver(os.path.basename(matlab_exec_sh), os.path.basename(matlab_exec_bin), files, num_jobs, config.INIT_TIMESTEP)
+try :
+
+    exit_code = main_solver(os.path.basename(matlab_exec_sh), os.path.basename(matlab_exec_bin), files, num_jobs, config.INIT_TIMESTEP)
+
+except Exception, e:
+    log(str(e))
+    exit_code = 2
+    
+if not exit_code:
+    update(state=STATE_FAILED, status="An error execution occurred.")
+else :
+    update(status="grid execution completed", state=STATE_FINISHED)
+    
