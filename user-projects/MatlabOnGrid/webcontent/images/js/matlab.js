@@ -48,13 +48,44 @@ function delete_process(name){
 	 		}
 	  }
 	
-	
+
+function executable_ready(){
+	var url = "/cgi-bin/executable_ready.py";
+    var query = {'output_format':'json'};
+    $.getJSON(url, query, function(jsonRes, status) {
+    //alert(jsonRes.length);
+      //for (var i = 0; i < jsonRes.length; i++) {
+      //if(jsonRes[i] == "text"){
+    	
+    	 
+        //alert(jsonRes[0].text);
+    	
+    	if(jsonRes[0].text == "1"){
+    		$("#submit_status").append("A compiled matlab program is ready to be submitted.");
+    	} 
+    	else{
+    		$("#submit_status").css("color","red");
+    		$("#submit_status").append("Please compile a matlab file first.");
+    		
+    	}	
+    	
+    	
+      //     }
+      //}
+         
+	//window.location.reload();
+
+    });
+}
+
+
 
 
 $(document).ready(function(){
 	
 	$("#compile_output").hide();
 	$("#submit_output").hide();
+	
 	
 	$( "#info_dialog").dialog({
 		autoOpen: false,

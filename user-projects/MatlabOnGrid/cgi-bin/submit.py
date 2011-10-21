@@ -28,6 +28,9 @@ def create_unique_name(name):
 def main(form):
     log(form)
     num_jobs = "2" # default
+    start_timestep = 81
+    end_timestep = 1
+    
     local_mode = False
     local_mode_flag = ""
     name = ""
@@ -42,6 +45,14 @@ def main(form):
     
     if int(num_jobs) > 100 or not int(num_jobs): # max 100 jobs
         return False
+    
+    
+    if form.has_key("start_timestep"):
+        start_timestep = form["start_timestep"].value
+    
+    if form.has_key("end_timestep"):
+        end_timestep = form["end_timestep"].value
+    
     
     if form.has_key("local_mode"):
         local_mode = form["local_mode"].value
@@ -63,7 +74,7 @@ def main(form):
     
     files.append(config.matlab_binary) # get the bin file launched by the bash file
     
-    cmd = "python %s %s %s %s -n %s %s -i %s" % (grid_solver, name, config.matlab_executable, config.matlab_binary , num_jobs, local_mode_flag, " ".join(files))#" ".join(index_files))
+    cmd = "python %s %s %s %s -n %s %s -t %s %s -i %s" % (grid_solver, name, config.matlab_executable, config.matlab_binary , num_jobs, local_mode_flag, start_timestep, end_timestep," ".join(files))#" ".join(index_files))
     
     log("starting : "+cmd)
     
@@ -95,6 +106,9 @@ def main(form):
     print head
     print text
     
+    
+    
+
 main(cgi.FieldStorage())
     
     

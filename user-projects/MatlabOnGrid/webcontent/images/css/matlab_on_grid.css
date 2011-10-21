@@ -43,6 +43,11 @@
 }
 
 
+#submit_status{
+	font-style: italic;
+	/*color : red;*/	
+}
+
 #submit_output {
 	width:400px;
 	/*height:40%;*/
@@ -94,7 +99,11 @@ input[name='num_jobs'] {
 	text-align: right;
 }
 
-
+input[name='start_timestep'], input[name='end_timestep'] {
+	
+	width : 50px;
+	text-align: right;
+}
 
 #info_dialog {
 	/*width:80%;

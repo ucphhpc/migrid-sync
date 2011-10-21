@@ -49,13 +49,22 @@ function init() {
 
 	document.getElementById("name").value = defaultName();
 
-
+	document.getElementById("start_timestep").value = 81;
+	document.getElementById("end_timestep").value = 1;
+	
+	
 }
 window.onload=init;
 
 
 
 
+$(document).ready(function(){
+	
+		executable_ready();
+
+
+});
 </script>
 
 </head>
@@ -69,6 +78,10 @@ window.onload=init;
 <!-- <input name="file" id="file" size="27" type="file" /><br /> -->
 <label>Name : </label><input id="name" name="process_name" type="text"  /> <br><br>
 <label>Number of jobs : </label><input name="num_jobs" type="text" /> </br> </br>
+<label>Start time step : </label><input id="start_timestep" name="start_timestep" type="text"/> <br><br>
+<label>End time step : </label><input id="end_timestep" name="end_timestep" type="text"/> <br><br>
+
+
 Local mode <input name="local_mode" type="checkbox"/> <div id='info_local'>?</div>
 <br><br>
 
@@ -81,6 +94,8 @@ Local mode <input name="local_mode" type="checkbox"/> <div id='info_local'>?</di
 <br>
 <input type="submit" name="action" value="Start solver" />
 </p>
+
+<div id="submit_status"></div>
 
 
 </form>

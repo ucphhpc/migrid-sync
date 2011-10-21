@@ -4,7 +4,6 @@ import miginterface as mig
 import migerror
 import fcntl
 
-
         
 def read_pickle_file(path):
     f = open(path)
@@ -12,6 +11,10 @@ def read_pickle_file(path):
     f.close()
     return data
 
+
+def check_submit_file():
+    
+    return os.path.exists(config.matlab_binary) and os.path.exists(config.matlab_executable) 
 
 
 def upload_file(file_item, path):
@@ -112,7 +115,6 @@ def load_solver_data(name):
     data_file.close()
     return data_dict
     
-    
 
 def log(message):
     """
@@ -122,10 +124,20 @@ def log(message):
     """
     LOG_FILE = config.log_file
     
-    logger = logging.getLogger(time.asctime())
-    print_format = '%(asctime)s %(message)s'
-
+    lf = open(LOG_FILE, "a") 
+    fcntl.flock(lf, fcntl.LOCK_EX)
+    #logger = logging.getLogger(time.asctime())
+    #logger = logging.getLogger("matlabongridlogger")
     
-    logging.basicConfig(level=logging.DEBUG, filename=LOG_FILE, format=print_format)
+    #logger = logging.getLogger()
+    #print_format = '%s %s' (time.asctime(), )
+    log_entry = '%s %s' % (time.asctime(), message)
+    lf.write(log_entry+"\n")
+    #logging.basicConfig(filename=LOG_FILE, format=print_format, level=logging.DEBUG)
     
-    logger.debug(message)
+    #logger.debug(message)
+    
+    fcntl.flock(lf, fcntl.LOCK_UN)
+    
+    lf.close()
+    

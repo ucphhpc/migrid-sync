@@ -9,6 +9,7 @@ import cPickle
 import configuration as config
 from miscfunctions import log, load_solver_data, update_solver_data, save_solver_data
 import subprocess
+import random
 
 
 # process states
@@ -54,6 +55,12 @@ def submit_job(exec_sh, exec_bin, files, output, argstr):
 
     matlab_RTE = config.matlab_rte
     execute_cmd = "./%s %s %s" % (exec_sh, matlab_RTE, argstr)
+    print "grid_enabled", grid_enabled 
+    if not grid_enabled: # this is strictly for testing. A random job time added  to simulate grid behaviour.
+        execute_cmd += " ; sleep %i" % random.randint(0,10)  
+    
+    
+    print execute_cmd
     job_id = mig.create_job(execute_cmd, executables=[exec_sh, exec_bin], input_files=files, output_files=output, resource_specifications=config.mig_specifications)
     
     return job_id
@@ -82,16 +89,17 @@ def submit_jobs(exec_sh, exec_bin, input_files, numjobs, timestep):
     return jobs
     
     
-def clean_up(files):
+def clean_up_mig_home(files):
     """
     delete the files
     """
     for f in [os.path.basename(f) for f in files]:
         mig.remove(f)
     
+def clean_upload_dir():
     uploaded_files = os.listdir(config.upload_directory)
     for f in uploaded_files:
-        os.remove(os.path.join(config.upload_directory, f))
+        os.remove(os.path.join(config.upload_directory, f)) # the pre compilation uploaded file. 
 
 
 def download_result(job):
@@ -101,20 +109,30 @@ def download_result(job):
         if mig.path_exists(f):
             dl = mig.get_file(f)
             dl_files.append(dl)
-        else:
-            return []
+        #else:
+        #    return []
             
     return dl_files
+
+
+def verify_job_output(output,job):
+    for expected_output_file in job["result_files"]:
+        if not expected_output_file in output:
+            log("Could not get result file %s for job %s" % (expected_output_file, str(job)))
+            return False
+    return True
+
 
 # monitor jobs
 
 def monitor_timestep(jobs):
-  
+      
+    finished_jobs = []
     while True:
-        finished = [] 
+     
         for j in jobs:
-            
-           
+            if j in finished_jobs:
+                continue
             try: 
                 j_done = mig.job_finished(j["job_id"])
             
@@ -123,15 +141,15 @@ def monitor_timestep(jobs):
                 j_done = False
                 
             if j_done:
-                if not download_result(j):
-                    update(status="Error: Could not find result", state=STATE_FAILED)
-                    return 1 # error
-                finished.append(j)
-            
-                
+                output_files = download_result(j)
+                if verify_job_output(output_files, j):
+                    finished_jobs.append(j)            
+                    clean_up_mig_home(output_files)
+                else:
+                    return 1                    
             
         update(status="waiting for jobs", state=STATE_RUNNING)
-        if len(jobs) == len(finished):
+        if len(jobs) == len(finished_jobs):
             update(status="iteration finished", state=STATE_RUNNING)
             return 0 # success
         time.sleep(config.POLLING_INTERVAL)
@@ -150,22 +168,23 @@ def postprocess():
     log(" ".join([out, err]))
 
 
-def main_solver(matlab_sh, matlab_bin, files, number_of_jobs, timesteps=80):
+def main_solver(matlab_sh, matlab_bin, files, number_of_jobs, first_timestep, last_timestep):
     """
     The main solver file start grid jobs for every timestep.
     """
 
-    final_step = config.FINAL_TIMESTEP
+    #final_step = config.FINAL_TIMESTEP
     solver_data = {}
     solver_data["timesteps"] = []
     solver_data["pid"] = os.getpid()
     solver_data["name"] = proc_name
-    solver_data["total_timesteps"] = timesteps
+    solver_data["start_timestep"] = start_timestep
     solver_data["grid_enabled"] = grid_enabled
     
     save_solver_data(proc_name, solver_data)
-    for t in range(timesteps, final_step, -1): # decending from timesteps         print "starting new time step: ",t
-        global timestep
+    for t in range(first_timestep, last_timestep-1, -1): # decending from timesteps         
+        print "starting new time step: ",t
+    #    global timestep
         timestep = str(t)#solver_data["timestep"] = t
         
         
@@ -177,32 +196,37 @@ def main_solver(matlab_sh, matlab_bin, files, number_of_jobs, timesteps=80):
         save_solver_data(proc_name, solver_data)
         
         update(status="starting iteration", state=STATE_RUNNING)
+        log("entering monitor")
         exit_code = monitor_timestep(grid_jobs) # returns when jobs are done
         
         if exit_code:
             print "Monitor error."
+            #update(status="Error: Could not find result", state=STATE_FAILED)
             return 1
         
         postprocess()
         
         log(timestep+" done. starting next")
         
-    
-    clean_up(files)
+        
+    clean_up_mig_home(files)
+    clean_upload_dir()
     return 0
     
 
 matlab_exec_sh = config.matlab_executable
 matlab_files = config.upload_directory
 
-#mig.debug_mode_on()
+#mig.debug_mode_off()
 #mig.local_mode_on()
 
-timestep = str(config.INIT_TIMESTEP)
+
 input_files = []
 num_jobs = 2
 proc_name = None
 grid_enabled = True
+start_timestep = str(config.INIT_TIMESTEP)
+end_timestep = str(config.FINAL_TIMESTEP)
 
 if len(sys.argv) > 1:
     proc_name = sys.argv[1]
@@ -220,6 +244,11 @@ if len(sys.argv) > 1:
             grid_enabled = False
         print "Local mode!"
         
+    if "-t" in sys.argv:
+        pos = sys.argv.index("-t")
+        start_timestep = int(sys.argv[pos+1])
+        end_timestep = int(sys.argv[pos+2])
+    
     if "-i" in sys.argv:
         pos = sys.argv.index("-i")
         input_files.extend(sys.argv[pos+1:])
@@ -234,15 +263,15 @@ input_files.append(matlab_exec_bin)
 prepare_execution(proc_name, input_files) # copy all files to execution directory
 files = [os.path.basename(f) for f in input_files]
 
-try :
+#try :
+#    log("Starting main solver")
+exit_code = main_solver(os.path.basename(matlab_exec_sh), os.path.basename(matlab_exec_bin), files, num_jobs, start_timestep, end_timestep)
 
-    exit_code = main_solver(os.path.basename(matlab_exec_sh), os.path.basename(matlab_exec_bin), files, num_jobs, config.INIT_TIMESTEP)
-
-except Exception, e:
-    log(str(e))
-    exit_code = 2
+#except Exception, e:
+#log(str(e))
+#exit_code = 2
     
-if not exit_code:
+if exit_code != 0:
     update(state=STATE_FAILED, status="An error execution occurred.")
 else :
     update(status="grid execution completed", state=STATE_FINISHED)

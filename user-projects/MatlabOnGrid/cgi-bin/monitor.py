@@ -57,11 +57,20 @@ def main(form):
     print text
 
 
+def sort_by_date(files):
+    file_time = []
+    for f in files: 
+        file_time.append((os.stat(os.path.join(config.jobdata_directory ,f)).st_mtime, f))
+    file_time.sort()
+    sorted_files = [ft[1] for ft in file_time]
+    return sorted_files
+    
 def create_process_list():
     
-    solvers = os.listdir(config.jobdata_directory)
-    solvers.remove(".svn")
-    solvers.sort()
+    solver_dirs = os.listdir(config.jobdata_directory)
+    solver_dirs.remove(".svn")
+    solvers = sort_by_date(solver_dirs)
+    
     proc_table = "<table class='proc_table'><th>Name</th><th></th>"
     for name in solvers:
         #proc_table += "<tr><td><a href='/cgi-bin/monitor.py?solver_name=%s'>%s</a></td> <td><button id='delete_process' filename='%s' > Delete</button></td></tr>" % (name, name, name)
