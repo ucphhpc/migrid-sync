@@ -11,9 +11,9 @@ def generate_mrsl(mrsl_file_path, exec_commands, input_files="", output_files=""
     mrsl.append("::EXECUTE::\n")
     if isinstance(exec_commands, list):
         for cmd in exec_commands:
-            mrsl.append(cmd+";\n")
+            mrsl.append(cmd+"\n")
     else:
-        mrsl.append(exec_commands+";\n")
+        mrsl.append(exec_commands+"\n")
     
     if input_files != "":
         mrsl.append("\n::INPUTFILES::"+"\n")

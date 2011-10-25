@@ -472,6 +472,11 @@ def __job_process(mrsl_file, working_dir):
     job_id = str(os.getpid())
     
     status_files_directory = os.path.join(MIG_HOME, "job_output", job_id)
+    
+    # if the folder already exists, we assume that the old one is no longer needed
+    if os.path.exists(status_files_directory):
+        print "Found an already existing job dir %s. Deleting..." % status_files_directory
+        shutil.rmtree(status_files_directory)
     os.makedirs(status_files_directory)
     
     stdout_path = os.path.join(status_files_directory, job_id+".stdout")

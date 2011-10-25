@@ -645,14 +645,17 @@ def __debug(message):
     
     message - a debug message.
     """
-    logger = logging.getLogger(time.asctime())
+    #logger = logging.getLogger(time.asctime())
+    logger = logging.getLogger(__name__)
+    
     if DEBUG_MODE:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.DEBUG, filename=LOG_FILE)
     
+    #message += "log file : "+LOG_FILE
     logger.debug(message)
-
+    #logging.debug(message)
 
 def __check_configuration():
     
