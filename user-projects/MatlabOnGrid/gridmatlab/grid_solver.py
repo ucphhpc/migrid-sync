@@ -155,7 +155,7 @@ def monitor_timestep(jobs):
         time.sleep(config.POLLING_INTERVAL)
     
        
-def postprocess():
+def postprocess(jobs, timestep):
     """
     run this code between each iterations. Merges the results using matlab code.
     """
@@ -166,6 +166,18 @@ def postprocess():
     out, err = proc.communicate()
     #if err:
     log(" ".join([out, err]))
+    
+    
+    # move the files to the results dir to clean up our working directory
+    for j in jobs:
+        for f in j["result_files"]:
+            src = os.path.join(os.getcwd(), f)
+            new_name = "t_" + timestep + "_" + f
+            dst = os.path.join(os.getcwd(), config.results_dir_name, new_name)
+            if os.path.exists(src):
+                shutil.move(src, dst)
+            else:
+                log("Error: could not find result file %s after post processing." % src)
 
 
 def main_solver(matlab_sh, matlab_bin, files, number_of_jobs, first_timestep, last_timestep):
@@ -180,6 +192,9 @@ def main_solver(matlab_sh, matlab_bin, files, number_of_jobs, first_timestep, la
     solver_data["name"] = proc_name
     solver_data["start_timestep"] = start_timestep
     solver_data["grid_enabled"] = grid_enabled
+    
+    os.mkdir(config.results_dir_name) # for storing old result
+    
     
     save_solver_data(proc_name, solver_data)
     for t in range(first_timestep, last_timestep-1, -1): # decending from timesteps         
@@ -204,7 +219,7 @@ def main_solver(matlab_sh, matlab_bin, files, number_of_jobs, first_timestep, la
             #update(status="Error: Could not find result", state=STATE_FAILED)
             return 1
         
-        postprocess()
+        postprocess(grid_jobs, timestep)
         
         log(timestep+" done. starting next")
         

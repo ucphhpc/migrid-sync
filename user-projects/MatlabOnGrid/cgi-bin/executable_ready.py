@@ -24,10 +24,16 @@ def main(form, output_format="json"):
     
     
     files_exist = os.path.exists(config.matlab_executable) and os.path.exists(config.matlab_binary)
-    output = str(int(files_exist)) 
+    ready = str(int(files_exist)) 
+    
+    output = {"ready" : ready}
+    
+    if ready :
+        modified = time.ctime(os.stat(config.matlab_binary).st_mtime)
+        output["modified"] = modified
     
     if output_format == "json":
-        output_dict = {"text" : output}
+        output_dict = output
         #output_dict["text"] = output
         print "Content-type: application/json"
         print 

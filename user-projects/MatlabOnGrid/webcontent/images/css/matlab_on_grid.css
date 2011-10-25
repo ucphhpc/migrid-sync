@@ -113,7 +113,7 @@ input[name='start_timestep'], input[name='end_timestep'] {
 	opacity: 0.5;
 }
 
-#info_local {
+#info_icon {
 	font: bold;
 	color : red;
 	display: inline; 

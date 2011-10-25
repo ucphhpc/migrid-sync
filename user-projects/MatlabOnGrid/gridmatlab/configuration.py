@@ -8,8 +8,9 @@ jobdata_directory = os.path.join(file_directory, "job_data")
 upload_directory = os.path.join(file_directory, "upload")
 compile_directory = os.path.join(file_directory, "compiled")
 logs_directory = os.path.join(root_directory, "logs")
-working_dir = "gridmatlab"
 
+working_dir = "gridmatlab"
+results_dir_name = "old_result_files_dir"
 
 # WEB URLS
 job_files_url = "/jobdata/"

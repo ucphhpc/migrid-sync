@@ -60,8 +60,8 @@ function executable_ready(){
     	 
         //alert(jsonRes[0].text);
     	
-    	if(jsonRes[0].text == "1"){
-    		$("#submit_status").append("A compiled matlab program is ready to be submitted.");
+    	if(jsonRes[0].ready == "1"){
+    		$("#submit_status").append("A compiled matlab program is ready to be submitted. compiled on "+jsonRes[0].modified+".");
     	} 
     	else{
     		$("#submit_status").css("color","red");
@@ -134,13 +134,10 @@ $(document).ready(function(){
 	});
 	*/
 	
-	$(".test").click(function(){
-		alert("virker");
-	})
 	
-	$("#info_local").hover(function(e){
+	$("#info_icon").hover(function(e){
 		
-		$("#info_dialog").html("Excute the grid jobs only on the server. This ensures faster response times for debugging. Use only for testing and with small jobs.");
+		$("#info_dialog").html("Execute the grid jobs only on the server. This ensures faster response times for debugging. Use only for testing and with small jobs.");
 		$("#info_dialog").dialog( "option" , "position" , [e.pageX, e.pageY]);
 		$("#info_dialog").dialog( "option" , "closeText" , "");
 		
