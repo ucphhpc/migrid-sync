@@ -1,0 +1,51 @@
+--- /usr/share/moin/config/wikiconfig.py	2011-10-26 15:23:06.000000000 +0200
++++ /usr/share/moin/config/wikiconfig.py.MiG	2011-10-26 15:23:47.000000000 +0200
+@@ -45,7 +45,9 @@
+     # If that's not true, feel free to just set instance_dir to the real path
+     # where data/ and underlay/ is located:
+     #instance_dir = '/where/ever/your/instance/is'
+-    instance_dir = wikiconfig_dir
++    # Our MiG VGrid wiki conf is saved in instance_dir/etc 
++    #instance_dir = wikiconfig_dir
++    instance_dir = os.path.dirname(wikiconfig_dir)
+ 
+     # Where your own wiki pages are (make regular backups of this directory):
+     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
+@@ -60,6 +62,7 @@
+     # use this setting and it will automatically work.
+     # If you run your wiki script at /mywiki, you need to use this:
+     #url_prefix_static = '/mywiki' + url_prefix_static
++    url_prefix_static = '/wiki'
+ 
+ 
+     # Wiki identity ----------------------------------------------------
+@@ -78,7 +81,7 @@
+     #page_front_page = u"MyStartingPage"
+ 
+     # b) if wiki content is maintained in many languages
+-    #page_front_page = u"FrontPage"
++    page_front_page = u"FrontPage"
+ 
+     # The interwiki name used in interwiki links
+     #interwikiname = u'UntitledWiki'
+@@ -115,9 +118,11 @@
+ 
+     # SMTP server, e.g. "mail.provider.com" (None to disable mail)
+     #mail_smarthost = ""
++    mail_smarthost = "localhost"
+ 
+     # The return address, e.g u"Jürgen Wiki <noreply@mywiki.org>" [Unicode]
+     #mail_from = u""
++    mail_from = u"MiG wiki <mig@dk.migrid.org>"
+ 
+     # "user pwd" if you need to use SMTP AUTH
+     #mail_login = ""
+@@ -133,7 +138,7 @@
+     # according to the user selected language. [Unicode]
+     navi_bar = [
+         # If you want to show your page_front_page here:
+-        #u'%(page_front_page)s',
++        u'%(page_front_page)s',
+         u'RecentChanges',
+         u'FindPage',
+         u'HelpContents',

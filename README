@@ -199,7 +199,9 @@ tweak the system wide wikiconfig template in
 using /moin_staticXYZ instead of /wiki and front page setup right. With
 recent version of moin you may also need to change the instance_dir
 variable to point to the parent of the wikiconfig_dir instead of the
-same dir.
+same dir. There's a diff between the default wikiconfig.py and the one that
+we use in mig/install/wikiconfig.py.MiG.diff .
+
 Similarly the mercurial package provides all required components for 
 VGrid SCMs on Debian.
 In case you want to run MiG with VGrid wikis on another distribution you can
