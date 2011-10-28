@@ -266,18 +266,25 @@ UL.jqueryFileList A:hover {
 .vgridpublicweb { background: url(/images/icons/folder_table.png) left center no-repeat; }
 .vgridprivateweb { background: url(/images/icons/folder_key.png) left center no-repeat; }
 
+/* use top here because it is relative to self plus all expanded children */
 .expanded { 
-  background: url(/images/icons/folder_open.png);
-  /* use top here because it is relative to self plus all expanded children */
-  background-position: left top;
-  background-repeat: no-repeat;
+  background: url(/images/icons/folder_open.png) left top no-repeat;
 }
 
-.expanded .vgridshared { 
-  background: url(/images/icons/folder_open_link.png);
-  /* use top here because it is relative to self plus all expanded children */
-  background-position: left top;
-  background-repeat: no-repeat;
+.expanded.userhome { 
+  background: url(/images/icons/folder_open_user.png) left top no-repeat;
+}
+
+.expanded.vgridshared { 
+  background: url(/images/icons/folder_open_link.png) left top no-repeat;
+}
+
+.expanded.vgridpublicweb { 
+  background: url(/images/icons/folder_open_table.png) left top no-repeat;
+}
+
+.expanded.vgridprivateweb { 
+  background: url(/images/icons/folder_open_key.png) left top no-repeat;
 }
 
 .ext_3gp { background: url(/images/icons/film.png) left center no-repeat; }
