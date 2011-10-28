@@ -13,7 +13,7 @@ Requires: jquery.js
         we want YYYY/MM/DD and getMonth is zero-indexed but getDate is
         one-indexed. Both need to be zero padded for single digit
         values.
-	Please note that including plain http content like this in your MiG
+        Please note that including plain http content like this in your MiG
         (https) pages may cause browser warnings about insecure content.
         */
         var url = "http://heltnormalt.dk/img/strip/";
