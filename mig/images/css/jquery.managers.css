@@ -273,6 +273,12 @@ UL.jqueryFileList A:hover {
   background-repeat: no-repeat;
 }
 
+.expanded .vgridshared { 
+  background: url(/images/icons/folder_open_link.png);
+  /* use top here because it is relative to self plus all expanded children */
+  background-position: left top;
+  background-repeat: no-repeat;
+}
 
 .ext_3gp { background: url(/images/icons/film.png) left center no-repeat; }
 .ext_afp { background: url(/images/icons/code.png) left center no-repeat; }
