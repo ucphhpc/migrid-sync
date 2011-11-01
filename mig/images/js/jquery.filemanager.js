@@ -285,8 +285,9 @@ if (jQuery) (function($){
             
                 );
             
-                // determine file-name of new file
-                var new_file_name = 'unknown';
+                // determine file-name of new file with fallback to default in
+                // current dir if dir is empty
+                var new_file_name = $('.fm_addressbar input[name=fm_current_path]').val()+'new_empty_file-1';
                 var name_taken = true;
 
                 for (var i=1; name_taken; i++) {
