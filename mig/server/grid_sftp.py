@@ -79,6 +79,7 @@ configuration, logger = None, None
 
 
 class User(object):
+    """User login class to hold a single valid login for a user"""
     def __init__(self, username, password, 
                  chroot=True, home=None, public_key=None):
         self.username = username
@@ -97,20 +98,25 @@ class User(object):
 
 
 class SFTPHandle(paramiko.SFTPHandle):
+    """Override default SFTPHandle"""
     def __init__(self, flags=0):
         paramiko.SFTPHandle.__init__(self, flags)
 
     def stat(self):
+        """Handle operations of same name"""
         logger.debug("SFTPHandle stat on %s" % self.path)
         active = getattr(self, 'active')
         file_obj = getattr(self, active)
-        return paramiko.SFTPAttributes.from_stat(os.fstat(file_obj.fileno()), self.path)
+        return paramiko.SFTPAttributes.from_stat(os.fstat(file_obj.fileno()),
+                                                 self.path)
 
     def chattr(self, attr):
+        """Handle operations of same name"""
         logger.debug("SFTPHandle chattr on %s: %s" % (self.path, attr))
         
 
 class SimpleSftpServer(paramiko.SFTPServerInterface):
+    """Custom SFTP server with chroot and MiG access restrictions"""
     def __init__(self, server, transport, fs_root, users, *largs,
                  **kwargs):
         conf = kwargs.get('conf', {})
@@ -127,6 +133,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 self.root = "%s/%s" % (self.root, entry.home)
 
     def get_fs_path(self, sftp_path):
+        "Translate path with chroot in mind"""
         real_path = "%s/%s" % (self.root, sftp_path)
         real_path = real_path.replace('//', '/')
 
@@ -143,6 +150,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         return(real_path)
 
     def strip_root(self, path):
+        """Strip root prefix for chrooted locations"""
         accept_roots = [self.root] + self.chroot_exceptions
         for root in accept_roots:
             if path.startswith(root):
@@ -150,6 +158,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         return path
 
     def open(self, path, flags, attr):
+        """Handle operations of same name"""        
         real_path = self.get_fs_path(path)
         logger.debug("open %s :: %s" % (path, real_path))
         handle = SFTPHandle(flags)
@@ -170,15 +179,18 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         return handle
 
     def list_folder(self, path):
+        """Handle operations of same name"""
         real_path = self.get_fs_path(path)
         logger.debug("list_folder %s :: %s" % (path, real_path))
         rc = []
         for filename in os.listdir(real_path):
             full_name = ("%s/%s" % (real_path, filename)).replace("//", "/")
-            rc.append(paramiko.SFTPAttributes.from_stat(os.stat(full_name), self.strip_root(filename)))
+            rc.append(paramiko.SFTPAttributes.from_stat(
+                os.stat(full_name), self.strip_root(filename)))
         return rc
 
     def stat(self, path):
+        """Handle operations of same name"""
         real_path = self.get_fs_path(path)
         logger.debug("stat %s :: %s" % (path, real_path))
         # TODO: catch here like in lstat for symmetry?
@@ -188,6 +200,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         return paramiko.SFTPAttributes.from_stat(os.stat(real_path), path)
 
     def lstat(self, path):
+        """Handle operations of same name"""
         real_path = self.get_fs_path(path)
         logger.debug("lstat %s :: %s" % (path, real_path))
         # sshfs requires lstat to return no such file during mkdir
@@ -197,6 +210,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         return paramiko.SFTPAttributes.from_stat(os.stat(real_path), path)
 
     def remove(self, path):
+        """Handle operations of same name"""
         real_path = self.get_fs_path(path)
         logger.debug("remove %s :: %s" % (path, real_path))
         # Prevent removal of special files - link to vgrid dirs, etc.
@@ -207,17 +221,20 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         return paramiko.SFTP_OK
 
     def rename(self, oldpath, newpath):
+        """Handle operations of same name"""
         logger.debug("rename %s %s" % (oldpath, newpath))
         real_oldpath = self.get_fs_path(oldpath)
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_oldpath):
-            logger.debug("rename on link src %s :: %s" % (path, real_path))
+            logger.debug("rename on link src %s :: %s" % (oldpath,
+                                                          real_oldpath))
             return paramiko.SFTP_PERMISSION_DENIED
         real_newpath = self.get_fs_path(newpath)
         os.rename(real_oldpath, real_newpath)
         return paramiko.SFTP_OK
 
     def mkdir(self, path, mode):
+        """Handle operations of same name"""
         logger.debug("mkdir %s" % path)
         real_path = self.get_fs_path(path)
         # Force MiG default mode
@@ -225,6 +242,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         return paramiko.SFTP_OK
 
     def rmdir(self, path):
+        """Handle operations of same name"""
         logger.debug("rmdir %s" % path)
         real_path = self.get_fs_path(path)
         # Prevent removal of special files - link to vgrid dirs, etc.
@@ -235,6 +253,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         return paramiko.SFTP_OK
 
     def chattr(self, path, attr):
+        """Handle operations of same name"""
         logger.debug("chattr %s" % path)
         real_path = self.get_fs_path(path)
         if not os.path.exists(real_path):
@@ -245,12 +264,13 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         return paramiko.SFTP_OK
 
     def chmod(self, path, mode):
+        """Handle operations of same name"""
         logger.debug("chmod %s" % path)
         real_path = self.get_fs_path(path)
         if not os.path.exists(real_path):
             logger.debug("chmod on missing path %s :: %s" % (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
-        old_mode = os.stat(real_path)[ST_MODE]
+        old_mode = os.stat(real_path).st_mode
         # Accept redundant change requests
         if mode == old_mode:
             logger.debug("chmod without effect on %s :: %s" % (path, real_path))
@@ -259,18 +279,21 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         return paramiko.SFTP_OP_UNSUPPORTED
          
     def readlink(self, path):
+        """Handle operations of same name"""
         logger.debug("readlink %s" % path)
         real_path = self.get_fs_path(path)
         relative_path = self.strip_root(os.readlink(path))
         return relative_path
 
     def symlink(self, target_path, path):
+        """Handle operations of same name"""
         logger.debug("symlink %s" % target_path)
         # Prevent users from creating symlinks for security reasons
         return paramiko.SFTP_OP_UNSUPPORTED
 
 
 class SimpleSSHServer(paramiko.ServerInterface):
+    """Custom SSH server with multi pub key support"""
     def __init__(self, users, *largs, **kwargs):
         conf = kwargs.get('conf', {})
         self.event = threading.Event()
@@ -280,10 +303,12 @@ class SimpleSSHServer(paramiko.ServerInterface):
         self.allow_publickey = conf.get('allow_publickey', True)
 
     def check_channel_request(self, kind, chanid):
+        """Log connections"""
         logger.info("channel_request: %s, %s" % (kind, chanid))
         return paramiko.OPEN_SUCCEEDED
 
     def check_auth_password(self, username, password):
+        """Password auth against usermap"""
         if self.allow_password and self.users.has_key(username):
             if self.users[username].password == password:
                 logger.info("Authenticated %s" % username)
@@ -292,9 +317,10 @@ class SimpleSSHServer(paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
+        """Public key auth against usermap"""
         if self.allow_publickey and self.users.has_key(username):
             # list of User login objects for username
-            entries = self.users[self.username]
+            entries = self.users[username]
             for entry in entries:
                 if entry.public_key is not None:
                     if entry.public_key.get_base64() == key.get_base64():
@@ -304,6 +330,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def get_allowed_auths(self, username):
+        """Valid auth modes"""
         auths = []
         if self.allow_password:
             auths.append('password')
@@ -312,14 +339,17 @@ class SimpleSSHServer(paramiko.ServerInterface):
         return ','.join(auths)
 
     def get_authenticated_user(self):
+        """Extract username of authenticated user"""
         return self.authenticated_user
 
     def check_channel_shell_request(self, channel):
+        """Check for shell request"""
         self.event.set()
         return True
 
 
 def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
+    """Handle a single client session"""
     # Fill users in dictionary for fast lookup. We create a list of matching
     # User objects since each user may have multiple logins (e.g. public keys)
     usermap = {}
@@ -398,11 +428,13 @@ def refresh_users(conf):
     if removed:
         logger.info("Removing login for %d deleted users" % len(removed))
         conf['users'] = [i for i in conf['users'] if not i.username in removed]
-    logger.info("Refreshed users from configuration (%d users)" % len(conf['users']))
+    logger.info("Refreshed users from configuration (%d users)" % \
+                len(conf['users']))
     conf['time_stamp'] = time.time()
     return conf
 
 def start_service(service_conf):
+    """Service daemon"""
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # Allow reuse of socket to avoid TCP time outs
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
@@ -416,12 +448,11 @@ def start_service(service_conf):
         refresh_delay = 60
         if service_conf['time_stamp'] + refresh_delay < time.time():
             service_conf = refresh_users(service_conf)
-        t = threading.Thread(target=accept_client, args=[client, 
-                                                         addr, 
-                                                         service_conf['root_dir'],
-                                                         service_conf['users'],
-                                                         service_conf['host_rsa_key'],
-                                                         service_conf,])
+        t = threading.Thread(target=accept_client,
+                             args=[client, addr, service_conf['root_dir'],
+                                   service_conf['users'],
+                                   service_conf['host_rsa_key'],
+                                   service_conf,])
         t.start()
 
 
