@@ -120,8 +120,11 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         self.user_name = self.transport.get_username()
         self.users = users
 
-        if self.users[self.user_name].chroot:
-            self.root = "%s/%s" % (self.root, self.users[self.user_name].home)
+        # list of User login objects for user_name
+        entries = self.users[self.user_name]
+        for entry in entries:
+            if entry.chroot:
+                self.root = "%s/%s" % (self.root, entry.home)
 
     def get_fs_path(self, sftp_path):
         real_path = "%s/%s" % (self.root, sftp_path)
@@ -290,12 +293,14 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
     def check_auth_publickey(self, username, key):
         if self.allow_publickey and self.users.has_key(username):
-            u = self.users[username]
-            if u.public_key is not None:
-                if u.public_key.get_base64() == key.get_base64():
-                    logger.info("Public key match for %s" % username)
-                    return paramiko.AUTH_SUCCESSFUL
-        logger.info('Public key authentication failed')
+            # list of User login objects for username
+            entries = self.users[self.username]
+            for entry in entries:
+                if entry.public_key is not None:
+                    if entry.public_key.get_base64() == key.get_base64():
+                        logger.info("Public key match for %s" % username)
+                        return paramiko.AUTH_SUCCESSFUL
+        logger.info('Public key authentication failed for %s' % username)
         return paramiko.AUTH_FAILED
 
     def get_allowed_auths(self, username):
@@ -315,9 +320,13 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
 
 def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
+    # Fill users in dictionary for fast lookup. We create a list of matching
+    # User objects since each user may have multiple logins (e.g. public keys)
     usermap = {}
     for u in users:
-        usermap[u.username] = u
+        if not usermap.has_key(u.username):
+            usermap[u.username] = []
+        usermap[u.username].append(u)
 
     host_key_file = StringIO(host_rsa_key)
     host_key = paramiko.RSAKey(file_obj=host_key_file)
