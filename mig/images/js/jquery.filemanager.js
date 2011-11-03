@@ -219,9 +219,20 @@ if (jQuery) (function($){
                 window.open('/cert_redirect/'+$(el).attr(pathAttribute))
             },
             download:   function (action, el, pos) { 
-                document.location = 
-                    'cat.py?path='
-                    +$(el).attr(pathAttribute)+'&output_format=file'
+	        /*
+                   Use 'cat' to stream small files but raw request for big
+                   files to avoid hogging memory. Take action based on file
+                   size in bytes.
+                */
+                var file_size = $("div.bytes", el).text();
+                var max_stream_size = 64*1024*1024;
+                if (file_size > max_stream_size) {
+                    window.open('/cert_redirect/'+$(el).attr(pathAttribute))
+                } else {
+                    document.location = 
+                        'cat.py?path='
+                        +$(el).attr(pathAttribute)+'&output_format=file';
+                }
             },
             edit:   function (action, el, pos) {
                 
@@ -636,7 +647,7 @@ if (jQuery) (function($){
                   '<td style="padding-left: 20px;" class="' + icon + ' ext_' + 
                   listing[i]['file_info']['ext'] + '"><div>' + dir_prefix +
                   listing[i]['name'] + '</div>' + listing[i]['name'] +
-                  '</td>' + '<td><div>' + listing[i]['file_info']['size'] +
+                  '</td>' + '<td><div class="bytes">' + listing[i]['file_info']['size'] +
                   '</div>' + pp_bytes(listing[i]['file_info']['size']) +
                   '</td>' + '<td><div>' + listing[i]['file_info']['ext'] +
                   '</div>' + listing[i]['file_info']['ext'] + '</td>'+
