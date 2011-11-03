@@ -131,6 +131,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         for entry in entries:
             if entry.chroot:
                 self.root = "%s/%s" % (self.root, entry.home)
+                break
 
     def get_fs_path(self, sftp_path):
         "Translate path with chroot in mind"""
@@ -205,7 +206,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         logger.debug("lstat %s :: %s" % (path, real_path))
         # sshfs requires lstat to return no such file during mkdir
         if not os.path.lexists(real_path):
-            logger.debug("lstat on missing path %s :: %s" % (path, real_path))
+            logger.err("lstat on missing path %s :: %s" % (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         return paramiko.SFTPAttributes.from_stat(os.stat(real_path), path)
 
@@ -215,7 +216,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         logger.debug("remove %s :: %s" % (path, real_path))
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_path):
-            logger.debug("remove on link path %s :: %s" % (path, real_path))
+            logger.err("remove on link path %s :: %s" % (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         os.remove(real_path)
         return paramiko.SFTP_OK
@@ -226,8 +227,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         real_oldpath = self.get_fs_path(oldpath)
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_oldpath):
-            logger.debug("rename on link src %s :: %s" % (oldpath,
-                                                          real_oldpath))
+            logger.err("rename on link src %s :: %s" % (oldpath,
+                                                        real_oldpath))
             return paramiko.SFTP_PERMISSION_DENIED
         real_newpath = self.get_fs_path(newpath)
         os.rename(real_oldpath, real_newpath)
@@ -247,7 +248,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         real_path = self.get_fs_path(path)
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_path):
-            logger.debug("rmdir on link path %s :: %s" % (path, real_path))
+            logger.err("rmdir on link path %s :: %s" % (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         os.rmdir(real_path)
         return paramiko.SFTP_OK
@@ -257,10 +258,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         logger.debug("chattr %s" % path)
         real_path = self.get_fs_path(path)
         if not os.path.exists(real_path):
-            logger.debug("chattr on missing path %s :: %s" % (path, real_path))
+            logger.err("chattr on missing path %s :: %s" % (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         # TODO: is this silent ignore still needed?
         # Prevent users from messing with attributes but silently ignore
+        logger.err("chattr %s rejected on path %s :: %s" % (attr, path,
+                                                            real_path))
         return paramiko.SFTP_OK
 
     def chmod(self, path, mode):
@@ -268,14 +271,16 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         logger.debug("chmod %s" % path)
         real_path = self.get_fs_path(path)
         if not os.path.exists(real_path):
-            logger.debug("chmod on missing path %s :: %s" % (path, real_path))
+            logger.err("chmod on missing path %s :: %s" % (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         old_mode = os.stat(real_path).st_mode
         # Accept redundant change requests
         if mode == old_mode:
-            logger.debug("chmod without effect on %s :: %s" % (path, real_path))
+            logger.err("chmod without effect on %s :: %s" % (path, real_path))
             return paramiko.SFTP_OK
         # Prevent users from messing with access modes
+        logger.err("chmod %s rejected on path %s :: %s" % (mode, path,
+                                                           real_path))
         return paramiko.SFTP_OP_UNSUPPORTED
          
     def readlink(self, path):
@@ -289,6 +294,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         """Handle operations of same name"""
         logger.debug("symlink %s" % target_path)
         # Prevent users from creating symlinks for security reasons
+        logger.err("symlink %s rejected on path %s :: %s" % (target_path, path,
+                                                             real_path))
         return paramiko.SFTP_OP_UNSUPPORTED
 
 
@@ -313,7 +320,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
             if self.users[username].password == password:
                 logger.info("Authenticated %s" % username)
                 return paramiko.AUTH_SUCCESSFUL
-        logger.info("Rejected %s" % username)
+        logger.err("Rejected %s" % username)
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
@@ -326,7 +333,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
                     if entry.public_key.get_base64() == key.get_base64():
                         logger.info("Public key match for %s" % username)
                         return paramiko.AUTH_SUCCESSFUL
-        logger.info('Public key authentication failed for %s' % username)
+        logger.err('Public key authentication failed for %s' % username)
         return paramiko.AUTH_FAILED
 
     def get_allowed_auths(self, username):
