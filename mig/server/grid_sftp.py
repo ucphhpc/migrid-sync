@@ -181,34 +181,59 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         self.logger.debug("strip_root returns: %s" % path)
         return path
 
+    def _flags_to_mode(self, flags):
+        """Internal helper to convert bitmask of os.O_* flags to open-mode.
+
+        It only handles read, write and append with and without truncation.
+        Append and write always creates the file if missing, so checking for
+        missing file creation flag should generally be handled separately.
+        The same goes for handling of invalid flag combinations.
+
+        This function is inspired by the XMP example in the fuse-python code
+        http://sourceforge.net/apps/mediawiki/fuse/index.php?title=Main_Page
+        but we need to prevent truncation unless explicitly requested.
+        """
+        # Truncate per default when enabling write - disable later if needed
+        main_modes = {os.O_RDONLY: 'r', os.O_WRONLY: 'w', os.O_RDWR: 'w+'}
+        mode = main_modes[flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)]
+        
+        if flags & os.O_APPEND:
+            mode = mode.replace('w', 'a', 1)
+        # Disable truncation unless explicitly requested
+        if not (flags & os.O_TRUNC):
+            mode = mode.replace('w', 'r+', 1)
+        return mode
+
     def open(self, path, flags, attr):
         """Handle operations of same name"""        
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
             return paramiko.SFTP_PERMISSION_DENIED
-        self.logger.debug("open %s :: %s" % (path, real_path))
+        self.logger.debug("open on %s :: %s (%s %s)" % \
+                          (path, real_path, repr(flags), repr(attr)))
+        if not (flags & os.O_CREAT) and not os.path.exists(real_path):
+            self.logger.error("open existing file on missing path %s :: %s" % \
+                              (path, real_path))
+            return paramiko.SFTP_NO_SUCH_FILE
         handle = SFTPHandle(flags, conf=self.conf)
         setattr(handle, 'real_path', real_path)
         setattr(handle, 'path', path)
         try:
-            if(flags == 0):
-                if not os.path.exists(real_path):
-                    self.logger.error("open read on missing path %s :: %s" % \
-                                      (path, real_path))
-                    return paramiko.SFTP_NO_SUCH_FILE
-                self.logger.debug("open read on %s" % path)
-                readfile = open(real_path, "r")
+            mode = self._flags_to_mode(flags)
+            if flags == os.O_RDONLY:
+                # Read-only mode
+                readfile = open(real_path, mode)
                 setattr(handle, 'readfile', readfile)
                 active = 'readfile'
             else:
-                self.logger.debug("open write on %s" % path)
-                # TODO: we should not truncate here if flags specify append!
-                writefile = open(real_path, "w")
+                # All other modes are handled as writes
+                writefile = open(real_path, mode)
                 setattr(handle, 'writefile', writefile)
                 active = 'writefile'
             setattr(handle, 'active', active)
-            self.logger.debug("open done %s :: %s" % (path, real_path))
+            self.logger.debug("open done %s :: %s (%s %s)" % \
+                              (path, real_path, str(handle), mode))
             return handle
         except Exception, err:
             self.logger.error("open on %s :: %s failed: %s" % \
@@ -383,12 +408,14 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("chattr on missing path %s :: %s" % (path,
                                                                    real_path))
             return paramiko.SFTP_NO_SUCH_FILE
-        self.logger.error("chattr %s rejected on path %s :: %s" % \
-                          (repr(attr), path, real_path))
         # TODO: is this silent ignore still needed?
         # ... we end here on chmod too, so error may cause problems
         # Prevent users from messing with attributes but silently ignore
+        #self.logger.error("chattr %s rejected on path %s :: %s" % \
+        #                  (repr(attr), path, real_path))
         #return paramiko.SFTP_OP_UNSUPPORTED
+        self.logger.warning("chattr %s ignored on path %s :: %s" % \
+                            (repr(attr), path, real_path))
         return paramiko.SFTP_OK
 
     def chmod(self, path, mode):
