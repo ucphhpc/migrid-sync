@@ -107,19 +107,31 @@ class SFTPHandle(paramiko.SFTPHandle):
 
     def stat(self):
         """Handle operations of same name"""
-        self.logger.debug("SFTPHandle stat on %s" % self.path)
+        self.logger.debug("SFTPHandle stat on %s" % getattr(self, "path",
+                                                            "unknown"))
         active = getattr(self, 'active')
         file_obj = getattr(self, active)
         return paramiko.SFTPAttributes.from_stat(os.fstat(file_obj.fileno()),
-                                                 self.path)
+                                                 getattr(self, "path",
+                                                         "unknown"))
 
     def chattr(self, attr):
         """Handle operations of same name"""
-        self.logger.debug("SFTPHandle chattr on %s: %s" % (self.path, attr))
+        self.logger.debug("SFTPHandle chattr on %s: %s" % \
+                          (getattr(self, "path", "unknown"), attr))
         
 
 class SimpleSftpServer(paramiko.SFTPServerInterface):
-    """Custom SFTP server with chroot and MiG access restrictions"""
+    """Custom SFTP server with chroot and MiG access restrictions.
+
+    Includes basic error handling and robustness, but could be extended to
+    deliver more precise error codes on common errors.
+
+    IMPORTANT: Instances of this class generally live in background threads.
+    This means that any unhandled exceptions will silently pass. Thus it is
+    very important to conservatively catch and log all potential exceptions
+    when debugging to avoid excessive loss of hair :-) 
+    """
     def __init__(self, server, transport, fs_root, users, *largs,
                  **kwargs):
         conf = kwargs.get('conf', {})
@@ -138,11 +150,11 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 self.root = "%s/%s" % (self.root, entry.home)
                 break
 
-    def get_fs_path(self, sftp_path):
-        "Translate path with chroot in mind"""
+    def _get_fs_path(self, sftp_path):
+        "Internal helper to translate path with chroot in mind"""
         real_path = "%s/%s" % (self.root, sftp_path)
         real_path = real_path.replace('//', '/')
-        self.logger.debug("checking fs path: %s :: %s" % (sftp_path, real_path))
+        self.logger.debug("get_fs_path: %s :: %s" % (sftp_path, real_path))
         accept_roots = [self.root] + self.chroot_exceptions
 
         accepted = False
@@ -152,122 +164,221 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 break
         if not accepted:
             self.logger.error("rejecting illegal path: %s" % real_path)
-            raise Exception("Invalid path")
-        self.logger.debug("accepted fs path: %s :: %s" % (sftp_path, real_path))
+            raise ValueError("Invalid path")
+        self.logger.debug("get_fs_path returns: %s :: %s" % (sftp_path,
+                                                             real_path))
         return(real_path)
 
-    def strip_root(self, path):
-        """Strip root prefix for chrooted locations"""
+    def _strip_root(self, path):
+        """Internal helper to strip root prefix for chrooted locations"""
+        self.logger.debug("strip root on path: %s" % path)
         accept_roots = [self.root] + self.chroot_exceptions
         for root in accept_roots:
             if path.startswith(root):
+                self.logger.debug("strip_root returns chrooted: %s" % \
+                                  path.replace(root, ''))
                 return path.replace(root, '')
+        self.logger.debug("strip_root returns: %s" % path)
         return path
 
     def open(self, path, flags, attr):
         """Handle operations of same name"""        
-        real_path = self.get_fs_path(path)
+        try:
+            real_path = self._get_fs_path(path)
+        except ValueError, err:
+            return paramiko.SFTP_PERMISSION_DENIED
         self.logger.debug("open %s :: %s" % (path, real_path))
         handle = SFTPHandle(flags, conf=self.conf)
         setattr(handle, 'real_path', real_path)
         setattr(handle, 'path', path)
-        if(flags == 0):
-            self.logger.debug("open read on %s" % path)
-            readfile = open(real_path, "r")
-            setattr(handle, 'readfile', readfile)
-            active = 'readfile'
-        else:
-            self.logger.debug("open write on %s" % path)
-            writefile = open(real_path, "w")
-            setattr(handle, 'writefile', writefile)
-            active = 'writefile'
-        setattr(handle, 'active', active)
-        self.logger.debug("open done %s :: %s" % (path, real_path))
-        return handle
+        try:
+            if(flags == 0):
+                if not os.path.exists(real_path):
+                    self.logger.error("open read on missing path %s :: %s" % \
+                                      (path, real_path))
+                    return paramiko.SFTP_NO_SUCH_FILE
+                self.logger.debug("open read on %s" % path)
+                readfile = open(real_path, "r")
+                setattr(handle, 'readfile', readfile)
+                active = 'readfile'
+            else:
+                self.logger.debug("open write on %s" % path)
+                # TODO: we should not truncate here if flags specify append!
+                writefile = open(real_path, "w")
+                setattr(handle, 'writefile', writefile)
+                active = 'writefile'
+            setattr(handle, 'active', active)
+            self.logger.debug("open done %s :: %s" % (path, real_path))
+            return handle
+        except Exception, err:
+            self.logger.error("open on %s :: %s failed: %s" % \
+                              (path, real_path, err))
+            return paramiko.SFTP_FAILURE          
 
     def list_folder(self, path):
         """Handle operations of same name"""
-        real_path = self.get_fs_path(path)
+        try:
+            real_path = self._get_fs_path(path)
+        except ValueError, err:
+            return paramiko.SFTP_PERMISSION_DENIED
         self.logger.debug("list_folder %s :: %s" % (path, real_path))
         rc = []
-        for filename in os.listdir(real_path):
+        if not os.path.exists(real_path):
+            self.logger.error("list_folder on missing path %s :: %s" % \
+                              (path, real_path))
+            return paramiko.SFTP_NO_SUCH_FILE
+        try:
+            files = os.listdir(real_path)
+        except Exception, err:
+            self.logger.error("list_folder on %s :: %s failed: %s" % \
+                              (path, real_path, err))
+            return paramiko.SFTP_FAILURE          
+        for filename in files:
             full_name = ("%s/%s" % (real_path, filename)).replace("//", "/")
-            rc.append(paramiko.SFTPAttributes.from_stat(
-                os.stat(full_name), self.strip_root(filename)))
+            # stat may fail e.g. if filename is a stale storage mount point
+            try:
+                rc.append(paramiko.SFTPAttributes.from_stat(
+                    os.stat(full_name), self._strip_root(filename)))
+            except Exception, err:
+                self.logger.warning("list_folder %s: stat on %s failed: %s" % \
+                                    (path, full_name, err))
+        self.logger.debug("list_folder %s rc %s" % (path, rc))
         return rc
 
     def stat(self, path):
         """Handle operations of same name"""
-        real_path = self.get_fs_path(path)
+        try:
+            real_path = self._get_fs_path(path)
+        except ValueError, err:
+            return paramiko.SFTP_PERMISSION_DENIED
         self.logger.debug("stat %s :: %s" % (path, real_path))
-        # TODO: catch here like in lstat for symmetry?
-        #if not os.path.exists(real_path):
-        #    self.logger.debug("stat on missing path %s :: %s" % (path,
-        #                                                         real_path))
-        #    return paramiko.SFTP_NO_SUCH_FILE
-        return paramiko.SFTPAttributes.from_stat(os.stat(real_path), path)
+        # for consistency with lstat
+        if not os.path.exists(real_path):
+            self.logger.error("stat on missing path %s :: %s" % (path,
+                                                                 real_path))
+            return paramiko.SFTP_NO_SUCH_FILE
+        try:
+            return paramiko.SFTPAttributes.from_stat(os.stat(real_path), path)
+        except Exception, err:
+            self.logger.error("lstat on %s :: %s failed: %s" % \
+                              (path, real_path, err))
+            return paramiko.SFTP_FAILURE            
 
     def lstat(self, path):
         """Handle operations of same name"""
-        real_path = self.get_fs_path(path)
+        try:
+            real_path = self._get_fs_path(path)
+        except ValueError, err:
+            return paramiko.SFTP_PERMISSION_DENIED
         self.logger.debug("lstat %s :: %s" % (path, real_path))
-        # sshfs requires lstat to return no such file during mkdir
         if not os.path.lexists(real_path):
             self.logger.error("lstat on missing path %s :: %s" % (path,
                                                                 real_path))
             return paramiko.SFTP_NO_SUCH_FILE
-        return paramiko.SFTPAttributes.from_stat(os.stat(real_path), path)
+        try:
+            return paramiko.SFTPAttributes.from_stat(os.stat(real_path), path)
+        except Exception, err:
+            self.logger.error("lstat on %s :: %s failed: %s" % \
+                              (path, real_path, err))
+            return paramiko.SFTP_FAILURE            
 
     def remove(self, path):
         """Handle operations of same name"""
-        real_path = self.get_fs_path(path)
+        try:
+            real_path = self._get_fs_path(path)
+        except ValueError, err:
+            return paramiko.SFTP_PERMISSION_DENIED
         self.logger.debug("remove %s :: %s" % (path, real_path))
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_path):
             self.logger.error("remove rejected on link path %s :: %s" % \
                             (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
-        os.remove(real_path)
-        return paramiko.SFTP_OK
+        if not os.path.exists(real_path):
+            self.logger.error("remove on missing path %s :: %s" % (path,
+                                                                   real_path))
+            return paramiko.SFTP_NO_SUCH_FILE
+        try:
+            os.remove(real_path)
+            return paramiko.SFTP_OK
+        except Exception, err:
+            self.logger.error("remove on %s :: %s failed: %s" % \
+                              (path, real_path, err))
+            return paramiko.SFTP_FAILURE            
 
     def rename(self, oldpath, newpath):
         """Handle operations of same name"""
         self.logger.debug("rename %s %s" % (oldpath, newpath))
-        real_oldpath = self.get_fs_path(oldpath)
+        try:
+            real_oldpath = self._get_fs_path(oldpath)
+        except ValueError, err:
+            return paramiko.SFTP_PERMISSION_DENIED
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_oldpath):
             self.logger.error("rename on link src %s :: %s" % (oldpath,
                                                         real_oldpath))
             return paramiko.SFTP_PERMISSION_DENIED
-        real_newpath = self.get_fs_path(newpath)
-        os.rename(real_oldpath, real_newpath)
-        return paramiko.SFTP_OK
+        if not os.path.exists(real_oldpath):
+            self.logger.error("rename on missing path %s :: %s" % \
+                              (oldpath, real_oldpath))
+            return paramiko.SFTP_NO_SUCH_FILE
+        real_newpath = self._get_fs_path(newpath)
+        try:
+            os.rename(real_oldpath, real_newpath)
+            return paramiko.SFTP_OK
+        except Exception, err:
+            self.logger.error("rename on %s :: %s failed: %s" % \
+                              (real_oldpath, real_newpath, err))
+            return paramiko.SFTP_FAILURE
 
     def mkdir(self, path, mode):
         """Handle operations of same name"""
         self.logger.debug("mkdir %s" % path)
-        real_path = self.get_fs_path(path)
-        # Force MiG default mode
-        os.mkdir(real_path, 0755)
-        return paramiko.SFTP_OK
+        try:
+            real_path = self._get_fs_path(path)
+        except ValueError, err:
+            return paramiko.SFTP_PERMISSION_DENIED
+        try:
+            # Force MiG default mode
+            os.mkdir(real_path, 0755)
+            return paramiko.SFTP_OK
+        except Exception, err:
+            self.logger.error("mkdir on %s :: %s failed: %s" % \
+                              (path, real_path, err))
+            return paramiko.SFTP_FAILURE
 
     def rmdir(self, path):
         """Handle operations of same name"""
         self.logger.debug("rmdir %s" % path)
-        real_path = self.get_fs_path(path)
+        try:
+            real_path = self._get_fs_path(path)
+        except ValueError, err:
+            return paramiko.SFTP_PERMISSION_DENIED
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_path):
             self.logger.error("rmdir rejected on link path %s :: %s" % \
                             (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
+        if not os.path.exists(real_path):
+            self.logger.error("rmdir on missing path %s :: %s" % (path,
+                                                                  real_path))
+            return paramiko.SFTP_NO_SUCH_FILE
         self.logger.debug("rmdir on path %s :: %s" % (path, real_path))
-        os.rmdir(real_path)
-        return paramiko.SFTP_OK
+        try:
+            os.rmdir(real_path)
+            return paramiko.SFTP_OK
+        except Exception, err:
+            self.logger.error("rmdir on %s :: %s failed: %s" % \
+                              (path, real_path, err))
+            return paramiko.SFTP_FAILURE
 
     def chattr(self, path, attr):
         """Handle operations of same name"""
         self.logger.debug("chattr %s" % path)
-        real_path = self.get_fs_path(path)
+        try:
+            real_path = self._get_fs_path(path)
+        except ValueError, err:
+            return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
             self.logger.error("chattr on missing path %s :: %s" % (path,
                                                                    real_path))
@@ -283,7 +394,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     def chmod(self, path, mode):
         """Handle operations of same name"""
         self.logger.debug("chmod %s" % path)
-        real_path = self.get_fs_path(path)
+        try:
+            real_path = self._get_fs_path(path)
+        except ValueError, err:
+            return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
             self.logger.error("chmod on missing path %s :: %s" % (path,
                                                                   real_path))
@@ -302,13 +416,23 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     def readlink(self, path):
         """Handle operations of same name"""
         self.logger.debug("readlink %s" % path)
-        real_path = self.get_fs_path(path)
-        relative_path = self.strip_root(os.readlink(path))
-        return relative_path
+        try:
+            real_path = self._get_fs_path(path)
+        except ValueError, err:
+            return paramiko.SFTP_PERMISSION_DENIED
+        if not os.path.exists(real_path):
+            self.logger.error("readlink on missing path %s :: %s" % \
+                              (path, real_path))
+            return paramiko.SFTP_NO_SUCH_FILE
+        try:
+            return self._strip_root(os.readlink(path))
+        except Exception, err:
+            self.logger.error("readlink on %s :: %s failed: %s" % \
+                              (path, real_path, err))
+            return paramiko.SFTP_FAILURE
 
     def symlink(self, target_path, path):
         """Handle operations of same name"""
-        self.logger.debug("symlink %s" % target_path)
         # Prevent users from creating symlinks for security reasons
         self.logger.error("symlink rejected on path %s :: %s" % (target_path,
                                                                  path))
@@ -328,7 +452,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
     def check_channel_request(self, kind, chanid):
         """Log connections"""
-        self.logger.info("channel_request: %s, %s" % (kind, chanid))
+        self.logger.debug("channel_request: %s, %s" % (kind, chanid))
         return paramiko.OPEN_SUCCEEDED
 
     def check_auth_password(self, username, password):
@@ -401,7 +525,7 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
             pass
         mod = __import__(mod_name, fromlist=fromlist)
         impl = getattr(mod, class_name)
-        logger.info("Custom implementation: %s" % conf['sftp_implementation'])
+        logger.debug("Custom implementation: %s" % conf['sftp_implementation'])
     else:
         impl = SimpleSftpServer
     transport.set_subsystem_handler("sftp", paramiko.SFTPServer, sftp_si=impl,
@@ -446,7 +570,7 @@ def refresh_users(conf):
                                (user_key, user_id))
                 continue
             user_key = user_key.strip()
-            logger.info("Adding user:\nname: %s\nalias: %s\nhome: %s\nkey: %s"\
+            logger.debug("Adding user:\nname: %s\nalias: %s\nhome: %s\nkey: %s"\
                         % (user_id, user_alias, user_dir, user_key))
             conf['users'].append(
                 User(username=user_alias, home=user_dir, password=None,
@@ -536,9 +660,11 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
     except IOError:
         logger.info("No valid host key provided - using default")
         host_rsa_key = default_host_key
+    # Allow access to vgrid linked dirs and mounted storage resource dirs
     chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
                          os.path.abspath(configuration.vgrid_public_base),
-                         os.path.abspath(configuration.vgrid_files_home)]
+                         os.path.abspath(configuration.vgrid_files_home),
+                         os.path.abspath(configuration.resource_home)]
     sftp_conf = {'address': address,
                  'port': port,
                  'root_dir': os.path.abspath(configuration.user_home),
