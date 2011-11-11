@@ -64,6 +64,7 @@ import glob
 import logging
 import os
 import socket
+import shutil
 import sys
 import threading
 import time
@@ -354,7 +355,9 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             return paramiko.SFTP_NO_SUCH_FILE
         real_newpath = self._get_fs_path(newpath)
         try:
-            os.rename(real_oldpath, real_newpath)
+            # Use shutil move to allow move to other file system like external
+            # storage mounted file systems
+            shutil.move(real_oldpath, real_newpath)
             return paramiko.SFTP_OK
         except Exception, err:
             self.logger.error("rename on %s :: %s failed: %s" % \
