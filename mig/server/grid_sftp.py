@@ -220,6 +220,11 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         setattr(handle, 'real_path', real_path)
         setattr(handle, 'path', path)
         try:
+            # Fake OS level open call first to avoid most flag parsing.
+            # This is necessary to make things like O_CREAT, O_EXCL and
+            # O_TRUNCATE consistent with the simple mode strings.
+            fake = os.open(real_path, flags, 0644)
+            os.close(fake)
             mode = self._flags_to_mode(flags)
             if flags == os.O_RDONLY:
                 # Read-only mode
@@ -236,8 +241,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                               (path, real_path, str(handle), mode))
             return handle
         except Exception, err:
-            self.logger.error("open on %s :: %s failed: %s" % \
-                              (path, real_path, err))
+            self.logger.error("open on %s :: %s (%s) failed: %s" % \
+                              (path, real_path, mode, err))
             return paramiko.SFTP_FAILURE          
 
     def list_folder(self, path):
@@ -621,7 +626,7 @@ def start_service(service_conf):
     server_socket.bind((service_conf['address'], service_conf['port']))
     server_socket.listen(10)
 
-    logger.info("Accepting connections")
+    logger.debug("Accepting connections")
     while True:
         client, addr = server_socket.accept()
         # automatic reload of users if more than refresh_delay seconds old
