@@ -577,6 +577,7 @@ You can simply copy/paste from the available widget file links below if you want
 <a class="urllink" href="/images/widgets/hello-grid.app">hello grid</a>,
 <a class="urllink" href="/images/widgets/simple-calendar.app">simple calendar</a>,
 <a class="urllink" href="/images/widgets/calendar.app">calendar</a>,
+<a class="urllink" href="/images/widgets/gcal.app">google calendar</a>,
 <a class="urllink" href="/images/widgets/calculator.app">calculator</a>,
 <a class="urllink" href="/images/widgets/localrss.app">local rss reader</a>,
 <a class="urllink" href="/images/widgets/rss.app">rss reader</a>,
