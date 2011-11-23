@@ -27,11 +27,18 @@
 
 """Sample Paramiko-based sftp client working with your MiG home.
 
+Requires paramiko (http://pypi.python.org/pypi/paramiko) and thus PyCrypto
+(http://pypi.python.org/pypi/pycrypto).
+
 Run with:
-python migsftp.py
+python migsftp.py [GENERATED_USERNAME]
+
+where the optional GENERATED_USERNAME is the username displayed on your
+personal MiG ssh settings page. You will be interactively prompted for it if
+it is not provided on the command line.
 
 Please check the global configuration section below if it fails. The comments
-should help solve the most common problems.
+should help you tweak the configuration to solve most common problems.
 
 This example should be a good starting point for writing your own custom sftp
 client acting on your MiG home.
@@ -71,45 +78,51 @@ data_compression = True
 
 ### Initialize client session ###
 
-# Get auto-generated username from command line
+if __name__ == "__main__":
 
-print "Please enter/paste the looong username from your MiG ssh settings page"
-user_name = raw_input('Username: ')
+    # Get auto-generated username from command line or interactively
 
-if len(user_name) < 64:
-    print "Warning: the supplied username is shorter than expected!"
-    print "Please verify it on your MiG ssh Settings page in case of failure."
+    if sys.argv[1:]:
+        user_name = sys.argv[1]
+    else:
+        print """Please enter/paste the long username from your MiG ssh
+settings page"""
+        user_name = raw_input('Username: ')
 
-# Connect with provided settings
+    if len(user_name) < 64:
+        print """Warning: the supplied username is shorter than expected!
+Please verify it on your MiG ssh Settings page in case of failure."""
 
-ssh = paramiko.SSHClient()
-known_host_keys = ssh.get_host_keys()
-key_type, key_data = server_host_key.split(' ')[:2]
-pub_key = paramiko.PKey(msg=server_fqdn, data=key_data)
-known_host_keys.add(server_fqdn, key_type, pub_key)
-known_host_keys.load(known_hosts_path)
-ssh.set_missing_host_key_policy(host_key_policy)
-ssh.connect(server_fqdn, username=user_name, port=server_port,
-            key_filename=user_key, compress=data_compression)
-ftp = ssh.open_sftp()
+    # Connect with provided settings
 
-
-### Sample actions on your MiG home directory ###
-
-# List and stat files in the remote .ssh dir which should always be there
-
-base = '.ssh'
-files = ftp.listdir(base)
-path_stat = ftp.stat(base)
-print "stat %s:\n%s" % (base, path_stat)
-print "files in %s dir:\n%s" % (base, files)
-for name in files:
-    rel_path = os.path.join(base, name)
-    path_stat = ftp.stat(rel_path)
-    print "stat %s:\n%s" % (rel_path, path_stat)
+    ssh = paramiko.SSHClient()
+    known_host_keys = ssh.get_host_keys()
+    key_type, key_data = server_host_key.split(' ')[:2]
+    pub_key = paramiko.PKey(msg=server_fqdn, data=key_data)
+    known_host_keys.add(server_fqdn, key_type, pub_key)
+    known_host_keys.load(known_hosts_path)
+    ssh.set_missing_host_key_policy(host_key_policy)
+    ssh.connect(server_fqdn, username=user_name, port=server_port,
+                key_filename=user_key, compress=data_compression)
+    ftp = ssh.open_sftp()
 
 
-### Clean up before exit ###
+    ### Sample actions on your MiG home directory ###
 
-ftp.close()
-ssh.close()
+    # List and stat files in the remote .ssh dir which should always be there
+
+    base = '.ssh'
+    files = ftp.listdir(base)
+    path_stat = ftp.stat(base)
+    print "stat %s:\n%s" % (base, path_stat)
+    print "files in %s dir:\n%s" % (base, files)
+    for name in files:
+        rel_path = os.path.join(base, name)
+        path_stat = ftp.stat(rel_path)
+        print "stat %s:\n%s" % (rel_path, path_stat)
+
+
+    ### Clean up before exit ###
+
+    ftp.close()
+    ssh.close()
