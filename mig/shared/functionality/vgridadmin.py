@@ -121,6 +121,14 @@ def main(client_id, user_arguments_dict):
                                        'title': 'Open %s public SCM' % \
                                        vgrid_name,
                                        'text': 'Open'}
+        vgrid_obj['publictrackerlink'] = {'object_type': 'link',
+                'destination': '%s/vgridpublictracker/%s'\
+                                       % (configuration.migserver_http_url,
+                                          vgrid_name),
+                                       'class': 'trackerlink public',
+                                       'title': 'Open %s public tracker' % \
+                                       vgrid_name,
+                                       'text': 'Open'}
         vgrid_obj['enterpubliclink'] = {'object_type': 'link',
                                         'destination':
                                         '%s/vgrid/%s/path/index.html' % \
@@ -206,6 +214,13 @@ def main(client_id, user_arguments_dict):
                                           'title': 'View %s members scm' % \
                                           vgrid_name,
                                           'text': 'View'}
+            vgrid_obj['membertrackerlink'] = {'object_type': 'link',
+                                          'destination': '/vgridtracker/%s' % \
+                                          vgrid_name,
+                                          'class': 'trackerlink member',
+                                          'title': 'View %s members tracker' % \
+                                          vgrid_name,
+                                          'text': 'View'}
             vgrid_obj['privateforumlink'] = {'object_type': 'link',
                                              'destination':
                                              'vgridforum.py?vgrid_name=%s' % \
@@ -256,7 +271,14 @@ def main(client_id, user_arguments_dict):
                                          'class': 'scmlink owner',
                                          'title': 'View %s owners scm' % \
                                          vgrid_name,
-                                          'text': 'View'}
+                                         'text': 'View'}
+            vgrid_obj['ownertrackerlink'] = {'object_type': 'link',
+                                         'destination': '/vgridownertracker/%s' % \
+                                         vgrid_name,
+                                         'class': 'trackerlink owner',
+                                         'title': 'View %s owners tracker' % \
+                                         vgrid_name,
+                                         'text': 'View'}
 
             # correct the link to leave the VGrid
 

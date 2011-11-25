@@ -32,15 +32,20 @@ tools and a Python interpreter with a few external modules.
 --... others may also work
 -Python Enchant module (http://pyenchant.sourceforge.net/). 
 
-Optional WSGI interface, Wiki and SCM VGrid features require:
+Optional WSGI interface, Wiki, SCM and tracker VGrid features require:
 -Apache WSGI module (http://code.google.com/p/modwsgi/)
 -MoinMoin (http://moinmo.in/)
 -Mercurial (http://mercurial.selenic.com/)
+-Trac (http://trac.edgewall.org/)
 
 On Debian servers the corresponding packages can be installed with:
 sudo aptitude install apache2-mpm-prefork libapache2-mod-wsgi \
      openssh-client python-json python-enchant python-moinmoin \
-     mercurial
+     mercurial trac trac-mercurial
+
+Additional Trac extensions can be installed with:
+sudo aptitude install trac-customfieldadmin trac-graphviz \
+     trac-mastertickets trac-wikiprint trac-wikirename trac-wysiwyg
 
 
 = Installing MiG =
@@ -133,6 +138,10 @@ settings:
 --mig_certs=MIG_CERTS
 --moin_etc=MOIN_ETC
 --moin_share=MOIN_SHARE
+--hg_path=HG_PATH
+--hgweb_path=HGWEB_PATH
+--trac_admin_path=TRAC_ADMIN_PATH
+--trac_ini_path=TRAC_INI_PATH
 --public_port=PUBLIC_PORT
 --cert_port=CERT_PORT
 --sid_port=SID_PORT
@@ -158,6 +167,8 @@ defaults, this could be:
 		   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
 		   --hg_path=/usr/bin/hg \
 		   --hgweb_path=/usr/share/doc/mercurial/examples/hgweb.cgi \
+		   --trac_admin_path=/usr/bin/trac-admin \
+		   --trac_ini_path=/home/mig/mig/server/trac.ini \
 		   --public_port=80 --cert_port=443 --sid_port=8092 \
 		   --user_clause=User --group_clause=Group \
 		   --listen_clause='Listen' \
@@ -178,6 +189,8 @@ or similarly with apache 2.x:
 		   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
 		   --hg_path=/usr/bin/hg \
 		   --hgweb_path=/usr/share/doc/mercurial/examples/hgweb.cgi \
+		   --trac_admin_path=/usr/bin/trac-admin \
+		   --trac_ini_path=/home/mig/mig/server/trac.ini \
 		   --public_port=80 --cert_port=443 --sid_port=443 \
 		   --user_clause=User --group_clause=Group \
 		   --listen_clause='#Listen' \
@@ -190,11 +203,11 @@ certificates (used for MiG server to server communication).
 The actual keys and certificates can be added later, so you can just
 choose a suitable directory path at first.
 
-The two moin paths and two hg paths are optional and can be set to the 
-empty string if moin and/or mercurial is not available or if VGrid wikis
-and SCMs should not be enabled. On Debian the moinmoin-common package
-provides all the necessary wiki requirements. It is still necessary to
-tweak the system wide wikiconfig template in
+The moin, hg and trac path pairs are optional and can be set to the 
+empty string if moin/mercurial/trac is not available or if VGrid wikis,
+SCMs and trackers should simply not be enabled. On Debian the
+moinmoin-common package provides all the necessary wiki requirements. It
+is still necessary to tweak the system wide wikiconfig template in
 /usr/share/moin/config/wikiconfig.py to get the moin underlay links
 using /moin_staticXYZ instead of /wiki and front page setup right. With
 recent version of moin you may also need to change the instance_dir
@@ -203,7 +216,8 @@ same dir. There's a diff between the default wikiconfig.py and the one that
 we use in mig/install/wikiconfig.py.MiG.diff .
 
 Similarly the mercurial package provides all required components for 
-VGrid SCMs on Debian.
+VGrid SCMs on Debian. The same applies for the trac + trac-mercurial
+packages.
 In case you want to run MiG with VGrid wikis on another distribution you can
 download a MoinMoin wiki tarball from our Downloads page:
 http://code.google.com/p/migrid/downloads/list

@@ -137,6 +137,8 @@ def create_user(
     moin_share = '/usr/share/moin'
     hg_path = '/usr/bin/hg'
     hgweb_path = '/usr/share/doc/mercurial/examples/hgweb.cgi'
+    trac_admin_path = '/usr/bin/trac-admin'
+    trac_admin_path = '%s/trac.ini' % server_dir
 
     firewall_script = '/root/scripts/firewall'
     print '# Add the next line to %s and run the script:'\
@@ -188,6 +190,8 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         moin_share,
         hg_path,
         hgweb_path,
+        trac_admin_path,
+        trac_ini_path,
         public_port,
         cert_port,
         sid_port,
@@ -202,6 +206,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     apache_ports_conf = os.path.join(dst, 'ports.conf')
     apache_mig_conf = os.path.join(dst, 'MiG.conf')
     server_conf = os.path.join(dst, 'MiGserver.conf')
+    trac_ini = os.path.join(dst, 'trac.ini')
     apache_initd_script = os.path.join(dst, 'apache-%s' % user)
 
     print '# Clone %s to %s and put config files there:' % (apache_etc,
@@ -235,8 +240,8 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
          % (user, user)
     print "sudo su - %s -c 'svn checkout http://migrid.googlecode.com/svn/trunk/ %s'"\
          % (user, home)
-    print 'sudo chown %s:%s %s' % (user, group, server_conf)
-    print 'sudo cp -f -p %s %s/' % (server_conf, server_dir)
+    print 'sudo chown %s:%s %s %s' % (user, group, server_conf, trac_ini)
+    print 'sudo cp -f -p %s %s %s/' % (server_conf, trac_ini, server_dir)
 
     # Only add non-directory paths manually and leave the rest to
     # checkconf.py below

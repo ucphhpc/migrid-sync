@@ -30,13 +30,15 @@
 import os
 import shutil
 import subprocess
+import ConfigParser
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.fileio import write_file, pickle, make_symlink
+from shared.fileio import write_file, make_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
+from shared.useradm import distinguished_name_to_user
 from shared.validstring import valid_dir_input
 from shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
      vgrid_set_resources
@@ -51,6 +53,7 @@ def signature():
 
 def create_wiki(
     configuration,
+    client_id,
     vgrid_name,
     wiki_dir,
     output_objects,
@@ -92,19 +95,22 @@ def create_wiki(
         os.mkdir(cgi_wiki_bin)
         os.mkdir(cgi_wiki_etc)
 
-        # Create modified MoinMoin cgi script that uses local rather than global config
-        # In this way modification to one vgrid wiki will not affect other vgrid wikis.
+        # Create modified MoinMoin cgi script that uses local rather than
+        # global config In this way modification to one vgrid wiki will not
+        # affect other vgrid wikis.
 
         template_fd = open(cgi_template_script, 'r')
         template_script = template_fd.readlines()
         template_fd.close()
         cgi_script = []
 
-        # Simply replace all occurences of template conf dir with vgrid wiki conf dir.
-        # In that way config files (python modules) are automatically loaded from there.
+        # Simply replace all occurences of template conf dir with vgrid wiki
+        # conf dir. In that way config files (python modules) are automatically
+        # loaded from there.
 
         # IMPORTANT NOTE:
-        # prevent users writing in cgi-bin and etc dir to avoid remote execution exploit
+        # prevent users writing in cgi-bin and etc dir to avoid remote
+        # execution exploit
 
         for line in template_script:
             line = line.replace(cgi_template_etc_alternative,
@@ -158,6 +164,7 @@ def create_wiki(
 
 def create_scm(
     configuration,
+    client_id,
     vgrid_name,
     scm_dir,
     output_objects,
@@ -252,7 +259,8 @@ the commands and work flows of this distributed SCM.
         cgi_script = []
 
         # IMPORTANT NOTE:
-        # prevent users writing in cgi-bin dir to avoid remote execution exploit
+        # prevent users writing in cgi-bin dir to avoid remote execution
+        # exploit
 
         for line in template_script:
             line = line.replace(cgi_template_name,
@@ -271,7 +279,8 @@ the commands and work flows of this distributed SCM.
         readme_fd.close()
         subprocess.call([configuration.hg_path, 'init', cgi_scm_repo])
         subprocess.call([configuration.hg_path, 'add', repo_readme])
-        subprocess.call([configuration.hg_path, 'commit', '-m"init"', repo_readme])
+        subprocess.call([configuration.hg_path, 'commit', '-m"init"',
+                         repo_readme])
         if not os.path.exists(repo_rc):
             open(repo_rc, 'w').close()
         os.chmod(repo_rc, 0644)
@@ -290,8 +299,185 @@ the commands and work flows of this distributed SCM.
         return False
 
 
+def create_tracker(
+    configuration,
+    client_id,
+    vgrid_name,
+    tracker_dir,
+    scm_dir,
+    output_objects,
+    ):
+    """Create new Trac issue tracker bound to SCM repository if given"""
+
+    logger = configuration.logger
+    kind = 'member'
+    tracker_alias = 'vgridtracker'
+    admin_user = distinguished_name_to_user(client_id)
+    admin_email = admin_user.get('email', 'unknown@migrid.org')
+    server_url = configuration.migserver_https_cert_url
+    server_url_without_port = ':'.join(server_url.split(':')[:2])
+    if tracker_dir.find('private') > -1:
+        kind = 'owner'
+        tracker_alias = 'vgridownertracker'
+        server_url = configuration.migserver_https_cert_url
+    elif tracker_dir.find('public') > -1:
+        kind = 'public'
+        tracker_alias = 'vgridpublictracker'
+        server_url = configuration.migserver_http_url
+
+    tracker_url = os.path.join(server_url, tracker_alias, vgrid_name)
+
+    # Trac init is documented at http://trac.edgewall.org/wiki/TracAdmin
+    cgi_tracker_var = os.path.join(tracker_dir, 'var')
+    cgi_tracker_conf = os.path.join(cgi_tracker_var, 'conf', 'trac.ini')
+    tracker_db = 'sqlite:db/trac.db'
+    # NB: deploy command requires an empty directory target
+    # We create a lib dir where it creates cgi-bin and htdocs subdirs
+    cgi_tracker_deploy = os.path.join(tracker_dir, 'lib')
+    cgi_tracker_bin = os.path.join(cgi_tracker_deploy, 'cgi-bin')
+    cgi_tracker_link = os.path.join(tracker_dir, 'cgi-bin')
+    cgi_tracker_underlay = os.path.join(cgi_tracker_deploy, 'htdocs')
+    repo_base = 'repo'
+    cgi_scm_repo = os.path.join(scm_dir, repo_base)
+    project_name = '%s %s issue tracker' % (vgrid_name, kind)
+    try:
+
+        # Create tracker directory
+
+        os.mkdir(tracker_dir)
+
+        # Create Trac project that uses local storage.
+        # In this way modification to one vgrid tracker will not affect others.
+
+        # Init tracker with trac-admin command:
+        # trac-admin tracker_dir initenv projectname db respostype repospath
+        create_cmd = [configuration.trac_admin_path, cgi_tracker_var,
+                      'initenv', vgrid_name, tracker_db, 'hg', cgi_scm_repo]
+        # Trac may fail silently if ini file is missing
+        if configuration.trac_ini_path and \
+               os.path.exists(configuration.trac_ini_path):
+            create_cmd.append('--inherit=%s' % configuration.trac_ini_path)
+
+        # IMPORTANT: trac commands are quite verbose and will cause trouble
+        # if the stdout/err is not handled (Popen vs call)
+        logger.info('create tracker project: %s' % create_cmd)
+        proc = subprocess.Popen(create_cmd, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
+        proc.wait()
+        if proc.returncode != 0:
+            raise Exception("tracker creation %s failed: %s (%d)" % \
+                            (create_cmd, proc.stdout.read(),
+                             proc.returncode))
+
+        # We want to customize generated project trac.ini with project info
+        
+        conf = ConfigParser.SafeConfigParser()
+        conf.read(cgi_tracker_conf)
+
+        conf_overrides = {
+            'trac': {
+                'base_url': tracker_url,
+                },
+            'project': {
+                'admin': admin_email,
+                'descr': project_name,
+                'footer': "",
+                'url': tracker_url,
+                },
+            'header_logo': {
+                'height': -1,
+                'width': -1,
+                'src': os.path.join(server_url, 'images', 'site-logo.png'),
+                'link': '',
+                },
+            }
+        if configuration.smtp_server:
+            conf_overrides['notification'] = {
+                'smtp_from': configuration.smtp_sender,
+                'smtp_server': configuration.smtp_server,
+                'smtp_enabled': True,
+                }
+
+        for (section, options) in conf_overrides.items():
+            if not conf.has_section(section):
+                conf.add_section(section)
+            for (key, val) in options.items():
+                conf.set(section, key, str(val))
+
+        project_conf = open(cgi_tracker_conf, "w")
+        project_conf.write("# -*- coding: utf-8 -*-\n")
+        # dump entire conf file
+        for section in conf.sections():
+            project_conf.write("\n[%s]\n" % section)
+            for option in conf.options(section):
+                project_conf.write("%s = %s\n" % (option, conf.get(section,
+                                                                 option)))
+        project_conf.close()
+
+        # Create cgi-bin with scripts using trac-admin command:
+        # trac-admin tracker_dir deploy cgi_tracker_bin
+        deploy_cmd = [configuration.trac_admin_path, cgi_tracker_var, 'deploy',
+                      cgi_tracker_deploy]
+        logger.info('deploy tracker project: %s' % deploy_cmd)
+        proc = subprocess.Popen(deploy_cmd, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
+        proc.wait()
+        if proc.returncode != 0:
+            raise Exception("tracker deployment %s failed: %s (%d)" % \
+                            (deploy_cmd, proc.stdout.read(),
+                             proc.returncode))
+
+        os.symlink(cgi_tracker_bin, cgi_tracker_link)
+
+        # Give admin rights to creator using trac-admin command:
+        # trac-admin tracker_dir deploy cgi_tracker_bin
+        perms_cmd = [configuration.trac_admin_path, cgi_tracker_var,
+                     'permission', 'add', admin_email, 'TRAC_ADMIN']
+        logger.info('provide admin rights to creator: %s' % perms_cmd)
+        proc = subprocess.Popen(perms_cmd, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
+        proc.wait()
+        if proc.returncode != 0:
+            raise Exception("tracker permissions %s failed: %s (%d)" % \
+                            (perms_cmd, proc.stdout.read(),
+                             proc.returncode))
+
+        # IMPORTANT NOTE:
+        # prevent users writing in cgi-bin dir to avoid remote execution
+        # exploit
+
+        logger.info('fix permissions on %s' % project_name)
+        for (root, dirs, files) in os.walk(tracker_dir):
+            for name in dirs:
+                os.chmod(os.path.join(root, name), 0555)
+            for name in files:
+                os.chmod(os.path.join(root, name), 0444)
+        cgi_tracker_script = os.path.join(cgi_tracker_bin, 'trac.cgi')
+        logger.info('loosen permissions on %s' % cgi_tracker_script)
+        os.chmod(cgi_tracker_script, 0555)
+        cgi_tracker_db_dir = os.path.join(cgi_tracker_var, 'db')
+        logger.info('loosen permissions on %s' % cgi_tracker_db_dir)
+        os.chmod(cgi_tracker_db_dir, 0755)
+        cgi_tracker_db = os.path.join(cgi_tracker_db_dir, 'trac.db')
+        logger.info('loosen permissions on %s' % cgi_tracker_db)
+        os.chmod(cgi_tracker_db, 0644)
+        cgi_tracker_attach = os.path.join(cgi_tracker_var, 'attachments')
+        logger.info('loosen permissions on %s' % cgi_tracker_attach)
+        os.chmod(cgi_tracker_attach, 0755)
+
+        os.chmod(tracker_dir, 0555)
+        return True
+    except Exception, exc:
+        logger.error('create vgrid tracker failed: %s' % exc)
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Could not create vgrid tracker: %s'
+                               % exc})
+        return False
+
+
 def create_forum(
     configuration,
+    client_id,
     vgrid_name,
     forum_dir,
     output_objects,
@@ -339,8 +525,8 @@ def main(client_id, user_arguments_dict):
     if not valid_dir_input(configuration.vgrid_home, vgrid_name):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Illegal vgrid_name: %s' % vgrid_name})
-        logger.warning("createvgrid registered possible illegal directory traversal attempt by '%s': vgrid name '%s'"
-                        % (client_id, vgrid_name))
+        logger.warning("""createvgrid possible illegal directory traversal
+attempt by '%s': vgrid name '%s'""" % (client_id, vgrid_name))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -357,6 +543,9 @@ def main(client_id, user_arguments_dict):
     public_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
                         vgrid_name, '.vgridscm')) + os.sep
+    public_tracker_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_public_base,
+                        vgrid_name, '.vgridtracker')) + os.sep
     private_base_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name)) + os.sep
@@ -366,6 +555,9 @@ def main(client_id, user_arguments_dict):
     private_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name, '.vgridscm')) + os.sep
+    private_tracker_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_private_base,
+                        vgrid_name, '.vgridtracker')) + os.sep
     private_forum_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name, '.vgridforum')) + os.sep
@@ -378,13 +570,17 @@ def main(client_id, user_arguments_dict):
     vgrid_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
                         vgrid_name, '.vgridscm')) + os.sep
+    vgrid_tracker_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_files_home,
+                        vgrid_name, '.vgridtracker')) + os.sep
 
     # does vgrid exist?
 
     if os.path.isdir(base_dir):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'vgrid %s cannot be created because it already exists!'
-                               % vgrid_name})
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'vgrid %s cannot be created because it already exists!'
+             % vgrid_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # verify that client is owner of imada or imada/topology if trying to
@@ -407,16 +603,18 @@ def main(client_id, user_arguments_dict):
             '/'.join(vgrid_name_list[0:vgrid_name_list_length - 1])
         if not vgrid_is_owner(vgrid_name_without_last_fragment,
                               client_id, configuration):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'You must be an owner of a parent vgrid to create a sub vgrid'
-                                  })
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : 'You must own a parent vgrid to create a sub vgrid'
+                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # make sure all dirs can be created (that a file or directory with the same name
-    # do not exist prior to the vgrid creation)
+    # make sure all dirs can be created (that a file or directory with the same
+    # name do not exist prior to the vgrid creation)
 
     try_again_string = \
-        'vgrid cannot be created, a file or directory exists with the same name, please try again with a new name!'
+        """vgrid cannot be created, a file or directory exists with the same
+name, please try again with a new name!"""
     if os.path.exists(public_base_dir):
         output_objects.append({'object_type': 'error_text', 'text'
                               : try_again_string})
@@ -437,9 +635,11 @@ def main(client_id, user_arguments_dict):
     try:
         os.mkdir(base_dir)
     except Exception, exc:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not create vgrid directory, remember to create parent vgrid before creating a sub-vgrid.'
-                              })
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : """Could not create vgrid directory, remember to create parent
+vgrid before creating a sub-vgrid."""
+             })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # create directory to store vgrid public_base files
@@ -462,11 +662,20 @@ for server side scripting with Python, ASP or PHP for security reasons.
                        pub_readme, logger)
         pub_entry_page = os.path.join(public_base_dir, 'index.html')
         if not os.path.exists(pub_entry_page):
-            write_file("<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>\n<html><head><title>Public entry page not created yet..</title></head><body>No public entrypage created yet! (If you are owner of the vgrid, overwrite public_base/%s/index.html to place it here)</body></html>"
-                        % vgrid_name, pub_entry_page, logger)
+            write_file("""<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01
+Transitional//EN'>
+<html>
+<head><title>Public entry page not created yet..</title></head>
+<body>
+No public entrypage created yet! (If you are owner of the vgrid, overwrite
+public_base/%s/index.html to place it here)
+</body>
+</html>""" % vgrid_name, pub_entry_page, logger)
     except Exception, exc:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not create vgrid public_base directory, remember to create parent vgrid before creating a sub-vgrid.'
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : """Could not create vgrid public_base directory, remember to
+create parent vgrid before creating a sub-vgrid."""
                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -491,15 +700,29 @@ for server side scripting with Python, ASP or PHP for security reasons.
                        priv_readme, logger)
         priv_entry_page = os.path.join(private_base_dir, 'index.html')
         if not os.path.exists(priv_entry_page):
-            write_file("<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>\n<html><head><title>Private entry page not created yet..</title></head><body>No private entrypage created yet! (If you are owner of the vgrid, overwrite private_base/%s/index.html to place it here)<br>  <p><a href='http://validator.w3.org/check?uri=referer'><img src='http://www.w3.org/Icons/valid-html401' alt='Valid HTML 4.01 Transitional' height='31' width='88' /></a> </p></body></html>"
-                        % vgrid_name, priv_entry_page, logger)
+            write_file("""<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01
+Transitional//EN'>
+<html>
+<head><title>Private entry page not created yet..</title></head>
+<body>
+No private entrypage created yet! (If you are owner of the vgrid, overwrite
+private_base/%s/index.html to place it here)<br>
+<p><a href='http://validator.w3.org/check?uri=referer'>
+<img src='http://www.w3.org/Icons/valid-html401' alt='Valid HTML 4.01
+Transitional' height='31' width='88' /></a>
+</p>
+</body>
+</html>""" % vgrid_name, priv_entry_page, logger)
     except Exception, exc:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not create vgrid private_base directory, remember to create parent vgrid before creating a sub-vgrid.'
-                              })
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : """Could not create vgrid private_base directory, remember to
+create parent vgrid before creating a sub-vgrid."""
+             })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # create directory in vgrid_files_home to contain internal files for the vgrid
+    # create directory in vgrid_files_home to contain internal files for the
+    # new vgrid
 
     try:
         os.mkdir(vgrid_files_dir)
@@ -525,27 +748,41 @@ for job input and output.
 
         for wiki_dir in [public_wiki_dir, private_wiki_dir,
                          vgrid_wiki_dir]:
-            if not create_wiki(configuration, vgrid_name, wiki_dir,
+            if not create_wiki(configuration, client_id, vgrid_name, wiki_dir,
                                output_objects):
                 return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    all_scm_dirs = ['', '', '']
     if configuration.hg_path and configuration.hgweb_path:
 
         # create participant scm repo in the vgrid shared dir
 
-        for scm_dir in [public_scm_dir, private_scm_dir, vgrid_scm_dir]:
-            if not create_scm(configuration, vgrid_name, scm_dir,
+        all_scm_dirs = [public_scm_dir, private_scm_dir, vgrid_scm_dir]
+        for scm_dir in all_scm_dirs:
+            if not create_scm(configuration, client_id, vgrid_name, scm_dir,
                                output_objects):
                 return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    all_tracker_dirs = ['', '', '']
+    if configuration.trac_admin_path:
+
+        # create participant tracker in the vgrid shared dir
+
+        all_tracker_dirs = [public_tracker_dir, private_tracker_dir,
+                            vgrid_tracker_dir]
+        for (tracker_dir, scm_dir) in zip(all_tracker_dirs, all_scm_dirs):
+            if not create_tracker(configuration, client_id, vgrid_name,
+                                  tracker_dir, scm_dir, output_objects):
+                return (output_objects, returnvalues.SYSTEM_ERROR)
+
     for forum_dir in [private_forum_dir]:
-        if not create_forum(configuration, vgrid_name, forum_dir,
+        if not create_forum(configuration, client_id, vgrid_name, forum_dir,
                             output_objects):
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    # create pickled owners list with client_id as owner
-    # only add user in owners list if new vgrid is a base vgrid (because symlinks to
-    # subdirs are not necessary, and an owner is per definition owner of sub vgrids).
+    # Create owners list with client_id as owner only add user in owners list
+    # if new vgrid is a base vgrid (because symlinks to subdirs are not
+    # necessary, and an owner is per definition owner of sub vgrids).
 
     owner_list = []
     if new_base_vgrid == True:
@@ -581,7 +818,8 @@ for job input and output.
 
     if new_base_vgrid:
 
-        # create sym link from creators (client_id) home directory to directory containing the vgrid files
+        # create sym link from creators (client_id) home directory to directory
+        # containing the vgrid files
 
         src = vgrid_files_dir
         dst = os.path.join(configuration.user_home, client_dir,
@@ -599,10 +837,8 @@ for job input and output.
         try:
             os.mkdir(user_public_base)
         except:
-
-            # o.out("could not create dir %s. Probably because it already exists." % user_public_base)
-
-            pass
+            logger.warning("could not create %s. Probably already exists." % \
+                   user_public_base)
 
         public_base_dst = os.path.join(user_public_base, vgrid_name)
 
@@ -621,38 +857,22 @@ for job input and output.
         try:
             os.mkdir(user_private_base)
         except:
-
-            # o.out("could not create dir %s. Probably because it already exists." % user_private_base)
-
-            pass
+            logger.warning("could not create %s. Probably already exists." % \
+                           user_private_base)
 
         private_base_dst = os.path.join(user_private_base, vgrid_name)
 
         # create sym link for private_base
 
         if not make_symlink(private_base_dir, private_base_dst, logger):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Could not create link to private_base dir!'
-                                  })
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : 'Could not create link to private_base dir!'
+                 })
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        # create sym link to make private_base available by linking it to wwwuser/vgrid
-
-        # ******** code below removed because apache rewriterule now sends requests for
-        # https://.../vgrid/vgrid_name to a python script that validates the client!
-
-        # try:
-            # make sure root dir exists
-            # os.mkdir(os.path.join(configuration.user_home, "vgrid"))
-            # except:
-                # dir probably exists
-                # pass
-
-                # if not make_symlink(private_base_dir, os.path.join(configuration.user_home, "vgrid", vgrid_name), logger):
-                    # o.out("Could not create link in wwwuser/vgrid/%s" % vgrid_name)
-                    # o.reply_and_exit(o.ERROR)
-
-        # create sym link to make public_base public by linking it to wwwpublic/vgrid
+        # create sym link to make public_base public by linking it to
+        # wwwpublic/vgrid
 
         try:
 
@@ -668,18 +888,20 @@ for job input and output.
         if not make_symlink(public_base_dir,
                             os.path.join(configuration.wwwpublic,
                             'vgrid', vgrid_name), logger):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Could not create link in wwwpublic/vgrid/%s'
-                                   % vgrid_name})
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : 'Could not create link in wwwpublic/vgrid/%s'
+                 % vgrid_name})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
                           : 'vgrid %s created!' % vgrid_name})
-    output_objects.append({'object_type': 'link',
-                           'destination': 'adminvgrid.py?vgrid_name=%s' % vgrid_name,
-                           'class': 'adminlink',
-                           'title': 'Administrate your new VGrid',
-                           'text': 'Administration for %s' % vgrid_name})
+    output_objects.append(
+        {'object_type': 'link',
+         'destination': 'adminvgrid.py?vgrid_name=%s' % vgrid_name,
+         'class': 'adminlink',
+         'title': 'Administrate your new VGrid',
+         'text': 'Administration for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)
 
 

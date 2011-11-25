@@ -549,6 +549,10 @@ table.liveio table {
   background: url('/images/icons/calendar.png') no-repeat;
   padding-left: 18px;
 }
+.trackerlink {
+  background: url('/images/icons/table_gear.png') no-repeat;
+  padding-left: 18px;
+}
 .forumlink {
   background: url('/images/icons/comments.png') no-repeat;
   padding-left: 18px;

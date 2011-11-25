@@ -85,6 +85,10 @@ def fix_missing(config_file, verbose=True):
         'javabin_home': '~/mig/java-bin',
         'moin_etc': '/etc/moin',
         'moin_share': '/usr/share/moin',
+        'hg_path': '/usr/bin/hg',
+        'hgweb_path': '/usr/share/doc/mercurial-common/examples/hgweb.cgi',
+        'trac_admin_path': '/usr/bin/trac-admin',
+        'trac_ini_path': '~/mig/server/trac.ini',
         'migserver_http_url': 'http://%%(server_fqdn)s',
         'backup_http_urls': '',
         'migserver_https_url': 'https://%%(server_fqdn)s',
@@ -191,6 +195,10 @@ class Configuration:
     javabin_home = ''
     moin_etc = ''
     moin_share = ''
+    hg_path = ''
+    hgweb_path = ''
+    trac_admin_path = ''
+    trac_ini_path = ''
     smtp_server = ''
     smtp_sender = ''
     user_sftp_address = ''
@@ -516,6 +524,14 @@ class Configuration:
             self.hgweb_path = config.get('SCM', 'hgweb_path')
         else:
             self.hgweb_path = ''
+        if config.has_option('TRACKER', 'trac_admin_path'):
+            self.trac_admin_path = config.get('TRACKER', 'trac_admin_path')
+        else:
+            self.trac_admin_path = ''
+        if config.has_option('TRACKER', 'trac_ini_path'):
+            self.trac_ini_path = config.get('TRACKER', 'trac_ini_path')
+        else:
+            self.trac_ini_path = ''
 
         if config.has_option('SITE', 'images'):
             self.site_images = config.get('SITE', 'images')

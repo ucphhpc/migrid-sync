@@ -161,7 +161,7 @@ def remove_vgrid_entry(vgrid, configuration):
                         configuration.vgrid_private_base, 
                         configuration.vgrid_files_home]:
 
-            # delete public, member, and owner wikis and scms
+            # delete public, member, and owner wikis/scms/trackers
             # we just remove and do not check success for these
 
             if configuration.moin_share and configuration.moin_etc:
@@ -170,6 +170,10 @@ def remove_vgrid_entry(vgrid, configuration):
 
             if configuration.hg_path and configuration.hgweb_path:
                 remove_rec(os.path.join(prefix, vgrid, '.vgridscm'), 
+                           configuration)
+
+            if configuration.trac_admin_path:
+                remove_rec(os.path.join(prefix, vgrid, '.vgridtracker'), 
                            configuration)
 
     return (success, msg)

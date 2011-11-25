@@ -41,7 +41,8 @@ from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.validstring import valid_dir_input
 from shared.vgrid import vgrid_is_owner
-from shared.functionality.createvgrid import create_wiki, create_scm
+from shared.functionality.createvgrid import create_wiki, create_scm, \
+     create_tracker
 
 def signature():
     """Signature of the main function"""
@@ -157,6 +158,9 @@ $(document).ready(function() {
     public_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
                         vgrid_name, '.vgridscm')) + os.sep
+    public_tracker_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_public_base,
+                        vgrid_name, '.vgridtracker')) + os.sep
     private_base_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name)) + os.sep
@@ -166,6 +170,9 @@ $(document).ready(function() {
     private_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name, '.vgridscm')) + os.sep
+    private_tracker_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_private_base,
+                        vgrid_name, '.vgridtracker')) + os.sep
     vgrid_files_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
                         vgrid_name)) + os.sep
@@ -175,6 +182,9 @@ $(document).ready(function() {
     vgrid_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
                         vgrid_name, '.vgridscm')) + os.sep
+    vgrid_tracker_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_files_home,
+                        vgrid_name, '.vgridtracker')) + os.sep
 
     # Try to create all base directories used for vgrid files
 
@@ -193,15 +203,31 @@ $(document).ready(function() {
         for wiki_dir in [public_wiki_dir, private_wiki_dir,
                          vgrid_wiki_dir]:
             tmp_output = []
-            create_wiki(configuration, vgrid_name, wiki_dir, tmp_output)
+            create_wiki(configuration, client_id, vgrid_name, wiki_dir,
+                        tmp_output)
 
+    all_scm_dirs = ['', '', '']
     if configuration.hg_path and configuration.hgweb_path:
 
         # create participant scm repo in the vgrid shared dir
 
-        for scm_dir in [public_scm_dir, private_scm_dir, vgrid_scm_dir]:
+        all_scm_dirs = [public_scm_dir, private_scm_dir, vgrid_scm_dir]
+        for scm_dir in all_scm_dirs:
             tmp_output = []
-            create_scm(configuration, vgrid_name, scm_dir, tmp_output)
+            create_scm(configuration, client_id, vgrid_name, scm_dir,
+                       tmp_output)
+
+    all_tracker_dirs = ['', '', '']
+    if configuration.trac_admin_path:
+
+        # create participant tracker in the vgrid shared dir
+
+        all_tracker_dirs = [public_tracker_dir, private_tracker_dir,
+                            vgrid_tracker_dir]
+        for (tracker_dir, scm_dir) in zip(all_tracker_dirs, all_scm_dirs):
+            tmp_output = []
+            create_tracker(configuration, client_id, vgrid_name, tracker_dir,
+                           scm_dir, tmp_output)
 
     output_objects.append({'object_type': 'text', 'text'
                           : 'vgrid %s updated!' % vgrid_name})

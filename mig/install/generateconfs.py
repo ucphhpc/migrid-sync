@@ -98,6 +98,8 @@ def generate_confs(
     moin_share='',
     hg_path='',
     hgweb_path='',
+    trac_admin_path='',
+    trac_ini_path='',
     public_port=80,
     cert_port=443,
     sid_port=444,
@@ -129,6 +131,8 @@ def generate_confs(
     user_dict['__MOIN_SHARE__'] = moin_share
     user_dict['__HG_PATH__'] = hg_path
     user_dict['__HGWEB_PATH__'] = hgweb_path
+    user_dict['__TRAC_ADMIN_PATH__'] = trac_admin_path
+    user_dict['__TRAC_INI_PATH__'] = trac_ini_path
     user_dict['__USER_CLAUSE__'] = user_clause
     user_dict['__GROUP_CLAUSE__'] = group_clause
     user_dict['__LISTEN_CLAUSE__'] = listen_clause
@@ -160,6 +164,7 @@ cert and sid based https!
                       ("apache-MiG-template.conf", "MiG.conf"),
                       ("apache-init.d-template", "apache-%s" % user),
                       ("apache-MiG-template.conf", "MiG.conf"),
+                      ("trac-MiG-template.ini", "trac.ini"),
                       ("MiGserver-template.conf", "MiGserver.conf"),
                       # service script for MiG daemons
                       ("MiG-init.d-template", "MiG"),
@@ -201,6 +206,8 @@ if '__main__' == __name__:
         'moin_share',
         'hg_path',
         'hgweb_path',
+        'trac_admin_path',
+        'trac_ini_path',
         'public_port',
         'cert_port',
         'sid_port',
@@ -263,6 +270,8 @@ moin_etc: %(moin_etc)s
 moin_share: %(moin_share)s
 hg_path: %(hg_path)s
 hgweb_path: %(hgweb_path)s
+trac_admin_path: %(trac_admin_path)s
+trac_ini_path: %(trac_ini_path)s
 public_port: %(public_port)s
 cert_port: %(cert_port)s
 sid_port: %(sid_port)s
@@ -291,6 +300,9 @@ cp %(destination)s/apache2.conf %(apache_etc)s/
 cp %(destination)s/httpd.conf %(apache_etc)s/
 cp %(destination)s/ports.conf %(apache_etc)s/
 cp %(destination)s/envvars %(apache_etc)s/
+
+and the generated trac.ini to %(mig_code)s/server/:
+cp %(destination)s/trac.ini %(mig_code)s/server/
 
 On a MiG developer server the dedicated apache init script is added with:
 cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s

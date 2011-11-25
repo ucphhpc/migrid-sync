@@ -1378,7 +1378,13 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
             if len(i['vgrids']) > 0:
                 vgrids = i['vgrids']
                 lines.append("<table class='vgrids columnsort' id='vgridtable'>")
-                # make scm optional, as it is in the configuration
+                # make wiki/scm/tracker optional, as it is in the configuration
+                if configuration.trac_admin_path:
+                    tracker = '''
+  <th class=centertext colspan="1">Tracker</th>
+'''
+                else:
+                    tracker = ''
                 if configuration.hg_path and configuration.hgweb_path:
                     scm = '''
   <th class=centertext colspan="1">SCM</th>
@@ -1402,12 +1408,13 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
   <th class=centertext colspan="1">Web Pages</th>
   %s
   %s
+  %s
   <th class=centertext colspan="1">Forum</th>
   <th class=centertext colspan="1">Monitor</th>
 </tr>
 </thead>
 <tbody>
-''' % (wiki, scm)
+''' % (wiki, scm, tracker)
                              )
                 for obj in vgrids:
                     lines.append('<tr>')
@@ -1474,6 +1481,21 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                             # if obj.has_key('publicscmlink'):
                             #    lines.append('%s '
                             #             % html_link(obj['publicscmlink']))
+                        else:
+                            lines.append('---')
+                        lines.append('</td>')
+                    if tracker:
+                        lines.append('<td class=centertext>')
+                        if obj.has_key('membertrackerlink'):
+                            if obj.has_key('ownertrackerlink'):
+                                lines.append('%s '
+                                             % html_link(obj['ownertrackerlink']))
+                            lines.append('%s '
+                                     % html_link(obj['membertrackerlink']))
+                            # hide link to public tracker which is disabled in apache
+                            # if obj.has_key('publictrackerlink'):
+                            #    lines.append('%s '
+                            #             % html_link(obj['publictrackerlink']))
                         else:
                             lines.append('---')
                         lines.append('</td>')
