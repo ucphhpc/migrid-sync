@@ -1385,7 +1385,7 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
 '''
                 else:
                     tracker = ''
-                if configuration.hg_path and configuration.hgweb_path:
+                if configuration.hgweb_path:
                     scm = '''
   <th class=centertext colspan="1">SCM</th>
 '''

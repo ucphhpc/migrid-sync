@@ -205,15 +205,18 @@ choose a suitable directory path at first.
 
 The moin, hg and trac path pairs are optional and can be set to the 
 empty string if moin/mercurial/trac is not available or if VGrid wikis,
-SCMs and trackers should simply not be enabled. On Debian the
-moinmoin-common package provides all the necessary wiki requirements. It
-is still necessary to tweak the system wide wikiconfig template in
-/usr/share/moin/config/wikiconfig.py to get the moin underlay links
-using /moin_staticXYZ instead of /wiki and front page setup right. With
-recent version of moin you may also need to change the instance_dir
-variable to point to the parent of the wikiconfig_dir instead of the
-same dir. There's a diff between the default wikiconfig.py and the one that
-we use in mig/install/wikiconfig.py.MiG.diff .
+SCMs and trackers should simply not be enabled. If you want VGrid
+trackers including mercurial integration, but don't want the direct
+VGrid SCM links, you can set the trac_X options and hg_path but leave
+hgweb_path empty. 
+On Debian the moinmoin-common package provides all the necessary wiki
+requirements. It is still necessary to tweak the system wide wikiconfig
+template in /usr/share/moin/config/wikiconfig.py to get the moin
+underlay links using /moin_staticXYZ instead of /wiki and front page
+setup right. With recent version of moin you may also need to change the
+instance_dir variable to point to the parent of the wikiconfig_dir
+instead of the same dir. There's a diff between the default
+wikiconfig.py and the one that we use in mig/install/wikiconfig.py.MiG.diff .
 
 Similarly the mercurial package provides all required components for 
 VGrid SCMs on Debian. The same applies for the trac + trac-mercurial
