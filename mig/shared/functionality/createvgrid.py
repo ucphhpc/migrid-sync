@@ -464,6 +464,9 @@ def create_tracker(
         cgi_tracker_attach = os.path.join(cgi_tracker_var, 'attachments')
         logger.info('loosen permissions on %s' % cgi_tracker_attach)
         os.chmod(cgi_tracker_attach, 0755)
+        cgi_tracker_log = os.path.join(cgi_tracker_var, 'log')
+        logger.info('loosen permissions on %s' % cgi_tracker_log)
+        os.chmod(cgi_tracker_log, 0755)
 
         os.chmod(tracker_dir, 0555)
         return True

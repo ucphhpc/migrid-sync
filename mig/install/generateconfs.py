@@ -150,6 +150,11 @@ WARNING: you probably have to use either different fqdn or port settings for
 cert and sid based https!
 """
 
+    # Enable mercurial module in trackers if Trac is available
+    user_dict['__HG_COMMENTED__'] = '#'
+    if user_dict['__HG_PATH__']:
+        user_dict['__HG_COMMENTED__'] = ''
+
     try:
         os.makedirs(destination)
     except OSError:
