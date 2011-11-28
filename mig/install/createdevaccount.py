@@ -133,6 +133,8 @@ def create_user(
     apache_lock = '%s/lock' % apache_dir
     apache_log = '%s/log' % apache_dir
     cert_dir = '%s/MiG-certificates' % apache_dir
+    # We don't have a free port for sftp
+    enable_sftp = 'False'
     moin_etc = '/etc/moin'
     moin_share = '/usr/share/moin'
     hg_path = '/usr/bin/hg'
@@ -186,6 +188,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         mig_dir,
         state_dir,
         cert_dir,
+        enable_sftp,
         moin_etc,
         moin_share,
         hg_path,
