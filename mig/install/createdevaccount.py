@@ -138,7 +138,7 @@ def create_user(
     moin_etc = '/etc/moin'
     moin_share = '/usr/share/moin'
     hg_path = '/usr/bin/hg'
-    hgweb_path = '/usr/share/doc/mercurial/examples/hgweb.cgi'
+    hgweb_path = '/usr/share/doc/mercurial-common/examples/hgweb.cgi'
     trac_admin_path = '/usr/bin/trac-admin'
     trac_ini_path = '%s/trac.ini' % server_dir
 
