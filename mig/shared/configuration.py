@@ -89,6 +89,7 @@ def fix_missing(config_file, verbose=True):
         'hgweb_path': '/usr/share/doc/mercurial-common/examples/hgweb.cgi',
         'trac_admin_path': '/usr/bin/trac-admin',
         'trac_ini_path': '~/mig/server/trac.ini',
+        'trac_id_field': 'email',
         'migserver_http_url': 'http://%%(server_fqdn)s',
         'backup_http_urls': '',
         'migserver_https_url': 'https://%%(server_fqdn)s',
@@ -199,6 +200,7 @@ class Configuration:
     hgweb_path = ''
     trac_admin_path = ''
     trac_ini_path = ''
+    trac_id_field = ''
     smtp_server = ''
     smtp_sender = ''
     user_sftp_address = ''
@@ -532,6 +534,10 @@ class Configuration:
             self.trac_ini_path = config.get('TRACKER', 'trac_ini_path')
         else:
             self.trac_ini_path = ''
+        if config.has_option('TRACKER', 'trac_id_field'):
+            self.trac_id_field = config.get('TRACKER', 'trac_id_field')
+        else:
+            self.trac_id_field = 'email'
 
         if config.has_option('SITE', 'images'):
             self.site_images = config.get('SITE', 'images')

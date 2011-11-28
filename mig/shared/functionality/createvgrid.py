@@ -314,6 +314,7 @@ def create_tracker(
     tracker_alias = 'vgridtracker'
     admin_user = distinguished_name_to_user(client_id)
     admin_email = admin_user.get('email', 'unknown@migrid.org')
+    admin_id = admin_user.get(configuration.trac_id_field, 'unknown_id')
     server_url = configuration.migserver_https_cert_url
     server_url_without_port = ':'.join(server_url.split(':')[:2])
     if tracker_dir.find('private') > -1:
@@ -432,7 +433,7 @@ def create_tracker(
         # Give admin rights to creator using trac-admin command:
         # trac-admin tracker_dir deploy cgi_tracker_bin
         perms_cmd = [configuration.trac_admin_path, cgi_tracker_var,
-                     'permission', 'add', admin_email, 'TRAC_ADMIN']
+                     'permission', 'add', admin_id, 'TRAC_ADMIN']
         logger.info('provide admin rights to creator: %s' % perms_cmd)
         proc = subprocess.Popen(perms_cmd, stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT)
