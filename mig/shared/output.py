@@ -1378,25 +1378,43 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
             if len(i['vgrids']) > 0:
                 vgrids = i['vgrids']
                 lines.append("<table class='vgrids columnsort' id='vgridtable'>")
-                # make wiki/scm/tracker optional, as it is in the configuration
-                if configuration.trac_admin_path:
+                # make vgrid component links optional, as it is in the configuration
+                if configuration.vgrid_files_link:
+                    files = '''
+  <th class=centertext colspan="1">Files</th>
+'''
+                else:
+                    files = ''
+                if configuration.vgrid_web_pages_link:
+                    web_pages = '''
+  <th class=centertext colspan="1">Web Pages</th>
+'''
+                else:
+                    web_pages = ''
+                if configuration.vgrid_tracker_link:
                     tracker = '''
   <th class=centertext colspan="1">Tracker</th>
 '''
                 else:
                     tracker = ''
-                if configuration.hgweb_path:
+                if configuration.vgrid_scm_link:
                     scm = '''
   <th class=centertext colspan="1">SCM</th>
 '''
                 else:
                     scm = ''
-                if configuration.moin_etc and configuration.moin_share:
+                if configuration.vgrid_wiki_link:
                     wiki = '''
   <th class=centertext colspan="1">Wiki</th>
 '''
                 else:
                     wiki = ''
+                if configuration.vgrid_forum_link:
+                    forum = '''
+  <th class=centertext colspan="1">Forum</th>
+'''
+                else:
+                    forum = ''
 
                 lines.append('''
 <thead class="title">
@@ -1404,17 +1422,17 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
   <th>Name</th>
   <th width="8"><!-- Owner --></th>
   <th width="8"><!-- Member --></th>
-  <th class=centertext colspan="1">Files</th>
-  <th class=centertext colspan="1">Web Pages</th>
   %s
   %s
   %s
-  <th class=centertext colspan="1">Forum</th>
+  %s
+  %s
+  %s
   <th class=centertext colspan="1">Monitor</th>
 </tr>
 </thead>
 <tbody>
-''' % (wiki, scm, tracker)
+''' % (files, web_pages, wiki, scm, tracker, forum)
                              )
                 for obj in vgrids:
                     lines.append('<tr>')
@@ -1430,29 +1448,31 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                         lines.append('%s'
                                  % html_link(obj['memberlink']))
                     lines.append('</td>')
-                    lines.append('<td class=centertext>')
-                    if obj.has_key('sharedfolderlink'):
-                        lines.append('%s '
-                                 % html_link(obj['sharedfolderlink']))
-                    else:
-                        lines.append('---')
-                    lines.append('</td>')
-                    lines.append('<td class=centertext>')
-                    if obj.has_key('enterprivatelink'):
-                        lines.append('%s '
-                                 % html_link(obj['enterprivatelink']))
-                        if obj.has_key('editprivatelink'):
+                    if files:
+                        lines.append('<td class=centertext>')
+                        if obj.has_key('sharedfolderlink'):
                             lines.append('%s '
-                                         % html_link(obj['editprivatelink']))
-                    if obj.has_key('enterpubliclink'):
-                        lines.append('%s '
-                                 % html_link(obj['enterpubliclink']))
-                        if obj.has_key('editpubliclink'):
+                                         % html_link(obj['sharedfolderlink']))
+                        else:
+                            lines.append('---')
+                        lines.append('</td>')
+                    if web_pages:
+                        lines.append('<td class=centertext>')
+                        if obj.has_key('enterprivatelink'):
                             lines.append('%s '
-                                         % html_link(obj['editpubliclink']))
-                    else:
-                        lines.append('---')
-                    lines.append('</td>')
+                                         % html_link(obj['enterprivatelink']))
+                            if obj.has_key('editprivatelink'):
+                                lines.append('%s '
+                                             % html_link(obj['editprivatelink']))
+                        if obj.has_key('enterpubliclink'):
+                            lines.append('%s '
+                                         % html_link(obj['enterpubliclink']))
+                            if obj.has_key('editpubliclink'):
+                                lines.append('%s '
+                                             % html_link(obj['editpubliclink']))
+                        else:
+                            lines.append('---')
+                        lines.append('</td>')
                     if wiki:
                         lines.append('<td class=centertext>')
                         if obj.has_key('memberwikilink'):
@@ -1499,13 +1519,14 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                         else:
                             lines.append('---')
                         lines.append('</td>')
-                    lines.append('<td class=centertext>')
-                    if obj.has_key('privateforumlink'):
-                        lines.append('%s '
-                                 % html_link(obj['privateforumlink']))
-                    else:
-                        lines.append('---')
-                    lines.append('</td>')
+                    if forum:
+                        lines.append('<td class=centertext>')
+                        if obj.has_key('privateforumlink'):
+                            lines.append('%s '
+                                         % html_link(obj['privateforumlink']))
+                        else:
+                            lines.append('---')
+                        lines.append('</td>')
                     lines.append('<td class=centertext>')
                     if obj.has_key('privatemonitorlink'):
                         lines.append('%s '
