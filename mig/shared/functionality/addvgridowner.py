@@ -28,12 +28,14 @@
 """Add owner to a vgrid"""
 
 import os
+import subprocess
 
 from shared.base import client_id_dir
 from shared.fileio import make_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
+from shared.useradm import distinguished_name_to_user
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
     vgrid_is_member, vgrid_list_subvgrids, vgrid_add_owners
 import shared.returnvalues as returnvalues
@@ -45,6 +47,40 @@ def signature():
     defaults = {'vgrid_name': REJECT_UNSET, 'cert_id': REJECT_UNSET}
     return ['text', defaults]
 
+def add_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
+                      output_objects):
+    """Add new Trac issue tracker owner"""
+    cgi_tracker_var = os.path.join(tracker_dir, 'var')
+    if not os.path.isdir(cgi_tracker_var):
+        output_objects.append(
+            {'object_type': 'text', 'text'
+             : 'No tracker (%s) for vgrid %s - skipping tracker admin rights' \
+             % (tracker_dir, vgrid_name)
+             })
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+    try:
+        admin_user = distinguished_name_to_user(cert_id)
+        admin_id = admin_user.get(configuration.trac_id_field, 'unknown_id')
+        # Give admin rights to owner using trac-admin command:
+        # trac-admin tracker_dir deploy cgi_tracker_bin
+        perms_cmd = [configuration.trac_admin_path, cgi_tracker_var,
+                     'permission', 'add', admin_id, 'TRAC_ADMIN']
+        configuration.logger.info('provide admin rights to owner: %s' % \
+                                  perms_cmd)
+        proc = subprocess.Popen(perms_cmd, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
+        proc.wait()
+        if proc.returncode != 0:
+            raise Exception("tracker permissions %s failed: %s (%d)" % \
+                            (perms_cmd, proc.stdout.read(),
+                             proc.returncode))
+        return True
+    except Exception, exc:
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Could not give %s tracker admin rights: %s' % (cert_id, exc)
+             })
+        return False
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -123,12 +159,6 @@ def main(client_id, user_arguments_dict):
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     # getting here means cert_id is neither owner or member of any parent or sub-vgrids.
-
-    # Please note that base_dir must end in slash to avoid access to other
-    # vgrid dirs when own name is a prefix of another name
-
-    base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
-                               vgrid_name)) + os.sep
 
     public_base_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
@@ -272,6 +302,22 @@ def main(client_id, user_arguments_dict):
                               : 'Could not create link to private_base dir!'
                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    if configuration.trac_admin_path:
+        public_tracker_dir = \
+                           os.path.abspath(os.path.join(
+            configuration.vgrid_public_base, vgrid_name, '.vgridtracker'))
+        private_tracker_dir = \
+                            os.path.abspath(os.path.join(
+            configuration.vgrid_private_base, vgrid_name, '.vgridtracker'))
+        vgrid_tracker_dir = \
+                          os.path.abspath(os.path.join(
+            configuration.vgrid_files_home, vgrid_name, '.vgridtracker'))
+        for tracker_dir in [public_tracker_dir, private_tracker_dir,
+                            vgrid_tracker_dir]:
+            if not add_tracker_admin(configuration, cert_id, vgrid_name,
+                                     tracker_dir, output_objects):
+                return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
                           : 'New owner %s successfully added to %s vgrid!'

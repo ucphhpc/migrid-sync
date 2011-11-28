@@ -444,31 +444,32 @@ def create_tracker(
                              proc.returncode))
 
         # IMPORTANT NOTE:
-        # prevent users writing in cgi-bin dir to avoid remote execution
-        # exploit
+        # prevent users writing in cgi-bin, plugins and conf dirs to avoid
+        # remote code execution exploits!
+        #
+        # We keep permissions at a minimum for the rest, but need to allow
+        # writes to DB, attachments and log.
 
         logger.info('fix permissions on %s' % project_name)
+        perms = {}
+        for real_path in [os.path.join(cgi_tracker_var, i) for i in \
+                          ['db', 'attachments', 'log']]:
+            perms[real_path] = 0755
+        for real_path in [os.path.join(cgi_tracker_var, 'db', 'trac.db')]:
+            perms[real_path] = 0644
+        for real_path in [os.path.join(cgi_tracker_bin, i) for i in \
+                          ['trac.cgi', 'trac.wsgi']]:
+            perms[real_path] = 0755
         for (root, dirs, files) in os.walk(tracker_dir):
-            for name in dirs:
-                os.chmod(os.path.join(root, name), 0555)
-            for name in files:
-                os.chmod(os.path.join(root, name), 0444)
-        cgi_tracker_script = os.path.join(cgi_tracker_bin, 'trac.cgi')
-        logger.info('loosen permissions on %s' % cgi_tracker_script)
-        os.chmod(cgi_tracker_script, 0555)
-        cgi_tracker_db_dir = os.path.join(cgi_tracker_var, 'db')
-        logger.info('loosen permissions on %s' % cgi_tracker_db_dir)
-        os.chmod(cgi_tracker_db_dir, 0755)
-        cgi_tracker_db = os.path.join(cgi_tracker_db_dir, 'trac.db')
-        logger.info('loosen permissions on %s' % cgi_tracker_db)
-        os.chmod(cgi_tracker_db, 0644)
-        cgi_tracker_attach = os.path.join(cgi_tracker_var, 'attachments')
-        logger.info('loosen permissions on %s' % cgi_tracker_attach)
-        os.chmod(cgi_tracker_attach, 0755)
-        cgi_tracker_log = os.path.join(cgi_tracker_var, 'log')
-        logger.info('loosen permissions on %s' % cgi_tracker_log)
-        os.chmod(cgi_tracker_log, 0755)
-
+            for name in dirs + files:
+                real_path = os.path.join(root, name)
+                if perms.has_key(real_path):
+                    logger.info('loosen permissions on %s' % real_path)
+                    os.chmod(real_path, perms[real_path])
+                elif name in dirs:
+                    os.chmod(real_path, 0555)
+                else:
+                    os.chmod(real_path, 0444)
         os.chmod(tracker_dir, 0555)
         return True
     except Exception, exc:

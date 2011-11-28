@@ -28,6 +28,7 @@
 """Remove an owner from a given vgrid"""
 
 import os
+import subprocess
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues
@@ -38,6 +39,7 @@ from shared.handlers import correct_handler
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables
 from shared.parseflags import force
+from shared.useradm import distinguished_name_to_user
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
        vgrid_owners, vgrid_members, vgrid_resources, vgrid_list_subvgrids, \
        vgrid_remove_owners
@@ -49,6 +51,41 @@ def signature():
     defaults = {'vgrid_name': REJECT_UNSET, 'cert_id': REJECT_UNSET,
                 'flags': []}
     return ['text', defaults]
+
+def rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
+                     output_objects):
+    """Remove Trac issue tracker owner"""
+    cgi_tracker_var = os.path.join(tracker_dir, 'var')
+    if not os.path.isdir(cgi_tracker_var):
+        output_objects.append(
+            {'object_type': 'text', 'text'
+             : 'No tracker (%s) for vgrid %s - skipping tracker admin rights' \
+             % (tracker_dir, vgrid_name)
+             })
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+    try:
+        admin_user = distinguished_name_to_user(cert_id)
+        admin_id = admin_user.get(configuration.trac_id_field, 'unknown_id')
+        # Remove admin rights for owner using trac-admin command:
+        # trac-admin tracker_dir deploy cgi_tracker_bin
+        perms_cmd = [configuration.trac_admin_path, cgi_tracker_var,
+                     'permission', 'remove', admin_id, 'TRAC_ADMIN']
+        configuration.logger.info('remove admin rights from owner: %s' % \
+                                  perms_cmd)
+        proc = subprocess.Popen(perms_cmd, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
+        proc.wait()
+        if proc.returncode != 0:
+            raise Exception("tracker permissions %s failed: %s (%d)" % \
+                            (perms_cmd, proc.stdout.read(),
+                             proc.returncode))
+        return True
+    except Exception, exc:
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Could not remove %s tracker admin rights: %s' % (cert_id, exc)
+             })
+        return False
 
 def unlink_shared_folders(user_dir, vgrid):
     """Utility function to remove links to shared vgrid folders.
@@ -116,7 +153,6 @@ def abandon_vgrid_files(vgrid, configuration):
         configuration.logger.debug(
             'not removing soft link to public VGrid pages for %s: %s' % \
             (vgrid, err))
-        pass
 
     for prefix in [configuration.vgrid_public_base, 
                    configuration.vgrid_private_base, 
@@ -268,7 +304,29 @@ Owner removal has to be performed at the topmost vgrid''' % cert_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         else:
+
+            # Remove any tracker admin rights
             
+            if configuration.trac_admin_path:
+                public_tracker_dir = \
+                                   os.path.abspath(os.path.join(
+                    configuration.vgrid_public_base, vgrid_name,
+                    '.vgridtracker'))
+                private_tracker_dir = \
+                                    os.path.abspath(os.path.join(
+                    configuration.vgrid_private_base, vgrid_name,
+                    '.vgridtracker'))
+                vgrid_tracker_dir = \
+                                  os.path.abspath(os.path.join(
+                    configuration.vgrid_files_home, vgrid_name,
+                    '.vgridtracker'))
+                for tracker_dir in [public_tracker_dir, private_tracker_dir,
+                                    vgrid_tracker_dir]:
+                    if not rm_tracker_admin(configuration, cert_id,
+                                             vgrid_name, tracker_dir,
+                                             output_objects):
+                        return (output_objects, returnvalues.SYSTEM_ERROR)
+
             # unlink shared folders (web pages and files)
 
             user_dir = os.path.abspath(os.path.join(configuration.user_home,
