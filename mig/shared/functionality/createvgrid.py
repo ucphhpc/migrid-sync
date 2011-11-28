@@ -334,9 +334,11 @@ def create_tracker(
     tracker_db = 'sqlite:db/trac.db'
     # NB: deploy command requires an empty directory target
     # We create a lib dir where it creates cgi-bin and htdocs subdirs
+    # and we then symlink both a parent cgi-bin and wsgi-bin to it
     cgi_tracker_deploy = os.path.join(tracker_dir, 'lib')
     cgi_tracker_bin = os.path.join(cgi_tracker_deploy, 'cgi-bin')
-    cgi_tracker_link = os.path.join(tracker_dir, 'cgi-bin')
+    cgi_tracker_cgi_link = os.path.join(tracker_dir, 'cgi-bin')
+    cgi_tracker_wsgi_link = os.path.join(tracker_dir, 'wsgi-bin')
     cgi_tracker_underlay = os.path.join(cgi_tracker_deploy, 'htdocs')
     repo_base = 'repo'
     cgi_scm_repo = os.path.join(scm_dir, repo_base)
@@ -428,7 +430,8 @@ def create_tracker(
                             (deploy_cmd, proc.stdout.read(),
                              proc.returncode))
 
-        os.symlink(cgi_tracker_bin, cgi_tracker_link)
+        os.symlink(cgi_tracker_bin, cgi_tracker_cgi_link)
+        os.symlink(cgi_tracker_bin, cgi_tracker_wsgi_link)
 
         # Give admin rights to creator using trac-admin command:
         # trac-admin tracker_dir deploy cgi_tracker_bin
@@ -459,7 +462,7 @@ def create_tracker(
             perms[real_path] = 0644
         for real_path in [os.path.join(cgi_tracker_bin, i) for i in \
                           ['trac.cgi', 'trac.wsgi']]:
-            perms[real_path] = 0755
+            perms[real_path] = 0555
         for (root, dirs, files) in os.walk(tracker_dir):
             for name in dirs + files:
                 real_path = os.path.join(root, name)
