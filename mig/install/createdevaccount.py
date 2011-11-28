@@ -138,7 +138,7 @@ def create_user(
     hg_path = '/usr/bin/hg'
     hgweb_path = '/usr/share/doc/mercurial/examples/hgweb.cgi'
     trac_admin_path = '/usr/bin/trac-admin'
-    trac_admin_path = '%s/trac.ini' % server_dir
+    trac_ini_path = '%s/trac.ini' % server_dir
 
     firewall_script = '/root/scripts/firewall'
     print '# Add the next line to %s and run the script:'\
