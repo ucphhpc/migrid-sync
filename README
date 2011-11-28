@@ -207,8 +207,9 @@ The moin, hg and trac path pairs are optional and can be set to the
 empty string if moin/mercurial/trac is not available or if VGrid wikis,
 SCMs and trackers should simply not be enabled. If you want VGrid
 trackers including mercurial integration, but don't want the direct
-VGrid SCM links, you can set the trac_X options and hg_path but leave
-hgweb_path empty. 
+VGrid SCM links, you can set the trac_X and hg_X options but set
+scm_link to False in the VGRID section. The same procedure applies for
+visibility of the other VGrid components.
 On Debian the moinmoin-common package provides all the necessary wiki
 requirements. It is still necessary to tweak the system wide wikiconfig
 template in /usr/share/moin/config/wikiconfig.py to get the moin
