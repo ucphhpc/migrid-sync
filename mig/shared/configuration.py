@@ -92,7 +92,7 @@ def fix_missing(config_file, verbose=True):
         'moin_etc': '/etc/moin',
         'moin_share': '/usr/share/moin',
         'hg_path': '/usr/bin/hg',
-        'hgweb_path': '/usr/share/doc/mercurial-common/examples/hgweb.cgi',
+        'hgweb_scripts': '/usr/share/doc/mercurial-common/examples/',
         'trac_admin_path': '/usr/bin/trac-admin',
         'trac_ini_path': '~/mig/server/trac.ini',
         'trac_id_field': 'email',
@@ -209,7 +209,7 @@ class Configuration:
     moin_etc = ''
     moin_share = ''
     hg_path = ''
-    hgweb_path = ''
+    hgweb_scripts = ''
     trac_admin_path = ''
     trac_ini_path = ''
     trac_id_field = ''
@@ -534,10 +534,14 @@ class Configuration:
             self.hg_path = config.get('SCM', 'hg_path')
         else:
             self.hg_path = ''
-        if config.has_option('SCM', 'hgweb_path'):
-            self.hgweb_path = config.get('SCM', 'hgweb_path')
+        if config.has_option('SCM', 'hgweb_scripts'):
+            self.hgweb_scripts = config.get('SCM', 'hgweb_scripts')
+        elif config.has_option('SCM', 'hgweb_path'):
+            # Legacy name (including actual cgi script no longer used)
+            self.hgweb_scripts = os.path.dirname(config.get('SCM',
+                                                            'hgweb_path'))
         else:
-            self.hgweb_path = ''
+            self.hgweb_scripts = ''
         if config.has_option('TRACKER', 'trac_admin_path'):
             self.trac_admin_path = config.get('TRACKER', 'trac_admin_path')
         else:
@@ -563,7 +567,7 @@ class Configuration:
             self.vgrid_wiki_link = True
         if config.has_option('VGRID', 'scm_link'):
             self.vgrid_scm_link = config.getboolean('VGRID', 'scm_link')
-        elif self.hg_path and self.hgweb_path:
+        elif self.hg_path and self.hgweb_scripts:
             self.vgrid_scm_link = True
         if config.has_option('VGRID', 'tracker_link'):
             self.vgrid_tracker_link = config.getboolean('VGRID', 'tracker_link')

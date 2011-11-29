@@ -97,7 +97,7 @@ def generate_confs(
     moin_etc='',
     moin_share='',
     hg_path='',
-    hgweb_path='',
+    hgweb_scripts='',
     trac_admin_path='',
     trac_ini_path='',
     public_port=80,
@@ -130,7 +130,7 @@ def generate_confs(
     user_dict['__MOIN_ETC__'] = moin_etc
     user_dict['__MOIN_SHARE__'] = moin_share
     user_dict['__HG_PATH__'] = hg_path
-    user_dict['__HGWEB_PATH__'] = hgweb_path
+    user_dict['__HGWEB_SCRIPTS__'] = hgweb_scripts
     user_dict['__TRAC_ADMIN_PATH__'] = trac_admin_path
     user_dict['__TRAC_INI_PATH__'] = trac_ini_path
     user_dict['__USER_CLAUSE__'] = user_clause
@@ -210,7 +210,7 @@ if '__main__' == __name__:
         'moin_etc',
         'moin_share',
         'hg_path',
-        'hgweb_path',
+        'hgweb_scripts',
         'trac_admin_path',
         'trac_ini_path',
         'public_port',
@@ -274,7 +274,7 @@ enable_sftp: %(enable_sftp)s
 moin_etc: %(moin_etc)s
 moin_share: %(moin_share)s
 hg_path: %(hg_path)s
-hgweb_path: %(hgweb_path)s
+hgweb_scripts: %(hgweb_scripts)s
 trac_admin_path: %(trac_admin_path)s
 trac_ini_path: %(trac_ini_path)s
 public_port: %(public_port)s

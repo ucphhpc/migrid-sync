@@ -139,7 +139,7 @@ settings:
 --moin_etc=MOIN_ETC
 --moin_share=MOIN_SHARE
 --hg_path=HG_PATH
---hgweb_path=HGWEB_PATH
+--hgweb_scripts=HGWEB_SCRIPTS
 --trac_admin_path=TRAC_ADMIN_PATH
 --trac_ini_path=TRAC_INI_PATH
 --public_port=PUBLIC_PORT
@@ -166,7 +166,7 @@ defaults, this could be:
 		   --mig_certs=/home/mig/MiG-certificates \
 		   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
 		   --hg_path=/usr/bin/hg \
-		   --hgweb_path=/usr/share/doc/mercurial/examples/hgweb.cgi \
+		   --hgweb_scripts=/usr/share/doc/mercurial/examples \
 		   --trac_admin_path=/usr/bin/trac-admin \
 		   --trac_ini_path=/home/mig/mig/server/trac.ini \
 		   --public_port=80 --cert_port=443 --sid_port=8092 \
@@ -188,7 +188,7 @@ or similarly with apache 2.x:
 		   --mig_certs=/etc/apache2/MiG-certificates \
 		   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
 		   --hg_path=/usr/bin/hg \
-		   --hgweb_path=/usr/share/doc/mercurial/examples/hgweb.cgi \
+		   --hgweb_scripts=/usr/share/doc/mercurial/examples \
 		   --trac_admin_path=/usr/bin/trac-admin \
 		   --trac_ini_path=/home/mig/mig/server/trac.ini \
 		   --public_port=80 --cert_port=443 --sid_port=443 \

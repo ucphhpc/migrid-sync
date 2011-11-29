@@ -304,7 +304,7 @@ Core communication with dedicated resources use OpenSSH client utilities:"""})
                                'class': 'urllink',
                                'title': 'MoinMoin Wiki Home Page',
                                'text': 'MoinMoin Wiki Engine (GPL)'})
-    if configuration.hg_path and configuration.hgweb_path:
+    if configuration.hg_path and configuration.hgweb_scripts:
         output_objects.append({'object_type': 'text', 'text' :
                                """SCM repositories are delivered using Mercurial:"""})
         output_objects.append({'object_type': 'link', 

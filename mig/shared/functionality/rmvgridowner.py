@@ -204,7 +204,7 @@ def remove_vgrid_entry(vgrid, configuration):
                 remove_rec(os.path.join(prefix, vgrid, '.vgridwiki'),
                            configuration)
 
-            if configuration.hg_path and configuration.hgweb_path:
+            if configuration.hg_path and configuration.hgweb_scripts:
                 remove_rec(os.path.join(prefix, vgrid, '.vgridscm'), 
                            configuration)
 

@@ -207,7 +207,7 @@ $(document).ready(function() {
                         tmp_output)
 
     all_scm_dirs = ['', '', '']
-    if configuration.hg_path and configuration.hgweb_path:
+    if configuration.hg_path and configuration.hgweb_scripts:
 
         # create participant scm repo in the vgrid shared dir
 

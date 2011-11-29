@@ -761,7 +761,7 @@ for job input and output.
                 return (output_objects, returnvalues.SYSTEM_ERROR)
 
     all_scm_dirs = ['', '', '']
-    if configuration.hg_path and configuration.hgweb_path:
+    if configuration.hg_path and configuration.hgweb_scripts:
 
         # create participant scm repo in the vgrid shared dir
 

@@ -138,7 +138,7 @@ def create_user(
     moin_etc = '/etc/moin'
     moin_share = '/usr/share/moin'
     hg_path = '/usr/bin/hg'
-    hgweb_path = '/usr/share/doc/mercurial-common/examples/hgweb.cgi'
+    hgweb_scripts = '/usr/share/doc/mercurial-common/examples/'
     trac_admin_path = '/usr/bin/trac-admin'
     trac_ini_path = '%s/trac.ini' % server_dir
 
@@ -192,7 +192,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         moin_etc,
         moin_share,
         hg_path,
-        hgweb_path,
+        hgweb_scripts,
         trac_admin_path,
         trac_ini_path,
         public_port,
