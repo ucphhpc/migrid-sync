@@ -31,7 +31,7 @@ code_files = [
     '%s' % plain,
     'cgi-bin/%s' % plain,
     'cgi-sid/%s' % plain,
-    'wsgi-scripts/%s' % plain,
+    'wsgi-bin/%s' % plain,
     'install/%s' % plain,
     'migfs-fuse/%s' % plain,
     'server/%s' % plain,
