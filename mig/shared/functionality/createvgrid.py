@@ -191,8 +191,10 @@ def create_scm(
         kind = 'public'
         scm_alias = 'vgridpublicscm'
         server_url = configuration.migserver_http_url
-    cgi_template_script = os.path.join(configuration.hgweb_path, 'hgweb.cgi')
-    wsgi_template_script = os.path.join(configuration.hgweb_path, 'hgweb.wsgi')
+    cgi_template_script = os.path.join(configuration.hgweb_scripts,
+                                       'hgweb.cgi')
+    wsgi_template_script = os.path.join(configuration.hgweb_scripts,
+                                        'hgweb.wsgi')
 
     # Depending on the Mercurial installation some of the
     # configuration strings may vary slightly.
