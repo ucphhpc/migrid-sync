@@ -62,97 +62,105 @@ def create_wiki(
 
     cgi_template_script = os.path.join(configuration.moin_share,
             'server', 'moin.cgi')
-    cgi_template_wikiconf = os.path.join(configuration.moin_share,
+    wsgi_template_script = os.path.join(configuration.moin_share,
+            'server', 'moin.wsgi')
+    template_wikiconf_path = os.path.join(configuration.moin_share,
             'config', 'wikiconfig.py')
 
     # Depending on the MoinMoin installation some of the
     # configuration strings may vary slightly.
     # We try to catch all with multiple targets
 
-    cgi_template_etc = configuration.moin_etc
-    cgi_template_etc_alternative = '/path/to/wikiconfig'
-    cgi_template_name = 'Untitled Wiki'
-    cgi_template_data_str = './data/'
-    cgi_template_data_str_alternative = '../data/'
-    cgi_template_underlay_str = './underlay/'
-    cgi_template_underlay_str_alternative = '../underlay/'
-    cgi_template_data = os.path.join(configuration.moin_share, 'data')
-    cgi_template_underlay = os.path.join(configuration.moin_share,
+    script_template_etc = configuration.moin_etc
+    script_template_etc_alternative = '/path/to/wikiconfig'
+    script_template_name = 'Untitled Wiki'
+    script_template_data_str = './data/'
+    script_template_data_str_alternative = '../data/'
+    script_template_underlay_str = './underlay/'
+    script_template_underlay_str_alternative = '../underlay/'
+    template_data_path = os.path.join(configuration.moin_share, 'data')
+    template_underlay_path = os.path.join(configuration.moin_share,
             'underlay')
 
-    cgi_wiki_bin = os.path.join(wiki_dir, 'cgi-bin')
-    cgi_wiki_etc = os.path.join(wiki_dir, 'etc')
-    cgi_wiki_name = vgrid_name
-    cgi_wiki_data = os.path.join(wiki_dir, 'data')
-    cgi_wiki_underlay = os.path.join(wiki_dir, 'underlay')
-    cgi_wiki_script = os.path.join(cgi_wiki_bin, 'moin.cgi')
-    cgi_wiki_wikiconf = os.path.join(cgi_wiki_etc, 'wikiconfig.py')
+    target_wiki_etc = os.path.join(wiki_dir, 'etc')
+    target_wiki_name = vgrid_name
+    target_wiki_data = os.path.join(wiki_dir, 'data')
+    target_wiki_underlay = os.path.join(wiki_dir, 'underlay')
+    cgi_wiki_script = os.path.join(wiki_dir, 'cgi-bin', 'moin.cgi')
+    wsgi_wiki_script = os.path.join(wiki_dir, 'wsgi-bin', 'moin.wsgi')
+    target_wiki_wikiconf = os.path.join(target_wiki_etc, 'wikiconfig.py')
     try:
 
         # Create wiki directory
 
         os.mkdir(wiki_dir)
-        os.mkdir(cgi_wiki_bin)
-        os.mkdir(cgi_wiki_etc)
+        os.mkdir(target_wiki_etc)
 
-        # Create modified MoinMoin cgi script that uses local rather than
+        # Create modified MoinMoin Xgi scripts that use local rather than
         # global config In this way modification to one vgrid wiki will not
         # affect other vgrid wikis.
 
-        template_fd = open(cgi_template_script, 'r')
-        template_script = template_fd.readlines()
-        template_fd.close()
-        cgi_script = []
+        for (template_path, target_path) in \
+                [(cgi_template_script, cgi_wiki_script),
+                 (wsgi_template_script, wsgi_wiki_script)]:
+            target_dir = os.path.dirname(target_path)
+            os.mkdir(target_dir)
 
-        # Simply replace all occurences of template conf dir with vgrid wiki
-        # conf dir. In that way config files (python modules) are automatically
-        # loaded from there.
+            template_fd = open(template_path, 'r')
+            template_script = template_fd.readlines()
+            template_fd.close()
+            script_lines = []
+            
+            # Simply replace all occurences of template conf dir with vgrid
+            # wiki conf dir. In that way config files (python modules) are
+            # automatically loaded from there.
 
-        # IMPORTANT NOTE:
-        # prevent users writing in cgi-bin and etc dir to avoid remote
-        # execution exploit
+            for line in template_script:
+                line = line.replace(script_template_etc_alternative,
+                                    target_wiki_etc)
+                line = line.replace(script_template_etc, target_wiki_etc)
+                script_lines.append(line)
+            script_fd = open(target_path, 'w')
+            script_fd.writelines(script_lines)
+            script_fd.close()
 
-        for line in template_script:
-            line = line.replace(cgi_template_etc_alternative,
-                                cgi_wiki_etc)
-            line = line.replace(cgi_template_etc, cgi_wiki_etc)
-            cgi_script.append(line)
-        cgi_fd = open(cgi_wiki_script, 'w')
-        cgi_fd.writelines(cgi_script)
-        cgi_fd.close()
-        os.chmod(cgi_wiki_script, 0555)
-        os.chmod(cgi_wiki_bin, 0555)
+            # IMPORTANT NOTE:
+            # prevent users writing in Xgi-bin dirs to avoid remote execution
+            # exploits
+
+            os.chmod(target_path, 0555)
+            os.chmod(target_dir, 0555)
 
         # Now create the vgrid specific wiki configuration file
 
-        template_fd = open(cgi_template_wikiconf, 'r')
+        template_fd = open(template_wikiconf_path, 'r')
         template_wikiconfig = template_fd.readlines()
         template_fd.close()
-        cgi_wikiconfig = []
+        target_wikiconfig = []
         for line in template_wikiconfig:
 
             # Simply replace the wiki name, data dir and underlay dir.
             # Remaining options can be modified by owners if needed
 
-            line = line.replace(cgi_template_name, cgi_wiki_name)
-            line = line.replace(cgi_template_data_str_alternative,
-                                cgi_wiki_data)
-            line = line.replace(cgi_template_data_str, cgi_wiki_data)
-            line = line.replace(cgi_template_underlay_str_alternative,
-                                cgi_wiki_underlay)
-            line = line.replace(cgi_template_underlay_str,
-                                cgi_wiki_underlay)
-            cgi_wikiconfig.append(line)
-        cgi_fd = open(cgi_wiki_wikiconf, 'w')
-        cgi_fd.writelines(cgi_wikiconfig)
-        cgi_fd.close()
-        os.chmod(cgi_wiki_wikiconf, 0444)
-        os.chmod(cgi_wiki_etc, 0555)
+            line = line.replace(script_template_name, target_wiki_name)
+            line = line.replace(script_template_data_str_alternative,
+                                target_wiki_data)
+            line = line.replace(script_template_data_str, target_wiki_data)
+            line = line.replace(script_template_underlay_str_alternative,
+                                target_wiki_underlay)
+            line = line.replace(script_template_underlay_str,
+                                target_wiki_underlay)
+            target_wikiconfig.append(line)
+        conf_fd = open(target_wiki_wikiconf, 'w')
+        conf_fd.writelines(target_wikiconfig)
+        conf_fd.close()
+        os.chmod(target_wiki_wikiconf, 0444)
+        os.chmod(target_wiki_etc, 0555)
 
         # Copy example data and underlay directories directly
 
-        shutil.copytree(cgi_template_data, cgi_wiki_data)
-        shutil.copytree(cgi_template_underlay, cgi_wiki_underlay)
+        shutil.copytree(template_data_path, target_wiki_data)
+        shutil.copytree(template_underlay_path, target_wiki_underlay)
         os.chmod(wiki_dir, 0555)
         return True
     except Exception, exc:
@@ -183,20 +191,21 @@ def create_scm(
         kind = 'public'
         scm_alias = 'vgridpublicscm'
         server_url = configuration.migserver_http_url
-    cgi_template_script = os.path.abspath(configuration.hgweb_path)
+    cgi_template_script = os.path.join(configuration.hgweb_path, 'hgweb.cgi')
+    wsgi_template_script = os.path.join(configuration.hgweb_path, 'hgweb.wsgi')
 
     # Depending on the Mercurial installation some of the
     # configuration strings may vary slightly.
     # We try to catch common variations with multiple targets
 
-    cgi_template_name = 'repository name'
-    cgi_template_repo = '/path/to/repo'
-    cgi_template_repo_alt = '/path/to/repo/or/config'
-    cgi_scm_name = '%s %s SCM repository' % (vgrid_name, kind)
+    script_template_name = 'repository name'
+    script_template_repo = '/path/to/repo'
+    script_template_repo_alt = '/path/to/repo/or/config'
+    script_scm_name = '%s %s SCM repository' % (vgrid_name, kind)
     repo_base = 'repo'
-    cgi_scm_repo = os.path.join(scm_dir, repo_base)
-    repo_rc = os.path.join(cgi_scm_repo, '.hg', 'hgrc')
-    repo_readme = os.path.join(cgi_scm_repo, 'readme')
+    target_scm_repo = os.path.join(scm_dir, repo_base)
+    repo_rc = os.path.join(target_scm_repo, '.hg', 'hgrc')
+    repo_readme = os.path.join(target_scm_repo, 'readme')
     rc_text = '''
 [web]
 allow_push = *
@@ -240,44 +249,50 @@ the commands and work flows of this distributed SCM.
        'server_url': server_url,
        'server_url_without_port': server_url_without_port}
 
-    cgi_scm_bin = os.path.join(scm_dir, 'cgi-bin')
-    cgi_scm_script = os.path.join(cgi_scm_bin, 'hgweb.cgi')
+    cgi_scm_script = os.path.join(scm_dir, 'cgi-bin', 'hgweb.cgi')
+    wsgi_scm_script = os.path.join(scm_dir, 'wsgi-bin', 'hgweb.wsgi')
     try:
 
         # Create scm directory
 
         os.mkdir(scm_dir)
-        os.mkdir(cgi_scm_bin)
-        os.mkdir(cgi_scm_repo)
+        os.mkdir(target_scm_repo)
 
-        # Create modified Mercurial cgi script that uses local scm repo.
+        # Create modified Mercurial Xgi scripts that use local scm repo.
         # In this way modification to one vgrid scm will not affect others.
 
-        template_fd = open(cgi_template_script, 'r')
-        template_script = template_fd.readlines()
-        template_fd.close()
-        cgi_script = []
+        for (template_path, target_path) in \
+                [(cgi_template_script, cgi_scm_script),
+                 (wsgi_template_script, wsgi_scm_script)]:
+            target_dir = os.path.dirname(target_path)
+            os.mkdir(target_dir)
+            template_fd = open(template_path, 'r')
+            template_script = template_fd.readlines()
+            template_fd.close()
+            script_lines = []
 
-        # IMPORTANT NOTE:
-        # prevent users writing in cgi-bin dir to avoid remote execution
-        # exploit
+            for line in template_script:
+                line = line.replace(script_template_name,
+                                    script_scm_name)
+                line = line.replace(script_template_repo_alt, target_scm_repo)
+                line = line.replace(script_template_repo, target_scm_repo)
+                script_lines.append(line)
+            target_fd = open(target_path, 'w')
+            target_fd.writelines(script_lines)
+            target_fd.close()
 
-        for line in template_script:
-            line = line.replace(cgi_template_name,
-                                cgi_scm_name)
-            line = line.replace(cgi_template_repo_alt, cgi_scm_repo)
-            line = line.replace(cgi_template_repo, cgi_scm_repo)
-            cgi_script.append(line)
-        cgi_fd = open(cgi_scm_script, 'w')
-        cgi_fd.writelines(cgi_script)
-        cgi_fd.close()
-        os.chmod(cgi_scm_script, 0555)
-        os.chmod(cgi_scm_bin, 0555)
-        os.chmod(cgi_scm_repo, 0755)
+            # IMPORTANT NOTE:
+            # prevent users writing in Xgi-bin dirs to avoid remote execution
+            # exploits
+
+            os.chmod(target_path, 0555)
+            os.chmod(target_dir, 0555)
+
+        os.chmod(target_scm_repo, 0755)
         readme_fd = open(repo_readme, 'w')
         readme_fd.write(readme_text)
         readme_fd.close()
-        subprocess.call([configuration.hg_path, 'init', cgi_scm_repo])
+        subprocess.call([configuration.hg_path, 'init', target_scm_repo])
         subprocess.call([configuration.hg_path, 'add', repo_readme])
         subprocess.call([configuration.hg_path, 'commit', '-m"init"',
                          repo_readme])
@@ -329,19 +344,18 @@ def create_tracker(
     tracker_url = os.path.join(server_url, tracker_alias, vgrid_name)
 
     # Trac init is documented at http://trac.edgewall.org/wiki/TracAdmin
-    cgi_tracker_var = os.path.join(tracker_dir, 'var')
-    cgi_tracker_conf = os.path.join(cgi_tracker_var, 'conf', 'trac.ini')
+    target_tracker_var = os.path.join(tracker_dir, 'var')
+    target_tracker_conf = os.path.join(target_tracker_var, 'conf', 'trac.ini')
     tracker_db = 'sqlite:db/trac.db'
     # NB: deploy command requires an empty directory target
     # We create a lib dir where it creates cgi-bin and htdocs subdirs
     # and we then symlink both a parent cgi-bin and wsgi-bin to it
-    cgi_tracker_deploy = os.path.join(tracker_dir, 'lib')
-    cgi_tracker_bin = os.path.join(cgi_tracker_deploy, 'cgi-bin')
-    cgi_tracker_cgi_link = os.path.join(tracker_dir, 'cgi-bin')
-    cgi_tracker_wsgi_link = os.path.join(tracker_dir, 'wsgi-bin')
-    cgi_tracker_underlay = os.path.join(cgi_tracker_deploy, 'htdocs')
+    target_tracker_deploy = os.path.join(tracker_dir, 'lib')
+    target_tracker_bin = os.path.join(target_tracker_deploy, 'cgi-bin')
+    target_tracker_cgi_link = os.path.join(tracker_dir, 'cgi-bin')
+    target_tracker_wsgi_link = os.path.join(tracker_dir, 'wsgi-bin')
     repo_base = 'repo'
-    cgi_scm_repo = os.path.join(scm_dir, repo_base)
+    target_scm_repo = os.path.join(scm_dir, repo_base)
     project_name = '%s %s issue tracker' % (vgrid_name, kind)
     try:
 
@@ -354,8 +368,8 @@ def create_tracker(
 
         # Init tracker with trac-admin command:
         # trac-admin tracker_dir initenv projectname db respostype repospath
-        create_cmd = [configuration.trac_admin_path, cgi_tracker_var,
-                      'initenv', vgrid_name, tracker_db, 'hg', cgi_scm_repo]
+        create_cmd = [configuration.trac_admin_path, target_tracker_var,
+                      'initenv', vgrid_name, tracker_db, 'hg', target_scm_repo]
         # Trac may fail silently if ini file is missing
         if configuration.trac_ini_path and \
                os.path.exists(configuration.trac_ini_path):
@@ -375,7 +389,7 @@ def create_tracker(
         # We want to customize generated project trac.ini with project info
         
         conf = ConfigParser.SafeConfigParser()
-        conf.read(cgi_tracker_conf)
+        conf.read(target_tracker_conf)
 
         conf_overrides = {
             'trac': {
@@ -407,7 +421,7 @@ def create_tracker(
             for (key, val) in options.items():
                 conf.set(section, key, str(val))
 
-        project_conf = open(cgi_tracker_conf, "w")
+        project_conf = open(target_tracker_conf, "w")
         project_conf.write("# -*- coding: utf-8 -*-\n")
         # dump entire conf file
         for section in conf.sections():
@@ -418,9 +432,9 @@ def create_tracker(
         project_conf.close()
 
         # Create cgi-bin with scripts using trac-admin command:
-        # trac-admin tracker_dir deploy cgi_tracker_bin
-        deploy_cmd = [configuration.trac_admin_path, cgi_tracker_var, 'deploy',
-                      cgi_tracker_deploy]
+        # trac-admin tracker_dir deploy target_tracker_bin
+        deploy_cmd = [configuration.trac_admin_path, target_tracker_var,
+                      'deploy', target_tracker_deploy]
         logger.info('deploy tracker project: %s' % deploy_cmd)
         proc = subprocess.Popen(deploy_cmd, stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT)
@@ -430,12 +444,12 @@ def create_tracker(
                             (deploy_cmd, proc.stdout.read(),
                              proc.returncode))
 
-        os.symlink(cgi_tracker_bin, cgi_tracker_cgi_link)
-        os.symlink(cgi_tracker_bin, cgi_tracker_wsgi_link)
+        os.symlink(target_tracker_bin, target_tracker_cgi_link)
+        os.symlink(target_tracker_bin, target_tracker_wsgi_link)
 
         # Give admin rights to creator using trac-admin command:
-        # trac-admin tracker_dir deploy cgi_tracker_bin
-        perms_cmd = [configuration.trac_admin_path, cgi_tracker_var,
+        # trac-admin tracker_dir deploy target_tracker_bin
+        perms_cmd = [configuration.trac_admin_path, target_tracker_var,
                      'permission', 'add', admin_id, 'TRAC_ADMIN']
         logger.info('provide admin rights to creator: %s' % perms_cmd)
         proc = subprocess.Popen(perms_cmd, stdout=subprocess.PIPE,
@@ -455,12 +469,12 @@ def create_tracker(
 
         logger.info('fix permissions on %s' % project_name)
         perms = {}
-        for real_path in [os.path.join(cgi_tracker_var, i) for i in \
+        for real_path in [os.path.join(target_tracker_var, i) for i in \
                           ['db', 'attachments', 'log']]:
             perms[real_path] = 0755
-        for real_path in [os.path.join(cgi_tracker_var, 'db', 'trac.db')]:
+        for real_path in [os.path.join(target_tracker_var, 'db', 'trac.db')]:
             perms[real_path] = 0644
-        for real_path in [os.path.join(cgi_tracker_bin, i) for i in \
+        for real_path in [os.path.join(target_tracker_bin, i) for i in \
                           ['trac.cgi', 'trac.wsgi']]:
             perms[real_path] = 0555
         for (root, dirs, files) in os.walk(tracker_dir):
