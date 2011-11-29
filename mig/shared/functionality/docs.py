@@ -288,7 +288,7 @@ Core communication with dedicated resources use OpenSSH client utilities:"""})
                            'text': 'OpenSSH secure remote shell and file transfer, BSD'})
     output_objects.append({'object_type': 'text', 'text' : ''})
 
-    if configuration.moin_share and configuration.site_enable_sftp:
+    if configuration.site_enable_sftp:
         output_objects.append({'object_type': 'text', 'text' :
                                """SFTP access is delivered using Paramiko:"""})
         output_objects.append({'object_type': 'link', 
@@ -312,6 +312,14 @@ Core communication with dedicated resources use OpenSSH client utilities:"""})
                                'class': 'urllink',
                                'title': 'Mercurial SCM Home Page',
                                'text': 'Mercurial SCM (GPLv2)'})
+    if configuration.trac_admin_path:
+        output_objects.append({'object_type': 'text', 'text' :
+                               """Trackers are delivered using Trac:"""})
+        output_objects.append({'object_type': 'link', 
+                               'destination' : 'http://trac.edgewall.org/',
+                               'class': 'urllink',
+                               'title': 'Trac Project Tracker Home Page',
+                               'text': 'Trac Project Tracker (BSD)'})
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
