@@ -175,7 +175,7 @@ def license_information(output_objects, configuration):
 %s is based on the Minimum intrusion Grid (MiG) middleware. You can read about MiG at the
 <a class="urllink" href="http://code.google.com/p/migrid/">project web site</a>.<br />
 The MiG software license follows below.
-""" % configuration.site_title })
+""" % configuration.site_title})
     output_objects.append({'object_type': 'text', 'text'
                            : 'Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter'
                            })
@@ -201,10 +201,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """})
 
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Acknowledgements' })
+                          : 'Acknowledgements'})
 
     output_objects.append({'object_type': 'text', 'text' : """
-This software is mainly implemented in Python and extension modules:""" })
+This software is mainly implemented in Python and extension modules:"""})
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://python.org/',
                            'class': 'urllink',
@@ -224,7 +224,7 @@ This software is mainly implemented in Python and extension modules:""" })
                            'text': 'Python Enchant Module (LGPL license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
     output_objects.append({'object_type': 'text', 'text' : """
-Web interfaces are served with the Apache web server:""" })
+Web interfaces are served with the Apache web server:"""})
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://httpd.apache.org/',
                            'class': 'urllink',
@@ -237,7 +237,7 @@ Web interfaces are served with the Apache web server:""" })
                            'title': 'Apache WSGI Module Home Page',
                            'text': 'Apache WSGI Module (Apache 2.0 license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
-    output_objects.append({'object_type': 'text', 'text' : """relying on JavaScript from:""" })
+    output_objects.append({'object_type': 'text', 'text' : """relying on JavaScript from:"""})
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://jquery.com/',
                            'class': 'urllink',
@@ -256,13 +256,13 @@ Web interfaces are served with the Apache web server:""" })
                            'title': 'markItUp! Home Page',
                            'text': 'markItUp! web markup editor (GPL/MIT license)'})
     output_objects.append({'object_type': 'text', 'text' : """
-and icons from the following sources:""" })
+and icons from the following sources:"""})
 
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://pixel-mixer.com/',
                            'class': 'urllink',
                            'title': 'PixelMixer Home Page',                           
-                           'text': 'pixel-mixer.com icons (free to use, acknowledgement required)' })
+                           'text': 'pixel-mixer.com icons (free to use, acknowledgement required)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
 
     output_objects.append({'object_type': 'link', 
@@ -279,7 +279,7 @@ and icons from the following sources:""" })
                            'text': 'KDE Crystal Icons, LGPL'})
     output_objects.append({'object_type': 'text', 'text' : ''})
     output_objects.append({'object_type': 'text', 'text' : """
-Core communication with dedicated resources use OpenSSH client utilities:""" })
+Core communication with dedicated resources use OpenSSH client utilities:"""})
 
     output_objects.append({'object_type': 'link', 
                            'destination' : 'http://openssh.org/',
@@ -290,28 +290,28 @@ Core communication with dedicated resources use OpenSSH client utilities:""" })
 
     if configuration.moin_share and configuration.site_enable_sftp:
         output_objects.append({'object_type': 'text', 'text' :
-                               """SFTP access is delivered using Paramiko:""" })
+                               """SFTP access is delivered using Paramiko:"""})
         output_objects.append({'object_type': 'link', 
                                'destination' : 'http://www.lag.net/paramiko/',
                                'class': 'urllink',
                                'title': 'Paramiko Home Page',
-                               'text': 'Paramiko SSH2 Module (LGPL)' })
+                               'text': 'Paramiko SSH2 Module (LGPL)'})
     if configuration.moin_share and configuration.moin_etc:
         output_objects.append({'object_type': 'text', 'text' :
-                               """Wikis are delivered using MoinMoin:""" })
+                               """Wikis are delivered using MoinMoin:"""})
         output_objects.append({'object_type': 'link', 
                                'destination' : 'http://moinmo.in/',
                                'class': 'urllink',
                                'title': 'MoinMoin Wiki Home Page',
-                               'text': 'MoinMoin Wiki Engine (GPL)' })
+                               'text': 'MoinMoin Wiki Engine (GPL)'})
     if configuration.hg_path and configuration.hgweb_path:
         output_objects.append({'object_type': 'text', 'text' :
-                               """SCM repositories are delivered using Mercurial:""" })
+                               """SCM repositories are delivered using Mercurial:"""})
         output_objects.append({'object_type': 'link', 
                                'destination' : 'http://mercurial.selenic.com/',
                                'class': 'urllink',
                                'title': 'Mercurial SCM Home Page',
-                               'text': 'Mercurial SCM (GPLv2)' })
+                               'text': 'Mercurial SCM (GPLv2)'})
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -343,7 +343,7 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'header', 'text'
                           : '%s On-demand Documentation' % \
-                            configuration.short_title })
+                            configuration.short_title})
     if not show:
         output_objects.append({'object_type': 'text',
                                'text': '''
@@ -351,12 +351,12 @@ This is the integrated help system for %s.
 You can search for a documentation topic or select the particular
 section directly.
 Please note that the integrated help is rather limited to short overviews and
-technical specifications.''' % configuration.short_title })
+technical specifications.''' % configuration.short_title})
 
         output_objects.append({'object_type': 'text',
                                'text': '''
 You can find more user friendly tutorials and examples on the
-official site support pages:''' })
+official site support pages:'''})
         output_objects.append({'object_type': 'link', 'destination':
                                configuration.site_external_doc,
                                'class': 'urllink', 'title': 'external documentation',
