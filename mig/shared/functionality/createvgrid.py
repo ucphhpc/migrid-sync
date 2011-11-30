@@ -57,6 +57,7 @@ def create_wiki(
     vgrid_name,
     wiki_dir,
     output_objects,
+    repair=False
     ):
     """Create new Moin Moin wiki"""
 
@@ -93,8 +94,10 @@ def create_wiki(
 
         # Create wiki directory
 
-        os.mkdir(wiki_dir)
-        os.mkdir(target_wiki_etc)
+        if not repair or not os.path.isdir(wiki_dir):
+            os.mkdir(wiki_dir)
+        else:
+            os.chmod(wiki_dir, 0755)
 
         # Create modified MoinMoin Xgi scripts that use local rather than
         # global config In this way modification to one vgrid wiki will not
@@ -103,6 +106,8 @@ def create_wiki(
         for (template_path, target_path) in \
                 [(cgi_template_script, cgi_wiki_script),
                  (wsgi_template_script, wsgi_wiki_script)]:
+            if repair and os.path.isfile(target_path):
+                continue
             target_dir = os.path.dirname(target_path)
             os.mkdir(target_dir)
 
@@ -133,34 +138,38 @@ def create_wiki(
 
         # Now create the vgrid specific wiki configuration file
 
-        template_fd = open(template_wikiconf_path, 'r')
-        template_wikiconfig = template_fd.readlines()
-        template_fd.close()
-        target_wikiconfig = []
-        for line in template_wikiconfig:
+        if not repair or not os.path.isdir(target_wiki_etc):
+            os.mkdir(target_wiki_etc)
+            template_fd = open(template_wikiconf_path, 'r')
+            template_wikiconfig = template_fd.readlines()
+            template_fd.close()
+            target_wikiconfig = []
+            for line in template_wikiconfig:
 
-            # Simply replace the wiki name, data dir and underlay dir.
-            # Remaining options can be modified by owners if needed
-
-            line = line.replace(script_template_name, target_wiki_name)
-            line = line.replace(script_template_data_str_alternative,
-                                target_wiki_data)
-            line = line.replace(script_template_data_str, target_wiki_data)
-            line = line.replace(script_template_underlay_str_alternative,
-                                target_wiki_underlay)
-            line = line.replace(script_template_underlay_str,
-                                target_wiki_underlay)
-            target_wikiconfig.append(line)
-        conf_fd = open(target_wiki_wikiconf, 'w')
-        conf_fd.writelines(target_wikiconfig)
-        conf_fd.close()
-        os.chmod(target_wiki_wikiconf, 0444)
-        os.chmod(target_wiki_etc, 0555)
+                # Simply replace the wiki name, data dir and underlay dir.
+                # Remaining options can be modified by owners if needed
+                
+                line = line.replace(script_template_name, target_wiki_name)
+                line = line.replace(script_template_data_str_alternative,
+                                    target_wiki_data)
+                line = line.replace(script_template_data_str, target_wiki_data)
+                line = line.replace(script_template_underlay_str_alternative,
+                                    target_wiki_underlay)
+                line = line.replace(script_template_underlay_str,
+                                    target_wiki_underlay)
+                target_wikiconfig.append(line)
+            conf_fd = open(target_wiki_wikiconf, 'w')
+            conf_fd.writelines(target_wikiconfig)
+            conf_fd.close()
+            os.chmod(target_wiki_wikiconf, 0444)
+            os.chmod(target_wiki_etc, 0555)
 
         # Copy example data and underlay directories directly
 
-        shutil.copytree(template_data_path, target_wiki_data)
-        shutil.copytree(template_underlay_path, target_wiki_underlay)
+        if not repair or not os.path.isdir(target_wiki_data):
+            shutil.copytree(template_data_path, target_wiki_data)
+        if not repair or not os.path.isdir(target_wiki_underlay):
+            shutil.copytree(template_underlay_path, target_wiki_underlay)
         os.chmod(wiki_dir, 0555)
         return True
     except Exception, exc:
@@ -176,6 +185,7 @@ def create_scm(
     vgrid_name,
     scm_dir,
     output_objects,
+    repair=False
     ):
     """Create new Mercurial SCM repository"""
 
@@ -257,8 +267,10 @@ the commands and work flows of this distributed SCM.
 
         # Create scm directory
 
-        os.mkdir(scm_dir)
-        os.mkdir(target_scm_repo)
+        if not repair or not os.path.isdir(scm_dir):
+            os.mkdir(scm_dir)
+        else:
+            os.chmod(scm_dir, 0755)
 
         # Create modified Mercurial Xgi scripts that use local scm repo.
         # In this way modification to one vgrid scm will not affect others.
@@ -266,6 +278,8 @@ the commands and work flows of this distributed SCM.
         for (template_path, target_path) in \
                 [(cgi_template_script, cgi_scm_script),
                  (wsgi_template_script, wsgi_scm_script)]:
+            if repair and os.path.isfile(target_path):
+                continue
             target_dir = os.path.dirname(target_path)
             os.mkdir(target_dir)
             template_fd = open(template_path, 'r')
@@ -290,14 +304,16 @@ the commands and work flows of this distributed SCM.
             os.chmod(target_path, 0555)
             os.chmod(target_dir, 0555)
 
-        os.chmod(target_scm_repo, 0755)
-        readme_fd = open(repo_readme, 'w')
-        readme_fd.write(readme_text)
-        readme_fd.close()
-        subprocess.call([configuration.hg_path, 'init', target_scm_repo])
-        subprocess.call([configuration.hg_path, 'add', repo_readme])
-        subprocess.call([configuration.hg_path, 'commit', '-m"init"',
-                         repo_readme])
+        if not repair or not os.path.isdir(target_scm_repo):
+            os.mkdir(target_scm_repo)
+            os.chmod(target_scm_repo, 0755)
+            readme_fd = open(repo_readme, 'w')
+            readme_fd.write(readme_text)
+            readme_fd.close()
+            subprocess.call([configuration.hg_path, 'init', target_scm_repo])
+            subprocess.call([configuration.hg_path, 'add', repo_readme])
+            subprocess.call([configuration.hg_path, 'commit', '-m"init"',
+                             repo_readme])
         if not os.path.exists(repo_rc):
             open(repo_rc, 'w').close()
         os.chmod(repo_rc, 0644)
@@ -323,6 +339,7 @@ def create_tracker(
     tracker_dir,
     scm_dir,
     output_objects,
+    repair=False
     ):
     """Create new Trac issue tracker bound to SCM repository if given"""
 
@@ -363,104 +380,126 @@ def create_tracker(
 
         # Create tracker directory
 
-        os.mkdir(tracker_dir)
-
+        if not repair or not os.path.isdir(tracker_dir):
+            os.mkdir(tracker_dir)
+        else:
+            os.chmod(tracker_dir, 0755)
+            
         # Create Trac project that uses local storage.
         # In this way modification to one vgrid tracker will not affect others.
 
-        # Init tracker with trac-admin command:
-        # trac-admin tracker_dir initenv projectname db respostype repospath
-        create_cmd = [configuration.trac_admin_path, target_tracker_var,
-                      'initenv', vgrid_name, tracker_db, 'hg', target_scm_repo]
-        # Trac may fail silently if ini file is missing
-        if configuration.trac_ini_path and \
-               os.path.exists(configuration.trac_ini_path):
-            create_cmd.append('--inherit=%s' % configuration.trac_ini_path)
+        if not repair or not os.path.isdir(target_tracker_var):
+            # Init tracker with trac-admin command:
+            # trac-admin tracker_dir initenv projectname db respostype repospath
+            create_cmd = [configuration.trac_admin_path, target_tracker_var,
+                          'initenv', vgrid_name, tracker_db, 'hg',
+                          target_scm_repo]
+            # Trac may fail silently if ini file is missing
+            if configuration.trac_ini_path and \
+                   os.path.exists(configuration.trac_ini_path):
+                create_cmd.append('--inherit=%s' % configuration.trac_ini_path)
 
-        # IMPORTANT: trac commands are quite verbose and will cause trouble
-        # if the stdout/err is not handled (Popen vs call)
-        logger.info('create tracker project: %s' % create_cmd)
-        proc = subprocess.Popen(create_cmd, stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
-        proc.wait()
-        if proc.returncode != 0:
-            raise Exception("tracker creation %s failed: %s (%d)" % \
-                            (create_cmd, proc.stdout.read(),
-                             proc.returncode))
+            # IMPORTANT: trac commands are quite verbose and will cause trouble
+            # if the stdout/err is not handled (Popen vs call)
+            logger.info('create tracker project: %s' % create_cmd)
+            proc = subprocess.Popen(create_cmd, stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT)
+            proc.wait()
+            if proc.returncode != 0:
+                raise Exception("tracker creation %s failed: %s (%d)" % \
+                                (create_cmd, proc.stdout.read(),
+                                 proc.returncode))
 
-        # We want to customize generated project trac.ini with project info
+            # We want to customize generated project trac.ini with project info
         
-        conf = ConfigParser.SafeConfigParser()
-        conf.read(target_tracker_conf)
+            conf = ConfigParser.SafeConfigParser()
+            conf.read(target_tracker_conf)
 
-        conf_overrides = {
-            'trac': {
-                'base_url': tracker_url,
-                },
-            'project': {
-                'admin': admin_email,
-                'descr': project_name,
-                'footer': "",
-                'url': tracker_url,
-                },
-            'header_logo': {
-                'height': -1,
-                'width': -1,
-                'src': os.path.join(server_url, 'images', 'site-logo.png'),
-                'link': '',
-                },
-            }
-        if configuration.smtp_server:
-            conf_overrides['notification'] = {
-                'smtp_from': configuration.smtp_sender,
-                'smtp_server': configuration.smtp_server,
-                'smtp_enabled': True,
+            conf_overrides = {
+                'trac': {
+                    'base_url': tracker_url,
+                    },
+                'project': {
+                    'admin': admin_email,
+                    'descr': project_name,
+                    'footer': "",
+                    'url': tracker_url,
+                    },
+                'header_logo': {
+                    'height': -1,
+                    'width': -1,
+                    'src': os.path.join(server_url, 'images', 'site-logo.png'),
+                    'link': '',
+                    },
                 }
+            if configuration.smtp_server:
+                conf_overrides['notification'] = {
+                    'smtp_from': configuration.smtp_sender,
+                    'smtp_server': configuration.smtp_server,
+                    'smtp_enabled': True,
+                    }
 
-        for (section, options) in conf_overrides.items():
-            if not conf.has_section(section):
-                conf.add_section(section)
-            for (key, val) in options.items():
-                conf.set(section, key, str(val))
+            for (section, options) in conf_overrides.items():
+                if not conf.has_section(section):
+                    conf.add_section(section)
+                for (key, val) in options.items():
+                    conf.set(section, key, str(val))
 
-        project_conf = open(target_tracker_conf, "w")
-        project_conf.write("# -*- coding: utf-8 -*-\n")
-        # dump entire conf file
-        for section in conf.sections():
-            project_conf.write("\n[%s]\n" % section)
-            for option in conf.options(section):
-                project_conf.write("%s = %s\n" % (option, conf.get(section,
-                                                                 option)))
-        project_conf.close()
+            project_conf = open(target_tracker_conf, "w")
+            project_conf.write("# -*- coding: utf-8 -*-\n")
+            # dump entire conf file
+            for section in conf.sections():
+                project_conf.write("\n[%s]\n" % section)
+                for option in conf.options(section):
+                    project_conf.write("%s = %s\n" %
+                                       (option, conf.get(section, option)))
+            project_conf.close()
 
-        # Create cgi-bin with scripts using trac-admin command:
-        # trac-admin tracker_dir deploy target_tracker_bin
-        deploy_cmd = [configuration.trac_admin_path, target_tracker_var,
-                      'deploy', target_tracker_deploy]
-        logger.info('deploy tracker project: %s' % deploy_cmd)
-        proc = subprocess.Popen(deploy_cmd, stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
-        proc.wait()
-        if proc.returncode != 0:
-            raise Exception("tracker deployment %s failed: %s (%d)" % \
-                            (deploy_cmd, proc.stdout.read(),
-                             proc.returncode))
+        if not repair or not os.path.isdir(target_tracker_deploy):
+            # Create cgi-bin with scripts using trac-admin command:
+            # trac-admin tracker_dir deploy target_tracker_bin
+            deploy_cmd = [configuration.trac_admin_path, target_tracker_var,
+                          'deploy', target_tracker_deploy]
+            logger.info('deploy tracker project: %s' % deploy_cmd)
+            proc = subprocess.Popen(deploy_cmd, stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT)
+            proc.wait()
+            if proc.returncode != 0:
+                raise Exception("tracker deployment %s failed: %s (%d)" % \
+                                (deploy_cmd, proc.stdout.read(),
+                                 proc.returncode))
 
-        os.symlink(target_tracker_bin, target_tracker_cgi_link)
-        os.symlink(target_tracker_bin, target_tracker_wsgi_link)
+        if not repair or not os.path.isdir(target_tracker_cgi_link):
+            os.symlink(target_tracker_bin, target_tracker_cgi_link)
+        if not repair or not os.path.isdir(target_tracker_wsgi_link):
+            os.symlink(target_tracker_bin, target_tracker_wsgi_link)
 
-        # Give admin rights to creator using trac-admin command:
-        # trac-admin tracker_dir deploy target_tracker_bin
-        perms_cmd = [configuration.trac_admin_path, target_tracker_var,
-                     'permission', 'add', admin_id, 'TRAC_ADMIN']
-        logger.info('provide admin rights to creator: %s' % perms_cmd)
-        proc = subprocess.Popen(perms_cmd, stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
-        proc.wait()
-        if proc.returncode != 0:
-            raise Exception("tracker permissions %s failed: %s (%d)" % \
-                            (perms_cmd, proc.stdout.read(),
-                             proc.returncode))
+        if repair:
+            # Upgrade environment using trac-admin command:
+            # trac-admin tracker_dir upgrade
+            upgrade_cmd = [configuration.trac_admin_path, target_tracker_var,
+                         'upgrade']
+            logger.info('upgrade project tracker database: %s' % upgrade_cmd)
+            proc = subprocess.Popen(upgrade_cmd, stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT)
+            proc.wait()
+            if proc.returncode != 0:
+                raise Exception("tracker upgrade db %s failed: %s (%d)" % \
+                                (upgrade_cmd, proc.stdout.read(),
+                                 proc.returncode))
+        else:
+            # Give admin rights to creator using trac-admin command:
+            # trac-admin tracker_dir permission add ADMIN_ID PERMISSION
+            perms_cmd = [configuration.trac_admin_path, target_tracker_var,
+                         'permission', 'add', admin_id, 'TRAC_ADMIN']
+            logger.info('provide admin rights to creator: %s' % perms_cmd)
+            proc = subprocess.Popen(perms_cmd, stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT)
+            proc.wait()
+            if proc.returncode != 0:
+                raise Exception("tracker permissions %s failed: %s (%d)" % \
+                                (perms_cmd, proc.stdout.read(),
+                                 proc.returncode))
 
         # IMPORTANT NOTE:
         # prevent users writing in cgi-bin, plugins and conf dirs to avoid
@@ -505,10 +544,12 @@ def create_forum(
     vgrid_name,
     forum_dir,
     output_objects,
+    repair=False
     ):
     """Create new forum - just the base dir"""
     try:
-        os.mkdir(forum_dir)
+        if not repair or not os.path.isdir(forum_dir):
+            os.mkdir(forum_dir)
         return True
     except Exception, exc:
         output_objects.append({'object_type': 'error_text', 'text'
