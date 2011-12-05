@@ -43,9 +43,19 @@ sudo aptitude install apache2-mpm-prefork libapache2-mod-wsgi \
      openssh-client python-json python-enchant python-moinmoin \
      mercurial trac trac-mercurial
 
-Additional Trac extensions can be installed with:
+Additional packaged Trac extensions can be installed with:
 sudo aptitude install trac-customfieldadmin trac-graphviz \
      trac-mastertickets trac-wikiprint trac-wikirename trac-wysiwyg
+
+and the unpackaged ones can be grabbed from pypi.org with:
+sudo aptitude install python-pip
+sudo pip install http://trac-hacks.org/svn/wikicssplugin/0.11
+sudo pip install http://trac-hacks.org/svn/fullblogplugin/0.11
+sudo pip install tracstats
+where 0.11 in the URL should be changed to fit your particular version
+of Trac. Please note that the source code stats in the TracStats plugin
+do not currently work for Mercurial repositories!
+Additional plugins are available from http://trac-hacks.org/
 
 
 = Installing MiG =
