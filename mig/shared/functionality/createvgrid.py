@@ -373,6 +373,7 @@ def create_tracker(
     target_tracker_bin = os.path.join(target_tracker_deploy, 'cgi-bin')
     target_tracker_cgi_link = os.path.join(tracker_dir, 'cgi-bin')
     target_tracker_wsgi_link = os.path.join(tracker_dir, 'wsgi-bin')
+    target_tracker_gvcache = os.path.join(tracker_dir, 'gvcache')
     repo_base = 'repo'
     target_scm_repo = os.path.join(scm_dir, repo_base)
     project_name = '%s %s issue tracker' % (vgrid_name, kind)
@@ -473,6 +474,8 @@ def create_tracker(
             os.symlink(target_tracker_bin, target_tracker_cgi_link)
         if not repair or not os.path.isdir(target_tracker_wsgi_link):
             os.symlink(target_tracker_bin, target_tracker_wsgi_link)
+        if not repair or not os.path.isdir(target_tracker_gvcache):
+            os.mkdir(target_tracker_gvcache)
 
         if repair:
             # Upgrade environment using trac-admin command:
@@ -511,7 +514,7 @@ def create_tracker(
         logger.info('fix permissions on %s' % project_name)
         perms = {}
         for real_path in [os.path.join(target_tracker_var, i) for i in \
-                          ['db', 'attachments', 'log']]:
+                          ['db', 'attachments', 'log', 'gvcache']]:
             perms[real_path] = 0755
         for real_path in [os.path.join(target_tracker_var, 'db', 'trac.db')]:
             perms[real_path] = 0644
