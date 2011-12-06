@@ -374,9 +374,11 @@ def create_tracker(
     target_tracker_cgi_link = os.path.join(tracker_dir, 'cgi-bin')
     target_tracker_wsgi_link = os.path.join(tracker_dir, 'wsgi-bin')
     target_tracker_gvcache = os.path.join(tracker_dir, 'gvcache')
+    target_tracker_log = os.path.join(target_tracker_var, 'log')
+    target_tracker_log_file = os.path.join(target_tracker_log, 'trac.log')
     repo_base = 'repo'
     target_scm_repo = os.path.join(scm_dir, repo_base)
-    project_name = '%s %s issue tracker' % (vgrid_name, kind)
+    project_name = '%s %s project tracker' % (vgrid_name, kind)
     try:
 
         # Create tracker directory
@@ -476,21 +478,10 @@ def create_tracker(
             os.symlink(target_tracker_bin, target_tracker_wsgi_link)
         if not repair or not os.path.isdir(target_tracker_gvcache):
             os.mkdir(target_tracker_gvcache)
+        if not repair or not os.path.isfile(target_tracker_log_file):
+            open(target_tracker_log_file, 'w').close()
 
-        if repair:
-            # Upgrade environment using trac-admin command:
-            # trac-admin tracker_dir upgrade
-            upgrade_cmd = [configuration.trac_admin_path, target_tracker_var,
-                         'upgrade']
-            logger.info('upgrade project tracker database: %s' % upgrade_cmd)
-            proc = subprocess.Popen(upgrade_cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
-            proc.wait()
-            if proc.returncode != 0:
-                raise Exception("tracker upgrade db %s failed: %s (%d)" % \
-                                (upgrade_cmd, proc.stdout.read(),
-                                 proc.returncode))
-        else:
+        if not repair:
             # Give admin rights to creator using trac-admin command:
             # trac-admin tracker_dir permission add ADMIN_ID PERMISSION
             perms_cmd = [configuration.trac_admin_path, target_tracker_var,
@@ -504,6 +495,20 @@ def create_tracker(
                                 (perms_cmd, proc.stdout.read(),
                                  proc.returncode))
 
+        # Some plugins require DB changes so we always force DB update here
+        # Upgrade environment using trac-admin command:
+        # trac-admin tracker_dir upgrade
+        upgrade_cmd = [configuration.trac_admin_path, target_tracker_var,
+                       'upgrade']
+        logger.info('upgrade project tracker database: %s' % upgrade_cmd)
+        proc = subprocess.Popen(upgrade_cmd, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        proc.wait()
+        if proc.returncode != 0:
+            raise Exception("tracker upgrade db %s failed: %s (%d)" % \
+                            (upgrade_cmd, proc.stdout.read(),
+                             proc.returncode))
+        
         # IMPORTANT NOTE:
         # prevent users writing in cgi-bin, plugins and conf dirs to avoid
         # remote code execution exploits!
@@ -516,7 +521,8 @@ def create_tracker(
         for real_path in [os.path.join(target_tracker_var, i) for i in \
                           ['db', 'attachments', 'log', 'gvcache']]:
             perms[real_path] = 0755
-        for real_path in [os.path.join(target_tracker_var, 'db', 'trac.db')]:
+        for real_path in [os.path.join(target_tracker_var, 'db', 'trac.db'),
+                          target_tracker_log_file]:
             perms[real_path] = 0644
         for real_path in [os.path.join(target_tracker_bin, i) for i in \
                           ['trac.cgi', 'trac.wsgi']]:
