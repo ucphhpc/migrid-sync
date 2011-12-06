@@ -202,7 +202,7 @@ or similarly with apache 2.x:
 		   --mig_certs=/etc/apache2/MiG-certificates \
 		   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
 		   --hg_path=/usr/bin/hg \
-		   --hgweb_scripts=/usr/share/doc/mercurial/examples \
+		   --hgweb_scripts=/usr/share/doc/mercurial-common/examples \
 		   --trac_admin_path=/usr/bin/trac-admin \
 		   --trac_ini_path=/home/mig/mig/server/trac.ini \
 		   --public_port=80 --cert_port=443 --sid_port=443 \
