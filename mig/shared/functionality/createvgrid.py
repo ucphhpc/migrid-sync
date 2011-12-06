@@ -31,6 +31,7 @@ import os
 import shutil
 import subprocess
 import ConfigParser
+from tempfile import NamedTemporaryFile
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
@@ -350,7 +351,6 @@ def create_tracker(
     admin_email = admin_user.get('email', 'unknown@migrid.org')
     admin_id = admin_user.get(configuration.trac_id_field, 'unknown_id')
     server_url = configuration.migserver_https_cert_url
-    server_url_without_port = ':'.join(server_url.split(':')[:2])
     if tracker_dir.find('private') > -1:
         kind = 'owner'
         tracker_alias = 'vgridownertracker'
@@ -359,12 +359,12 @@ def create_tracker(
         kind = 'public'
         tracker_alias = 'vgridpublictracker'
         server_url = configuration.migserver_http_url
-
     tracker_url = os.path.join(server_url, tracker_alias, vgrid_name)
 
     # Trac init is documented at http://trac.edgewall.org/wiki/TracAdmin
     target_tracker_var = os.path.join(tracker_dir, 'var')
-    target_tracker_conf = os.path.join(target_tracker_var, 'conf', 'trac.ini')
+    target_tracker_conf = os.path.join(target_tracker_var, 'conf')
+    target_tracker_conf_file = os.path.join(target_tracker_conf, 'trac.ini')
     tracker_db = 'sqlite:db/trac.db'
     # NB: deploy command requires an empty directory target
     # We create a lib dir where it creates cgi-bin and htdocs subdirs
@@ -373,7 +373,7 @@ def create_tracker(
     target_tracker_bin = os.path.join(target_tracker_deploy, 'cgi-bin')
     target_tracker_cgi_link = os.path.join(tracker_dir, 'cgi-bin')
     target_tracker_wsgi_link = os.path.join(tracker_dir, 'wsgi-bin')
-    target_tracker_gvcache = os.path.join(tracker_dir, 'gvcache')
+    target_tracker_gvcache = os.path.join(target_tracker_var, 'gvcache')
     target_tracker_log = os.path.join(target_tracker_var, 'log')
     target_tracker_log_file = os.path.join(target_tracker_log, 'trac.log')
     repo_base = 'repo'
@@ -416,7 +416,7 @@ def create_tracker(
             # We want to customize generated project trac.ini with project info
         
             conf = ConfigParser.SafeConfigParser()
-            conf.read(target_tracker_conf)
+            conf.read(target_tracker_conf_file)
 
             conf_overrides = {
                 'trac': {
@@ -448,7 +448,7 @@ def create_tracker(
                 for (key, val) in options.items():
                     conf.set(section, key, str(val))
 
-            project_conf = open(target_tracker_conf, "w")
+            project_conf = open(target_tracker_conf_file, "w")
             project_conf.write("# -*- coding: utf-8 -*-\n")
             # dump entire conf file
             for section in conf.sections():
@@ -457,6 +457,7 @@ def create_tracker(
                     project_conf.write("%s = %s\n" %
                                        (option, conf.get(section, option)))
             project_conf.close()
+
 
         if not repair or not os.path.isdir(target_tracker_deploy):
             # Create cgi-bin with scripts using trac-admin command:
@@ -494,6 +495,88 @@ def create_tracker(
                 raise Exception("tracker permissions %s failed: %s (%d)" % \
                                 (perms_cmd, proc.stdout.read(),
                                  proc.returncode))
+
+            # Customize Wiki front page using trac-admin commands:
+            # trac-admin tracker_dir wiki export WikiStart tracinfo.txt
+            # trac-admin tracker_dir wiki import AboutTrac tracinfo.txt
+            # trac-admin tracker_dir wiki import WikiStart welcome.txt
+
+            settings = {'vgrid_name': vgrid_name, 'kind': kind, 'cap_kind':
+                        kind.capitalize(), 'server_url':  server_url,
+                        'css_wikipage': 'SiteStyle'}
+            if kind == 'public':
+                settings['access_limit'] = "public"
+                settings['login_info'] = """
+This %(access_limit)s page requires you to register to get a login. The owners
+of the VGrid will then need to give you access as they see fit.
+""" % settings
+            else:
+                settings['access_limit'] = "private"
+                settings['login_info'] = """
+These %(access_limit)s pages use your certificate for login. This means that
+you just need to click [/login login] to ''automatically'' sign in with your
+certificate ID.
+
+Owners of a VGrid can login and access the [/admin Admin] menu where they can configure
+fine grained access permissions for all other users with access to the tracker.
+
+Please contact the owners of this VGrid if you require greater tracker access. 
+""" % settings
+            intro_text = \
+                       """= The %(cap_kind)s Project Tracker for %(vgrid_name)s =
+Welcome to the ''%(access_limit)s'' %(kind)s project management site for the
+'''%(vgrid_name)s''' VGrid. It interfaces with the corresponding code repository for
+the VGrid and provides a number of tools to help software development and
+project management.
+
+== Quick Intro ==
+This particular page is a Wiki page which means that all ''authorized''
+%(vgrid_name)s users can edit it.
+
+Generally wou need to [/login login] at the top of the page to get access to
+most of the features here. The navigation menu provides buttons to access
+ * this [/wiki Wiki] with customizable contents
+ * a [/roadmap Project Roadmap] with goals and progress
+ * the [/browser Code Browser] with access to the %(kind)s SCM repository
+ * the [/report Ticket Overview] page with pending tasks or issues
+ * ... and so on.
+%(login_info)s
+
+== Look and Feel ==
+The look and feel of this project tracker can be customized with ordinary CSS
+through the %(css_wikipage)s Wiki page. Simply create that page and go
+ahead with style changes as you see fit.
+
+== Limitations ==
+For security reasons all project trackers are quite locked down to avoid abuse.
+This implies a number of restrictions on the freedom to fully tweak them e.g.
+by installing additional plugins or modifying the core configuration.  
+
+== Further Information ==
+Please see TitleIndex for a complete list of local wiki pages or refer to
+TracIntro for additional information and help on using Trac.
+""" % settings
+            trac_fd, wiki_fd = NamedTemporaryFile(), NamedTemporaryFile()
+            trac_tmp, wiki_tmp = trac_fd.name, wiki_fd.name
+            trac_fd.close()
+            wiki_fd.write(intro_text)
+            wiki_fd.flush()
+
+            for (act, page, path) in [('export', 'WikiStart', trac_tmp),
+                                      ('import', 'TracIntro', trac_tmp),
+                                      ('import', 'WikiStart', wiki_tmp)]:
+                wiki_cmd = [configuration.trac_admin_path, target_tracker_var,
+                            'wiki', act, page, path]
+                logger.info('wiki %s %s: %s' % (act, page, wiki_cmd))
+                proc = subprocess.Popen(wiki_cmd, stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
+                proc.wait()
+                if proc.returncode != 0:
+                    raise Exception("tracker wiki %s failed: %s (%d)" % \
+                                    (perms_cmd, proc.stdout.read(),
+                                     proc.returncode))
+
+            wiki_fd.close()
 
         # Some plugins require DB changes so we always force DB update here
         # Upgrade environment using trac-admin command:
