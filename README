@@ -37,6 +37,7 @@ Optional WSGI interface, Wiki, SCM and tracker VGrid features require:
 -MoinMoin (http://moinmo.in/)
 -Mercurial (http://mercurial.selenic.com/)
 -Trac (http://trac.edgewall.org/)
+-Trac plugins (e.g. http://trac-hacks.org/)
 
 On Debian servers the corresponding packages can be installed with:
 sudo aptitude install apache2-mpm-prefork libapache2-mod-wsgi \
@@ -47,12 +48,15 @@ Additional packaged Trac extensions can be installed with:
 sudo aptitude install trac-customfieldadmin trac-graphviz \
      trac-mastertickets trac-wikiprint trac-wikirename trac-wysiwyg
 
-and the unpackaged ones can be grabbed from pypi.org with:
+and the unpackaged ones can be grabbed from pypi.python.org with:
 sudo aptitude install python-pip
 sudo pip install http://trac-hacks.org/svn/wikicssplugin/0.11
 sudo pip install http://trac-hacks.org/svn/fullblogplugin/0.11
-sudo pip install tracstats
-where 0.11 in the URL should be changed to fit your particular version
+sudo pip install http://trac-hacks.org/svn/discussionplugin/0.11
+sudo pip install http://trac-hacks.org/svn/watchlistplugin/0.11
+sudo pip install TracStats
+
+where 0.11 in the URLs may need to be changed to fit your particular version
 of Trac. Please note that the source code stats in the TracStats plugin
 do not currently work for Mercurial repositories!
 Additional plugins are available from http://trac-hacks.org/
