@@ -53,13 +53,19 @@ sudo aptitude install python-pip
 sudo pip install http://trac-hacks.org/svn/wikicssplugin/0.11
 sudo pip install http://trac-hacks.org/svn/fullblogplugin/0.11
 sudo pip install http://trac-hacks.org/svn/discussionplugin/0.11
-sudo pip install http://trac-hacks.org/svn/watchlistplugin/0.11
 sudo pip install TracStats
 
 where 0.11 in the URLs may need to be changed to fit your particular version
 of Trac. Please note that the source code stats in the TracStats plugin
 do not currently work for Mercurial repositories!
 Additional plugins are available from http://trac-hacks.org/
+
+Please note that there may be subtle internal plugin dependencies and
+conflicts that e.g. can cause problems if plugins are not loaded in the
+right order. We have seen database upgrade problems if FullBlog,
+Watchlist and Discussion are enabled but not loaded in an order where
+Watchlist is loaded in between the other two. You may have to experiment
+with the installed plugins in a conservative way. 
 
 
 = Installing MiG =
