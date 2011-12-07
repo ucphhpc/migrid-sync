@@ -379,6 +379,7 @@ def create_tracker(
     repo_base = 'repo'
     target_scm_repo = os.path.join(scm_dir, repo_base)
     project_name = '%s %s project tracker' % (vgrid_name, kind)
+    create_status = True
     try:
 
         # Create tracker directory
@@ -458,7 +459,6 @@ def create_tracker(
                                        (option, conf.get(section, option)))
             project_conf.close()
 
-
         if not repair or not os.path.isdir(target_tracker_deploy):
             # Create cgi-bin with scripts using trac-admin command:
             # trac-admin tracker_dir deploy target_tracker_bin
@@ -474,12 +474,16 @@ def create_tracker(
                                  proc.returncode))
 
         if not repair or not os.path.isdir(target_tracker_cgi_link):
+            os.chmod(target_tracker_var, 0755)
             os.symlink(target_tracker_bin, target_tracker_cgi_link)
         if not repair or not os.path.isdir(target_tracker_wsgi_link):
+            os.chmod(target_tracker_var, 0755)
             os.symlink(target_tracker_bin, target_tracker_wsgi_link)
         if not repair or not os.path.isdir(target_tracker_gvcache):
+            os.chmod(target_tracker_var, 0755)
             os.mkdir(target_tracker_gvcache)
         if not repair or not os.path.isfile(target_tracker_log_file):
+            os.chmod(target_tracker_log, 0755)
             open(target_tracker_log_file, 'w').close()
 
         if not repair:
@@ -517,17 +521,18 @@ These %(access_limit)s pages use your certificate for login. This means that
 you just need to click [/login login] to ''automatically'' sign in with your
 certificate ID.
 
-Owners of a VGrid can login and access the [/admin Admin] menu where they can configure
-fine grained access permissions for all other users with access to the tracker.
+Owners of a VGrid can login and access the [/admin Admin] menu where they can
+configure fine grained access permissions for all other users with access to
+the tracker.
 
 Please contact the owners of this VGrid if you require greater tracker access. 
 """ % settings
             intro_text = \
                        """= The %(cap_kind)s Project Tracker for %(vgrid_name)s =
 Welcome to the ''%(access_limit)s'' %(kind)s project management site for the
-'''%(vgrid_name)s''' VGrid. It interfaces with the corresponding code repository for
-the VGrid and provides a number of tools to help software development and
-project management.
+'''%(vgrid_name)s''' VGrid. It interfaces with the corresponding code
+repository for the VGrid and provides a number of tools to help software
+development and project management.
 
 == Quick Intro ==
 This particular page is a Wiki page which means that all ''authorized''
@@ -591,7 +596,14 @@ TracIntro for additional information and help on using Trac.
             raise Exception("tracker upgrade db %s failed: %s (%d)" % \
                             (upgrade_cmd, proc.stdout.read(),
                              proc.returncode))
-        
+    except Exception, exc:
+        create_status = False
+        logger.error('create vgrid tracker failed: %s' % exc)
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Could not create vgrid tracker: %s'
+                               % exc})
+
+    try:
         # IMPORTANT NOTE:
         # prevent users writing in cgi-bin, plugins and conf dirs to avoid
         # remote code execution exploits!
@@ -621,13 +633,14 @@ TracIntro for additional information and help on using Trac.
                 else:
                     os.chmod(real_path, 0444)
         os.chmod(tracker_dir, 0555)
-        return True
     except Exception, exc:
-        logger.error('create vgrid tracker failed: %s' % exc)
+        create_status = False
+        logger.error('fix permissions on vgrid tracker failed: %s' % exc)
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not create vgrid tracker: %s'
+                              : 'Could not finish vgrid tracker: %s'
                                % exc})
-        return False
+        os.chmod(tracker_dir, 0000)
+    return create_status
 
 
 def create_forum(
