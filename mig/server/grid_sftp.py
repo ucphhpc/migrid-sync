@@ -72,7 +72,7 @@ from StringIO import StringIO
 import paramiko
 import paramiko.util
 
-from shared.base import client_dir_id, client_alias
+from shared.base import client_dir_id, client_alias, invisible_file
 from shared.conf import get_configuration_object
 from shared.useradm import ssh_authkeys, get_ssh_authkeys
 
@@ -152,7 +152,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 break
 
     def _get_fs_path(self, sftp_path):
-        "Internal helper to translate path with chroot in mind"""
+        """Internal helper to translate path with chroot and invisible files
+        in mind"""
         real_path = "%s/%s" % (self.root, sftp_path)
         real_path = real_path.replace('//', '/')
         self.logger.debug("get_fs_path: %s :: %s" % (sftp_path, real_path))
@@ -160,9 +161,21 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
         accepted = False
         for accept_path in accept_roots:
-            if os.path.realpath(real_path).startswith(accept_path):
+            expanded_path = os.path.realpath(real_path)
+            if expanded_path.startswith(accept_path):
+                # Found matching root - check visibility
                 accepted = True
+                sub_path = expanded_path
+                lastname, filename = False, True
+                while lastname != filename:
+                    lastname = filename
+                    filename = os.path.basename(sub_path)
+                    if invisible_file(filename):
+                        accepted = False
+                        break
+                    sub_path = os.path.dirname(sub_path)
                 break
+            
         if not accepted:
             self.logger.error("rejecting illegal path: %s" % real_path)
             raise ValueError("Invalid path")
@@ -265,6 +278,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                               (path, real_path, err))
             return paramiko.SFTP_FAILURE          
         for filename in files:
+            if invisible_file(filename):
+                continue
             full_name = ("%s/%s" % (real_path, filename)).replace("//", "/")
             # stat may fail e.g. if filename is a stale storage mount point
             try:
