@@ -31,6 +31,7 @@ import os
 import shutil
 import subprocess
 import ConfigParser
+from email.utils import parseaddr
 from tempfile import NamedTemporaryFile
 
 import shared.returnvalues as returnvalues
@@ -437,8 +438,11 @@ def create_tracker(
                     },
                 }
             if configuration.smtp_server:
+                (from_name, from_addr) = parseaddr(configuration.smtp_sender)
+                from_name += ": %s %s project tracker" % (vgrid_name, kind)
                 conf_overrides['notification'] = {
-                    'smtp_from': configuration.smtp_sender,
+                    'smtp_from': from_addr,
+                    'smtp_from_name': from_name,
                     'smtp_server': configuration.smtp_server,
                     'smtp_enabled': True,
                     }
@@ -528,7 +532,7 @@ the tracker.
 Please contact the owners of this VGrid if you require greater tracker access. 
 """ % settings
             intro_text = \
-                       """= The %(cap_kind)s Project Tracker for %(vgrid_name)s =
+                       """= %(cap_kind)s %(vgrid_name)s Project Tracker =
 Welcome to the ''%(access_limit)s'' %(kind)s project management site for the
 '''%(vgrid_name)s''' VGrid. It interfaces with the corresponding code
 repository for the VGrid and provides a number of tools to help software
