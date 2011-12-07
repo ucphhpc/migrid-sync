@@ -216,6 +216,10 @@ def handle_dir(
     ):
     """handle a dir"""
 
+    # Recursion can get here when called without explicit invisible files
+    
+    if invisible_file(os.path.basename(dirname_with_dir)):
+        return
     special = ''
     extra_class = ''
     if os.path.islink(actual_dir):
@@ -273,6 +277,11 @@ def handle_ls(
     else:
         base_name = os.path.basename(real_path)
         relative_path = real_path.replace(base_dir, '')
+
+    # Recursion can get here when called without explicit invisible files
+    
+    if invisible_file(os.path.basename(relative_path)):
+        return
 
     if os.path.isfile(real_path):
         handle_file(listing, base_name, relative_path, real_path, flags)

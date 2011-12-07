@@ -65,7 +65,8 @@ profile_filename = 'userprofile'
 # The htaccess file prevents illegal http access to user files. We completely
 # hide it to not confuse users and to prevent all modification. It is 'only'
 # a matter of users not accidentally giving away file privacy, though.
-user_invisible_files = [htaccess_filename]
+_dot_vgrid = ['.vgrid%s' % i for i in ['wiki', 'scm', 'tracker','forum']]
+user_invisible_files = [htaccess_filename] + _dot_vgrid
 
 profile_img_max_kb = 128
 profile_img_extensions = ['png', 'jpg']
