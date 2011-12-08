@@ -28,6 +28,7 @@
 """Base helper functions"""
 
 import base64
+import os
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from shared.defaults import sandbox_names, user_invisible_files
@@ -94,10 +95,41 @@ def invisible_file(filename):
     """
     return filename in user_invisible_files
 
+def invisible_path(path):
+    """Returns boolean indicating if the file with path is among restricted
+    files or directories to completely hide. Such items can not safely be
+    removed or modified by users and should only be changed through fixed
+    interfaces.
+    Provided path may be absolute or relative.
+    """
+    for name in path.split(os.sep):
+        if invisible_file(name):
+            return True
+    return False
+
 if __name__ == '__main__':
     orig_id = '/X=ab/Y=cdef ghi/Z=klmn'
     client_dir = client_id_dir(orig_id)
     client_id = client_dir_id(client_dir)
+    test_paths = ['simple.txt', 'somedir/somefile.txt']
+    sample = user_invisible_files[0]
+    illegal = ["%s%s%s" % (prefix, sample, suffix) for (prefix, suffix) in \
+               [('', ''), ('./', ''), ('/', ''), ('somedir/', ''),
+                ('/somedir/', ''), ('somedir/sub/', ''), ('/somedir/sub/', ''),
+                ('', '/sub'), ('', '/sub/sample.txt'),
+                ('somedir/', '/sample.txt'), ('/somedir/', '/sample.txt'),
+                ('/somedir/sub/', '/sample.txt')]]
+    legal = ["%s%s%s" % (prefix, sample, suffix) for (prefix, suffix) in \
+               [('prefix', ''), ('somedir/prefix', ''), ('', 'suffix'),
+                ('', 'suffix/somedir'), ('prefix', 'suffix')]]
+    legal += ['sample.txt', 'somedir/sample.txt', '/somedir/sample.txt']
     print "orig id %s, dir %s, id %s (match %s)" % \
           (orig_id, client_dir, client_id, orig_id == client_id)
-
+    print "invisible tests"
+    print "check that these are invisible:"
+    for path in illegal:
+        print "  %s: %s" % (path, invisible_path(path))
+    print "make sure these are not invisible:"
+    for path in legal:
+        print "  %s: %s" % (path, not invisible_path(path))
+        
