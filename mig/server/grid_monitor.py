@@ -329,7 +329,11 @@ Listing the last request from each resource<br />
         current_dir = os.path.join(current_dir, vgrid_name_part)
         abs_dir = os.path.join(configuration.vgrid_home, current_dir)
         print 'dir: %s' % abs_dir
-        sorted_names = os.listdir(abs_dir)
+        # Potential race - just ignore if it disappeared
+        try:
+            sorted_names = os.listdir(abs_dir)
+        except OSError:
+            continue
         sorted_names.sort()
         for filename in sorted_names:
             print filename
