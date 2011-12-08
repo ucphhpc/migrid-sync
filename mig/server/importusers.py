@@ -36,7 +36,7 @@ import re
 import shared.returnvalues as returnvalues
 from shared.useradm import init_user_adm, fill_user, default_search, \
     distinguished_name_to_user, create_user, search_users
-from shared.functionality.vgridmemberrequestaction import main
+from shared.functionality.sendrequestaction import main
 
 
 def usage(name='importusers.py'):
@@ -161,9 +161,10 @@ if '__main__' == __name__:
             continue
         print 'Created %s in user database and in file system' % user_id
         for name in vgrids:
-            request = {'vgrid_name': [name],
-                'request_type': ['member'],
-                'request_text': ['automatic request from importusers script']}
+            request = {'cert_id': user_id, 'vgrid_name': [name],
+                       'request_type': ['vgridmember'],
+                       'request_text':
+                       ['automatic request from importusers script']}
             (output, status) = main(user_id, request)
             if status == returnvalues.OK:
                 print 'Request for %s membership in %s sent to owners' % \
