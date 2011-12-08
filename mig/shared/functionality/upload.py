@@ -25,18 +25,16 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
 """Plain file upload back end"""
 
 import os
-import glob
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
+from shared.parseflags import verbose
 from shared.validstring import valid_user_path
 
 block_size = 1024 * 1024
@@ -45,8 +43,12 @@ block_size = 1024 * 1024
 def signature():
     """Signature of the main function"""
 
-    defaults = {'path': REJECT_UNSET, 'fileupload': REJECT_UNSET, 
-                'restrict':False}
+    defaults = {
+        'flags': [''],
+        'path': REJECT_UNSET,
+        'fileupload': REJECT_UNSET, 
+        'restrict':False,
+        }
     return ['html_form', defaults]
 
 
@@ -56,6 +58,7 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     client_dir = client_id_dir(client_id)
+    status = returnvalues.OK
     defaults = signature()[1]
 
     # IMPORTANT: the CGI front end forces the input extraction to be delayed
@@ -102,6 +105,7 @@ def main(client_id, user_arguments_dict):
              : 'Only accepting POST requests to prevent unintended updates'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    flags = ''.join(accepted['flags'])
     path = accepted['path'][-1]
     restrict = accepted['restrict'][-1]
 
@@ -113,43 +117,37 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                client_dir)) + os.sep
 
+    if verbose(flags):
+        for flag in flags:
+            output_objects.append({'object_type': 'text', 'text'
+                                  : '%s using flag: %s' % (op_name,
+                                  flag)})
+
     output_objects.append({'object_type': 'header', 'text'
                           : 'Uploading file'})
 
-    # Check directory traversal attempts before actual handling to avoid leaking
-    # information about file system layout while allowing consistent error messages
+    # Check directory traversal attempts before actual handling to avoid
+    # leaking information about file system layout while allowing consistent
+    # error messages
 
-    real_path = ''
-    unfiltered_match = glob.glob(base_dir + path)
-    for server_path in unfiltered_match:
-        real_path = os.path.abspath(server_path)
-        if not valid_user_path(real_path, base_dir, True):
-            logger.error('Warning: %s tried to %s to restricted path %s! (%s)'
-                         % (client_id, op_name, real_path, path))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : "You're only allowed to write your own files! (%s expands to an illegal path)"
-                                   % path})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-
-    if real_path == '':
-        real_path = base_dir + path
-        if not valid_user_path(real_path, base_dir, True):
-            logger.error('Warning: %s tried to %s restricted path %s! (%s)'
-                          % (client_id, op_name, real_path, path))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : "You're only allowed to write your own files! (%s expands to an illegal path)"
-                                   % path})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-
+    real_path = os.path.realpath(base_dir + path)
+    # Implicit destination
     if os.path.isdir(real_path):
         real_path = os.path.join(real_path, os.path.basename(file_name))
-        if not valid_user_path(real_path, base_dir, True):
-            logger.error('Warning: %s tried to %s restricted path %s! (path %s)'
-                         % (client_id, op_name, real_path, path))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : "You're only allowed to write your own files! (%s expands to an illegal path)"
-                                   % path})
-            return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if not valid_user_path(real_path, base_dir, True):
+        logger.warning('%s tried to %s restricted path %s ! (%s)'
+                       % (client_id, op_name, real_path, path))
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : "Invalid destination (%s expands to an illegal path)" % path})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if not os.path.isdir(os.path.dirname(real_path)):
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : "cannot write: no such file or directory: %s)"
+                               % path})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     try:
         logger.info('Writing %s' % real_path)
@@ -179,4 +177,4 @@ def main(client_id, user_arguments_dict):
                               ))})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    return (output_objects, returnvalues.OK)
+    return (output_objects, status)
