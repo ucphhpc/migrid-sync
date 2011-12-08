@@ -415,7 +415,7 @@ class Ui:
                 [jobDir, filename] = os.path.split(xrslFilename)
                 os.chdir(jobDir)
 
-                result = (self.submit(self, xrslAll, jobName))
+                result = (self.submit(xrslAll, jobName))
                 os.chdir(currDir)
                 return result
         except arclib.XrslError, err:
