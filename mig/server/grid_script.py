@@ -1577,18 +1577,54 @@ while True:
         if not details:
             details.append('JOB_ID')
         job_queue.show_queue(details)
+    elif cap_line.find('DROPQUEUED') == 0:
+        logger.info('--- REMOVING JOBS FROM JOB QUEUE ---')
+        job_list = linelist[1:]
+        if not job_list:
+            logger.info('No jobs specified for removal')
+        for job_id in job_list:
+            try:
+                job_queue.dequeue_job_by_id(job_id)
+                logger.info("Removed job %s from job queue" % job_id)
+            except Exception, exc:
+                logger.error("Failed to remove job %s from job queue: %s" \
+                             %  (job_id, exc))
     elif cap_line.find('EXECUTINGQUEUEINFO') == 0:
         logger.info('--- DISPLAYING EXECUTING QUEUE INFORMATION ---')
         details = linelist[1:]
         if not details:
             details.append('JOB_ID')
         executing_queue.show_queue(details)
+    elif cap_line.find('DROPEXECUTING') == 0:
+        logger.info('--- REMOVING JOBS FROM EXECUTING QUEUE ---')
+        job_list = linelist[1:]
+        if not job_list:
+            logger.info('No jobs specified for removal')
+        for job_id in job_list:
+            try:
+                executing_queue.dequeue_job_by_id(job_id)
+                logger.info("Removed job %s from executing queue" % job_id)
+            except Exception, exc:
+                logger.error("Failed to remove job %s from exe queue: %s" \
+                             %  (job_id, exc))
     elif cap_line.find('DONEQUEUEINFO') == 0:
         logger.info('--- DISPLAYING DONE QUEUE INFORMATION ---')
         details = linelist[1:]
         if not details:
             details.append('JOB_ID')
         done_queue.show_queue(details)
+    elif cap_line.find('DROPDONE') == 0:
+        logger.info('--- REMOVING JOBS FROM DONE QUEUE ---')
+        job_list = linelist[1:]
+        if not job_list:
+            logger.info('No jobs specified for removal')
+        for job_id in job_list:
+            try:
+                done_queue.dequeue_job_by_id(job_id)
+                logger.info("Removed job %s from done queue" % job_id)
+            except Exception, exc:
+                logger.error("Failed to remove job %s from exe queue: %s" \
+                             %  (job_id, exc))
     elif cap_line.find('STARTTIMEOUTTHREAD') == 0:
         logger.info('--- STARTING TIME OUT THREAD ---')
         job_time_out_stop.clear()
