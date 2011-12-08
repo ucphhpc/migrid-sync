@@ -33,8 +33,8 @@ import base
 # publish all relevant path functions and override the ones that are
 # file location specific
 
-from os.path import basename, commonprefix, dirname, exists, getsize, \
-    isabs, isdir, isfile, join, normcase, normpath, sep, split
+from os.path import basename, commonprefix, dirname, isabs, join, normcase, \
+     normpath, sep, split
 
 
 def isfile(path):

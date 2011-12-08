@@ -63,8 +63,8 @@ def mkdir(path, mode=0777):
     return os.mkdir(path, mode)
 
 
-def makedirs(path_list):
-    return os.makedirs(path_list)
+def makedirs(path_list, mode=0777):
+    return os.makedirs(path_list, mode=0777)
 
 
 def remove(path):
