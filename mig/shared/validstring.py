@@ -29,7 +29,7 @@
 
 import os.path
 
-from shared.base import invisible_file
+from shared.base import invisible_path
 
 def cert_name_format(input_string):
     """ Spaces in certificate names are replaced with underscore internally """
@@ -101,7 +101,7 @@ def valid_user_path(path, home_dir, allow_equal=False):
     """This is a convenience function for making sure that users do
     not access restricted files including files outside their own file
     tree(s): Check that path is a valid path inside user home directory,
-    home_dir.
+    home_dir and it does not map to an invisible file or dir.
     In  a few situations it may be relevant to not allow an exact
     match, e.g. to prevent users from deleting the base of their
     home directory.
@@ -117,7 +117,7 @@ def valid_user_path(path, home_dir, allow_equal=False):
 
     real_path = os.path.abspath(path)
 
-    if invisible_file(os.path.basename(real_path)):
+    if invisible_path(real_path):
         return False
 
     real_home = os.path.abspath(home_dir)
@@ -143,17 +143,18 @@ def valid_user_path(path, home_dir, allow_equal=False):
 
 def valid_dir_input(base, variable):
     """This function verifies that user supplied variable used as a directory
-    in file manipulation doesn't try to illegally traverse directories by
+    in file manipulation doesn't try to illegally access directories by
     using e.g. '..'. The base argument is the directory that the user
     should be bound to, and the variable is the variable to be checked.
     The verification amounts to verifying that base/variable doesn't
-    expand to a path outside base."""
+    expand to a path outside base or among the invisible paths.
+    """
 
     # Please note that base_dir must end in slash to avoid access to other
     # dirs when variable is a prefix of another dir in base
 
     path = os.path.abspath(base) + os.sep + variable
-    if os.path.abspath(path) != path:
+    if os.path.abspath(path) != path or invisible_path(path):
 
         # out of bounds
 

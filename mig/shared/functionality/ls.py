@@ -35,7 +35,7 @@ import glob
 import stat
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir, invisible_file
+from shared.base import client_id_dir, invisible_path
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive, file_info
@@ -138,12 +138,7 @@ def long_format(path):
 
     try:
         stat_info = os.stat(path)
-    except Exception, err:
-
-        # Don't give away FS information - only log full failure reason
-        # (logger not available here)
-        # logger.warning("ls failed to stat %s: %s" % (path, err))
-
+    except Exception:
         return 'Internal error: stat failed!'
 
     mode = stat_info.st_mode
@@ -186,7 +181,7 @@ def handle_file(
 
     # Recursion can get here when called without explicit invisible files
     
-    if invisible_file(os.path.basename(file_with_dir)):
+    if invisible_path(file_with_dir):
         return
     special = ''
     file_obj = {
@@ -218,7 +213,7 @@ def handle_dir(
 
     # Recursion can get here when called without explicit invisible files
     
-    if invisible_file(os.path.basename(dirname_with_dir)):
+    if invisible_path(dirname_with_dir):
         return
     special = ''
     extra_class = ''
@@ -280,7 +275,7 @@ def handle_ls(
 
     # Recursion can get here when called without explicit invisible files
     
-    if invisible_file(os.path.basename(relative_path)):
+    if invisible_path(relative_path):
         return
 
     if os.path.isfile(real_path):
@@ -365,7 +360,6 @@ def main(client_id, user_arguments_dict):
 
     flags = ''.join(accepted['flags'])
     pattern_list = accepted['path']
-    listing = []
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -460,22 +454,24 @@ Action on paths selected below
     first_match = None
     for pattern in pattern_list:
 
-        # Check directory traversal attempts before actual handling to avoid leaking
-        # information about file system layout while allowing consistent error messages
+        # Check directory traversal attempts before actual handling to avoid
+        # leaking information about file system layout while allowing
+        # consistent error messages
 
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
             real_path = os.path.abspath(server_path)
             if not valid_user_path(real_path, base_dir, True):
-                logger.error('Warning: %s tried to %s restricted path %s! (%s)'
-                             % (client_id, op_name, real_path, pattern))
+                logger.warning('%s tried to %s restricted path %s ! (%s)'
+                               % (client_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
             if not first_match:
                 first_match = real_path
 
-        # Now actually treat list of allowed matchings and notify if no (allowed) match
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',

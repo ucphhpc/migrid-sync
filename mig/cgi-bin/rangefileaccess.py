@@ -44,7 +44,7 @@ import sys
 
 # MiG imports
 
-from shared.base import client_id_dir
+from shared.base import client_id_dir, invisible_path
 from shared.scriptinput import fieldstorage_to_dict
 from shared.cgishared import init_cgiscript_possibly_with_cert
 
@@ -303,6 +303,12 @@ if not fileinfo_dict.has_key('path'):
 
     o.out('No path provided, unable to process file!')
     o.reply_and_exit(o.ERROR)
+
+# Reject modification of invisible files, even if apache generally allows it
+
+if invisible_path(fileinfo_dict['path']):
+    o.out('Access to %s is prohibited!' % fileinfo_dict['path'])
+    o.reply_and_exit(o.CLIENT_ERROR)
 
 logger.info('rangefileaccess on %s (%s)' % (fileinfo_dict['path'],
             fileinfo_dict))

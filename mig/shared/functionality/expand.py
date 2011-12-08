@@ -34,7 +34,7 @@ import os
 import glob
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir, invisible_file
+from shared.base import client_id_dir, invisible_path
 from shared.functional import validate_input_and_cert
 from shared.functionality.ls import select_all_javascript, \
     selected_file_actions_javascript
@@ -66,7 +66,7 @@ def handle_file(
 
     # Recursion can get here when called without explicit invisible files
     
-    if invisible_file(os.path.basename(file_with_dir)):
+    if invisible_path(file_with_dir):
         return
     file_obj = {
         'object_type': 'direntry',
@@ -113,6 +113,9 @@ def handle_expand(
     else:
         base_name = os.path.basename(real_path)
         relative_path = real_path.replace(base_dir, '')
+
+    if invisible_path(relative_path):
+        return
 
     if os.path.isfile(real_path):
         handle_file(
@@ -304,22 +307,24 @@ Action on paths selected below
     first_match = None
     for pattern in pattern_list:
 
-        # Check directory traversal attempts before actual handling to avoid leaking
-        # information about file system layout while allowing consistent error messages
+        # Check directory traversal attempts before actual handling to avoid
+        # leaking information about file system layout while allowing
+        # consistent error messages
 
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
         for server_path in unfiltered_match:
             real_path = os.path.abspath(server_path)
             if not valid_user_path(real_path, base_dir, True):
-                logger.error('Warning: %s tried to %s restricted path %s! (%s)'
-                              % (client_id, op_name, real_path, pattern))
+                logger.warning('%s tried to %s restricted path %s! (%s)'
+                               % (client_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
             if not first_match:
                 first_match = real_path
 
-        # Now actually treat list of allowed matchings and notify if no (allowed) match
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',

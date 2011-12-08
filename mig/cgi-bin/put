@@ -37,7 +37,7 @@ import fcntl
 import time
 
 import shared.confparser as confparser
-from shared.base import client_id_dir, invisible_file
+from shared.base import client_id_dir, invisible_path
 from shared.putfuncs import verify_results, migrated_job
 from shared.resadm import start_resource_exe_if_continuous
 from shared.refunctions import create_runtimeenv
@@ -104,8 +104,8 @@ base_filename = os.path.basename(filename)
 
 # Reject modification of invisible files, even if apache generally allows it
 
-if invisible_file(base_filename):
-    o.out('Upload of %s files is prohibited!' % base_filename)
+if invisible_path(filename):
+    o.out('Upload to %s is prohibited!' % rel_name)
     o.reply_and_exit(o.CLIENT_ERROR)
 
 # Check cert and decide if it is a user or resource or without cert using the put method
