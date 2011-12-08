@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # unzip - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,7 +30,6 @@ MiG user into a given destination directory.
 """
 
 import os
-import zipfile
 import glob
 
 import shared.returnvalues as returnvalues
@@ -52,22 +51,28 @@ def signature():
 
 
 def usage(output_objects):
-    output_objects.append({'object_type': 'header', 'text': 'unzip usage:'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'SERVER_URL/unzip.py?[output_format=(html|txt|xmlrpc|..);][flags=h;][src=src_path;[...]]src=src_path;dst=dst_path'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : '- output_format specifies how the script should format the output'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : '- flags is a string of one character flags to be passed to the script'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : '- each src specifies a zip file in your home to extract'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : '- dst is the path where the extracted zip archive contents will be stored'
+    """Usage help"""
+    
+    output_objects.append({'object_type': 'header', 'text': 'unzip usage:'})
+    output_objects.append(
+        {'object_type': 'text', 'text'
+         : 'SERVER_URL/unzip.py?[output_format=(html|txt|xmlrpc|..);]'
+         '[flags=h;][src=src_path;[...]]src=src_path;dst=dst_path'})
+    output_objects.append(
+        {'object_type': 'text', 'text'
+         : '- output_format specifies how the script should format the output'
+         })
+    output_objects.append(
+        {'object_type': 'text', 'text'
+         : '- flags is a string of character flags to be passed to the script'
+         })
+    output_objects.append(
+        {'object_type': 'text', 'text'
+         : '- each src specifies a zip file in your home to extract'
+         })
+    output_objects.append(
+        {'object_type': 'text', 'text'
+         : '- dst is the path where the zip archive is extracted'
                           })
     return (output_objects, returnvalues.OK)
 
@@ -130,11 +135,11 @@ def main(client_id, user_arguments_dict):
 
         # out of bounds
 
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : "You're only allowed to write to your own home directory! dest (%s) expands to an illegal path (%s)"
-                               % (dst, relative_dest)})
-        logger.error('Warning: %s tried to %s file(s) to destination %s outside own home! (using pattern %s)'
-                      % (client_id, op_name, real_dest, dst))
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : "Invalid path! (%s expands to an illegal path)" % dst})
+        logger.warning('%s tried to %s restricted path %s ! (%s)'
+                       % (client_id, op_name, real_dest, dst))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     status = returnvalues.OK
@@ -150,12 +155,13 @@ def main(client_id, user_arguments_dict):
         for server_path in unfiltered_match:
             real_path = os.path.abspath(server_path)
             if not valid_user_path(real_path, base_dir, True):
-                logger.error('Warning: %s tried to %s restricted path %s! (%s)'
-                              % (client_id, op_name, real_path, pattern))
+                logger.warning('%s tried to %s restricted path %s ! (%s)'
+                               % (client_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
 
-        # Now actually treat list of allowed matchings and notify if no (allowed) match
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',

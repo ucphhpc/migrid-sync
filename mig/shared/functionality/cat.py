@@ -81,9 +81,9 @@ def main(client_id, user_arguments_dict):
 
     for pattern in patterns:
 
-        # Check directory traversal attempts before actual handling
-        # to avoid leaking information about file system layout while
-        # allowing consistent error messages
+        # Check directory traversal attempts before actual handling to avoid
+        # leaking information about file system layout while allowing
+        # consistent error messages
 
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
@@ -95,14 +95,13 @@ def main(client_id, user_arguments_dict):
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                logger.error('Warning: %s tried to %s %s outside own home! (%s)'
-                              % (client_id, op_name, real_path,
-                             pattern))
+                logger.warning('%s tried to %s restricted path %s ! (%s)'
+                               % (client_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
 
-        # Now actually treat list of allowed matchings and notify if
-        # no (allowed) match
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',

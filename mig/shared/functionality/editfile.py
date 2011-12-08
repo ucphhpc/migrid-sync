@@ -97,43 +97,44 @@ def main(client_id, user_arguments_dict):
                           : 'Saving changes to edited file'})
 
     if not chosen_newline in allowed_newline.keys():
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Unsupported newline style supplied: %s (must be one of %s)'
-                               % (chosen_newline,
-                              ', '.join(allowed_newline.keys()))})
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Unsupported newline style supplied: %s (must be one of %s)'
+             % (chosen_newline, ', '.join(allowed_newline.keys()))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     saved_newline = allowed_newline[chosen_newline]
 
-    # Check directory traversal attempts before actual handling to avoid leaking
-    # information about file system layout while allowing consistent error messages
+    # Check directory traversal attempts before actual handling to avoid
+    # leaking information about file system layout while allowing consistent
+    # error messages
 
     real_path = ''
     unfiltered_match = glob.glob(base_dir + path)
     for server_path in unfiltered_match:
         real_path = os.path.abspath(server_path)
         if not valid_user_path(real_path, base_dir, True):
-            logger.error('Warning: %s tried to %s restricted path %s! (%s)'
-                         % (client_id, op_name, real_path, path))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : "You're only allowed to edit your own files! (%s expands to an illegal path)"
-                                   % path})
+            logger.warning('%s tried to %s restricted path %s ! (%s)'
+                           % (client_id, op_name, real_path, path))
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : "Invalid path! (%s expands to an illegal path)" % path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     if real_path == '':
         real_path = base_dir + path
         if not valid_user_path(real_path, base_dir, True):
-            logger.error('Warning: %s tried to %s outside own home! (path %s)'
-                          % (client_id, op_name, path))
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : "You're only allowed to edit your own files! (%s expands to an illegal path)"
-                                   % path})
+            logger.warning('%s tried to %s restricted path %s ! (%s)'
+                           % (client_id, op_name, real_path, path))
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : "Invalid path! (%s expands to an illegal path)" % path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     (owner, time_left) = acquire_edit_lock(real_path, client_id)
     if owner != client_id:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : "You don't have the lock for %s!"
+                               : "You don't have the lock for %s!"
                                % path})
         return (output_objects, returnvalues.CLIENT_ERROR)
 

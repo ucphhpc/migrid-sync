@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resubmit - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,10 +27,10 @@
 
 """Resubmit a job
 The idea is to reuse the existing job submit code (new_job()) and
-make a resubmit like any other job submission (textarea, mRSL file upload). 
+make a resubmit like any other job submission (textarea, mRSL file upload).
 
-The client specifies a job_id, and this script loops all relevant fields, generates a 
-temp file in mRSL format and submits the tempfile to new_job()
+The client specifies a job_id, and this script loops all relevant fields,
+generates a temp file in mRSL format and submits the tempfile to new_job()
 """
 
 import os
@@ -104,9 +104,9 @@ def main(client_id, user_arguments_dict):
         if pattern == all_jobs:
             pattern = '*'
 
-        # Check directory traversal attempts before actual handling to
-        # avoid leaking information about file system layout while
-        # allowing consistent error messages
+        # Check directory traversal attempts before actual handling to avoid
+        # leaking information about file system layout while allowing
+        # consistent error messages
 
         unfiltered_match = glob.glob(base_dir + pattern + '.mRSL')
         match = []
@@ -118,22 +118,21 @@ def main(client_id, user_arguments_dict):
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                logger.error('%s tried to use %s %s outside own home! (pattern %s)'
-                              % (client_id, op_name, real_path,
-                             pattern))
+                logger.warning('%s tried to %s restricted path %s ! (%s)'
+                               % (client_id, op_name, real_path, pattern))
                 continue
 
             # Insert valid job files in filelist for later treatment
 
             match.append(real_path)
 
-        # Now actually treat list of allowed matchings and notify if
-        # no (allowed) match
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match
 
         if not match:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : '%s: You do not have any matching job IDs!'
-                                   % pattern})
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : '%s: You do not have any matching job IDs!' % pattern})
             status = returnvalues.CLIENT_ERROR
         else:
             filelist += match
@@ -142,7 +141,7 @@ def main(client_id, user_arguments_dict):
 
     if len(filelist) > 100:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Too many matching jobs (%s)!'
+                               : 'Too many matching jobs (%s)!'
                                % len(filelist)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -156,17 +155,14 @@ def main(client_id, user_arguments_dict):
 
         resubmitobj = {'object_type': 'resubmitobj', 'job_id': job_id}
 
-        # filename = configuration.mrsl_files_dir + "/" + client_id + "/" + job_id + ".mRSL"
-
         mrsl_dict = unpickle(filepath, logger)
         if not mrsl_dict:
 
-            # o.out("You can only resubmit your own jobs. Please verify that you submitted the job with job id '%s' (Could not unpickle mRSL file)" % job_id, filepath)
-            # o.reply_and_exit(o.CLIENT_ERROR)
-
             resubmitobj['message'] = \
-                "You can only resubmit your own jobs. Please verify that you submitted the job with job id '%s' (Could not unpickle mRSL file)"\
-                 % (job_id, filepath)
+                ("You can only resubmit your own jobs. Please verify that " \
+                 "you submitted the job with job id '%s' (Could not " \
+                 "unpickle mRSL file %s)"
+                 ) % (job_id, mrsl_file)
             status = returnvalues.CLIENT_ERROR
             resubmitobjs.append(resubmitobj)
             continue
@@ -179,12 +175,15 @@ def main(client_id, user_arguments_dict):
 
         for dict_elem in resubmit_items:
             value = ''
-            # Extract job value with fallback to default to support optional fields
-            job_value = mrsl_dict.get(dict_elem, keywords_dict[dict_elem]['Value'])
+            # Extract job value with fallback to default to support optional
+            # fields
+            job_value = mrsl_dict.get(dict_elem,
+                                      keywords_dict[dict_elem]['Value'])
             if keywords_dict[dict_elem]['Type'].startswith('multiplekeyvalues'):
                 for (elem_key, elem_val) in job_value:
                     if elem_key:
-                        value += '%s=%s\n' % (str(elem_key).strip(), str(elem_val).strip())
+                        value += '%s=%s\n' % (str(elem_key).strip(),
+                                              str(elem_val).strip())
             elif keywords_dict[dict_elem]['Type'].startswith('multiple'):
                 for elem in job_value:
                     if elem:
@@ -200,8 +199,7 @@ def main(client_id, user_arguments_dict):
                     resubmit_job_string += '''::%s::
 %s
 
-'''\
-                         % (dict_elem, value.rstrip())
+''' % (dict_elem, value.rstrip())
 
         # save tempfile
 

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # getrespgid - Get PGID of process on resource for kill in clean up
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -85,8 +85,10 @@ def main(client_id, user_arguments_dict):
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text': 
-                               "Failure: You must be an owner of '%s' to get the PGID!" % unique_resource_name})
+        output_objects.append(
+            {'object_type': 'error_text', 'text': 
+             "Failure: You must be an owner of '%s' to get the PGID!" % \
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # is_owner incorporates unique_resource_name verification - no need to
@@ -99,8 +101,9 @@ def main(client_id, user_arguments_dict):
 
         output_objects.append({'object_type': 'error_text', 'text': 
                                'invalid exe_name! %s' % exe_name})
-        logger.error('getrespgid called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, client_id %s'
-                     % (unique_resource_name, exe_name, client_id))
+        logger.error('''getrespgid called with illegal parameter(s) in what
+appears to be an illegal directory traversal attempt!: unique_resource_name %s,
+exe %s, client_id %s''' % (unique_resource_name, exe_name, client_id))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if 'FE' == res_type:
@@ -123,18 +126,19 @@ def main(client_id, user_arguments_dict):
         msg = "%s\n'%s' PGID succesfully retrieved." % (pgid, res_type)
     except Exception, err:
         if 'FE' == res_type:
-            msg = "Resource frontend: '%s' is stopped." \
-                  % unique_resource_name
+            msg = "Resource frontend: '%s' is stopped." % unique_resource_name
         elif 'EXE' == res_type:
-            msg = "Error reading PGID for resource: '%s' EXE: '%s'\n" + \
-                  'Either resource has never been started or a server error occured.' \
-                  % (unique_resource_name, exe_name)
+            msg = ("Error reading PGID for resource: '%s' EXE: '%s'\n" \
+                   'Either resource has never been started or a server ' \
+                   'error occured.'
+                   ) % (unique_resource_name, exe_name)
         status = returnvalues.CLIENT_ERROR
 
     # Status code line followed by raw output
     if not client_id:
         output_objects.append({'object_type': 'script_status', 'text': ''})
-        output_objects.append({'object_type': 'binary', 'data': '%s' % status[0]})
+        output_objects.append({'object_type': 'binary', 'data': '%s' % \
+                               status[0]})
     output_objects.append({'object_type': 'binary', 'data': msg})
     return (output_objects, status)
 

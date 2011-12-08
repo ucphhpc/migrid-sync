@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # submit - submit a job file
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -51,9 +51,10 @@ def usage():
     """Usage help"""
 
     return """submit one or more job description files.
-Takes a list of path entries relative to your home directory and submits each one in turn.
-The result is a structure with submit details for each submit attempt including status and job ID
-upon success.
+Takes a list of path entries relative to your home directory and submits each
+one in turn.
+The result is a structure with submit details for each submit attempt including
+status and job ID upon success.
 The flags parameter can be used to request more verbose output.
 """
 
@@ -100,9 +101,9 @@ def main(client_id, user_arguments_dict):
 
     for pattern in patterns:
 
-        # Check directory traversal attempts before actual handling
-        # to avoid leaking information about file system layout while
-        # allowing consistent error messages
+        # Check directory traversal attempts before actual handling to avoid
+        # leaking information about file system layout while allowing
+        # consistent error messages
 
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
@@ -114,14 +115,13 @@ def main(client_id, user_arguments_dict):
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                logger.error('Warning: %s tried to %s %s outside own home! (%s)'
-                              % (client_id, op_name, real_path,
-                             pattern))
+                logger.warning('%s tried to %s restricted path %s ! (%s)'
+                               % (client_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
 
-        # Now actually treat list of allowed matchings and notify if
-        # no (allowed) match
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
@@ -148,19 +148,13 @@ def main(client_id, user_arguments_dict):
 
             if not job_status:
 
-                # output_objects.append({"object_type":"error_text", "text":"%s" % newmsg})
-
                 submitstatus['status'] = False
                 submitstatus['message'] = newmsg
                 status = returnvalues.CLIENT_ERROR
             else:
 
-                # return (output_objects, returnvalues.CLIENT_ERROR)
-
                 submitstatus['status'] = True
                 submitstatus['job_id'] = job_id
-
-                # output_objects.append({"object_type":"text", "text":"%s" % newmsg})
 
             submitstatuslist.append(submitstatus)
         output_objects.append({'object_type': 'submitstatuslist',

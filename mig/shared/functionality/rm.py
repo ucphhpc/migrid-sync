@@ -78,16 +78,14 @@ def main(client_id, user_arguments_dict):
     pattern_list = accepted['path']
     iosessionid = accepted['iosessionid'][-1]
 
-    # output_objects.append({"object_type":"text", "text": "fil %s" % (pattern_list)})
-
     if not client_id:
         if not iosessionid.strip() or not iosessionid.isalnum():
 
             # deny
 
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'No sessionid or invalid sessionid supplied!'
-                                  })
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : 'No sessionid or invalid sessionid supplied!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         base_dir_no_sessionid = \
             os.path.realpath(configuration.webserver_home) + os.sep
@@ -128,8 +126,9 @@ def main(client_id, user_arguments_dict):
 
     for pattern in pattern_list:
 
-        # Check directory traversal attempts before actual handling to avoid leaking
-        # information about file system layout while allowing consistent error messages
+        # Check directory traversal attempts before actual handling to avoid
+        # leaking information about file system layout while allowing
+        # consistent error messages
 
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
@@ -137,15 +136,17 @@ def main(client_id, user_arguments_dict):
             real_path = os.path.abspath(server_path)
             if not valid_user_path(real_path, base_dir, True):
 
-                # out of bounds - save user warning for later to allow partial match:
+                # out of bounds - save user warning for later to allow
+                # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                logger.error('Warning: %s tried to %s restricted path %s! ( %s)'
-                             % (client_id, op_name, real_path, pattern))
+                logger.warning('%s tried to %s restricted path %s ! ( %s)'
+                               % (client_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
 
-        # Now actually treat list of allowed matchings and notify if no (allowed) match
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',

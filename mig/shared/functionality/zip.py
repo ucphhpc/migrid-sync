@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # zip - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -51,23 +51,29 @@ def signature():
 
 
 def usage(output_objects):
-    output_objects.append({'object_type': 'header', 'text': 'zip usage:'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'SERVER_URL/zip.py?[output_format=(html|txt|xmlrpc|..);][flags=h;][src=src_path;[...]]src=src_path;dst=dst_path'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : '- output_format specifies how the script should format the output'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : '- flags is a string of one character flags to be passed to the script'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : '- each src specifies a file or directory in your home to include in the zip archive'
-                          })
-    output_objects.append({'object_type': 'text', 'text'
-                          : '- dst is the path where the generated zip archive will be stored'
-                          })
+    """Usage help"""
+
+    output_objects.append({'object_type': 'header', 'text': 'zip usage:'})
+    output_objects.append(
+        {'object_type': 'text', 'text'
+         : 'SERVER_URL/zip.py?[output_format=(html|txt|xmlrpc|..);]'
+         '[flags=h;][src=src_path;[...]]src=src_path;dst=dst_path'})
+    output_objects.append(
+        {'object_type': 'text', 'text'
+         : '- output_format specifies how the script should format the output'
+         })
+    output_objects.append(
+        {'object_type': 'text', 'text'
+         : '- flags is a string of character flags to be passed to the script'
+         })
+    output_objects.append(
+        {'object_type': 'text', 'text'
+         : '- each src specifies a path in your home to include in the archive'
+         })
+    output_objects.append(
+        {'object_type': 'text', 'text'
+         : '- dst is the path where the generated zip archive will be stored'
+         })
     return (output_objects, returnvalues.OK)
 
 
@@ -134,14 +140,12 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text'
                               : "You're not allowed to work in %s!"
                                % current_dir})
-        logger.error(
-            'Warning: %s tried to %s with current_dir %s outside own home!'
-            % (client_id, op_name, current_dir))
+        logger.warning('%s tried to %s restricted path %s ! (%s)'
+                       % (client_id, op_name, real_dir, current_dir))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                              : "working in %s"
-                               % current_dir})
+                           : "working in %s" % current_dir})
 
     real_dest = os.path.join(base_dir, dst.lstrip(os.sep))
 
@@ -153,19 +157,17 @@ def main(client_id, user_arguments_dict):
 
         # out of bounds
 
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : """
-You're only allowed to write to your own home directory!
-dst (%s) expands to an illegal path (%s)""" % (dst, relative_dest)})
-        logger.error(
-            'Warning: %s tried to %s file(s) to dest %s outside own home!'
-            % (client_id, op_name, real_dest))
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : "Invalid path! (%s expands to an illegal path)" % dst})
+        logger.warning('%s tried to %s restricted path %s !(%s)'
+                       % (client_id, op_name, real_dest, dst))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
 
     if not os.path.isdir(os.path.dirname(real_dest)):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : "No such destination directory: %s"
+                               : "No such destination directory: %s"
                                % os.path.dirname(relative_dest)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -188,9 +190,8 @@ dst (%s) expands to an illegal path (%s)""" % (dst, relative_dest)})
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                logger.error(
-                    'Warning: %s tried to %s %s outside own home! (%s)'
-                    % (client_id, op_name, real_path, pattern))
+                logger.warning('%s tried to %s restricted path %s ! (%s)'
+                               % (client_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
 

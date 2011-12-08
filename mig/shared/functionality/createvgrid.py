@@ -694,12 +694,12 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1]
 
     # No owner check here so we need to specifically check for illegal
-    # directory traversals
+    # directory access
 
     if not valid_dir_input(configuration.vgrid_home, vgrid_name):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Illegal vgrid_name: %s' % vgrid_name})
-        logger.warning("""createvgrid possible illegal directory traversal
+        logger.warning("""createvgrid possible illegal directory access
 attempt by '%s': vgrid name '%s'""" % (client_id, vgrid_name))
         return (output_objects, returnvalues.CLIENT_ERROR)
 

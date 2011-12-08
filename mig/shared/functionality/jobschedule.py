@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobschedule - Request schedule for a job
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""Forward valid schedule requests to grid_script for consistent job schedule data"""
+"""Forward valid schedule requests to grid_script for consistent job
+scheduling data"""
 
 import os
 import glob
@@ -90,9 +91,9 @@ def main(client_id, user_arguments_dict):
         if pattern == all_jobs:
             pattern = '*'
 
-        # Check directory traversal attempts before actual handling to
-        # avoid leaking information about file system layout while
-        # allowing consistent error messages
+        # Check directory traversal attempts before actual handling to avoid
+        # leaking information about file system layout while allowing
+        # consistent error messages
 
         unfiltered_match = glob.glob(base_dir + pattern + '.mRSL')
         match = []
@@ -104,22 +105,21 @@ def main(client_id, user_arguments_dict):
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                logger.error('%s tried to use %s %s outside own home! (pattern %s)'
-                              % (client_id, op_name, real_path,
-                             pattern))
+                logger.warning('%s tried to %s restricted path %s ! (%s)'
+                               % (client_id, op_name, real_path, pattern))
                 continue
 
             # Insert valid job files in filelist for later treatment
 
             match.append(real_path)
 
-        # Now actually treat list of allowed matchings and notify if
-        # no (allowed) match^I
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match
 
         if not match:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : '%s: You do not have any matching job IDs!'
-                                   % pattern})
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : '%s: You do not have any matching job IDs!' % pattern})
             status = returnvalues.CLIENT_ERROR
         else:
             filelist += match
@@ -128,7 +128,7 @@ def main(client_id, user_arguments_dict):
 
     if len(filelist) > 100:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Too many matching jobs (%s)!'
+                               : 'Too many matching jobs (%s)!'
                                % len(filelist)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -147,8 +147,10 @@ def main(client_id, user_arguments_dict):
         dict = unpickle(filepath, logger)
         if not dict:
             saveschedulejob['message'] = \
-                'The file containing the information for job id %s could not be opened! You can only read schedule for your own jobs!'\
-                 % job_id
+                                       ('The file containing the information' \
+                                        ' for job id %s could not be opened!' \
+                                        ' You can only read schedule for ' \
+                                        'your own jobs!') % job_id
             saveschedulejobs.append(saveschedulejob)
             status = returnvalues.CLIENT_ERROR
             continue
@@ -179,9 +181,10 @@ def main(client_id, user_arguments_dict):
 
         if not send_message_to_grid_script('JOBSCHEDULE ' + job_id
                  + '\n', logger, configuration):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Error sending message to grid_script, job may not be updated.'
-                                  })
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : 'Error sending message to grid_script, update may fail.'
+                 })
             status = returnvalues.SYSTEM_ERROR
             continue
 

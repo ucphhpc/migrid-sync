@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobaction - Request status change (freeze, cancel, ...) for one or more jobs
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -105,9 +105,9 @@ def main(client_id, user_arguments_dict):
         if pattern == all_jobs:
             pattern = '*'
 
-        # Check directory traversal attempts before actual handling to
-        # avoid leaking information about file system layout while
-        # allowing consistent error messages
+        # Check directory traversal attempts before actual handling to avoid
+        # leaking information about file system layout while allowing
+        # consistent error messages
 
         unfiltered_match = glob.glob(base_dir + pattern + '.mRSL')
         match = []
@@ -128,8 +128,8 @@ def main(client_id, user_arguments_dict):
 
             match.append(real_path)
 
-        # Now actually treat list of allowed matchings and notify if
-        # no (allowed) match^I
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match
 
         if not match:
             output_objects.append({'object_type': 'error_text', 'text'

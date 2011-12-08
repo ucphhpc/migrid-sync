@@ -349,12 +349,6 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                client_dir)) + os.sep
 
-    # !!! IMPORTANT !!!
-    # This is a (dynamic) user interface so we expect html to be used.
-    # We don't use CGIOutput for printing since we neither need a
-    # status nor like to wait for all data before printing
-    # !!!
-
     # the client can choose to specify the path of the target directory with
     # current_dir + "/" + path, instead of specifying the complete path in
     # subdirs. This is usefull from ls.py where a hidden html control makes it
@@ -369,8 +363,6 @@ def main(client_id, user_arguments_dict):
                           : 'Editing file in %s home directory' % \
                             configuration.short_title })
 
-    # addMiGhtmlHeader( "MiG file web editor",  "Editing file in MiG home directory of %s " % client_id , printhtml, scripts=lock_info("this file", -1))lock_info("this file", -1)
-
     if not path:
         now = time.gmtime()
         path = 'noname-%s.txt' % time.strftime('%d%m%y-%H%M%S', now)
@@ -381,12 +373,11 @@ def main(client_id, user_arguments_dict):
     path = os.path.normpath(current_dir + path)
     real_path = os.path.abspath(base_dir + current_dir + path)
     if not valid_user_path(real_path, base_dir):
-
-        # out of bounds!
-
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : "You're only allowed to edit your own files! (%s expands to an illegal path)"
-                               % path})
+        logger.warning('%s tried to %s restricted path %s ! (%s)'
+                       % (client_id, op_name, real_path, path))
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : "Invalid path! (%s expands to an illegal path)" % path})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     (owner, time_left) = acquire_edit_lock(real_path, client_id)
@@ -404,9 +395,10 @@ setTimeout("newcountdown('%s', %d)", 1)
         output_objects.append({'object_type': 'html_form', 'text'
                               : html})
     else:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s has acquired the editing lock for %s! (timeout in %d seconds)'
-                               % (owner, path, time_left)})
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : '%s acquired the editing lock for %s! (timeout in %d seconds)'
+             % (owner, path, time_left)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     return (output_objects, returnvalues.OK)

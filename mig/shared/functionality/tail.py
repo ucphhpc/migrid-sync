@@ -82,8 +82,9 @@ def main(client_id, user_arguments_dict):
 
     for pattern in pattern_list:
 
-        # Check directory traversal attempts before actual handling to avoid leaking
-        # information about file system layout while allowing consistent error messages
+        # Check directory traversal attempts before actual handling to avoid
+        # leaking information about file system layout while allowing
+        # consistent error messages
 
         unfiltered_match = glob.glob(base_dir + pattern)
         match = []
@@ -91,16 +92,17 @@ def main(client_id, user_arguments_dict):
             real_path = os.path.abspath(server_path)
             if not valid_user_path(real_path, base_dir, True):
 
-                # out of bounds - save user warning for later to allow partial match:
+                # out of bounds - save user warning for later to allow
+                # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                logger.error('Warning: %s tried to %s %s outside own home! (using pattern %s)'
-                              % (client_id, op_name, real_path,
-                             pattern))
+                logger.warning('%s tried to %s restricted path %s ! (%s)'
+                               % (client_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
 
-        # Now actually treat list of allowed matchings and notify if no (allowed) match
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
@@ -112,8 +114,9 @@ def main(client_id, user_arguments_dict):
             output_lines = []
 
             # We search for the last 'lines' lines by beginning from the end of
-            # the file and exponetially backtracking until the backtrack contains
-            # at least 'lines' lines or we're back to the beginning of the file.
+            # the file and exponetially backtracking until the backtrack
+            # contains at least 'lines' lines or we're back to the beginning of
+            # the file.
             # At that point we skip any extra lines before printing.
 
             try:
@@ -138,7 +141,7 @@ def main(client_id, user_arguments_dict):
                     filedes.seek(-backstep, 2)
 
                 # Skip any extra lines caused by the exponential backtracking.
-                # We could probably speed up convergence with a binary search...
+                # We could probably speed up convergence with binary search...
 
                 while newlines > lines:
                     dummy = filedes.readline()

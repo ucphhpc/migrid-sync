@@ -53,7 +53,12 @@ import paramiko
 
 server_fqdn = 'dk.migrid.org'
 server_port = 2222
-server_host_key = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0ImsGTKx3Rky7jaGDRVtse80YUcVTYW5NCvU0ntclfosdlFdDli8S3tOLk47DcwZkYt1/XY4rP/LN6unVTiZK7dpRTACuSGrKc/TVM63TzG9Zwq1M95pNLdhgRJen1Ez7CzbrWDcsFJNfjxJtvnIWuKmXJ8NBbmhw1nqtZRdvcF7aLX12KxCxcpJLPtU0N/cbRghi2BTYsGbPUrVd1vYJKhtvc2dQ+vfOiYGSj1bo3LOdTsLmpOoImGvYyGnpA8mVgc4sbWW6/RVSkIJxnyoUeP/xgsMQlfcXLZ/9vi/QPe64UVAAAdk18+eNnjHq2Qs8fxHMVyV2vhLpP/xFdJVNQ=="
+server_host_key = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0ImsGTKx3Rky7jaGDRVts" \
+"e80YUcVTYW5NCvU0ntclfosdlFdDli8S3tOLk47DcwZkYt1/XY4rP/LN6unVTiZK7dpRTACuSGr" \
+"Kc/TVM63TzG9Zwq1M95pNLdhgRJen1Ez7CzbrWDcsFJNfjxJtvnIWuKmXJ8NBbmhw1nqtZRdvcF" \
+"7aLX12KxCxcpJLPtU0N/cbRghi2BTYsGbPUrVd1vYJKhtvc2dQ+vfOiYGSj1bo3LOdTsLmpOoIm" \
+"GvYyGnpA8mVgc4sbWW6/RVSkIJxnyoUeP/xgsMQlfcXLZ/9vi/QPe64UVAAAdk18+eNnjHq2Qs8" \
+"fxHMVyV2vhLpP/xFdJVNQ=="
 known_hosts_path = os.path.expanduser("~/.ssh/known_hosts")
 user_key = None
 host_key_policy = paramiko.RejectPolicy()

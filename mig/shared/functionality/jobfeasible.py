@@ -105,17 +105,16 @@ def main(client_id, user_arguments_dict):
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                logger.error('%s tried to use %s %s outside own home! (pattern %s)'
-                              % (client_id, op_name, real_path,
-                             pattern))
+                logger.warning('%s tried to %s restricted path %s ! (%s)'
+                               % (client_id, op_name, real_path, pattern))
                 continue
 
             # Insert valid job files in filelist for later treatment
 
             match.append(real_path)
 
-        # Now actually treat list of allowed matchings and notify if
-        # no (allowed) match^I
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match^I
 
         if not match:
             output_objects.append({'object_type': 'error_text', 'text'
@@ -148,8 +147,11 @@ def main(client_id, user_arguments_dict):
         dict = unpickle(filepath, logger)
         if not dict:
             checkcondjob['message'] = \
-                'The file containing the information for job id %s could not be opened! You can only check feasibility of your own jobs!'\
-                 % job_id
+                                    ('The file containing the information ' \
+                                     'for job id %s could not be opened! ' \
+                                     'You can only check feasibility of ' \
+                                     'your own jobs!'
+                                     ) % job_id
             checkcondjobs.append(checkcondjob)
             status = returnvalues.CLIENT_ERROR
             continue

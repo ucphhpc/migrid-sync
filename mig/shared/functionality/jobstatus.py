@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobstatus - Display status of jobs
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -123,7 +123,7 @@ def main(client_id, user_arguments_dict):
 
     if not patterns:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'No job_id specified!'})
+                               : 'No job_id specified!'})
         return (output_objects, returnvalues.NO_SUCH_JOB_ID)
 
     if verbose(flags):
@@ -133,12 +133,11 @@ def main(client_id, user_arguments_dict):
                                   flag)})
 
     if not os.path.isdir(base_dir):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'You have not been created'
-                               + ' as a user on the %s server!' % \
-                                 configuration.short_title
-                               + ' Please contact the %s team.' % \
-                                 configuration.short_title })
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : ('You have not been created as a user on the %s server! ' \
+                'Please contact the %s team.') % \
+             (configuration.short_title, configuration.short_title)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     filelist = []
@@ -164,22 +163,21 @@ def main(client_id, user_arguments_dict):
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                logger.error('%s tried to use %s %s outside own home! (pattern %s)'
-                              % (client_id, op_name, real_path,
-                             pattern))
+                logger.warning('%s tried to %s restricted path %s ! (%s)'
+                               % (client_id, op_name, real_path, pattern))
                 continue
 
             # Insert valid job files in filelist for later treatment
 
             match.append(real_path)
 
-        # Now actually treat list of allowed matchings and notify if
-        # no (allowed) match....
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match....
 
         if not match:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : '%s: You do not have any matching job IDs!'
-                                   % pattern})
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : '%s: You do not have any matching job IDs!' % pattern})
             status = returnvalues.CLIENT_ERROR
         else:
             filelist += match
@@ -188,9 +186,10 @@ def main(client_id, user_arguments_dict):
         sort(filelist)
 
     if max_jobs < len(filelist):
-        output_objects.append({'object_type': 'text', 'text'
-                              : 'Only showing first %d of the %d matching jobs as requested'
-                               % (max_jobs, len(filelist))})
+        output_objects.append(
+            {'object_type': 'text', 'text'
+             : 'Only showing first %d of the %d matching jobs as requested'
+             % (max_jobs, len(filelist))})
         filelist = filelist[:max_jobs]
 
     # Iterate through jobs and print details for each
@@ -207,21 +206,21 @@ def main(client_id, user_arguments_dict):
         if not job_dict:
             status = returnvalues.CLIENT_ERROR
 
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'You can only list status of your own jobs.'
-
-                                   + ' Please verify that you submitted the mRSL file '
-
-                                   + "with job id '%s' (Could not unpickle mRSL file %s)"
-                                   % (job_id, filepath)})
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : ('You can only list status of your own jobs. ' \
+                    'Please verify that you submitted the mRSL file ' \
+                    'with job id "%s" (Could not unpickle mRSL file %s)'
+                    ) % (job_id, filepath)})
             continue
 
         # Check that file belongs to the user requesting the status
 
         if client_id != job_dict['USER_CERT']:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'The job you are trying to get status for does not belong to you!'
-                                  })
+            output_objects.append(
+                {'object_type': 'text', 'text'
+                 : 'The job you are trying to get status for does not belong'
+                 'to you!'})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -269,16 +268,18 @@ def main(client_id, user_arguments_dict):
                 arcstatus = arcsession.jobStatus(job_dict['EXE'])
                 job_obj['status'] = arcstatus['status']
             except arc.ARCWrapperError, err:
-                logger.error('Error retrieving ARC job status: %s' % err.what())
+                logger.error('Error retrieving ARC job status: %s' % \
+                             err.what())
                 job_obj['status'] += '(Error: ' + err.what() + ')' 
             except arc.NoProxyError, err:
-                logger.error('While retrieving ARC job status: %s' % err.what())
+                logger.error('While retrieving ARC job status: %s' % \
+                             err.what())
                 job_obj['status'] += '(Error: ' + err.what() + ')' 
             except Exception, err:
                 logger.error('Error retrieving ARC job status: %s' % err)
                 job_obj['status'] += '(Error during retrieval)' 
 
-        execution_histories = []
+        exec_histories = []
         if verbose(flags):
             if job_dict.has_key('EXECUTE'):
                 command_line = '; '.join(job_dict['EXECUTE'])
@@ -297,34 +298,35 @@ def main(client_id, user_arguments_dict):
             if job_dict.has_key('EXECUTION_HISTORY'):
                 counter = 0
                 for history_dict in job_dict['EXECUTION_HISTORY']:
-                    execution_history = \
+                    exec_history = \
                         {'object_type': 'execution_history'}
 
                     if history_dict.has_key('QUEUED_TIMESTAMP'):
-                        execution_history['queued'] = \
+                        exec_history['queued'] = \
                             time.asctime(history_dict['QUEUED_TIMESTAMP'
                                 ])
                     if history_dict.has_key('EXECUTING_TIMESTAMP'):
-                        execution_history['executing'] = \
+                        exec_history['executing'] = \
                             time.asctime(history_dict['EXECUTING_TIMESTAMP'
                                 ])
                     if history_dict.has_key('PUBLICNAME'):
                         if history_dict['PUBLICNAME']:
-                            execution_history['resource'] = history_dict['PUBLICNAME']
+                            exec_history['resource'] = \
+                                                     history_dict['PUBLICNAME']
                         else:
-                            execution_history['resource'] = 'HIDDEN'
+                            exec_history['resource'] = 'HIDDEN'
                     if history_dict.has_key('RESOURCE_VGRID'):
-                        execution_history['vgrid'] = \
+                        exec_history['vgrid'] = \
                             history_dict['RESOURCE_VGRID']
                     if history_dict.has_key('FAILED_TIMESTAMP'):
-                        execution_history['failed'] = \
+                        exec_history['failed'] = \
                             time.asctime(history_dict['FAILED_TIMESTAMP'
                                 ])
                     if history_dict.has_key('FAILED_MESSAGE'):
-                        execution_history['failed_message'] = \
+                        exec_history['failed_message'] = \
                             history_dict['FAILED_MESSAGE']
-                    execution_histories.append({'execution_history'
-                            : execution_history, 'count': counter})
+                    exec_histories.append({'execution_history'
+                            : exec_history, 'count': counter})
                     counter += 1
         if job_dict.has_key('SCHEDULE_HINT'):
             job_obj['schedule_hint'] = job_dict['SCHEDULE_HINT']
@@ -338,12 +340,13 @@ def main(client_id, user_arguments_dict):
             else:
                 job_obj['expected_delay'] = int(job_dict['EXPECTED_DELAY'])
 
-        job_obj['execution_histories'] = execution_histories
+        job_obj['execution_histories'] = exec_histories
 
         if interactive(flags):
             job_obj['statuslink'] = {'object_type': 'link',
                                      'destination': 'ls.py?path=%s/%s/*'\
-                                     % (output_dir, job_id), 'text': 'View status files'}
+                                     % (output_dir, job_id), 'text':
+                                     'View status files'}
             job_obj['mrsllink'] = {'object_type': 'link',
                                    'destination': 'mrslview.py?job_id=%s'\
                                    % job_id,
@@ -365,7 +368,8 @@ def main(client_id, user_arguments_dict):
                     path_string += 'path=%s;' % parts[-1]
 
                 job_obj['outputfileslink'] = {'object_type': 'link',
-                                              'destination': 'ls.py?%s' % path_string,
+                                              'destination': 'ls.py?%s' % \
+                                              path_string,
                                               'text': 'View output files'}
 
             js_name = 'resubmit%s' % hexlify(job_id)
@@ -408,7 +412,8 @@ def main(client_id, user_arguments_dict):
             job_obj['jobschedulelink'] = {'object_type': 'link',
                                           'destination':
                                           "javascript: %s();" % js_name,
-                                          'text': 'Request schedule information'}
+                                          'text':
+                                          'Request schedule information'}
             js_name = 'jobfeasible%s' % hexlify(job_id)
             helper = html_post_helper(js_name, 'jobfeasible.py',
                                       {'job_id': job_id})
@@ -418,8 +423,8 @@ def main(client_id, user_arguments_dict):
                                           "javascript: %s();" % js_name,
                                           'text': 'Check job feasibility'}
             job_obj['liveiolink'] = {'object_type': 'link',
-                                     'destination': 'liveio.py?job_id=%s' % job_id,
-                                     'text': 'Request live I/O'}
+                                     'destination': 'liveio.py?job_id=%s' % \
+                                     job_id, 'text': 'Request live I/O'}
         job_list['jobs'].append(job_obj)
     output_objects.append(job_list)
 

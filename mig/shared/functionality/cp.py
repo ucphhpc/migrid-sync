@@ -110,9 +110,10 @@ def main(client_id, user_arguments_dict):
 
     dest = dst_list[-1]
     if len(dst_list) > 1:
-        output_objects.append({'object_type': 'warning', 'text'
-                              : 'dst (%s) matches multiple targets - using last: %s'
-                               % (dst, dest)})
+        output_objects.append(
+            {'object_type': 'warning', 'text'
+             : 'dst (%s) matches multiple targets - using last: %s'
+             % (dst, dest)})
 
     real_dest = os.path.abspath(dest)
 
@@ -121,11 +122,11 @@ def main(client_id, user_arguments_dict):
 
     relative_dest = real_dest.replace(base_dir, '')
     if not valid_user_path(real_dest, base_dir, True):
-        logger.error('Warning: %s tried to %s to restricted path %s! (%s)'
-                      % (client_id, op_name, real_dest, dst))
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : "You're only allowed to write to your own home directory! dest (%s) expands to an illegal path (%s)"
-                               % (dst, relative_dest)})
+        logger.warning('%s tried to %s restricted path %s ! (%s)'
+                       % (client_id, op_name, real_dest, dst))
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : "Invalid destination (%s expands to an illegal path)" % dst})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     for pattern in src_list:
@@ -134,12 +135,13 @@ def main(client_id, user_arguments_dict):
         for server_path in unfiltered_match:
             real_path = os.path.abspath(server_path)
             if not valid_user_path(real_path, base_dir):
-                logger.error('Warning: %s tried to %s restricted path %s! (%s)'
-                              % (client_id, op_name, real_path, pattern))
+                logger.warning('%s tried to %s restricted path %s ! (%s)'
+                               % (client_id, op_name, real_path, pattern))
                 continue
             match.append(real_path)
 
-        # Now actually treat list of allowed matchings and notify if no (allowed) match
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
@@ -163,7 +165,8 @@ def main(client_id, user_arguments_dict):
 
             real_target = real_dest
             if os.path.isdir(real_target):
-                real_target = os.path.join(real_target, os.path.basename(real_path))
+                real_target = os.path.join(real_target,
+                                           os.path.basename(real_path))
             try:
                 if os.path.isdir(real_path):
                     shutil.copytree(real_path, real_target)

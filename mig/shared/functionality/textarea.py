@@ -221,10 +221,11 @@ def main(client_id, user_arguments_dict):
 
             filename_key = 'FILENAME_%s' % filenumber
             if not user_arguments_dict.has_key(filename_key):
-                output_objects.append({'object_type': 'error_text',
-                        'text'
-                        : "The specified file_type is 'plain', but a filename value was not found. The missing control should be named %s"
-                         % filename_key})
+                output_objects.append(
+                    {'object_type': 'error_text','text'
+                     : ("The specified file_type is 'plain', but a filename" \
+                        "value was not found. The missing control should be " \
+                        "named %s") % filename_key})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             local_filename = base_dir\
@@ -232,10 +233,10 @@ def main(client_id, user_arguments_dict):
                                                  user_arguments_dict)
 
             if not valid_user_path(local_filename, base_dir):
-                output_objects.append({'object_type': 'error_text',
-                        'text'
-                        : 'Are you trying to circumvent permissions on the file system? Do not use .. in the path string!'
-                        })
+                output_objects.append(
+                    {'object_type': 'error_text', 'text'
+                     : 'Invalid path! (%s expands to illegal path)'
+                     % filename_key})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             # A new filename was created, write content to file
@@ -293,10 +294,10 @@ def main(client_id, user_arguments_dict):
             base_name = strip_dir(user_arguments_dict[fileupload_key
                                    + 'filename'])
             if not base_name:
-                output_objects.append({'object_type': 'error_text',
-                        'text'
-                        : 'No filename found - please make sure you provide a file to upload'
-                        })
+                output_objects.append(
+                    {'object_type': 'error_text', 'text'
+                     : 'No filename found - please make sure you provide a " \
+                     "file to upload'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             if not remote_filename:
@@ -315,10 +316,10 @@ def main(client_id, user_arguments_dict):
 
             local_filename = os.path.abspath(base_dir + remote_filename)
             if not valid_user_path(local_filename, base_dir):
-                output_objects.append({'object_type': 'error_text',
-                        'text'
-                        : 'Are you trying to circumvent permissions on the file system? Do not use .. in the path string! This event has been logged! %s'
-                         % client_id})
+                output_objects.append(
+                    {'object_type': 'error_text', 'text'
+                     : 'Invalid path! (%s expands to illegal path)'
+                     % remote_filename})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             if not os.path.isdir(os.path.dirname(local_filename)):
@@ -328,7 +329,7 @@ def main(client_id, user_arguments_dict):
                     fileuploadobj['message'] = \
                         {'object_type': 'error_text',
                          'text': 'Exception creating dirs %s'\
-                          % os.path.dirname(local_filename)}
+                         % os.path.dirname(local_filename)}
             fileuploadobj['name'] = remote_filename
 
             # reads uploaded file into memory
@@ -345,8 +346,9 @@ def main(client_id, user_arguments_dict):
 
             if not write_file(data, local_filename,
                               configuration.logger):
-                output_objects.append({'object_type': 'error_text',
-                        'text': 'Error writing file in memory to disk'})
+                output_objects.append(
+                    {'object_type': 'error_text',
+                     'text': 'Error writing file in memory to disk'})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
             fileuploadobj['saved'] = True
 
@@ -405,12 +407,15 @@ def main(client_id, user_arguments_dict):
                  and submit_mrslfiles:
 
                 # A .mrsl file was uploaded!
-                # output_objects.append({"object_type":"text", "text":"File name on MiG server: %s" % (remote_filename)})
+                # output_objects.append({"object_type":"text", "text":
+                #                        "File name on MiG server: %s"
+                #                        % (remote_filename)})
 
                 mrslfiles_to_parse.append(local_filename)
         else:
 
-            # mrsl file created by html controls. create filename. Loop until a filename that do not exits is created
+            # mrsl file created by html controls. create filename. Loop until
+            # a filename that do not exits is created
 
             html_generated_mrsl_dir = base_dir + 'html_generated_mrsl'
             if os.path.exists(html_generated_mrsl_dir)\
@@ -418,10 +423,10 @@ def main(client_id, user_arguments_dict):
 
                 # oops, user might have created a file with the same name
 
-                output_objects.append({'object_type': 'error_text',
-                        'text'
-                        : 'Please make sure %s does not exist or is a directory!'
-                         % 'html_generated_mrsl/'})
+                output_objects.append(
+                    {'object_type': 'error_text', 'text'
+                     : 'Please make sure %s does not exist or is a directory!'
+                     % 'html_generated_mrsl/'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             if not os.path.isdir(html_generated_mrsl_dir):
                 os.mkdir(html_generated_mrsl_dir)
@@ -443,8 +448,9 @@ def main(client_id, user_arguments_dict):
             # A new filename was created, write content to file
 
             if not write_file(content, local_filename, logger):
-                output_objects.append({'object_type': 'error_text',
-                        'text': 'Could not write: %s' % local_filename})
+                output_objects.append(
+                    {'object_type': 'error_text',
+                     'text': 'Could not write: %s' % local_filename})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
             fileuploadobj['name'] = os.sep\
                  + 'html_generated_mrsl/TextAreaAt_' + timestamp\
@@ -467,7 +473,8 @@ def main(client_id, user_arguments_dict):
                     configuration, False, True)
             if not status:
 
-                # output_objects.append({"object_type":"error_text", "text":"%s" % newmsg})
+                # output_objects.append({"object_type":"error_text", "text":"%s"
+                #                        % newmsg})
 
                 submitstatus['status'] = False
                 submitstatus['message'] = newmsg
@@ -478,7 +485,8 @@ def main(client_id, user_arguments_dict):
                 submitstatus['status'] = True
                 submitstatus['job_id'] = job_id
 
-                # output_objects.append({"object_type":"text", "text":"%s" % newmsg})
+                # output_objects.append({"object_type":"text", "text":"%s"
+                #                       % newmsg})
 
             submitstatuslist.append(submitstatus)
 
@@ -486,15 +494,17 @@ def main(client_id, user_arguments_dict):
 
         filenumber += 1
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Uploaded/created files'})
+                           : 'Uploaded/created files'})
     output_objects.append({'object_type': 'fileuploadobjs',
-                          'fileuploadobjs': fileuploadobjs})
+                           'fileuploadobjs': fileuploadobjs})
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Submitted jobs'})
+                           : 'Submitted jobs'})
     output_objects.append({'object_type': 'submitstatuslist',
-                          'submitstatuslist': submitstatuslist})
+                           'submitstatuslist': submitstatuslist})
 
-    # output_objects.append({"object_type":"text","text":str(submitstatuslist) + " *** " + str(mrslfiles_to_parse)})
+    # output_objects.append({"object_type":"text", "text":
+    #                        str(submitstatuslist) + " *** " + \
+    #                        str(mrslfiles_to_parse)})
 
     # save to default job template file if requested
 
@@ -505,10 +515,9 @@ def main(client_id, user_arguments_dict):
             template_fd.write(mrsl)
             template_fd.close()
         except Exception, err:
-            output_objects.append({'object_type': 'error_text',
-                                   'text':
-                                   'Failed to write default job template: %s' % \
-                                   err})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Failed to write default job template: %s' % err})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     return (output_objects, returnvalues.OK)
