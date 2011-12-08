@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # upload - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,10 +25,9 @@
 # -- END_HEADER ---
 #
 
+"""Helpers for file upload"""
+
 import os
-
-# package handling
-
 import zipfile
 import tarfile
 
@@ -71,9 +70,9 @@ def handle_package_upload(
     # Handle .zip file
 
     if real_path.upper().endswith('.ZIP'):
-        msg += \
-            ".ZIP file '%s' received, it was specified that it should be extracted!\n"\
-             % relative_path
+        msg += """.ZIP file '%s' received, it was specified that it should be
+extracted!
+""" % relative_path
         try:
             zip_object = zipfile.ZipFile(real_path, 'r')
         except Exception, exc:
@@ -87,8 +86,8 @@ def handle_package_upload(
 
             local_zip_entry_name = os.path.join(dest_path, zip_entry.filename)
             if not valid_user_path(local_zip_entry_name, base_dir):
-                msg += \
-                    'Are you trying to circumvent permissions on the file system? Do not use .. in the path string!'
+                msg += 'Invalid path! (%s expands to restricted path)\n' % \
+                       zip_entry.filename
                 return (False, msg)
 
             # create sub dir(s) if missing
@@ -110,7 +109,8 @@ def handle_package_upload(
             # they are simply created as files containing the name they
             # were supposed to link to: This is inconsistent but safe :-S
 
-            # write file - symbolic links are written as files! (good for security)
+            # write file - symbolic links are written as files! (good for
+            # security)
 
             if not write_file(zip_object.read(zip_entry.filename),
                               local_zip_entry_name,
@@ -146,9 +146,9 @@ def handle_package_upload(
 
         if real_path.upper().endswith('.TAR.GZ')\
              or real_path.upper().endswith('.TGZ'):
-            msg += \
-                ".TAR.GZ file '%s' received, it was specified that it should be extracted!\n"\
-                 % relative_path
+            msg += """.TAR.GZ file '%s' received, it was specified that it
+should be extracted!
+""" % relative_path
             try:
                 tar_object = tarfile.open(real_path, 'r:gz')
                 tar_file_content = tarfile.TarFile.gzopen(real_path)
@@ -156,9 +156,9 @@ def handle_package_upload(
                 msg += 'Could not open .tar.gz file! %s\n' % exc
                 return (False, msg)
         elif real_path.upper().endswith('.TAR.BZ2'):
-            msg += \
-                ".TAR.BZ2 file '%s' received, it was specified that it should be extracted!\n"\
-                 % relative_path
+            msg += """.TAR.BZ2 file '%s' received, it was specified that it
+should be extracted!
+""" % relative_path
             try:
                 tar_object = tarfile.open(real_path, 'r:bz2')
                 tar_file_content = tarfile.TarFile.bz2open(real_path)
@@ -179,8 +179,8 @@ def handle_package_upload(
                      + tar_entry.name)
 
             if not valid_user_path(local_tar_entry_name, base_dir):
-                msg += \
-                    'Are you trying to circumvent permissions on the file system? Do not use .. in the path string!\n'
+                msg += 'Invalid path! (%s expands to restricted path)\n' % \
+                       tar_entry.name
                 return (False, msg)
 
             # create sub dir(s) if missing
@@ -196,7 +196,8 @@ def handle_package_upload(
                     return (False, msg)
             if not tar_entry.isreg():
 
-                # not a regular file - symlinks are ignored to avoid illegal access
+                # not a regular file - symlinks are ignored to avoid illegal
+                # access
 
                 msg += 'skipping %s: not a file or directory!\n'\
                      % tar_entry.name
@@ -229,8 +230,9 @@ def handle_package_upload(
 
                 mrslfiles_to_parse.append(local_tar_entry_name)
 
-    # submit mrsl files to the parser. It should be done from within this function to
-    # keep the right order if multiple files are created in the html form.
+    # submit mrsl files to the parser. It should be done from within this
+    # function to keep the right order if multiple files are created in the
+    # html form.
 
     submitstatuslist = []
     if submit_mrslfiles:
