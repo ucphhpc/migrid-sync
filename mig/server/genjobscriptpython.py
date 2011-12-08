@@ -224,7 +224,31 @@ io_log.flush()'''\
         cmd = ''
 
         for infile in job_dict['INPUTFILES']:
-            cmd += 'os.popen("' + curl_cmd_get(infile) + '", "r")'
+
+            # "filename" or "mig_server_filename resource_filename"
+
+            parts = infile.split()
+            mig_server_filename = str(parts[0])
+            try:
+                resource_filename = str(parts[1])
+            except:
+                resource_filename = mig_server_filename
+
+            # Source may be external in which case implicit destination needs attention
+
+            if resource_filename.find('://') != -1:
+
+                # Strip any protocol prefixes in destination for external sources
+
+                resource_filename = resource_filename.split('://', 1)[1]
+
+            # Always strip leading slashes to avoid absolute paths
+
+            resource_filename = resource_filename.lstrip('/')
+
+            cmd += 'os.popen("%s", "r")\n' % curl_cmd_get(mig_server_filename,
+                                                          resource_filename,
+                                                          https_sid_url_arg)
         return cmd
 
     def get_special_input_files(self, result='get_special_status'):
@@ -234,9 +258,22 @@ io_log.flush()'''\
         cmd += curl_cmd_get_special('.job', localjobname + '.job',
                                     https_sid_url_arg) + ' && \\'\
              + '\n'
-        cmd += curl_cmd_get_special('.sendoutputfiles', localjobname
-                                     + '.sendoutputfiles',
-                                    https_sid_url_arg) + '\n'
+
+        cmd += '''
+%s
+''' % curl_cmd_get_special('.getupdatefiles',
+                localjobname + '.getupdatefiles',
+                https_sid_url_arg)
+        cmd += '''
+%s
+''' % curl_cmd_get_special('.sendupdatefiles',
+                localjobname + '.sendupdatefiles',
+                https_sid_url_arg)
+        cmd += '''
+%s
+''' % curl_cmd_get_special('.sendoutputfiles',
+                localjobname + '.sendoutputfiles',
+                https_sid_url_arg)
         return cmd
 
     def get_executables(self, result='get_executables_status'):
@@ -244,8 +281,31 @@ io_log.flush()'''\
 
         cmd = ''
         for executables in job_dict['EXECUTABLES']:
-            cmd += 'os.popen("' + curl_cmd_get(executables)\
-                 + '", "r")\n'
+
+            # "filename" or "mig_server_filename resource_filename"
+
+            parts = executables.split()
+            mig_server_filename = str(parts[0])
+            try:
+                resource_filename = str(parts[1])
+            except:
+                resource_filename = mig_server_filename
+
+            # Source may be external in which case implicit destination needs attention
+
+            if resource_filename.find('://') != -1:
+
+                # Strip any protocol prefixes in destination for external sources
+
+                resource_filename = resource_filename.split('://', 1)[1]
+
+            # Always strip leading slashes to avoid absolute paths
+
+            resource_filename = resource_filename.lstrip('/')
+
+            cmd += 'os.popen("%s", "r")\n' % curl_cmd_get(mig_server_filename,
+                                                          resource_filename,
+                                                          https_sid_url_arg)
         return cmd
 
     def get_io_files(self, result='get_io_status'):
@@ -546,10 +606,29 @@ if not os.environ.get("MIG_JOBDIR", ""):
         cmd = ''
 
         for outputfile in job_dict['OUTPUTFILES']:
-            cmd += 'if (os.path.isfile("' + outputfile\
-                 + '") and os.path.getsize("' + outputfile\
+
+            # "filename" or "resource_filename mig_server_filename"
+
+            parts = outputfile.split()
+            resource_filename = str(parts[0])
+            try:
+                mig_server_filename = str(parts[1])
+            except:
+                mig_server_filename = resource_filename
+
+            # External destinations will always be explicit so no
+            # need to mangle protocol prefix here as in get inputfiles
+
+            # Always strip leading slashes to avoid absolute paths
+
+            mig_server_filename = mig_server_filename.lstrip('/')
+
+            cmd += 'if (os.path.isfile("' + resource_filename\
+                 + '") and os.path.getsize("' + resource_filename\
                  + '") > 0):\n'
-            cmd += '  os.popen("' + curl_cmd_send(outputfile) + '")\n'
+            cmd += '  os.popen("%s")\n' % curl_cmd_send(resource_filename,
+                                                        mig_server_filename,
+                                                        https_sid_url_arg)
         return cmd
 
     def send_io_files(self, result='send_io_status'):

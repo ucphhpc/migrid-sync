@@ -157,7 +157,7 @@ except Exception, e:
 base_dir = os.path.abspath(os.path.join(configuration.user_home,
                            client_dir)) + os.sep
 
-create_verify_files(['status', 'stdout', 'stderr'])
+create_verify_files(['status', 'stdout', 'stderr'], base_dir)
 
 forceddestination_dict = {'UNIQUE_RESOURCE_NAME': unique_resource_name,
                           'RE_NAME': re_name}

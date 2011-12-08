@@ -33,7 +33,7 @@ if '__main__' == __name__:
         print 'Grep for obvious errors in all code files'
         sys.exit(1)
 
-    command = "pylint -e %s" % (' '.join(code_files))
+    command = "pylint -E %s" % (' '.join(code_files))
     print "Bug weeding command: %s" % command
     print "*** Not all lines reported are necessarily errors ***"
     print

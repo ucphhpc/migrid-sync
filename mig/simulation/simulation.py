@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # simulation - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -510,7 +510,7 @@ if arg.count(':') == 2:
         expire = timesteps
         status_freq = int(status_freq)
     except ValueError, e:
-        print 'Error: invalid argument %s - expected integer' % defaults
+        print 'Error: invalid argument %s - expected integer' % timesteps
         print e
         sys.exit(1)
 

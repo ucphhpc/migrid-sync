@@ -207,7 +207,7 @@ def handle_package_upload(
             if not write_file(tar_file_content.extractfile(tar_entry).read(),
                               local_tar_entry_name,
                               configuration.logger):
-                msg += 'error writing file in memory to disk %s\n' % e
+                msg += 'error writing file in memory to disk\n'
                 return (False, msg)
 
             # get the size as the OS sees it

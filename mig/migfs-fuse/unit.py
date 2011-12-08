@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # unit - some simple unit tests against migfs
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -224,7 +224,7 @@ if not os.path.isdir(mount_point):
     try:
         os.mkdir(mount_point)
     except OSError, ose:
-        print 'Failed to create missing mount point %: %ss'\
+        print 'Failed to create missing mount point %s: %s'\
              % (mount_point, ose)
         sys.exit(1)
 

@@ -66,7 +66,7 @@ class Worker(Thread):
         self.__args = args
         self.__kwargs = kwargs
         self.__result = None
-        self.__exception = None
+        self.__exception = Exception('unknown exception')
         Thread.__init__(self, group=group, target=target, args=args,
                         kwargs=kwargs)
 
