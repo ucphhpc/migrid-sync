@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # liveio - communication with running jobs
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,7 @@ from shared.base import client_id_dir
 from shared.conf import get_resource_exe
 from shared.defaults import all_jobs
 from shared.fileio import unpickle, pickle
-from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.job import output_dir
@@ -89,7 +89,6 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Invalid action "%s" (supported: %s)' % \
                                (action, ', '.join(valid_actions))})
-        output_objects.append(file_entry)
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if action in post_actions and not correct_handler('POST'):
@@ -233,9 +232,9 @@ jobs before and during execution.
         if job_id == all_jobs:
             job_id = '*'
 
-        # Check directory traversal attempts before actual handling to
-        # avoid leaking information about file system layout while
-        # allowing consistent error messages
+        # Check directory traversal attempts before actual handling to avoid
+        # leaking information about file system layout while allowing
+        # consistent error messages
 
         unfiltered_match = glob.glob(base_dir + job_id + '.mRSL')
         match = []
@@ -247,8 +246,8 @@ jobs before and during execution.
                 # partial match:
                 # ../*/* is technically allowed to match own files.
 
-                # logger.warning("%s tried to %s %s outside own home! (pattern %s)" % \
-                # (client_id, op_name, real_path,pattern))
+                logger.warning("%s tried to %s restricted path %s ! (%s)" % \
+                                (client_id, op_name, real_path, job_id))
 
                 continue
 
@@ -256,13 +255,13 @@ jobs before and during execution.
 
             match.append(real_path)
 
-        # Now actually treat list of allowed matchings and notify if
-        # no (allowed) match....
+        # Now actually treat list of allowed matchings and notify if no
+        # (allowed) match....
 
         if not match:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : '%s: You do not have any matching job IDs!'
-                                   % job_id})
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : '%s: You do not have any matching job IDs!' % job_id})
         else:
             filelist += match
 
@@ -276,32 +275,36 @@ jobs before and during execution.
         if not job_dict:
             status = returnvalues.CLIENT_ERROR
 
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'You can only list status of your own jobs.'
-                                   + ' Please verify that you submitted the mRSL file '
-                                   + "with job id '%s' (Could not unpickle mRSL file %s)"
-                                   % (job_id, filepath)})
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : ('You can only list status of your own jobs. '
+                    'Please verify that you submitted the mRSL file '
+                    'with job id "%s" (Could not unpickle mRSL file %s)'
+                    ) % (job_id, filepath)})
             continue
 
         # Check that file belongs to the user requesting the status
 
         if client_id != job_dict['USER_CERT']:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'The job you are trying to contact does not belong to you!'
-                                  })
+            output_objects.append(
+                {'object_type': 'text', 'text'
+                 : 'The job you are trying to contact does not belong to you!'
+                 })
             status = returnvalues.CLIENT_ERROR
             continue
 
         if job_dict['STATUS'] != 'EXECUTING':
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'Job %s is not currently being executed! Job status: %s'
-                                   % (job_id, job_dict['STATUS'])})
+            output_objects.append(
+                {'object_type': 'text', 'text'
+                 : 'Job %s is not currently being executed! Job status: %s'
+                 % (job_id, job_dict['STATUS'])})
             continue
 
         if job_dict['UNIQUE_RESOURCE_NAME'] == 'ARC':
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'Job %s is submitted to ARC, details are not available!'
-                                   % job_id })
+            output_objects.append(
+                {'object_type': 'text', 'text'
+                 : 'Job %s is submitted to ARC, details are not available!'
+                 % job_id })
             continue
 
         last_live_update_dict = {}
@@ -317,19 +320,19 @@ jobs before and during execution.
                          % last_live_update_file})
                 continue
 
-            if not last_live_update_dict_unpickled.has_key('LAST_LIVE_UPDATE_REQUEST_TIMESTAMP'
-                    ):
-                output_objects.append({'object_type': 'error_text',
-                        'text': 'Could not find needed key in %s.'
-                         % last_live_update_file})
+            if not last_live_update_dict_unpickled.has_key(
+                'LAST_LIVE_UPDATE_REQUEST_TIMESTAMP'):
+                output_objects.append(
+                    {'object_type': 'error_text',
+                     'text': 'Could not find needed key in %s.'
+                     % last_live_update_file})
                 continue
 
             last_live_update_request = \
                 last_live_update_dict_unpickled['LAST_LIVE_UPDATE_REQUEST_TIMESTAMP'
                     ]
 
-            difference = datetime.datetime.now()\
-                 - last_live_update_request
+            difference = datetime.datetime.now()- last_live_update_request
             try:
                 min_delay = \
                     int(configuration.min_seconds_between_live_update_requests)
@@ -337,10 +340,11 @@ jobs before and during execution.
                 min_delay = 30
 
             if difference.seconds < min_delay:
-                output_objects.append({'object_type': 'error_text',
-                        'text': 'Request not allowed, you must '
-                         + 'wait at least %s seconds between live update requests!'
-                         % min_delay})
+                output_objects.append(
+                    {'object_type': 'error_text',
+                     'text': ('Request not allowed, you must wait at least ' \
+                              '%s seconds between live update requests!'
+                              ) % min_delay})
                 continue
 
         # save this request to file to avoid DoS from a client request loop.
@@ -350,9 +354,10 @@ jobs before and during execution.
         pickle_ret = pickle(last_live_update_dict,
                             last_live_update_file, logger)
         if not pickle_ret:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Error saving live io request timestamp to last_live_update file, request not send!'
-                                  })
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : 'Error saving live io request timestamp to last_live_update '
+                 'file, request not sent!'})
             continue
 
         # #
@@ -360,15 +365,16 @@ jobs before and during execution.
         # #
 
         # get resource_config, needed by scp_file_to_resource
-        # (status, resource_config) = get_resource_configuration(resource_home, unique_resource_name, logger)
+        #(status, resource_config) = get_resource_configuration(
+        #    resource_home, unique_resource_name, logger)
 
         resource_config = job_dict['RESOURCE_CONFIG']
-        (status, exe) = get_resource_exe(resource_config, job_dict['EXE'
-                ], logger)
+        (status, exe) = get_resource_exe(resource_config, job_dict['EXE'],
+                                         logger)
         if not status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Could not get exe configuration for job %s'
-                                   % job_id})
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : 'Could not get exe configuration for job %s' % job_id})
             continue
 
         local_file = '%s.%supdate' % (job_dict['LOCALJOBNAME'], action)
@@ -416,27 +422,29 @@ jobs before and during execution.
                 pass
 
         if not os.path.exists(local_file):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                : '.%supdate file not available on %s server' %\
-                                  (action, configuration.short_title)
-                                  })
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : '.%supdate file not available on %s server' % \
+                 (action, configuration.short_title)})
             continue
 
         scpstatus = copy_file_to_resource(local_file, '%s.%supdate'
                  % (job_dict['LOCALJOBNAME'], action), resource_config, logger)
         if not scpstatus:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Error sending request for live io to resource!'
-                                  })
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : 'Error sending request for live io to resource!'})
             continue
         else:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'Request for live io was successfully sent to the resource!'
-                                  })
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s %s and should become available in %s in a minute.' % \
-                                   (src_text, action_desc, dst_text)
-                                  })
+            output_objects.append(
+                {'object_type': 'text', 'text'
+                 : 'Request for live io was successfully sent to the resource!'
+                 })
+            output_objects.append(
+                {'object_type': 'text', 'text'
+                 : '%s %s and should become available in %s in a minute.' % \
+                 (src_text, action_desc, dst_text)
+                 })
             if action == 'send':
                 if not dst:
                     target_path = '%s/%s/*' % (output_dir, job_id)
