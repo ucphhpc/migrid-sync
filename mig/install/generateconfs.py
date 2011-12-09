@@ -36,6 +36,7 @@ import os
 import re
 import getopt
 
+default_http_port, default_https_port = 80, 443
 
 def usage(options):
     lines = ["--%s=%s" % pair for pair in zip(options,
@@ -100,9 +101,9 @@ def generate_confs(
     hgweb_scripts='',
     trac_admin_path='',
     trac_ini_path='',
-    public_port=80,
-    cert_port=443,
-    sid_port=444,
+    public_port=default_http_port,
+    cert_port=default_https_port,
+    sid_port=default_https_port+1,
     user_clause='User',
     group_clause='Group',
     listen_clause='#Listen',
@@ -160,6 +161,20 @@ cert and sid based https!
     except OSError:
         pass
 
+    # Implicit ports if they are standard: cleaner and removes double hg login
+    user_dict['__PUBLIC_URL__'] = 'http://%(__PUBLIC_FQDN__)s' % user_dict
+    if str(public_port) != str(default_http_port):
+        print "adding explicit public port (%s)" % [public_port, default_http_port]
+        user_dict['__PUBLIC_URL__'] += ':%(__PUBLIC_PORT__)s' % user_dict
+    user_dict['__CERT_URL__'] = 'https://%(__CERT_FQDN__)s' % user_dict
+    if str(cert_port) != str(default_https_port):
+        print "adding explicit cert port (%s)" % [cert_port, default_https_port]
+        user_dict['__CERT_URL__'] += ':%(__CERT_PORT__)s' % user_dict
+    user_dict['__SID_URL__'] = 'https://%(__SID_FQDN__)s' % user_dict
+    if str(cert_port) != str(default_https_port):
+        print "adding explicit sid port (%s)" % [sid_port, default_https_port]
+        user_dict['__SID_URL__'] += ':%(__SID_PORT__)s' % user_dict
+        
     # modify this list when adding/removing template->target  
     replacement_list = \
                      [("apache-envs-template.conf", "envvars"),
