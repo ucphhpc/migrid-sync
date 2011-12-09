@@ -194,7 +194,6 @@ def create_scm(
     kind = 'member'
     scm_alias = 'vgridscm'
     server_url = configuration.migserver_https_cert_url
-    server_url_without_port = ':'.join(server_url.split(':')[:2])
     if scm_dir.find('private') > -1:
         kind = 'owner'
         scm_alias = 'vgridownerscm'
@@ -203,6 +202,7 @@ def create_scm(
         kind = 'public'
         scm_alias = 'vgridpublicscm'
         server_url = configuration.migserver_http_url
+    server_url_without_port = ':'.join(server_url.split(':')[:2])
     cgi_template_script = os.path.join(configuration.hgweb_scripts,
                                        'hgweb.cgi')
     wsgi_template_script = os.path.join(configuration.hgweb_scripts,
