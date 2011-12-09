@@ -600,6 +600,11 @@ TracIntro for additional information and help on using Trac.
             raise Exception("tracker upgrade db %s failed: %s (%d)" % \
                             (upgrade_cmd, proc.stdout.read(),
                              proc.returncode))
+
+        if repair:
+            # Touch WSGI scripts to force reload of running instances
+            for name in os.listdir(target_tracker_wsgi_link):
+                os.utime(os.path.join(target_tracker_wsgi_link, name), None)
     except Exception, exc:
         create_status = False
         logger.error('create vgrid tracker failed: %s' % exc)
