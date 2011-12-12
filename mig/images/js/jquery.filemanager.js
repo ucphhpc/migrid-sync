@@ -145,10 +145,9 @@ if (jQuery) (function($){
                                },
                       function(jsonRes, textStatus) {
                           
-                          if (jsonRes.length > 3) {                                       
-                              for (var i = 2; i < jsonRes.length; i++) {
-                                  $($('#cmd_dialog').html('<p>Error:</p>'+jsonRes[i].text));
-                              }
+                          var errors = $(this).renderError(jsonRes);
+                          if (errors.length > 0) {
+                              $($('#cmd_dialog').html('<p>Error:</p>'+errors));
                           } else {
                               // Only reload if destination is current folder
                               if ($('.fm_addressbar input[name=fm_current_path]').val().substr(1) == dst.substring(0, dst.lastIndexOf('/'))+'/')
