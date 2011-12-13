@@ -53,12 +53,17 @@ sudo aptitude install python-pip
 sudo pip install http://trac-hacks.org/svn/wikicssplugin/0.11
 sudo pip install http://trac-hacks.org/svn/fullblogplugin/0.11
 sudo pip install http://trac-hacks.org/svn/discussionplugin/0.11
+sudo pip install http://trac-hacks.org/svn/tracpasteplugin/0.11
+sudo pip install http://trac-hacks.org/svn/downloadsplugin/0.11
 sudo pip install TracStats
 
 where 0.11 in the URLs may need to be changed to fit your particular version
 of Trac. Please note that the source code stats in the TracStats plugin
 do not currently work for Mercurial repositories!
 Additional plugins are available from http://trac-hacks.org/
+
+The downloads plugin currently needs patching to work. Please refer to
+the notes in the [downloads] section of the generated MiG trac.ini file.
 
 Please note that there may be subtle internal plugin dependencies and
 conflicts that e.g. can cause problems if plugins are not loaded in the
