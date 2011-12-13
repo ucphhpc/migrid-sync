@@ -69,8 +69,14 @@ Please note that there may be subtle internal plugin dependencies and
 conflicts that e.g. can cause problems if plugins are not loaded in the
 right order. We have seen database upgrade problems if FullBlog,
 Watchlist and Discussion are enabled but not loaded in an order where
-Watchlist is loaded in between the other two. You may have to experiment
-with the installed plugins in a conservative way. 
+Watchlist is loaded in between the other two.
+Similar issues appeared when we enabled the Pastebin and Downloads
+plugins in one step. It was necessary to either patch
+tracdownloads/db/db1.py to ignore errors for existing tables or to
+enable one plugin and upgrade all Trac environments before enabling the
+other plugin and upgrading again.
+Thus you may have to experiment with the installed plugins in a
+conservative way.
 
 
 = Installing MiG =
