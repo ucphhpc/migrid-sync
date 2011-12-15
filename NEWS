@@ -6,14 +6,26 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
-=== June 9th, 2011 ===
+=== December 15th, 2011 ===
 Feature and bugfix release.
-IMPORTANT: User settings moved to a dedicated user_settings dir to
-prevent any potential security issues with users manually crafting malign
-pickle files.
-The change requires a MiGserver.conf addition and a manual migration of
-old settings is recommend.
-Typically the conf change is a matter of rerunning the conf generator of
+
+SECURITY CHANGES:
+* User settings moved to a dedicated user_settings dir to
+  prevent any potential security issues with users manually crafting malign
+  pickle files.
+* Direct access to VGrid component dirs is completely disabled and an Apache
+  guard against fake VGrid components is added. The existing CGI
+  components were *not* vulnerable unless users somehow managed to bypass
+  the prevention of setting the executable bit on their files. The changes
+  are an extra layer of security for the CGIs and a safety precaution
+  needed with the new WSGI components (where the executable is not needed
+  for abuse).
+* Require HTTP POST on potentially Cross-Site-Request-Forgery vulnerable
+  pages like e.g. VGrid management.
+
+The user settings change requires a MiGserver.conf addition and a manual
+migration of old settings is recommend.
+Typically the conf change is a matter of rerunning the conf generator or
 adding a line like:
 user_settings = %(state_path)s/user_settings/
 The settings migration is a matter of moving
@@ -26,6 +38,16 @@ for name in settings widgets userprofile; do
     	mv $i $new;
     done
 done
+
+The VGrid component changes are included in the configuration generator
+so you should rerun the generator and replace or update your apache
+configuration.
+
+New exciting features include:
+* Trac integration to provide tons of new VGrid collaboration tools
+* SFTP server for efficient file access and sshfs mounting of your MiG home
+* Powerful Grid user interface library for easy Grid application development
+* People page for user profiles and communication
 
 
 === September 29th, 2010 ===
@@ -115,7 +137,19 @@ More detailed changelogs for the public releases.
 The full changelog is available from the repository:
 http://code.google.com/p/migrid/source/list
 
-== 1.3.3 ==
+== 1.4.0 ==
+-Completely disable direct access to VGrid component dirs for security
+-New Apache guards against VGrid component abuse
+-WSGI access to all VGrid components (wiki, scm, tracker, ...)
+-Integrate Trac scm, forum, blog, downloads, pastebin and many more plugins
+-Trac integration for VGrid Project Trackers
+-Flexible VGrid component visibility
+-Simplified Apache rewrite rules
+-SFTP server fixes
+-Tweak file manager download efficiency for both big and small files
+-Filemanager bread crumbs navigation
+-Filemanager fixes
+-Added MatlabOnGrid 'user project'
 -Move user settings to user-inaccessible user_settings dir
 -Speed up resource/vgrid/user caches with explicit cache invalidation
 -New VGrid forums and VGrids page layout improvements
