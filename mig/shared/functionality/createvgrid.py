@@ -512,6 +512,7 @@ def create_tracker(
             # trac-admin tracker_dir wiki export WikiStart tracinfo.txt
             # trac-admin tracker_dir wiki import AboutTrac tracinfo.txt
             # trac-admin tracker_dir wiki import WikiStart welcome.txt
+            # trac-admin tracker_dir wiki import SiteStyle style.txt
 
             settings = {'vgrid_name': vgrid_name, 'kind': kind, 'cap_kind':
                         kind.capitalize(), 'server_url':  server_url,
@@ -569,15 +570,61 @@ by installing additional plugins or modifying the core configuration.
 Please see TitleIndex for a complete list of local wiki pages or refer to
 TracIntro for additional information and help on using Trac.
 """ % settings
+            style_text = """/*
+CSS settings for %(cap_kind)s %(vgrid_name)s project tracker.
+Uncomment or add your style rules below to modify the look and feel of all the
+tracker pages. The example rules target the major page sections, but you can
+view the full page source to find additional style targets.
+*/
+
+/*
+body {
+  background: #ccc;
+  background: transparent url('/images/pattern.png');
+  color: #000;
+  margin: 0;
+  padding: 0;
+}
+
+#banner,#main,#footer {
+  background: white;
+  border: 1px solid black;
+  border-radius: 4px;
+  -moz-border-radius: 4px;
+  padding: 8px;
+  margin: 4px;
+}
+
+#main {
+  /* Prevent footer overlap with menu */
+  min-height: 500px;
+}
+
+#ctxnav,#mainnav {
+  margin: 4px;
+}
+
+#header {
+}
+
+#logo img {
+}
+*/
+""" % settings
             trac_fd, wiki_fd = NamedTemporaryFile(), NamedTemporaryFile()
+            style_fd = NamedTemporaryFile()
             trac_tmp, wiki_tmp = trac_fd.name, wiki_fd.name
+            style_tmp = style_fd.name
             trac_fd.close()
             wiki_fd.write(intro_text)
             wiki_fd.flush()
+            style_fd.write(style_text)
+            style_fd.flush()
 
             for (act, page, path) in [('export', 'WikiStart', trac_tmp),
                                       ('import', 'TracIntro', trac_tmp),
-                                      ('import', 'WikiStart', wiki_tmp)]:
+                                      ('import', 'WikiStart', wiki_tmp),
+                                      ('import', 'SiteStyle', style_tmp)]:
                 wiki_cmd = [configuration.trac_admin_path, target_tracker_var,
                             'wiki', act, page, path]
                 logger.info('wiki %s %s: %s' % (act, page, wiki_cmd))
