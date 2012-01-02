@@ -34,6 +34,7 @@ resource.
 import os
 
 import shared.returnvalues as returnvalues
+from shared.defaults import any_protocol
 from shared.findtype import is_user, is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
@@ -120,6 +121,23 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'text', 'text'
                           : 'New owner %s successfully added to %s!'
                            % (cert_id, unique_resource_name)})
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : """
+<form method='post' action='sendrequestaction.py'>
+<input type=hidden name=request_type value='plain' />
+<input type=hidden name=cert_id value='%s' />
+<input type=hidden name=protocol value='%s' />
+<table align='center'>
+<tr>
+<td>Custom message to user</td><td><textarea name=request_text cols=72 rows=10>
+We have granted you ownership access to our %s resource.
+You can access the resource administration page from the Resources page.
+
+Regards, the %s owners
+</textarea></td>
+</tr>
+<tr><td><input type='submit' value='Inform user' /></td><td></td></tr></table>
+</form>""" % (cert_id, any_protocol, unique_resource_name, unique_resource_name)})
     output_objects.append({'object_type': 'link', 'destination':
                            'resadmin.py?unique_resource_name=%s' % \
                            unique_resource_name, 'class': 'adminlink', 'title':

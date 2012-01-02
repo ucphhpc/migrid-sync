@@ -28,6 +28,7 @@
 """Send request e.g. for access (ownership or membership) back end"""
 
 import shared.returnvalues as returnvalues
+from shared.defaults import any_protocol
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 
@@ -109,7 +110,7 @@ Resource ID </td><td><input name=unique_resource_name />
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Send message'})
     protocol_options = ''
-    for proto in configuration.notify_protocols:
+    for proto in [any_protocol] + configuration.notify_protocols:
         protocol_options += '<option value=%s>%s</option>\n' % (proto, proto)
     output_objects.append({'object_type': 'html_form', 'text'
                           : """

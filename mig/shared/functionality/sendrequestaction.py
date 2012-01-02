@@ -46,7 +46,7 @@ def signature():
 
     defaults = {'unique_resource_name': [''],
                 'vgrid_name': [''], 'cert_id': [''],
-                'protocol': [''],
+                'protocol': [any_protocol],
                 'request_type': REJECT_UNSET,
                 'request_text': REJECT_UNSET}
     return ['html_form', defaults]
@@ -89,7 +89,12 @@ def main(client_id, user_arguments_dict):
     visible_res_name = accepted['unique_resource_name'][-1].strip()
     request_type = accepted['request_type'][-1].strip().lower()
     request_text = accepted['request_text'][-1].strip()
-    protocol = accepted['protocol'][-1].strip()
+    protocols = [proto.strip() for proto in accepted['protocol']]
+    use_any = False
+    if any_protocol in protocols:
+        use_any = True
+        protocols = configuration.notify_protocols
+    protocols = [proto.upper() for proto in protocols]
 
     valid_request_types = ['resourceowner', 'vgridowner', 'vgridmember',
                            'vgridresource', 'plain']
@@ -101,6 +106,12 @@ def main(client_id, user_arguments_dict):
                valid_request_types)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    if not protocols:
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                'No protocol specified!'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
     user_map = get_user_map(configuration)
     reply_to = user_map[client_id][USERID]
 
@@ -109,11 +120,6 @@ def main(client_id, user_arguments_dict):
             output_objects.append({
                 'object_type': 'error_text', 'text':
                 'No user ID specified!'})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-        if not protocol:
-            output_objects.append({
-                'object_type': 'error_text', 'text':
-                'No protocol specified!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         user_id = visible_user_name
@@ -139,26 +145,41 @@ def main(client_id, user_arguments_dict):
             im_vgrids = allow_vgrids
         else:
             im_vgrids = set(vgrids_allow_im).intersection(allow_vgrids)
-        if not email_vgrids and protocol.upper() == 'EMAIL':
+        if use_any:
+            if not email_vgrids:
+                protocols = [i for i in protocols if i != 'EMAIL']
+            if not im_vgrids:
+                protocols = [i for i in protocols if i == 'EMAIL']
+        if not email_vgrids and 'EMAIL' in protocols:
             output_objects.append({
                 'object_type': 'error_text', 'text'
                 : 'You are not allowed to send emails to %s!' % \
                 visible_user_name
                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
-        if not im_vgrids and protocol.upper() != 'EMAIL':
+        if not im_vgrids and [i for i in protocols if i != 'EMAIL']:
             output_objects.append({
                 'object_type': 'error_text', 'text'
                 : 'You are not allowed to send instant messages to %s!' % \
                 visible_user_name
                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
-        if not user_dict[CONF][protocol.upper()]:
+        for proto in protocols:
+            if not user_dict[CONF].get(proto, False):
+                if use_any:
+                    protocols = [i for i in protocols if not i == proto]
+                else:
+                    output_objects.append({
+                        'object_type': 'error_text', 'text'
+                        : 'User %s does not accept %s messages!' % \
+                        (visible_user_name, protocol)
+                        })
+                    return (output_objects, returnvalues.CLIENT_ERROR)
+        if not protocols:
             output_objects.append({
-                'object_type': 'error_text', 'text'
-                : 'User %s does not accept %s messages!' % \
-                (visible_user_name, protocol)
-                })
+                'object_type': 'error_text', 'text':
+                'User %s does not accept requested protocol(s) messages!' % \
+                visible_user_name})
             return (output_objects, returnvalues.CLIENT_ERROR)
         target_list = [user_id]
     elif request_type == "resourceowner":
@@ -260,11 +281,8 @@ def main(client_id, user_arguments_dict):
         # USER_CERT entry is destination
 
         notify = []
-        if protocol:
-            notify.append('%s: SETTINGS' % protocol)
-        else:
-            for proto in configuration.notify_protocols:
-                notify.append('%s: SETTINGS' % proto)
+        for proto in protocols:
+            notify.append('%s: SETTINGS' % proto)
         job_dict = {'NOTIFY': notify, 'JOB_ID': 'NOJOBID', 'USER_CERT': target}
 
         notifier = notify_user_thread(
