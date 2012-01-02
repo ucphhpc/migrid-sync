@@ -107,10 +107,10 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not protocols:
-            output_objects.append({
-                'object_type': 'error_text', 'text':
-                'No protocol specified!'})
-            return (output_objects, returnvalues.CLIENT_ERROR)
+        output_objects.append({
+            'object_type': 'error_text', 'text':
+            'No protocol specified!'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     user_map = get_user_map(configuration)
     reply_to = user_map[client_id][USERID]
@@ -172,7 +172,7 @@ def main(client_id, user_arguments_dict):
                     output_objects.append({
                         'object_type': 'error_text', 'text'
                         : 'User %s does not accept %s messages!' % \
-                        (visible_user_name, protocol)
+                        (visible_user_name, proto)
                         })
                     return (output_objects, returnvalues.CLIENT_ERROR)
         if not protocols:

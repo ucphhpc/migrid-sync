@@ -137,7 +137,8 @@ Regards, the %s owners
 </textarea></td>
 </tr>
 <tr><td><input type='submit' value='Inform user' /></td><td></td></tr></table>
-</form>""" % (cert_id, any_protocol, unique_resource_name, unique_resource_name)})
+</form>""" % (cert_id, any_protocol, unique_resource_name,
+              unique_resource_name)})
     output_objects.append({'object_type': 'link', 'destination':
                            'resadmin.py?unique_resource_name=%s' % \
                            unique_resource_name, 'class': 'adminlink', 'title':

@@ -113,7 +113,7 @@ def main(client_id, user_arguments_dict):
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
 
-    (ret_val, msg, ret_variables) = \
+    (ret_val, msg, _) = \
         init_vgrid_script_add_rem(vgrid_name, client_id, cert_id,
                                   'owner', configuration)
     if not ret_val:
@@ -124,17 +124,20 @@ def main(client_id, user_arguments_dict):
     # don't add if already an owner
 
     if vgrid_is_owner(vgrid_name, cert_id, configuration):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is already an owner of %s or a parent vgrid.'
-                               % (cert_id, vgrid_name)})
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : '%s is already an owner of %s or a parent vgrid.'
+             % (cert_id, vgrid_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't add if already a member
 
     if vgrid_is_member(vgrid_name, cert_id, configuration):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is already a member of %s or a parent vgrid. Please remove the person first and then try this operation again.'
-                               % (cert_id, vgrid_name)})
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : '''%s is already a member of %s or a parent vgrid. Please remove
+the person first and then try this operation again.''' % (cert_id, vgrid_name)
+             })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # owner of subvgrid?
@@ -149,17 +152,22 @@ def main(client_id, user_arguments_dict):
 
     for subvgrid in subvgrids:
         if vgrid_is_owner(subvgrid, cert_id, configuration):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : "%s is already an owner of a sub vgrid ('%s'). Please remove the person first and then try this operation again."
-                                   % (cert_id, subvgrid)})
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : """%s is already an owner of a sub vgrid ('%s'). Please
+remove the person first and then try this operation again.""" % (cert_id,
+                                                                 subvgrid)})
             return (output_objects, returnvalues.CLIENT_ERROR)
         if vgrid_is_member(subvgrid, cert_id, configuration):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : "%s is already a member of a sub vgrid ('%s'). Please remove the person first and then try this operation again."
-                                   % (cert_id, subvgrid)})
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : """%s is already a member of a sub vgrid ('%s'). Please
+remove the person first and then try this operation again.""" % (cert_id,
+                                                                 subvgrid)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # getting here means cert_id is neither owner or member of any parent or sub-vgrids.
+    # getting here means cert_id is neither owner or member of any parent or
+    # sub-vgrids.
 
     public_base_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
@@ -179,25 +187,28 @@ def main(client_id, user_arguments_dict):
     user_private_base = os.path.abspath(os.path.join(user_dir,
             'private_base')) + os.sep
 
-    # make sure all dirs can be created (that a file or directory with the same name
-    # do not exist prior to adding the owner)
+    # make sure all dirs can be created (that a file or directory with the same
+    # name do not exist prior to adding the owner)
 
     if os.path.exists(user_public_base + vgrid_name):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not add owner, a file or directory in public_base exists with the same name! %s'
-                               % user_dir + vgrid_name})
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : '''Could not add owner, a file or directory in public_base
+exists with the same name! %s''' % user_dir + vgrid_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if os.path.exists(user_private_base + vgrid_name):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not add owner, a file or directory in private_base exists with the same name!'
-                              })
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : '''Could not add owner, a file or directory in private_base
+exists with the same name!'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if os.path.exists(user_dir + vgrid_name):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not add owner, a file or directory in the home directory exists with the same name!'
-                              })
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : '''Could not add owner, a file or directory in the home
+directory exists with the same name!'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Add
@@ -259,9 +270,10 @@ def main(client_id, user_arguments_dict):
 
             # out of range? should not be possible due to is_subvgrid check
 
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : ('Could not create needed dirs on %s server! %s'
-                                     % (configuration.short_title, exc))})
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : ('Could not create needed dirs on %s server! %s'
+                    % (configuration.short_title, exc))})
             logger.error('%s when looking for dir %s.' % (exc, dir1))
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -270,16 +282,14 @@ def main(client_id, user_arguments_dict):
     link_src = os.path.abspath(configuration.vgrid_files_home + os.sep
                                 + vgrid_name) + os.sep
     link_dst = user_dir + vgrid_name
-    not_allowed_here_filename = 'not_in_vgrid__writing_here_not_allowed'
 
     # create symlink to vgrid files
 
     if not make_symlink(link_src, link_dst, logger):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not create link to vgrid files!'
-                              })
-        logger.error('Could not create link to vgrid files link_src: %s link_dst: %s'
-                      % (link_src, link_dst))
+                              : 'Could not create link to vgrid files!'})
+        logger.error('Could not create link to vgrid files (%s -> %s)'
+                     % (link_src, link_dst))
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     public_base_dst = user_public_base + vgrid_name
@@ -290,8 +300,8 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not create link to public_base dir!'
                               })
-        logger.error('Could not create link to public_base dir src: %s dst: %s'
-                      % (public_base_dir, public_base_dst))
+        logger.error('Could not create link to public_base dir (%s -> %s)'
+                     % (public_base_dir, public_base_dst))
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     private_base_dst = user_private_base + vgrid_name
@@ -344,5 +354,3 @@ Regards, the %s owners
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)
-
-
