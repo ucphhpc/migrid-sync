@@ -94,7 +94,7 @@ def main(client_id, user_arguments_dict):
     if any_protocol in protocols:
         use_any = True
         protocols = configuration.notify_protocols
-    protocols = [proto.upper() for proto in protocols]
+    protocols = [proto.lower() for proto in protocols]
 
     valid_request_types = ['resourceowner', 'vgridowner', 'vgridmember',
                            'vgridresource', 'plain']
@@ -146,18 +146,23 @@ def main(client_id, user_arguments_dict):
         else:
             im_vgrids = set(vgrids_allow_im).intersection(allow_vgrids)
         if use_any:
+            # Do not try disabled protocols if ANY was requested
             if not email_vgrids:
-                protocols = [i for i in protocols if i != 'EMAIL']
+                protocols = [proto for proto in protocols \
+                             if proto not in email_keyword_list]
             if not im_vgrids:
-                protocols = [i for i in protocols if i == 'EMAIL']
-        if not email_vgrids and 'EMAIL' in protocols:
+                protocols = [proto for proto in protocols \
+                             if proto in email_keyword_list]
+        if not email_vgrids and [proto for proto in protocols \
+                                 if proto in email_keyword_list]:
             output_objects.append({
                 'object_type': 'error_text', 'text'
                 : 'You are not allowed to send emails to %s!' % \
                 visible_user_name
                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
-        if not im_vgrids and [i for i in protocols if i != 'EMAIL']:
+        if not im_vgrids and [proto for proto in protocols \
+                              if proto not in email_keyword_list]:
             output_objects.append({
                 'object_type': 'error_text', 'text'
                 : 'You are not allowed to send instant messages to %s!' % \
@@ -165,9 +170,10 @@ def main(client_id, user_arguments_dict):
                 })
             return (output_objects, returnvalues.CLIENT_ERROR)
         for proto in protocols:
-            if not user_dict[CONF].get(proto, False):
+            if not user_dict[CONF].get(proto.upper(), False):
                 if use_any:
-                    protocols = [i for i in protocols if not i == proto]
+                    # Remove missing protocols if ANY protocol was requested
+                    protocols = [i for i in protocols if i != proto]
                 else:
                     output_objects.append({
                         'object_type': 'error_text', 'text'

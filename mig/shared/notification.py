@@ -32,6 +32,7 @@ import smtplib
 import threading
 from urllib import quote
 
+from shared.defaults import email_keyword_list
 from shared.job import output_dir
 from shared.settings import load_settings
 from shared.validstring import is_valid_email_address
@@ -329,8 +330,6 @@ def notify_user(
         supported_protocols = ['jabber', 'msn', 'icq', 'aol', 'yahoo']
         notify_line_colon_split = notify_line.split(':', 1)
 
-        email_keyword_list = ['mail', 'email']
-
         if notify_line_colon_split[0].strip() in supported_protocols:
             protocol = notify_line_colon_split[0]
             recipients = notify_line_colon_split[1].strip()
@@ -426,8 +425,6 @@ def notify_user(
                 else:
                     logger.error('email NOT sent to %s, jobid: %s'
                                   % (single_dest, jobid))
-
-
     # logger.info("notify_user end")
 
 

@@ -46,6 +46,8 @@ any_protocol = keyword_any
 
 sandbox_names = ['sandbox', 'oneclick', 'ps3live']
 
+email_keyword_list = ['mail', 'email']
+
 mqueue_prefix = 'message_queues'
 default_mqueue = 'default'
 mqueue_empty = 'NO MESSAGES'
