@@ -41,8 +41,9 @@ send_pgid() {
     
     echo $command >> $frontendlog
     status=`$command`
+    retval=$?
     echo "" >> $frontendlog
-    echo "$status" >> $frontendlog
+    echo "send_pgid result: $status ($retval)" >> $frontendlog
     
     # return only exit_code
     return ${status:0:1}
@@ -198,7 +199,8 @@ request_job() {
         retry_counter=$((retry_counter+1))
         # TODO: can we supply ca-cert to avoid insecure here?
         curl --location --insecure --stderr $curllog --connect-timeout $contimeout -m $contimeout $migserver/cgi-sid/requestnewjob?exe=${exe}\&amp\;unique_resource_name=${unique_resource_name}\&amp\;cputime=${cputime}\&amp\;nodecount=${nodecount}\&amp\;sandboxkey=${sandboxkey}\&amp\;localjobname=${localjobname}\&amp\;execution_delay=${execution_delay}\&amp\;exe_pgid=${exe_pgid} 1>> $frontendlog 2>> $frontendlog
-        echo "a new job ${exe} ${nodecount} ${cputime} ${localjobname} ${execution_delay} ${exe_pgid} was requested" 1>> $frontendlog 2>> $frontendlog
+        retval=$?
+        echo "a new job ${exe} ${nodecount} ${cputime} ${localjobname} ${execution_delay} ${exe_pgid} was requested ($retval)" 1>> $frontendlog 2>> $frontendlog
         
         if [ $sandbox -eq 1 ]; then
             getinputfiles_retry=0
@@ -206,13 +208,14 @@ request_job() {
             while [ ! -f ${localjobname}.getinputfiles ] && \
                 [ $getinputfiles_retry -lt $getinputfiles_max_retries ]; do
                 curl --location --fail --insecure --stderr $curllog --connect-timeout $contimeout -m $contimeout $migserver/sid_redirect/${localjobname}.getinputfiles -o ${localjobname}.getinputfiles 1>> $frontendlog 2>> $frontendlog
+                retval=$?
                 # Loop until .getinputfiles is ready, curl returns 0,
                 # --fail must be set on curl command to do this, see 
                 # man curl
-                if [ "$?" -ne "0" ]; then
+                if [ "$retval" -ne "0" ]; then
                     getinputfiles_retry=$((getinputfiles_retry+1))
                     ${clean_command} ${localjobname}.getinputfiles
-                    echo ".getinputfiles script _NOT_ received yet! (${getinputfiles_retry}/${getinputfiles_max_retries})" 1>> $frontendlog 2>> $frontendlog
+                    echo ".getinputfiles script _NOT_ received yet ($retval)! (${getinputfiles_retry}/${getinputfiles_max_retries})" 1>> $frontendlog 2>> $frontendlog
                     sleep 5
                 fi
             done
