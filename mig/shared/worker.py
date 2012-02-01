@@ -66,7 +66,7 @@ class Worker(Thread):
         self.__args = args
         self.__kwargs = kwargs
         self.__result = None
-        self.__exception = Exception('unknown exception')
+        self.__exception = None
         Thread.__init__(self, group=group, target=target, args=args,
                         kwargs=kwargs)
 
@@ -82,8 +82,9 @@ class Worker(Thread):
         """Wait for the worker thread and return result"""
 
         self.join()
-        if self.__exception:
-            raise self.__exception
+        if self.__exception != None:
+            # Disable bogus pylint warning about raise None here
+            raise self.__exception # pylint: disable-msg=E0702
         return self.__result
 
 

@@ -118,5 +118,3 @@ def main(client_id, user_arguments_dict):
                                   : 'Status command run, output: %s'
                                    % msg})
     return (output_objects, exit_status)
-
-
