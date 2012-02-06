@@ -28,7 +28,8 @@
 """Send request e.g. for ownership or membership action back end"""
 
 import shared.returnvalues as returnvalues
-from shared.defaults import default_vgrid, any_vgrid, any_protocol
+from shared.defaults import default_vgrid, any_vgrid, any_protocol, \
+     email_keyword_list
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
