@@ -121,16 +121,15 @@ def main(client_id, user_arguments_dict):
     html_form = \
         """<form method="get" action="adminre.py">
     <select name="re_template">
-    <option value="">None
-
-    """
+    <option value="">None</option>
+"""
     for existing_re in ret:
-        html_form += '<option value=%s>%s\n' % (existing_re,
-                existing_re)
-    html_form += \
-        """</select>
+        html_form += '    <option value=%s>%s</option>\n' % \
+                     (existing_re, existing_re)
+    html_form += """
+    </select>
     <input type="submit" value="Get" />
-    </form>"""
+</form>"""
     output_objects.append({'object_type': 'html_form', 'text'
                           : html_form})
 
@@ -174,11 +173,11 @@ information.'''
     output_objects.append({'object_type': 'html_form', 'text'
                           : html_form})
     if testprocedure_entry == 0:
-        select_string = \
-            """<option value=0 selected>No<option value=1>Yes"""
+        select_string = """<option value=0 selected>No</option>
+<option value=1>Yes</option>"""
     elif testprocedure_entry == 1:
-        select_string = \
-            """<option value=0>No<option value=1 selected>Yes"""
+        select_string = """<option value=0>No</option>
+<option value=1 selected>Yes</option>"""
     else:
         output_objects.append(
             {'object_type': 'error_text', 'text'
