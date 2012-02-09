@@ -201,7 +201,7 @@ def main(client_id, user_arguments_dict):
                 loop_number += 1
                 for keyname in s.keys():
                     if keyname != '':
-                        html_form += '%s=%s' % (keyname, s[keyname])
+                        html_form += '%s=%s\n' % (keyname, s[keyname])
                 html_form += '</textarea><br />'
     else:
 
