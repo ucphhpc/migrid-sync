@@ -29,6 +29,17 @@ if (jQuery) (function($){
         }
         return errors;
     }
+
+    $.fn.renderWarning = function(jsonRes) {
+        
+        var warnings = '';
+        
+        for (var i=0; i<jsonRes.length; i++) {
+            if (jsonRes[i]['object_type'] == 'warning')
+                warnings +='<p>'+jsonRes[i].text+'</p>';
+        }
+        return warnings;
+    }
     
     $.fn.renderFileoutput = function(jsonRes) {
         
@@ -144,10 +155,12 @@ if (jQuery) (function($){
                                  flags: flag
                                },
                       function(jsonRes, textStatus) {
-                          
                           var errors = $(this).renderError(jsonRes);
+                          var warnings = $(this).renderWarning(jsonRes);
                           if (errors.length > 0) {
                               $($('#cmd_dialog').html('<p>Error:</p>'+errors));
+                          } else if (warnings.length > 0) {
+                              $($('#cmd_dialog').html('<p>Warning:</p>'+warnings));
                           } else {
                               // Only reload if destination is current folder
                               if ($('.fm_addressbar input[name=fm_current_path]').val().substr(1) == dst.substring(0, dst.lastIndexOf('/'))+'/')
@@ -156,6 +169,7 @@ if (jQuery) (function($){
                           }
                       }, "json"
                   );
+
         }
         
         function jsonWrapper(el, dialog, url, jsonOptions) {
@@ -170,6 +184,7 @@ if (jQuery) (function($){
                       function(jsonRes, textStatus) {
                           
                           var errors = $(this).renderError(jsonRes);
+                          var warnings = $(this).renderWarning(jsonRes);
                           var file_output = $(this).renderFileoutput(jsonRes);
                           var misc_output = '';
                           
@@ -193,6 +208,7 @@ if (jQuery) (function($){
                           }
                           
                           if ((errors.length > 0) 
+                              || (warnings.length > 0) 
                               || (file_output.length > 0) 
                               || (misc_output.length > 0)) {
                               
@@ -203,7 +219,7 @@ if (jQuery) (function($){
                                   file_output = '<pre>'+file_output+'</pre>'; 
                               }
                               
-                              $(dialog).html(errors+file_output+misc_output);
+                              $(dialog).html(errors+warnings+file_output+misc_output);
                           } else {
                               $('.fm_files').parent().reload($(this).parentPath($(el).attr(pathAttribute))); 
                           }
@@ -904,8 +920,11 @@ if (jQuery) (function($){
          {target: '#upload_output', dataType: 'json',
           success: function(responseObject, statusText) {
               var errors = $(this).renderError(responseObject);
+              var warnings = $(this).renderWarning(responseObject);
               if (errors.length > 0) {
                   $('#upload_output').html(errors);
+              } else if (warnings.length > 0) {
+                  $('#upload_output').html(warnings);
               } else {
                   $('.fm_files').parent().reload($('#upload_form input[name=remotefilename_0]').val().substr(2));
                   $('#upload_dialog').dialog('close');
@@ -917,8 +936,11 @@ if (jQuery) (function($){
          {target: '#mkdir_output', dataType: 'json',
           success: function(responseObject, statusText) {
               var errors = $(this).renderError(responseObject);
+              var warnings = $(this).renderWarning(responseObject);
               if (errors.length > 0) {
                   $('#mkdir_output').html(errors);
+              } else if (warnings.length > 0) {
+                  $('#mkdir_output').html(warnings);
               } else {
                   $('#mkdir_dialog').dialog('close');
                   $('.fm_files').parent().reload('');
@@ -930,8 +952,11 @@ if (jQuery) (function($){
          {target: '#zip_output', dataType: 'json',
           success: function(responseObject, statusText) {
               var errors = $(this).renderError(responseObject);
+              var warnings = $(this).renderWarning(responseObject);
               if (errors.length > 0) {
                   $('#zip_output').html(errors);
+              } else if (warnings.length > 0) {
+                  $('#zip_output').html(warnings);
               } else {
                   $('#zip_dialog').dialog('close');
                   $('.fm_files').parent().reload('');
@@ -943,8 +968,11 @@ if (jQuery) (function($){
          {target: '#rename_output', dataType: 'json',
           success: function(responseObject, statusText) {
               var errors = $(this).renderError(responseObject);
+              var warnings = $(this).renderWarning(responseObject);
               if (errors.length > 0) {
                   $('#rename_output').html(errors);
+              } else if (warnings.length > 0) {
+                  $('#rename_output').html(warnings);
               } else {
                   $('#rename_dialog').dialog('close');
                   $('.fm_files').parent().reload('');
