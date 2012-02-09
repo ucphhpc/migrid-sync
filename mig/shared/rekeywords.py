@@ -29,6 +29,7 @@
 
 
 def get_keywords_dict():
+    """Return a dictionary maping keywords to a dictionary with settings"""
     rename = {
         'Description': 'The name of the runtime environment.',
         'Example': 'POVRAY-3.6',
@@ -44,8 +45,10 @@ def get_keywords_dict():
         'Required': False,
         }
     software = {
-        'Description': "The software required to satisfy this runtime environment. Keywords: 'name', 'version', 'url', 'description', 'icon'",
-        'Example': "['povray','3.6','http://www.povray.org/download/','This will make the most amazing povray ever seen.','povray.jpg']",
+        'Description': """The software required to satisfy this runtime
+environment. Keywords: 'name', 'version', 'url', 'description', 'icon'""",
+        'Example': """['povray','3.6','http://www.povray.org/download/',
+'This will make the most amazing povray ever seen.','povray.jpg']""",
         'Type': 'RE_software',
         'Value': [],
         'Required': False,
@@ -55,7 +58,8 @@ def get_keywords_dict():
         'Sublevel_optional': [],
         }
     testprocedure = {
-        'Description': 'The procedure for testing the runtime environment, this must be on the mRSL format.',
+        'Description': '''The procedure for testing the runtime environment,
+this must be on the mRSL format.''',
         'Example': '''::EXECUTE::
 command
 
@@ -67,29 +71,34 @@ TODO: complete this example!
         'Required': False,
         }
     verifystdout = {
-        'Description': 'The expected content of the .stdout file if a testprocedure job is executed. (empty lines not supported)',
+        'Description': '''The expected content of the .stdout file if a
+testprocedure job is executed. (empty lines not supported)''',
         'Example': '::dido.imada.sdu.dk\n',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }
     verifystderr = {
-        'Description': 'The expected content of the .stderr file if a testprocedure job is executed. (empty lines not supported)',
+        'Description': '''The expected content of the .stderr file if a
+testprocedure job is executed. (empty lines not supported)''',
         'Example': '::bash: notvalidcomnmand: command not found\n',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }
     verifystatus = {
-        'Description': 'The expected content of the .status file if a testprocedure job is executed. (empty lines not supported)',
+        'Description': '''The expected content of the .status file if a
+testprocedure job is executed. (empty lines not supported)''',
         'Example': '.* 0\n',
         'Type': 'multiplestrings',
         'Value': [],
         'Required': False,
         }
     environmentvariable = {
-        'Description': 'The environment variables which must be set on the resource for the runtime environment to work. name, example, description',
-        'Example': "['name=POVRAY_HOME','example=/usr/local/povray/','description=Path to Povray home.']",
+        'Description': '''The environment variables which must be set on the
+resource for the runtime environment to work. name, example, description''',
+        'Example': """['name=POVRAY_HOME','example=/usr/local/povray/',
+'description=Path to Povray home.']""",
         'Type': 'RE_environmentvariable',
         'Value': [],
         'Required': False,
