@@ -42,9 +42,9 @@ def signature():
 
     defaults = {
         're_template': [''],
-        'software_entries': [1],
-        'environment_entries': [1],
-        'testprocedure_entry': [0],
+        'software_entries': [-1],
+        'environment_entries': [-1],
+        'testprocedure_entry': [-1],
         }
     return ['html_form', defaults]
 
@@ -70,7 +70,7 @@ def main(client_id, user_arguments_dict):
     environment_entries = int(accepted['environment_entries'][-1])
     testprocedure_entry = int(accepted['testprocedure_entry'][-1])
 
-    template = False
+    template = {}
     if re_template:
         if not is_runtime_environment(re_template, configuration):
             output_objects.append(
@@ -85,6 +85,25 @@ def main(client_id, user_arguments_dict):
                                    : 'Could not read re_template %s. %s'
                                    % (re_template, msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    # Override template fields if user loaded a template and modified the
+    # required entries and chose update.
+    # Use default of 1 sw, 1 env and 0 test or template setting otherwise
+    if software_entries < 0:
+        software_entries = len(template.get('SOFTWARE', [None]))
+    if environment_entries < 0:
+        environment_entries = len(template.get('ENVIRONMENTVARIABLE', [None]))
+    if testprocedure_entry < 0:
+        testprocedure_entry = len(template.get('TESTPROCEDURE', []))
+    if template.has_key('SOFTWARE'):
+        new_sw = template['SOFTWARE'][:software_entries]
+        template['SOFTWARE'] = new_sw
+    if template.has_key('ENVIRONMENTVARIABLE'):
+        new_env = template['ENVIRONMENTVARIABLE'][:environment_entries]
+        template['ENVIRONMENTVARIABLE'] = new_env
+    if template.has_key('TESTPROCEDURE'):
+        new_test = template['TESTPROCEDURE'][:testprocedure_entry]
+        template['TESTPROCEDURE'] = new_test
 
     # Avoid DoS, limit number of software_entries
 
@@ -149,17 +168,11 @@ information.'''
         """<form method='get' action='adminre.py'>
     <table border='0'>
 """
-    if template:
-        if template.has_key('SOFTWARE'):
-            software_entries = len(template['SOFTWARE'])
     html_form += """
 <tr>
     <td>Number of needed software entries</td>
     <td><input type='text' size='2' name='software_entries' value='%s' /></td>
 </tr>""" % software_entries
-    if template:
-        if template.has_key('ENVIRONMENTVARIABLE'):
-            environment_entries = len(template['ENVIRONMENTVARIABLE'])
     html_form += """
 <tr>
     <td>Number of environment entries</td>
@@ -167,11 +180,6 @@ information.'''
     <input type='text' size='2' name='environment_entries' value='%s' />
     </td>
 </tr>""" % environment_entries
-    if template:
-        if template.has_key('TESTPROCEDURE'):
-            testprocedure_entry = 1
-        else:
-            testprocedure_entry = 0
     output_objects.append({'object_type': 'html_form', 'text'
                           : html_form})
     if testprocedure_entry == 0:
@@ -193,11 +201,14 @@ information.'''
     <td><select name='testprocedure_entry'>%s</select></td>
 </tr>
 <tr>
-<td><input type='submit' value='Update fields' /></td>
+    <td>
+    <input type='hidden' name='re_template' value='%s' />
+    <input type='submit' value='Update fields' />
+    </td>
 </tr>
 </table>
 </form><br />
-""" % select_string
+""" % (select_string, re_template)
 
     html_form += """
 <form method='post' action='createre.py'>
@@ -209,13 +220,14 @@ information.'''
 """
     if template:
         html_form += template['DESCRIPTION']
-    html_form += '</textarea>'
+    html_form += '</textarea><br />'
 
+    soft_list = []
+    if software_entries > 0:
+        html_form += '<br /><b>Needed Software:</b><br />'
     if template:
         if template.has_key('SOFTWARE'):
             soft_list = template['SOFTWARE']
-            if soft_list:
-                html_form += '<br /><b>Needed Software:</b><br />'
             for soft in soft_list:
                 html_form += """
 <textarea cols='50' rows='5' wrap='off' name='software'>"""
@@ -223,29 +235,26 @@ information.'''
                     if keyname != '':
                         html_form += '%s=%s\n' % (keyname, soft[keyname])
                 html_form += '</textarea><br />'
-    else:
 
-        # loop and create textareas for each software entry
+    # loop and create textareas for any missing software entries
 
-        if software_entries > 0:
-            html_form += '<br /><b>Needed Software:</b><br />'
+    software = rekeywords_dict['SOFTWARE']
+    sublevel_required = []
+    sublevel_optional = []
 
-            software = rekeywords_dict['SOFTWARE']
-            sublevel_required = []
-            sublevel_optional = []
+    if software.has_key('Sublevel') and software['Sublevel']:
+        sublevel_required = software['Sublevel_required']
+        sublevel_optional = software['Sublevel_optional']
 
-        if software.has_key('Sublevel') and software['Sublevel']:
-            sublevel_required = software['Sublevel_required']
-            sublevel_optional = software['Sublevel_optional']
-
-        for _ in range(0, software_entries):
-            html_form += """
+    for _ in range(len(soft_list), software_entries):
+        html_form += """
 <textarea cols='50' rows='5' wrap='off' name='software'>"""
-            for sub_req in sublevel_required:
-                html_form += '%s=   # required\n' % sub_req
-            for sub_opt in sublevel_optional:
-                html_form += '%s=   # optional\n' % sub_opt
-            html_form += '</textarea><br />'
+        for sub_req in sublevel_required:
+            html_form += '%s=   # required\n' % sub_req
+        for sub_opt in sublevel_optional:
+            html_form += '%s=   # optional\n' % sub_opt
+        html_form += '</textarea><br />'
+        
     if template and testprocedure_entry == 1:
         if template.has_key('TESTPROCEDURE'):
             html_form += """
@@ -312,12 +321,12 @@ ls
         sublevel_required = environmentvariable['Sublevel_required']
         sublevel_optional = environmentvariable['Sublevel_optional']
 
+    env_list = []
+    if environment_entries > 0:
+        html_form += '<br /><b>Environments:</b><br />'
     if template:
         if template.has_key('ENVIRONMENTVARIABLE'):
             env_list = template['ENVIRONMENTVARIABLE']
-
-            if env_list:
-                html_form += '<br /><br /><br /><b>Environments:</b><br />'
             for env in env_list:
                 html_form += """
 <textarea cols='50' rows='3' wrap='off' name='environment'>"""
@@ -325,20 +334,18 @@ ls
                     if keyname != '':
                         html_form += '%s=%s\n' % (keyname, env[keyname])
 
-                html_form += '</textarea>'
-    else:
+                html_form += '</textarea><br />'
 
-        if environment_entries > 0:
-            html_form += '<br /><br /><br /><b>Environments:</b><br />'
+    # loop and create textareas for any missing environment entries
 
-        for _ in range(0, environment_entries):
-            html_form += """
+    for _ in range(len(env_list), environment_entries):
+        html_form += """
 <textarea cols='50' rows='3' wrap='off' name='environment'>"""
-            for sub_req in sublevel_required:
-                html_form += '%s=   # required\n' % sub_req
-            for sub_opt in sublevel_optional:
-                html_form += '%s=   # optional\n' % sub_opt
-            html_form += '</textarea><br />'
+        for sub_req in sublevel_required:
+            html_form += '%s=   # required\n' % sub_req
+        for sub_opt in sublevel_optional:
+            html_form += '%s=   # optional\n' % sub_opt
+        html_form += '</textarea><br />'
 
     html_form += """<br /><br /><input type='submit' value='Create' />
     </form>
