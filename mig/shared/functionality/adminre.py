@@ -119,16 +119,16 @@ def main(client_id, user_arguments_dict):
                           : 'Use existing RE as template'})
 
     html_form = \
-        """<form method="get" action="adminre.py">
-    <select name="re_template">
-    <option value="">None</option>
+        """<form method='get' action='adminre.py'>
+    <select name='re_template'>
+    <option value=''>None</option>
 """
     for existing_re in ret:
-        html_form += '    <option value=%s>%s</option>\n' % \
+        html_form += "    <option value='%s'>%s</option>\n" % \
                      (existing_re, existing_re)
     html_form += """
     </select>
-    <input type="submit" value="Get" />
+    <input type='submit' value='Get' />
 </form>"""
     output_objects.append({'object_type': 'html_form', 'text'
                           : html_form})
@@ -147,7 +147,7 @@ information.'''
 
     html_form = \
         """<form method='get' action='adminre.py'>
-    <table border=0>
+    <table border='0'>
 """
     if template:
         if template.has_key('SOFTWARE'):
@@ -155,7 +155,7 @@ information.'''
     html_form += """
 <tr>
     <td>Number of needed software entries</td>
-    <td><input type=text size=2 name=software_entries value=%s /></td>
+    <td><input type='text' size='2' name='software_entries' value='%s' /></td>
 </tr>""" % software_entries
     if template:
         if template.has_key('ENVIRONMENTVARIABLE'):
@@ -163,7 +163,9 @@ information.'''
     html_form += """
 <tr>
     <td>Number of environment entries</td>
-    <td><input type=text size=2 name=environment_entries value=%s /></td>
+    <td>
+    <input type='text' size='2' name='environment_entries' value='%s' />
+    </td>
 </tr>""" % environment_entries
     if template:
         if template.has_key('TESTPROCEDURE'):
@@ -173,11 +175,11 @@ information.'''
     output_objects.append({'object_type': 'html_form', 'text'
                           : html_form})
     if testprocedure_entry == 0:
-        select_string = """<option value=0 selected>No</option>
+        select_string = """<option value='0' selected>No</option>
 <option value=1>Yes</option>"""
     elif testprocedure_entry == 1:
-        select_string = """<option value=0>No</option>
-<option value=1 selected>Yes</option>"""
+        select_string = """<option value='0'>No</option>
+<option value='1' selected>Yes</option>"""
     else:
         output_objects.append(
             {'object_type': 'error_text', 'text'
@@ -188,7 +190,7 @@ information.'''
     html_form = """
 <tr>
     <td>Runtime environment has a testprocedure</td>
-    <td><select name=testprocedure_entry>%s</select></td>
+    <td><select name='testprocedure_entry'>%s</select></td>
 </tr>
 <tr>
 <td><input type='submit' value='Update fields' /></td>
@@ -201,7 +203,7 @@ information.'''
 <form method='post' action='createre.py'>
 <b>RE Name</b><br />
 <small>(eg. DALTON-3.0, must be unique):</small><br />
-<input type='text' size=40 name='re_name' /><br />
+<input type='text' size='40' name='re_name' /><br />
 <br /><b>Description:</b><br />
 <textarea cols='50' rows='2' wrap='off' name='redescription'>
 """
@@ -315,7 +317,7 @@ ls
             env_list = template['ENVIRONMENTVARIABLE']
 
             if env_list:
-                html_form += '<br /><b><br /><br /><b>Environments:</b><br />'
+                html_form += '<br /><br /><br /><b>Environments:</b><br />'
             for env in env_list:
                 html_form += """
 <textarea cols='50' rows='3' wrap='off' name='environment'>"""
@@ -327,7 +329,7 @@ ls
     else:
 
         if environment_entries > 0:
-            html_form += '<br /><b><br /><br /><b>Environments:</b><br />'
+            html_form += '<br /><br /><br /><b>Environments:</b><br />'
 
         for _ in range(0, environment_entries):
             html_form += """
