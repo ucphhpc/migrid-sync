@@ -154,8 +154,9 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append(
         {'object_type': 'text', 'text'
-         : '''Note that a runtime environment can not be changed or removed
-when it has been created, so please be careful when filling in the details'''
+         : '''Note that a runtime environment can not be changed after creation
+and it can only be removed if not in use by any resources, so please be careful
+when filling in the details'''
          })
     output_objects.append(
         {'object_type': 'text', 'text'
@@ -213,7 +214,7 @@ information.'''
     html_form += """
 <form method='post' action='createre.py'>
 <b>RE Name</b><br />
-<small>(eg. DALTON-3.0, must be unique):</small><br />
+<small>(eg. BASH-2.X-1, must be unique):</small><br />
 <input type='text' size='40' name='re_name' /><br />
 <br /><b>Description:</b><br />
 <textarea cols='50' rows='2' wrap='off' name='redescription'>

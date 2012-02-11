@@ -175,6 +175,10 @@ def main(client_id, user_arguments_dict):
                     continue
                 real_target = os.path.join(real_target,
                                            os.path.basename(real_path))
+
+            logger.info('%s trying to %s %s to %s (%s)' % \
+                        (client_id, op_name, real_path, real_target, pattern))
+            
             try:
                 if os.path.isdir(real_path):
                     shutil.copytree(real_path, real_target)
