@@ -181,9 +181,8 @@ def create_user(
 
         if user_db.has_key(client_id):
             if ask_renew:
-                renew_answer = \
-                             raw_input('User DB entry already exists - renew? [Y/n] '
-                                       )
+                print 'User DB entry for "%s" already exists' % client_id
+                renew_answer = raw_input('Renew existing entry? [Y/n] ')
                 renew = not renew_answer.lower().startswith('n')
             else:
                 renew = False
