@@ -219,7 +219,7 @@ Command to create certificate:
 %(command_cert_create)s
 
 Finally add the user
-%(user_id)s
+%(distinguished_name)s
 to any relevant VGrids on:
 %(https_cert_url)s/cgi-bin/vgridadmin.py
 
