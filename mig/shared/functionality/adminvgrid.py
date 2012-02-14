@@ -91,7 +91,7 @@ def vgrid_add_remove_table(vgrid_name,
         <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
         Current %(item)ss of %(vgrid)s:
         <table class="vgrid%(item)s">
-          <thead><tr><th>Remove</th><th>Owner</th></thead>
+          <thead><tr><th>Remove</th><th>%(item)s</th></thead>
           <tbody>
 ''' % { 'item': item_string,
         'scriptname': script_suffix,
