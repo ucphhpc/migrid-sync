@@ -281,16 +281,15 @@ sudo %s/%s start
     return True
 
 
-# ## Main ###
+if __name__ == '__main__':
+    argc = len(sys.argv)
+    debug_mode = True
+    if argc <= 1:
+        print 'Usage: %s LOGIN [LOGINS...]' % sys.argv[0]
+        sys.exit(1)
 
-argc = len(sys.argv)
-debug_mode = True
-if argc <= 1:
-    print 'Usage: %s LOGIN [LOGINS...]' % sys.argv[0]
-    sys.exit(1)
+    for login in sys.argv[1:]:
+        print '# Creating a unprivileged account for %s' % login
+        create_user(login, login, debug=debug_mode)
 
-for login in sys.argv[1:]:
-    print '# Creating a unprivileged account for %s' % login
-    create_user(login, login, debug=debug_mode)
-
-sys.exit(0)
+    sys.exit(0)
