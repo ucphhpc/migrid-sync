@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createdevaccount - create a MiG server development account
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,259 +37,60 @@ for separated developer accounts. Some paths like for apache and moin moin is
 similarly hard coded to the Debian defaults on those servers.
 """
 
+import getopt
 import sys
-import os
-import random
-import crypt
-import socket
-import datetime
 
-from generateconfs import generate_confs
+from shared.install import create_user
 
+def usage(options):
+    """Usage help"""
+    lines = ["--%s=%s" % pair for pair in zip(options,
+                                              [i.upper() for i in options])]
+    print '''Usage:
+%s [OPTIONS] LOGIN [LOGIN ...]
+Create developer account with username LOGIN using OPTIONS.
+Where supported options include -h/--help for this help or the conf settings:
+%s
 
-def create_user(
-    user,
-    group,
-    ssh_login_group='remotelogin',
-    debug=False,
-    ):
-    """Create unix user with supplied user and group name"""
-
-    # make sure not to wreak havoc if no user supplied
-
-    if not user:
-        print "no user supplied! can't continue"
-        return False
-
-    print 'groupadd %s' % group
-    status = os.system('groupadd %s' % group) >> 8
-    if status != 0:
-        print 'Warning: exit code %d' % status
-
-    # Don't use 'o'/'0' and 'l'/'1' since they may confuse users
-
-    valid_chars = 'abcdefghijkmnpqrstuvwxyz'\
-         + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ23456789'
-    pwlen = 8
-    pw = ''
-    for idx in range(pwlen):
-        pw += random.choice(valid_chars)
-
-    # TODO: python does not support md5 passwords - using DES ones
-    # from crypt for now
-
-    shell = '/bin/bash'
-    enc_pw = crypt.crypt(pw, random.choice(valid_chars)
-                          + random.choice(valid_chars))
-    print 'useradd -m -s %s -p %s -g %s %s' % (shell, enc_pw, group,
-            user)
-    status = os.system('useradd -m -s %s -p %s -g %s %s' % (shell,
-                       enc_pw, group, user)) >> 8
-    if status != 0:
-        print 'Warning: exit code %d' % status
-    else:
-        print '# Created %s in group %s with pw %s' % (user, group, pw)
-
-    home = '/home/%s' % user
-
-    print 'chmod -R g-rwx,o-rwx %s' % home
-    status = os.system('chmod -R g-rwx,o-rwx %s' % home) >> 8
-    if status != 0:
-        print 'Warning: exit code %d' % status
-    else:
-        print 'Removed global access to %s' % home
-
-    print 'addgroup %s %s' % (user, ssh_login_group)
-    status = os.system('addgroup %s %s' % (user, ssh_login_group)) >> 8
-    if status != 0:
-        print 'Warning: exit code %d' % status
-    else:
-        print '# Added %s to group %s' % (user, ssh_login_group)
-
-    out = os.popen('id -u %s' % user).readlines()
-    uid_str = out[0].strip()
-    out = os.popen('id -g %s' % user).readlines()
-    gid_str = out[0].strip()
-    try:
-        uid = int(uid_str)
-        gid = int(gid_str)
-    except Exception, err:
-        print 'Error: %s' % err
-        if not debug:
-            return False
-
-    # print "uid: %d, gid: %d" % (uid, gid)
-
-    public_port = 3 * uid
-    cert_port = public_port + 1
-    sid_port = public_port + 2
-
-    mig_dir = os.path.join(home, 'mig')
-    server_dir = os.path.join(mig_dir, 'server')
-    state_dir = os.path.join(home, 'state')
-    apache_etc = '/etc/apache2'
-    apache_dir = '%s-%s' % (apache_etc, user)
-    apache_run = '%s/run' % apache_dir
-    apache_lock = '%s/lock' % apache_dir
-    apache_log = '%s/log' % apache_dir
-    cert_dir = '%s/MiG-certificates' % apache_dir
-    # We don't have a free port for sftp
-    enable_sftp = 'False'
-    moin_etc = '/etc/moin'
-    moin_share = '/usr/share/moin'
-    hg_path = '/usr/bin/hg'
-    hgweb_scripts = '/usr/share/doc/mercurial-common/examples/'
-    trac_admin_path = '/usr/bin/trac-admin'
-    trac_ini_path = '%s/trac.ini' % server_dir
-
-    firewall_script = '/root/scripts/firewall'
-    print '# Add the next line to %s and run the script:'\
-         % firewall_script
-    print 'iptables -A INPUT -p tcp --dport %d:%d -j ACCEPT # webserver: %s'\
-         % (public_port, sid_port, user)
-
-    sshd_conf = '/etc/ssh/sshd_config'
-    print """# Unless 'AllowGroups %s' is already included, append %s
-# to the AllowUsers line in %s and restart sshd."""\
-         % (ssh_login_group, user, sshd_conf)
-    print """# Add %s to the sudoers file (visudo) with privileges
-# to run apache init script in %s
-visudo""" % (user, apache_dir)
-    print """# Set disk quotas for %s using reference user quota:
-edquota -u %s -p LOGIN_OF_SIMILAR_USER"""\
-         % (user, user)
-    expire = datetime.date.today()
-    expire = expire.replace(year=expire.year + 1)
-    print """# Optionally set account expire date for user:
-chage -E %s %s"""\
-         % (expire, user)
-    print """# Attach full name of user to login:
-usermod -c 'INSERT FULL NAME HERE' %s"""\
-         % user
-    print """# Add mount point for sandbox generator:
-echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  auto    user,loop       0       0' >> /etc/fstab"""\
-         % (user, user)
-
-    src = os.path.abspath(os.path.dirname(sys.argv[0]))
-    dst = os.path.join(src, '%s-confs' % user)
-
-    generate_confs(
-        src,
-        dst,
-        socket.getfqdn(),
-        socket.getfqdn(),
-        socket.getfqdn(),
-        user,
-        group,
-        apache_dir,
-        apache_run,
-        apache_lock,
-        apache_log,
-        mig_dir,
-        state_dir,
-        cert_dir,
-        enable_sftp,
-        moin_etc,
-        moin_share,
-        hg_path,
-        hgweb_scripts,
-        trac_admin_path,
-        trac_ini_path,
-        public_port,
-        cert_port,
-        sid_port,
-        'User',
-        'Group',
-        '#Listen',
-        '#ServerAlias',
-        )
-    apache_envs_conf = os.path.join(dst, 'envvars')
-    apache_apache2_conf = os.path.join(dst, 'apache2.conf')
-    apache_httpd_conf = os.path.join(dst, 'httpd.conf')
-    apache_ports_conf = os.path.join(dst, 'ports.conf')
-    apache_mig_conf = os.path.join(dst, 'MiG.conf')
-    server_conf = os.path.join(dst, 'MiGserver.conf')
-    trac_ini = os.path.join(dst, 'trac.ini')
-    apache_initd_script = os.path.join(dst, 'apache-%s' % user)
-
-    print '# Clone %s to %s and put config files there:' % (apache_etc,
-            apache_dir)
-    print 'sudo cp -r -u -d -x %s %s' % (apache_etc, apache_dir)
-    print 'sudo rm -f %s/envvars' % apache_dir
-    print 'sudo rm -f %s/apache2.conf' % apache_dir
-    print 'sudo rm -f %s/httpd.conf' % apache_dir
-    print 'sudo rm -f %s/ports.conf' % apache_dir
-    print 'sudo rm -f %s/sites-enabled/*' % apache_dir
-    print 'sudo rm -f %s/conf.d/*' % apache_dir
-    print 'sudo cp -f -d %s %s/' % (apache_envs_conf, apache_dir)
-    print 'sudo cp -f -d %s %s/' % (apache_apache2_conf, apache_dir)
-    print 'sudo cp -f -d %s %s/' % (apache_httpd_conf, apache_dir)
-    print 'sudo cp -f -d %s %s/' % (apache_ports_conf, apache_dir)
-    print 'sudo cp -f -d %s %s/conf.d/' % (apache_mig_conf, apache_dir)
-    print 'sudo cp -f -d %s %s/' % (apache_initd_script, apache_dir)
-    print 'sudo mkdir -p %s %s %s ' % (apache_run, apache_lock, apache_log)
-
-    # allow read access to logs
-
-    print 'sudo chgrp -R %s %s' % (user, apache_log)
-    print 'sudo chmod 2755 %s' % apache_log
-
-    print '# Setup MiG for %s:' % user
-    print 'sudo su - %s -c \'ssh-keygen -t rsa -N "" -q -f \\\n\t%s/.ssh/id_rsa\''\
-         % (user, home)
-    print "sudo su - %s -c 'cp -f -x \\\n\t%s/.ssh/{id_rsa.pub,authorized_keys}'"\
-         % (user, home)
-    print "sudo su - %s -c 'ssh -o StrictHostKeyChecking=no \\\n\t%s@`hostname -f` pwd >/dev/null'"\
-         % (user, user)
-    print "sudo su - %s -c 'svn checkout http://migrid.googlecode.com/svn/trunk/ %s'"\
-         % (user, home)
-    print 'sudo chown %s:%s %s %s' % (user, group, server_conf, trac_ini)
-    print 'sudo cp -f -p %s %s %s/' % (server_conf, trac_ini, server_dir)
-
-    # Only add non-directory paths manually and leave the rest to
-    # checkconf.py below
-
-    print "sudo su - %s -c 'mkfifo \\\n\t%s/server.stdin'" % (user,
-            server_dir)
-    print "sudo su - %s -c 'mkfifo \\\n\t%s/notify.stdin'" % (user,
-            server_dir)
-    print "sudo su - %s -c '%s/mig/server/checkconf.py'" % (user, home)
-
-    print """
-#############################################################
-Created %s in group %s with pw %s
-Reserved ports:
-HTTP:\t\t%d
-HTTPS users:\t\t%d
-HTTPS resources:\t\t%d
-
-The dedicated apache server can be started with the command:
-sudo %s/%s start
-
-#############################################################
-"""\
-         % (
-        user,
-        group,
-        pw,
-        public_port,
-        cert_port,
-        sid_port,
-        apache_dir,
-        os.path.basename(apache_initd_script),
-        )
-    return True
-
+''' % (sys.argv[0], '\n'.join(lines))
 
 if __name__ == '__main__':
-    argc = len(sys.argv)
-    debug_mode = True
-    if argc <= 1:
-        print 'Usage: %s LOGIN [LOGINS...]' % sys.argv[0]
+    settings = {
+        'sid_fqdn': None,
+        'debug_mode': True,
+        }
+    flag_str = 'h'
+    opts_str = ["%s=" % key for key in settings.keys()] + ["help"]
+    
+    try:
+        (opts, args) = getopt.getopt(sys.argv[1:], flag_str, opts_str)
+    except getopt.GetoptError, exc:
+        print 'Error: ', exc.msg
+        usage(settings)
         sys.exit(1)
 
-    for login in sys.argv[1:]:
+    for (opt, val) in opts:
+        opt_name = opt.lstrip('-')
+        if opt in ('-h', '--help'):
+            usage(settings)
+            sys.exit(0)
+        elif opt_name in settings.keys():
+            settings[opt_name] = val
+        else:
+            print 'Error: %s not supported!' % opt
+            usage(settings)
+            sys.exit(1)
+
+    if not args:
+        usage(settings)
+        sys.exit(1)
+
+    print '# Creating dev account with:'
+    for (key, val) in settings.items():
+        print '%s: %s' % (key, val)
+    for login in args:
         print '# Creating a unprivileged account for %s' % login
-        create_user(login, login, debug=debug_mode)
+        create_user(login, login, debug=settings["debug_mode"],
+                    sid_fqdn=settings["sid_fqdn"])
 
     sys.exit(0)
