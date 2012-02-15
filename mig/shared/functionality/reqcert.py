@@ -113,7 +113,7 @@ old files, jobs and privileges.</p>''' % \
                           : """
 Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the certificate request to the %(site)s administrators.<p>
 <b><font color='red'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br />
-That is, if You're a student/employee at DIKU, please type DIKU in the Organization field and use your USER@diku.dk address in the Email field.</font></b></p>
+That is, if You're a student/employee at KU, please enter institute acronym (NBI, DIKU, etc.) in the Organization field and use your USER@INSTITUTE.dk or USER@*.ku.dk address in the Email field.</font></b></p>
 <hr />
 <p>
 <!-- use post here to avoid field contents in URL -->
@@ -140,8 +140,8 @@ That is, if You're a student/employee at DIKU, please type DIKU in the Organizat
 <sup>1</sup> restricted to the characters in '%(valid_name_chars)s'<br />
 <sup>2</sup> name or acronym<br />
 <sup>3</sup> address associated with organization if at all possible<br />
-<sup>4</sup> optional<br />
-<sup>5</sup> Country code is on the form GB/DK/.. , <a href=http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html>help</a><br />
+<sup>4</sup> optional, just leave empty unless you are a citizen of the US or similar<br />
+<sup>5</sup> Country code is on the form DE/DK/GB/US/.. , <a href='http://www.iso.org/iso/country_codes/iso_3166_code_lists/country_names_and_code_elements.html'>help</a><br />
 <sup>6</sup> Password is restricted to the characters in '%(valid_password_chars)s'<br />
 <sup>7</sup> Password must be at least %(password_min_len)s and at most %(password_max_len)s characters long<br /> 
 <sup>8</sup> optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.<br />
