@@ -110,6 +110,9 @@ if '__main__' == __name__:
     print '# Creating confs with:'
     for (key, val) in settings.items():
         print '%s: %s' % (key, val)    
+        # Remove default values to use generate_confs default values
+        if val == 'DEFAULT':
+            del settings[key]
     generate_confs(**settings)
     print '''Configurations for MiG and Apache were generated in
 %(destination)s/
