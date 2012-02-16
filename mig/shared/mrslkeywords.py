@@ -208,13 +208,13 @@ To submit with execution on the first suitable and allowed VGrid.
         'Description': 'Amount of memory required to execute the job. The amount is specified in megabytes ',
         'Example': '128',
         'Type': 'int',
-        'Value': 1,
+        'Value': 32,
         'Editor': 'input',
         'Required': False,
         }))
     specs.append(('DISK', {
         'Title': 'Disk (GB)',
-        'Description': 'Amount of disk space required to execute the job. The amount is specified in gigabytes aand the default is zero.',
+        'Description': 'Amount of disk space required to execute the job. The amount is specified in gigabytes and the default is zero.',
         'Example': '10',
         'Type': 'int',
         'Value': 0,
