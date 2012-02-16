@@ -35,7 +35,7 @@ import time
 from ConfigParser import ConfigParser
 
 from shared.logger import Logger
-from shared.html import menu_items
+from shared.html import menu_items, vgrid_items
 
 def fix_missing(config_file, verbose=True):
     """Add missing configuration options - used by checkconf script"""
@@ -83,12 +83,7 @@ def fix_missing(config_file, verbose=True):
         'sandbox_home': '~/state/sandbox_home',
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
-        'vgrid_files_link': True,
-        'vgrid_web_link': True,
-        'vgrid_forum_link': True,
-        'vgrid_wiki_link': False,
-        'vgrid_tracker_link': False,
-        'vgrid_scm_link': False,
+        'site_vgrid_links': 'files web wiki scm tracker forum monitor',
         'moin_etc': '/etc/moin',
         'moin_share': '/usr/share/moin',
         'hg_path': '/usr/bin/hg',
@@ -200,12 +195,7 @@ class Configuration:
     sss_home = ''
     sandbox_home = ''
     javabin_home = ''
-    vgrid_files_link = True
-    vgrid_web_pages_link = True
-    vgrid_forum_link = True
-    vgrid_wiki_link = False
-    vgrid_scm_link = False
-    vgrid_tracker_link = False
+    vgrid_component_links = []
     moin_etc = ''
     moin_share = ''
     hg_path = ''
@@ -555,25 +545,6 @@ class Configuration:
         else:
             self.trac_id_field = 'email'
 
-        if config.has_option('VGRID', 'files_link'):
-            self.vgrid_files_link = config.getboolean('VGRID', 'files_link')
-        if config.has_option('VGRID', 'web_pages_link'):
-            self.vgrid_web_pages_link = config.getboolean('VGRID', 'web_pages_link')
-        if config.has_option('VGRID', 'forum_link'):
-            self.vgrid_forum_link = config.getboolean('VGRID', 'forum_link')
-        if config.has_option('VGRID', 'wiki_link'):
-            self.vgrid_wiki_link = config.getboolean('VGRID', 'wiki_link')
-        elif self.moin_etc and self.moin_share:
-            self.vgrid_wiki_link = True
-        if config.has_option('VGRID', 'scm_link'):
-            self.vgrid_scm_link = config.getboolean('VGRID', 'scm_link')
-        elif self.hg_path and self.hgweb_scripts:
-            self.vgrid_scm_link = True
-        if config.has_option('VGRID', 'tracker_link'):
-            self.vgrid_tracker_link = config.getboolean('VGRID', 'tracker_link')
-        elif self.trac_admin_path and self.trac_id_field:
-            self.vgrid_tracker_link = True
-
         if config.has_option('SITE', 'images'):
             self.site_images = config.get('SITE', 'images')
         else:
@@ -608,6 +579,11 @@ class Configuration:
                                    i not in self.site_default_menu]
         else:
             self.site_user_menu = []
+        if config.has_option('SITE', 'vgrid_links'):
+            req = config.get('SITE', 'vgrid_links').split()
+            self.site_vgrid_links = [i for i in req if i in vgrid_items]
+        else:
+            self.site_vgrid_links = vgrid_items.keys()
         if config.has_option('SITE', 'script_deps'):
             self.site_script_deps = config.get('SITE', 'script_deps').split()
         else:

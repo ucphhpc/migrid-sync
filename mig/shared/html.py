@@ -75,7 +75,23 @@ menu_items['docs'] = {'class': 'docs', 'url': 'docs.py',
 menu_items['people'] = {'class': 'people', 'url': 'people.py',
                            'title': 'People', 
                            'hover': 'view and communicate with other users'}
-
+# Define all possible VGrid page columns
+vgrid_items = {}
+vgrid_items['files'] = {'class': 'vgridfiles', 'title': 'Files', 
+                        'hover': 'Open shared files'}
+vgrid_items['web'] = {'class': 'vgridweb', 'title': 'Web Pages', 
+                        'hover': 'View/edit private and public web pages'}
+vgrid_items['wiki'] = {'class': 'vgridwiki', 'title': 'Wiki', 
+                        'hover': 'Enter private and public WikiWiki pages'}
+vgrid_items['scm'] = {'class': 'vgridscm', 'title': 'SCM', 
+                      'hover':
+                      'Inspect private and public Source Code Management systems'}
+vgrid_items['tracker'] = {'class': 'vgridtracker', 'title': 'Tracker Tools', 
+                      'hover': 'Open private and public project collaboration tools'}
+vgrid_items['forum'] = {'class': 'vgridforum', 'title': 'Forum', 
+                        'hover': 'Enter private forum'}
+vgrid_items['monitor'] = {'class': 'vgridmonitor', 'title': 'Monitor', 
+                        'hover': 'Open private resource monitor'}
 
 def html_print(formatted_text, html=True):
     print html_add(formatted_text, html)
