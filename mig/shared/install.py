@@ -372,7 +372,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     trac_ini = os.path.join(dst, 'trac.ini')
     apache_initd_script = os.path.join(dst, 'apache-%s' % user)
 
-    settings = {'user': user, 'gropu': group, 'server_conf': server_conf,
+    settings = {'user': user, 'group': group, 'server_conf': server_conf,
                 'trac_ini': trac_ini, 'home': home, 'server_dir': server_dir,
                 'public_fqdn': public_fqdn}
     settings['sudo_cmd'] = 'sudo su - %(user)s -c' % settings
@@ -400,7 +400,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     print 'sudo chmod 2755 %s' % apache_log
 
     print """# Setup MiG for %(user)s:
-%(sudo_cmd)s 'ssh-keygen -t rsa -N \\'\\' -q -f \\
+%(sudo_cmd)s 'ssh-keygen -t rsa -N \"\" -q -f \\
     %(home)s/.ssh/id_rsa'
 %(sudo_cmd)s 'cp -f -x \\
     %(home)s/.ssh/{id_rsa.pub,authorized_keys}'
@@ -416,8 +416,8 @@ sudo cp -f -p %(server_conf)s %(trac_ini)s %(server_dir)s/
 
     print """%(sudo_cmd)s 'mkfifo %(server_dir)s/server.stdin'
 %(sudo_cmd)s 'mkfifo %(server_dir)s/notify.stdin'
-%(sudo_cmd)s '%s/mig/server/checkconf.py'
-"""
+%(sudo_cmd)s '%(server_dir)s/checkconf.py'
+""" % settings
 
     print """
 #############################################################

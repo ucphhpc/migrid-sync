@@ -38,6 +38,7 @@ similarly hard coded to the Debian defaults on those servers.
 """
 
 import getopt
+import socket
 import sys
 
 from shared.install import create_user
@@ -56,7 +57,9 @@ Where supported options include -h/--help for this help or the conf settings:
 
 if __name__ == '__main__':
     settings = {
-        'sid_fqdn': None,
+        'public_fqdn': socket.getfqdn(),
+        'cert_fqdn': socket.getfqdn(),
+        'sid_fqdn': socket.getfqdn(),
         'debug_mode': True,
         }
     flag_str = 'h'
@@ -91,6 +94,8 @@ if __name__ == '__main__':
     for login in args:
         print '# Creating a unprivileged account for %s' % login
         create_user(login, login, debug=settings["debug_mode"],
+                    public_fqdn=settings["public_fqdn"],
+                    cert_fqdn=settings["cert_fqdn"],
                     sid_fqdn=settings["sid_fqdn"])
 
     sys.exit(0)
