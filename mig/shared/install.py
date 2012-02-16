@@ -276,9 +276,8 @@ def create_user(
 
     # print "uid: %d, gid: %d" % (uid, gid)
 
-    public_port = 3 * uid
-    cert_port = public_port + 1
-    sid_port = public_port + 2
+    reserved_ports = range(3 * uid, 3 * uid + 3)
+    public_port, cert_port, sid_port = reserved_ports[:3]
 
     mig_dir = os.path.join(home, 'mig')
     server_dir = os.path.join(mig_dir, 'server')
@@ -419,6 +418,8 @@ sudo cp -f -p %(server_conf)s %(trac_ini)s %(server_dir)s/
 %(sudo_cmd)s '%(server_dir)s/checkconf.py'
 """ % settings
 
+    used_ports = [public_port, cert_port, sid_port]
+    extra_ports = [port for port in reserved_ports if not port in used_ports]
     print """
 #############################################################
 Created %s in group %s with pw %s
@@ -426,6 +427,7 @@ Reserved ports:
 HTTP:\t\t%d
 HTTPS users:\t\t%d
 HTTPS resources:\t\t%d
+Extra ports:\t\t%s
 
 The dedicated apache server can be started with the command:
 sudo %s/%s start
@@ -439,6 +441,7 @@ sudo %s/%s start
         public_port,
         cert_port,
         sid_port,
+        ', '.join(["%d" % port for port in extra_ports]),
         apache_dir,
         os.path.basename(apache_initd_script),
         )
