@@ -34,7 +34,7 @@ import shutil
 import fnmatch
 import datetime
 
-from shared.base import client_id_dir, old_id_format, sandbox_resource
+from shared.base import client_id_dir, sandbox_resource
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.defaults import keyword_auto, ssh_conf_dir, htaccess_filename, \
@@ -72,7 +72,7 @@ def init_user_adm():
 def fill_user(target):
     """Fill target user dictionary with all expected fields"""
 
-    for (key, val) in cert_field_order:
+    for (key, _) in cert_field_order:
         target[key] = target.get(key, '')
     return target
 
@@ -142,6 +142,13 @@ def delete_dir(path, verbose=False):
         print 'removing: %s' % path
     shutil.rmtree(path)
 
+def rename_dir(src, dst, verbose=False):
+    """Rename src to dst"""
+
+    if verbose:
+        print 'renaming: %s -> %s ' % (src, dst)
+    shutil.move(src, dst)
+
 
 def create_user(
     user,
@@ -192,7 +199,8 @@ def create_user(
                         print 'Renewal request supplied a different password: '
                         print 'Please re-request with the original password '
                         print 'to assure authenticity!'
-                    raise Exception('Cannot renew certificate with a new password')
+                    raise Exception(
+                        'Cannot renew certificate with a new password')
                 if verbose:
                     print 'Renewing existing user'
             elif not force:
@@ -358,6 +366,100 @@ def create_user(
                             css_path)
 
     mark_user_modified(configuration, client_id)
+    return user
+
+def edit_user(
+    client_id,
+    changes,
+    conf_path,
+    db_path,
+    force=False,
+    verbose=False,
+    ):
+    """Edit user"""
+
+    user_db = {}
+    if conf_path:
+        configuration = Configuration(conf_path)
+    else:
+        configuration = get_configuration_object()
+
+    client_dir = client_id_dir(client_id)
+
+    if verbose:
+        print 'User ID: %s\n' % client_id
+
+    if os.path.exists(db_path):
+        try:
+            user_db = load_user_db(db_path)
+            if verbose:
+                print 'Loaded existing user DB from: %s' % db_path
+        except Exception, err:
+            if not force:
+                raise Exception('Failed to load user DB: %s' % err)
+
+        if not user_db.has_key(client_id):
+            if not force:
+                raise Exception("Error: User DB entry '%s' doesn't exist!" % \
+                                client_id)
+
+    user_dict = {}
+    new_id = ''
+    try:
+        old_user = user_db[client_id]
+        del user_db[client_id]
+        user_dict = old_user
+        user_dict.update(changes)
+        fill_user(user_dict)
+        # Force distinguished_name update
+        del user_dict["distinguished_name"]
+        fill_distinguished_name(user_dict)
+        new_id = user_dict["distinguished_name"]
+        user_db[new_id] = user_dict
+        save_user_db(user_db, db_path)
+        if verbose:
+            print 'User %s was successfully edited in user DB!'\
+                  % client_id
+    except Exception, err:
+        import traceback
+        print traceback.format_exc()
+        if not force:
+            raise Exception('Error: Failed to edit %s with %s in user DB: %s'\
+                            % (client_id, changes, err))
+
+    new_client_dir = client_id_dir(new_id)
+    
+    # Rename user dirs recursively
+
+    for base_dir in (configuration.user_home,
+                     configuration.user_settings,
+                     configuration.user_cache,
+                     configuration.mrsl_files_dir,
+                     configuration.resource_pending):
+
+        old_path = os.path.join(base_dir, client_dir)
+        new_path = os.path.join(base_dir, new_client_dir)
+        try:
+            rename_dir(old_path, new_path)
+        except Exception, exc:
+            if not force:
+                raise Exception('Error: could not rename %s to %s: %s' % \
+                                (old_path, new_path, exc))
+    if verbose:
+        print 'User dirs for %s was successfully renamed!'\
+                  % client_id
+
+    # TODO: update user credentials in various files
+    # vgrid member/ownership files
+    # resource confs
+    # runtime env ownership
+    # user settings files
+    # mrsl files?
+    # VGrid components (Trac perms)
+    # user stats?
+
+    mark_user_modified(configuration, new_id)
+    return user_dict
 
 
 def delete_user(
@@ -483,17 +585,20 @@ def migrate_users(
         if new_id in user_db.keys():
             if not prune_dupes:
                 if not force:
-                    raise Exception('Error: new ID %s already exists in user DB!' % \
-                                    new_id)
+                    raise Exception(
+                        'Error: new ID %s already exists in user DB!' % \
+                        new_id)
             else:
                 if verbose:
-                    print 'Pruning old duplicate user %s from user DB' % client_id
+                    print 'Pruning old duplicate user %s from user DB' % \
+                          client_id
                 del user_db[client_id]
         elif old_id in latest.keys():
             if not prune_dupes:
                 if not force:
-                    raise Exception('Error: old ID %s is not unique in user DB!' % \
-                                    old_id)
+                    raise Exception(
+                        'Error: old ID %s is not unique in user DB!' % \
+                        old_id)
             else:
                 (latest_id, latest_user) = latest[old_id]
                 # expire may be int, unset or None: try with fall back
@@ -522,9 +627,8 @@ def migrate_users(
         old_id = user['full_name'].replace(' ', '_')
         new_id = user['distinguished_name']        
         if verbose:
-            print 'updating user %s on old format %s to new format %s' % (client_id,
-                                                                          old_id,
-                                                                          new_id)
+            print 'updating user %s on old format %s to new format %s' % \
+                  (client_id, old_id, new_id)
 
         old_name = client_id_dir(old_id)
         new_name = client_id_dir(new_id)
@@ -556,8 +660,9 @@ def migrate_users(
                 filter_pickled_dict(mrsl_path, {old_id: new_id})
             except Exception, exc:
                 if not force:
-                    raise Exception('Error: could not update saved mrsl user in %s: %s'\
-                                    % (mrsl_path, exc))
+                    raise Exception(
+                        'Error: could not update saved mrsl user in %s: %s'\
+                        % (mrsl_path, exc))
 
         re_base = configuration.re_home
         for re_name in os.listdir(re_base):
@@ -568,8 +673,9 @@ def migrate_users(
                 filter_pickled_dict(re_path, {old_id: new_id})
             except Exception, exc:
                 if not force:
-                    raise Exception('Error: could not update RE user in %s: %s'\
-                                    % (re_path, exc))
+                    raise Exception(
+                        'Error: could not update RE user in %s: %s'\
+                        % (re_path, exc))
 
         for base_dir in (configuration.resource_home,
                          configuration.vgrid_home):
@@ -582,8 +688,9 @@ def migrate_users(
                         filter_pickled_list(kind_path, {old_id: new_id})
                     except Exception, exc:
                         if not force:
-                            raise Exception('Error: could not update saved %s in %s: %s'\
-                                            % (kind, kind_path, exc))
+                            raise Exception(
+                                'Error: could not update saved %s in %s: %s'\
+                                % (kind, kind_path, exc))
 
         # Finally update user DB now that file system was updated
 
@@ -629,11 +736,11 @@ def fix_entities(
         old_id = user['full_name'].replace(' ', '_')
         new_id = user['distinguished_name']        
         if verbose:
-            print 'updating user %s on old format %s to new format %s' % (client_id,
-                                                                          old_id,
-                                                                          new_id)
+            print 'updating user %s on old format %s to new format %s' % \
+                  (client_id, old_id, new_id)
 
-        for base_dir in (configuration.resource_home, configuration.vgrid_home):
+        for base_dir in (configuration.resource_home,
+                         configuration.vgrid_home):
             for entry_name in os.listdir(base_dir):
                 for kind in ('members', 'owners'):
                     kind_path = os.path.join(base_dir, entry_name, kind)
@@ -647,21 +754,27 @@ def fix_entities(
                         filter_pickled_list(kind_path, {old_id: new_id})
                     except Exception, exc:
                         if not force:
-                            raise Exception('Error: could not update saved %s in %s: %s'\
-                                            % (kind, kind_path, exc))
+                            raise Exception(
+                                'Error: could not update saved %s in %s: %s'\
+                                % (kind, kind_path, exc))
 
 
 def default_search():
     """Default search filter to match all users"""
 
     search_filter = {}
-    for (key, val) in cert_field_order:
+    for (key, _) in cert_field_order:
         search_filter[key] = '*'
     return search_filter
 
 
 def search_users(search_filter, conf_path, db_path, verbose=False):
     """Search for matching users"""
+
+    if conf_path:
+        configuration = Configuration(conf_path)
+    else:
+        configuration = get_configuration_object()
 
     try:
         user_db = load_user_db(db_path)
@@ -684,7 +797,8 @@ def search_users(search_filter, conf_path, db_path, verbose=False):
     return hits
 
 
-def user_password_reminder(user_id, targets, conf_path, db_path, verbose=False):
+def user_password_reminder(user_id, targets, conf_path, db_path,
+                           verbose=False):
     """Find notification addresses for user_id and targets"""
 
     errors = []
