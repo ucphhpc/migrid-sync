@@ -53,12 +53,12 @@ def usage(name='createuser.py'):
     print """Create user in the MiG user database and file system.
 %(cert_warn)s
 Usage:
-%(name)s [OPTIONS] FULL_NAME ORGANIZATION STATE COUNTRY \
-    EMAIL COMMENT PASSWORD
+%(name)s [OPTIONS] [FULL_NAME ORGANIZATION STATE COUNTRY \
+    EMAIL COMMENT PASSWORD]
 or
-%(name)s -u USER_FILE
+%(name)s [OPTIONS] -u USER_FILE
 or
-%(name)s
+%(name)s [OPTIONS]
 Where OPTIONS may be one or more of:
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
