@@ -410,6 +410,7 @@ def delete_user(
     # Remove user dirs recursively
 
     for base_dir in (configuration.user_home,
+                     configuration.user_settings,
                      configuration.user_cache,
                      configuration.mrsl_files_dir,
                      configuration.resource_pending):
