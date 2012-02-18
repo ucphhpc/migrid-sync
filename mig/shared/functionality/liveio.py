@@ -283,16 +283,6 @@ jobs before and during execution.
                     ) % (job_id, filepath)})
             continue
 
-        # Check that file belongs to the user requesting the status
-
-        if client_id != job_dict['USER_CERT']:
-            output_objects.append(
-                {'object_type': 'text', 'text'
-                 : 'The job you are trying to contact does not belong to you!'
-                 })
-            status = returnvalues.CLIENT_ERROR
-            continue
-
         if job_dict['STATUS'] != 'EXECUTING':
             output_objects.append(
                 {'object_type': 'text', 'text'

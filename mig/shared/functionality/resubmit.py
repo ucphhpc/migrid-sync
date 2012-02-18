@@ -157,12 +157,8 @@ def main(client_id, user_arguments_dict):
 
         mrsl_dict = unpickle(filepath, logger)
         if not mrsl_dict:
-
-            resubmitobj['message'] = \
-                ("You can only resubmit your own jobs. Please verify that " \
-                 "you submitted the job with job id '%s' (Could not " \
-                 "unpickle mRSL file %s)"
-                 ) % (job_id, mrsl_file)
+            resubmitobj['message'] = "No such job: %s (%s)" % (job_id,
+                                                               mrsl_file)
             status = returnvalues.CLIENT_ERROR
             resubmitobjs.append(resubmitobj)
             continue

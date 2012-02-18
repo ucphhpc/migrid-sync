@@ -168,16 +168,6 @@ jobs!''' % (job_id, action)
             status = returnvalues.CLIENT_ERROR
             continue
 
-        # Check that file belongs to the user requesting the job action
-
-        if client_id != job_dict['USER_CERT']:
-            changedstatusjob['message'] = \
-                '%s the job you are trying to %s does not belong to you!'\
-                 % (client_id, action)
-            status = returnvalues.CLIENT_ERROR
-            changedstatusjobs.append(changedstatusjob)
-            continue
-
         changedstatusjob['oldstatus'] = job_dict['STATUS']
 
         # Is the job status compatible with action?

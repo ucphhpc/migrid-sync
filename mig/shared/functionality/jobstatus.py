@@ -208,20 +208,8 @@ def main(client_id, user_arguments_dict):
 
             output_objects.append(
                 {'object_type': 'error_text', 'text'
-                 : ('You can only list status of your own jobs. ' \
-                    'Please verify that you submitted the mRSL file ' \
-                    'with job id "%s" (Could not unpickle mRSL file %s)'
-                    ) % (job_id, filepath)})
-            continue
-
-        # Check that file belongs to the user requesting the status
-
-        if client_id != job_dict['USER_CERT']:
-            output_objects.append(
-                {'object_type': 'text', 'text'
-                 : 'The job you are trying to get status for does not belong'
-                 'to you!'})
-            status = returnvalues.CLIENT_ERROR
+                 : 'No such job: %s (could not load mRSL file %s)' % \
+                 (job_id, filepath)})
             continue
 
         # Expand any job variables before use

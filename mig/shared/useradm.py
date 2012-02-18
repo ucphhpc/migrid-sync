@@ -42,7 +42,13 @@ from shared.defaults import keyword_auto, ssh_conf_dir, htaccess_filename, \
      widgets_filename, ssh_conf_dir
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
+from shared.refunctions import list_runtime_environments, edit_runtimeenv_owner
+from shared.resource import resource_add_owners, resource_remove_owners
 from shared.serial import load, dump
+from shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
+     vgrid_add_members, vgrid_remove_members
+from shared.vgridaccess import get_resource_map, get_vgrid_map, VGRIDS, \
+     OWNERS, MEMBERS
 
 db_name = 'MiG-users.db'
 ssh_authkeys = os.path.join(ssh_conf_dir, 'authorized_keys')
@@ -449,15 +455,99 @@ def edit_user(
         print 'User dirs for %s was successfully renamed!'\
                   % client_id
 
-    # TODO: update user credentials in various files
-    # vgrid member/ownership files
-    # resource confs
-    # runtime env ownership
-    # user settings files
-    # mrsl files?
-    # VGrid components (Trac perms)
-    # user stats?
+    # Loop through resource map and update user resource ownership
+    
+    res_map = get_resource_map(configuration)
+    for (res_id, res) in res_map.items():
+        if client_id in res[OWNERS]:
+            (add_status, err) = resource_add_owners(configuration, res_id,
+                                                    [new_id])
+            if not add_status:
+                if verbose:
+                    print 'Could not add new %s owner of %s: %s' \
+                          % (new_id, res_id, err)
+                continue
+            (del_status, err) = resource_remove_owners(configuration, res_id,
+                                                       [client_id])
+            if not del_status:
+                if verbose:
+                    print 'Could not remove old %s owner of %s: %s' \
+                          % (client_id, res_id, err)
+                continue
+            if verbose:
+                print 'Updated %s owner from %s to %s' % (res_id, client_id,
+                                                          new_id)
 
+    # Loop through vgrid map and update user owner/membership
+    # By using the high level add/remove API the corresponding vgrid components
+    # get properly updated, too
+
+    vgrid_map = get_vgrid_map(configuration)
+    for (vgrid_name, vgrid) in vgrid_map[VGRIDS].items():
+        if client_id in vgrid[OWNERS]:
+            (add_status, err) = vgrid_add_owners(configuration, vgrid_name,
+                                                 [new_id])
+            if not add_status:
+                if verbose:
+                    print 'Could not add new %s owner of %s: %s' \
+                          % (new_id, vgrid_name, err)
+                continue
+            (del_status, err) = vgrid_remove_owners(configuration, vgrid_name,
+                                                       [client_id])
+            if not del_status:
+                if verbose:
+                    print 'Could not remove old %s owner of %s: %s' \
+                          % (client_id, vgrid_name, err)
+                continue
+            if verbose:
+                print 'Updated %s owner from %s to %s' % (vgrid_name,
+                                                          client_id,
+                                                          new_id)
+        elif client_id in vgrid[MEMBERS]:
+            (add_status, err) = vgrid_add_members(configuration, vgrid_name,
+                                                  [new_id])
+            if not add_status:
+                if verbose:
+                    print 'Could not add new %s member of %s: %s' \
+                          % (new_id, vgrid_name, err)
+                continue
+            (del_status, err) = vgrid_remove_members(configuration, vgrid_name,
+                                                     [client_id])
+            if not del_status:
+                if verbose:
+                    print 'Could not remove old %s member of %s: %s' \
+                          % (client_id, vgrid_name, err)
+                continue
+            if verbose:
+                print 'Updated %s member from %s to %s' % (vgrid_name,
+                                                           client_id,
+                                                           new_id)
+
+    # Loop through runtime envs and update ownership
+
+    (re_status, re_list) = list_runtime_environments(configuration)
+    if re_status:
+        for re_name in re_list:
+            (re_status, err) = edit_runtimeenv_owner(re_name, client_id,
+                                                     new_id, configuration)
+            if verbose:
+                if not re_status:
+                    print 'Could not change owner of %s: %s' % (re_name, err)
+                else:
+                    print 'Updated %s owner from %s to %s' % (re_name,
+                                                              client_id,
+                                                              new_id)
+    else:
+        if verbose:
+            print 'Could not load runtime env list: %s' % re_list
+
+    # TODO: update remaining user credentials in various locations?
+    # * queued and active jobs (tricky due to races)
+    # * user settings files?
+    # * mrsl files?
+    # * user stats?
+
+    configuration.logger.info("Renamed user %s to %s" % (client_id, new_id))
     mark_user_modified(configuration, new_id)
     return user_dict
 

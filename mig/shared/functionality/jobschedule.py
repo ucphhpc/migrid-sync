@@ -155,16 +155,6 @@ def main(client_id, user_arguments_dict):
             status = returnvalues.CLIENT_ERROR
             continue
 
-        # Check that file belongs to the user requesting the job schedule
-
-        if client_id != dict['USER_CERT']:
-            saveschedulejob['message'] = \
-                '%s the job you are trying to modify does not belong to you!'\
-                 % client_id
-            status = returnvalues.CLIENT_ERROR
-            saveschedulejobs.append(saveschedulejob)
-            continue
-
         saveschedulejob['oldstatus'] = dict['STATUS']
 
         # Is the job status pending?

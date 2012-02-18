@@ -156,16 +156,6 @@ def main(client_id, user_arguments_dict):
             status = returnvalues.CLIENT_ERROR
             continue
 
-        # Check that file belongs to the user requesting the job check
-
-        if client_id != dict['USER_CERT']:
-            checkcondjob['message'] = \
-                '%s the job you are trying to modify does not belong to you!'\
-                 % client_id
-            status = returnvalues.CLIENT_ERROR
-            checkcondjobs.append(checkcondjob)
-            continue
-
         # Is the job status pending?
 
         possible_check_states = ['QUEUED', 'RETRY', 'FROZEN']

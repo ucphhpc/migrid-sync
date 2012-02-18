@@ -136,5 +136,7 @@ if '__main__' == __name__:
     except Exception, err:
         print err
         sys.exit(1)
-    print 'Edited %s to %s in user database and file system' % \
+    print '%s\nchanged to\n%s\nin user database and file system' % \
           (user_id, user['distinguished_name'])
+    print
+    print 'Please revoke/reissue any related certificates!'
