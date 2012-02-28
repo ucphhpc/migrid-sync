@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridowner - remove a vgrid owner
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -283,9 +283,10 @@ def main(client_id, user_arguments_dict):
          via mail about what you wanted to do when the error happened.'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # find out whether to just remove an owner or delete the whole thing
+    # find out whether to just remove an owner or delete the whole thing.
+    # ask about delete if last or no direct owners.
 
-    if len(owners) > 1:
+    if len(owners_direct) > 1:
         
         logger.debug('Removing %s, one of several owners, from %s.' % 
                      (cert_id, vgrid_name))
@@ -358,21 +359,20 @@ Owner removal has to be performed at the topmost vgrid''' % cert_id})
 
     else:
         
-        # the last owner wants to leave, we try to remove this VGrid
-        # implies cert_id == client_id. 
+        # no more direct owners - we try to remove this VGrid
 
-        logger.debug('Last owner %s wants to leave %s. Attempting deletion' %
-                     (cert_id, vgrid_name))
+        logger.debug('Leave %s from %s with no more direct owners: delete' %
+                     (vgrid_name, cert_id))
 
         if not force(flags):
             output_objects.append({'object_type': 'text', 'text' : '''
-You are the last owner of %s - leaving will result in the vgrid getting
+No more direct owners of %s - leaving will result in the vgrid getting
 deleted. Please use either of the links below to confirm or cancel.
 ''' % vgrid_name})
             js_name = 'rmvgridowner%s' % hexlify(vgrid_name)
             helper = html_post_helper(js_name, 'rmvgridowner.py',
                                       {'vgrid_name': vgrid_name,
-                                       'cert_id': client_id, 'flags': 'f'})
+                                       'cert_id': cert_id, 'flags': 'f'})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             output_objects.append({'object_type': 'link', 'destination':
                                    "javascript: %s();" % js_name, 'class':
@@ -454,7 +454,7 @@ To leave (and delete) %s, first remove all members.'''
 
         if (cert_id in owners_direct):
 
-            # owner owns an upper vgrid, ownership is inherited
+            # owner owns this vgrid, direct ownership
 
             logger.debug('%s looks like a top-level vgrid.'
                          % vgrid_name)
