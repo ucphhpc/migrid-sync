@@ -88,10 +88,17 @@ class User(object):
         self.password = password
         self.chroot = chroot
         self.public_key = public_key
-        if type(self.public_key) in (str, unicode):
-            bits = base64.decodestring(self.public_key.split(' ')[1])
+        if type(public_key) in (str, unicode):
+            head, tail = public_key.split(' ')[:2]
+            bits = base64.decodestring(tail)
             msg = paramiko.Message(bits)
-            key = paramiko.RSAKey(msg)
+            if head == 'ssh-rsa':
+                key = paramiko.RSAKey(msg)
+            elif head == 'ssh-dss':
+                key = paramiko.DSSKey(msg)
+            else:
+                # Skip unknown key type
+                key = None
             self.public_key = key
 
         self.home = home
@@ -607,7 +614,8 @@ def refresh_users(conf):
         # Create user entry for each valid key
         all_keys = get_ssh_authkeys(path)
         for user_key in all_keys:
-            if not user_key.startswith('ssh-rsa '):
+            if not user_key.startswith('ssh-rsa ') and \
+                   not user_key.startswith('ssh-dss '):
                 logger.warning("Skipping broken key %s for user %s" % \
                                (user_key, user_id))
                 continue
