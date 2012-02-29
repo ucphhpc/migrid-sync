@@ -93,11 +93,15 @@ class User(object):
             bits = base64.decodestring(tail)
             msg = paramiko.Message(bits)
             if head == 'ssh-rsa':
-                key = paramiko.RSAKey(msg)
+                parse_key = paramiko.RSAKey
             elif head == 'ssh-dss':
-                key = paramiko.DSSKey(msg)
+                parse_key = paramiko.DSSKey
             else:
-                # Skip unknown key type
+                # Try RSA for unknown key types
+                parse_key = paramiko.RSAKey
+            try:
+                key = parse_key(msg)
+            except:
                 key = None
             self.public_key = key
 
