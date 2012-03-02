@@ -234,7 +234,8 @@ in any browser.
 Access to non-public repositories is only granted if your user certificate
 is imported in the browser.
 
-For full access the repository you need a Mercurial client.
+For full access the repository you need a Mercurial client and the unpacked
+user certificate files, that you received upon your certificate request.
 Once again for non-public repositories you need client certificate support
 in the client. Mercurial 1.3 and later is known to work with certificates,
 but please refer to the documentation provided with your installation if you
