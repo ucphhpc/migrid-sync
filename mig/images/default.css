@@ -243,6 +243,9 @@ table.liveio table {
 .navmenu ul li.people a {
   background-image: url('/images/icons/group.png');
 }
+.navmenu ul li.migadmin a {
+  background-image: url('/images/icons/server_lightning.png');
+}
 
 .navmenu ul li.statistics a {
   background-image: url('/images/icons/statistics-icon.png');

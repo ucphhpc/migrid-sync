@@ -28,6 +28,7 @@
 """MiG administrators page with daemon status and configuration"""
 
 import os
+import subprocess
 
 import shared.returnvalues as returnvalues
 from shared.fileio import send_message_to_grid_script
@@ -35,11 +36,19 @@ from shared.findtype import is_admin
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 
+grid_actions = {'reloadconfig': 'RELOADCONFIG',
+                'showqueued': 'JOBQUEUEINFO',
+                'showexecuting': 'EXECUTINGQUEUEINFO',
+                'showdone': 'DONEQUEUEINFO',
+                'dropqueued': 'DROPQUEUED',
+                'dropexecuting': 'DROPEXECUTING',
+                'dropdone': 'DROPDONE',
+                }
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'action': [], 'job_id': [], 'lines': [20]}
+    defaults = {'action': [''], 'job_id': [], 'lines': [20]}
     return ['html_form', defaults]
 
 
@@ -87,17 +96,9 @@ $(document).ready(function() {
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     html = ''
-    grid_actions = {'reloadconfig': 'RELOADCONFIG',
-                    'showqueued': 'JOBQUEUEINFO',
-                    'showexecuting': 'EXECUTINGQUEUEINFO',
-                    'showdone': 'DONEQUEUEINFO',
-                    'dropqueud': 'DROPQUEUED',
-                    'dropexecuting': 'DROPEXECUTING',
-                    'dropdone': 'DROPDONE',
-                    }
     if action and not action in grid_actions:
         output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Invalid action: %s)' % action})
+                               : 'Invalid action: %s' % action})
         return (output_objects, returnvalues.SYSTEM_ERROR)
     if action:
         msg = "%s" % grid_actions[action]
@@ -110,45 +111,81 @@ $(document).ready(function() {
                  : '''Error sending %s message to grid_script.''' % action
                  })
             status = returnvalues.SYSTEM_ERROR
-    else:
-        show, drop = '', '', ''
-        general = """
+
+    show, drop = '', ''
+    general = """
 <p>
+<h1>Server Status</h1>
 <form method='get' action='migadmin.py'>
     <input type='hidden' name='action' value='' />
+    <input type='submit' value='Show last log lines' />
     <input type='text' size='2' name='lines' value='%s' />
-    <input type='submit' value='last log lines' />
 </form>
 </p>
 <p>
 <form method='get' action='migadmin.py'>
+    <input type='hidden' name='lines' value='%s' />
     <input type='hidden' name='action' value='reloadconfig' />
-    <input type='submit' value='reload configuration' />
+    <input type='submit' value='Reload Configuration' />
 </form>
 </p>
+""" % (lines, lines)
+    show += """<p>
+<form method='get' action='migadmin.py'>
+    <input type='hidden' name='lines' value='%s' />
+    <input type='submit' value='Log Jobs' />
+    <select name='action'>
 """ % lines
-        for queue in ['queued', 'executing', 'done']:
-            show += """
+    drop += """
 <p>
 <form method='get' action='migadmin.py'>
-    <input type='hidden' name='action' value='show%s' />
-    <input type='submit' value='show %s jobs' />
+    <input type='hidden' name='lines' value='%s' />
+    <input type='submit' value='Drop Job' />
+    <select name='action'>
+""" % lines
+    for queue in ['queued', 'executing', 'done']:
+        selected = ''
+        if action.find(queue) != -1:
+            selected = 'selected'
+        show += "<option %s value='show%s' />%s</option>" % (selected, queue,
+                                                             queue)
+        drop += "<option %s value='drop%s' />%s</option>" % (selected, queue,
+                                                             queue)
+    show += """
+    </select>
 </form>
-</p>
-""" % queue
-            drop += """
-<p>
-<form method='get' action='migadmin.py'>
+</p>"""
+    drop += """
+    </select>
     <input type='text' size='20' name='job_id' value='' />
-    <input type='hidden' name='action' value='drop%s' />
-    <input type='submit' value='drop %s job' />
 </form>
-</p>
-""" % (queue, queue)
-        html += general
-        html += show
-        html += drop
+</p>"""
+    html += general
+    html += show
+    html += drop
 
+    daemons = """
+<p>
+"""
+    daemon_names = ['grid_script.py', 'grid_monitor.py', 'ssh_multiplex.py',
+                    'im_notify.py']
+    if configuration.site_enable_sftp:
+        daemon_names.append('grid_sftp.py')
+    for proc in daemon_names:
+        pgrep_proc = subprocess.Popen(['pgrep', proc],
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.STDOUT)
+        pgrep_proc.wait()
+        ps_out = pgrep_proc.stdout.read().strip()
+        if pgrep_proc.returncode == 0:
+            daemons += "<div class='status_online'>%s running (pid %s)</div>" \
+                       % (proc, ps_out)
+        else:
+            daemons += "<div class='status_offline'>%s not running!</div>" % \
+                       proc
+    daemons += """</p>"""
+    html += daemons
+    
     log_path_list = []
     if os.path.isabs(configuration.logfile):
         log_path_list.append(configuration.logfile)
@@ -157,17 +194,37 @@ $(document).ready(function() {
             log_path_list.append(os.path.join(configuration.mig_code_base,
                                               name, configuration.logfile))
     for log_path in log_path_list:
-        html += '<p>'
+        html += '''<p>
+<h1>%s</h1><textarea rows=%s cols=200 readonly="yes">
+''' % (log_path, lines)
         try:
+            logger.debug("loading %d lines from %s" % (lines, log_path))
             log_fd = open(log_path, 'r')
-            for line in log_fd[-lines:]:
-                html += str(line)
+            log_fd.seek(0, os.SEEK_END)
+            size = log_fd.tell()
+            pos = log_fd.tell()
+            log_lines = []
+            step_size = 100
+            # locate last X lines 
+            while pos > 0 and len(log_lines) < lines:
+                offset = min(lines * step_size, size)
+                logger.debug("seek to offset %d from end of %s" % (offset,
+                                                                  log_path))
+                log_fd.seek(-offset, os.SEEK_END)
+                pos = log_fd.tell()
+                log_lines = log_fd.readlines()
+                step_size *= 2
+            logger.debug("reading %d lines from %s" % (lines, log_path))
+            html += ''.join(log_lines[-lines:])
             log_fd.close()
         except Exception, exc:
+            logger.error("reading %d lines from %s: %s" % (lines, log_path,
+                                                           exc))
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'Error reading log (%s)' % exc})
             return (output_objects, returnvalues.SYSTEM_ERROR)
-        html += '</p>'
+        html += '''</textarea>
+</p>'''
 
     output_objects.append({'object_type': 'html_form', 'text'
                               : html})

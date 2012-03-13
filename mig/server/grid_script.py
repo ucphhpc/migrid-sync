@@ -1572,10 +1572,11 @@ while True:
                     logger.info('requested restart exe retry attempt')
     elif cap_line.find('JOBQUEUEINFO') == 0:
 
-        logger.info('--- DISPLAYING JOB QUEUE INFORMATION ---')
         details = linelist[1:]
         if not details:
             details.append('JOB_ID')
+        logger.info('--- DISPLAYING JOB QUEUE INFORMATION ---\n%s' % \
+                    '\n'.join(job_queue.format_queue(details)))
         job_queue.show_queue(details)
     elif cap_line.find('DROPQUEUED') == 0:
         logger.info('--- REMOVING JOBS FROM JOB QUEUE ---')
@@ -1590,10 +1591,11 @@ while True:
                 logger.error("Failed to remove job %s from job queue: %s" \
                              %  (job_id, exc))
     elif cap_line.find('EXECUTINGQUEUEINFO') == 0:
-        logger.info('--- DISPLAYING EXECUTING QUEUE INFORMATION ---')
         details = linelist[1:]
         if not details:
             details.append('JOB_ID')
+        logger.info('--- DISPLAYING EXECUTING QUEUE INFORMATION ---\n%s' % \
+                    '\n'.join(executing_queue.format_queue(details)))
         executing_queue.show_queue(details)
     elif cap_line.find('DROPEXECUTING') == 0:
         logger.info('--- REMOVING JOBS FROM EXECUTING QUEUE ---')
@@ -1608,10 +1610,11 @@ while True:
                 logger.error("Failed to remove job %s from exe queue: %s" \
                              %  (job_id, exc))
     elif cap_line.find('DONEQUEUEINFO') == 0:
-        logger.info('--- DISPLAYING DONE QUEUE INFORMATION ---')
         details = linelist[1:]
         if not details:
             details.append('JOB_ID')
+        logger.info('--- DISPLAYING DONE QUEUE INFORMATION ---\n%s' % \
+                    '\n'.join(done_queue.format_queue(details)))
         done_queue.show_queue(details)
     elif cap_line.find('DROPDONE') == 0:
         logger.info('--- REMOVING JOBS FROM DONE QUEUE ---')

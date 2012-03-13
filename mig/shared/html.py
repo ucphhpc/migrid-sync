@@ -75,6 +75,9 @@ menu_items['docs'] = {'class': 'docs', 'url': 'docs.py',
 menu_items['people'] = {'class': 'people', 'url': 'people.py',
                            'title': 'People', 
                            'hover': 'view and communicate with other users'}
+menu_items['migadmin'] = {'class': 'migadmin', 'url': 'migadmin.py',
+                           'title': 'Server Admin', 
+                           'hover': 'administrate this MiG server'}
 # Define all possible VGrid page columns
 vgrid_items = {}
 vgrid_items['files'] = {'class': 'vgridfiles', 'title': 'Files', 

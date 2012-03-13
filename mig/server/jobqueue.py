@@ -28,20 +28,25 @@
 """MiG server job queue"""
 
 
-def print_job(job_dict, detail=['JOB_ID']):
+def format_job(job_dict, detail=['JOB_ID']):
 
-    # Keyword all prints all values
+    # Keyword all shows all values
 
+    out = []
     if detail == ['ALL']:
         for attr in job_dict.keys():
-            print '\t%s: %s' % (attr, job_dict[attr])
+            out.append('\t%s: %s' % (attr, job_dict[attr]))
     else:
 
         for attr in detail:
             if job_dict.has_key(attr):
-                print '\t%s: %s' % (attr, job_dict[attr])
+                out.append('\t%s: %s' % (attr, job_dict[attr]))
             else:
-                print '\t%s: UNSET' % attr
+                out.append('\t%s: UNSET' % attr)
+    return out
+
+def print_job(job_dict, detail=['JOB_ID']):
+    print '\n'.join(format_job(job_dict, detail))
 
 
 class JobQueue:
@@ -64,15 +69,22 @@ class JobQueue:
         self.logger = logger
         self.logger.info('initialised queue')
 
+    def format_queue(self, detail=['JOB_ID']):
+        """Format queue contents for printing"""
+
+        out = []
+        if self.queue_length() > 0:
+            for j in self.queue:
+                out.append('\n'.join(format_job(j, detail)))
+        else:
+            out.append('\t-Empty-')
+        return out
+
     def show_queue(self, detail=['JOB_ID']):
         """Print queue contents"""
 
         print 'Queue:'
-        if self.queue_length() > 0:
-            for j in self.queue:
-                print_job(j, detail)
-        else:
-            print '\t-Empty-'
+        print '\n'.join(self.format_queue(detail))
 
     def queue_length(self):
         """Count number of jobs in queue"""
