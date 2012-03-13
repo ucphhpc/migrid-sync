@@ -442,7 +442,7 @@ class Configuration:
         if config.has_option('GLOBAL', 'admin_list'):
             # Parse semi-colon separated list of admins with optional spaces
             admins = config.get('GLOBAL', 'admin_list')
-            self.admin_list = [admin.strip() for admin in admins.split(';')]
+            self.admin_list = [admin.strip() for admin in admins.split(',')]
         else:
             self.admin_list = []
         if config.has_option('GLOBAL', 'admin_email'):
