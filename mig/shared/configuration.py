@@ -51,6 +51,7 @@ def fix_missing(config_file, verbose=True):
         'auto_add_resource': False,
         'server_fqdn': fqdn,
         'admin_email': '%s@%s' % (user, fqdn),
+        'admin_list': '',
         'mrsl_files_dir': '~/state/mrsl_files/',
         're_files_dir': '~/state/re_files/',
         're_pending_dir': '~/state/re_pending/',
@@ -181,6 +182,7 @@ class Configuration:
     mig_code_base = ''
     server_fqdn = ''
     admin_email = ''
+    admin_list = ''
     resource_home = ''
     vgrid_home = ''
     vgrid_public_base = ''
@@ -366,7 +368,6 @@ class Configuration:
             # logger.info("grid_stdin = " + self.grid_stdin)
 
             self.server_fqdn = config.get('GLOBAL', 'server_fqdn')
-            self.admin_email = config.get('GLOBAL', 'admin_email')
             self.resource_home = config.get('GLOBAL', 'resource_home')
             self.vgrid_home = config.get('GLOBAL', 'vgrid_home')
             self.vgrid_private_base = config.get('GLOBAL',
@@ -438,6 +439,14 @@ class Configuration:
                 pass
             raise Exception('Failed to parse configuration: %s' % err)
 
+        if config.has_option('GLOBAL', 'admin_list'):
+            self.admin_list = config.get('GLOBAL', 'admin_list')
+        else:
+            self.admin_list = []
+        if config.has_option('GLOBAL', 'admin_email'):
+            self.admin_email = config.get('GLOBAL', 'admin_email')
+        else:
+            self.admin_email = []
         if config.has_option('GLOBAL', 'migserver_https_cert_url'):
             self.migserver_https_cert_url = config.get('GLOBAL',
                                                        'migserver_https_cert_url')

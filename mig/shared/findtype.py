@@ -110,4 +110,9 @@ caller: %s"""
          or is_item_in_pickled_list(config_path,
                                     old_id_format(client_id), logger)
 
+def is_admin(client_id, configuration, logger):
+    """Check that client_id is listed in MiG admins"""
+
+    return client_id in configuration.admin_id_list
+
 
