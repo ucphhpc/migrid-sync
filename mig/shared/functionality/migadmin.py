@@ -172,7 +172,7 @@ $(document).ready(function() {
     if configuration.site_enable_sftp:
         daemon_names.append('grid_sftp.py')
     for proc in daemon_names:
-        pgrep_proc = subprocess.Popen(['pgrep', proc],
+        pgrep_proc = subprocess.Popen(['pgrep', '-f', proc],
                                       stdout=subprocess.PIPE,
                                       stderr=subprocess.STDOUT)
         pgrep_proc.wait()
