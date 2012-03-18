@@ -165,19 +165,21 @@ def main(client_id, user_arguments_dict):
 
             real_target = real_dest
             if os.path.isdir(real_target):
-                if os.path.samefile(real_target, real_path):
-                    logger.warning('%s tried to %s %s to itself! (%s)'
-                                   % (client_id, op_name, real_path, pattern))
-                    output_objects.append(
-                        {'object_type': 'warning', 'text'
-                         : "Cannot copy '%s' to itself!" % relative_path})
-                    status = returnvalues.CLIENT_ERROR
-                    continue
                 real_target = os.path.join(real_target,
                                            os.path.basename(real_path))
 
             logger.info('%s trying to %s %s to %s (%s)' % \
                         (client_id, op_name, real_path, real_target, pattern))
+
+            if os.path.isdir(real_path) and \
+                   real_target.startswith(real_path + os.sep):
+                    logger.warning('%s tried to %s %s to itself! (%s)'
+                                   % (client_id, op_name, real_path, pattern))
+                    output_objects.append(
+                        {'object_type': 'warning', 'text'
+                         : "Cannot copy '%s' to (sub) self!" % relative_path})
+                    status = returnvalues.CLIENT_ERROR
+                    continue
             
             try:
                 if os.path.isdir(real_path):
