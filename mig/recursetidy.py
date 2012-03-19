@@ -166,7 +166,8 @@ def tidy_all(src_path, dst_path, filter_pattern):
     tidied_path_list = tidy_recursively(orig_dir, tidied_dir, filter_pattern)
     
     if zip_target:
-        arch = zipfile.ZipFile(dst_path, zip_mode)
+        # Force compression
+        arch = zipfile.ZipFile(dst_path, zip_mode, zipfile.ZIP_DEFLATED)
         for tidied_path in tidied_path_list:
             rel_path = tidied_path.replace(tidied_dir + os.sep, "")
             arch.write(tidied_path, rel_path)

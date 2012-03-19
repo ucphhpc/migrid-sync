@@ -269,7 +269,8 @@ def main(client_id, user_arguments_dict):
 
         script_zip = script_dir + '.zip'
         dest_zip = '%s%s' % (base_dir, script_zip)
-        zip_file = zipfile.ZipFile(dest_zip, 'w')
+        # Force compression
+        zip_file = zipfile.ZipFile(dest_zip, 'w', zipfile.ZIP_DEFLATED)
 
         # Directory write is not supported - add each file manually
 

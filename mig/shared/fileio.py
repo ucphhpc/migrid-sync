@@ -246,7 +246,8 @@ def write_zipfile(zip_path, paths, archive_base=''):
     directory path of the archived files.
     """
     try:
-        zip_file = zipfile.ZipFile(zip_path, 'w')
+        # Force compression
+        zip_file = zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED)
         # Directory write is not supported - add each file manually
         for script in paths:
 

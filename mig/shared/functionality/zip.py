@@ -173,7 +173,8 @@ def main(client_id, user_arguments_dict):
 
     status = returnvalues.OK
 
-    zip_file = zipfile.ZipFile(real_dest, 'w')
+    # Force compression
+    zip_file = zipfile.ZipFile(real_dest, 'w', zipfile.ZIP_DEFLATED)
     for pattern in pattern_list:
 
         # Check directory traversal attempts before actual handling to avoid
