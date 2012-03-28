@@ -120,7 +120,7 @@ def handle_form_input(filenumber, user_arguments_dict, configuration):
                 if counter_1 == -1 and counter_2 == 0:
                     if keyword == 'PLAINFILE':
                         file_type = 'plain'
-                    if keyword == 'FILEUPLOAD':
+                    elif keyword == 'FILEUPLOAD':
                         file_type = 'fileupload'
                     else:
 
