@@ -41,7 +41,7 @@ from shared.validstring import valid_user_path
 def signature():
     """Signature of the main function"""
 
-    defaults = {'path': REJECT_UNSET, 'flags': ['']}
+    defaults = {'path': REJECT_UNSET, 'dst': [''], 'flags': ['']}
     return ['file_output', defaults]
 
 
@@ -66,6 +66,7 @@ def main(client_id, user_arguments_dict):
 
     flags = ''.join(accepted['flags'])
     patterns = accepted['path']
+    dst = accepted['dst'][-1]
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -79,6 +80,18 @@ def main(client_id, user_arguments_dict):
                                   : '%s using flag: %s' % (op_name,
                                   flag)})
 
+    if dst:
+        dst_mode = "wb"
+        real_dst = os.path.join(base_dir, dst)
+        relative_dst = real_dst.replace(base_dir, '')
+        if not valid_user_path(real_dst, base_dir, True):
+            logger.warning('%s tried to %s into restricted path %s ! (%s)'
+                           % (client_id, op_name, real_dst, dst))
+            output_objects.append({'object_type': 'error_text',
+                                   'text': "invalid destination: '%s'" % \
+                                   dst})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+            
     for pattern in patterns:
 
         # Check directory traversal attempts before actual handling to avoid
@@ -111,7 +124,6 @@ def main(client_id, user_arguments_dict):
         for real_path in match:
             output_lines = []
             relative_path = real_path.replace(base_dir, '')
-            filename = 'unknown'
             try:
                 fd = open(real_path, 'r')
 
@@ -119,7 +131,6 @@ def main(client_id, user_arguments_dict):
 
                 for line in fd:
                     output_lines.append(line)
-
                 fd.close()
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
@@ -129,22 +140,45 @@ def main(client_id, user_arguments_dict):
                              relative_path, exc))
                 status = returnvalues.SYSTEM_ERROR
                 continue
-            entry = {'object_type': 'file_output',
-                       'lines': output_lines,
-                       'wrap_binary': binary(flags),
-                       'wrap_targets': ['lines']}
-            if verbose(flags):
-                entry['path'] = relative_path
-            output_objects.append(entry)
+            if dst:
+                try:
+                    out_fd = open(real_dst, dst_mode)
+                    out_fd.writelines(output_lines)
+                    out_fd.close()
+                except Exception, exc:
+                    output_objects.append({'object_type': 'error_text',
+                                           'text': "write failed: '%s'" % exc})
+                    logger.error("%s: write failed on '%s': %s" % (op_name,
+                                                               real_dst, exc))
+                    status = returnvalues.SYSTEM_ERROR
+                    continue
+                output_objects.append({'object_type': 'text',
+                        'text': "wrote %s to %s" % (relative_path,
+                                                    relative_dst)})
+                # Prevent truncate after first write
+                dst_mode = "ab+"
+            else:
+                entry = {'object_type': 'file_output',
+                         'lines': output_lines,
+                         'wrap_binary': binary(flags),
+                         'wrap_targets': ['lines']}
+                if verbose(flags):
+                    entry['path'] = relative_path
+                output_objects.append(entry)
 
-            # TODO: rip this hack out into real download handler?
-            # Force download of files when output_format == 'file_format'
-            # This will only work for the first file matching a glob when using file_format.
-            # And it is supposed to only work for one file.
-            if user_arguments_dict.has_key('output_format'):
-                output_format = user_arguments_dict['output_format'][0]
-                if output_format == 'file':
-                    output_objects.append({'object_type': 'start', 'headers': [('Content-Disposition', 'attachment; filename="%s";' % os.path.basename(real_path))]})
+                # TODO: rip this hack out into real download handler?
+                # Force download of files when output_format == 'file_format'
+                # This will only work for the first file matching a glob when
+                # using file_format.
+                # And it is supposed to only work for one file.
+                if user_arguments_dict.has_key('output_format'):
+                    output_format = user_arguments_dict['output_format'][0]
+                    if output_format == 'file':
+                        output_objects.append(
+                            {'object_type': 'start', 'headers':
+                             [('Content-Disposition',
+                               'attachment; filename="%s";' % \
+                               os.path.basename(real_path))]})
             
     return (output_objects, status)
 
