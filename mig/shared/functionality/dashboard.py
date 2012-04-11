@@ -235,9 +235,10 @@ but additional help, background information and tutorials are available in the
     output_objects.append({'object_type': 'sectionheader', 'text' :
                            "Personal Settings"})
     settings_info = """
-You can customize your personal pages if you like, by opening the Settings
+You can customize your personal pages by opening the Settings
 page from the navigation menu and entering personal preferences. In that way you
-can ease file and job handling or even completely redecorate your interface.
+can completely redecorate your interface and configure things like notification,
+profile visibility and remote file access.
 """
     output_objects.append({'object_type': 'text', 'text': settings_info})
 
