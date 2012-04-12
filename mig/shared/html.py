@@ -78,6 +78,16 @@ menu_items['people'] = {'class': 'people', 'url': 'people.py',
 menu_items['migadmin'] = {'class': 'migadmin', 'url': 'migadmin.py',
                            'title': 'Server Admin', 
                            'hover': 'administrate this MiG server'}
+menu_items['vmachines'] = {'class': 'vmachines', 'url': 'vmachines.py',
+                           'title': 'Virtual Machines', 
+                           'hover': 'Manage Virtual Machines'}
+menu_items['vmrequest'] = {'class': 'vmrequest', 'url': 'vmrequest.py',
+                           'title': 'Request Virtual Machine', 
+                           'hover': 'Request Virtual Machine'}
+menu_items['vmconnect'] = {'class': 'vmconnect', 'url': 'vmconnect.py',
+                           'title': 'Connect to Virtual Machine', 
+                           'hover': 'Connect to Virtual Machine'}
+
 # Define all possible VGrid page columns
 vgrid_items = {}
 vgrid_items['files'] = {'class': 'vgridfiles', 'title': 'Files', 
@@ -112,10 +122,13 @@ def html_add(formatted_text, html=True):
 
 def render_menu(configuration, menu_class='navmenu', 
                 current_element='Unknown',
-                user_menu=[]):
+                user_menu=[], hide_default=False):
     """Render the menu contents using configuration"""
 
-    raw_order = configuration.site_default_menu + user_menu
+    raw_order = []
+    if not hide_default:
+        raw_order += configuration.site_default_menu
+    raw_order += user_menu
     menu_order = []
     # Remove duplicates
     for name in raw_order:

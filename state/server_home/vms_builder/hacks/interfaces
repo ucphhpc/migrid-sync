@@ -1,0 +1,46 @@
+# This file is a hack due to a glitch when deploying virtual
+# machines to resources. VirtualBox presents new hardware identifiers
+# and linux responds by renaming the interface name from eth0 to eth1
+# resulting in a missing configuration for the eth1 and thus no
+# network for the appliance.
+#
+# An alternative is to use a command like:
+# dhclient `dmesg | grep "renamed network interface eth.*eth.*" | grep -o "to eth.*" | cut -b 4-`
+# this would be an attempt to dynamicly assign a dhcp lease to whichever
+# the device is renamed to.
+# That would however but a limited attempt to fix the dynamic renaming
+# and much more work would be done to make it stable.
+# This static approach is ugly but stable.
+
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+
+auto eth1
+iface eth1 inet dhcp
+
+auto eth2
+iface eth2 inet dhcp
+
+auto eth3
+iface eth3 inet dhcp
+
+auto eth4
+iface eth4 inet dhcp
+
+auto eth5
+iface eth5 inet dhcp
+
+auto eth6
+iface eth6 inet dhcp
+
+auto eth7
+iface eth7 inet dhcp
+
+auto eth8
+iface eth8 inet dhcp
+
+auto eth9
+iface eth9 inet dhcp
