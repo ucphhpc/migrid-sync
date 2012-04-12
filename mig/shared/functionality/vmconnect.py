@@ -74,7 +74,7 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'text', 'text'
                           : vms.popup_snippet() + vms.vnc_applet(
-        'amigos18.diku.dk',
+        configuration.server_fqdn,
         8111,
         8114,
         1024,
