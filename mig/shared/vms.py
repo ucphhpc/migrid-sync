@@ -43,7 +43,7 @@ from glob import glob
 from tempfile import NamedTemporaryFile
 
 from shared.base import client_id_dir
-from shared.defaults import default_vgrid
+from shared.defaults import any_vgrid
 from shared.fileio import unpickle
 from shared.job import new_job
 
@@ -293,14 +293,13 @@ def enqueue_vm(client_id, configuration, machine_name):
     # Generate the mrsl and write to a temp file which is removed on close
 
     mrsl = mig_vbox_deployed_job(machine_name)
-    mrsl_path = NamedTemporaryFile()
-    mrsl_fd = open(filename, 'w', 0)
+    mrsl_fd = NamedTemporaryFile()
     mrsl_fd.write(mrsl)
     mrsl_fd.flush()
 
     # Submit job and clean up
 
-    res = new_job(filename, client_id, configuration, False, True)
+    res = new_job(mrsl_fd.name, client_id, configuration, False, True)
     mrsl_fd.close()
     return res
 
@@ -317,7 +316,7 @@ def mig_vbox_deployed_job(
     cpu_count=1,
     cpu_time=900,
     architecture='',
-    vgrid=[default_vgrid],
+    vgrid=[any_vgrid],
     runtime_env=['VIRTUALBOX-3.1.X-1', 'VBOX3.1-IMAGES-2008-1'],
     notify=['jabber: SETTINGS'],
     ):

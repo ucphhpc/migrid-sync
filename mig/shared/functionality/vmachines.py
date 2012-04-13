@@ -31,10 +31,10 @@
 import time
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
+from shared import vms
 from shared.functional import validate_input_and_cert
 from shared.html import render_menu
-from shared import vms
+from shared.init import initialize_main_variables, find_entry
 
 
 def signature():
@@ -48,8 +48,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False,
-                                  op_title=False)
+        initialize_main_variables(client_id, op_header=False)
 
     status = returnvalues.OK
     defaults = {
@@ -94,10 +93,10 @@ def main(client_id, user_arguments_dict):
 </ul>
 </p>'''
 
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG Virtual Machines'})
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG Virtual Machines'})
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'MiG Virtual Machines'
+    output_objects.append({'object_type': 'header', 'text':
+                           'MiG Virtual Machines'})
     output_objects.append({'object_type': 'html_form', 'text': submenu})
     output_objects.append({'object_type': 'html_form', 'text'
                           : '<p>&nbsp;</p>'})
