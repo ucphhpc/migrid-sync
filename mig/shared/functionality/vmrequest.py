@@ -68,7 +68,7 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<form method="post" action="/cgi-bin/vmachines.py">
+<form method="post" action="vmachines.py">
 <input type="hidden" name="output_format" value="html">
 <input type="hidden" name="machine_request" value="1">
 

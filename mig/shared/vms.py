@@ -33,6 +33,7 @@ machines etc.
 """
 
 import os
+import datetime
 import ConfigParser
 import re
 import md5
@@ -93,9 +94,10 @@ def vms_list(client_id, configuration):
       - By using VirtualBox frontend (work of Tomas)
       - By using webinterface (work of Simon)
       
-      The storage of virtual machines are based on xml files (deployed by virtualbox)
-      or ini files when deployed by MiG. This library supports both and the logic
-      is separeted into functions where appropriate.
+      The storage of virtual machines are based on xml files (deployed by
+      virtualbox)
+      or ini files when deployed by MiG. This library supports both and the
+      logic is separated into functions where appropriate.
     """
 
     # Grab the base directory of the user
@@ -145,11 +147,14 @@ def vms_list(client_id, configuration):
         jobs = []
         match_line = 'VBoxManage createvm -name "' + vm_def_base \
             + '" -register'
-        for stuff in glob(os.path.join(mrsl_files_dir, '*')):
-            for line in open(os.path.abspath(stuff), 'r', 1):
+        # we cannot inspect all mrsl files - filter by year is good guesstimate
+        # TODO: mark vms jobs for easy finding without brute force search
+        for mrsl_path in glob(os.path.join(mrsl_files_dir, '*_%d_*' % \
+                                           datetime.date.today().year)):
+            for line in open(os.path.abspath(mrsl_path), 'r', 1):
 
                 if match_line in line:
-                    jobs.append(unpickle(stuff, configuration.logger))
+                    jobs.append(unpickle(mrsl_path, configuration.logger))
                     break
 
         # Base the state on the latest job.
@@ -231,7 +236,7 @@ def machine_link(
 
     if state == 'EXECUTING':
         link = \
-            '<a href="/cgi-bin/vmachines_connect.py?job_id=%s">%s</a>' \
+            '<a href="vmconnect.py?job_id=%s">%s</a>' \
             % (job_id, content)
     elif state == 'QUEUED':
         link = content

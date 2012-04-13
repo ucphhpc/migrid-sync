@@ -72,7 +72,7 @@ def main(client_id, user_arguments_dict):
 
     # TODO: Read proxy parameters from configuration
 
-    output_objects.append({'object_type': 'text', 'text'
+    output_objects.append({'object_type': 'html_form', 'text'
                           : vms.popup_snippet() + vms.vnc_applet(
         configuration.server_fqdn,
         8111,
