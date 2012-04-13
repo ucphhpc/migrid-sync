@@ -2,6 +2,10 @@
 #
 # Script to manage the execution time of the virtual machine.
 #
+# Requires VBOXHEADLESS and VBOXMANAGE environments to point to the
+# VBoxHeadless and VBoxManage binaries respectively.
+# They are automatically set by the VIRTUALBOX-*-1 runtime environments
+#
 # Arguments:
 # 1 = Virtual Machine Name
 # 2 = Execution time
@@ -10,7 +14,8 @@
 VBOX_STATE=0
 VM_NAME=$1
 EXEC_TIME=$2
-VBoxHeadless -startvm "$VM_NAME" &
+
+$VBOXHEADLESS -startvm "$VM_NAME" &
 VBOX_PID=$!
 
 while [ $VBOX_STATE -eq 0 ]
@@ -28,11 +33,11 @@ do
   elif [ $EXEC_TIME -lt 1 ]
   then
     echo "vm $VM_NAME with pid $VBOX_PID still running: hard power off"
-    VBoxManage -q controlvm "$VM_NAME" poweroff
+    $VBOXMANAGE -q controlvm "$VM_NAME" poweroff
   elif [ $EXEC_TIME -lt 2 ]
   then
     echo "vm $VM_NAME with pid $VBOX_PID timed out: soft power off"
-    VBoxManage -q controlvm "$VM_NAME" acpipowerbutton
+    $VBOXMANAGE -q controlvm "$VM_NAME" acpipowerbutton
     # give it a little time to shut down cleanly
     sleep 15
   fi

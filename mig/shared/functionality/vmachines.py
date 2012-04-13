@@ -115,15 +115,19 @@ def main(client_id, user_arguments_dict):
         vms.create_vm(client_id, configuration, accepted['machine_name'
                       ][0])
 
-    just_started_job_id = ''
+    (action_status, action_msg, job_id) = (True, '', None)
     if accepted['start'][0] != '':
-        just_started_job_id = vms.enqueue_vm(client_id, configuration,
-                accepted['start'][0])
+        (action_status, action_msg, job_id) = vms.enqueue_vm(client_id, configuration,
+                                                     accepted['start'][0])
     elif accepted['stop']:
 
         # TODO: manage stop
 
         pass
+
+    if not action_status:
+        output_objects.append({'object_type': 'error_text', 'text': action_msg})
+        
 
     # List the machines here
 
@@ -217,6 +221,12 @@ def main(client_id, user_arguments_dict):
              "Click 'Request Virtual Machine' to become a proud owner :)"
              })
 
+    output_objects.append({'object_type': 'html_form', 'text'
+                          : '''<p>
+You can manually delete your virtual machines by removing the directory of the
+corresponding name in <a href="fileman.py?path=vms/">your vms directory</a>.
+</p>'''
+                           })
     return (output_objects, status)
 
 

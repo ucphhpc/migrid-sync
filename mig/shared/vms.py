@@ -40,9 +40,10 @@ import os
 import re
 import shutil
 from glob import glob
-from string import Template
+from tempfile import NamedTemporaryFile
 
 from shared.base import client_id_dir
+from shared.defaults import default_vgrid
 from shared.fileio import unpickle
 from shared.job import new_job
 
@@ -146,8 +147,8 @@ def vms_list(client_id, configuration):
         # All job descriptions associated with this virtual machine
 
         jobs = []
-        match_line = 'VBoxManage -q createvm --name "' + vm_def_base \
-            + '" --register'
+        match_line = "$VBOXMANAGE -q createvm --name '" + vm_def_base \
+            + "' --register"
         # we cannot inspect all mrsl files - filter by year is good guesstimate
         # TODO: mark vms jobs for easy finding without brute force search
         for mrsl_path in glob(os.path.join(mrsl_files_dir, '*_%d_*' % \
@@ -220,7 +221,6 @@ def popup_snippet():
     }
     </script>"""
 
-
 def machine_link(
     content,
     job_id,
@@ -285,88 +285,119 @@ def create_vm(client_id, configuration, machine_name):
                     vm_home + os.sep)
         open(os.path.join(vm_home, 'sys_plain.remote'), 'a')
 
-
 def enqueue_vm(client_id, configuration, machine_name):
-    """Submit a machine job based on machine definition file"""
-
-    filename = '/tmp/thisisatest.mrsl'
-
-    # Generate the mrsl
-
-    mrsl = mig_deployed_job(machine_name)
-    mrsl_fd = open(filename, 'w', 0)
-    mrsl_fd.write(mrsl)
-    mrsl_fd.close()
-
-    # Find the machine the given name
-
-    return new_job(filename, client_id, configuration, False, True)
-
-
-def mig_deployed_job(
-    name='Unknown',
-    data_disk='data.vmdk',
-    sys_disk='plain.vmdk',
-    memory=1024,
-    cpu_count=1,
-    cpu_time=900,
-    ):
-    """This method assumes that the system disk is registered on the
-    resource.
+    """Submit a machine job based on machine definition file.
+    Returns the job submit result, a 3-tuple of (status, msg, job_id)
     """
 
-    effective_time = 0.9 * cpu_time
-    mrsl = \
-        Template("""::EXECUTE::                  
-rm -rf ~/.VirtualBox
-mkdir ~/.VirtualBox
-mkdir ~/.VirtualBox/Machines
-mkdir ~/.VirtualBox/HardDisks
-cp ~/vbox_disks/plain.vmdk ~/.VirtualBox/HardDisks/plain.vmdk
-mv data.vmdk ~/.VirtualBox/HardDisks/+JOBID+_data.vmdk
-VBoxManage -q openmedium disk +JOBID+_data.vmdk
-VBoxManage -q openmedium disk plain.vmdk
-VBoxManage -q createvm --name "$NAME" --register
-VBoxManage -q modifyvm "$NAME" --nic1 nat --memory $MEMORY --pae on --hwvirtex on --ioapic off
-VBoxManage -q storagectl "$NAME" --name "IDE Controller" --add ide
-VBoxManage -q storageattach "$NAME" --storagectl "IDE Controller" --port 0 --device 0 --type hdd --medium "plain.vmdk"
-VBoxManage -q storageattach "$NAME" --storagectl "IDE Controller" --port 1 --device 0 --type hdd --medium "+JOBID+_data.vmdk"
-VBoxManage -q guestproperty set "$NAME" job_id +JOBID+
-./runvm.sh $NAME %d
-VBoxManage -q storageattach "$NAME" --storagectl "IDE Controller" --port 0 --device 0 --type hdd --medium none
-VBoxManage -q storageattach "$NAME" --storagectl "IDE Controller" --port 1 --device 0 --type hdd --medium none
-VBoxManage -q storagectl "$NAME" --name "IDE Controller" --remove
-VBoxManage -q closemedium disk plain.vmdk
-VBoxManage -q closemedium disk +JOBID+_data.vmdk
-VBoxManage -q unregistervm "$NAME" --delete
-mv ~/.VirtualBox/HardDisks/+JOBID+_data.vmdk data.vmdk
+    # Generate the mrsl and write to a temp file which is removed on close
+
+    mrsl = mig_vbox_deployed_job(machine_name)
+    mrsl_path = NamedTemporaryFile()
+    mrsl_fd = open(filename, 'w', 0)
+    mrsl_fd.write(mrsl)
+    mrsl_fd.flush()
+
+    # Submit job and clean up
+
+    res = new_job(filename, client_id, configuration, False, True)
+    mrsl_fd.close()
+    return res
+
+def mig_vbox_deployed_job(
+    name='Unknown',
+    data_disk='data.vmdk',
+    sys_disk='ubuntu-8.10.vmdk',
+    run_script='runvm.sh',
+    vbox_base='$VBOXIMGDIR',
+    user_conf='$VBOXUSERCONF',
+    img_dir='vms',
+    memory=1024,
+    disk=1,
+    cpu_count=1,
+    cpu_time=900,
+    architecture='',
+    vgrid=[default_vgrid],
+    runtime_env=['VIRTUALBOX-3.1.X-1', 'VBOX3.1-IMAGES-2008-1'],
+    notify=['jabber: SETTINGS'],
+    ):
+    """This method assumes that the system disk, sys_disk, is available in
+    vbox_base on the resource.
+    """
+    architecture_lines = ''
+    vgrid_lines = ''
+    runtime_env_lines = ''
+    notify_lines = ''
+    if architecture:
+        architecture_lines = '::ARCHITECTURE::\n%s' % architecture
+    if vgrid:
+        vgrid_lines = '::VGRID::\n%s' % '\n'.join(vgrid)
+    if runtime_env:
+        runtime_env_lines = '::RUNTIMEENVIRONMENT::\n%s' % \
+                            '\n'.join(runtime_env)
+    if notify:
+        notify_lines = '::NOTIFY::\n%s' % '\n'.join(notify)
+    
+    specs = {'name': name, 'data_disk': data_disk, 'sys_disk': sys_disk,
+             'run_script': run_script, 'vbox_base': vbox_base, 'user_conf': 
+             user_conf, 'img_dir': img_dir, 'memory': memory, 'disk': disk,
+             'cpu_count': cpu_count, 'cpu_time': cpu_time, 'architecture':
+             architecture, 'vgrid': vgrid, 'runtime_env': runtime_env,
+             'notify': notify, 'architecture_lines': architecture_lines,
+             'vgrid_lines': vgrid_lines, 'runtime_env_lines':
+             runtime_env_lines, 'notify_lines': notify_lines,
+             'effective_disk': disk + 1, 'effective_time': cpu_time - 30,
+             }
+    return """::EXECUTE::
+rm -rf %(user_conf)s
+mkdir %(user_conf)s
+mkdir %(user_conf)s/Machines
+mkdir %(user_conf)s/HardDisks
+cp %(vbox_base)s/%(sys_disk)s %(user_conf)s/HardDisks/%(sys_disk)s
+mv %(data_disk)s %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s
+$VBOXMANAGE -q openmedium disk +JOBID+_%(data_disk)s
+$VBOXMANAGE -q openmedium disk %(sys_disk)s
+$VBOXMANAGE -q createvm --name '%(name)s' --register
+$VBOXMANAGE -q modifyvm '%(name)s' --nic1 nat --memory %(memory)d --pae on --hwvirtex on --ioapic off
+$VBOXMANAGE -q storagectl '%(name)s' --name 'IDE Controller' --add ide
+$VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium '%(sys_disk)s'
+$VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium '+JOBID+_%(data_disk)s'
+$VBOXMANAGE -q guestproperty set '%(name)s' job_id +JOBID+
+./%(run_script)s '%(name)s' %(effective_time)d
+$VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium none
+$VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium none
+$VBOXMANAGE -q storagectl '%(name)s' --name 'IDE Controller' --remove
+$VBOXMANAGE -q closemedium disk %(sys_disk)s
+$VBOXMANAGE -q closemedium disk +JOBID+_%(data_disk)s
+$VBOXMANAGE -q unregistervm '%(name)s' --delete
+mv %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s %(data_disk)s
 
 ::INPUTFILES::
-vms/$NAME/data.vmdk data.vmdk
+%(img_dir)s/%(name)s/%(data_disk)s %(data_disk)s
 
 ::OUTPUTFILES::
-data.vmdk vms/$NAME/data.vmdk
+%(data_disk)s %(img_dir)s/%(name)s/%(data_disk)s
 
 ::EXECUTABLES::
-vms/runvm.sh runvm.sh
+%(img_dir)s/%(run_script)s %(run_script)s
 
 ::MEMORY::
-$MEMORY
+%(memory)d
+
+::DISK::
+%(effective_disk)d
+
+::CPUCOUNT::
+%(cpu_count)d
 
 ::CPUTIME::
-900
+%(cpu_time)d
 
-::ARCHITECTURE::
-AMD64
+%(vgrid_lines)s
 
-::VGRID::
-Generic
+%(architecture_lines)s
 
-::NOTIFY::
-jabber: SETTINGS
+%(runtime_env_lines)s
 
-""" % effective_time)
-    return mrsl.substitute(NAME=name, CPU_COUNT=cpu_count,
-                           MEMORY=memory)
-
-
+%(notify_lines)s
+""" % specs
