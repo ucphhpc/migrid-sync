@@ -32,11 +32,12 @@ virtual  machines, creation of mRSL for start, grabbing status, listing
 machines etc.
 """
 
-import os
 import datetime
 import ConfigParser
-import re
 import md5
+import operator
+import os
+import re
 import shutil
 from glob import glob
 from string import Template
@@ -145,35 +146,34 @@ def vms_list(client_id, configuration):
         # All job descriptions associated with this virtual machine
 
         jobs = []
-        match_line = 'VBoxManage createvm -name "' + vm_def_base \
-            + '" -register'
+        match_line = 'VBoxManage -q createvm --name "' + vm_def_base \
+            + '" --register'
         # we cannot inspect all mrsl files - filter by year is good guesstimate
         # TODO: mark vms jobs for easy finding without brute force search
         for mrsl_path in glob(os.path.join(mrsl_files_dir, '*_%d_*' % \
                                            datetime.date.today().year)):
             for line in open(os.path.abspath(mrsl_path), 'r', 1):
-
                 if match_line in line:
                     jobs.append(unpickle(mrsl_path, configuration.logger))
-                    break
 
         # Base the state on the latest job.
         #
         # Now determine the state of the jobs.
-        # Job status can be one of EXECUTING, CANCELED, QUEUED, FINISHED, the
-        # machine state mapping is:
+        # Job status can be one of EXECUTING, CANCELED, FAILED, QUEUED,
+        # FINISHED, the machine state mapping is:
         # EXECUTING -> Powered On
-        # CANCELED/FINISHED -> Powered Off
+        # CANCELED/FAILED/FINISHED -> Powered Off
         # QUEUED -> Booting
         #
         # TODO: 3
 
         if len(jobs) > 0:
-            machine['status'] = jobs[len(jobs) - 1]['STATUS']
+            sorted_jobs = sorted(jobs, key=operator.itemgetter('JOB_ID'))
+            last = sorted_jobs[-1]
+            machine['status'] = last['STATUS']
             if machine['status'] == 'EXECUTING':
-                machine['execution_time'] = jobs[len(jobs)
-                        - 1]['EXECUTING_TIMESTAMP']
-            machine['job_id'] = jobs[len(jobs) - 1]['JOB_ID']
+                machine['execution_time'] = last['EXECUTING_TIMESTAMP']
+            machine['job_id'] = last['JOB_ID']
 
         vms.append(machine)
 
@@ -315,6 +315,7 @@ def mig_deployed_job(
     resource.
     """
 
+    effective_time = 0.9 * cpu_time
     mrsl = \
         Template("""::EXECUTE::                  
 rm -rf ~/.VirtualBox
@@ -323,22 +324,21 @@ mkdir ~/.VirtualBox/Machines
 mkdir ~/.VirtualBox/HardDisks
 cp ~/vbox_disks/plain.vmdk ~/.VirtualBox/HardDisks/plain.vmdk
 mv data.vmdk ~/.VirtualBox/HardDisks/+JOBID+_data.vmdk
-VBoxManage openmedium disk +JOBID+_data.vmdk
-VBoxManage openmedium disk plain.vmdk
-VBoxManage createvm -name "$NAME" -register
-VBoxManage modifyvm "$NAME" -nic1 nat
-VBoxManage modifyvm "$NAME" -memory $MEMORY
-VBoxManage modifyvm "$NAME" -pae on
-VBoxManage modifyvm "$NAME" -hwvirtex on
-VBoxManage modifyvm "$NAME" -ioapic off
-VBoxManage modifyvm "$NAME" -hda "plain.vmdk"
-VBoxManage modifyvm "$NAME" -hdb "+JOBID+_data.vmdk"
-VBoxManage guestproperty set "$NAME" job_id +JOBID+
-./runvm.sh $NAME 780
-VBoxManage modifyvm $NAME -hda none
-VBoxManage modifyvm $NAME -hdb none
-VBoxManage closemedium disk +JOBID+_data.vmdk
-VBoxManage unregistervm $NAME -delete
+VBoxManage -q openmedium disk +JOBID+_data.vmdk
+VBoxManage -q openmedium disk plain.vmdk
+VBoxManage -q createvm --name "$NAME" --register
+VBoxManage -q modifyvm "$NAME" --nic1 nat --memory $MEMORY --pae on --hwvirtex on --ioapic off
+VBoxManage -q storagectl "$NAME" --name "IDE Controller" --add ide
+VBoxManage -q storageattach "$NAME" --storagectl "IDE Controller" --port 0 --device 0 --type hdd --medium "plain.vmdk"
+VBoxManage -q storageattach "$NAME" --storagectl "IDE Controller" --port 1 --device 0 --type hdd --medium "+JOBID+_data.vmdk"
+VBoxManage -q guestproperty set "$NAME" job_id +JOBID+
+./runvm.sh $NAME %d
+VBoxManage -q storageattach "$NAME" --storagectl "IDE Controller" --port 0 --device 0 --type hdd --medium none
+VBoxManage -q storageattach "$NAME" --storagectl "IDE Controller" --port 1 --device 0 --type hdd --medium none
+VBoxManage -q storagectl "$NAME" --name "IDE Controller" --remove
+VBoxManage -q closemedium disk plain.vmdk
+VBoxManage -q closemedium disk +JOBID+_data.vmdk
+VBoxManage -q unregistervm "$NAME" --delete
 mv ~/.VirtualBox/HardDisks/+JOBID+_data.vmdk data.vmdk
 
 ::INPUTFILES::
@@ -365,7 +365,7 @@ Generic
 ::NOTIFY::
 jabber: SETTINGS
 
-""")
+""" % effective_time)
     return mrsl.substitute(NAME=name, CPU_COUNT=cpu_count,
                            MEMORY=memory)
 

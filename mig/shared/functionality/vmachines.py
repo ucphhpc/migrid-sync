@@ -139,13 +139,14 @@ def main(client_id, user_arguments_dict):
     machine_states = {
         'EXECUTING': 'vm_running.jpg',
         'CANCELED': 'vm_off.jpg',
+        'FAILED': 'vm_off.jpg',
         'FINISHED': 'vm_off.jpg',
         'UNKNOWN': 'vm_off.jpg',
         'QUEUED': 'vm_booting.jpg',
         'PARSE': 'vm_booting.jpg',
         }
 
-    # CANCELED/FINISHED -> Powered Off
+    # CANCELED/FAILED/FINISHED -> Powered Off
     # QUEUED -> Booting
 
     if len(machines) > 0:

@@ -13,14 +13,28 @@ EXEC_TIME=$2
 VBoxHeadless -startvm "$VM_NAME" &
 VBOX_PID=$!
 
-while [[ $VBOX_STATE -eq 0 && $EXEC_TIME -gt 0 ]]
+while [ $VBOX_STATE -eq 0 ]
 do
 
-  if kill -0 $VBOX_PID       # Is the process still alive?
+  # Progressively harder stop attempts on time out
+  if [ $EXEC_TIME -lt -1 ]
   then
-    VBOX_STATE=0 # Yes
-  else
-    VBOX_STATE=1 # No
+    echo "vm $VM_NAME with pid $VBOX_PID still running: giving up"
+    break
+  elif [ $EXEC_TIME -lt 0 ]
+  then
+    echo "vm $VM_NAME with pid $VBOX_PID still running: hard kill"
+    kill -9 $VBOX_PID
+  elif [ $EXEC_TIME -lt 1 ]
+  then
+    echo "vm $VM_NAME with pid $VBOX_PID still running: hard power off"
+    VBoxManage -q controlvm "$VM_NAME" poweroff
+  elif [ $EXEC_TIME -lt 2 ]
+  then
+    echo "vm $VM_NAME with pid $VBOX_PID timed out: soft power off"
+    VBoxManage -q controlvm "$VM_NAME" acpipowerbutton
+    # give it a little time to shut down cleanly
+    sleep 15
   fi
 
   # Decrease exec time
@@ -28,11 +42,13 @@ do
 
   sleep 1
 
-done
+  if kill -0 $VBOX_PID 2> /dev/null      # Is the process still alive?
+  then
+    VBOX_STATE=0 # Yes
+  else
+    VBOX_STATE=1 # No
+  fi
 
-# If still running then turn it off
-if [ $VBOX_STATE -eq 0 ]; then
-VBoxManage controlvm "$VM_NAME" acpipowerbutton
-fi
+done
 
 echo "CP: $VBOX_PID CS: $VBOX_STATE ET: $EXEC_TIME"
