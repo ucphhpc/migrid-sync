@@ -29,15 +29,15 @@
 """Virtual machine connection back end functionality"""
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
-from shared.functional import validate_input_and_cert
 from shared import vms
+from shared.functional import validate_input_and_cert
+from shared.init import initialize_main_variables, find_entry
 
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {}
+    defaults = {'job_id': ['']}
     return ['html_form', defaults]
 
 
@@ -45,12 +45,9 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False,
-                                  op_title=False)
-
+        initialize_main_variables(client_id, op_header=False)
     status = returnvalues.OK
-    defaults = {'job_id': ['']}
-
+    defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -59,12 +56,13 @@ def main(client_id, user_arguments_dict):
         configuration,
         allow_rejects=False,
         )
-
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG Virtual Desktop'})
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Virtual Machines'
+    output_objects.append({'object_type': 'header', 'text':
+                           '%s Virtual Desktop' % configuration.short_title})
 
     password = vms.vnc_jobid(accepted['job_id'][0])
 
@@ -75,8 +73,8 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form', 'text'
                           : vms.popup_snippet() + vms.vnc_applet(
         configuration.server_fqdn,
-        8111,
-        8114,
+        configuration.vm_client_port,
+        configuration.vm_applet_port,
         1024,
         768,
         password,

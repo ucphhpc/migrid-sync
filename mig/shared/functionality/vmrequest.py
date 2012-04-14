@@ -29,8 +29,8 @@
 """Virtual machine request back end functionality"""
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables
 from shared.functional import validate_input_and_cert
+from shared.init import initialize_main_variables, find_entry
 
 
 def signature():
@@ -44,11 +44,9 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False,
-                                  op_title=False)
-
+        initialize_main_variables(client_id, op_header=False)
     status = returnvalues.OK
-    defaults = {}
+    defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -57,15 +55,14 @@ def main(client_id, user_arguments_dict):
         configuration,
         allow_rejects=False,
         )
-
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    output_objects.append({'object_type': 'title', 'text'
-                          : 'MiG Request Virtual Machine'})
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'MiG Request Virtual Machine'})
-
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Virtual Machines'
+    output_objects.append({'object_type': 'header', 'text':
+                           '%s Request Virtual Machine' % \
+                           configuration.short_title})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <form method="post" action="vmachines.py">
@@ -154,5 +151,3 @@ iptables, acpid, x11vnc, xorg, gdm, xfce4, gcc, make, dillo, python-openssl
     """})
 
     return (output_objects, status)
-
-

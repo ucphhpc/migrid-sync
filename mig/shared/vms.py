@@ -298,7 +298,7 @@ def enqueue_vm(client_id, configuration, machine_name):
 
     # Generate the mrsl and write to a temp file which is removed on close
 
-    mrsl = mig_vbox_deployed_job(machine_name)
+    mrsl = mig_vbox_deployed_job(configuration, machine_name)
     mrsl_fd = NamedTemporaryFile()
     mrsl_fd.write(mrsl)
     mrsl_fd.flush()
@@ -310,6 +310,7 @@ def enqueue_vm(client_id, configuration, machine_name):
     return res
 
 def mig_vbox_deployed_job(
+    configuration,
     name='Unknown',
     data_disk='ubuntu-8.10-data.vmdk',
     sys_disk='ubuntu-8.10.vmdk',
@@ -352,6 +353,8 @@ def mig_vbox_deployed_job(
              'vgrid_lines': vgrid_lines, 'runtime_env_lines':
              runtime_env_lines, 'notify_lines': notify_lines,
              'effective_disk': disk + 1, 'effective_time': cpu_time - 30,
+             'proxy_host': configuration.vm_proxy_host,
+             'proxy_port': configuration.vm_proxy_port,
              }
     return """::EXECUTE::
 rm -rf %(user_conf)s
@@ -368,6 +371,8 @@ $VBOXMANAGE -q storagectl '%(name)s' --name 'IDE Controller' --add ide
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium '%(sys_disk)s'
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium '+JOBID+_%(data_disk)s'
 $VBOXMANAGE -q guestproperty set '%(name)s' job_id +JOBID+
+$VBOXMANAGE -q guestproperty set '%(name)s' proxy_host %(proxy_host)s
+$VBOXMANAGE -q guestproperty set '%(name)s' proxy_port %(proxy_port)d
 ./%(run_script)s '%(name)s' %(effective_time)d
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium none
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium none

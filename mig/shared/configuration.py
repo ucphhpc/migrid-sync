@@ -227,6 +227,10 @@ class Configuration:
     public_key_file = ''
     wwwpublic = ''
     vm_home = ''
+    vm_proxy_host = ''
+    vm_proxy_port = vm_agent_port = 8112
+    vm_client_port = 8111
+    vm_applet_port = 8114
     enable_server_dist = False
     sleep_secs = 0
     sleep_update_totals = 0
@@ -485,6 +489,20 @@ class Configuration:
             self.notify_protocols = []
         if config.has_option('GLOBAL', 'storage_protocols'):
             self.storage_protocols = config.get('GLOBAL', 'storage_protocols').split()
+        if config.has_option('GLOBAL', 'vm_proxy_host'):
+            self.vm_proxy_host = config.get('GLOBAL', 'vm_proxy_host')
+        else:
+            self.vm_proxy_host = self.server_fqdn
+        if config.has_option('GLOBAL', 'vm_proxy_port'):
+            self.vm_proxy_port = config.getint('GLOBAL', 'vm_proxy_port')
+        if config.has_option('GLOBAL', 'vm_client_port'):
+            self.vm_client_port = config.getint('GLOBAL', 'vm_client_port')
+        if config.has_option('GLOBAL', 'vm_applet_port'):
+            self.vm_applet_port = config.getint('GLOBAL', 'vm_applet_port')
+
+        # vm_agent_port is just an alias for vm_proxy_port
+
+        self.vm_agent_port = self.vm_proxy_port
 
         # logger.debug('starting scheduler options')
 
