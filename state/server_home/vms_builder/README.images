@@ -1,0 +1,17 @@
+= VM helper images =
+This directory contains the optional virtual machine helper scripts and images
+used in the integrated virtual machine support.
+
+To enable virtual machine support you should download and unpack the helper
+images and guest additions matching the base OS images for the available
+VBOX3.1-IMAGES-X-1 runtime environments from:
+http://dk.migrid.org/public/vm-packs/vbox3.1-data-images-X-1.tar.gz
+http://dk.migrid.org/public/vm-packs/vbox3.1-guest-additions-X-1.tar.gz
+where X should be replaced by the actual value like e.g. 2008.
+
+Additionally you can add the word 'vmachines' to the default_menu or user_menu
+configuration entry in your MiGserver.conf so that the corresponding page
+is added in the MiG navigation menus.
+
+If you want to add new images you should prepare matching OS and data images
+and introduce a matching new runtime environment.

@@ -248,8 +248,15 @@ def machine_link(
 
     return link
 
-def create_vm(client_id, configuration, machine_name):
-    """Create virtual machine"""
+def create_vm(client_id, configuration, machine_name,            
+              data_disk='ubuntu-8.10-data.vmdk',
+              run_script='runvm.sh',
+              machine_conf='machine.cfg',
+              remote_marker='sys_plain.remote',
+              ):
+    """Create virtual machine with machine_name as ID and using data_disk as
+    data image base.
+    """
     
     client_dir = client_id_dir(client_id)
 
@@ -264,7 +271,6 @@ def create_vm(client_id, configuration, machine_name):
                                              client_dir))
     user_vms_home = os.path.join(user_home, 'vms')
     vm_home = os.path.join(user_vms_home, machine_name)
-    server_vms_home = os.path.join(configuration.server_home, 'vms')
     server_vms_builder_home = os.path.join(configuration.server_home,
                                            'vms_builder')
 
@@ -272,18 +278,18 @@ def create_vm(client_id, configuration, machine_name):
 
     if not os.path.exists(user_vms_home):
         os.mkdir(user_vms_home)
-        shutil.copy(os.path.join(server_vms_home, 'runvm.sh'),
+        shutil.copy(os.path.join(server_vms_builder_home, run_script),
                     user_vms_home + os.sep)
 
     # Create the vm
 
     if not os.path.exists(vm_home):
         os.mkdir(vm_home)
-        shutil.copy(os.path.join(server_vms_builder_home, 'machine.cfg'),
+        shutil.copy(os.path.join(server_vms_builder_home, machine_conf),
                     vm_home + os.sep)
-        shutil.copy(os.path.join(server_vms_builder_home, 'data.vmdk'),
+        shutil.copy(os.path.join(server_vms_builder_home, data_disk),
                     vm_home + os.sep)
-        open(os.path.join(vm_home, 'sys_plain.remote'), 'a')
+        open(os.path.join(vm_home, remote_marker), 'a')
 
 def enqueue_vm(client_id, configuration, machine_name):
     """Submit a machine job based on machine definition file.
@@ -305,7 +311,7 @@ def enqueue_vm(client_id, configuration, machine_name):
 
 def mig_vbox_deployed_job(
     name='Unknown',
-    data_disk='data.vmdk',
+    data_disk='ubuntu-8.10-data.vmdk',
     sys_disk='ubuntu-8.10.vmdk',
     run_script='runvm.sh',
     vbox_base='$VBOXIMGDIR',

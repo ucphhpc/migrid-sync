@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
@@ -40,17 +39,6 @@ from shared.init import initialize_main_variables, find_entry
 def signature():
     """Signature of the main function"""
 
-    defaults = {}
-    return ['html_form', defaults]
-
-
-def main(client_id, user_arguments_dict):
-    """Main function used by front end"""
-
-    (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
-
-    status = returnvalues.OK
     defaults = {
         'start': [''],
         'stop': [''],
@@ -64,7 +52,16 @@ def main(client_id, user_arguments_dict):
         'machine_partition': [''],
         'machine_software': [''],
         }
+    return ['html_form', defaults]
 
+
+def main(client_id, user_arguments_dict):
+    """Main function used by front end"""
+
+    (configuration, logger, output_objects, op_name) = \
+        initialize_main_variables(client_id, op_header=False)
+    status = returnvalues.OK
+    defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -73,7 +70,6 @@ def main(client_id, user_arguments_dict):
         configuration,
         allow_rejects=False,
         )
-
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -84,8 +80,9 @@ def main(client_id, user_arguments_dict):
     submenu = render_menu(configuration, menu_class='navsubmenu',
                           user_menu=menu_items, hide_default=True)
 
-    welcome_text = 'Welcome to MiG virtual machine management!'
-    desc_text = '''<p>In this part of MiG you can:
+    welcome_text = 'Welcome to your %s virtual machine management!' % \
+                   configuration.short_title
+    desc_text = '''<p>On this page you can:
 <ul>
     <li>Request Virtual Machines, by clicking on the button above</li>
     <li>See your virtual machines in the list below.</li>
@@ -94,9 +91,9 @@ def main(client_id, user_arguments_dict):
 </p>'''
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'MiG Virtual Machines'
+    title_entry['text'] = 'Virtual Machines'
     output_objects.append({'object_type': 'header', 'text':
-                           'MiG Virtual Machines'})
+                           'Virtual Machines'})
     output_objects.append({'object_type': 'html_form', 'text': submenu})
     output_objects.append({'object_type': 'html_form', 'text'
                           : '<p>&nbsp;</p>'})
@@ -105,7 +102,7 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form', 'text'
                           : desc_text})
 
-    # TODO: manage request machine
+    # TODO: handle request for pre-built or custom machine
 
     if accepted['machine_request'][0] == '1':
 
@@ -116,8 +113,9 @@ def main(client_id, user_arguments_dict):
 
     (action_status, action_msg, job_id) = (True, '', None)
     if accepted['start'][0] != '':
-        (action_status, action_msg, job_id) = vms.enqueue_vm(client_id, configuration,
-                                                     accepted['start'][0])
+        (action_status, action_msg, job_id) = \
+                        vms.enqueue_vm(client_id, configuration,
+                                       accepted['start'][0])
     elif accepted['stop']:
 
         # TODO: manage stop
@@ -125,7 +123,8 @@ def main(client_id, user_arguments_dict):
         pass
 
     if not action_status:
-        output_objects.append({'object_type': 'error_text', 'text': action_msg})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               action_msg})
         
 
     # List the machines here
