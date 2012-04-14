@@ -1,0 +1,71 @@
+<html>
+<head>
+<title>Virtual Box - Where to jack in an external framebuffer.</title>
+<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+</head>
+</html>
+<body>
+<h1>Virtual Box - Where to jack in an external framebuffer.</h1>
+<author>Simon Andreas Frimann Lund - safl@safl.dk</author>
+<date>~February/March 2009</date>
+<p>
+<a href="http://forums.virtualbox.org/viewtopic.php?f=10&t=14948">According to a VirtualBOX developer</a> then there is a very pretty way of doing this. However I think an ugly shortcut exists :) It's all about 20.000 lines of code vs. 2000.
+</p>
+TODO, figure out these calls:
+
+<ul>
+  <li>CHECK_ERROR_BREAK, used on like 822/823</li>
+  <li>ComPtr <Type>, what are these pointers? Type:</li>
+  <li>Type::IConsole</li>
+  <li>Type::IMachine</li>
+  <li>Type::IDisplay</li>
+  <li>VRDPFramebuffer, framebuffer used by RDP <b>no source</b> found. Probably the most interesting!</li>
+  <li>display-&gt;SetFramebuffer, used by RDP</li>
+  <li>IFrameBuffer, framebuffer used by FFmpeg</li>
+  <li>display-&gt;RegisterExternalFramebuffer, used bu FFmpeg</li>
+  <li>pfnRegisterFFmpegFB, used by FFmpeg</li>
+</ul>
+
+<p>
+An attempt ot document where to jack into VirtualBox to provide remote access to display and into of virtual machines.
+</p>
+<p>
+Since the ripped out RDP server was jacking into VBoxHeadless then it seems like a fair assumption that this is the place to look to try and figure out what it would take to jack in an external framebuffer.
+</p>
+Interesting files:
+<ul>
+  <li>VBox/Frontends/VBoxHeadless/VBoxHeadless.cpp</li>
+  <li>VBox/vrdpapi.h</li>
+  <li>VBOX/Main/ConsoleVRDPServer.h
+  <li>VBox/Main/FrameBufferImpl.cpp</li>
+  <li>VBox/Main/ConsoleImpl.cpp</li>
+  <li>VBox/Main/KeyboardImpl.cpp</li>
+  <li>VBox/Main/DisplayImpl.cpp</li>
+</ul>
+
+<p>
+After scavening the source for RDP, the current results are that all the interesting RDP code is gone. Theres only RDP headers for stuff that is not interesting. It's all bunch of definitions for datastructures and pointers to various RDP specifics that has nothing to do with the integration to virtualbox. It is very dissapointing.
+</p>
+<p>
+It seems easier to figure out what is needed by investigating VBoxSDL and figure out what interfaces to implement.
+<p>
+
+<h2>How?</h2>
+
+Data to and from these devices:
+<pre>
+ static ComPtr<IKeyboard> gKeyboard;
+ static ComPtr<IMouse> gMouse;
+ static ComPtr<IDisplay> gDisplay;
+</pre>
+
+Video output can be catched by implementing:
+<ul>
+  <li>InternalFramebuffer / IFramebuffer -> MigvncFramebuffer.</li>
+  <li>display->setFramebuffer(screen, migFramebuffer)</li>
+</ul>
+
+Getting mouse input seems more complicated. There are a bunch of curser devices.
+
+</body>
+</html>

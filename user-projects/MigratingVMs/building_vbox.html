@@ -1,0 +1,155 @@
+<html>
+<head>
+<title>VirtualBox - Building MIGified version 2.1.4 on 64bit (x)ubuntu.</title>
+<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+</head>
+<body>
+
+<h1>VirtualBox - Building MIGified version 2.1.4 on 64bit (x)ubuntu.</h1>
+<author>Simon Andreas Frimann Lund - safl@safl.dk</author>
+<date>18. February 2009</date>
+
+<p>
+This is a walkthrough of the <a href="http://www.virtualbox.org/wiki/Linux%20build%20instructions">Linux build instructions.</a> on a Lenovo Thinkpad x200 running 64bit Xubuntu 8.10.
+</p>
+
+<p>
+Theres some additional information on the MIG Prerequisities and a lot of output which might be usefull if you want to compile virtualbox yourself.
+</p>
+
+<h2>Vanilla Prerequisities</h2>
+
+<pre>
+sudo apt-get install gcc g++ bcc iasl xsltproc uuid-dev zlib1g-dev libidl-dev \
+                libsdl1.2-dev libxcursor-dev libqt3-headers libqt3-mt-dev \
+                libasound2-dev libstdc++5 libhal-dev libpulse-dev libxml2-dev \
+                libxslt1-dev python2.5-dev libqt4-dev qt4-dev-tools libcap-dev
+
+sudo apt-get install ia32-libs libc6-dev-i386 lib32gcc1 gcc-multilib \
+                lib32stdc++6 g++-multilib
+
+sudo ln -s libX11.so.6    /usr/lib32/libX11.so 
+sudo ln -s libXTrap.so.6  /usr/lib32/libXTrap.so 
+sudo ln -s libXt.so.6     /usr/lib32/libXt.so 
+sudo ln -s libXtst.so.6   /usr/lib32/libXtst.so
+sudo ln -s libXmu.so.6    /usr/lib32/libXmu.so
+sudo ln -s libXext.so.6   /usr/lib32/libXext.so
+</pre>
+
+<h3>MIG Prerequisities</h3>
+
+Grab the latest and greatest "MIGified" virtualbox unpack it and cd into it.
+Then install these packages:
+
+<pre>
+sudo apt-get install libcurl3 libcurl3-gnutls libcurl3-openssl-dev libbz2-dev
+</pre>
+
+<h2>Now do it!</h2>
+
+<pre>
+./configure --disable-hardening
+</pre>
+
+It then told me this:
+
+<pre>
+./configure --disable-hardening
+Checking for environment: Determined build machine: linux.amd64, target machine: linux.amd64, OK.
+Checking for kBuild: found, OK.
+Checking for gcc: found version 4.3.2, OK.
+Checking for as86: found version 0.16.17, OK.
+Checking for bcc: found version 0.16.17, OK.
+Checking for iasl: found version 20061109, OK.
+Checking for xslt: found, OK.
+Checking for pthread: found, OK.
+Checking for libxml2: found version 2.6.32, OK.
+Checking for libxslt: found version 1.1.24, OK.
+Checking for libIDL: found version 0.8.10, OK.
+Checking for zlib: found version 1.2.3.3, OK.
+Checking for libpng: found version 1.2.27, OK.
+Checking for SDL: found version 1.2.12, OK.
+Checking for X libraries: found, OK.
+Checking for Xcursor: found, OK.
+Checking for Qt3: found version 3.3.8b, OK.
+Checking for Qt3 devtools: found version 3.3.8b, OK.
+Checking for Qt4: found version 4.4.3, OK.
+Checking for Qt4 devtools: found version 4.4.3, OK.
+Checking for python support: found version 2.5.2, OK.
+Checking for static stc++ library: found, OK.
+Checking for Linux kernel sources: found version 2.6.27, OK.
+Checking for ALSA: found version 1.0.17, OK.
+Checking for PulseAudio: found version 0.9.10 API version 11, OK.
+Checking for libcap library: found, OK.
+Checking for compiler.h: compiler.h not found, OK.
+Checking for 32-bit support: OK.
+
+Successfully generated '/home/safl/Desktop/bach/virtual/VirtualBox-2.1.4_OSE/AutoConfig.kmk' and '/home/safl/Desktop/bach/virtual/VirtualBox-2.1.4_OSE/env.sh'.
+Source '/home/safl/Desktop/bach/virtual/VirtualBox-2.1.4_OSE/env.sh' once before you start to build VBox:
+
+  source /home/safl/Desktop/bach/virtual/VirtualBox-2.1.4_OSE/env.sh
+  kmk
+
+To compile the kernel module, do:
+
+  cd ./out/linux.amd64/release/bin/src/vboxdrv
+  make
+
+
+  +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++
+  Hardening is disabled. Please do NOT build packages for distribution with
+  disabled hardening!
+  +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++ WARNING +++
+
+Enjoy!
+
+</pre>
+
+So i continued:
+
+<pre>
+source /home/safl/Desktop/bach/virtual/VirtualBox-2.1.4_OSE/env.sh
+kmk -j3
+</pre>
+
+<p>
+It took like 14minutes.
+Then build the kernel module It took like 30 seconds.
+</p>
+
+<pre>
+cd out/linux.amd64/release/bin/src/
+make
+sudo make install
+</pre>
+
+To be able to run it non-root i needed to part of the vboxusers group.
+
+<pre>
+sudo groupadd vboxusers
+sudo usermod -G vboxusers -a safl
+</pre>
+
+Then load the kernel mode
+
+<pre>
+sudo modprobe vboxdrv
+sudo chmod 660 /dev/vboxdrv
+sudo chgrp vboxusers /dev/vboxdrv
+</pre>
+
+Then you probably also need to disable KVM
+
+<pre>
+sudo invoke-rc.d kvm stop
+</pre>
+
+Then i simply ran the thing. Voila!
+
+<pre>
+cd ..
+./VirtualBox &
+</pre>
+
+</body>
+</html>

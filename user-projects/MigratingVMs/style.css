@@ -1,0 +1,18 @@
+body {
+	font-family: Sans-serif, helvetica, arial;
+
+}
+pre {
+	background-color: black;
+	color: white;
+}
+
+author {
+	color: red;
+	display: block;
+}
+
+date {
+	color: blue;
+	display: block;
+}
