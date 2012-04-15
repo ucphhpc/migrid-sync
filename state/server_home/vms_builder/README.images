@@ -15,3 +15,8 @@ is added in the MiG navigation menus.
 
 If you want to add new images you should prepare matching OS and data images
 and introduce a matching new runtime environment.
+
+The images were built with the python-vm-builder package:
+https://launchpad.net/ubuntu/+source/vm-builder
+and the command:
+python-vm-builder -c machine.cfg
