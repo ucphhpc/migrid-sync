@@ -125,7 +125,31 @@ Please verify it on your MiG ssh Settings page in case of failure."""
         rel_path = os.path.join(base, name)
         path_stat = ftp.stat(rel_path)
         print "stat %s:\n%s" % (rel_path, path_stat)
-
+    dummy = 'this-is-a-migsftp-dummy-file.txt'
+    dummy_text = "sample file\ncontents from client\n"
+    dummy_fd = open(dummy, "w")
+    dummy_fd.write(dummy_text)
+    dummy_fd.close()
+    print "create dummy in %s" % dummy
+    path_stat = os.stat(dummy)
+    print "local stat %s:\n%s" % (dummy, path_stat)
+    print "upload migsftpdummy in %s home" % dummy
+    ftp.put(dummy, dummy)
+    path_stat = ftp.stat(dummy)
+    print "remote stat %s:\n%s" % (dummy, path_stat)
+    print "delete dummy in %s" % dummy
+    os.remove(dummy)
+    print "verify gone: %s" % (dummy not in os.listdir('.'))
+    print "download migsftpdummy from %s home" % dummy
+    ftp.get(dummy, dummy)
+    path_stat = os.stat(dummy)
+    print "local stat %s:\n%s" % (dummy, path_stat)
+    dummy_fd = open(dummy, "r")
+    verify_text = dummy_fd.read()
+    dummy_fd.close()
+    print "verify correct contents: %s" % (dummy_text == verify_text)
+    print "delete dummy in %s" % dummy
+    os.remove(dummy)
 
     ### Clean up before exit ###
 
