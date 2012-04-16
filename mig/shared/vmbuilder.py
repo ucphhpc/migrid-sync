@@ -73,13 +73,22 @@ def build_vm(vm_specs):
     build_specs.update(vm_specs)
     build_specs['package_list'] = ', '.join(build_specs['base_packages'] + \
                                             build_specs['extra_packages'])
+    # Fill conf template (currently just copies it since all args are explicit)
     tmp_dir = mkdtemp()
-    conf_path = os.path.join(tmp_dir, '%(suite)s.cfg' % build_specs)
+    conf_path = os.path.join(tmp_dir, '%(distro)s.cfg' % build_specs)
     template_path = os.path.join(configuration.vms_builder_home,
-                                 '%(suite)s.cfg.in' % build_specs)
-    opts_string = "%s -c %s" % (build_specs["vmbuilder_opts"], conf_path)
-    # destdir option in conf does not work
+                                 '%(distro)s.cfg' % build_specs)
+    # destdir option in conf does not work - keep most on cli
+    # reserve 2G for tmpfs for way faster build
+    opts_string = "%(vmbuilder_opts)s"
+    opts_string += " -c %s --tmpfs 2048" % conf_path
     opts_string += " -d %(working_dir)s/%(hypervisor)s-%(distro)s-%(suite)s"
+    opts_string += " --suite %(suite)s --arch %(architecture)s"
+    opts_string += " --mem %(memory)d --cpus %(cpu_count)d --mirror %(mirror)s"
+    opts_string += " --part %(working_dir)s/%(suite)s.partition"
+    opts_string += " --firstboot %(working_dir)s/boot-%(suite)s.sh"
+    for name in build_specs["base_packages"] + build_specs["extra_packages"]:
+        opts_string += " --addpkg %s" % name
     build_specs["vmbuilder_opts"] = opts_string % build_specs
     try:
         fill_vmbuilder_conf(template_path, conf_path, build_specs)
