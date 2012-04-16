@@ -77,7 +77,10 @@ def build_vm(vm_specs):
     conf_path = os.path.join(tmp_dir, '%(suite)s.cfg' % build_specs)
     template_path = os.path.join(configuration.vms_builder_home,
                                  '%(suite)s.cfg.in' % build_specs)
-    build_specs["vmbuilder_opts"] += " -c %s" % conf_path
+    opts_string = "%s -c %s" % (build_specs["vmbuilder_opts"], conf_path)
+    # destdir option in conf does not work
+    opts_string += " -d %(working_dir)s/%(hypervisor)s-%(distro)s" % build_specs
+    build_specs["vmbuilder_opts"] = opts_string
     try:
         fill_vmbuilder_conf(template_path, conf_path, build_specs)
         cmd_base = "sudo /usr/bin/vmbuilder"
@@ -92,6 +95,16 @@ def build_vm(vm_specs):
     finally:
         os.remove(conf_path)
         os.rmdir(tmp_dir)
+
+def usage():
+    """Script usage help"""
+    print "%s OPTIONS [EXTRA_PACKAGES]" % sys.argv[0]
+    print "where OPTIONS include the names:"
+    for name in default_specs.keys():
+        if name in ('base_packages', 'extra_packages'):
+            continue
+        print "    %s (default: %s)" % (name.replace('_', '-'),
+                                        default_specs[name])
 
 if __name__ == '__main__':
     specs = {}
@@ -138,6 +151,7 @@ if __name__ == '__main__':
             specs["vmbuilder_opts"] = val
         else:
             logger.error("Unknown option: %s" % opt)
+            usage()
             sys.exit(1)
 
     if args:
