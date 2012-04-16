@@ -211,6 +211,7 @@ class Configuration:
     user_sftp_port = 2222
     user_sftp_key = ''
     server_home = ''
+    vms_builder_home = ''
     sessid_to_mrsl_link_home = ''
     mig_system_files = ''
     empty_job_name = ''
@@ -476,6 +477,10 @@ class Configuration:
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:
             self.mig_code_base = os.path.dirname(self.mig_server_home.rstrip(os.sep))
+        if config.has_option('GLOBAL', 'vms_builder_home'):
+            self.vms_builder_home = config.get('GLOBAL', 'vms_builder_home')
+        else:
+            self.vms_builder_home = os.path.join(self.server_home, 'vms_builder')
         if config.has_option('GLOBAL', 'public_key_file'):
             self.public_key_file = config.get('GLOBAL', 'public_key_file')
         if config.has_option('GLOBAL', 'smtp_sender'):

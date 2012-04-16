@@ -1,0 +1,18 @@
+[DEFAULT]
+arch = %(architecture)s
+ip = dhcp
+part = %(working_dir)s/%(suite)s.partition
+user = mig
+name = MiG User
+pass = mig
+tmpfs = - 
+firstboot = %(working_dir)s/boot.sh
+mem = %(memory)d
+cpus = %(cpu_count)d
+destdir = %(working_dir)s/%(hypervisor)s-%(distro)s
+
+[ubuntu]
+mirror = http://127.0.0.1:9999/ubuntu
+suite = lucid
+flavour = virtual
+addpkg = %(package_list)s

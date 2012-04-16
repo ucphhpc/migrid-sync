@@ -16,7 +16,26 @@ is added in the MiG navigation menus.
 If you want to add new images you should prepare matching OS and data images
 and introduce a matching new runtime environment.
 
-The images were built with the python-vm-builder package:
+Apparently the original image was built with the python-vm-builder package:
 https://launchpad.net/ubuntu/+source/vm-builder
-and the command:
-python-vm-builder -c machine.cfg
+and a command like:
+sudo vmbuilder vbox ubuntu -c intrepid.cfg
+
+For more recent versions the builder should be called with an updated conf:
+sudo vmbuilder vbox ubuntu -c SUITE.cfg
+It should be noted that vmbuilder no longer allows relative paths so an
+updated conf must use absolute paths.
+However, we provide a simple build wrapper in mig/shared/vmbuilder.py
+so that building can be done without mucking around with conf files.
+The build command for the Ubuntu Precise image is thus:
+cd mig/shared
+python vmbuilder.py --suite=precise
+
+Please note that there are a couple of bugs in the python-vm-builder package
+included in Ubuntu Lucid that breaks the build there:
+https://bugs.launchpad.net/ubuntu/+source/vm-builder/+bug/580237
+https://bugs.launchpad.net/vmbuilder/+bug/677378
+Either manually fix the bugs as mentioned there or use a more recent Ubuntu
+version.
+Builds rely on a local apt-proxy by default, but you can disable it in the conf
+by commenting out the mirror line.
