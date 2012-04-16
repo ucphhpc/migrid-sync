@@ -6,10 +6,9 @@ user = mig
 name = MiG User
 pass = mig
 tmpfs = - 
-firstboot = %(working_dir)s/boot.sh
+firstboot = %(working_dir)s/boot-%(suite)s.sh
 mem = %(memory)d
 cpus = %(cpu_count)d
-destdir = %(working_dir)s/%(hypervisor)s-%(distro)s
 
 [ubuntu]
 mirror = http://127.0.0.1:9999/ubuntu
