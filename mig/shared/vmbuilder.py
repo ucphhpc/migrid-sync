@@ -79,8 +79,8 @@ def build_vm(vm_specs):
                                  '%(suite)s.cfg.in' % build_specs)
     opts_string = "%s -c %s" % (build_specs["vmbuilder_opts"], conf_path)
     # destdir option in conf does not work
-    opts_string += " -d %(working_dir)s/%(hypervisor)s-%(distro)s" % build_specs
-    build_specs["vmbuilder_opts"] = opts_string
+    opts_string += " -d %(working_dir)s/%(hypervisor)s-%(distro)s-%(suite)s"
+    build_specs["vmbuilder_opts"] = opts_string % build_specs
     try:
         fill_vmbuilder_conf(template_path, conf_path, build_specs)
         cmd_base = "sudo /usr/bin/vmbuilder"
