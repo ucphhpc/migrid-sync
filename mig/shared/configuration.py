@@ -470,7 +470,7 @@ class Configuration:
             self.user_sftp_port = config.getint('GLOBAL', 
                                                  'user_sftp_port')
         if config.has_option('GLOBAL', 'user_sftp_key'):
-            self.user_sftp_key = config.getint('GLOBAL', 
+            self.user_sftp_key = config.get('GLOBAL', 
                                                  'user_sftp_key')
         if config.has_option('GLOBAL', 'mig_code_base'):
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
