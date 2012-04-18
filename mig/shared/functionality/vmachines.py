@@ -35,7 +35,6 @@ from shared.functional import validate_input_and_cert
 from shared.html import render_menu
 from shared.init import initialize_main_variables, find_entry
 
-
 def signature():
     """Signature of the main function"""
 
@@ -73,6 +72,12 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    machine_request = (accepted['machine_request'][-1] == '1')
+    machine_name = accepted['machine_name'][-1]
+    pre_built = accepted['pre_built'][-1]
+    start = accepted['start'][-1]
+    stop = accepted['stop'][-1]
+
     menu_items = ['vmrequest']
 
     # Html fragments
@@ -102,21 +107,32 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form', 'text'
                           : desc_text})
 
-    # TODO: handle request for pre-built or custom machine
+    if machine_request:
+        if not machine_name:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 "requested build without machine name"})
+            status = returnvalues.CLIENT_ERROR
+            return (output_objects, status)            
+        elif not pre_built in vms.pre_built_flavors:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 "requested pre-built flavor not available: %s" % pre_built})
+            status = returnvalues.CLIENT_ERROR
+            return (output_objects, status)
 
-    if accepted['machine_request'][0] == '1':
+        # TODO: support custom build og machine
 
-        # output_objects.append({'object_type': 'text', 'text': accepted})
+        # request for existing pre-built machine
 
-        vms.create_vm(client_id, configuration, accepted['machine_name'
-                      ][0])
+        vms.create_vm(client_id, configuration, machine_name,
+                      sys_flavor=pre_built)
 
     (action_status, action_msg, job_id) = (True, '', None)
-    if accepted['start'][0] != '':
+    if start:
         (action_status, action_msg, job_id) = \
-                        vms.enqueue_vm(client_id, configuration,
-                                       accepted['start'][0])
-    elif accepted['stop']:
+                        vms.enqueue_vm(client_id, configuration, start)
+    elif stop:
 
         # TODO: manage stop
 
@@ -125,8 +141,7 @@ def main(client_id, user_arguments_dict):
     if not action_status:
         output_objects.append({'object_type': 'error_text', 'text':
                                action_msg})
-        
-
+    
     # List the machines here
 
     output_objects.append({'object_type': 'sectionheader', 'text'
@@ -215,7 +230,7 @@ def main(client_id, user_arguments_dict):
     else:
         output_objects.append(
             {'object_type': 'text', 'text'
-             : "You don't have any virtual machines!"
+             : "You don't have any virtual machines! "
              "Click 'Request Virtual Machine' to become a proud owner :)"
              })
 

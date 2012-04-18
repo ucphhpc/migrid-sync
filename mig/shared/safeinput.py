@@ -880,6 +880,8 @@ def guess_type(name):
         return valid_free_text
     elif name.lower().find('site_script_deps') != -1:
         return valid_path
+    elif name.lower().find('machine_name') != -1:
+        return valid_job_id
     # showstats.py:
     # time_start/time_end: YYYY-MM
     elif name.lower().find('time_') != -1:

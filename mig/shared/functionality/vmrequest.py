@@ -29,6 +29,7 @@
 """Virtual machine request back end functionality"""
 
 import shared.returnvalues as returnvalues
+from shared import vms
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 
@@ -63,8 +64,7 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text':
                            '%s Request Virtual Machine' % \
                            configuration.short_title})
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """
+    build_form = """
 <form method="post" action="vmachines.py">
 <input type="hidden" name="output_format" value="html">
 <input type="hidden" name="machine_request" value="1">
@@ -86,8 +86,11 @@ def main(client_id, user_arguments_dict):
   <td>
   
 <select name="pre_built">
-<option value="plain">Basic</option>
-<option value="matlab">Matlab</option>
+"""
+    for flavor in vms.pre_built_flavors:
+        build_form += '<option value="%s">%s</option>\n' % \
+                      (flavor, flavor.capitalize())
+    build_form += """
 </select>
 
   </td>
@@ -97,7 +100,7 @@ def main(client_id, user_arguments_dict):
 </fieldset>
 
 <fieldset>
-<legend><input type="radio" name="machine_type" value="custom">Custom:</legend>
+<legend><input type="radio" name="machine_type" value="custom" disabled>Custom:</legend>
 <table>
 
 <tr>
@@ -138,7 +141,7 @@ def main(client_id, user_arguments_dict):
   <td width="200">Software</td>
   <td>
 <textarea cols=40 name="machine_software">
-iptables, acpid, x11vnc, xorg, gdm, xfce4, gcc, make, dillo, python-openssl
+iptables, acpid, x11vnc, xorg, gdm, xfce4, gcc, make, netsurf, python-openssl
 </textarea>
   </td>
 </tr>
@@ -148,6 +151,6 @@ iptables, acpid, x11vnc, xorg, gdm, xfce4, gcc, make, dillo, python-openssl
 <input type="submit" value="Submit machine request!">
 
 </form>
-    """})
-
+"""
+    output_objects.append({'object_type': 'html_form', 'text': build_form})
     return (output_objects, status)

@@ -47,6 +47,13 @@ from shared.defaults import any_vgrid
 from shared.fileio import unpickle
 from shared.job import new_job
 
+default_os = 'ubuntu-8.10'
+default_flavor = 'basic'
+default_diskformat = 'vmdk'
+default_hypervisor = 'vbox31'
+sys_location = 'sys_location.txt'
+pre_built_flavors = [default_flavor, 'numpy']
+
 
 def vnc_jobid(job_id='Unknown'):
     """
@@ -249,30 +256,32 @@ def machine_link(
     return link
 
 def create_vm(client_id, configuration, machine_name,            
-              data_disk='ubuntu-8.10-data.vmdk',
-              run_script='runvm.sh',
-              machine_conf='machine.cfg',
-              remote_marker='sys_plain.remote',
+              os_name=default_os,
+              sys_flavor=default_flavor,
+              disk_format=default_diskformat,
+              hypervisor=default_hypervisor,
+              sys_img_from_re='VBOX3.1-IMAGES-2008-1',
+              sys_base='$VBOXIMGDIR',
               ):
     """Create virtual machine with machine_name as ID and using data_disk as
     data image base.
+    Set sys_img_from_re and sys_base to use common images from the runtime env
+    on the resource or unset both to use a custom image from user home.
     """
     
+    # Setup paths - input filter prevents directory traversal
+
     client_dir = client_id_dir(client_id)
-
-    # Primitive sanitize of machine name
-    # Only allow A-z and numbers and no longer than 30 chars
-
-    machine_name = re.sub('[^A-Za-z0-9]*', '', machine_name)[:30]
-
-    # Setup paths - filter above prevents directory traversal
-
     user_home = os.path.abspath(os.path.join(configuration.user_home,
                                              client_dir))
     user_vms_home = os.path.join(user_home, 'vms')
     vm_home = os.path.join(user_vms_home, machine_name)
     server_vms_builder_home = os.path.join(configuration.server_home,
                                            'vms_builder')
+    sys_disk = '%s-%s.%s' % (os_name, sys_flavor, disk_format)
+    sys_conf = '%s-%s.cfg' % (os_name, sys_flavor)
+    data_disk = '%s-%s.%s' % (os_name, 'data', disk_format)
+    run_script='run%svm.sh' % hypervisor
 
     # Create users vms storage
 
@@ -285,20 +294,72 @@ def create_vm(client_id, configuration, machine_name,
 
     if not os.path.exists(vm_home):
         os.mkdir(vm_home)
-        shutil.copy(os.path.join(server_vms_builder_home, machine_conf),
-                    vm_home + os.sep)
         shutil.copy(os.path.join(server_vms_builder_home, data_disk),
                     vm_home + os.sep)
-        open(os.path.join(vm_home, remote_marker), 'a')
 
-def enqueue_vm(client_id, configuration, machine_name):
+        # Use OS image from runtime env resource for performance if possible
+        # with fall back to image from user home if custom image
+
+        if sys_img_from_re:
+            img_re = sys_img_from_re
+            img_location = sys_base
+            sys_conf = 'default.cfg'
+        else:
+            img_re = ''
+            img_location = ''
+            shutil.copy(os.path.join(server_vms_builder_home, sys_disk),
+                        vm_home + os.sep)
+
+        # Build conf file is always needed for arch, mem and cpu
+
+        shutil.copy(os.path.join(server_vms_builder_home, sys_conf),
+                    vm_home + os.sep)
+        location_fd = open(os.path.join(vm_home, sys_location), 'w')
+        location_fd.write("%s:%s:%s" % (img_re, img_location, sys_disk))
+        location_fd.close()
+        
+def enqueue_vm(client_id, configuration, machine_name,
+               os_name=default_os,
+               sys_flavor=default_flavor,
+               disk_format=default_diskformat,
+               hypervisor=default_hypervisor,
+               sys_base='$VBOXIMGDIR',
+               user_conf='$VBOXUSERCONF',
+               img_dir='vms',
+               memory=1024,
+               disk=1,
+               cpu_count=1,
+               cpu_time=900,
+               architecture='',
+               vgrid=[any_vgrid],
+               runtime_env=['VIRTUALBOX-3.1.X-1'],
+               notify=['jabber: SETTINGS'],
+               ):
     """Submit a machine job based on machine definition file.
     Returns the job submit result, a 3-tuple of (status, msg, job_id)
     """
 
+    # Setup paths - filter above prevents directory traversal
+
+    client_dir = client_id_dir(client_id)
+    user_home = os.path.abspath(os.path.join(configuration.user_home,
+                                             client_dir))
+    user_vms_home = os.path.join(user_home, 'vms')
+    vm_home = os.path.join(user_vms_home, machine_name)
+    location_fd = open(os.path.join(vm_home, sys_location), 'r')
+    (sys_re, sys_base, sys_disk) = location_fd.read().split(':')
+    location_fd.close()
+    if sys_re:
+        runtime_env.append(sys_re)
+    data_disk = '%s-data.%s' % (os_name, disk_format)
+    run_script='run%svm.sh' % hypervisor
+
     # Generate the mrsl and write to a temp file which is removed on close
 
-    mrsl = mig_vbox_deployed_job(configuration, machine_name)
+    mrsl = mig_vbox_deployed_job(client_id, configuration, machine_name, sys_disk,
+                                 data_disk, run_script, sys_base, user_conf,
+                                 img_dir, memory, disk, cpu_count, cpu_time,
+                                 architecture, vgrid, runtime_env, notify)
     mrsl_fd = NamedTemporaryFile()
     mrsl_fd.write(mrsl)
     mrsl_fd.flush()
@@ -310,25 +371,27 @@ def enqueue_vm(client_id, configuration, machine_name):
     return res
 
 def mig_vbox_deployed_job(
+    client_id,
     configuration,
-    name='Unknown',
-    data_disk='ubuntu-8.10-data.vmdk',
-    sys_disk='ubuntu-8.10.vmdk',
-    run_script='runvm.sh',
-    vbox_base='$VBOXIMGDIR',
-    user_conf='$VBOXUSERCONF',
-    img_dir='vms',
-    memory=1024,
-    disk=1,
-    cpu_count=1,
-    cpu_time=900,
-    architecture='',
-    vgrid=[any_vgrid],
-    runtime_env=['VIRTUALBOX-3.1.X-1', 'VBOX3.1-IMAGES-2008-1'],
-    notify=['jabber: SETTINGS'],
+    name,
+    sys_disk,
+    data_disk,
+    run_script,
+    sys_base,
+    user_conf,
+    img_dir,
+    memory,
+    disk,
+    cpu_count,
+    cpu_time,
+    architecture,
+    vgrid,
+    runtime_env,
+    notify,
     ):
     """This method assumes that the system disk, sys_disk, is available in
-    vbox_base on the resource.
+    sys_base on the resource either through a runtime environment or through
+    the user home. If unset it is fetched from user home through INPUTFILES.
     """
     architecture_lines = ''
     vgrid_lines = ''
@@ -345,7 +408,7 @@ def mig_vbox_deployed_job(
         notify_lines = '::NOTIFY::\n%s' % '\n'.join(notify)
     
     specs = {'name': name, 'data_disk': data_disk, 'sys_disk': sys_disk,
-             'run_script': run_script, 'vbox_base': vbox_base, 'user_conf': 
+             'run_script': run_script, 'sys_base': sys_base, 'user_conf': 
              user_conf, 'img_dir': img_dir, 'memory': memory, 'disk': disk,
              'cpu_count': cpu_count, 'cpu_time': cpu_time, 'architecture':
              architecture, 'vgrid': vgrid, 'runtime_env': runtime_env,
@@ -356,12 +419,15 @@ def mig_vbox_deployed_job(
              'proxy_host': configuration.vm_proxy_host,
              'proxy_port': configuration.vm_proxy_port,
              }
-    return """::EXECUTE::
+    job = """::EXECUTE::
 rm -rf %(user_conf)s
 mkdir %(user_conf)s
 mkdir %(user_conf)s/Machines
 mkdir %(user_conf)s/HardDisks
-cp %(vbox_base)s/%(sys_disk)s %(user_conf)s/HardDisks/%(sys_disk)s
+"""
+    if sys_base:
+        job += "cp %(sys_base)s/%(sys_disk)s %(user_conf)s/HardDisks/%(sys_disk)s"
+    job += """
 mv %(data_disk)s %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s
 $VBOXMANAGE -q openmedium disk +JOBID+_%(data_disk)s
 $VBOXMANAGE -q openmedium disk %(sys_disk)s
@@ -384,7 +450,11 @@ mv %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s %(data_disk)s
 
 ::INPUTFILES::
 %(img_dir)s/%(name)s/%(data_disk)s %(data_disk)s
-
+"""
+    if not sys_base:
+        job += """%(img_dir)s/%(name)s/%(sys_disk)s %(sys_disk)s
+"""
+    job += """
 ::OUTPUTFILES::
 %(data_disk)s %(img_dir)s/%(name)s/%(data_disk)s
 
@@ -410,4 +480,5 @@ mv %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s %(data_disk)s
 %(runtime_env_lines)s
 
 %(notify_lines)s
-""" % specs
+"""
+    return job % specs
