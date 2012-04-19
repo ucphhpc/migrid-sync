@@ -91,8 +91,10 @@ def build_vm(vm_specs):
     opts_string += " --mem %(memory)d --cpus %(cpu_count)d --mirror %(mirror)s"
     opts_string += " --part %(working_dir)s/%(suite)s.partition"
     opts_string += " --firstboot %(working_dir)s/boot-%(suite)s.sh"
+    opts_string += " --exec %(working_dir)s/post-install-%(suite)s.sh"
     for name in build_specs["base_packages"] + build_specs["extra_packages"]:
         opts_string += " --addpkg %s" % name
+        
     build_specs["vmbuilder_opts"] = opts_string % build_specs
     try:
         fill_template(conf_template_path, conf_path, build_specs)

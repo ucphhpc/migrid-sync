@@ -3,22 +3,13 @@
 # Set up virtualbox guest additions and start MiG VNC proxy agent that relies
 # on them for dynamic proxy settings
 
-echo ""
-echo " * Fixing repository"
-echo "deb http://ftp.klid.dk/ftp/ubuntu/ lucid main restricted universe" > /etc/apt/sources.list
-echo "deb http://ftp.klid.dk/ftp/ubuntu/ lucid-updates main restricted universe" >> /etc/apt/sources.list
-echo "deb http://ftp.klid.dk/ftp/ubuntu/ lucid-security main restricted universe" >> /etc/apt/sources.list
-echo "deb http://security.ubuntu.com/ubuntu lucid-security main restricted universe" >> /etc/apt/sources.list
-# Try a few times to make sure we have a good chance even if network is
-# lacking or still initializing
-for i in 1 2 3 4 5 6 7 8 9; do
-	apt-get update && break
-	sleep $i
-done
+# TODO: this is still not optimal with rc.local happening after gdm launch
 
 echo ""
 echo " * Installing guest additions"
-apt-get install -y linux-headers-generic-pae virtualbox-ose-guest-x11
+# We delay module install until this point to make sure we are running the
+# right kernel
+aptitude install -y virtualbox-ose-guest-x11
 modprobe vboxguest
 
 echo ""
