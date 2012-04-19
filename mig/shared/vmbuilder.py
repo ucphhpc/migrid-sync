@@ -45,15 +45,16 @@ logger = configuration.logger
 default_packages = ['iptables', 'acpid', 'x11vnc', 'xorg', 'gdm', 'xfce4',
                     'gcc', 'make', 'netsurf', 'python-openssl']
 default_specs = {'distro': 'ubuntu', 'hypervisor': 'vbox', 'memory': 1024,
-                 'cpu_count': 1, 'suite': 'lucid', 'working_dir':
+                 'cpu_count': 1, 'suite': 'lucid', 'mig_code_base':
+                 configuration.mig_code_base, 'working_dir':
                  configuration.vms_builder_home, 'architecture': 'i386',
                  'mirror': 'http://127.0.0.1:9999/ubuntu', 'base_packages':
                  default_packages, 'extra_packages': [], 'vmbuilder_opts':
                  '--vbox-disk-format=vmdk'}
 
-def fill_vmbuilder_conf(src, dst, vm_specs):
-    """Fills vmbuilder conf template in src with values from specs and writes
-    it to dst. All fileds used in conf should be provided in vm_specs.
+def fill_template(src, dst, vm_specs):
+    """Fills template in src with values from specs and writes it to dst. All
+    fields used in template should be provided in vm_specs.
     """
     src_fd = open(src, 'r')
     template = src_fd.read()
@@ -62,7 +63,7 @@ def fill_vmbuilder_conf(src, dst, vm_specs):
     dst_fd = open(dst, 'w')
     dst_fd.write(filled_conf)
     dst_fd.close()
-    logger.info("vm conf:\n%s" % filled_conf)
+    logger.info("filled %s in %s:\n%s" % (src, dst, filled_conf))
 
 def build_vm(vm_specs):
     """Use vmbuilder to build an OS image with settings from the vm_specs
@@ -76,12 +77,15 @@ def build_vm(vm_specs):
     # Fill conf template (currently just copies it since all args are explicit)
     tmp_dir = mkdtemp()
     conf_path = os.path.join(tmp_dir, '%(distro)s.cfg' % build_specs)
-    template_path = os.path.join(configuration.vms_builder_home,
+    conf_template_path = os.path.join(configuration.vms_builder_home,
                                  '%(distro)s.cfg' % build_specs)
+    bundle_path = os.path.join(tmp_dir, 'bundle-%(suite)s' % build_specs)
+    bundle_template_path = os.path.join(configuration.vms_builder_home,
+                                 'bundle-%(suite)s.in' % build_specs)
     # destdir option in conf does not work - keep most on cli
     # reserve 2G for tmpfs for way faster build
     opts_string = "%(vmbuilder_opts)s"
-    opts_string += " -c %s --tmpfs 2048" % conf_path
+    opts_string += " -c %s --copy %s --tmpfs 2048" % (conf_path, bundle_path)
     opts_string += " -d %(working_dir)s/%(hypervisor)s-%(distro)s-%(suite)s"
     opts_string += " --suite %(suite)s --arch %(architecture)s"
     opts_string += " --mem %(memory)d --cpus %(cpu_count)d --mirror %(mirror)s"
@@ -91,7 +95,8 @@ def build_vm(vm_specs):
         opts_string += " --addpkg %s" % name
     build_specs["vmbuilder_opts"] = opts_string % build_specs
     try:
-        fill_vmbuilder_conf(template_path, conf_path, build_specs)
+        fill_template(conf_template_path, conf_path, build_specs)
+        fill_template(bundle_template_path, bundle_path, build_specs)
         cmd_base = "sudo /usr/bin/vmbuilder"
         cmd_args = "%(hypervisor)s %(distro)s %(vmbuilder_opts)s" % build_specs
         cmd_string = "%s %s" % (cmd_base, cmd_args)
@@ -103,6 +108,7 @@ def build_vm(vm_specs):
         logger.error("vm built failed: %s" % exc)
     finally:
         os.remove(conf_path)
+        os.remove(bundle_path)
         os.rmdir(tmp_dir)
 
 def usage():

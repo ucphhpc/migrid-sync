@@ -32,10 +32,24 @@ cd mig/shared
 python vmbuilder.py --suite=precise
 
 Please note that there are a couple of bugs in the python-vm-builder package
-included in Ubuntu Lucid that breaks the build there:
+included in Ubuntu Lucid that breaks direct vbox image builds there:
 https://bugs.launchpad.net/ubuntu/+source/vm-builder/+bug/580237
 https://bugs.launchpad.net/vmbuilder/+bug/677378
-Either manually fix the bugs as mentioned there or use a more recent Ubuntu
-version.
+It may be possible to get around the bugs as mentioned there or use a more
+recent Ubuntu version, but building for kvm instead and manually convert the
+disk images afterwards is known to work. The build is then:
+python vmbuilder.py --suite=lucid --hypervisor=kvm --vmbuilder-opts=''
+The resulting big sys and small data qcow2 images will have random names:
+ls -l ~/state/server_home/vms_builder/kvm-ubuntu-lucid
+total 968472
+-rwxrwxr-x 1 bardino bardino        96 2012-04-19 13:21 run.sh
+-rw-r--r-- 1 bardino bardino 990445568 2012-04-19 13:21 tmpFuZRXJ.qcow2
+-rw-r--r-- 1 bardino bardino   1507328 2012-04-19 13:21 tmpRyRt5s.qcow2
+but just look at the sizes and convert them like:
+qemu-img convert -f qcow2 -O vmdk kvm-ubuntu-lucid/tmpFuZRXJ.qcow2 \
+	vbox-ubuntu-lucid/ubuntu-10.04-basic.vmdk 
+qemu-img convert -f qcow2 -O vmdk kvm-ubuntu-lucid/tmpRyRt5s.qcow2 \
+	vbox-ubuntu-lucid/ubuntu-10.04-data.vmdk 
+
 Builds rely on a local apt-proxy by default, but you can disable it in the conf
 by commenting out the mirror line.
