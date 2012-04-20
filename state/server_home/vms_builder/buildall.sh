@@ -7,34 +7,77 @@ if [ $# -lt 2 ]; then
 	exit 1
 fi
 
+# Change run to 'echo' to only show commands for partial manual runs
+#run='echo'
+run=''
+
 cwd=$PWD
 shared_dir="$1"
 builder_dir=$2
 
-for flavor in lucid; do
-	# lucid is 10.04
-	version=10.04
+lookup_version() {
+	flavors=('lucid' 'maverick' 'natty' 'oneiric' 'precise')
+	versions=('10.04' '10.10' '11.04' '11.10' '12.04')
+	count=${#flavors[@]}
+	index=0
+	name="$1"
+	while [ "$index" -lt "$count" ]; do
+		cur="${flavors[$index]}"
+		if [ "$name" = "$cur" ]; then
+			version="${versions[$index]}"
+			#echo  "found version: $version"
+			break
+		fi
+		let "index++"
+	done
+	export version
+}
+
+for flavor in lucid precise; do
+	# lookup version number from flavor
+	flavorindex=0
+	version=''
+	lookup_version $flavor
 	for arch in i386 amd64; do
-		# basic image
-		cd $shared_dir
-		python vmbuilder.py --suite=$flavor --hypervisor=kvm \
+		label="basic"
+		$run echo "build ubuntu $flavor $label image for $arch"
+		$run cd $shared_dir
+		$run python vmbuilder.py --suite=$flavor --hypervisor=kvm \
 			--vmbuilder-opts='' --architecture=$arch
-		cd $builder_dir
-		./tmp2kvm.sh $arch 'basic' $version $flavor
-		# escience-base image
-		cd $shared_dir
-		python vmbuilder.py --suite=$flavor --hypervisor=kvm \
+		$run cd $builder_dir
+		$run ./tmp2kvm.sh $arch 'basic' $version $flavor
+		label="escience-base"
+		$run echo "build ubuntu $flavor $label image for $arch"
+		$run cd $shared_dir
+		$run python vmbuilder.py --suite=$flavor --hypervisor=kvm \
 			--vmbuilder-opts='' --architecture=$arch \
 			libatlas3gf-base python-scipy python-matplotlib \
-			ipython
-		cd $builder_dir
-		./tmp2kvm.sh $arch 'escience-base' $version $flavor
+			ipython	python-imaging python-profiler python-pip
+		$run cd $builder_dir
+		$run ./tmp2kvm.sh $arch 'escience-base' $version $flavor
+		label="escience-astro"
+		$run echo "build ubuntu $flavor $label image for $arch"
+		$run cd $shared_dir
+		# TODO: add mysql python-pywcs stsci_python where available
+		# python-pywcs is available in precise and on this PPA
+		# https://launchpad.net/~olebole/+archive/astro
+		$run python vmbuilder.py --suite=$flavor --hypervisor=kvm \
+			--vmbuilder-opts='' --architecture=$arch \
+			libatlas3gf-base python-scipy python-matplotlib \
+			ipython python-imaging python-profiler python-pip \
+			sqlite3 python-sqlalchemy python-pyfits 
+		$run cd $builder_dir
+		$run ./tmp2kvm.sh $arch 'escience-base' $version $flavor
 	done
 done
 
 # Convert all images to vbox31 format
-cd $builder_dir
-./kvm2vbox.sh
+$run cd $builder_dir
+$run ./kvm2vbox.sh
 
-cd $cwd
+# Copy all data images to separate dirs for flexible packaging
+$run cd $builder_dir
+$run ./clonedataimg.sh
+
+$run cd $cwd
 exit 0

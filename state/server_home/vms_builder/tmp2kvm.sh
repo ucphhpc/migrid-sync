@@ -26,13 +26,16 @@ YEAR="20$(echo $VERSION|cut -f1 -d.)"
 export ARCH
 export CODENAME
 
+# Change run to 'echo' to only show commands for partial manual runs
+#run='echo'
+run=''
+
 srcdir="kvm-ubuntu-$CODENAME-$ARCH"
 dstdir="kvm-os-images-$YEAR-1"
-mkdir -p $dstdir
-sync
+$run mkdir -p $dstdir
+$run sync
 
 files=($(ls -S $srcdir))
-echo "DEBUG: files: ${files[@]}"
 if [ ${#files[@]} -lt 3 ]; then
 	echo "no source files to move from $srcdir"
 	exit 0
@@ -44,8 +47,17 @@ runsrc="$srcdir/${files[2]}"
 sysdst="$dstdir/ubuntu-$VERSION-$ARCH-$FLAVOR.qcow2"
 datadst="$dstdir/ubuntu-$VERSION-$ARCH-data.qcow2"
 rundst="$dstdir/run-ubuntu-$VERSION-$ARCH-$FLAVOR.sh"
-[ -e "$syssrc" ] && rsync -aP "$syssrc" "$sysdst"
-[ -e "$datasrc" ] && rsync -aP "$datasrc" "$datadst"
-[ -e "$runsrc" ] && rsync -aP "$runsrc" "$rundst"
-sync
+if [ -e "$syssrc" ]; then
+	$run rsync -aP "$syssrc" "$sysdst"
+	$run rm -f "$syssrc"
+fi
+if [ -e "$datasrc" ]; then
+	$run rsync -aP "$datasrc" "$datadst"
+	$run rm -f "$datasrc"
+fi
+if [ -e "$runsrc" ]; then
+	$run rsync -aP "$runsrc" "$rundst"
+	$run rm -f "$runsrc"
+fi
+$run sync
 
