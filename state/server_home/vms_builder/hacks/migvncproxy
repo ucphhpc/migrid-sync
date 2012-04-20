@@ -25,12 +25,17 @@ touch $LOG
 
 start_proxy() {
 	# Wait for VBoxControl from guest additions
-	echo "waiting for VBoxControl" >> $LOG
-	VBOXCONTROL=""
-	while [ -z "$VBOXCONTROL" ]; do
+	while [ 1 ]; do
 		echo "`date` looking up VBoxControl" >> $LOG
-		VBOXCONTROL=`which VBoxControl` 2> /dev/null || sleep 5
+		VBOXCONTROL=`which VBoxControl` 2> /dev/null && break
+		echo "`date` installing virtualbox guest additions" >> $LOG
+		aptitude install -y linux-headers-`uname -r` && \
+			aptitude install -y virtualbox-ose-guest-x11 && \
+			break
+		sleep 10
 	done
+	sync
+	modprobe vboxguest
 
 	job_id=`VBoxControl -nologo guestproperty get job_id | cut -b 8-`
 	proxy_host=`VBoxControl -nologo guestproperty get proxy_host | cut -b 8-`
