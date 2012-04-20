@@ -85,8 +85,9 @@ def build_vm(vm_specs):
     # destdir option in conf does not work - keep most on cli
     # reserve 2G for tmpfs for way faster build
     opts_string = "%(vmbuilder_opts)s"
-    opts_string += " -c %s --copy %s --tmpfs 2048" % (conf_path, bundle_path)
-    opts_string += " -d %(working_dir)s/%(hypervisor)s-%(distro)s-%(suite)s"
+    opts_string += " -c %s --copy %s --tmpfs 2048 -o" % (conf_path,
+                                                         bundle_path)
+    opts_string += " -d %(working_dir)s/%(hypervisor)s-%(distro)s-%(suite)s-%(architecture)s"
     opts_string += " --suite %(suite)s --arch %(architecture)s"
     opts_string += " --mem %(memory)d --cpus %(cpu_count)d --mirror %(mirror)s"
     opts_string += " --part %(working_dir)s/%(suite)s.partition"
