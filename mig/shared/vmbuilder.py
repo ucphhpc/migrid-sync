@@ -43,7 +43,7 @@ from shared.conf import get_configuration_object
 configuration = get_configuration_object()
 logger = configuration.logger
 default_packages = ['iptables', 'acpid', 'x11vnc', 'xorg', 'gdm', 'xfce4',
-                    'gcc', 'make', 'aptitude', 'netsurf', 'python-openssl']
+                    'dkms', 'aptitude', 'netsurf', 'python-openssl']
 default_specs = {'distro': 'ubuntu', 'hypervisor': 'vbox', 'memory': 1024,
                  'cpu_count': 1, 'suite': 'lucid', 'mig_code_base':
                  configuration.mig_code_base, 'working_dir':
