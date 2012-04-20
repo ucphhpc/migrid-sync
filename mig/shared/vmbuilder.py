@@ -83,9 +83,9 @@ def build_vm(vm_specs):
     bundle_template_path = os.path.join(configuration.vms_builder_home,
                                  'bundle-%(suite)s.in' % build_specs)
     # destdir option in conf does not work - keep most on cli
-    # reserve 2G for tmpfs for way faster build
+    # reserve 3G for tmpfs for way faster build (and enough for sys disk)
     opts_string = "%(vmbuilder_opts)s"
-    opts_string += " -c %s --copy %s --tmpfs 2048 -o" % (conf_path,
+    opts_string += " -c %s --copy %s --tmpfs 3072 -o" % (conf_path,
                                                          bundle_path)
     opts_string += " -d %(working_dir)s/%(hypervisor)s-%(distro)s-%(suite)s-%(architecture)s"
     opts_string += " --suite %(suite)s --arch %(architecture)s"
