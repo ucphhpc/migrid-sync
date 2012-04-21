@@ -1,9 +1,17 @@
 #!/bin/bash
 #
 # Build all our images for kvm and vbox31
+# ubuntu dist and arch combinations can be overridden on the command line
 
 if [ $# -lt 2 ]; then
-	echo "Usage: $0 mig_shared_dir mig_state_vms_builder_dir"
+	echo "Usage: $0 mig_shared_dir mig_state_vms_builder_dir [dists] [archs]"
+	echo "Where the optional dists argument is a string listing Ubuntu"
+	echo "dist names separated by space."
+	echo "archs is a single string with architecture names separated by a" 
+	echo "space."
+	echo "Example to build 32 and 64 bit images for lucid and precise:"
+	echo "$0 $HOME/mig/shared $HOME/mig/state/server_files/vms_builder \\"
+	echo "		'lucid precise' 'i386 amd64'"
 	exit 1
 fi
 
@@ -11,9 +19,18 @@ fi
 #run='echo'
 run=''
 
+flavorlist=("lucid" "precise")
+archlist=("i386" "amd64")
 cwd=$PWD
 shared_dir="$1"
 builder_dir=$2
+if [ $# -ge 3 ]; then
+	flavorlist=($(echo $3))
+fi
+if [ $# -ge 4 ]; then
+	archlist=($(echo $4))
+fi
+
 
 lookup_version() {
 	flavors=('lucid' 'maverick' 'natty' 'oneiric' 'precise')
@@ -33,19 +50,21 @@ lookup_version() {
 	export version
 }
 
-for flavor in lucid precise; do
+for flavor in ${flavorlist[@]}; do
 	# lookup version number from flavor
 	flavorindex=0
 	version=''
 	lookup_version $flavor
-	for arch in i386 amd64; do
+	# apt-proxy hogs memory - restart to free it once in a while
+	sudo service apt-proxy restart
+	for arch in ${archlist[@]}; do
 		label="basic"
 		$run echo "build ubuntu $flavor $label image for $arch"
 		$run cd $shared_dir
 		$run python vmbuilder.py --suite=$flavor --hypervisor=kvm \
 			--vmbuilder-opts='' --architecture=$arch
 		$run cd $builder_dir
-		$run ./tmp2kvm.sh $arch 'basic' $version $flavor
+		$run ./tmp2kvm.sh $arch $label $version $flavor
 		label="escience-base"
 		$run echo "build ubuntu $flavor $label image for $arch"
 		$run cd $shared_dir
@@ -54,7 +73,7 @@ for flavor in lucid precise; do
 			libatlas3gf-base python-scipy python-matplotlib \
 			ipython	python-imaging python-pip
 		$run cd $builder_dir
-		$run ./tmp2kvm.sh $arch 'escience-base' $version $flavor
+		$run ./tmp2kvm.sh $arch $label $version $flavor
 		label="escience-astro"
 		$run echo "build ubuntu $flavor $label image for $arch"
 		$run cd $shared_dir
@@ -67,7 +86,7 @@ for flavor in lucid precise; do
 			ipython python-imaging python-pip \
 			sqlite3 python-sqlalchemy python-pyfits 
 		$run cd $builder_dir
-		$run ./tmp2kvm.sh $arch 'escience-base' $version $flavor
+		$run ./tmp2kvm.sh $arch $label $version $flavor
 	done
 done
 
