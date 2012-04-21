@@ -8,11 +8,13 @@
 # We need proc for network access during post install
 mount --bind /proc $1/proc
 
-# prepare vbox guest additions for use in dynamic vnc proxy settings
-# we delay dkms module build until first boot for right kernel
-chroot $1 aptitude update
-# dkms only builds modules for kernels with available headers:
-# install 'virtual' headers to automatically pull in pae headers for i386
+# Prepare vbox guest additions for use in dynamic vnc proxy settings.
+# We delay dkms module build until first boot for right kernel.
+# Base build fails if aptitude is included early, so we install it here.
+chroot $1 apt-get update
+chroot $1 apt-get install -y aptitude
+# Dkms only builds modules for kernels with available headers:
+# Install 'virtual' headers to automatically pull in pae headers for i386
 # and generic for other archs
 chroot $1 aptitude install -y linux-headers-virtual
 chroot $1 aptitude install -y -d virtualbox-ose-guest-x11
