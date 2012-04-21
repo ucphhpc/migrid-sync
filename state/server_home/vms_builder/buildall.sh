@@ -52,7 +52,7 @@ for flavor in lucid precise; do
 		$run python vmbuilder.py --suite=$flavor --hypervisor=kvm \
 			--vmbuilder-opts='' --architecture=$arch \
 			libatlas3gf-base python-scipy python-matplotlib \
-			ipython	python-imaging python-profiler python-pip
+			ipython	python-imaging python-pip
 		$run cd $builder_dir
 		$run ./tmp2kvm.sh $arch 'escience-base' $version $flavor
 		label="escience-astro"
@@ -64,7 +64,7 @@ for flavor in lucid precise; do
 		$run python vmbuilder.py --suite=$flavor --hypervisor=kvm \
 			--vmbuilder-opts='' --architecture=$arch \
 			libatlas3gf-base python-scipy python-matplotlib \
-			ipython python-imaging python-profiler python-pip \
+			ipython python-imaging python-pip \
 			sqlite3 python-sqlalchemy python-pyfits 
 		$run cd $builder_dir
 		$run ./tmp2kvm.sh $arch 'escience-base' $version $flavor
