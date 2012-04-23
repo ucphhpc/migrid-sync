@@ -882,6 +882,14 @@ def guess_type(name):
         return valid_path
     elif name.lower().find('machine_name') != -1:
         return valid_job_id
+    elif name.lower().find('cpu_count') != -1:
+        return valid_numeric
+    elif name.lower().find('cpu_time') != -1:
+        return valid_numeric
+    elif name.lower().find('architecture') != -1:
+        return valid_alphanumeric
+    elif name.lower().find('pre_built') != -1:
+        return valid_fqdn
     # showstats.py:
     # time_start/time_end: YYYY-MM
     elif name.lower().find('time_') != -1:

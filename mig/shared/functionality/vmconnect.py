@@ -64,6 +64,12 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text':
                            '%s Virtual Desktop' % configuration.short_title})
 
+    if not configuration.site_enable_vmachines:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "Virtual machines are disabled on this server"})
+        status = returnvalues.CLIENT_ERROR
+        return (output_objects, status)
+
     password = vms.vnc_jobid(accepted['job_id'][0])
 
     # Do an "intoN" then map to acsii

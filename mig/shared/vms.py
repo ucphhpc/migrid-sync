@@ -52,8 +52,10 @@ default_flavor = 'basic'
 default_diskformat = 'vmdk'
 default_hypervisor = 'vbox31'
 sys_location = 'sys_location.txt'
-pre_built_flavors = [default_flavor, 'numpy']
 
+def pre_built_flavors(configuration):
+    """Returns a list of available VM flavors (package sets)"""
+    return [default_flavor] + configuration.site_vm_extra_flavors
 
 def vnc_jobid(job_id='Unknown'):
     """
@@ -88,7 +90,8 @@ def vms_list(client_id, configuration):
     """Returns a list of dicts describing users available virtual machines
     described by following keys:
  
-    'name', 'ram', 'state'
+    'name', 'memory', 'disk', 'cpu_count', 'cpu_time', 'vgrid', 'architecture',
+    'state'
  
     NOTE:
 
@@ -134,8 +137,11 @@ def vms_list(client_id, configuration):
             'execution_time': 'UNKNOWN',
             'job_id': 'UNKNOWN',
             'memory': 'UNKNOWN',
+            'disk': 'UNKNOWN',
             'cpu_count': 'UNKNOWN',
-            'arch': 'UNKNOWN',
+            'cpu_time': 'UNKNOWN',
+            'vgrid': 'UNKNOWN',
+            'architecture': 'UNKNOWN',
             'uuid': 'UNKNOWN',
             }
 
@@ -147,9 +153,12 @@ def vms_list(client_id, configuration):
         vm_config.read([vm_def_path])
 
         machine['name'] = vm_def_base
-        machine['memory'] = vm_config.get('DEFAULT', 'mem')
-        machine['cpu_count'] = vm_config.get('DEFAULT', 'cpus')
-        machine['arch'] = vm_config.get('DEFAULT', 'arch')
+        machine['memory'] = vm_config.get('DEFAULT', 'memory')
+        machine['disk'] = vm_config.get('DEFAULT', 'disk')
+        machine['cpu_count'] = vm_config.get('DEFAULT', 'cpu_count')
+        machine['cpu_time'] = vm_config.get('DEFAULT', 'cpu_time')
+        machine['architecture'] = vm_config.get('DEFAULT', 'architecture')
+        machine['vgrid'] = vm_config.get('DEFAULT', 'vgrid').split()
 
         # All job descriptions associated with this virtual machine
 
@@ -234,6 +243,7 @@ def machine_link(
     name,
     uuid,
     state,
+    machine_req,
     ):
     """A convenience functions for creating links to 'stop/stop/connect'.
     Depending on the machine state.
@@ -251,7 +261,15 @@ def machine_link(
 
         # Canceled, Finished, Unknown
 
-        link = '<a href="?start=%s">%s</a>' % (name, content)
+        specs_string = 'start=%s' % name
+        for (key, val) in machine_req.items():
+            # Lists of strings must be split into multiple key=val pairs
+            if not isinstance(val, basestring) and isinstance(val, list):
+                for entry in val:
+                    specs_string += ';%s=%s' % (key, entry)
+            else:
+                specs_string += ';%s=%s' % (key, val)
+        link = '<a href="?%s">%s</a>' % (specs_string, content)
 
     return link
 
@@ -310,7 +328,7 @@ def create_vm(client_id, configuration, machine_name,
             shutil.copy(os.path.join(server_vms_builder_home, sys_disk),
                         vm_home + os.sep)
 
-        # Build conf file is always needed for arch, mem and cpu
+        # Build conf file is always needed for specs like arch, mem and cpu
 
         shutil.copy(os.path.join(server_vms_builder_home, sys_conf),
                     vm_home + os.sep)
@@ -318,6 +336,34 @@ def create_vm(client_id, configuration, machine_name,
         location_fd.write("%s:%s:%s" % (img_re, img_location, sys_disk))
         location_fd.close()
         
+def edit_vm(client_id, configuration, machine_name, machine_specs):
+    """Updates the vm configuration for vm with given machine_name"""
+
+    # Grab the base directory of the user
+
+    client_dir = client_id_dir(client_id)
+    user_home = os.path.abspath(os.path.join(configuration.user_home,
+                                             client_dir))
+
+    vms_conf_path = os.path.join(user_home, 'vms', machine_name, 'default.cfg')
+
+    # Grab the configuration file defining the machine
+
+    vm_config = ConfigParser.ConfigParser()
+    vm_config.read([vms_conf_path])
+    for (key, val) in machine_specs.items():
+        if not isinstance(val, basestring) and isinstance(val, list):
+            string_val = ''
+            for entry in val:
+                string_val += '%s ' % entry
+        else:
+            string_val = val
+        vm_config.set('DEFAULT', key, string_val)
+    conf_fd = open(vms_conf_path, 'w')
+    vm_config.write(conf_fd)
+    conf_fd.close()
+    return (True, '')
+
 def enqueue_vm(client_id, configuration, machine_name,
                os_name=default_os,
                sys_flavor=default_flavor,
@@ -327,7 +373,7 @@ def enqueue_vm(client_id, configuration, machine_name,
                user_conf='$VBOXUSERCONF',
                img_dir='vms',
                memory=1024,
-               disk=1,
+               disk=2,
                cpu_count=1,
                cpu_time=900,
                architecture='',

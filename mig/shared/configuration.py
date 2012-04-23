@@ -634,6 +634,16 @@ class Configuration:
             self.site_enable_sftp = config.getboolean('SITE', 'enable_sftp')
         else:
             self.site_enable_sftp = True
+        if config.has_option('SITE', 'enable_vmachines'):
+            self.site_enable_vmachines = config.getboolean('SITE',
+                                                           'enable_vmachines')
+        else:
+            self.site_enable_vmachines = False
+        if config.has_option('SITE', 'vm_extra_flavors'):
+            self.site_vm_extra_flavors = config.get('SITE',
+                                                    'vm_extra_flavors').split()
+        else:
+            self.site_vm_extra_flavors = []
         if config.has_option('SITE', 'swrepo_url'):
             self.site_swrepo_url = config.get('SITE', 'swrepo_url')
         else:

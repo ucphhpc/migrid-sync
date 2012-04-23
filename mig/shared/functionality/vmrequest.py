@@ -64,6 +64,12 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text':
                            '%s Request Virtual Machine' % \
                            configuration.short_title})
+    if not configuration.site_enable_vmachines:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "Virtual machines are disabled on this server"})
+        status = returnvalues.CLIENT_ERROR
+        return (output_objects, status)
+
     build_form = """
 <form method="post" action="vmachines.py">
 <input type="hidden" name="output_format" value="html">
@@ -82,12 +88,12 @@ def main(client_id, user_arguments_dict):
 <legend><input type="radio" name="machine_type" value="pre" checked="checked">Prebuilt</legend>
 <table>
 <tr>
-  <td width="200">Choose a machine</td>
+  <td width="200">Choose a machine image</td>
   <td>
   
 <select name="pre_built">
 """
-    for flavor in vms.pre_built_flavors:
+    for flavor in vms.pre_built_flavors(configuration):
         build_form += '<option value="%s">%s</option>\n' % \
                       (flavor, flavor.capitalize())
     build_form += """
@@ -101,42 +107,8 @@ def main(client_id, user_arguments_dict):
 
 <fieldset>
 <legend><input type="radio" name="machine_type" value="custom" disabled>Custom:</legend>
+<span class="warningtext">Custom builds are currently unavailable.</span>
 <table>
-
-<tr>
-  <td width="200">Architecture</td>
-  <td>
-  <select name="machine_arch">
-  <option value="32">32bit</option>
-  <option value="64">64bit</option>
-  </select>
-  </td>
-</tr>
-
-<tr>
-  <td width="200">Ram</td>
-  <td>
-  <select name="machine_ram">
-  <option value="256">256</option>
-  <option value="512">512</option>
-  <option value="1024">1024</option>
-  <option value="2048">2048</option>
-  <option value="4096">4096</option>
-  </select>
-  </td>
-</tr>
-
-<tr>
-  <td width="200">CPUs</td>
-  <td>
-  <select name="machine_cpu">
-  <option value="1">1</option>
-  <option value="2">2</option>
-  <option value="4">4</option>
-  </select>
-  </td>
-</tr>
-
 <tr>
   <td width="200">Software</td>
   <td>

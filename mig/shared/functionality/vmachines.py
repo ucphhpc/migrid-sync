@@ -31,25 +31,32 @@ import time
 
 import shared.returnvalues as returnvalues
 from shared import vms
+from shared.defaults import any_vgrid
 from shared.functional import validate_input_and_cert
 from shared.html import render_menu
 from shared.init import initialize_main_variables, find_entry
+from shared.vgrid import user_allowed_vgrids
 
 def signature():
     """Signature of the main function"""
 
     defaults = {
         'start': [''],
+        'edit': [''],
         'stop': [''],
         'machine_name': [''],
         'machine_request': ['0'],
         'machine_type': [''],
-        'pre_built': [''],
-        'machine_arch': [''],
-        'machine_cpu': [''],
-        'machine_ram': [''],
         'machine_partition': [''],
         'machine_software': [''],
+        'pre_built': [''],
+        # Resource native architecture requirement (not vm architecture)
+        'architecture': [''],
+        'cpu_count': ['1'],
+        'cpu_time': ['900'],
+        'memory': ['1024'],
+        'disk': ['2'],
+        'vgrid': ['ANY'],
         }
     return ['html_form', defaults]
 
@@ -74,10 +81,21 @@ def main(client_id, user_arguments_dict):
 
     machine_request = (accepted['machine_request'][-1] == '1')
     machine_name = accepted['machine_name'][-1]
+    memory = int(accepted['memory'][-1])
+    disk = int(accepted['disk'][-1])
+    vgrid = accepted['vgrid']
+    architecture = accepted['architecture'][-1]
+    cpu_count = int(accepted['cpu_count'][-1])
+    cpu_time = int(accepted['cpu_time'][-1])
     pre_built = accepted['pre_built'][-1]
     start = accepted['start'][-1]
+    edit = accepted['edit'][-1]
     stop = accepted['stop'][-1]
 
+    machine_req = {'memory': memory, 'disk': disk, 'cpu_count': cpu_count,
+                   'cpu_time': cpu_time, 'architecture': architecture,
+                   'vgrid': vgrid}
+    
     menu_items = ['vmrequest']
 
     # Html fragments
@@ -107,21 +125,34 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form', 'text'
                           : desc_text})
 
+    user_vms = vms.vms_list(client_id, configuration)
     if machine_request:
+        if not configuration.site_enable_vmachines:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 "Virtual machines are disabled on this server"})
+            status = returnvalues.CLIENT_ERROR
+            return (output_objects, status)
         if not machine_name:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  "requested build without machine name"})
             status = returnvalues.CLIENT_ERROR
             return (output_objects, status)            
-        elif not pre_built in vms.pre_built_flavors:
+        elif machine_name in [vm["name"] for vm in user_vms]:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 "requested machine name '%s' already exists!" % machine_name})
+            status = returnvalues.CLIENT_ERROR
+            return (output_objects, status)
+        elif not pre_built in vms.pre_built_flavors(configuration):
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  "requested pre-built flavor not available: %s" % pre_built})
             status = returnvalues.CLIENT_ERROR
             return (output_objects, status)
 
-        # TODO: support custom build og machine
+        # TODO: support custom build of machine using shared/vmbuilder.py
 
         # request for existing pre-built machine
 
@@ -129,12 +160,40 @@ def main(client_id, user_arguments_dict):
                       sys_flavor=pre_built)
 
     (action_status, action_msg, job_id) = (True, '', None)
+    if start or edit or stop:
+        if not configuration.site_enable_vmachines:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 "Virtual machines are disabled on this server"})
+            status = returnvalues.CLIENT_ERROR
+            return (output_objects, status)
     if start:
+        machine = {}
+        for entry in user_vms:
+            if start == entry['name']:
+                for name in machine_req.keys():
+                    if isinstance(entry[name], basestring) and \
+                                  entry[name].isdigit():
+                        machine[name] = int(entry[name])
+                    else:
+                        machine[name] = entry[name]
+                break
         (action_status, action_msg, job_id) = \
-                        vms.enqueue_vm(client_id, configuration, start)
+                        vms.enqueue_vm(client_id, configuration, start,
+                                       **machine)
+    elif edit:
+        if not edit in [vm['name'] for vm in user_vms]:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 "No such virtual machine: %s" % machine_name})
+            status = returnvalues.CLIENT_ERROR
+            return (output_objects, status)
+        (action_status, action_msg) = \
+                        vms.edit_vm(client_id, configuration, edit,
+                                    machine_req)
     elif stop:
-
-        # TODO: manage stop
+        
+        # TODO: manage stop - use live I/O to create vmname.stop in job dir
 
         pass
 
@@ -168,7 +227,7 @@ def main(client_id, user_arguments_dict):
 
     if len(machines) > 0:
 
-        # Create a pretty list with start/stop/connect links
+        # Create a pretty list with start/edit/stop/connect links
 
         pretty_machines = \
             '<table style="border: 0; background: none;"><tr>'
@@ -197,11 +256,36 @@ def main(client_id, user_arguments_dict):
                             - time.mktime(machine['execution_time'])
                 password = vms.vnc_jobid(machine['job_id'])
 
-            specs = """<fieldset><legend>Specs:</legend>
-<ul><li>Memory: %s</li><li>Cpu's: %s</li><li>Arch: %s</li>
-<li>Password: %s</li></ul>
-</fieldset>""" % (machine['memory'], machine['cpu_count'],
-                  machine['arch'], password)
+            machine_specs = {}
+            machine_specs.update(machine)
+            machine_specs['password'] = password
+            specs = """<fieldset>
+<legend>Specs:</legend><ul>
+<form method="post" action="vmachines.py">
+<input type="hidden" name="edit" value="%(name)s">
+<input type="hidden" name="output_format" value="html">
+
+<li>Memory <input type="text" size=4 name="memory" value="%(memory)s"> MB</li>
+<li>Disk <input type="text" size=4 name="disk" value="%(disk)s"> GB</li>
+<li>Cpu's <input type="text" size=4 name="cpu_count" value="%(cpu_count)s"></li>
+<li>Architecture <select name="architecture">
+"""
+            for arch in [''] + configuration.architectures:
+                specs += "<option value='%s'>%s</option>" % (arch, arch)
+            specs += """</select>
+<li>Time slot <input type="text" size=4 name="cpu_time" value="%(cpu_time)s"> s</li>
+<li>VGrid <select name="vgrid">"""
+            for vgrid_name in [any_vgrid] + \
+                    user_allowed_vgrids(configuration, client_id):
+                select = ''
+                if vgrid_name == machine_specs['vgrid'][0]:
+                    select = 'selected'
+                specs += "<option %s>%s</option>" % (select, vgrid_name)
+            specs += """</select></li>"""
+            specs += """            
+<li>Password:  %(password)s</li>
+<input type="submit" value="Save">
+</form></ul></fieldset>"""
             if machine['status'] == 'EXECUTING' and exec_time > 130:
                 machine_image = '<img src="/images/vms/' \
                     + machine_states[machine['status']] + '">'
@@ -214,14 +298,14 @@ def main(client_id, user_arguments_dict):
                     + machine_states[machine['status']] + '">'
             machine_link = vms.machine_link(machine_image,
                     machine['job_id'], machine['name'], machine['uuid'
-                    ], machine['status'])
+                    ], machine['status'], machine_req)
 
             # Smack all the html together
 
             pretty_machines += '''
 <td style="vertical-align: top;">
 <fieldset><legend>%s</legend> %s %s</fieldset>
-</td>''' % (machine['name'], machine_link, specs)
+</td>''' % (machine['name'], machine_link, specs % machine_specs)
 
         pretty_machines += '</tr></table>'
 
