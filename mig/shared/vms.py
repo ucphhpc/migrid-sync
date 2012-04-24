@@ -488,7 +488,7 @@ def mig_vbox_deploy_job(client_id, configuration, name, machine_req):
                   configuration.vm_proxy_port, 'arch_opts': ''
 
                   })
-    if specs['architecture'] == 'i386':
+    if specs['vm_arch'] == 'i386':
         specs['arch_opts'] = '--pae on'
     else:
         # default NIC is not supported on all 64-bit OSes
