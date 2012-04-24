@@ -892,6 +892,8 @@ def guess_type(name):
         return valid_fqdn
     elif name.lower().find('flavor') != -1:
         return valid_fqdn
+    elif name.lower().find('hypervisor_re') != -1:
+        return valid_fqdn
     elif name.lower().find('sys_re') != -1:
         return valid_fqdn
     # showstats.py:

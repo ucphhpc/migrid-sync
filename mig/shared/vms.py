@@ -57,6 +57,11 @@ def available_flavor_list(configuration):
     """Returns a list of available VM flavors (package sets)"""
     return [configuration.vm_default_flavor] + configuration.vm_extra_flavors
 
+def available_hypervisor_re_list(configuration):
+    """Returns a list of available VM hypervisor runtime envs"""
+    return [configuration.vm_default_hypervisor_re] + \
+           configuration.vm_extra_hypervisor_re
+
 def available_sys_re_list(configuration):
     """Returns a list of available VM system pack runtime envs"""
     return [configuration.vm_default_sys_re] + configuration.vm_extra_sys_re
@@ -79,6 +84,7 @@ def default_vm_specs(configuration):
     specs['flavor'] = configuration.vm_default_flavor
     specs['disk_format'] = configuration.vm_default_disk_format
     specs['hypervisor'] = configuration.vm_default_hypervisor
+    specs['hypervisor_re'] = configuration.vm_default_hypervisor_re
     specs['sys_re'] = configuration.vm_default_sys_re
     specs['sys_base'] = configuration.vm_default_sys_base
     specs['user_conf'] = configuration.vm_default_user_conf
@@ -118,7 +124,7 @@ def vms_list(client_id, configuration):
     described by following keys:
  
     'name', 'memory', 'disk', 'cpu_count', 'cpu_time', 'vgrid', 'architecture',
-    'vm_arch', 'os', 'flavor', 'sys_re', 'state'
+    'vm_arch', 'os', 'flavor', 'hypervisor_re', 'sys_re', 'state'
  
     NOTE:
 
@@ -189,6 +195,7 @@ def vms_list(client_id, configuration):
         machine['vm_arch'] = vm_config.get('MiG', 'vm_arch')
         machine['os'] = vm_config.get('MiG', 'os')
         machine['flavor'] = vm_config.get('MiG', 'flavor')
+        machine['hypervisor_re'] = vm_config.get('MiG', 'hypervisor_re')
         machine['sys_re'] = vm_config.get('MiG', 'sys_re')
 
         # All job descriptions associated with this virtual machine
@@ -312,6 +319,7 @@ def create_vm(client_id, configuration, machine_name, machine_req):
     * flavor
     * disk_format
     * hypervisor
+    * hypervisor_re
     * sys_re
     * sys_base
     * user_conf

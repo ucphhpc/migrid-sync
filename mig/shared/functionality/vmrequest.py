@@ -122,8 +122,9 @@ For Ubuntu systems you can typically just use a runtime env from the same year,
 like VBOX3.1-IMAGES-2010-1 for ubuntu-10.* versions.</td>
   <td>
   
+<input type="hidden" name="hypervisor_re" value="%s">
 <select name="sys_re">
-"""
+""" % configuration.vm_default_hypervisor_re
     for sys_re in vms.available_sys_re_list(configuration):
         build_form += '<option value="%s">%s</option>\n' % \
                       (sys_re, sys_re)

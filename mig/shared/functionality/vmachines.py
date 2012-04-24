@@ -48,6 +48,7 @@ def signature():
         'machine_software': [''],
         'os': [''],
         'flavor': [''],
+        'hypervisor_re': [''],
         'sys_re': [''],
         # Resource native architecture requirement (not vm architecture)
         'architecture': [''],
@@ -87,13 +88,14 @@ def main(client_id, user_arguments_dict):
     cpu_time = int(accepted['cpu_time'][-1])
     os = accepted['os'][-1]
     flavor = accepted['flavor'][-1]
+    hypervisor_re = accepted['hypervisor_re'][-1]
     sys_re = accepted['sys_re'][-1]
     action = accepted['action'][-1]
 
     machine_req = {'memory': memory, 'disk': disk, 'cpu_count': cpu_count,
                    'cpu_time': cpu_time, 'architecture': architecture,
-                   'vgrid': vgrid, 'os': os, 'flavor': flavor, 'sys_re':
-                   sys_re}
+                   'vgrid': vgrid, 'os': os, 'flavor': flavor,
+                   'hypervisor_re': hypervisor_re, 'sys_re': sys_re}
     
     menu_items = ['vmrequest']
 
@@ -150,6 +152,12 @@ def main(client_id, user_arguments_dict):
                  "requested pre-built flavor not available: %s" % flavor})
             status = returnvalues.CLIENT_ERROR
             return (output_objects, status)
+        elif not hypervisor_re in \
+                 vms.available_hypervisor_re_list(configuration):
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 "requested hypervisor runtime env not available: %s" % \
+                 hypervisor_re})
         elif not sys_re in vms.available_sys_re_list(configuration):
             output_objects.append(
                 {'object_type': 'error_text', 'text':
@@ -273,6 +281,7 @@ def main(client_id, user_arguments_dict):
 
 <li><input type="text" readonly name="os" value="%(os)s"> base system</li>
 <li><input type="text" readonly name="flavor" value="%(flavor)s"> software flavor</li>
+<li><input type="text" readonly name="hypervisor_re" value="%(hypervisor_re)s"> hypervisor runtime env</li>
 <li><input type="text" readonly name="sys_re" value="%(sys_re)s"> image pack runtime env</li>
 <li><input type="text" name="memory" value="%(memory)s"> MB memory</li>
 <li><input type="text" readonly name="disk" value="%(disk)s"> GB disk</li>

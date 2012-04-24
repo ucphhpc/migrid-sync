@@ -594,9 +594,14 @@ class Configuration:
             self.vm_default_hypervisor = 'vbox31'
         if config.has_option('VMACHINES', 'default_disk_format'):
             self.vm_default_disk_format = config.get('VMACHINES',
-                                                    'default_disk_format')
+                                                     'default_disk_format')
         else:
             self.vm_default_disk_format = 'vmdk'
+        if config.has_option('VMACHINES', 'default_hypervisor_re'):
+            self.vm_default_hypervisor_re = config.get(
+                'VMACHINES', 'default_hypervisor_re')
+        else:
+            self.vm_default_hypervisor_re = 'VIRTUALBOX-3.1.X-1'
         if config.has_option('VMACHINES', 'default_sys_re'):
             self.vm_default_sys_re = config.get('VMACHINES', 'default_sys_re')
         else:
@@ -611,14 +616,9 @@ class Configuration:
                                                    'default_user_conf')
         else:
             self.vm_default_user_conf = '$VBOXUSERCONF'
-        if config.has_option('VMACHINES', 'hypervisor_re'):
-            self.vm_hypervisor_re = config.get('VMACHINES',
-                                               'hypervisor_re').split()
-        else:
-            self.vm_hypervisor_re = ['VIRTUALBOX-3.1.X-1']
         if config.has_option('VMACHINES', 'extra_os'):
             self.vm_extra_os = config.get('VMACHINES',
-                                               'extra_os').split()
+                                          'extra_os').split()
         else:
             self.vm_extra_os = []
         if config.has_option('VMACHINES', 'extra_flavors'):
@@ -626,6 +626,11 @@ class Configuration:
                                                'extra_flavors').split()
         else:
             self.vm_extra_flavors = []
+        if config.has_option('VMACHINES', 'extra_hypervisor_re'):
+            self.vm_extra_hypervisor_re = config.get(
+                'VMACHINES', 'extra_hypervisor_re').split()
+        else:
+            self.vm_extra_hypervisor_re = []
         if config.has_option('VMACHINES', 'extra_sys_re'):
             self.vm_extra_sys_re = config.get('VMACHINES',
                                               'extra_sys_re').split()
