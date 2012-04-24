@@ -649,7 +649,7 @@ def write_zipfile(
         zip_fd = file_opener(zip_path, 'w')
         zip_fd.lock(LOCK_EX)
         # Force compression
-        zip_file = realzipfile.ZipFile(zip_fd, 'w', zipfile.ZIP_DEFLATED)
+        zip_file = realzipfile.ZipFile(zip_fd, 'w', realzipfile.ZIP_DEFLATED)
 
         # Directory write is not supported - add each file manually
 
