@@ -485,8 +485,14 @@ def mig_vbox_deploy_job(client_id, configuration, name, machine_req):
                   'effective_disk': specs['disk'] + 1, 'effective_time':
                   specs['cpu_time'] - 30, 'proxy_host':
                   configuration.vm_proxy_host, 'proxy_port':
-                  configuration.vm_proxy_port,
+                  configuration.vm_proxy_port, 'arch_opts': ''
+
                   })
+    if specs['architecture'] == 'i386':
+        specs['arch_opts'] = '--pae on'
+    else:
+        # default NIC is not supported on all 64-bit OSes
+        specs['arch_opts'] = '--nictype1 82543GC'
     job = """::EXECUTE::
 rm -rf %(user_conf)s
 mkdir %(user_conf)s
@@ -500,7 +506,7 @@ mv %(data_disk)s %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s
 $VBOXMANAGE -q openmedium disk +JOBID+_%(data_disk)s
 $VBOXMANAGE -q openmedium disk %(sys_disk)s
 $VBOXMANAGE -q createvm --name '%(name)s' --register
-$VBOXMANAGE -q modifyvm '%(name)s' --nic1 nat --memory %(memory)d --pae on --hwvirtex on --ioapic off
+$VBOXMANAGE -q modifyvm '%(name)s' --nic1 nat --memory %(memory)d %(arch_opts)s --hwvirtex on --ioapic off
 $VBOXMANAGE -q storagectl '%(name)s' --name 'IDE Controller' --add ide
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium '%(sys_disk)s'
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium '+JOBID+_%(data_disk)s'

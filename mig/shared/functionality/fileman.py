@@ -42,7 +42,6 @@ from shared.functionality.editor import advanced_editor_deps, lock_info, \
      edit_file
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive
-from shared.settings import load_settings
 from shared.validstring import valid_user_path
 
 def html_tmpl():

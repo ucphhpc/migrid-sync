@@ -32,6 +32,7 @@ import shared.returnvalues as returnvalues
 from shared import vms
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
+from shared.settings import load_settings
 
 
 def signature():
@@ -70,19 +71,29 @@ def main(client_id, user_arguments_dict):
         status = returnvalues.CLIENT_ERROR
         return (output_objects, status)
 
+    settings_dict = load_settings(client_id, configuration)
+    if not settings_dict or not settings_dict.has_key('VNCDISPLAY'):
+        logger.info('Settings dict does not have VNCDISPLAY key - using default'
+                    )
+        (vnc_display_width, vnc_display_height) = (1024, 768)
+    else:
+        (vnc_display_width, vnc_display_height) = settings_dict['VNCDISPLAY']
+
+    # Make room for vnc control menu
+    
+    vnc_menu_height = 24
+    vnc_display_height += vnc_menu_height
     password = vms.vnc_jobid(accepted['job_id'][0])
 
     # Do an "intoN" then map to acsii
-
-    # TODO: Read proxy parameters from configuration
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : vms.popup_snippet() + vms.vnc_applet(
         configuration.server_fqdn,
         configuration.vm_client_port,
         configuration.vm_applet_port,
-        1024,
-        768,
+        vnc_display_width,
+        vnc_display_height,
         password,
         )})
 
