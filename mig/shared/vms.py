@@ -291,7 +291,7 @@ def machine_link(
 
     if state == 'EXECUTING':
         link = \
-            '<a href="vmconnect.py?action=connect;job_id=%s">%s</a>' \
+            '<a href="vmconnect.py?job_id=%s">%s</a>' \
             % (job_id, content)
     elif state == 'QUEUED':
         link = content
@@ -440,14 +440,16 @@ def enqueue_vm(client_id, configuration, machine_name, machine_req):
     location_fd = open(os.path.join(vm_home, sys_location), 'r')
     (sys_re, sys_base, sys_disk) = location_fd.read().split(':')
     location_fd.close()
-    if sys_re:
-        specs['runtime_env'].append(sys_re)
     data_disk = '%(os)s-%(vm_arch)s-data.%(disk_format)s' % specs
     run_script = 'run%(hypervisor)svm.sh' % specs
 
     specs.update({'name': machine_name, 'data_disk': data_disk, 'run_script':
                   run_script, 'vm_base': vm_base, 'sys_re': sys_re, 'sys_base':
                   sys_base, 'sys_disk': sys_disk})
+    if specs['hypervisor_re']:
+        specs['runtime_env'].append(specs['hypervisor_re'])
+    if specs['sys_re']:
+        specs['runtime_env'].append(specs['sys_re'])
     
     # Generate the mrsl and write to a temp file which is removed on close
 
