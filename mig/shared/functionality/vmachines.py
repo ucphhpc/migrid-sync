@@ -41,15 +41,14 @@ def signature():
     """Signature of the main function"""
 
     defaults = {
-        'start': [''],
-        'edit': [''],
-        'stop': [''],
+        'action': [''],
         'machine_name': [''],
-        'machine_request': ['0'],
         'machine_type': [''],
         'machine_partition': [''],
         'machine_software': [''],
-        'pre_built': [''],
+        'os': [''],
+        'flavor': [''],
+        'sys_re': [''],
         # Resource native architecture requirement (not vm architecture)
         'architecture': [''],
         'cpu_count': ['1'],
@@ -79,7 +78,6 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    machine_request = (accepted['machine_request'][-1] == '1')
     machine_name = accepted['machine_name'][-1]
     memory = int(accepted['memory'][-1])
     disk = int(accepted['disk'][-1])
@@ -87,14 +85,15 @@ def main(client_id, user_arguments_dict):
     architecture = accepted['architecture'][-1]
     cpu_count = int(accepted['cpu_count'][-1])
     cpu_time = int(accepted['cpu_time'][-1])
-    pre_built = accepted['pre_built'][-1]
-    start = accepted['start'][-1]
-    edit = accepted['edit'][-1]
-    stop = accepted['stop'][-1]
+    os = accepted['os'][-1]
+    flavor = accepted['flavor'][-1]
+    sys_re = accepted['sys_re'][-1]
+    action = accepted['action'][-1]
 
     machine_req = {'memory': memory, 'disk': disk, 'cpu_count': cpu_count,
                    'cpu_time': cpu_time, 'architecture': architecture,
-                   'vgrid': vgrid}
+                   'vgrid': vgrid, 'os': os, 'flavor': flavor, 'sys_re':
+                   sys_re}
     
     menu_items = ['vmrequest']
 
@@ -126,7 +125,7 @@ def main(client_id, user_arguments_dict):
                           : desc_text})
 
     user_vms = vms.vms_list(client_id, configuration)
-    if machine_request:
+    if action == 'create':
         if not configuration.site_enable_vmachines:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
@@ -145,10 +144,17 @@ def main(client_id, user_arguments_dict):
                  "requested machine name '%s' already exists!" % machine_name})
             status = returnvalues.CLIENT_ERROR
             return (output_objects, status)
-        elif not pre_built in vms.pre_built_flavors(configuration):
+        elif not flavor in vms.available_flavor_list(configuration):
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 "requested pre-built flavor not available: %s" % pre_built})
+                 "requested pre-built flavor not available: %s" % flavor})
+            status = returnvalues.CLIENT_ERROR
+            return (output_objects, status)
+        elif not sys_re in vms.available_sys_re_list(configuration):
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 "requested system pack runtime env not available: %s" % \
+                 sys_re})
             status = returnvalues.CLIENT_ERROR
             return (output_objects, status)
 
@@ -156,21 +162,20 @@ def main(client_id, user_arguments_dict):
 
         # request for existing pre-built machine
 
-        vms.create_vm(client_id, configuration, machine_name,
-                      sys_flavor=pre_built)
+        vms.create_vm(client_id, configuration, machine_name, machine_req)
 
     (action_status, action_msg, job_id) = (True, '', None)
-    if start or edit or stop:
+    if action in ['start', 'stop', 'edit']:
         if not configuration.site_enable_vmachines:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  "Virtual machines are disabled on this server"})
             status = returnvalues.CLIENT_ERROR
             return (output_objects, status)
-    if start:
+    if action == 'start':
         machine = {}
         for entry in user_vms:
-            if start == entry['name']:
+            if machine_name == entry['name']:
                 for name in machine_req.keys():
                     if isinstance(entry[name], basestring) and \
                                   entry[name].isdigit():
@@ -179,19 +184,19 @@ def main(client_id, user_arguments_dict):
                         machine[name] = entry[name]
                 break
         (action_status, action_msg, job_id) = \
-                        vms.enqueue_vm(client_id, configuration, start,
-                                       **machine)
-    elif edit:
-        if not edit in [vm['name'] for vm in user_vms]:
+                        vms.enqueue_vm(client_id, configuration, machine_name,
+                                       machine)
+    elif action == 'edit':
+        if not machine_name in [vm['name'] for vm in user_vms]:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  "No such virtual machine: %s" % machine_name})
             status = returnvalues.CLIENT_ERROR
             return (output_objects, status)
         (action_status, action_msg) = \
-                        vms.edit_vm(client_id, configuration, edit,
+                        vms.edit_vm(client_id, configuration, machine_name,
                                     machine_req)
-    elif stop:
+    elif action == 'stop':
         
         # TODO: manage stop - use live I/O to create vmname.stop in job dir
 
@@ -262,29 +267,37 @@ def main(client_id, user_arguments_dict):
             specs = """<fieldset>
 <legend>Specs:</legend><ul>
 <form method="post" action="vmachines.py">
-<input type="hidden" name="edit" value="%(name)s">
+<input type="hidden" name="action" value="edit">
+<input type="hidden" name="machine_name" value="%(name)s">
 <input type="hidden" name="output_format" value="html">
 
-<li>Memory <input type="text" size=4 name="memory" value="%(memory)s"> MB</li>
-<li>Disk <input type="text" size=4 name="disk" value="%(disk)s"> GB</li>
-<li>Cpu's <input type="text" size=4 name="cpu_count" value="%(cpu_count)s"></li>
-<li>Architecture <select name="architecture">
+<li><input type="text" readonly name="os" value="%(os)s"> base system</li>
+<li><input type="text" readonly name="flavor" value="%(flavor)s"> software flavor</li>
+<li><input type="text" readonly name="sys_re" value="%(sys_re)s"> image pack runtime env</li>
+<li><input type="text" name="memory" value="%(memory)s"> MB memory</li>
+<li><input type="text" readonly name="disk" value="%(disk)s"> GB disk</li>
+<li><input type="text" name="cpu_count" value="%(cpu_count)s"> CPU's</li>
+<li><select name="architecture">
 """
             for arch in [''] + configuration.architectures:
-                specs += "<option value='%s'>%s</option>" % (arch, arch)
-            specs += """</select>
-<li>Time slot <input type="text" size=4 name="cpu_time" value="%(cpu_time)s"> s</li>
-<li>VGrid <select name="vgrid">"""
+                select = ''
+                if arch == machine_specs['architecture']:
+                    select = 'selected'
+                specs += "<option %s value='%s'>%s</option>" % (select, arch,
+                                                                arch)
+            specs += """</select> resource architecture
+<li><input type="text" name="cpu_time" value="%(cpu_time)s"> s time slot</li>
+<li><select name="vgrid" multiple>"""
             for vgrid_name in [any_vgrid] + \
                     user_allowed_vgrids(configuration, client_id):
                 select = ''
-                if vgrid_name == machine_specs['vgrid'][0]:
+                if vgrid_name in machine_specs['vgrid']:
                     select = 'selected'
                 specs += "<option %s>%s</option>" % (select, vgrid_name)
-            specs += """</select></li>"""
+            specs += """</select> VGrid(s)</li>"""
             specs += """            
-<li>Password:  %(password)s</li>
-<input type="submit" value="Save">
+<li><input type="text" readonly value="%(password)s"> as VNC password</li>
+<input class="styled_button" type="submit" value="Save">
 </form></ul></fieldset>"""
             if machine['status'] == 'EXECUTING' and exec_time > 130:
                 machine_image = '<img src="/images/vms/' \

@@ -888,7 +888,11 @@ def guess_type(name):
         return valid_numeric
     elif name.lower().find('architecture') != -1:
         return valid_alphanumeric
-    elif name.lower().find('pre_built') != -1:
+    elif name.lower().find('os') != -1:
+        return valid_fqdn
+    elif name.lower().find('flavor') != -1:
+        return valid_fqdn
+    elif name.lower().find('sys_re') != -1:
         return valid_fqdn
     # showstats.py:
     # time_start/time_end: YYYY-MM

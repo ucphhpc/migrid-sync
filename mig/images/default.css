@@ -287,6 +287,39 @@ table.liveio table {
   float: left;
 }
 
+.styled_button:hover {
+  background-color: #369;
+  color: white;
+}
+
+.styled_button.selected {
+  background-color: #147;
+  color: white;
+}
+
+.styled_button {
+  border-radius: 4px;
+  -moz-border-radius: 4px;
+  display: block;
+  
+  background-repeat: no-repeat;
+  background-image: url('/images/icons/bullet_black.png');
+  background-position: 5px 50%;
+  
+  border: 1px solid darkgrey;
+  color: white;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 3px 5px 3px 24px;
+  text-decoration: none;
+  background-color: rgb(100,100,100);
+}
+
+.styled_button input {
+  display: inline;
+  float: left;
+}
+
 .premenuwidgets {
   color: black;
 }

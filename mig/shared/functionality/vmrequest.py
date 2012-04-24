@@ -73,7 +73,7 @@ def main(client_id, user_arguments_dict):
     build_form = """
 <form method="post" action="vmachines.py">
 <input type="hidden" name="output_format" value="html">
-<input type="hidden" name="machine_request" value="1">
+<input type="hidden" name="action" value="create">
 
 <table style="margin: 10px; width: 96%;">
 <tr>
@@ -88,14 +88,45 @@ def main(client_id, user_arguments_dict):
 <legend><input type="radio" name="machine_type" value="pre" checked="checked">Prebuilt</legend>
 <table>
 <tr>
+  <td width="200">Choose a OS version</td>
+  <td>
+  
+<select name="os">
+"""
+    for os in vms.available_os_list(configuration):
+        build_form += '<option value="%s">%s</option>\n' % \
+                      (os, os.capitalize())
+    build_form += """
+</select>
+
+  </td>
+</tr>
+<tr>
   <td width="200">Choose a machine image</td>
   <td>
   
-<select name="pre_built">
+<select name="flavor">
 """
-    for flavor in vms.pre_built_flavors(configuration):
+    for flavor in vms.available_flavor_list(configuration):
         build_form += '<option value="%s">%s</option>\n' % \
                       (flavor, flavor.capitalize())
+    build_form += """
+</select>
+
+  </td>
+</tr>
+<tr>
+  <td width="200">Select a runtime environment providing the chosen OS and
+flavor combination.
+For Ubuntu systems you can typically just use a runtime env from the same year,
+like VBOX3.1-IMAGES-2010-1 for ubuntu-10.* versions.</td>
+  <td>
+  
+<select name="sys_re">
+"""
+    for sys_re in vms.available_sys_re_list(configuration):
+        build_form += '<option value="%s">%s</option>\n' % \
+                      (sys_re, sys_re)
     build_form += """
 </select>
 
@@ -112,7 +143,7 @@ def main(client_id, user_arguments_dict):
 <tr>
   <td width="200">Software</td>
   <td>
-<textarea cols=40 name="machine_software">
+<textarea cols=40 name="machine_software" readonly>
 iptables, acpid, x11vnc, xorg, gdm, xfce4, gcc, make, netsurf, python-openssl
 </textarea>
   </td>

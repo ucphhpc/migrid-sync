@@ -44,6 +44,7 @@ code_files = [
     'resource/leader_node_script.sh',
     'resource/dummy_node_script.sh',
     'user/%s' % plain,
+    'vm-proxy/%s' % plain,
     'webserver/%s' % plain,
     ]
 code_files += ['cgi-sid/%s' % name for name in ['requestnewjob',

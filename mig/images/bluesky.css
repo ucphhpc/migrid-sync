@@ -153,6 +153,39 @@ div.container {
   float: left;
 }
 
+.styled_button:hover {
+  background-color: #369;
+  color: white;
+}
+
+.styled_button.selected {
+  background-color: #147;
+  color: white;
+}
+
+.styled_button {
+  border-radius: 4px;
+  -moz-border-radius: 4px;
+  display: inline;
+  
+  background-repeat: no-repeat;
+  background-position: 5px 50%;
+  
+  border: 1px solid #fff;
+  color: white;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 3px 5px 3px 24px;
+  text-decoration: none;
+  background-color: #63a4f0;
+  margin-right: 10px;
+}
+
+.styled_button input {
+  display: inline;
+  float: left;
+}
+
 .premenuwidgets {
   color: black;
 }

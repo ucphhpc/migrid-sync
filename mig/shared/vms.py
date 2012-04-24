@@ -37,7 +37,6 @@ import ConfigParser
 import md5
 import operator
 import os
-import re
 import shutil
 from glob import glob
 from tempfile import NamedTemporaryFile
@@ -47,15 +46,43 @@ from shared.defaults import any_vgrid
 from shared.fileio import unpickle
 from shared.job import new_job
 
-default_os = 'ubuntu-8.10'
-default_flavor = 'basic'
-default_diskformat = 'vmdk'
-default_hypervisor = 'vbox31'
 sys_location = 'sys_location.txt'
+vm_base = 'vms'
 
-def pre_built_flavors(configuration):
+def available_os_list(configuration):
+    """Returns a list of available VM OS versions"""
+    return [configuration.vm_default_os] + configuration.vm_extra_os
+
+def available_flavor_list(configuration):
     """Returns a list of available VM flavors (package sets)"""
-    return [default_flavor] + configuration.site_vm_extra_flavors
+    return [configuration.vm_default_flavor] + configuration.vm_extra_flavors
+
+def available_sys_re_list(configuration):
+    """Returns a list of available VM system pack runtime envs"""
+    return [configuration.vm_default_sys_re] + configuration.vm_extra_sys_re
+
+def default_vm_specs(configuration):
+    """Returns a dictionarydefault VM specs from configuration"""
+    specs = {}
+    specs['memory'] = 1024
+    specs['disk'] = 2
+    specs['cpu_count'] = 1
+    specs['cpu_time'] = 900
+    # VM image architecture
+    specs['vm_arch'] = 'i386'
+    # Resource architecture 
+    specs['architecture'] = ''
+    specs['vgrid'] = [any_vgrid]
+    specs['runtime_env'] = []
+    specs['notify'] = ['jabber: SETTINGS']
+    specs['os'] = configuration.vm_default_os
+    specs['flavor'] = configuration.vm_default_flavor
+    specs['disk_format'] = configuration.vm_default_disk_format
+    specs['hypervisor'] = configuration.vm_default_hypervisor
+    specs['sys_re'] = configuration.vm_default_sys_re
+    specs['sys_base'] = configuration.vm_default_sys_base
+    specs['user_conf'] = configuration.vm_default_user_conf
+    return specs
 
 def vnc_jobid(job_id='Unknown'):
     """
@@ -91,7 +118,7 @@ def vms_list(client_id, configuration):
     described by following keys:
  
     'name', 'memory', 'disk', 'cpu_count', 'cpu_time', 'vgrid', 'architecture',
-    'state'
+    'vm_arch', 'os', 'flavor', 'sys_re', 'state'
  
     NOTE:
 
@@ -122,7 +149,7 @@ def vms_list(client_id, configuration):
 
     # Append the virtual machine directory
 
-    vms_paths = glob(os.path.join(user_home, 'vms', '*', '*.cfg'))
+    vms_paths = glob(os.path.join(user_home, vm_base, '*', '*.cfg'))
 
     # List of virtual machines
 
@@ -153,12 +180,16 @@ def vms_list(client_id, configuration):
         vm_config.read([vm_def_path])
 
         machine['name'] = vm_def_base
-        machine['memory'] = vm_config.get('DEFAULT', 'memory')
-        machine['disk'] = vm_config.get('DEFAULT', 'disk')
-        machine['cpu_count'] = vm_config.get('DEFAULT', 'cpu_count')
-        machine['cpu_time'] = vm_config.get('DEFAULT', 'cpu_time')
-        machine['architecture'] = vm_config.get('DEFAULT', 'architecture')
-        machine['vgrid'] = vm_config.get('DEFAULT', 'vgrid').split()
+        machine['memory'] = vm_config.get('MiG', 'memory')
+        machine['disk'] = vm_config.get('MiG', 'disk')
+        machine['cpu_count'] = vm_config.get('MiG', 'cpu_count')
+        machine['cpu_time'] = vm_config.get('MiG', 'cpu_time')
+        machine['architecture'] = vm_config.get('MiG', 'architecture')
+        machine['vgrid'] = vm_config.get('MiG', 'vgrid').split()
+        machine['vm_arch'] = vm_config.get('MiG', 'vm_arch')
+        machine['os'] = vm_config.get('MiG', 'os')
+        machine['flavor'] = vm_config.get('MiG', 'flavor')
+        machine['sys_re'] = vm_config.get('MiG', 'sys_re')
 
         # All job descriptions associated with this virtual machine
 
@@ -253,7 +284,7 @@ def machine_link(
 
     if state == 'EXECUTING':
         link = \
-            '<a href="vmconnect.py?job_id=%s">%s</a>' \
+            '<a href="vmconnect.py?action=connect;job_id=%s">%s</a>' \
             % (job_id, content)
     elif state == 'QUEUED':
         link = content
@@ -261,7 +292,7 @@ def machine_link(
 
         # Canceled, Finished, Unknown
 
-        specs_string = 'start=%s' % name
+        specs_string = 'action=start;machine_name=%s' % name
         for (key, val) in machine_req.items():
             # Lists of strings must be split into multiple key=val pairs
             if not isinstance(val, basestring) and isinstance(val, list):
@@ -273,33 +304,47 @@ def machine_link(
 
     return link
 
-def create_vm(client_id, configuration, machine_name,            
-              os_name=default_os,
-              sys_flavor=default_flavor,
-              disk_format=default_diskformat,
-              hypervisor=default_hypervisor,
-              sys_img_from_re='VBOX3.1-IMAGES-2008-1',
-              sys_base='$VBOXIMGDIR',
-              ):
-    """Create virtual machine with machine_name as ID and using data_disk as
-    data image base.
-    Set sys_img_from_re and sys_base to use common images from the runtime env
+def create_vm(client_id, configuration, machine_name, machine_req):
+    """Create virtual machine with machine_name as ID and using optional
+    machine_req overrides dictionary to tune the vm. The dictionary includes
+    the server configuration options:
+    * os
+    * flavor
+    * disk_format
+    * hypervisor
+    * sys_re
+    * sys_base
+    * user_conf
+    and vm specs used for the job description:
+    * memory
+    * disk
+    * cpu_count
+    * cpu_time
+    * vm_arch
+    * architecture
+    * vgrid
+    * notify
+    
+    Set sys_re and sys_base to use common images from the runtime env
     on the resource or unset both to use a custom image from user home.
     """
-    
+
+    specs = default_vm_specs(configuration)
+    specs.update(machine_req)
+   
     # Setup paths - input filter prevents directory traversal
 
     client_dir = client_id_dir(client_id)
     user_home = os.path.abspath(os.path.join(configuration.user_home,
                                              client_dir))
-    user_vms_home = os.path.join(user_home, 'vms')
+    user_vms_home = os.path.join(user_home, vm_base)
     vm_home = os.path.join(user_vms_home, machine_name)
     server_vms_builder_home = os.path.join(configuration.server_home,
                                            'vms_builder')
-    sys_disk = '%s-%s.%s' % (os_name, sys_flavor, disk_format)
-    sys_conf = '%s-%s.cfg' % (os_name, sys_flavor)
-    data_disk = '%s-%s.%s' % (os_name, 'data', disk_format)
-    run_script='run%svm.sh' % hypervisor
+    sys_disk = '%(os)s-%(vm_arch)s-%(flavor)s.%(disk_format)s' % specs
+    sys_conf = '%(os)s-%(vm_arch)s-%(flavor)s.cfg' % specs
+    data_disk = '%(os)s-%(vm_arch)s-data.%(disk_format)s' % specs
+    run_script = 'run%(hypervisor)svm.sh' % specs
 
     # Create users vms storage
 
@@ -318,20 +363,22 @@ def create_vm(client_id, configuration, machine_name,
         # Use OS image from runtime env resource for performance if possible
         # with fall back to image from user home if custom image
 
-        if sys_img_from_re:
-            img_re = sys_img_from_re
-            img_location = sys_base
+        if specs['sys_re']:
+            img_re = specs['sys_re']
+            img_location = specs['sys_base']
             sys_conf = 'default.cfg'
         else:
             img_re = ''
             img_location = ''
-            shutil.copy(os.path.join(server_vms_builder_home, sys_disk),
-                        vm_home + os.sep)
+            shutil.copy(os.path.join(server_vms_builder_home,
+                                     specs['sys_disk']), vm_home + os.sep)
 
         # Build conf file is always needed for specs like arch, mem and cpu
+        # copy default cfg and update with machine_req specs
 
         shutil.copy(os.path.join(server_vms_builder_home, sys_conf),
                     vm_home + os.sep)
+        edit_vm(client_id, configuration, machine_name, machine_req)
         location_fd = open(os.path.join(vm_home, sys_location), 'w')
         location_fd.write("%s:%s:%s" % (img_re, img_location, sys_disk))
         location_fd.close()
@@ -345,67 +392,59 @@ def edit_vm(client_id, configuration, machine_name, machine_specs):
     user_home = os.path.abspath(os.path.join(configuration.user_home,
                                              client_dir))
 
-    vms_conf_path = os.path.join(user_home, 'vms', machine_name, 'default.cfg')
+    vms_conf_paths = glob(os.path.join(user_home, vm_base, machine_name,
+                                       '*.cfg'))
 
     # Grab the configuration file defining the machine
 
-    vm_config = ConfigParser.ConfigParser()
-    vm_config.read([vms_conf_path])
-    for (key, val) in machine_specs.items():
-        if not isinstance(val, basestring) and isinstance(val, list):
-            string_val = ''
-            for entry in val:
-                string_val += '%s ' % entry
-        else:
-            string_val = val
-        vm_config.set('DEFAULT', key, string_val)
-    conf_fd = open(vms_conf_path, 'w')
-    vm_config.write(conf_fd)
-    conf_fd.close()
+    for conf_path in vms_conf_paths:
+        vm_config = ConfigParser.ConfigParser()
+        vm_config.read([conf_path])
+        for (key, val) in machine_specs.items():
+            if not isinstance(val, basestring) and isinstance(val, list):
+                string_val = ''
+                for entry in val:
+                    string_val += '%s ' % entry
+            else:
+                string_val = val
+            vm_config.set('MiG', key, string_val)
+        conf_fd = open(conf_path, 'w')
+        vm_config.write(conf_fd)
+        conf_fd.close()
     return (True, '')
 
-def enqueue_vm(client_id, configuration, machine_name,
-               os_name=default_os,
-               sys_flavor=default_flavor,
-               disk_format=default_diskformat,
-               hypervisor=default_hypervisor,
-               sys_base='$VBOXIMGDIR',
-               user_conf='$VBOXUSERCONF',
-               img_dir='vms',
-               memory=1024,
-               disk=2,
-               cpu_count=1,
-               cpu_time=900,
-               architecture='',
-               vgrid=[any_vgrid],
-               runtime_env=['VIRTUALBOX-3.1.X-1'],
-               notify=['jabber: SETTINGS'],
-               ):
-    """Submit a machine job based on machine definition file.
+def enqueue_vm(client_id, configuration, machine_name, machine_req):
+    """Submit a machine job based on machine definition file and overrides
+    from machine_req.
     Returns the job submit result, a 3-tuple of (status, msg, job_id)
     """
+
+    specs = default_vm_specs(configuration)
+    specs.update(machine_req)
 
     # Setup paths - filter above prevents directory traversal
 
     client_dir = client_id_dir(client_id)
     user_home = os.path.abspath(os.path.join(configuration.user_home,
                                              client_dir))
-    user_vms_home = os.path.join(user_home, 'vms')
+    user_vms_home = os.path.join(user_home, vm_base)
     vm_home = os.path.join(user_vms_home, machine_name)
     location_fd = open(os.path.join(vm_home, sys_location), 'r')
     (sys_re, sys_base, sys_disk) = location_fd.read().split(':')
     location_fd.close()
     if sys_re:
-        runtime_env.append(sys_re)
-    data_disk = '%s-data.%s' % (os_name, disk_format)
-    run_script='run%svm.sh' % hypervisor
+        specs['runtime_env'].append(sys_re)
+    data_disk = '%(os)s-%(vm_arch)s-data.%(disk_format)s' % specs
+    run_script = 'run%(hypervisor)svm.sh' % specs
 
+    specs.update({'name': machine_name, 'data_disk': data_disk, 'run_script':
+                  run_script, 'vm_base': vm_base, 'sys_re': sys_re, 'sys_base':
+                  sys_base, 'sys_disk': sys_disk})
+    
     # Generate the mrsl and write to a temp file which is removed on close
 
-    mrsl = mig_vbox_deployed_job(client_id, configuration, machine_name, sys_disk,
-                                 data_disk, run_script, sys_base, user_conf,
-                                 img_dir, memory, disk, cpu_count, cpu_time,
-                                 architecture, vgrid, runtime_env, notify)
+    mrsl = mig_vbox_deploy_job(client_id, configuration, machine_name,
+                                 specs)
     mrsl_fd = NamedTemporaryFile()
     mrsl_fd.write(mrsl)
     mrsl_fd.flush()
@@ -416,62 +455,45 @@ def enqueue_vm(client_id, configuration, machine_name,
     mrsl_fd.close()
     return res
 
-def mig_vbox_deployed_job(
-    client_id,
-    configuration,
-    name,
-    sys_disk,
-    data_disk,
-    run_script,
-    sys_base,
-    user_conf,
-    img_dir,
-    memory,
-    disk,
-    cpu_count,
-    cpu_time,
-    architecture,
-    vgrid,
-    runtime_env,
-    notify,
-    ):
-    """This method assumes that the system disk, sys_disk, is available in
+def mig_vbox_deploy_job(client_id, configuration, name, machine_req):
+    """Deploy a vbox vm on a resource through ordinary job submission.
+    The machine_req dictionary can be used to override default settings.
+    
+    This method assumes that the system disk, sys_disk, is available in
     sys_base on the resource either through a runtime environment or through
     the user home. If unset it is fetched from user home through INPUTFILES.
     """
+    specs = default_vm_specs(configuration)
+    specs.update(machine_req)
     architecture_lines = ''
     vgrid_lines = ''
     runtime_env_lines = ''
     notify_lines = ''
-    if architecture:
-        architecture_lines = '::ARCHITECTURE::\n%s' % architecture
-    if vgrid:
-        vgrid_lines = '::VGRID::\n%s' % '\n'.join(vgrid)
-    if runtime_env:
+    if specs['architecture']:
+        architecture_lines = '::ARCHITECTURE::\n%(architecture)s' % specs
+    if specs['vgrid']:
+        vgrid_lines = '::VGRID::\n%s' % '\n'.join(specs['vgrid'])
+    if specs['runtime_env']:
         runtime_env_lines = '::RUNTIMEENVIRONMENT::\n%s' % \
-                            '\n'.join(runtime_env)
-    if notify:
-        notify_lines = '::NOTIFY::\n%s' % '\n'.join(notify)
+                            '\n'.join(specs['runtime_env'])
+    if specs['notify']:
+        notify_lines = '::NOTIFY::\n%s' % '\n'.join(specs['notify'])
     
-    specs = {'name': name, 'data_disk': data_disk, 'sys_disk': sys_disk,
-             'run_script': run_script, 'sys_base': sys_base, 'user_conf': 
-             user_conf, 'img_dir': img_dir, 'memory': memory, 'disk': disk,
-             'cpu_count': cpu_count, 'cpu_time': cpu_time, 'architecture':
-             architecture, 'vgrid': vgrid, 'runtime_env': runtime_env,
-             'notify': notify, 'architecture_lines': architecture_lines,
-             'vgrid_lines': vgrid_lines, 'runtime_env_lines':
-             runtime_env_lines, 'notify_lines': notify_lines,
-             'effective_disk': disk + 1, 'effective_time': cpu_time - 30,
-             'proxy_host': configuration.vm_proxy_host,
-             'proxy_port': configuration.vm_proxy_port,
-             }
+    specs.update({'name': name, 'architecture_lines': architecture_lines,
+                  'vgrid_lines': vgrid_lines, 'runtime_env_lines':
+                  runtime_env_lines, 'notify_lines': notify_lines,
+                  'effective_disk': specs['disk'] + 1, 'effective_time':
+                  specs['cpu_time'] - 30, 'proxy_host':
+                  configuration.vm_proxy_host, 'proxy_port':
+                  configuration.vm_proxy_port,
+                  })
     job = """::EXECUTE::
 rm -rf %(user_conf)s
 mkdir %(user_conf)s
 mkdir %(user_conf)s/Machines
 mkdir %(user_conf)s/HardDisks
 """
-    if sys_base:
+    if specs['sys_base']:
         job += "cp %(sys_base)s/%(sys_disk)s %(user_conf)s/HardDisks/%(sys_disk)s"
     job += """
 mv %(data_disk)s %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s
@@ -495,17 +517,17 @@ $VBOXMANAGE -q unregistervm '%(name)s' --delete
 mv %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s %(data_disk)s
 
 ::INPUTFILES::
-%(img_dir)s/%(name)s/%(data_disk)s %(data_disk)s
+%(vm_base)s/%(name)s/%(data_disk)s %(data_disk)s
 """
-    if not sys_base:
-        job += """%(img_dir)s/%(name)s/%(sys_disk)s %(sys_disk)s
+    if not specs['sys_base']:
+        job += """%(vm_base)s/%(name)s/%(sys_disk)s %(sys_disk)s
 """
     job += """
 ::OUTPUTFILES::
-%(data_disk)s %(img_dir)s/%(name)s/%(data_disk)s
+%(data_disk)s %(vm_base)s/%(name)s/%(data_disk)s
 
 ::EXECUTABLES::
-%(img_dir)s/%(run_script)s %(run_script)s
+%(vm_base)s/%(run_script)s %(run_script)s
 
 ::MEMORY::
 %(memory)d

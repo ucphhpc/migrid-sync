@@ -579,6 +579,59 @@ class Configuration:
         else:
             self.trac_id_field = 'email'
 
+        if config.has_option('VMACHINES', 'default_os'):
+            self.vm_default_os = config.get('VMACHINES', 'default_os')
+        else:
+            self.vm_default_os = 'ubuntu-10.04'
+        if config.has_option('VMACHINES', 'default_flavor'):
+            self.vm_default_flavor = config.get('VMACHINES', 'default_flavor')
+        else:
+            self.vm_default_flavor = 'basic'
+        if config.has_option('VMACHINES', 'default_hypervisor'):
+            self.vm_default_hypervisor = config.get('VMACHINES',
+                                                    'default_hypervisor')
+        else:
+            self.vm_default_hypervisor = 'vbox31'
+        if config.has_option('VMACHINES', 'default_disk_format'):
+            self.vm_default_disk_format = config.get('VMACHINES',
+                                                    'default_disk_format')
+        else:
+            self.vm_default_disk_format = 'vmdk'
+        if config.has_option('VMACHINES', 'default_sys_re'):
+            self.vm_default_sys_re = config.get('VMACHINES', 'default_sys_re')
+        else:
+            self.vm_default_sys_re = 'VBOX3.1-IMAGES-2010-1'
+        if config.has_option('VMACHINES', 'default_sys_base'):
+            self.vm_default_sys_base = config.get('VMACHINES',
+                                                  'default_sys_base')
+        else:
+            self.vm_default_sys_base = '$VBOXIMGDIR'
+        if config.has_option('VMACHINES', 'default_user_conf'):
+            self.vm_default_user_conf = config.get('VMACHINES',
+                                                   'default_user_conf')
+        else:
+            self.vm_default_user_conf = '$VBOXUSERCONF'
+        if config.has_option('VMACHINES', 'hypervisor_re'):
+            self.vm_hypervisor_re = config.get('VMACHINES',
+                                               'hypervisor_re').split()
+        else:
+            self.vm_hypervisor_re = ['VIRTUALBOX-3.1.X-1']
+        if config.has_option('VMACHINES', 'extra_os'):
+            self.vm_extra_os = config.get('VMACHINES',
+                                               'extra_os').split()
+        else:
+            self.vm_extra_os = []
+        if config.has_option('VMACHINES', 'extra_flavors'):
+            self.vm_extra_flavors = config.get('VMACHINES',
+                                               'extra_flavors').split()
+        else:
+            self.vm_extra_flavors = []
+        if config.has_option('VMACHINES', 'extra_sys_re'):
+            self.vm_extra_sys_re = config.get('VMACHINES',
+                                              'extra_sys_re').split()
+        else:
+            self.vm_extra_sys_re = []
+
         if config.has_option('SITE', 'images'):
             self.site_images = config.get('SITE', 'images')
         else:
@@ -639,11 +692,6 @@ class Configuration:
                                                            'enable_vmachines')
         else:
             self.site_enable_vmachines = False
-        if config.has_option('SITE', 'vm_extra_flavors'):
-            self.site_vm_extra_flavors = config.get('SITE',
-                                                    'vm_extra_flavors').split()
-        else:
-            self.site_vm_extra_flavors = []
         if config.has_option('SITE', 'swrepo_url'):
             self.site_swrepo_url = config.get('SITE', 'swrepo_url')
         else:
