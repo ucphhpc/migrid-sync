@@ -21,6 +21,12 @@ VBOX_PID=$!
 while [ $VBOX_STATE -eq 0 ]
 do
 
+  # Check for stop requests from user through server (live I/O)
+  if [ -e "${VM_NAME}.stop" ]
+  then
+    echo "vm $VM_NAME received stop request - force time out"
+    EXEC_TIME=1
+  fi
   # Progressively harder stop attempts on time out
   if [ $EXEC_TIME -lt -1 ]
   then
