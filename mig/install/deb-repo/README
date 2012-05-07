@@ -3,22 +3,24 @@ We distribute deb packages with the latest MiG user scripts to make life
 easier for users.
 
 The packages should be *locally* built but signed with the official MiG
-software signing key from mig@distlab4:.gnupg/ .
-The corresponding passphrase is included in the MiG developers VGrid SCM.
+software signing key from mig@dk.migrid.org:.gnupg/ .
+The corresponding passphrase is included in the MiG developers VGrid owners SCM.
 
 It can be achieved by mounting the mig user home on the build host during build:
-[prepare ssh login as mig at distlab4]
-mkdir -p  ~/mnt/mig@distlab4
-sshfs mig@distlab4: ~/mnt/mig@distlab4  -o uid=$(id -u) -o gid=$(id -g)
+[prepare ssh login as mig at dk.migrid.org]
+mkdir -p  ~/mnt/mig@dk.migrid.org
+sshfs mig@dk.migrid.org: ~/mnt/mig@dk.migrid.org  -o uid=$(id -u) -o gid=$(id -g)
 [add deb-src http://dk.migrid.org/deb stable main to your APT sources]
-apt-get update
+sudo apt-get update
+mkdir -p  ~/build
+cd ~/build
 apt-get source mig-user-scripts
 cd mig-user-scripts-VERSION
 EMAIL="MiG signing key <mig@www.migrid.org>" dch -i
 [edit changelog and save - possibly cd to new dir if it mentions rename]
 [make your changes]
-GNUPGHOME=~/mnt/mig@distlab4/.gnupg dpkg-buildpackage -rfakeroot
-[copy package files to ~/mnt/mig@distlab4/state/wwwpublic/deb/pool/main/]
+GNUPGHOME=~/mnt/mig@dk.migrid.org/.gnupg dpkg-buildpackage -rfakeroot
+[copy package files to ~/mnt/mig@dk.migrid.org/state/wwwpublic/deb/pool/main/]
 
-Finally login as mig on distlab4 and run the updaterep.sh script from
+Finally login as mig on dk.migrid.org and run the updaterep.sh script from
 ~mig/state/wwwpublic/deb/ .
