@@ -235,9 +235,7 @@ def vms_list(client_id, configuration):
     return vms
 
 def vnc_applet(
-    proxy_host,
-    proxy_port,
-    applet_port,
+    configuration,
     width,
     height,
     password,
@@ -248,17 +246,33 @@ def vnc_applet(
     You just specifify a jobidentifier and where all happy.
     """
 
-    applet = """<APPLET CODE="VncViewer" ARCHIVE="VncViewer.jar" """
-    applet += ' CODEBASE="http://%s:%d/tightvnc/"' % (proxy_host,
-            applet_port)
+    # New 2.5 version from http://www.tightvnc.com needed for working keyboard
+    # with recent VM images. Please refer to state/wwwpublic/README for details
+
+    vnc_dir = 'vnc'
+    jar_name = 'tightvnc-jviewer.jar'
+    code_hook = 'com.glavsoft.viewer.Viewer'
+    host_address = '%s' % configuration.vm_proxy_host
+    applet_base = os.path.join(configuration.wwwpublic, vnc_dir)
+    applet_path = os.path.join(applet_base, jar_name)
+
+    if not os.path.exists(applet_path):
+
+        # Fall back to old 1.3 version served from proxy agent 
+
+        vnc_dir = 'tightvnc'
+        jar_name = 'VncViewer.jar'
+        code_hook = 'VncViewer'
+        host_address = '%s:%d' % (configuration.vm_proxy_host,
+                                  configuration.vm_applet_port)
+        
+    applet = '<APPLET CODE="%s" ARCHIVE="%s" ' % (code_hook, jar_name)
+    applet += ' CODEBASE="http://%s/%s/"' % (host_address, vnc_dir)
     applet += ' WIDTH="%d" HEIGHT="%d">' % (width, height)
-    applet += '<PARAM NAME="PORT" VALUE="%d">' % proxy_port
+    applet += '<PARAM NAME="PORT" VALUE="%d">' % configuration.vm_client_port
     applet += '<PARAM NAME="PASSWORD" VALUE="%s">' % password
-
-    # applet += "<PARAM NAME=\"Encoding\" VALUE=\"Raw\">"
-
+    applet += '<PARAM NAME="OpenNewWindow" VALUE="no" />'
     applet += '</APPLET>'
-
     return applet
 
 def popup_snippet():
@@ -495,8 +509,8 @@ def mig_vbox_deploy_job(client_id, configuration, name, machine_req):
                   'effective_disk': specs['disk'] + 1, 'effective_time':
                   specs['cpu_time'] - 30, 'proxy_host':
                   configuration.vm_proxy_host, 'proxy_port':
-                  configuration.vm_proxy_port, 'arch_opts': ''
-
+                  configuration.vm_proxy_port, 'arch_opts': '',
+                  'mac': '001122334455'
                   })
     if specs['vm_arch'] == 'i386':
         specs['arch_opts'] = '--pae on'
@@ -516,7 +530,7 @@ mv %(data_disk)s %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s
 $VBOXMANAGE -q openmedium disk +JOBID+_%(data_disk)s
 $VBOXMANAGE -q openmedium disk %(sys_disk)s
 $VBOXMANAGE -q createvm --name '%(name)s' --register
-$VBOXMANAGE -q modifyvm '%(name)s' --nic1 nat --memory %(memory)d %(arch_opts)s --hwvirtex on --ioapic off
+$VBOXMANAGE -q modifyvm '%(name)s' --nic1 nat --macaddress1 %(mac)s --memory %(memory)d %(arch_opts)s --hwvirtex on --ioapic off
 $VBOXMANAGE -q storagectl '%(name)s' --name 'IDE Controller' --add ide
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium '%(sys_disk)s'
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium '+JOBID+_%(data_disk)s'

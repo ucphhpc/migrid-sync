@@ -89,13 +89,11 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : vms.popup_snippet() + vms.vnc_applet(
-        configuration.server_fqdn,
-        configuration.vm_client_port,
-        configuration.vm_applet_port,
-        vnc_display_width,
-        vnc_display_height,
-        password,
-        )})
+                               configuration,
+                               vnc_display_width,
+                               vnc_display_height,
+                               password,
+                               )})
 
     return (output_objects, status)
 

@@ -1,5 +1,0 @@
-= Interactive jobs =
-It is possible to support interactive MiG jobs using a web based java vnc client.
-Please place vncviewer.jar in this directory to allow that kind of jobs.
-If running on a Debian server yiu can pull in the java-vnc package and copy or link 
-the included vncviewer.jar from there.
