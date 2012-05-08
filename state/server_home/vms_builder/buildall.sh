@@ -21,6 +21,7 @@ run=''
 
 flavorlist=("lucid" "precise")
 archlist=("i386" "amd64")
+labellist=("basic" "escience-base" "escience-astro")
 cwd=$PWD
 shared_dir="$1"
 builder_dir=$2
@@ -29,6 +30,9 @@ if [ $# -ge 3 ]; then
 fi
 if [ $# -ge 4 ]; then
 	archlist=($(echo $4))
+fi
+if [ $# -ge 5 ]; then
+	labellist=($(echo $5))
 fi
 
 
@@ -58,35 +62,31 @@ for flavor in ${flavorlist[@]}; do
 	# apt-proxy hogs memory - restart to free it once in a while
 	sudo service apt-proxy restart
 	for arch in ${archlist[@]}; do
-		label="basic"
+	    for label in ${labellist[@]}; do
+		if [ "$label" = "basic" ]; then
+			extras=""
+		elif [ "$label" = "escience-base" ]; then
+			extras="libatlas3gf-base python-scipy \
+				python-matplotlib ipython python-imaging \
+				python-pip"
+		elif [ "$label" = "escience-astro" ]; then
+			# TODO: add mysql python-pywcs stsci_python where available
+			# python-pywcs is available in precise and on this PPA
+			# https://launchpad.net/~olebole/+archive/astro
+			extras="libatlas3gf-base python-scipy \
+				python-matplotlib ipython python-imaging \
+				python-pip sqlite3 python-sqlalchemy \
+				python-pyfits"
+		else
+			echo "skipping unknown label: $label"
+		fi
 		$run echo "build ubuntu $flavor $label image for $arch"
 		$run cd $shared_dir
 		$run python vmbuilder.py --suite=$flavor --hypervisor=kvm \
-			--vmbuilder-opts='' --architecture=$arch
+			--vmbuilder-opts='' --architecture=$arch $extras
 		$run cd $builder_dir
 		$run ./tmp2kvm.sh $arch $label $version $flavor
-		label="escience-base"
-		$run echo "build ubuntu $flavor $label image for $arch"
-		$run cd $shared_dir
-		$run python vmbuilder.py --suite=$flavor --hypervisor=kvm \
-			--vmbuilder-opts='' --architecture=$arch \
-			libatlas3gf-base python-scipy python-matplotlib \
-			ipython	python-imaging python-pip
-		$run cd $builder_dir
-		$run ./tmp2kvm.sh $arch $label $version $flavor
-		label="escience-astro"
-		$run echo "build ubuntu $flavor $label image for $arch"
-		$run cd $shared_dir
-		# TODO: add mysql python-pywcs stsci_python where available
-		# python-pywcs is available in precise and on this PPA
-		# https://launchpad.net/~olebole/+archive/astro
-		$run python vmbuilder.py --suite=$flavor --hypervisor=kvm \
-			--vmbuilder-opts='' --architecture=$arch \
-			libatlas3gf-base python-scipy python-matplotlib \
-			ipython python-imaging python-pip \
-			sqlite3 python-sqlalchemy python-pyfits 
-		$run cd $builder_dir
-		$run ./tmp2kvm.sh $arch $label $version $flavor
+	    done
 	done
 done
 

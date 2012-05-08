@@ -24,18 +24,18 @@ fi
 touch $LOG
 
 start_proxy() {
-	# Wait for VBoxControl from guest additions
+	# Make sure VBoxControl from guest additions is available
+	# Install and reboot if not there to get correct drivers
 	while [ 1 ]; do
-		echo "`date` looking up VBoxControl" >> $LOG
-		VBOXCONTROL=`which VBoxControl` 2> /dev/null && break
+		echo "`date` look up VBoxControl and load vbox module" >> $LOG
+		VBOXCONTROL=`which VBoxControl` 2> /dev/null && \
+			modprobe vboxguest && break 2>> $LOG
 		echo "`date` installing virtualbox guest additions" >> $LOG
 		aptitude install -y linux-headers-`uname -r` && \
 			aptitude install -y virtualbox-ose-guest-x11 && \
-			break
+			sync && reboot 2>> $LOG
 		sleep 10
 	done
-	sync
-	modprobe vboxguest
 
 	job_id=`VBoxControl -nologo guestproperty get job_id | cut -b 8-`
 	proxy_host=`VBoxControl -nologo guestproperty get proxy_host | cut -b 8-`

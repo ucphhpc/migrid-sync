@@ -18,9 +18,11 @@ chroot $1 apt-get install -y aptitude
 # and generic for other archs
 chroot $1 aptitude install -y linux-headers-virtual
 chroot $1 aptitude install -y -d virtualbox-ose-guest-x11
-# Replace default gnome session with xfce
+# Replace default gnome and ubuntu session with xfce
 chroot $1 mv /usr/share/xsessions/gnome.desktop /usr/share/xsessions/gnome.desktop.old
+chroot $1 mv /usr/share/xsessions/ubuntu.desktop /usr/share/xsessions/ubuntu.desktop.old
 chroot $1 ln -s /usr/share/xsessions/xfce.desktop /usr/share/xsessions/gnome.desktop
+chroot $1 ln -s /usr/share/xsessions/xfce.desktop /usr/share/xsessions/ubuntu.desktop
 
 # Launch migvncproxy from GDM init to get vnc running at the right time
 sed -ie 's/^exit 0//g' "$1/etc/gdm/Init/Default"

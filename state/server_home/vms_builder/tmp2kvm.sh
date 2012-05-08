@@ -31,7 +31,7 @@ export CODENAME
 run=''
 
 srcdir="kvm-ubuntu-$CODENAME-$ARCH"
-dstdir="kvm-os-images-$YEAR-1"
+dstdir="kvm-os-images-$YEAR-pristine"
 $run mkdir -p $dstdir
 $run sync
 

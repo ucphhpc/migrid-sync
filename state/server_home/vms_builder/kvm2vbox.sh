@@ -10,7 +10,7 @@
 run=''
 
 $run sync
-for src in kvm-os-images-*/*.qcow2; do
+for src in kvm-os-images-*-pristine/*.qcow2; do
 	srcdir=$(dirname $src)
 	dstdir=$(echo $srcdir|sed 's/kvm/vbox3.1/g')
 	img=$(basename $src)
