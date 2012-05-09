@@ -582,7 +582,7 @@ class Configuration:
         if config.has_option('VMACHINES', 'default_os'):
             self.vm_default_os = config.get('VMACHINES', 'default_os')
         else:
-            self.vm_default_os = 'ubuntu-10.04'
+            self.vm_default_os = 'ubuntu-12.04'
         if config.has_option('VMACHINES', 'default_flavor'):
             self.vm_default_flavor = config.get('VMACHINES', 'default_flavor')
         else:
@@ -605,7 +605,7 @@ class Configuration:
         if config.has_option('VMACHINES', 'default_sys_re'):
             self.vm_default_sys_re = config.get('VMACHINES', 'default_sys_re')
         else:
-            self.vm_default_sys_re = 'VBOX3.1-IMAGES-2010-1'
+            self.vm_default_sys_re = 'VBOX3.1-IMAGES-2012-1'
         if config.has_option('VMACHINES', 'default_sys_base'):
             self.vm_default_sys_base = config.get('VMACHINES',
                                                   'default_sys_base')
