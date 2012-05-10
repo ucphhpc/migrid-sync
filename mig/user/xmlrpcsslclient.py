@@ -367,8 +367,8 @@ uname -a
 ::CPUTIME::
 30
 
-::SANDBOX::
-True
+::VGRID::
+ANY
 """
     print 'writing job description to %s file on server' % mrsl_path
     (inlist, retval) = server.editfile({'path': [mrsl_path], 'editarea'
