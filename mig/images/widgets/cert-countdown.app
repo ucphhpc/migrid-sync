@@ -27,7 +27,7 @@ $(document).ready(function() {
                 var high_warn = new Date(expire.getTime() - high_days*day_msecs);
                 var mid_warn = new Date(expire.getTime() - mid_days*day_msecs);
                 var low_warn = new Date(expire.getTime() - low_days*day_msecs);
-                if(new Date().getTime() > high_warn_warn.getTime()) {
+                if(new Date().getTime() > high_warn.getTime()) {
                     $("#cert_countdown").addClass("highwarn");
                 } else if(new Date().getTime() > mid_warn.getTime()) {
                     $("#cert_countdown").addClass("midwarn");
