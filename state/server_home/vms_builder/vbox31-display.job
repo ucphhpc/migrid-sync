@@ -33,7 +33,7 @@ fi
 $VBOXMANAGE -q openmedium disk $SYSDISK
 $VBOXMANAGE -q openmedium disk $DATADISK
 $VBOXMANAGE -q createvm --name 'MyVirtualDesktop' --register
-$VBOXMANAGE -q modifyvm 'MyVirtualDesktop' --nic1 nat --macaddress1 001122334455 --memory 1024 $ARHCOPTS --hwvirtex on --ioapic off
+$VBOXMANAGE -q modifyvm 'MyVirtualDesktop' --nic1 nat --macaddress1 001122334455 --cpus 1 --memory 1024 $ARHCOPTS --hwvirtex on --ioapic off
 $VBOXMANAGE -q storagectl 'MyVirtualDesktop' --name 'IDE Controller' --add ide
 $VBOXMANAGE -q storageattach 'MyVirtualDesktop' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium $SYSDISK
 $VBOXMANAGE -q storageattach 'MyVirtualDesktop' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium $DATADISK
