@@ -530,7 +530,7 @@ mv %(data_disk)s %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s
 $VBOXMANAGE -q openmedium disk +JOBID+_%(data_disk)s
 $VBOXMANAGE -q openmedium disk %(sys_disk)s
 $VBOXMANAGE -q createvm --name '%(name)s' --register
-$VBOXMANAGE -q modifyvm '%(name)s' --nic1 nat --macaddress1 %(mac)s --memory %(memory)d %(arch_opts)s --hwvirtex on --ioapic off
+$VBOXMANAGE -q modifyvm '%(name)s' --nic1 nat --macaddress1 %(mac)s --cpus %(cpu_count)d --memory %(memory)d %(arch_opts)s --hwvirtex on --ioapic off
 $VBOXMANAGE -q storagectl '%(name)s' --name 'IDE Controller' --add ide
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium '%(sys_disk)s'
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium '+JOBID+_%(data_disk)s'

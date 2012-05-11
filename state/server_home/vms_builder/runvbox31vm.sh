@@ -40,6 +40,8 @@ do
   then
     echo "vm $VM_NAME with pid $VBOX_PID still running: hard power off"
     $VBOXMANAGE -q controlvm "$VM_NAME" poweroff
+    # give it a little time to shut down
+    sleep 5
   elif [ $EXEC_TIME -lt 2 ]
   then
     echo "vm $VM_NAME with pid $VBOX_PID timed out: soft power off"
