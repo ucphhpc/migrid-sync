@@ -111,31 +111,38 @@ host_port[1] = int(host_port[1])
 (HOSTNAME, HOSTPORT) = host_port
 
 
-class HTTPSCertTransport(xmlrpclib.Transport):
+class SafeCertTransport(xmlrpclib.SafeTransport):
 
     """HTTPS with user certificate"""
 
     host = None
+    
+    def __init__(self, use_datetime=0):
+        """For backward compatibility with python < 2.7 . Call parent
+        constructor and check if the new _connection attribute is set.
+        If not we must switch to compatibility mode where the request
+        method needs to be overridden.
+        """
+        xmlrpclib.SafeTransport.__init__(self, use_datetime)
 
-    def make_connection(self, host):
-
-        # TODO: we should try to use supplied password here, but it is difficult!
-        # it seems the password handling is passed directly to openssl through console
-
-        conn = httplib.HTTPSConnection(HOSTNAME, HOSTPORT,
-                key_file=KEYCERTFILE, cert_file=CERTFILE)
-
-        # conn.set_debuglevel(10)
-
-        return conn
-
-    def request(
+        if not hasattr(self, '_connection'):
+            # print "DEBUG: switch to compat mode"
+            self._connection = (None, None)
+            self.request = self._compat_request
+            
+    def _compat_request(
         self,
         host,
         handler,
         request_body,
         verbose=0,
         ):
+        """For backward compatibility with < 2.7 : must override connection
+        calls to fit older httplib API.
+
+        Reuse existing connections to avoid repeating passphrase every single
+        time.
+        """
 
         # issue XML-RPC request
 
@@ -167,11 +174,41 @@ class HTTPSCertTransport(xmlrpclib.Transport):
 
         return self._parse_response(resp, sock)
 
+    def make_connection(self, host):
+        """Override default HTTPS Transport to include key/cert support. This
+        is the python 2.7 version which changed internals and broke
+        backward compatibility. We use the exact same structure and do the
+        plumbing for backward compatibility in the constructor instead.
+        
+        Reuses connections if possible to support HTTP/1.1 keep-alive.
+        """
+        if self._connection and host == self._connection[0]:
+            return self._connection[1]
+        # create a HTTPS connection object from a host descriptor
+        # host may be a string, or a (host, x509-dict) tuple
+        try:
+            HTTPS = httplib.HTTPSConnection
+        except AttributeError:
+            raise NotImplementedError(
+                "your version of httplib doesn't support HTTPS"
+                )
+        else:
+            chost, self._extra_headers, x509 = self.get_host_info(host)
+
+            # Force user key and cert
+            x509_args = (x509 or {})
+            x509_args['key_file'] = KEYCERTFILE
+            x509_args['cert_file'] = CERTFILE
+            
+            self._connection = host, HTTPS(HOSTNAME, HOSTPORT, **x509_args)
+            return self._connection[1]
+
 
 def xmlrpcgetserver():
-    cert_transport = HTTPSCertTransport()
-    server = xmlrpclib.Server('https://%s:%s%s' % (HOSTNAME, HOSTPORT,
-                              SCRIPTNAME), transport=cert_transport)
+    cert_transport = SafeCertTransport()
+    server = xmlrpclib.ServerProxy('https://%s:%s%s' % (HOSTNAME, HOSTPORT,
+                                                        SCRIPTNAME),
+                                   transport=cert_transport)
     return server
 
 
