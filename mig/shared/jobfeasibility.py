@@ -195,13 +195,6 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
     resource_map = get_resource_map(configuration)
     for (vgrid, resources) in vgrid_resource_map.items():
 
-        if not resources:
-            best_job_cond['RESOURCE'] = False
-            best_errors['RESOURCE'] = \
-            'There are no valid/allowed resources for VGrid "%s" available.' \
-            % (vgrid)
-            return (best_job_cond, best_errors)
-
         if best_job_cond['JOB_COND'] == GREEN:
             break
 
