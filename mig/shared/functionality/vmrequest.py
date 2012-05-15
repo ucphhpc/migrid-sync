@@ -144,9 +144,8 @@ like VBOX3.1-IMAGES-2010-1 for ubuntu-10.* versions.</td>
 <tr>
   <td width="200">Software</td>
   <td>
-<textarea cols=40 name="machine_software" readonly>
-iptables, acpid, x11vnc, xorg, gdm, xfce4, gcc, make, netsurf, python-openssl
-</textarea>
+<input type=text size=80 name="machine_software" readonly
+value='iptables acpid x11vnc xorg gdm xfce4 gcc make netsurf python-openssl' />
   </td>
 </tr>
 </table>

@@ -78,7 +78,12 @@ VALID_PASSWORD_CHARACTERS = valid_password_chars
 VALID_NAME_CHARACTERS = valid_name_chars
 VALID_DN_CHARACTERS = valid_dn_chars
 
-# Helper functions
+# Helper functions and variables
+
+# Type and value guess helpers - filled first time used
+
+__type_map = {}
+__value_map = {}
 
 def __valid_contents(
     contents,
@@ -155,7 +160,8 @@ def valid_alphanumeric(contents, min_length=0, max_length=-1):
 
 def valid_alphanumeric_and_spaces(contents, min_length=0,
                                   max_length=-1):
-    """Verify that supplied contents only contain alphanumeric characters and spaces"""
+    """Verify that supplied contents only contain alphanumeric characters and
+    spaces"""
 
     __valid_contents(contents, letters + digits + ' ' + '_',
                      min_length, max_length)
@@ -367,7 +373,9 @@ def valid_job_id_patterns(
 
 
 def valid_email_address(addr):
-    """From http://www.secureprogramming.com/?action=view&feature=recipes&recipeid=1"""
+    """Email check from
+    http://www.secureprogramming.com/?action=view&feature=recipes&recipeid=1
+    """
 
     rfc822_specials = '()<>@,;:\\"[]'
 
@@ -720,217 +728,78 @@ def validated_job_id(user_arguments_dict, name, default):
 
 
 def guess_type(name):
-    """Maps variable names to expected types"""
+    """Maps variable names to expected types - only init map once"""
 
-    if name.lower().find('path') != -1:
-        return valid_path_pattern
-    elif name.lower().find('job_id') != -1:
-        return valid_job_id_pattern
-    elif name.lower().find('action') != -1:
-        return valid_job_id
-    elif name.lower().find('flags') != -1:
-        return valid_ascii
-    elif name.lower().find('max_jobs') != -1:
-        return valid_numeric
-    elif name.lower().find('lines') != -1:
-        return valid_numeric
-    elif name.lower().find('cputime') != -1:
-        return valid_numeric
-    elif name.lower().find('unique_resource_name') != -1:
-        return valid_fqdn
-    elif name.lower().find('resource') != -1:
-        return valid_job_id_pattern
-    elif name.lower().find('hosturl') != -1:
-        return valid_fqdn
-    elif name.lower().find('exe_name') != -1:
-        return valid_fqdn
-    elif name.lower().find('cert_name') != -1:
-        return valid_commonname
-    elif name.lower().find('cert_id') != -1:
-        return valid_distinguished_name
-    elif name.lower().find('vgrid_name') != -1:
-        return valid_path
-    elif name.lower().find('fileupload') != -1:
-        return valid_path
-    elif name.lower().find('re_name') != -1:
-        return valid_job_id
-    elif name.lower().find('re_template') != -1:
-        return valid_job_id
-    elif name.lower().find('src') != -1:
-        return valid_path_pattern
-    elif name.lower().find('dst') != -1:
-        return valid_path_pattern
-    elif name.lower().find('size') != -1:
-        return valid_numeric
-    elif name.lower().find('request_text') != -1:
-        return valid_plain_text
-    elif name.lower().find('aol') != -1:
-        return valid_email_address
-    elif name.lower().find('yahoo') != -1:
-        return valid_email_address
-    elif name.lower().find('msn') != -1:
-        return valid_email_address
-    elif name.lower().find('icq') != -1:
-        return valid_email_address
-    elif name.lower().find('jabber') != -1:
-        return valid_email_address
-    elif name.lower().find('email') != -1:
-        return valid_email_address
-    elif name.lower().find('public_profile') != -1:
-        return valid_plain_text
-    elif name.lower().find('public_image') != -1:
-        return valid_path
-    elif name.lower().find('resconfig') != -1:
-        return valid_plain_text
-    elif name.lower().find('redescription') != -1:
-        return valid_plain_text
-    elif name.lower().find('testprocedure') != -1:
-        return valid_plain_text
-    elif name.lower().find('environment') != -1:
-        return valid_plain_text
-    elif name.lower().find('software') != -1:
-        return valid_plain_text
-    elif name.lower().find('verifystdout') != -1:
-        return valid_plain_text
-    elif name.lower().find('verifystderr') != -1:
-        return valid_plain_text
-    elif name.lower().find('verifystatus') != -1:
-        return valid_plain_text
-    elif name.lower().find('editarea') != -1:
-        return valid_free_text
-    elif name.lower().find('msg_subject') != -1:
-        return valid_plain_text
-    elif name.lower().find('msg_body') != -1:
-        return valid_plain_text
-    elif name.lower().find('offset') != -1:
-        return valid_integer
-    elif name.lower().find('software_entries') != -1:
-        return valid_numeric
-    elif name.lower().find('environment_entries') != -1:
-        return valid_numeric
-    elif name.lower().find('testprocedure_entry') != -1:
-        return valid_numeric
-    elif name.lower().find('current_dir') != -1:
-        return valid_path_pattern
-    elif name.lower().find('search') != -1:
-        return valid_job_id_pattern
-    elif name.lower().find('show') != -1:
-        return valid_label_text
-    elif name.lower().find('country') != -1:
-        return valid_ascii
-    elif name.lower().find('state') != -1:
-        return valid_ascii
-    elif name.lower().find('org') != -1:
-        return valid_commonname
-    elif name.lower().find('email') != -1:
-        return valid_email_address
-    elif name.lower().find('comment') != -1:
-        return valid_plain_text
-    elif name.lower().find('msg') != -1:
-        return valid_plain_text
-    elif name.lower().find('password') != -1:
-        return valid_password
-    elif name.lower().find('verifypassword') != -1:
-        return valid_password
-    elif name.lower().find('cmd') != -1:
-        return valid_path_pattern
-    elif name.lower().find('pattern') != -1:
-        return valid_path_pattern
-    elif name.lower().find('name') != -1:
-        return valid_job_id_pattern
-    elif name.lower().find('lang') != -1:
-        return valid_job_id
-    elif name.lower().find('execute') != -1:
-        return valid_free_text
-    elif name.lower().find('executables') != -1:
-        return valid_plain_text
-    elif name.lower().find('inputfiles') != -1:
-        return valid_plain_text
-    elif name.lower().find('outputfiles') != -1:
-        return valid_plain_text
-    elif name.lower().find('verifyfiles') != -1:
-        return valid_plain_text
-    elif name.lower().find('notify') != -1:
-        return valid_plain_text
-    elif name.lower().find('vgrid') != -1:
-        return valid_plain_text
-    elif name.lower().find('runtimeenvironment') != -1:
-        return valid_plain_text
-    elif name.lower().find('width') != -1:
-        return valid_numeric
-    elif name.lower().find('height') != -1:
-        return valid_numeric
-    elif name.lower().find('depth') != -1:
-        return valid_numeric
-    elif name.lower().find('desktopname') != -1:
-        return valid_ascii
-    elif name.lower().find('hd_size') != -1:
-        return valid_numeric
-    elif name.lower().find('memory') != -1:
-        return valid_numeric
-    elif name.lower().find('net_bw') != -1:
-        return valid_numeric
-    elif name.lower().find('premenu') != -1:
-        return valid_free_text
-    elif name.lower().find('postmenu') != -1:
-        return valid_free_text
-    elif name.lower().find('precontent') != -1:
-        return valid_free_text
-    elif name.lower().find('postcontent') != -1:
-        return valid_free_text
-    elif name.lower().find('site_script_deps') != -1:
-        return valid_path
-    elif name.lower().find('machine_name') != -1:
-        return valid_job_id
-    elif name.lower().find('cpu_count') != -1:
-        return valid_numeric
-    elif name.lower().find('cpu_time') != -1:
-        return valid_numeric
-    elif name.lower().find('architecture') != -1:
-        return valid_alphanumeric
-    elif name.lower().find('os') != -1:
-        return valid_fqdn
-    elif name.lower().find('flavor') != -1:
-        return valid_fqdn
-    elif name.lower().find('hypervisor_re') != -1:
-        return valid_fqdn
-    elif name.lower().find('sys_re') != -1:
-        return valid_fqdn
-    # showstats.py:
-    # time_start/time_end: YYYY-MM
-    elif name.lower().find('time_') != -1:
-        # has to be a function with type (something convertible to string) -> Bool 
-        return lambda x:__valid_contents(x, "-" + digits)
-    # group_in_time: month,week,day,all
-    elif name.lower().find('group_in_time') != -1:
-        return lambda x:__valid_contents(x, "monthweekdayall")
-    # display: machine, user, summary
-    elif name.lower().find('display') != -1:
-        return lambda x:__valid_contents(x, "machineusersummaryvgrid")
-    # autocreate.py: proxy_upload and proxy_uploadfilename, contain cert/key
-    elif name.lower().find('proxy_upload') != -1:
-        return valid_printable
-    # shell:menu or settings:site_user_menu
-    elif name.lower().find('menu') != -1:
-        return valid_ascii
+    if not __type_map:
 
+        # TODO: extend to include all used variables here
 
-    else:
-
-    # TODO: extend to include all used variables here
-
-        return valid_alphanumeric
+        for key in ('path', 'src', 'dst', 'current_dir', 'cmd', 'pattern', ):
+            __type_map[key] = valid_path_pattern
+        for key in ('vgrid_name', 'fileupload', 'public_image',
+                    'site_script_deps', ):
+            __type_map[key] = valid_path
+        for key in ('job_id', 'resource', 'search', 'name', ):
+            __type_map[key] = valid_job_id_pattern
+        for key in ('action', 're_name', 're_template', 'lang', 'machine_name',
+                    ):
+            __type_map[key] = valid_job_id
+        for key in ('flags', 'country', 'state', 'desktopname', 'menu',
+                    'group_in_time', 'display', ):
+            __type_map[key] = valid_ascii
+        for key in ('max_jobs', 'lines', 'cputime', 'size', 'software_entries',
+                'environment_entries', 'testprocedure_entry', 'width',
+                'height', 'depth', 'hd_size', 'memory', ' net_bw', 'cpu_count',
+                'cpu_time', ):
+            __type_map[key] = valid_numeric
+        for key in ('offset', ):
+            __type_map[key] = valid_integer
+        for key in ('unique_resource_name', 'hosturl', 'exe_name', 'os',
+                    'flavor', 'hypervisor_re', 'sys_re', 'time_start',
+                    'time_end', ):
+            __type_map[key] = valid_fqdn
+        for key in ('cert_name', 'org', 'machine_software', ):
+            __type_map[key] = valid_commonname
+        for key in ('cert_id', ):
+            __type_map[key] = valid_distinguished_name
+        for key in ('request_text', 'public_profile', 'resconfig',
+                    'redescription', 'testprocedure', 'environment',
+                    'software', 'verifystdout', 'verifystderr', 'verifystatus',
+                    'msg_subject', 'msg_body', 'comment', 'msg', 'executables',
+                    'inputfiles', 'outputfiles', 'verifyfiles', 'notify',
+                    'vgrid', 'runtimeenvironment', ):
+            __type_map[key] = valid_plain_text
+        for key in ('aol', 'yahoo', 'msn', 'icq', 'jabber', 'email', ):
+            __type_map[key] = valid_email_address
+        for key in ('editarea', 'execute', 'premenu', 'postmenu', 'precontent',
+                    'postcontent', ):
+            __type_map[key] = valid_free_text
+        for key in ('show', ):
+            __type_map[key] = valid_label_text
+        for key in ('password', 'verifypassword', ):
+            __type_map[key] = valid_password
+        for key in ('architecture', 'hostidentifier', ):
+            __type_map[key] = valid_alphanumeric
+        for key in ('proxy_upload', ):
+            __type_map[key] = valid_printable
+        
+    # Return type checker from __type_map with fall back to alphanumeric
+    
+    return __type_map.get(name.lower().strip(), valid_alphanumeric)
 
 
 def guess_value(name):
-    """Maps variable names to expected values"""
+    """Maps variable names to expected values - only init map once"""
 
-    if name.lower().find('lines') != -1:
-        return lines_value_checker
-    elif name.lower().find('max_jobs') != -1:
-        return max_jobs_value_checker
-    else:
-        return id
+    if not __value_map:
+        for key in ('lines', ):
+            __value_map[key] = lines_value_checker
+        for key in ('max_jobs', ):
+            __value_map[key] = max_jobs_value_checker
+
+    # Return value checker from __value_map with fall back to id function
+    
+    return __value_map.get(name.lower().strip(), id)
 
 
 def validated_input(
