@@ -271,6 +271,10 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
             job_cond.clear()
             errors.clear()
 
+    if not found_best:
+            best_job_cond['RESOURCE'] = False
+            best_errors['RESOURCE'] = 'No valid/allowed resources available.'
+
     return (best_job_cond, best_errors)
 
 
