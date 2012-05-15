@@ -1219,8 +1219,7 @@ class Scheduler:
                 if not job[attr] and res[attr]:
 
                     # job is not allowed to run in a sandbox resource
-                    # self.logger.info("job is not allowed to run in a sandbox resource")
-
+                    self.logger.info("job is not allowed to run on a sandbox resource")
                     return False
 
                 # sandbox jobs on non-sandbox resources are ok, however
@@ -1236,8 +1235,8 @@ class Scheduler:
 
                 if job[attr].upper() != res[attr].upper():
 
-                    # Platforms does'nt match
-                    # self.logger.info("Job has PLATFORM: (%s), does'nt match with resource PLATFORM: (%s)" % (job[attr], res[attr]))
+                    # Platforms don't match
+                    # self.logger.info("Job has PLATFORM: (%s), doesn't match resource PLATFORM: (%s)" % (job[attr], res[attr]))
 
                     return False
 

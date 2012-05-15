@@ -45,6 +45,7 @@ from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, edit_runtimeenv_owner
 from shared.resource import resource_add_owners, resource_remove_owners
 from shared.serial import load, dump
+from shared.settings import update_settings, update_profile, update_widgets
 from shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
      vgrid_add_members, vgrid_remove_members
 from shared.vgridaccess import get_resource_map, get_vgrid_map, VGRIDS, \
@@ -223,7 +224,7 @@ def create_user(
                   % client_id
     except Exception, err:
         if not force:
-            raise Exception('Error: Failed to add %s to user DB: %s' % \
+            raise Exception('Failed to add %s to user DB: %s' % \
                             (client_id, err))
 
     home_dir = os.path.join(configuration.user_home, client_dir)
@@ -245,38 +246,38 @@ def create_user(
             os.mkdir(home_dir)
         except:
             if not force:
-                raise Exception('Error: could not create home dir: %s' % \
+                raise Exception('could not create home dir: %s' % \
                                 home_dir)
         try:
             os.mkdir(settings_dir)
         except:
             if not force:
-                raise Exception('Error: could not create settings dir: %s' % \
+                raise Exception('could not create settings dir: %s' % \
                                 settings_dir)
         try:
             os.mkdir(cache_dir)
         except:
             if not force:
-                raise Exception('Error: could not create cache dir: %s' % \
+                raise Exception('could not create cache dir: %s' % \
                                 cache_dir)
 
         try:
             os.mkdir(mrsl_dir)
         except:
             if not force:
-                raise Exception('Error: could not create mrsl dir: %s' % \
+                raise Exception('could not create mrsl dir: %s' % \
                                 mrsl_dir)
         try:
             os.mkdir(pending_dir)
         except:
             if not force:
-                raise Exception('Error: could not create resource dir: %s' % \
+                raise Exception('could not create resource dir: %s' % \
                                 pending_dir)
         try:
             os.mkdir(ssh_dir)
         except:
             if not force:
-                raise Exception('Error: could not create ssh conf dir: %s' % \
+                raise Exception('could not create ssh conf dir: %s' % \
                                 ssh_dir)
 
     elif os.path.exists(htaccess_path):
@@ -315,61 +316,64 @@ def create_user(
         os.chmod(htaccess_path, 0444)
     except:
         if not force:
-            raise Exception('Error: could not create htaccess file: %s' % \
+            raise Exception('could not create htaccess file: %s' % \
                             htaccess_path)
 
-    # Always write basic settings with email to support various mail requests
-    # and to avoid log errors.
-    # Please note that we can't rely on anything from shared.settings here
-    # since it would introduce a module import cycle
-    ### THIS SHOULD NO LONGER BE A PROBLEM!!
+    # Always write/update basic settings with email to support various mail
+    # requests and to avoid log errors.
 
+    settings_dict, settings_defaults = {}, {}
+    user_email = user.get('email', '')
+    if user_email:
+        settings_defaults['EMAIL'] = [user_email]
+    settings_defaults['CREATOR'] = client_id
+    settings_defaults['CREATED_TIMESTAMP'] = datetime.datetime.now()
     try:
-        settings_dict = {}
-        user_email = user.get('email', '')
-        if user_email:
-            settings_dict['EMAIL'] = [user_email]
-        settings_dict['CREATOR'] = client_id
-        settings_dict['CREATED_TIMESTAMP'] = datetime.datetime.now()
-        dump(settings_dict, settings_path)
+        settings_dict = update_settings(client_id, configuration,
+                                        settings_dict, settings_defaults)
     except:
         if not force:
-            raise Exception('Error: could not create settings file: %s' % \
+            raise Exception('could not write settings file: %s' % \
                             settings_path)
         
     # Always write default profile to avoid error log entries
+
+    profile_dict, profile_defaults = {}, {}
+    profile_defaults['CREATOR'] = client_id
+    profile_defaults['CREATED_TIMESTAMP'] = datetime.datetime.now()
     try:
-        profile_dict = {}
-        profile_dict['CREATOR'] = client_id
-        profile_dict['CREATED_TIMESTAMP'] = datetime.datetime.now()
-        dump(profile_dict, profile_path)
+        profile_dict = update_profile(client_id, configuration, profile_dict,
+                                      profile_defaults)
     except:
         if not force:
-            raise Exception('Error: could not create profile file: %s' % \
+            raise Exception('could not write profile file: %s' % \
                             profile_path)
 
     # Always write default widgets to avoid error log entries
+
+    widgets_dict, widgets_defaults = {}, {}
+    widgets_defaults['CREATOR'] = client_id
+    widgets_defaults['CREATED_TIMESTAMP'] = datetime.datetime.now()
     try:
-        widgets_dict = {}
-        widgets_dict['CREATOR'] = client_id
-        widgets_dict['CREATED_TIMESTAMP'] = datetime.datetime.now()
-        dump(widgets_dict, widgets_path)
+        widgets_dict = update_widgets(client_id, configuration, widgets_dict,
+                                      widgets_defaults)
     except:
         if not force:
-            raise Exception('Error: could not create widgets file: %s' % \
+            raise Exception('could not create widgets file: %s' % \
                             widgets_path)
         
-    # Always write default css to avoid apache error log entries
+    # Write missing default css to avoid apache error log entries
 
-    try:
-        filehandle = open(css_path, 'w')
-        filehandle.write(get_default_css(css_path))
-        filehandle.close()
-    except:
-        
-        if not force:
-            raise Exception('Error: could not create custom css file: %s' % \
-                            css_path)
+    if not os.path.exists(css_path):
+        try:
+            filehandle = open(css_path, 'w')
+            filehandle.write(get_default_css(css_path))
+            filehandle.close()
+        except:
+            
+            if not force:
+                raise Exception('could not create custom css file: %s' % \
+                                css_path)
 
     mark_user_modified(configuration, client_id)
     return user
@@ -406,7 +410,7 @@ def edit_user(
 
         if not user_db.has_key(client_id):
             if not force:
-                raise Exception("Error: User DB entry '%s' doesn't exist!" % \
+                raise Exception("User DB entry '%s' doesn't exist!" % \
                                 client_id)
 
     user_dict = {}
@@ -430,7 +434,7 @@ def edit_user(
         import traceback
         print traceback.format_exc()
         if not force:
-            raise Exception('Error: Failed to edit %s with %s in user DB: %s'\
+            raise Exception('Failed to edit %s with %s in user DB: %s'\
                             % (client_id, changes, err))
 
     new_client_dir = client_id_dir(new_id)
@@ -449,7 +453,7 @@ def edit_user(
             rename_dir(old_path, new_path)
         except Exception, exc:
             if not force:
-                raise Exception('Error: could not rename %s to %s: %s' % \
+                raise Exception('could not rename %s to %s: %s' % \
                                 (old_path, new_path, exc))
     if verbose:
         print 'User dirs for %s was successfully renamed!'\
@@ -585,7 +589,7 @@ def delete_user(
 
         if not user_db.has_key(client_id):
             if not force:
-                raise Exception("Error: User DB entry '%s' doesn't exist!" % \
+                raise Exception("User DB entry '%s' doesn't exist!" % \
                                 client_id)
 
     try:
@@ -596,7 +600,7 @@ def delete_user(
                   % client_id
     except Exception, err:
         if not force:
-            raise Exception('Error: Failed to remove %s from user DB: %s'\
+            raise Exception('Failed to remove %s from user DB: %s'\
                             % (client_id, err))
 
     # Remove user dirs recursively
@@ -612,7 +616,7 @@ def delete_user(
             delete_dir(user_path)
         except Exception, exc:
             if not force:
-                raise Exception('Error: could not remove %s: %s' % \
+                raise Exception('could not remove %s: %s' % \
                                 (user_path, exc))
     if verbose:
         print 'User dirs for %s was successfully removed!'\
@@ -675,9 +679,8 @@ def migrate_users(
         if new_id in user_db.keys():
             if not prune_dupes:
                 if not force:
-                    raise Exception(
-                        'Error: new ID %s already exists in user DB!' % \
-                        new_id)
+                    raise Exception('new ID %s already exists in user DB!' % \
+                                    new_id)
             else:
                 if verbose:
                     print 'Pruning old duplicate user %s from user DB' % \
@@ -686,9 +689,8 @@ def migrate_users(
         elif old_id in latest.keys():
             if not prune_dupes:
                 if not force:
-                    raise Exception(
-                        'Error: old ID %s is not unique in user DB!' % \
-                        old_id)
+                    raise Exception('old ID %s is not unique in user DB!' % \
+                                    old_id)
             else:
                 (latest_id, latest_user) = latest[old_id]
                 # expire may be int, unset or None: try with fall back
@@ -738,7 +740,7 @@ def migrate_users(
                 # os.symlink(new_path, old_path)
 
                 if not force:
-                    raise Exception('Error: could not move %s to %s: %s' % \
+                    raise Exception('could not move %s to %s: %s' % \
                                     (old_path, new_path, exc))
 
         mrsl_base = os.path.join(configuration.mrsl_files_dir, new_name)
@@ -750,9 +752,8 @@ def migrate_users(
                 filter_pickled_dict(mrsl_path, {old_id: new_id})
             except Exception, exc:
                 if not force:
-                    raise Exception(
-                        'Error: could not update saved mrsl user in %s: %s'\
-                        % (mrsl_path, exc))
+                    raise Exception('could not update saved mrsl in %s: %s' \
+                                    % (mrsl_path, exc))
 
         re_base = configuration.re_home
         for re_name in os.listdir(re_base):
@@ -763,9 +764,8 @@ def migrate_users(
                 filter_pickled_dict(re_path, {old_id: new_id})
             except Exception, exc:
                 if not force:
-                    raise Exception(
-                        'Error: could not update RE user in %s: %s'\
-                        % (re_path, exc))
+                    raise Exception('could not update RE user in %s: %s' \
+                                    % (re_path, exc))
 
         for base_dir in (configuration.resource_home,
                          configuration.vgrid_home):
@@ -778,9 +778,8 @@ def migrate_users(
                         filter_pickled_list(kind_path, {old_id: new_id})
                     except Exception, exc:
                         if not force:
-                            raise Exception(
-                                'Error: could not update saved %s in %s: %s'\
-                                % (kind, kind_path, exc))
+                            raise Exception('could not update %s in %s: %s' \
+                                            % (kind, kind_path, exc))
 
         # Finally update user DB now that file system was updated
 
@@ -793,8 +792,8 @@ def migrate_users(
                       % client_id
         except Exception, err:
             if not force:
-                raise Exception('Error: Failed to update %s in user DB: %s'\
-                                % (client_id, err))
+                raise Exception('Failed to update %s in user DB: %s' % \
+                                (client_id, err))
 
 
 def fix_entities(
@@ -844,9 +843,8 @@ def fix_entities(
                         filter_pickled_list(kind_path, {old_id: new_id})
                     except Exception, exc:
                         if not force:
-                            raise Exception(
-                                'Error: could not update saved %s in %s: %s'\
-                                % (kind, kind_path, exc))
+                            raise Exception('could not update %s in %s: %s' % \
+                                            (kind, kind_path, exc))
 
 
 def default_search():

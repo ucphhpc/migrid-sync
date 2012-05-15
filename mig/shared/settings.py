@@ -111,50 +111,103 @@ def parse_and_save_profile(filename, client_id, configuration):
         mark_user_modified(configuration, client_id)
     return status
 
+def load_section_helper(client_id, configuration, section_filename,
+                        section_keys, include_meta=False):
+    """Load settings section from pickled file. Optional include_meta
+    controls the inclusion of meta data like creator and creation time.
+    """
+
+    client_dir = client_id_dir(client_id)
+    section_path = os.path.join(configuration.user_settings, client_dir,
+                                section_filename)
+    section_dict = unpickle(section_path, configuration.logger)
+    if section_dict and not include_meta:
+        real_keys = section_keys
+        for key in section_dict.keys():
+            if not key in real_keys:
+                del section_dict[key]
+    return section_dict
+
+
 def load_settings(client_id, configuration, include_meta=False):
     """Load settings from pickled settings file. Optional include_meta
     controls the inclusion of meta data like creator and creation time.
     """
 
-    client_dir = client_id_dir(client_id)
-    settings_path = os.path.join(configuration.user_settings, client_dir,
-                                 settings_filename)
-    settings_dict = unpickle(settings_path, configuration.logger)
-    if settings_dict and not include_meta:
-        real_keys = get_settings_fields().keys()
-        for key in settings_dict.keys():
-            if not key in real_keys:
-                del settings_dict[key]
-    return settings_dict
+    return load_section_helper(client_id, configuration, settings_filename,
+                               get_settings_fields().keys(), include_meta)
 
 def load_widgets(client_id, configuration, include_meta=False):
     """Load widgets from pickled widgets file. Optional include_meta
     controls the inclusion of meta data like creator and creation time.
     """
 
-    client_dir = client_id_dir(client_id)
-    widgets_path = os.path.join(configuration.user_settings, client_dir,
-                                 widgets_filename)
-    widgets_dict = unpickle(widgets_path, configuration.logger)
-    if widgets_dict and not include_meta:
-        real_keys = get_widgets_fields().keys()
-        for key in widgets_dict.keys():
-            if not key in real_keys:
-                del widgets_dict[key]
-    return widgets_dict
+    return load_section_helper(client_id, configuration, widgets_filename,
+                               get_widgets_fields().keys(), include_meta)
 
 def load_profile(client_id, configuration, include_meta=False):
     """Load profile from pickled profile file. Optional include_meta
     controls the inclusion of meta data like creator and creation time.
     """
 
+    return load_section_helper(client_id, configuration, profile_filename,
+                               get_profile_fields().keys(), include_meta)
+
+def update_section_helper(client_id, configuration, section_filename, changes,
+                          defaults, create_missing=True):
+    """Update settings section in pickled file with values from changes
+    dictionary. Optional create_missing can be used if the pickle should be
+    created if not already there.
+    The defaults dictionary is used to set any missing values.
+    """
+
     client_dir = client_id_dir(client_id)
-    profile_path = os.path.join(configuration.user_settings, client_dir,
-                                 profile_filename)
-    profile_dict = unpickle(profile_path, configuration.logger)
-    if profile_dict and not include_meta:
-        real_keys = get_profile_fields().keys()
-        for key in profile_dict.keys():
-            if not key in real_keys:
-                del profile_dict[key]
-    return profile_dict
+    section_path = os.path.join(configuration.user_settings, client_dir,
+                                 section_filename)
+    if not os.path.exists(section_path):
+        if create_missing:
+            section_dict = {}
+        else:
+            raise Exception('no %s file to update!' % section_filename)
+    else:
+        section_dict = unpickle(section_path, configuration.logger)
+    for (key, val) in defaults.items():
+        section_dict[key] = section_dict.get(key, val)
+    section_dict.update(changes)
+    if not pickle(section_dict, section_path, configuration.logger):
+        raise Exception('could not save updated %s file!' % section_filename)
+    return section_dict
+
+def update_settings(client_id, configuration, changes, defaults,
+                    create_missing=True):
+    """Update settings in pickled settings file with values from changes
+    dictionary. Optional create_missing can be used if the settings pickle
+    should be created if not already there.
+    The defaults dictionary is used to set any missing values.
+    """
+
+    return update_section_helper(client_id, configuration, settings_filename,
+                                 changes, defaults, create_missing)
+
+def update_widgets(client_id, configuration, changes, defaults,
+                   create_missing=True):
+    """Update widgets in pickled widgets file with values from changes
+    dictionary. Optional create_missing can be used if the widgets pickle
+    should be created if not already there.
+    The defaults dictionary is used to set any missing values.
+    """
+
+    return update_section_helper(client_id, configuration, widgets_filename,
+                                 changes, defaults, create_missing)
+
+def update_profile(client_id, configuration, changes, defaults,
+                   create_missing=True):
+    """Update profile in pickled profile file with values from changes
+    dictionary. Optional create_missing can be used if the profile pickle
+    should be created if not already there.
+    The defaults dictionary is used to set any missing values.
+    """
+
+    return update_section_helper(client_id, configuration, profile_filename,
+                                 changes, defaults, create_missing)
+
