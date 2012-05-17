@@ -73,6 +73,9 @@ def default_vm_specs(configuration):
     specs['disk'] = 2
     specs['cpu_count'] = 1
     specs['cpu_time'] = 900
+    specs['screen_xres'] = 1024
+    specs['screen_yres'] = 768
+    specs['screen_bpp'] = 24
     # VM image architecture
     specs['vm_arch'] = 'i386'
     # Resource architecture 
@@ -120,11 +123,10 @@ def vnc_jobid(job_id='Unknown'):
     return password
 
 def vms_list(client_id, configuration):
-    """Returns a list of dicts describing users available virtual machines
-    described by following keys:
- 
-    'name', 'memory', 'disk', 'cpu_count', 'cpu_time', 'vgrid', 'architecture',
-    'vm_arch', 'os', 'flavor', 'hypervisor_re', 'sys_re', 'state'
+    """Returns a list of dicts describing available user virtual machines
+    described by the keys from default_vm_specs and the additional fields:
+     
+    'name', 'status', 'uuid', 'execution_time' and 'path'
  
     NOTE:
 
@@ -162,21 +164,18 @@ def vms_list(client_id, configuration):
     vms = []
 
     for vm_def_path in vms_paths:
-
-        machine = {
+        machine = {}
+        machine_defaults = default_vm_specs(configuration)
+        machine_state = {
             'name': 'UNKNOWN',
             'path': os.path.abspath(vm_def_path),
             'status': 'UNKNOWN',
             'execution_time': 'UNKNOWN',
             'job_id': 'UNKNOWN',
-            'memory': 'UNKNOWN',
-            'disk': 'UNKNOWN',
-            'cpu_count': 'UNKNOWN',
-            'cpu_time': 'UNKNOWN',
-            'vgrid': 'UNKNOWN',
-            'architecture': 'UNKNOWN',
             'uuid': 'UNKNOWN',
             }
+        machine.update(machine_defaults)
+        machine.update(machine_state)
 
         # Grab the configuration file defining the machine
 
@@ -186,17 +185,13 @@ def vms_list(client_id, configuration):
         vm_config.read([vm_def_path])
 
         machine['name'] = vm_def_base
-        machine['memory'] = vm_config.get('MiG', 'memory')
-        machine['disk'] = vm_config.get('MiG', 'disk')
-        machine['cpu_count'] = vm_config.get('MiG', 'cpu_count')
-        machine['cpu_time'] = vm_config.get('MiG', 'cpu_time')
-        machine['architecture'] = vm_config.get('MiG', 'architecture')
-        machine['vgrid'] = vm_config.get('MiG', 'vgrid').split()
-        machine['vm_arch'] = vm_config.get('MiG', 'vm_arch')
-        machine['os'] = vm_config.get('MiG', 'os')
-        machine['flavor'] = vm_config.get('MiG', 'flavor')
-        machine['hypervisor_re'] = vm_config.get('MiG', 'hypervisor_re')
-        machine['sys_re'] = vm_config.get('MiG', 'sys_re')
+        # override defaults with conf values
+        for key in machine_defaults.keys():
+            if vm_config.has_option('MiG', key):
+                machine[key] = vm_config.get('MiG', key)
+        # vgrid entry must be a list of strings
+        if isinstance(machine['vgrid'], basestring):
+            machine['vgrid'] = machine['vgrid'].split()
 
         # All job descriptions associated with this virtual machine
 
@@ -342,6 +337,9 @@ def create_vm(client_id, configuration, machine_name, machine_req):
     * disk
     * cpu_count
     * cpu_time
+    * screen_xres
+    * screen_yres
+    * screen_bpp
     * vm_arch
     * architecture
     * vgrid
@@ -534,10 +532,12 @@ $VBOXMANAGE -q modifyvm '%(name)s' --nic1 nat --macaddress1 %(mac)s --cpus %(cpu
 $VBOXMANAGE -q storagectl '%(name)s' --name 'IDE Controller' --add ide
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium '%(sys_disk)s'
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium '+JOBID+_%(data_disk)s'
+$VBOXMANAGE -q sharedfolder add '%(name)s' --name 'MIG_JOBDIR' --hostpath "$MIG_JOBDIR"
 $VBOXMANAGE -q guestproperty set '%(name)s' job_id +JOBID+
 $VBOXMANAGE -q guestproperty set '%(name)s' proxy_host %(proxy_host)s
 $VBOXMANAGE -q guestproperty set '%(name)s' proxy_port %(proxy_port)d
-./%(run_script)s '%(name)s' %(effective_time)d
+./%(run_script)s '%(name)s' %(effective_time)d %(screen_xres)d %(screen_yres)d %(screen_bpp)d
+$VBOXMANAGE -q sharedfolder remove '%(name)s' --name 'MIG_JOBDIR'
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium none
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium none
 $VBOXMANAGE -q storagectl '%(name)s' --name 'IDE Controller' --remove

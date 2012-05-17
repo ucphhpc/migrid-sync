@@ -14,9 +14,25 @@
 VBOX_STATE=0
 VM_NAME=$1
 EXEC_TIME=$2
+VM_XRES=1024
+VM_YRES=768
+VM_BPP=24
+if [ $# -ge 3 ]; then
+    VM_XRES=$3
+fi
+if [ $# -ge 4 ]; then
+    VM_YRES=$4
+fi
+
+if [ $# -ge 5 ]; then
+    VM_BPP=$5
+fi
 
 $VBOXHEADLESS -startvm "$VM_NAME" &
 VBOX_PID=$!
+
+# Change display size once the VM is started
+sleep 5 && $VBOXMANAGE -q controlvm "$VM_NAME" setvideomodehint $VM_XRES $VM_YRES $VM_BPP
 
 while [ $VBOX_STATE -eq 0 ]
 do

@@ -37,6 +37,17 @@ start_proxy() {
 		sleep 10
 	done
 
+	# Mount job dir in VM for access to ordinary and live I/O files
+	USER="mig"
+	USERID=$(id -u $USER)
+	GROUPID=$(id -g $USER)
+	JOBDIR="/home/$USER/job-dir"
+	mkdir -p "$JOBDIR"
+	grep -q vboxsf /etc/fstab || \
+		echo "MIG_JOBDIR $JOBDIR vboxsf rw,uid=$USERID,gid=$GROUPID 0 0" >> /etc/fstab
+	mount "$JOBDIR"
+
+	# Read settings and start proxy agent
 	job_id=`VBoxControl -nologo guestproperty get job_id | cut -b 8-`
 	proxy_host=`VBoxControl -nologo guestproperty get proxy_host | cut -b 8-`
 	proxy_port=`VBoxControl -nologo guestproperty get proxy_port | cut -b 8-`
