@@ -9,7 +9,10 @@
 # Arguments:
 # 1 = Virtual Machine Name
 # 2 = Execution time
-#
+# Optional arguments:
+# 3 = Screen width
+# 4 = Screen height
+# 5 = Screen bits per pixel
 
 VBOX_STATE=0
 VM_NAME=$1
@@ -23,7 +26,6 @@ fi
 if [ $# -ge 4 ]; then
     VM_YRES=$4
 fi
-
 if [ $# -ge 5 ]; then
     VM_BPP=$5
 fi
