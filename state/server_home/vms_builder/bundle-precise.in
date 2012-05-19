@@ -2,3 +2,4 @@
 %(working_dir)s/hacks/precise-gdm-custom.conf /etc/gdm/custom.conf
 %(working_dir)s/hacks/precise-apt-sources.list /etc/apt/sources.list
 %(working_dir)s/hacks/migvncproxy /etc/init.d/migvncproxy
+%(working_dir)s/hacks/migjobmonitor /etc/init.d/migjobmonitor

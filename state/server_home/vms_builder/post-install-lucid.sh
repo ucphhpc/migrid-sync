@@ -25,6 +25,7 @@ chroot $1 ln -s /usr/share/xsessions/xfce.desktop /usr/share/xsessions/gnome.des
 # Launch migvncproxy from GDM init to get vnc running at the right time
 sed -ie 's/^exit 0//g' "$1/etc/gdm/Init/Default"
 echo "/etc/init.d/migvncproxy start" >> $1/etc/gdm/Init/Default
+echo "/etc/init.d/migjobmonitor start" >> $1/etc/gdm/Init/Default
 echo "" >> $1/etc/gdm/Init/Default
 echo "exit 0" >> $1/etc/gdm/Init/Default
 

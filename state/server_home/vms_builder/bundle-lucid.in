@@ -3,3 +3,4 @@
 %(working_dir)s/hacks/interfaces /etc/network/interfaces
 %(working_dir)s/hacks/lucid-apt-sources.list /etc/apt/sources.list
 %(working_dir)s/hacks/migvncproxy /etc/init.d/migvncproxy
+%(working_dir)s/hacks/migjobmonitor /etc/init.d/migjobmonitor
