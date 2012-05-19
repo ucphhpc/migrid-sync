@@ -18,6 +18,8 @@ chroot $1 apt-get install -y aptitude
 # and generic for other archs
 chroot $1 aptitude install -y linux-headers-virtual
 chroot $1 aptitude install -y -d virtualbox-ose-guest-x11
+# Other delayed packages that break vmbuilder - missing icons and tools
+chroot $1 aptitude install -y elementary-icon-theme xfce4-goodies
 # Replace default gnome and ubuntu session with xfce
 chroot $1 mv /usr/share/xsessions/gnome.desktop /usr/share/xsessions/gnome.desktop.old
 chroot $1 mv /usr/share/xsessions/ubuntu.desktop /usr/share/xsessions/ubuntu.desktop.old
