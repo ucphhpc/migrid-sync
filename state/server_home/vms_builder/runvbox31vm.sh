@@ -30,9 +30,6 @@ if [ $# -ge 5 ]; then
     VM_BPP=$5
 fi
 
-# Locate VBoxControl binary from vbox guest additions
-VBOXCONTROL=`which VBoxControl`
-
 $VBOXHEADLESS -startvm "$VM_NAME" &
 VBOX_PID=$!
 
@@ -70,10 +67,10 @@ do
     $VBOXMANAGE -q controlvm "$VM_NAME" acpipowerbutton
     # give it a little time to shut down cleanly
     sleep 15
-  elif [ -x "$VBOXCONTROL" ]
+  elif [ -x "$VBOXMANAGE" ]
   then
       # Pass remaining time to guest
-      $VBOXCONTROL -nologo guestproperty set time_left $((EXEC_TIME-2))
+      $VBOXMANAGE -q guestproperty set "$VM_NAME" time_left $((EXEC_TIME-2))
   fi
 
   # Decrease exec time
