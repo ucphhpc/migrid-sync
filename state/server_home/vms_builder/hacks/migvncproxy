@@ -16,16 +16,17 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/opt/proxy/proxyagent.py
 PIDFILE=/var/run/proxyagent.pid
 LOG="/tmp/migvncproxy.log"
-
-# Custom helper vars
-USER="mig"
-USERID=$(id -u $USER)
-GROUPID=$(id -g $USER)
-JOBMOUNT="/home/$USER/job-dir"
+JOBUSER="mig"
+MNTNAME="MIG_JOBDIR"
 
 if [ -r /etc/default/migvncproxy ]; then
         . /etc/default/migvncproxy
 fi
+
+# Expand user variables
+USERID=$(id -u $JOBUSER)
+GROUPID=$(id -g $JOBUSER)
+JOBMNT="/home/$JOBUSER/job-dir"
 
 touch $LOG
 
@@ -42,10 +43,10 @@ init_vbox_guest() {
 			sync && break 2>> $LOG
 		sleep 30
 	done
-        # Setup mount of job dir in VM for access to ordinary and
+	# Setup mount of job dir in VM for access to ordinary and
 	# live I/O files after finishing install and then reboot.
-        mkdir -p "$JOBMOUNT"
-	echo "MIG_JOBDIR $JOBMOUNT vboxsf rw,uid=$USERID,gid=$GROUPID 0 0" \
+	mkdir -p "$JOBMNT"
+	echo "$MNTNAME $JOBMNT vboxsf defaults,uid=$USERID,gid=$GROUPID 0 0" \
 		  >> /etc/fstab
 	reboot
 }
