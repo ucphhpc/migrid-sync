@@ -30,11 +30,15 @@ if [ $# -ge 5 ]; then
     VM_BPP=$5
 fi
 
+# Locate VBoxControl binary from vbox guest additions
+VBOXCONTROL=`which VBoxControl`
+
 $VBOXHEADLESS -startvm "$VM_NAME" &
 VBOX_PID=$!
 
 # Change display size once the VM is started
-sleep 5 && $VBOXMANAGE -q controlvm "$VM_NAME" setvideomodehint $VM_XRES $VM_YRES $VM_BPP
+sleep 5 && $VBOXMANAGE -q controlvm "$VM_NAME" \
+                       setvideomodehint $VM_XRES $VM_YRES $VM_BPP &
 
 while [ $VBOX_STATE -eq 0 ]
 do
@@ -66,6 +70,10 @@ do
     $VBOXMANAGE -q controlvm "$VM_NAME" acpipowerbutton
     # give it a little time to shut down cleanly
     sleep 15
+  elif [ -x "$VBOXCONTROL" ]
+  then
+      # Pass remaining time to guest
+      $VBOXCONTROL -nologo guestproperty set time_left $((EXEC_TIME-2))
   fi
 
   # Decrease exec time
@@ -79,7 +87,6 @@ do
   else
     VBOX_STATE=1 # No
   fi
-
 done
 
 echo "CP: $VBOX_PID CS: $VBOX_STATE ET: $EXEC_TIME"
