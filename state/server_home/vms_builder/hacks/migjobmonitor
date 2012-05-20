@@ -28,8 +28,8 @@ ZENITY=`which zenity` 2>> $LOG
 [ -x "$VBOXCONTROL" ] || exit 1
 [ -x "$ZENITY" ] || exit 1
 
-export TIME_LEFT=`$VBOXCONTROL -nologo guestproperty get time_left | cut -b 8-` 2>> $LOG
-
+$VBOXCONTROL -nologo guestproperty enumerate | grep -q time_left || exit 1
+TIME_LEFT=`$VBOXCONTROL -nologo guestproperty get time_left | cut -b 8-` 2>> $LOG
 
 start_jobmonitor() {
     while [ "$TIME_LEFT" -ge 2 ]; do
