@@ -42,6 +42,7 @@ $VBOXMANAGE -q storagectl 'MyVirtualDesktop' --name 'IDE Controller' --add ide
 $VBOXMANAGE -q storageattach 'MyVirtualDesktop' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium $SYSDISK
 $VBOXMANAGE -q storageattach 'MyVirtualDesktop' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium $DATADISK
 $VBOXMANAGE -q sharedfolder add 'MyVirtualDesktop' --name 'MIG_JOBDIR' --hostpath "$MIG_JOBDIR"
+$VBOXMANAGE -q guestproperty set 'MyVirtualDesktop' time_left 999999
 $VBOXMANAGE -q guestproperty set 'MyVirtualDesktop' job_id 344692_4_14_2012__4_55_3_dk.migrid.org.0
 $VBOXMANAGE -q guestproperty set 'MyVirtualDesktop' proxy_host dk.migrid.org
 $VBOXMANAGE -q guestproperty set 'MyVirtualDesktop' proxy_port 8112
