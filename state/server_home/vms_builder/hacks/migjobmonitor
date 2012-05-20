@@ -13,6 +13,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 . /lib/lsb/init-functions
 
+PIDFILE=/var/run/jobmonitor.pid
 LOG="/tmp/migjobmonitor.log"
 
 if [ -r /etc/default/migjobmonitor ]; then
@@ -23,6 +24,9 @@ touch $LOG
 
 VBOXCONTROL=`which VBoxControl` 2>> $LOG
 ZENITY=`which zenity` 2>> $LOG
+
+[ -x "$VBOXCONTROL" ] || exit 1
+[ -x "$ZENITY" ] || exit 1
 
 export TIME_LEFT=`$VBOXCONTROL -nologo guestproperty get time_left | cut -b 8-` 2>> $LOG
 
@@ -43,10 +47,11 @@ start_jobmonitor() {
 	TIME_LEFT=$((TIME_LEFT-1))
 	sleep 1
     done &
+    echo "$!" > $PIDFILE
 }
 
 stop_jobmonitor() {
-	export TIME_LEFT=0
+	kill -9 `cat $PIDFILE`
 }
 
 case $1 in

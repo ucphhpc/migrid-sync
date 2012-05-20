@@ -12,13 +12,15 @@ mount --bind /proc $1/proc
 # We delay dkms module build until first boot for right kernel.
 # Base build fails if aptitude is included early, so we install it here.
 chroot $1 apt-get update
+# Force noninteractive mode to avoid whiptail promts hanging install
+export DEBIAN_FRONTEND=noninteractive
 chroot $1 apt-get install -y aptitude
 # Dkms only builds modules for kernels with available headers:
 # Install 'virtual' headers to automatically pull in pae headers for i386
 # and generic for other archs
 chroot $1 aptitude install -y linux-headers-virtual
 chroot $1 aptitude install -y -d virtualbox-ose-guest-x11
-# Other delayed packages that break vmbuilder - missing icons and tools
+# Other delayed packages that break vmbuilder: missing icons and tools
 chroot $1 aptitude install -y elementary-icon-theme xfce4-goodies
 # Replace default gnome and ubuntu session with xfce
 chroot $1 mv /usr/share/xsessions/gnome.desktop /usr/share/xsessions/gnome.desktop.old
