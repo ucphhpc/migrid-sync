@@ -27,6 +27,7 @@ fi
 USERID=$(id -u $JOBUSER)
 GROUPID=$(id -g $JOBUSER)
 JOBMNT="/home/$JOBUSER/job-dir"
+MNTLINE="$MNTNAME $JOBMNT vboxsf defaults,uid=$USERID,gid=$GROUPID,noauto 0 0"
 
 touch $LOG
 
@@ -45,16 +46,17 @@ init_vbox_guest() {
 			sync && break 2>> $LOG
 		sleep 30
 	done
-	# Setup mount of job dir in VM for access to ordinary and
-	# live I/O files after finishing install and then reboot.
+	# After finishing install we setup manual mount of job dir in VM for
+	# access to ordinary and live I/O files and then reboot.
 	mkdir -p "$JOBMNT"
-	echo "$MNTNAME $JOBMNT vboxsf defaults,uid=$USERID,gid=$GROUPID 0 0" \
-		  >> /etc/fstab
+	echo "$MNTLINE" >> /etc/fstab
 	reboot
 }
 
 start_proxy() {
         init_vbox_guest
+	# Delay mount until vbox guest is ready to avoid early mount hangs
+	mount "$JOBMNT"
 	# Read settings and start proxy agent
 	job_id=`$VBOXCONTROL -nologo guestproperty get job_id | cut -b 8-`
 	proxy_host=`$VBOXCONTROL -nologo guestproperty get proxy_host | cut -b 8-`
