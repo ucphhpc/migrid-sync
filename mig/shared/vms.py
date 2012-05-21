@@ -523,12 +523,13 @@ mkdir %(user_conf)s/HardDisks
 """
     if specs['sys_base']:
         job += "cp %(sys_base)s/%(sys_disk)s %(user_conf)s/HardDisks/%(sys_disk)s"
+    # VM requires static MAC to avoid NIC renaming and ioapic for multi-cpu
     job += """
 mv %(data_disk)s %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s
 $VBOXMANAGE -q openmedium disk +JOBID+_%(data_disk)s
 $VBOXMANAGE -q openmedium disk %(sys_disk)s
 $VBOXMANAGE -q createvm --name '%(name)s' --register
-$VBOXMANAGE -q modifyvm '%(name)s' --nic1 nat --macaddress1 %(mac)s --cpus %(cpu_count)d --memory %(memory)d %(arch_opts)s --hwvirtex on --ioapic off
+$VBOXMANAGE -q modifyvm '%(name)s' --nic1 nat --macaddress1 %(mac)s --cpus %(cpu_count)d --memory %(memory)d %(arch_opts)s --hwvirtex on --ioapic on
 $VBOXMANAGE -q storagectl '%(name)s' --name 'IDE Controller' --add ide
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium '%(sys_disk)s'
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium '+JOBID+_%(data_disk)s'

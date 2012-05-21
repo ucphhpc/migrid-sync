@@ -1,9 +1,9 @@
 #!/bin/bash
 #
 # Copies qcow2 and vmdk data images in 
-#  *-os-images-*/*
+#  *-os-images-*/*-data.*
 # to corresponding separate data image dirs
-#  *-data-images-*/*
+#  *-data-images-*/
 
 # Change run to 'echo' to only show commands for partial manual runs
 #run='echo'
