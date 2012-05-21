@@ -1,5 +1,5 @@
 %(mig_code_base)s/vm-proxy /opt/proxy
-%(working_dir)s/hacks/gdm-custom.conf /etc/gdm/custom.conf
+%(working_dir)s/hacks/lucid-gdm-custom.conf /etc/gdm/custom.conf
 %(working_dir)s/hacks/interfaces /etc/network/interfaces
 %(working_dir)s/hacks/lucid-apt-sources.list /etc/apt/sources.list
 %(working_dir)s/hacks/migvncproxy /etc/init.d/migvncproxy
