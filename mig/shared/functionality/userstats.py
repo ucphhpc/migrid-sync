@@ -28,6 +28,7 @@
 """Display user stats like job states and disk use"""
 
 import os
+import datetime
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input
@@ -99,8 +100,25 @@ def main(client_id, user_arguments_dict):
         total_res = {'resources': resource_count, 'exes': exe_count}
         user_stats['resources'] = total_res
     if 'certificate' in stats:
-        total_cert = {'distinguished_name': os.environ['SSL_CLIENT_S_DN'],
-                      'expire': os.environ['SSL_CLIENT_V_END']}
+        if os.environ.has_key('SSL_CLIENT_V_END'):
+            expire = os.environ['SSL_CLIENT_V_END']
+        else:
+            expire = "%s" % datetime.datetime.now()
+        total_cert = {'client_id': client_id, 'expire': expire}
+        # Server may not want to reveal too much, but we want to provide
+        # easy access to all safe SSL_* environment fields. This list of
+        # environment prefixes are used to expose any such fields.
+        # These env names are from Apache but can be safely extended to
+        # include similar envs from other web servers if needed.
+        # Please be careful not to make it too general, though.
+        expose_env_prefixes = ('SSL_SERVER_S_DN', 'SSL_SERVER_V_',
+                               'SSL_SERVER_I_DN', 'SSL_CLIENT_S_DN',
+                               'SSL_CLIENT_V_', 'SSL_CLIENT_I_DN')
+        for field in os.environ:
+            for expose in expose_env_prefixes:
+                if field.startswith(expose):
+                    total_cert[field] = os.environ[field]
+                
         user_stats['certificate'] = total_cert
 
 
