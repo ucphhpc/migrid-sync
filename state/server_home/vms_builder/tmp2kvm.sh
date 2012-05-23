@@ -48,15 +48,15 @@ sysdst="$dstdir/ubuntu-$VERSION-$ARCH-$FLAVOR.qcow2"
 datadst="$dstdir/ubuntu-$VERSION-$ARCH-data.qcow2"
 rundst="$dstdir/run-ubuntu-$VERSION-$ARCH-$FLAVOR.sh"
 if [ -e "$syssrc" ]; then
-	$run rsync -aP "$syssrc" "$sysdst"
+	$run rsync -aSP "$syssrc" "$sysdst"
 	$run rm -f "$syssrc"
 fi
 if [ -e "$datasrc" ]; then
-	$run rsync -aP "$datasrc" "$datadst"
+	$run rsync -aSP "$datasrc" "$datadst"
 	$run rm -f "$datasrc"
 fi
 if [ -e "$runsrc" ]; then
-	$run rsync -aP "$runsrc" "$rundst"
+	$run rsync -aSP "$runsrc" "$rundst"
 	$run rm -f "$runsrc"
 fi
 $run sync
