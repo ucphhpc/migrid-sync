@@ -1,14 +1,32 @@
 #!/bin/bash
 #
-# Generates html index of qcow2 and vmdk data images in target dir 
+# Generates html index of qcow2 and vmdk images in target dir 
+#
+# Please refer to usage help for details
 
 # Change run to 'echo' to only show commands for partial manual runs
 #run='echo'
 run=''
 
+usage() {
+    echo "USAGE: $0 SOURCEDIR
+Generates a html index of qcow2 and vmdk image files in SOURCEDIR.
+
+Typically called with something like
+$0 ~/state/wwwpublic/vm-packs/vbox3.1-os-images-2012-1
+to generate the html index for the image files in a vm-packs subdir.
+"
+}
+
+if [ $# -lt 1 ]; then
+    usage
+    exit 1
+fi
+
 srcdir="$1"
 if [ ! -d $srcdir ]; then
     echo "No such input dir: $srcdir"
+    usage
     exit 1
 fi
 index="$srcdir/index.html"
