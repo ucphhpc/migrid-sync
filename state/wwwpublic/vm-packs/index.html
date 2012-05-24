@@ -39,6 +39,32 @@ user VMs on MiG servers.
 <li><a href='vbox3.1-os-images-2012-1'>vbox3.1-os-images-2012-1</a></li>
 <li><a href='vbox3.1-os-images-2010-1'>vbox3.1-os-images-2010-1</a></li>
 </ul>
+<h2>Helper Scripts</h2>
+<ul>
+<li><a href='vbox31-display.job'>vbox31-display.job</a></li>
+</ul>
+<h2>Steps to Run a VM</h2>
+<ul>
+<li>
+Install virtualbox (apt-get install virtualbox-ose virtualbox-ose-dkms) 
+</li>
+<li>
+Download one or more OS and data images to ~/.VirtualBox/HardDisks/
+</li>
+<li>
+Download the vbox helper script
+</li>
+<li>
+Launch it with the image details like<br />
+<pre>
+bash vbox31-display.job i386 escience-base 12.04
+</pre>
+for the ubuntu-12.04-i386-escience-base.vmdk and
+ubuntu-12.04-i386-data.vmdk images.
+</li>
+</ul>
+The instructions were tested with VirtualBox 3 on Ubuntu, but may work
+for other distributions and the newer version 4.
 </div>
 </body>
 </html>
