@@ -21,7 +21,7 @@ run=''
 
 flavorlist=("lucid" "precise")
 archlist=("i386" "amd64")
-labellist=("basic" "escience-base" "escience-astro")
+labellist=("basic" "escience-base" "escience-astro" "nemid-jail")
 cwd=$PWD
 shared_dir="$1"
 builder_dir=$2
@@ -66,17 +66,19 @@ for flavor in ${flavorlist[@]}; do
 		if [ "$label" = "basic" ]; then
 			extras=""
 		elif [ "$label" = "escience-base" ]; then
-			extras="libatlas3gf-base python-scipy \
-				python-matplotlib ipython python-imaging \
-				python-pip"
+			extras="netsurf xfce4-goodies libatlas3gf-base \
+				python-scipy python-matplotlib ipython \
+				python-imaging python-pip"
 		elif [ "$label" = "escience-astro" ]; then
 			# TODO: add mysql python-pywcs stsci_python where available
 			# python-pywcs is available in precise and on this PPA
 			# https://launchpad.net/~olebole/+archive/astro
-			extras="libatlas3gf-base python-scipy \
-				python-matplotlib ipython python-imaging \
-				python-pip sqlite3 python-sqlalchemy \
-				python-pyfits"
+			extras="netsurf xfce4-goodies libatlas3gf-base \
+				python-scipy python-matplotlib ipython \
+				python-imaging python-pip sqlite3 \
+				python-sqlalchemy python-pyfits"
+		elif [ "$label" = "nemid-jail" ]; then
+			extras="firefox icedtea-plugin"
 		else
 			echo "skipping unknown label: $label"
 		fi

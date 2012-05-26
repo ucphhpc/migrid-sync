@@ -42,8 +42,9 @@ from shared.conf import get_configuration_object
 
 configuration = get_configuration_object()
 logger = configuration.logger
+# Packages needed for basic desktop with vnc proxy (using vboxguest module)
 default_packages = ['iptables', 'acpid', 'x11vnc', 'xorg', 'gdm', 'xfce4',
-                    'gcc', 'make', 'netsurf', 'python-openssl']
+                    'gcc', 'make', 'python-openssl']
 default_specs = {'distro': 'ubuntu', 'hypervisor': 'vbox', 'memory': 1024,
                  'cpu_count': 1, 'suite': 'lucid', 'mig_code_base':
                  configuration.mig_code_base, 'working_dir':
@@ -74,6 +75,7 @@ def build_vm(vm_specs):
     build_specs.update(vm_specs)
     build_specs['package_list'] = ', '.join(build_specs['base_packages'] + \
                                             build_specs['extra_packages'])
+    build_specs['postinst_packages'] = ' '.join(build_specs['extra_packages'])
     # Fill conf template (currently just copies it since all args are explicit)
     tmp_dir = mkdtemp()
     conf_path = os.path.join(tmp_dir, '%(distro)s.cfg' % build_specs)
@@ -82,24 +84,29 @@ def build_vm(vm_specs):
     bundle_path = os.path.join(tmp_dir, 'bundle-%(suite)s' % build_specs)
     bundle_template_path = os.path.join(configuration.vms_builder_home,
                                  'bundle-%(suite)s.in' % build_specs)
+    # Install extra_packages in post-install to avoid early install problems
+    postinst_path = os.path.join(tmp_dir, 'post-install-%(suite)s.sh' % \
+                                 build_specs)
+    postinst_template_path = os.path.join(configuration.vms_builder_home,
+                                 'post-install-%(suite)s.sh.in' % build_specs)
     # destdir option in conf does not work - keep most on cli
     # reserve 3G for tmpfs for way faster build (and enough for sys disk)
     opts_string = "%(vmbuilder_opts)s"
-    opts_string += " -c %s --copy %s --tmpfs 3072 -o" % (conf_path,
-                                                         bundle_path)
+    opts_string += " -c %s --copy %s --exec %s --tmpfs 3072 -o" % \
+                   (conf_path, bundle_path, postinst_path)
     opts_string += " -d %(working_dir)s/%(hypervisor)s-%(distro)s-%(suite)s-%(architecture)s"
     opts_string += " --suite %(suite)s --arch %(architecture)s"
     opts_string += " --mem %(memory)d --cpus %(cpu_count)d --mirror %(mirror)s"
     opts_string += " --part %(working_dir)s/%(suite)s.partition"
     opts_string += " --firstboot %(working_dir)s/boot-%(suite)s.sh"
-    opts_string += " --exec %(working_dir)s/post-install-%(suite)s.sh"
-    for name in build_specs["base_packages"] + build_specs["extra_packages"]:
+    for name in build_specs["base_packages"]:
         opts_string += " --addpkg %s" % name
         
     build_specs["vmbuilder_opts"] = opts_string % build_specs
     try:
         fill_template(conf_template_path, conf_path, build_specs)
         fill_template(bundle_template_path, bundle_path, build_specs)
+        fill_template(postinst_template_path, postinst_path, build_specs)
         cmd_base = "sudo /usr/bin/vmbuilder"
         cmd_args = "%(hypervisor)s %(distro)s %(vmbuilder_opts)s" % build_specs
         cmd_string = "%s %s" % (cmd_base, cmd_args)
@@ -112,6 +119,7 @@ def build_vm(vm_specs):
     finally:
         os.remove(conf_path)
         os.remove(bundle_path)
+        os.remove(postinst_path)
         os.rmdir(tmp_dir)
 
 def usage():
