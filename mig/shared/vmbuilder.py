@@ -107,6 +107,7 @@ def build_vm(vm_specs):
         fill_template(conf_template_path, conf_path, build_specs)
         fill_template(bundle_template_path, bundle_path, build_specs)
         fill_template(postinst_template_path, postinst_path, build_specs)
+        os.chmod(postinst_path, 0755)
         cmd_base = "sudo /usr/bin/vmbuilder"
         cmd_args = "%(hypervisor)s %(distro)s %(vmbuilder_opts)s" % build_specs
         cmd_string = "%s %s" % (cmd_base, cmd_args)
