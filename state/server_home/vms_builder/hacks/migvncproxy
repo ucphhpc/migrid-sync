@@ -48,7 +48,6 @@ init_vbox_guest() {
 	done
 	# After finishing install we setup manual mount of job dir in VM for
 	# access to ordinary and live I/O files and then reboot.
-	mkdir -p "$JOBMNT"
 	echo "$MNTLINE" >> /etc/fstab
 	reboot
 }
@@ -56,6 +55,7 @@ init_vbox_guest() {
 start_proxy() {
         init_vbox_guest
 	# Delay mount until vbox guest is ready to avoid early mount hangs
+	mkdir -p "$JOBMNT"
 	mount "$JOBMNT"
 	# Read settings and start proxy agent
 	job_id=`$VBOXCONTROL -nologo guestproperty get job_id | cut -b 8-`
