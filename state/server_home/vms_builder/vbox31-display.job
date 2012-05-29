@@ -52,6 +52,7 @@ sleep 5 && $VBOXMANAGE -q controlvm 'MyVirtualDesktop' setvideomodehint 1024 768
 # Toggle next lines to switch between headless and display mode
 #$VBOXHEADLESS -startvm 'MyVirtualDesktop'
 $VBOXSDL -startvm 'MyVirtualDesktop'
+status=$?
 $VBOXMANAGE -q sharedfolder remove 'MyVirtualDesktop' --name "MIG_JOBDIR"
 $VBOXMANAGE -q storageattach 'MyVirtualDesktop' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium none
 $VBOXMANAGE -q storageattach 'MyVirtualDesktop' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium none
@@ -59,4 +60,4 @@ $VBOXMANAGE -q storagectl 'MyVirtualDesktop' --name 'IDE Controller' --remove
 $VBOXMANAGE -q closemedium disk $DATADISK
 $VBOXMANAGE -q closemedium disk $SYSDISK
 $VBOXMANAGE -q unregistervm 'MyVirtualDesktop' --delete
-exit 0
+exit $status

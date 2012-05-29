@@ -4,12 +4,14 @@
 # ubuntu dist and arch combinations can be overridden on the command line
 
 if [ $# -lt 2 ]; then
-	echo "Usage: $0 mig_shared_dir mig_state_vms_builder_dir [dists] [archs]"
+	echo "Usage: $0 mig_shared_dir mig_state_vms_builder_dir [dists] [archs] [flavors]"
 	echo "Where the optional dists argument is a string listing Ubuntu"
 	echo "dist names separated by space."
 	echo "archs is a single string with architecture names separated by a" 
 	echo "space."
-	echo "Example to build 32 and 64 bit images for lucid and precise:"
+	echo "flavors is a single string with package flavor names separated by a" 
+	echo "space."
+	echo "Example to build all 32 and 64 bit images for lucid and precise:"
 	echo "$0 $HOME/mig/shared $HOME/mig/state/server_files/vms_builder \\"
 	echo "		'lucid precise' 'i386 amd64'"
 	exit 1
@@ -19,57 +21,62 @@ fi
 #run='echo'
 run=''
 
-flavorlist=("lucid" "precise")
+distlist=("lucid" "precise")
 archlist=("i386" "amd64")
-labellist=("basic" "escience-base" "escience-astro" "nemid-jail")
+flavorlist=("basic" "escience-base" "escience-astro" "nemid-jail")
 cwd=$PWD
+diskdir="$HOME/.VirtualBox/HardDisks"
 shared_dir="$1"
 builder_dir=$2
 if [ $# -ge 3 ]; then
-	flavorlist=($(echo $3))
+	distlist=($(echo $3))
 fi
 if [ $# -ge 4 ]; then
 	archlist=($(echo $4))
 fi
 if [ $# -ge 5 ]; then
-	labellist=($(echo $5))
+	flavorlist=($(echo $5))
 fi
 
 
 lookup_version() {
-	flavors=('lucid' 'maverick' 'natty' 'oneiric' 'precise')
+	dists=('lucid' 'maverick' 'natty' 'oneiric' 'precise')
 	versions=('10.04' '10.10' '11.04' '11.10' '12.04')
-	count=${#flavors[@]}
+	years=('2010' '2010' '2011' '2011' '2012')
+	count=${#dists[@]}
 	index=0
 	name="$1"
 	while [ "$index" -lt "$count" ]; do
-		cur="${flavors[$index]}"
+		cur="${dists[$index]}"
 		if [ "$name" = "$cur" ]; then
 			version="${versions[$index]}"
+			year="${years[$index]}"
 			#echo  "found version: $version"
+			#echo  "found year: $year"
 			break
 		fi
 		let "index++"
 	done
 	export version
+	export year
 }
 
-for flavor in ${flavorlist[@]}; do
-	# lookup version number from flavor
-	flavorindex=0
+for dist in ${distlist[@]}; do
+	# lookup version number and year from dist 
 	version=''
-	lookup_version $flavor
+	year=''
+	lookup_version $dist
 	# apt-proxy hogs memory - restart to free it once in a while
-	sudo service apt-proxy restart
+	$run sudo service apt-proxy restart
 	for arch in ${archlist[@]}; do
-	    for label in ${labellist[@]}; do
-		if [ "$label" = "basic" ]; then
+	    for flavor in ${flavorlist[@]}; do
+		if [ "$flavor" = "basic" ]; then
 			extras=""
-		elif [ "$label" = "escience-base" ]; then
+		elif [ "$flavor" = "escience-base" ]; then
 			extras="netsurf xfce4-goodies libatlas3gf-base \
 				python-scipy python-matplotlib ipython \
 				python-imaging python-pip"
-		elif [ "$label" = "escience-astro" ]; then
+		elif [ "$flavor" = "escience-astro" ]; then
 			# TODO: add mysql python-pywcs stsci_python where available
 			# python-pywcs is available in precise and on this PPA
 			# https://launchpad.net/~olebole/+archive/astro
@@ -77,17 +84,17 @@ for flavor in ${flavorlist[@]}; do
 				python-scipy python-matplotlib ipython \
 				python-imaging python-pip sqlite3 \
 				python-sqlalchemy python-pyfits"
-		elif [ "$label" = "nemid-jail" ]; then
+		elif [ "$flavor" = "nemid-jail" ]; then
 			extras="firefox icedtea-plugin"
 		else
-			echo "skipping unknown label: $label"
+			echo "skipping unknown flavor: $flavor"
 		fi
-		$run echo "build ubuntu $flavor $label image for $arch"
+		echo "build ubuntu $dist $flavor image for $arch"
 		$run cd $shared_dir
-		$run python vmbuilder.py --suite=$flavor --hypervisor=kvm \
+		$run python vmbuilder.py --suite=$dist --hypervisor=kvm \
 			--vmbuilder-opts='' --architecture=$arch $extras
 		$run cd $builder_dir
-		$run ./tmp2kvm.sh $arch $label $version $flavor
+		$run ./tmp2kvm.sh $arch $flavor $version $dist
 	    done
 	done
 done
@@ -99,6 +106,41 @@ $run ./kvm2vbox.sh
 # Copy all data images to separate dirs for flexible packaging
 $run cd $builder_dir
 $run ./clonedataimg.sh
+
+echo "Pristine kvm and vbox images now available in the pristine dir(s):"
+echo *-pristine
+echo "Run the images once to install vbox guest additions and verify that
+everything works as expected before release:"
+echo "mkdir -p $diskdir"
+for dist in ${distlist[@]}; do
+	# lookup version number and year from dist
+	version=''
+	year=''
+	lookup_version $dist
+	for arch in ${archlist[@]}; do
+	    for flavor in ${flavorlist[@]}; do
+		osimg="ubuntu-$version-$arch-$flavor.vmdk"
+		osdir="vbox3.1-os-images-$year-pristine"
+		ossrc="$osdir/$osimg"
+		releasedir="${osdir/-pristine/-1}"
+		dataimg="${osimg/$flavor/data}"
+		datadir="${osdir/-os-/-data-}"
+		datasrc="$datadir/$dataimg"
+		echo "rsync -aSP $ossrc $datasrc $diskdir/ && \\"
+		echo "sync && \\"
+		echo "vbox31-display.job $arch $flavor $version && \\"
+		echo "mkdir -p $releasedir && \\"
+		echo "sync && \\"
+		echo "rsync -aSP $diskdir/$osimg $releasedir/"
+	    done
+	    # only copy data image once
+	    echo "rsync -aSP $datasrc $releasedir/"
+	done
+done
+echo "Checklist:"
+echo " * job-dir mount"
+echo " * vnc access"
+echo " * flavor packages"
 
 $run cd $cwd
 exit 0
