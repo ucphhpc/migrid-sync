@@ -22,7 +22,11 @@ chroot $1 aptitude install -y linux-headers-virtual
 chroot $1 aptitude install -y -d virtualbox-ose-guest-x11
 # Finally install other packages that break vmbuilder if installed earlier:
 # missing icons and any extra packages requested in vmbuilder
-chroot $1 aptitude install -y elementary-icon-theme %(postinst_packages)s
+chroot $1 aptitude install -y elementary-icon-theme %(postinst_adds)s
+# Purge blacklisted packages - clean all downloads *after* vbox guest install
+chroot $1 aptitude purge --purge-unused -y no-such-dummy %(postinst_removes)s
+# Clean up after packages only removed but not purged
+chroot $1 aptitude purge -y ~c
 # Replace default gnome and ubuntu session with xfce
 chroot $1 mv /usr/share/xsessions/gnome.desktop /usr/share/xsessions/gnome.desktop.old
 chroot $1 mv /usr/share/xsessions/ubuntu.desktop /usr/share/xsessions/ubuntu.desktop.old

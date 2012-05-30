@@ -35,6 +35,7 @@ init_vbox_guest() {
 	# Make sure VBoxControl from guest additions is available.
 	# Install and reboot if not there to get correct drivers.
 	# Force noninteractive mode to avoid whiptail promts hanging install.
+	# Remove all downloaded packages from cache after build and install.
 	export DEBIAN_FRONTEND=noninteractive
 	while [ 1 ]; do
 		echo "`date` look up VBoxControl and load vbox module" >> $LOG
@@ -43,7 +44,8 @@ init_vbox_guest() {
 		echo "`date` installing virtualbox guest additions" >> $LOG
 		aptitude install -y linux-headers-`uname -r` && \
 			aptitude install -y virtualbox-ose-guest-x11 && \
-			sync && break 2>> $LOG
+			sync && aptitude autoclean && aptitude clean && \
+			break 2>> $LOG
 		sleep 30
 	done
 	# After finishing install we setup manual mount of job dir in VM for

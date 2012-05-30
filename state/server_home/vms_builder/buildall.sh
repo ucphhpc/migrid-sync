@@ -61,6 +61,8 @@ lookup_version() {
 	export year
 }
 
+# Force remove any unused packages
+blacklist=""
 for dist in ${distlist[@]}; do
 	# lookup version number and year from dist 
 	version=''
@@ -71,7 +73,8 @@ for dist in ${distlist[@]}; do
 	for arch in ${archlist[@]}; do
 	    for flavor in ${flavorlist[@]}; do
 		if [ "$flavor" = "basic" ]; then
-			extras=""
+		        # to avoid firefox install from recommends
+			extras="netsurf"
 		elif [ "$flavor" = "escience-base" ]; then
 			extras="netsurf xfce4-goodies libatlas3gf-base \
 				python-scipy python-matplotlib ipython \
@@ -92,7 +95,8 @@ for dist in ${distlist[@]}; do
 		echo "build ubuntu $dist $flavor image for $arch"
 		$run cd $shared_dir
 		$run python vmbuilder.py --suite=$dist --hypervisor=kvm \
-			--vmbuilder-opts='' --architecture=$arch $extras
+			--vmbuilder-opts='' --architecture=$arch \
+			--blacklist="$blacklist" $extras
 		$run cd $builder_dir
 		$run ./tmp2kvm.sh $arch $flavor $version $dist
 	    done
@@ -126,11 +130,9 @@ for dist in ${distlist[@]}; do
 		dataimg="${osimg/$flavor/data}"
 		datadir="${osdir/-os-/-data-}"
 		datasrc="$datadir/$dataimg"
-		echo "rsync -aSP $ossrc $datasrc $diskdir/ && \\"
-		echo "sync && \\"
+		echo "rsync -aSP $ossrc $datasrc $diskdir/ && sync && \\"
 		echo "vbox31-display.job $arch $flavor $version && \\"
-		echo "mkdir -p $releasedir && \\"
-		echo "sync && \\"
+		echo "mkdir -p $releasedir && sync && \\"
 		echo "rsync -aSP $diskdir/$osimg $releasedir/"
 	    done
 	    # only copy data image once

@@ -43,14 +43,18 @@ from shared.conf import get_configuration_object
 configuration = get_configuration_object()
 logger = configuration.logger
 # Packages needed for basic desktop with vnc proxy (using vboxguest module)
-default_packages = ['iptables', 'acpid', 'x11vnc', 'xorg', 'gdm', 'xfce4',
-                    'gcc', 'make', 'python-openssl']
+default_adds = ['iptables', 'acpid', 'x11vnc', 'xorg', 'gdm', 'xfce4', 'gcc',
+                'make', 'python-openssl', 'zenity']
+# Packages installed by recommends but not needed
+default_removes = ['gnome-session', 'compiz', 'metacity', 'xscreensaver',
+                   'nautilus', 'yelp', 'rhythmbox']
 default_specs = {'distro': 'ubuntu', 'hypervisor': 'vbox', 'memory': 1024,
                  'cpu_count': 1, 'suite': 'lucid', 'mig_code_base':
                  configuration.mig_code_base, 'working_dir':
                  configuration.vms_builder_home, 'architecture': 'i386',
-                 'mirror': 'http://127.0.0.1:9999/ubuntu', 'base_packages':
-                 default_packages, 'extra_packages': [], 'vmbuilder_opts':
+                 'mirror': 'http://127.0.0.1:9999/ubuntu', 'add_packages':
+                 default_adds, 'remove_packages': default_removes,
+                 'late_adds': [], 'late_removes': [], 'vmbuilder_opts':
                  '--vbox-disk-format=vmdk'}
 
 def fill_template(src, dst, vm_specs):
@@ -73,9 +77,11 @@ def build_vm(vm_specs):
     build_specs = {}
     build_specs.update(default_specs)
     build_specs.update(vm_specs)
-    build_specs['package_list'] = ', '.join(build_specs['base_packages'] + \
-                                            build_specs['extra_packages'])
-    build_specs['postinst_packages'] = ' '.join(build_specs['extra_packages'])
+    # Recent suites added unused unity package(s)
+    if build_specs['suite'] in ('precise', ):
+        build_specs['remove_packages'].append('unity')
+    build_specs['postinst_adds'] = ' '.join(build_specs['late_adds'])
+    build_specs['postinst_removes'] = ' '.join(build_specs['late_removes'])
     # Fill conf template (currently just copies it since all args are explicit)
     tmp_dir = mkdtemp()
     conf_path = os.path.join(tmp_dir, '%(distro)s.cfg' % build_specs)
@@ -84,7 +90,8 @@ def build_vm(vm_specs):
     bundle_path = os.path.join(tmp_dir, 'bundle-%(suite)s' % build_specs)
     bundle_template_path = os.path.join(configuration.vms_builder_home,
                                  'bundle-%(suite)s.in' % build_specs)
-    # Install extra_packages in post-install to avoid early install problems
+    # Install late_adds and purge late_removes in post-install to avoid
+    # early install problems and clean up
     postinst_path = os.path.join(tmp_dir, 'post-install-%(suite)s.sh' % \
                                  build_specs)
     postinst_template_path = os.path.join(configuration.vms_builder_home,
@@ -99,8 +106,10 @@ def build_vm(vm_specs):
     opts_string += " --mem %(memory)d --cpus %(cpu_count)d --mirror %(mirror)s"
     opts_string += " --part %(working_dir)s/%(suite)s.partition"
     opts_string += " --firstboot %(working_dir)s/boot-%(suite)s.sh"
-    for name in build_specs["base_packages"]:
+    for name in build_specs["add_packages"]:
         opts_string += " --addpkg %s" % name
+    for name in build_specs["remove_packages"]:
+        opts_string += " --removepkg %s" % name
         
     build_specs["vmbuilder_opts"] = opts_string % build_specs
     try:
@@ -128,7 +137,8 @@ def usage():
     print "%s OPTIONS [EXTRA_PACKAGES]" % sys.argv[0]
     print "where OPTIONS include the names:"
     for name in default_specs.keys():
-        if name in ('base_packages', 'extra_packages'):
+        if name in ('add_packages', 'late_adds', 'remove_packages',
+                    'late_removes'):
             continue
         print "    %s (default: %s)" % (name.replace('_', '-'),
                                         default_specs[name])
@@ -145,9 +155,10 @@ if __name__ == '__main__':
             'memory=',
             'cpu_count=',
             'architecture=',
-            'working_dir=',
+            'working-dir=',
             'suite=',
             'mirror=',
+            'blacklist=',
             'vmbuilder-opts=',
             ])
     except getopt.GetoptError, exc:
@@ -158,6 +169,8 @@ if __name__ == '__main__':
         if opt in ('-h', '--help'):
             usage()
             sys.exit(0)
+        elif opt in ('--blacklist', ):
+            specs["late_removes"] = val.split()
         elif opt in ('--distro', ):
             specs["distro"] = val
         elif opt in ('--hypervisor', ):
@@ -182,5 +195,5 @@ if __name__ == '__main__':
             sys.exit(1)
 
     if args:
-        specs['extra_packages'] = args
+        specs['late_adds'] = args
     build_vm(specs)
