@@ -112,6 +112,7 @@ def main(client_id, user_arguments_dict):
     <li>Request Virtual Machines, by clicking on the button above</li>
     <li>See your virtual machines in the list below.</li>
     <li>Start, and connect to your Virtual Machine by clicking on it.</li>
+    <li>Edit or delete your Virtual Machine from the Advanced tab.</li>
 </ul>
 </p>'''
 
@@ -441,12 +442,6 @@ value="Delete Machine" onClick="javascript: confirmDialog(%s, '%s');" >
              "Click 'Request Virtual Machine' to become a proud owner :)"
              })
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : '''<p>
-You can manually delete your virtual machines by removing the directory of the
-corresponding name in <a href="fileman.py?path=vms/">your vms directory</a>.
-</p>'''
-                           })
     return (output_objects, status)
 
 
