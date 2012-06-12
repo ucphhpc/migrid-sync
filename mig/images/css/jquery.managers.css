@@ -373,3 +373,25 @@ UL.jqueryFileList A:hover {
   background-image: url('/images/icons/desc.gif'); 
   background-color: #3399FF; 
 }
+
+/* use similar colors in tabs as in navmenu */
+/*
+.vm-tabs li.ui-state-default { 
+  background: #6699bb;
+  color: white;
+}
+*/
+.vm-tabs li.ui-tabs-selected { 
+  background: #114477;
+  color: white;
+  font-weight: bold; 
+}
+.vm-tabs li.ui-state-hover a:hover { 
+  background: #336699;
+  color: white;
+}
+.vm-tabs ul.no-bullets {
+  list-style-type: none;
+}
+
+

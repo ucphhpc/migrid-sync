@@ -43,7 +43,7 @@ from tempfile import NamedTemporaryFile
 
 from shared.base import client_id_dir
 from shared.defaults import any_vgrid
-from shared.fileio import unpickle
+from shared.fileio import unpickle, remove_rec
 from shared.job import new_job
 
 sys_location = 'sys_location.txt'
@@ -432,6 +432,22 @@ def edit_vm(client_id, configuration, machine_name, machine_specs):
         vm_config.write(conf_fd)
         conf_fd.close()
     return (True, '')
+
+def delete_vm(client_id, configuration, machine_name):
+    """Deletes the vm dir with configuration and images for vm with given
+    machine_name"""
+
+    # Grab the base directory of the user
+
+    client_dir = client_id_dir(client_id)
+    user_home = os.path.abspath(os.path.join(configuration.user_home,
+                                             client_dir))
+    vms_machine_path = os.path.join(user_home, vm_base, machine_name)
+    msg = ''
+    success = remove_rec(vms_machine_path, configuration)
+    if not success:
+        msg = "Error while removing %s" % machine_name
+    return (success, msg)
 
 def enqueue_vm(client_id, configuration, machine_name, machine_req):
     """Submit a machine job based on machine definition file and overrides

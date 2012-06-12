@@ -28,12 +28,13 @@
 """Virtual machine administration back end functionality"""
 
 import time
+from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared import vms
 from shared.defaults import any_vgrid
 from shared.functional import validate_input_and_cert
-from shared.html import render_menu
+from shared.html import render_menu, html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import user_allowed_vgrids
 
@@ -116,6 +117,46 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Virtual Machines'
+
+    # jquery support for tablesorter and confirmation on "leave":
+
+    title_entry['javascript'] = '''
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
+
+<script type="text/javascript" >
+
+$(document).ready(function() {
+
+          // init confirmation dialog
+          $( "#confirm_dialog" ).dialog(
+              // see http://jqueryui.com/docs/dialog/ for options
+              { autoOpen: false,
+                modal: true, closeOnEscape: true,
+                width: 500,
+                buttons: {
+                   "Cancel": function() { $( "#" + name ).dialog("close"); }
+                }
+              });
+
+          $(".vm-tabs").tabs();
+     }
+);
+</script>
+'''
+
+    output_objects.append({'object_type': 'html_form',
+                           'text':'''
+ <div id="confirm_dialog" title="Confirm" style="background:#fff;">
+  <div id="confirm_text"><!-- filled by js --></div>
+   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"/></textarea>
+ </div>
+'''})
+    
     output_objects.append({'object_type': 'header', 'text':
                            'Virtual Machines'})
     output_objects.append({'object_type': 'html_form', 'text': submenu})
@@ -173,7 +214,7 @@ def main(client_id, user_arguments_dict):
         vms.create_vm(client_id, configuration, machine_name, machine_req)
 
     (action_status, action_msg, job_id) = (True, '', None)
-    if action in ['start', 'stop', 'edit']:
+    if action in ['start', 'stop', 'edit', 'delete']:
         if not configuration.site_enable_vmachines:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
@@ -204,6 +245,15 @@ def main(client_id, user_arguments_dict):
         (action_status, action_msg) = \
                         vms.edit_vm(client_id, configuration, machine_name,
                                     machine_req)
+    elif action == 'delete':
+        if not machine_name in [vm['name'] for vm in user_vms]:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 "No such virtual machine: %s" % machine_name})
+            status = returnvalues.CLIENT_ERROR
+            return (output_objects, status)
+        (action_status, action_msg) = \
+                        vms.delete_vm(client_id, configuration, machine_name)
     elif action == 'stop':
         
         # TODO: manage stop - use live I/O to create vmname.stop in job dir
@@ -234,6 +284,11 @@ def main(client_id, user_arguments_dict):
         'QUEUED': 'vm_booting.jpg',
         'PARSE': 'vm_booting.jpg',
         }
+
+    # Empirical upper bound on boot time in seconds used to decide between
+    # desktop init and ready states
+
+    boot_secs = 130
 
     # CANCELED/FAILED/FINISHED -> Powered Off
     # QUEUED -> Booting
@@ -272,8 +327,23 @@ def main(client_id, user_arguments_dict):
             machine_specs = {}
             machine_specs.update(machine)
             machine_specs['password'] = password
-            specs = """<fieldset>
-<legend>Specs:</legend><ul>
+            show_specs = """<fieldset>
+<legend>VM Specs:</legend><ul class="no-bullets">
+<li><input type="text" readonly value="%(os)s"> base system</li>
+<li><input type="text" readonly value="%(flavor)s"> software flavor</li>
+<li><input type="text" readonly value="%(memory)s"> MB memory</li>
+<li><input type="text" readonly value="%(disk)s"> GB disk</li>
+<li><input type="text" readonly value="%(cpu_count)s"> CPU's</li>
+<li><input type="text" readonly value="%(vm_arch)s"> architecture</li>
+"""
+            if password != 'UNKNOWN':
+                show_specs += """            
+<li><input type="text" readonly value="%(password)s"> as VNC password</li>
+"""
+            show_specs += """            
+</form></ul></fieldset>"""
+            edit_specs = """<fieldset>
+<legend>Edit VM Specs:</legend><ul class="no-bullets">
 <form method="post" action="vmachines.py">
 <input type="hidden" name="action" value="edit">
 <input type="hidden" name="machine_name" value="%(name)s">
@@ -284,7 +354,7 @@ def main(client_id, user_arguments_dict):
 <li><input type="text" readonly name="hypervisor_re" value="%(hypervisor_re)s"> hypervisor runtime env</li>
 <li><input type="text" readonly name="sys_re" value="%(sys_re)s"> image pack runtime env</li>
 <li><input type="text" name="memory" value="%(memory)s"> MB memory</li>
-<li><input type="text" readonly name="disk" value="%(disk)s"> GB disk</li>
+<li><input type="text" name="disk" value="%(disk)s"> GB disk</li>
 <li><input type="text" name="cpu_count" value="%(cpu_count)s"> CPU's</li>
 <li><select name="architecture">
 """
@@ -292,9 +362,9 @@ def main(client_id, user_arguments_dict):
                 select = ''
                 if arch == machine_specs['architecture']:
                     select = 'selected'
-                specs += "<option %s value='%s'>%s</option>" % (select, arch,
+                edit_specs += "<option %s value='%s'>%s</option>" % (select, arch,
                                                                 arch)
-            specs += """</select> resource architecture
+            edit_specs += """</select> resource architecture
 <li><input type="text" name="cpu_time" value="%(cpu_time)s"> s time slot</li>
 <li><select name="vgrid" multiple>"""
             for vgrid_name in [any_vgrid] + \
@@ -302,16 +372,28 @@ def main(client_id, user_arguments_dict):
                 select = ''
                 if vgrid_name in machine_specs['vgrid']:
                     select = 'selected'
-                specs += "<option %s>%s</option>" % (select, vgrid_name)
-            specs += """</select> VGrid(s)</li>"""
-            specs += """            
+                edit_specs += "<option %s>%s</option>" % (select, vgrid_name)
+            edit_specs += """</select> VGrid(s)</li>"""
+            if password != 'UNKNOWN':
+                edit_specs += """
 <li><input type="text" readonly value="%(password)s"> as VNC password</li>
-<input class="styled_button" type="submit" value="Save">
-</form></ul></fieldset>"""
-            if machine['status'] == 'EXECUTING' and exec_time > 130:
+"""
+            edit_specs += """
+<input class="styled_button" type="submit" value="Save Changes">
+</form>"""
+            js_name = 'deletevm%s' % hexlify("%(name)s" % machine_specs)
+            helper = html_post_helper(js_name, 'vmachines.py',
+                                      {'machine_name': machine_specs['name'],
+                                       'action': 'delete'})
+            edit_specs += helper
+            edit_specs += """<input class="styled_button" type="submit"
+value="Delete Machine" onClick="javascript: confirmDialog(%s, '%s');" >
+""" % (js_name, "Really permanently delete %(name)s VM?" % machine_specs)
+            edit_specs += """</ul></fieldset>"""
+            if machine['status'] == 'EXECUTING' and exec_time > boot_secs:
                 machine_image = '<img src="/images/vms/' \
                     + machine_states[machine['status']] + '">'
-            elif machine['status'] == 'EXECUTING' and exec_time < 130:
+            elif machine['status'] == 'EXECUTING' and exec_time < boot_secs:
                 machine_image = \
                     '<img src="/images/vms/vm_desktop_loading.jpg' \
                     + '">'
@@ -324,10 +406,29 @@ def main(client_id, user_arguments_dict):
 
             # Smack all the html together
 
+            fill_dict = {}
+            fill_dict.update(machine)
+            fill_dict['link'] = machine_link
+            fill_dict['show_specs'] = show_specs % machine_specs
+            fill_dict['edit_specs'] = edit_specs % machine_specs
             pretty_machines += '''
 <td style="vertical-align: top;">
-<fieldset><legend>%s</legend> %s %s</fieldset>
-</td>''' % (machine['name'], machine_link, specs % machine_specs)
+<fieldset><legend>%(name)s</legend>
+<div id="%(name)s-tabs" class="vm-tabs">
+<ul>
+<li><a href="#%(name)s-overview">Overview</a></li>
+<li><a href="#%(name)s-edit">Advanced</a></li>
+</ul>
+<div id="%(name)s-overview">
+<p>%(link)s</p>
+%(show_specs)s
+</div>
+<div id="%(name)s-edit">
+%(edit_specs)s
+</div>
+</div>
+</fieldset>
+</td>''' % fill_dict
 
         pretty_machines += '</tr></table>'
 
