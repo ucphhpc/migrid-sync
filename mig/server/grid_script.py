@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_script - the core job handling daemon on a MiG server
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

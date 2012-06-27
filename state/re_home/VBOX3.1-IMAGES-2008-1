@@ -52,7 +52,7 @@ p28
 (dp30
 S'url'
 p31
-S'https://dk-cert.migrid.org/public/vm-packs/vbox3.1-os-images-2008-1.tar.gz'
+S'https://dk-cert.migrid.org/public/vm-packs/'
 p32
 sS'version'
 p33

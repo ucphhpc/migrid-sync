@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2012  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -605,6 +605,7 @@ def refresh_users(conf):
     cur_usernames = []
     authkeys_pattern = os.path.join(conf['root_dir'], '*', ssh_authkeys)
     for path in glob.glob(authkeys_pattern):
+        # TODO: maybe we should check expire field in user DB, too?
         logger.debug("Checking %s" % path)
         user_home = path.replace(os.sep + ssh_authkeys, '')
         user_dir = user_home.replace(conf['root_dir'] + os.sep, '')

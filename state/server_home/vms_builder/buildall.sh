@@ -23,7 +23,7 @@ run=''
 
 distlist=("lucid" "precise")
 archlist=("i386" "amd64")
-flavorlist=("basic" "escience-base" "escience-astro" "nemid-jail")
+flavorlist=("basic" "escience-base" "escience-astro" "escience-expmath" "nemid-jail")
 cwd=$PWD
 diskdir="$HOME/.VirtualBox/HardDisks"
 shared_dir="$1"
@@ -87,6 +87,12 @@ for dist in ${distlist[@]}; do
 				python-scipy python-matplotlib ipython \
 				python-imaging python-pip sqlite3 \
 				python-sqlalchemy python-pyfits"
+		elif [ "$flavor" = "escience-expmath" ]; then
+			# gap is 'Groups, Algorithms and Programming computer
+			# algebra system'
+			extras="netsurf xfce4-goodies libatlas3gf-base \
+				python-scipy python-matplotlib ipython \
+				python-imaging python-pip gap gnuplot"
 		elif [ "$flavor" = "nemid-jail" ]; then
 			extras="firefox icedtea-plugin"
 		else
