@@ -1775,7 +1775,16 @@ def expand_list(
     warnings=True,
     ):
     """Inline expansion of remote filenames from a list of patterns possibly
-    with wild cards."""
+    with wild cards.
+
+    Output from CGI script is on the form:
+    Exit code: 0 Description OK (done in 0.012s)
+    Title: MiG Files
+
+    ___MIG FILES___
+
+    test.txt test.txt
+    """
 
     s = ''
     if lang == 'sh':
@@ -1791,7 +1800,7 @@ for pattern in \"${orig_args[@]}\"; do
     set -- $expanded_path
     shift; shift
     exit_code=\"$1\"
-    shift; shift; shift; shift; shift; shift; shift; shift    
+    shift; shift; shift; shift; shift; shift; shift; shift; shift; shift; shift
     if [ \"$exit_code\" -ne \"0\" ]; then
 """\
              % (expanded_list, input_list, str(destinations).lower())
