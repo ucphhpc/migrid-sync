@@ -306,7 +306,7 @@ table.monitorresreq {
 }
 div.monitorruntimeenvdetails {
   /* force scroll box if list is longer than bounding box */
-  height: 200px;
+  height: 220px;
   overflow: auto;
 }
 table.monitorruntimeenvdone {
