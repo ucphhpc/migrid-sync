@@ -282,75 +282,87 @@ class GridStat:
             self.__add(self.VGRID, job_vgrid_name, 'CANCELED', 1)
         elif job_dict['STATUS'] == 'FINISHED':
 
-            # Compute used wall time
+            # Recent jobs have actual VGRID used as RESOURCE_VGRID
+            # Fall back to first one otherwise
+            
+            active_vgrid = job_dict.get('RESOURCE_VGRID', None)
+            if not active_vgrid:
+                print "WARNING: no RESOURCE_VGRID for job %(JOB_ID)s" % \
+                      job_dict
+                active_vgrid = job_dict.get('VGRID', [default_vgrid])[0]
+            active_vgrid = active_vgrid.upper()
+            if active_vgrid == job_vgrid_name:
 
-            finished_timestamp = job_dict['FINISHED_TIMESTAMP']
-            finished_datetime = datetime.datetime(
-                finished_timestamp.tm_year,
-                finished_timestamp.tm_mon,
-                finished_timestamp.tm_mday,
-                finished_timestamp.tm_hour,
-                finished_timestamp.tm_min,
-                finished_timestamp.tm_sec,
-                )
+                # Compute used wall time
 
-            starting_timestamp = job_dict['EXECUTING_TIMESTAMP']
-            starting_datetime = datetime.datetime(
-                starting_timestamp.tm_year,
-                starting_timestamp.tm_mon,
-                starting_timestamp.tm_mday,
-                starting_timestamp.tm_hour,
-                starting_timestamp.tm_min,
-                starting_timestamp.tm_sec,
-                )
+                finished_timestamp = job_dict['FINISHED_TIMESTAMP']
+                finished_datetime = datetime.datetime(
+                    finished_timestamp.tm_year,
+                    finished_timestamp.tm_mon,
+                    finished_timestamp.tm_mday,
+                    finished_timestamp.tm_hour,
+                    finished_timestamp.tm_min,
+                    finished_timestamp.tm_sec,
+                    )
 
-            used_walltime = finished_datetime - starting_datetime
+                starting_timestamp = job_dict['EXECUTING_TIMESTAMP']
+                starting_datetime = datetime.datetime(
+                    starting_timestamp.tm_year,
+                    starting_timestamp.tm_mon,
+                    starting_timestamp.tm_mday,
+                    starting_timestamp.tm_hour,
+                    starting_timestamp.tm_min,
+                    starting_timestamp.tm_sec,
+                    )
 
-            # VGrid stats
+                used_walltime = finished_datetime - starting_datetime
 
-            self.__add(self.VGRID, job_vgrid_name, 'FINISHED', 1)
-            self.__add(self.VGRID, job_vgrid_name, 'NODECOUNT_DONE',
-                       int(job_dict['NODECOUNT']))
-            self.__add(self.VGRID, job_vgrid_name, 'CPUTIME_DONE',
-                       int(job_dict['CPUTIME']))
+                # VGrid stats
+                
+                self.__add(self.VGRID, job_vgrid_name, 'FINISHED', 1)
+                self.__add(self.VGRID, job_vgrid_name, 'NODECOUNT_DONE',
+                           int(job_dict['NODECOUNT']))
+                self.__add(self.VGRID, job_vgrid_name, 'CPUTIME_DONE',
+                           int(job_dict['CPUTIME']))
+                
+                self.__add(self.VGRID, job_vgrid_name, 'USED_WALLTIME',
+                           used_walltime)
+                
+                self.__add(self.VGRID, job_vgrid_name, 'CPUCOUNT_DONE',
+                           int(job_dict['CPUCOUNT']))
+                self.__add(self.VGRID, job_vgrid_name, 'DISK_DONE',
+                           int(job_dict['DISK']))
+                self.__add(self.VGRID, job_vgrid_name, 'MEMORY_DONE',
+                           int(job_dict['MEMORY']))
+                self.__add(self.VGRID, job_vgrid_name, 'RUNTIMEENVIRONMENT_DONE',
+                           len(job_dict['RUNTIMEENVIRONMENT']))
+                
+                # Resource stats
+                
+                self.__add_resource(unique_resource_name, resource_id,
+                                    'FINISHED', 1)
+                
+                self.__add_resource(unique_resource_name, resource_id,
+                                    'USED_WALLTIME', used_walltime)
+                
+                # RE stats
 
-            self.__add(self.VGRID, job_vgrid_name, 'USED_WALLTIME',
-                       used_walltime)
+                for runtime_env in job_dict['RUNTIMEENVIRONMENT']:
+                    self.__addre(self.VGRID, job_vgrid_name, runtime_env, 1)
 
-            self.__add(self.VGRID, job_vgrid_name, 'CPUCOUNT_DONE',
-                       int(job_dict['CPUCOUNT']))
-            self.__add(self.VGRID, job_vgrid_name, 'DISK_DONE',
-                       int(job_dict['DISK']))
-            self.__add(self.VGRID, job_vgrid_name, 'MEMORY_DONE',
-                       int(job_dict['MEMORY']))
-            self.__add(self.VGRID, job_vgrid_name, 'RUNTIMEENVIRONMENT_DONE',
-                       len(job_dict['RUNTIMEENVIRONMENT']))
+                    # Old mRSL files lack the UNIQUE_RESOURCE_NAME field
 
-            # Resource stats
+                    if unique_resource_name:
+                        self.__addre(self.RESOURCE_TOTAL,
+                                     unique_resource_name, runtime_env, 1)
 
-            self.__add_resource(unique_resource_name, resource_id,
-                                'FINISHED', 1)
+                    # Old mRSL files lack the RESOURCE_ID field
+                    # Old mRSL files has resource_id == unique_resource_name
 
-            self.__add_resource(unique_resource_name, resource_id,
-                                'USED_WALLTIME', used_walltime)
+                    if resource_id and resource_id != unique_resource_name:
+                        self.__addre(self.RESOURCE_NODE, resource_id,
+                                     runtime_env, 1)
 
-            # RE stats
-
-            for runtime_env in job_dict['RUNTIMEENVIRONMENT']:
-                self.__addre(self.VGRID, job_vgrid_name, runtime_env, 1)
-
-                # Old mRSL files lack the UNIQUE_RESOURCE_NAME field
-
-                if unique_resource_name:
-                    self.__addre(self.RESOURCE_TOTAL,
-                                 unique_resource_name, runtime_env, 1)
-
-                # Old mRSL files lack the RESOURCE_ID field
-                # Old mRSL files has resource_id == unique_resource_name
-
-                if resource_id and resource_id != unique_resource_name:
-                    self.__addre(self.RESOURCE_NODE, resource_id,
-                                 runtime_env, 1)
         else:
 
             print 'Unknown status: ' + job_dict['STATUS']

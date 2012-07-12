@@ -66,7 +66,7 @@ def create_monitor(vgrid_name):
     html_file = os.path.join(configuration.vgrid_home, vgrid_name,
                              'monitor.html')
 
-    print 'starting collecting statistics for VGrid %s' % vgrid_name
+    print 'collecting statistics for VGrid %s' % vgrid_name
     sleep_secs = configuration.sleep_secs
     slackperiod = configuration.slackperiod
     now = time.asctime(time.localtime())
@@ -343,7 +343,7 @@ Listing the last request from each resource<br />
     for vgrid_name_part in vgrid_name_list:
         current_dir = os.path.join(current_dir, vgrid_name_part)
         abs_dir = os.path.join(configuration.vgrid_home, current_dir)
-        print 'dir: %s' % abs_dir
+        # print 'dir: %s' % abs_dir
         # Potential race - just ignore if it disappeared
         try:
             sorted_names = os.listdir(abs_dir)
@@ -351,7 +351,7 @@ Listing the last request from each resource<br />
             continue
         sorted_names.sort()
         for filename in sorted_names:
-            print filename
+            # print filename
             if filename.startswith('monitor_last_request_'):
 
                 # read file
