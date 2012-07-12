@@ -58,7 +58,7 @@ class GridStat:
     def __check_dict(self, stattype_key, stattype_value):
         """Checking if dict exists on disk and loads it into memory"""
 
-        # If stattype does'nt exist create it
+        # If stattype doesn't exist create it
 
         if not self.__gridstat_dict.has_key(stattype_key):
             self.__gridstat_dict[stattype_key] = {}
@@ -448,8 +448,11 @@ class GridStat:
                         continue
 
                     # Use default VGrid if no VGRID information in jobfile
+                    # and wrap any old plain string VGRID entries in list
 
                     job_vgrids = job_dict.get('VGRID', [default_vgrid])
+                    if isinstance(job_vgrids, basestring):
+                        job_vgrids = [job_vgrids]
 
                     for job_vgrid_name in job_vgrids:
 
