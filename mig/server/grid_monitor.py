@@ -126,14 +126,13 @@ $(document).ready(function() {
         '''
 <!-- end of raw header: this line is used by showvgridmonitor -->
 <h1>Statistics/monitor for the %(vgrid_name)s VGrid</h1>
-This page was generated %(now)s<br />
-Automatic refresh every %(sleep_secs)s secs.<br />
-<br />'''\
+<div id="generatornote" class="smallcontent">
+This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
+</div>
+'''\
          % html_vars
 
     # loop and get totals
-
-    runtimeenv_dict = {'': 0}
 
     parse_count = 0
     queued_count = 0
@@ -155,6 +154,8 @@ Automatic refresh every %(sleep_secs)s secs.<br />
     memory_requested = 0
     memory_done = 0
     runtimeenv_dict = {'': 0}
+    runtimeenv_requested = 0
+    runtimeenv_done = 0
 
     number_of_jobs = 0
     up_count = 0
@@ -216,6 +217,10 @@ Automatic refresh every %(sleep_secs)s secs.<br />
             vgrid_name.upper(), 'CPUCOUNT_REQ')
     cpucount_done = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                     'CPUCOUNT_DONE')
+    runtimeenv_requested = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
+                                           'RUNTIMEENVIRONMENT_REQ')
+    runtimeenv_done = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
+                                      'RUNTIMEENVIRONMENT_DONE')
 
     number_of_jobs = parse_count
     number_of_jobs += queued_count
@@ -247,11 +252,13 @@ Automatic refresh every %(sleep_secs)s secs.<br />
         'disk_done': disk_done,
         'memory_requested': memory_requested,
         'memory_done': memory_done,
+        'runtimeenv_requested': runtimeenv_requested,
+        'runtimeenv_done': runtimeenv_done,
         }
 
     html += \
-        """<table class=monitorstats><tr><td valign=top>
-<table class=monitorjobs><tr class=title><td>State</td><td>Number of jobs</td></tr>
+        """<h2>Job Stats</h2><table class=monitorstats><tr><td valign=top>
+<table class=monitorjobs><tr class=title><td>Job State</td><td>Number of jobs</td></tr>
 <tr><td>Parse</td><td>%(parse_count)s</td></tr>
 <tr><td>Queued</td><td>%(queued_count)s</td></tr>
 <tr><td>Executing</td><td>%(executing_count)s</td></tr>
@@ -264,17 +271,19 @@ Automatic refresh every %(sleep_secs)s secs.<br />
 </table>
 </td><td valign=top>
 <table class=monitorresreq>
-<tr class=title><td>Item</td><td>Requested</td><td>Done</td></tr>
+<tr class=title><td>Requirement</td><td>Requested</td><td>Done</td></tr>
 <tr><td>Cpucount</td><td>%(cpucount_requested)s</td><td>%(cpucount_done)s</td></tr>
 <tr><td>Nodecount</td><td>%(nodecount_requested)s</td><td>%(nodecount_done)s</td></tr>
 <tr><td>Cputime</td><td>%(cputime_requested)s</td><td>%(cputime_done)s</td></tr>
 <tr><td>GB Disk</td><td>%(disk_requested)s</td><td>%(disk_done)s</td></tr>
 <tr><td>MB Memory</td><td>%(memory_requested)s</td><td>%(memory_done)s</td></tr>
+<tr><td>Runtime Envs</td><td>%(runtimeenv_requested)s</td><td>%(runtimeenv_done)s</td></tr>
 <tr><td>Used Walltime</td><td colspan='2'>%(used_walltime)s</td></tr>
 </table><br />
 </td><td valign=top>
-<table class=monitorruntimeenvreq>
-<tr class=title><td>Runtimeenvironment</td><td></td></tr>
+<div class=monitorruntimeenvdetails>
+<table class=monitorruntimeenvdone>
+<tr class=title><td>Runtime Envs Done</td><td></td></tr>
 """\
          % html_vars
 
@@ -290,21 +299,21 @@ Automatic refresh every %(sleep_secs)s secs.<br />
                      + str(runtimeenv_dict[entry]) + '</td></tr>\n'
     html += \
         """</table>
+</div>
 </td></tr>
 
-</table><br />
-<br />
-<hr /><br />
-<h2>Resource job request</h2>
+</table>
+<h2>Resource Job Requests</h2>
 Listing the last request from each resource<br />
 <br />
 <table class="monitor columnsort">
 <thead class="title">
 <tr>
   <th width="1"><!-- Status icon --></th>
-  <th>Resource ID with exe unit</th>
+  <th>Resource ID, unit</th>
   <th>Last seen</th>
   <th>VGrid</th>
+  <th>Runtime envs</th>
   <th>CPU time (s)</th>
   <th>Node count</th>
   <th>CPU count</th>
@@ -445,14 +454,18 @@ Listing the last request from each resource<br />
                             (time.asctime(last_request_dict['CREATED_TIME'].timetuple()),
                              days, hours, minutes, seconds)
                     html += '<td>' + vgrid_name + '</td>'
+                    runtime_envs = last_request_dict['RESOURCE_CONFIG'
+                               ]['RUNTIMEENVIRONMENT']
+                    re_list_text = ', '.join([i[0] for i in runtime_envs])
+                    html += '<td title="%s">' % re_list_text \
+                         + str(len(runtime_envs)) + '</td>'
                     html += '<td>'\
                          + str(last_request_dict['RESOURCE_CONFIG'
                                ]['CPUTIME']) + '</td><td>'\
                          + str(last_request_dict['RESOURCE_CONFIG'
                                ]['NODECOUNT']) + '</td><td>'\
                          + str(last_request_dict['RESOURCE_CONFIG'
-                               ]['CPUCOUNT']) + '</td>'
-                    html += '<td>'\
+                               ]['CPUCOUNT']) + '</td><td>'\
                          + str(last_request_dict['RESOURCE_CONFIG'
                                ]['DISK']) + '</td><td>'\
                          + str(last_request_dict['RESOURCE_CONFIG'
@@ -496,10 +509,8 @@ Listing the last request from each resource<br />
 
     html += '</tbody>\n</table>\n'
 
-    html += '''<br />
-<hr />
-<br />
-<h3>VGrid Totals</h3>
+    html += '''
+<h2>VGrid Totals</h2>
 A total of <b>'''\
          + str(total_number_of_resources) + '</b> resources ('\
          + str(total_number_of_cpus) + " cpu's) joined this VGrid ("\

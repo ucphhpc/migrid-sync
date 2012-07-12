@@ -246,6 +246,8 @@ class GridStat:
                        int(job_dict['DISK']))
             self.__add(self.VGRID, job_vgrid_name, 'MEMORY_REQ',
                        int(job_dict['MEMORY']))
+            self.__add(self.VGRID, job_vgrid_name, 'RUNTIMEENVIRONMENT_REQ',
+                       len(job_dict['RUNTIMEENVIRONMENT']))
 
         unique_resource_name = None
         resource_id = None
@@ -319,6 +321,8 @@ class GridStat:
                        int(job_dict['DISK']))
             self.__add(self.VGRID, job_vgrid_name, 'MEMORY_DONE',
                        int(job_dict['MEMORY']))
+            self.__add(self.VGRID, job_vgrid_name, 'RUNTIMEENVIRONMENT_DONE',
+                       len(job_dict['RUNTIMEENVIRONMENT']))
 
             # Resource stats
 

@@ -304,7 +304,12 @@ table.monitorjobs {
 table.monitorresreq {
   border: 0px solid #000;
 }
-table.monitorruntimeenvreq {
+div.monitorruntimeenvdetails {
+  /* force scroll box if list is longer than bounding box */
+  height: 200px;
+  overflow: auto;
+}
+table.monitorruntimeenvdone {
   border: 0px solid #000;
 }
 
