@@ -509,3 +509,20 @@ def vgrid_set_resources(configuration, vgrid_name, clients, allow_empty=True):
     """Set list of resources for given vgrid"""
     return vgrid_set_entities(configuration, vgrid_name, 'resources', clients,
                               allow_empty)
+
+def validated_vgrid_list(configuration, job_dict):
+    """Grabs VGRID field value from job_dict if available and makes sure that
+    it is a non-empty list of strings.
+    Fall back to [default_vgrid] if either of the legacy/bogus cases
+    - empty string or None
+    - no vgrid set
+    Convert other plain strings to list format.
+    """
+    job_vgrids = job_dict.get('VGRID', None)
+    if not job_vgrids:
+        job_vgrids = [default_vgrid]
+    if isinstance(job_vgrids, basestring):
+        job_vgrids = [job_vgrids]
+    return job_vgrids
+
+    

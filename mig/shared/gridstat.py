@@ -34,6 +34,7 @@ import datetime
 from shared.defaults import default_vgrid, pending_states
 from shared.fileio import pickle, unpickle, touch
 from shared.serial import pickle as py_pickle
+from shared.vgrid import validated_vgrid_list
 
 
 class GridStat:
@@ -289,7 +290,8 @@ class GridStat:
             if not active_vgrid:
                 print "WARNING: no RESOURCE_VGRID for job %(JOB_ID)s" % \
                       job_dict
-                active_vgrid = job_dict.get('VGRID', [default_vgrid])[0]
+                active_vgrid = validated_vgrid_list(self.__configuration,
+                                                    job_dict)[0]
             active_vgrid = active_vgrid.upper()
             if active_vgrid == job_vgrid_name:
 
@@ -459,12 +461,8 @@ class GridStat:
                         self.__logger.error(msg)
                         continue
 
-                    # Use default VGrid if no VGRID information in jobfile
-                    # and wrap any old plain string VGRID entries in list
-
-                    job_vgrids = job_dict.get('VGRID', [default_vgrid])
-                    if isinstance(job_vgrids, basestring):
-                        job_vgrids = [job_vgrids]
+                    job_vgrids = validated_vgrid_list(self.__configuration,
+                                                      job_dict)
 
                     for job_vgrid_name in job_vgrids:
 
