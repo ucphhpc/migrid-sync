@@ -136,6 +136,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 
     parse_count = 0
     queued_count = 0
+    frozen_count = 0
     executing_count = 0
     finished_count = 0
     failed_count = 0
@@ -174,6 +175,8 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                                   'PARSE')
     queued_count = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
                                    'QUEUED')
+    frozen_count = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
+                                   'FROZEN')
     executing_count = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
             'EXECUTING')
     failed_count = gstat.get_value(gstat.VGRID, vgrid_name.upper(),
@@ -224,6 +227,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 
     number_of_jobs = parse_count
     number_of_jobs += queued_count
+    number_of_jobs += frozen_count
     number_of_jobs += expired_count
     number_of_jobs += canceled_count
     number_of_jobs += failed_count
@@ -234,6 +238,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
     html_vars = {
         'parse_count': parse_count,
         'queued_count': queued_count,
+        'frozen_count': frozen_count,
         'executing_count': executing_count,
         'failed_count': failed_count,
         'retry_count': retry_count,
@@ -261,6 +266,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 <table class=monitorjobs><tr class=title><td>Job State</td><td>Number of jobs</td></tr>
 <tr><td>Parse</td><td>%(parse_count)s</td></tr>
 <tr><td>Queued</td><td>%(queued_count)s</td></tr>
+<tr><td>Frozen</td><td>%(frozen_count)s</td></tr>
 <tr><td>Executing</td><td>%(executing_count)s</td></tr>
 <tr><td>Failed</td><td>%(failed_count)s</td></tr>
 <tr><td>Retry</td><td>%(retry_count)s</td></tr>

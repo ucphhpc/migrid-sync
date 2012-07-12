@@ -31,7 +31,7 @@ import os
 import fcntl
 import datetime
 
-from shared.defaults import default_vgrid
+from shared.defaults import default_vgrid, pending_states
 from shared.fileio import pickle, unpickle, touch
 from shared.serial import pickle as py_pickle
 
@@ -276,6 +276,8 @@ class GridStat:
                                 'RETRY', 1)
         elif job_dict['STATUS'] == 'EXPIRED':
             self.__add(self.VGRID, job_vgrid_name, 'EXPIRED', 1)
+        elif job_dict['STATUS'] == 'FROZEN':
+            self.__add(self.VGRID, job_vgrid_name, 'FROZEN', 1)
         elif job_dict['STATUS'] == 'CANCELED':
             self.__add(self.VGRID, job_vgrid_name, 'CANCELED', 1)
         elif job_dict['STATUS'] == 'FINISHED':
@@ -353,15 +355,11 @@ class GridStat:
 
             print 'Unknown status: ' + job_dict['STATUS']
 
-        # Check and update cache for previours status'
+        # Check and update cache for previous status'
 
-        if buildcache_dict.has_key(job_id):
-            if buildcache_dict[job_id] == 'PARSE':
-                self.__add(self.VGRID, job_vgrid_name, 'PARSE', -1)
-            elif buildcache_dict[job_id] == 'QUEUED':
-                self.__add(self.VGRID, job_vgrid_name, 'QUEUED', -1)
-            elif buildcache_dict[job_id] == 'EXECUTING':
-                self.__add(self.VGRID, job_vgrid_name, 'EXECUTING', -1)
+        if buildcache_dict.has_key(job_id) and \
+               buildcache_dict[job_id] in pending_states:
+            self.__add(self.VGRID, job_vgrid_name, buildcache_dict[job_id], -1)
 
         # Cache current status for use in next iteration.
         # Note that status: CANCELED, FAILED, EXPIRED or FINISHED are
@@ -369,9 +367,7 @@ class GridStat:
         # the cache, as the mRSL file should not be modified once it
         # reaches one of thoose stages.
 
-        if job_dict['STATUS'] == 'PARSE' or job_dict['STATUS']\
-             == 'QUEUED' or job_dict['STATUS'] == 'EXECUTING'\
-             or job_dict['STATUS'] == 'RETRY':
+        if job_dict['STATUS'] in pending_states:
             buildcache_dict[job_id] = job_dict['STATUS']
         elif buildcache_dict.has_key(job_id):
             del buildcache_dict[job_id]
