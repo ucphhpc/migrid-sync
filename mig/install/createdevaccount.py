@@ -38,6 +38,7 @@ similarly hard coded to the Debian defaults on those servers.
 """
 
 import getopt
+import os
 import socket
 import sys
 
@@ -53,6 +54,7 @@ Create developer account with username LOGIN using OPTIONS.
 Where supported options include -h/--help for this help or the conf settings:
 %s
 
+IMPORTANT: needs to run with privileges to create system user!
 ''' % (sys.argv[0], '\n'.join(lines))
 
 if __name__ == '__main__':
@@ -87,6 +89,9 @@ if __name__ == '__main__':
     if not args:
         usage(settings)
         sys.exit(1)
+
+    if os.getuid() > 0:
+        print "WARNING: needs to run with user management privileges!"
 
     print '# Creating dev account with:'
     for (key, val) in settings.items():

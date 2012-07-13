@@ -220,7 +220,7 @@ def create_user(
     print 'groupadd %s' % group
     status = os.system('groupadd %s' % group) >> 8
     if status != 0:
-        print 'Warning: exit code %d' % status
+        print 'Warning: groupadd exit code %d' % status
 
     # Don't use 'o'/'0' and 'l'/'1' since they may confuse users
 
@@ -242,7 +242,7 @@ def create_user(
     status = os.system('useradd -m -s %s -p %s -g %s %s' % (shell,
                        enc_pw, group, user)) >> 8
     if status != 0:
-        print 'Warning: exit code %d' % status
+        print 'Warning: useradd exit code %d' % status
     else:
         print '# Created %s in group %s with pw %s' % (user, group, pw)
 
@@ -251,16 +251,16 @@ def create_user(
     print 'chmod -R g-rwx,o-rwx %s' % home
     status = os.system('chmod -R g-rwx,o-rwx %s' % home) >> 8
     if status != 0:
-        print 'Warning: exit code %d' % status
+        print 'Warning: chmod exit code %d' % status
     else:
         print 'Removed global access to %s' % home
 
     print 'addgroup %s %s' % (user, ssh_login_group)
     status = os.system('addgroup %s %s' % (user, ssh_login_group)) >> 8
     if status != 0:
-        print 'Warning: exit code %d' % status
+        print 'Warning: login addgroup exit code %d' % status
     else:
-        print '# Added %s to group %s' % (user, ssh_login_group)
+        print '# Added %s to login group %s' % (user, ssh_login_group)
 
     out = os.popen('id -u %s' % user).readlines()
     uid_str = out[0].strip()
