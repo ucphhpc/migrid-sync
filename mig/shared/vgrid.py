@@ -322,24 +322,24 @@ def vgrid_match_resources(vgrid_name, resources, configuration):
 
 def job_fits_res_vgrid(job_vgrid_list, res_vgrid_list):
     """Used to find match between job and resource vgrids.
-    Return fit status and name of first vgrid from
-    res_vgrid_list that is compatible with a vgrid
-    in job_vgrid_list. The returned name is None if
-    no compatible match was found.
+    Return a 3-tuple of boolean fit status and the first job and resource
+    vgrid names that are compatible. A job vgrid matches parent resource
+    vgrids due to inheritance so it is useful to get both names back. The
+    returned names are None if no compatible match was found.
     """
 
     for job_vgrid in job_vgrid_list:
         for res_vgrid in res_vgrid_list:
             if vgrid_request_and_job_match(res_vgrid, job_vgrid):
-                return (True, res_vgrid)
-    return (False, None)
+                return (True, job_vgrid, res_vgrid)
+    return (False, None, None)
 
 
 def vgrid_request_and_job_match(resource_vgrid, job_vgrid):
     """Compares resource_vgrid and job_vgrid.
     Return True if job_vgrid fits resource_vgrid.
     A job submitted to a vgrid must be executed by a
-    resource from the vgrid.
+    resource from that vgrid or a parent vgrid.
     """
 
     resource_vgrid_list = resource_vgrid.split('/')
@@ -402,19 +402,21 @@ def vgrid_access_match(configuration, job_owner, job, res_id, res):
     job_req = [i for i in job.get('VGRID', [])]
     res_req = [i for i in res.get('VGRID', [])]
     while True:
-        answer = (found, best) = job_fits_res_vgrid(job_req, res_req)
+        answer = (found, best_job, best_res) = job_fits_res_vgrid(job_req,
+                                                                  res_req)
         if not found:
             configuration.logger.info('no valid vgrid found!')
             break
-        configuration.logger.info('testing if best vgrid %s is valid' % best)
-        if not vgrid_is_owner_or_member(best, job_owner, configuration):
+        configuration.logger.info('test if best vgrids %s , %s are valid' % \
+                                  (best_job, best_res))
+        if not vgrid_is_owner_or_member(best_job, job_owner, configuration):
             configuration.logger.info('del invalid vgrid %s from job (%s)' % \
-                                      (best, job_owner))
-            job_req = [i for i in job_req if not i == best]
-        if not vgrid_is_resource(best, res_id, configuration):
+                                      (best_job, job_owner))
+            job_req = [i for i in job_req if i != best_job]
+        if not vgrid_is_resource(best_res, res_id, configuration):
             configuration.logger.info('del invalid vgrid %s from res (%s)' \
-                                      % (best, res_id))
-            res_req = [i for i in res_req if not i == best]
+                                      % (best_res, res_id))
+            res_req = [i for i in res_req if i != best_res]
         else:
             break
     return answer

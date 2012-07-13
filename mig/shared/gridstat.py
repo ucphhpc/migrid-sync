@@ -34,7 +34,7 @@ import datetime
 from shared.defaults import default_vgrid, pending_states
 from shared.fileio import pickle, unpickle, touch
 from shared.serial import pickle as py_pickle
-from shared.vgrid import validated_vgrid_list
+from shared.vgrid import validated_vgrid_list, job_fits_res_vgrid
 
 
 class GridStat:
@@ -233,6 +233,11 @@ class GridStat:
         """The dirty details of what jobinfo is used in the
         statistics and buildcache"""
 
+        # Fix legacy VGRIDs
+
+        job_dict['VGRID'] = validated_vgrid_list(self.__configuration,
+                                                    job_dict)
+
         # If the mRSL file was modified and this is the first time
         # we have seen it, add the request info to the statistics.
 
@@ -283,16 +288,31 @@ class GridStat:
             self.__add(self.VGRID, job_vgrid_name, 'CANCELED', 1)
         elif job_dict['STATUS'] == 'FINISHED':
 
-            # Recent jobs have actual VGRID used as RESOURCE_VGRID
-            # Fall back to first one otherwise
+            # Recent jobs have the scheduled resource vgrid available in
+            # the RESOURCE_VGRID field. However, that vgrid may be a parent of
+            # the requested job vgrid due to inheritance.
+            # We repeat the vgrid match up to find the actual job vgrid here.
+            # Fall back to saved resource prioritized vgrid list for old jobs.
             
-            active_vgrid = job_dict.get('RESOURCE_VGRID', None)
-            if not active_vgrid:
+            active_res_vgrid = job_dict.get('RESOURCE_VGRID', None)
+            if active_res_vgrid:
+                search_vgrids = [active_res_vgrid]
+            else:
                 print "WARNING: no RESOURCE_VGRID for job %(JOB_ID)s" % \
                       job_dict
-                active_vgrid = validated_vgrid_list(self.__configuration,
-                                                    job_dict)[0]
-            active_vgrid = active_vgrid.upper()
+                search_vgrids = job_dict['RESOURCE_CONFIG']['VGRID']
+            (match, active_job_vgrid, _) = job_fits_res_vgrid(
+                job_dict['VGRID'], search_vgrids)
+
+            if not match:
+
+                # This should not happen - scheduled job to wrong vgrid!
+            
+                print "ERROR: %s no match for vgrids: %s vs %s" % \
+                      (job_dict['JOB_ID'], job_dict['VGRID'], search_vgrids)
+                active_job_vgrid = '__NO_SUCH_JOB_VGRID__'
+                
+            active_vgrid = active_job_vgrid.upper()
             if active_vgrid == job_vgrid_name:
 
                 # Compute used wall time
@@ -490,3 +510,93 @@ class GridStat:
             return False
 
         return True
+
+if __name__ == '__main__':
+    import sys
+    import fnmatch
+    from shared.conf import get_configuration_object
+    configuration = get_configuration_object()
+    root_dir = configuration.mrsl_files_dir
+    job_id = '*_2012_*'
+    search_runtime = "GAP-4.5.X-1"
+    if sys.argv[1:]:
+        job_id = sys.argv[1]
+    if sys.argv[2:]:
+        search_runtime = sys.argv[2]
+    matches = []
+    for (root, _, files) in os.walk(root_dir, topdown=True):
+
+        # skip all dot dirs - they are from repos etc and _not_ jobs
+
+        if root.find(os.sep + '.') != -1:
+            continue
+        for name in fnmatch.filter(files, job_id+'.mRSL'):
+            filename = os.path.join(root, name)
+            job_dict = unpickle(filename, configuration.logger)
+            if not job_dict:
+                print "could not load %s" % filename
+                continue
+
+            runtime_envs = job_dict["RUNTIMEENVIRONMENT"]
+            if not search_runtime in runtime_envs:
+                continue
+
+            job_vgrids = validated_vgrid_list(configuration, job_dict)
+            #print "DEBUG: found matching job %s with vgrids: %s" % (filename,
+            #                                                        job_vgrids)
+            matches.append(job_dict)
+    print "DEBUG: found %d matching jobs" % len(matches)
+    finished_count = 0
+    default_vgrid_count = 0
+    resource_vgrid_map = {}
+    job_vgrid_map = {}
+    explicit_vgrids = {}
+    implicit_vgrids = {}
+    parent_vgrids = {}
+    for job_dict in matches:
+        job_id = job_dict['JOB_ID']
+        job_vgrid = job_dict['VGRID']
+        job_vgrid_string = str(job_vgrid)
+        if job_dict['STATUS'] == 'FINISHED':
+            finished_count += 1
+
+            active_res_vgrid = job_dict.get('RESOURCE_VGRID', None)
+            if active_res_vgrid:
+                search_vgrids = [active_res_vgrid]
+            else:
+                search_vgrids = job_dict['RESOURCE_CONFIG']['VGRID']
+            (match, active_job_vgrid, _) = job_fits_res_vgrid(
+                job_dict['VGRID'], search_vgrids)
+
+            resource_vgrid_map[active_res_vgrid] = resource_vgrid_map.get(
+                active_res_vgrid, 0) + 1
+            job_vgrid_map[active_job_vgrid] = job_vgrid_map.get(
+                active_job_vgrid, 0) + 1
+            if active_res_vgrid not in job_vgrid:
+                implicit_vgrids[active_res_vgrid] = implicit_vgrids.get(
+                    active_res_vgrid, 0) + 1
+                parent_vgrids[job_vgrid_string] = parent_vgrids.get(
+                    job_vgrid_string, 0) + 1
+            else:
+                explicit_vgrids[active_res_vgrid] = explicit_vgrids.get(
+                    active_res_vgrid, 0) + 1
+
+    
+    print "DEBUG: found %d finished jobs" % \
+          finished_count
+    print "resource vgrid distribution:"
+    for (key, val) in resource_vgrid_map.items():
+        print "\t%s: %d" % (key, val)
+    print " * explicit:"
+    for (key, val) in explicit_vgrids.items():
+        print "\t%s: %d" % (key, val)
+    print " * implicit:"
+    for (key, val) in implicit_vgrids.items():
+        print "\t%s: %d" % (key, val)
+    print " * parent:"
+    for (key, val) in parent_vgrids.items():
+        print "\t%s: %d" % (key, val)
+    print "job vgrid distribution:"
+    for (key, val) in job_vgrid_map.items():
+        print "\t%s: %d" % (key, val)
+        

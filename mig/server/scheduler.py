@@ -39,7 +39,7 @@ from math import exp, floor
 import shared.safeeval as safeeval
 from jobqueue import print_job
 from shared.resource import anon_resource_id
-from shared.vgrid import vgrid_access_match
+from shared.vgrid import vgrid_access_match, validated_vgrid_list
 
 
 class Scheduler:
@@ -1288,19 +1288,18 @@ class Scheduler:
         # Check VGRID
         # Force old jobs with VGRID string value to list form
 
-        if isinstance(job['VGRID'], basestring):
-            job['VGRID'] = [job['VGRID']]
-        (match, res_vgrid) = vgrid_access_match(self.conf, job['USER_CERT'],
-                                                job, res_id.split('_')[0],
-                                                res)
-        self.logger.info('scheduler: res and job vgrid match: %s' % res_vgrid)
+        job['VGRID'] = validated_vgrid_list(self.conf, job)
+        (match, job_vgrid, res_vgrid) = vgrid_access_match(
+            self.conf, job['USER_CERT'], job, res_id.split('_')[0], res)
+        self.logger.info('scheduler: res and job vgrid match: %s %s' % \
+                         (res_vgrid, job_vgrid))
         res_name = job_name = 'Unknown'
         try:
             res_name = res['RESOURCE_ID']
             job_name = job['JOB_ID']
         except Exception, err:
             self.logger.error('scheduler: res or job name error: %s (%s) (%s)'
-                               % (err, res, job))
+                              % (err, res, job))
         if match:
             job['RESOURCE_VGRID'] = res_vgrid
         else:

@@ -49,7 +49,7 @@ from shared.gridscript import clean_grid_stdin, \
     save_schedule_cache, arc_job_status, clean_arc_job
 from shared.notification import notify_user_thread
 from shared.resadm import atomic_resource_exe_restart, put_exe_pgid
-from shared.vgrid import job_fits_res_vgrid
+from shared.vgrid import job_fits_res_vgrid, validated_vgrid_list
 
 try:
     import servercomm
@@ -1005,11 +1005,18 @@ while True:
                         )
                     if sessionid and iosessionid:
 
+                        # mrsl_dict now contains entire job_dict with updates
+                        
+                        # Fix legacy VGRID fields
 
+                        mrsl_dict['VGRID'] = validated_vgrid_list(
+                            configuration, mrsl_dict)
+                    
                         # Select actual VGrid to use
 
-                        (match, active_vgrid) = job_fits_res_vgrid(
-                            job_dict['VGRID'], vgrids_in_prioritized_order)
+                        (match, active_job_vgrid, active_res_vgrid) = \
+                                job_fits_res_vgrid(mrsl_dict['VGRID'],
+                                                   vgrids_in_prioritized_order)
 
                         # Write executing details to mRSL file
 
@@ -1021,7 +1028,7 @@ while True:
                         mrsl_dict['PUBLICNAME'] = resource_config.get(
                             'PUBLICNAME', 'HIDDEN')
                         mrsl_dict['EXE'] = exe
-                        mrsl_dict['RESOURCE_VGRID'] = active_vgrid
+                        mrsl_dict['RESOURCE_VGRID'] = active_res_vgrid
                         mrsl_dict['RESOURCE_CONFIG'] = resource_config
                         mrsl_dict['LOCALJOBNAME'] = localjobname
                         mrsl_dict['SESSIONID'] = sessionid
