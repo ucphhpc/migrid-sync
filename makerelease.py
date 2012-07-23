@@ -33,7 +33,7 @@ if len(sys.argv) < 2:
 
 version = sys.argv[1]
 try:
-    target = sys.argv[2]
+    target = os.path.abspath(sys.argv[2])
 except:
     target = os.getcwd()
 
@@ -59,7 +59,7 @@ if '__main__' == __name__:
             if name.startswith(tar_path):
                 continue
             path = os.path.normpath(os.path.join(root, name))
-            rel_path = path.replace(os.path.dirname(target), '')
+            rel_path = path.replace(target+os.sep, '')
             archive_path = os.path.join(archive_base, rel_path)
             print 'Adding %s' % archive_path
             tar_ball.add(rel_path, archive_path, recursive=False)
