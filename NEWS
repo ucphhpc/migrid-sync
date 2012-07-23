@@ -6,6 +6,13 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
+=== July 23rd, 2012 ===
+Feature and minor bugfix release. Mainly the integration of the long
+awaited interactive virtual machine jobs using VNC. Based on original
+work by Tomas Groth and Simon A. F. Lund but updated and extended to
+work with current VM images and virtualization technologies.
+
+
 === December 15th, 2011 ===
 Feature and bugfix release.
 
@@ -136,6 +143,21 @@ for other users.
 More detailed changelogs for the public releases.
 The full changelog is available from the repository:
 http://code.google.com/p/migrid/source/list
+
+== 1.4.1 ==
+-Improvements and stats fixes to VGrid monitors (includes fix for issue 32)
+-Fix issue 67: migget user script bug
+-Speed optimizations to VM builder using tmpfs when possible
+-Complete VM build scripts to ease future and custom VM image builds
+-VM polish: access to all job settings, job session timeout warning
+-VM live I/O access through mounted job dir
+-Integration of interactive VM jobs using VNC
+-Use compression in generated zip files (user scripts, etc)
+-New MiG admin monitor page
+-Added sftp DSA key support and fixed a crash for broken keys
+-Fix removal of nested VGrids
+-Improved Runtime Env reuse support
+-Fix issue 66: Add VGrid owner bug
 
 == 1.4.0 ==
 -Completely disable direct access to VGrid component dirs for security

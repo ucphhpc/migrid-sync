@@ -34,15 +34,14 @@ tools and a Python interpreter with a few external modules.
 
 Optional WSGI interface, Wiki, SCM and tracker VGrid features require:
 -Apache WSGI module (http://code.google.com/p/modwsgi/)
--MoinMoin (http://moinmo.in/)
 -Mercurial (http://mercurial.selenic.com/)
 -Trac (http://trac.edgewall.org/)
 -Trac plugins (e.g. http://trac-hacks.org/)
 
 On Debian servers the corresponding packages can be installed with:
 sudo aptitude install apache2-mpm-prefork libapache2-mod-wsgi \
-     openssh-client python-json python-enchant python-moinmoin \
-     mercurial trac trac-mercurial
+     openssh-client python-json python-enchant mercurial trac \
+     trac-mercurial
 
 Additional packaged Trac extensions can be installed with:
 sudo aptitude install trac-customfieldadmin trac-graphviz \
@@ -77,6 +76,14 @@ enable one plugin and upgrade all Trac environments before enabling the
 other plugin and upgrading again.
 Thus you may have to experiment with the installed plugins in a
 conservative way.
+
+With the inclusion of Trac we no longer rely on the MoinMoin software
+for stand-alone wikis, but if anyone wants to include them it can still
+be done. More information about MoinMoin at:
+-MoinMoin (http://moinmo.in/)
+
+On Debian servers the corresponding packages can be installed with:
+sudo aptitude install python-moinmoin
 
 
 = Installing MiG =
@@ -249,16 +256,12 @@ setup right. With recent version of moin you may also need to change the
 instance_dir variable to point to the parent of the wikiconfig_dir
 instead of the same dir. There's a diff between the default
 wikiconfig.py and the one that we use in mig/install/wikiconfig.py.MiG.diff .
-It may be simpler to just leave out Moin of the mix and using the wiki
+We recommend to just leave out MoinMoin of the mix and using the wiki
 included with Trac.
 
 Similarly the mercurial package provides all required components for 
 VGrid SCMs on Debian. The same applies for the trac + trac-mercurial
 packages.
-In case you want to run MiG with VGrid wikis on another distribution you can
-download a MoinMoin wiki tarball from our Downloads page:
-http://code.google.com/p/migrid/downloads/list
-It includes step-by-step installation instructions in the README.
 Paramiko is required for the optional grid_sftp daemon to work and the
 python-paramiko package provides all required components for it on
 Debian.
