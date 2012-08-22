@@ -1037,8 +1037,12 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                           % i['creator'])
             lines.append('<tr><td>Job&nbsp;count</td><td>%s</td></tr>'
                           % i['job_count'])
+            view_providers = [{'text': name,
+                               'destination': 'viewres.py?unique_resource_name=%s'
+                               % name} for name in i['providers']]
+            provider_links = [html_link(res) for res in view_providers]
             lines.append('<tr><td>Resources</td><td>%s</td></tr>'
-                          % ', '.join(i['providers']))
+                          % ', '.join(provider_links))
             lines.append('</table>')
         elif i['object_type'] == 'table_pager':
             page_entries = i.get('page_entries', [5, 10, 20, 25, 40, 50, 80,
