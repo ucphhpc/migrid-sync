@@ -300,7 +300,13 @@ class GridStat:
             else:
                 print "WARNING: no RESOURCE_VGRID for job %(JOB_ID)s" % \
                       job_dict
-                search_vgrids = job_dict['RESOURCE_CONFIG']['VGRID']
+                resource_config = job_dict['RESOURCE_CONFIG']
+
+                # Fix legacy VGRIDs
+
+                resource_config['VGRID'] = validated_vgrid_list(
+                    self.__configuration, resource_config)
+                search_vgrids = resource_config['VGRID']
             (match, active_job_vgrid, _) = job_fits_res_vgrid(
                 job_dict['VGRID'], search_vgrids)
 
