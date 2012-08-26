@@ -28,3 +28,5 @@ for name in $state_dir/user_home/no_grid_jobs_in_grid_scheduler; do
 	echo "Deleting files older than $max_days days from $name"
 	su - mig -c "find $name -maxdepth 1 -mtime +${max_days} | xargs -n1 rm -f " 
 done
+
+exit 0
