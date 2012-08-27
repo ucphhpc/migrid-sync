@@ -325,7 +325,7 @@ def main(client_id, user_arguments_dict):
             if not os.path.isdir(os.path.dirname(local_filename)):
                 try:
                     os.makedirs(os.path.dirname(local_filename), 0777)
-                except Exception, e:
+                except Exception:
                     fileuploadobj['message'] = \
                         {'object_type': 'error_text',
                          'text': 'Exception creating dirs %s'\
@@ -392,11 +392,11 @@ def main(client_id, user_arguments_dict):
                 try:
                     output_objects.append({'object_type': 'text', 'text'
                             : 'File saved: %s' % remote_filename})
-                except Exception, e:
+                except Exception, err:
                     output_objects.append({'object_type': 'error_text',
                             'text'
                             : 'File seems to be saved, but could not get file size %s'
-                             % e})
+                             % err})
                     return (output_objects, returnvalues.SYSTEM_ERROR)
             fileuploadobj['size'] = os.path.getsize(local_filename)
             fileuploadobj['name'] = remote_filename
