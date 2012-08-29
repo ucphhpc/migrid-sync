@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # upload - Plain and efficient file upload back end
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -47,10 +47,28 @@ def signature():
         'flags': [''],
         'path': REJECT_UNSET,
         'fileupload': REJECT_UNSET, 
-        'restrict':False,
+        'restrict': [False],
         }
     return ['html_form', defaults]
 
+def write_chunks(path, file_obj, restrict):
+    """Write file_obj bytes to path and set strict permissions if restrict
+    is set. Removes file if upload fails for some reason.
+    """
+    try:
+        upload_fd = open(path, 'wb')
+        while True:
+            chunk = file_obj.read(block_size)
+            if not chunk:
+                break
+            upload_fd.write(chunk)
+        upload_fd.close()
+        if restrict:
+            os.chmod(path, 0600)
+        return True
+    except Exception, exc:
+        os.remove(real_path)
+        raise exc
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -72,18 +90,21 @@ def main(client_id, user_arguments_dict):
     extract_input = user_arguments_dict['__DELAYED_INPUT__']
     logger.info('Extracting input in %s' % op_name)
     form = extract_input()
+    logger.info('After extracting input in %s' % op_name)
     file_item = None
     file_name = ''
     user_arguments_dict = {}
     if form.has_key('fileupload'):
         file_item = form['fileupload']
         file_name = file_item.filename
-        user_arguments_dict['fileupload'] = 'true'
+        user_arguments_dict['fileupload'] = ['true']
         user_arguments_dict['path'] = [file_name]
     if form.has_key('path'):
         user_arguments_dict['path'] = [form['path'].value]
     if form.has_key('restrict'):
         user_arguments_dict['restrict'] = [form['restrict'].value]
+    else:
+        user_arguments_dict['restrict'] = defaults['restrict']
     logger.info('Filtered input is: %s' % user_arguments_dict)
 
     # Now validate parts as usual
@@ -130,8 +151,10 @@ def main(client_id, user_arguments_dict):
     # leaking information about file system layout while allowing consistent
     # error messages
 
-    real_path = os.path.realpath(base_dir + path)
+    real_path = os.path.realpath(os.path.join(base_dir, path))
+
     # Implicit destination
+
     if os.path.isdir(real_path):
         real_path = os.path.join(real_path, os.path.basename(file_name))
 
@@ -149,32 +172,53 @@ def main(client_id, user_arguments_dict):
                                % path})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    # We fork off here and redirect the user to a progress page for user
+    # friendly output and to avoid cgi timeouts from killing the upload.
+    # We use something like the Active State python recipe for daemonizing
+    # to properly detach from the CGI process and continue in the background.
+    # Please note that we only close stdio file descriptors to avoid closing
+    # the fileupload.
+
+    file_item.file.seek(0, 2)
+    total_size = file_item.file.tell()
+    file_item.file.seek(0, 0)
+
     try:
-        logger.info('Writing %s' % real_path)
-        upload_fd = open(real_path, 'wb')
-        while True:
-            chunk = file_item.file.read(block_size)
-            if not chunk:
-                break
-            upload_fd.write(chunk)
-        upload_fd.close()
-        logger.info('Wrote %s' % real_path)
-
-        if restrict:
-            os.chmod(real_path, 0600)
-
-        # everything ok
-
-        output_objects.append({'object_type': 'text', 'text'
-                              : 'Saved changes to %s.' % path})
-    except Exception, exc:
-
-        # Don't give away information about actual fs layout
-
+        pid = os.fork()
+        if pid == 0:
+            os.setsid()
+            pid = os.fork()
+            if pid == 0:
+                os.chdir('/')
+                os.umask(0)
+                for fno in range(3):
+                    try: 
+                        os.close(fno)
+                    except OSError:
+                        pass
+            else:
+                os._exit(0)
+    except OSError, ose:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s could not be written! (%s)'
-                               % (path, str(exc).replace(base_dir, ''
-                              ))})
+                               : '%s upload could not background! (%s)'
+                               % (path, str(ose).replace(base_dir, ''
+                                                         ))})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    # The detached grand child takes care of writing and the original process
+    # redirects to progress page
+
+    if pid == 0:
+        try:
+            write_chunks(real_path, file_item.file, restrict)
+        except Exception, exc:
+            pass
+    else:
+        output_objects.append({'object_type': 'text', 'text'
+                               : 'Upload of %s in progress' % path})
+        progress_link = {'object_type': 'link', 'text': 'show progress',
+                         'destination': 'uploadprogress.py?path=%s;size=%d'
+                         % (path, total_size)}
+        output_objects.append(progress_link)
+                        
     return (output_objects, status)

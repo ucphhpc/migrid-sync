@@ -150,6 +150,15 @@ ___%s___
             continue
         elif i['object_type'] == 'file':
             lines.append('%s\n' % i['name'])
+        elif i['object_type'] == 'progress_list':
+            progress_list = i['progress_list']
+            header = [['Path', 'Size', 'Total Size', 'Percent', 'Completed']]
+            lines += pprint_table(txt_table_if_have_keys(header,
+                                                         progress_list,
+                                                         ['path', 'cur_size',
+                                                          'total_size',
+                                                          'percent', 'done']))
+            
         elif i['object_type'] == 'submitstatuslist':
             submitstatuslist = i['submitstatuslist']
             if len(submitstatuslist) == 0:
@@ -907,6 +916,26 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                              links]))
         elif i['object_type'] == 'file':
             lines.append(i['name'])
+        elif i['object_type'] == 'progress_list':
+            progress_list = i['progress_list']
+            header = [['Path', 'Size', 'Total Size', 'Percent', 'Completed']]
+            if len(progress_list) == 0:
+                lines.append('No progress status found!')
+            else:
+
+                lines.append('<table class="progress"><tr>')
+                for title in header[0]:
+                    lines.append('<th>%s</th>' % title)
+                lines.append('</tr>')
+                for progress in progress_list:
+                    lines.append('<tr>%s</tr>'
+                                  % html_table_if_have_keys(progress,
+                                                            ['path',
+                                                             'cur_size',
+                                                             'total_size',
+                                                             'percent',
+                                                             'done']))
+                lines.append('</table>')    
         elif i['object_type'] == 'submitstatuslist':
             submitstatuslist = i['submitstatuslist']
             if len(submitstatuslist) == 0:

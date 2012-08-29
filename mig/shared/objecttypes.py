@@ -53,6 +53,11 @@ warning = {'object_type': 'warning', 'required': ['text'],
 direntry = {'object_type': 'direntry', 'required': ['name', 'type'],
             'optional': []}
 file = {'object_type': 'file', 'required': ['name'], 'optional': []}
+progress = {'object_type': 'progress', 'required':
+            ['progress_type', 'path', 'cur_size', 'total_size', 'percent',
+             'done'], 'optional': []}
+progress_list = {'object_type': 'progress_list', 'required_list':
+                   [('progress_list', 'progress')]}
 stat = {'object_type': 'stat', 'required': [
     'device',
     'inode',
@@ -208,6 +213,8 @@ valid_types_list = [
     job_list,
     direntry,
     file,
+    progress,
+    progress_list,
     directory,
     dir_listing,
     html_form,

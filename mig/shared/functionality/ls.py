@@ -715,9 +715,30 @@ Optional remote filename (extra useful in windows)
 </form>
 </td></tr>
 </table>
+<table class='files'>
+<tr class=title><td class=centertext colspan=4>
+Upload file with progress
+</td></tr>
+<tr><td colspan=4>
+Upload file to current directory (%(dest_dir)s)
+</td></tr>
+<tr><td colspan=2>
+<form enctype='multipart/form-data' action='upload.py' method='post'>
+</td></tr>
+<tr><td>
+File to upload
+</td><td class=righttext colspan=3>
+<input name='fileupload' type='file' size='50'/>
+</td></tr>
+<tr><td>
+Optional remote filename (extra useful in windows)
+</td><td class=righttext colspan=3>
+<input name='path' type='input' size='50' value='%(dest_dir)s'/>
+<input type='submit' value='Upload' name='sendfile'/>
+</form>
+</td></tr>
+</table>
     """
                                % {'dest_dir': relative_dir + os.sep}})
 
     return (output_objects, status)
-
-
