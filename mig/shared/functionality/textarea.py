@@ -53,7 +53,7 @@ from shared.validstring import valid_user_path
 def signature():
     """Signature of the main function"""
 
-    defaults = {'save_as_default': ['False']}
+    defaults = {'save_as_default': ['False'], 'file_fields': ['0']}
     return ['html_form', defaults]
 
 
@@ -155,8 +155,10 @@ def main(client_id, user_arguments_dict):
     defaults = signature()[1]
     # TODO: all non-file fields should be validated!!
     # Input fields are mostly file stuff so do not validate it
+    validate_args = dict([(key, user_arguments_dict.get(key, val)) for \
+                         (key, val) in defaults.items()])
     (validate_status, accepted) = validate_input_and_cert(
-        {'save_as_default': user_arguments_dict.get('save_as_default', [])},
+        validate_args,
         defaults,
         output_objects,
         client_id,
@@ -177,6 +179,7 @@ def main(client_id, user_arguments_dict):
     submitstatuslist = []
     fileuploadobjs = []
     filenumber = 0
+    file_fields = int(accepted.get('file_fields', -1)[-1])
     save_as_default = (accepted['save_as_default'][-1] != 'False')
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -192,7 +195,7 @@ def main(client_id, user_arguments_dict):
 
         if not content:
 
-            # no data for filenumber found
+            # no field count and no data for filenumber found
 
             break
 
@@ -228,10 +231,23 @@ def main(client_id, user_arguments_dict):
                         "named %s") % filename_key})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
-            local_filename = base_dir\
-                 + convert_control_value_to_line(filename_key,
-                                                 user_arguments_dict)
+            filename_val = convert_control_value_to_line(filename_key,
+                                                         user_arguments_dict)
+            if not filename_val:
+                if filenumber < file_fields:
 
+                    # blank field but file_fields indicates more fields
+
+                    filenumber += 1
+                    continue
+
+                output_objects.append(
+                    {'object_type': 'error_text', 'text'
+                     : 'No filename found - please make sure you provide a " \
+                     "file to upload'})
+                return (output_objects, returnvalues.CLIENT_ERROR)
+
+            local_filename = base_dir + filename_val
             if not valid_user_path(local_filename, base_dir):
                 output_objects.append(
                     {'object_type': 'error_text', 'text'
@@ -260,12 +276,6 @@ def main(client_id, user_arguments_dict):
 
             # An input type=file was found
 
-            extract_packages = False
-            extract_key = 'extract_%s' % filenumber
-            if user_arguments_dict.has_key(extract_key):
-                val = str(user_arguments_dict[extract_key][0]).upper()
-                if val == 'ON' or val == 'TRUE':
-                    extract_packages = True
             fileupload_key = 'fileupload_%s_0_0' % filenumber
 
             # if not fileitem.filename:
@@ -275,6 +285,32 @@ def main(client_id, user_arguments_dict):
                 output_objects.append({'object_type': 'error_text',
                         'text': 'NO FILENAME error'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
+
+            base_name = strip_dir(user_arguments_dict[fileupload_key
+                                   + 'filename'])
+            if not base_name:
+                if filenumber < file_fields:
+
+                    # blank field but file_fields indicates more fields
+
+                    # output_objects.append({'object_type': 'text', 'text':
+                    #                        'skip item %d' % filenumber})
+                    
+                    filenumber += 1
+                    continue
+
+                output_objects.append(
+                    {'object_type': 'error_text', 'text'
+                     : 'No filename found - please make sure you provide a " \
+                     "file to upload'})
+                return (output_objects, returnvalues.CLIENT_ERROR)
+
+            extract_packages = False
+            extract_key = 'extract_%s' % filenumber
+            if user_arguments_dict.has_key(extract_key):
+                val = str(user_arguments_dict[extract_key][0]).upper()
+                if val == 'ON' or val == 'TRUE':
+                    extract_packages = True
 
             remote_filename = ''
             default_remotefilename_key = 'default_remotefilename_%s'\
@@ -289,15 +325,6 @@ def main(client_id, user_arguments_dict):
             if user_arguments_dict.has_key(remotefilename_key):
                 remote_filename = \
                     user_arguments_dict[remotefilename_key][0]
-
-            base_name = strip_dir(user_arguments_dict[fileupload_key
-                                   + 'filename'])
-            if not base_name:
-                output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : 'No filename found - please make sure you provide a " \
-                     "file to upload'})
-                return (output_objects, returnvalues.CLIENT_ERROR)
 
             if not remote_filename:
                 remote_filename = base_name
@@ -520,5 +547,3 @@ def main(client_id, user_arguments_dict):
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     return (output_objects, returnvalues.OK)
-
-

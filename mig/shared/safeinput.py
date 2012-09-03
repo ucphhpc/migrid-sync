@@ -750,7 +750,7 @@ def guess_type(name):
         for key in ('max_jobs', 'lines', 'cputime', 'size', 'software_entries',
                 'environment_entries', 'testprocedure_entry', 'width',
                 'height', 'depth', 'hd_size', 'memory', ' net_bw', 'cpu_count',
-                'cpu_time', ):
+                'cpu_time', 'field_count', ):
             __type_map[key] = valid_numeric
         for key in ('offset', ):
             __type_map[key] = valid_integer
