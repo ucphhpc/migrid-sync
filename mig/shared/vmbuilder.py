@@ -80,8 +80,11 @@ def build_vm(vm_specs):
     # Recent suites added unused unity package(s)
     if build_specs['suite'] in ('precise', ):
         build_specs['remove_packages'].append('unity')
-    build_specs['postinst_adds'] = ' '.join(build_specs['late_adds'])
-    build_specs['postinst_removes'] = ' '.join(build_specs['late_removes'])
+    # Make sure basic package adds and removes are done
+    build_specs['postinst_adds'] = ' '.join(build_specs['add_packages'] + \
+                                            build_specs['late_adds'])
+    build_specs['postinst_removes'] = ' '.join(build_specs['remove_packages'] \
+                                               + build_specs['late_removes'])
     # Fill conf template (currently just copies it since all args are explicit)
     tmp_dir = mkdtemp()
     conf_path = os.path.join(tmp_dir, '%(distro)s.cfg' % build_specs)
