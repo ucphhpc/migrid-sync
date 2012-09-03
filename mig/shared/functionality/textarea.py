@@ -280,7 +280,6 @@ def main(client_id, user_arguments_dict):
             default_remotefilename_key = 'default_remotefilename_%s'\
                  % filenumber
             if user_arguments_dict.has_key(default_remotefilename_key):
-                fileuploadobjs.append(fileuploadobj)
                 remote_filename = \
                     user_arguments_dict[default_remotefilename_key][0]
 
