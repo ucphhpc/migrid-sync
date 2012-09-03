@@ -194,6 +194,12 @@ def main(client_id, user_arguments_dict):
                 user_arguments_dict, configuration)
 
         if not content:
+            if filenumber < file_fields:
+
+                # blank field but file_fields indicates more fields
+                    
+                filenumber += 1
+                continue
 
             # no field count and no data for filenumber found
 
