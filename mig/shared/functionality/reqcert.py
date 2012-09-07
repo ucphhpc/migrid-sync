@@ -60,10 +60,10 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s certificate request' % configuration.short_title
     title_entry['skipmenu'] = True
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Welcome to the %s certificate request page' % \
-                            configuration.short_title
-                          })
+    header_entry = {'object_type': 'header', 'text'
+                    : 'Welcome to the %s certificate request page' % \
+                    configuration.short_title}
+    output_objects.append(header_entry)
     
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -75,8 +75,10 @@ def main(client_id, user_arguments_dict):
                    'state': '', 'country': '', 'password': '',
                    'verifypassword': ''}
     if not os.path.isdir(base_dir) and client_id:
+
         # Redirect to extcert page with certificate requirement but without
         # changing access method (CGI vs. WSGI).
+
         extcert_url = os.environ['REQUEST_URI'].replace('-sid', '-bin')
         extcert_url = os.path.join(os.path.dirname(extcert_url), 'extcert.py')
         extcert_link = {'object_type': 'link', 'destination': extcert_url,
@@ -91,6 +93,8 @@ def main(client_id, user_arguments_dict):
                                 configuration.short_title
                               })
     elif client_id:
+        for entry in (title_entry, header_entry):
+            entry['text'] = entry['text'].replace('request', 'request / renew')
         output_objects.append({'object_type': 'html_form', 'text'
                               : '''<p>
 Apparently you already have a valid %s certificate, but if it is about to
@@ -109,6 +113,7 @@ old files, jobs and privileges.</p>''' % \
         'password_max_len': password_max_len,
         'site': configuration.short_title
         })
+
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the certificate request to the %(site)s administrators.<p>
