@@ -1166,13 +1166,22 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             resource_html += '<h3>%s</h3>' % i['unique_resource_name']
             resource_html += \
                           '<table class="resource" frame=hsides rules=none cellpadding=5>'
+            resource_html += '<tr><td colspan=2><h3>General</h3></td></tr>'
             for (key, val) in i['fields']:
                 resource_html += \
                           '<tr><td>%s</td><td>%s</td></tr>' % \
                           (key, val)
+            resource_html += '<tr><td colspan=2><h3>Exes</h3></td></tr>'
             for (exe_name, exe_spec) in i['exes'].items():
                 resource_html += '<tr><td><b>%s</b></td></tr>' % exe_name
                 for (key, val) in exe_spec:
+                    resource_html += \
+                                  '<tr><td>%s</td><td>%s</td></tr>' % \
+                                  (key, val)
+            resource_html += '<tr><td colspan=2><h3>Stores</h3></td></tr>'
+            for (store_name, store_spec) in i['stores'].items():
+                resource_html += '<tr><td><b>%s</b></td></tr>' % store_name
+                for (key, val) in store_spec:
                     resource_html += \
                                   '<tr><td>%s</td><td>%s</td></tr>' % \
                                   (key, val)

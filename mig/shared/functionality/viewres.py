@@ -31,7 +31,8 @@ import shared.returnvalues as returnvalues
 from shared.conf import get_resource_configuration
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
-from shared.resconfkeywords import get_resource_keywords, get_exenode_keywords
+from shared.resconfkeywords import get_resource_keywords, \
+     get_exenode_keywords, get_storenode_keywords
 from shared.vgridaccess import user_visible_res_confs, user_allowed_vgrids, \
      CONF
 
@@ -49,15 +50,18 @@ def build_resitem_object_from_res_dict(configuration, unique_resource_name,
 
     res_keywords = get_resource_keywords(configuration)
     exe_keywords = get_exenode_keywords(configuration)
+    store_keywords = get_storenode_keywords(configuration)
     res_fields = ['PUBLICNAME', 'CPUCOUNT', 'NODECOUNT', 'MEMORY', 'DISK',
                  'ARCHITECTURE', 'JOBTYPE', 'MAXUPLOADBANDWIDTH',
                  'MAXDOWNLOADBANDWIDTH', 'SANDBOX']
     exe_fields = ['cputime', 'nodecount']
+    store_fields = ['storage_disk', 'storage_protocol']
     res_item = {
         'object_type': 'resource_info',
         'unique_resource_name': unique_resource_name,
         'fields': [],
         'exes': {},
+        'stores': {},
         }
     for name in res_fields:
         res_item['fields'].append((res_keywords[name]['Title'],
@@ -67,6 +71,8 @@ def build_resitem_object_from_res_dict(configuration, unique_resource_name,
                                ', '.join([name for (name, val) in rte_spec])))
     for exe in res_dict.get('EXECONFIG', []):
         exe_name = exe['name']
+        if not exe_name:
+            continue
         exe_spec = res_item['exes'][exe_name] = []
         for name in exe_fields:
             exe_spec.append((exe_keywords[name]['Title'],
@@ -77,6 +83,21 @@ def build_resitem_object_from_res_dict(configuration, unique_resource_name,
             visible_vgrids.append('%d undisclosed' % \
                                   (len(exec_vgrids) - len(visible_vgrids)))
         exe_spec.append((exe_keywords['vgrid']['Title'],
+                         ', '.join(visible_vgrids)))
+    for store in res_dict.get('STORECONFIG', []):
+        store_name = store['name']
+        if not store_name:
+            continue
+        store_spec = res_item['stores'][store_name] = []
+        for name in store_fields:
+            store_spec.append((store_keywords[name]['Title'],
+                             store.get(name, 'UNKNOWN')))
+        storage_vgrids = store.get('vgrid', [])
+        visible_vgrids = [i for i in storage_vgrids if i in allow_vgrids]
+        if visible_vgrids != storage_vgrids:
+            visible_vgrids.append('%d undisclosed' % \
+                                  (len(storage_vgrids) - len(visible_vgrids)))
+        store_spec.append((store_keywords['vgrid']['Title'],
                          ', '.join(visible_vgrids)))
     return res_item
 
