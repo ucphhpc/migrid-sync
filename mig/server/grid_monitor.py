@@ -504,7 +504,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 mount_point = last_status_dict.get('MOUNT_POINT', 'UNKNOWN')
                 is_live = os.path.ismount(mount_point)
                 total_disk = last_status_dict['RESOURCE_CONFIG']['DISK']
-                free_disk, used_disk, used_percent = 0, 0, 0
+                free_disk, avail_disk, used_disk, used_percent = 0, 0, 0, 0
                 gig_bytes = 1.0 * 2**30
                 if is_live:
 
@@ -625,7 +625,7 @@ A total of <b>'''\
          + str(total_number_of_exe_resources) + '</b> exe resources ('\
          + str(total_number_of_exe_cpus) + " cpu's) and <b>"\
          + str(total_number_of_store_resources) + '</b> store resources ('\
-         + str(total_number_of_store_gigs) + " GB) joined this VGrid ("\
+         + str(int(total_number_of_store_gigs)) + " GB) joined this VGrid ("\
          + str(up_count) + ' up, ' + str(down_count) + ' down?, '\
          + str(slack_count) + ' slack)<br />'
     html += str(job_assigned) + ' exe resources (' + str(job_assigned_cpus)\
