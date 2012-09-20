@@ -492,6 +492,13 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                          + mon_file_name
                     continue
 
+                difference = datetime.datetime.now()\
+                     - last_status_dict['CREATED_TIME']
+                days = str(difference.days)
+                hours = str(difference.seconds / 3600)
+                minutes = str((difference.seconds % 3600) / 60)
+                seconds = str((difference.seconds % 60) % 60)
+
                 unique_res_name_and_store_list = \
                                              filename.split('monitor_last_status_', 1)
                 mount_point = last_status_dict.get('MOUNT_POINT', 'UNKNOWN')
@@ -524,7 +531,6 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 else:
                     resource_status = 'unknown'
 
-
                 stores += '<tr>'
                 stores += \
                     '<td><img src=/images/status-icons/%s.png /></td>'\
@@ -550,21 +556,9 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 stores += '<td>%d</td>' % used_disk
                 stores += '<td>%d</td>' % avail_disk
                 stores += '<td>%d</td>' % used_percent
-                stores += '<td>' + resource_status + '</td>'
 
                 stores += '<td class=status_%s>' % resource_status
-                if 'unavailable' == resource_status:
-                    stores += '-'
-                elif 'slack' == resource_status:
-                    stores += 'Within slack period (%s < %s secs)'\
-                         % (time_rem_abs.seconds, slackperiod)
-                elif 'offline' == resource_status:
-                    stores += 'down?'
-                else:
-                    stores += '%sd, %sh, %sm, %ss'\
-                         % (days_rem, hours_rem, minutes_rem,
-                            seconds_rem)
-                stores += '</td>'
+                stores += resource_status + '</td>'
 
                 stores += '</tr>\n'
                 total_number_of_store_resources += 1
