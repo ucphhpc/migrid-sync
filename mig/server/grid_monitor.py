@@ -303,50 +303,21 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
             if not entry == '':
                 html += '<tr><td>' + entry + '</td><td>'\
                      + str(runtimeenv_dict[entry]) + '</td></tr>\n'
-    html += \
-        """</table>
-</div>
-</td></tr>
 
-</table>
-<h2>Resource Job Requests</h2>
-Listing the last request from each resource<br />
-<br />
-<table class="monitor columnsort">
-<thead class="title">
-<tr>
-  <th width="1"><!-- Status icon --></th>
-  <th>Resource ID, unit</th>
-  <th>Last seen</th>
-  <th>VGrid</th>
-  <th>Runtime envs</th>
-  <th>CPU time (s)</th>
-  <th>Node count</th>
-  <th>CPU count</th>
-  <th>Disk (GB)</th>
-  <th>Memory (MB)</th>
-  <th>Arch</th>
-  <th>Status</th>
-  <th>Job (s)</th>
-  <th>Remaining</th>
-</tr>
-</thead>
-<tbody>
-"""
-
-    total_number_of_resources = 0
-    total_number_of_cpus = 0
+    total_number_of_exe_resources, total_number_of_store_resources = 0, 0
+    total_number_of_exe_cpus, total_number_of_store_gigs= 0, 0
 
     vgrid_name_list = vgrid_name.split('/')
     current_dir = ''
 
+    exes, stores = '', ''
     for vgrid_name_part in vgrid_name_list:
         current_dir = os.path.join(current_dir, vgrid_name_part)
-        abs_dir = os.path.join(configuration.vgrid_home, current_dir)
-        # print 'dir: %s' % abs_dir
+        abs_mon_dir = os.path.join(configuration.vgrid_home, current_dir)
+        # print 'dir: %s' % abs_mon_dir
         # Potential race - just ignore if it disappeared
         try:
-            sorted_names = os.listdir(abs_dir)
+            sorted_names = os.listdir(abs_mon_dir)
         except OSError:
             continue
         sorted_names.sort()
@@ -356,7 +327,7 @@ Listing the last request from each resource<br />
 
                 # read file
 
-                mon_file_name = os.path.join(abs_dir, filename)
+                mon_file_name = os.path.join(abs_mon_dir, filename)
                 print 'found ' + mon_file_name
                 last_request_dict = unpickle(mon_file_name, logger)
                 if not last_request_dict:
@@ -439,8 +410,8 @@ Listing the last request from each resource<br />
                         resource_status = 'online'
                         up_count = up_count + 1
 
-                    html += '<tr>'
-                    html += \
+                    exes += '<tr>'
+                    exes += \
                         '<td><img src=/images/status-icons/%s.png /></td>'\
                          % resource_status
                     public_id = unique_res_name_and_exe_list[1]
@@ -454,18 +425,18 @@ Listing the last request from each resource<br />
                     else:
                         resource_name += "<br />(no alias)"
                     resource_name += "<br />%s" % resource_parts[1]
-                    html += '<td>%s</td>' % resource_name
+                    exes += '<td>%s</td>' % resource_name
 
-                    html += '<td>%s<br />(%sd %sh %sm %ss ago)</td>' % \
+                    exes += '<td>%s<br />(%sd %sh %sm %ss ago)</td>' % \
                             (time.asctime(last_request_dict['CREATED_TIME'].timetuple()),
                              days, hours, minutes, seconds)
-                    html += '<td>' + vgrid_name + '</td>'
+                    exes += '<td>' + vgrid_name + '</td>'
                     runtime_envs = last_request_dict['RESOURCE_CONFIG'
                                ]['RUNTIMEENVIRONMENT']
                     re_list_text = ', '.join([i[0] for i in runtime_envs])
-                    html += '<td title="%s">' % re_list_text \
+                    exes += '<td title="%s">' % re_list_text \
                          + str(len(runtime_envs)) + '</td>'
-                    html += '<td>'\
+                    exes += '<td>'\
                          + str(last_request_dict['RESOURCE_CONFIG'
                                ]['CPUTIME']) + '</td><td>'\
                          + str(last_request_dict['RESOURCE_CONFIG'
@@ -478,25 +449,25 @@ Listing the last request from each resource<br />
                                ]['MEMORY']) + '</td><td>'\
                          + str(last_request_dict['RESOURCE_CONFIG'
                                ]['ARCHITECTURE']) + '</td>'
-                    html += '<td>' + last_request_dict['STATUS']\
+                    exes += '<td>' + last_request_dict['STATUS']\
                          + '</td><td>' + str(last_request_dict['CPUTIME'
                             ]) + '</td>'
 
-                    html += '<td class=status_%s>' % resource_status
+                    exes += '<td class=status_%s>' % resource_status
                     if 'unavailable' == resource_status:
-                        html += '-'
+                        exes += '-'
                     elif 'slack' == resource_status:
-                        html += 'Within slack period (%s < %s secs)'\
+                        exes += 'Within slack period (%s < %s secs)'\
                              % (time_rem_abs.seconds, slackperiod)
                     elif 'offline' == resource_status:
-                        html += 'down?'
+                        exes += 'down?'
                     else:
-                        html += '%sd, %sh, %sm, %ss'\
+                        exes += '%sd, %sh, %sm, %ss'\
                              % (days_rem, hours_rem, minutes_rem,
                                 seconds_rem)
-                    html += '</td>'
+                    exes += '</td>'
 
-                    html += '</tr>\n'
+                    exes += '</tr>\n'
                     if last_request_dict['STATUS'] == 'Job assigned':
                         job_assigned = job_assigned + 1
                         job_assigned_cpus = job_assigned_cpus\
@@ -505,24 +476,165 @@ Listing the last request from each resource<br />
                              * int(last_request_dict['RESOURCE_CONFIG'
                                    ]['CPUCOUNT'])
 
-                    total_number_of_resources = \
-                        total_number_of_resources + 1
-                    total_number_of_cpus = total_number_of_cpus\
-                         + int(last_request_dict['RESOURCE_CONFIG'
-                               ]['NODECOUNT'])\
-                         * int(last_request_dict['RESOURCE_CONFIG'
-                               ]['CPUCOUNT'])
+                    total_number_of_exe_resources += 1
+                    total_number_of_exe_cpus += int(
+                        last_request_dict['RESOURCE_CONFIG']['NODECOUNT']) \
+                        * int(last_request_dict['RESOURCE_CONFIG']['CPUCOUNT'])
+            elif filename.startswith('monitor_last_status_'):
 
+                # read file
+
+                mon_file_name = os.path.join(abs_mon_dir, filename)
+                print 'found ' + mon_file_name
+                last_status_dict = unpickle(mon_file_name, logger)
+                if not last_status_dict:
+                    print 'could not open and unpickle: '\
+                         + mon_file_name
+                    continue
+
+                unique_res_name_and_store_list = \
+                                             filename.split('monitor_last_status_', 1)
+                mount_point = last_status_dict.get('MOUNT_POINT', 'UNKNOWN')
+                is_live = os.path.ismount(mount_point)
+                total_disk = last_status_dict['RESOURCE_CONFIG']['DISK']
+                free_disk, used_disk, used_percent = 0, 0, 0
+                gig_bytes = 1.0 * 2**30
+                if is_live:
+
+                    # These disk stats are slightly confusing but match 'df'
+                    # 'available' is the space that can actually be used so it
+                    # is typically less than 'free'.
+                    
+                    disk_stats = os.statvfs(mount_point)
+                    total_disk = disk_stats.f_bsize * disk_stats.f_blocks / gig_bytes
+                    avail_disk = disk_stats.f_bsize * disk_stats.f_bavail / gig_bytes
+                    free_disk = disk_stats.f_bsize * disk_stats.f_bfree / gig_bytes
+                    used_disk = total_disk - free_disk
+                    used_percent = 100.0 * used_disk / (avail_disk + used_disk)
+                if last_status_dict['STATUS'] == 'stopped':
+                    resource_status = 'offline'
+                    down_count = down_count + 1
+                elif last_status_dict['STATUS'] == 'started':
+                    if is_live:
+                        resource_status = 'online'
+                        up_count = up_count + 1
+                    else:
+                        resource_status = 'unavailable'
+                        down_count = down_count + 1
+                else:
+                    resource_status = 'unknown'
+
+
+                stores += '<tr>'
+                stores += \
+                    '<td><img src=/images/status-icons/%s.png /></td>'\
+                     % resource_status
+                public_id = unique_res_name_and_store_list[1]
+                if last_status_dict['RESOURCE_CONFIG'].get('ANONYMOUS', True):
+                    public_id = anon_resource_id(public_id)
+                public_name = last_status_dict['RESOURCE_CONFIG'].get('PUBLICNAME', '')
+                resource_parts = public_id.split('_', 2)
+                resource_name = resource_parts[0]
+                if public_name:
+                    resource_name += "<br />(alias %s)" % public_name
+                else:
+                    resource_name += "<br />(no alias)"
+                resource_name += "<br />%s" % resource_parts[1]
+                stores += '<td>%s</td>' % resource_name
+
+                stores += '<td>%s<br />(%sd %sh %sm %ss ago)</td>' % \
+                        (time.asctime(last_status_dict['CREATED_TIME'].timetuple()),
+                         days, hours, minutes, seconds)
+                stores += '<td>' + vgrid_name + '</td>'
+                stores += '<td>%d</td>' % total_disk
+                stores += '<td>%d</td>' % used_disk
+                stores += '<td>%d</td>' % avail_disk
+                stores += '<td>%d</td>' % used_percent
+                stores += '<td>' + resource_status + '</td>'
+
+                stores += '<td class=status_%s>' % resource_status
+                if 'unavailable' == resource_status:
+                    stores += '-'
+                elif 'slack' == resource_status:
+                    stores += 'Within slack period (%s < %s secs)'\
+                         % (time_rem_abs.seconds, slackperiod)
+                elif 'offline' == resource_status:
+                    stores += 'down?'
+                else:
+                    stores += '%sd, %sh, %sm, %ss'\
+                         % (days_rem, hours_rem, minutes_rem,
+                            seconds_rem)
+                stores += '</td>'
+
+                stores += '</tr>\n'
+                total_number_of_store_resources += 1
+                total_number_of_store_gigs += total_disk
+
+    html += """</table>
+</div>
+</td></tr>
+
+</table>
+<h2>Resource Job Requests</h2>
+Listing the last request from each resource<br />
+<br />
+<table class="monitor columnsort">
+<thead class="title">
+<tr>
+  <th width="1"><!-- Status icon --></th>
+  <th>Resource ID, unit</th>
+  <th>Last seen</th>
+  <th>VGrid</th>
+  <th>Runtime envs</th>
+  <th>CPU time (s)</th>
+  <th>Node count</th>
+  <th>CPU count</th>
+  <th>Disk (GB)</th>
+  <th>Memory (MB)</th>
+  <th>Arch</th>
+  <th>Status</th>
+  <th>Job (s)</th>
+  <th>Remaining</th>
+</tr>
+</thead>
+<tbody>
+"""
+    html += exes
     html += '</tbody>\n</table>\n'
 
+    html += """
+<h2>Resource Storage</h2>
+Listing the last check for each resource<br />
+<br />
+<table class="monitor columnsort">
+<thead class="title">
+<tr>
+  <th width="1"><!-- Status icon --></th>
+  <th>Resource ID, unit</th>
+  <th>Last Status</th>
+  <th>VGrid</th>
+  <th>Total Disk (GB)</th>
+  <th>Used Disk (GB)</th>
+  <th>Available Disk (GB)</th>
+  <th>Disk Use %</th>
+  <th>Status</th>
+</tr>
+</thead>
+<tbody>
+"""
+    html += stores
+    html += '</tbody>\n</table>\n'
+    
     html += '''
 <h2>VGrid Totals</h2>
 A total of <b>'''\
-         + str(total_number_of_resources) + '</b> resources ('\
-         + str(total_number_of_cpus) + " cpu's) joined this VGrid ("\
+         + str(total_number_of_exe_resources) + '</b> exe resources ('\
+         + str(total_number_of_exe_cpus) + " cpu's) and <b>"\
+         + str(total_number_of_store_resources) + '</b> store resources ('\
+         + str(total_number_of_store_gigs) + " GB) joined this VGrid ("\
          + str(up_count) + ' up, ' + str(down_count) + ' down?, '\
          + str(slack_count) + ' slack)<br />'
-    html += str(job_assigned) + ' resources (' + str(job_assigned_cpus)\
+    html += str(job_assigned) + ' exe resources (' + str(job_assigned_cpus)\
          + """ cpu's) appear to be executing a job<br />
 <br />
 """

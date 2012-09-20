@@ -32,12 +32,13 @@ import subprocess
 import tempfile
 import fcntl
 import time
+import datetime
 
 # MiG imports
 
 from shared.conf import get_resource_configuration, get_resource_exe, \
     get_resource_store, get_configuration_object
-from shared.fileio import unpickle
+from shared.fileio import unpickle, pickle
 from shared.ssh import execute_on_resource, execute_on_exe, execute_on_store, \
     copy_file_to_exe, copy_file_to_resource
 
@@ -881,6 +882,28 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
                 msg += ' failed to link %s into %s: %s. ' % (mount_point, vgrid_link, exc)
                 logger.error('failed to link %s: %s' % (mount_point, exc))
 
+    # save monitor_last_status files
+    # for vgrid_monitor in all vgrids where this resource is providing storage
+
+    last_status_dict = {'RESOURCE_CONFIG': {}}
+    last_status_dict['RESOURCE_CONFIG'].update(resource_config)
+    last_status_dict['CREATED_TIME'] = datetime.datetime.now()
+    last_status_dict['MOUNT_POINT'] = mount_point
+    if status: 
+        last_status_dict['STATUS'] = 'started'
+    else:
+        last_status_dict['STATUS'] = 'stopped'
+    
+    for vgrid in store['vgrid']:
+        logger.info("save status for '%s' store '%s'" % (vgrid, store_name))
+        status_path = os.path.join(configuration.vgrid_home, vgrid,
+                                   'monitor_last_status_' + \
+                                   unique_resource_name + '_' + store_name)
+        
+        pickle(last_status_dict, status_path, logger)
+        logger.info('vgrid_name: %s status: %s' % \
+                    (vgrid, last_status_dict['STATUS']))
+
     return (status, msg)
 
 
@@ -1448,6 +1471,29 @@ def resource_store_action(
         msg += ssh_error_msg
     else:
         msg += ssh_status_msg
+
+    # save monitor_last_status files
+    # for vgrid_monitor in all vgrids where this resource is providing storage
+
+    for vgrid in store['vgrid']:
+        logger.info("save status for '%s' store '%s'" % (vgrid, store_name))
+        status_path = os.path.join(configuration.vgrid_home, vgrid,
+                                   'monitor_last_status_' + \
+                                   unique_resource_name + '_' + store_name)
+        
+        last_status_dict = unpickle(status_path, logger)
+        if not last_status_dict:
+            last_status_dict = {'RESOURCE_CONFIG': {}}
+            last_status_dict['STATUS'] = 'UNKNOWN'
+            last_status_dict['MOUNT_POINT'] = 'UNKNOWN'
+            
+        last_status_dict['RESOURCE_CONFIG'].update(resource_config)
+        if action != 'status':
+            last_status_dict['STATUS'] = 'stopped'
+            last_status_dict['CREATED_TIME'] = datetime.datetime.now()
+        pickle(last_status_dict, status_path, logger)
+        logger.info('vgrid_name: %s status: %s' % \
+                    (vgrid, last_status_dict['STATUS']))
 
     return (status, msg)
 
