@@ -325,7 +325,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
             # print filename
             if filename.startswith('monitor_last_request_'):
 
-                # read file
+                # read last request helper file
 
                 mon_file_name = os.path.join(abs_mon_dir, filename)
                 print 'found ' + mon_file_name
@@ -482,7 +482,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                         * int(last_request_dict['RESOURCE_CONFIG']['CPUCOUNT'])
             elif filename.startswith('monitor_last_status_'):
 
-                # read file
+                # read last resource action status file
 
                 mon_file_name = os.path.join(abs_mon_dir, filename)
                 print 'found ' + mon_file_name
@@ -499,34 +499,45 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 minutes = str((difference.seconds % 3600) / 60)
                 seconds = str((difference.seconds % 60) % 60)
 
-                unique_res_name_and_store_list = \
-                                             filename.split('monitor_last_status_', 1)
+                unique_res_name_and_store_list = filename.split(
+                    'monitor_last_status_', 1)
                 mount_point = last_status_dict.get('MOUNT_POINT', 'UNKNOWN')
                 is_live = os.path.ismount(mount_point)
+                vgrid_link = os.path.join(configuration.vgrid_files_home,
+                                          vgrid_name,
+                                          unique_res_name_and_store_list[1])
+                is_linked = (os.path.realpath(vgrid_link) == mount_point)
                 total_disk = last_status_dict['RESOURCE_CONFIG']['DISK']
                 free_disk, avail_disk, used_disk, used_percent = 0, 0, 0, 0
                 gig_bytes = 1.0 * 2**30
-                if is_live:
-
-                    # These disk stats are slightly confusing but match 'df'
-                    # 'available' is the space that can actually be used so it
-                    # is typically less than 'free'.
+                
+                # These disk stats are slightly confusing but match 'df'
+                # 'available' is the space that can actually be used so it
+                # is typically less than 'free'.
                     
+                try:
                     disk_stats = os.statvfs(mount_point)
-                    total_disk = disk_stats.f_bsize * disk_stats.f_blocks / gig_bytes
-                    avail_disk = disk_stats.f_bsize * disk_stats.f_bavail / gig_bytes
-                    free_disk = disk_stats.f_bsize * disk_stats.f_bfree / gig_bytes
+                    total_disk = disk_stats.f_bsize * disk_stats.f_blocks / \
+                                 gig_bytes
+                    avail_disk = disk_stats.f_bsize * disk_stats.f_bavail / \
+                                 gig_bytes
+                    free_disk = disk_stats.f_bsize * disk_stats.f_bfree / \
+                                gig_bytes
                     used_disk = total_disk - free_disk
                     used_percent = 100.0 * used_disk / (avail_disk + used_disk)
+                except OSError, ose:
+                    print 'could not stat mount point %s: %s' % \
+                                 (mount_point, ose)
+                    is_live = False
                 if last_status_dict['STATUS'] == 'stopped':
                     resource_status = 'offline'
                     down_count = down_count + 1
                 elif last_status_dict['STATUS'] == 'started':
-                    if is_live:
+                    if is_live and is_linked:
                         resource_status = 'online'
                         up_count = up_count + 1
                     else:
-                        resource_status = 'unavailable'
+                        resource_status = 'slack'
                         down_count = down_count + 1
                 else:
                     resource_status = 'unknown'
