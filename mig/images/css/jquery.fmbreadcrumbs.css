@@ -1,0 +1,22 @@
+/* Custom layout for xbreadcrumbs plugin inside fie managers */
+.xbreadcrumbs LI {
+  border-right: none;
+  background: url(/images/icons/separator.gif) no-repeat right center;
+  padding-right: 15px;
+  padding-left: 10px;
+}
+.xbreadcrumbs LI A {
+  padding: 1px;
+  font-size: 12px;
+}
+.xbreadcrumbs LI.current { background: none; }
+.xbreadcrumbs LI A.home {
+  background: url(/images/icons/folder_user.png) no-repeat left center;
+  padding-left: 20px;
+}
+/*  Hide unused sub-level background */
+.xbreadcrumbs LI UL {
+  background: none;
+  visible: false;
+}
+.xbreadcrumbs LI UL LI { background: none; }

@@ -252,30 +252,7 @@ def js_tmpl(entry_path='/'):
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.contextmenu.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.xbreadcrumbs.css" media="screen"/>
-
-<style type="text/css">
-.xbreadcrumbs LI {
-  border-right: none;
-  background: url(/images/icons/separator.gif) no-repeat right center;
-  padding-right: 15px;
-  padding-left: 10px;
-}
-.xbreadcrumbs LI A {
-  padding: 1px;
-  font-size: 12px;
-}
-.xbreadcrumbs LI.current { background: none; }
-.xbreadcrumbs LI A.home {
-  background: url(/images/icons/folder_user.png) no-repeat left center;
-  padding-left: 20px;
-}
-/*  Hide unused sub-level background */
-.xbreadcrumbs LI UL {
-  background: none;
-  visible: false;
-}
-.xbreadcrumbs LI UL LI { background: none; }
-</style>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.fmbreadcrumbs.css" media="screen"/>
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
