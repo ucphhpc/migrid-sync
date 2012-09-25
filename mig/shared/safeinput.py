@@ -46,6 +46,7 @@ VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + '?!#$\xa4%&()[]{}*'\
      + '"' + "'`|^~" + '\\' + '\n\r\t'
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
 VALID_JOB_ID_CHARACTERS = VALID_FQDN_CHARACTERS + '_'
+VALID_JOB_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_+@$%'
 REJECT_UNSET = 'MUST_BE_SET_AND_NO_DEFAULT_VALUE'
 ALLOW_UNSAFE = \
     'THIS INPUT IS NOT VERIFIED: DO NOT EVER PRINT IT UNESCAPED! '
@@ -312,6 +313,21 @@ def valid_job_id(
 
     valid_chars = VALID_JOB_ID_CHARACTERS + extra_chars
     __valid_contents(job_id, valid_chars, min_length, max_length)
+
+
+def valid_job_name(
+    job_name,
+    min_length=0,
+    max_length=255,
+    extra_chars='',
+    ):
+    """Verify that supplied job name, only contains characters that we
+    consider valid. Job names are user provided names possibly with common
+    special characters.
+    """
+
+    valid_chars = VALID_JOB_NAME_CHARACTERS + extra_chars
+    __valid_contents(job_name, valid_chars, min_length, max_length)
 
 
 def valid_path_pattern(
@@ -737,7 +753,7 @@ def guess_type(name):
         for key in ('path', 'src', 'dst', 'current_dir', 'cmd', 'pattern', ):
             __type_map[key] = valid_path_pattern
         for key in ('vgrid_name', 'fileupload', 'public_image',
-                    'site_script_deps', ):
+                    'site_script_deps', 'jobname', ):
             __type_map[key] = valid_path
         for key in ('job_id', 'resource', 'search', 'name', ):
             __type_map[key] = valid_job_id_pattern

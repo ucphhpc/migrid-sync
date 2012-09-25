@@ -35,7 +35,7 @@ import tempfile
 
 from shared.rekeywords import get_keywords_dict
 from shared.resconfkeywords import get_keywords_dict as resconf_get_keywords_dict
-from shared.safeinput import valid_job_id
+from shared.safeinput import valid_job_name
 
 comment_char = '#'
 
@@ -367,7 +367,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                                 keyword_dict, keyword_data)
                 if job_keyword == 'JOBNAME':
                     try:
-                        valid_job_id(str(keyword_data[0]), min_length=0)
+                        valid_job_name(str(keyword_data[0]), min_length=0)
                     except Exception, err:
                         status = False
                         msg += print_type_error(job_keyword,
