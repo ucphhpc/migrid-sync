@@ -37,8 +37,10 @@ basic usage.
 
 
 = Prerequisites =
-In order to access MiG you generally need a MiG key/certificate pair: please
-contact us if you haven't already got one.
+In order to access MiG you generally need a MiG key/certificate
+pair. Please refer to our 
+[Getting Started http://code.google.com/p/migrid/wiki/GettingStarted]
+page if you haven't already got one.
 
 The user scripts rely heavily on [curl http://curl.haxx.se] for communication
 with the MiG servers. Any recent version of curl should work without problems,
@@ -55,7 +57,7 @@ and //sh//. The python scripts provide platform independent script access
 to MiG, but may require the user to install 
 [python http://www.python.org]
  if not already available. The sh scripts on the
-other hand are un*x primarily, but seldom require anything to be installed
+other hand are UN*X primarily, but seldom require anything to be installed
 as an sh-interpreter is normally readily available.
 The sh-scripts are intended to be //pure// sh, but our testing is somewhat
 limited to bash and zsh, so we may have missed some bash'isms. Again,
@@ -65,12 +67,14 @@ please feel free to report any problems.
 = Obtaining the scripts =
 All MiG scripts are provided on a //on-demand// basis through a generator cgi
 script. To obtain the latest version, simply point your browser to
-[user-scripts https://dk.migrid.org/cgi-bin/scripts.py?flavor=user]
-. It is possible to pass options to the generator in order to change the
-generated script languages and default application paths.
-Go to the 
-[usage-help https://dk.migrid.org/cgi-bin/scripts.py?flags=h]
-to get help on using these options.
+[user-scripts https://dk.migrid.org/cgi-bin/downloads.py] and click 'all
+versions' in the User Scripts section.
+% POST requirement prevents options!
+%It is possible to pass options to the generator in order to change the
+%generated script languages and default application paths.
+%Go to the 
+%[usage-help https://dk.migrid.org/cgi-bin/scripts.py?flags=h]
+%to get help on using these options.
 After running the generator successfully, the output will include links
 to the location of the generated scripts. Simply select the zip link to
 download a zip archive of the scripts.
@@ -79,7 +83,7 @@ Unpack the archive and you're ready to start using the scripts.
 For Debian and Ubuntu users the scripts are also available as native
 packages. 
 It is recommended to download and import the
-[software signing key https://dk-sid.migrid.org/mig-pubring.gpg] first
+[software signing key https://migrid.googlecode.com/files/mig-pubring.gpg] first
 to avoid 'untrusted source' warnings:
 ```
 cat mig-pubring.gpg  | sudo apt-key add -
@@ -91,6 +95,7 @@ deb http://dk.migrid.org/deb stable main
 to your /etc/apt/sources.list or similar, refresh the available packages
 and install the mig-user-script package with your favorite system
 software manager.
+
 
 = Configuration =
 You receive information about the address of the MiG server that you
@@ -122,13 +127,29 @@ providing a CA certificate path in the configuration:
 ```
 cacertfile /home/LOGIN/.mig/cacert.pem
 ```
-Please contact us if you haven't been given a copy of the CA
-certificate, cacert.pem .
+You should have received a copy of the CA certificate, cacert.pem, along
+with your user certificate. You can download the 
+[CA certificate http://migrid.googlecode.com/files/cacert.pem] from the
+project page downloads otherwise. 
 
 
 = Using the scripts =
+In this section the use from the generated scripts is described with
+examples. With the native packaged version the scripts will be available
+in the default search path, removing the need to change directory and
+and prefix commands with python. If you use the packaged version simply
+replace all occurrences of 
+```
+python migX.py XYZ
+```
+below with
+```
+migX.py XYZ
+```
+
+Now back to the instructions with the generated version. 
 First of all change directory to the unpacked MiG-user-scripts
-directory.
+directory if you downloaded the generated scripts archive.
 In general all MiG scripts include a short usage help which is shown if
 the script is called with the //-h// flag or if incorrect syntax is used.
 In the following sections most of the MiG user scripts are shown in
