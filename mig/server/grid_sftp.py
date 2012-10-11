@@ -513,8 +513,11 @@ class SimpleSSHServer(paramiko.ServerInterface):
         if self.allow_password and self.users.has_key(username):
             if self.users[username].password == password:
                 self.logger.info("Authenticated %s" % username)
+                self.authenticated_user = username
                 return paramiko.AUTH_SUCCESSFUL
-        self.logger.error("Rejected %s" % username)
+        err_msg = "Rejected password for %s" % username
+        self.logger.error(err_msg)
+        print err_msg
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
@@ -522,12 +525,19 @@ class SimpleSSHServer(paramiko.ServerInterface):
         if self.allow_publickey and self.users.has_key(username):
             # list of User login objects for username
             entries = self.users[username]
+            offered = key.get_base64()
             for entry in entries:
                 if entry.public_key is not None:
-                    if entry.public_key.get_base64() == key.get_base64():
+                    allowed = entry.public_key.get_base64()
+                    self.logger.debug("Public key check for %s" % username)
+                    if allowed == offered:
                         self.logger.info("Public key match for %s" % username)
+                        self.authenticated_user = username
                         return paramiko.AUTH_SUCCESSFUL
-        self.logger.error('Public key authentication failed for %s' % username)
+        err_msg = 'Public key authentication failed for %s:\n%s' % \
+                  (username, offered)
+        self.logger.error(err_msg)
+        print err_msg
         return paramiko.AUTH_FAILED
 
     def get_allowed_auths(self, username):
@@ -556,10 +566,10 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
     # Fill users in dictionary for fast lookup. We create a list of matching
     # User objects since each user may have multiple logins (e.g. public keys)
     usermap = {}
-    for u in users:
-        if not usermap.has_key(u.username):
-            usermap[u.username] = []
-        usermap[u.username].append(u)
+    for user_obj in users:
+        if not usermap.has_key(user_obj.username):
+            usermap[user_obj.username] = []
+        usermap[user_obj.username].append(user_obj)
 
     host_key_file = StringIO(host_rsa_key)
     host_key = paramiko.RSAKey(file_obj=host_key_file)
@@ -588,14 +598,20 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
     server = SimpleSSHServer(users=usermap, conf=conf)
     transport.start_server(server=server)
     channel = transport.accept()
-    while(transport.is_active()):
-        time.sleep(3)
-
     username = server.get_authenticated_user()
     if username is not None:
         user = usermap[username]
         logger.info("Login for %s from %s" % (username, addr))
-        # Ignore user connection here as we only care about sftp 
+        print "Login for %s from %s" % (username, addr)
+
+    # Ignore user connection here as we only care about sftp.
+    # Keep the connection alive until user disconnects or server is halted.
+
+    while transport.is_active():
+        if conf['stop_running'].is_set():
+            transport.close()
+        time.sleep(1)
+
 
 def refresh_users(conf):
     '''Reload users from conf if it changed on disk'''
@@ -643,33 +659,55 @@ def refresh_users(conf):
 def start_service(service_conf):
     """Service daemon"""
     logger = service_conf.get("logger", logging.getLogger())
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # Allow reuse of socket to avoid TCP time outs
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
-    server_socket.bind((service_conf['address'], service_conf['port']))
-    server_socket.listen(10)
+    server_socket = None
+    try:
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Allow reuse of socket to avoid TCP time outs
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
+        server_socket.bind((service_conf['address'], service_conf['port']))
+        server_socket.listen(10)
+    except Exception, err:
+        err_msg = 'Could not open socket: %s' % err
+        logger.error(err_msg)
+        print err_msg
+        if server_socket:
+            server_socket.close()
+        sys.exit(1)
 
     logger.debug("Accepting connections")
     while True:
-        client, addr = server_socket.accept()
+        try:
+            client_tuple = server_socket.accept()
+            # accept may return None or tuple with None part in corner cases
+            if client_tuple == None or None in client_tuple:
+                raise Exception('got empty bogus request')
+            (client, addr) = client_tuple
+        except KeyboardInterrupt:
+            # forward KeyboardInterrupt to main thread
+            raise
+        except Exception, err:
+            logger.warning('ignoring failed client connection: %s' % err)
+            continue
         # automatic reload of users if more than refresh_delay seconds old
         refresh_delay = 60
         if service_conf['time_stamp'] + refresh_delay < time.time():
             service_conf = refresh_users(service_conf)
         logger.info("Handling session from %s %s" % (client, addr))
-        t = threading.Thread(target=accept_client,
-                             args=[client, addr, service_conf['root_dir'],
-                                   service_conf['users'],
-                                   service_conf['host_rsa_key'],
-                                   service_conf,])
-        t.start()
+        worker = threading.Thread(target=accept_client,
+                                  args=[client, addr, service_conf['root_dir'],
+                                        service_conf['users'],
+                                        service_conf['host_rsa_key'],
+                                        service_conf,])
+        worker.start()
 
 
 if __name__ == "__main__":
     configuration = get_configuration_object()
     logger = configuration.logger
     if not configuration.site_enable_sftp:
-        print "SFTP access to user homes is disabled in configuration!"
+        err_msg = "SFTP access to user homes is disabled in configuration!"
+        logger.error(err_msg)
+        print err_msg
         sys.exit(1)
     print """
 Running grid sftp server for user sftp access to their MiG homes.
@@ -729,7 +767,25 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
                  'host_rsa_key': host_rsa_key,
                  'users': [],
                  'time_stamp': 0,
-                 'logger': logger}
-    logger.info("Listening on address '%s' and port %d" % \
-                (address, port))
-    start_service(sftp_conf)
+                 'logger': logger,
+                 'stop_running': threading.Event()}
+    info_msg = "Listening on address '%s' and port %d" % (address, port)
+    logger.info(info_msg)
+    print info_msg
+    try:
+        start_service(sftp_conf)
+    except KeyboardInterrupt:
+        info_msg = "Received user interrupt"
+        logger.info(info_msg)
+        print info_msg
+        sftp_conf['stop_running'].set()
+    active = threading.active_count() - 1
+    while active > 0:
+        info_msg = "Waiting for %d worker threads to finish" % active
+        logger.info(info_msg)
+        print info_msg
+        time.sleep(1)
+        active = threading.active_count() - 1
+    info_msg = "Leaving with no more workers active"
+    logger.info(info_msg)
+    print info_msg
