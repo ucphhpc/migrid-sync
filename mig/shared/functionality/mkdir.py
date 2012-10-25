@@ -129,7 +129,7 @@ def main(client_id, user_arguments_dict):
             if verbose(flags):
                 output_objects.append({'object_type': 'file', 'name'
                         : relative_path})
-            if os.path.exists(real_path):
+            if not parents(flags) and os.path.exists(real_path):
                 output_objects.append({'object_type': 'error_text',
                         'text': '%s: path exist!' % pattern})
                 status = returnvalues.CLIENT_ERROR
