@@ -1039,8 +1039,10 @@ if (jQuery) (function($){
 })(jQuery);
 
 
+/*** Extras for use e.g. in VGrid portals ***/
 
-/*  MiG-Special: initialize a filechooser dialog, installing the
+
+/*  MiG-Special: initialize a MiG home filechooser dialog, installing the
  *  callback for doubleclick or "select" selection
  *  if files_only is set, directories cannot be chosen
  */
@@ -1102,3 +1104,44 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
     return do_d;
 };
 
+
+/*  MiG-Special: initialize a local file chooser dialog, installing the
+ *  callback for OK and cancel actions.
+ */
+function local_filechooser_init(name, callback) {
+
+    var ok_action = function (action) {
+                var filename = $("#lc_filechooser_file").val();
+                callback(filename);
+                $("#" + name).dialog("close");
+    };
+
+    $("#" + name).dialog(
+        // see http://jqueryui.com/docs/dialog/ for options
+          {autoOpen: false,
+           modal: true,
+           width: 800,
+           buttons: {"OK": ok_action,
+                     "Close": function() { $("#" + name).dialog("close"); }
+                    }
+          });
+
+    var do_d = function(text, action) {
+        // save and restore original callback
+        var c = callback;
+
+        $("#" + name).dialog("option", "title", text);
+
+        if (action == undefined) {
+            action = c;
+        }
+
+        callback = function(i) { action(i);
+                                 callback = c;
+                               };
+
+        $("#" + name).dialog("open");
+    };
+
+    return do_d;
+};
