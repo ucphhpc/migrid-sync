@@ -3,7 +3,7 @@ Name: KUnet Login
 Description: Basic KUnet login wrapper to avoid repeated typing of silly username
 Requires: jquery.js
 -->
-<script src="https://intranet.ku.dk/CookieAuth.dll?GetPic?formdir=8&image=flogon.js" type="text/javascript"></script>
+<script src="https://intranet.ku.dk/CookieAuth.dll?GetPic?formdir=5&image=flogon.js" type="text/javascript"></script>
 <script type="text/javascript">
     $(document).ready(function() {
         /* 
