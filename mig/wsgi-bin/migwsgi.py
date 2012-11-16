@@ -132,15 +132,13 @@ def application(environ, start_response):
                 , '')
         module_path = 'shared.functionality.%s' % backend
         (output_objs, ret_val) = stub(module_path, user_arguments_dict)
+        status = '200 OK'
     except Exception, exc:
+        status = '500 ERROR'
         (output_objs, ret_val) = ([{'object_type': 'error_text', 'text'
                                   : exc}, {'object_type': 'text', 'text'
                                   : str(environ)}],
                                   returnvalues.SYSTEM_ERROR)
-    if returnvalues.OK == ret_val:
-        status = '200 OK'
-    else:
-        status = '403 ERROR'
 
     (ret_code, ret_msg) = ret_val
 
