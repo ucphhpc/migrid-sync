@@ -106,6 +106,15 @@ def get_settings_specs():
         'Context': 'appearance',
         'Required': False,
         }))
+    specs.append(('SITE_BASE_MENU', {
+        'Title': 'Base menu',
+        'Description': 'Which base menu to use.',
+        'Example': 'simple',
+        'Type': 'string',
+        'Value': 'default',
+        'Context': 'appearance',
+        'Required': False,
+        }))
     specs.append(('SITE_USER_MENU', {
         'Title': 'User menu items',
         'Description': 'Additional menu items.', # can be chosen from configuration.user_menu

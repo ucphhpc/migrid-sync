@@ -657,6 +657,12 @@ class Configuration:
             self.short_title = config.get('SITE', 'short_title')
         else:
             self.short_title = "MiG"
+        if config.has_option('SITE', 'base_menu'):
+            menus = ['default', 'simple', 'advanced']
+            req = config.get('SITE', 'base_menu').split()
+            self.site_base_menu = [i for i in req if i in menus]
+        else:
+            self.site_base_menu = ['default']
         if config.has_option('SITE', 'default_menu'):
             req = config.get('SITE', 'default_menu').split()
             self.site_default_menu = [i for i in req if menu_items.has_key(i)]
@@ -664,11 +670,24 @@ class Configuration:
             self.site_default_menu = ['dashboard', 'submitjob', 'files',
                                       'jobs', 'vgrids', 'resources',
                                       'downloads', 'runtimeenvs', 'people',
-                                      'settings', 'shell', 'docs']
+                                      'settings', 'docs']
+        if config.has_option('SITE', 'simple_menu'):
+            req = config.get('SITE', 'simple_menu').split()
+            self.site_simple_menu = [i for i in req if menu_items.has_key(i)]
+        else:
+            self.site_simple_menu = ['dashboard', 'files', 'vgrids',
+                                     'settings']
+        if config.has_option('SITE', 'advanced_menu'):
+            req = config.get('SITE', 'advanced_menu').split()
+            self.site_advanced_menu = [i for i in req if menu_items.has_key(i)]
+        else:
+            self.site_advanced_menu = ['dashboard', 'submitjob', 'files',
+                                      'jobs', 'vgrids', 'resources',
+                                      'downloads', 'runtimeenvs', 'people',
+                                      'settings', 'vmachines', 'shell', 'docs']
         if config.has_option('SITE', 'user_menu'):
             req = config.get('SITE', 'user_menu').split()
-            self.site_user_menu = [i for i in req if menu_items.has_key(i) and \
-                                   i not in self.site_default_menu]
+            self.site_user_menu = [i for i in req if menu_items.has_key(i)]
         else:
             self.site_user_menu = []
         if config.has_option('SITE', 'vgrid_links'):

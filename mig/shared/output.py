@@ -516,7 +516,11 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 include_menu = not i['skipmenu']
             if i.has_key('skipwidgets'):
                 include_widgets = not i['skipwidgets']
-            user_menu = []
+            base_menu, user_menu = [], []
+            if i.has_key('base_menu'):
+                base_menu = i['base_menu']
+            else:
+                base_menu = configuration.site_default_menu
             if i.has_key('user_menu'):
                 user_menu = i['user_menu']
             if i.has_key('user_widgets'):
@@ -529,6 +533,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 bodyfunctions,
                 include_menu,
                 include_widgets,
+                base_menu,
                 user_menu,
                 user_widgets
                 ))

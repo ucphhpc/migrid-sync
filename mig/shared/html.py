@@ -121,13 +121,12 @@ def html_add(formatted_text, html=True):
 
 
 def render_menu(configuration, menu_class='navmenu', 
-                current_element='Unknown',
-                user_menu=[], hide_default=False):
+                current_element='Unknown', base_menu=[],
+                user_menu=[]):
     """Render the menu contents using configuration"""
 
     raw_order = []
-    if not hide_default:
-        raw_order += configuration.site_default_menu
+    raw_order += base_menu
     raw_order += user_menu
     menu_order = []
     # Remove duplicates
@@ -165,6 +164,7 @@ def get_cgi_html_header(
     bodyfunctions='',
     menu=True,
     widgets=True,
+    base_menu=[],
     user_menu=[],
     user_widgets={},
     ):
@@ -244,7 +244,8 @@ def get_cgi_html_header(
     if menu:
         maximize = ''
         current_page = os.path.basename(sys.argv[0]).replace('.py', '')
-        menu_lines = render_menu(configuration, 'navmenu', current_page, user_menu)
+        menu_lines = render_menu(configuration, 'navmenu', current_page,
+                                 base_menu, user_menu)
         out += '''
 <div class="menublock">
 %s

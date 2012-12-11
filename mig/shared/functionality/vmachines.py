@@ -103,7 +103,7 @@ def main(client_id, user_arguments_dict):
     # Html fragments
 
     submenu = render_menu(configuration, menu_class='navsubmenu',
-                          user_menu=menu_items, hide_default=True)
+                          base_menu=[], user_menu=menu_items)
 
     welcome_text = 'Welcome to your %s virtual machine management!' % \
                    configuration.short_title

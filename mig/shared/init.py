@@ -89,6 +89,15 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
         if title:
             settings = load_settings(client_id, configuration)
             if settings:
+                base_menu = settings.get('SITE_BASE_MENU', 'default')
+                if not base_menu in configuration.site_base_menu:
+                    base_menu = 'default'
+                if base_menu == 'simple' and configuration.site_simple_menu:
+                    title['base_menu'] = configuration.site_simple_menu
+                elif base_menu == 'advanced' and configuration.site_advanced_menu:
+                    title['base_menu'] = configuration.site_advanced_menu
+                else:
+                    title['base_menu'] = configuration.site_default_menu
                 user_menu = settings.get('SITE_USER_MENU', None)
                 if configuration.site_user_menu and user_menu:
                     title['user_menu'] = user_menu
