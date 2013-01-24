@@ -39,6 +39,7 @@ import datetime
 from shared.conf import get_resource_configuration, get_resource_exe, \
     get_resource_store, get_configuration_object
 from shared.fileio import unpickle, pickle
+from shared.resource import anon_resource_id
 from shared.ssh import execute_on_resource, execute_on_exe, execute_on_store, \
     copy_file_to_exe, copy_file_to_resource
 
@@ -870,10 +871,13 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
     if status:
 
         # Finally link mount point into vgrid dirs now that mount should be ready
-    
+
+        link_name = "%s_%s" % (unique_resource_name, store_name)
+        if resource_config.get('ANONYMOUS', True):
+            link_name = anon_resource_id(link_name)
         for vgrid in store['vgrid']:
-            vgrid_link = os.path.join(configuration.vgrid_files_home, vgrid, "%s_%s" % \
-                                      (unique_resource_name, store_name))
+            vgrid_link = os.path.join(configuration.vgrid_files_home, vgrid,
+                                      link_name)
             try:
                 if not os.path.exists(vgrid_link):
                     os.symlink(mount_point, vgrid_link)
@@ -1413,14 +1417,18 @@ def resource_store_action(
 
     # Remove vgrid dir symlinks before unmounting
     
+    link_name = "%s_%s" % (unique_resource_name, store_name)
+    if resource_config.get('ANONYMOUS', True):
+        link_name = anon_resource_id(link_name)
     for vgrid in store['vgrid']:
         vgrid_link = os.path.join(configuration.vgrid_files_home, vgrid,
-                                  "%s_%s" % (unique_resource_name, store_name))
+                                  link_name)
         try:
             if os.path.exists(vgrid_link):
                 os.remove(vgrid_link)
         except Exception, exc:
             msg += ' failed to unlink %s: %s. ' % (vgrid_link, exc)
+            logger.error('failed to unlink %s: %s' % (vgrid_link, exc))
                 
     if 'sftp' == store['storage_protocol']:
         setup = {'mount_point': mount_point}
