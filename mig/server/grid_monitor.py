@@ -518,6 +518,13 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 free_disk, avail_disk, used_disk, used_percent = 0, 0, 0, 0
                 gig_bytes = 1.0 * 2**30
                 
+                # Fall back status - show last action unless statvfs succeeds
+                
+                store_status = '<td>%s %s<br />(%sd %sh %sm %ss ago)</td>' % \
+                               (last_status_dict['STATUS'],
+                                time.asctime(last_status_dict['CREATED_TIME'].timetuple()),
+                                days, hours, minutes, seconds)
+                
                 # These disk stats are slightly confusing but match 'df'
                 # 'available' is the space that can actually be used so it
                 # is typically less than 'free'.
@@ -532,6 +539,8 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                                 gig_bytes
                     used_disk = total_disk - free_disk
                     used_percent = 100.0 * used_disk / (avail_disk + used_disk)
+                    store_status = '<td>%s %s<br />(%sd %sh %sm %ss ago)</td>' % \
+                               ('checked', time.asctime(), 0, 0, 0, 0)
                 except OSError, ose:
                     print 'could not stat mount point %s: %s' % \
                                  (mount_point, ose)
@@ -566,9 +575,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 resource_name += "<br />%s" % resource_parts[1]
                 stores += '<td>%s</td>' % resource_name
 
-                stores += '<td>%s<br />(%sd %sh %sm %ss ago)</td>' % \
-                        (time.asctime(last_status_dict['CREATED_TIME'].timetuple()),
-                         days, hours, minutes, seconds)
+                stores += store_status
                 stores += '<td>' + vgrid_name + '</td>'
                 stores += '<td>%d</td>' % total_disk
                 stores += '<td>%d</td>' % used_disk
