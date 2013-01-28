@@ -504,6 +504,10 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 mount_point = last_status_dict.get('MOUNT_POINT', 'UNKNOWN')
                 is_live = os.path.ismount(mount_point)
 
+                public_id = unique_res_name_and_store_list[1]
+                if last_status_dict['RESOURCE_CONFIG'].get('ANONYMOUS', True):
+                    public_id = anon_resource_id(public_id)
+
                 # store may be linked to this or parent vgrid
                 
                 is_linked = False
@@ -511,7 +515,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 while search_vgrid and not is_linked:
                     vgrid_link = os.path.join(
                         configuration.vgrid_files_home, search_vgrid,
-                        unique_res_name_and_store_list[1])
+                        public_id)
                     is_linked = (os.path.realpath(vgrid_link) == mount_point)
                     search_vgrid = os.path.dirname(search_vgrid)
                 total_disk = last_status_dict['RESOURCE_CONFIG']['DISK']
@@ -562,9 +566,6 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 stores += \
                     '<td><img src=/images/status-icons/%s.png /></td>'\
                      % resource_status
-                public_id = unique_res_name_and_store_list[1]
-                if last_status_dict['RESOURCE_CONFIG'].get('ANONYMOUS', True):
-                    public_id = anon_resource_id(public_id)
                 public_name = last_status_dict['RESOURCE_CONFIG'].get('PUBLICNAME', '')
                 resource_parts = public_id.split('_', 2)
                 resource_name = resource_parts[0]

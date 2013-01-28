@@ -388,12 +388,13 @@ def fill_exe_node_script(
         os.write(filehandle, 'cputime=' + str(walltime) + '\n')
 
         # For backwards compatibility
+        # Please note that execution_precondition gets eval'ed so we escape it
 
         execution_precondition = ''
         if exe.has_key('execution_precondition'):
             execution_precondition = exe['execution_precondition']
-        os.write(filehandle, 'execution_precondition='
-                  + execution_precondition + '\n')
+        os.write(filehandle, "execution_precondition='"
+                  + execution_precondition + "'\n")
         os.write(filehandle, 'prepend_execute=' + exe['prepend_execute']
                   + '\n')
         os.write(filehandle, 'exehostlog=' + exe['exehostlog'] + '\n')
