@@ -669,8 +669,8 @@ def prepare_conf(configuration, input_args, resource_id):
     nodes = 0
     if execution_nodes:
         nodes = int(execution_nodes[-1]['nodecount'])
-    exe_count = len(execution_nodes)
-    store_count = len(storage_nodes)
+    exe_count = len([i for i in exe_names if i])
+    store_count = len([i for i in store_names if i])
     if execution_leader:
         exe_count -= 1
     total_nodes = exe_count * nodes + store_count
