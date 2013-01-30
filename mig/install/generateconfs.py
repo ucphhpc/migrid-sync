@@ -113,7 +113,8 @@ if '__main__' == __name__:
         # Remove default values to use generate_confs default values
         if val == 'DEFAULT':
             del settings[key]
-    generate_confs(**settings)
+    conf = generate_confs(**settings)
+    print "DEBUG: %s" % conf
     print '''Configurations for MiG and Apache were generated in
 %(destination)s/
 For a default setup you will probably want to copy the MiG daemon conf to the
@@ -144,5 +145,5 @@ cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
 
 Please reload or restart your apache daemons to catch the configuration
 changes.
-''' % settings
+''' % conf
     sys.exit(0)
