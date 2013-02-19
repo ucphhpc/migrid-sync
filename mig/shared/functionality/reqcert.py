@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqcert - Certificate request backend
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,7 +32,7 @@ import os
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.certreq import valid_password_chars, valid_name_chars, \
-    password_min_len, password_max_len
+    password_min_len, password_max_len, js_helpers
 from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input
 from shared.useradm import distinguished_name_to_user
@@ -43,7 +43,6 @@ def signature():
 
     defaults = {}
     return ['html_form', defaults]
-
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -60,6 +59,16 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s certificate request' % configuration.short_title
     title_entry['skipmenu'] = True
+    form_fields = ['full_name', 'organization', 'email', 'country', 'state',
+                   'password', 'verifypassword', 'comment']
+    title_entry['javascript'] = js_helpers(form_fields)
+    output_objects.append({'object_type': 'html_form',
+                           'text':'''
+ <div id="contextual_help">
+  <div class="help_gfx_bubble"><!--- graphically connect field with help text---></div>
+  <div class="help_message"><!-- filled by js --></div>
+ </div>
+'''                       })
     header_entry = {'object_type': 'header', 'text'
                     : 'Welcome to the %s certificate request page' % \
                     configuration.short_title}
@@ -118,40 +127,39 @@ old files, jobs and privileges.</p>''' % \
                           : """
 Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the certificate request to the %(site)s administrators.<p>
 <b><font color='red'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br />
-That is, if You're a student/employee at KU, please enter institute acronym (NBI, DIKU, etc.) in the Organization field and use your USER@INSTITUTE.dk or USER@*.ku.dk address in the Email field.</font></b></p>
+That is, if You're a student/employee at KU, please enter institute acronym (NBI, DIKU, etc.) in the Organization field and use your corresponding USER@ACRONYM.dk or USER@*.ku.dk address in the Email field.</font></b></p>
 <hr />
-<p>
+<div class=form_container>
 <!-- use post here to avoid field contents in URL -->
-<form method=post action=reqcertaction.py>
+<form method=post action=reqcertaction.py onSubmit='return validate_form();'>
 <table>
-<tr><td>Full name</td><td><input type=text name=cert_name value='%(full_name)s' /> <sup class=mandatory>1</sup></td></tr>
-<tr><td>Organization</td><td><input type=text name=org value='%(organization)s' /> <sup class=mandatory>2</sup></td></tr>
-<tr><td>Email address</td><td><input type=text name=email value='%(email)s' /> <sup class=mandatory>3</sup></td></tr>
-<tr><td>State</td><td><input type=text name=state value='%(state)s' /> <sup class=optional>4</sup></td></tr>
-<tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2 value='%(country)s' /> <sup class=mandatory>5</sup></td></tr>
-<tr><td>Password</td><td><input type=password name=password maxlength=%(password_max_len)s value='%(password)s' /> <sup class=mandatory>6, 7</sup></td></tr>
-<tr><td>Verify password</td><td><input type=password name=verifypassword maxlength=%(password_max_len)s value='%(verifypassword)s' /> <sup class=mandatory>6, 7</sup></td></tr>
-<tr><td>Comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea rows=4 cols=%(password_max_len)s name=comment></textarea> <sup class=optional>8</sup></td></tr>
-<tr><td><input type=submit value=Send /></td><td></td></tr>
+<tr><td class='mandatory label'>Full name</td><td><input id='full_name_field' type=text name=cert_name value='%(full_name)s' /></td><td class=fill_space><br /></td></tr>
+<tr><td class='mandatory label'>Email address</td><td><input id='email_field' type=text name=email value='%(email)s' /> </td><td class=fill_space><br /></td></tr>
+<tr><td class='mandatory label'>Organization</td><td><input id='organization_field' type=text name=org value='%(organization)s' /></td><td class=fill_space><br /></td></tr>
+<tr><td class='mandatory label'>Two letter country-code</td><td><input id='country_field' type=text name=country maxlength=2 value='%(country)s' /></td><td class=fill_space><br /></td></tr>
+<tr><td class='optional label'>State</td><td><input id='state_field' type=text name=state value='%(state)s' /> </td><td class=fill_space><br /></td></tr>
+<tr><td class='mandatory label'>Password</td><td><input id='password_field' type=password name=password maxlength=%(password_max_len)s value='%(password)s' /> </td><td class=fill_space><br /></td></tr>
+<tr><td class='mandatory label'>Verify password</td><td><input id='verifypassword_field' type=password name=verifypassword maxlength=%(password_max_len)s value='%(verifypassword)s' /></td><td class=fill_space><br /></td></tr>
+<tr><td class='optional label'>Optional comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea id='comment_field' rows=4 name=comment></textarea></td><td class=fill_space><br /></td></tr>
+<tr><td class='label'><!--- empty area ---></td><td><input id='submit_button' type=submit value=Send /></td><td class=fill_space><br /></td></tr>
 </table>
 </form>
-</p>
+</div>
+<hr />
 <p>
 <div class='warn_message'>Please note that passwords may be accessible to the %(site)s administrators!</div>
 </p>
-<hr />
-<p>
-<font size=-1>
-<sup>1</sup> restricted to the characters in '%(valid_name_chars)s'<br />
-<sup>2</sup> name or acronym<br />
-<sup>3</sup> address associated with organization if at all possible<br />
-<sup>4</sup> optional, just leave empty unless you are a citizen of the US or similar<br />
-<sup>5</sup> Country code is on the form DE/DK/GB/US/.. , <a href='http://www.iso.org/iso/country_codes/iso_3166_code_lists/country_names_and_code_elements.html'>help</a><br />
-<sup>6</sup> Password is restricted to the characters in '%(valid_password_chars)s'<br />
-<sup>7</sup> Password must be at least %(password_min_len)s and at most %(password_max_len)s characters long<br /> 
-<sup>8</sup> optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.<br />
-</font>
-</p>
+<!--- Hidden help text --->
+<div id='help_text'>
+  <div id='full_name_help'>Your full name, restricted to the characters in '%(valid_name_chars)s'</div>
+  <div id='organization_help'>Organization name or acronym  matching email</div>
+  <div id='email_help'>Email address associated with your organization if at all possible</div>
+  <div id='country_help'>Country code is on the form DE/DK/GB/US/.. , <a href='http://www.iso.org/iso/country_codes/iso_3166_code_lists/country_names_and_code_elements.html'>help</a></div>
+  <div id='state_help'>Optional, please just leave empty unless you are a citizen of the US or similar</div>
+  <div id='password_help'>Password is restricted to the characters in '%(valid_password_chars)s and must be %(password_min_len)s to %(password_max_len)s characters long'</div>
+  <div id='verifypassword_help'>Please repeat password</div>
+  <div id='comment_help'>Optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.</div>
+</div>
 """
                            % user_fields})
 

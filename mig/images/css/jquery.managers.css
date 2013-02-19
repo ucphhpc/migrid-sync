@@ -395,3 +395,49 @@ UL.jqueryFileList A:hover {
 }
 
 
+#contextual_help { 
+  position: absolute;
+  display: none;
+}
+#contextual_help .help_gfx_bubble {
+  border-radius:20px;
+ -moz-border-radius: 20px;
+ -webkit-border-radius: 20px;
+  background-color: #FFFE9D;
+  border: 1px solid #A9A809;
+  padding: 1em;
+  width: 1px;
+  height: 1px;
+}  
+#contextual_help .help_message {
+  border-radius: 20px;
+ -moz-border-radius: 20px;
+ -webkit-border-radius: 20px;
+  background-color: #FFFE9D;
+  border: 1px solid #A9A809;
+  padding: 1em;
+  width: 80%;
+}  
+#help_text { 
+  display: none;
+}
+.form_container {
+  width: 100%;
+}
+.form_container td {
+  width: 40%;
+}
+.form_container td.label {
+  width: 20%;
+}
+.form_container td.fill_space {
+  width: 40%;
+}
+.form_container input, .form_container textarea, .form_container fill_space {
+  width: 98%;
+  display: block;
+  padding: 2px;
+}
+#submit_button {
+  width: auto;
+}

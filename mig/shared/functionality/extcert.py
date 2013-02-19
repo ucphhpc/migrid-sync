@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extcert - External certificate sign up backend
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,8 +30,8 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.certreq import valid_name_chars, dn_max_len
-from shared.init import initialize_main_variables
+from shared.certreq import valid_name_chars, dn_max_len, js_helpers
+from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
 from shared.useradm import distinguished_name_to_user
 
@@ -48,11 +48,6 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Welcome to the %s user sign up page' % \
-                            configuration.site_title
-                          })
-
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -66,6 +61,24 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = '%s certificate sign up' % configuration.short_title
+    title_entry['skipmenu'] = True
+    form_fields = ['cert_id', 'cert_name', 'organization', 'email', 'country', 'state',
+                   'comment']
+    title_entry['javascript'] = js_helpers(form_fields)
+    output_objects.append({'object_type': 'html_form',
+                           'text':'''
+ <div id="contextual_help">
+  <div class="help_gfx_bubble"><!--- graphically connect field with help text---></div>
+  <div class="help_message"><!-- filled by js --></div>
+ </div>
+'''                       })
+    header_entry = {'object_type': 'header', 'text'
+                    : 'Welcome to the %s certificate sign up page' % \
+                    configuration.short_title}
+    output_objects.append(header_entry)
+    
     # Redirect to reqcert page without certificate requirement but without
     # changing access method (CGI vs. WSGI).
     
@@ -84,37 +97,33 @@ You can use it if you already have a x509 certificate from another accepted CA. 
 The page tries to auto load any certificate your browser provides and fill in the fields accordingly, but in case it can't guess all <span class=mandatory>mandatory</span> fields, you still need to fill in those.<br />
 Please enter any missing information below and press the Send button to submit the external certificate sign up request to the %(site)s administrators.<p>
 <b><font color='red'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br />
-That is, if You're a student/employee at DIKU, please type DIKU in the Organization field and use your USER@diku.dk address in the Email field.</font></b></p>
+That is, if You're a student/employee at KU, please enter institute acronym (NBI, DIKU, etc.) in the Organization field and use your corresponding USER@ACRONYM.dk or USER@*.ku.dk address in the Email field.</font></b></p>
 <hr />
-<p>
+<div class=form_container>
 <!-- use post here to avoid field contents in URL -->
-<form method=post action=extcertaction.py>
+<form method=post action=extcertaction.py onSubmit='return validate_form();'>
 <table>
-<tr><td>Certificate DN</td>
-<td><input type=text size=%(dn_max_len)s maxlength=%(dn_max_len)s name=cert_id value='%(client_id)s' /> <sup class=mandatory>1</sup></td>
-</tr>
-<tr><td>Full name</td><td><input type=text name=cert_name value='%(common_name)s' /> <sup class=mandatory>2</sup></td></tr>
-<tr><td>Organization</td><td><input type=text name=org value='%(org)s' /> <sup class=mandatory>3</sup></td></tr>
-<tr><td>Email address</td><td><input type=text name=email value='%(email)s' /> <sup class=mandatory>4</sup></td></tr>
-<tr><td>State</td><td><input type=text name=state value='%(state)s' /> <sup class=optional>5</sup></td></tr>
-<tr><td>Two letter country-code</td><td><input type=text name=country maxlength=2 value='%(country)s' /> <sup class=mandatory>6</sup></td></tr>
-<tr><td>Comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea rows=4 cols=%(dn_max_len)s name=comment></textarea> <sup class=optional>7</sup></td></tr>
-<tr><td><input type='submit' value='Send' /></td><td></td></tr>
+<tr><td class='mandatory label'>Certificate DN</td><td><input id='cert_id_field' type=text size=%(dn_max_len)s maxlength=%(dn_max_len)s name=cert_id value='%(client_id)s' /></td><td class=fill_space></td></tr>
+<tr><td class='mandatory label'>Full name</td><td><input id='cert_name_field' type=text name=cert_name value='%(common_name)s' /></td><td class=fill_space></td></tr>
+<tr><td class='mandatory label'>Organization</td><td><input id='organization_field' type=text name=org value='%(org)s' /></td><td class=fill_space></td></tr>
+<tr><td class='mandatory label'>Email address</td><td><input id='email_field' type=text name=email value='%(email)s' /></td><td class=fill_space></td></tr>
+<tr><td class='optional label'>State</td><td><input id='state_field' type=text name=state value='%(state)s' /></td><td class=fill_space></td></tr>
+<tr><td class='mandatory label'>Two letter country-code</td><td><input id='country_field' type=text name=country maxlength=2 value='%(country)s' /></td><td class=fill_space></td></tr>
+<tr><td class='optional label'>Comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea id='comment_field' rows=4 name=comment></textarea></td><td class=fill_space></td></tr>
+<tr><td class='label'><!--- empty area ---></td><td><input id='submit_button' type='submit' value='Send' /></td><td class=fill_space></td></tr>
 </table>
 </form>
-</p>
-<hr />
-<p>
-<font size=-1>
-<sup>1</sup> must be the exact Distinguished Name (DN) of your certificate<br />
-<sup>2</sup> restricted to the characters in '%(valid_name_chars)s'<br />
-<sup>3</sup> name or acronym<br />
-<sup>4</sup> address associated with organization if at all possible<br />
-<sup>5</sup> optional (just leave empty if you're not located in e.g the U.S.)<br />
-<sup>6</sup> country code is on the form GB/DK/.. , <a href=http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html>help</a><br />
-<sup>7</sup> optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.<br />
-</font>
-</p>
+</div>
+<!--- Hidden help text --->
+<div id='help_text'>
+  <div id='cert_id_help'>Must be the exact Distinguished Name (DN) of your certificate</div>
+  <div id='cert_name_help'>Your full name, restricted to the characters in '%(valid_name_chars)s'</div>
+  <div id='organization_help'>Organization name or acronym  matching email</div>
+  <div id='email_help'>Email address associated with your organization if at all possible</div>
+  <div id='country_help'>Country code is on the form DE/DK/GB/US/.. , <a href='http://www.iso.org/iso/country_codes/iso_3166_code_lists/country_names_and_code_elements.html'>help</a></div>
+  <div id='state_help'>Optional, please just leave empty unless you are a citizen of the US or similar</div>
+  <div id='comment_help'>Optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.</div>
+</div>
 """
                            % {
         'valid_name_chars': valid_name_chars,
