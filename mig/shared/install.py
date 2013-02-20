@@ -169,7 +169,7 @@ cert and sid based https!
         print "adding explicit cert port (%s)" % [cert_port, default_https_port]
         user_dict['__CERT_URL__'] += ':%(__CERT_PORT__)s' % user_dict
     user_dict['__SID_URL__'] = 'https://%(__SID_FQDN__)s' % user_dict
-    if str(cert_port) != str(default_https_port):
+    if str(sid_port) != str(default_https_port):
         print "adding explicit sid port (%s)" % [sid_port, default_https_port]
         user_dict['__SID_URL__'] += ':%(__SID_PORT__)s' % user_dict
         

@@ -114,7 +114,7 @@ if '__main__' == __name__:
         if val == 'DEFAULT':
             del settings[key]
     conf = generate_confs(**settings)
-    print "DEBUG: %s" % conf
+    #print "DEBUG: %s" % conf
     print '''Configurations for MiG and Apache were generated in
 %(destination)s/
 For a default setup you will probably want to copy the MiG daemon conf to the
