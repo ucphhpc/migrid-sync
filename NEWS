@@ -6,6 +6,14 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
+=== February 20th, 2013 ===
+Minor bugfix release.
+
+
+=== January 30th, 2013 ===
+Feature and minor bugfix release.
+
+
 === July 23rd, 2012 ===
 Feature and minor bugfix release. Mainly the integration of the long
 awaited interactive virtual machine jobs using VNC. Based on original
@@ -143,6 +151,22 @@ for other users.
 More detailed changelogs for the public releases.
 The full changelog is available from the repository:
 http://code.google.com/p/migrid/source/list
+
+
+== 1.4.3 ==
+-Fixes a port bug in the configuration generator for the single IP setup
+-Fix to re-enable support for running the configuration generator without args
+-Visually simplified certificate request and sign up pages
+
+== 1.4.2 ==
+-Fixes the wrong node count for resources without store nodes
+-Preserve anonymization for storage resources in shared vgrid dirs
+-Improved storage resource status and monitoring
+-Support for simplified navigation menu. 
+-WSGI fix to mimic CGI behaviour more closely
+-SFTP robustness improvements
+-A number of VGrid portal helper improvements
+-List actual providers on runtime env pages.
 
 == 1.4.1 ==
 -Improvements and stats fixes to VGrid monitors (includes fix for issue 32)
