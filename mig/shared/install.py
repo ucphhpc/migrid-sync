@@ -104,6 +104,10 @@ def generate_confs(
     ):
     """Generate Apache and MiG server confs with specified variables"""
 
+    # Read out dictionary of args with defaults and overrides
+    
+    expanded = locals()
+
     user_dict = {}
     user_dict['__PUBLIC_FQDN__'] = public_fqdn
     user_dict['__CERT_FQDN__'] = cert_fqdn
@@ -192,7 +196,7 @@ cert and sid based https!
             os.chmod(out_path, os.stat(in_path).st_mode)
         else:
             print "Skipping missing template: %s" % in_path
-    return True
+    return expanded
 
 def create_user(
     user,
