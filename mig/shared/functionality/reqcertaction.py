@@ -231,6 +231,8 @@ Remove the user from any relevant VGrids on:
 
 Command to revoke user certificate:
 %(command_cert_revoke)s
+You need to copy the resulting signed certificate revocation list (crl.pem)
+to the web server(s) for the revocation to take effect.
 
 Command to delete user again on %(site)s server:
 %(command_user_delete)s
