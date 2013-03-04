@@ -42,6 +42,7 @@ from shared.init import initialize_main_variables
 from shared.job import output_dir, get_job_ids_with_specified_project_name
 from shared.mrslparser import expand_variables
 from shared.parseflags import verbose, sorted, interactive
+from shared.resource import anon_resource_id
 from shared.validstring import valid_user_path
 
 try:
@@ -275,11 +276,14 @@ def main(client_id, user_arguments_dict):
                     job_obj['execute'] = '%s ...' % command_line[:252]
                 else:
                     job_obj['execute'] = command_line
-            if job_dict.has_key('PUBLICNAME'):
-                if job_dict['PUBLICNAME']:
-                    job_obj['resource'] = job_dict['PUBLICNAME']
-                else:
-                    job_obj['resource'] = 'HIDDEN'
+            res_conf = job_dict.get('RESOURCE_CONFIG', {})
+            if res_conf.has_key('RESOURCE_ID'):
+                public_id = res_conf['RESOURCE_ID']
+                if res_conf.get('ANONYMOUS', True):
+                    public_id = anon_resource_id(public_id)
+                job_obj['resource'] = public_id
+            if job_dict.get('PUBLICNAME', False):
+                job_obj['resource'] += ' (alias %(PUBLICNAME)s)' % job_dict
             if job_dict.has_key('RESOURCE_VGRID'):
                 job_obj['vgrid'] = job_dict['RESOURCE_VGRID']
 
