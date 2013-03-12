@@ -151,6 +151,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         self.logger = conf.get("logger", logging.getLogger())
         self.transport = transport
         self.root = fs_root
+        self.chmod_exceptions = conf.get('chmod_exceptions', [])
         self.chroot_exceptions = conf.get('chroot_exceptions', [])
         self.user_name = self.transport.get_username()
         self.users = users
@@ -184,7 +185,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             raise ValueError("Invalid path")
         self.logger.debug("get_fs_path returns: %s :: %s" % (sftp_path,
                                                              real_path))
-        return(real_path)
+        return real_path
 
     def _strip_root(self, path):
         """Internal helper to strip root prefix for chrooted locations"""
@@ -220,6 +221,22 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         if not (flags & os.O_TRUNC):
             mode = mode.replace('w', 'r+', 1)
         return mode
+
+    def _acceptable_chmod(self, path):
+        """Internal helper to check that a chmod request is safe. That is, it
+        only changes permission on files. Furthermore anything inside the dirs
+        in chmod_exceptions should be left alone to avoid users touching
+        read-only files or enabling execution of custom cgi scripts with
+        potentially arbitrary code.
+        """
+        if os.path.isfile(path):
+            if True in [os.path.realpath(path).startswith(i + os.sep) \
+                        for i in self.chmod_exceptions]:
+                return False
+            else:
+                return True
+        else:
+            return False
 
     def open(self, path, flags, attr):
         """Handle operations of same name"""        
@@ -434,15 +451,20 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("chattr on missing path %s :: %s" % (path,
                                                                    real_path))
             return paramiko.SFTP_NO_SUCH_FILE
-        # TODO: is this silent ignore still needed?
-        # ... we end here on chmod too, so error may cause problems
-        # Prevent users from messing with attributes but silently ignore
-        #self.logger.error("chattr %s rejected on path %s :: %s" % \
-        #                  (repr(attr), path, real_path))
-        #return paramiko.SFTP_OP_UNSUPPORTED
-        self.logger.warning("chattr %s ignored on path %s :: %s" % \
-                            (repr(attr), path, real_path))
-        return paramiko.SFTP_OK
+
+        # Prevent users from messing with attributes as such.
+        # We end here on chmod too, so pass any mode change requests there and
+        # silently ignore them otherwise. It turns out to have caused problems
+        # if we rejected those other attribute changes in the past but it may
+        # not be a problem anymore. If it ain't broken...
+        if hasattr(attr, 'st_mode') and attr.st_mode:
+            self.logger.info("chattr %s forwarding for path %s :: %s" % \
+                                (repr(attr), path, real_path))
+            return self.chmod(path, attr.st_mode)
+        else:
+            self.logger.error("chattr %s ignored on path %s :: %s" % \
+                                (repr(attr), path, real_path))
+            return paramiko.SFTP_OK
 
     def chmod(self, path, mode):
         """Handle operations of same name"""
@@ -456,12 +478,21 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                                                                   real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         old_mode = os.stat(real_path).st_mode
-        # Accept redundant change requests
-        if mode == old_mode:
-            self.logger.warning("chmod without effect on %s :: %s" % \
-                                (path, real_path))
+        # Only allow change of mode on files and only outside chmod_exceptions
+        if self._acceptable_chmod(real_path):
+            # Only allow permission changes that won't give excessive access
+            # or remove own access.
+            new_mode = (mode & 0755) | 0600
+            self.logger.info("chmod %s (%s) without damage on %s :: %s" % \
+                                (new_mode, mode, path, real_path))
+            try:
+                os.chmod(real_path, new_mode)
+            except Exception, err:
+                self.logger.error("chmod %s (%s) failed on path %s :: %s %s" % \
+                                  (new_mode, mode, path, real_path, err))
+                return paramiko.SFTP_PERMISSION_DENIED
             return paramiko.SFTP_OK
-        # Prevent users from messing with access modes
+        # Prevent users from messing up access modes
         self.logger.error("chmod %s rejected on path %s :: %s" % (mode, path,
                                                                   real_path))
         return paramiko.SFTP_OP_UNSUPPORTED
@@ -758,9 +789,14 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
                          os.path.abspath(configuration.vgrid_public_base),
                          os.path.abspath(configuration.vgrid_files_home),
                          os.path.abspath(configuration.resource_home)]
+    # Don't allow chmod in dirs with CGI access as it introduces arbitrary
+    # code execution vulnerabilities
+    chmod_exceptions = [os.path.abspath(configuration.vgrid_private_base),
+                         os.path.abspath(configuration.vgrid_public_base)]
     sftp_conf = {'address': address,
                  'port': port,
                  'root_dir': os.path.abspath(configuration.user_home),
+                 'chmod_exceptions': chmod_exceptions,
                  'chroot_exceptions': chroot_exceptions,
                  'allow_password': False,
                  'allow_publickey': True,
