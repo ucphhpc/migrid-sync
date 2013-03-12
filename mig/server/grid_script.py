@@ -797,7 +797,7 @@ while True:
         scheduler.update_resources(resource_config)
         scheduler.update_seen(resource_config)
 
-        if job_queue.queue_length() == 0 or last_job_failed:
+        if job_queue.queue_length() == 0 or last_job_failed or nodecount < 1:
 
             # No jobs: Create 'empty' job script and double sleep time if
             # repeated empty job
