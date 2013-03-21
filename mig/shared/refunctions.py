@@ -166,8 +166,10 @@ def create_runtimeenv(filename, client_id, configuration):
     lock_handle.close()
     return (status, msg)
 
-def edit_runtimeenv_owner(re_name, old_owner, new_owner, configuration):
-    """Change owner on an existing runtime environment"""
+def update_runtimeenv_owner(re_name, old_owner, new_owner, configuration):
+    """Update owner on an existing runtime environment if existing owner
+    matches old_owner.
+    """
     status, msg = True, ""
     # Lock the access to the runtime env files, so that edit is done
     # with exclusive access.
@@ -177,8 +179,9 @@ def edit_runtimeenv_owner(re_name, old_owner, new_owner, configuration):
     re_filename = os.path.join(configuration.re_home, re_name)
     try:
         re_dict = load(re_filename)
-        re_dict['CREATOR'] = new_owner
-        dump(re_dict, re_filename)
+        if re_dict['CREATOR'] == old_owner:
+            re_dict['CREATOR'] = new_owner
+            dump(re_dict, re_filename)
     except Exception, err:
         msg = "Failed to edit owner of runtime enviroment '%s': %s" % \
               (re_name, err)

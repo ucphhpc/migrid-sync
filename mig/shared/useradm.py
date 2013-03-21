@@ -42,7 +42,7 @@ from shared.defaults import keyword_auto, ssh_conf_dir, htaccess_filename, \
      widgets_filename, ssh_conf_dir
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
-from shared.refunctions import list_runtime_environments, edit_runtimeenv_owner
+from shared.refunctions import list_runtime_environments, update_runtimeenv_owner
 from shared.resource import resource_add_owners, resource_remove_owners
 from shared.serial import load, dump
 from shared.settings import update_settings, update_profile, update_widgets
@@ -532,7 +532,7 @@ def edit_user(
     (re_status, re_list) = list_runtime_environments(configuration)
     if re_status:
         for re_name in re_list:
-            (re_status, err) = edit_runtimeenv_owner(re_name, client_id,
+            (re_status, err) = update_runtimeenv_owner(re_name, client_id,
                                                      new_id, configuration)
             if verbose:
                 if not re_status:
