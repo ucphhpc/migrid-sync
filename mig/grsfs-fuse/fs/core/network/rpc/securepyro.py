@@ -135,7 +135,6 @@ class SecurePyroServer(Pyro.core.Daemon):
                  ssl_version=None):
         """Overriding __init__ method of the Pyro server Daemon to add SSL in
         between basic init and network activation.
-        Exposes all functionality through the 'base' object.
         """
         # Validate arguments possibly supplied by user
         if not os.path.isfile(key_path):
@@ -163,7 +162,6 @@ class SecurePyroServer(Pyro.core.Daemon):
         """Fake object registration interface like xmlrpc"""
         # Skip name server and bind wrap object with method x() to name.
         # client must open proxy to URI/name to enable use of proxy.x() 
-        # Expose everything as attributes of base object
         if self.__introspection:
             obj.system =  IntrospectionHelper()
         pyro_obj = Pyro.core.ObjBase()

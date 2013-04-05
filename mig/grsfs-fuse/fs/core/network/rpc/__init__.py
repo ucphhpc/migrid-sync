@@ -37,6 +37,9 @@ import threading
 from securexmlrpc import SecureXMLRPCServer as SecureRPCServer
 from securexmlrpc import SecureXMLRPCServerProxy as SecureRPCServerProxy
 from securexmlrpc import wrapbinary, unwrapbinary
+#from securepyro import SecurePyroServer as SecureRPCServer
+#from securepyro import SecurePyroServerProxy as SecureRPCServerProxy
+#from securepyro import wrapbinary, unwrapbinary
 
 
 class GRSServerProxy(SecureRPCServerProxy):
@@ -118,8 +121,10 @@ def connect_to_peer(peer, ident):
                                                                 peer, val))
             return (proxy_link, val)
         except Exception, serr:
-            logger.error( "%s unable to connect to %s (%s)"  % (__name__,
-                                                                peer, serr))
+            import traceback
+            logger.error( "%s unable to connect to %s (%s %s)"  % (__name__,
+                                                                peer, serr,
+                                                                traceback.format_exc()))
             return None        
     finally:
         pass

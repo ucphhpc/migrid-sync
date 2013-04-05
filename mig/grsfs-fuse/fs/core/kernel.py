@@ -31,7 +31,6 @@
 
 
 import os, threading, time, errno, socket, signal
-from xmlrpclib import Binary
 
 from core.specialized.aux import flag2mode
 from core.storage.passthrough import Passthrough as storage_impl
