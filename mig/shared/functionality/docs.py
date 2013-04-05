@@ -296,6 +296,14 @@ Core communication with dedicated resources use OpenSSH client utilities:"""})
                                'class': 'urllink',
                                'title': 'Paramiko Home Page',
                                'text': 'Paramiko SSH2 Module (LGPL)'})
+        output_objects.append({'object_type': 'text', 'text' : """
+and the optional password authentication support relies on the PBKDF2 module
+(embedded) from:"""})
+        output_objects.append({'object_type': 'link', 
+                               'destination' : 'https://github.com/mitsuhiko/python-pbkdf2',
+                               'class': 'urllink',
+                               'title': 'PBKDF2 Home Page',
+                               'text': 'PBKDF2 Module (BSD)'})
     if configuration.moin_share and configuration.moin_etc:
         output_objects.append({'object_type': 'text', 'text' :
                                """Wikis are delivered using MoinMoin:"""})

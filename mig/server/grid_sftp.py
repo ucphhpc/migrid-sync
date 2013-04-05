@@ -74,7 +74,8 @@ import paramiko.util
 
 from shared.base import client_dir_id, client_alias, invisible_path
 from shared.conf import get_configuration_object
-from shared.useradm import ssh_authkeys, get_ssh_authkeys
+from shared.useradm import ssh_authkeys, get_ssh_authkeys, ssh_authpasswords, \
+     get_ssh_authpasswords, check_password_hash
 
 
 configuration, logger = None, None
@@ -540,19 +541,36 @@ class SimpleSSHServer(paramiko.ServerInterface):
         return paramiko.OPEN_SUCCEEDED
 
     def check_auth_password(self, username, password):
-        """Password auth against usermap"""
+        """Password auth against usermap.
+
+        Please note that we take serious steps to secure against password
+        cracking, but that it _may_ still be possible to achieve with a big
+        effort.
+
+        Paranoid users / grid owners should not enable password access in the
+        first place!
+        """
+        offered = None
         if self.allow_password and self.users.has_key(username):
-            if self.users[username].password == password:
-                self.logger.info("Authenticated %s" % username)
-                self.authenticated_user = username
-                return paramiko.AUTH_SUCCESSFUL
-        err_msg = "Rejected password for %s" % username
+            # list of User login objects for username
+            entries = self.users[username]
+            offered = password
+            for entry in entries:
+                if entry.password is not None:
+                    allowed = entry.password
+                    self.logger.debug("Password check for %s" % username)
+                    if check_password_hash(offered, allowed):
+                        self.logger.info("Authenticated %s" % username)
+                        self.authenticated_user = username
+                        return paramiko.AUTH_SUCCESSFUL
+        err_msg = "Password authentication failed for %s" % username
         self.logger.error(err_msg)
         print err_msg
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
         """Public key auth against usermap"""
+        offered = None
         if self.allow_publickey and self.users.has_key(username):
             # list of User login objects for username
             entries = self.users[username]
@@ -651,20 +669,36 @@ def refresh_users(conf):
     old_usernames = [i.username for i in conf['users']]
     cur_usernames = []
     authkeys_pattern = os.path.join(conf['root_dir'], '*', ssh_authkeys)
-    for path in glob.glob(authkeys_pattern):
+    authpasswords_pattern = os.path.join(conf['root_dir'], '*',
+                                         ssh_authpasswords)
+    matches = [(ssh_authkeys, i) for i in glob.glob(authkeys_pattern)]
+    matches += [(ssh_authpasswords, i) \
+                for i in glob.glob(authpasswords_pattern)] 
+    for (auth_file, path) in matches:
         # TODO: maybe we should check expire field in user DB, too?
         logger.debug("Checking %s" % path)
-        user_home = path.replace(os.sep + ssh_authkeys, '')
+        user_home = path.replace(os.sep + auth_file, '')
         user_dir = user_home.replace(conf['root_dir'] + os.sep, '')
         user_id = client_dir_id(user_dir)
         user_alias = client_alias(user_id)
         cur_usernames.append(user_alias)
         if last_update >= os.path.getmtime(path):
             continue
-        # Clean up all old entries for this user
-        conf['users'] = [i for i in conf['users'] if i.username != user_alias]
-        # Create user entry for each valid key
-        all_keys = get_ssh_authkeys(path)
+        # Create user entry for each valid key and password 
+        if auth_file == ssh_authkeys:
+            all_keys = get_ssh_authkeys(path)
+            all_passwords = []
+            # Clean up all old key entries for this user
+            conf['users'] = [i for i in conf['users'] \
+                             if i.username != user_alias or \
+                             i.public_key is None]
+        else:
+            all_keys = []
+            all_passwords = get_ssh_authpasswords(path)
+            # Clean up all old password entries for this user
+            conf['users'] = [i for i in conf['users'] \
+                             if i.username != user_alias or \
+                             i.password is None]
         for user_key in all_keys:
             if not user_key.startswith('ssh-rsa ') and \
                    not user_key.startswith('ssh-dss '):
@@ -678,6 +712,13 @@ def refresh_users(conf):
                 User(username=user_alias, home=user_dir, password=None,
                      public_key=user_key, chroot=True),
                 )
+        for user_password in all_passwords:
+            user_password = user_password.strip()
+            logger.debug("Adding user:\nname: %s\nalias: %s\nhome: %s\npw: %s"\
+                        % (user_id, user_alias, user_dir, user_password))
+            conf['users'].append(
+                User(username=user_alias, home=user_dir,
+                     password=user_password, public_key=None, chroot=True))
     removed = [i for i in old_usernames if not i in cur_usernames]
     if removed:
         logger.info("Removing login for %d deleted users" % len(removed))
@@ -798,8 +839,8 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
                  'root_dir': os.path.abspath(configuration.user_home),
                  'chmod_exceptions': chmod_exceptions,
                  'chroot_exceptions': chroot_exceptions,
-                 'allow_password': False,
-                 'allow_publickey': True,
+                 'allow_password': 'password' in configuration.user_sftp_auth,
+                 'allow_publickey': 'publickey' in configuration.user_sftp_auth,
                  'host_rsa_key': host_rsa_key,
                  'users': [],
                  'time_stamp': 0,

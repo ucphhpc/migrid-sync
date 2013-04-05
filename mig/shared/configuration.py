@@ -104,6 +104,7 @@ def fix_missing(config_file, verbose=True):
         'user_sftp_address': fqdn,
         'user_sftp_port': 2222,
         'user_sftp_key': '~/certs/key.pem',
+        'user_sftp_auth': ['publickey'],
         'logfile': 'server.log',
         'loglevel': 'info',
         'sleep_period_for_empty_jobs': '80',
@@ -210,6 +211,7 @@ class Configuration:
     user_sftp_address = ''
     user_sftp_port = 2222
     user_sftp_key = ''
+    user_sftp_auth = ['publickey']
     server_home = ''
     vms_builder_home = ''
     sessid_to_mrsl_link_home = ''
@@ -473,6 +475,9 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_sftp_key'):
             self.user_sftp_key = config.get('GLOBAL', 
                                                  'user_sftp_key')
+        if config.has_option('GLOBAL', 'user_sftp_auth'):
+            self.user_sftp_auth = config.get('GLOBAL', 
+                                                 'user_sftp_auth').split()
         if config.has_option('GLOBAL', 'mig_code_base'):
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:
