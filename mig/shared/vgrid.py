@@ -150,6 +150,17 @@ def vgrid_list_subvgrids(vgrid_name, configuration):
     return (True, result_list)
 
 
+def vgrid_list_parents(vgrid_name, configuration):
+    """Return list of parent vgrids of vgrid_name"""
+
+    result_list = []
+    parts = vgrid_name.split(os.sep)
+    for i in xrange(len(parts)-1):
+        vgrid = (os.sep).join(parts[:i+1])
+        result_list.append(vgrid)
+    return result_list
+
+
 def vgrid_list_vgrids(configuration):
     """List all vgrids and sub-vgrids created on the system"""
 
@@ -358,10 +369,12 @@ def vgrid_request_and_job_match(resource_vgrid, job_vgrid):
             return False
     return True
 
-def user_allowed_vgrids(configuration, client_id):
+def user_allowed_vgrids(configuration, client_id, inherited=False):
     """Return a list of all VGrids that the user with
     client_id is allowed to access. I.e. the VGrids
     that the user is member or owner of.
+    The optional inherited argument is used to add any parent vgrids to match
+    inherited access to resources in parent vgrids.
     """
 
     allowed = []
@@ -370,6 +383,8 @@ def user_allowed_vgrids(configuration, client_id):
         return allowed
     for vgrid in all_vgrids:
         if vgrid_is_owner_or_member(vgrid, client_id, configuration):
+            if inherited:
+                allowed += vgrid_list_parents(vgrid, configuration)
             allowed.append(vgrid)
     return allowed
 

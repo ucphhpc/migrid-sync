@@ -131,6 +131,8 @@ def main(client_id, user_arguments_dict):
 
     for visible_res_name in resource_list:
         if not visible_res_name in visible_res.keys():
+            logger.warning('User %s not allowed to view %s (%s)' % \
+                           (client_id, visible_res_name, visible_res.keys()))
             output_objects.append({'object_type': 'error_text',
                                    'text': 'invalid resource %s' % \
                                    visible_res_name})

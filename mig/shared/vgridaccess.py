@@ -182,7 +182,6 @@ def refresh_resource_map(configuration):
     """
     dirty = []
     map_path = os.path.join(configuration.resource_home, "resource.map")
-    dirty_path = os.path.join(configuration.resource_home, "resource.dirty")
     lock_path = os.path.join(configuration.resource_home, "resource.lock")
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
@@ -252,7 +251,6 @@ def refresh_vgrid_map(configuration):
     dirty = {}
     vgrid_changes = {}
     map_path = os.path.join(configuration.vgrid_home, "vgrid.map")
-    dirty_path = os.path.join(configuration.vgrid_home, "vgrid.dirty")
     lock_path = os.path.join(configuration.vgrid_home, "vgrid.lock")
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
@@ -519,7 +517,11 @@ def user_allowed_res_confs(configuration, client_id):
     in a vgrid if the vgrid *and* resource owners configured it so.
     """
     allowed = {}
-    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
+
+    # Extend allowed_vgrids with any parent vgrids here to fit inheritance
+
+    allowed_vgrids = user_allowed_vgrids(configuration, client_id,
+                                         inherited=True)
 
     # Find all potential resources from vgrid sign up
 
@@ -541,6 +543,7 @@ def user_allowed_res_confs(configuration, client_id):
             continue
         allowed[anon_map[res]] = resource_map.get(res, {CONF: {}})[CONF]
     return allowed
+
 
 def user_visible_res_confs(configuration, client_id):
     """Extract a map of resources that client_id owns or can submit jobs to.
@@ -582,7 +585,11 @@ def user_allowed_res_exes(configuration, client_id):
     in a vgrid if the vgrid *and* resource owners configured it so.
     """
     allowed = {}
-    allowed_vgrids = user_allowed_vgrids(configuration, client_id)
+
+    # Extend allowed_vgrids with any parent vgrids here to fit inheritance
+
+    allowed_vgrids = user_allowed_vgrids(configuration, client_id,
+                                         inherited=True)
 
     # Find all potential resources from vgrid sign up
 
