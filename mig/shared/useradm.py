@@ -130,6 +130,12 @@ def distinguished_name_to_user(distinguished_name):
     return user_dict
 
 
+def extract_field(distinguished_name, field_name):
+    """Extract field_name value from client_id if included"""
+    user = distinguished_name_to_user(distinguished_name)
+    return user.get(field_name, None)
+
+
 def load_user_db(db_path):
     """Load pickled user DB"""
 

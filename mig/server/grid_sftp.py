@@ -75,7 +75,7 @@ import paramiko.util
 from shared.base import client_dir_id, client_alias, invisible_path
 from shared.conf import get_configuration_object
 from shared.useradm import ssh_authkeys, get_ssh_authkeys, ssh_authpasswords, \
-     get_ssh_authpasswords, check_password_hash
+     get_ssh_authpasswords, check_password_hash, extract_field
 
 
 configuration, logger = None, None
@@ -671,6 +671,7 @@ def refresh_users(conf):
     authkeys_pattern = os.path.join(conf['root_dir'], '*', ssh_authkeys)
     authpasswords_pattern = os.path.join(conf['root_dir'], '*',
                                          ssh_authpasswords)
+    short_id, short_alias = None, None
     matches = [(ssh_authkeys, i) for i in glob.glob(authkeys_pattern)]
     matches += [(ssh_authpasswords, i) \
                 for i in glob.glob(authpasswords_pattern)] 
@@ -682,6 +683,10 @@ def refresh_users(conf):
         user_id = client_dir_id(user_dir)
         user_alias = client_alias(user_id)
         cur_usernames.append(user_alias)
+        if conf['user_alias']:
+            short_id = extract_field(user_id, conf['user_alias'])
+            short_alias = client_alias(short_id)
+            cur_usernames.append(short_alias)
         if last_update >= os.path.getmtime(path):
             continue
         # Create user entry for each valid key and password 
@@ -712,6 +717,14 @@ def refresh_users(conf):
                 User(username=user_alias, home=user_dir, password=None,
                      public_key=user_key, chroot=True),
                 )
+            # Add short alias copy if user aliasing is enabled
+            if short_id:
+                logger.debug("Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s"\
+                             % (user_id, short_alias, user_dir, user_key))
+                conf['users'].append(
+                    User(username=short_alias, home=user_dir, password=None,
+                         public_key=user_key, chroot=True),
+                    )
         for user_password in all_passwords:
             user_password = user_password.strip()
             logger.debug("Adding user:\nname: %s\nalias: %s\nhome: %s\npw: %s"\
@@ -719,6 +732,14 @@ def refresh_users(conf):
             conf['users'].append(
                 User(username=user_alias, home=user_dir,
                      password=user_password, public_key=None, chroot=True))
+            # Add short alias copy if user aliasing is enabled
+            if short_id:
+                logger.debug("Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s"\
+                             % (user_id, short_alias, user_dir, user_password))
+                conf['users'].append(
+                    User(username=short_alias, home=user_dir, password=user_password,
+                         public_key=None, chroot=True),
+                    )
     removed = [i for i in old_usernames if not i in cur_usernames]
     if removed:
         logger.info("Removing login for %d deleted users" % len(removed))
@@ -841,6 +862,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
                  'chroot_exceptions': chroot_exceptions,
                  'allow_password': 'password' in configuration.user_sftp_auth,
                  'allow_publickey': 'publickey' in configuration.user_sftp_auth,
+                 'user_alias': configuration.user_sftp_alias,
                  'host_rsa_key': host_rsa_key,
                  'users': [],
                  'time_stamp': 0,
