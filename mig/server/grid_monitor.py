@@ -419,7 +419,8 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                         public_id = anon_resource_id(public_id)
                     public_name = last_request_dict['RESOURCE_CONFIG'].get('PUBLICNAME', '')
                     resource_parts = public_id.split('_', 2)
-                    resource_name = resource_parts[0]
+                    resource_name = "<a href='viewres.py?unique_resource_name=%s'>%s</a>" % \
+                                    (resource_parts[0], resource_parts[0])
                     if public_name:
                         resource_name += "<br />(alias %s)" % public_name
                     else:
@@ -568,7 +569,8 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                      % resource_status
                 public_name = last_status_dict['RESOURCE_CONFIG'].get('PUBLICNAME', '')
                 resource_parts = public_id.split('_', 2)
-                resource_name = resource_parts[0]
+                resource_name = "<a href='viewres.py?unique_resource_name=%s'>%s</a>" % \
+                                (resource_parts[0], resource_parts[0])
                 if public_name:
                     resource_name += "<br />(alias %s)" % public_name
                 else:

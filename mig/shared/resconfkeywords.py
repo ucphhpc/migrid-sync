@@ -276,6 +276,15 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         'Editor': 'input',
         'Required': False,
         }))
+    specs.append(('PUBLICINFO', {
+        'Title': 'Public Information',
+        'Description': 'Optional extra free text information describing the resource.',
+        'Example': 'Eight core host with OpenCL capable GPU',
+        'Type': 'string',
+        'Value': '',
+        'Editor': 'input',
+        'Required': False,
+        }))
     specs.append(('SANDBOX', {
         'Title': 'Sandbox',
         'Description': 'Specifies whether resource is a sandbox. If 0 or false, the resource is not a sandbox, if 1 or true, the resource is a sandbox. Sandbox resources are less trusted and thus can only handle explicitly allowed sandbox jobs.',
