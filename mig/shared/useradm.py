@@ -1002,7 +1002,7 @@ def get_ssh_authkeys(authkeys_path):
     return authorized_keys
 
 def get_ssh_authpasswords(authpasswords_path):
-    """Return the ssh authorized passwords from authpasswords_path"""
+    """Return the non-empty ssh authorized passwords from authpasswords_path"""
 
     try:
         authpasswords_fd = open(authpasswords_path, 'rb')

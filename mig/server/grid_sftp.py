@@ -663,7 +663,11 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
 
 
 def refresh_users(conf):
-    '''Reload users from conf if it changed on disk'''
+    '''Reload users from conf if it changed on disk. Add user entries for all
+    active keys and passwords enabled in conf. Optionally add short ID
+    username alias entries for all users if that is enabled in the conf.
+    Removes all the user entries no longer active, too.
+    '''
     logger = conf.get("logger", logging.getLogger())
     last_update = conf['time_stamp']
     old_usernames = [i.username for i in conf['users']]
@@ -676,7 +680,6 @@ def refresh_users(conf):
     matches += [(ssh_authpasswords, i) \
                 for i in glob.glob(authpasswords_pattern)] 
     for (auth_file, path) in matches:
-        # TODO: maybe we should check expire field in user DB, too?
         logger.debug("Checking %s" % path)
         user_home = path.replace(os.sep + auth_file, '')
         user_dir = user_home.replace(conf['root_dir'] + os.sep, '')
