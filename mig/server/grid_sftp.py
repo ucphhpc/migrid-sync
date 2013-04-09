@@ -676,9 +676,12 @@ def refresh_users(conf):
     authpasswords_pattern = os.path.join(conf['root_dir'], '*',
                                          ssh_authpasswords)
     short_id, short_alias = None, None
-    matches = [(ssh_authkeys, i) for i in glob.glob(authkeys_pattern)]
-    matches += [(ssh_authpasswords, i) \
-                for i in glob.glob(authpasswords_pattern)] 
+    matches = []
+    if conf['allow_publickey']:
+        matches += [(ssh_authkeys, i) for i in glob.glob(authkeys_pattern)]
+    if conf['allow_password']:
+        matches += [(ssh_authpasswords, i) \
+                    for i in glob.glob(authpasswords_pattern)] 
     for (auth_file, path) in matches:
         logger.debug("Checking %s" % path)
         user_home = path.replace(os.sep + auth_file, '')
