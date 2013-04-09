@@ -788,7 +788,7 @@ def guess_type(name):
         for key in ('aol', 'yahoo', 'msn', 'icq', 'jabber', 'email', ):
             __type_map[key] = valid_email_address
         for key in ('editarea', 'execute', 'premenu', 'postmenu', 'precontent',
-                    'postcontent', ):
+                    'postcontent', 'publickeys', ):
             __type_map[key] = valid_free_text
         for key in ('show', ):
             __type_map[key] = valid_label_text

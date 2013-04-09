@@ -35,6 +35,7 @@
 keyword_any = 'ANY'
 keyword_all = 'ALL'
 keyword_auto = 'AUTO'
+keyword_unchanged = 'UNCHANGED'
 
 default_vgrid = 'Generic'
 any_vgrid = keyword_any
@@ -67,6 +68,8 @@ default_mrsl_filename = '.default.mrsl'
 default_css_filename = '.default.css'
 spell_dictionary_filename = '.personal_dictionary'
 ssh_conf_dir = '.ssh'
+authkeys_filename = 'authorized_keys'
+authpasswords_filename= 'authorized_passwords'
 settings_filename = 'settings'
 widgets_filename = 'widgets'
 profile_filename = 'userprofile'

@@ -33,12 +33,11 @@ from shared.defaults import any_vgrid, default_mrsl_filename, \
      default_css_filename, profile_img_max_kb, profile_img_extensions
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
-from shared.settings import load_settings, load_widgets, load_profile
+from shared.settings import load_settings, load_widgets, load_profile, load_ssh
 from shared.profilekeywords import get_profile_specs
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
-from shared.useradm import ssh_authkeys, get_default_mrsl, get_default_css, \
-     get_ssh_authkeys
+from shared.useradm import get_default_mrsl, get_default_css
 from shared.vgrid import vgrid_list_vgrids
 
 try:
@@ -775,8 +774,18 @@ If you want to let other users know more about you can add your own text here. I
         output_objects.append({'object_type': 'html_form', 'text': html})
 
     if 'ssh' in topics:
-        authkeys_path = os.path.join(base_dir, ssh_authkeys)
-        default_authkeys = '\n'.join(get_ssh_authkeys(authkeys_path))
+
+        # load current ssh
+
+        current_ssh_dict = load_ssh(client_id, configuration)
+        if not current_ssh_dict:
+            
+            # no current ssh found
+            
+            current_ssh_dict = {}
+
+        default_authkeys = current_ssh_dict.get('authkeys', '')
+        default_authpassword = current_ssh_dict.get('authpassword', '')
         sftp_server = configuration.user_sftp_address
         # address may be empty to use all interfaces - then use FQDN
         if not sftp_server:
@@ -825,33 +834,54 @@ sshfs %(sftp_server)s: mig-home -o uid=$(id -u) -o gid=$(id -g)
 </pre>
 </p>
 </td></tr>
-<tr><td>
-<form method="post" action="editfile.py">
-<input type="hidden" name="path" value="%(ssh_authkeys)s" />
-<input type="hidden" name="newline" value="unix" />
+<form method="post" action="settingsaction.py">
+<input type="hidden" name="topic" value="ssh" />
 '''
-        keyword = "authkeys"
-        area = '''
-<textarea id="%(keyword)s" cols=82 rows=5 name="editarea">
+        
+        keyword_keys = "authkeys"
+        if 'publickey' in configuration.user_sftp_auth:
+            html += '''
+<tr><td>
+'''
+            area = '''
+<textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
 %(default_authkeys)s
 </textarea>
 '''
-        html += wrap_edit_area(keyword, area, ssh_edit, 'BASIC')
+            html += wrap_edit_area(keyword_keys, area, ssh_edit, 'BASIC')
+            html += '''
+(leave empty to disable sftp access with ssh keys)
+</td></tr>
+'''
+            
+        keyword_password = "authpassword"
+        if 'password' in configuration.user_sftp_auth:
+            # We only want a single password and a masked input field
+            html += '''
+<tr><td>
+<input type=password id="%(keyword_password)s" size=40 name="password"
+value="%(default_authpassword)s" />
+(leave empty to disable sftp access with password)
+</td></tr>
+'''
         
         html += '''
-</td></tr>
 <tr><td>
-<input type="submit" value="Save keys" />
+<input type="submit" value="Save ssh" />
 </form>
 </td></tr>
+'''
+        
+        html += '''
 </table>
 </div>
 '''
         html = html % {
             'default_authkeys': default_authkeys,
-            'ssh_authkeys': ssh_authkeys,
+            'default_authpassword': default_authpassword,
             'site': configuration.short_title,
-            'keyword': keyword,
+            'keyword_keys': keyword_keys,
+            'keyword_password': keyword_password,
             'username': client_alias(client_id),
             'sftp_server': sftp_server,
             'sftp_port': sftp_port,

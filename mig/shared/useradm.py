@@ -39,7 +39,7 @@ from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.defaults import keyword_auto, ssh_conf_dir, htaccess_filename, \
      settings_filename, profile_filename, default_css_filename, \
-     widgets_filename, ssh_conf_dir
+     widgets_filename, ssh_conf_dir, authkeys_filename, authpasswords_filename
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, update_runtimeenv_owner
@@ -53,8 +53,8 @@ from shared.vgridaccess import get_resource_map, get_vgrid_map, VGRIDS, \
      OWNERS, MEMBERS
 
 db_name = 'MiG-users.db'
-ssh_authkeys = os.path.join(ssh_conf_dir, 'authorized_keys')
-ssh_authpasswords = os.path.join(ssh_conf_dir, 'authorized_passwords')
+ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)
+ssh_authpasswords = os.path.join(ssh_conf_dir, authpasswords_filename)
 cert_field_order = [
     ('country', 'C'),
     ('state', 'ST'),

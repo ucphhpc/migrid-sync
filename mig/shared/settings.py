@@ -31,10 +31,12 @@ import datetime
 import shared.parser as parser
 from shared.base import client_id_dir
 from shared.defaults import settings_filename, profile_filename, \
-     widgets_filename
+     widgets_filename, ssh_conf_dir, authkeys_filename, \
+     authpasswords_filename, keyword_unchanged
 from shared.fileio import pickle, unpickle
 from shared.modified import mark_user_modified
 from shared.profilekeywords import get_keywords_dict as get_profile_fields
+from shared.pwhash import make_hash
 from shared.settingskeywords import get_keywords_dict as get_settings_fields
 from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 
@@ -91,6 +93,7 @@ def parse_and_save_pickle(source, destination, keywords, client_id,
     return (True, '')
 
 def parse_and_save_settings(filename, client_id, configuration):
+    """Validate and write settings entries from filename"""
     status = parse_and_save_pickle(filename, settings_filename,
                                    get_settings_fields(), client_id,
                                    configuration, True, True)
@@ -99,14 +102,68 @@ def parse_and_save_settings(filename, client_id, configuration):
     return status
 
 def parse_and_save_widgets(filename, client_id, configuration):
+    """Validate and write widget entries from filename"""
     return parse_and_save_pickle(filename, widgets_filename,
                                  get_widgets_fields(), client_id,
                                  configuration, False, False)
 
 def parse_and_save_profile(filename, client_id, configuration):
+    """Validate and write profile entries from filename"""
     status = parse_and_save_pickle(filename, profile_filename,
                                    get_profile_fields(), client_id,
                                    configuration, False, False)
+    if status[0]:
+        mark_user_modified(configuration, client_id)
+    return status
+
+def parse_and_save_publickeys(keys_path, keys_content, client_id,
+                              configuration):
+    """Validate and write the contents to the keys_path"""
+    # TODO: validate?
+    status, msg = True, ''
+    try:
+        keys_fd = open(keys_path, 'wb')
+        keys_fd.write(keys_content)
+        keys_fd.close()
+    except Exception, exc:
+        status = False
+        msg = 'ERROR: writing %s ssh publickey file: %s' % (client_id, exc)
+    return (status, msg)
+
+def parse_and_save_passwords(passwords_path, passwords_content, client_id,
+                             configuration):
+    """Check password strength and write the hashed content to passwords_path
+    using the password hashing helper.
+    """
+    # TODO: validate?
+    status, msg = True, ''
+    if passwords_content == keyword_unchanged:
+        return (status, msg)
+    try:
+        if not passwords_content:
+            password_hash = ''
+        else:
+            password_hash = make_hash(passwords_content)
+        passwords_fd = open(passwords_path, 'wb')
+        passwords_fd.write(password_hash)
+        passwords_fd.close()
+    except Exception, exc:
+        status = False
+        msg = 'ERROR: writing %s ssh passwords file: %s' % (client_id, exc)
+    return (status, msg)
+
+def parse_and_save_ssh(publickeys, password, client_id, configuration):
+    """Validate and write ssh entries"""
+    client_dir = client_id_dir(client_id)
+    keys_path = os.path.join(configuration.user_home, client_dir, ssh_conf_dir,
+                             authkeys_filename)
+    key_status = parse_and_save_publickeys(keys_path, publickeys, client_id,
+                                           configuration)
+    pw_path = os.path.join(configuration.user_home, client_dir, ssh_conf_dir,
+                           authpasswords_filename)
+    pw_status = parse_and_save_passwords(pw_path, password, client_id,
+                                         configuration)
+    status = (key_status[0] and pw_status[0], key_status[1] + pw_status[1])
     if status[0]:
         mark_user_modified(configuration, client_id)
     return status
@@ -152,6 +209,34 @@ def load_profile(client_id, configuration, include_meta=False):
 
     return load_section_helper(client_id, configuration, profile_filename,
                                get_profile_fields().keys(), include_meta)
+
+def load_ssh(client_id, configuration):
+    """Load ssh keys and password from user .ssh dir"""
+
+    section_dict = {}
+    client_dir = client_id_dir(client_id)
+    keys_path = os.path.join(configuration.user_home, client_dir, ssh_conf_dir,
+                             authkeys_filename)
+    pw_path = os.path.join(configuration.user_home, client_dir, ssh_conf_dir,
+                           authpasswords_filename)
+    try:
+        keys_fd = open(keys_path)
+        section_dict['authkeys'] = keys_fd.read()
+        keys_fd.close()
+    except Exception, exc:
+        configuration.logger.error("load ssh publickeys failed: %s" % exc)
+    try:
+        password = ''
+        if os.path.exists(pw_path):
+            pw_fd = open(pw_path)
+            password_hash = pw_fd.read()
+            if password_hash.strip():
+                password = keyword_unchanged
+            pw_fd.close()
+        section_dict['authpassword'] = password
+    except Exception, exc:
+        configuration.logger.error("load ssh password failed: %s" % exc)
+    return section_dict
 
 def update_section_helper(client_id, configuration, section_filename, changes,
                           defaults, create_missing=True):
