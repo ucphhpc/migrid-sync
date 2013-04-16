@@ -154,8 +154,8 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
   <div id='full_name_help'>Your full name, restricted to the characters in '%(valid_name_chars)s'</div>
   <div id='organization_help'>Organization name or acronym  matching email</div>
   <div id='email_help'>Email address associated with your organization if at all possible</div>
-  <div id='country_help'>Country code is on the form DE/DK/GB/US/.. , <a href='http://www.iso.org/iso/country_codes/iso_3166_code_lists/country_names_and_code_elements.html'>help</a></div>
-  <div id='state_help'>Optional, please just leave empty unless you are a citizen of the US or similar</div>
+  <div id='country_help'>Country code of your organization and on the form DE/DK/GB/US/.. , <a href='http://www.iso.org/iso/country_codes/iso_3166_code_lists/country_names_and_code_elements.html'>help</a></div>
+  <div id='state_help'>Optional state of your organization, please just leave empty unless it is in the US or similar</div>
   <div id='password_help'>Password is restricted to the characters in '%(valid_password_chars)s and must be %(password_min_len)s to %(password_max_len)s characters long'</div>
   <div id='verifypassword_help'>Please repeat password</div>
   <div id='comment_help'>Optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.</div>

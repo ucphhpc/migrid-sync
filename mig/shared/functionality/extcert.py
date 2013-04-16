@@ -105,10 +105,10 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
 <table>
 <tr><td class='mandatory label'>Certificate DN</td><td><input id='cert_id_field' type=text size=%(dn_max_len)s maxlength=%(dn_max_len)s name=cert_id value='%(client_id)s' /></td><td class=fill_space></td></tr>
 <tr><td class='mandatory label'>Full name</td><td><input id='cert_name_field' type=text name=cert_name value='%(common_name)s' /></td><td class=fill_space></td></tr>
-<tr><td class='mandatory label'>Organization</td><td><input id='organization_field' type=text name=org value='%(org)s' /></td><td class=fill_space></td></tr>
 <tr><td class='mandatory label'>Email address</td><td><input id='email_field' type=text name=email value='%(email)s' /></td><td class=fill_space></td></tr>
-<tr><td class='optional label'>State</td><td><input id='state_field' type=text name=state value='%(state)s' /></td><td class=fill_space></td></tr>
+<tr><td class='mandatory label'>Organization</td><td><input id='organization_field' type=text name=org value='%(org)s' /></td><td class=fill_space></td></tr>
 <tr><td class='mandatory label'>Two letter country-code</td><td><input id='country_field' type=text name=country maxlength=2 value='%(country)s' /></td><td class=fill_space></td></tr>
+<tr><td class='optional label'>State</td><td><input id='state_field' type=text name=state value='%(state)s' /></td><td class=fill_space></td></tr>
 <tr><td class='optional label'>Comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea id='comment_field' rows=4 name=comment></textarea></td><td class=fill_space></td></tr>
 <tr><td class='label'><!--- empty area ---></td><td><input id='submit_button' type='submit' value='Send' /></td><td class=fill_space></td></tr>
 </table>
@@ -120,8 +120,8 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
   <div id='cert_name_help'>Your full name, restricted to the characters in '%(valid_name_chars)s'</div>
   <div id='organization_help'>Organization name or acronym  matching email</div>
   <div id='email_help'>Email address associated with your organization if at all possible</div>
-  <div id='country_help'>Country code is on the form DE/DK/GB/US/.. , <a href='http://www.iso.org/iso/country_codes/iso_3166_code_lists/country_names_and_code_elements.html'>help</a></div>
-  <div id='state_help'>Optional, please just leave empty unless you are a citizen of the US or similar</div>
+  <div id='country_help'>Country code of your organization and on the form DE/DK/GB/US/.. , <a href='http://www.iso.org/iso/country_codes/iso_3166_code_lists/country_names_and_code_elements.html'>help</a></div>
+  <div id='state_help'>Optional state of your organization, please just leave empty unless it is in the US or similar</div>
   <div id='comment_help'>Optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.</div>
 </div>
 """
