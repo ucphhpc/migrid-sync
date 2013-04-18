@@ -155,12 +155,17 @@ def parse_and_save_passwords(passwords_path, passwords_content, client_id,
 def parse_and_save_ssh(publickeys, password, client_id, configuration):
     """Validate and write ssh entries"""
     client_dir = client_id_dir(client_id)
-    keys_path = os.path.join(configuration.user_home, client_dir, ssh_conf_dir,
-                             authkeys_filename)
+    ssh_conf_path = os.path.join(configuration.user_home, client_dir,
+                                 ssh_conf_dir)
+    # Create ssh conf dir for any old users
+    try:
+        os.mkdir(ssh_conf_path)
+    except:
+        pass
+    keys_path = os.path.join(ssh_conf_path, authkeys_filename)
     key_status = parse_and_save_publickeys(keys_path, publickeys, client_id,
                                            configuration)
-    pw_path = os.path.join(configuration.user_home, client_dir, ssh_conf_dir,
-                           authpasswords_filename)
+    pw_path = os.path.join(ssh_conf_path, authpasswords_filename)
     pw_status = parse_and_save_passwords(pw_path, password, client_id,
                                          configuration)
     status = (key_status[0] and pw_status[0], key_status[1] + pw_status[1])
