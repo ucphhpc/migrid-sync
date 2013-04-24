@@ -171,7 +171,8 @@ def create_user(
     db_path,
     force=False,
     verbose=False,
-    ask_renew=True
+    ask_renew=True,
+    default_renew=False
     ):
     """Add user"""
 
@@ -188,7 +189,7 @@ def create_user(
     client_id = user['distinguished_name']
     client_dir = client_id_dir(client_id)
 
-    renew = False
+    renew = default_renew
 
     if verbose:
         print 'User ID: %s\n' % client_id
@@ -207,7 +208,7 @@ def create_user(
                 renew_answer = raw_input('Renew existing entry? [Y/n] ')
                 renew = not renew_answer.lower().startswith('n')
             else:
-                renew = False
+                renew = default_renew
             if renew:
                 if user_db[client_id]['password'] != user['password']:
                     if verbose:
@@ -247,8 +248,9 @@ def create_user(
     profile_path = os.path.join(settings_dir, profile_filename)
     widgets_path = os.path.join(settings_dir, widgets_filename)
     css_path = os.path.join(home_dir, default_css_filename)
+    required_dirs = (settings_dir, cache_dir, mrsl_dir, pending_dir, ssh_dir)
     if not renew:
-        if verbose:        
+        if verbose:
             print 'Creating dirs and files for new user: %s' % client_id
         try:
             os.mkdir(home_dir)
@@ -256,42 +258,24 @@ def create_user(
             if not force:
                 raise Exception('could not create home dir: %s' % \
                                 home_dir)
-        try:
-            os.mkdir(settings_dir)
-        except:
-            if not force:
-                raise Exception('could not create settings dir: %s' % \
-                                settings_dir)
-        try:
-            os.mkdir(cache_dir)
-        except:
-            if not force:
-                raise Exception('could not create cache dir: %s' % \
-                                cache_dir)
+        for dir_path in required_dirs:
+            try:
+                os.mkdir(dir_path)
+            except:
+                if not force:
+                    raise Exception('could not create required dir: %s' % \
+                                    dir_path)
 
-        try:
-            os.mkdir(mrsl_dir)
-        except:
-            if not force:
-                raise Exception('could not create mrsl dir: %s' % \
-                                mrsl_dir)
-        try:
-            os.mkdir(pending_dir)
-        except:
-            if not force:
-                raise Exception('could not create resource dir: %s' % \
-                                pending_dir)
-        try:
-            os.mkdir(ssh_dir)
-        except:
-            if not force:
-                raise Exception('could not create ssh conf dir: %s' % \
-                                ssh_dir)
-
-    elif os.path.exists(htaccess_path):
-        # Allow temporary write access
-        os.chmod(htaccess_path, 0644)
-
+    else:
+        if os.path.exists(htaccess_path):
+            # Allow temporary write access
+            os.chmod(htaccess_path, 0644)
+        for dir_path in required_dirs:
+            try:
+                os.makedirs(dir_path)
+            except Exception, exc:
+                pass
+            
     # Always write htaccess to catch any updates
 
     try:
@@ -425,6 +409,9 @@ def edit_user(
     new_id = ''
     try:
         old_user = user_db[client_id]
+        configuration.logger.info("Force old user renew to fix missing files")
+        create_user(old_user, conf_path, db_path, force, verbose,
+                    ask_renew=False, default_renew=True)
         del user_db[client_id]
         user_dict = old_user
         user_dict.update(changes)
@@ -561,6 +548,9 @@ def edit_user(
 
     configuration.logger.info("Renamed user %s to %s" % (client_id, new_id))
     mark_user_modified(configuration, new_id)
+    configuration.logger.info("Force new user renew to fix access")
+    create_user(user_dict, conf_path, db_path, force, verbose,
+                ask_renew=False, default_renew=True)
     return user_dict
 
 
