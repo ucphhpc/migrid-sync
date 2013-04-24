@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# fakecgi - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# fakecgi - fake a cgi request
+# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,15 +29,20 @@
 # It should only be accessible from the command line to avoid
 # unauthenticated user access to CGI scripts.
 
-"""This is a simple wrapper to fake actual CGI execution of a
-script. Some of the MiG cgi scripts may require the user, Test User, to exist for actions to work."""
+"""This is a simple wrapper to fake actual CGI GET/POST execution of a
+script. Some of the MiG cgi scripts may require the provided RUNAS user
+to exist for actions to work.
+"""
 
 import os
 import sys
+import subprocess
+
+from shared.useradm import distinguished_name_to_user
 
 
 def usage():
-    print 'Usage: %s SCRIPT [QUERY]' % sys.argv[0]
+    print 'Usage: %s SCRIPT [METHOD] [QUERY] [RUNAS]' % sys.argv[0]
 
 
 if len(sys.argv) < 2:
@@ -46,24 +51,34 @@ if len(sys.argv) < 2:
 
 script = sys.argv[1]
 query = ''
-if len(sys.argv) > 2:
-    query = sys.argv[2]
+method = 'GET'
+run_as_dn = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Test User/emailAddress=nosuch@bogusdomain.net'
+if sys.argv[2:]:
+    method = sys.argv[2]
+if sys.argv[:3]:
+    query = sys.argv[3]
+if sys.argv[:4]:
+    run_as_dn = sys.argv[4]
+
+run_as_user = distinguished_name_to_user(run_as_dn)
 
 extra_environment = {
-    'REQUEST_METHOD': 'GET',
-    'SSL_CLIENT_S_DN': '/C=DK/L=IMADA/O=MiG/CN=Test User',
+    'REQUEST_METHOD': method,
     'SERVER_PROTOCOL': 'HTTP/1.1',
-    'PATH': '/bin:/usr/bin:/usr/local/bin',
-    'SSL_CLIENT_I_DN': '/C=DK/ST=Denmark/O=IMADA/OU=MiG/CN=MiGCA',
-    'SSL_CLIENT_I_DN_O': 'IMADA',
-    'REMOTE_ADDR': '127.0.0.1',
-    'SSL_CLIENT_I_DN_C': 'DK',
-    'SSL_CLIENT_S_DN_O': 'MiG',
-    'SSL_CLIENT_S_DN_L': 'IMADA',
-    'SSL_CLIENT_S_DN_C': 'DK',
-    'SSL_CLIENT_I_DN_ST': 'Denmark',
     'GATEWAY_INTERFACE': 'CGI/1.1',
-    'SSL_CLIENT_S_DN_CN': 'Test User',
+    'PATH': '/bin:/usr/bin:/usr/local/bin',
+    'REMOTE_ADDR': '127.0.0.1',
+    'SSL_CLIENT_S_DN': run_as_user['distinguished_name'],
+    'SSL_CLIENT_S_DN_C': run_as_user['country'],
+    'SSL_CLIENT_S_DN_O': run_as_user['organization'],
+    'SSL_CLIENT_S_DN_OU': run_as_user['organizational_unit'],
+    'SSL_CLIENT_S_DN_L': run_as_user['locality'],
+    'SSL_CLIENT_S_DN_CN': run_as_user['full_name'],
+    'SSL_CLIENT_I_DN': '/C=DK/ST=Denmark/O=IMADA/OU=MiG/CN=MiGCA',
+    'SSL_CLIENT_I_DN_C': 'DK',
+    'SSL_CLIENT_I_DN_ST': 'Denmark',
+    'SSL_CLIENT_I_DN_O': 'IMADA',
+    'SSL_CLIENT_I_DN_OU': 'MiGCA',
     'SSL_CLIENT_I_DN_CN': 'MiGCA',
     }
 
@@ -76,4 +91,5 @@ extra_environment['SCRIPT_URI'] = 'https://localhost/cgi-bin/%s'\
      % script
 os.environ.update(extra_environment)
 
-os.system(script)
+print "Running %s with environment:\n%s" % (script, os.environ)
+subprocess.call(script, stdin=open('/dev/null', 'r'))
