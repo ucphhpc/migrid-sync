@@ -550,7 +550,7 @@ if (jQuery) (function($){
              onclick_action = "$('.fm_addressbar input[name=fm_current_path]').val('"+subdir_path+"');";
              onclick_action += "$.fn.reload('"+subdir_path+"');";
              entry_html = '  <li '+li_class+'>';
-             entry_html += '    <a href="#" '+a_class+' onclick="'+onclick_action+'">'+subdir_name+'</a>';
+             entry_html += '    <a href="?path='+subdir_path+'" '+a_class+' onclick="'+onclick_action+';return false;">'+subdir_name+'</a>';
              entry_html += '    <ul>';
              entry_html += '    </ul>';
              entry_html += '  </li>';
