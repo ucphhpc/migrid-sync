@@ -664,9 +664,12 @@ A total of <b>'''\
         '<!-- begin raw footer: this line is used by showvgridmonitor -->'
     html += get_cgi_html_footer(configuration, '')
 
-    file_handle = open(html_file, 'w')
-    file_handle.write(html)
-    file_handle.close()
+    try:
+        file_handle = open(html_file, 'w')
+        file_handle.write(html)
+        file_handle.close()
+    except Exception, exc:
+        print 'Could not write monitor page %s: %s' % (html_file, exc)
 
 
 while True:
