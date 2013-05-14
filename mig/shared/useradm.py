@@ -409,17 +409,19 @@ def edit_user(
     new_id = ''
     try:
         old_user = user_db[client_id]
-        configuration.logger.info("Force old user renew to fix missing files")
-        create_user(old_user, conf_path, db_path, force, verbose,
-                    ask_renew=False, default_renew=True)
-        del user_db[client_id]
-        user_dict = old_user
+        user_dict.update(old_user)
         user_dict.update(changes)
         fill_user(user_dict)
         # Force distinguished_name update
         del user_dict["distinguished_name"]
         fill_distinguished_name(user_dict)
         new_id = user_dict["distinguished_name"]
+        if user_db.has_key(new_id):
+            raise Exception("Edit aborted: new user already exists!")
+        configuration.logger.info("Force old user renew to fix missing files")
+        create_user(old_user, conf_path, db_path, force, verbose,
+                    ask_renew=False, default_renew=True)
+        del user_db[client_id]
         user_db[new_id] = user_dict
         save_user_db(user_db, db_path)
         if verbose:
