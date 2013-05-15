@@ -113,26 +113,46 @@ def main(client_id, user_arguments_dict):
                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    is_diku_email = False
-    is_diku_org = False
-    if email.find('@diku.dk') != -1:
-        is_diku_email = True
-    if 'DIKU' == org.upper():
+    # TODO: move this map and error message to conf
+    
+    force_org_email = {'DIKU': ['@diku.dk'],
+                       'NBI': ['@nbi.ku.dk', '@nbi.dk', '@fys.ku.dk'],
+                       'IMF': ['@math.ku.dk']}
+    is_forced_email = False
+    is_forced_org = False
+    email_hit = '__BOGUS__'
+    for (forced_org, forced_email_suffix_list) in force_org_email.items():
+        if forced_org.lower() == org.lower():
 
-        # Consistent upper casing
+            # Consistent casing
 
-        org = org.upper()
-        is_diku_org = True
+            org = forced_org
+            is_forced_org = True
+        for forced_email in forced_email_suffix_list:
+            if email.lower().find(forced_email.lower()) != -1:
 
-    if is_diku_org != is_diku_email:
+                # Consistent casing
+                
+                email = email.lower()
+                is_forced_email = True
+                email_hit = forced_email
+
+    if is_forced_org != is_forced_email or \
+           not email_hit in force_org_email.get(org, ['__BOGUS__']):
         output_objects.append({'object_type': 'error_text', 'text'
                               : '''Illegal email and organization combination:
 Please read and follow the instructions in red on the request page!
-If you are a DIKU student with only a @*.ku.dk address please just use KU as organization.
-As long as you state that you want the certificate for DIKU purposes in the comment field, you
-will be given access to the necessary resources anyway.
+If you are a student with only a @*.ku.dk address please just use KU as
+organization. As long as you state that you want the certificate for course
+purposes in the comment field, you will be given access to the necessary
+resources anyway.
 '''})
         return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if cert_name.upper().find('DO NOT SEND') != -1:
+        output_objects.append({'object_type': 'text', 'text'
+                          : "Test request ignored!"})
+        return (output_objects, returnvalues.OK)
 
     user_dict = {
         'full_name': cert_name,
@@ -163,7 +183,6 @@ will be given access to the necessary resources anyway.
     tmp_id = req_path.replace(user_pending, '')
     user_dict['tmp_id'] = tmp_id
 
-    dest = 'karlsen@erda.imada.sdu.dk'
     mig_user = os.environ.get('USER', 'mig')
     command_cert_create = \
         """
