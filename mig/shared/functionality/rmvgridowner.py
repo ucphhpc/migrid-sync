@@ -43,7 +43,7 @@ from shared.useradm import distinguished_name_to_user
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
        vgrid_owners, vgrid_members, vgrid_resources, vgrid_list_subvgrids, \
        vgrid_remove_owners
-from shared.vgridaccess import unmap_vgrid
+from shared.vgridaccess import unmap_vgrid, unmap_inheritance
 
 def signature():
     """Signature of the main function"""
@@ -348,6 +348,8 @@ Owner removal has to be performed at the topmost vgrid''' % cert_id})
                                        : '%s of owners of %s' 
                                        % (rm_msg, vgrid_name)})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
+
+            unmap_inheritance(configuration, vgrid_name, cert_id)
 
             output_objects.append({'object_type': 'text', 'text'
                           : '%s successfully removed as owner of %s!'

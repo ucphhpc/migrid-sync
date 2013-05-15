@@ -43,7 +43,7 @@ from shared.resource import list_resources, real_to_anon_res_map
 from shared.serial import load, dump
 from shared.user import list_users, real_to_anon_user_map, get_user_conf
 from shared.vgrid import vgrid_list_vgrids, vgrid_allowed, vgrid_resources, \
-     user_allowed_vgrids, vgrid_owners, vgrid_members
+     user_allowed_vgrids, vgrid_owners, vgrid_members, vgrid_list_subvgrids
 
 MAP_SECTIONS = (USERS, RESOURCES, VGRIDS) = ("__users__", "__resources__",
                                              "__vgrids__")
@@ -694,6 +694,14 @@ def unmap_vgrid(configuration, vgrid_name):
     """Remove vgrid_name from vgrid map - simply force refresh"""
     mark_vgrid_modified(configuration, vgrid_name)
 
+def unmap_inheritance(configuration, vgrid_name, cert_id):
+    """Remove cert_id inherited access to all vgrid_name sub vgrids: Simply
+    force refresh of those vgrids as cert_id was never really there.
+    """
+    (status, sub_vgrids) = vgrid_list_subvgrids(vgrid_name, configuration)
+    for sub in sub_vgrids:
+        mark_vgrid_modified(configuration, sub)
+    
 
 if "__main__" == __name__:
     import sys

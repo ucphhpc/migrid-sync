@@ -36,6 +36,7 @@ from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_member, \
      vgrid_remove_members
+from shared.vgridaccess import unmap_inheritance
 
 
 def signature():
@@ -204,6 +205,8 @@ def main(client_id, user_arguments_dict):
                                % vgrid_name})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    unmap_inheritance(configuration, vgrid_name, cert_id)
+    
     output_objects.append({'object_type': 'text', 'text'
                           : '%s successfully removed as member of %s vgrid!'
                            % (cert_id, vgrid_name)})
