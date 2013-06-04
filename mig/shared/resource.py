@@ -333,7 +333,7 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
             conf['frontendhome'] = home
 
     if conf.get('HOSTKEY', None):
-        if len(conf['HOSTKEY'].split()) == 3:
+        if conf['HOSTKEY'].split()[1].startswith('ssh-'):
             conf['HOSTKEY'] = conf['HOSTKEY'].split(None, 1)[1]
 
     # Fill in all_X if not already set
