@@ -69,7 +69,7 @@ def get_resource_specs(configuration):
         }))
     specs.append(('HOSTKEY', {
         'Title': 'SSH Public Host Key',
-        'Description': 'The public SSS host key of the resource (content of e.g. /etc/ssh/ssh_host_rsa_key.pub). Can be left empty to disable host key validation, but that is not recommended as it weakens the trust model.',
+        'Description': 'The public SSH host key of the resource (content of e.g. /etc/ssh/ssh_host_rsa_key.pub). Can be left empty to disable host key validation, but that is not recommended as it weakens the trust model.',
         'Example': 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA00hFE4OiIzcRBFowx9Li5giPwh5Z6ni2Zo256pZwg3IjYeiudeqam6E8MuVaZ6NerrkDRdY6JaN8KZ47YNRNP6iuoI9K9eqYOZ08MzEGytRf5fyWEpAnRQjgk/jJygM2BM2ImtxbT+IOwIkCuX6ekL7E+r7tfrd3uOG7RdVox2E=',
         'Type': 'string',
         'Value': '',
@@ -87,7 +87,7 @@ def get_resource_specs(configuration):
         }))
     specs.append(('MIGUSER', {
         'Title': '%s SSH User' % configuration.short_title,
-        'Description': 'The %s ssh login user on the resource frontend node.'\
+        'Description': 'The %s SSH login user on the resource frontend node.'\
                        % configuration.short_title,
         'Example': 'miguser',
         'Type': 'string',
@@ -214,7 +214,7 @@ GUILE_LOAD_PATH=$GENERECON_HOME''',
         }))
     specs.append(('SSHMULTIPLEX', {
         'Title': 'SSH Connection Sharing',
-        'Description': 'Enable sharing of multiple ssh sessions over a single network connection. This can significantly speed up communication with the resource, if the resource supports session multiplexing. If unset or 0 multiplexing is disabled, otherwise it will be attempted (Just leave it unset if in doubt).',
+        'Description': 'Enable sharing of multiple SSH sessions over a single network connection. This can significantly speed up communication with the resource, if the resource supports session multiplexing. If unset or 0 multiplexing is disabled, otherwise it will be attempted (Just leave it unset if in doubt).',
         'Example': 'True',
         'Type': 'boolean',
         'Value': False,
@@ -510,7 +510,7 @@ def get_exenode_specs(configuration):
         }))
     specs.append(('start_command', {
         'Title': 'Start Execution Node',
-        'Description': "The command which is used to start the resource execution node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the execution node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the execution node management process is executed through ssh to the host specified in the execution node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
+        'Description': "The command which is used to start the resource execution node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the execution node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the execution node management process is executed through SSH to the host specified in the execution node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
         'Example': 'local',
         'Type': 'string',
         'Value': 'default',
@@ -519,7 +519,7 @@ def get_exenode_specs(configuration):
         }))
     specs.append(('status_command', {
         'Title': 'Query Execution Node',
-        'Description': "The command which is used to query status of the resource execution node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the execution node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the execution node management process is executed through ssh to the host specified in the execution node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
+        'Description': "The command which is used to query status of the resource execution node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the execution node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the execution node management process is executed through SSH to the host specified in the execution node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
         'Example': 'local',
         'Type': 'string',
         'Value': 'default',
@@ -528,7 +528,7 @@ def get_exenode_specs(configuration):
         }))
     specs.append(('stop_command', {
         'Title': 'Stop Execution Node',
-        'Description': "The command which is used to stop the resource execution node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the execution node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the execution node management process is executed through ssh to the host specified in the execution node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
+        'Description': "The command which is used to stop the resource execution node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the execution node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the execution node management process is executed through SSH to the host specified in the execution node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
         'Example': 'local',
         'Type': 'string',
         'Value': 'default',
@@ -537,7 +537,7 @@ def get_exenode_specs(configuration):
         }))
     specs.append(('clean_command', {
         'Title': 'Clean Execution Node',
-        'Description': "The command which is used to clean the resource execution node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the execution node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the execution node management process is executed through ssh to the host specified in the execution node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
+        'Description': "The command which is used to clean the resource execution node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the execution node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the execution node management process is executed through SSH to the host specified in the execution node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
         'Example': 'local',
         'Type': 'string',
         'Value': 'default',
@@ -556,7 +556,7 @@ def get_exenode_specs(configuration):
         }))
     specs.append(('shared_fs', {
         'Title': 'Shared File System',
-        'Description': 'If the frontend and execution node shares the same file system (i.e. True), so that frontend and execution management processes can communicate directly through files in the %s user home directory. If this is not the case (i.e. False) the communication will use ssh to communicate, but this is slightly less efficient and requires additional setup of local login access without password. To be more precise the frontend must be able to login as the execution user on the execution node and vice versa without any user input (e.g. by using ssh keys with an empty passphrase).'\
+        'Description': 'If the frontend and execution node shares the same file system (i.e. True), so that frontend and execution management processes can communicate directly through files in the %s user home directory. If this is not the case (i.e. False) the communication will use SSH to communicate, but this is slightly less efficient and requires additional setup of local login access without password. To be more precise the frontend must be able to login as the execution user on the execution node and vice versa without any user input (e.g. by using SSH keys with an empty passphrase).'\
                         % configuration.short_title,
         'Example': 'False',
         'Type': 'boolean',
@@ -650,7 +650,7 @@ def get_storenode_specs(configuration):
         }))
     specs.append(('start_command', {
         'Title': 'Start Storage Node',
-        'Description': "The command which is used to start the resource storage node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the storage node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the storage node management process is executed through ssh to the host specified in the storage node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
+        'Description': "The command which is used to start the resource storage node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the storage node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the storage node management process is executed through SSH to the host specified in the storage node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
         'Example': 'local',
         'Type': 'string',
         'Value': 'default',
@@ -659,7 +659,7 @@ def get_storenode_specs(configuration):
         }))
     specs.append(('status_command', {
         'Title': 'Query Storage Node',
-        'Description': "The command which is used to query status of the resource storage node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the storage node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the storage node management process is executed through ssh to the host specified in the storage node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
+        'Description': "The command which is used to query status of the resource storage node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the storage node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the storage node management process is executed through SSH to the host specified in the storage node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
         'Example': 'local',
         'Type': 'string',
         'Value': 'default',
@@ -668,7 +668,7 @@ def get_storenode_specs(configuration):
         }))
     specs.append(('stop_command', {
         'Title': 'Stop Storage Node',
-        'Description': "The command which is used to stop the resource storage node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the storage node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the storage node management process is executed through ssh to the host specified in the storage node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
+        'Description': "The command which is used to stop the resource storage node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the storage node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the storage node management process is executed through SSH to the host specified in the storage node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
         'Example': 'local',
         'Type': 'string',
         'Value': 'default',
@@ -677,7 +677,7 @@ def get_storenode_specs(configuration):
         }))
     specs.append(('clean_command', {
         'Title': 'Clean Storage Node',
-        'Description': "The command which is used to clean the resource storage node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the storage node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the storage node management process is executed through ssh to the host specified in the storage node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
+        'Description': "The command which is used to clean the resource storage node. If unsure use either of the keywords 'local' or 'default'. The 'local' keyword means that the storage node management process runs locally on the frontend host and it should be used if the resource is a single host or if it is a cluster or super computer where all jobs are managed by an LRMS from the frontend. The 'default' keyword on the other hand means that the storage node management process is executed through SSH to the host specified in the storage node setting, which allows the actual executing resources to be located behind a firewall or gateway frontend.",
         'Example': 'local',
         'Type': 'string',
         'Value': 'default',
@@ -686,7 +686,7 @@ def get_storenode_specs(configuration):
         }))
     specs.append(('shared_fs', {
         'Title': 'Shared File System',
-        'Description': 'If the frontend and storage node shares the same file system (i.e. True), so that frontend and storage management processes can communicate directly through files in the %s user home directory. If this is not the case (i.e. False) the communication will use ssh to communicate, but this is slightly less efficient and requires additional setup of local login access without password. To be more precise the frontend must be able to login as the storage user on the storage node and vice versa without any user input (e.g. by using ssh keys with an empty passphrase).'\
+        'Description': 'If the frontend and storage node shares the same file system (i.e. True), so that frontend and storage management processes can communicate directly through files in the %s user home directory. If this is not the case (i.e. False) the communication will use SSH to communicate, but this is slightly less efficient and requires additional setup of local login access without password. To be more precise the frontend must be able to login as the storage user on the storage node and vice versa without any user input (e.g. by using SSH keys with an empty passphrase).'\
                         % configuration.short_title,
         'Example': 'False',
         'Type': 'boolean',

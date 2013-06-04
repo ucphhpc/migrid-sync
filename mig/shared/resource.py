@@ -677,7 +677,11 @@ def prepare_conf(configuration, input_args, resource_id):
     conf['NODECOUNT'] = total_nodes
 
     if conf.get('HOSTKEY', None):
-        if len(conf['HOSTKEY'].split()) < 3:
+        # HOSTKEY is either saved one with "FQDN,IP" prefixed or raw key
+        # Make sure HOSTIP gets set and that HOSTKEY gets "FQDN,IP" prefix
+        # if not already set. Leave key bits and comment alone.
+        key_parts = conf['HOSTKEY'].split() + ['']
+        if not key_parts[1].startswith('ssh-'):
             host_key = ''
             try:
                 fallback_ip = socket.gethostbyname(conf['HOSTURL'])
@@ -686,8 +690,6 @@ def prepare_conf(configuration, input_args, resource_id):
             conf['HOSTIP'] = conf.get('HOSTIP', fallback_ip)
             host_key = conf['HOSTURL'] + ',' + conf['HOSTIP']
             raw_key = conf['HOSTKEY'].strip()
-            if not raw_key.startswith('ssh-rsa'):
-                raw_key = 'ssh-rsa ' + raw_key
             host_key += ' ' + raw_key
             conf['HOSTKEY'] = host_key
 
