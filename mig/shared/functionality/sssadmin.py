@@ -358,8 +358,8 @@ def main(client_id, user_arguments_dict):
                                                expert)})
         output_objects.append({'object_type': 'text', 'text'
                                : """
-ou run into any problems, please contact the grid administrators (%s)""" % \
-                               admin_email})
+If you run into any problems, please contact the grid administrators (%s)""" \
+                               % admin_email})
 
     return (output_objects, returnvalues.OK)
 

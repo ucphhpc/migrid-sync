@@ -264,12 +264,6 @@ def main(client_id, user_arguments_dict):
 
     logger.debug('modifying hda image for this sandbox')
 
-    '''
-    # TODO: We can not rely on chdir to work consistently!
-    
-    os.chdir(configuration.sss_home)
-
-    '''
     mnt_path = os.path.join(configuration.sss_home, 'mnt')
     
     lock_path = os.path.join(configuration.sss_home, 'lockfile.txt')
@@ -353,9 +347,11 @@ def main(client_id, user_arguments_dict):
         # copy the sandboxkey to the keyfile:
 
         key_dst = os.path.join(mnt_path, 'mig', 'etc', 'keyfile')
-        shutil.copyfile('keyfile', key_dst)
+        shutil.copyfile(os.path.join(configuration.sss_home, 'keyfile'),
+                        key_dst)
         server_dst = os.path.join(mnt_path, 'mig', 'etc', 'serverfile')
-        shutil.copyfile('serverfile', server_dst)
+        shutil.copyfile(os.path.join(configuration.sss_home, 'serverfile'),
+                        server_dst)
     except Exception, err:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Failed to customize image: %s' \
@@ -445,7 +441,8 @@ def main(client_id, user_arguments_dict):
                ('Content-Type', 'application/force-download'),
                ('Content-Type', 'application/octet-stream'),
                ('Content-Type', 'application/download'),
-               ('Content-Disposition', 'attachment; filename=%s' % zip_path),
+               ('Content-Disposition', 'attachment; filename=%s' % \
+                os.path.basename(zip_path)),
                ('Content-Length', '%s' % file_size)]
     output_objects = [{'object_type': 'start', 'headers': headers}]
     fd = open(zip_path, 'rb')
