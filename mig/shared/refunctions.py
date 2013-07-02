@@ -182,6 +182,8 @@ def update_runtimeenv_owner(re_name, old_owner, new_owner, configuration):
         if re_dict['CREATOR'] == old_owner:
             re_dict['CREATOR'] = new_owner
             dump(re_dict, re_filename)
+        else:
+            status = False
     except Exception, err:
         msg = "Failed to edit owner of runtime enviroment '%s': %s" % \
               (re_name, err)

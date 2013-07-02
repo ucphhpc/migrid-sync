@@ -532,12 +532,12 @@ def edit_user(
             (re_status, err) = update_runtimeenv_owner(re_name, client_id,
                                                      new_id, configuration)
             if verbose:
-                if not re_status:
-                    print 'Could not change owner of %s: %s' % (re_name, err)
-                else:
+                if re_status:
                     print 'Updated %s owner from %s to %s' % (re_name,
                                                               client_id,
                                                               new_id)
+                elif err:
+                    print 'Could not change owner of %s: %s' % (re_name, err)
     else:
         if verbose:
             print 'Could not load runtime env list: %s' % re_list
