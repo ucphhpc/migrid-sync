@@ -7,9 +7,9 @@ Requires: jquery.js
     $(document).ready(function() {
         /*
            IMPORTANT: KU occasionally changes beween a 'secret' formdir
-           variable value of 5 or 8. Change below if login fails with page error.
+           variable value of 5, 6 or 8. Change below if login fails with page error.
         */
-        var formdir="5";
+        var formdir="6";
         /* 
            Specify your auto-generated KU username once and for all here
            to avoid having to remember it.
