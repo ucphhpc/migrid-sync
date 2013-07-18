@@ -1036,7 +1036,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                     '<table class="runtimeenvvars" frame=hsides rules=none cellpadding=5>'
             for environment in i['environments']:
                 environment_html += \
-                                 '<tr><td>Name:</td><td>%(name)s (use with $%(name)s)</td></tr>'
+                                 '<tr><td>Name:</td><td>%(name)s (use with ${%(name)s})</td></tr>'
                 environment_html += \
                     '<tr><td>Example:</td><td>%(example)s</td></tr>'
                 environment_html += \
