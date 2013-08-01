@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_monitor - Monitor page generator
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -499,6 +499,19 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 hours = str(difference.seconds / 3600)
                 minutes = str((difference.seconds % 3600) / 60)
                 seconds = str((difference.seconds % 60) % 60)
+
+                if last_status_dict['STATUS'] == 'stopped':
+                    time_stopped = datetime.datetime.now() - \
+                                   last_status_dict['CREATED_TIME']
+                    if time_stopped.days > 7:
+                        try:
+                            print 'removing: %s as we havent seen him for %s days.'\
+                                  % (mon_file_name, abs(time_stopped).days)
+                            os.remove(mon_file_name)
+                        except Exception, err:
+                            print "could not remove: '%s' Error: %s"\
+                                  % (mon_file_name, str(err))
+                        continue
 
                 unique_res_name_and_store_list = filename.split(
                     'monitor_last_status_', 1)
