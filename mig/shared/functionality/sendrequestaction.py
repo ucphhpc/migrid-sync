@@ -97,8 +97,9 @@ def main(client_id, user_arguments_dict):
         protocols = configuration.notify_protocols
     protocols = [proto.lower() for proto in protocols]
 
-    valid_request_types = ['resourceowner', 'vgridowner', 'vgridmember',
-                           'vgridresource', 'plain']
+    valid_request_types = ['resourceowner', 'resourceaccept', 'vgridowner',
+                           'vgridmember','vgridresource', 'vgridaccept',
+                           'plain']
     if not request_type in valid_request_types:
         output_objects.append({
             'object_type': 'error_text', 'text'
@@ -188,6 +189,61 @@ def main(client_id, user_arguments_dict):
                 'User %s does not accept requested protocol(s) messages!' % \
                 visible_user_name})
             return (output_objects, returnvalues.CLIENT_ERROR)
+        target_list = [user_id]
+    elif request_type == "vgridaccept":
+        # Always allow accept messages but only between vgrid members/owners
+        user_id = visible_user_name
+        if not vgrid_name:
+            output_objects.append({
+                'object_type': 'error_text', 'text': 'No VGrid specified!'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        if vgrid_name.upper() == default_vgrid.upper():
+            output_objects.append({
+                'object_type': 'error_text', 'text'
+                : 'No requests for %s are not allowed!' % \
+                default_vgrid
+                })
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        if not vgrid_is_owner(vgrid_name, client_id, configuration):
+            output_objects.append({
+                'object_type': 'error_text', 'text'
+                : 'You are not an owner of %s or a parent vgrid!' % \
+                vgrid_name})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        allow_vgrids = user_allowed_vgrids(configuration, client_id)
+        if not vgrid_name in allow_vgrids:
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                'Invalid vgrid accept message! (%s sv %s)' % (user_id, allow_vgrids)})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        target_id = '%s VGrid owners' % vgrid_name
+        target_name = vgrid_name
+        target_list = [user_id]
+    elif request_type == "resourceaccept":
+        # Always allow accept messages between actual resource owners
+        user_id = visible_user_name
+        if not visible_res_name:
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                'No resource ID specified!'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        unique_resource_name = visible_res_name
+        target_name = unique_resource_name
+        res_map = get_resource_map(configuration)
+        if not res_map.has_key(unique_resource_name):
+            output_objects.append({'object_type': 'error_text',
+                                   'text': 'No such resource: %s' % \
+                                   unique_resource_name
+                                   })
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        owners_list = res_map[unique_resource_name][OWNERS]
+        if not client_id in owners_list or not user_id in owners_list:
+            output_objects.append({
+                'object_type': 'error_text', 'text'
+                : 'Invalid resource owner accept message!'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        target_id = '%s resource owners' % unique_resource_name
+        target_name = unique_resource_name
         target_list = [user_id]
     elif request_type == "resourceowner":
         if not visible_res_name:

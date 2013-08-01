@@ -336,7 +336,7 @@ def main(client_id, user_arguments_dict):
 
         if interactive(flags):
             job_obj['statuslink'] = {'object_type': 'link',
-                                     'destination': 'ls.py?path=%s/%s/*'\
+                                     'destination': 'fileman.py?path=%s/%s/'\
                                      % (output_dir, job_id), 'text':
                                      'View status files'}
             job_obj['mrsllink'] = {'object_type': 'link',

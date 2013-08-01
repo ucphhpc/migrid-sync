@@ -217,7 +217,8 @@ directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <form method='post' action='sendrequestaction.py'>
-<input type=hidden name=request_type value='plain' />
+<input type=hidden name=request_type value='vgridaccept' />
+<input type=hidden name=vgrid_name value='%s' />
 <input type=hidden name=cert_id value='%s' />
 <input type=hidden name=protocol value='%s' />
 <table align='center'>
@@ -226,11 +227,11 @@ directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
 We have granted you membership access to our %s VGrid.
 You can access the VGrid components from the VGrids page.
 
-Regards, the %s owners
+Regards, the %s VGrid owners
 </textarea></td>
 </tr>
 <tr><td><input type='submit' value='Inform user' /></td><td></td></tr></table>
-</form>""" % (cert_id, any_protocol, vgrid_name, vgrid_name)})
+</form>""" % (vgrid_name, cert_id, any_protocol, vgrid_name, vgrid_name)})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

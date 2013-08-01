@@ -124,7 +124,8 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <form method='post' action='sendrequestaction.py'>
-<input type=hidden name=request_type value='plain' />
+<input type=hidden name=request_type value='resourceaccept' />
+<input type=hidden name=unique_resource_name value='%s' />
 <input type=hidden name=cert_id value='%s' />
 <input type=hidden name=protocol value='%s' />
 <table align='center'>
@@ -133,12 +134,12 @@ def main(client_id, user_arguments_dict):
 We have granted you ownership access to our %s resource.
 You can access the resource administration page from the Resources page.
 
-Regards, the %s owners
+Regards, the %s resource owners
 </textarea></td>
 </tr>
 <tr><td><input type='submit' value='Inform user' /></td><td></td></tr></table>
-</form>""" % (cert_id, any_protocol, unique_resource_name,
-              unique_resource_name)})
+</form>""" % (unique_resource_name, cert_id, any_protocol,
+              unique_resource_name, unique_resource_name)})
     output_objects.append({'object_type': 'link', 'destination':
                            'resadmin.py?unique_resource_name=%s' % \
                            unique_resource_name, 'class': 'adminlink', 'title':

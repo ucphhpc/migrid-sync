@@ -66,13 +66,14 @@ def create_notify_message(
 
     entity_mapper = {'vgridmember': 'member', 'vgridowner': 'owner',
                      'vgridresource': 'resource', 'resourceowner': 'owner'}
+    accept_mapper = {'vgridaccept': 'vgrid', 'resourceaccept': 'resource'}
 
     if status == 'SUCCESS':
         header = '%s JOB finished' % configuration.short_title
         txt += \
             '''
 Your %(site)s job with JOB ID %(jobid)s has finished and full status is available at:
-%(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
+%(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
 
 The job commands and their exit codes:
 '''\
@@ -101,7 +102,7 @@ Replies to this message will not be read!
             '''
 The job with JOB ID %(jobid)s has failed after %(retries)s retries!
 This may be due to internal errors, but full status is available at:
-%(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
+%(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
 
 Please contact the %(site)s team if the problem occurs multiple times.
 
@@ -114,7 +115,7 @@ Replies to this message will not be read!!!
             '''
 Your %(site)s job with JOB ID %(jobid)s has expired, after remaining in the queue for too long.
 This may be due to internal errors, but full status is available at:
-%(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s
+%(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
 
 Please contact the %(site)s team for details about expire policies.
 
@@ -129,6 +130,18 @@ Replies to this message will not be read!!!
         reply_to = args_list[4]
         if request_type == "plain":
             header = '%s user message' % configuration.short_title
+            txt += """This is a message sent on behalf of %s:
+
+---
+
+%s
+
+---
+
+""" % (from_id, request_text)
+        elif request_type in accept_mapper.keys():
+            kind = accept_mapper[request_type]
+            header = '%s %s accept message' % (configuration.short_title, kind)
             txt += """This is a message sent on behalf of %s:
 
 ---
