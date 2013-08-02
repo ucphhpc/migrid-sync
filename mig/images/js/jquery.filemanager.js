@@ -295,7 +295,7 @@ if (jQuery) (function($){
                           });
                 
             },
-            create:     function (action, el, pos) {
+            create:    function (action, el, pos) {
                 
                 $('#editor_dialog').dialog('destroy');
                 $('#editor_output').html('');
@@ -341,7 +341,7 @@ if (jQuery) (function($){
                 jsonWrapper(el, '#cmd_dialog', 'head.py'); },
             tail:   function (action, el, pos) { 
                 jsonWrapper(el, '#cmd_dialog', 'tail.py'); },
-            zip:   function (action, el, pos) { 
+            zip:    function (action, el, pos) { 
                 /* zip file or directory to user specified file */
                 var current_dir = '';
                 var target = $(el).attr(pathAttribute);
@@ -1011,24 +1011,34 @@ if (jQuery) (function($){
      $('#editor_form').ajaxForm(
          {target: '#editor_output', dataType: 'json',
           success: function(responseObject, statusText) {
-              var stuff ='';
+              var edit_out ='';
+              var errors = $(this).renderError(responseObject);
+              var warnings = $(this).renderWarning(responseObject);
+              if (errors.length > 0) {
+                  edit_out += errors;
+              } else if (warnings.length > 0) {
+                  edit_out += warnings;
+              } else {
+                  //$('#editor_dialog').dialog('close');
+                  $('.fm_files').parent().reload('');
+              }
               for (var i=0; i<(responseObject.length); i++) {
                   switch(responseObject[i]['object_type']) {
                   case 'text':
-                      stuff += '<p>'+responseObject[i]['text']+'</p>';    
+                      edit_out += '<p>'+responseObject[i]['text']+'</p>';    
                       break;
                   case 'submitstatuslist':
                       for (var j=0; j<responseObject[i]['submitstatuslist'].length; j++) {
                           if (responseObject[i]['submitstatuslist'][j]['status']) {
-                              stuff += '<p>Submitted as: '+responseObject[i]['submitstatuslist'][j]['job_id']+'</p>';
+                              edit_out += '<p>Submitted as: '+responseObject[i]['submitstatuslist'][j]['job_id']+'</p>';
                           } else {
-                              stuff += '<p style="color: red;">'+responseObject[i]['submitstatuslist'][j]['message']+'</p>';
+                              edit_out += '<p style="color: red;">'+responseObject[i]['submitstatuslist'][j]['message']+'</p>';
                           }
                       }
                       break;
                   }
               }
-              $('#editor_output').html(stuff);
+              $('#editor_output').html(edit_out);
               $('.fm_files').parent().reload('');
           }
          });
