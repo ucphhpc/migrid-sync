@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -387,6 +387,23 @@ def valid_job_id_patterns(
     for pattern in pattern_list:
         valid_job_id(pattern, min_length, max_length, extra_chars)
 
+
+def valid_user_path_name(safe_path, path, home_dir, allow_equal=False):
+    """Wrap valid_user_path and valid_path name checks in one to check both
+    destination dir and filename characters. Returns error using safe_path if
+    validation fails.
+    """
+    status, msg = True, ''
+    try:
+        valid_path(path)
+    except InputException, iex:
+        status = False
+        msg = "Invalid path! (%s: %s)" % (safe_path, iex)
+    if not valid_user_path(path, home_dir, allow_equal):
+        status = False
+        msg = 'Invalid path! (%s expands to illegal path)' % safe_path
+    return (status, html_escape(msg))
+        
 
 def valid_email_address(addr):
     """Email check from

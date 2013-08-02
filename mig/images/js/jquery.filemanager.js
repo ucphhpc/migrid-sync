@@ -926,10 +926,17 @@ if (jQuery) (function($){
               } else if (warnings.length > 0) {
                   $('#upload_output').html(warnings);
               } else {
-                  $('.fm_files').parent().reload($('#upload_form input[name=remotefilename_0]').val().substr(2));
                   $('#upload_dialog').dialog('close');
+                  $('.fm_files').parent().reload($('#upload_form input[name=remotefilename_0]').val().substr(2));
               }
           }
+	  /*
+	  ,
+ 	  error: function(responseObject, status, err){
+              var errors = 'upload error: '+responseObject.status+' ; '+status+' ; '+err;
+              $('#upload_output').html(errors);
+	  }
+	  */
          });
             
      $('#mkdir_form').ajaxForm(

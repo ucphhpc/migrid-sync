@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# textarea - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# textarea - combined text/mrsl writer and file upload
+# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -46,8 +46,8 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.job import new_job
+from shared.safeinput import valid_user_path_name
 from shared.upload import handle_package_upload
-from shared.validstring import valid_user_path
 
 
 def signature():
@@ -254,11 +254,12 @@ def main(client_id, user_arguments_dict):
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             local_filename = base_dir + filename_val
-            if not valid_user_path(local_filename, base_dir):
+            valid_status, valid_err = valid_user_path_name(filename_val,
+                                                           local_filename,
+                                                           base_dir)
+            if not valid_status:
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : 'Invalid path! (%s expands to illegal path)'
-                     % filename_key})
+                    {'object_type': 'error_text', 'text': valid_err})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             # A new filename was created, write content to file
@@ -347,11 +348,12 @@ def main(client_id, user_arguments_dict):
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             local_filename = os.path.abspath(base_dir + remote_filename)
-            if not valid_user_path(local_filename, base_dir):
+            valid_status, valid_err = valid_user_path_name(remote_filename,
+                                                           local_filename,
+                                                           base_dir)
+            if not valid_status:
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : 'Invalid path! (%s expands to illegal path)'
-                     % remote_filename})
+                    {'object_type': 'error_text', 'text': valid_err})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             if not os.path.isdir(os.path.dirname(local_filename)):

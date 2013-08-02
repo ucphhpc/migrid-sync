@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # upload - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,7 +34,7 @@ import tarfile
 from shared.base import client_id_dir
 from shared.fileio import write_file
 from shared.job import new_job
-from shared.validstring import valid_user_path
+from shared.safeinput import valid_user_path_name
 
 
 def handle_package_upload(
@@ -85,10 +85,10 @@ extracted!
             # write zip_entry to disk
 
             local_zip_entry_name = os.path.join(dest_path, zip_entry.filename)
-            if not valid_user_path(local_zip_entry_name, base_dir):
-                msg += 'Invalid path! (%s expands to restricted path)\n' % \
-                       zip_entry.filename
-                return (False, msg)
+            valid_status, valid_err = valid_user_path_name(
+                zip_entry.filename, local_zip_entry_name, base_dir)
+            if not valid_status:
+                return (valid_status, valid_err)
 
             # create sub dir(s) if missing
 
@@ -178,10 +178,10 @@ should be extracted!
             local_tar_entry_name = os.path.abspath(base_dir
                      + tar_entry.name)
 
-            if not valid_user_path(local_tar_entry_name, base_dir):
-                msg += 'Invalid path! (%s expands to restricted path)\n' % \
-                       tar_entry.name
-                return (False, msg)
+            valid_status, valid_err = valid_user_path_name(
+                tar_entry.name, local_tar_entry_name, base_dir)
+            if not valid_status:
+                return (valid_status, valid_err)
 
             # create sub dir(s) if missing
 

@@ -177,12 +177,9 @@ def html_tmpl():
       
       <label for="fileupload_0_0_0">File:</label>
       <input type="file" name="fileupload_0_0_0"/>
-
     </fieldset>
     </form>
-
     <div id="upload_output"></div>
-
   </div>
       
   <div id="mkdir_dialog" title="Create New Folder" style="display: none;">
@@ -192,8 +189,7 @@ def html_tmpl():
       <input type="hidden" name="output_format" value="json" />
       <input type="hidden" name="current_dir" value="./" />
       <label for="path">Enter the new name:</label>
-      <input type="text" name="path"/>
-      
+      <input type="text" name="path"/>      
     </fieldset>
     </form>
     <div id="mkdir_output"></div>
@@ -201,8 +197,7 @@ def html_tmpl():
   
   <div id="rename_dialog" title="Rename" style="display: none;">
   <form id="rename_form" method="post" action="mv.py">
-  <fieldset>
-  
+  <fieldset>  
     <input type="hidden" name="output_format" value="json" />
     <input type="hidden" name="flags" value="r" />
     <input type="hidden" name="src" value="" />
@@ -210,7 +205,6 @@ def html_tmpl():
     
     <label for="name">Enter the new name:</label>
     <input type="text" name="name" value="" />
-    
   </fieldset>
   </form>
   <div id="rename_output"></div>
@@ -219,7 +213,6 @@ def html_tmpl():
   <div id="zip_dialog" title="Zip" style="display: none;">
   <form id="zip_form" method="post" action="zip.py">
   <fieldset>
-  
     <input type="hidden" name="output_format" value="json" />
     <input type="hidden" name="flags" value="" />
     <input type="hidden" name="src" value="" />
@@ -227,7 +220,6 @@ def html_tmpl():
     
     <label for="dst">Enter the zip file name:</label>
     <input type="text" name="dst" value="" />
-    
   </fieldset>
   </form>
   <div id="zip_output"></div>
