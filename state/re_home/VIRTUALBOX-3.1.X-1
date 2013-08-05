@@ -15,7 +15,7 @@ S'VirtualBox is a powerful x86 and AMD64/Intel64 virtualization product for ente
 p9
 sS'CREATOR'
 p10
-S'/C=DK/ST=NA/L=NA/O=DIKU/OU=NA/CN=Jonas Bardino/emailAddress=bardino@diku.dk'
+S'/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk'
 p11
 sS'TESTPROCEDURE'
 p12
@@ -24,43 +24,43 @@ sS'ENVIRONMENTVARIABLE'
 p14
 (lp15
 (dp16
-S'example'
+S'description'
 p17
-S'/usr/bin/vboxheadless'
-p18
-sS'name'
-p19
-S'VBOXHEADLESS'
-p20
-sS'description'
-p21
 S'path to the vboxheadless binary'
+p18
+sS'example'
+p19
+S'/usr/bin/vboxheadless'
+p20
+sS'name'
+p21
+S'VBOXHEADLESS'
 p22
 sa(dp23
-S'example'
+S'description'
 p24
-S'/usr/bin/vboxmanage'
-p25
-sS'name'
-p26
-S'VBOXMANAGE'
-p27
-sS'description'
-p28
 S'path to the vboxmanage binary'
+p25
+sS'example'
+p26
+S'/usr/bin/vboxmanage'
+p27
+sS'name'
+p28
+S'VBOXMANAGE'
 p29
 sa(dp30
-S'example'
+S'description'
 p31
-S'~/.VirtualBox'
-p32
-sS'name'
-p33
-S'VBOXUSERCONF'
-p34
-sS'description'
-p35
 S'path to local user writable virtualbox configuration directory'
+p32
+sS'example'
+p33
+S'~/.VirtualBox'
+p34
+sS'name'
+p35
+S'VBOXUSERCONF'
 p36
 sasS'VERIFYSTDOUT'
 p37
@@ -88,12 +88,12 @@ sS'description'
 p49
 S'any version in the 3.1 series'
 p50
-sS'icon'
-p51
-S'https://www.virtualbox.org/graphics/vbox_logo2_gradient.png'
-p52
 sS'name'
-p53
+p51
 S'Oracle Virtualbox'
+p52
+sS'icon'
+p53
+S'https://www.virtualbox.org/graphics/vbox_logo2_gradient.png'
 p54
 sas.

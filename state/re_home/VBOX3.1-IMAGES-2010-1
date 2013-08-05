@@ -15,7 +15,7 @@ S'This runtime environment advertises the availability of the base virtual machi
 p9
 sS'CREATOR'
 p10
-S'/C=DK/ST=NA/L=NA/O=DIKU/OU=NA/CN=Jonas Bardino/emailAddress=bardino@diku.dk'
+S'/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk'
 p11
 sS'TESTPROCEDURE'
 p12
@@ -24,17 +24,17 @@ sS'ENVIRONMENTVARIABLE'
 p14
 (lp15
 (dp16
-S'example'
+S'description'
 p17
-S'/home/mig-re/vbox-images'
-p18
-sS'name'
-p19
-S'VBOXIMGDIR'
-p20
-sS'description'
-p21
 S'path to the unpacked virtualbox images'
+p18
+sS'example'
+p19
+S'/home/mig-re/vbox-images'
+p20
+sS'name'
+p21
+S'VBOXIMGDIR'
 p22
 sasS'VERIFYSTDOUT'
 p23
@@ -62,11 +62,11 @@ sS'description'
 p35
 S'VirtualBox OS base images prepared for MiG integration'
 p36
-sS'icon'
-p37
-S''
 sS'name'
-p38
+p37
 S'vbox3.1-images-2010-1'
+p38
+sS'icon'
 p39
+S''
 sas.
