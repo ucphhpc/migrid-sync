@@ -569,7 +569,7 @@ if (jQuery) (function($){
                 
          $(folder_pane).addClass('wait');
 
-         statusbar.html('loading directory entries...');
+         statusbar.html('<span class="spinner" style="padding-left: 20px;">loading directory entries...</span>');
          $.getJSON(options.connector,
                    { path: t, output_format: 'json', flags: 'fa' },
                    function(jsonRes, textStatus) {
