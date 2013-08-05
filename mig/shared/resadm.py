@@ -817,7 +817,8 @@ def start_resource_store(
         msg += ssh_status_msg
 
     if 'sftp' == store['storage_protocol']:
-        sshfs_options = ['-o reconnect', '-C']
+        sshfs_options = ['-o reconnect', '-C', '-o uid=%d' % os.getuid(),
+                         '-o gid=%d' % os.getgid()]
         jump_path = os.path.join(resource_home, unique_resource_name,
                                  store_name + '-jump.sh')
         setup = {'mount_point': mount_point, 'jump_path': jump_path}
