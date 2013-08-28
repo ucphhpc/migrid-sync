@@ -802,26 +802,37 @@ SSH/SFTP access to your MiG account
 </td></tr>
 <tr><td>
 <p>
-Allow SSH/SFTP login to your %(site)s account with provided public key(s)
-and your automatic username:
+You can configure SFTP login to your %(site)s account for efficient file access.
+Login takes place with ssh keys and your automatic username:
 <pre>%(username)s</pre>
 </p>
 <p>
-You can use any existing SSH RSA keys you may have or create a new one with:
-<pre>
-ssh-keygen -t rsa -f ~/.mig/id_rsa
-</pre>
-Then save the contents of the public key (id_rsa.pub) below.
+You can use any existing SSH/RSA key, including the key.pem you received along with your user certificate, or create a new one. In any case you need to save the contents of the corresponding public key (X.pub) in the text area below, before you can connect as described in the following sections.
 </p>
 <p>
-Finally save something like the following lines in your local ~/.ssh/config
-to avoid typing the full login details each time:<br />
+<h3>Graphical SFTP access</h3>
+The FireFTP plugin for Firefox is known to generally work for graphical access to your MiG home over SFTP.
+Enter the following values in the FireFTP Account Manager:
+<pre>
+Host %(sftp_server)s
+Login %(username)s
+Password YOUR_KEY_PASSWORD_HERE
+Security SFTP
+Port %(sftp_port)s
+Private Key ~/.mig/key.pem
+</pre>
+other graphical clients may work as well.
+</p>
+<p>
+<h3>Command line SFTP/SSHFS access on Linux/UN*X</h3>
+Save something like the following lines in your local ~/.ssh/config
+to avoid typing the full login details every time:<br />
 <pre>
 Host %(sftp_server)s
 Hostname %(sftp_server)s
 User %(username)s
 Port %(sftp_port)s
-IdentityFile ~/.mig/id_rsa
+IdentityFile ~/.mig/key.pem
 </pre>
 </p>
 <p>
