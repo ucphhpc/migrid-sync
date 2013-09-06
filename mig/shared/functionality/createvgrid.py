@@ -382,14 +382,17 @@ def create_tracker(
     repo_base = 'repo'
     target_scm_repo = os.path.join(scm_dir, repo_base)
     project_name = '%s %s project tracker' % (vgrid_name, kind)
+    create_cmd = None
     create_status = True
     try:
 
         # Create tracker directory
 
         if not repair or not os.path.isdir(tracker_dir):
+            logger.info('create tracker dir: %s' % tracker_dir)
             os.mkdir(tracker_dir)
         else:
+            logger.info('write enable tracker dir: %s' % tracker_dir)
             os.chmod(tracker_dir, 0755)
             
         # Create Trac project that uses local storage.
@@ -495,7 +498,7 @@ def create_tracker(
             os.chmod(target_tracker_log, 0755)
             open(target_tracker_log_file, 'w').close()
 
-        if not repair:
+        if not repair or create_cmd:
             # Give admin rights to creator using trac-admin command:
             # trac-admin tracker_dir permission add ADMIN_ID PERMISSION
             perms_cmd = [configuration.trac_admin_path, target_tracker_var,
