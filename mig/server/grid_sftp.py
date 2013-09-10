@@ -81,6 +81,23 @@ from shared.useradm import ssh_authkeys, get_ssh_authkeys, ssh_authpasswords, \
 configuration, logger = None, None
 
 
+def parse_pub_key(public_key):
+    """Parse public_key string to paramiko key.
+    Throws exception if key is broken.
+    """
+    head, tail = public_key.split(' ')[:2]
+    bits = base64.decodestring(tail)
+    msg = paramiko.Message(bits)
+    if head == 'ssh-rsa':
+        parse_key = paramiko.RSAKey
+    elif head == 'ssh-dss':
+        parse_key = paramiko.DSSKey
+    else:
+        # Try RSA for unknown key types
+        parse_key = paramiko.RSAKey
+    return parse_key(msg)
+    
+
 class User(object):
     """User login class to hold a single valid login for a user"""
     def __init__(self, username, password, 
@@ -90,21 +107,8 @@ class User(object):
         self.chroot = chroot
         self.public_key = public_key
         if type(public_key) in (str, unicode):
-            head, tail = public_key.split(' ')[:2]
-            bits = base64.decodestring(tail)
-            msg = paramiko.Message(bits)
-            if head == 'ssh-rsa':
-                parse_key = paramiko.RSAKey
-            elif head == 'ssh-dss':
-                parse_key = paramiko.DSSKey
-            else:
-                # Try RSA for unknown key types
-                parse_key = paramiko.RSAKey
-            try:
-                key = parse_key(msg)
-            except:
-                key = None
-            self.public_key = key
+            # We already checked that key is valid if we got here
+            self.public_key = parse_pub_key(public_key)
 
         self.home = home
         if self.home is None:
@@ -711,12 +715,17 @@ def refresh_users(conf):
                              if i.username != user_alias or \
                              i.password is None]
         for user_key in all_keys:
-            if not user_key.startswith('ssh-rsa ') and \
-                   not user_key.startswith('ssh-dss '):
-                logger.warning("Skipping broken key %s for user %s" % \
-                               (user_key, user_id))
+            # Remove comments and blank lines
+            user_key = user_key.split('#', 1)[0].strip()
+            if not user_key:
                 continue
-            user_key = user_key.strip()
+            # Make sure pub key is valid
+            try:
+                _ = parse_pub_key(user_key)
+            except Exception, exc:
+                logger.warning("Skipping broken key %s for user %s (%s)" % \
+                               (user_key, user_id, exc))
+                continue
             logger.debug("Adding user:\nname: %s\nalias: %s\nhome: %s\nkey: %s"\
                         % (user_id, user_alias, user_dir, user_key))
             conf['users'].append(
