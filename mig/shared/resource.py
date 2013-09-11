@@ -251,7 +251,7 @@ def local_exe_clean_command(dir, node, name='master'):
             'name': name,
             'pgid': '$mig_exe_pgid',
             }
-    return 'killall -9 %(name)s_node_script_%(node)s.sh; rm -rf %(dir)s'\
+    return 'killall -9 %(name)s_node_script_%(node)s.sh; rm -rf --one-file-system %(dir)s'\
          % {'dir': dir, 'node': node, 'name': name}
 
 
