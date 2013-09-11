@@ -13,7 +13,7 @@ fi
 
 clean_command="rm -f"
 # We don't want recursive clean up to delete mounted file systems
-recurse_clean_command="$clean_command -r --one-file-system"
+clean_recursive="$clean_command -r --one-file-system"
 # if changing end_marker string, remember to change in the other scripts
 # (master_node_script and cgi-scripts on MiG server)
 end_marker="### END OF SCRIPT ###"
@@ -295,14 +295,14 @@ sandbox_stop_exe() {
                         localjobname_clean=${job_dir_clean#job-dir_}
                         
                         # Remove EXE jobdir 
-                        ${recurse_clean_command} ${copy_execution_prefix}${execution_dir}/${job_dir_clean} 1>> $frontendlog 2>> $frontendlog
+                        ${clean_recursive} ${copy_execution_prefix}${execution_dir}/${job_dir_clean} 1>> $frontendlog 2>> $frontendlog
                         
                         # Remove run_handle_updates
                         $clean_command ${copy_execution_prefix}${execution_dir}/run_handle_updates.${localjobname_clean}\
                             1>> $frontendlog 2>> $frontendlog 
                         
                         # Remove FE jobdir
-                        ${recurse_clean_command} $job_dir_clean 1>> $frontendlog 2>> $frontendlog
+                        ${clean_recursive} $job_dir_clean 1>> $frontendlog 2>> $frontendlog
                         
                         # Remove jobdone, we can't trust it at this stage
                         ${clean_command} ${localjobname_clean}.jobdone 1>> $frontendlog 2>> $frontendlog
@@ -392,7 +392,7 @@ while [ 1 ]; do
         
         #echo "deleting file ${localjobname}.jobdone and directory job-dir_${localjobname}" >> $frontendlog
         $clean_command ${localjobname}.jobdone 
-        $recurse_clean_command job-dir_${localjobname}
+        $clean_recursive job-dir_${localjobname}
         sync_clean ${localjobname}.jobdone
         sync_clean job-dir_${localjobname}
     done
@@ -534,7 +534,7 @@ while [ 1 ]; do
                 echo "copy of $runrequest files failed ($available_ret)" 1>> $frontendlog 2>> $frontendlog
             fi
             cd ..
-            $recurse_clean_command $tmpbase
+            $clean_recursive $tmpbase
             sync_clean $tmpbase
             cd ..
             echo "forwarding $runrequest done signal to exe" 1>> $frontendlog 2>> $frontendlog
@@ -723,7 +723,7 @@ while [ 1 ]; do
             # retry from scratch later. 
             # That is now disabled due to the reasons explained above.
             #cd ..
-            #$recurse_clean_command job-dir_${localjobname}
+            #$clean_recursive job-dir_${localjobname}
             sync_complete ../${localjobname}.getinputfiles.FAILED
             #continue
         else
@@ -748,7 +748,7 @@ while [ 1 ]; do
                 #echo "move ($move_command) ($inputfiles) to (${copy_execution_prefix}${execution_dir}/job-dir_${localjobname}) went ok " 1>> $frontendlog 2>> $frontendlog
                 
                 # Remove inputfiles (this is to free space when $move_command is not deleting files etc. scp)
-                $recurse_clean_command $inputfiles 1>> $frontendlog 2>> $frontendlog
+                $clean_recursive $inputfiles 1>> $frontendlog 2>> $frontendlog
                 for i in "$inputfiles"; do
                     sync_clean $i
                 done

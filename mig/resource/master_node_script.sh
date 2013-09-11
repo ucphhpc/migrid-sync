@@ -13,7 +13,8 @@ debug=""
 copy_command="$debug ${copy_command}"
 move_command="$debug ${move_command}"
 clean_command="$debug rm -f"
-clean_recursive="${clean_command} -r"
+# We don't want recursive clean up to delete mounted file systems
+clean_recursive="${clean_command} -r --one-file-system"
 end_marker="### END OF SCRIPT ###"
 
 ###jobname is full date (DateMonthYear-HourMinuteSecond) with .PID appended. In that way it should be both portable and unique :)
@@ -312,8 +313,8 @@ done
 echo "inputfiles and job script available: ready to execute job" >> $exehostlog
 
 echo "delete exe pgid file" >> $exehostlog
-rm -f exe.pgid >> $exehostlog 2>> $exehostlog
-rm -f ${exe}.pgid >> $exehostlog 2>> $exehostlog
+$clean_command exe.pgid >> $exehostlog 2>> $exehostlog
+$clean_command ${exe}.pgid >> $exehostlog 2>> $exehostlog
 
 ### Execute script that sets environments and executes the commands from the mRSL file
 chmod +x ${localjobname}.job >> $exehostlog 2>> $exehostlog
