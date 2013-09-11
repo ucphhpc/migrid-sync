@@ -735,7 +735,9 @@ if not os.environ.get("MIG_JOBDIR", ""):
     def clean_up(self):
         """Clean up"""
 
-        # cd .., rm -rf "job id"
+        # cd .. ; rm -rf --one-file-system "job id"
+
+        # TODO: really skip mount points and contents!!!
 
         cmd = 'os.chdir("..")\n'
         cmd += 'top = "' + job_dict['JOB_ID'] + '"\n'

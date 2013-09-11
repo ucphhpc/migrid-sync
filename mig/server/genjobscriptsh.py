@@ -1031,12 +1031,12 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
     def clean_up(self):
         """Clean up"""
 
-        # cd .., rm -rf "job id"
+        # cd .. ; rm -rf --one-file-system "job id"
 
         cmd = ''
 
         cmd += 'cd ..\n'
-        cmd += 'rm -rf ' + job_dict['JOB_ID'] + '\n'
+        cmd += 'rm -rf --one-file-system ' + job_dict['JOB_ID'] + '\n'
         return cmd
 
 

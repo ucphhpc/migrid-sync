@@ -1068,7 +1068,7 @@ def resource_fe_action(
             return (False,
                     'Please stop the frontend before calling clean.')
 
-        command = 'rm -rf %s' % resource_config['RESOURCEHOME']
+        command = 'rm -rf --one-file-system %(RESOURCEHOME)s' % resource_config
         (exit_code, executed_command) = execute_on_resource(command,
                 False, resource_config, logger)
 
