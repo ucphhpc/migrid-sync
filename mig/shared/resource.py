@@ -205,6 +205,9 @@ def default_exe_start_command(execution_dir, execution_node):
                                     local_exe_start_command(execution_dir,
                                     execution_node))
 
+
+# TODO: switch master node resources to SCRIPT COMMAND form, too
+
 def local_exe_status_command(dir, node, name='master'):
     if 'master' != name:
         return 'cd %(dir)s; nice ./%(name)s_node_script_%(node)s.sh status %(pgid)s'\
