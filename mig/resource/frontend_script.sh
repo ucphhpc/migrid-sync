@@ -12,6 +12,8 @@ fi
 # $Revision: 2580 $
 
 clean_command="rm -f"
+# We don't want recursive clean up to delete mounted file systems
+recurse_clean_command="$clean_command -r --one-file-system"
 # if changing end_marker string, remember to change in the other scripts
 # (master_node_script and cgi-scripts on MiG server)
 end_marker="### END OF SCRIPT ###"
@@ -293,14 +295,14 @@ sandbox_stop_exe() {
                         localjobname_clean=${job_dir_clean#job-dir_}
                         
                         # Remove EXE jobdir 
-                        ${clean_command} -r ${copy_execution_prefix}${execution_dir}/${job_dir_clean} 1>> $frontendlog 2>> $frontendlog
+                        ${recurse_clean_command} ${copy_execution_prefix}${execution_dir}/${job_dir_clean} 1>> $frontendlog 2>> $frontendlog
                         
                         # Remove run_handle_updates
                         $clean_command ${copy_execution_prefix}${execution_dir}/run_handle_updates.${localjobname_clean}\
                             1>> $frontendlog 2>> $frontendlog 
                         
                         # Remove FE jobdir
-                        ${clean_command} -r $job_dir_clean 1>> $frontendlog 2>> $frontendlog
+                        ${recurse_clean_command} $job_dir_clean 1>> $frontendlog 2>> $frontendlog
                         
                         # Remove jobdone, we can't trust it at this stage
                         ${clean_command} ${localjobname_clean}.jobdone 1>> $frontendlog 2>> $frontendlog
@@ -331,40 +333,40 @@ fi
 # Loop through job handling forever
 while [ 1 ]; do
     # Send leader PGIDs (leaders don't request jobs, so no givejob)
-    for e in *.leader_pgid; do
+    for pgidfile in *.leader_pgid; do
         # No matching expansion results in raw pattern value - just 
         # ignore
-        if [ "$e" = '*.leader_pgid' ]; then
+        if [ "$pgidfile" = '*.leader_pgid' ]; then
             continue
         fi
         
         # Now make sure file was fully transferred
-        complete_file_available "$e" || continue
+        complete_file_available "$pgidfile" || continue
         
-        exe=`awk '/exe/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $e`
-        leader_pgid=`awk '/leader_pgid/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $e`
+        exe=`awk '/exe/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $pgidfile`
+        leader_pgid=`awk '/leader_pgid/ {ORS=" " ; for(field=2;field<NF;++field) print $field; ORS=""; print $field}' $pgidfile`
         send_pgid "EXE" $leader_pgid $exe
-        ${clean_command} $e
-        sync_clean $e
+        ${clean_command} $pgidfile
+        sync_clean $pgidfile
     done
     
     # SEND OUTPUTFILES
-    for e in *.jobdone; do
+    for jobdone in *.jobdone; do
         # No matching expansion results in raw pattern value - just 
         # ignore
-        if [ "$e" = '*.jobdone' ]; then
+        if [ "$jobdone" = '*.jobdone' ]; then
             continue
         fi
         
         # Now make sure file was fully transferred
-        complete_file_available "$e" || continue
+        complete_file_available "$jobdone" || continue
         
         # Try to force disk flush - outputfiles *must* be written 
         # before jobname.sendoutput is executed
         force_refresh "job-dir_${localjobname}"
         
         # localjobname is filename without .done
-        localjobname=${e%\.jobdone}
+        localjobname=${jobdone%\.jobdone}
         
         echo "Sending outputfiles for job with localjobname: $localjobname" 1>> $frontendlog 2>> $frontendlog 
         if [ -d job-dir_${localjobname} ]; then
@@ -390,7 +392,7 @@ while [ 1 ]; do
         
         #echo "deleting file ${localjobname}.jobdone and directory job-dir_${localjobname}" >> $frontendlog
         $clean_command ${localjobname}.jobdone 
-        rm -rf job-dir_${localjobname}
+        $recurse_clean_command job-dir_${localjobname}
         sync_clean ${localjobname}.jobdone
         sync_clean job-dir_${localjobname}
     done
@@ -532,7 +534,7 @@ while [ 1 ]; do
                 echo "copy of $runrequest files failed ($available_ret)" 1>> $frontendlog 2>> $frontendlog
             fi
             cd ..
-            $clean_command -r $tmpbase
+            $recurse_clean_command $tmpbase
             sync_clean $tmpbase
             cd ..
             echo "forwarding $runrequest done signal to exe" 1>> $frontendlog 2>> $frontendlog
@@ -721,7 +723,7 @@ while [ 1 ]; do
             # retry from scratch later. 
             # That is now disabled due to the reasons explained above.
             #cd ..
-            #rm -rf job-dir_${localjobname}
+            #$recurse_clean_command job-dir_${localjobname}
             sync_complete ../${localjobname}.getinputfiles.FAILED
             #continue
         else
@@ -746,7 +748,7 @@ while [ 1 ]; do
                 #echo "move ($move_command) ($inputfiles) to (${copy_execution_prefix}${execution_dir}/job-dir_${localjobname}) went ok " 1>> $frontendlog 2>> $frontendlog
                 
                 # Remove inputfiles (this is to free space when $move_command is not deleting files etc. scp)
-                $clean_command -r $inputfiles 1>> $frontendlog 2>> $frontendlog
+                $recurse_clean_command $inputfiles 1>> $frontendlog 2>> $frontendlog
                 for i in "$inputfiles"; do
                     sync_clean $i
                 done
