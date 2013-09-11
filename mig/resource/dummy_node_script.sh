@@ -2,7 +2,8 @@
 # $Revision: 2326 $
 
 clean_command="$debug rm -f"
-clean_recursive="${clean_command} -r"
+# We don't want recursive clean up to delete mounted file systems
+clean_recursive="${clean_command} -r --one-file-system"
 end_marker="### END OF SCRIPT ###"
 
 start_dummy() {
