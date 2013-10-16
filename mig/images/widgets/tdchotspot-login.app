@@ -27,4 +27,7 @@ Requires: jquery.js
     <div class="tdchotspotlogin smallcontent">
         <p>Please enable Javascript to view this tdchotspotlogin widget.</p>
     </div>
+    <div>
+        <a href="https://redirect.tdchotspot.dk/">Login page</a>
+    </div>
 </div>
