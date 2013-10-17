@@ -20,7 +20,15 @@ Requires: jquery.js
 	*/
         username="INSERT_YOUR_TDC_PHONE_NUMBER_HERE";
         password="";
-	$(".tdchotspotlogin").html('<h2>TDC Hotspot login</h2><form name="loginform" class="t_block_login" method="post" action="https://redirect.tdchotspot.dk/sd/login"><label>Username</label><input id="username" name="username" size=10 style="display: block;" value="'+username+'" type="text"><label>Password</label><input id="password" name="password" size=10 style="display: block;" type="password" value="'+password+'"><button class="t_button_gray" type="submit"><span>Log ind</span></button></form>');
+        $(".tdchotspotlogin").html('<h2>TDC Hotspot login</h2><div class="tdchotspotinit"></div><div class="tdchotspotform"></div>');
+        $(".tdchotspotinit").html('<button class="tdchotspotinitbutton t_button_grey"">Init first</button>');
+        $(".tdchotspotform").html('<form name="loginform" class="t_block_login" method="post" action="https://redirect.tdchotspot.dk/sd/login"><label>Username</label><input id="username" name="username" size=10 style="display: block;" value="'+username+'" type="text"><label>Password</label><input id="password" name="password" size=10 style="display: block;" type="password" value="'+password+'"><button class="t_button_gray" type="submit"><span>Log in</span></button></form>');
+        $(".tdchotspotinitbutton").click(function() {
+            $.get("https://redirect.tdchotspot.dk", function(data, status){
+                // fire and forget - to init session
+                //alert("DEBUG: Data: " + data + "\nStatus: " + status);
+            });
+        });
     });
 </script>
 <div id="content">
