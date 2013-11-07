@@ -27,6 +27,7 @@ Requires: jquery.js
             $.get("https://redirect.tdchotspot.dk", function(data, status){
                 // fire and forget - to init session
                 //alert("DEBUG: Data: " + data + "\nStatus: " + status);
+                alert("Init succeeded, now you can proceed with login");
             });
         });
     });
@@ -36,6 +37,6 @@ Requires: jquery.js
         <p>Please enable Javascript to view this tdchotspotlogin widget.</p>
     </div>
     <div>
-        <a href="https://redirect.tdchotspot.dk/">Login page</a>
+        <a href="https://redirect.tdchotspot.dk/">Full login page</a>
     </div>
 </div>
