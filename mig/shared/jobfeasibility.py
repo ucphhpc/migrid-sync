@@ -38,6 +38,7 @@ i.e. job_cond orange is a subset of job_cond yellow.
 """
 
 import os
+import subprocess
 from time import time
 
 from shared.base import client_id_dir
@@ -190,8 +191,10 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
     best_job_cond['JOB_COND'] = RED
     best_errors = errors
     found_best = False
+    other_errors = {}
 
     # Avoid repeated get_resource_map calls for every single resource
+    
     resource_map = get_resource_map(configuration)
     for (vgrid, resources) in vgrid_resource_map.items():
 
@@ -207,7 +210,7 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
             if not resource:
                 continue
 
-            # resource
+            # Check resource availability
 
             job_cond['REGISTERED'] = validate_resource_seen(configuration,
                                                             resource, errors,
@@ -216,7 +219,7 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
             validate_resource_seen_within_x_hours(configuration, resource,
                                                   errors, resource_id)
 
-            # mRSL
+            # Check mRSL requested specs
 
             job_cond['ARCHITECTURE'] = validate_architecture(configuration,
                                                              job, resource,
@@ -227,10 +230,6 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
                                                    resource, errors)
             job_cond['DISK'] = validate_disk(configuration, job, resource,
                                              errors)
-            job_cond['EXECUTABLES'] = validate_executables(configuration, job,
-                                                           errors)
-            job_cond['INPUTFILES'] = validate_inputfiles(configuration, job,
-                                                         errors)
             job_cond['JOBTYPE'] = validate_jobtype(configuration, job,
                                                    resource, errors)
             job_cond['MAXPRICE'] = validate_maxprice(configuration, job,
@@ -239,18 +238,13 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
                                                  errors)
             job_cond['NODECOUNT'] = validate_nodecount(configuration, job,
                                                        resource, errors)
-            job_cond['NOTIFY'] = validate_notify(configuration, job, errors)
             job_cond['PLATFORM'] = validate_platform(configuration, job,
                                                      resource, errors)
             job_cond['RETRIES'] = validate_retries(configuration, job, errors)
             job_cond['RUNTIMEENVIRONMENT'] = validate_runtimeenvironment(
                 configuration, job, resource, errors)
-            job_cond['VERIFYFILES'] = validate_verifyfiles(configuration, job,
-                                                           errors)
             job_cond['SANDBOX'] = validate_sandbox(configuration, job,
                                                    resource, errors)
-
-            # job_cond
 
             job_cond['suggested_vgrid'] = vgrid
             job_cond['suggested_resource'] = anon_resource_id(resource_id,
@@ -271,18 +265,32 @@ def validate(configuration, job, vgrid_resource_map, job_cond, errors):
             job_cond.clear()
             errors.clear()
 
+    # Run resource independent checks only once
+
+    job_cond['INPUTFILES'] = validate_inputfiles(configuration, job,
+                                                 other_errors)
+    job_cond['EXECUTABLES'] = validate_executables(configuration, job,
+                                                   other_errors)
+    job_cond['VERIFYFILES'] = validate_verifyfiles(configuration, job,
+                                                   other_errors)
+    job_cond['NOTIFY'] = validate_notify(configuration, job, other_errors)
+
     if not found_best:
-            best_job_cond['RESOURCE'] = False
-            best_errors['RESOURCE'] = 'No valid/allowed resources available.'
+        best_job_cond['RESOURCE'] = False
+        best_errors['RESOURCE'] = 'No valid/allowed resources available.'
+    else:
+        best_job_cond.update(job_cond)
 
+    if other_errors:
+        best_errors.update(other_errors)
+        if best_job_cond['JOB_COND'] == GREEN:
+            best_job_cond['JOB_COND'] = YELLOW
     return (best_job_cond, best_errors)
-
 
 
 #
 # ## Validation functions ##
 #
-
 
 
 def validate_architecture(configuration, job, resource, errors):
@@ -314,17 +322,11 @@ def validate_disk(configuration, job, resource, errors):
 def validate_executables(configuration, job, errors):
     """Validates the presense of specific local/remote files."""
 
-    if skip_validation(configuration, job, 'EXECUTABLES'):
-        return True
-
     return validate_files(configuration, job, errors, 'EXECUTABLES')
 
 
 def validate_inputfiles(configuration, job, errors):
     """Validates the presense of specific local/remote files."""
-
-    if skip_validation(configuration, job, 'INPUTFILES'):
-        return True
 
     return validate_files(configuration, job, errors, 'INPUTFILES')
 
@@ -533,9 +535,6 @@ def validate_runtimeenvironment(configuration, job, resource, errors):
 def validate_verifyfiles(configuration, job, errors):
     """Validates the presense of specific local files."""
 
-    if skip_validation(configuration, job, 'VERIFYFILES'):
-        return True
-
     return validate_files(configuration, job, errors, 'VERIFYFILES', True)
 
 
@@ -641,50 +640,66 @@ def validate_files(configuration, job, errors, mrsl_attribute,
                    verify_file=False):
     """Validates the presense of specific input-, execute- and verify-files
     at local and remote locations.
+    The optional verify_file option is used to tell the check that it is
+    called for the VERIFYFILES keyword. If set the file extension must match
+    one of our status file extensions (status/stdout/stderr).
     """
 
     if skip_validation(configuration, job, mrsl_attribute):
         return True
 
     missing_files = []
+    invalid_verify = []
 
-    for filename in job[mrsl_attribute]:
+    # file lines may be single src/dst path or separate src dst pair
 
-        if not filename.find('://'):
+    src_files = [i.split(' ', 1)[0] for i in job[mrsl_attribute]]
+    for filename in src_files:
+
+        configuration.logger.info('checking filename %s' % filename)
+        
+        # Extra check for VERIFYFILES to match status extension
+
+        if verify_file and not os.path.splitext(filename)[1] in \
+               ['status', 'stdout', 'stderr']:
+            invalid_verify.append(filename)
+            continue
+
+        # Separate local and remote file checks
+
+        if filename.find('://') == -1:
             filename = filename.lstrip('/')
             filename = os.path.normpath(filename)
-
-        if os.path.isfile(os.path.join(configuration.user_home, \
-                        client_id_dir(job['USER_CERT']), filename)):
-
-            if verify_file and not filename.split('.')[1] in ['status',
-                                                              'stdout',
-                                                              'stderr']:
+            abs_path = os.path.join(configuration.user_home,
+                                    client_id_dir(job['USER_CERT']),
+                                    filename)
+            if not os.path.isfile(abs_path):
                 missing_files.append(filename)
-
-            continue
         else:
-            if verify_file:
-                missing_files.append(filename)
-                continue
+            dest_file = '/dev/null'
+            # We use curl since it supports all our protocols including sftp
+            # Check only first byte to limit overhead for big files
+            curl_cmd = 'curl --location --fail --silent --range 0-0 ' + \
+                       '--insecure %s -o %s' % (filename, dest_file)
+            configuration.logger.info('checking remote file with %s' % \
+                                      curl_cmd)
+            curl_result = subprocess.call(curl_cmd, stderr=subprocess.PIPE,
+                                          shell=True)
+            configuration.logger.debug('got curl result %d' % curl_result)
 
-            dest_file = 'tmp_curl_file.tmp'
-            curl_result = \
-            os.system('curl --location --fail --silent --insecure %s -o %s' \
-                     % (filename.lower(), dest_file))
-
-            if curl_result == 0 and os.path.isfile(dest_file):
-                os.system('rm -f %s' % (dest_file))
-                continue
-            else:
+            if curl_result != 0:
                 missing_files.append(filename)
 
     if missing_files:
-        file_cnt = len(' '.join(job[mrsl_attribute]).split())
-        missing_file_cnt = len(' '.join(missing_files).split())
+        file_cnt = len(src_files)
+        missing_file_cnt = len(missing_files)
         errors[mrsl_attribute] = \
-        'The following (%i of %i) files are missing:, %s' \
+        'The following (%d of %d) files are missing: %s' \
         % (missing_file_cnt, file_cnt, ', '.join(missing_files))
+    if verify_file and invalid_verify:
+        errors[mrsl_attribute] = \
+        'The following verify files are invalid (must match status ext): %s' \
+        % ', '.join(invalid_verify)
 
     return not errors.has_key(mrsl_attribute)
 
@@ -899,16 +914,16 @@ def skip_validation(configuration, job, mrsl_attribute, *args):
     default value, validation is omitted.
     """
 
-    in__skip_list = in_skip_list(configuration, mrsl_attribute)
+    is_in_skip_list = in_skip_list(configuration, mrsl_attribute)
     job_has_key = False
-    has__default_value = False
+    it_has_default_value = False
     args_present = False
     args_has_key = False
 
-    if not in__skip_list:
+    if not is_in_skip_list:
         job_has_key = job.has_key(mrsl_attribute)
         if job_has_key:
-            has__default_value = has_default_value(configuration,
+            it_has_default_value = has_default_value(configuration,
                                                    mrsl_attribute, 
                                                    job[mrsl_attribute])
         if args and len(args) == 1:
@@ -916,10 +931,10 @@ def skip_validation(configuration, job, mrsl_attribute, *args):
             args_has_key = args[0].has_key(mrsl_attribute)
 
     if args_present:
-        in__skip_list or (not job_has_key) or has__default_value \
-        or (not args_has_key)
+        return is_in_skip_list or (not job_has_key) or it_has_default_value \
+               or (not args_has_key)
     else:
-        in__skip_list or (not job_has_key) or has__default_value
+        return is_in_skip_list or (not job_has_key) or it_has_default_value
 
 
 def has_default_value(configuration, mrsl_attribute, value):
