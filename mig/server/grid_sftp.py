@@ -136,6 +136,8 @@ class SFTPHandle(paramiko.SFTPHandle):
         """Handle operations of same name"""
         self.logger.debug("SFTPHandle chattr on %s: %s" % \
                           (getattr(self, "path", "unknown"), attr))
+        # Silently ignore to allow e.g. truncate operations to succeed
+        return paramiko.SFTP_OK
         
 
 class SimpleSftpServer(paramiko.SFTPServerInterface):
