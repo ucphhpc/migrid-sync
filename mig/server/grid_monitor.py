@@ -483,6 +483,12 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                         * int(last_request_dict['RESOURCE_CONFIG']['CPUCOUNT'])
             elif filename.startswith('monitor_last_status_'):
 
+                # store must be linked to this vgrid, not only parent vgrid:
+                # inheritance only covers access, not automatic participation
+
+                if current_dir != vgrid_name:
+                    continue
+                
                 # read last resource action status file
 
                 mon_file_name = os.path.join(abs_mon_dir, filename)
@@ -522,16 +528,10 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 if last_status_dict['RESOURCE_CONFIG'].get('ANONYMOUS', True):
                     public_id = anon_resource_id(public_id)
 
-                # store may be linked to this or parent vgrid
-                
-                is_linked = False
-                search_vgrid = vgrid_name
-                while search_vgrid and not is_linked:
-                    vgrid_link = os.path.join(
-                        configuration.vgrid_files_home, search_vgrid,
-                        public_id)
-                    is_linked = (os.path.realpath(vgrid_link) == mount_point)
-                    search_vgrid = os.path.dirname(search_vgrid)
+                vgrid_link = os.path.join(
+                    configuration.vgrid_files_home, vgrid_name, public_id)
+                is_linked = (os.path.realpath(vgrid_link) == mount_point)
+
                 total_disk = last_status_dict['RESOURCE_CONFIG']['DISK']
                 free_disk, avail_disk, used_disk, used_percent = 0, 0, 0, 0
                 gig_bytes = 1.0 * 2**30
