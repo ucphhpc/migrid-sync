@@ -836,6 +836,14 @@ attempt by '%s': vgrid name '%s'""" % (client_id, vgrid_name))
         new_base_vgrid = False
         vgrid_name_without_last_fragment = \
             '/'.join(vgrid_name_list[0:vgrid_name_list_length - 1])
+        parent_base = os.path.dirname(base_dir.rstrip(os.sep))
+        if not os.path.isdir(parent_base):
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : 'Parent vgrid %s does not exist!' % \
+                 vgrid_name_without_last_fragment
+                 })
+            return (output_objects, returnvalues.CLIENT_ERROR)
         if not vgrid_is_owner(vgrid_name_without_last_fragment,
                               client_id, configuration):
             output_objects.append(
