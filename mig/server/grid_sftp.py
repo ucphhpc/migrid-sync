@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2010-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -59,8 +59,6 @@
 
 """Provide SFTP access to MiG user homes"""
 
-import base64
-import glob
 import logging
 import os
 import socket
@@ -72,48 +70,14 @@ from StringIO import StringIO
 import paramiko
 import paramiko.util
 
-from shared.base import client_dir_id, client_alias, invisible_path
+from shared.base import invisible_path
 from shared.conf import get_configuration_object
-from shared.useradm import ssh_authkeys, get_ssh_authkeys, ssh_authpasswords, \
-     get_ssh_authpasswords, check_password_hash, extract_field
+from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
+     acceptable_chmod, refresh_users
+from shared.useradm import check_password_hash
 
 
 configuration, logger = None, None
-
-
-def parse_pub_key(public_key):
-    """Parse public_key string to paramiko key.
-    Throws exception if key is broken.
-    """
-    head, tail = public_key.split(' ')[:2]
-    bits = base64.decodestring(tail)
-    msg = paramiko.Message(bits)
-    if head == 'ssh-rsa':
-        parse_key = paramiko.RSAKey
-    elif head == 'ssh-dss':
-        parse_key = paramiko.DSSKey
-    else:
-        # Try RSA for unknown key types
-        parse_key = paramiko.RSAKey
-    return parse_key(msg)
-    
-
-class User(object):
-    """User login class to hold a single valid login for a user"""
-    def __init__(self, username, password, 
-                 chroot=True, home=None, public_key=None):
-        self.username = username
-        self.password = password
-        self.chroot = chroot
-        self.public_key = public_key
-        if type(public_key) in (str, unicode):
-            # We already checked that key is valid if we got here
-            self.public_key = parse_pub_key(public_key)
-
-        self.home = home
-        if self.home is None:
-            self.home = self.username
-
 
 class SFTPHandle(paramiko.SFTPHandle):
     """Override default SFTPHandle"""
@@ -170,80 +134,34 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 self.root = "%s/%s" % (self.root, entry.home)
                 break
 
+    # Use shared daemon fs helper functions
+    
     def _get_fs_path(self, sftp_path):
-        """Internal helper to translate path with chroot and invisible files
-        in mind"""
-        real_path = "%s/%s" % (self.root, sftp_path)
-        real_path = real_path.replace('//', '/')
-        self.logger.debug("get_fs_path: %s :: %s" % (sftp_path, real_path))
-        accept_roots = [self.root] + self.chroot_exceptions
-
-        accepted = False
-        for accept_path in accept_roots:
-            expanded_path = os.path.realpath(real_path)
-            if expanded_path.startswith(accept_path):
-                # Found matching root - check visibility
-                if not invisible_path(real_path):
-                    accepted = True
-                break
-            
-        if not accepted:
-            self.logger.error("rejecting illegal path: %s" % real_path)
-            raise ValueError("Invalid path")
+        """Wrap helper"""
+        self.logger.debug("get_fs_path: %s" % sftp_path)
+        reply = get_fs_path(sftp_path, self.root, self.chroot_exceptions)
         self.logger.debug("get_fs_path returns: %s :: %s" % (sftp_path,
-                                                             real_path))
-        return real_path
+                                                             reply))
 
-    def _strip_root(self, path):
-        """Internal helper to strip root prefix for chrooted locations"""
-        self.logger.debug("strip root on path: %s" % path)
-        accept_roots = [self.root] + self.chroot_exceptions
-        for root in accept_roots:
-            if path.startswith(root):
-                self.logger.debug("strip_root returns chrooted: %s" % \
-                                  path.replace(root, ''))
-                return path.replace(root, '')
-        self.logger.debug("strip_root returns: %s" % path)
-        return path
+        return reply
 
-    def _flags_to_mode(self, flags):
-        """Internal helper to convert bitmask of os.O_* flags to open-mode.
+    def _strip_root(self, sftp_path):
+        """Wrap helper"""
+        self.logger.debug("strip_root: %s" % sftp_path)
+        reply = strip_root(sftp_path, self.root, self.chroot_exceptions)
+        self.logger.debug("strip_root returns: %s :: %s" % (sftp_path,
+                                                             reply))
+        return reply
+    
+    def _acceptable_chmod(self, sftp_path):
+        """Wrap helper"""
+        self.logger.debug("acceptable_chmod: %s" % sftp_path)
+        reply = acceptable_chmod(sftp_path, self.chmod_exceptions)
+        self.logger.debug("acceptable_chmod returns: %s :: %s" % (sftp_path,
+                                                                  reply))
+        return reply
 
-        It only handles read, write and append with and without truncation.
-        Append and write always creates the file if missing, so checking for
-        missing file creation flag should generally be handled separately.
-        The same goes for handling of invalid flag combinations.
-
-        This function is inspired by the XMP example in the fuse-python code
-        http://sourceforge.net/apps/mediawiki/fuse/index.php?title=Main_Page
-        but we need to prevent truncation unless explicitly requested.
-        """
-        # Truncate per default when enabling write - disable later if needed
-        main_modes = {os.O_RDONLY: 'r', os.O_WRONLY: 'w', os.O_RDWR: 'w+'}
-        mode = main_modes[flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)]
-        
-        if flags & os.O_APPEND:
-            mode = mode.replace('w', 'a', 1)
-        # Disable truncation unless explicitly requested
-        if not (flags & os.O_TRUNC):
-            mode = mode.replace('w', 'r+', 1)
-        return mode
-
-    def _acceptable_chmod(self, path):
-        """Internal helper to check that a chmod request is safe. That is, it
-        only changes permission on files. Furthermore anything inside the dirs
-        in chmod_exceptions should be left alone to avoid users touching
-        read-only files or enabling execution of custom cgi scripts with
-        potentially arbitrary code.
-        """
-        if os.path.isfile(path):
-            if True in [os.path.realpath(path).startswith(i + os.sep) \
-                        for i in self.chmod_exceptions]:
-                return False
-            else:
-                return True
-        else:
-            return False
+    # Public interface functions
 
     def open(self, path, flags, attr):
         """Handle operations of same name"""        
@@ -266,7 +184,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             # O_TRUNCATE consistent with the simple mode strings.
             fake = os.open(real_path, flags, 0644)
             os.close(fake)
-            mode = self._flags_to_mode(flags)
+            mode = flags_to_mode(flags)
             if flags == os.O_RDONLY:
                 # Read-only mode
                 readfile = open(real_path, mode)
@@ -293,7 +211,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         except ValueError, err:
             return paramiko.SFTP_PERMISSION_DENIED
         self.logger.debug("list_folder %s :: %s" % (path, real_path))
-        rc = []
+        reply = []
         if not os.path.exists(real_path):
             self.logger.error("list_folder on missing path %s :: %s" % \
                               (path, real_path))
@@ -310,13 +228,13 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             full_name = ("%s/%s" % (real_path, filename)).replace("//", "/")
             # stat may fail e.g. if filename is a stale storage mount point
             try:
-                rc.append(paramiko.SFTPAttributes.from_stat(
+                reply.append(paramiko.SFTPAttributes.from_stat(
                     os.stat(full_name), self._strip_root(filename)))
             except Exception, err:
                 self.logger.warning("list_folder %s: stat on %s failed: %s" % \
                                     (path, full_name, err))
-        self.logger.debug("list_folder %s rc %s" % (path, rc))
-        return rc
+        self.logger.debug("list_folder %s reply %s" % (path, reply))
+        return reply
 
     def stat(self, path):
         """Handle operations of same name"""
@@ -668,113 +586,16 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
         time.sleep(1)
 
 
-def refresh_users(conf):
-    '''Reload users from conf if it changed on disk. Add user entries for all
-    active keys and passwords enabled in conf. Optionally add short ID
-    username alias entries for all users if that is enabled in the conf.
-    Removes all the user entries no longer active, too.
-    '''
-    logger = conf.get("logger", logging.getLogger())
-    last_update = conf['time_stamp']
-    old_usernames = [i.username for i in conf['users']]
-    cur_usernames = []
-    authkeys_pattern = os.path.join(conf['root_dir'], '*', ssh_authkeys)
-    authpasswords_pattern = os.path.join(conf['root_dir'], '*',
-                                         ssh_authpasswords)
-    short_id, short_alias = None, None
-    matches = []
-    if conf['allow_publickey']:
-        matches += [(ssh_authkeys, i) for i in glob.glob(authkeys_pattern)]
-    if conf['allow_password']:
-        matches += [(ssh_authpasswords, i) \
-                    for i in glob.glob(authpasswords_pattern)] 
-    for (auth_file, path) in matches:
-        logger.debug("Checking %s" % path)
-        user_home = path.replace(os.sep + auth_file, '')
-        user_dir = user_home.replace(conf['root_dir'] + os.sep, '')
-        user_id = client_dir_id(user_dir)
-        user_alias = client_alias(user_id)
-        cur_usernames.append(user_alias)
-        if conf['user_alias']:
-            short_id = extract_field(user_id, conf['user_alias'])
-            short_alias = client_alias(short_id)
-            cur_usernames.append(short_alias)
-        if last_update >= os.path.getmtime(path):
-            continue
-        # Create user entry for each valid key and password 
-        if auth_file == ssh_authkeys:
-            all_keys = get_ssh_authkeys(path)
-            all_passwords = []
-            # Clean up all old key entries for this user
-            conf['users'] = [i for i in conf['users'] \
-                             if i.username != user_alias or \
-                             i.public_key is None]
-        else:
-            all_keys = []
-            all_passwords = get_ssh_authpasswords(path)
-            # Clean up all old password entries for this user
-            conf['users'] = [i for i in conf['users'] \
-                             if i.username != user_alias or \
-                             i.password is None]
-        for user_key in all_keys:
-            # Remove comments and blank lines
-            user_key = user_key.split('#', 1)[0].strip()
-            if not user_key:
-                continue
-            # Make sure pub key is valid
-            try:
-                _ = parse_pub_key(user_key)
-            except Exception, exc:
-                logger.warning("Skipping broken key %s for user %s (%s)" % \
-                               (user_key, user_id, exc))
-                continue
-            logger.debug("Adding user:\nname: %s\nalias: %s\nhome: %s\nkey: %s"\
-                        % (user_id, user_alias, user_dir, user_key))
-            conf['users'].append(
-                User(username=user_alias, home=user_dir, password=None,
-                     public_key=user_key, chroot=True),
-                )
-            # Add short alias copy if user aliasing is enabled
-            if short_id:
-                logger.debug("Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s"\
-                             % (user_id, short_alias, user_dir, user_key))
-                conf['users'].append(
-                    User(username=short_alias, home=user_dir, password=None,
-                         public_key=user_key, chroot=True),
-                    )
-        for user_password in all_passwords:
-            user_password = user_password.strip()
-            logger.debug("Adding user:\nname: %s\nalias: %s\nhome: %s\npw: %s"\
-                        % (user_id, user_alias, user_dir, user_password))
-            conf['users'].append(
-                User(username=user_alias, home=user_dir,
-                     password=user_password, public_key=None, chroot=True))
-            # Add short alias copy if user aliasing is enabled
-            if short_id:
-                logger.debug("Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s"\
-                             % (user_id, short_alias, user_dir, user_password))
-                conf['users'].append(
-                    User(username=short_alias, home=user_dir, password=user_password,
-                         public_key=None, chroot=True),
-                    )
-    removed = [i for i in old_usernames if not i in cur_usernames]
-    if removed:
-        logger.info("Removing login for %d deleted users" % len(removed))
-        conf['users'] = [i for i in conf['users'] if not i.username in removed]
-    logger.info("Refreshed users from configuration (%d users)" % \
-                len(conf['users']))
-    conf['time_stamp'] = time.time()
-    return conf
-
-def start_service(service_conf):
+def start_service(configuration):
     """Service daemon"""
-    logger = service_conf.get("logger", logging.getLogger())
+    daemon_conf = configuration.daemon_conf
+    logger = daemon_conf.get("logger", logging.getLogger())
     server_socket = None
     try:
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # Allow reuse of socket to avoid TCP time outs
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
-        server_socket.bind((service_conf['address'], service_conf['port']))
+        server_socket.bind((daemon_conf['address'], daemon_conf['port']))
         server_socket.listen(10)
     except Exception, err:
         err_msg = 'Could not open socket: %s' % err
@@ -800,14 +621,14 @@ def start_service(service_conf):
             continue
         # automatic reload of users if more than refresh_delay seconds old
         refresh_delay = 60
-        if service_conf['time_stamp'] + refresh_delay < time.time():
-            service_conf = refresh_users(service_conf)
+        if daemon_conf['time_stamp'] + refresh_delay < time.time():
+            daemon_conf = refresh_users(configuration)
         logger.info("Handling session from %s %s" % (client, addr))
         worker = threading.Thread(target=accept_client,
-                                  args=[client, addr, service_conf['root_dir'],
-                                        service_conf['users'],
-                                        service_conf['host_rsa_key'],
-                                        service_conf,])
+                                  args=[client, addr, daemon_conf['root_dir'],
+                                        daemon_conf['users'],
+                                        daemon_conf['host_rsa_key'],
+                                        daemon_conf,])
         worker.start()
 
 
@@ -872,29 +693,31 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
     # code execution vulnerabilities
     chmod_exceptions = [os.path.abspath(configuration.vgrid_private_base),
                          os.path.abspath(configuration.vgrid_public_base)]
-    sftp_conf = {'address': address,
-                 'port': port,
-                 'root_dir': os.path.abspath(configuration.user_home),
-                 'chmod_exceptions': chmod_exceptions,
-                 'chroot_exceptions': chroot_exceptions,
-                 'allow_password': 'password' in configuration.user_sftp_auth,
-                 'allow_publickey': 'publickey' in configuration.user_sftp_auth,
-                 'user_alias': configuration.user_sftp_alias,
-                 'host_rsa_key': host_rsa_key,
-                 'users': [],
-                 'time_stamp': 0,
-                 'logger': logger,
-                 'stop_running': threading.Event()}
+    configuration.daemon_conf = {
+        'address': address,
+        'port': port,
+        'root_dir': os.path.abspath(configuration.user_home),
+        'chmod_exceptions': chmod_exceptions,
+        'chroot_exceptions': chroot_exceptions,
+        'allow_password': 'password' in configuration.user_sftp_auth,
+        'allow_publickey': 'publickey' in configuration.user_sftp_auth,
+        'user_alias': configuration.user_sftp_alias,
+        'host_rsa_key': host_rsa_key,
+        'users': [],
+        'time_stamp': 0,
+        'logger': logger,
+        'stop_running': threading.Event()
+        }
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)
     print info_msg
     try:
-        start_service(sftp_conf)
+        start_service(configuration)
     except KeyboardInterrupt:
         info_msg = "Received user interrupt"
         logger.info(info_msg)
         print info_msg
-        sftp_conf['stop_running'].set()
+        configuration.daemon_conf['stop_running'].set()
     active = threading.active_count() - 1
     while active > 0:
         info_msg = "Waiting for %d worker threads to finish" % active

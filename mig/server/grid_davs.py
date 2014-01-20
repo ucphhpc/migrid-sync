@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# grid_dav - DAV server providing access to MiG user homes
+# grid_davs - secure DAV server providing access to MiG user homes
 # Copyright (C) 2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,37 +25,38 @@
 # -- END_HEADER ---
 #
 
-"""Provide DAV access to MiG user homes"""
+"""Provide secure DAV access to MiG user homes"""
 
 import BaseHTTPServer
-import SimpleHTTPServer
+#import SimpleHTTPServer
 import SocketServer
-import base64
-import glob
-import logging
+#import base64
+#import glob
+#import logging
 import ssl
 import os
-import socket
+#import socket
 import shutil
 import sys
-import threading
-import time
-from StringIO import StringIO
+#import threading
+#import time
+#from StringIO import StringIO
 
-import pywebdav.lib
+#import pywebdav.lib
 from pywebdav.server.fileauth import DAVAuthHandler
 #from pywebdav.server.mysqlauth import MySQLAuthHandler
 from pywebdav.server.fshandler import FilesystemHandler
 #from pywebdav.server.daemonize import startstop
 
-from pywebdav.lib.INI_Parse import Configuration
-from pywebdav.lib import VERSION, AUTHOR
+#from pywebdav.lib.INI_Parse import Configuration
+#from pywebdav.lib import VERSION, AUTHOR
 
 
 from shared.base import client_dir_id, client_alias, invisible_path
 from shared.conf import get_configuration_object
-from shared.useradm import ssh_authpasswords, get_ssh_authpasswords, \
-     check_password_hash, extract_field, generate_password_hash
+from shared.griddaemons import get_fs_path, strip_root, \
+     flags_to_mode, acceptable_chmod, refresh_users
+from shared.useradm import check_password_hash
 
 
 configuration, logger = None, None
@@ -68,36 +69,24 @@ class ThreadedHTTPServer(SocketServer.ThreadingMixIn,
     pass
 
 
-def setupDummyConfig(**kw):
+def setup_dummy_config(**kw):
+    """DAV config object helper"""
 
     class DummyConfigDAV:
+        """Dummy DAV config"""
         def __init__(self, **kw):
             self.__dict__.update(**kw)
 
         def getboolean(self, name):
-            return (str(getattr(self, name, 0)) in ('1', "yes", "true", "on", "True"))
+            """Get boolean value from config"""
+            return (str(getattr(self, name, 0)) in ('1', "yes", "true", "on",
+                                                    "True"))
 
     class DummyConfig:
+        """Dummy config"""
         DAV = DummyConfigDAV(**kw)
 
     return DummyConfig()
-
-
-class User(object):
-    """User login class to hold a single valid login for a user"""
-    def __init__(self, username, password, 
-                 chroot=True, home=None, public_key=None):
-        self.username = username
-        self.password = password
-        self.chroot = chroot
-        self.public_key = public_key
-        if type(public_key) in (str, unicode):
-            # We already checked that key is valid if we got here
-            self.public_key = parse_pub_key(public_key)
-
-        self.home = home
-        if self.home is None:
-            self.home = self.username
 
 
 class MiGDAVAuthHandler(DAVAuthHandler):
@@ -110,54 +99,64 @@ class MiGDAVAuthHandler(DAVAuthHandler):
     the MiG user DB.
     """
 
-    # TMP! load from DB
-    allow_password = True
-    users = {'jonas': [User('jonas', generate_password_hash('test1234'))]}
-
     # Do not forget to set IFACE_CLASS by caller
     # ex.: IFACE_CLASS = FilesystemHandler('/tmp', 'http://localhost/')
     verbose = False
+    users = None
+    authenticated_user = None
 
     def _log(self, message):
+        print "in _log"
         if self.verbose:
-            log.info(message)
+            logger.info(message)
 
-    def get_userinfo(self, user, pw, command):
+    def get_userinfo(self, username, password, command):
         """authenticate user against user DB"""
 
-        username, password = user, pw
+        refresh_users(configuration)
+        usermap = {}
+        for user_obj in self.server_conf.daemon_conf['users']:
+            if not usermap.has_key(user_obj.username):
+                usermap[user_obj.username] = []
+            usermap[user_obj.username].append(user_obj)
+        self.users = usermap
+        logger.debug("get_userinfo found users: %s" % self.users)
+
+        # TODO: add pubkey support
 
         offered = None
-        if self.allow_password and self.users.has_key(username):
+        if 'password' in self.server_conf.user_davs_auth and \
+               self.users.has_key(username):
             # list of User login objects for username
             entries = self.users[username]
             offered = password
             for entry in entries:
                 if entry.password is not None:
                     allowed = entry.password
-                    logging.debug("Password check for %s" % username)
+                    logger.debug("Password check for %s" % username)
                     if check_password_hash(offered, allowed):
-                        logging.info("Authenticated %s" % username)
+                        logger.info("Authenticated %s" % username)
                         self.authenticated_user = username
                         return 1
         err_msg = "Password authentication failed for %s" % username
-        logging.error(err_msg)
+        logger.error(err_msg)
         print err_msg
         return 0
 
 
-def run(conf):
+def run(configuration):
     """SSL wrap HTTP server for secure DAV access"""
 
     handler = MiGDAVAuthHandler
 
     # Pass conf options to DAV handler in required object format
 
-    dav_conf_dict = conf['dav_cfg']
-    for name in ('host', 'port'):
-        dav_conf_dict[name] = conf[name]
-    dav_conf = setupDummyConfig(**dav_conf_dict)
-    # injecting options
+    dav_conf_dict = configuration.dav_cfg
+    dav_conf_dict['host'] = configuration.user_davs_address
+    dav_conf_dict['port'] = configuration.user_davs_port
+    dav_conf = setup_dummy_config(**dav_conf_dict)
+    # inject options
+    handler.server_conf = configuration
     handler._config = dav_conf
 
     server = ThreadedHTTPServer
@@ -167,22 +166,22 @@ def run(conf):
     directory = directory.rstrip('/')
     verbose = dav_conf.DAV.getboolean('verbose')
     noauth = dav_conf.DAV.getboolean('noauth')
-    host = conf['host']
+    host = dav_conf_dict['host']
     host = host.strip()
-    port = conf['port']
+    port = dav_conf_dict['port']
 
     if not os.path.isdir(directory):
-        logging.error('%s is not a valid directory!' % directory)
+        logger.error('%s is not a valid directory!' % directory)
         return sys.exit(233)
 
     # basic checks against wrong hosts
     if host.find('/') != -1 or host.find(':') != -1:
-        logging.error('Malformed host %s' % host)
+        logger.error('Malformed host %s' % host)
         return sys.exit(233)
 
     # no root directory
     if directory == '/':
-        logging.error('Root directory not allowed!')
+        logger.error('Root directory not allowed!')
         sys.exit(233)
 
     # dispatch directory and host to the filesystem handler
@@ -193,28 +192,33 @@ def run(conf):
     # put some extra vars
     handler.verbose = verbose
     if noauth:
-        logging.warning('Authentication disabled!')
+        logger.warning('Authentication disabled!')
         handler.DO_AUTH = False
 
-    logging.info('Serving data from %s' % directory)
+    logger.info('Serving data from %s' % directory)
 
     if not dav_conf.DAV.getboolean('lockemulation'):
-        logging.info('Deactivated LOCK, UNLOCK (WebDAV level 2) support')
+        logger.info('Deactivated LOCK, UNLOCK (WebDAV level 2) support')
 
     handler.IFACE_CLASS.mimecheck = True
     if not dav_conf.DAV.getboolean('mimecheck'):
         handler.IFACE_CLASS.mimecheck = False
-        logging.info('Disabled mimetype sniffing (All files will have type application/octet-stream)')
+        logger.info('Disabled mimetype sniffing (All files will have type '
+                    'application/octet-stream)')
 
     if dav_conf_dict['baseurl']:
-        logging.info('Using %(baseurl)s as base url for PROPFIND requests' % \
+        logger.info('Using %(baseurl)s as base url for PROPFIND requests' % \
                      dav_conf_dict)
     handler.IFACE_CLASS.baseurl = dav_conf_dict['baseurl']
 
     # initialize server on specified port
     runner = server((host, port), handler)
     # Wrap in SSL
-    cert_path = os.path.join(conf['cert_base'], conf['cert_file'])
+
+    cert_path = configuration.user_davs_key
+    if not os.path.isfile(cert_path):
+        logger.error('No such server key: %s' % cert_path)
+        sys.exit(1)
     runner.socket = ssl.wrap_socket(runner.socket,
                                    certfile=cert_path,
                                    server_side=True)
@@ -223,36 +227,14 @@ def run(conf):
     try:
         runner.serve_forever()
     except KeyboardInterrupt:
-        logging.info('Killed by user')
+        logger.info('Killed by user')
 
-
-def main(conf):
-    """Run server"""
-    if conf['log_path']:
-        logging.basicConfig(path=conf['log_path'], level=conf['log_level'],
-                            format=conf['log_format'])
-    else:
-        logging.basicConfig(level=conf['log_level'],
-                            format=conf['log_format'])
-    logging.info("starting DAV server")
-    try:
-        run(conf)
-    except KeyboardInterrupt:
-        logging.info("received interrupt - shutting down")
-    except Exception, exc:
-        logging.error("exiting on unexpected exception: %s" % exc)
-        
 
 if __name__ == "__main__":
-    cfg = {'log_level': logging.INFO,
-           'log_path': None,
-           'log_format': '%(asctime)s %(levelname)s %(message)s',
-           'host': 'localhost',
-           'port': 4443,
-           'cert_base': '../../MiG-certificates',
-           'cert_file': 'localhost.pem',
-           #'configfile': '',
-           'dav_cfg': {
+    configuration = get_configuration_object()
+    logger = configuration.logger
+    # TODO: dynamically switch to user home directory
+    configuration.dav_cfg = {
                'verbose': False,
                'directory': '/tmp',
                'no_auth': False,
@@ -267,6 +249,47 @@ if __name__ == "__main__":
                'chunked_http_response': True,
                'mimecheck': True,
                'baseurl': '',
-               },
-           }
-    main(cfg)
+        }
+
+    logger = configuration.logger
+    if not configuration.site_enable_davs:
+        err_msg = "DAVS access to user homes is disabled in configuration!"
+        logger.error(err_msg)
+        print err_msg
+        sys.exit(1)
+
+    chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
+                         os.path.abspath(configuration.vgrid_public_base),
+                         os.path.abspath(configuration.vgrid_files_home),
+                         os.path.abspath(configuration.resource_home)]
+    # Don't allow chmod in dirs with CGI access as it introduces arbitrary
+    # code execution vulnerabilities
+    chmod_exceptions = [os.path.abspath(configuration.vgrid_private_base),
+                         os.path.abspath(configuration.vgrid_public_base)]
+    configuration.daemon_conf = {
+        'address': configuration.user_davs_address,
+        'port': configuration.user_davs_port,
+        'root_dir': os.path.abspath(configuration.user_home),
+        'chmod_exceptions': chmod_exceptions,
+        'chroot_exceptions': chroot_exceptions,
+        'allow_password': 'password' in configuration.user_davs_auth,
+        'allow_publickey': 'publickey' in configuration.user_davs_auth,
+        'user_alias': configuration.user_davs_alias,
+        'users': [],
+        'time_stamp': 0,
+        'logger': logger,
+        }
+
+    print """
+Running grid davs server for user dav access to their MiG homes.
+
+Set the MIG_CONF environment to the server configuration path
+unless it is available in mig/server/MiGserver.conf
+"""
+    logger.info("starting DAV server")
+    try:
+        run(configuration)
+    except KeyboardInterrupt:
+        logger.info("received interrupt - shutting down")
+    except Exception, exc:
+        logger.error("exiting on unexpected exception: %s" % exc)

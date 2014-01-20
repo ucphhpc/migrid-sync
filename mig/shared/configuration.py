@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # configuration - configuration wrapper
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -106,6 +106,11 @@ def fix_missing(config_file, verbose=True):
         'user_sftp_key': '~/certs/key.pem',
         'user_sftp_auth': ['publickey'],
         'user_sftp_alias': '',
+        'user_davs_address': fqdn,
+        'user_davs_port': 2222,
+        'user_davs_key': '~/certs/key.pem',
+        'user_davs_auth': ['publickey'],
+        'user_davs_alias': '',
         'logfile': 'server.log',
         'loglevel': 'info',
         'sleep_period_for_empty_jobs': '80',
@@ -214,6 +219,11 @@ class Configuration:
     user_sftp_key = ''
     user_sftp_auth = ['publickey']
     user_sftp_alias = ''
+    user_davs_address = ''
+    user_davs_port = 4443
+    user_davs_key = ''
+    user_davs_auth = ['publickey']
+    user_davs_alias = ''
     server_home = ''
     vms_builder_home = ''
     sessid_to_mrsl_link_home = ''
@@ -483,6 +493,21 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_sftp_alias'):
             self.user_sftp_alias = config.get('GLOBAL', 
                                                  'user_sftp_alias')
+        if config.has_option('GLOBAL', 'user_davs_address'):
+            self.user_davs_address = config.get('GLOBAL', 
+                                                 'user_davs_address')
+        if config.has_option('GLOBAL', 'user_davs_port'):
+            self.user_davs_port = config.getint('GLOBAL', 
+                                                 'user_davs_port')
+        if config.has_option('GLOBAL', 'user_davs_key'):
+            self.user_davs_key = config.get('GLOBAL', 
+                                                 'user_davs_key')
+        if config.has_option('GLOBAL', 'user_davs_auth'):
+            self.user_davs_auth = config.get('GLOBAL', 
+                                                 'user_davs_auth').split()
+        if config.has_option('GLOBAL', 'user_davs_alias'):
+            self.user_davs_alias = config.get('GLOBAL', 
+                                                 'user_davs_alias')
         if config.has_option('GLOBAL', 'mig_code_base'):
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:
@@ -721,6 +746,10 @@ class Configuration:
             self.site_enable_sftp = config.getboolean('SITE', 'enable_sftp')
         else:
             self.site_enable_sftp = True
+        if config.has_option('SITE', 'enable_davs'):
+            self.site_enable_davs = config.getboolean('SITE', 'enable_davs')
+        else:
+            self.site_enable_davs = True
         if config.has_option('SITE', 'enable_vmachines'):
             self.site_enable_vmachines = config.getboolean('SITE',
                                                            'enable_vmachines')
