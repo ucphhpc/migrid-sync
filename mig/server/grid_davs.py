@@ -89,6 +89,31 @@ def setup_dummy_config(**kw):
     return DummyConfig()
 
 
+def init_filesystem_handler(handler, directory, host, port, verbose):
+    """Setup up file system handler to take data from user home"""
+
+    dav_conf_dict = handler.server_conf.dav_cfg
+    
+    # dispatch directory and host to the filesystem handler
+    # This handler is responsible from where to take the data
+    handler.IFACE_CLASS = FilesystemHandler(directory, 'http://%s:%s/' % \
+                                            (host, port), verbose)
+
+    if not handler._config.DAV.getboolean('lockemulation'):
+        logger.info('Deactivated LOCK, UNLOCK (WebDAV level 2) support')
+
+    handler.IFACE_CLASS.mimecheck = True
+    if not handler._config.DAV.getboolean('mimecheck'):
+        handler.IFACE_CLASS.mimecheck = False
+        logger.info('Disabled mimetype sniffing (All files will have type '
+                    'application/octet-stream)')
+
+    if dav_conf_dict['baseurl']:
+        logger.info('Using %(baseurl)s as base url for PROPFIND requests' % \
+                     dav_conf_dict)
+    handler.IFACE_CLASS.baseurl = dav_conf_dict['baseurl']
+
+
 class MiGDAVAuthHandler(DAVAuthHandler):
     """
     Provides MiG specific authentication based on parameters. The calling
@@ -122,6 +147,10 @@ class MiGDAVAuthHandler(DAVAuthHandler):
         self.users = usermap
         logger.debug("get_userinfo found users: %s" % self.users)
 
+        host = self.server_conf.user_davs_address.strip()
+        port = self.server_conf.user_davs_port
+        verbose = self._config.DAV.getboolean('verbose')
+        
         # TODO: add pubkey support
 
         offered = None
@@ -137,6 +166,20 @@ class MiGDAVAuthHandler(DAVAuthHandler):
                     if check_password_hash(offered, allowed):
                         logger.info("Authenticated %s" % username)
                         self.authenticated_user = username
+                        # dispatch directory and host to the filesystem handler
+                        # responsible for deciding where to take the data from
+
+                        # list of User login objects for user_name
+                        entries = usermap[self.authenticated_user]
+                        for entry in entries:
+                            if entry.chroot:
+                                directory = os.path.join(
+                                    self.server_conf.user_home, entry.home)
+                                logger.info("switching to user home %s" % \
+                                            directory)
+                                init_filesystem_handler(self, directory, host,
+                                                        port, verbose)
+                                break
                         return 1
         err_msg = "Password authentication failed for %s" % username
         logger.error(err_msg)
@@ -161,13 +204,10 @@ def run(configuration):
 
     server = ThreadedHTTPServer
 
-    directory = dav_conf_dict['directory']
-    directory = directory.strip()
-    directory = directory.rstrip('/')
+    directory = dav_conf_dict['directory'].strip().rstrip('/')
     verbose = dav_conf.DAV.getboolean('verbose')
     noauth = dav_conf.DAV.getboolean('noauth')
-    host = dav_conf_dict['host']
-    host = host.strip()
+    host = dav_conf_dict['host'].strip()
     port = dav_conf_dict['port']
 
     if not os.path.isdir(directory):
@@ -184,11 +224,6 @@ def run(configuration):
         logger.error('Root directory not allowed!')
         sys.exit(233)
 
-    # dispatch directory and host to the filesystem handler
-    # This handler is responsible from where to take the data
-    handler.IFACE_CLASS = FilesystemHandler(directory, 'http://%s:%s/' % \
-                                            (host, port), verbose)
-
     # put some extra vars
     handler.verbose = verbose
     if noauth:
@@ -197,19 +232,7 @@ def run(configuration):
 
     logger.info('Serving data from %s' % directory)
 
-    if not dav_conf.DAV.getboolean('lockemulation'):
-        logger.info('Deactivated LOCK, UNLOCK (WebDAV level 2) support')
-
-    handler.IFACE_CLASS.mimecheck = True
-    if not dav_conf.DAV.getboolean('mimecheck'):
-        handler.IFACE_CLASS.mimecheck = False
-        logger.info('Disabled mimetype sniffing (All files will have type '
-                    'application/octet-stream)')
-
-    if dav_conf_dict['baseurl']:
-        logger.info('Using %(baseurl)s as base url for PROPFIND requests' % \
-                     dav_conf_dict)
-    handler.IFACE_CLASS.baseurl = dav_conf_dict['baseurl']
+    init_filesystem_handler(handler, directory, host, port, verbose)
 
     # initialize server on specified port
     runner = server((host, port), handler)
@@ -236,7 +259,7 @@ if __name__ == "__main__":
     # TODO: dynamically switch to user home directory
     configuration.dav_cfg = {
                'verbose': False,
-               'directory': '/tmp',
+               'directory': configuration.user_home,
                'no_auth': False,
                'user': '',
                'password': '',
