@@ -142,7 +142,6 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         reply = get_fs_path(sftp_path, self.root, self.chroot_exceptions)
         self.logger.debug("get_fs_path returns: %s :: %s" % (sftp_path,
                                                              reply))
-
         return reply
 
     def _strip_root(self, sftp_path):

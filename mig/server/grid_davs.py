@@ -40,6 +40,7 @@ import shutil
 import sys
 #import threading
 #import time
+import urlparse
 #from StringIO import StringIO
 
 #import pywebdav.lib
@@ -48,6 +49,7 @@ from pywebdav.server.fileauth import DAVAuthHandler
 from pywebdav.server.fshandler import FilesystemHandler
 #from pywebdav.server.daemonize import startstop
 
+from pywebdav.lib.errors import DAV_NotFound
 #from pywebdav.lib.INI_Parse import Configuration
 #from pywebdav.lib import VERSION, AUTHOR
 
@@ -96,8 +98,10 @@ def init_filesystem_handler(handler, directory, host, port, verbose):
     
     # dispatch directory and host to the filesystem handler
     # This handler is responsible from where to take the data
-    handler.IFACE_CLASS = FilesystemHandler(directory, 'http://%s:%s/' % \
-                                            (host, port), verbose)
+    handler.IFACE_CLASS = MiGFilesystemHandler(directory, 'http://%s:%s/' % \
+                                               (host, port),
+                                               handler.server_conf,
+                                               handler._config, verbose)
 
     if not handler._config.DAV.getboolean('lockemulation'):
         logger.info('Deactivated LOCK, UNLOCK (WebDAV level 2) support')
@@ -113,6 +117,85 @@ def init_filesystem_handler(handler, directory, host, port, verbose):
                      dav_conf_dict)
     handler.IFACE_CLASS.baseurl = dav_conf_dict['baseurl']
 
+
+class MiGFilesystemHandler(FilesystemHandler):
+    """
+    Overrides the default FilesystemHandler to include chroot support and
+    hidden files like in other MiG file interfaces.
+    """
+
+    def __init__(self, directory, uri, server_conf, dav_conf, verbose=False):
+        """Simply call parent constructor"""
+        FilesystemHandler.__init__(self, directory, uri, verbose)
+        self.logger = logger
+        self.root = directory
+        self.daemon_conf = server_conf.daemon_conf
+        self.chroot_exceptions = self.daemon_conf['chroot_exceptions']
+        self.chmod_exceptions = self.daemon_conf['chmod_exceptions']
+
+    # Use shared daemon fs helper functions
+    
+    def _get_fs_path(self, davs_path):
+        """Wrap helper"""
+        self.logger.debug("get_fs_path: %s" % davs_path)
+        reply = get_fs_path(davs_path, self.root, self.chroot_exceptions)
+        self.logger.debug("get_fs_path returns: %s :: %s" % (davs_path,
+                                                             reply))
+        return reply
+
+    def _strip_root(self, davs_path):
+        """Wrap helper"""
+        self.logger.debug("strip_root: %s" % davs_path)
+        reply = strip_root(davs_path, self.root, self.chroot_exceptions)
+        self.logger.debug("strip_root returns: %s :: %s" % (davs_path,
+                                                             reply))
+        return reply
+    
+    def _acceptable_chmod(self, davs_path):
+        """Wrap helper"""
+        self.logger.debug("acceptable_chmod: %s" % davs_path)
+        reply = acceptable_chmod(davs_path, self.chmod_exceptions)
+        self.logger.debug("acceptable_chmod returns: %s :: %s" % (davs_path,
+                                                                  reply))
+        return reply
+
+    def uri2local(self, uri):
+        """map uri in baseuri and local part"""
+
+        uparts = urlparse.urlparse(uri)
+        fileloc = uparts[2][1:]
+        rel_path = os.path.join(fileloc)
+        try:
+            filename = self._get_fs_path(rel_path)
+        except ValueError, vae:
+            self.logger.warning("illegal path requested: %s :: %s" % (rel_path,
+                                                                      vae))
+            raise DAV_NotFound
+        return filename
+
+    def get_childs(self, uri, filter=None):
+        """return the child objects as self.baseuris for the given URI"""
+        
+        fileloc = self.uri2local(uri)
+        filelist = []
+        
+        if os.path.exists(fileloc):
+            if os.path.isdir(fileloc):
+                try:
+                    files = os.listdir(fileloc)
+                except:
+                    raise DAV_NotFound
+                
+                for filename in files:
+                    if invisible_path(filename):
+                        continue
+                    newloc = os.path.join(fileloc, filename)
+                    filelist.append(self.local2uri(newloc))
+                    
+                    self.logger.info('get_childs: Childs %s' % filelist)
+                    
+        return filelist
+                
 
 class MiGDAVAuthHandler(DAVAuthHandler):
     """
