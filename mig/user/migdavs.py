@@ -53,6 +53,7 @@ import os
 import sys
 import python_webdav
 import python_webdav.client
+from requests.exceptions import ConnectionError
 
 
 ### Global configuration ###
@@ -66,61 +67,84 @@ server_host_key = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0ImsGTKx3Rky7jaGDRVts" \
 "7aLX12KxCxcpJLPtU0N/cbRghi2BTYsGbPUrVd1vYJKhtvc2dQ+vfOiYGSj1bo3LOdTsLmpOoIm" \
 "GvYyGnpA8mVgc4sbWW6/RVSkIJxnyoUeP/xgsMQlfcXLZ/9vi/QPe64UVAAAdk18+eNnjHq2Qs8" \
 "fxHMVyV2vhLpP/xFdJVNQ=="
-#known_hosts_path = os.path.expanduser("~/.ssh/known_hosts")
-#user_key = None
-#host_key_policy = python_webdav.RejectPolicy()
-#data_compression = True
-
-# Uncomment the next line if you don't have a valid key in ssh-agent or ~/.ssh/
-# but use a key from ~/.mig/id_rsa instead. Obviously, you can modify the path
-# if your key is stored elsewhere.
-#user_key = [os.path.expanduser('~/.mig/id_rsa')]
-
-# Uncomment the next line if you have not connected to MiG before
-# and want to silently accept the host key - please beware of the
-# security implications!
-#host_key_policy = python_webdav.AutoAddPolicy()
-# ... or the next line if you want a warning in that case but want to continue
-#host_key_policy = python_webdav.WarningPolicy()
-
-# Uncomment the next line if don't want compressed transfers. This is a trade
-# off between CPU usage and throughput
-#data_compression = False
 
 
-def emulate_stat(obj, path):
-    """Wrap underlying connection.client.get_properties to provide something
-    like os.stat .
-    Reuse ls(path) code from python_webdav/client.py
-    """
-    list_format=('F', 'C', 'M')
-    # Format Map
-    format_map = {'T': 'resourcetype',
-                  'D': 'creationdate',
-                  'F': 'href',
-                  'M': 'getlastmodified',
-                  'A': 'executable',
-                  'E': 'getetag',
-                  'C': 'getcontenttype'}
+class MiGDAVClient(python_webdav.client.Client):
+    """Extend basic client with a few methods we want for the testing"""
+
+    def __init__(self, webdav_server_uri, webdav_path='.', port=80, realm='',
+                 allow_bad_cert=False):
+        """Just call parent constructor for now"""
+        python_webdav.client.Client.__init__(self, webdav_server_uri,
+                                             webdav_path, port, realm,
+                                             allow_bad_cert)
+
+    def stat(self, path):
+        """Wrap underlying connection.client.get_properties to provide
+        something like os.stat .
+        Reuse ls(path) code from python_webdav/client.py
+        """
+        list_format=('F', 'C', 'M')
+        # Format Map
+        format_map = {'T': 'resourcetype',
+                      'D': 'creationdate',
+                      'F': 'href',
+                      'M': 'getlastmodified',
+                      'A': 'executable',
+                      'E': 'getetag',
+                      'C': 'getcontenttype'}
     
-    props = obj.client.get_properties(obj.connection, path)
-    property_lists = []
-    for prop in props:
-        for symbol in list_format:
-            str_prop = getattr(prop, format_map[symbol], None)
-            if not str_prop:
-                str_prop = ''
-            if symbol == 'E':
-                str_prop = str_prop.strip('"')
-            property_lists.append((format_map[symbol], str_prop))
-    return property_lists
+        props = self.client.get_properties(self.connection, path)
+        property_lists = []
+        for prop in props:
+            for symbol in list_format:
+                str_prop = getattr(prop, format_map[symbol], None)
+                if not str_prop:
+                    str_prop = ''
+                if symbol == 'E':
+                    str_prop = str_prop.strip('"')
+                property_lists.append((format_map[symbol], str_prop))
+        # TODO: convert to stat tuple/object
+        return property_lists
 
-def emulate_rm(obj, path):
-    """Wrap underlying connection.client.delete_resource to provide something
-    like os.remove .
-    """
-    return obj.client.delete_resource(obj.connection, path)
+    def rm(self, path):
+        """Wrap underlying connection.client.delete_resource to provide
+        something like os.remove .
+        """
+        return self.client.delete_resource(self.connection, path)
 
+    def get(self, src_path, dst_path):
+        """Wrap send_get to emulate sftp get. The existing download_file method
+        is limited to providing destination directory so we modify the code
+        from there.
+        """
+        resource_path = "%s/%s" % (
+            self.connection.path.rstrip('/'), src_path.lstrip('/'))
+        resp, content = self.connection.send_get(resource_path)
+        file_name = os.path.basename(src_path)
+        
+        try:
+            file_fd = open(dst_path, 'wb')
+            file_fd.write(content)
+        except IOError:
+            raise
+        finally:
+            file_fd.close()
+
+        return resp, content
+
+    def put(self, src_path, dst_path):
+        """Wrap upload_file to emulate sftp put"""
+        # TODO: this should work without error but upload succeeds and throws
+        #    requests.exceptions.ConnectionError: 
+        #    HTTPSConnectionPool(host='localhost', port=4443):
+        #        Max retries exceeded with url: /this-is-a-migdavs-dummy-file.txt
+        #          (Caused by <class 'socket.error'>: [Errno 32] Broken pipe)
+        try:
+            self.upload_file(src_path, dst_path)
+        except ConnectionError:
+            pass
+ 
 
 ### Initialize client session ###
 
@@ -135,7 +159,7 @@ if __name__ == "__main__":
 settings page"""
         user_name = raw_input('Username: ')
 
-    # griddavs server does not support long usernames it seems - so please
+    # grid_davs server does not support long usernames it seems - so please
     # enable email alias or similar and use it here
 #    if len(user_name) < 64:
 #        print """Warning: the supplied username is shorter than expected!
@@ -158,32 +182,19 @@ page"""
     server_url = 'https://%s:%d' % (server_fqdn, server_port)
     print "connecting to %s" % server_url
     
-    client = python_webdav.client.Client(server_url, allow_bad_cert=ignore_cert)
-    #known_host_keys = ssh.get_host_keys()
-    #key_type, key_data = server_host_key.split(' ')[:2]
-    #pub_key = python_webdav.PKey(msg=server_fqdn, data=key_data)
-    #known_host_keys.add(server_fqdn, key_type, pub_key)
-    #known_host_keys.load(known_hosts_path)
-    #ssh.set_missing_host_key_policy(host_key_policy)
-    #ssh.connect(server_fqdn, username=user_name, port=server_port,
-    #            key_filename=user_key, compress=data_compression)
-    #ftp = ssh.open_davs()
-    #print "created client: %s" % client
+    client = MiGDAVClient(server_url, allow_bad_cert=ignore_cert)
+
     print "auth as user %s" % user_name
     client.set_connection(user_name, password)
 
     ### Sample actions on your MiG home directory ###
-
-    # Use underlying connection.Client object to emulate stat and rm
-
-    client.stat = lambda path: emulate_stat(client, path)
-    client.rm = lambda path: emulate_rm(client, path)
 
     # List and stat files in the remote .ssh dir which should always be there
 
     base = '.ssh'
     print "listing files in %s" % base
     # ls returns list of list with hrefs - convert to relative paths
+    # list includes directory itself so filter on type
     nested_hrefs = client.ls(base, list_format=('T', 'F'))
     hrefs = [i[1] for i in nested_hrefs if i[0] != 'collection']
     files = []
@@ -201,9 +212,6 @@ page"""
         print "stat on %s" % rel_path
         path_stat = client.stat(rel_path)
         print "stat %s:\n%s" % (rel_path, path_stat)
-        tmp_path = os.path.join('/tmp', os.path.basename(rel_path))
-        client.download_file(rel_path, '/tmp')
-        os.remove(tmp_path)
     dummy = 'this-is-a-migdavs-dummy-file.txt'
     dummy_text = "sample file\ncontents from client\n"
     dummy_fd = open(dummy, "w")
@@ -213,22 +221,14 @@ page"""
     path_stat = os.stat(dummy)
     print "local stat %s:\n%s" % (dummy, path_stat)
     print "upload migdavsdummy in %s home" % dummy
-    # TODO: this should work without error but upload succeeds and throws
-    #    HTTPSConnectionPool(host='localhost', port=4443):
-    #        Max retries exceeded with url: /this-is-a-migdavs-dummy-file.txt
-    #          (Caused by <class 'socket.error'>: [Errno 32] Broken pipe)
-    try:
-        client.upload_file(dummy, dummy)
-        print "uploaded migdavsdummy in %s home" % dummy
-    except Exception, exc:
-        print "upload threw exception: %s" % exc
+    client.put(dummy, dummy)
     path_stat = client.stat(dummy)
     print "remote stat %s:\n%s" % (dummy, path_stat)
     print "delete dummy in %s" % dummy
     os.remove(dummy)
     print "verify gone: %s" % (dummy not in os.listdir('.'))
     print "download migdavsdummy from %s home" % dummy
-    client.download_file(dummy, './')
+    client.get(dummy, dummy)
     path_stat = os.stat(dummy)
     print "local stat %s:\n%s" % (dummy, path_stat)
     dummy_fd = open(dummy, "r")
