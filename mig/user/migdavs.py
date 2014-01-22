@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# migdavs - sample tinydav-based davs client for user home access
+# migdavs - sample python_webdav-based davs client for user home access
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,9 +25,14 @@
 # -- END_HEADER ---
 #
 
-"""Sample tinydav-based davs client working with your MiG home.
+"""Sample python_webdav-based davs client working with your MiG home.
 
-Requires tinydav (http://pypi.python.org/pypi/tinydav).
+Requires python_webdav (>0.4) (https://github.com/scaryclam/python-webdav) and
+thus also the dependencies
+lxml (https://pypi.python.org/pypi/lxml),
+requests (https://pypi.python.org/pypi/requests),
+mock (https://pypi.python.org/pypi/mock),
+and BeautifulSoup (https://pypi.python.org/pypi/BeautifulSoup).
 
 Run with:
 python migdavs.py [GENERATED_USERNAME]
@@ -46,7 +51,8 @@ client acting on your MiG home.
 import getpass
 import os
 import sys
-import tinydav
+import python_webdav
+import python_webdav.client
 
 
 ### Global configuration ###
@@ -62,7 +68,7 @@ server_host_key = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0ImsGTKx3Rky7jaGDRVts" \
 "fxHMVyV2vhLpP/xFdJVNQ=="
 #known_hosts_path = os.path.expanduser("~/.ssh/known_hosts")
 #user_key = None
-#host_key_policy = tinydav.RejectPolicy()
+#host_key_policy = python_webdav.RejectPolicy()
 #data_compression = True
 
 # Uncomment the next line if you don't have a valid key in ssh-agent or ~/.ssh/
@@ -73,13 +79,47 @@ server_host_key = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0ImsGTKx3Rky7jaGDRVts" \
 # Uncomment the next line if you have not connected to MiG before
 # and want to silently accept the host key - please beware of the
 # security implications!
-#host_key_policy = tinydav.AutoAddPolicy()
+#host_key_policy = python_webdav.AutoAddPolicy()
 # ... or the next line if you want a warning in that case but want to continue
-#host_key_policy = tinydav.WarningPolicy()
+#host_key_policy = python_webdav.WarningPolicy()
 
 # Uncomment the next line if don't want compressed transfers. This is a trade
 # off between CPU usage and throughput
 #data_compression = False
+
+
+def emulate_stat(obj, path):
+    """Wrap underlying connection.client.get_properties to provide something
+    like os.stat .
+    Reuse ls(path) code from python_webdav/client.py
+    """
+    list_format=('F', 'C', 'M')
+    # Format Map
+    format_map = {'T': 'resourcetype',
+                  'D': 'creationdate',
+                  'F': 'href',
+                  'M': 'getlastmodified',
+                  'A': 'executable',
+                  'E': 'getetag',
+                  'C': 'getcontenttype'}
+    
+    props = obj.client.get_properties(obj.connection, path)
+    property_lists = []
+    for prop in props:
+        for symbol in list_format:
+            str_prop = getattr(prop, format_map[symbol], None)
+            if not str_prop:
+                str_prop = ''
+            if symbol == 'E':
+                str_prop = str_prop.strip('"')
+            property_lists.append((format_map[symbol], str_prop))
+    return property_lists
+
+def emulate_rm(obj, path):
+    """Wrap underlying connection.client.delete_resource to provide something
+    like os.remove .
+    """
+    return obj.client.delete_resource(obj.connection, path)
 
 
 ### Initialize client session ###
@@ -114,39 +154,56 @@ page"""
 
     # Connect with provided settings
 
-    print "connecting to %s:%d" % (server_fqdn, server_port)
-    client = tinydav.WebDAVClient(server_fqdn, server_port, protocol="https")
+    ignore_cert = True
+    server_url = 'https://%s:%d' % (server_fqdn, server_port)
+    print "connecting to %s" % server_url
+    
+    client = python_webdav.client.Client(server_url, allow_bad_cert=ignore_cert)
     #known_host_keys = ssh.get_host_keys()
     #key_type, key_data = server_host_key.split(' ')[:2]
-    #pub_key = tinydav.PKey(msg=server_fqdn, data=key_data)
+    #pub_key = python_webdav.PKey(msg=server_fqdn, data=key_data)
     #known_host_keys.add(server_fqdn, key_type, pub_key)
     #known_host_keys.load(known_hosts_path)
     #ssh.set_missing_host_key_policy(host_key_policy)
     #ssh.connect(server_fqdn, username=user_name, port=server_port,
     #            key_filename=user_key, compress=data_compression)
     #ftp = ssh.open_davs()
-    print "created client: %s" % client
-    print "auth as %s" % user_name
-    client.setbasicauth(user_name, password)
-
-    print "setting up stat wrapper"
-    client.stat = lambda path: client.propfind(path)
+    #print "created client: %s" % client
+    print "auth as user %s" % user_name
+    client.set_connection(user_name, password)
 
     ### Sample actions on your MiG home directory ###
+
+    # Use underlying connection.Client object to emulate stat and rm
+
+    client.stat = lambda path: emulate_stat(client, path)
+    client.rm = lambda path: emulate_rm(client, path)
 
     # List and stat files in the remote .ssh dir which should always be there
 
     base = '.ssh'
     print "listing files in %s" % base
-    files = client.propfind(base, depth=1)
-    print "got files: %s" % files.content
+    # ls returns list of list with hrefs - convert to relative paths
+    nested_hrefs = client.ls(base, list_format=('T', 'F'))
+    hrefs = [i[1] for i in nested_hrefs if i[0] != 'collection']
+    files = []
+    for uri in hrefs:
+        split_str = ':%d/%s/' % (server_port, base)
+        pos = uri.find(split_str)
+        rel_path = uri[pos+len(split_str):]
+        files.append(rel_path)
+    print "got files: %s" % files
     path_stat = client.stat(base)
     print "stat %s:\n%s" % (base, path_stat)
     print "files in %s dir:\n%s" % (base, files)
     for name in files:
         rel_path = os.path.join(base, name)
+        print "stat on %s" % rel_path
         path_stat = client.stat(rel_path)
         print "stat %s:\n%s" % (rel_path, path_stat)
+        tmp_path = os.path.join('/tmp', os.path.basename(rel_path))
+        client.download_file(rel_path, '/tmp')
+        os.remove(tmp_path)
     dummy = 'this-is-a-migdavs-dummy-file.txt'
     dummy_text = "sample file\ncontents from client\n"
     dummy_fd = open(dummy, "w")
@@ -156,14 +213,22 @@ page"""
     path_stat = os.stat(dummy)
     print "local stat %s:\n%s" % (dummy, path_stat)
     print "upload migdavsdummy in %s home" % dummy
-    client.put(dummy, dummy)
+    # TODO: this should work without error but upload succeeds and throws
+    #    HTTPSConnectionPool(host='localhost', port=4443):
+    #        Max retries exceeded with url: /this-is-a-migdavs-dummy-file.txt
+    #          (Caused by <class 'socket.error'>: [Errno 32] Broken pipe)
+    try:
+        client.upload_file(dummy, dummy)
+        print "uploaded migdavsdummy in %s home" % dummy
+    except Exception, exc:
+        print "upload threw exception: %s" % exc
     path_stat = client.stat(dummy)
     print "remote stat %s:\n%s" % (dummy, path_stat)
     print "delete dummy in %s" % dummy
     os.remove(dummy)
     print "verify gone: %s" % (dummy not in os.listdir('.'))
     print "download migdavsdummy from %s home" % dummy
-    client.get(dummy, dummy)
+    client.download_file(dummy, './')
     path_stat = os.stat(dummy)
     print "local stat %s:\n%s" % (dummy, path_stat)
     dummy_fd = open(dummy, "r")
@@ -172,7 +237,9 @@ page"""
     print "verify correct contents: %s" % (dummy_text == verify_text)
     print "delete dummy in %s" % dummy
     os.remove(dummy)
+    print "delete remote dummy in %s home" % dummy
+    client.rm(dummy)
 
     ### Clean up before exit ###
 
-    client.close()
+    del client
