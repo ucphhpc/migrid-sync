@@ -207,6 +207,8 @@ class MiGDAVAuthHandler(DAVAuthHandler):
     the MiG user DB.
     """
 
+    # TODO: add pubkey auth
+
     # Do not forget to set IFACE_CLASS by caller
     # ex.: IFACE_CLASS = FilesystemHandler('/tmp', 'http://localhost/')
     verbose = False
@@ -218,8 +220,56 @@ class MiGDAVAuthHandler(DAVAuthHandler):
         if self.verbose:
             logger.info(message)
 
+    def _check_auth_password(self, username, password):
+        """Verify supplied username and password against user DB"""
+        offered = None
+        if self.users.has_key(username):
+            # list of User login objects for username
+            entries = self.users[username]
+            offered = password
+            for entry in entries:
+                if entry.password is not None:
+                    allowed = entry.password
+                    logger.debug("Password check for %s" % username)
+                    if check_password_hash(offered, allowed):
+                        self.authenticated_user = username
+                        return True
+        return False
+
+
+    def _check_auth_publickey(self, username, key):
+        offered = None
+        if self.allow_publickey and self.users.has_key(username):
+            # list of User login objects for username
+            entries = self.users[username]
+            offered = key.get_base64()
+            for entry in entries:
+                if entry.public_key is not None:
+                    allowed = entry.public_key.get_base64()
+                    self.logger.debug("Public key check for %s" % username)
+                    if allowed == offered:
+                        self.logger.info("Public key match for %s" % username)
+                        self.authenticated_user = username
+                        return paramiko.AUTH_SUCCESSFUL
+
+    def _chroot_user(self, username, host, port, verbose):
+        """Swith to user home"""
+        # list of User login objects for user_name
+        entries = self.users[self.authenticated_user]
+        for entry in entries:
+            if entry.chroot:
+                directory = os.path.join(self.server_conf.user_home,
+                                         entry.home)
+                logger.info("switching to user home %s" % directory)
+                init_filesystem_handler(self, directory, host, port, verbose)
+                break
+        logger.info("leaving root directory alone")
+        
+
     def get_userinfo(self, username, password, command):
-        """authenticate user against user DB"""
+        """Authenticate user against user DB. Returns 1 on success and None
+        otherwise.
+        """
 
         refresh_users(configuration, 'davs')
         usermap = {}
@@ -233,43 +283,22 @@ class MiGDAVAuthHandler(DAVAuthHandler):
         host = self.server_conf.user_davs_address.strip()
         port = self.server_conf.user_davs_port
         verbose = self._config.DAV.getboolean('verbose')
-        
-        # TODO: add pubkey support
 
-        offered = None
         if 'password' in self.server_conf.user_davs_auth and \
-               self.users.has_key(username):
-            # list of User login objects for username
-            entries = self.users[username]
-            offered = password
-            for entry in entries:
-                if entry.password is not None:
-                    allowed = entry.password
-                    logger.debug("Password check for %s" % username)
-                    if check_password_hash(offered, allowed):
-                        logger.info("Authenticated %s" % username)
-                        self.authenticated_user = username
-                        # dispatch directory and host to the filesystem handler
-                        # responsible for deciding where to take the data from
-
-                        # list of User login objects for user_name
-                        entries = usermap[self.authenticated_user]
-                        for entry in entries:
-                            if entry.chroot:
-                                directory = os.path.join(
-                                    self.server_conf.user_home, entry.home)
-                                logger.info("switching to user home %s" % \
-                                            directory)
-                                init_filesystem_handler(self, directory, host,
-                                                        port, verbose)
-                                break
-                        return 1
-        err_msg = "Password authentication failed for %s" % username
-        logger.error(err_msg)
-        print err_msg
-        return 0
-
-
+                 self._check_auth_password(username, password):
+            logger.info("Authenticated %s" % username)
+            # dispatch directory and host to the filesystem handler
+            # responsible for deciding where to take the data from
+            self._chroot_user(username, host, port, verbose)
+            return 1
+        else:
+            err_msg = "Password authentication failed for %s" % username
+            logger.error(err_msg)
+            print err_msg
+        return None
+            
+            
+            
 def run(configuration):
     """SSL wrap HTTP server for secure DAV access"""
 
