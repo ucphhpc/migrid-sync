@@ -49,6 +49,7 @@ client acting on your MiG home.
 """
 
 import getpass
+import netrc
 import os
 import sys
 import python_webdav
@@ -149,15 +150,34 @@ class MiGDAVClient(python_webdav.client.Client):
 ### Initialize client session ###
 
 if __name__ == "__main__":
+    user_name, password = None, None
+    try:
+        auth_helper = netrc.netrc()
+        creds = auth_helper.authenticators(server_fqdn)
+        if creds:
+            (user_name, _, password) = creds
+            print "Read login for %s from .netrc" % server_fqdn
+    except Exception, exc:
+        print "Didn't find login in ~/.netrc: %s" % exc
 
-    # Get auto-generated username from command line or interactively
+    # Override with username/password from command line if given
 
     if sys.argv[1:]:
         user_name = sys.argv[1]
-    else:
-        print """Please enter/paste the short alias username from your MiG ssh
-settings page"""
+        print "Using username %s from command line" % user_name
+    if sys.argv[2:]:
+        password = sys.argv[2]
+        print "Using password from command line"
+
+    if not user_name:
+        print """Please enter/paste the short alias username from your MiG
+ssh settings page"""
         user_name = raw_input('Username: ')
+    if not password:
+        print """Please enter your password entered on your MiG ssh settings
+page"""
+        password = getpass.getpass('Password: ')
+
 
     # grid_davs server does not support long usernames it seems - so please
     # enable email alias or similar and use it here
@@ -168,13 +188,6 @@ settings page"""
         print """Warning: the supplied username is longer than expected!
 Please note that the long user names are not supported on the server and that
 you should use the short alias found on your MiG ssh Settings page."""
-
-    if sys.argv[2:]:
-        password = sys.argv[2]
-    else:
-        print """Please enter your password entered on your MiG ssh settings
-page"""
-        password = getpass.getpass('Password: ')
 
     # Connect with provided settings
 

@@ -35,8 +35,8 @@ import paramiko
 import time
 
 from shared.base import client_dir_id, client_alias, invisible_path
-from shared.useradm import ssh_authkeys, get_ssh_authkeys, ssh_authpasswords, \
-     get_ssh_authpasswords, extract_field
+from shared.useradm import ssh_authkeys, davs_authkeys, get_authkeys, \
+     ssh_authpasswords, davs_authpasswords, get_authpasswords, extract_field
 
 
 class User(object):
@@ -140,26 +140,33 @@ def acceptable_chmod(path, chmod_exceptions):
         return False
 
 
-def refresh_users(configuration):
+def refresh_users(configuration, protocol):
     '''Reload users from conf if it changed on disk. Add user entries for all
     active keys and passwords enabled in conf. Optionally add short ID
     username alias entries for all users if that is enabled in the conf.
     Removes all the user entries no longer active, too.
+    The protocol argument specifies which auth files to use.
     '''
     conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
     last_update = conf['time_stamp']
     old_usernames = [i.username for i in conf['users']]
     cur_usernames = []
-    authkeys_pattern = os.path.join(conf['root_dir'], '*', ssh_authkeys)
+    if protocol in ('ssh', 'sftp', 'scp', 'rsync'):
+        proto_authkeys = ssh_authkeys
+        proto_authpasswords = ssh_authpasswords
+    elif protocol in ('dav', 'davs'):
+        proto_authkeys = davs_authkeys
+        proto_authpasswords = davs_authpasswords
+    authkeys_pattern = os.path.join(conf['root_dir'], '*', proto_authkeys)
     authpasswords_pattern = os.path.join(conf['root_dir'], '*',
-                                         ssh_authpasswords)
+                                         proto_authpasswords)
     short_id, short_alias = None, None
     matches = []
     if conf['allow_publickey']:
-        matches += [(ssh_authkeys, i) for i in glob.glob(authkeys_pattern)]
+        matches += [(proto_authkeys, i) for i in glob.glob(authkeys_pattern)]
     if conf['allow_password']:
-        matches += [(ssh_authpasswords, i) \
+        matches += [(proto_authpasswords, i) \
                     for i in glob.glob(authpasswords_pattern)] 
     for (auth_file, path) in matches:
         logger.debug("Checking %s" % path)
@@ -170,13 +177,14 @@ def refresh_users(configuration):
         cur_usernames.append(user_alias)
         if conf['user_alias']:
             short_id = extract_field(user_id, conf['user_alias'])
+            logger.debug("find short_alias for %s" % short_alias)
             short_alias = client_alias(short_id)
             cur_usernames.append(short_alias)
         if last_update >= os.path.getmtime(path):
             continue
         # Create user entry for each valid key and password 
-        if auth_file == ssh_authkeys:
-            all_keys = get_ssh_authkeys(path)
+        if auth_file == proto_authkeys:
+            all_keys = get_authkeys(path)
             all_passwords = []
             # Clean up all old key entries for this user
             conf['users'] = [i for i in conf['users'] \
@@ -184,7 +192,7 @@ def refresh_users(configuration):
                              i.public_key is None]
         else:
             all_keys = []
-            all_passwords = get_ssh_authpasswords(path)
+            all_passwords = get_authpasswords(path)
             # Clean up all old password entries for this user
             conf['users'] = [i for i in conf['users'] \
                              if i.username != user_alias or \

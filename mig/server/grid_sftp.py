@@ -621,7 +621,7 @@ def start_service(configuration):
         # automatic reload of users if more than refresh_delay seconds old
         refresh_delay = 60
         if daemon_conf['time_stamp'] + refresh_delay < time.time():
-            daemon_conf = refresh_users(configuration)
+            daemon_conf = refresh_users(configuration, 'sftp')
         logger.info("Handling session from %s %s" % (client, addr))
         worker = threading.Thread(target=accept_client,
                                   args=[client, addr, daemon_conf['root_dir'],

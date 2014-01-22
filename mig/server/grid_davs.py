@@ -221,7 +221,7 @@ class MiGDAVAuthHandler(DAVAuthHandler):
     def get_userinfo(self, username, password, command):
         """authenticate user against user DB"""
 
-        refresh_users(configuration)
+        refresh_users(configuration, 'davs')
         usermap = {}
         for user_obj in self.server_conf.daemon_conf['users']:
             if not usermap.has_key(user_obj.username):
@@ -319,8 +319,8 @@ def run(configuration):
 
     # initialize server on specified port
     runner = server((host, port), handler)
-    # Wrap in SSL
 
+    # Wrap in SSL
     cert_path = configuration.user_davs_key
     if not os.path.isfile(cert_path):
         logger.error('No such server key: %s' % cert_path)
@@ -339,7 +339,6 @@ def run(configuration):
 if __name__ == "__main__":
     configuration = get_configuration_object()
     logger = configuration.logger
-    # TODO: dynamically switch to user home directory
     configuration.dav_cfg = {
                'verbose': False,
                'directory': configuration.user_home,

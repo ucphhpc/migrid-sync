@@ -37,9 +37,10 @@ import datetime
 from shared.base import client_id_dir, sandbox_resource
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
-from shared.defaults import keyword_auto, ssh_conf_dir, htaccess_filename, \
-     settings_filename, profile_filename, default_css_filename, \
-     widgets_filename, ssh_conf_dir, authkeys_filename, authpasswords_filename
+from shared.defaults import keyword_auto, ssh_conf_dir, davs_conf_dir, \
+     htaccess_filename, settings_filename, profile_filename, \
+     default_css_filename, widgets_filename, authkeys_filename, \
+     authpasswords_filename
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, update_runtimeenv_owner
@@ -55,6 +56,8 @@ from shared.vgridaccess import get_resource_map, get_vgrid_map, VGRIDS, \
 db_name = 'MiG-users.db'
 ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)
 ssh_authpasswords = os.path.join(ssh_conf_dir, authpasswords_filename)
+davs_authkeys = os.path.join(davs_conf_dir, authkeys_filename)
+davs_authpasswords = os.path.join(davs_conf_dir, authpasswords_filename)
 cert_field_order = [
     ('country', 'C'),
     ('state', 'ST'),
@@ -243,12 +246,14 @@ def create_user(
     pending_dir = os.path.join(configuration.resource_pending,
                                client_dir)
     ssh_dir = os.path.join(home_dir, ssh_conf_dir)
+    davs_dir = os.path.join(home_dir, davs_conf_dir)
     htaccess_path = os.path.join(home_dir, htaccess_filename)
     settings_path = os.path.join(settings_dir, settings_filename)
     profile_path = os.path.join(settings_dir, profile_filename)
     widgets_path = os.path.join(settings_dir, widgets_filename)
     css_path = os.path.join(home_dir, default_css_filename)
-    required_dirs = (settings_dir, cache_dir, mrsl_dir, pending_dir, ssh_dir)
+    required_dirs = (settings_dir, cache_dir, mrsl_dir, pending_dir, ssh_dir,
+                     davs_dir)
     if not renew:
         if verbose:
             print 'Creating dirs and files for new user: %s' % client_id
@@ -980,8 +985,8 @@ def get_default_css(template_path):
 
     return default_css
 
-def get_ssh_authkeys(authkeys_path):
-    """Return the ssh authorized keys from authkeys_path"""
+def get_authkeys(authkeys_path):
+    """Return the authorized keys from authkeys_path"""
 
     try:
         authkeys_fd = open(authkeys_path, 'rb')
@@ -993,8 +998,8 @@ def get_ssh_authkeys(authkeys_path):
         authorized_keys = []
     return authorized_keys
 
-def get_ssh_authpasswords(authpasswords_path):
-    """Return the non-empty ssh authorized passwords from authpasswords_path"""
+def get_authpasswords(authpasswords_path):
+    """Return the non-empty authorized passwords from authpasswords_path"""
 
     try:
         authpasswords_fd = open(authpasswords_path, 'rb')
