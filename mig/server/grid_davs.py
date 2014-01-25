@@ -174,7 +174,9 @@ class MiGFilesystemHandler(FilesystemHandler):
         return filename
 
     def get_childs(self, uri, filter=None):
-        """return the child objects as self.baseuris for the given URI"""
+        """return the child objects as self.baseuris for the given URI.
+        We override the listing to hide invisible_path hits.
+        """
         
         fileloc = self.uri2local(uri)
         filelist = []
@@ -262,7 +264,7 @@ class MiGDAVAuthHandler(DAVAuthHandler):
                                          entry.home)
                 logger.info("switching to user home %s" % directory)
                 init_filesystem_handler(self, directory, host, port, verbose)
-                break
+                return
         logger.info("leaving root directory alone")
         
 
@@ -303,6 +305,10 @@ def run(configuration):
     """SSL wrap HTTP server for secure DAV access"""
 
     handler = MiGDAVAuthHandler
+
+    # Force AuthRequestHandler to HTTP/1.1 to allow persistent connections
+
+    handler.protocol_version = 'HTTP/1.1'
 
     # Pass conf options to DAV handler in required object format
 
@@ -385,7 +391,12 @@ if __name__ == "__main__":
                'baseurl': '',
         }
 
-    logger = configuration.logger
+    # TMP: separate logger for now
+    #logger = configuration.logger
+    import logging
+    logging.basicConfig(filename="davs.log", level=logging.DEBUG,
+                        format="%(asctime)s %(levelname)s %(message)s")
+    logger = logging
     if not configuration.site_enable_davs:
         err_msg = "DAVS access to user homes is disabled in configuration!"
         logger.error(err_msg)

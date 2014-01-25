@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settingsaction - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,7 +33,7 @@ from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.settings import parse_and_save_settings, parse_and_save_widgets, \
-     parse_and_save_profile, parse_and_save_ssh
+     parse_and_save_profile, parse_and_save_ssh, parse_and_save_davs
 from shared.profilekeywords import get_keywords_dict as profile_keywords
 from shared.settingskeywords import get_keywords_dict as settings_keywords
 from shared.widgetskeywords import get_keywords_dict as widgets_keywords
@@ -51,6 +51,8 @@ def extend_defaults(defaults, user_args):
     elif topic == 'profile':
         keywords_dict = profile_keywords()
     elif topic == 'ssh':
+        keywords_dict = {'publickeys': '', 'password': ''}
+    elif topic == 'davs':
         keywords_dict = {'publickeys': '', 'password': ''}
     else:
         # should never get here
@@ -105,6 +107,9 @@ def main(client_id, user_arguments_dict):
     elif topic == 'ssh':
         # We don't use mRSL parser here
         keywords_dict = {}
+    elif topic == 'davs':
+        # We don't use mRSL parser here
+        keywords_dict = {}
     else:
         # should never get here
         keywords_dict = {}
@@ -150,6 +155,12 @@ def main(client_id, user_arguments_dict):
         (parse_status, parse_msg) = \
                        parse_and_save_ssh(publickeys, password, client_id,
                                           configuration)
+    elif topic == 'davs':
+        publickeys = '\n'.join(accepted.get('publickeys', ['']))
+        password = accepted.get('password', [''])[-1].strip()
+        (parse_status, parse_msg) = \
+                       parse_and_save_davs(publickeys, password, client_id,
+                                           configuration)
     else:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'No such settings topic: %s' % topic

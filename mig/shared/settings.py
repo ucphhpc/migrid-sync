@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,13 +31,14 @@ import datetime
 import shared.parser as parser
 from shared.base import client_id_dir
 from shared.defaults import settings_filename, profile_filename, \
-     widgets_filename, ssh_conf_dir, authkeys_filename, \
+     widgets_filename, ssh_conf_dir, davs_conf_dir, authkeys_filename, \
      authpasswords_filename, keyword_unchanged
 from shared.fileio import pickle, unpickle
 from shared.modified import mark_user_modified
 from shared.profilekeywords import get_keywords_dict as get_profile_fields
 from shared.pwhash import make_hash
 from shared.settingskeywords import get_keywords_dict as get_settings_fields
+from shared.safeinput import valid_password
 from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 
 
@@ -127,7 +128,7 @@ def parse_and_save_publickeys(keys_path, keys_content, client_id,
         keys_fd.close()
     except Exception, exc:
         status = False
-        msg = 'ERROR: writing %s ssh publickey file: %s' % (client_id, exc)
+        msg = 'ERROR: writing %s publickey file: %s' % (client_id, exc)
     return (status, msg)
 
 def parse_and_save_passwords(passwords_path, passwords_content, client_id,
@@ -143,13 +144,14 @@ def parse_and_save_passwords(passwords_path, passwords_content, client_id,
         if not passwords_content:
             password_hash = ''
         else:
+            valid_password(passwords_content)
             password_hash = make_hash(passwords_content)
         passwords_fd = open(passwords_path, 'wb')
         passwords_fd.write(password_hash)
         passwords_fd.close()
     except Exception, exc:
         status = False
-        msg = 'ERROR: writing %s ssh passwords file: %s' % (client_id, exc)
+        msg = 'ERROR: writing %s passwords file: %s' % (client_id, exc)
     return (status, msg)
 
 def parse_and_save_ssh(publickeys, password, client_id, configuration):
@@ -166,6 +168,27 @@ def parse_and_save_ssh(publickeys, password, client_id, configuration):
     key_status = parse_and_save_publickeys(keys_path, publickeys, client_id,
                                            configuration)
     pw_path = os.path.join(ssh_conf_path, authpasswords_filename)
+    pw_status = parse_and_save_passwords(pw_path, password, client_id,
+                                         configuration)
+    status = (key_status[0] and pw_status[0], key_status[1] + pw_status[1])
+    if status[0]:
+        mark_user_modified(configuration, client_id)
+    return status
+
+def parse_and_save_davs(publickeys, password, client_id, configuration):
+    """Validate and write davs entries"""
+    client_dir = client_id_dir(client_id)
+    davs_conf_path = os.path.join(configuration.user_home, client_dir,
+                                  davs_conf_dir)
+    # Create davs conf dir for any old users
+    try:
+        os.mkdir(davs_conf_path)
+    except:
+        pass
+    keys_path = os.path.join(davs_conf_path, authkeys_filename)
+    key_status = parse_and_save_publickeys(keys_path, publickeys, client_id,
+                                           configuration)
+    pw_path = os.path.join(davs_conf_path, authpasswords_filename)
     pw_status = parse_and_save_passwords(pw_path, password, client_id,
                                          configuration)
     status = (key_status[0] and pw_status[0], key_status[1] + pw_status[1])
@@ -216,7 +239,7 @@ def load_profile(client_id, configuration, include_meta=False):
                                get_profile_fields().keys(), include_meta)
 
 def load_ssh(client_id, configuration):
-    """Load ssh keys and password from user .ssh dir"""
+    """Load ssh keys and password from user ssh_conf_dir"""
 
     section_dict = {}
     client_dir = client_id_dir(client_id)
@@ -241,6 +264,34 @@ def load_ssh(client_id, configuration):
         section_dict['authpassword'] = password
     except Exception, exc:
         configuration.logger.error("load ssh password failed: %s" % exc)
+    return section_dict
+
+def load_davs(client_id, configuration):
+    """Load davs keys and password from user davs_conf_dir"""
+
+    section_dict = {}
+    client_dir = client_id_dir(client_id)
+    keys_path = os.path.join(configuration.user_home, client_dir, davs_conf_dir,
+                             authkeys_filename)
+    pw_path = os.path.join(configuration.user_home, client_dir, davs_conf_dir,
+                           authpasswords_filename)
+    try:
+        keys_fd = open(keys_path)
+        section_dict['authkeys'] = keys_fd.read()
+        keys_fd.close()
+    except Exception, exc:
+        configuration.logger.error("load davs publickeys failed: %s" % exc)
+    try:
+        password = ''
+        if os.path.exists(pw_path):
+            pw_fd = open(pw_path)
+            password_hash = pw_fd.read()
+            if password_hash.strip():
+                password = keyword_unchanged
+            pw_fd.close()
+        section_dict['authpassword'] = password
+    except Exception, exc:
+        configuration.logger.error("load davs password failed: %s" % exc)
     return section_dict
 
 def update_section_helper(client_id, configuration, section_filename, changes,

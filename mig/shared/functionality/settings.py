@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,7 +33,8 @@ from shared.defaults import any_vgrid, default_mrsl_filename, \
      default_css_filename, profile_img_max_kb, profile_img_extensions
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
-from shared.settings import load_settings, load_widgets, load_profile, load_ssh
+from shared.settings import load_settings, load_widgets, load_profile, \
+     load_ssh, load_davs
 from shared.profilekeywords import get_profile_specs
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
@@ -63,6 +64,8 @@ general_edit = edit_defaults.copy()
 general_edit['height'] = '50px'
 ssh_edit = edit_defaults.copy()
 ssh_edit['height'] = '200px'
+davs_edit = edit_defaults.copy()
+davs_edit['height'] = '200px'
 style_edit = edit_defaults.copy()
 style_edit['parserfile'] = css_parsers
 style_edit['stylesheet'] = css_stylesheets
@@ -318,6 +321,8 @@ def main(client_id, user_arguments_dict):
         valid_topics.append('arc')
     if configuration.site_enable_sftp:
         valid_topics.append('ssh')
+    if configuration.site_enable_davs:
+        valid_topics.append('davs')
     topics = accepted['topic']
     topics = [i for i in topics if i in valid_topics]
     output_objects.append({'object_type': 'header', 'text'
@@ -325,6 +330,9 @@ def main(client_id, user_arguments_dict):
 
     links = []
     for name in valid_topics:
+        # hide davs for now
+        if name == 'davs':
+            continue
         links.append({'object_type': 'link', 
                       'destination': "settings.py?topic=%s" % name,
                       'class': '%ssettingslink' % name,
@@ -804,7 +812,7 @@ SSH/SFTP access to your MiG account
 <tr><td>
 <p>
 You can configure SFTP login to your %(site)s account for efficient file access.
-Login takes place with ssh keys and your automatic username:
+Login takes place with public key or password and your automatic username:
 <pre>%(username)s</pre>
 </p>
 <p>
@@ -862,7 +870,7 @@ sshfs %(sftp_server)s: mig-home -o uid=$(id -u) -o gid=$(id -g)
 '''
             html += wrap_edit_area(keyword_keys, area, ssh_edit, 'BASIC')
             html += '''
-(leave empty to disable sftp access with ssh keys)
+(leave empty to disable sftp access with public keys)
 </td></tr>
 '''
             
@@ -897,6 +905,128 @@ value="%(default_authpassword)s" />
             'username': client_alias(client_id),
             'sftp_server': sftp_server,
             'sftp_port': sftp_port,
+            }
+
+        output_objects.append({'object_type': 'html_form', 'text': html})
+
+    if 'davs' in topics:
+
+        # load current davs
+
+        current_davs_dict = load_davs(client_id, configuration)
+        if not current_davs_dict:
+            
+            # no current davs found
+            
+            current_davs_dict = {}
+
+        default_authkeys = current_davs_dict.get('authkeys', '')
+        default_authpassword = current_davs_dict.get('authpassword', '')
+        davs_server = configuration.user_davs_address
+        # address may be empty to use all interfaces - then use FQDN
+        if not davs_server:
+            davs_server = configuration.server_fqdn
+        davs_port = configuration.user_davs_port
+        html = \
+        '''
+<div id="davsaccess">
+<table class="davssettings">
+<tr class="title"><td class="centertext">
+WebDAV access to your MiG account
+</td></tr>
+<tr><td>
+</td></tr>
+<tr><td>
+<p>
+You can configure WebDAV login to your %(site)s account for efficient file access.
+Login takes place with public key or password and your automatic username:
+<pre>%(username)s</pre>
+</p>
+<p>
+You can use any existing RSA key, including the key.pem you received along with your user certificate, or create a new one. In any case you need to save the contents of the corresponding public key (X.pub) in the text area below, before you can connect as described in the following sections.
+</p>
+<p>
+<h3>Graphical WebDAV access</h3>
+Several native file browsers and web browsers are known to generally work for
+graphical access to your MiG home over WebDAV when password support is enabled.<br />
+Enter the address https://%(davs_server)s:%(davs_port)s and when fill in the login details:
+<pre>
+Username %(username)s
+Password YOUR_PASSWORD_HERE
+</pre>
+other graphical clients should work as well.
+</p>
+<p>
+<h3>Command line WebDAV access on Linux/UN*X</h3>
+Save something like the following lines in your local ~/.netrc
+to avoid typing the full login details every time:<br />
+<pre>
+machine %(davs_server)s
+login %(username)s
+password YOUR_PASSWORD_HERE
+</pre>
+</p>
+<p>
+From then on you can use e.g. cadaver or fusedav to access your MiG home:
+<pre>
+cadaver https://%(davs_server)s:%(davs_port)s
+</pre>
+<pre>
+fusedav https://%(davs_server)s:%(davs_port)s mig-home -o uid=$(id -u) -o gid=$(id -g)
+</pre>
+</p>
+</td></tr>
+<form method="post" action="settingsaction.py">
+<input type="hidden" name="topic" value="davs" />
+'''
+        
+        keyword_keys = "authkeys"
+        if 'publickey' in configuration.user_davs_auth:
+            html += '''
+<tr><td>
+'''
+            area = '''
+<textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
+%(default_authkeys)s
+</textarea>
+'''
+            html += wrap_edit_area(keyword_keys, area, davs_edit, 'BASIC')
+            html += '''
+(leave empty to disable davs access with public keys)
+</td></tr>
+'''
+            
+        keyword_password = "authpassword"
+        if 'password' in configuration.user_davs_auth:
+            # We only want a single password and a masked input field
+            html += '''
+<tr><td>
+<input type=password id="%(keyword_password)s" size=40 name="password"
+value="%(default_authpassword)s" />
+(leave empty to disable davs access with password)
+</td></tr>
+'''
+        
+        html += '''
+<tr><td>
+<input type="submit" value="Save davs" />
+</form>
+</td></tr>
+'''
+        
+        html += '''
+</table>
+</div>
+'''
+        html = html % {
+            'default_authkeys': default_authkeys,
+            'default_authpassword': default_authpassword,
+            'site': configuration.short_title,
+            'keyword_keys': keyword_keys,
+            'keyword_password': keyword_password,
+            'username': client_alias(client_id),
+            'davs_server': davs_server,
+            'davs_port': davs_port,
             }
 
         output_objects.append({'object_type': 'html_form', 'text': html})
