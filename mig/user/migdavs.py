@@ -59,8 +59,8 @@ from requests.exceptions import ConnectionError
 
 ### Global configuration ###
 
-#server_fqdn = 'dk.migrid.org'
-server_fqdn = 'localhost'
+server_fqdn = 'dk.migrid.org'
+#server_fqdn = 'localhost'
 server_port = 4443
 server_host_key = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0ImsGTKx3Rky7jaGDRVts" \
 "e80YUcVTYW5NCvU0ntclfosdlFdDli8S3tOLk47DcwZkYt1/XY4rP/LN6unVTiZK7dpRTACuSGr" \
@@ -252,6 +252,36 @@ you should use the short alias found on your MiG ssh Settings page."""
     os.remove(dummy)
     print "delete remote dummy in %s home" % dummy
     client.rm(dummy)
+
+    illegal_dir = '../'
+    illegal_dummy = os.path.join(illegal_dir, 'tmp-' + dummy)
+    print "change remote dir outside home - should fail"
+    try:
+        client.chdir('.')
+        old_pwd = client.pwd()
+        client.chdir(illegal_dir)
+        new_pwd = client.pwd()
+        if new_pwd == old_pwd:
+            raise Exception('chdir did not change anything!')
+        else:
+            print "changed to illegal dir %s from %s" % (new_pwd, old_pwd)
+    except Exception, exc:
+        print "correctly rejected change dir to illegal destination: %s" % exc
+    print "copy remote dummy outside home - should fail"
+    try:
+        resp, contents = client.copy(dummy, illegal_dummy)
+        print resp, contents
+    except Exception, exc:
+        print "correctly rejected copy to illegal destination"
+    print "delete remote dummy outside home - should fail"
+    try:
+        resp, contents = client.rm(illegal_dummy)
+        if resp.status_code in range (400, 410):
+            raise Exception('delete failed with %s' % resp)
+        else:
+            print "copied to illegal destination %s" % illegal_dummy
+    except Exception, exc:
+        print "correctly rejected removal of illegal dummy: %s" % exc
 
     ### Clean up before exit ###
 
