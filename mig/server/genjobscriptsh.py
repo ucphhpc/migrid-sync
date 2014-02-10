@@ -699,6 +699,7 @@ class GenJobScriptSh:
         Limits are set slightly higher to avoid overhead problems.
         """
         requested = {'CPUTIME': int(job_dict['CPUTIME']) + 10}
+        requested['CPUCOUNT'] = int(job_dict.get('CPUCOUNT', 1))
         requested['MEMORY'] = int(job_dict.get('MEMORY', 1)) + 16
         requested['DISK'] = int(job_dict.get('DISK', 1)) + 1
         # Arbitrary values low enough to prevent fork bombs
@@ -712,7 +713,7 @@ class GenJobScriptSh:
 ulimit -u %(MAXPROCS)d
 
 # Actual request limits - not accurate but better than nothing
-ulimit -t $((%(CPUTIME)d*%(SECS)d))
+ulimit -t $((%(CPUTIME)d*%(CPUCOUNT)d*%(SECS)d))
 ulimit -v $((%(MEMORY)d*%(MEGS)d))
 ulimit -f $((%(DISK)d*%(GIGS)d))
 ''' % requested
