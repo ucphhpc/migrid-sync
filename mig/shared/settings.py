@@ -37,8 +37,9 @@ from shared.fileio import pickle, unpickle
 from shared.modified import mark_user_modified
 from shared.profilekeywords import get_keywords_dict as get_profile_fields
 from shared.pwhash import make_hash
-from shared.settingskeywords import get_keywords_dict as get_settings_fields
 from shared.safeinput import valid_password
+from shared.settingskeywords import get_keywords_dict as get_settings_fields
+from shared.ssh import parse_pub_key
 from shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 
 
@@ -120,9 +121,17 @@ def parse_and_save_profile(filename, client_id, configuration):
 def parse_and_save_publickeys(keys_path, keys_content, client_id,
                               configuration):
     """Validate and write the contents to the keys_path"""
-    # TODO: validate?
     status, msg = True, ''
     try:
+        # Verify all keys to avoid e.g. stray line splits or missing key type
+        for key in keys_content.splitlines():
+            key = key.split('#', 1)[0]
+            if not key.strip():
+                continue
+            try:
+                parse_pub_key(key)
+            except Exception, exc:
+                raise Exception('Invalid public key: %s' % key)
         keys_fd = open(keys_path, 'wb')
         keys_fd.write(keys_content)
         keys_fd.close()

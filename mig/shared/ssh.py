@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssh - remote command wrappers using ssh/scp
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,11 +27,30 @@
 
 """SSH based remote operations"""
 
+import base64
 import os
+import paramiko
 import tempfile
 
 from shared.conf import get_resource_exe, get_configuration_object
 
+
+def parse_pub_key(public_key):
+    """Parse public_key string to paramiko key.
+    Throws exception if key is broken.
+    """
+    head, tail = public_key.split(' ')[:2]
+    bits = base64.decodestring(tail)
+    msg = paramiko.Message(bits)
+    if head == 'ssh-rsa':
+        parse_key = paramiko.RSAKey
+    elif head == 'ssh-dss':
+        parse_key = paramiko.DSSKey
+    else:
+        # Try RSA for unknown key types
+        parse_key = paramiko.RSAKey
+    return parse_key(msg)
+    
 
 def default_ssh_options():
     """Default list of options for ssh connections"""

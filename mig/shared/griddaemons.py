@@ -27,14 +27,13 @@
 
 """General MiG daemon functions"""
 
-import base64
 import glob
 import logging
 import os
-import paramiko
 import time
 
 from shared.base import client_dir_id, client_alias, invisible_path
+from shared.ssh import parse_pub_key
 from shared.useradm import ssh_authkeys, davs_authkeys, get_authkeys, \
      ssh_authpasswords, davs_authpasswords, get_authpasswords, extract_field
 
@@ -55,23 +54,6 @@ class User(object):
         if self.home is None:
             self.home = self.username
 
-
-def parse_pub_key(public_key):
-    """Parse public_key string to paramiko key.
-    Throws exception if key is broken.
-    """
-    head, tail = public_key.split(' ')[:2]
-    bits = base64.decodestring(tail)
-    msg = paramiko.Message(bits)
-    if head == 'ssh-rsa':
-        parse_key = paramiko.RSAKey
-    elif head == 'ssh-dss':
-        parse_key = paramiko.DSSKey
-    else:
-        # Try RSA for unknown key types
-        parse_key = paramiko.RSAKey
-    return parse_key(msg)
-    
 
 def get_fs_path(user_path, root, chroot_exceptions):
     """Internal helper to translate path with chroot and invisible files
