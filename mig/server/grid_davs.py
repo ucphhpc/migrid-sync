@@ -325,6 +325,7 @@ def run(configuration):
     directory = dav_conf_dict['directory'].strip().rstrip('/')
     verbose = dav_conf.DAV.getboolean('verbose')
     noauth = dav_conf.DAV.getboolean('noauth')
+    nossl = dav_conf.DAV.getboolean('nossl')
     host = dav_conf_dict['host'].strip()
     port = dav_conf_dict['port']
 
@@ -355,14 +356,19 @@ def run(configuration):
     # initialize server on specified port
     runner = server((host, port), handler)
 
-    # Wrap in SSL
-    cert_path = configuration.user_davs_key
-    if not os.path.isfile(cert_path):
-        logger.error('No such server key: %s' % cert_path)
-        sys.exit(1)
-    runner.socket = ssl.wrap_socket(runner.socket,
-                                   certfile=cert_path,
-                                   server_side=True)
+    # Wrap in SSL if enabled
+    if nossl:
+        logger.warning('Not wrapping connections in SSL - only for testing!')
+    else:
+        cert_path = configuration.user_davs_key
+        if not os.path.isfile(cert_path):
+            logger.error('No such server key: %s' % cert_path)
+            sys.exit(1)
+        logger.info('Wrapping connections in SSL')
+        runner.socket = ssl.wrap_socket(runner.socket,
+                                        certfile=cert_path,
+                                        server_side=True)
+        
     print('Listening on %s (%i)' % (host, port))
 
     try:
@@ -389,6 +395,7 @@ if __name__ == "__main__":
                'chunked_http_response': True,
                'mimecheck': True,
                'baseurl': '',
+               'nossl': False,
         }
 
     # TMP: separate logger for now
