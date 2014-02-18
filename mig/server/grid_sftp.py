@@ -164,6 +164,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def open(self, path, flags, attr):
         """Handle operations of same name"""        
+        self.logger.debug('open %s' % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
@@ -205,6 +206,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def list_folder(self, path):
         """Handle operations of same name"""
+        self.logger.debug('list_folder %s' % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
@@ -237,6 +239,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def stat(self, path):
         """Handle operations of same name"""
+        self.logger.debug('stat %s' % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
@@ -256,15 +259,18 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def lstat(self, path):
         """Handle operations of same name"""
+        self.logger.debug('lstat %s' % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
             return paramiko.SFTP_PERMISSION_DENIED
         self.logger.debug("lstat %s :: %s" % (path, real_path))
+
         if not os.path.lexists(real_path):
             self.logger.error("lstat on missing path %s :: %s" % (path,
                                                                 real_path))
             return paramiko.SFTP_NO_SUCH_FILE
+        self.logger.debug('return lstat %s' % path)
         try:
             return paramiko.SFTPAttributes.from_stat(os.stat(real_path), path)
         except Exception, err:
@@ -274,6 +280,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def remove(self, path):
         """Handle operations of same name"""
+        self.logger.debug("remove %s" % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
@@ -441,6 +448,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def symlink(self, target_path, path):
         """Handle operations of same name"""
+        self.logger.debug('symlink %s %s' % (target_path, path))
         # Prevent users from creating symlinks for security reasons
         self.logger.error("symlink rejected on path %s :: %s" % (target_path,
                                                                  path))
