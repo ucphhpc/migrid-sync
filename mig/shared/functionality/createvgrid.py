@@ -36,6 +36,7 @@ from tempfile import NamedTemporaryFile
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
+from shared.defaults import default_vgrid, all_vgrids, any_vgrid
 from shared.fileio import write_file, make_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
@@ -757,7 +758,9 @@ def main(client_id, user_arguments_dict):
     # No owner check here so we need to specifically check for illegal
     # directory access
 
-    if not valid_dir_input(configuration.vgrid_home, vgrid_name):
+    reserved_names = (default_vgrid, any_vgrid, all_vgrids)
+    if vgrid_name in reserved_names or \
+           not valid_dir_input(configuration.vgrid_home, vgrid_name):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Illegal vgrid_name: %s' % vgrid_name})
         logger.warning("""createvgrid possible illegal directory access
