@@ -30,7 +30,7 @@
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues
-from shared.defaults import default_vgrid, default_pager_entries
+from shared.defaults import default_vgrid, all_vgrids, default_pager_entries
 from shared.functional import validate_input_and_cert
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
@@ -63,7 +63,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    (stat, list) = vgrid_list_vgrids(configuration)
+    (stat, vgrid_list) = vgrid_list_vgrids(configuration)
     if not stat:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Error getting list of vgrids.'})
@@ -71,8 +71,11 @@ def main(client_id, user_arguments_dict):
     # Iterate through vgrids and print details for each
 
     member_list = {'object_type': 'vgrid_list', 'vgrids': []}
-    for vgrid_name in list:
-        
+    if 'monitor' in configuration.site_vgrid_links:
+        vgrid_list = [all_vgrids] + vgrid_list
+    else:
+        vgrid_list.remove(default_vgrid)
+    for vgrid_name in vgrid_list:
         vgrid_obj = {'object_type': 'vgrid', 'name': vgrid_name}
 
         if vgrid_name == default_vgrid:
@@ -86,7 +89,6 @@ def main(client_id, user_arguments_dict):
                                                'class': 'monitorlink',
                                                'title': 'View %s monitor' % vgrid_name, 
                                                'text': 'View'}
-
             vgrid_obj['memberlink'] = {'object_type': 'link',
                                        'destination':'',
                                        'class': 'infolink',
@@ -99,7 +101,29 @@ def main(client_id, user_arguments_dict):
                                        'title': 'Nobody owns the %s VGrid' \
                                        % default_vgrid,
                                        'text': ''}
+            member_list['vgrids'].append(vgrid_obj)
+            continue
+        elif vgrid_name == all_vgrids:
 
+            # Only show global monitor link for all_vgrids, Noone
+            # can own it or leave it. Do not add any page links.
+
+            vgrid_obj['privatemonitorlink'] = {'object_type': 'link',
+                                               'destination': 'showvgridmonitor.py?vgrid_name=%s'\
+                                               % vgrid_name,
+                                               'class': 'monitorlink',
+                                               'title': 'View global monitor', 
+                                               'text': 'View'}
+            vgrid_obj['memberlink'] = {'object_type': 'link',
+                                       'destination':'',
+                                       'class': 'infolink',
+                                       'title': 'Not a real VGrid - only for global monitor',
+                                       'text': ''}
+            vgrid_obj['administratelink'] = {'object_type': 'link',
+                                       'destination':'',
+                                       'class': 'infolink',
+                                       'title': 'Not a real VGrid - only for global monitor',
+                                       'text': ''}
             member_list['vgrids'].append(vgrid_obj)
             continue
 
@@ -392,17 +416,6 @@ VGrids share files, a number of collaboration tools and resources. Members can a
     output_objects.append({'object_type': 'table_pager', 'entry_name': 'VGrids',
                            'default_entries': default_pager_entries})
     output_objects.append(member_list)
-
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'VGrid Totals'})
-    output_objects.append({'object_type': 'link', 'text'
-                           : 'View a monitor page with all VGrids/resources you can access'
-                           , 'destination'
-                           : 'showvgridmonitor.py?vgrid_name=ALL',
-                           'class': 'monitorlink',
-                           'title': 'View global monitor',                           
-                           })
-
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Additional VGrids'})
     output_objects.append({'object_type': 'text', 'text'

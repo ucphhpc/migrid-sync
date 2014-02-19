@@ -44,9 +44,24 @@ from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive
 from shared.validstring import valid_user_path
 
-def html_tmpl():
-  """HTML page base"""
+def html_tmpl(configuration):
+  """HTML page base: some upload and menu entries depend on configuration"""
 
+  fill_entries = {}
+  if 'submitjob' in configuration.site_default_menu:
+    fill_entries["menu_submit_entry"] = '''
+    <li class="submit separator">
+      <a href="#submit">submit</a>
+    </li>        
+'''
+    fill_entries["upload_submit_entry"] = '''
+      <label for="submitmrsl_0">Submit mRSL files (also .mRSL files included in packages):</label>
+      <input type="checkbox" checked="" name="submitmrsl_0"/>
+'''
+  else:
+    fill_entries["menu_submit_entry"] = ''
+    fill_entries["upload_submit_entry"] = ''
+    
   html = '''
   <div id="fm_debug"></div>
   <div id="fm_filemanager">
@@ -149,9 +164,7 @@ def html_tmpl():
     <li class="tail">
       <a href="#tail">tail</a>
     </li>
-    <li class="submit separator">
-      <a href="#submit">submit</a>
-    </li>        
+    %(menu_submit_entry)s
   </ul>
 
   <div id="cmd_dialog" title="Command output" style="display: none;"></div>
@@ -162,9 +175,8 @@ def html_tmpl():
     <fieldset>
       <input type="hidden" name="output_format" value="json"/>
       <input type="hidden" name="max_file_size" value="100000"/>
-      
-      <label for="submitmrsl_0">Submit mRSL files (also .mRSL files included in packages):</label>
-      <input type="checkbox" checked="" name="submitmrsl_0"/>
+
+      %(upload_submit_entry)s
       <br />
       
       <label for="remotefilename_0">Optional remote filename (extra useful in windows):</label>
@@ -224,7 +236,7 @@ def html_tmpl():
   </form>
   <div id="zip_output"></div>
   </div>
-  '''
+  ''' % fill_entries
   html += '''
   <div id="editor_dialog" title="Editor" style="display: none;">
   <div class="spinner" style="padding-left: 20px;">Loading file...</div>
@@ -332,7 +344,7 @@ def main(client_id, user_arguments_dict):
   title_entry['javascript'] = js_tmpl(entry_path)        
   
   output_objects.append({'object_type': 'header', 'text': 'File Manager' })
-  output_objects.append({'object_type': 'html_form', 'text': html_tmpl()})
+  output_objects.append({'object_type': 'html_form', 'text': html_tmpl(configuration)})
 
   if len(all_paths) > 1:
     output_objects.append({'object_type': 'sectionheader', 'text':
