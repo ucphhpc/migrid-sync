@@ -242,6 +242,7 @@ class ServerHandler(BaseHTTPRequestHandler):
                 response = self.approved(request, identity)
             else:
                 print "handleAllow rejected login %s" % identity
+                self.user = None
                 response = self.rejected(request, identity)    
         elif 'no' in query:
             response = request.answer(False)
