@@ -107,10 +107,17 @@ def fix_missing(config_file, verbose=True):
         'user_sftp_auth': ['publickey'],
         'user_sftp_alias': '',
         'user_davs_address': fqdn,
-        'user_davs_port': 2222,
+        'user_davs_port': 4443,
         'user_davs_key': '~/certs/key.pem',
         'user_davs_auth': ['publickey'],
         'user_davs_alias': '',
+        'user_openid_provider': '',
+        'user_openid_address': fqdn,
+        'user_openid_port': 8443,
+        'user_openid_key': '~/certs/key.pem',
+        'user_openid_auth': ['publickey'],
+        'user_openid_alias': '',
+        'user_openid_store': '~/state/openid_store/',
         'logfile': 'server.log',
         'loglevel': 'info',
         'sleep_period_for_empty_jobs': '80',
@@ -224,6 +231,13 @@ class Configuration:
     user_davs_key = ''
     user_davs_auth = ['publickey']
     user_davs_alias = ''
+    user_openid_provider = ''
+    user_openid_address = ''
+    user_openid_port = 8443
+    user_openid_key = ''
+    user_openid_auth = ['publickey']
+    user_openid_alias = ''
+    user_openid_store = ''
     server_home = ''
     vms_builder_home = ''
     sessid_to_mrsl_link_home = ''
@@ -508,6 +522,28 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_davs_alias'):
             self.user_davs_alias = config.get('GLOBAL', 
                                                  'user_davs_alias')
+        if config.has_option('GLOBAL', 'user_openid_provider'):
+            self.user_openid_provider = config.get('GLOBAL', 
+                                                   'user_openid_provider')
+        if config.has_option('GLOBAL', 'user_openid_address'):
+            self.user_openid_address = config.get('GLOBAL', 
+                                                 'user_openid_address')
+        if config.has_option('GLOBAL', 'user_openid_port'):
+            self.user_openid_port = config.getint('GLOBAL', 
+                                                 'user_openid_port')
+        if config.has_option('GLOBAL', 'user_openid_key'):
+            self.user_openid_key = config.get('GLOBAL', 
+                                                 'user_openid_key')
+        if config.has_option('GLOBAL', 'user_openid_auth'):
+            self.user_openid_auth = config.get('GLOBAL', 
+                                                 'user_openid_auth').split()
+        if config.has_option('GLOBAL', 'user_openid_alias'):
+            self.user_openid_alias = config.get('GLOBAL', 
+                                                 'user_openid_alias')
+        if config.has_option('GLOBAL', 'user_openid_store'):
+            self.user_openid_store = config.get('GLOBAL', 'user_openid_store')
+        else:
+            self.user_openid_store = os.path.join(self.server_home, 'openid_store')
         if config.has_option('GLOBAL', 'mig_code_base'):
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:
@@ -750,6 +786,10 @@ class Configuration:
             self.site_enable_davs = config.getboolean('SITE', 'enable_davs')
         else:
             self.site_enable_davs = True
+        if config.has_option('SITE', 'enable_openid'):
+            self.site_enable_openid = config.getboolean('SITE', 'enable_openid')
+        else:
+            self.site_enable_openid = True
         if config.has_option('SITE', 'enable_vmachines'):
             self.site_enable_vmachines = config.getboolean('SITE',
                                                            'enable_vmachines')

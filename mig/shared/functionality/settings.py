@@ -311,7 +311,9 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = 'Settings'
     title_entry['javascript'] = javascript
 
-    valid_topics = ['general', 'job', 'style']
+    valid_topics = ['general', 'style']
+    if 'submitjob' in configuration.site_default_menu:
+        valid_topics.append('job')
     if 'people' in configuration.site_user_menu + \
            configuration.site_default_menu:
         valid_topics.append('profile')
@@ -330,9 +332,6 @@ def main(client_id, user_arguments_dict):
 
     links = []
     for name in valid_topics:
-        # hide davs for now
-        if name == 'davs':
-            continue
         links.append({'object_type': 'link', 
                       'destination': "settings.py?topic=%s" % name,
                       'class': '%ssettingslink' % name,

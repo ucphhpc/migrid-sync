@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # functional - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -24,8 +24,6 @@
 #
 # -- END_HEADER ---
 #
-
-# -*- coding: iso-8859-1 -*-
 
 """This module contains general functions used by the modules in
 the functionality dir.
