@@ -65,7 +65,7 @@ import time
 
 from shared.base import client_alias
 from shared.conf import get_configuration_object
-from shared.useradm import load_user_db
+from shared.useradm import load_user_db, extract_field
 
 configuration, logger = None, None
 
@@ -348,8 +348,14 @@ class ServerHandler(BaseHTTPRequestHandler):
                                'MiG-users.db')
         print "Loading user DB"
         id_map = load_user_db(db_path)
+        user_alias = configuration.user_openid_alias
         for cert_id in id_map.keys():
-            if username == client_alias(cert_id):
+            user_match = [client_alias(cert_id)]
+            if user_alias:
+                short_id = extract_field(cert_id, user_alias)
+                user_match.append(client_alias(short_id))
+                print "short alias for %s: %s" % (short_id, client_alias(short_id))
+            if username in user_match:
                 user = id_map[cert_id]
                 #print "looked up user %s in DB: %s" % (username, user)
                 enc_pw = user.get('password', None)
