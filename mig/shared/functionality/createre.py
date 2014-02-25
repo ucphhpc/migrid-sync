@@ -32,6 +32,7 @@ import base64
 import tempfile
 
 import shared.returnvalues as returnvalues
+from shared.defaults import max_software_entries, max_environment_entries
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
@@ -99,7 +100,6 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     software_entries = len(software)
-    max_software_entries = 40
     if software_entries > max_software_entries:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Too many software entries (%s), max %s'
@@ -108,7 +108,6 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     environment_entries = len(environment)
-    max_environment_entries = 40
     if environment_entries > max_environment_entries:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Too many environment entries (%s), max %s'

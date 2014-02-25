@@ -82,3 +82,6 @@ user_invisible_files = [htaccess_filename] + _dot_vgrid
 
 profile_img_max_kb = 128
 profile_img_extensions = ['png', 'jpg']
+
+max_software_entries = 40
+max_environment_entries = 40

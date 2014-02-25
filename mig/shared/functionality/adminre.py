@@ -30,6 +30,7 @@
 import base64
 
 import shared.returnvalues as returnvalues
+from shared.defaults import max_software_entries, max_environment_entries
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables
 from shared.refunctions import is_runtime_environment, \
@@ -107,7 +108,6 @@ def main(client_id, user_arguments_dict):
 
     # Avoid DoS, limit number of software_entries
 
-    max_software_entries = 40
     if software_entries > max_software_entries:
         output_objects.append(
             {'object_type': 'error_text', 'text'
@@ -117,7 +117,6 @@ def main(client_id, user_arguments_dict):
 
     # Avoid DoS, limit number of environment_entries
 
-    max_environment_entries = 40
     if environment_entries > max_environment_entries:
         output_objects.append(
             {'object_type': 'error_text', 'text'
