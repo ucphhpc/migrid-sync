@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # vmconnect - connect to virtual machine
-# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

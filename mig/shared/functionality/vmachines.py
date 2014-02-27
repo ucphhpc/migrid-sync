@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vmachines - virtual machine management
-# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -160,6 +160,11 @@ $(document).ready(function() {
     
     output_objects.append({'object_type': 'header', 'text':
                            'Virtual Machines'})
+    if not configuration.site_enable_vmachines:
+        output_objects.append({'object_type': 'text', 'text':
+                           '''Virtual Machines are not enabled on this site.
+    Please contact the Grid admins if you think they should be.'''})
+        return (output_objects, status)
     output_objects.append({'object_type': 'html_form', 'text': submenu})
     output_objects.append({'object_type': 'html_form', 'text'
                           : '<p>&nbsp;</p>'})
@@ -167,6 +172,7 @@ $(document).ready(function() {
                           : welcome_text})
     output_objects.append({'object_type': 'html_form', 'text'
                           : desc_text})
+
 
     user_vms = vms.vms_list(client_id, configuration)
     if action == 'create':
