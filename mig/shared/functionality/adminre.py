@@ -219,7 +219,7 @@ information.'''
 <textarea cols='50' rows='2' wrap='off' name='redescription'>
 """
     if template:
-        html_form += template['DESCRIPTION']
+        html_form += template['DESCRIPTION'].replace('<br />', '\n')
     html_form += '</textarea><br />'
 
     soft_list = []
