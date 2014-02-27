@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showre - Display a runtime environment
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -122,8 +122,9 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
-
     defaults = signature()[1]
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Show runtime environment details'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -153,9 +154,6 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Runtime environment details'
-
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Show runtime environment details'})
 
     (re_dict, msg) = get_re_dict(re_name, configuration)
     if not re_dict:

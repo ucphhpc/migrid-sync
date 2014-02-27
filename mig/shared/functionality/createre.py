@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createre - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -62,6 +62,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Create runtime environment'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -87,8 +89,6 @@ def main(client_id, user_arguments_dict):
     verifystdout = accepted['verifystdout'][-1].strip()
     verifystderr = accepted['verifystderr'][-1].strip()
     verifystatus = accepted['verifystatus'][-1].strip()
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Create runtime environment'})
 
     if not valid_dir_input(configuration.re_home, re_name):
         logger.warning(

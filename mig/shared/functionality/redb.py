@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # redb - manage runtime environments
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -51,6 +51,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Runtime Environments'
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -61,9 +63,6 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'Runtime Environments'
 
     # jquery support for tablesorter and confirmation on "leave":
 
@@ -92,7 +91,7 @@ $(document).ready(function() {
                 }
               });
 
-          // table initially sorted by col. 1 (admin), then 0 (name)
+          // table initially sorted by col. 2 (admin), then 0 (name)
           var sortOrder = [[2,1],[0,0]];
 
           // use image path for sorting if there is any inside
@@ -123,7 +122,6 @@ $(document).ready(function() {
    <textarea cols="40" rows="4" id="confirm_input" style="display:none;"/></textarea>
  </div>
 '''                       })
-
     output_objects.append({'object_type': 'header', 'text'
                           : 'Runtime Environments'})
 

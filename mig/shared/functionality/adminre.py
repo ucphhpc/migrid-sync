@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminre - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -56,6 +56,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Create runtime environment'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -125,8 +127,6 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     rekeywords_dict = get_keywords_dict()
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Create runtime environment'})
     (status, ret) = list_runtime_environments(configuration)
     if not status:
         output_objects.append({'object_type': 'error_text', 'text'
