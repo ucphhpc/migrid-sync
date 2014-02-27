@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # httpsclient - Shared functions for all HTTPS clients
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,11 +34,19 @@ import os
 
 client_id_field = 'SSL_CLIENT_S_DN'
 
+# Login based clients like OpenID ones will instead have their REMOTE_USER env
+# set to some ID provided by the authenticator. In that case look up mapping
+# to native user
 
-def extract_client_id():
-    """Extract unique user ID from HTTPS environment"""
+client_login_field = 'REMOTE_USER'
+
+def extract_client_id(id_map=None):
+    """Extract unique user ID from HTTPS or REMOTE_USER Login environment"""
 
     distinguished_name = os.environ.get(client_id_field, '').strip()
+    if id_map and not distinguished_name:
+        lookup_login = os.environ.get(client_login_field, 'NOSUCHUSER').strip()
+        distinguished_name = id_map.get(lookup_login, '')
     return distinguished_name
 
 
