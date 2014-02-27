@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# settings - [insert a few words of module description on this line]
+# settings - back end for the settings page
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -338,6 +338,7 @@ def main(client_id, user_arguments_dict):
                       'title': 'Switch to %s settings' % name,
                       'text' : '%s settings' % name,
                       })
+
     output_objects.append({'object_type': 'multilinkline', 'links': links})
     output_objects.append({'object_type': 'text', 'text': ''})
 
