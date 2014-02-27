@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -775,7 +775,7 @@ def guess_type(name):
         for key in ('job_id', 'resource', 'search', 'name', ):
             __type_map[key] = valid_job_id_pattern
         for key in ('action', 're_name', 're_template', 'lang', 'machine_name',
-                    ):
+                    'freeze_id', ):
             __type_map[key] = valid_job_id
         for key in ('flags', 'country', 'state', 'desktopname', 'menu',
                     'group_in_time', 'display', ):
@@ -791,7 +791,7 @@ def guess_type(name):
                     'flavor', 'hypervisor_re', 'sys_re', 'time_start',
                     'time_end', ):
             __type_map[key] = valid_fqdn
-        for key in ('cert_name', 'org', 'machine_software', ):
+        for key in ('cert_name', 'org', 'machine_software', 'freeze_name', ):
             __type_map[key] = valid_commonname
         for key in ('cert_id', ):
             __type_map[key] = valid_distinguished_name
@@ -805,7 +805,7 @@ def guess_type(name):
         for key in ('aol', 'yahoo', 'msn', 'icq', 'jabber', 'email', ):
             __type_map[key] = valid_email_address
         for key in ('editarea', 'execute', 'premenu', 'postmenu', 'precontent',
-                    'postcontent', 'publickeys', ):
+                    'postcontent', 'publickeys', 'freeze_description'):
             __type_map[key] = valid_free_text
         for key in ('show', ):
             __type_map[key] = valid_label_text

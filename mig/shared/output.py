@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # output - general formatting of backend output objects
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1077,6 +1077,74 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             provider_links = [html_link(res) for res in view_providers]
             lines.append('<tr><td>Resources</td><td>%s</td></tr>'
                           % ', '.join(provider_links))
+            lines.append('</table>')
+        elif i['object_type'] == 'frozenarchives':
+            frozenarchives = i['frozenarchives']
+            delcol_html = ''
+            if not configuration.site_permanent_freeze:
+                delcol_html = '<th width="8"><!-- Owner --></th>'
+            
+            lines.append('''<table class="frozenarchives columnsort" id="frozenarchivetable">
+<thead class="title">
+    <tr>
+        <th>ID</th>
+        <th width="8"><!-- View --></th>
+        %s
+        <th>Name</th>
+        <th>Created</th>
+        <th>Files</th>
+    </tr>
+</thead>
+<tbody>
+''' % delcol_html
+                         )
+            for single_freeze in frozenarchives:
+                viewlink = html_link(single_freeze['viewfreezelink'])
+                dellink = single_freeze.get('delfreezelink', '')
+                dellink_html = ''
+                if dellink and not configuration.site_permanent_freeze:
+                    dellink = html_link(dellink)
+                    dellink_html = '<td>%s</td>' % dellink
+                lines.append('''
+<tr>
+<td>%s</td><td>%s</td>%s<td>%s</td><td>%s</td><td>%s</td>
+</tr>''' % (single_freeze['id'], viewlink, dellink_html,
+            single_freeze['name'], single_freeze['created'],
+            len(single_freeze['frozenfiles'])))
+                
+            lines.append('''
+</tbody>
+</table>''')
+        elif i['object_type'] == 'frozenarchive':
+
+            frozenfile_html = '''
+<table class="frozenfiles columnsort" id="frozenfilestable">
+<thead class="title">
+    <tr>
+        <th>Name</th>
+        <th>Size in bytes</th>
+        <th>MD5 checksum</th>
+    </tr>
+</thead>
+<tbody>
+'''
+            for frozenfile in i['frozenfiles']:
+                frozenfile_html += '''
+    <tr>
+        <td>%(name)s</td><td>%(size)s</td><td>%(md5sum)s</td>
+    </tr>
+''' % frozenfile
+            frozenfile_html += '</tbody></table>'
+            lines.append(frozenfile_html)
+            lines.append('<table class="frozenarchivedetails">')
+            lines.append('<tr><td class="title">ID</td><td>%s</td></tr>' % i['id'])
+            lines.append('<tr><td class="title">Name</td><td>%s</td></tr>' % i['name'])
+            lines.append('<tr><td class="title">Description</td><td class="border">%s</td></tr>'
+                          % i['description'].replace('\n', '<br />'))
+            lines.append('<tr><td class="title">Creator</td><td>%s</td></tr>'
+                          % i['creator'])
+            lines.append('<tr><td class="title">Created</td><td>%s</td></tr>'
+                          % i['created'])
             lines.append('</table>')
         elif i['object_type'] == 'table_pager':
             page_entries = i.get('page_entries', [5, 10, 20, 25, 40, 50, 80,

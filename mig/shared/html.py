@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # html - html helper functions
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -53,6 +53,9 @@ menu_items['downloads'] = {'class': 'downloads', 'url': 'downloads.py',
 menu_items['runtimeenvs'] = {'class': 'runtimeenvs', 'url': 'redb.py',
                              'title': 'Runtime Envs', 
                            'hover': 'runtime environments: software which can be made available'}
+menu_items['archives'] = {'class': 'archives', 'url': 'freezedb.py',
+                             'title': 'Archives', 
+                           'hover': 'frozen archives: write-once file archives'}
 menu_items['settings'] = {'class': 'settings', 'url': 'settings.py',
                           'title': 'Settings',
                            'hover': 'your personal settings for these pages'}

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -74,6 +74,7 @@ authpasswords_filename = 'authorized_passwords'
 settings_filename = 'settings'
 widgets_filename = 'widgets'
 profile_filename = 'userprofile'
+freeze_meta_filename = 'meta.txt'
 # The htaccess file prevents illegal http access to user files. We completely
 # hide it to not confuse users and to prevent all modification. It is 'only'
 # a matter of users not accidentally giving away file privacy, though.
@@ -85,3 +86,4 @@ profile_img_extensions = ['png', 'jpg']
 
 max_software_entries = 40
 max_environment_entries = 40
+max_freeze_files = 100

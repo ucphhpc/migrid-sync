@@ -82,6 +82,7 @@ def fix_missing(config_file, verbose=True):
         'ca_cert': '~/certs/ca.pem',
         'sss_home': '~/state/sss_home/',
         'sandbox_home': '~/state/sandbox_home',
+        'freeze_home': '~/state/freeze_home',
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
         'site_vgrid_links': 'files web wiki scm tracker forum monitor',
@@ -210,6 +211,7 @@ class Configuration:
     user_cache = ''
     sss_home = ''
     sandbox_home = ''
+    freeze_home = ''
     javabin_home = ''
     vgrid_component_links = []
     moin_etc = ''
@@ -492,6 +494,10 @@ class Configuration:
                                                        'migserver_https_sid_url')
         else:
             self.migserver_https_sid_url = self.migserver_https_url
+        if config.has_option('GLOBAL', 'freeze_home'):
+            self.freeze_home = config.get('GLOBAL', 'freeze_home')
+        else:
+            self.freeze_home = ''
         if config.has_option('GLOBAL', 'user_sftp_address'):
             self.user_sftp_address = config.get('GLOBAL', 
                                                  'user_sftp_address')
@@ -795,6 +801,16 @@ class Configuration:
                                                            'enable_vmachines')
         else:
             self.site_enable_vmachines = False
+        if config.has_option('SITE', 'enable_freeze'):
+            self.site_enable_freeze = config.get('SITE', 'enable_freeze')
+        else:
+            self.site_enable_freeze = False
+        if config.has_option('SITE', 'permanent_freeze'):
+            self.site_permanent_freeze = config.getboolean('SITE',
+                                                           'permanent_freeze')
+        else:
+            self.site_permanent_freeze = True
+
         if config.has_option('SITE', 'swrepo_url'):
             self.site_swrepo_url = config.get('SITE', 'swrepo_url')
         else:

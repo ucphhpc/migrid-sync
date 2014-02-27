@@ -110,6 +110,9 @@ div.container {
 .navmenu ul li.runtimeenvs a {
   background-image: url('/images/icons/database.png');
 }
+.navmenu ul li.archives a {
+  background-image: url('/images/icons/box.png');
+}
 .navmenu ul li.settings a {
   background-image: url('/images/icons/wrench.png');
 }
@@ -292,6 +295,19 @@ table.runtimeenventry {
 }
 table.runtimeenvvars {
   border: 0px solid #000;
+}
+table.frozenarchivedetails {
+  margin-top: 10px;
+}
+table.frozenarchivedetails td {
+  vertical-align: top;
+  padding: 4px;
+}
+table.frozenarchivedetails td.title {
+  text-decoration: bold;
+}
+table.frozenarchivedetails td.border {
+  border: 1px solid #000;
 }
 
 table.monitor {
@@ -684,6 +700,10 @@ table.liveio table {
   padding-left: 18px;
 }
 .sshsettingslink {
+  background: url('/images/icons/computer_link.png') no-repeat;
+  padding-left: 18px;
+}
+.davssettingslink {
   background: url('/images/icons/computer_link.png') no-repeat;
   padding-left: 18px;
 }

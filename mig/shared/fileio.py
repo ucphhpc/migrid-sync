@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileio - [insert a few words of module description on this line]
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,15 +27,16 @@
 
 """IO operations"""
 
-import time
+from hashlib import md5
+import fcntl
 import os
 import shutil
-import fcntl
+import time
 import zipfile
 
 from shared.serial import dump, load
 
-def write_file(content, filename, logger):
+def write_file(content, filename, logger, mode='w'):
     """Wrapper to handle writing of contents to filename"""
     logger.debug('writing file: %s' % filename)
 
@@ -49,7 +50,7 @@ def write_file(content, filename, logger):
         except Exception, err:
             logger.error('could not create dir %s' % err)
     try:
-        filehandle = open(filename, 'w')
+        filehandle = open(filename, mode)
         filehandle.write(content)
         filehandle.close()
         logger.debug('file written: %s' % filename)
@@ -263,3 +264,48 @@ def write_zipfile(zip_path, paths, archive_base=''):
         return (True, '')        
     except Exception, err:
         return (False, err)
+
+def strip_dir(path):
+    """Strip directory part of path for all known path formats. We can
+    not simply use os.path.basename() as it doesn't work if client
+    supplies, say, an absolute windows path.
+    """
+
+    if path.find(':') >= 0:
+
+        # Windows absolute path - name is just right of rightmost backslash
+
+        index = path.rfind('\\')
+        name = path[index + 1:]
+    else:
+        name = os.path.basename(path)
+    return name
+
+def md5sum_file(path, chunk_size, max_chunks=-1):
+    """Simple md5 hashing for checksumming of files inspired by  
+    http://stackoverflow.com/questions/16799088/file-checksums-in-python
+    Read at most max_chunks blocks of chunk_size (to avoid DoS) and checksum
+    using md5.
+    Any non-positive max_chunks value removes the size limit.  
+    If max_chunks is positive the checksum will match that of the md5sum
+    command for files smaller than max_chunks * chunk_size and for bigger
+    files a partial checksum of the first chunk_size * max_chunks bytes will
+    be returned.
+    """
+    checksum = md5()
+    chunks_read = 0
+    msg = ''
+    try:
+        file_fd = open(path, 'rb')
+        while max_chunks < 1 or chunks_read < max_chunks:
+            block = file_fd.read(chunk_size)
+            if not block:
+                break
+            checksum.update(block)
+            chunks_read += 1
+        if file_fd.read(1):
+            msg = ' (of first %d bytes)' % (chunk_size * max_chunks)
+        return "%s%s" % (checksum.hexdigest(), msg)
+    except Exception, exc:
+        return "checksum failed: %s" % exc
+

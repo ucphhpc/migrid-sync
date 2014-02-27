@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # objecttypes - output object types and validation
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -104,6 +104,14 @@ runtimeenvironment = {
                       'environment')],
     'optional': [],
     }
+frozenfile = {'object_type': 'frozenfile', 'required': ['name',
+               'size', 'checksum', 'timestamp'], 'optional': []}
+frozenarchive = {
+    'object_type': 'frozenarchive',
+    'required': ['id', 'name', 'description', 'creator', 'created', ],
+    'required_list': [('frozenfiles', 'frozenfile'), ],
+    'optional': [],
+    }
 changedstatusjob = {'object_type': 'changedstatusjob',
                     'required': ['job_id'], 'optional': []}
 saveschedulejob = {'object_type': 'saveschedulejob',
@@ -151,6 +159,9 @@ dir_listings = {'object_type': 'dir_listings',
 runtimeenvironments = {'object_type': 'runtimeenvironments',
                        'required_list': [('runtimeenvironments',
                        'runtimeenvironment')]}
+frozenarchives = {'object_type': 'frozenarchives',
+                       'required_list': [('frozenarchives',
+                       'frozenarchive')]}
 changedstatusjobs = {'object_type': 'changedstatusjobs',
                      'required_list': [('changedstatusjobs',
                      'changedstatusjob')]}
@@ -222,6 +233,9 @@ valid_types_list = [
     file_output,
     runtimeenvironment,
     runtimeenvironments,
+    frozenfile,
+    frozenarchive,
+    frozenarchives,
     file_not_found,
     filewc,
     filewcs,

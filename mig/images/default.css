@@ -142,6 +142,19 @@ table.runtimeenventry {
 table.runtimeenvvars {
   border: 0px solid #000;
 }
+table.frozenarchivedetails {
+  margin-top: 10px;
+}
+table.frozenarchivedetails td {
+  vertical-align: top;
+  padding: 4px;
+}
+table.frozenarchivedetails td.title {
+  text-decoration: bold;
+}
+table.frozenarchivedetails td.border {
+  border: 1px solid #000;
+}
 
 table.monitor {
   font-size: 10px;
@@ -238,6 +251,9 @@ table.liveio table {
 }
 .navmenu ul li.runtimeenvs a {
   background-image: url('/images/icons/database.png');
+}
+.navmenu ul li.archives a {
+  background-image: url('/images/icons/box.png');
 }
 .navmenu ul li.settings a {
   background-image: url('/images/icons/wrench.png');

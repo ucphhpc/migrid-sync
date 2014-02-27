@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # textarea - combined text/mrsl writer and file upload
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,7 +41,7 @@ import shared.mrslkeywords as mrslkeywords
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import default_mrsl_filename
-from shared.fileio import write_file
+from shared.fileio import write_file, strip_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
@@ -62,23 +62,6 @@ def convert_control_value_to_line(form_key, user_arguments_dict):
 
     value = user_arguments_dict[form_key][0].strip()
     return value
-
-
-def strip_dir(path):
-    """Strip directory part of path for all known path formats. We can
-    not simply use os.path.basename() as it doesn't work if client
-    supplies, say, an absolute windows path.
-    """
-
-    if path.find(':') >= 0:
-
-        # Windows absolute path - name is just right of rightmost backslash
-
-        index = path.rfind('\\')
-        name = path[index + 1:]
-    else:
-        name = os.path.basename(path)
-    return name
 
 
 def handle_form_input(filenumber, user_arguments_dict, configuration):
