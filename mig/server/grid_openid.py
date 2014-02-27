@@ -60,6 +60,7 @@ import Cookie
 import cgi
 import cgitb
 import os
+import ssl
 import sys
 import time
 
@@ -825,6 +826,8 @@ def start_service(configuration):
     host = configuration.user_openid_address
     port = configuration.user_openid_port
     data_path = configuration.user_openid_store
+    daemon_conf = configuration.daemon_conf
+    nossl = daemon_conf['nossl']
     addr = (host, port)
     httpserver = OpenIDHTTPServer(addr, ServerHandler)
 
@@ -836,6 +839,20 @@ def start_service(configuration):
 
     httpserver.setOpenIDServer(oidserver)
 
+    # Wrap in SSL if enabled
+    if nossl:
+        logger.warning('Not wrapping connections in SSL - only for testing!')
+    else:
+        cert_path = configuration.user_openid_key
+        if not os.path.isfile(cert_path):
+            logger.error('No such server key: %s' % cert_path)
+            sys.exit(1)
+        logger.info('Wrapping connections in SSL')
+        httpserver.socket = ssl.wrap_socket(httpserver.socket,
+                                            certfile=cert_path,
+                                            server_side=True)
+        httpserver.base_url = httpserver.base_url.replace('http', 'https', 1)
+        
     print 'Server running at:'
     print httpserver.base_url
     httpserver.serve_forever()
@@ -905,6 +922,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'users': [],
         'time_stamp': 0,
         'logger': logger,
+        'nossl': False,
         }
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)
