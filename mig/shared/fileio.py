@@ -241,6 +241,38 @@ def copy(src, dst):
     """Copy a file from src to dst where dst my be a directory"""
     return shutil.copy(src, dst)
 
+def copy_file(src, dst, configuration):
+    """Copy a file from src to dst where dst must be a new file path and
+    the parent dir is created if necessary.
+    """
+    dst_dir = os.path.dirname(dst)
+    try:
+        os.makedirs(dst_dir)
+    except:
+        # probably already exists
+        pass
+    try:
+        shutil.copy(src, dst)
+    except Exception, exc:
+        return (False, "copy failed: %s" % exc)
+    return (True, "")
+
+def copy_rec(src, dst, configuration):
+    """Copy a dir recursively to dst where dst must be a new dir path and the
+    parent dir is created if necessary.
+    """
+    dst_dir = os.path.dirname(dst)
+    try:
+        os.makedirs(dst_dir)
+    except:
+        # probably already exists
+        pass
+    try:
+        shutil.copytree(src, dst)
+    except Exception, exc:
+        return (False, "copy failed: %s" % exc)
+    return (True, "")
+
 def write_zipfile(zip_path, paths, archive_base=''):
     """Write each of the files/dirs in paths to a zip file with zip_path.
     Given a non-empty archive_base string, that string will be used as the

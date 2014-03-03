@@ -33,7 +33,7 @@ import tempfile
 import time
 
 from shared.defaults import freeze_meta_filename
-from fileio import md5sum_file, write_file, remove_rec
+from fileio import md5sum_file, write_file, copy_file, copy_rec, remove_rec
 from shared.serial import load, dump
 
 
@@ -117,20 +117,20 @@ def get_frozen_meta(freeze_id, configuration):
 def get_frozen_files(freeze_id, configuration):
     """Helper to list names and stats for files in a frozen archive"""
     frozen_dir = os.path.join(configuration.freeze_home, freeze_id)
-    try:
-        dir_content = os.listdir(frozen_dir)
-    except Exception:
+    if not os.path.isdir(frozen_dir):
         return (False, 'Could not open frozen archive %s' % freeze_id)
     files = []
-    for name in dir_content:
-        if name.startswith('.') or name in [freeze_meta_filename]:
-            continue
-        frozen_path = os.path.join(frozen_dir, name)
-        files.append({'name': name,
-                      'timestamp': os.path.getctime(frozen_path),
-                      'size': os.path.getsize(frozen_path),
-                      # Checksum 1024 first 32k-blocks of files (i.e. 32MB)
-                      'md5sum': md5sum_file(frozen_path, 32768, 1024)})
+    for (root, _, filenames) in os.walk(frozen_dir):
+        for name in filenames:
+            if name.startswith('.') or name in [freeze_meta_filename]:
+                continue
+            frozen_path = os.path.join(root, name)
+            rel_path = os.path.join(root.replace(frozen_dir, '', 1), name)
+            files.append({'name': rel_path,
+                          'timestamp': os.path.getctime(frozen_path),
+                          'size': os.path.getsize(frozen_path),
+                          # Checksum 1024 first 32k-blocks of files (i.e. 32MB)
+                          'md5sum': md5sum_file(frozen_path, 32768, 1024)})
     return (True, files)
 
 def get_frozen_archive(freeze_id, configuration):
@@ -147,10 +147,10 @@ def get_frozen_archive(freeze_id, configuration):
     freeze_dict.update(meta_out)
     return (True, freeze_dict)
 
-def create_frozen_archive(freeze_name, freeze_description, freeze_files,
-                          client_id, configuration):
+def create_frozen_archive(freeze_name, freeze_description, freeze_copy,
+                          freeze_upload, client_id, configuration):
     """Create a new frozen archive with meta data fields and provided
-    freeze_files list of name and contents.
+    freeze_copy files from user home and freeze_upload files from form.
     """
     try:
         frozen_dir = tempfile.mkdtemp(prefix='archive-',
@@ -167,7 +167,7 @@ def create_frozen_archive(freeze_name, freeze_description, freeze_files,
         'NAME': freeze_name,
         'DESCRIPTION': freeze_description,
         }
-    configuration.logger.info("create_frozen_archive: make pickle for %s" % \
+    configuration.logger.info("create_frozen_archive: save meta for %s" % \
                               freeze_id)
     try:
         dump(freeze_dict, os.path.join(frozen_dir, freeze_meta_filename))
@@ -177,11 +177,31 @@ def create_frozen_archive(freeze_name, freeze_description, freeze_files,
         remove_rec(frozen_dir, configuration)
         return (False, 'Error writing frozen archive info: %s' % err)
 
+    configuration.logger.info("create_frozen_archive: copy %s for %s" % \
+                              (freeze_copy, freeze_id))
+    for (real_source, rel_dst) in freeze_copy:
+        freeze_path = os.path.join(frozen_dir, rel_dst)
+        configuration.logger.debug("create_frozen_archive: copy %s" % \
+                                            freeze_path)
+        if os.path.isdir(real_source):
+            (status, msg) = copy_rec(real_source, freeze_path, configuration)
+            if not status:
+                configuration.logger.error("create_frozen_archive: failed: %s" \
+                                           % msg)
+                remove_rec(frozen_dir, configuration)
+                return (False, 'Error writing frozen archive')
+        else:
+            (status, msg) = copy_file(real_source, freeze_path, configuration)
+            if not status:
+                configuration.logger.error("create_frozen_archive: failed: %s" \
+                                           % msg)
+                remove_rec(frozen_dir, configuration)
+                return (False, 'Error writing frozen archive')
     configuration.logger.info("create_frozen_archive: save %s for %s" % \
-                              (freeze_files, freeze_id))
-    for (filename, contents) in freeze_files:
+                              ([i[0] for i in freeze_upload], freeze_id))
+    for (filename, contents) in freeze_upload:
         freeze_path = os.path.join(frozen_dir, filename)
-        configuration.logger.info("create_frozen_archive: write %s" % \
+        configuration.logger.debug("create_frozen_archive: write %s" % \
                                             freeze_path)
         if not write_file(contents, freeze_path, configuration.logger):
             configuration.logger.error("create_frozen_archive: failed: %s" % \

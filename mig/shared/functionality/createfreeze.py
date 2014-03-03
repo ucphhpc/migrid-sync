@@ -27,7 +27,10 @@
 
 """Creation of frozen archives fo write-once files"""
 
+import os
+
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.defaults import max_freeze_files
 from shared.fileio import strip_dir
 from shared.freezefunctions import create_frozen_archive
@@ -35,6 +38,7 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.safeinput import valid_path
+from shared.validstring import valid_user_path
 
 
 def signature():
@@ -46,14 +50,43 @@ def signature():
         }
     return ['text', defaults]
 
-def parse_form_files(user_args, configuration):
-    """Parse file entries from user_args"""
+def parse_form_copy(user_args, client_id, configuration):
+    """Parse copy file/dir entries from user_args"""
     files, rejected = [], []
     i = 0
+    client_dir = client_id_dir(client_id)
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                               client_dir)) + os.sep
     for i in xrange(max_freeze_files):
-        if user_args.has_key('freeze_file_%d' % i):
-            file_item = user_args['freeze_file_%d' % i]
-            filename = user_args.get('freeze_file_%dfilename' % i,
+        if user_args.has_key('freeze_copy_%d' % i):
+            source_path = user_args['freeze_copy_%d' % i][-1].strip()
+            configuration.logger.info('found copy entry: %s' % source_path)
+            if not source_path:
+                continue
+            try:
+                valid_path(source_path)
+            except Exception, exc:
+                rejected.append('invalid path: %s (%s)' % (source_path,
+                                                               exc))
+                continue
+            source_path = os.path.normpath(source_path).lstrip(os.sep)
+            real_path = os.path.abspath(os.path.join(base_dir, source_path))
+            if not valid_user_path(real_path, base_dir, True):
+                rejected.append('invalid path: %s (%s)' % \
+                                (source_path, 'illegal path!'))
+                continue
+            files.append((real_path, source_path))
+    return (files, rejected)
+
+def parse_form_upload(user_args, client_id, configuration):
+    """Parse upload file entries from user_args"""
+    files, rejected = [], []
+    i = 0
+    client_dir = client_id_dir(client_id)
+    for i in xrange(max_freeze_files):
+        if user_args.has_key('freeze_upload_%d' % i):
+            file_item = user_args['freeze_upload_%d' % i]
+            filename = user_args.get('freeze_upload_%dfilename' % i,
                                      '')
             if not filename.strip():
                 continue
@@ -62,6 +95,7 @@ def parse_form_files(user_args, configuration):
                 valid_path(filename)
             except Exception, exc:
                 rejected.append('invalid filename: %s (%s)' % (filename, exc))
+                continue
             files.append((filename, file_item[0]))
     return (files, rejected)
 
@@ -112,15 +146,22 @@ def main(client_id, user_arguments_dict):
         if user_arguments_dict.has_key(name):
             del user_arguments_dict[name]
 
-    (freeze_files, rejected) = parse_form_files(user_arguments_dict,
-                                                configuration)
-    if not freeze_files or rejected:
+    (copy_files, copy_rejected) = parse_form_copy(user_arguments_dict,
+                                                  client_id, configuration)
+    (upload_files, upload_rejected) = parse_form_upload(user_arguments_dict,
+                                                        client_id,
+                                                        configuration)
+    if copy_rejected + upload_rejected:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Errors parsing files: %s' % \
-                               '\n '.join(rejected)})
+                              : 'Errors parsing freeze files: %s' % \
+                               '\n '.join(copy_rejected + upload_rejected)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    if not (copy_files + upload_files):
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'No files included to freeze!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    freeze_entries = len(freeze_files)
+    freeze_entries = len(copy_files + upload_files)
     if freeze_entries > max_freeze_files:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Too many freeze files (%s), max %s'
@@ -129,8 +170,8 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     (retval, retmsg) = create_frozen_archive(freeze_name, freeze_description,
-                                             freeze_files, client_id,
-                                             configuration)
+                                             copy_files, upload_files,
+                                             client_id, configuration)
     if not retval:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Error creating new frozen archive: %s'
