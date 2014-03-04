@@ -3,8 +3,6 @@ Name: TDC Hotspot Login
 Description: Basic TDC Hotspot login wrapper for convenient direct login
 Requires: jquery.js
 -->
-<script type="text/javascript" src="hotspots.js"></script>
-<script type="text/javascript" src="lcp.js"></script>
 <script type="text/javascript">
     $(document).ready(function() {
         /* 
