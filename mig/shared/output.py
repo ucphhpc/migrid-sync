@@ -1159,7 +1159,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
       <form style="display: inline;" action="">
         <img class="first" src="/images/icons/arrow_left.png"/>
         <img class="prev" src="/images/icons/arrow_left.png"/>
-        <input type="text" class="pagedisplay" size=5 />
+        <input type="text" class="pagedisplay" size=15 />
         <img class="next" src="/images/icons/arrow_right.png"/>
         <img class="last" src="/images/icons/arrow_right.png"/>
         <select class="pagesize">

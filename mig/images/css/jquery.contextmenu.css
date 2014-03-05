@@ -85,3 +85,4 @@
 .contextMenu LI.cancel a { background-image: url(/images/icons/cancel.png); }
 .contextMenu LI.liveio a { background-image: url(/images/icons/page_white_go.png); }
 .contextMenu LI.verbosestatus a { background-image: url(/images/icons/information.png); }
+.contextMenu LI.select a { background-image: url(/images/icons/hourglass_add.png); }

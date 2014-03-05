@@ -17,6 +17,6 @@
 /*  Hide unused sub-level background */
 .xbreadcrumbs LI UL {
   background: none;
-  visible: false;
+  display: none;
 }
 .xbreadcrumbs LI UL LI { background: none; }

@@ -13,8 +13,8 @@ if (jQuery) (function($){
 
   function windowWrapper(el_id, dialog, url) {
     window.open(url);
-    $("#cmd_helper div[title="+el_id+"]").removeClass("spinner").addClass("ok");
-    $("#cmd_helper div[title="+el_id+"] p").append("<br/>Opened in new window/tab");
+    $("#cmd_helper div[title='"+el_id+"']").removeClass("spinner").addClass("ok");
+    $("#cmd_helper div[title='"+el_id+"'] p").append("<br/>Opened in new window/tab");
     return true;
   }
 
@@ -160,16 +160,15 @@ if (jQuery) (function($){
         }
         
         if ((errors.length > 0) || (misc_output.length > 0)) {
-          $("#cmd_helper div[title="+el_id+"]").removeClass("spinner").addClass("error");
+          $("#cmd_helper div[title='"+el_id+"']").removeClass("spinner").addClass("error");
         } else {
-          $("#cmd_helper div[title="+el_id+"]").removeClass("spinner").addClass("ok");
+          $("#cmd_helper div[title='"+el_id+"']").removeClass("spinner").addClass("ok");
         }
-        
-        $("#cmd_helper div[title="+el_id+"] p").append("<br />"+errors+file_output+misc_output+dir_listings);
+        $("#cmd_helper div[title='"+el_id+"'] p").append("<br />"+errors+file_output+misc_output+dir_listings);
         
       } else {
-        $("#cmd_helper div[title="+el_id+"]").removeClass("spinner").addClass("ok");
-        $("#cmd_helper div[title="+el_id+"] p").append(success_message);
+        $("#cmd_helper div[title='"+el_id+"']").removeClass("spinner").addClass("ok");
+        $("#cmd_helper div[title='"+el_id+"'] p").append(success_message);
         
       }      
     }, "json");
@@ -260,13 +259,13 @@ if (jQuery) (function($){
                     
                     if (single_selection) {
                     
-                        job_id = $("input[name=job_identifier]", $(el).parent()).val();
+                        job_id = $("input[name='job_identifier']", $(el).parent()).val();
                         
                         $("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>JobId: "+job_id+"</p></div>");
                         // Output files redirect to the filemanager with extra args.
                         // All other actions are handled by the general case.
                         if (action == "outputfiles") {
-                          actions[action](job_id, $("input[name=job_output]", $(el).parent()).val());
+                          actions[action](job_id, $("input[name='job_output']", $(el).parent()).val());
                         } else {
                           actions[action](job_id);
                         }
@@ -274,7 +273,7 @@ if (jQuery) (function($){
                         var selected_rows = $("#jm_jobmanager tbody tr.ui-selected");
                         $("#cmd_helper").append("<p>"+action+": "+selected_rows.length+" jobs, see individual status below:</p>");
                         selected_rows.each(function(i) {
-                            job_id = $("input[name=job_identifier]", this).val();
+                            job_id = $("input[name='job_identifier']", this).val();
                             $("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>"+job_id+"</p></div>");
                             actions[action](job_id);
                         });
@@ -298,6 +297,7 @@ if (jQuery) (function($){
         }
     });
     
+    var config = {container: $("#pager"), size: 300};
     $("#jm_jobmanager")
     .tablesorter({  widgets: ["zebra", "multiselect", "contextual"],
                     textExtraction: function(node) {
@@ -309,9 +309,7 @@ if (jQuery) (function($){
                                   },
                     headers: {0: {sorter: false}}
                   })
-    .tablesorterPager({ container: $("#pager"),
-                        size: 300
-                    });
+    .tablesorterPager(config);
 
     // Check CheckAll when read all
     $("#jm_jobmanager").bind("sortEnd", function() { $("#checkAll").attr("checked", false); });

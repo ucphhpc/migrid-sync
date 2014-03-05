@@ -27,7 +27,6 @@ img {
 h1 {
   border: 1px solid darkgrey;
   border-radius: 4px;
-  -moz-border-radius: 4px;
   margin-top: 0;
   
   color: #eee;
@@ -150,7 +149,7 @@ table.frozenarchivedetails td {
   padding: 4px;
 }
 table.frozenarchivedetails td.title {
-  text-decoration: bold;
+  font-weight: bold;
 }
 table.frozenarchivedetails td.border {
   border: 1px solid #000;
@@ -205,7 +204,6 @@ table.liveio table {
 .navmenu {
   background: #aaa url('/images/background_greypattern.png');
   border-radius: 5px;
-  -moz-border-radius: 5px;
   border: 1px solid grey;
   padding: 0;
   margin: 0;
@@ -287,7 +285,6 @@ table.liveio table {
 
 .navmenu ul li a, .navsubmenu ul li a {
   border-radius: 4px;
-  -moz-border-radius: 4px;
   display: block;
   
   background-repeat: no-repeat;
@@ -320,7 +317,6 @@ table.liveio table {
 
 .styled_button {
   border-radius: 4px;
-  -moz-border-radius: 4px;
   display: block;
   
   background-repeat: no-repeat;
@@ -365,7 +361,6 @@ table.liveio table {
 
 .editortoolbar {
   border-radius: 4px;
-  -moz-border-radius: 4px;
   padding: 6px;
   background: #ddd;
 }
@@ -376,7 +371,6 @@ table.liveio table {
   font-size: 28px;
   border: 0;
   border-radius: 4px;
-  -moz-border-radius: 4px;
   color: #eee;
   background: #eee url('/images/background.png');
 }
@@ -468,7 +462,6 @@ table.liveio table {
   background: white;
   border: 1px solid black;
   border-radius: 4px;
-  -moz-border-radius: 4px;
   padding: 8px; 
 }
 
@@ -493,7 +486,6 @@ table.liveio table {
   font-weight: bold;
   color: red;
   border-radius: 4px;
-  -moz-border-radius: 4px;
 }
 
 .lefttext {
@@ -814,10 +806,9 @@ table.liveio table {
 .owner {
   border: 1px solid gold;
   border-radius: 4px;
-  -moz-border-radius: 4px;
 }
 .member {
-  background-color: none;
+  background-color: transparent;
 }
 .public {
   background-color: silver;

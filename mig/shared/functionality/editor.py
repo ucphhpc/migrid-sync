@@ -60,7 +60,7 @@ def advanced_editor_deps(include_jquery=True):
 <link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/txt2tags/style.css" title="txt2tags"/>
 <link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/html/style.css" title="html"/>
 
-<script type="text/javascript" src="/images/lib/markitup/markitup/jquery.markitup.pack.js"></script>
+<script type="text/javascript" src="/images/lib/markitup/markitup/jquery.markitup.js"></script>
 <script type="text/javascript" src="/images/lib/markitup/markitup/sets/html/set.js"></script>
 <script type="text/javascript">
 var myHtmlSettings = mySettings;
