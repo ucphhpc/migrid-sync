@@ -1,4 +1,4 @@
-/* Custom layout for xbreadcrumbs plugin inside fie managers */
+/* Custom layout for xbreadcrumbs plugin inside file managers */
 .xbreadcrumbs LI {
   border-right: none;
   background: url(/images/icons/separator.gif) no-repeat right center;
@@ -14,9 +14,8 @@
   background: url(/images/icons/folder_user.png) no-repeat left center;
   padding-left: 20px;
 }
-/*  Hide unused sub-level background */
-.xbreadcrumbs LI UL {
-  background: none;
-  display: none;
+
+/* prevent breadcrumbs bar from shadowing dialogs */
+#fm_xbreadcrumbs {
+  z-index: 100;
 }
-.xbreadcrumbs LI UL LI { background: none; }
