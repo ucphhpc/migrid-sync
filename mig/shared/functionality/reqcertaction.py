@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqcertaction - handle certificate requests and send email to admins
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -117,7 +117,9 @@ def main(client_id, user_arguments_dict):
     
     force_org_email = {'DIKU': ['@diku.dk'],
                        'NBI': ['@nbi.ku.dk', '@nbi.dk', '@fys.ku.dk'],
-                       'IMF': ['@math.ku.dk']}
+                       'IMF': ['@math.ku.dk'],
+                       'KU': ['.ku.dk'],
+                       }
     is_forced_email = False
     is_forced_org = False
     email_hit = '__BOGUS__'
