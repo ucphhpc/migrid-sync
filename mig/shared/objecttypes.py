@@ -112,6 +112,15 @@ frozenarchive = {
     'required_list': [('frozenfiles', 'frozenfile'), ],
     'optional': [],
     }
+uploadfile = {'object_type': 'uploadfile', 'required': ['name',
+               'size', 'url'], 'optional': ['error']}
+uploadfiles = {
+    'object_type': 'uploadfiles',
+    'required': [],
+    # list entry must be called 'files' for jquery fileupload plugin to work
+    'required_list': [('files', 'uploadfile'), ],
+    'optional': [],
+    }
 changedstatusjob = {'object_type': 'changedstatusjob',
                     'required': ['job_id'], 'optional': []}
 saveschedulejob = {'object_type': 'saveschedulejob',
@@ -236,6 +245,8 @@ valid_types_list = [
     frozenfile,
     frozenarchive,
     frozenarchives,
+    uploadfile,
+    uploadfiles,
     file_not_found,
     filewc,
     filewcs,

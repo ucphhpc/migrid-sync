@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # submitjob - Job submission interfaces
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -123,7 +123,18 @@ def main(client_id, user_arguments_dict):
     submit_options = ['fields_form', 'textarea_form', 'files_form']
 
     title_entry['javascript'] = '''
+<link rel="stylesheet" type="text/css"
+      href="/images/css/jquery.managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css"
+      href="/images/css/jquery-ui.css" media="screen"/>
+<link rel="stylesheet" type="text/css"
+      href="/images/css/jquery.fileupload-ui.custom.css" media="screen"/>
+
 <script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.iframe-transport.js">
+</script>
+<script type="text/javascript" src="/images/js/jquery.fileupload.js"></script>
 
 <script type="text/javascript" >
 
@@ -149,13 +160,59 @@ def main(client_id, user_arguments_dict):
 
     $(document).ready( function() {
          switchTo("%s");
+
+         $("#globalprogress").progressbar({value: 0});
+         $("#globalprogress > div").html("<span class=\'ui-progressbar-text\'>0%%</span>");
+
+         var url = "uploadchunked.py?output_format=json";
+         
+         $(function () {
+             $("#basicfileupload").fileupload({
+                 url: url,
+                 dataType: "json",
+                 maxChunkSize: 8000000, // 8 MB
+                 sequentialUploads: true,
+                 done: function (e, data) {
+                    console.log("upload done");
+                    $("#globalprogress").progressbar("option", "value",
+                        $("#globalprogress").progressbar("option", "max"));
+                    $("#globalprogress > div > span.ui-progressbar-text").html("100%%");
+                    console.log("results: "+data.result);
+                    $.each(data.result, function (index, obj) {
+                        console.log("result obj: "+index+" "+obj.toSource());
+                        if (obj.object_type == "uploadfiles") {
+                            console.log("found files in obj "+index);
+                            var files = obj.files;
+                            console.log("found files: "+index+" "+files.toSource());
+                            $.each(files, function (index, file) {
+                                console.log("found entry in results: "+index+", "+file);
+                                $("#uploadedfiles").append(file.name+"<br />");
+                            });
+                        }
+                    });
+                    console.log("after done handling: "+$("#uploadedfiles"));
+                 },
+                 progressall: function (e, data) {
+                    var progress = parseInt(data.loaded / data.total * 100, 10);
+                    $("#globalprogress").progressbar("option", "value", progress);
+                    $("#globalprogress > div > span.ui-progressbar-text").html(progress+"%%");
+                    console.log("progress is "+progress);
+                 }
+             });
+         });
+
+         $(document).bind("drop dragover", function (e) {
+             e.preventDefault();
+         });
+             
+
     });
 
 </script>
 ''' % (submit_options, submit_style + "_form")
 
-    output_objects.append({'object_type': 'text',
-                           'text': 'This page is used to submit jobs to the grid.'})
+    output_objects.append({'object_type': 'text', 'text':
+                           'This page is used to submit jobs to the grid.'})
 
     output_objects.append({'object_type': 'verbatim',
                            'text': '''
@@ -164,7 +221,7 @@ There are %s interface styles available that you can choose among:''' % \
 
     links = []
     for opt in submit_options:
-        name = opt.split('_',2)[0] 
+        name = opt.split('_', 2)[0] 
         links.append({'object_type': 'link', 
                       'destination': "javascript:switchTo('%s')" % opt,
                       'class': 'submit%slink' % name,
@@ -177,19 +234,20 @@ There are %s interface styles available that you can choose among:''' % \
 Please note that changes to the job description are *not* automatically
 transferred if you switch style.'''}) 
 
-    output_objects.append({'object_type': 'html_form', 
-                           'text': '<div id="fields_form" style="display:none;">\n'})
+    output_objects.append({'object_type': 'html_form', 'text':
+                           '<div id="fields_form" style="display:none;">\n'})
     
     # Fields
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Please fill in your job description in the fields below:'
+                          : 'Please fill in your job description in the fields'
+                           ' below:'
                           })
     output_objects.append({'object_type': 'text', 'text'
                           : """
 Please fill in one or more fields below to define your job before hitting
 Submit Job at the bottom of the page.
-Empty fields will simply result in the default value being used and each field is
-accompanied by a help link providing further details about the field."""})
+Empty fields will simply result in the default value being used and each field
+is accompanied by a help link providing further details about the field."""})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <table class="submitjob">
@@ -205,10 +263,15 @@ accompanied by a help link providing further details about the field."""})
     # Find allowed VGrids and Runtimeenvironments and add them to
     # configuration object for automated choice handling
     
-    allowed_vgrids = user_allowed_vgrids(configuration, client_id) + [any_vgrid]
+    allowed_vgrids = user_allowed_vgrids(configuration, client_id) + \
+                     [any_vgrid]
     allowed_vgrids.sort()
     configuration.vgrids = allowed_vgrids
     (re_status, allowed_run_envs) = list_runtime_environments(configuration)
+    if not re_status:
+        logger.error('Failed to extract allowed runtime envs: %s' % \
+                     allowed_run_envs)
+        allowed_run_envs = []
     allowed_run_envs.sort()
     configuration.runtimeenvironments = allowed_run_envs
     user_res = user_allowed_res_exes(configuration, client_id)
@@ -278,8 +341,9 @@ accompanied by a help link providing further details about the field."""})
                     selected = ''
                     if str(name) in res_value:
                         selected = 'checked'
-                    value_select += '<input type="checkbox" name="%s" %s value=%s>%s<br />'\
-                                    % (field, selected, name, name)
+                    value_select += '''
+                        <input type="checkbox" name="%s" %s value=%s>%s<br />
+                        ''' % (field, selected, name, name)
                 value_select += '</div>\n'
             else:
                 value_select += "<select name='%s'>\n" % field
@@ -287,7 +351,8 @@ accompanied by a help link providing further details about the field."""})
                     selected = ''
                     if str(res_value) == str(name):
                         selected = 'selected'
-                    value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
+                    value_select += """<option %s value='%s'>%s</option>\n""" \
+                                    % (selected, name, name)
                 value_select += """</select><br />\n"""    
             output_objects.append({'object_type': 'html_form', 'text'
                                    : value_select
@@ -367,7 +432,8 @@ are supplied: thus we simply send a bogus jobname which does nothing
     # Upload form
 
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Please upload your job file or packaged job files below:'
+                          : 'Please upload your job file or packaged job files'
+                           ' below:'
                           })
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
@@ -402,12 +468,37 @@ Optional remote filename (extra useful in windows)
 <input type='submit' value='Upload' name='sendfile'/>
 </form>
 </td></tr>
+<tr><td colspan=3>
+<hr>
+</td></tr>
+<tr class=title><td class=centertext colspan=4>
+Upload other files efficiently (using chunking).
+</td></tr>
+<tr><td colspan=4>
+Upload file to current directory (%(dest_dir)s)
+</td></tr>
+<tr><td>    
+File to upload
+</td><td class=righttext colspan=3>
+<input id='basicfileupload' type='file' name='files[]' multiple>
+</td></tr>
+<tr><td colspan=4>
+<!-- The global progress bar area-->
+<div id='uploadfiles' class='uploadfiles'>
+<div id='globalprogress' class='uploadprogress'>
+</div>
+</div>
+<br />
+<b>Uploaded files:</b>
+<div id='uploadedfiles'>
+<!-- dynamically filled by javascript after uploads -->
+</div>
+</td></tr>
 </table>
+</div>                                                                                    
 """
                            % {'dest_dir': '.' + os.sep}})
 
     output_objects.append({'object_type': 'html_form', 
                            'text': '\n</div><!-- files_form-->'})
     return (output_objects, status)
-
-

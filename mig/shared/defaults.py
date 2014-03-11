@@ -87,3 +87,8 @@ profile_img_extensions = ['png', 'jpg']
 max_software_entries = 40
 max_environment_entries = 40
 max_freeze_files = 100
+max_upload_files = 100
+max_upload_chunks = 10
+
+upload_block_size = 64 * 1024 * 1024
+upload_tmp_dir = '.upload-cache'

@@ -36,13 +36,53 @@ import zipfile
 
 from shared.serial import dump, load
 
-def write_file(content, filename, logger, mode='w'):
-    """Wrapper to handle writing of contents to filename"""
-    logger.debug('writing file: %s' % filename)
+def write_chunk(path, chunk, offset, logger, mode='r+b'):
+    """Wrapper to handle writing of chunks with offset to path.
+    Creates file first if it doesn't already exist.
+    """
+    logger.info('writing chunk to %s at offset %d' % (path, offset))
+
+    # create dir and file if it does not exists
+
+    (head, _) = os.path.split(path)
+    if not os.path.isdir(head):
+        try:
+            os.mkdir(head)
+        except Exception, err:
+            logger.error('could not create dir %s' % err)
+    if not os.path.isfile(path):
+        try:
+            open(path, "w").close()
+        except Exception, err:
+            logger.error('could not create file %s' % err)
+    try:
+        filehandle = open(path, mode)
+        # Make sure we can write at requested position, filling if needed
+        try:
+            filehandle.seek(offset)
+        except:
+            filehandle.seek(0, 2)
+            file_size = filehandle.tell()
+            for _ in xrange(offset - file_size):
+                filehandle.write('\0')
+        logger.info('write %s chunk of size %d at position %d' % \
+                     (path, len(chunk), filehandle.tell()))
+        filehandle.write(chunk)
+        filehandle.close()
+        logger.debug('file chunk written: %s' % path)
+        return True
+    except Exception, err:
+        logger.error('could not write %s chunk at %d: %s' % \
+                     (path, offset, err))
+        return False
+
+def write_file(content, path, logger, mode='w'):
+    """Wrapper to handle writing of contents to path"""
+    logger.debug('writing file: %s' % path)
 
     # create dir if it does not exists
 
-    (head, _) = os.path.split(filename)
+    (head, _) = os.path.split(path)
     if not os.path.isdir(head):
         try:
             logger.debug('making directory %s' % head)
@@ -50,28 +90,28 @@ def write_file(content, filename, logger, mode='w'):
         except Exception, err:
             logger.error('could not create dir %s' % err)
     try:
-        filehandle = open(filename, mode)
+        filehandle = open(path, mode)
         filehandle.write(content)
         filehandle.close()
-        logger.debug('file written: %s' % filename)
+        logger.debug('file written: %s' % path)
         return True
     except Exception, err:
-        logger.error('could not write %s %s' % (filename, err))
+        logger.error('could not write %s %s' % (path, err))
         return False
 
 
-def delete_file(filename, logger):
-    """Wrapper to handle deletion of filename"""
-    logger.debug('deleting file: %s' % filename)
-    if os.path.exists(filename):
+def delete_file(path, logger):
+    """Wrapper to handle deletion of path"""
+    logger.debug('deleting file: %s' % path)
+    if os.path.exists(path):
         try:
-            os.remove(filename)
+            os.remove(path)
             result = True
         except Exception, err:
-            logger.error('could not delete %s %s' % (filename, err))
+            logger.error('could not delete %s %s' % (path, err))
             result = False
     else:
-        logger.info('%s does not exist.' % filename)
+        logger.info('%s does not exist.' % path)
         result = False
 
     return result
@@ -88,77 +128,77 @@ def make_symlink(dest, src, logger):
     return True
 
 
-def filter_pickled_list(filename, changes):
+def filter_pickled_list(path, changes):
     """Filter pickled list on disk with provided changes where changes is a
     dictionary mapping existing list entries and the value to replace it with.
     """
 
-    saved_list = load(filename)
+    saved_list = load(path)
     saved_list = [changes.get(entry, entry) for entry in saved_list]
-    dump(saved_list, filename)
+    dump(saved_list, path)
     return saved_list
 
 
-def filter_pickled_dict(filename, changes):
+def filter_pickled_dict(path, changes):
     """Filter pickled dictionary on disk with provided changes where changes
     is a dictionary mapping existing dictionary values to a value to replace
     it with.
     """
 
-    saved_dict = load(filename)
+    saved_dict = load(path)
     for (key, val) in saved_dict.items():
         if val in changes.keys():
             saved_dict[key] = changes[val]
-    dump(saved_dict, filename)
+    dump(saved_dict, path)
     return saved_dict
 
 
-def update_pickled_dict(filename, changes):
+def update_pickled_dict(path, changes):
     """Update pickled dictionary on disk with provided changes"""
 
-    saved_dict = load(filename)
+    saved_dict = load(path)
     saved_dict.update(changes)
-    dump(saved_dict, filename)
+    dump(saved_dict, path)
     return saved_dict
 
 
-def unpickle_and_change_status(filename, newstatus, logger):
+def unpickle_and_change_status(path, newstatus, logger):
     """change status in the MiG server mRSL file"""
 
     changes = {}
     changes['STATUS'] = newstatus
     changes[newstatus + '_TIMESTAMP'] = time.gmtime()
     try:
-        job_dict = update_pickled_dict(filename, changes)
+        job_dict = update_pickled_dict(path, changes)
         logger.info('job status changed to %s: %s' % (newstatus,
-                    filename))
+                    path))
         return job_dict
     except Exception, err:
         logger.error('could not change job status to %s: %s %s'
-                      % (newstatus, filename, err))
+                      % (newstatus, path, err))
         return False
 
 
-def unpickle(filename, logger):
-    """Unpack pickled object in filename"""
+def unpickle(path, logger):
+    """Unpack pickled object in path"""
     try:
-        job_dict = load(filename)
-        logger.debug('%s was unpickled successfully' % filename)
+        job_dict = load(path)
+        logger.debug('%s was unpickled successfully' % path)
         return job_dict
     except Exception, err:
         logger.error('%s could not be opened/unpickled! %s'
-                      % (filename, err))
+                      % (path, err))
         return False
 
 
-def pickle(job_dict, filename, logger):
-    """Pack job_dict as pickled object in filename"""
+def pickle(job_dict, path, logger):
+    """Pack job_dict as pickled object in path"""
     try:
-        dump(job_dict, filename)
-        logger.debug('pickle success: %s' % filename)
+        dump(job_dict, path)
+        logger.debug('pickle success: %s' % path)
         return True
     except Exception, err:
-        logger.error('could not pickle: %s %s' % (filename, err))
+        logger.error('could not pickle: %s %s' % (path, err))
         return False
 
 
