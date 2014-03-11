@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migwsgi.py - Provides the entire WSGI interface
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -143,7 +143,9 @@ def application(environ, start_response):
     (ret_code, ret_msg) = ret_val
 
     default_content = 'text/html'
-    if 'html' != output_format:
+    if 'json' == output_format:
+        default_content = 'application/json'
+    elif 'html' != output_format:
         default_content = 'text/plain'
     default_headers = [('Content-Type', default_content)]
     start_entry = None
