@@ -579,7 +579,7 @@ table.liveio table {
 
 .centertext .scrollselect { 
   /* hackaround to get the div centered, not its contents */
-  margin:0 auto;
+  margin: 0 auto;
 }
 
 /* Job manager */
