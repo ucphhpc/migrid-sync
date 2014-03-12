@@ -33,18 +33,23 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import max_upload_files, max_upload_chunks, \
      upload_block_size, upload_tmp_dir
-from shared.fileio import strip_dir, write_chunk
+from shared.fileio import strip_dir, write_chunk, delete_file
 from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.safeinput import valid_path
 from shared.validstring import valid_user_path
 
+# The input argument for fileupload files
+
+files_field = 'files[]'
+filename_field = '%sfilename' % files_field
+manual_validation = [files_field, filename_field]
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {
+    defaults = {'action': ['put'],
         }
     return ['html_form', defaults]
 
@@ -76,24 +81,29 @@ def parse_form_upload(user_args, client_id, configuration):
 
     # TMP! only support single filename and chunk for now
     #for name_index in xrange(max_upload_files):
-    #    if user_args.has_key('files[]filename') and \
-    #           len(user_args['files[]filename']) > name_index:
+    #    if user_args.has_key(filename_field) and \
+    #           len(user_args[filename_field]) > name_index:
     for name_index in [0]:
-        if user_args.has_key('files[]filename'):
-            filename = user_args['files[]filename']
+        if user_args.has_key(filename_field):
+            if isinstance(user_args[filename_field], basestring):
+                filename = user_args[filename_field]
+            else:
+                filename = user_args[filename_field][name_index]
+            configuration.logger.info('found name: %s' % filename)
         else:
             # No more files
             break
         #for chunk_index in xrange(max_upload_chunks):
-        #    if user_args.has_key('files[]') and \
-        #           len(user_args['files[]']) > chunk_index:
+        #    if user_args.has_key(files_field) and \
+        #           len(user_args[files_field]) > chunk_index:
         for chunk_index in [0]:
-            if user_args.has_key('files[]'):
-                chunk = user_args['files[]'][chunk_index]
+            if user_args.has_key(files_field):
+                chunk = user_args[files_field][chunk_index]
             else:
                 break
             if not filename.strip():
                 continue
+            configuration.logger.info('find chunk range: %s' % filename)
             (chunk_first, chunk_last) = extract_chunk_region(configuration)
             if len(chunk) > upload_block_size:
                 configuration.logger.error('skip bigger than allowed chunk')
@@ -124,7 +134,8 @@ def main(client_id, user_arguments_dict):
 
     # All non-file fields must be validated
     validate_args = dict([(key, user_arguments_dict.get(key, val)) for \
-                         (key, val) in defaults.items()])
+                         (key, val) in user_arguments_dict.items() if not key \
+                          in manual_validation])
     (validate_status, accepted) = validate_input_and_cert(
         validate_args,
         defaults,
@@ -143,6 +154,9 @@ def main(client_id, user_arguments_dict):
             {'object_type': 'error_text', 'text'
              : 'Only accepting POST requests to prevent unintended updates'})
         return (output_objects, returnvalues.CLIENT_ERROR)
+
+    action = accepted['action'][-1]
+    output_format = accepted['output_format'][-1]
 
     logger.info('parsing upload form in %s' % op_name)
 
@@ -193,8 +207,25 @@ def main(client_id, user_arguments_dict):
 
     logger.info('Looping through files: %s' % \
                 ' '.join([i[0] for i in upload_files]))
+
     chunk_no = 0
     uploaded = []
+
+    # Please refer to https://github.com/blueimp/jQuery-File-Upload/wiki/Setup
+    # for details about the status reply format in the uploadfile output object
+    
+    if action == 'delete':
+        for (rel_path, chunk_tuple) in upload_files:
+            real_path = os.path.realpath(os.path.join(base_dir, rel_path))
+            deleted = delete_file(real_path, logger)
+            uploaded.append({'object_type': 'uploadfile', rel_path: deleted})
+                
+        output_objects.append({'object_type': 'uploadfiles', 'files': uploaded})
+        logger.info('done')
+        return (output_objects, status)
+
+    # Handle actual uploads (action == 'put')
+        
     for (rel_path, chunk_tuple) in upload_files:
         logger.info('handling %s chunk no %d' % (rel_path, chunk_no))
         (chunk, offset, chunk_last) = chunk_tuple
@@ -228,6 +259,11 @@ def main(client_id, user_arguments_dict):
                 {'object_type': 'uploadfile', 'name': rel_path,
                  "size": os.path.getsize(real_path), "url": 
                  os.path.join("/cert_redirect", upload_tmp_dir, rel_path),
+                 "deleteUrl":
+                 "uploadchunked.py?output_format=%s;action=delete;%s=%s;%s=%s"
+                 % (output_format, files_field, rel_path, filename_field,
+                    "dummy"),
+                 'deleteType': 'POST',
                  })
             chunk_no += 1
         else:
