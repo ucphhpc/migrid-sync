@@ -171,7 +171,7 @@ def main(client_id, user_arguments_dict):
         } else {
             disabled = false;            
         }
-        console.log("toggling action buttons: "+disabled+" : "+active_upload);
+        //console.log("toggling action buttons: "+disabled+" : "+active_upload);
         $("#actionbuttons").children("button").prop("disabled", disabled);
     }
 
@@ -220,9 +220,9 @@ def main(client_id, user_arguments_dict):
             data: {"files[]filename": name, "files[]": "dummy"},
             type: "POST"
         });
-        console.log("removing from uploadedfiles");
+        //console.log("removing from uploadedfiles");
         $("#uploadedfiles > div:contains(\'"+name+"\')").remove();
-        console.log("removed");
+        console.log("removed any matching entries from uploadedfiles");
     }
 
     $(document).ready( function() {
@@ -241,11 +241,13 @@ def main(client_id, user_arguments_dict):
              sequentialUploads: sequential,
              maxRetries: 100,
              retryTimeout: 500,
+             /*
              send: function (e, data) {
                  console.log("Send file");
              },
+             */
              submit: function (e, data) {
-                 console.log("Submit file");
+                 //console.log("Submit file");
                  /* Tmp! we preserve pristine data here for resume from scratch */
                  resume_data = data;
                  var $this = $(this);
@@ -277,16 +279,16 @@ def main(client_id, user_arguments_dict):
                  $("#globalprogress").progressbar("option", "value",
                      $("#globalprogress").progressbar("option", "max"));
                  $("#globalprogress > div > span.ui-progressbar-text").html("100%%");
-                 console.log("results: "+data.result);
+                 //console.log("results: "+data.result);
                  $.each(data.result, function (index, obj) {
-                     console.log("result obj: "+index+" "+obj.toSource());
+                     //console.log("result obj: "+index+" "+obj.toSource());
                      if (obj.object_type == "uploadfiles") {
-                         console.log("found files in obj "+index);
+                         //console.log("found files in obj "+index);
                          var files = obj.files;
                          var upload_entry;
-                         console.log("found files: "+index+" "+files.toSource());
+                         //console.log("found files: "+index+" "+files.toSource());
                          $.each(files, function (index, file) {
-                             console.log("found entry in results: "+index+", "+file);
+                             console.log("found file entry in results: "+index);
                              upload_entry = "<div>"+file.name+" <button";
                              upload_entry += " class=\'deletebutton\'> Delete</button>";
                              upload_entry += "</div>";
@@ -295,7 +297,7 @@ def main(client_id, user_arguments_dict):
                                  function() {
                                      deleteUpload(file.name);
                                  });
-                             console.log("inserted upload entry: "+upload_entry);
+                             //console.log("inserted upload entry: "+upload_entry);
                          });
                      }
                  });
@@ -316,8 +318,8 @@ def main(client_id, user_arguments_dict):
                      $("#globalprogress > div > span.ui-progressbar-text").html("0%%");
                      $.each(data.files, function (index, file) {
                          $("#failedfiles").append(file.name+"<br />");
+                         deleteUpload(file.name);
                      });
-                     deleteUpload(file.name);
                  }
              }
          });

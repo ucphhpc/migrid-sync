@@ -103,7 +103,7 @@ def parse_form_upload(user_args, client_id, configuration):
                 break
             if not filename.strip():
                 continue
-            configuration.logger.info('find chunk range: %s' % filename)
+            configuration.logger.debug('find chunk range: %s' % filename)
             (chunk_first, chunk_last) = extract_chunk_region(configuration)
             if len(chunk) > upload_block_size:
                 configuration.logger.error('skip bigger than allowed chunk')
@@ -124,7 +124,7 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
-    logger.info('Extracting input in %s' % op_name)
+    logger.debug('Extracting input in %s' % op_name)
     client_dir = client_id_dir(client_id)
     status = returnvalues.OK
     defaults = signature()[1]
@@ -147,7 +147,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    logger.info('validated input in %s: %s' % (op_name, validate_args.keys()))
+    logger.debug('validated input in %s: %s' % (op_name, validate_args.keys()))
 
     if not correct_handler('POST'):
         output_objects.append(
@@ -218,10 +218,9 @@ def main(client_id, user_arguments_dict):
         for (rel_path, chunk_tuple) in upload_files:
             real_path = os.path.realpath(os.path.join(base_dir, rel_path))
             deleted = delete_file(real_path, logger)
-            uploaded.append({'object_type': 'uploadfile', rel_path: deleted})
-                
+            uploaded.append({'object_type': 'uploadfile', rel_path: deleted})                
         output_objects.append({'object_type': 'uploadfiles', 'files': uploaded})
-        logger.info('done')
+        logger.info('delete done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)
 
     # Handle actual uploads (action == 'put')
@@ -248,7 +247,7 @@ def main(client_id, user_arguments_dict):
                                    " %s)" % rel_path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        logger.info('write %s chunk of size %d' % (rel_path, len(chunk)))
+        logger.debug('write %s chunk of size %d' % (rel_path, len(chunk)))
         if chunk_size == range_size and \
                write_chunk(real_path, chunk, offset, logger, 'r+b'):
             output_objects.append({'object_type': 'text', 'text'
@@ -278,5 +277,5 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'uploadfiles', 'files': uploaded})
 
-    logger.info('done')
+    logger.info('put done: %s' % ' '.join([i[0] for i in upload_files]))
     return (output_objects, status)
