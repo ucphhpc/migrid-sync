@@ -228,7 +228,7 @@ def main(client_id, user_arguments_dict):
             async: false,
             success: function(data, textStatus, jqXHR) {
                 console.log("delete success handler: "+name);
-                console.log("data: "+data.toSource());
+                //console.log("data: "+data.toSource());
                 $.each(data, function (index, obj) {
                     //console.log("delete result obj: "+index+" "+obj.toSource());
                     if (obj.object_type == "uploadfiles") {
@@ -266,7 +266,7 @@ def main(client_id, user_arguments_dict):
             async: false,
             success: function(data, textStatus, jqXHR) {
                 console.log("move success handler: "+name);
-                console.log("data: "+data.toSource());
+                //console.log("data: "+data.toSource());
                 $.each(data, function (index, obj) {
                     //console.log("move result obj: "+index+" "+obj.toSource());
                     if (obj.object_type == "uploadfiles") {
