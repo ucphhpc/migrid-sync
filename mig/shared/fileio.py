@@ -100,6 +100,16 @@ def write_file(content, path, logger, mode='w'):
         return False
 
 
+def get_file_size(path, logger):
+    """Wrapper to handle getsize of path"""
+    logger.debug('getsize on file: %s' % path)
+    try:
+        return os.path.getsize(path)
+    except Exception, err:
+        logger.error('could not get size for %s: %s' % (path, err))
+        result = -1
+
+
 def delete_file(path, logger):
     """Wrapper to handle deletion of path"""
     logger.debug('deleting file: %s' % path)

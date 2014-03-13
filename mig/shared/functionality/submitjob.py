@@ -143,6 +143,7 @@ def main(client_id, user_arguments_dict):
     var active_upload = false;
     var upload_paused = false;
     var resume_data = false;
+    var move_dest = "";
     
     options = %s;
 
@@ -212,27 +213,104 @@ def main(client_id, user_arguments_dict):
         }
     }
 
-    function deleteUpload(name) {
-        console.log("delete upload: "+name);
+    function deleteUpload(name, dest_dir) {
+        console.log("delete upload: "+name+" "+dest_dir);
+        var deleted = false;
         $.ajax({
             url: url+";action=delete",
             dataType: "json",
-            data: {"files[]filename": name, "files[]": "dummy"},
-            type: "POST"
+            data: {"files[]filename": name, "files[]": "dummy",
+                   "current_dir": dest_dir},
+            type: "POST",
+            async: false,
+            success: function(data, textStatus, jqXHR) {
+                console.log("delete success handler: "+name);
+                console.log("data: "+data.toSource());
+                $.each(data, function (index, obj) {
+                    //console.log("delete result obj: "+index+" "+obj.toSource());
+                    if (obj.object_type == "uploadfiles") {
+                        //console.log("found files in obj "+index);
+                        var files = obj.files;
+                        $.each(files, function (index, file) {
+                            console.log("found file entry in results: "+index);
+                            if (file.error != undefined) {
+                                console.log("found file error: "+file.error);
+                            } else if (file[name]) {
+                                console.log("found success marker: "+file[name]);
+                                deleted = true;
+                            }
+                            return false;
+                        });
+                    }
+                });
+            }
         });
         //console.log("removing from uploadedfiles");
-        $("#uploadedfiles > div:contains(\'"+name+"\')").remove();
+        $("#uploadedfiles > div:contains(\'(upload-cache)/"+name+"\')").remove();
         console.log("removed any matching entries from uploadedfiles");
+        return deleted;
     }
 
+    function moveUpload(name, dest_dir) {
+        console.log("move upload: "+name+" to "+dest_dir);
+        var moved = false;
+        $.ajax({
+            url: url+";action=move",
+            dataType: "json",
+            data: {"files[]filename": name, "files[]": "dummy",
+                   "current_dir": dest_dir},
+            type: "POST",
+            async: false,
+            success: function(data, textStatus, jqXHR) {
+                console.log("move success handler: "+name);
+                console.log("data: "+data.toSource());
+                $.each(data, function (index, obj) {
+                    //console.log("move result obj: "+index+" "+obj.toSource());
+                    if (obj.object_type == "uploadfiles") {
+                        //console.log("found files in obj "+index);
+                        var files = obj.files;
+                        $.each(files, function (index, file) {
+                            console.log("found file entry in results: "+index);
+                            if (file.error != undefined) {
+                                console.log("found file error: "+file.error);
+                            } else if (file[name]) {
+                                console.log("found success marker: "+file[name]);
+                                moved = true;
+                            }
+                            return false;
+                        });
+                    }
+                });
+            }
+        });
+        console.log("move status: "+moved);
+        return moved;
+    }
+
+    function clearUploads() {
+        console.log("clear uploads list");
+        $("#uploadedfiles").empty();
+        $("#recentupload").hide();        
+    }
+
+    function clearFailed() {
+        console.log("clear failed uploads list");
+        $("#failedfiles").empty();
+        $("#recentfail").hide();
+    }
+    
     $(document).ready( function() {
          switchTo("%s");
 
          $("#globalprogress").progressbar({value: 0});
          $("#globalprogress > div").html("<span class=\'ui-progressbar-text\'>0%%</span>");
          toggleActions(false);
+         $("#recentupload").hide();
+         $("#recentfail").hide();
          $("#pauseupload").click(pauseUpload);
          $("#cancelupload").click(cancelUpload);
+         $("#clearuploads").click(clearUploads);
+         $("#clearfailed").click(clearFailed);
 
          $("#basicfileupload").fileupload({
              url: url+";action=put",
@@ -250,6 +328,7 @@ def main(client_id, user_arguments_dict):
                  //console.log("Submit file");
                  /* Tmp! we preserve pristine data here for resume from scratch */
                  resume_data = data;
+                 move_dest = $("#basicfileuploaddest").val();
                  var $this = $(this);
                  $.each(data.files, function (index, file) {
                      console.log("Send file: " + file.name);
@@ -289,13 +368,27 @@ def main(client_id, user_arguments_dict):
                          //console.log("found files: "+index+" "+files.toSource());
                          $.each(files, function (index, file) {
                              console.log("found file entry in results: "+index);
-                             upload_entry = "<div>"+file.name+" <button";
-                             upload_entry += " class=\'deletebutton\'> Delete</button>";
+                             var dst = "(upload-cache)"
+                             if (file.error != undefined) {
+                                 console.log("found file error: "+file.error);
+                                 $("#recentfail").show();
+                                 $("#failedfiles").append(file.name+" ("+file.error+")<br />");
+                                 deleteUpload(file.name);
+                                 return false;
+                             } else if (move_dest && moveUpload(file.name, move_dest)) {
+                                 dst = move_dest;
+                             }
+                             $("#recentupload").show();
+                             upload_entry = "<div>"+dst+"/"+file.name;
+                             del_btn = "<button class=\'deletebutton\'>Delete</button>";
+                             if (move_dest == "") {
+                                 upload_entry += del_btn;
+                             }
                              upload_entry += "</div>";
                              $("#uploadedfiles").append(upload_entry);
-                             $("#uploadedfiles > div:contains(\'"+file.name+"\')").click(
+                             $("#uploadedfiles > div:contains(\'"+file.name+"\') > button").click(
                                  function() {
-                                     deleteUpload(file.name);
+                                     deleteUpload(file.name, move_dest);
                                  });
                              //console.log("inserted upload entry: "+upload_entry);
                          });
@@ -316,8 +409,9 @@ def main(client_id, user_arguments_dict):
                      $("#globalprogress").progressbar("option", "value",
                          $("#globalprogress").progressbar("option", "min"));
                      $("#globalprogress > div > span.ui-progressbar-text").html("0%%");
+                     $("#recentfail").show();
                      $.each(data.files, function (index, file) {
-                         $("#failedfiles").append(file.name+"<br />");
+                         $("#failedfiles").append(file.name+" ("+file.error+")<br />");
                          deleteUpload(file.name);
                      });
                  }
@@ -562,7 +656,7 @@ are supplied: thus we simply send a bogus jobname which does nothing
                           : """
 <table class='files'>
 <tr class=title><td class=centertext colspan=4>
-Upload file
+Upload job files
 </td></tr>
 <tr><td colspan=4>
 Upload file to current directory (%(dest_dir)s)
@@ -597,8 +691,10 @@ Optional remote filename (extra useful in windows)
 <tr class=title><td class=centertext colspan=4>
 Upload other files efficiently (using chunking).
 </td></tr>
-<tr><td colspan=4>
-Upload file to current directory (%(dest_dir)s)
+<tr><td colspan=2>
+Upload file to upload cache with optional move to this destination dir:
+</td><td class=righttext colspan=2>
+<input id='basicfileuploaddest' type='text' size=60 value=''>
 </td></tr>
 <tr><td>    
 File to upload
@@ -615,14 +711,18 @@ File to upload
 <button id='cancelupload'>Cancel</button>
 </div>
 <br />
-<b>Uploaded files:</b>
+<div id='recentupload'>
+<b>Recently uploaded files:</b> <button id='clearuploads'>Clear</button>
 <div id='uploadedfiles'>
 <!-- dynamically filled by javascript after uploads -->
 </div>
+</div>
 <br />
-<b>Failed files:</b>
+<div id='recentfail'>
+<b>Recently failed uploads:</b> <button id='clearfailed'>Clear</button>
 <div id='failedfiles'>
 <!-- dynamically filled by javascript after uploads -->
+</div>
 </div>
 </td></tr>
 </table>
