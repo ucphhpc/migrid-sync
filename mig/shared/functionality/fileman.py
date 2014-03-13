@@ -107,6 +107,9 @@ def html_tmpl(configuration):
     <li class="create">
       <a href="#create">Create File</a>
     </li>
+    <li class="uploadchunked">
+      <a href="#uploadchunked">Upload File in Chunks</a>
+    </li>
     <li class="upload">
       <a href="#upload">Upload File</a>
     </li>
@@ -169,6 +172,40 @@ def html_tmpl(configuration):
 
   <div id="cmd_dialog" title="Command output" style="display: none;"></div>
 
+  <div id="uploadchunked_dialog" title="Upload File" style="display: none;">
+
+    <fieldset>
+      <label for="basicfileupload">Optional final destination dir:</label>
+      <input id="basicfileuploaddest" type="text" size=60 value="">
+      
+      <label for="basicfileupload">File:</label>
+      <input id="basicfileupload" type="file" name="files[]" multiple>
+    </fieldset>
+
+    <!-- The global progress bar area-->
+    <div id="uploadfiles" class="uploadfiles">
+      <div id="globalprogress" class="uploadprogress"></div>
+      <div id="actionbuttons">
+        <button id="pauseupload">Pause/Resume</button>
+        <button id="cancelupload">Cancel</button>
+      </div>
+      <br />
+      <div id="recentupload">
+        <b>Recently uploaded files:</b> <button id="clearuploads">Clear</button>
+        <div id="uploadedfiles">
+          <!-- dynamically filled by javascript after uploads -->
+        </div>
+      </div>
+      <br />
+      <div id="recentfail">
+        <b>Recently failed uploads:</b> <button id="clearfailed">Clear</button>
+        <div id="failedfiles">
+          <!-- dynamically filled by javascript after uploads -->
+        </div>
+      </div>
+    <div id="uploadchunked_output"></div>
+  </div>
+      
   <div id="upload_dialog" title="Upload File" style="display: none;">
   
     <form id="upload_form" enctype="multipart/form-data" method="post" action="textarea.py">
@@ -257,6 +294,7 @@ def js_tmpl(entry_path='/'):
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.xbreadcrumbs.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fmbreadcrumbs.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.custom.css" media="screen"/>
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
@@ -267,6 +305,7 @@ def js_tmpl(entry_path='/'):
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
 <script type="text/javascript" src="/images/js/jquery.xbreadcrumbs.js"></script>
+<script type="text/javascript" src="/images/js/jquery.fileupload.js"></script>
 '''
   js += advanced_editor_deps(include_jquery=False)
   js += lock_info('this file', -1)
