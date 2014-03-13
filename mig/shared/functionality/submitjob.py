@@ -209,6 +209,9 @@ def main(client_id, user_arguments_dict):
         } else {
             active_upload.abort();
             console.log("cancel sent");
+            upload_paused = false;
+            resume_data = false;
+            $("#pauseupload").text("Pause");
             toggleActions(false);
         }
     }
