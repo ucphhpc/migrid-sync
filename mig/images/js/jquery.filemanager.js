@@ -1427,10 +1427,13 @@ function mig_uploadchunked_init(name, callback) {
                  return false;
              }, 
              progressall: function (e, data) {
-                var progress = parseInt(data.loaded / data.total * 100, 10);
-                $("#globalprogress").progressbar("option", "value", progress);
-                $("#globalprogress > div.progress-label").html(progress+"%");
-                console.log("progress is "+progress);
+                var total_percent = parseInt(data.loaded / data.total * 100, 10);
+                var kbitrate = parseInt(data.bitrate / 1000, 10);
+                var progress = data.loaded + " of " + data.total + " bytes ";
+		progress += "("+ total_percent + "%) at "+kbitrate+" Kbit/s";
+                $("#globalprogress").progressbar("option", "value", total_percent);
+                $("#globalprogress > div.progress-label").html(progress);
+                console.log("progress: "+progress);
              },
              done: function (e, data) {
                  console.log("upload done");
