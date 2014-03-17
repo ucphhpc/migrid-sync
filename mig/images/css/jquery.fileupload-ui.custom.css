@@ -25,11 +25,19 @@
     transition: width 0.5s;
     -webkit-transition: width 0.5s;
 }
-.ui-progressbar-text {
-    height: 100%;
-    float: right;
-    margin-right: 4px;
-    padding: 2px;
+.progress-label {
+    position: absolute;
+    width: 100%;
+    left: 0px;
+    right: 0px;
+    text-align: center;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    font-weight: bold;
+    text-shadow: 1px 1px 0 #fff;
+}
+.progress-label.paused {
+    opacity: 0.5;
 }
 
 .btn-select {

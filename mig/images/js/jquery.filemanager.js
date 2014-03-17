@@ -416,7 +416,7 @@ if (jQuery) (function($){
                     remote_path = './'+remote_path;
                 }
 	        console.log("uploadchunked open dialog with dest dir: "+remote_path);
-		open_dialog("Upload files with Chunking", 
+		open_dialog("Upload Files in Chunks", 
 		                      function () {
 			                  $(".fm_files").parent().reload('');
 		                      }, remote_path);
@@ -1216,6 +1216,7 @@ function mig_uploadchunked_init(name, callback) {
             console.log("no active upload to pause");
         } else if (upload_paused && resume_data) {
             console.log("resume active upload");
+	    $("#globalprogress > div.progress-label").removeClass("paused");
             upload_paused = false;
             console.log("TODO: resume from existing instead of restarting");
             resume_data.uploadedBytes = 0;
@@ -1225,6 +1226,7 @@ function mig_uploadchunked_init(name, callback) {
             $("#pauseupload").text("Pause");
         } else {
             console.log("TODO: pause active upload");
+            $("#globalprogress > div.progress-label").addClass("paused");
             upload_paused = true;
             active_upload.abort();
             $("#pauseupload").text("Resume");
@@ -1241,6 +1243,8 @@ function mig_uploadchunked_init(name, callback) {
             upload_paused = false;
             resume_data = false;
             $("#pauseupload").text("Pause");
+	    $("#globalprogress > div.progress-label").removeClass("paused");
+	    $("#globalprogress > div.progress-label").html("= aborted =");
             toggleActions(false);
         }
     }
@@ -1367,8 +1371,8 @@ function mig_uploadchunked_init(name, callback) {
 
         console.log("mig_uploadchunked_init do_d fileupload pre-setup");
 
+         $("#globalprogress").html("<div class=\'progress-label\'>= ready =</div>");
          $("#globalprogress").progressbar({value: 0});
-         $("#globalprogress > div").html("<span class=\'ui-progressbar-text\'>0%%</span>");
          toggleActions(false);
          $("#recentupload").hide();
          $("#recentfail").hide();
@@ -1416,7 +1420,7 @@ function mig_uploadchunked_init(name, callback) {
              progressall: function (e, data) {
                 var progress = parseInt(data.loaded / data.total * 100, 10);
                 $("#globalprogress").progressbar("option", "value", progress);
-                $("#globalprogress > div > span.ui-progressbar-text").html(progress+"%%");
+                $("#globalprogress > div.progress-label").html(progress+"%");
                 console.log("progress is "+progress);
              },
              done: function (e, data) {
@@ -1424,7 +1428,7 @@ function mig_uploadchunked_init(name, callback) {
                  resume_data = false;
                  $("#globalprogress").progressbar("option", "value",
                      $("#globalprogress").progressbar("option", "max"));
-                 $("#globalprogress > div > span.ui-progressbar-text").html("100%%");
+                 $("#globalprogress > div.progress-label").html("100%");
                  //console.log("results: "+data.result);
                  $.each(data.result, function (index, obj) {
                      //console.log("result obj: "+index+" "+obj.toSource());
@@ -1475,11 +1479,15 @@ function mig_uploadchunked_init(name, callback) {
                      resume_data = false;
                      $("#globalprogress").progressbar("option", "value",
                          $("#globalprogress").progressbar("option", "min"));
-                     $("#globalprogress > div > span.ui-progressbar-text").html("0%%");
                      $("#recentfail").show();
                      $.each(data.files, function (index, file) {
-                         $("#failedfiles").append(file.name+" ("+file.error+")<br />");
-                         deleteUpload(file.name);
+		         if (file.error != undefined) {
+			     $("#globalprogress > div.progress-label").html("= failed =");
+                     	     $("#failedfiles").append(file.name+" ("+file.error+")<br />");
+                             deleteUpload(file.name);
+			 } else {
+	             	     $("#failedfiles").append(file.name+" (cancelled)<br />");
+			 }
                      });
                  }
              }
