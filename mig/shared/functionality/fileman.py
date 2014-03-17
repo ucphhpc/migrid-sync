@@ -184,7 +184,9 @@ def html_tmpl(configuration):
 
     <!-- The global progress bar area-->
     <div id="uploadfiles" class="uploadfiles">
-      <div id="globalprogress" class="uploadprogress"></div>
+      <div id="globalprogress" class="uploadprogress">
+      <div class="progress-label">= Init =</div>
+      </div>
       <div id="actionbuttons">
         <button id="pauseupload">Pause/Resume</button>
         <button id="cancelupload">Cancel</button>

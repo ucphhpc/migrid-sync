@@ -406,21 +406,17 @@ if (jQuery) (function($){
                 $("#cmd_dialog").dialog('open');
             },
             uploadchunked: function (action, el, pos) {
-	        console.log("uploadchunked handler");
-		var open_dialog = mig_uploadchunked_init("uploadchunked_dialog");
-	        console.log("uploadchunked past init: "+open_dialog);
+                var open_dialog = mig_uploadchunked_init("uploadchunked_dialog");
                 var remote_path = $(el).attr(pathAttribute);
                 if (remote_path == '/') {
                     remote_path = './';                                             
                 } else {
                     remote_path = './'+remote_path;
                 }
-	        console.log("uploadchunked open dialog with dest dir: "+remote_path);
-		open_dialog("Upload Files in Chunks", 
-		                      function () {
-			                  $(".fm_files").parent().reload('');
-		                      }, remote_path);
-	        console.log("uploadchunked handler done");
+                open_dialog("Upload Files in Chunks", 
+                                      function () {
+                                          $(".fm_files").parent().reload('');
+                                      }, remote_path);
             },
             upload: function (action, el, pos) {
                 var remote_path = $(el).attr(pathAttribute);
@@ -1185,15 +1181,31 @@ function local_filechooser_init(name, callback) {
 /* Chunked uploader dialog */
 function mig_uploadchunked_init(name, callback) {
 
-    console.log("mig_uploadchunked_init: "+name, callback);
+    //console.log("mig_uploadchunked_init: "+name, callback);
 
     var url = "uploadchunked.py?output_format=json";
-    var sequential = false;         
+    var sequential = false;
     var active_upload = false;
     var upload_paused = false;
     var resume_data = false;
     var move_dest = "";
     
+    $("#" + name).dialog(
+        // see http://jqueryui.com/docs/dialog/ for options
+          {autoOpen: false,
+           modal: true,
+           width: 800,
+           buttons: {
+                     "Close": function() {
+                                  callback();
+                                  if (active_upload) {
+                                      cancelUpload();
+                                  }
+                                  $("#" + name).dialog("close");
+                              }
+                    }
+          });
+
     function toggleActions(ref) {
         active_upload = ref;
         if (ref == false) {
@@ -1216,7 +1228,7 @@ function mig_uploadchunked_init(name, callback) {
             console.log("no active upload to pause");
         } else if (upload_paused && resume_data) {
             console.log("resume active upload");
-	    $("#globalprogress > div.progress-label").removeClass("paused");
+            $("#globalprogress > div.progress-label").removeClass("paused");
             upload_paused = false;
             console.log("TODO: resume from existing instead of restarting");
             resume_data.uploadedBytes = 0;
@@ -1243,8 +1255,8 @@ function mig_uploadchunked_init(name, callback) {
             upload_paused = false;
             resume_data = false;
             $("#pauseupload").text("Pause");
-	    $("#globalprogress > div.progress-label").removeClass("paused");
-	    $("#globalprogress > div.progress-label").html("= aborted =");
+            $("#globalprogress > div.progress-label").removeClass("paused");
+            $("#globalprogress > div.progress-label").html("= aborted =");
             toggleActions(false);
         }
     }
@@ -1268,7 +1280,7 @@ function mig_uploadchunked_init(name, callback) {
                         //console.log("found files in obj "+index);
                         var files = obj.files;
                         $.each(files, function (index, file) {
-                            console.log("found file entry in results: "+index);
+                            //console.log("found file entry in results: "+index);
                             if (file.error != undefined) {
                                 console.log("found file error: "+file.error);
                             } else if (file[name]) {
@@ -1306,7 +1318,7 @@ function mig_uploadchunked_init(name, callback) {
                         //console.log("found files in obj "+index);
                         var files = obj.files;
                         $.each(files, function (index, file) {
-                            console.log("found file entry in results: "+index);
+                            //console.log("found file entry in results: "+index);
                             if (file.error != undefined) {
                                 console.log("found file error: "+file.error);
                             } else if (file[name]) {
@@ -1319,7 +1331,7 @@ function mig_uploadchunked_init(name, callback) {
                 });
             }
         });
-        console.log("move status: "+moved);
+        //console.log("move status: "+moved);
         return moved;
     }
 
@@ -1335,27 +1347,14 @@ function mig_uploadchunked_init(name, callback) {
         $("#recentfail").hide();
     }
     
-    $("#" + name).dialog(
-        // see http://jqueryui.com/docs/dialog/ for options
-          {autoOpen: false,
-           modal: true,
-           width: 800,
-           buttons: {
-                     "Close": function() {
-                                  callback();
-                                  $("#" + name).dialog("close");
-                              }
-                    }
-          });
-
     var do_d = function(text, action, dest_dir) {
 
-        console.log("mig_uploadchunked_init do_d: "+text);
+        console.log("mig_uploadchunked_init do_d: "+text+", "+action+", "+dest_dir);
 
         // save and restore original callback
         var c = callback;
 
-        console.log("mig_uploadchunked_init init dialog on: "+$("#"+name));
+        //console.log("mig_uploadchunked_init init dialog on: "+$("#"+name));
         $("#" + name).dialog("option", "title", text);
 
         if (action == undefined) {
@@ -1366,23 +1365,25 @@ function mig_uploadchunked_init(name, callback) {
                                  callback = c;
                                };
 
-        console.log("mig_uploadchunked_init do_d open: ");
+        //console.log("mig_uploadchunked_init do_d open");
         $("#" + name).dialog("open");
 
-        console.log("mig_uploadchunked_init do_d fileupload pre-setup");
+        //console.log("mig_uploadchunked_init do_d fileupload pre-setup");
 
-         $("#globalprogress").html("<div class=\'progress-label\'>= ready =</div>");
-         $("#globalprogress").progressbar({value: 0});
-         toggleActions(false);
-         $("#recentupload").hide();
-         $("#recentfail").hide();
-         $("#pauseupload").click(pauseUpload);
-         $("#cancelupload").click(cancelUpload);
-         $("#clearuploads").click(clearUploads);
-         $("#clearfailed").click(clearFailed);
+        $("#globalprogress").progressbar({value: 0});
+        $("#globalprogress > div.progress-label").html("= ready =");
+        toggleActions(false);
+        clearUploads();
+        clearFailed();
+        $("#recentupload").hide();
+        $("#recentfail").hide();
+        $("#pauseupload").click(pauseUpload);
+        $("#cancelupload").click(cancelUpload);
+        $("#clearuploads").click(clearUploads);
+        $("#clearfailed").click(clearFailed);
 
-        console.log("mig_uploadchunked_init do_d fileupload setup: "+dest_dir);
-	$("#basicfileuploaddest").val(dest_dir);
+        //console.log("mig_uploadchunked_init do_d fileupload setup: "+dest_dir);
+        $("#basicfileuploaddest").val(dest_dir);
         $("#basicfileupload").fileupload({
              url: url+";action=put",
              dataType: "json",
@@ -1397,6 +1398,8 @@ function mig_uploadchunked_init(name, callback) {
              */
              submit: function (e, data) {
                  //console.log("Submit file");
+                 $("#globalprogress").progressbar("option", "value",
+                     $("#globalprogress").progressbar("option", "min"));
                  /* Tmp! we preserve pristine data here for resume from scratch */
                  resume_data = data;
                  move_dest = $("#basicfileuploaddest").val();
@@ -1438,7 +1441,7 @@ function mig_uploadchunked_init(name, callback) {
                          var upload_entry;
                          //console.log("found files: "+index+" "+files.toSource());
                          $.each(files, function (index, file) {
-                             console.log("found file entry in results: "+index);
+                             //console.log("found file entry in results: "+index);
                              var dst = "(upload-cache)"
                              if (file.error != undefined) {
                                  console.log("found file error: "+file.error);
@@ -1467,7 +1470,7 @@ function mig_uploadchunked_init(name, callback) {
                  });
                  /* clear active*/
                  toggleActions(false);
-                 console.log("after done handling: "+$("#uploadedfiles"));
+                 //console.log("after done handling: "+$("#uploadedfiles"));
              },
              fail: function (e, data) {
                  if (upload_paused) {
@@ -1481,21 +1484,18 @@ function mig_uploadchunked_init(name, callback) {
                          $("#globalprogress").progressbar("option", "min"));
                      $("#recentfail").show();
                      $.each(data.files, function (index, file) {
-		         if (file.error != undefined) {
-			     $("#globalprogress > div.progress-label").html("= failed =");
-                     	     $("#failedfiles").append(file.name+" ("+file.error+")<br />");
+                         if (file.error != undefined) {
+                             $("#globalprogress > div.progress-label").html("= failed =");
+                             $("#failedfiles").append(file.name+" ("+file.error+")<br />");
                              deleteUpload(file.name);
-			 } else {
-	             	     $("#failedfiles").append(file.name+" (cancelled)<br />");
-			 }
+                         } else {
+                             $("#failedfiles").append(file.name+" (cancelled)<br />");
+                         }
                      });
                  }
              }
          });
-         console.log("mig_uploadchunked_init do_d fileupload post setup");
-
     };
 
-    console.log("mig_uploadchunked_init return do_d");
     return do_d;
 };
