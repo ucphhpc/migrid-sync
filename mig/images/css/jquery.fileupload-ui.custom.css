@@ -22,6 +22,8 @@
     padding: 0px;
     height: 20px;
     border-radius: 4px;
+    transition: width 0.5s;
+    -webkit-transition: width 0.5s;
 }
 .ui-progressbar-text {
     height: 100%;
