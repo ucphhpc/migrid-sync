@@ -1181,6 +1181,10 @@ function local_filechooser_init(name, callback) {
 /* Chunked uploader dialog */
 function mig_uploadchunked_init(name, callback) {
 
+         /* TODO:
+         cancel does not work for multiple file upload
+         */
+
     //console.log("mig_uploadchunked_init: "+name, callback);
 
     var url = "uploadchunked.py?output_format=json";
@@ -1250,6 +1254,8 @@ function mig_uploadchunked_init(name, callback) {
         if (active_upload == false) {
             console.log("no active upload to cancel");
         } else {
+            //console.log("cancel: "+active_upload.toSource());
+            //console.log("cancel resume data: "+resume_data.toSource());
             active_upload.abort();
             console.log("cancel sent");
             upload_paused = false;
@@ -1409,7 +1415,7 @@ function mig_uploadchunked_init(name, callback) {
                  });
                  /* save reference to upload for pause/cancel to use */
                  var req = $this.fileupload("send", data).error(
-                         function (ref, textStatus, errorThrown) {
+                         function (uploadRef, textStatus, errorThrown) {
                              if (errorThrown === "abort") {
                                  console.log("File upload was aborted");
                              } else {
@@ -1431,7 +1437,7 @@ function mig_uploadchunked_init(name, callback) {
                  resume_data = false;
                  $("#globalprogress").progressbar("option", "value",
                      $("#globalprogress").progressbar("option", "max"));
-                 $("#globalprogress > div.progress-label").html("100%");
+                 $("#globalprogress > div.progress-label").html("= complete =");
                  //console.log("results: "+data.result);
                  $.each(data.result, function (index, obj) {
                      //console.log("result obj: "+index+" "+obj.toSource());
