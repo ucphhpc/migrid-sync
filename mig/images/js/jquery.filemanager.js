@@ -704,8 +704,7 @@ if (jQuery) (function($){
                   '<td><div>' + listing[i]['file_info']['created'] + '</div>' +
                   pp_date(listing[i]['file_info']['created']) + '</td>' +
                   '</tr>';
-              $(".fm_files table tbody").append($(entry_html)
-                                                .dblclick(function() { doubleClickEvent(this); }));
+              $(".fm_files table tbody").append(entry_html);
               emptyDir = false;
           }
 
@@ -799,6 +798,18 @@ if (jQuery) (function($){
                         function(action, el, pos) {
                             (options['actions'][action])(action, el, pos);
                         })
+                }, 10);
+            });
+
+	    // Doubleclick actions (including preventing text select on dclick)
+            $("tr.recent.file, tr.recent.directory").each(function() { 
+                var t = $(this); 
+                setTimeout(function() {
+		    t.dblclick(function(event) { doubleClickEvent(this); });
+		    t.mousedown(function(event) { event.preventDefault(); })
+                }, 10);
+                setTimeout(function() {
+		    
                 }, 10);
             });
             
@@ -1218,7 +1229,6 @@ function mig_uploadchunked_init(name, callback) {
          cancel does not work for multiple file upload
          individual uploads with progress and actions?
          start/cancel/delete all support?
-         make files entries clickable without text select
          */
 
     //console.log("mig_uploadchunked_init: "+name, callback);
