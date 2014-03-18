@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resadmin - Administrate a MiG Resource
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -408,6 +408,7 @@ def main(client_id, user_arguments_dict):
     title_entry['javascript'] = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>

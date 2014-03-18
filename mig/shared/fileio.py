@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# fileio - [insert a few words of module description on this line]
+# fileio - wrappers to keep file I/O in a single replaceable module
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -287,6 +287,56 @@ def move(src, dst):
     """
     return shutil.move(src, dst)
 
+def _move_helper(src, dst, configuration, recursive):
+    """Move a file/dir to dst where dst must be a new file/dir path and the
+    parent dir is created if necessary. The recursive flag is used to enable
+    recursion.
+    """
+    dst_dir = os.path.dirname(dst)
+    try:
+        os.makedirs(dst_dir)
+    except:
+        # probably already exists
+        pass
+    try:
+        # Always use the same recursive move
+        shutil.move(src, dst)
+    except Exception, exc:
+        return (False, "move failed: %s" % exc)
+    return (True, "")
+
+def move_file(src, dst, configuration):
+    """Move a file from src to dst where dst must be a new file path and
+    the parent dir is created if necessary.
+    """
+    return _move_helper(src, dst, configuration, False)
+
+def move_rec(src, dst, configuration):
+    """Move a dir recursively to dst where dst must be a new dir path and the
+    parent dir is created if necessary.
+    """
+    return _move_helper(src, dst, configuration, True)
+
+def _copy_helper(src, dst, configuration, recursive):
+    """Copy a file or directory from src to dst where dst must be a new
+    file/dir path and the parent dir is created if necessary. The recursive
+    flag enables recursive copy.
+    """
+    dst_dir = os.path.dirname(dst)
+    try:
+        os.makedirs(dst_dir)
+    except:
+        # probably already exists
+        pass
+    try:
+        if recursive:
+            shutil.copytree(src, dst)
+        else:
+            shutil.copy(src, dst)
+    except Exception, exc:
+        return (False, "copy failed: %s" % exc)
+    return (True, "")
+
 def copy(src, dst):
     """Copy a file from src to dst where dst my be a directory"""
     return shutil.copy(src, dst)
@@ -295,33 +345,13 @@ def copy_file(src, dst, configuration):
     """Copy a file from src to dst where dst must be a new file path and
     the parent dir is created if necessary.
     """
-    dst_dir = os.path.dirname(dst)
-    try:
-        os.makedirs(dst_dir)
-    except:
-        # probably already exists
-        pass
-    try:
-        shutil.copy(src, dst)
-    except Exception, exc:
-        return (False, "copy failed: %s" % exc)
-    return (True, "")
+    return _copy_helper(src, dst, configuration, False)
 
 def copy_rec(src, dst, configuration):
     """Copy a dir recursively to dst where dst must be a new dir path and the
     parent dir is created if necessary.
     """
-    dst_dir = os.path.dirname(dst)
-    try:
-        os.makedirs(dst_dir)
-    except:
-        # probably already exists
-        pass
-    try:
-        shutil.copytree(src, dst)
-    except Exception, exc:
-        return (False, "copy failed: %s" % exc)
-    return (True, "")
+    return _copy_helper(src, dst, configuration, True)
 
 def write_zipfile(zip_path, paths, archive_base=''):
     """Write each of the files/dirs in paths to a zip file with zip_path.

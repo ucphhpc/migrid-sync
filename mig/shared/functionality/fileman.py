@@ -5,7 +5,7 @@
 #
 # fileman - File manager UI for browsing and manipulating files and folders
 #
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -175,17 +175,18 @@ def html_tmpl(configuration):
   <div id="uploadchunked_dialog" title="Upload File" style="display: none;">
 
     <fieldset>
-      <label for="basicfileupload">Optional final destination dir:</label>
+      <label id="basicfileuploaddestlabel" for="basicfileupload">
+          Optional final destination dir:
+      </label>
       <input id="basicfileuploaddest" type="text" size=60 value="">
       
       <label for="basicfileupload">File:</label>
       <input id="basicfileupload" type="file" name="files[]" multiple>
     </fieldset>
 
-    <!-- The global progress bar area-->
     <div id="uploadfiles" class="uploadfiles">
       <div id="globalprogress" class="uploadprogress">
-      <div class="progress-label">= Init =</div>
+        <div class="progress-label">= Init =</div>
       </div>
       <div id="actionbuttons">
         <button id="pauseupload">Pause/Resume</button>
@@ -205,7 +206,8 @@ def html_tmpl(configuration):
           <!-- dynamically filled by javascript after uploads -->
         </div>
       </div>
-    <div id="uploadchunked_output"></div>
+      <div id="uploadchunked_output"></div>
+    </div>
   </div>
       
   <div id="upload_dialog" title="Upload File" style="display: none;">

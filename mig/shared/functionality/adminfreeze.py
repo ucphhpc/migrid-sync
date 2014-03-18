@@ -67,8 +67,10 @@ def main(client_id, user_arguments_dict):
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.contextmenu.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.xbreadcrumbs.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fmbreadcrumbs.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.custom.css" media="screen"/>
 
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
@@ -80,12 +82,16 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
 <script type="text/javascript" src="/images/js/jquery.xbreadcrumbs.js"></script>
+<script type="text/javascript" src="/images/js/jquery.fileupload.js"></script>
 
 <script type="text/javascript" >
 
 var copy_fields = 0;
 var upload_fields = 0;
-var open_chooser;
+var open_file_chooser;
+var open_upload_dialog;
+/* default upload destination */
+var remote_path = "";
 
 function add_copy(div_id) {
     var field_id = "freeze_copy_"+copy_fields;
@@ -104,7 +110,7 @@ function add_copy(div_id) {
 
     $("#"+div_id).append(copy_entry);
     $("#"+field_id).click(function() {
-        open_chooser("Add file(s)", function(file) {
+        open_file_chooser("Add file(s)", function(file) {
                 $("#"+field_id).val(file);
             });
     });
@@ -116,18 +122,33 @@ function add_copy(div_id) {
 }
 
 function add_upload(div_id) {
-    var field_id = "freeze_upload_"+upload_fields;
-    var field_name = "freeze_upload_"+upload_fields;
-    var wrap_id = field_id+"_wrap";
-    upload_entry = "<span id=\'"+wrap_id+"\'>";
-    upload_entry += "<input type=\'button\' value=\'Remove\' ";
-    upload_entry += " onClick=\'remove_field(\"+wrap_id+\");\'/>";
-    upload_entry += "<input type=\'file\' id=\'"+field_id+"\' ";
-    upload_entry += " name=\'" + field_name + "\' size=50 /><br / >";
-    upload_entry += "</span>";
-    $("#"+div_id).append(upload_entry);
-    $("#"+field_id).click();
-    upload_fields += 1;
+    var field_id, field_name, wrap_id, path, on_remove;
+    open_upload_dialog("Upload Files in Chunks", function() {
+            console.log("in upload callback");
+            $("#uploadedfiles > div > span:contains(\'(upload-cache)/\')").each(
+                function(index) {
+                    console.log("callback for upload item no. "+index);
+                    path = $(this).text().replace(\'(upload-cache)/\', \'\');
+                    console.log("callback for upload path "+path);
+                    field_id = "freeze_move_"+upload_fields;
+                    field_name = "freeze_move_"+upload_fields;
+                    wrap_id = field_id+"_wrap";
+                    on_remove = "";
+                    on_remove += "remove_field("+wrap_id+");";
+                    on_remove += "$.fn.delete_upload(\\""+path+"\\");";
+                    upload_entry = "<span id=\'"+wrap_id+"\'>";
+                    upload_entry += "<input type=\'button\' value=\'Remove\' ";
+                    upload_entry += " onClick=\'"+on_remove+"\'/>";
+                    upload_entry += "<input type=\'text\' id=\'"+field_id+"\' ";
+                    upload_entry += " name=\'" + field_name + "\' size=50 ";
+                    upload_entry += "value=\'"+path+"\' /><br / >";
+                    upload_entry += "</span>";
+                    $("#"+div_id).append(upload_entry);
+                    console.log("callback added upload: "+upload_entry);
+                    upload_fields += 1;
+                });
+            console.log("callback done");
+        }, remote_path, true);
 }
 
 function remove_field(field_id) {
@@ -136,10 +157,14 @@ function remove_field(field_id) {
 
 // init file chooser dialogs with directory selction support
 function init_dialogs() {
-    open_chooser = mig_filechooser_init("fm_filechooser",
+    open_file_chooser = mig_filechooser_init("fm_filechooser",
         function(file) {
             return;
         }, false, "/");
+         $("#opendialog").click(openChunkedUpload);
+    open_upload_dialog = mig_uploadchunked_init("uploadchunked_dialog");
+    $("#addfilebutton").click(function() { add_copy(\"copyfiles\"); });
+    $("#adduploadbutton").click(function() { add_upload(\"uploadfiles\"); });
 }
 
 function post_init() {
@@ -165,6 +190,9 @@ function init_page() {
     } else { // other browser, should support onload
         script.onload = post_init;
     }
+}
+
+function openChunkedUpload() {
 }
 
 $(document).ready(function() {
@@ -218,23 +246,60 @@ when filling in the details.'''
             <tbody>
                 <!-- this is a placeholder for contents: do not remove! -->
             </tbody>
-         </table>
-         
+         </table>     
     </div>
     <div class='fm_statusbar'>&nbsp;</div>
+</div>
+<!-- very limited menus here - maybe we should add select all entry? -->
+<ul id='folder_context' class='contextMenu' style='display:none'>
+    <li class='select'>
+        <a href='#select'>Select</a>
+    </li>
+</ul>
+<ul id='file_context' class='contextMenu' style='display:none'>
+    <li class='select'>
+        <a href='#select'>Select</a>
+    </li>
+</ul>
+<div id='cmd_dialog' title='Command output' style='display: none;'></div>
+
+<div id='uploadchunked_dialog' title='Upload File' style='display: none;'>
+  
+    <fieldset>
+        <label id='basicfileuploaddestlabel' for='basicfileupload'>
+            Optional final destination dir:
+        </label>
+        <input id='basicfileuploaddest' type='text' size=60 value=''>
+      
+        <label for='basicfileupload'>File:</label>
+        <input id='basicfileupload' type='file' name='files[]' multiple>
+    </fieldset>
+
+    <div id='uploadfiles' class='uploadfiles'>
+        <div id='globalprogress' class='uploadprogress'>
+          <div class='progress-label'>= Init =</div>
+        </div>
+        <div id='actionbuttons'>
+            <button id='pauseupload'>Pause/Resume</button>
+            <button id='cancelupload'>Cancel</button>
+        </div>
+        <br />
+        <div id='recentupload'>
+            <b>Recently uploaded files:</b> <button id='clearuploads'>Clear</button>
+            <div id='uploadedfiles'>
+                <!-- dynamically filled by javascript after uploads -->
+            </div>
+        </div>
+        <br />
+        <div id='recentfail'>
+            <b>Recently failed uploads:</b> <button id='clearfailed'>Clear</button>
+            <div id='failedfiles'>
+                <!-- dynamically filled by javascript after uploads -->
+            </div>
+        </div>
+        <div id='uploadchunked_output'></div>
     </div>
-    <!-- very limited menus here - maybe we should add select all entry? -->
-    <ul id='folder_context' class='contextMenu' style='display:none'>
-        <li class='select'>
-            <a href='#select'>Select</a>
-        </li>
-    </ul>
-    <ul id='file_context' class='contextMenu' style='display:none'>
-        <li class='select'>
-            <a href='#select'>Select</a>
-        </li>
-    </ul>
-    <div id='cmd_dialog' title='Command output' style='display: none;'></div>
+</div>      
     """
     output_objects.append({'object_type': 'html_form', 'text'
                           : files_form})
@@ -247,10 +312,8 @@ when filling in the details.'''
 <br />
 <div id='freezefiles'>
 <b>Freeze Archive Files:</b>
-<input type='button' value='Add file/directory'
-    onClick='add_copy(\"copyfiles\");'/>
-<input type='button' value='Add upload'
-    onClick='add_upload(\"uploadfiles\");'/>
+<input type='button' id='addfilebutton' value='Add file/directory' />
+<input type='button' id='adduploadbutton' value='Add upload' '/>
 <div id='copyfiles'>
 <!-- Dynamically filled -->
 </div>

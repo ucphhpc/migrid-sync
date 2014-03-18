@@ -1,3 +1,32 @@
+/*
+
+#
+# --- BEGIN_HEADER ---
+#
+# jquery.filemanager - jquery based file manager
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+*/
+
 if (jQuery) (function($){
   
     // Use touchscreen interface without need for right clicking
@@ -416,7 +445,7 @@ if (jQuery) (function($){
                 open_dialog("Upload Files in Chunks", 
                                       function () {
                                           $(".fm_files").parent().reload('');
-                                      }, remote_path);
+                                      }, remote_path, false);
             },
             upload: function (action, el, pos) {
                 var remote_path = $(el).attr(pathAttribute);
@@ -1183,6 +1212,9 @@ function mig_uploadchunked_init(name, callback) {
 
          /* TODO:
          cancel does not work for multiple file upload
+         individual uploads with progress and actions?
+         start/cancel/delete all support?
+         make files entries clickable without text select
          */
 
     //console.log("mig_uploadchunked_init: "+name, callback);
@@ -1215,7 +1247,7 @@ function mig_uploadchunked_init(name, callback) {
         if (ref == false) {
             disabled = true;
         } else {
-            disabled = false;            
+            disabled = false;
         }
         //console.log("toggling action buttons: "+disabled+" : "+active_upload);
         $("#actionbuttons").children("button").prop("disabled", disabled);
@@ -1300,7 +1332,7 @@ function mig_uploadchunked_init(name, callback) {
             }
         });
         //console.log("removing from uploadedfiles");
-        $("#uploadedfiles > div:contains(\'(upload-cache)/"+name+"\')").remove();
+        $("#uploadedfiles > div > span.path:contains(\'(upload-cache)/"+name+"\')").parent().remove();
         console.log("removed any matching entries from uploadedfiles");
         return deleted;
     }
@@ -1341,6 +1373,10 @@ function mig_uploadchunked_init(name, callback) {
         return moved;
     }
 
+    /* expose there helpers in general */
+    $.fn.delete_upload = deleteUpload;
+    $.fn.move_upload = moveUpload;
+
     function clearUploads() {
         console.log("clear uploads list");
         $("#uploadedfiles").empty();
@@ -1353,7 +1389,7 @@ function mig_uploadchunked_init(name, callback) {
         $("#recentfail").hide();
     }
     
-    var do_d = function(text, action, dest_dir) {
+    var do_d = function(text, action, dest_dir, automatic_dest) {
 
         console.log("mig_uploadchunked_init do_d: "+text+", "+action+", "+dest_dir);
 
@@ -1376,6 +1412,13 @@ function mig_uploadchunked_init(name, callback) {
 
         //console.log("mig_uploadchunked_init do_d fileupload pre-setup");
 
+        if (automatic_dest) { 
+            $("#basicfileuploaddestlabel").hide();
+            $("#basicfileuploaddest").hide();
+        } else {
+            $("#basicfileuploaddestlabel").show();
+            $("#basicfileuploaddest").show();
+        }
         $("#globalprogress").progressbar({value: 0});
         $("#globalprogress > div.progress-label").html("= ready =");
         toggleActions(false);
@@ -1430,7 +1473,7 @@ function mig_uploadchunked_init(name, callback) {
                 var total_percent = parseInt(data.loaded / data.total * 100, 10);
                 var kbitrate = parseInt(data.bitrate / 1000, 10);
                 var progress = data.loaded + " of " + data.total + " bytes ";
-		progress += "("+ total_percent + "%) at "+kbitrate+" Kbit/s";
+                progress += "("+ total_percent + "%) at "+kbitrate+" Kbit/s";
                 $("#globalprogress").progressbar("option", "value", total_percent);
                 $("#globalprogress > div.progress-label").html(progress);
                 console.log("progress: "+progress);
@@ -1462,7 +1505,7 @@ function mig_uploadchunked_init(name, callback) {
                                  dst = move_dest;
                              }
                              $("#recentupload").show();
-                             upload_entry = "<div>"+dst+"/"+file.name;
+                             upload_entry = "<div><span class='path'>"+dst+"/"+file.name+"</span>";
                              del_btn = "<button class=\'deletebutton\'>Delete</button>";
                              if (move_dest == "") {
                                  upload_entry += del_btn;

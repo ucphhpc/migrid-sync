@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridforum - Access VGrid private forum for owners and members
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -137,6 +137,7 @@ access the forum.''' % vgrid_name})
 <link rel="stylesheet" href="/images/css/forum.css" type="text/css" />
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
