@@ -117,6 +117,10 @@ if (jQuery) (function($){
         
     }
     
+    $.fn.opendir = function opendir(path) {
+             $(".fm_addressbar input[name='fm_current_path']").val(path);
+             $.fn.reload(path);
+    }
 
     /* extended this by the "clickaction" callback, which can remain undefined...
      * the provided callback will be executed on doubleclick
@@ -579,10 +583,10 @@ if (jQuery) (function($){
                  subdir_name = subdir_path.substring(0, subdir_path.length-1);
                  subdir_name = subdir_name.substring(subdir_name.lastIndexOf('/')+1, subdir_name.length);
              }
-             onclick_action = '$(".fm_addressbar input[name=\'fm_current_path\']").val("'+subdir_path+'");';
-             onclick_action += "$.fn.reload('"+subdir_path+"');";
+             onclick_action = "$.fn.opendir('"+subdir_path+"');return false;";
              entry_html = '  <li '+li_class+'>';
-             entry_html += '    <a href="?path='+subdir_path+'" '+a_class+' onclick="'+onclick_action+';return false;">'+subdir_name+'</a>';
+             entry_html += '    <a href="?path='+subdir_path+'" '+a_class;
+             entry_html += ' onclick="'+onclick_action+'">'+subdir_name+'</a>';
              entry_html += '    <ul>';
              entry_html += '    </ul>';
              entry_html += '  </li>';
