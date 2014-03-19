@@ -67,8 +67,9 @@ def forced_org_email_match(org, email, configuration):
                                '^[a-zA-Z0-9_.+-]+@nbi.dk$',
                                '^[a-zA-Z0-9_.+-]+@fys.ku.dk$']),
                        ('IMF', ['^[a-zA-Z0-9_.+-]+@math.ku.dk$']),
-                       # Keep this KU catch-all last
-                       ('KU', ['^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9_]+.ku.dk$']),
+                       ('DTU', ['^[a-zA-Z0-9_.+-]+@dtu.dk$']),
+                       # Keep this KU catch-all last and do not generalize it!
+                       ('KU', ['^[a-zA-Z0-9_.+-]+@alumni.ku.dk$']),
                        ]
     force_org_email_dict = dict(force_org_email)
     is_forced_email = False
