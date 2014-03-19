@@ -31,6 +31,7 @@ import os
 import time
 import tempfile
 import base64
+import re
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input, REJECT_UNSET
@@ -55,6 +56,48 @@ def signature():
         'comment': [''],
         }
     return ['text', defaults]
+
+def forced_org_email_match(org, email, configuration):
+    """Check that email and organization follow the required policy"""
+
+    logger = configuration.logger
+    # Policy regexps: prioritized order with most general last
+    force_org_email = [('DIKU', ['^[a-zA-Z0-9_.+-]+@diku.dk$']),
+                       ('NBI', ['^[a-zA-Z0-9_.+-]+@nbi.ku.dk$',
+                               '^[a-zA-Z0-9_.+-]+@nbi.dk$',
+                               '^[a-zA-Z0-9_.+-]+@fys.ku.dk$']),
+                       ('IMF', ['^[a-zA-Z0-9_.+-]+@math.ku.dk$']),
+                       # Keep this KU catch-all last
+                       ('KU', ['^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9_]+.ku.dk$']),
+                       ]
+    force_org_email_dict = dict(force_org_email)
+    is_forced_email = False
+    is_forced_org = False
+    if org.upper() in force_org_email_dict.keys():
+        is_forced_org = True
+        # Consistent casing
+        org = org.upper()
+    email_hit = '__BOGUS__'
+    for (forced_org, forced_email_list) in force_org_email:
+        for forced_email in forced_email_list:
+            if re.match(forced_email, email):
+                is_forced_email = True
+                email_hit = forced_email
+                logger.debug('email match on %s vs %s' % (email, forced_email))
+                break
+            
+        # Use first hit to avoid catch-all overriding specific hits
+        if is_forced_email or is_forced_org and org == forced_org:
+            break
+    if is_forced_org != is_forced_email or \
+           not email_hit in force_org_email_dict.get(org, ['__BOGUS__']):
+        logger.error('Illegal email and organization combination: %s' % \
+                     ([email, org, is_forced_org, is_forced_email, \
+                       email_hit, force_org_email_dict.get(org,
+                                                           ['__BOGUS__'])]))
+        return False
+    else:
+        return True
 
 
 def main(client_id, user_arguments_dict):
@@ -113,34 +156,9 @@ def main(client_id, user_arguments_dict):
                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # TODO: move this map and error message to conf
-    
-    force_org_email = {'DIKU': ['@diku.dk'],
-                       'NBI': ['@nbi.ku.dk', '@nbi.dk', '@fys.ku.dk'],
-                       'IMF': ['@math.ku.dk'],
-                       'KU': ['.ku.dk'],
-                       }
-    is_forced_email = False
-    is_forced_org = False
-    email_hit = '__BOGUS__'
-    for (forced_org, forced_email_suffix_list) in force_org_email.items():
-        if forced_org.lower() == org.lower():
+    # TODO: move this check to conf?
 
-            # Consistent casing
-
-            org = forced_org
-            is_forced_org = True
-        for forced_email in forced_email_suffix_list:
-            if email.lower().find(forced_email.lower()) != -1:
-
-                # Consistent casing
-                
-                email = email.lower()
-                is_forced_email = True
-                email_hit = forced_email
-
-    if is_forced_org != is_forced_email or \
-           not email_hit in force_org_email.get(org, ['__BOGUS__']):
+    if not forced_org_email_match(org, email, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : '''Illegal email and organization combination:
 Please read and follow the instructions in red on the request page!
