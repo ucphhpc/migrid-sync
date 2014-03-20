@@ -296,7 +296,13 @@ class ServerHandler(BaseHTTPRequestHandler):
         # and the user should be asked for permission to release
         # it.
         sreg_data = {
-            'nickname':self.user
+            'nickname': self.user,
+            # TODO: load real user data from DB
+            'fullname': 'Some One',
+            'email': 'someone@nowhere.org',
+            'country': 'DK',
+            # Unofficial fields
+            'org': 'Some Organization'
             }
 
         sreg_resp = sreg.SRegResponse.extractResponse(sreg_req, sreg_data)
