@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# cgiscriptstub - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# cgiscriptstub - cgi wrapper functions for functionality backends
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,19 +34,25 @@ cgitb.enable()
 import time
 
 import shared.returnvalues as returnvalues
-from shared.scriptinput import fieldstorage_to_dict
 from shared.conf import get_configuration_object
 from shared.httpsclient import extract_client_id
 from shared.output import format_output
+from shared.scriptinput import fieldstorage_to_dict
+from shared.useradm import get_openid_user_map
 
 def init_cgi_script(delayed_input=None):
     """Shared init"""
     configuration = get_configuration_object()
     logger = configuration.logger
 
-    # get DN of user currently logged in
+    if configuration.user_openid_provider:
+        id_map = get_openid_user_map(configuration)
+    else:
+        id_map = None
+    
+    # get and log ID of user currently logged in
 
-    client_id = extract_client_id()
+    client_id = extract_client_id(id_map)
     logger.info('script: %s cert: %s' % (sys.argv[0], client_id))
     if not delayed_input:
         fieldstorage = cgi.FieldStorage()
@@ -56,10 +62,10 @@ def init_cgi_script(delayed_input=None):
     return (configuration, logger, client_id, user_arguments_dict)
 
 
-def finish_cgi_script(configuration, output_format, ret_code, ret_msg, output_objs):
+def finish_cgi_script(configuration, output_format, ret_code, ret_msg,
+                      output_objs):
     """Shared finalization"""
 
-    logger = configuration.logger
     default_content = 'text/html'
     if 'json' == output_format:
         default_content = 'application/json'
@@ -77,7 +83,8 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg, output_ob
         start_entry['headers'] = default_headers
     headers = start_entry['headers']
 
-    output = format_output(configuration, ret_code, ret_msg, output_objs, output_format)
+    output = format_output(configuration, ret_code, ret_msg, output_objs,
+                           output_format)
     
     # Explicit None means error during output formatting - empty string is okay
 
@@ -94,7 +101,7 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg, output_ob
     print ''
 
     # Print without adding newline
-    
+
     print output,
 
 def run_cgi_script(main, delayed_input=None):

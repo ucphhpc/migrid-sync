@@ -34,7 +34,7 @@ import shutil
 import fnmatch
 import datetime
 
-from shared.base import client_id_dir, sandbox_resource
+from shared.base import client_id_dir, client_alias, sandbox_resource
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.defaults import keyword_auto, ssh_conf_dir, davs_conf_dir, \
@@ -43,7 +43,8 @@ from shared.defaults import keyword_auto, ssh_conf_dir, davs_conf_dir, \
      authpasswords_filename
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
-from shared.refunctions import list_runtime_environments, update_runtimeenv_owner
+from shared.refunctions import list_runtime_environments, \
+     update_runtimeenv_owner
 from shared.pwhash import make_hash, check_hash
 from shared.resource import resource_add_owners, resource_remove_owners
 from shared.serial import load, dump
@@ -629,6 +630,24 @@ def delete_user(
     mark_user_modified(configuration, client_id)
 
 
+def get_openid_user_map(configuration):
+    """Translate user DB to OpenID mapping between a verified login URL and a
+    pseudo certificate DN.
+    """
+    id_map = {}
+    db_path = os.path.join(configuration.mig_code_base, 'server',
+                           'MiG-users.db')
+    user_map = load_user_db(db_path)
+    user_alias = configuration.user_openid_alias
+    for cert_id in user_map.keys():
+        url = configuration.user_openid_provider + client_alias(cert_id)
+        id_map[url] = cert_id
+        if user_alias:
+            short_id = extract_field(cert_id, user_alias)
+            url = configuration.user_openid_provider + client_alias(short_id)
+            id_map[url] = cert_id
+    return id_map
+    
 def migrate_users(
     conf_path,
     db_path,
