@@ -61,7 +61,9 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg, output_ob
 
     logger = configuration.logger
     default_content = 'text/html'
-    if 'html' != output_format:
+    if 'json' == output_format:
+        default_content = 'application/json'
+    elif 'html' != output_format:
         default_content = 'text/plain'
     default_headers = [('Content-Type', default_content)]
     start_entry = None
@@ -82,8 +84,13 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg, output_ob
     if output == None:
         output = 'Output could _not_ be extracted!'
 
+    header_out = ''
     for (key, val) in headers:
-        print "%s: %s" % (key, val)
+        header_out += "%s: %s\n" % (key, val)
+    
+    # configuration.logger.debug("raw output:\n%s\n%s" % (header_out, output))
+    
+    print header_out
     print ''
 
     # Print without adding newline
