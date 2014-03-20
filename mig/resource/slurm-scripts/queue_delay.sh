@@ -4,34 +4,48 @@
 # -node count
 # -walltime (seconds)
 # -user
+# -partition (implicit by MIG_EXEUNIT)
 
-if [ -z "$MIG_MAXNODES" -o -z "$MIG_MAXSECONDS" -o -z "$MIG_SUBMITUSER" ]; then
+if [ -z "$MIG_MAXNODES" -o -z "$MIG_MAXSECONDS" -o -z "$MIG_SUBMITUSER" -o -z "$MIG_EXEUNIT" ]; then
     echo "Usage: $0 [QUEUE_ARGS]"
-    echo "where the environment should provide values for MIG_MAXNODES"
-    echo "MIG_MAXSECONDS and MIG_SUBMITUSER."
+    echo "where the environment should provide values for MIG_MAXNODES,"
+    echo "MIG_MAXSECONDS, MIG_SUBMITUSER and MIG_EXEUNIT."
     echo "The optional QUEUE_ARGS are passed directly to the queue command(s)."
     exit 1
 fi
 
-# Use NODES, SECONDS and USER to get only matching output lines
-# We return false in case of qselect errors in order to avoid false 
-# positives if PBS daemon is temporarily unavailable
-#backfill=`showbf -n "$MIG_MAXNODES" -d "$MIG_MAXSECONDS" -u "$MIG_SUBMITUSER" $@`
-#query_status=$?
-#echo "$backfill" | grep -E '[1-9][0-9]* procs available' > /dev/null
-#backfill_status=$?
-# No easy showbf equivalent for SLURM - use average estimate
+#PARTITION="$MIG_EXEUNIT"
+
+# We return false in case of sinfo errors in order to avoid false 
+# positives if SLURM daemon is temporarily unavailable
 query_status=0
-backfill_status=1
-if [ $query_status -ne 0 ]; then
-    # Print warning to stderr to avoid interference with output
-    echo "Failed to query SLURM for job delay - aim high" 1>&2
-    DELAY="86400"
-elif [ $backfill_status -eq 0 ]; then
-    # Idle node(s) available - no serious delay (15 mins)
-    DELAY=900
-else
-    # Scale with requested node count
-    DELAY=$(($MIG_MAXNODES*900))
+# Check if partition exist
+if [ `sinfo -h -p "$MIG_EXEUNIT" | wc -l` -eq 0 ]; then
+   query_status=1
 fi
+
+idle_nodes=`sinfo -h -a idle -p "$MIG_EXEUNIT" -o "%A" | awk -F'/' '{print $2}'`
+query_status=$(($query_status+$?))
+
+max_queue_time=`sinfo -h -p "$MIG_EXEUNIT" -o "%l" | \
+                awk -F[:-] '{if (NF == 4) print $1*86400+$2*3600+$3*60+$4; \
+                             else print $1*3600+$2*60+$3}'`
+query_status=$(($query_status+$?))
+
+suspendable=`scontrol show part "$MIG_EXEUNIT" | grep "PreemptMode=SUSPEND" | wc -l`
+query_status=$(($query_status+$?))
+
+if [ $query_status -ne 0 ] || [ $max_queue_time -eq 0 ] || [ $suspendable -gt 0 ]; then
+    # Print warning to stderr to avoid interference with output
+    echo -n "Failed to query SLURM for job delay, " 1>&2
+    echo "infinite queue time or suspendalbe queue - aim high" 1>&2
+    DELAY="84600"
+elif [ $idle_nodes -ge $MIG_MAXNODES ]; then
+    # Idle node(s) available - no delay (1 min)
+    DELAY=60
+else
+    # Wait for jobs to finish 
+    DELAY=$max_queue_time
+fi
+
 echo $DELAY

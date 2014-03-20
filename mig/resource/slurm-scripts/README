@@ -1,8 +1,13 @@
-This directory contains SLURM helper scripts that can be 'installed' at the SLURM
-resources in order to simplify the commands used in the LRMSX fields of the
-resource configuration.
-They should preferably be copied to and used from a read-only location on the
-resource, because they should be auto executed as a part of
+This directory contains SLURM helper scripts that can be 'installed' at
+the SLURM resources in order to simplify the commands used in the LRMSX
+fields of the resource configuration.
+They should preferably be copied to and used from a read-only location
+on the resource, because they should be auto executed as a part of
 {leader,master}_node_script.
+
+Please note that the scripts implicitly expects the MiG exe-unit to be
+called the same as the SLURM queue to use. That is, if your slurm queue
+is called 'medium' you should also make an exe unit called 'medium' on
+the MiG resource.
 
 -Jonas
