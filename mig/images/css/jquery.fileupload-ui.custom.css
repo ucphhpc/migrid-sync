@@ -27,6 +27,8 @@
 
 */
 
+/* Basic uploader */
+
 #uploadfiles {
     height: 100%;
     width: 100%;
@@ -36,7 +38,7 @@
     height: 20px;
 }
 
-.uploadprogress {
+.ui-dialog .uploadprogress {
     margin-top: 2px;
     margin-bottom: 2px;
     border-radius: 4px;
@@ -45,7 +47,7 @@
     vertical-align: center;
 }
 
-.ui-progressbar-value {
+.ui-dialog .ui-progressbar-value {
     vertical-align: center;
     margin: 0px;
     padding: 0px;
@@ -54,7 +56,7 @@
     transition: width 0.5s;
     -webkit-transition: width 0.5s;
 }
-.progress-label {
+.ui-dialog .progress-label {
     position: absolute;
     width: 100%;
     left: 0px;
@@ -65,28 +67,53 @@
     font-weight: bold;
     text-shadow: 1px 1px 0 #fff;
 }
-.progress-label.paused {
+.ui-dialog .progress-label.paused {
     opacity: 0.5;
 }
 
-.btn-select {
-    color: #FFF;
-    background-color: #428BCA;
-    border-color: #357EBD;
+
+/* Fancy uploader */
+
+.uploadfileslist {
+    width: 200px;
+    height: 20px;
 }
-.btn {
-    display: inline-block;
-    padding: 6px 12px;
-    margin-bottom: 0px;
-    font-size: 14px;
-    font-weight: normal;
-    line-height: 1.42857;
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: middle;
-    cursor: pointer;
-    background-image: none;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    -moz-user-select: none;
+
+/* force touch default theme background for progressbars */
+.fileupload-buttonbar .ui-progressbar-value {
+    background: url('images/ui-bg_gloss-wave_75_2191c0_500x100.png') repeat-x scroll 50% 50% #2191C0;
 }
+.uploadfileslist .ui-progressbar-value {
+    background: url('images/ui-bg_gloss-wave_75_2191c0_500x100.png') repeat-x scroll 50% 50% #2191C0;
+}
+
+.uploadfileslist .fade {
+    display: none;
+}
+
+.fileupload-loading {
+    position: absolute;
+    left: 50%;
+    width: 128px;
+    height: 128px;
+    background: url(/images/css/images/animate-overlay.gif) center no-repeat;
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .uploadfileslist .preview * {
+	width: 40px;
+    }
+    .uploadfileslist .name * {
+	width: 80px;
+	display: inline-block;
+	word-wrap: break-word;
+    }
+    .uploadfileslist .progress {
+	width: 20px;
+    }
+    .uploadfileslist .delete {
+	width: 60px;
+    }
+}
+

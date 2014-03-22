@@ -1565,3 +1565,347 @@ function mig_uploadchunked_init(name, callback) {
 
     return do_d;
 };
+
+/* Fancy chunked uploader dialog */
+function mig_fancyupload_init(name, callback) {
+
+         /* TODO:
+         cancel does not work for multiple file upload
+         individual uploads with progress and actions?
+         start/cancel/delete all support?
+         */
+
+    //console.log("mig_fancyupload_init: "+name, callback);
+
+    var url = "uploadchunked.py?output_format=json";
+    var sequential = false;
+    var active_upload = false;
+    var upload_paused = false;
+    var resume_data = false;
+    var move_dest = "";
+    
+    $("#" + name).dialog(
+        // see http://jqueryui.com/docs/dialog/ for options
+          {autoOpen: false,
+           modal: true,
+           width: 800,
+           buttons: {
+                     "Close": function() {
+                                  callback();
+                                  if (active_upload) {
+                                      cancelUpload();
+                                  }
+                                  $("#" + name).dialog("close");
+                              }
+                    }
+          });
+
+    function toggleActions(ref) {
+        active_upload = ref;
+        if (ref == false) {
+            disabled = true;
+        } else {
+            disabled = false;
+        }
+        //console.log("toggling action buttons: "+disabled+" : "+active_upload);
+        $("#actionbuttons").children("button").prop("disabled", disabled);
+    }
+
+    function pauseUpload() {
+        /* fileupload does not include explicit pause/resume but we can abort
+         and use the resume trick from:
+         https://github.com/blueimp/jQuery-File-Upload/wiki/Chunked-file-uploads
+         */
+         /* TODO: implement properly */
+        console.log("pause upload: "+active_upload+" "+upload_paused);
+        if (active_upload == false) {
+            console.log("no active upload to pause");
+        } else if (upload_paused && resume_data) {
+            console.log("resume active upload");
+            $("#globalprogress > div.progress-label").removeClass("paused");
+            upload_paused = false;
+            console.log("TODO: resume from existing instead of restarting");
+            resume_data.uploadedBytes = 0;
+            resume_data.data = null;
+            //console.log("resume data: "+resume_data.toSource());
+            resume_data.submit();
+            $("#pauseupload").text("Pause");
+        } else {
+            console.log("TODO: pause active upload");
+            $("#globalprogress > div.progress-label").addClass("paused");
+            upload_paused = true;
+            active_upload.abort();
+            $("#pauseupload").text("Resume");
+        }
+    }
+
+    function cancelUpload() {
+        console.log("cancel upload: "+active_upload);
+        if (active_upload == false) {
+            console.log("no active upload to cancel");
+        } else {
+            //console.log("cancel: "+active_upload.toSource());
+            //console.log("cancel resume data: "+resume_data.toSource());
+            active_upload.abort();
+            console.log("cancel sent");
+            upload_paused = false;
+            resume_data = false;
+            $("#pauseupload").text("Pause");
+            $("#globalprogress > div.progress-label").removeClass("paused");
+            $("#globalprogress > div.progress-label").html("= aborted =");
+            toggleActions(false);
+        }
+    }
+
+    function deleteUpload(name, dest_dir) {
+        console.log("delete upload: "+name+" "+dest_dir);
+        var deleted = false;
+        $.ajax({
+            url: url+";action=delete",
+            dataType: "json",
+            data: {"files[]filename": name, "files[]": "dummy",
+                   "current_dir": dest_dir},
+            type: "POST",
+            async: false,
+            success: function(data, textStatus, jqXHR) {
+                console.log("delete success handler: "+name);
+                //console.log("data: "+data.toSource());
+                $.each(data, function (index, obj) {
+                    //console.log("delete result obj: "+index+" "+obj.toSource());
+                    if (obj.object_type == "uploadfiles") {
+                        //console.log("found files in obj "+index);
+                        var files = obj.files;
+                        $.each(files, function (index, file) {
+                            //console.log("found file entry in results: "+index);
+                            if (file.error != undefined) {
+                                console.log("found file error: "+file.error);
+                            } else if (file[name]) {
+                                console.log("found success marker: "+file[name]);
+                                deleted = true;
+                            }
+                            return false;
+                        });
+                    }
+                });
+            }
+        });
+        //console.log("removing from uploadedfiles");
+        $("#uploadedfiles > div > span.path:contains(\'(upload-cache)/"+name+"\')").parent().remove();
+        console.log("removed any matching entries from uploadedfiles");
+        return deleted;
+    }
+
+    function moveUpload(name, dest_dir) {
+        console.log("move upload: "+name+" to "+dest_dir);
+        var moved = false;
+        $.ajax({
+            url: url+";action=move",
+            dataType: "json",
+            data: {"files[]filename": name, "files[]": "dummy",
+                   "current_dir": dest_dir},
+            type: "POST",
+            async: false,
+            success: function(data, textStatus, jqXHR) {
+                console.log("move success handler: "+name);
+                //console.log("data: "+data.toSource());
+                $.each(data, function (index, obj) {
+                    //console.log("move result obj: "+index+" "+obj.toSource());
+                    if (obj.object_type == "uploadfiles") {
+                        //console.log("found files in obj "+index);
+                        var files = obj.files;
+                        $.each(files, function (index, file) {
+                            //console.log("found file entry in results: "+index);
+                            if (file.error != undefined) {
+                                console.log("found file error: "+file.error);
+                            } else if (file[name]) {
+                                console.log("found success marker: "+file[name]);
+                                moved = true;
+                            }
+                            return false;
+                        });
+                    }
+                });
+            }
+        });
+        //console.log("move status: "+moved);
+        return moved;
+    }
+
+    /* expose there helpers in general */
+    $.fn.delete_upload = deleteUpload;
+    $.fn.move_upload = moveUpload;
+
+    function clearUploads() {
+        console.log("clear uploads list");
+        $("#uploadedfiles").empty();
+        $("#recentupload").hide();        
+    }
+
+    function clearFailed() {
+        console.log("clear failed uploads list");
+        $("#failedfiles").empty();
+        $("#recentfail").hide();
+    }
+    
+    var do_d = function(text, action, dest_dir, automatic_dest) {
+
+        console.log("mig_fancyupload_init do_d: "+text+", "+action+", "+dest_dir);
+
+        // save and restore original callback
+        var c = callback;
+
+        //console.log("mig_fancyupload_init init dialog on: "+$("#"+name));
+        $("#" + name).dialog("option", "title", text);
+
+        if (action == undefined) {
+            action = c;
+        }
+
+        callback = function(i) { action(i);
+                                 callback = c;
+                               };
+
+        //console.log("mig_fancyupload_init do_d open");
+        $("#" + name).dialog("open");
+
+        //console.log("mig_fancyupload_init do_d fileupload pre-setup");
+
+        if (automatic_dest) { 
+            $("#fancyfileuploaddestlabel").hide();
+            $("#fancyfileuploaddest").hide();
+        } else {
+            $("#fancyfileuploaddestlabel").show();
+            $("#fancyfileuploaddest").show();
+        }
+        $("#globalprogress").progressbar({value: 0});
+        $("#globalprogress > div.progress-label").html("= ready =");
+        toggleActions(false);
+        clearUploads();
+        clearFailed();
+        $("#recentupload").hide();
+        $("#recentfail").hide();
+        $("#pauseupload").click(pauseUpload);
+        $("#cancelupload").click(cancelUpload);
+        $("#clearuploads").click(clearUploads);
+        $("#clearfailed").click(clearFailed);
+
+        //console.log("mig_fancyupload_init do_d fileupload setup: "+dest_dir);
+        $("#fancyfileuploaddest").val(dest_dir);
+        $("#fancyfileupload").fileupload({
+             url: url+";action=put",
+             dataType: "json",
+             maxChunkSize: 8000000, // 8 MB
+             sequentialUploads: sequential,
+             maxRetries: 100,
+             retryTimeout: 500,
+             /*
+             send: function (e, data) {
+                 console.log("Send file");
+             },
+             */
+             submit: function (e, data) {
+                 //console.log("Submit file");
+                 $("#globalprogress").progressbar("option", "value",
+                     $("#globalprogress").progressbar("option", "min"));
+                 /* Tmp! we preserve pristine data here for resume from scratch */
+                 resume_data = data;
+                 move_dest = $("#fancyfileuploaddest").val();
+                 var $this = $(this);
+                 $.each(data.files, function (index, file) {
+                     console.log("Send file: " + file.name);
+                 });
+                 /* save reference to upload for pause/cancel to use */
+                 var req = $this.fileupload("send", data).error(
+                         function (uploadRef, textStatus, errorThrown) {
+                             if (errorThrown === "abort") {
+                                 console.log("File upload was aborted");
+                             } else {
+                                 console.log("File upload failed: "+textStatus);
+                             }
+                     });
+                 toggleActions(req);
+                 /* Prevent duplicate native send */
+                 return false;
+             }, 
+             progressall: function (e, data) {
+                var total_percent = parseInt(data.loaded / data.total * 100, 10);
+                var kbitrate = parseInt(data.bitrate / 1000, 10);
+                var progress = data.loaded + " of " + data.total + " bytes ";
+                progress += "("+ total_percent + "%) at "+kbitrate+" Kbit/s";
+                $("#globalprogress").progressbar("option", "value", total_percent);
+                $("#globalprogress > div.progress-label").html(progress);
+                console.log("progress: "+progress);
+             },
+             done: function (e, data) {
+                 console.log("upload done");
+                 resume_data = false;
+                 $("#globalprogress").progressbar("option", "value",
+                     $("#globalprogress").progressbar("option", "max"));
+                 $("#globalprogress > div.progress-label").html("= complete =");
+                 //console.log("results: "+data.result);
+                 $.each(data.result, function (index, obj) {
+                     //console.log("result obj: "+index+" "+obj.toSource());
+                     if (obj.object_type == "uploadfiles") {
+                         //console.log("found files in obj "+index);
+                         var files = obj.files;
+                         var upload_entry;
+                         //console.log("found files: "+index+" "+files.toSource());
+                         $.each(files, function (index, file) {
+                             //console.log("found file entry in results: "+index);
+                             var dst = "(upload-cache)"
+                             if (file.error != undefined) {
+                                 console.log("found file error: "+file.error);
+                                 $("#recentfail").show();
+                                 $("#failedfiles").append(file.name+" ("+file.error+")<br />");
+                                 deleteUpload(file.name);
+                                 return false;
+                             } else if (move_dest && moveUpload(file.name, move_dest)) {
+                                 dst = move_dest;
+                             }
+                             $("#recentupload").show();
+                             upload_entry = "<div><span class='path'>"+dst+"/"+file.name+"</span>";
+                             del_btn = "<button class=\'deletebutton\'>Delete</button>";
+                             if (move_dest == "") {
+                                 upload_entry += del_btn;
+                             }
+                             upload_entry += "</div>";
+                             $("#uploadedfiles").append(upload_entry);
+                             $("#uploadedfiles > div:contains(\'"+file.name+"\') > button").click(
+                                 function() {
+                                     deleteUpload(file.name, move_dest);
+                                 });
+                             //console.log("inserted upload entry: "+upload_entry);
+                         });
+                     }
+                 });
+                 /* clear active*/
+                 toggleActions(false);
+                 //console.log("after done handling: "+$("#uploadedfiles"));
+             },
+             fail: function (e, data) {
+                 if (upload_paused) {
+                     console.log("upload paused");
+                     /* TODO: extract actual resume data here */
+                     //resume_data = data;
+                 } else {
+                     console.log("upload failed/cancelled");
+                     resume_data = false;
+                     $("#globalprogress").progressbar("option", "value",
+                         $("#globalprogress").progressbar("option", "min"));
+                     $("#recentfail").show();
+                     $.each(data.files, function (index, file) {
+                         if (file.error != undefined) {
+                             $("#globalprogress > div.progress-label").html("= failed =");
+                             $("#failedfiles").append(file.name+" ("+file.error+")<br />");
+                             deleteUpload(file.name);
+                         } else {
+                             $("#failedfiles").append(file.name+" (cancelled)<br />");
+                         }
+                     });
+                 }
+             }
+         });
+    };
+
+    return do_d;
+};

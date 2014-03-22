@@ -50,8 +50,7 @@ manual_validation = [files_field, filename_field]
 def signature():
     """Signature of the main function"""
 
-    defaults = {'action': ['put'], 'current_dir': ['.'],
-        }
+    defaults = {'action': ['status'], 'current_dir': [upload_tmp_dir]}
     return ['html_form', defaults]
 
 def extract_chunk_region(configuration):
@@ -74,11 +73,12 @@ def extract_chunk_region(configuration):
         chunk_first, chunk_last = 0, -1
     return (chunk_first, chunk_last)
 
-def parse_form_upload(user_args, client_id, configuration):
+def parse_form_upload(user_args, client_id, configuration, cache_dir):
     """Parse upload file and chunk entries from user_args. Chunk limits are
     extracted from content-range http header in environment.
     """
     files, rejected = [], []
+    logger = configuration.logger
 
     # TMP! only support single filename and chunk for now
     #for name_index in xrange(max_upload_files):
@@ -90,7 +90,7 @@ def parse_form_upload(user_args, client_id, configuration):
                 filename = user_args[filename_field]
             else:
                 filename = user_args[filename_field][name_index]
-            configuration.logger.info('found name: %s' % filename)
+            logger.info('found name: %s' % filename)
         else:
             # No more files
             break
@@ -100,10 +100,18 @@ def parse_form_upload(user_args, client_id, configuration):
             filename = strip_dir(filename)
             valid_path(filename)
         except Exception, exc:
-            configuration.logger.error('invalid filename: %s' % filename)
+            logger.error('invalid filename: %s' % filename)
             rejected.append((filename, 'invalid filename: %s (%s)' % \
                              (filename, exc)))
             continue
+        real_path = os.path.abspath(os.path.join(cache_dir, filename))
+        if not valid_user_path(real_path, cache_dir, True):
+            logger.error('%s tried to access restricted path %s ! (%s)'
+                             % (client_id, real_path, cache_dir))
+            rejected.append("Invalid path (%s expands to an illegal path)" \
+                            % filename)
+            continue
+
         #for chunk_index in xrange(max_upload_chunks):
         #    if user_args.has_key(files_field) and \
         #           len(user_args[files_field]) > chunk_index:
@@ -152,16 +160,17 @@ def main(client_id, user_arguments_dict):
                      (op_name, validate_status, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    logger.debug('validated input in %s: %s' % (op_name, validate_args.keys()))
+    logger.info('validated input in %s: %s' % (op_name, validate_args.keys()))
 
     if not correct_handler('POST'):
+        logger.error('invalid method %s: %s' % (op_name, os.environ))
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : 'Only accepting POST requests to prevent unintended updates'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     action = accepted['action'][-1]
-    current_dir = accepted.get('current_dir', ['.'])[-1]
+    current_dir = accepted['current_dir'][-1]
     output_format = accepted['output_format'][-1]
 
     uploaded = []
@@ -170,15 +179,38 @@ def main(client_id, user_arguments_dict):
 
     logger.info('parsing upload form in %s' % op_name)
 
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                               client_dir)) + os.sep
+    cache_dir = os.path.join(base_dir, upload_tmp_dir) + os.sep
+
     # Now parse and validate files to archive
+    # ... this includes checking for illegal directory traversal attempts
 
     for name in defaults.keys():
         if user_arguments_dict.has_key(name):
             del user_arguments_dict[name]
 
-    (upload_files, upload_rejected) = parse_form_upload(user_arguments_dict,
-                                                        client_id,
-                                                        configuration)
+    try:
+        (upload_files, upload_rejected) = parse_form_upload(
+            user_arguments_dict, client_id, configuration, cache_dir)
+    except Exception, exc:
+        logger.error('error extracting required fields: %s' % exc)
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if not os.path.isdir(cache_dir):
+        try:
+            os.makedirs(cache_dir)
+        except Exception, exc:
+            logger.error('%s could not create upload tmp dir %s ! (%s)'
+                         % (op_name, cache_dir, exc))
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : "Problem creating temporary upload dir"})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+
     if upload_rejected:
         logger.error('Rejecting upload with: %s' % upload_rejected)
         output_objects.append({'object_type': 'error_text', 'text'
@@ -190,82 +222,59 @@ def main(client_id, user_arguments_dict):
                 {'object_type': 'uploadfile', 'name': rel_path, 'size': -1,
                  "error": err})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    if not upload_files:
+    elif action == "status" and not upload_files:
+        # Default to entire cache dir
+        upload_files = [(i, '') for i in os.listdir(cache_dir)]
+    elif not upload_files:
+        logger.error('Rejecting upload with: %s' % upload_files)
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'No files included to upload!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     logger.info('Filtered input validated with result: %s' % accepted)
 
-    # Please note that base_dir must end in slash to avoid access to other
-    # user dirs when own name is a prefix of another user name
-
-    base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
-    cache_dir = os.path.join(base_dir, upload_tmp_dir) + os.sep
-
-    if not os .path.isdir(cache_dir):
-        try:
-            os.makedirs(cache_dir)
-        except Exception, exc:
-            logger.error('%s could not create upload tmp dir %s ! (%s)'
-                         % (op_name, cache_dir, exc))
-            output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : "Problem creating temporary upload dir"})
-            return (output_objects, returnvalues.SYSTEM_ERROR)
-
     output_objects.append({'object_type': 'header', 'text'
                           : 'Uploading file chunk(s)'})
-
-    # Check directory traversal attempts before actual handling to avoid
-    # leaking information about file system layout while allowing consistent
-    # error messages
 
     logger.info('Looping through files: %s' % \
                 ' '.join([i[0] for i in upload_files]))
 
+    del_url = "uploadchunked.py?output_format=%s;action=delete;%s=%s;%s=%s"
+
     # Please refer to https://github.com/blueimp/jQuery-File-Upload/wiki/Setup
     # for details about the status reply format in the uploadfile output object
     
+    # All actions automatically take place relative to cache_dir. We only use
+    # current_dir in move operation where it is the destination.
     if action == 'delete':
         for (rel_path, chunk_tuple) in upload_files:
             real_path = os.path.abspath(os.path.join(cache_dir, rel_path))
-            if not valid_user_path(real_path, base_dir, True):
-                logger.error('%s tried to %s delete restricted path %s !'
-                             % (client_id, op_name, real_path))
-                output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : "Invalid destination (%s expands to an illegal path)" \
-                     % rel_path})
-                deleted = False
-            else:
-                deleted = delete_file(real_path, logger)
+            deleted = delete_file(real_path, logger)
             uploaded.append({'object_type': 'uploadfile', rel_path: deleted})
         logger.info('delete done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)
     elif action == 'status':
+        # Status automatically takes place relative to cache_dir
         for (rel_path, chunk_tuple) in upload_files:
             real_path = os.path.abspath(os.path.join(cache_dir, rel_path))
             file_entry = {'object_type': 'uploadfile', 'name': rel_path}
-            if not valid_user_path(real_path, base_dir, True):
-                logger.error('%s tried to %s status restricted path %s !'
-                             % (client_id, op_name, real_path))
-                output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : "Invalid destination (%s expands to an illegal path)" \
-                     % rel_path})
-                file_entry.update({'size': -1, 'error': 'invalid path'})
-            else:
-                file_entry['size'] = get_file_size(real_path, logger)
+            file_entry['size'] = get_file_size(real_path, logger)
+            file_entry['url'] = os.path.join("/cert_redirect", rel_path)
+            if current_dir == upload_tmp_dir:
+                file_entry['deleteType'] = 'POST'
+                file_entry["deleteUrl"] = del_url % (output_format,
+                                                     filename_field,
+                                                     rel_path,
+                                                     files_field, "dummy")
             uploaded.append(file_entry)
         logger.info('status done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)
     elif action == 'move':
+        # Move automatically takes place relative to cache_dir
         for (rel_path, chunk_tuple) in upload_files:
             real_path = os.path.abspath(os.path.join(cache_dir, rel_path))
             dest_path = os.path.abspath(os.path.join(base_dir, current_dir,
-                                                      rel_path))
+                                                     rel_path))
             if not valid_user_path(dest_path, base_dir, True):
                 logger.error('%s tried to %s move to restricted path %s ! (%s)'
                              % (client_id, op_name, dest_path, current_dir))
@@ -292,28 +301,20 @@ def main(client_id, user_arguments_dict):
 
     # Handle actual uploads (action == 'put')
         
+    # Put automatically takes place relative to cache_dir
     for (rel_path, chunk_tuple) in upload_files:
         logger.info('handling %s chunk %s' % (rel_path, chunk_tuple[1:]))
         (chunk, offset, chunk_last) = chunk_tuple
         chunk_size = len(chunk)
         range_size = 1 + chunk_last - offset
         real_path = os.path.abspath(os.path.join(cache_dir, rel_path))
-
-        if not valid_user_path(real_path, cache_dir, True):
-            logger.warning('%s tried to %s restricted path %s ! (%s)'
-                           % (client_id, op_name, real_path, rel_path))
-            output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : "Invalid destination (%s expands to an illegal path)" % \
-                 rel_path})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-
         if not os.path.isdir(os.path.dirname(real_path)):
             output_objects.append({'object_type': 'error_text', 'text'
                                    : "cannot write: no such file or directory:"
                                    " %s)" % rel_path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
+        file_entry = {'object_type': 'uploadfile', 'name': rel_path}
         logger.debug('write %s chunk of size %d' % (rel_path, chunk_size))
         if chunk_size == range_size and \
                write_chunk(real_path, chunk, offset, logger, 'r+b'):
@@ -321,26 +322,26 @@ def main(client_id, user_arguments_dict):
                                    : 'wrote chunk %s at %d' % \
                                    (chunk_tuple[1:], offset)})
             logger.info('wrote %s chunk at %s' % (real_path, chunk_tuple[1:]))
-            uploaded.append(
-                {'object_type': 'uploadfile', 'name': rel_path,
-                 "size": os.path.getsize(real_path), "url": 
-                 os.path.join("/cert_redirect", upload_tmp_dir, rel_path),
-                 "deleteUrl":
-                 "uploadchunked.py?output_format=%s;action=delete;%s=%s;%s=%s"
-                 % (output_format, files_field, rel_path, filename_field,
-                    "dummy"),
-                 'deleteType': 'POST',
-                 })
+            file_entry["size"] = os.path.getsize(real_path)
+            file_entry["url"] = os.path.join("/cert_redirect", current_dir,
+                                             rel_path)
+            if current_dir == upload_tmp_dir:
+                file_entry['deleteType'] = 'POST'
+                file_entry["deleteUrl"] = del_url % (output_format,
+                                                     filename_field,
+                                                     rel_path,
+                                                     files_field, "dummy")
         else:
             logger.error('could not write %s chunk %s (%d vs %d)' % \
                          (real_path, chunk_tuple[1:], chunk_size, range_size))
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'failed to write chunk %s at %d' % \
                                    (chunk_tuple[1:], offset)})
-            uploaded.append(
-                {'object_type': 'uploadfile', 'name': rel_path,
-                 "error": "failed to write chunk %s - try again" % \
-                 (chunk_tuple[1:], )})
+            file_entry["error"] = "failed to write chunk %s - try again" % \
+                                  (chunk_tuple[1:], )
 
-    logger.info('put done: %s' % ' '.join([i[0] for i in upload_files]))
+        uploaded.append(file_entry)
+
+    logger.info('put done: %s (%s)' % (' '.join([i[0] for i in upload_files]),
+                                       uploaded))
     return (output_objects, status)
