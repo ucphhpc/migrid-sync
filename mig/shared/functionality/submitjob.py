@@ -200,6 +200,15 @@ def main(client_id, user_arguments_dict):
         }
     }
 
+    function dumpObject(obj) {
+        try {
+            return obj.toSource();
+        } catch (err) {
+            console.log("failed to dump obj: "+err);
+            return obj;
+        }
+    }    
+
     function openChunkedUpload() {
         var open_dialog = mig_uploadchunked_init("uploadchunked_dialog");
         var remote_path = ".";
@@ -209,20 +218,20 @@ def main(client_id, user_arguments_dict):
 
     function parseReply(raw_data) {
         var data = {"files": []};
-        //console.log("parseReply raw data: "+raw_data.toSource());
+        //console.log("parseReply raw data: "+dumpObject(raw_data));
         if (raw_data.files != undefined) {
-             console.log("parseReply return direct files data: "+raw_data.files.toSource());
+             console.log("parseReply return direct files data: "+dumpObject(raw_data.files));
              //return raw_data;
              data.files = raw_data.files;
              return data;
         }
         try {
             $.each(raw_data, function (index, obj) {
-                //console.log("result obj: "+index+" "+obj.toSource());
+                //console.log("result obj: "+index+" "+dumpObject(obj));
                 if (obj.object_type == "uploadfiles") {
                     //console.log("found files in obj "+index);
                     var files = obj.files;
-                    //console.log("found files: "+index+" "+files.toSource());
+                    //console.log("found files: "+index+" "+dumpObject(files));
                     $.each(files, function (index, file) {
                         //console.log("found file entry in results: "+index);
                         if (file.error != undefined) {
@@ -230,14 +239,14 @@ def main(client_id, user_arguments_dict):
                             return false;
                         }
                         data["files"].push(file);
-                        //console.log("added upload file: "+file.toSource());
+                        //console.log("added upload file: "+dumpObject(file));
                     });
                 }
             });
         } catch(err) {
             console.log("err in parseReply: "+err);
         }
-        console.log("parsed raw reply into files: "+data.files.toSource());
+        console.log("parsed raw reply into files: "+dumpObject(data.files));
         return data;
     }
 
@@ -257,8 +266,8 @@ def main(client_id, user_arguments_dict):
             add: function (e, data) {
                 console.log("add file");
                 //var data = parseReply(raw_data);
-                //console.log("add file with data: "+data.toSource());
-                console.log("add file with data files: "+data.files.toSource());
+                //console.log("add file with data: "+dumpObject(data));
+                console.log("add file with data files: "+dumpObject(data.files));
                 var that = this;
                 try {
                     $.blueimp.fileupload.prototype
@@ -270,13 +279,13 @@ def main(client_id, user_arguments_dict):
             /* TODO: uploaded entry link and buttons in uploadfileslist silently fail */
             done: function (e, data) {
                 console.log("done file");
-                console.log("done with data: "+data.toSource());
+                console.log("done with data: "+dumpObject(data));
                 if (data.result.files == undefined) {
                     var parsed = parseReply(data);
-                    console.log("done parsed result: "+parsed.toSource());
+                    console.log("done parsed result: "+dumpObject(parsed));
                     data.result = parsed;
                 }
-                console.log("done with data result: "+data.result.toSource());
+                console.log("done with data result: "+dumpObject(data.result));
                 var that = this;
                 try {
                     $.blueimp.fileupload.prototype
@@ -302,7 +311,7 @@ def main(client_id, user_arguments_dict):
             }).done(function (raw_result) {
                         console.log("done checking server");
                         //var result = parseReply(raw_result);
-                        //console.log("done checking server parsed result: "+result.toSource());
+                        //console.log("done checking server parsed result: "+dumpObject(result));
                     }
            );
         }
@@ -321,9 +330,9 @@ def main(client_id, user_arguments_dict):
             //console.log("load existing files always handler");
             $(this).removeClass("fileupload-processing");
         }).done(function (raw_result) {
-                    //console.log("loaded existing files: "+raw_result.toSource());
+                    //console.log("loaded existing files: "+dumpObject(raw_result));
                     var result = parseReply(raw_result);
-                    console.log("parsed existing files: "+result.files.toSource());
+                    console.log("parsed existing files: "+dumpObject(result.files));
                     $(this).fileupload("option", "done")
                         .call(this, $.Event("done"), {result: result});
                     console.log("done handling existing files");
@@ -713,7 +722,7 @@ Upload other files efficiently (using chunking).
 <!-- The template to display files available for upload -->
 <script id="template-upload" type="text/x-tmpl">
 {% console.log("using upload template"); %}
-{% console.log("... with upload files: "+o.toSource()); %}
+{% console.log("... with upload files: "+dumpObject(o)); %}
 {% var dest_dir = $("#fileuploaddest").val() || default_upload_dest; %}
 {% console.log("using upload dest: "+dest_dir); %}
 {% for (var i=0, file; file=o.files[i]; i++) { %}
@@ -743,7 +752,7 @@ Upload other files efficiently (using chunking).
 <!-- The template to display files available for download -->
 <script id="template-download" type="text/x-tmpl">
 {% console.log("using download template"); %}
-{% console.log("... with download files: "+o.toSource()); %}
+{% console.log("... with download files: "+dumpObject(o)); %}
 {% for (var i=0, file; file=o.files[i]; i++) { %}
     {% console.log("adding download: "+i); %}
     {% console.log("adding download: "+file.name); %}
