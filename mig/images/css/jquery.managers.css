@@ -277,7 +277,8 @@ UL.jqueryFileList A:hover {
 .jqueryFileList div {
   display: inline;
 }
-.jqueryFileList .cdate,.size { float:right; margin-top: -20px; }
+.jqueryFileList .cdate, .jqueryFileList .size { float:right; margin-top: -20px; }
+
 
 /* File Extensions */
 .directoryicon { background: url(/images/icons/folder.png) left center no-repeat; }

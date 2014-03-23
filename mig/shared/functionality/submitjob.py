@@ -218,15 +218,21 @@ def main(client_id, user_arguments_dict):
 
     function parseReply(raw_data) {
         var data = {"files": []};
+        var target = raw_data;
         //console.log("parseReply raw data: "+dumpObject(raw_data));
-        if (raw_data.files != undefined) {
+        if (raw_data.result != undefined) {
+            console.log("parseReply found result entry to parse: "+dumpObject(raw_data.result));
+            target = raw_data.result;
+        } else if (raw_data.files != undefined) {
              console.log("parseReply return direct files data: "+dumpObject(raw_data.files));
              //return raw_data;
              data.files = raw_data.files;
              return data;
+        } else {
+            console.log("parseReply falling back to parsing all: "+dumpObject(raw_data));            
         }
         try {
-            $.each(raw_data, function (index, obj) {
+            $.each(target, function (index, obj) {
                 //console.log("result obj: "+index+" "+dumpObject(obj));
                 if (obj.object_type == "uploadfiles") {
                     //console.log("found files in obj "+index);
@@ -276,10 +282,11 @@ def main(client_id, user_arguments_dict):
                     console.log("err in add file: "+err);
                 }
             },
-            /* TODO: uploaded entry link and buttons in uploadfileslist silently fail */
             done: function (e, data) {
                 console.log("done file");
-                console.log("done with data: "+dumpObject(data));
+                //console.log("done with data: "+dumpObject(data));
+                //console.log("done with data files: "+dumpObject(data.files));
+                //console.log("done with data result: "+dumpObject(data.result));
                 if (data.result.files == undefined) {
                     var parsed = parseReply(data);
                     console.log("done parsed result: "+dumpObject(parsed));
@@ -293,7 +300,26 @@ def main(client_id, user_arguments_dict):
                 } catch(err) {
                     console.log("err in done file: "+err);
                 }                               
-            }
+            },
+            fail: function (e, data) {
+                console.log("fail file");
+                $.each(data.files, function (index, file) {
+                    if (file.error != undefined) {
+                        console.log("error uploading "+file.name+" : "+file.error);
+                    } else {
+                        console.log("cancelled file: "+file.name);
+                    }
+                    console.log("TODO: call clean up file: "+file.name);
+                    //$.fn.delete_upload(file.name);
+                });
+                var that = this;
+                try {
+                    $.blueimp.fileupload.prototype
+                                .options.fail.call(that, e, data);
+                } catch(err) {
+                    console.log("err in fail file: "+err);
+                }                               
+             }
         });
 
         console.log("check server status");
