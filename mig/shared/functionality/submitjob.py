@@ -31,7 +31,7 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import any_vgrid, default_mrsl_filename, upload_tmp_dir
+from shared.defaults import any_vgrid, default_mrsl_filename
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.mrslkeywords import get_job_specs
@@ -123,59 +123,54 @@ def main(client_id, user_arguments_dict):
     submit_options = ['fields_form', 'textarea_form', 'files_form']
 
     title_entry['javascript'] = '''
-<link rel="stylesheet" type="text/css"
-      href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css"
-      href="/images/css/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css"
-      media="screen"/>
-<link rel="stylesheet" href="/images/css/jquery.fileupload.css">
-<link rel="stylesheet" href="/images/css/jquery.fileupload-ui.css">
-<link rel="stylesheet" type="text/css"
-      href="/images/css/jquery.fileupload-ui.custom.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload.css" media="screen">
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.css" media="screen">
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.custom.css" media="screen"/>
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
-<!--
-<script src="/images/js/jquery.ui.widget.js"></script>
--->
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.form.js"></script>
+<script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <!-- The Templates plugin is included to render the upload/download listings -->
 <script type="text/javascript" src="/images/js/tmpl.min.js"></script>
 <!-- The Load Image plugin is included for the preview images and image resizing functionality -->
-<script src="/images/js/load-image.min.js"></script>
+<script type="text/javascript" src="/images/js/load-image.min.js"></script>
 <!-- The Canvas to Blob plugin is included for image resizing functionality -->
-<script src="/images/js/canvas-to-blob.min.js"></script>
+<script type="text/javascript" src="/images/js/canvas-to-blob.min.js"></script>
 <!-- Bootstrap JS is not required, but included for the responsive demo navigation -->
-<!--
-<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
--->
 <!-- The Iframe Transport is required for browsers without support for XHR file uploads -->
-<script src="/images/js/jquery.iframe-transport.js"></script>
+<script type="text/javascript" src="/images/js/jquery.iframe-transport.js"></script>
 <!-- The basic File Upload plugin -->
-<script src="/images/js/jquery.fileupload.js"></script>
+<script type="text/javascript" src="/images/js/jquery.fileupload.js"></script>
+<!-- save basic fileuploader before overwriting it with ui version below -->
+<script type="text/javascript">
+        $.fn.basicfileupload = $.fn.fileupload;
+</script>
 <!-- The File Upload processing plugin -->
-<script src="/images/js/jquery.fileupload-process.js"></script>
+<script type="text/javascript" src="/images/js/jquery.fileupload-process.js"></script>
 <!-- The File Upload image preview & resize plugin -->
-<script src="/images/js/jquery.fileupload-image.js"></script>
+<script type="text/javascript" src="/images/js/jquery.fileupload-image.js"></script>
 <!-- The File Upload audio preview plugin -->
-<script src="/images/js/jquery.fileupload-audio.js"></script>
+<script type="text/javascript" src="/images/js/jquery.fileupload-audio.js"></script>
 <!-- The File Upload video preview plugin -->
-<script src="/images/js/jquery.fileupload-video.js"></script>
+<script type="text/javascript" src="/images/js/jquery.fileupload-video.js"></script>
 <!-- The File Upload validation plugin -->
-<script src="/images/js/jquery.fileupload-validate.js"></script>
+<script type="text/javascript" src="/images/js/jquery.fileupload-validate.js"></script>
 <!-- The File Upload user interface plugin -->
-<script src="/images/js/jquery.fileupload-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.fileupload-ui.js"></script>
 <!-- The File Upload jQuery UI plugin -->
-<script src="/images/js/jquery.fileupload-jquery-ui.js"></script>
-
-<script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.fileupload-jquery-ui.js"></script>
+<!-- not really needed but save ui fileuploader for symmetry -->
+<script type="text/javascript">
+        $.fn.fancyfileupload = $.fn.fileupload;
+</script>
 
 <script type="text/javascript" >
-    var base_url = "uploadchunked.py?output_format=json;action=";
-    var upload_url = base_url+"put";
-    var status_url = base_url+"status";
-    var delete_url = base_url+"delete";
-    var default_upload_dest = "%s";
 
     options = %s;
 
@@ -200,200 +195,35 @@ def main(client_id, user_arguments_dict):
         }
     }
 
-    function dumpObject(obj) {
-        try {
-            return obj.toSource();
-        } catch (err) {
-            console.log("failed to dump obj: "+err);
-            return obj;
-        }
-    }    
-
-    function openChunkedUpload() {
-        var open_dialog = mig_uploadchunked_init("uploadchunked_dialog");
-        var remote_path = ".";
-        open_dialog("Upload Files in Chunks", function() { return false; },
-                    remote_path, false);
-    }
-
-    function parseReply(raw_data) {
-        var data = {"files": []};
-        var target = raw_data;
-        //console.log("parseReply raw data: "+dumpObject(raw_data));
-        if (raw_data.result != undefined) {
-            console.log("parseReply found result entry to parse: "+dumpObject(raw_data.result));
-            target = raw_data.result;
-        } else if (raw_data.files != undefined) {
-             console.log("parseReply return direct files data: "+dumpObject(raw_data.files));
-             //return raw_data;
-             data.files = raw_data.files;
-             return data;
-        } else {
-            console.log("parseReply falling back to parsing all: "+dumpObject(raw_data));            
-        }
-        try {
-            $.each(target, function (index, obj) {
-                //console.log("result obj: "+index+" "+dumpObject(obj));
-                if (obj.object_type == "uploadfiles") {
-                    //console.log("found files in obj "+index);
-                    var files = obj.files;
-                    //console.log("found files: "+index+" "+dumpObject(files));
-                    $.each(files, function (index, file) {
-                        //console.log("found file entry in results: "+index);
-                        if (file.error != undefined) {
-                            console.log("found file error: "+file.error);
-                            return false;
-                        }
-                        data["files"].push(file);
-                        //console.log("added upload file: "+dumpObject(file));
-                    });
-                }
-            });
-        } catch(err) {
-            console.log("err in parseReply: "+err);
-        }
-        console.log("parsed raw reply into files: "+dumpObject(data.files));
-        return data;
-    }
-
-    function init_fancyupload() {
-        "use strict";
-
-        console.log("init_fancyupload");
-        // Initialize the jQuery File Upload widget:
-        $("#fileupload").fileupload({
-            // Uncomment the following to send cross-domain cookies:
-            //xhrFields: {withCredentials: true},
-            url: upload_url,
-            dataType: "json",
-            maxChunkSize: 32000000, // 32 MB
-            disableImageResize: true,
-            filesContainer: ".uploadfileslist",
-            add: function (e, data) {
-                console.log("add file");
-                //var data = parseReply(raw_data);
-                //console.log("add file with data: "+dumpObject(data));
-                console.log("add file with data files: "+dumpObject(data.files));
-                var that = this;
-                try {
-                    $.blueimp.fileupload.prototype
-                                .options.add.call(that, e, data);
-                } catch(err) {
-                    console.log("err in add file: "+err);
-                }
-            },
-            done: function (e, data) {
-                console.log("done file");
-                //console.log("done with data: "+dumpObject(data));
-                //console.log("done with data files: "+dumpObject(data.files));
-                //console.log("done with data result: "+dumpObject(data.result));
-                if (data.result.files == undefined) {
-                    var parsed = parseReply(data);
-                    console.log("done parsed result: "+dumpObject(parsed));
-                    data.result = parsed;
-                }
-                console.log("done with data result: "+dumpObject(data.result));
-                var that = this;
-                try {
-                    $.blueimp.fileupload.prototype
-                                .options.done.call(that, e, data);
-                } catch(err) {
-                    console.log("err in done file: "+err);
-                }                               
-            },
-            fail: function (e, data) {
-                console.log("fail file");
-                $.each(data.files, function (index, file) {
-                    if (file.error != undefined) {
-                        console.log("error uploading "+file.name+" : "+file.error);
-                    } else {
-                        console.log("cancelled file: "+file.name);
-                    }
-                    console.log("TODO: call clean up file: "+file.name);
-                    //$.fn.delete_upload(file.name);
-                });
-                var that = this;
-                try {
-                    $.blueimp.fileupload.prototype
-                                .options.fail.call(that, e, data);
-                } catch(err) {
-                    console.log("err in fail file: "+err);
-                }                               
-             }
-        });
-
-        console.log("check server status");
-        // Upload server status check for browsers with CORS support:
-        if ($.support.cors) {
-            $.ajax({
-                url: status_url,
-                dataType: "json",
-                type: "POST"
-            }).fail(function () {
-                console.log("server status fail");
-                $("<div class=\'alert alert-danger\'/>")
-                    .text("Upload server currently unavailable - " + new Date())
-                    .appendTo("#fileupload");
-            }).done(function (raw_result) {
-                        console.log("done checking server");
-                        //var result = parseReply(raw_result);
-                        //console.log("done checking server parsed result: "+dumpObject(result));
-                    }
-           );
-        }
-        
-        // Load existing files:
-        console.log("load existing files");
-        $("#fileupload").addClass("fileupload-processing");
-        $.ajax({
-            // Uncomment the following to send cross-domain cookies:
-            //xhrFields: {withCredentials: true},
-            url: status_url,
-            dataType: "json",
-            type: "POST",            
-            context: $("#fileupload")[0]
-        }).always(function () {
-            //console.log("load existing files always handler");
-            $(this).removeClass("fileupload-processing");
-        }).done(function (raw_result) {
-                    //console.log("loaded existing files: "+dumpObject(raw_result));
-                    var result = parseReply(raw_result);
-                    console.log("parsed existing files: "+dumpObject(result.files));
-                    $(this).fileupload("option", "done")
-                        .call(this, $.Event("done"), {result: result});
-                    console.log("done handling existing files");
-                }
-           );
-    }
-    
-    function openFancyUploadExt() {
-        var open_dialog = mig_fancyupload_init("fancyupload_dialog");
+    function openBasicUpload() {
+        var open_dialog = mig_basicuploadchunked_init("basicuploadchunked_dialog");
         var remote_path = ".";
         open_dialog("Upload Files in Chunks", function() { return false; },
                     remote_path, false);
     }
 
     function openFancyUpload() {
+        var open_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog");
         var remote_path = ".";
-        init_fancyupload();
-        $("#fancyupload_dialog").show();
+        open_dialog("Upload Files in Chunks", function() { return false; },
+                    remote_path, false);
     }
 
     $(document).ready( function() {
          console.log("document ready handler");
          switchTo("%s");
-         $("#basicdialog").click(openChunkedUpload);
+         $("#basicdialog").click(openBasicUpload);
          $("#fancydialog").click(openFancyUpload);
-         console.log("init fancydialog");
+         console.log("TMP: open fancydialog");
          try {
-             init_fancyupload();
+             openFancyUpload();
          } catch(err) {
-             console.log("error init fancy upload: "+err);
+             console.log("error openFancyUpload: "+err);
          }
     });
 
 </script>
-''' % (upload_tmp_dir, submit_options, submit_style + "_form")
+''' % (submit_options, submit_style + "_form")
 
     output_objects.append({'object_type': 'text', 'text':
                            'This page is used to submit jobs to the grid.'})
@@ -667,13 +497,15 @@ Upload other files efficiently (using chunking).
 </table>
 </div>
 
-<div id='uploadchunked_dialog' title='Upload File' style='display: none;'>
+<div id='basicuploadchunked_dialog' title='Upload File' style='display: none;'>
   
     <fieldset>
-        <label id='basicfileuploaddestlabel' for='basicfileupload'>
-            Optional final destination dir:
-        </label>
-        <input id='basicfileuploaddest' type='text' size=60 value=''>
+        <p id='basicfileuploaddestbox'>
+            <label id='basicfileuploaddestlabel' for='basicfileupload'>
+                Optional final destination dir:
+            </label>
+            <input id='basicfileuploaddest' type='text' size=60 value=''>
+        </p>
       
         <label for='basicfileupload'>File:</label>
         <input id='basicfileupload' type='file' name='files[]' multiple>
@@ -701,18 +533,21 @@ Upload other files efficiently (using chunking).
                 <!-- dynamically filled by javascript after uploads -->
             </div>
         </div>
-        <div id='uploadchunked_output'></div>
+        <div id='basicuploadchunked_output'></div>
     </div>
 </div>      
 
-<div id='fancyupload_dialog' title='Upload File' > <!-- style='display: none;' -->
+<div id='fancyuploadchunked_dialog' title='Upload File' style='display: none;'>
 
     <!-- The file upload form used as target for the file upload widget -->
-    <form id='fileupload' action='uploadchunked.py?output_format=json;action=put'
+    <form id='fancyfileupload' action='uploadchunked.py?output_format=json;action=put'
         method='POST' enctype='multipart/form-data'>
-        <p>
-            <input id='fileuploaddest' type='text' size=60 value=''>
-        </p>
+        <fieldset id='fancyfileuploaddestbox'>
+            <label id='fancyfileuploaddestlabel' for='fancyfileupload'>
+                Optional final destination dir:
+            </label>
+            <input id='fancyfileuploaddest' type='text' size=60 value=''>
+        </fieldset>
 
         <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
         <div class='fileupload-buttonbar'>
@@ -748,8 +583,8 @@ Upload other files efficiently (using chunking).
 <!-- The template to display files available for upload -->
 <script id="template-upload" type="text/x-tmpl">
 {% console.log("using upload template"); %}
-{% console.log("... with upload files: "+dumpObject(o)); %}
-{% var dest_dir = $("#fileuploaddest").val() || default_upload_dest; %}
+{% console.log("... with upload files: "+$.fn.dump(o)); %}
+{% var dest_dir = $("#fancyfileuploaddest").val(); %}
 {% console.log("using upload dest: "+dest_dir); %}
 {% for (var i=0, file; file=o.files[i]; i++) { %}
     <tr class="template-upload fade">
@@ -778,7 +613,7 @@ Upload other files efficiently (using chunking).
 <!-- The template to display files available for download -->
 <script id="template-download" type="text/x-tmpl">
 {% console.log("using download template"); %}
-{% console.log("... with download files: "+dumpObject(o)); %}
+{% console.log("... with download files: "+$.fn.dump(o)); %}
 {% for (var i=0, file; file=o.files[i]; i++) { %}
     {% console.log("adding download: "+i); %}
     {% console.log("adding download: "+file.name); %}

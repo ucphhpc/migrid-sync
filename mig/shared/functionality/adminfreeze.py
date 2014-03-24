@@ -70,19 +70,109 @@ def main(client_id, user_arguments_dict):
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.xbreadcrumbs.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fmbreadcrumbs.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload.css" media="screen">
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.css" media="screen">
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.custom.css" media="screen"/>
 
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
-<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
 <script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
 <script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
 <script type="text/javascript" src="/images/js/jquery.xbreadcrumbs.js"></script>
+<!-- The Templates plugin is included to render the upload/download listings -->
+<script type="text/javascript" src="/images/js/tmpl.min.js"></script>
+<!-- The Load Image plugin is included for the preview images and image resizing functionality -->
+<script type="text/javascript" src="/images/js/load-image.min.js"></script>
+<!-- The Canvas to Blob plugin is included for image resizing functionality -->
+<script type="text/javascript" src="/images/js/canvas-to-blob.min.js"></script>
+<!-- Bootstrap JS is not required, but included for the responsive demo navigation -->
+<!-- The Iframe Transport is required for browsers without support for XHR file uploads -->
+<script type="text/javascript" src="/images/js/jquery.iframe-transport.js"></script>
+<!-- The basic File Upload plugin -->
 <script type="text/javascript" src="/images/js/jquery.fileupload.js"></script>
+<!-- The File Upload processing plugin -->
+<script type="text/javascript" src="/images/js/jquery.fileupload-process.js"></script>
+<!-- The File Upload image preview & resize plugin -->
+<script type="text/javascript" src="/images/js/jquery.fileupload-image.js"></script>
+<!-- The File Upload audio preview plugin -->
+<script type="text/javascript" src="/images/js/jquery.fileupload-audio.js"></script>
+<!-- The File Upload video preview plugin -->
+<script type="text/javascript" src="/images/js/jquery.fileupload-video.js"></script>
+<!-- The File Upload validation plugin -->
+<script type="text/javascript" src="/images/js/jquery.fileupload-validate.js"></script>
+<!-- The File Upload user interface plugin -->
+<script type="text/javascript" src="/images/js/jquery.fileupload-ui.js"></script>
+<!-- The File Upload jQuery UI plugin -->
+<script type="text/javascript" src="/images/js/jquery.fileupload-jquery-ui.js"></script>
+
+<!-- The template to display files available for upload -->
+<script id="template-upload" type="text/x-tmpl">
+{% console.log("using upload template"); %}
+{% console.log("... with upload files: "+$.fn.dump(o)); %}
+{% var dest_dir = $("#fancyfileuploaddest").val(); %}
+{% console.log("using upload dest: "+dest_dir); %}
+{% for (var i=0, file; file=o.files[i]; i++) { %}
+    <tr class="template-upload fade">
+        <td>
+            <span class="preview"></span>
+        </td>
+        <td>
+            <p class="name">{%=dest_dir%}/{%=file.name%}</p>
+            <strong class="error"></strong>
+        </td>
+        <td>
+            <p class="size">Processing...</p>
+            <div class="progress"></div>
+        </td>
+        <td>
+            {% if (!i && !o.options.autoUpload) { %}
+                <button class="start" disabled>Start</button>
+            {% } %}
+            {% if (!i) { %}
+                <button class="cancel">Cancel</button>
+            {% } %}
+        </td>
+    </tr>
+{% } %}
+</script>
+<!-- The template to display files available for download -->
+<script id="template-download" type="text/x-tmpl">
+{% console.log("using download template"); %}
+{% console.log("... with download files: "+$.fn.dump(o)); %}
+{% for (var i=0, file; file=o.files[i]; i++) { %}
+    {% console.log("adding download: "+i); %}
+    {% console.log("adding download: "+file.name); %}
+    <tr class="template-download fade">
+        <td>
+            <span class="preview">
+                {% if (file.thumbnailUrl) { %}
+                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" data-gallery><img src="{%=file.thumbnailUrl%}"></a>
+                {% } %}
+            </span>
+        </td>
+        <td>
+            <p class="name">
+                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" {%=file.thumbnailUrl?\'data-gallery\':\'\'%}>{%=file.name%}</a>
+            </p>
+            {% if (file.error) { %}
+                <div><span class="error">Error</span> {%=file.error%}</div>
+            {% } %}
+        </td>
+        <td>
+            <span class="size">{%=o.formatFileSize(file.size)%}</span>
+        </td>
+        <td>
+            <button class="delete" data-type="{%=file.deleteType%}" data-url="{%=file.deleteUrl%}"{% if (file.deleteWithCredentials) { %} data-xhr-fields=\'{"withCredentials":true}\'{% } %}>Delete</button>
+            <input type="checkbox" name="delete" value="1" class="toggle">
+        </td>
+    </tr>
+{% } %}
+</script>
 
 <script type="text/javascript" >
 
@@ -125,6 +215,7 @@ function add_upload(div_id) {
     var field_id, field_name, wrap_id, path, on_remove;
     open_upload_dialog("Upload Files in Chunks", function() {
             console.log("in upload callback");
+            console.log("TODO: update to extract from dynamic template list");
             $("#uploadedfiles > div > span:contains(\'(upload-cache)/\')").each(
                 function(index) {
                     console.log("callback for upload item no. "+index);
@@ -161,38 +252,13 @@ function init_dialogs() {
         function(file) {
             return;
         }, false, "/");
-         $("#opendialog").click(openChunkedUpload);
-    open_upload_dialog = mig_uploadchunked_init("uploadchunked_dialog");
+    open_upload_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog");
     $("#addfilebutton").click(function() { add_copy(\"copyfiles\"); });
     $("#adduploadbutton").click(function() { add_upload(\"uploadfiles\"); });
 }
 
-function post_init() {
-    init_dialogs();
-}
-
-// function to load js helpers and then initialise the page parts
 function init_page() {
-    // load the helper scripts
-    var script = document.createElement("script");
-    script.setAttribute("type","text/javascript");
-    script.setAttribute("src",
-    "/images/js/jquery.migtools.js");
-    document.getElementsByTagName("head")[0].appendChild(script);
-    
-    // and call continuation (browser dependent)
-    if (script.readyState) { // IE style browser
-        script.onreadystatechange = function() {
-            if (this.readyState == "loaded" || this.readyState == "complete") {
-                post_init();
-            }
-        };
-    } else { // other browser, should support onload
-        script.onload = post_init;
-    }
-}
-
-function openChunkedUpload() {
+    init_dialogs();
 }
 
 $(document).ready(function() {
@@ -263,43 +329,45 @@ when filling in the details.'''
 </ul>
 <div id='cmd_dialog' title='Command output' style='display: none;'></div>
 
-<div id='uploadchunked_dialog' title='Upload File' style='display: none;'>
-  
-    <fieldset>
-        <label id='basicfileuploaddestlabel' for='basicfileupload'>
-            Optional final destination dir:
-        </label>
-        <input id='basicfileuploaddest' type='text' size=60 value=''>
-      
-        <label for='basicfileupload'>File:</label>
-        <input id='basicfileupload' type='file' name='files[]' multiple>
-    </fieldset>
+<div id='fancyuploadchunked_dialog' title='Upload File' style='display: none;'>
 
-    <div id='uploadfiles' class='uploadfiles'>
-        <div id='globalprogress' class='uploadprogress'>
-          <div class='progress-label'>= Init =</div>
-        </div>
-        <div id='actionbuttons'>
-            <button id='pauseupload'>Pause/Resume</button>
-            <button id='cancelupload'>Cancel</button>
-        </div>
-        <br />
-        <div id='recentupload'>
-            <b>Recently uploaded files:</b> <button id='clearuploads'>Clear</button>
-            <div id='uploadedfiles'>
-                <!-- dynamically filled by javascript after uploads -->
+    <!-- The file upload form used as target for the file upload widget -->
+    <form id='fancyfileupload' action='uploadchunked.py?output_format=json;action=put'
+        method='POST' enctype='multipart/form-data'>
+        <fieldset id='fancyfileuploaddestbox'>
+            <label id='fancyfileuploaddestlabel' for='fancyfileupload'>
+                Optional final destination dir:
+            </label>
+            <input id='fancyfileuploaddest' type='text' size=60 value=''>
+        </fieldset>
+
+        <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
+        <div class='fileupload-buttonbar'>
+            <div class='fileupload-buttons'>
+                <!-- The fileinput-button span is used to style the file input field as button -->
+                <span class='fileinput-button'>
+                    <span>Add files...</span>
+                    <input type='file' name='files[]' multiple>
+                </span>
+                <button type='submit' class='start'>Start upload</button>
+                <button type='reset' class='cancel'>Cancel upload</button>
+                <button type='button' class='delete'>Delete</button>
+                <input type='checkbox' class='toggle'>
+                <!-- The global file processing state -->
+                <span class='fileupload-process'></span>
+            </div>
+            <!-- The global progress state -->
+            <div class='fileupload-progress fade' style='display:none'>
+                <!-- The global progress bar -->
+                <div class='progress' role='progressbar' aria-valuemin='0' aria-valuemax='100'></div>
+                <!-- The extended global progress state -->
+                <div class='progress-extended'>&nbsp;</div>
             </div>
         </div>
-        <br />
-        <div id='recentfail'>
-            <b>Recently failed uploads:</b> <button id='clearfailed'>Clear</button>
-            <div id='failedfiles'>
-                <!-- dynamically filled by javascript after uploads -->
-            </div>
-        </div>
-        <div id='uploadchunked_output'></div>
-    </div>
-</div>      
+        <!-- The table listing the files available for upload/download -->
+        <table role='presentation' class='table table-striped'><tbody class='uploadfileslist'></tbody></table>
+    </form>
+</div>
     """
     output_objects.append({'object_type': 'html_form', 'text'
                           : files_form})
@@ -328,5 +396,3 @@ when filling in the details.'''
                           : html_form})
 
     return (output_objects, returnvalues.OK)
-
-

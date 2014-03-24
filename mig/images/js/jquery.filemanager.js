@@ -37,6 +37,10 @@ if (jQuery) (function($){
     }
 
     $.fn.dump = function(element) {
+        /* some browsers support toSource as easy dump */
+        if (element.toSource != undefined) {
+            return element.toSource();
+        }
         var a = ["Element dump:"];
         a.push("Raw: " + element);
         for (var k in element) {
@@ -438,8 +442,21 @@ if (jQuery) (function($){
                       closeOnEscape: true, modal: true});
                 $("#cmd_dialog").dialog('open');
             },
-            uploadchunked: function (action, el, pos) {
-                var open_dialog = mig_uploadchunked_init("uploadchunked_dialog");
+            basicuploadchunked: function (action, el, pos) {
+                var open_dialog = mig_basicuploadchunked_init("basicuploadchunked_dialog");
+                var remote_path = $(el).attr(pathAttribute);
+                if (remote_path == '/') {
+                    remote_path = './';                                             
+                } else {
+                    remote_path = './'+remote_path;
+                }
+                open_dialog("Upload Files in Chunks", 
+                                      function () {
+                                          $(".fm_files").parent().reload('');
+                                      }, remote_path, false);
+            },
+            fancyuploadchunked: function (action, el, pos) {
+                var open_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog");
                 var remote_path = $(el).attr(pathAttribute);
                 if (remote_path == '/') {
                     remote_path = './';                                             
@@ -801,15 +818,15 @@ if (jQuery) (function($){
                 }, 10);
             });
 
-	    // Doubleclick actions (including preventing text select on dclick)
+            // Doubleclick actions (including preventing text select on dclick)
             $("tr.recent.file, tr.recent.directory").each(function() { 
                 var t = $(this); 
                 setTimeout(function() {
-		    t.dblclick(function(event) { doubleClickEvent(this); });
-		    t.mousedown(function(event) { event.preventDefault(); })
+                    t.dblclick(function(event) { doubleClickEvent(this); });
+                    t.mousedown(function(event) { event.preventDefault(); })
                 }, 10);
                 setTimeout(function() {
-		    
+                    
                 }, 10);
             });
             
@@ -1114,7 +1131,7 @@ if (jQuery) (function($){
 /*  MiG-Special: initialize a MiG home filechooser dialog, installing the
  *  callback for doubleclick or "select" selection
  *  if files_only is set, directories cannot be chosen
- */
+*/
 function mig_filechooser_init(name, callback, files_only, start_path) {
 
     $("#" + name).dialog(
@@ -1183,7 +1200,7 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
 
 /*  MiG-Special: initialize a local file chooser dialog, installing the
  *  callback for OK and cancel actions.
- */
+*/
 function local_filechooser_init(name, callback) {
 
     var ok_action = function (action) {
@@ -1222,24 +1239,108 @@ function local_filechooser_init(name, callback) {
     return do_d;
 };
 
-/* Chunked uploader dialog */
-function mig_uploadchunked_init(name, callback) {
+/* expose these helpers in general */
 
-         /* TODO:
-         cancel does not work for multiple file upload
-         individual uploads with progress and actions?
-         start/cancel/delete all support?
-         */
+var base_url = "uploadchunked.py?output_format=json;action=";
+var upload_url = base_url+"put";
+var status_url = base_url+"status";
+var delete_url = base_url+"delete";
+var move_url = base_url+"move";
+
+$.fn.delete_upload = function(name, dest_dir) {
+    console.log("delete upload: "+name+" "+dest_dir);
+    var deleted = false;
+    $.ajax({
+        url: delete_url,
+	    dataType: "json",
+        data: {"files[]filename": name, "files[]": "dummy",
+               "current_dir": dest_dir},
+        type: "POST",
+        async: false,
+        success: function(data, textStatus, jqXHR) {
+            console.log("delete success handler: "+name);
+            //console.log("data: "+data.toSource());
+            $.each(data, function (index, obj) {
+                //console.log("delete result obj: "+index+" "+obj.toSource());
+                if (obj.object_type == "uploadfiles") {
+                    //console.log("found files in obj "+index);
+                    var files = obj.files;
+                    $.each(files, function (index, file) {
+                        //console.log("found file entry in results: "+index);
+                        if (file.error != undefined) {
+                            console.log("found file error: "+file.error);
+                        } else if (file[name]) {
+                            console.log("found success marker: "+file[name]);
+                            deleted = true;
+                        }
+                        return false;
+                    });
+                }
+            });
+        }
+    });
+};
+
+$.fn.move_upload = function(name, dest_dir) {
+    var moved = false;
+    $.ajax({
+        url: move_url,
+        dataType: "json",
+        data: {"files[]filename": name, "files[]": "dummy",
+               "current_dir": dest_dir},
+        type: "POST",
+        async: false,
+        success: function(data, textStatus, jqXHR) {
+            console.log("move success handler: "+name);
+            //console.log("data: "+data.toSource());
+            $.each(data, function (index, obj) {
+                //console.log("move result obj: "+index+" "+obj.toSource());
+                if (obj.object_type == "uploadfiles") {
+                    //console.log("found files in obj "+index);
+                    var files = obj.files;
+                    $.each(files, function (index, file) {
+                        //console.log("found file entry in results: "+index);
+                        if (file.error != undefined) {
+                            console.log("found file error: "+file.error);
+                        } else if (file[name]) {
+                            console.log("found success marker: "+file[name]);
+                            moved = true;
+                        }
+                        return false;
+                    });
+                }
+            });
+        }
+    });
+
+};
+
+/* Basic chunked uploader dialog */
+function mig_basicuploadchunked_init(name, callback) {
+
+    /* TODO:
+        cancel does not work for multiple file upload
+        individual uploads with progress and actions?
+        start/cancel/delete all support?
+    */
 
     //console.log("mig_uploadchunked_init: "+name, callback);
 
-    var url = "uploadchunked.py?output_format=json";
+    /* We must support concurrent basic fileuload and fancy fileupload, so if
+       the basic fileupload is saved in $.fn.basicfileupload we use that and
+       otherwise we fall back to the default fileupload. 
+     */
+    if ($.fn.basicfileupload == undefined){
+        console.log("basicuploadchunked falling back to default fileupload");
+        $.fn.basicfileupload = $.fn.fileupload;
+    }
+    
     var sequential = false;
     var active_upload = false;
     var upload_paused = false;
     var resume_data = false;
     var move_dest = "";
-    
+
     $("#" + name).dialog(
         // see http://jqueryui.com/docs/dialog/ for options
           {autoOpen: false,
@@ -1314,37 +1415,7 @@ function mig_uploadchunked_init(name, callback) {
     }
 
     function deleteUpload(name, dest_dir) {
-        console.log("delete upload: "+name+" "+dest_dir);
-        var deleted = false;
-        $.ajax({
-            url: url+";action=delete",
-            dataType: "json",
-            data: {"files[]filename": name, "files[]": "dummy",
-                   "current_dir": dest_dir},
-            type: "POST",
-            async: false,
-            success: function(data, textStatus, jqXHR) {
-                console.log("delete success handler: "+name);
-                //console.log("data: "+data.toSource());
-                $.each(data, function (index, obj) {
-                    //console.log("delete result obj: "+index+" "+obj.toSource());
-                    if (obj.object_type == "uploadfiles") {
-                        //console.log("found files in obj "+index);
-                        var files = obj.files;
-                        $.each(files, function (index, file) {
-                            //console.log("found file entry in results: "+index);
-                            if (file.error != undefined) {
-                                console.log("found file error: "+file.error);
-                            } else if (file[name]) {
-                                console.log("found success marker: "+file[name]);
-                                deleted = true;
-                            }
-                            return false;
-                        });
-                    }
-                });
-            }
-        });
+        var deleted = $.fn.delete_upload(name, dest_dir);
         //console.log("removing from uploadedfiles");
         $("#uploadedfiles > div > span.path:contains(\'(upload-cache)/"+name+"\')").parent().remove();
         console.log("removed any matching entries from uploadedfiles");
@@ -1353,43 +1424,10 @@ function mig_uploadchunked_init(name, callback) {
 
     function moveUpload(name, dest_dir) {
         console.log("move upload: "+name+" to "+dest_dir);
-        var moved = false;
-        $.ajax({
-            url: url+";action=move",
-            dataType: "json",
-            data: {"files[]filename": name, "files[]": "dummy",
-                   "current_dir": dest_dir},
-            type: "POST",
-            async: false,
-            success: function(data, textStatus, jqXHR) {
-                console.log("move success handler: "+name);
-                //console.log("data: "+data.toSource());
-                $.each(data, function (index, obj) {
-                    //console.log("move result obj: "+index+" "+obj.toSource());
-                    if (obj.object_type == "uploadfiles") {
-                        //console.log("found files in obj "+index);
-                        var files = obj.files;
-                        $.each(files, function (index, file) {
-                            //console.log("found file entry in results: "+index);
-                            if (file.error != undefined) {
-                                console.log("found file error: "+file.error);
-                            } else if (file[name]) {
-                                console.log("found success marker: "+file[name]);
-                                moved = true;
-                            }
-                            return false;
-                        });
-                    }
-                });
-            }
-        });
+	var moved = $.fn.move_upload(name, dest_dir);
         //console.log("move status: "+moved);
         return moved;
     }
-
-    /* expose there helpers in general */
-    $.fn.delete_upload = deleteUpload;
-    $.fn.move_upload = moveUpload;
 
     function clearUploads() {
         console.log("clear uploads list");
@@ -1427,11 +1465,9 @@ function mig_uploadchunked_init(name, callback) {
         //console.log("mig_uploadchunked_init do_d fileupload pre-setup");
 
         if (automatic_dest) { 
-            $("#basicfileuploaddestlabel").hide();
-            $("#basicfileuploaddest").hide();
+            $("#basicfileuploaddestbox").hide();
         } else {
-            $("#basicfileuploaddestlabel").show();
-            $("#basicfileuploaddest").show();
+            $("#basicfileuploaddestbox").show();
         }
         $("#globalprogress").progressbar({value: 0});
         $("#globalprogress > div.progress-label").html("= ready =");
@@ -1447,20 +1483,15 @@ function mig_uploadchunked_init(name, callback) {
 
         //console.log("mig_uploadchunked_init do_d fileupload setup: "+dest_dir);
         $("#basicfileuploaddest").val(dest_dir);
-        $("#basicfileupload").fileupload({
-             url: url+";action=put",
+        $("#basicfileupload").basicfileupload({
+             url: upload_url,
              dataType: "json",
              maxChunkSize: 8000000, // 8 MB
              sequentialUploads: sequential,
              maxRetries: 100,
              retryTimeout: 500,
-             /*
-             send: function (e, data) {
-                 console.log("Send file");
-             },
-             */
              submit: function (e, data) {
-                 //console.log("Submit file");
+                 console.log("submit file");
                  $("#globalprogress").progressbar("option", "value",
                      $("#globalprogress").progressbar("option", "min"));
                  /* Tmp! we preserve pristine data here for resume from scratch */
@@ -1567,17 +1598,21 @@ function mig_uploadchunked_init(name, callback) {
 };
 
 /* Fancy chunked uploader dialog */
-function mig_fancyupload_init(name, callback) {
+function mig_fancyuploadchunked_init(name, callback) {
 
-         /* TODO:
-         cancel does not work for multiple file upload
-         individual uploads with progress and actions?
-         start/cancel/delete all support?
-         */
+    /* TODO: finish cancel and delete functionality */
 
-    //console.log("mig_fancyupload_init: "+name, callback);
+    console.log("mig_fancyuploadchunked_init: "+name, callback);
 
-    var url = "uploadchunked.py?output_format=json";
+    /* We must support concurrent basic fileuload and fancy fileupload, so if
+       the ui fileupload is saved in $.fn.fancyfileupload we use that and
+       otherwise we fall back to the default fileupload. 
+     */
+    if ($.fn.fancyfileupload == undefined){
+        console.log("fancyuploadchunked falling back to default fileupload");
+        $.fn.fancyfileupload = $.fn.fileupload;
+    }
+
     var sequential = false;
     var active_upload = false;
     var upload_paused = false;
@@ -1592,6 +1627,7 @@ function mig_fancyupload_init(name, callback) {
            buttons: {
                      "Close": function() {
                                   callback();
+				  // TODO: this doesn't work here
                                   if (active_upload) {
                                       cancelUpload();
                                   }
@@ -1600,151 +1636,45 @@ function mig_fancyupload_init(name, callback) {
                     }
           });
 
-    function toggleActions(ref) {
-        active_upload = ref;
-        if (ref == false) {
-            disabled = true;
-        } else {
-            disabled = false;
-        }
-        //console.log("toggling action buttons: "+disabled+" : "+active_upload);
-        $("#actionbuttons").children("button").prop("disabled", disabled);
-    }
 
-    function pauseUpload() {
-        /* fileupload does not include explicit pause/resume but we can abort
-         and use the resume trick from:
-         https://github.com/blueimp/jQuery-File-Upload/wiki/Chunked-file-uploads
-         */
-         /* TODO: implement properly */
-        console.log("pause upload: "+active_upload+" "+upload_paused);
-        if (active_upload == false) {
-            console.log("no active upload to pause");
-        } else if (upload_paused && resume_data) {
-            console.log("resume active upload");
-            $("#globalprogress > div.progress-label").removeClass("paused");
-            upload_paused = false;
-            console.log("TODO: resume from existing instead of restarting");
-            resume_data.uploadedBytes = 0;
-            resume_data.data = null;
-            //console.log("resume data: "+resume_data.toSource());
-            resume_data.submit();
-            $("#pauseupload").text("Pause");
+    function parseReply(raw_data) {
+        var data = {"files": []};
+        var target = raw_data;
+        //console.log("parseReply raw data: "+$.fn.dump(raw_data));
+        if (raw_data.result != undefined) {
+            console.log("parseReply found result entry to parse: "+$.fn.dump(raw_data.result));
+            target = raw_data.result;
+        } else if (raw_data.files != undefined) {
+             console.log("parseReply return direct files data: "+$.fn.dump(raw_data.files));
+             //return raw_data;
+             data.files = raw_data.files;
+             return data;
         } else {
-            console.log("TODO: pause active upload");
-            $("#globalprogress > div.progress-label").addClass("paused");
-            upload_paused = true;
-            active_upload.abort();
-            $("#pauseupload").text("Resume");
+            console.log("parseReply falling back to parsing all: "+$.fn.dump(raw_data));            
         }
-    }
-
-    function cancelUpload() {
-        console.log("cancel upload: "+active_upload);
-        if (active_upload == false) {
-            console.log("no active upload to cancel");
-        } else {
-            //console.log("cancel: "+active_upload.toSource());
-            //console.log("cancel resume data: "+resume_data.toSource());
-            active_upload.abort();
-            console.log("cancel sent");
-            upload_paused = false;
-            resume_data = false;
-            $("#pauseupload").text("Pause");
-            $("#globalprogress > div.progress-label").removeClass("paused");
-            $("#globalprogress > div.progress-label").html("= aborted =");
-            toggleActions(false);
-        }
-    }
-
-    function deleteUpload(name, dest_dir) {
-        console.log("delete upload: "+name+" "+dest_dir);
-        var deleted = false;
-        $.ajax({
-            url: url+";action=delete",
-            dataType: "json",
-            data: {"files[]filename": name, "files[]": "dummy",
-                   "current_dir": dest_dir},
-            type: "POST",
-            async: false,
-            success: function(data, textStatus, jqXHR) {
-                console.log("delete success handler: "+name);
-                //console.log("data: "+data.toSource());
-                $.each(data, function (index, obj) {
-                    //console.log("delete result obj: "+index+" "+obj.toSource());
-                    if (obj.object_type == "uploadfiles") {
-                        //console.log("found files in obj "+index);
-                        var files = obj.files;
-                        $.each(files, function (index, file) {
-                            //console.log("found file entry in results: "+index);
-                            if (file.error != undefined) {
-                                console.log("found file error: "+file.error);
-                            } else if (file[name]) {
-                                console.log("found success marker: "+file[name]);
-                                deleted = true;
-                            }
+        try {
+            $.each(target, function (index, obj) {
+                //console.log("result obj: "+index+" "+$.fn.dump(obj));
+                if (obj.object_type == "uploadfiles") {
+                    //console.log("found files in obj "+index);
+                    var files = obj.files;
+                    //console.log("found files: "+index+" "+$.fn.dump(files));
+                    $.each(files, function (index, file) {
+                        //console.log("found file entry in results: "+index);
+                        if (file.error != undefined) {
+                            console.log("found file error: "+file.error);
                             return false;
-                        });
-                    }
-                });
-            }
-        });
-        //console.log("removing from uploadedfiles");
-        $("#uploadedfiles > div > span.path:contains(\'(upload-cache)/"+name+"\')").parent().remove();
-        console.log("removed any matching entries from uploadedfiles");
-        return deleted;
-    }
-
-    function moveUpload(name, dest_dir) {
-        console.log("move upload: "+name+" to "+dest_dir);
-        var moved = false;
-        $.ajax({
-            url: url+";action=move",
-            dataType: "json",
-            data: {"files[]filename": name, "files[]": "dummy",
-                   "current_dir": dest_dir},
-            type: "POST",
-            async: false,
-            success: function(data, textStatus, jqXHR) {
-                console.log("move success handler: "+name);
-                //console.log("data: "+data.toSource());
-                $.each(data, function (index, obj) {
-                    //console.log("move result obj: "+index+" "+obj.toSource());
-                    if (obj.object_type == "uploadfiles") {
-                        //console.log("found files in obj "+index);
-                        var files = obj.files;
-                        $.each(files, function (index, file) {
-                            //console.log("found file entry in results: "+index);
-                            if (file.error != undefined) {
-                                console.log("found file error: "+file.error);
-                            } else if (file[name]) {
-                                console.log("found success marker: "+file[name]);
-                                moved = true;
-                            }
-                            return false;
-                        });
-                    }
-                });
-            }
-        });
-        //console.log("move status: "+moved);
-        return moved;
-    }
-
-    /* expose there helpers in general */
-    $.fn.delete_upload = deleteUpload;
-    $.fn.move_upload = moveUpload;
-
-    function clearUploads() {
-        console.log("clear uploads list");
-        $("#uploadedfiles").empty();
-        $("#recentupload").hide();        
-    }
-
-    function clearFailed() {
-        console.log("clear failed uploads list");
-        $("#failedfiles").empty();
-        $("#recentfail").hide();
+                        }
+                        data["files"].push(file);
+                        //console.log("added upload file: "+$.fn.dump(file));
+                    });
+                }
+            });
+        } catch(err) {
+            console.log("err in parseReply: "+err);
+        }
+        console.log("parsed raw reply into files: "+$.fn.dump(data.files));
+        return data;
     }
     
     var do_d = function(text, action, dest_dir, automatic_dest) {
@@ -1771,141 +1701,120 @@ function mig_fancyupload_init(name, callback) {
         //console.log("mig_fancyupload_init do_d fileupload pre-setup");
 
         if (automatic_dest) { 
-            $("#fancyfileuploaddestlabel").hide();
-            $("#fancyfileuploaddest").hide();
+            $("#fancyfileuploaddestbox").hide();
         } else {
-            $("#fancyfileuploaddestlabel").show();
-            $("#fancyfileuploaddest").show();
+            $("#fancyfileuploaddestbox").show();
         }
-        $("#globalprogress").progressbar({value: 0});
-        $("#globalprogress > div.progress-label").html("= ready =");
-        toggleActions(false);
-        clearUploads();
-        clearFailed();
-        $("#recentupload").hide();
-        $("#recentfail").hide();
-        $("#pauseupload").click(pauseUpload);
-        $("#cancelupload").click(cancelUpload);
-        $("#clearuploads").click(clearUploads);
-        $("#clearfailed").click(clearFailed);
 
-        //console.log("mig_fancyupload_init do_d fileupload setup: "+dest_dir);
+        console.log("init_fancyupload");
+        // Initialize the jQuery File Upload widget:
+        //console.log("mig_uploadchunked_init do_d fileupload setup: "+dest_dir);
         $("#fancyfileuploaddest").val(dest_dir);
-        $("#fancyfileupload").fileupload({
-             url: url+";action=put",
-             dataType: "json",
-             maxChunkSize: 8000000, // 8 MB
-             sequentialUploads: sequential,
-             maxRetries: 100,
-             retryTimeout: 500,
-             /*
-             send: function (e, data) {
-                 console.log("Send file");
-             },
-             */
-             submit: function (e, data) {
-                 //console.log("Submit file");
-                 $("#globalprogress").progressbar("option", "value",
-                     $("#globalprogress").progressbar("option", "min"));
-                 /* Tmp! we preserve pristine data here for resume from scratch */
-                 resume_data = data;
-                 move_dest = $("#fancyfileuploaddest").val();
-                 var $this = $(this);
-                 $.each(data.files, function (index, file) {
-                     console.log("Send file: " + file.name);
-                 });
-                 /* save reference to upload for pause/cancel to use */
-                 var req = $this.fileupload("send", data).error(
-                         function (uploadRef, textStatus, errorThrown) {
-                             if (errorThrown === "abort") {
-                                 console.log("File upload was aborted");
-                             } else {
-                                 console.log("File upload failed: "+textStatus);
-                             }
-                     });
-                 toggleActions(req);
-                 /* Prevent duplicate native send */
-                 return false;
-             }, 
-             progressall: function (e, data) {
-                var total_percent = parseInt(data.loaded / data.total * 100, 10);
-                var kbitrate = parseInt(data.bitrate / 1000, 10);
-                var progress = data.loaded + " of " + data.total + " bytes ";
-                progress += "("+ total_percent + "%) at "+kbitrate+" Kbit/s";
-                $("#globalprogress").progressbar("option", "value", total_percent);
-                $("#globalprogress > div.progress-label").html(progress);
-                console.log("progress: "+progress);
-             },
-             done: function (e, data) {
-                 console.log("upload done");
-                 resume_data = false;
-                 $("#globalprogress").progressbar("option", "value",
-                     $("#globalprogress").progressbar("option", "max"));
-                 $("#globalprogress > div.progress-label").html("= complete =");
-                 //console.log("results: "+data.result);
-                 $.each(data.result, function (index, obj) {
-                     //console.log("result obj: "+index+" "+obj.toSource());
-                     if (obj.object_type == "uploadfiles") {
-                         //console.log("found files in obj "+index);
-                         var files = obj.files;
-                         var upload_entry;
-                         //console.log("found files: "+index+" "+files.toSource());
-                         $.each(files, function (index, file) {
-                             //console.log("found file entry in results: "+index);
-                             var dst = "(upload-cache)"
-                             if (file.error != undefined) {
-                                 console.log("found file error: "+file.error);
-                                 $("#recentfail").show();
-                                 $("#failedfiles").append(file.name+" ("+file.error+")<br />");
-                                 deleteUpload(file.name);
-                                 return false;
-                             } else if (move_dest && moveUpload(file.name, move_dest)) {
-                                 dst = move_dest;
-                             }
-                             $("#recentupload").show();
-                             upload_entry = "<div><span class='path'>"+dst+"/"+file.name+"</span>";
-                             del_btn = "<button class=\'deletebutton\'>Delete</button>";
-                             if (move_dest == "") {
-                                 upload_entry += del_btn;
-                             }
-                             upload_entry += "</div>";
-                             $("#uploadedfiles").append(upload_entry);
-                             $("#uploadedfiles > div:contains(\'"+file.name+"\') > button").click(
-                                 function() {
-                                     deleteUpload(file.name, move_dest);
-                                 });
-                             //console.log("inserted upload entry: "+upload_entry);
-                         });
-                     }
-                 });
-                 /* clear active*/
-                 toggleActions(false);
-                 //console.log("after done handling: "+$("#uploadedfiles"));
-             },
-             fail: function (e, data) {
-                 if (upload_paused) {
-                     console.log("upload paused");
-                     /* TODO: extract actual resume data here */
-                     //resume_data = data;
-                 } else {
-                     console.log("upload failed/cancelled");
-                     resume_data = false;
-                     $("#globalprogress").progressbar("option", "value",
-                         $("#globalprogress").progressbar("option", "min"));
-                     $("#recentfail").show();
-                     $.each(data.files, function (index, file) {
-                         if (file.error != undefined) {
-                             $("#globalprogress > div.progress-label").html("= failed =");
-                             $("#failedfiles").append(file.name+" ("+file.error+")<br />");
-                             deleteUpload(file.name);
-                         } else {
-                             $("#failedfiles").append(file.name+" (cancelled)<br />");
-                         }
-                     });
-                 }
+        $(".uploadfileslist").empty();
+        $("#fancyfileupload").fancyfileupload({
+            // Uncomment the following to send cross-domain cookies:
+            //xhrFields: {withCredentials: true},
+            url: upload_url,
+            dataType: "json",
+            maxChunkSize: 32000000, // 32 MB
+            disableImageResize: true,
+            filesContainer: ".uploadfileslist",
+            add: function (e, data) {
+                console.log("add file");
+                //var data = parseReply(raw_data);
+                //console.log("add file with data: "+$.fn.dump(data));
+                console.log("add file with data files: "+$.fn.dump(data.files));
+                var that = this;
+                try {
+                    $.blueimp.fileupload.prototype
+                                .options.add.call(that, e, data);
+                } catch(err) {
+                    console.log("err in add file: "+err);
+                }
+            },
+            done: function (e, data) {
+                console.log("done file");
+                //console.log("done with data: "+$.fn.dump(data));
+                //console.log("done with data files: "+$.fn.dump(data.files));
+                //console.log("done with data result: "+$.fn.dump(data.result));
+                if (data.result.files == undefined) {
+                    var parsed = parseReply(data);
+                    console.log("done parsed result: "+$.fn.dump(parsed));
+                    data.result = parsed;
+                }
+                console.log("done with data result: "+$.fn.dump(data.result));
+                var that = this;
+                try {
+                    $.blueimp.fileupload.prototype
+                                .options.done.call(that, e, data);
+                } catch(err) {
+                    console.log("err in done file: "+err);
+                }                               
+            },
+            fail: function (e, data) {
+                console.log("fail file");
+                $.each(data.files, function (index, file) {
+                    if (file.error != undefined) {
+                        console.log("error uploading "+file.name+" : "+file.error);
+                    } else {
+                        console.log("cancelled file: "+file.name);
+                    }
+                    console.log("call clean up file: "+file.name);
+		    $.fn.delete_upload(file.name);
+                });
+                var that = this;
+                try {
+                    $.blueimp.fileupload.prototype
+                                .options.fail.call(that, e, data);
+                } catch(err) {
+                    console.log("err in fail file: "+err);
+                }                               
              }
-         });
+        });
+
+        console.log("check server status");
+        // Upload server status check for browsers with CORS support:
+        if ($.support.cors) {
+            $.ajax({
+                url: status_url,
+                dataType: "json",
+                type: "POST"
+            }).fail(function () {
+                console.log("server status fail");
+                $("<div class=\'alert alert-danger\'/>")
+                    .text("Upload server currently unavailable - " + new Date())
+                    .appendTo("#fancyfileupload");
+            }).done(function (raw_result) {
+                        console.log("done checking server");
+                        //var result = parseReply(raw_result);
+                        //console.log("done checking server parsed result: "+$.fn.dump(result));
+                    }
+           );
+        }
+        
+        // Load existing files:
+        console.log("load existing files");
+        $("#fancyfileupload").addClass("fileupload-processing");
+        $.ajax({
+            // Uncomment the following to send cross-domain cookies:
+            //xhrFields: {withCredentials: true},
+            url: status_url,
+            dataType: "json",
+            type: "POST",            
+            context: $("#fancyfileupload")[0]
+        }).always(function () {
+            //console.log("load existing files always handler");
+            $(this).removeClass("fileupload-processing");
+        }).done(function (raw_result) {
+                    //console.log("loaded existing files: "+$.fn.dump(raw_result));
+                    var result = parseReply(raw_result);
+                    console.log("parsed existing files: "+$.fn.dump(result.files));
+                    $(this).fileupload("option", "done")
+                        .call(this, $.Event("done"), {result: result});
+                    console.log("done handling existing files");
+                });
     };
 
     return do_d;
 };
+
