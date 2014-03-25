@@ -227,7 +227,8 @@ function add_upload(div_id) {
                     path = $(this).text();
                     if ($(this).attr("href") == "") {
                         console.log("skipping empty (error) upload: "+path);
-                        return false;
+                        // Continue to next iteration on errors
+                        return true;
                     }
                     console.log("callback for upload path "+path);
                     field_id = "freeze_move_"+upload_fields;
@@ -235,7 +236,8 @@ function add_upload(div_id) {
                     wrap_id = field_id+"_wrap";
                     if ($("#"+div_id+" > span > input[value=\'"+path+"\']").length) {
                         console.log("skipping duplicate path: "+path);
-                        return false;
+                        // Continue to next iteration on errors
+                        return true;
                     } else {
                         console.log("adding new path: "+path);
                     }

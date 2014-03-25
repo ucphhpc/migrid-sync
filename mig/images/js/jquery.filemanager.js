@@ -1286,6 +1286,7 @@ $.fn.delete_upload = function(name, dest_dir) {
                             console.log("found success marker: "+file[name]);
                             deleted = true;
                         }
+                        // Break upon first hit
                         return false;
                     });
                 }
@@ -1319,6 +1320,7 @@ $.fn.move_upload = function(name, dest_dir) {
                             console.log("found success marker: "+file[name]);
                             moved = true;
                         }
+                        // Break upon first hit
                         return false;
                     });
                 }
@@ -1557,7 +1559,8 @@ function mig_basicuploadchunked_init(name, callback) {
                                  $("#recentfail").show();
                                  $("#failedfiles").append(file.name+" ("+file.error+")<br />");
                                  deleteUpload(file.name);
-                                 return false;
+                                 // Continue to next iteration on errors
+                                 return true;
                              } else if (move_dest && moveUpload(file.name, move_dest)) {
                                  dst = move_dest;
                              }
@@ -1617,7 +1620,7 @@ function mig_fancyuploadchunked_init(name, callback) {
        corrupt png image stalls upload in processing - disable all processing?
        busy marker during slow cancel-all on close?
        move all these dialogs into if jquery section?
-       do we need some kind of select to discrimiante between all and recent
+       do we need some kind of select to discriminate between all and recent
            uploads in adminfreeze?
        drag n drop to fileman drop zone with upload popup?
        individual file upload progress stats?
@@ -1761,7 +1764,8 @@ function mig_fancyuploadchunked_init(name, callback) {
                     //console.log("found file entry in results: "+$.fn.dump(file));
                     if (file.error != undefined) {
                         console.log("found upload error: "+file.error);
-                        return false;
+                        // Continue to next iteration on errors
+                        return true;
                     }
                     if (file.moveDest && $.fn.move_upload(file.name, file.moveDest)) {
                         //console.log("fix path and strip move info: "+file.name);
