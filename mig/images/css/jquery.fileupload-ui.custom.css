@@ -78,6 +78,11 @@
     height: 20px;
 }
 
+/* avoid overlap of text and error icon in upload dialog */
+.uploadfileslist span.error {
+    padding-left: 20px;
+}
+
 /* force touch default theme background for progressbars */
 .fileupload-buttonbar .ui-progressbar-value {
     background: url('images/ui-bg_gloss-wave_75_2191c0_500x100.png') repeat-x scroll 50% 50% #2191C0;

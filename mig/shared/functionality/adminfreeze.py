@@ -225,6 +225,10 @@ function add_upload(div_id) {
                 function(index) {
                     console.log("callback for upload item no. "+index);
                     path = $(this).text();
+                    if ($(this).attr("href") == "") {
+                        console.log("skipping empty (error) upload: "+path);
+                        return false;
+                    }
                     console.log("callback for upload path "+path);
                     field_id = "freeze_move_"+upload_fields;
                     field_name = "freeze_move_"+upload_fields;

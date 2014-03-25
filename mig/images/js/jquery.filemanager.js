@@ -1614,8 +1614,6 @@ function mig_fancyuploadchunked_init(name, callback) {
 
     /* TODO: 
        avoid duplicates in uploadfileslist
-       fix exclamation mark position for upload errors e.g. invalid chars in name
-       skip such error entries from archive
        corrupt png image stalls upload in processing - disable all processing?
        busy marker during slow cancel-all on close?
        move all these dialogs into if jquery section?
