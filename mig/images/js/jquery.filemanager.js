@@ -29,6 +29,8 @@
 
 if (jQuery) (function($){
   
+    var pathAttribute = 'rel_path';
+
     // Use touchscreen interface without need for right clicking
     function touchscreenChecker() {
         var touchscreen = $("#fm_touchscreen input[type='checkbox']").is(":checked");
@@ -121,9 +123,23 @@ if (jQuery) (function($){
         
     }
     
-    $.fn.opendir = function opendir(path) {
-             $(".fm_addressbar input[name='fm_current_path']").val(path);
-             $.fn.reload(path);
+    $.fn.targetDir = function(elem) {
+        var remote_path = $(elem).attr(pathAttribute);
+        /* if called on element without pathAttribute */
+        if (remote_path == undefined) {
+            remote_path = $(".fm_addressbar input[name='fm_current_path']").val(); 
+        }
+        /* fix path anchor */
+        if (remote_path == '/') {
+            remote_path = './';                                             
+        } else {
+            remote_path = './'+remote_path;
+        }
+        return remote_path;
+    }
+    $.fn.openDir = function(path) {
+         $(".fm_addressbar input[name='fm_current_path']").val(path);
+         $.fn.reload(path);
     }
 
     /* extended this by the "clickaction" callback, which can remain undefined...
@@ -131,7 +147,6 @@ if (jQuery) (function($){
      */
     $.fn.filemanager = function(user_options, clickaction) {
     
-        var pathAttribute = 'rel_path';
         var clipboard = new Array({'is_dir':false, 'path':''});
         
         // Note: max-height is broken on autoHeight this is noted as a bug:
@@ -444,12 +459,7 @@ if (jQuery) (function($){
             },
             basicuploadchunked: function (action, el, pos) {
                 var open_dialog = mig_basicuploadchunked_init("basicuploadchunked_dialog");
-                var remote_path = $(el).attr(pathAttribute);
-                if (remote_path == '/') {
-                    remote_path = './';                                             
-                } else {
-                    remote_path = './'+remote_path;
-                }
+                var remote_path = $.fn.targetDir(el);
                 open_dialog("Upload Files in Chunks", 
                                       function () {
                                           $(".fm_files").parent().reload('');
@@ -457,12 +467,7 @@ if (jQuery) (function($){
             },
             fancyuploadchunked: function (action, el, pos) {
                 var open_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog");
-                var remote_path = $(el).attr(pathAttribute);
-                if (remote_path == '/') {
-                    remote_path = './';                                             
-                } else {
-                    remote_path = './'+remote_path;
-                }
+                var remote_path = $.fn.targetDir(el);
                 open_dialog("Upload Files in Chunks", 
                                       function () {
                                           $(".fm_files").parent().reload('');
@@ -600,7 +605,7 @@ if (jQuery) (function($){
                  subdir_name = subdir_path.substring(0, subdir_path.length-1);
                  subdir_name = subdir_name.substring(subdir_name.lastIndexOf('/')+1, subdir_name.length);
              }
-             onclick_action = "$.fn.opendir('"+subdir_path+"');return false;";
+             onclick_action = "$.fn.openDir('"+subdir_path+"');return false;";
              entry_html = '  <li '+li_class+'>';
              entry_html += '    <a href="?path='+subdir_path+'" '+a_class;
              entry_html += ' onclick="'+onclick_action+'">'+subdir_name+'</a>';
@@ -773,12 +778,20 @@ if (jQuery) (function($){
             }
 
             if (options.filespacer) {
-                if (t != '/') { // Do not prepend the fake-root.
-                    $(".fm_files").append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path="'+t+'" title="'+t+'"+></div>');
-                } else {
-                    $(".fm_files").append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path="" title=""></div>');  
+                var rel_path = "";
+                /* add or update existing filespacer */
+                if ($(".fm_files div.filespacer").length == 0) {
+                    //console.log("add filespacer");
+                    $(".fm_files").append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path="" title=""+></div>');
                 }
-
+                
+                if (t != '/') { // Do not prepend the fake-root.
+                    rel_path = t;
+                }
+                //console.log("update filespacer with path: "+rel_path);
+                $(".fm_files div.filespacer").css("height", spacerHeight+"px")
+                                             .attr("rel_path", rel_path)
+                                             .attr("title", rel_path);
 
                 $("div.filespacer").contextMenu(
                     { menu: 'folder_context',
@@ -1252,7 +1265,7 @@ $.fn.delete_upload = function(name, dest_dir) {
     var deleted = false;
     $.ajax({
         url: delete_url,
-	    dataType: "json",
+            dataType: "json",
         data: {"files[]filename": name, "files[]": "dummy",
                "current_dir": dest_dir},
         type: "POST",
@@ -1424,7 +1437,7 @@ function mig_basicuploadchunked_init(name, callback) {
 
     function moveUpload(name, dest_dir) {
         console.log("move upload: "+name+" to "+dest_dir);
-	var moved = $.fn.move_upload(name, dest_dir);
+        var moved = $.fn.move_upload(name, dest_dir);
         //console.log("move status: "+moved);
         return moved;
     }
@@ -1600,7 +1613,20 @@ function mig_basicuploadchunked_init(name, callback) {
 /* Fancy chunked uploader dialog */
 function mig_fancyuploadchunked_init(name, callback) {
 
-    /* TODO: finish cancel and delete functionality */
+    /* TODO: 
+       finish cancel and delete functionality
+       should cancel on close
+       fix progress bar not filling frame in css 
+       extract paths from uploadfileslist for archive
+       consistent paths in uploadfileslist
+       avoid duplicates in uploadfileslist
+       move all these dialogs into if jquery section?
+       do we need some kind of select to discrimiante between all and recent
+           uploads in adminfreeze?
+       drag n drop to fileman drop zone with upload popup?
+       individual file upload progress?
+       replace old and basic upload entries with fancyupload when ready
+    */
 
     console.log("mig_fancyuploadchunked_init: "+name, callback);
 
@@ -1627,7 +1653,7 @@ function mig_fancyuploadchunked_init(name, callback) {
            buttons: {
                      "Close": function() {
                                   callback();
-				  // TODO: this doesn't work here
+                                  // TODO: this doesn't work here
                                   if (active_upload) {
                                       cancelUpload();
                                   }
@@ -1642,10 +1668,10 @@ function mig_fancyuploadchunked_init(name, callback) {
         var target = raw_data;
         //console.log("parseReply raw data: "+$.fn.dump(raw_data));
         if (raw_data.result != undefined) {
-            console.log("parseReply found result entry to parse: "+$.fn.dump(raw_data.result));
+            //console.log("parseReply found result entry to parse: "+$.fn.dump(raw_data.result));
             target = raw_data.result;
         } else if (raw_data.files != undefined) {
-             console.log("parseReply return direct files data: "+$.fn.dump(raw_data.files));
+             //console.log("parseReply return direct files data: "+$.fn.dump(raw_data.files));
              //return raw_data;
              data.files = raw_data.files;
              return data;
@@ -1673,7 +1699,7 @@ function mig_fancyuploadchunked_init(name, callback) {
         } catch(err) {
             console.log("err in parseReply: "+err);
         }
-        console.log("parsed raw reply into files: "+$.fn.dump(data.files));
+        //console.log("parsed raw reply into files: "+$.fn.dump(data.files));
         return data;
     }
     
@@ -1710,6 +1736,7 @@ function mig_fancyuploadchunked_init(name, callback) {
         // Initialize the jQuery File Upload widget:
         //console.log("mig_uploadchunked_init do_d fileupload setup: "+dest_dir);
         $("#fancyfileuploaddest").val(dest_dir);
+        console.log("init_fancyupload set dest to: "+$("#fancyfileuploaddest").val());
         $(".uploadfileslist").empty();
         $("#fancyfileupload").fancyfileupload({
             // Uncomment the following to send cross-domain cookies:
@@ -1739,10 +1766,10 @@ function mig_fancyuploadchunked_init(name, callback) {
                 //console.log("done with data result: "+$.fn.dump(data.result));
                 if (data.result.files == undefined) {
                     var parsed = parseReply(data);
-                    console.log("done parsed result: "+$.fn.dump(parsed));
+                    //console.log("done parsed result: "+$.fn.dump(parsed));
                     data.result = parsed;
                 }
-                console.log("done with data result: "+$.fn.dump(data.result));
+                //console.log("done with data result: "+$.fn.dump(data.result));
                 var that = this;
                 try {
                     $.blueimp.fileupload.prototype
@@ -1760,7 +1787,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                         console.log("cancelled file: "+file.name);
                     }
                     console.log("call clean up file: "+file.name);
-		    $.fn.delete_upload(file.name);
+                    $.fn.delete_upload(file.name);
                 });
                 var that = this;
                 try {
