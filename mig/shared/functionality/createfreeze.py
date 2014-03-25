@@ -57,8 +57,6 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
     client_dir = client_id_dir(client_id)
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                client_dir)) + os.sep
-    if xfer == 'move':
-        base_dir = os.path.join(base_dir, upload_tmp_dir) + os.sep
     xfer_pattern = 'freeze_%s_%%d' % xfer 
     for i in xrange(max_freeze_files):
         if user_args.has_key(xfer_pattern % i):

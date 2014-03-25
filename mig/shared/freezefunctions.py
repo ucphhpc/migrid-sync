@@ -201,7 +201,8 @@ def create_frozen_archive(freeze_name, freeze_description, freeze_copy,
     logger.info("create_frozen_archive: move %s for %s" % \
                               (freeze_move, freeze_id))
     for (real_source, rel_dst) in freeze_move:
-        freeze_path = os.path.join(frozen_dir, rel_dst)
+        # Strip relative dir from move targets
+        freeze_path = os.path.join(frozen_dir, os.path.basename(rel_dst))
         logger.debug("create_frozen_archive: move %s" % freeze_path)
         if os.path.isdir(real_source):
             (status, msg) = move_rec(real_source, freeze_path, configuration)

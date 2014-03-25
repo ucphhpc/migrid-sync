@@ -45,6 +45,7 @@ from shared.validstring import valid_user_path
 
 files_field = 'files[]'
 filename_field = '%sfilename' % files_field
+dest_field = 'current_dir'
 manual_validation = [files_field, filename_field]
 
 def signature():
@@ -170,7 +171,7 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     action = accepted['action'][-1]
-    current_dir = accepted['current_dir'][-1]
+    current_dir = os.path.normpath(accepted['current_dir'][-1])
     output_format = accepted['output_format'][-1]
 
     uploaded = []
@@ -240,6 +241,7 @@ def main(client_id, user_arguments_dict):
                 ' '.join([i[0] for i in upload_files]))
 
     del_url = "uploadchunked.py?output_format=%s;action=delete;%s=%s;%s=%s"
+    move_url = "uploadchunked.py?output_format=%s;action=move;%s=%s;%s=%s;%s=%s"
 
     # Please refer to https://github.com/blueimp/jQuery-File-Upload/wiki/Setup
     # for details about the status reply format in the uploadfile output object
@@ -261,7 +263,7 @@ def main(client_id, user_arguments_dict):
             file_entry['size'] = get_file_size(real_path, logger)
             file_entry['url'] = os.path.join("/cert_redirect", rel_path)
             if current_dir == upload_tmp_dir:
-                file_entry['deleteType'] = 'POST'
+                file_entry["deleteType"] = "POST"
                 file_entry["deleteUrl"] = del_url % (output_format,
                                                      filename_field,
                                                      rel_path,
@@ -326,11 +328,18 @@ def main(client_id, user_arguments_dict):
             file_entry["url"] = os.path.join("/cert_redirect", current_dir,
                                              rel_path)
             if current_dir == upload_tmp_dir:
-                file_entry['deleteType'] = 'POST'
+                file_entry["deleteType"] = "POST"
                 file_entry["deleteUrl"] = del_url % (output_format,
-                                                     filename_field,
-                                                     rel_path,
+                                                     filename_field, rel_path,
                                                      files_field, "dummy")
+            else:
+                file_entry["moveType"] = "POST"
+                file_entry["moveDest"] = current_dir
+                file_entry["moveUrl"] = move_url % (output_format,
+                                                    filename_field, rel_path,
+                                                    files_field, "dummy",
+                                                    dest_field, current_dir)
+                
         else:
             logger.error('could not write %s chunk %s (%d vs %d)' % \
                          (real_path, chunk_tuple[1:], chunk_size, range_size))

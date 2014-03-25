@@ -1272,9 +1272,9 @@ $.fn.delete_upload = function(name, dest_dir) {
         async: false,
         success: function(data, textStatus, jqXHR) {
             console.log("delete success handler: "+name);
-            //console.log("data: "+data.toSource());
+            //console.log("data: "+$.fn.dump(data));
             $.each(data, function (index, obj) {
-                //console.log("delete result obj: "+index+" "+obj.toSource());
+                //console.log("delete result obj: "+index+" "+$.fn.dump(obj));
                 if (obj.object_type == "uploadfiles") {
                     //console.log("found files in obj "+index);
                     var files = obj.files;
@@ -1305,9 +1305,9 @@ $.fn.move_upload = function(name, dest_dir) {
         async: false,
         success: function(data, textStatus, jqXHR) {
             console.log("move success handler: "+name);
-            //console.log("data: "+data.toSource());
+            //console.log("data: "+$.fn.dump(data));
             $.each(data, function (index, obj) {
-                //console.log("move result obj: "+index+" "+obj.toSource());
+                //console.log("move result obj: "+index+" "+$.fn.dump(obj));
                 if (obj.object_type == "uploadfiles") {
                     //console.log("found files in obj "+index);
                     var files = obj.files;
@@ -1396,7 +1396,7 @@ function mig_basicuploadchunked_init(name, callback) {
             console.log("TODO: resume from existing instead of restarting");
             resume_data.uploadedBytes = 0;
             resume_data.data = null;
-            //console.log("resume data: "+resume_data.toSource());
+            //console.log("resume data: "+$.fn.dump(resume_data));
             resume_data.submit();
             $("#pauseupload").text("Pause");
         } else {
@@ -1413,8 +1413,8 @@ function mig_basicuploadchunked_init(name, callback) {
         if (active_upload == false) {
             console.log("no active upload to cancel");
         } else {
-            //console.log("cancel: "+active_upload.toSource());
-            //console.log("cancel resume data: "+resume_data.toSource());
+            //console.log("cancel: "+$.fn.dump(active_upload));
+            //console.log("cancel resume data: "+$.fn.dump(resume_data));
             active_upload.abort();
             console.log("cancel sent");
             upload_paused = false;
@@ -1543,12 +1543,12 @@ function mig_basicuploadchunked_init(name, callback) {
                  $("#globalprogress > div.progress-label").html("= complete =");
                  //console.log("results: "+data.result);
                  $.each(data.result, function (index, obj) {
-                     //console.log("result obj: "+index+" "+obj.toSource());
+                     //console.log("result obj: "+index+" "+$.fn.dump(obj));
                      if (obj.object_type == "uploadfiles") {
                          //console.log("found files in obj "+index);
                          var files = obj.files;
                          var upload_entry;
-                         //console.log("found files: "+index+" "+files.toSource());
+                         //console.log("found files: "+index+" "+$.fn.dump(files));
                          $.each(files, function (index, file) {
                              //console.log("found file entry in results: "+index);
                              var dst = "(upload-cache)"
@@ -1613,15 +1613,16 @@ function mig_basicuploadchunked_init(name, callback) {
 function mig_fancyuploadchunked_init(name, callback) {
 
     /* TODO: 
-       finish move after upload support
-       extract paths from uploadfileslist for archive
-       consistent paths in uploadfileslist
        avoid duplicates in uploadfileslist
+       fix exclamation mark position for upload errors e.g. invalid chars in name
+       skip such error entries from archive
+       corrupt png image stalls upload in processing - disable all processing?
+       busy marker during slow cancel-all on close?
        move all these dialogs into if jquery section?
        do we need some kind of select to discrimiante between all and recent
            uploads in adminfreeze?
        drag n drop to fileman drop zone with upload popup?
-       individual file upload progress?
+       individual file upload progress stats?
        replace old and basic upload entries with fancyupload when ready
     */
 
@@ -1636,12 +1637,6 @@ function mig_fancyuploadchunked_init(name, callback) {
         $.fn.fancyfileupload = $.fn.fileupload;
     }
 
-    var sequential = false;
-    var active_upload = false;
-    var upload_paused = false;
-    var resume_data = false;
-    var move_dest = "";
-    
     $("#" + name).dialog(
         // see http://jqueryui.com/docs/dialog/ for options
           {autoOpen: false,
@@ -1682,10 +1677,6 @@ function mig_fancyuploadchunked_init(name, callback) {
                     //console.log("found files: "+index+" "+$.fn.dump(files));
                     $.each(files, function (index, file) {
                         //console.log("found file entry in results: "+index);
-                        if (file.error != undefined) {
-                            console.log("found file error: "+file.error);
-                            return false;
-                        }
                         data["files"].push(file);
                         //console.log("added upload file: "+$.fn.dump(file));
                     });
@@ -1744,6 +1735,9 @@ function mig_fancyuploadchunked_init(name, callback) {
             add: function (e, data) {
                 console.log("add file");
                 //var data = parseReply(raw_data);
+                /* Add final destination for use in done */ 
+                var dest_dir = $("#fancyfileuploaddest").val() || '.';
+                data.formData = {current_dir: dest_dir};
                 //console.log("add file with data: "+$.fn.dump(data));
                 console.log("add file with data files: "+$.fn.dump(data.files));
                 var that = this;
@@ -1757,21 +1751,38 @@ function mig_fancyuploadchunked_init(name, callback) {
             done: function (e, data) {
                 console.log("done file");
                 //console.log("done with data: "+$.fn.dump(data));
-                //console.log("done with data files: "+$.fn.dump(data.files));
-                //console.log("done with data result: "+$.fn.dump(data.result));
                 if (data.result.files == undefined) {
                     var parsed = parseReply(data);
                     //console.log("done parsed result: "+$.fn.dump(parsed));
                     data.result = parsed;
                 }
                 //console.log("done with data result: "+$.fn.dump(data.result));
+                /* move files to final destination if so requested */
+                console.log("handle any pending move for done files");
+                $.each(data.result.files, function (index, file) {
+                    //console.log("found file entry in results: "+$.fn.dump(file));
+                    if (file.error != undefined) {
+                        console.log("found upload error: "+file.error);
+                        return false;
+                    }
+                    if (file.moveDest && $.fn.move_upload(file.name, file.moveDest)) {
+                        //console.log("fix path and strip move info: "+file.name);
+                        delete file.moveType;
+                        delete file.moveUrl;
+                        file.path = file.moveDest+"/"+file.name;
+                        /* include new dest in url */
+                        file.url = file.url.substring(0, str.lastIndexOf("/") + 1)+file.path;
+                        console.log("updated file entry: "+$.fn.dump(file));
+                    }
+                });
+                /* Finally pass control over to native done handler */
                 var that = this;
                 try {
                     $.blueimp.fileupload.prototype
                                 .options.done.call(that, e, data);
                 } catch(err) {
                     console.log("err in done file: "+err);
-                }                               
+                }
             },
             fail: function (e, data) {
                 console.log("fail file");
@@ -1794,8 +1805,8 @@ function mig_fancyuploadchunked_init(name, callback) {
              }
         });
 
-        console.log("check server status");
         // Upload server status check for browsers with CORS support:
+        console.log("check server status");
         if ($.support.cors) {
             $.ajax({
                 url: status_url,
@@ -1813,7 +1824,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                     }
            );
         }
-        
+
         // Load existing files:
         console.log("load existing files");
         $("#fancyfileupload").addClass("fileupload-processing");
@@ -1827,6 +1838,8 @@ function mig_fancyuploadchunked_init(name, callback) {
         }).always(function () {
             //console.log("load existing files always handler");
             $(this).removeClass("fileupload-processing");
+        }).fail(function () {
+            console.log("load existing files failed");
         }).done(function (raw_result) {
                     //console.log("loaded existing files: "+$.fn.dump(raw_result));
                     var result = parseReply(raw_result);

@@ -28,6 +28,7 @@
 """Request freeze of one or more files into a write-once archive"""
 
 import shared.returnvalues as returnvalues
+from shared.defaults import upload_tmp_dir
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 
@@ -144,6 +145,8 @@ def main(client_id, user_arguments_dict):
 <script id="template-download" type="text/x-tmpl">
 {% console.log("using download template"); %}
 {% console.log("... with download files: "+$.fn.dump(o)); %}
+{% var dest_dir = $("#fancyfileuploaddest").val(); %}
+{% console.log("using download dest: "+dest_dir); %}
 {% for (var i=0, file; file=o.files[i]; i++) { %}
     {% console.log("adding download: "+i); %}
     {% console.log("adding download: "+file.name); %}
@@ -157,7 +160,7 @@ def main(client_id, user_arguments_dict):
         </td>
         <td>
             <p class="name">
-                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" {%=file.thumbnailUrl?\'data-gallery\':\'\'%}>{%=file.name%}</a>
+                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" {%=file.thumbnailUrl?\'data-gallery\':\'\'%}>{%=dest_dir%}/{%=file.name%}</a>
             </p>
             {% if (file.error) { %}
                 <div><span class="error">Error</span> {%=file.error%}</div>
@@ -180,9 +183,12 @@ var copy_fields = 0;
 var upload_fields = 0;
 var open_file_chooser;
 var open_upload_dialog;
+'''
+    title_entry['javascript'] += '''
 /* default upload destination */
-var remote_path = "";
-
+var remote_path = "%s";
+''' % upload_tmp_dir
+    title_entry['javascript'] += '''
 function add_copy(div_id) {
     var field_id = "freeze_copy_"+copy_fields;
     var field_name = "freeze_copy_"+copy_fields;
@@ -215,15 +221,20 @@ function add_upload(div_id) {
     var field_id, field_name, wrap_id, path, on_remove;
     open_upload_dialog("Upload Files in Chunks", function() {
             console.log("in upload callback");
-            console.log("TODO: update to extract from dynamic template list");
-            $("#uploadedfiles > div > span:contains(\'(upload-cache)/\')").each(
+            $(".uploadfileslist > tr > td > p.name > a").each(
                 function(index) {
                     console.log("callback for upload item no. "+index);
-                    path = $(this).text().replace(\'(upload-cache)/\', \'\');
+                    path = $(this).text();
                     console.log("callback for upload path "+path);
                     field_id = "freeze_move_"+upload_fields;
                     field_name = "freeze_move_"+upload_fields;
                     wrap_id = field_id+"_wrap";
+                    if ($("#"+div_id+" > span > input[value=\'"+path+"\']").length) {
+                        console.log("skipping duplicate path: "+path);
+                        return false;
+                    } else {
+                        console.log("adding new path: "+path);
+                    }
                     on_remove = "";
                     on_remove += "remove_field("+wrap_id+");";
                     on_remove += "$.fn.delete_upload(\\""+path+"\\");";
@@ -253,6 +264,7 @@ function init_dialogs() {
             return;
         }, false, "/");
     open_upload_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog");
+
     $("#addfilebutton").click(function() { add_copy(\"copyfiles\"); });
     $("#adduploadbutton").click(function() { add_upload(\"uploadfiles\"); });
 }
