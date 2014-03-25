@@ -1386,7 +1386,6 @@ function mig_basicuploadchunked_init(name, callback) {
          and use the resume trick from:
          https://github.com/blueimp/jQuery-File-Upload/wiki/Chunked-file-uploads
          */
-         /* TODO: implement properly */
         console.log("pause upload: "+active_upload+" "+upload_paused);
         if (active_upload == false) {
             console.log("no active upload to pause");
@@ -1615,7 +1614,6 @@ function mig_fancyuploadchunked_init(name, callback) {
 
     /* TODO: 
        finish cancel and delete functionality
-       should cancel on close
        fix progress bar not filling frame in css 
        extract paths from uploadfileslist for archive
        consistent paths in uploadfileslist
@@ -1652,11 +1650,9 @@ function mig_fancyuploadchunked_init(name, callback) {
            width: 800,
            buttons: {
                      "Close": function() {
+                                  /* cancel any active uploads */
+                                  $(".fileupload-buttons button.cancel").click();
                                   callback();
-                                  // TODO: this doesn't work here
-                                  if (active_upload) {
-                                      cancelUpload();
-                                  }
                                   $("#" + name).dialog("close");
                               }
                     }
