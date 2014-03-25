@@ -1613,8 +1613,7 @@ function mig_basicuploadchunked_init(name, callback) {
 function mig_fancyuploadchunked_init(name, callback) {
 
     /* TODO: 
-       finish cancel and delete functionality
-       fix progress bar not filling frame in css 
+       finish move after upload support
        extract paths from uploadfileslist for archive
        consistent paths in uploadfileslist
        avoid duplicates in uploadfileslist

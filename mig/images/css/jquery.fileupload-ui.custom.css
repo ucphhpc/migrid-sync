@@ -38,7 +38,7 @@
     height: 20px;
 }
 
-.ui-dialog .uploadprogress {
+#globalprogress .uploadprogress {
     margin-top: 2px;
     margin-bottom: 2px;
     border-radius: 4px;
@@ -47,16 +47,15 @@
     vertical-align: center;
 }
 
-.ui-dialog .ui-progressbar-value {
+#globalprogress .ui-progressbar-value {
     vertical-align: center;
     margin: 0px;
     padding: 0px;
-    height: 20px;
     border-radius: 4px;
     transition: width 0.5s;
     -webkit-transition: width 0.5s;
 }
-.ui-dialog .progress-label {
+#globalprogress .progress-label {
     position: absolute;
     width: 100%;
     left: 0px;
@@ -67,7 +66,7 @@
     font-weight: bold;
     text-shadow: 1px 1px 0 #fff;
 }
-.ui-dialog .progress-label.paused {
+#globalprogress .progress-label.paused {
     opacity: 0.5;
 }
 
