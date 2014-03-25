@@ -1293,6 +1293,8 @@ $.fn.delete_upload = function(name, dest_dir) {
             });
         }
     });
+    //console.log("return deleted: "+deleted);
+    return deleted;
 };
 
 $.fn.move_upload = function(name, dest_dir) {
@@ -1327,7 +1329,8 @@ $.fn.move_upload = function(name, dest_dir) {
             });
         }
     });
-
+    //console.log("return moved: "+moved);
+    return moved;
 };
 
 /* Basic chunked uploader dialog */
@@ -1616,6 +1619,7 @@ function mig_basicuploadchunked_init(name, callback) {
 function mig_fancyuploadchunked_init(name, callback) {
 
     /* TODO: 
+       path and url is still not consistent for uploadfileslist in upload cache 
        avoid duplicates in uploadfileslist
        corrupt png image stalls upload in processing - disable all processing?
        busy marker during slow cancel-all on close?
@@ -1624,6 +1628,7 @@ function mig_fancyuploadchunked_init(name, callback) {
            uploads in adminfreeze?
        drag n drop to fileman drop zone with upload popup?
        individual file upload progress stats?
+       refresh list of archive uploads upon each dialog close to force sync?
        replace old and basic upload entries with fancyupload when ready
     */
 
@@ -1767,14 +1772,20 @@ function mig_fancyuploadchunked_init(name, callback) {
                         // Continue to next iteration on errors
                         return true;
                     }
-                    if (file.moveDest && $.fn.move_upload(file.name, file.moveDest)) {
-                        //console.log("fix path and strip move info: "+file.name);
+                    if (!file.moveDest) {
+                        // Continue to next if move was not requested
+                        return true;
+                    }
+                    if ($.fn.move_upload(file.name, file.moveDest)) {
+                        console.log("fix path and strip move info: "+file.name);
+                        file.path = "./"+file.moveDest+"/"+file.name;
+                        file.name = file.path;
                         delete file.moveType;
+                        delete file.moveDest;
                         delete file.moveUrl;
-                        file.path = file.moveDest+"/"+file.name;
-                        /* include new dest in url */
-                        file.url = file.url.substring(0, str.lastIndexOf("/") + 1)+file.path;
                         console.log("updated file entry: "+$.fn.dump(file));
+                    } else {
+                        console.log("move failed!");
                     }
                 });
                 /* Finally pass control over to native done handler */
