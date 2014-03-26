@@ -1330,8 +1330,8 @@ function mig_basicuploadchunked_init(name, callback) {
 
     /* TODO:
         cancel does not work for multiple file upload
-        individual uploads with progress and actions?
-        start/cancel/delete all support?
+        continue paused should really resume rather than restart
+        we keep this one for now but should replace it with fancy one
     */
 
     //console.log("mig_uploadchunked_init: "+name, callback);
@@ -1390,14 +1390,14 @@ function mig_basicuploadchunked_init(name, callback) {
             console.log("resume active upload");
             $("#globalprogress > div.progress-label").removeClass("paused");
             upload_paused = false;
-            console.log("TODO: resume from existing instead of restarting");
+            console.log("restart paused upload");
             resume_data.uploadedBytes = 0;
             resume_data.data = null;
             //console.log("resume data: "+$.fn.dump(resume_data));
             resume_data.submit();
             $("#pauseupload").text("Pause");
         } else {
-            console.log("TODO: pause active upload");
+            console.log("pause active upload");
             $("#globalprogress > div.progress-label").addClass("paused");
             upload_paused = true;
             active_upload.abort();
@@ -1582,7 +1582,7 @@ function mig_basicuploadchunked_init(name, callback) {
              fail: function (e, data) {
                  if (upload_paused) {
                      console.log("upload paused");
-                     /* TODO: extract actual resume data here */
+                     /* TODO: extract and save actual resume data here */
                      //resume_data = data;
                  } else {
                      console.log("upload failed/cancelled");
@@ -1611,8 +1611,8 @@ function mig_basicuploadchunked_init(name, callback) {
 function mig_fancyuploadchunked_init(name, callback) {
 
     /* TODO: 
-       path and url is still not consistent for uploadfileslist in upload cache 
        avoid duplicates in uploadfileslist
+       enable loading spinner in uploadfileslist?
        corrupt png image stalls upload in processing - disable all processing?
        busy marker during slow cancel-all on close?
        move all these dialogs into if jquery section?
@@ -1769,9 +1769,11 @@ function mig_fancyuploadchunked_init(name, callback) {
                         return true;
                     }
                     if ($.fn.move_upload(file.name, file.moveDest)) {
-                        console.log("fix path and strip move info: "+file.name);
-                        file.path = "./"+file.moveDest+"/"+file.name;
-                        file.name = file.path;
+                        console.log("fix path and strip move info: " + file.name);
+                        var purename = file.name.substring(file.name.lastIndexOf("/") + 1);
+                        var baseurl = file.url.substring(0, file.url.length - file.name.length);
+                        file.name = file.moveDest + "/" + purename;
+                        file.url = baseurl + file.name;
                         delete file.moveType;
                         delete file.moveDest;
                         delete file.moveUrl;

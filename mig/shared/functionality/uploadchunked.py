@@ -25,7 +25,14 @@
 # -- END_HEADER ---
 #
 
-"""Chunked file upload back end"""
+"""Chunked file upload back end:
+Implicitly operates on upload tmp dir for all operations to keep partial
+uploads separated from other user files. It is left to the client to send
+chunks in any order and then call move explicitly after the upload has
+finished.
+Multiple files can upload chunks in parallel but the chunks of individual
+files must be non-overlapping to guarantee race-free writing.
+"""
 
 import os
 
@@ -74,12 +81,14 @@ def extract_chunk_region(configuration):
         chunk_first, chunk_last = 0, -1
     return (chunk_first, chunk_last)
 
-def parse_form_upload(user_args, client_id, configuration, cache_dir):
+def parse_form_upload(user_args, client_id, configuration, base_dir):
     """Parse upload file and chunk entries from user_args. Chunk limits are
     extracted from content-range http header in environment.
+    Files are considered to be inside uplad tmp dir inside base_dir.
     """
     files, rejected = [], []
     logger = configuration.logger
+    cache_dir = os.path.join(base_dir, upload_tmp_dir) + os.sep
 
     # TMP! only support single filename and chunk for now
     #for name_index in xrange(max_upload_files):
@@ -105,7 +114,8 @@ def parse_form_upload(user_args, client_id, configuration, cache_dir):
             rejected.append((filename, 'invalid filename: %s (%s)' % \
                              (filename, exc)))
             continue
-        real_path = os.path.abspath(os.path.join(cache_dir, filename))
+        rel_path = os.path.join(upload_tmp_dir, filename)
+        real_path = os.path.abspath(os.path.join(base_dir, rel_path))
         if not valid_user_path(real_path, cache_dir, True):
             logger.error('%s tried to access restricted path %s ! (%s)'
                              % (client_id, real_path, cache_dir))
@@ -128,7 +138,7 @@ def parse_form_upload(user_args, client_id, configuration, cache_dir):
                 continue
             elif chunk_last < 0:
                 chunk_last = len(chunk) - 1
-            files.append((filename, (chunk, chunk_first, chunk_last)))
+            files.append((rel_path, (chunk, chunk_first, chunk_last)))
     return (files, rejected)
 
 def main(client_id, user_arguments_dict):
@@ -196,7 +206,7 @@ def main(client_id, user_arguments_dict):
 
     try:
         (upload_files, upload_rejected) = parse_form_upload(
-            user_arguments_dict, client_id, configuration, cache_dir)
+            user_arguments_dict, client_id, configuration, base_dir)
     except Exception, exc:
         logger.error('error extracting required fields: %s' % exc)
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -225,7 +235,8 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif action == "status" and not upload_files:
         # Default to entire cache dir
-        upload_files = [(i, '') for i in os.listdir(cache_dir)]
+        upload_files = [(os.path.join(upload_tmp_dir, i), '') for i in \
+                        os.listdir(cache_dir)]
     elif not upload_files:
         logger.error('Rejecting upload with: %s' % upload_files)
         output_objects.append({'object_type': 'error_text', 'text'
@@ -250,33 +261,33 @@ def main(client_id, user_arguments_dict):
     # current_dir in move operation where it is the destination.
     if action == 'delete':
         for (rel_path, chunk_tuple) in upload_files:
-            real_path = os.path.abspath(os.path.join(cache_dir, rel_path))
+            real_path = os.path.abspath(os.path.join(base_dir, rel_path))
             deleted = delete_file(real_path, logger)
             uploaded.append({'object_type': 'uploadfile', rel_path: deleted})
         logger.info('delete done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)
     elif action == 'status':
-        # Status automatically takes place relative to cache_dir
+        # Status automatically takes place relative to upload tmp dir
         for (rel_path, chunk_tuple) in upload_files:
-            real_path = os.path.abspath(os.path.join(cache_dir, rel_path))
+            real_path = os.path.abspath(os.path.join(base_dir, rel_path))
             file_entry = {'object_type': 'uploadfile', 'name': rel_path}
             file_entry['size'] = get_file_size(real_path, logger)
             file_entry['url'] = os.path.join("/cert_redirect", rel_path)
             if current_dir == upload_tmp_dir:
                 file_entry["deleteType"] = "POST"
-                file_entry["deleteUrl"] = del_url % (output_format,
-                                                     filename_field,
-                                                     rel_path,
-                                                     files_field, "dummy")
+                file_entry["deleteUrl"] = del_url % \
+                                          (output_format, filename_field,
+                                           os.path.basename(rel_path),
+                                           files_field, "dummy")
             uploaded.append(file_entry)
         logger.info('status done: %s' % ' '.join([i[0] for i in upload_files]))
         return (output_objects, status)
     elif action == 'move':
-        # Move automatically takes place relative to cache_dir
+        # Move automatically takes place relative to upload tmp dir
         for (rel_path, chunk_tuple) in upload_files:
-            real_path = os.path.abspath(os.path.join(cache_dir, rel_path))
-            dest_path = os.path.abspath(os.path.join(base_dir, current_dir,
-                                                     rel_path))
+            real_path = os.path.abspath(os.path.join(base_dir, rel_path))
+            dest_path = os.path.abspath(os.path.join(
+                base_dir, current_dir, os.path.basename(rel_path)))
             if not valid_user_path(dest_path, base_dir, True):
                 logger.error('%s tried to %s move to restricted path %s ! (%s)'
                              % (client_id, op_name, dest_path, current_dir))
@@ -309,7 +320,7 @@ def main(client_id, user_arguments_dict):
         (chunk, offset, chunk_last) = chunk_tuple
         chunk_size = len(chunk)
         range_size = 1 + chunk_last - offset
-        real_path = os.path.abspath(os.path.join(cache_dir, rel_path))
+        real_path = os.path.abspath(os.path.join(base_dir, rel_path))
         if not os.path.isdir(os.path.dirname(real_path)):
             output_objects.append({'object_type': 'error_text', 'text'
                                    : "cannot write: no such file or directory:"
@@ -325,21 +336,21 @@ def main(client_id, user_arguments_dict):
                                    (chunk_tuple[1:], offset)})
             logger.info('wrote %s chunk at %s' % (real_path, chunk_tuple[1:]))
             file_entry["size"] = os.path.getsize(real_path)
-            file_entry["url"] = os.path.join("/cert_redirect", current_dir,
-                                             rel_path)
+            file_entry["url"] = os.path.join("/cert_redirect", rel_path)
             if current_dir == upload_tmp_dir:
                 file_entry["deleteType"] = "POST"
-                file_entry["deleteUrl"] = del_url % (output_format,
-                                                     filename_field, rel_path,
-                                                     files_field, "dummy")
+                file_entry["deleteUrl"] = del_url % \
+                                          (output_format, filename_field,
+                                           os.path.basename(rel_path),
+                                           files_field, "dummy")
             else:
                 file_entry["moveType"] = "POST"
                 file_entry["moveDest"] = current_dir
-                file_entry["moveUrl"] = move_url % (output_format,
-                                                    filename_field, rel_path,
-                                                    files_field, "dummy",
-                                                    dest_field, current_dir)
-                
+                file_entry["moveUrl"] = move_url % \
+                                        (output_format, filename_field,
+                                         os.path.basename(rel_path),
+                                         files_field, "dummy", dest_field,
+                                         current_dir)
         else:
             logger.error('could not write %s chunk %s (%d vs %d)' % \
                          (real_path, chunk_tuple[1:], chunk_size, range_size))

@@ -115,7 +115,7 @@ def main(client_id, user_arguments_dict):
 <script id="template-upload" type="text/x-tmpl">
 {% console.log("using upload template"); %}
 {% console.log("... with upload files: "+$.fn.dump(o)); %}
-{% var dest_dir = $("#fancyfileuploaddest").val(); %}
+{% var dest_dir = $("#fancyfileuploaddest").val() || "."; %}
 {% console.log("using upload dest: "+dest_dir); %}
 {% for (var i=0, file; file=o.files[i]; i++) { %}
     <tr class="template-upload fade">
@@ -145,8 +145,6 @@ def main(client_id, user_arguments_dict):
 <script id="template-download" type="text/x-tmpl">
 {% console.log("using download template"); %}
 {% console.log("... with download files: "+$.fn.dump(o)); %}
-{% var dest_dir = $("#fancyfileuploaddest").val(); %}
-{% console.log("using download dest: "+dest_dir); %}
 {% for (var i=0, file; file=o.files[i]; i++) { %}
     {% console.log("adding download: "+i); %}
     {% console.log("adding download: "+file.name); %}
@@ -160,7 +158,7 @@ def main(client_id, user_arguments_dict):
         </td>
         <td>
             <p class="name">
-                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" {%=file.thumbnailUrl?\'data-gallery\':\'\'%}>{%=dest_dir%}/{%=file.name%}</a>
+                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" {%=file.thumbnailUrl?\'data-gallery\':\'\'%}>{%=file.name%}</a>
             </p>
             {% if (file.error) { %}
                 <div><span class="error">Error</span> {%=file.error%}</div>
@@ -170,7 +168,7 @@ def main(client_id, user_arguments_dict):
             <span class="size">{%=o.formatFileSize(file.size)%}</span>
         </td>
         <td>
-            <button class="delete" data-type="{%=file.deleteType%}" data-url="{%=file.deleteUrl%}"{% if (file.deleteWithCredentials) { %} data-xhr-fields=\'{"withCredentials":true}\'{% } %}>Delete</button>
+            <button class="delete" data-type="{%=file.deleteType%}" data-url="{%=file.deleteUrl%}"{% if (file.deleteWithCredentials) { %} data-xhr-fields=\'{"withCredentials":true}\'{% } %}>{% if (file.deleteUrl) { %}Delete{% } else { %}Dismiss{% } %}</button>
             <input type="checkbox" name="delete" value="1" class="toggle">
         </td>
     </tr>

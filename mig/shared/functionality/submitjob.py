@@ -584,7 +584,7 @@ Upload other files efficiently (using chunking).
 <script id="template-upload" type="text/x-tmpl">
 {% console.log("using upload template"); %}
 {% console.log("... with upload files: "+$.fn.dump(o)); %}
-{% var dest_dir = $("#fancyfileuploaddest").val(); %}
+{% var dest_dir = $("#fancyfileuploaddest").val() || "."; %}
 {% console.log("using upload dest: "+dest_dir); %}
 {% for (var i=0, file; file=o.files[i]; i++) { %}
     <tr class="template-upload fade">
@@ -637,7 +637,7 @@ Upload other files efficiently (using chunking).
             <span class="size">{%=o.formatFileSize(file.size)%}</span>
         </td>
         <td>
-            <button class="delete" data-type="{%=file.deleteType%}" data-url="{%=file.deleteUrl%}"{% if (file.deleteWithCredentials) { %} data-xhr-fields=\'{"withCredentials":true}\'{% } %}>Delete</button>
+            <button class="delete" data-type="{%=file.deleteType%}" data-url="{%=file.deleteUrl%}"{% if (file.deleteWithCredentials) { %} data-xhr-fields=\'{"withCredentials":true}\'{% } %}>{% if (file.deleteUrl) { %}Delete{% } else { %}Dismiss{% } %}</button>
             <input type="checkbox" name="delete" value="1" class="toggle">
         </td>
     </tr>
