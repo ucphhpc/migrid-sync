@@ -100,7 +100,7 @@
     left: 50%;
     width: 128px;
     height: 128px;
-    background: url(/images/css/images/animate-overlay.gif) center no-repeat;
+    background: url(/images/loading.gif) center no-repeat;
     display: none;
 }
 

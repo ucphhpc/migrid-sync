@@ -204,6 +204,8 @@ def html_tmpl(configuration):
             <!-- The table listing the files available for upload/download -->
             <table role="presentation" class="table table-striped"><tbody class="uploadfileslist"></tbody></table>
         </form>
+        <!-- For status and error output messages -->
+        <div id="fancyuploadchunked_output"></div>
     </div>
     
     <div id="upload_dialog" title="Upload File" style="display: none;">
@@ -338,15 +340,17 @@ def js_tmpl(entry_path='/'):
 <script id="template-upload" type="text/x-tmpl">
 {% console.log("using upload template"); %}
 {% console.log("... with upload files: "+$.fn.dump(o)); %}
-{% var dest_dir = $("#fancyfileuploaddest").val() || "."; %}
+{% var dest_dir = "./" + $("#fancyfileuploaddest").val(); %}
 {% console.log("using upload dest: "+dest_dir); %}
 {% for (var i=0, file; file=o.files[i]; i++) { %}
+    {% var rel_path = $.fn.normalizePath(dest_dir+"/"+file.name); %}
+    {% console.log("using upload rel_path: "+rel_path); %}
     <tr class="template-upload fade">
         <td>
             <span class="preview"></span>
         </td>
         <td>
-            <p class="name">{%=dest_dir%}/{%=file.name%}</p>
+            <p class="name">{%=rel_path%}</p>
             <strong class="error"></strong>
         </td>
         <td>
@@ -369,8 +373,8 @@ def js_tmpl(entry_path='/'):
 {% console.log("using download template"); %}
 {% console.log("... with download files: "+$.fn.dump(o)); %}
 {% for (var i=0, file; file=o.files[i]; i++) { %}
-    {% console.log("adding download: "+i); %}
-    {% console.log("adding download: "+file.name); %}
+    {% var rel_path = $.fn.normalizePath("./"+file.name); %}
+    {% console.log("using download rel_path: "+rel_path); %}
     <tr class="template-download fade">
         <td>
             <span class="preview">
@@ -381,7 +385,7 @@ def js_tmpl(entry_path='/'):
         </td>
         <td>
             <p class="name">
-                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" {%=file.thumbnailUrl?\'data-gallery\':\'\'%}>{%=file.name%}</a>
+                <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" {%=file.thumbnailUrl?\'data-gallery\':\'\'%}>{%=rel_path%}</a>
             </p>
             {% if (file.error) { %}
                 <div><span class="error">Error</span> {%=file.error%}</div>

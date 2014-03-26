@@ -27,6 +27,32 @@
 
 */
 
+/*
+
+# The path normalization code is a modified copy from Node.js and the original
+# Copyright notice follows here:
+
+Copyright 2009, 2010 Ryan Lienhart Dahl. All rights reserved. Permission
+is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+*/
+
 if (jQuery) (function($){
   
     var pathAttribute = 'rel_path';
@@ -105,6 +131,38 @@ if (jQuery) (function($){
         return dirPath;
     }
 
+    $.fn.normalizePath = function(path) {
+        /* This is a modified version of the path normalizer from Node.js */
+        var parts = path.split("/");
+        var keepBlanks = false;
+        var directories = [], prev;
+        for (var i = 0, l = parts.length - 1; i <= l; i++) {
+            var directory = parts[i];
+ 
+            // if it's blank, but it's not the first thing, and not the last thing, skip it.
+            if (directory === "" && i !== 0 && i !== l && !keepBlanks) continue;
+  
+            // if it's a dot, and there was some previous dir already, then skip it.
+            if (directory === "." && prev !== undefined) continue;
+  
+            // if it starts with "", and is a . or .., then skip it.
+            if (directories.length === 1 && directories[0] === "" && (
+                directory === "." || directory === "..")) continue;
+  
+            if (directory === ".." && directories.length && prev !== ".." && 
+                          prev !== "." && prev !== undefined && 
+                          (prev !== "" || keepBlanks)) {
+                directories.pop();
+                prev = directories.slice(-1)[0];
+            } else {
+                if (prev === ".") directories.pop();
+                directories.push(directory);
+                prev = directory;
+            }
+        }
+        return directories.join("/");
+    }
+
     $.fn.reload = function reload(path) {
         var reloadPath = path;
         
@@ -137,6 +195,7 @@ if (jQuery) (function($){
         }
         return remote_path;
     }
+
     $.fn.openDir = function(path) {
          $(".fm_addressbar input[name='fm_current_path']").val(path);
          $.fn.reload(path);
@@ -1611,7 +1670,6 @@ function mig_basicuploadchunked_init(name, callback) {
 function mig_fancyuploadchunked_init(name, callback) {
 
     /* TODO: 
-       avoid duplicates in uploadfileslist
        enable loading spinner in uploadfileslist?
        corrupt png image stalls upload in processing - disable all processing?
        busy marker during slow cancel-all on close?
@@ -1619,7 +1677,6 @@ function mig_fancyuploadchunked_init(name, callback) {
        do we need some kind of select to discriminate between all and recent
            uploads in adminfreeze?
        drag n drop to fileman drop zone with upload popup?
-       individual file upload progress stats?
        refresh list of archive uploads upon each dialog close to force sync?
        replace old and basic upload entries with fancyupload when ready
     */
@@ -1650,6 +1707,30 @@ function mig_fancyuploadchunked_init(name, callback) {
                     }
           });
 
+    function showMessage(msg, html_msg, fadein_ms, fadeout_ms) {
+        if (fadein_ms == undefined) fadein_ms = 0;
+        if (fadeout_ms == undefined) fadeout_ms = 10000;
+        console.log(msg);
+        $("#fancyuploadchunked_output").html(html_msg).fadeIn(fadein_ms, 
+            function() {
+                $(this).fadeOut(fadeout_ms);
+            });     
+    }
+    function showInfo(msg, fadein_ms, fadeout_ms) {
+        var html_msg = "<div class='info' style='margin: 20px;'>";
+        html_msg += "<span style='margin-left: 20px;'>"+msg+"</span></div>";
+        showMessage("Info: "+msg, html_msg, fadein_ms, fadeout_ms);
+    }
+    function showWarning(msg, fadein_ms, fadeout_ms) {
+        var html_msg = "<div class='warn' style='margin: 20px;'>";
+        html_msg += "<span style='margin-left: 20px;'>"+msg+"</span></div>";
+        showMessage("Warning: "+msg, html_msg, fadein_ms, fadeout_ms);
+    }
+    function showError(msg, fadein_ms, fadeout_ms) {
+        var html_msg = "<div class='error' style='margin: 20px;'>";
+        html_msg += "<span style='margin-left: 20px;'>"+msg+"</span></div>";
+        showMessage("Error: "+msg, html_msg, fadein_ms, fadeout_ms);
+    }
 
     function parseReply(raw_data) {
         var data = {"files": []};
@@ -1681,7 +1762,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                 }
             });
         } catch(err) {
-            console.log("err in parseReply: "+err);
+            showError("parsing response from server: "+err);
         }
         //console.log("parsed raw reply into files: "+$.fn.dump(data.files));
         return data;
@@ -1732,9 +1813,10 @@ function mig_fancyuploadchunked_init(name, callback) {
             filesContainer: ".uploadfileslist",
             add: function (e, data) {
                 console.log("add file");
-                //var data = parseReply(raw_data);
                 /* Add final destination for use in done */ 
-                var dest_dir = $("#fancyfileuploaddest").val() || '.';
+                var dest_dir = $("#fancyfileuploaddest").val();
+                /* empty dest is not allowed */
+                dest_dir = "./" + $.fn.normalizePath(dest_dir);
                 data.formData = {current_dir: dest_dir};
                 //console.log("add file with data: "+$.fn.dump(data));
                 console.log("add file with data files: "+$.fn.dump(data.files));
@@ -1743,7 +1825,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                     $.blueimp.fileupload.prototype
                                 .options.add.call(that, e, data);
                 } catch(err) {
-                    console.log("err in add file: "+err);
+                    showError("adding upload: "+err);
                 }
             },
             done: function (e, data) {
@@ -1760,7 +1842,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                 $.each(data.result.files, function (index, file) {
                     //console.log("found file entry in results: "+$.fn.dump(file));
                     if (file.error != undefined) {
-                        console.log("found upload error: "+file.error);
+                        showError("found upload error: "+file.error);
                         // Continue to next iteration on errors
                         return true;
                     }
@@ -1779,7 +1861,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                         delete file.moveUrl;
                         console.log("updated file entry: "+$.fn.dump(file));
                     } else {
-                        console.log("move failed!");
+                        showError("automatic move to destination failed!");
                     }
                 });
                 /* Finally pass control over to native done handler */
@@ -1788,14 +1870,14 @@ function mig_fancyuploadchunked_init(name, callback) {
                     $.blueimp.fileupload.prototype
                                 .options.done.call(that, e, data);
                 } catch(err) {
-                    console.log("err in done file: "+err);
+                    showError("upload done handler failed: "+err);
                 }
             },
             fail: function (e, data) {
                 console.log("fail file");
                 $.each(data.files, function (index, file) {
                     if (file.error != undefined) {
-                        console.log("error uploading "+file.name+" : "+file.error);
+                        showError("uploading of "+file.name+" failed: "+file.error);
                     } else {
                         console.log("cancelled file: "+file.name);
                     }
@@ -1807,7 +1889,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                     $.blueimp.fileupload.prototype
                                 .options.fail.call(that, e, data);
                 } catch(err) {
-                    console.log("err in fail file: "+err);
+                    showError("upload fail handler failed: "+err);
                 }                               
              }
         });
@@ -1846,7 +1928,7 @@ function mig_fancyuploadchunked_init(name, callback) {
             //console.log("load existing files always handler");
             $(this).removeClass("fileupload-processing");
         }).fail(function () {
-            console.log("load existing files failed");
+            showError("load existing files failed");
         }).done(function (raw_result) {
                     //console.log("loaded existing files: "+$.fn.dump(raw_result));
                     var result = parseReply(raw_result);
@@ -1855,6 +1937,42 @@ function mig_fancyuploadchunked_init(name, callback) {
                         .call(this, $.Event("done"), {result: result});
                     console.log("done handling existing files");
                 });
+
+        /* Prevent duplicates in uploadfileslist */
+        $("#fancyfileupload").bind("fileuploadadd", function(e, data) {
+            //console.log("in add handler");
+            var current_files = [];
+            var path;
+            $(this).fileupload("option").filesContainer.children().each(function() {
+                //console.log("in add handler loop");
+                if ($(this).data == undefined || $(this).data("data") == undefined) {
+                    //showWarning("no this.data field in add handler loop");
+                    return true;
+                }
+                //console.log("add file in add handler loop");
+                path = $(this).data("data").formData.current_dir + "/";
+                path += $(this).data("data").files[0].name;
+                path = $.fn.normalizePath(path);
+                current_files.push(path);
+            });
+            $(this).fileupload("option").filesContainer.find("td > p.name > a")
+                .each(function() {
+                    //console.log("add finished in add handler loop");
+                    path = $.fn.normalizePath("./"+$(this).text());
+                    current_files.push(path);
+                });
+            console.log("found existing uploads: "+current_files);
+            data.files = $.map(data.files, function(file, i) {
+                    path = "./" + $("#fancyfileuploaddest").val() + "/" + file.name;
+                    path = $.fn.normalizePath(path);
+                    if ($.inArray(path, current_files) >= 0) {
+                        showError("ignoring addition of duplicate: "+path);
+                        return null;
+                    }
+                    return file;
+                });
+            });
+
     };
 
     return do_d;
