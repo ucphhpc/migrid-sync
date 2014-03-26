@@ -1672,7 +1672,6 @@ function mig_fancyuploadchunked_init(name, callback) {
     /* TODO: 
        enable loading spinner in uploadfileslist?
        corrupt png image stalls upload in processing - disable all processing?
-       busy marker during slow cancel-all on close?
        move all these dialogs into if jquery section?
        do we need some kind of select to discriminate between all and recent
            uploads in adminfreeze?
@@ -1700,7 +1699,10 @@ function mig_fancyuploadchunked_init(name, callback) {
            buttons: {
                      "Close": function() {
                                   /* cancel any active uploads */
-                                  $(".fileupload-buttons button.cancel").click();
+                                  if ($(".uploadfileslist button.cancel").length > 0) {
+                                      showInfo("aborting any active uploads", 0, 3000);
+                                      $(".fileupload-buttons button.cancel").click();
+                                  }
                                   callback();
                                   $("#" + name).dialog("close");
                               }
