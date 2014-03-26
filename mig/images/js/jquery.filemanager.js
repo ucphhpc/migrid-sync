@@ -457,16 +457,8 @@ if (jQuery) (function($){
                       closeOnEscape: true, modal: true});
                 $("#cmd_dialog").dialog('open');
             },
-            basicuploadchunked: function (action, el, pos) {
-                var open_dialog = mig_basicuploadchunked_init("basicuploadchunked_dialog");
-                var remote_path = $.fn.targetDir(el);
-                open_dialog("Upload Files in Chunks", 
-                                      function () {
-                                          $(".fm_files").parent().reload('');
-                                      }, remote_path, false);
-            },
-            fancyuploadchunked: function (action, el, pos) {
-                var open_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog");
+            uploadchunked: function (action, el, pos) {
+                var open_dialog = mig_fancyuploadchunked_init("uploadchunked_dialog");
                 var remote_path = $.fn.targetDir(el);
                 open_dialog("Upload Files in Chunks", 
                                       function () {

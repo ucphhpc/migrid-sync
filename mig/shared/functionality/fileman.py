@@ -101,11 +101,8 @@ def html_tmpl(configuration):
         <li class="create">
             <a href="#create">Create File</a>
         </li>
-        <li class="basicuploadchunked">
-            <a href="#basicuploadchunked">Basic Uploader</a>
-        </li>
-        <li class="fancyuploadchunked">
-            <a href="#fancyuploadchunked">Fancy Uploader</a>
+        <li class="uploadchunked">
+            <a href="#uploadchunked">Fancy Uploader</a>
         </li>
         <li class="upload">
             <a href="#upload">Upload File</a>
@@ -169,46 +166,7 @@ def html_tmpl(configuration):
 
     <div id="cmd_dialog" title="Command output" style="display: none;"></div>
 
-    <div id="basicuploadchunked_dialog" title="Upload File" style="display: none;">
-
-        <fieldset>
-            <p id="basicfileuploaddestbox">
-                <label id="basicfileuploaddestlabel" for="basicfileupload">
-                        Optional final destination dir:
-                </label>
-            <input id="basicfileuploaddest" type="text" size=60 value="">
-            </p>
-            <label for="basicfileupload">File:</label>
-            <input id="basicfileupload" type="file" name="files[]" multiple>
-        </fieldset>
-
-        <div id="uploadfiles" class="uploadfiles">
-            <div id="globalprogress" class="uploadprogress">
-                <div class="progress-label">= Init =</div>
-            </div>
-            <div id="actionbuttons">
-                <button id="pauseupload">Pause/Resume</button>
-                <button id="cancelupload">Cancel</button>
-            </div>
-            <br />
-            <div id="recentupload">
-                <b>Recently uploaded files:</b> <button id="clearuploads">Clear</button>
-                <div id="uploadedfiles">
-                    <!-- dynamically filled by javascript after uploads -->
-                </div>
-            </div>
-            <br />
-            <div id="recentfail">
-                <b>Recently failed uploads:</b> <button id="clearfailed">Clear</button>
-                <div id="failedfiles">
-                    <!-- dynamically filled by javascript after uploads -->
-                </div>
-            </div>
-            <div id="basicuploadchunked_output"></div>
-        </div>
-    </div>
-    
-    <div id="fancyuploadchunked_dialog" title="Upload File" style="display: none;">
+    <div id="uploadchunked_dialog" title="Upload File" style="display: none;">
     
         <!-- The file upload form used as target for the file upload widget -->
         <form id="fancyfileupload" action="uploadchunked.py?output_format=json;action=put"
@@ -361,10 +319,6 @@ def js_tmpl(entry_path='/'):
 <script type="text/javascript" src="/images/js/jquery.iframe-transport.js"></script>
 <!-- The basic File Upload plugin -->
 <script type="text/javascript" src="/images/js/jquery.fileupload.js"></script>
-<!-- save basic fileuploader before overwriting it with ui version below -->
-<script type="text/javascript">
-        $.fn.basicfileupload = $.fn.fileupload;
-</script>
 <!-- The File Upload processing plugin -->
 <script type="text/javascript" src="/images/js/jquery.fileupload-process.js"></script>
 <!-- The File Upload image preview & resize plugin -->
@@ -379,10 +333,6 @@ def js_tmpl(entry_path='/'):
 <script type="text/javascript" src="/images/js/jquery.fileupload-ui.js"></script>
 <!-- The File Upload jQuery UI plugin -->
 <script type="text/javascript" src="/images/js/jquery.fileupload-jquery-ui.js"></script>
-<!-- not really needed but save ui fileuploader for symmetry -->
-<script type="text/javascript">
-        $.fn.fancyfileupload = $.fn.fileupload;
-</script>
 
 <!-- The template to display files available for upload -->
 <script id="template-upload" type="text/x-tmpl">
