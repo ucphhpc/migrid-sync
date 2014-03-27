@@ -300,6 +300,7 @@ def js_tmpl(entry_path='/'):
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.contextmenu.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.xbreadcrumbs.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fmbreadcrumbs.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload.css" media="screen">
