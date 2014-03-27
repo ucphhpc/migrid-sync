@@ -516,36 +516,16 @@ if (jQuery) (function($){
                       closeOnEscape: true, modal: true});
                 $("#cmd_dialog").dialog('open');
             },
-            uploadchunked: function (action, el, pos) {
-                var open_dialog = mig_fancyuploadchunked_init("uploadchunked_dialog");
-                var remote_path = $.fn.targetDir(el);
-                open_dialog("Upload Files in Chunks", 
-                                      function () {
-                                          $(".fm_files").parent().reload('');
-                                      }, remote_path, false);
-            },
             upload: function (action, el, pos) {
-                var remote_path = $(el).attr(pathAttribute);
-                if (remote_path == '/') {
-                    remote_path = './';                                             
-                } else {
-                    remote_path = './'+remote_path;
-                }
+                var open_dialog = mig_fancyuploadchunked_init("upload_dialog");
+                var remote_path = $.fn.targetDir(el);
                 $("#upload_form input[name='remotefilename_0']").val(remote_path);
                 $("#upload_form input[name='fileupload_0_0_0']").val('');
                 $("#upload_output").html('');
-                $("#upload_dialog").dialog(
-                    {buttons: {
-                         Upload: function() { 
-                             $("#upload_form").submit(); 
-                             $(".fm_files").parent().reload('');
-                         },
-                         Cancel: function() {
-                             $(this).dialog('close');}
-                     },
-                     autoOpen: false, closeOnEscape:  true,
-                     modal: true, width: '800px'});
-                $("#upload_dialog").dialog('open');
+                open_dialog("Upload Files", 
+                                      function () {
+                                          $(".fm_files").parent().reload('');
+                                      }, remote_path, false);
             },
             mkdir:  function (action, el, pos) {
                 // Initialize the form
@@ -1677,7 +1657,7 @@ function mig_fancyuploadchunked_init(name, callback) {
            uploads in adminfreeze?
        drag n drop to fileman drop zone with upload popup?
        refresh list of archive uploads upon each dialog close to force sync?
-       replace old and basic upload entries with fancyupload when ready
+       add loading spinner on Upload click in legacy upload?
     */
 
     console.log("mig_fancyuploadchunked_init: "+name, callback);
@@ -1976,6 +1956,7 @@ function mig_fancyuploadchunked_init(name, callback) {
             });
 
     };
+
 
     return do_d;
 };

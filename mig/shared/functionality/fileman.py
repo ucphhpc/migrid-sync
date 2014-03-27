@@ -101,9 +101,6 @@ def html_tmpl(configuration):
         <li class="create">
             <a href="#create">Create File</a>
         </li>
-        <li class="uploadchunked">
-            <a href="#uploadchunked">Fancy Uploader</a>
-        </li>
         <li class="upload">
             <a href="#upload">Upload File</a>
         </li>
@@ -166,73 +163,81 @@ def html_tmpl(configuration):
 
     <div id="cmd_dialog" title="Command output" style="display: none;"></div>
 
-    <div id="uploadchunked_dialog" title="Upload File" style="display: none;">
-    
-        <!-- The file upload form used as target for the file upload widget -->
-        <form id="fancyfileupload" action="uploadchunked.py?output_format=json;action=put"
-            method="POST" enctype="multipart/form-data">
-            <fieldset id="fancyfileuploaddestbox">
-                <label id="fancyfileuploaddestlabel" for="fancyfileupload">
-                    Optional final destination dir:
-                </label>
-                <input id="fancyfileuploaddest" type="text" size=60 value="">
-            </fieldset>
-    
-            <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
-            <div class="fileupload-buttonbar">
-                <div class="fileupload-buttons">
-                    <!-- The fileinput-button span is used to style the file input field as button -->
-                    <span class="fileinput-button">
-                        <span>Add files...</span>
-                        <input type="file" name="files[]" multiple>
-                    </span>
-                    <button type="submit" class="start">Start upload</button>
-                    <button type="reset" class="cancel">Cancel upload</button>
-                    <button type="button" class="delete">Delete</button>
-                    <input type="checkbox" class="toggle">
-                    <!-- The global file processing state -->
-                    <span class="fileupload-process"></span>
-                </div>
-                <!-- The global progress state -->
-                <div class="fileupload-progress fade" style="display:none">
-                    <!-- The global progress bar -->
-                    <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
-                    <!-- The extended global progress state -->
-                    <div class="progress-extended">&nbsp;</div>
-                </div>
-            </div>
-            <!-- The table listing the files available for upload/download -->
-            <table role="presentation" class="table table-striped"><tbody class="uploadfileslist"></tbody></table>
-        </form>
-        <!-- For status and error output messages -->
-        <div id="fancyuploadchunked_output"></div>
-    </div>
-    
     <div id="upload_dialog" title="Upload File" style="display: none;">
-    
-        <form id="upload_form" enctype="multipart/form-data" method="post" action="textarea.py">
-        <fieldset>
-            <input type="hidden" name="output_format" value="json"/>
-            <input type="hidden" name="max_file_size" value="100000"/>
 
-            %(upload_submit_entry)s
-            <br />
+      <div id="upload_tabs">
+        <ul>
+              <li><a href="#fancyuploadtab">Fancy Upload</a></li>
+              <li><a href="#legacyuploadtab">Legacy Upload</a></li>
+        </ul>
+        <div id="fancyuploadtab">
+            <!-- The file upload form used as target for the file upload widget -->
+            <form id="fancyfileupload" action="uploadchunked.py?output_format=json;action=put"
+                method="POST" enctype="multipart/form-data">
+                <fieldset id="fancyfileuploaddestbox">
+                    <label id="fancyfileuploaddestlabel" for="fancyfileupload">
+                        Optional final destination dir:
+                    </label>
+                    <input id="fancyfileuploaddest" type="text" size=60 value="">
+                </fieldset>
+    
+                <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
+                <div class="fileupload-buttonbar">
+                    <div class="fileupload-buttons">
+                        <!-- The fileinput-button span is used to style the file input field as button -->
+                        <span class="fileinput-button">
+                            <span>Add files...</span>
+                            <input type="file" name="files[]" multiple>
+                        </span>
+                        <button type="submit" class="start">Start upload</button>
+                        <button type="reset" class="cancel">Cancel upload</button>
+                        <button type="button" class="delete">Delete</button>
+                        <input type="checkbox" class="toggle">
+                        <!-- The global file processing state -->
+                        <span class="fileupload-process"></span>
+                    </div>
+                    <!-- The global progress state -->
+                    <div class="fileupload-progress fade" style="display:none">
+                        <!-- The global progress bar -->
+                        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+                        <!-- The extended global progress state -->
+                        <div class="progress-extended">&nbsp;</div>
+                    </div>
+                </div>
+                <!-- The table listing the files available for upload/download -->
+                <table role="presentation" class="table table-striped"><tbody class="uploadfileslist">
+                </tbody></table>
+            </form>
+            <!-- For status and error output messages -->
+            <div id="fancyuploadchunked_output"></div>
+        </div>
+        <div id="legacyuploadtab">
+            <form id="upload_form" enctype="multipart/form-data" method="post" action="textarea.py">
+                <fieldset>
+                    <input type="hidden" name="output_format" value="json"/>
+                    <input type="hidden" name="max_file_size" value="100000"/>
+
+                    %(upload_submit_entry)s
+                    <br />
             
-            <label for="remotefilename_0">Optional remote filename (extra useful in windows):</label>
-            <input type="text" value="./" size="50" name="remotefilename_0" />
-            <br />
+                    <label for="remotefilename_0">Optional remote filename (extra useful in windows):</label>
+                    <input type="text" value="./" size="50" name="remotefilename_0" />
+                    <br />
             
-            <label for="extract_0">Extract package files (.zip, .tar.gz, .tar.bz2)</label>
-            <input type="checkbox" name="extract_0"/>
-            <br />
+                    <label for="extract_0">Extract package files (.zip, .tar.gz, .tar.bz2)</label>
+                    <input type="checkbox" name="extract_0"/>
+                    <br />
             
-            <label for="fileupload_0_0_0">File:</label>
-            <input type="file" name="fileupload_0_0_0"/>
-        </fieldset>
-        </form>
-        <div id="upload_output"></div>
+                    <label for="fileupload_0_0_0">File:</label>
+                    <input type="file" name="fileupload_0_0_0"/>
+                    <input type="submit" value="Upload"/>
+                </fieldset>
+            </form>
+            <div id="upload_output"></div>
+        </div>
+      </div>
     </div>
-            
+    
     <div id="mkdir_dialog" title="Create New Folder" style="display: none;">
     
         <form id="mkdir_form" method="post" action="mkdir.py">
@@ -415,30 +420,32 @@ def js_tmpl(entry_path='/'):
         $.ui.dialog.defaults.bgiframe = true;
     }
 
-    $(document).ready( function() {
+    $(document).ready(function() {
 
-    /* wrap in try/catch for debugging - disabled in prodution */
-    /*
-    try {
-    */
+        /* wrap in try/catch for debugging - disabled in prodution */
+        /*
+        try {
+        */
     
-        $("#fm_filemanager").filemanager({
-                                         root: "/",
-                                         connector: "ls.py",
-                                         params: "path",
-                                         expandSpeed: 0,
-                                         collapseSpeed: 0,
-                                         multiFolder: false,
-                                         subPath: "%s"
-                                         }
-        );
+            $("#fm_filemanager").filemanager({
+                                             root: "/",
+                                             connector: "ls.py",
+                                             params: "path",
+                                             expandSpeed: 0,
+                                             collapseSpeed: 0,
+                                             multiFolder: false,
+                                             subPath: "%s"
+                                             }
+            );
 
-    /*
-    } catch(err) {
-        alert("Internal error in file manager: " + err);
-    }
-    */
+        /*
+        } catch(err) {
+            alert("Internal error in file manager: " + err);
+        }
+        */
 
+        /* init upload dialog tabs */
+        $("#upload_tabs").tabs();
     });
 </script>
     ''' % entry_path
