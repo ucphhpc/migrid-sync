@@ -1650,13 +1650,8 @@ function mig_basicuploadchunked_init(name, callback) {
 function mig_fancyuploadchunked_init(name, callback) {
 
     /* TODO: 
-       enable loading spinner in uploadfileslist?
-       corrupt png image stalls upload in processing - disable all processing?
        move all these dialogs into if jquery section? (fails for some reason)
-       do we need some kind of select to discriminate between all and recent
-           uploads in adminfreeze?
        drag n drop to fileman drop zone with upload popup?
-       refresh list of archive uploads upon each dialog close to force sync?
     */
 
     console.log("mig_fancyuploadchunked_init: "+name, callback);
@@ -1677,9 +1672,9 @@ function mig_fancyuploadchunked_init(name, callback) {
            width: 800,
            buttons: {
                      "Close": function() {
-                                  /* cancel any active uploads */
+                                  /* cancel active uploads if any */
                                   if ($(".uploadfileslist button.cancel").length > 0) {
-                                      showWaitInfo("aborting any active uploads", 0, 3000);
+                                      showWaitInfo("aborting active uploads", 0, 3000);
                                       $(".fileupload-buttons button.cancel").click();
                                   }
                                   callback();
@@ -1797,8 +1792,11 @@ function mig_fancyuploadchunked_init(name, callback) {
             url: upload_url,
             dataType: "json",
             maxChunkSize: 32000000, // 32 MB
-            disableImageResize: true,
             filesContainer: ".uploadfileslist",
+            disableImageLoad: true,
+            disableAudioPreview: true,
+            disableVideoPreview: true,
+            disableValidation: true,
             add: function (e, data) {
                 console.log("add file");
                 /* Add final destination for use in done */ 
