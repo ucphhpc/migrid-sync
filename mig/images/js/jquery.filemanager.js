@@ -1652,12 +1652,11 @@ function mig_fancyuploadchunked_init(name, callback) {
     /* TODO: 
        enable loading spinner in uploadfileslist?
        corrupt png image stalls upload in processing - disable all processing?
-       move all these dialogs into if jquery section?
+       move all these dialogs into if jquery section? (fails for some reason)
        do we need some kind of select to discriminate between all and recent
            uploads in adminfreeze?
        drag n drop to fileman drop zone with upload popup?
        refresh list of archive uploads upon each dialog close to force sync?
-       add loading spinner on Upload click in legacy upload?
     */
 
     console.log("mig_fancyuploadchunked_init: "+name, callback);
@@ -1680,7 +1679,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                      "Close": function() {
                                   /* cancel any active uploads */
                                   if ($(".uploadfileslist button.cancel").length > 0) {
-                                      showInfo("aborting any active uploads", 0, 3000);
+                                      showWaitInfo("aborting any active uploads", 0, 3000);
                                       $(".fileupload-buttons button.cancel").click();
                                   }
                                   callback();
@@ -1693,10 +1692,17 @@ function mig_fancyuploadchunked_init(name, callback) {
         if (fadein_ms == undefined) fadein_ms = 0;
         if (fadeout_ms == undefined) fadeout_ms = 10000;
         console.log(msg);
-        $("#fancyuploadchunked_output").html(html_msg).fadeIn(fadein_ms, 
-            function() {
-                $(this).fadeOut(fadeout_ms);
-            });     
+        $("#fancyuploadchunked_output").html(html_msg).fadeIn(fadein_ms,         
+                function() {
+                    $(this).stop();
+                    $(this).fadeOut(fadeout_ms);
+                }
+            );     
+    }
+    function showWaitInfo(msg, fadein_ms, fadeout_ms) {
+        var html_msg = "<div class='spinner' style='margin: 20px;'>";
+        html_msg += "<span style='margin-left: 20px;'>"+msg+"</span></div>";
+        showMessage("Info: "+msg, html_msg, fadein_ms, fadeout_ms);
     }
     function showInfo(msg, fadein_ms, fadeout_ms) {
         var html_msg = "<div class='info' style='margin: 20px;'>";
@@ -1877,7 +1883,7 @@ function mig_fancyuploadchunked_init(name, callback) {
         });
 
         // Upload server status check for browsers with CORS support:
-        console.log("check server status");
+        showWaitInfo("checking server availability");
         if ($.support.cors) {
             $.ajax({
                 url: status_url,
@@ -1892,12 +1898,13 @@ function mig_fancyuploadchunked_init(name, callback) {
                         console.log("done checking server");
                         //var result = parseReply(raw_result);
                         //console.log("done checking server parsed result: "+$.fn.dump(result));
+                        showInfo("server is ready", 10, 3000);
                     }
            );
         }
 
         // Load existing files:
-        console.log("load existing files");
+        showWaitInfo("loading list of cached uploads");
         $("#fancyfileupload").addClass("fileupload-processing");
         $.ajax({
             // Uncomment the following to send cross-domain cookies:
@@ -1917,7 +1924,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                     console.log("parsed existing files: "+$.fn.dump(result.files));
                     $(this).fileupload("option", "done")
                         .call(this, $.Event("done"), {result: result});
-                    console.log("done handling existing files");
+                    showInfo("list of cached uploads loaded", 10, 3000);
                 });
 
         /* Prevent duplicates in uploadfileslist */
@@ -1948,7 +1955,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                     path = "./" + $("#fancyfileuploaddest").val() + "/" + file.name;
                     path = $.fn.normalizePath(path);
                     if ($.inArray(path, current_files) >= 0) {
-                        showError("ignoring addition of duplicate: "+path);
+                        showWarning("ignoring addition of duplicate: "+path);
                         return null;
                     }
                     return file;
@@ -1956,7 +1963,6 @@ function mig_fancyuploadchunked_init(name, callback) {
             });
 
     };
-
 
     return do_d;
 };

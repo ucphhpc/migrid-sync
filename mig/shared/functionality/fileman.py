@@ -230,7 +230,7 @@ def html_tmpl(configuration):
             
                     <label for="fileupload_0_0_0">File:</label>
                     <input type="file" name="fileupload_0_0_0"/>
-                    <input type="submit" value="Upload"/>
+                    <input type="submit" value="Upload" onClick="$(\'#upload_output\').html(\'<div><span style=\\\'margin-left: 20px;\\\'>uploading ... please wait</span></div>\').addClass(\'info\').addClass(\'spinner\');" />
                 </fieldset>
             </form>
             <div id="upload_output"></div>
