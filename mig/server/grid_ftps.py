@@ -208,6 +208,25 @@ class MiGRestrictedFilesystem(AbstractedFS):
         return [i for i in AbstractedFS.listdir(self, path) if not \
                 invisible_path(i)]
 
+    ### Force symlinks to look like real dirs to avoid client confusion ###
+    if hasattr(os, 'lstat'):
+        def lstat(self, path):
+            """Modified to always return real stat to hide symlinks"""
+            return self.stat(path)
+        
+    if hasattr(os, 'readlink'):
+        def readlink(self, path):
+            """Modified to always return just path to hide symlinks"""
+            return path
+
+    def islink(self, path):
+        """Modified to always return False to hide symlinks"""
+        return False
+
+    def lexists(self, path):
+        """Modified to always return real exists to hide symlinks"""
+        return self.exists(path)
+
 
 def start_service(conf):
     """Main server"""
