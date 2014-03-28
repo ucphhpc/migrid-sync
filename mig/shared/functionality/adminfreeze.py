@@ -214,7 +214,7 @@ function add_copy(div_id) {
 
 function add_upload(div_id) {
     var field_id, field_name, wrap_id, path, on_remove;
-    open_upload_dialog("Upload Files in Chunks", function() {
+    open_upload_dialog("Upload Files", function() {
             console.log("in upload callback");
             $(".uploadfileslist > tr > td > p.name > a").each(
                 function(index) {

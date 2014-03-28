@@ -192,14 +192,14 @@ def main(client_id, user_arguments_dict):
     function openBasicUpload() {
         var open_dialog = mig_basicuploadchunked_init("basicuploadchunked_dialog");
         var remote_path = ".";
-        open_dialog("Upload Files in Chunks", function() { return false; },
+        open_dialog("Upload Files", function() { return false; },
                     remote_path, false);
     }
 
     function openFancyUpload() {
         var open_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog");
         var remote_path = ".";
-        open_dialog("Upload Files in Chunks", function() { return false; },
+        open_dialog("Upload Files", function() { return false; },
                     remote_path, false);
     }
 
