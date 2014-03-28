@@ -54,6 +54,10 @@ class User(object):
         if self.home is None:
             self.home = self.username
 
+    def __str__(self):
+        """String formater"""
+        return 'username: %s\nhome: %s\npassword: %s\npublic_key: %s' % \
+               (self.username, self.home, self.password, self.public_key)
 
 def get_fs_path(user_path, root, chroot_exceptions):
     """Internal helper to translate path with chroot and invisible files
@@ -134,12 +138,14 @@ def refresh_users(configuration, protocol):
     last_update = conf['time_stamp']
     old_usernames = [i.username for i in conf['users']]
     cur_usernames = []
-    if protocol in ('ssh', 'sftp', 'scp', 'rsync'):
+    if protocol in ('ssh', 'sftp', 'scp', 'rsync', 'ftps'):
         proto_authkeys = ssh_authkeys
         proto_authpasswords = ssh_authpasswords
     elif protocol in ('dav', 'davs'):
         proto_authkeys = davs_authkeys
         proto_authpasswords = davs_authpasswords
+    else:
+        logger.error("invalid protocol: %s" % protocol)
     authkeys_pattern = os.path.join(conf['root_dir'], '*', proto_authkeys)
     authpasswords_pattern = os.path.join(conf['root_dir'], '*',
                                          proto_authpasswords)
