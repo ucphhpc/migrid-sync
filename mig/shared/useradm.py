@@ -38,7 +38,7 @@ from shared.base import client_id_dir, client_alias, sandbox_resource
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.defaults import keyword_auto, ssh_conf_dir, davs_conf_dir, \
-     htaccess_filename, settings_filename, profile_filename, \
+     ftps_conf_dir, htaccess_filename, settings_filename, profile_filename, \
      default_css_filename, widgets_filename, authkeys_filename, \
      authpasswords_filename
 from shared.fileio import filter_pickled_list, filter_pickled_dict
@@ -59,6 +59,8 @@ ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)
 ssh_authpasswords = os.path.join(ssh_conf_dir, authpasswords_filename)
 davs_authkeys = os.path.join(davs_conf_dir, authkeys_filename)
 davs_authpasswords = os.path.join(davs_conf_dir, authpasswords_filename)
+ftps_authkeys = os.path.join(ftps_conf_dir, authkeys_filename)
+ftps_authpasswords = os.path.join(ftps_conf_dir, authpasswords_filename)
 cert_field_order = [
     ('country', 'C'),
     ('state', 'ST'),
@@ -248,13 +250,14 @@ def create_user(
                                client_dir)
     ssh_dir = os.path.join(home_dir, ssh_conf_dir)
     davs_dir = os.path.join(home_dir, davs_conf_dir)
+    ftps_dir = os.path.join(home_dir, ftps_conf_dir)
     htaccess_path = os.path.join(home_dir, htaccess_filename)
     settings_path = os.path.join(settings_dir, settings_filename)
     profile_path = os.path.join(settings_dir, profile_filename)
     widgets_path = os.path.join(settings_dir, widgets_filename)
     css_path = os.path.join(home_dir, default_css_filename)
     required_dirs = (settings_dir, cache_dir, mrsl_dir, pending_dir, ssh_dir,
-                     davs_dir)
+                     davs_dir, ftps_dir)
     if not renew:
         if verbose:
             print 'Creating dirs and files for new user: %s' % client_id

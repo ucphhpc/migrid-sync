@@ -74,7 +74,7 @@ import sys
 import time
 
 from pyftpdlib.authorizers import DummyAuthorizer
-from pyftpdlib.handlers import TLS_FTPHandler
+from pyftpdlib.handlers import FTPHandler, TLS_FTPHandler
 from pyftpdlib.servers import FTPServer
 from pyftpdlib.filesystems import AbstractedFS, FilesystemError
 
@@ -212,16 +212,21 @@ class MiGRestrictedFilesystem(AbstractedFS):
 def start_service(conf):
     """Main server"""
     authorizer = MiGUserAuthorizer()
-    handler = TLS_FTPHandler
+    if configuration.user_ftps_key:
+        logger.info("Using fully encrypted mode")
+        handler = TLS_FTPHandler
+        # requires SSL for both control and data channel
+        handler.tls_control_required = True
+        handler.tls_data_required = True
+    else:
+        logger.warning("Using unencrypted mode - only for testing!")
+        handler = FTPHandler
     handler.certfile = conf.user_ftps_key
     handler.authorizer = authorizer
     handler.abstracted_fs = MiGRestrictedFilesystem
     handler.passive_ports = range(conf.user_ftps_pasv_ports[0],
                                   conf.user_ftps_pasv_ports[1])
     
-    # requires SSL for both control and data channel
-    handler.tls_control_required = True
-    handler.tls_data_required = True
     server = FTPServer((conf.user_ftps_address, conf.user_ftps_ctrl_port),
                        handler)
     server.serve_forever()

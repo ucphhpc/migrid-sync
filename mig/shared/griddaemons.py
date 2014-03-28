@@ -34,8 +34,9 @@ import time
 
 from shared.base import client_dir_id, client_alias, invisible_path
 from shared.ssh import parse_pub_key
-from shared.useradm import ssh_authkeys, davs_authkeys, get_authkeys, \
-     ssh_authpasswords, davs_authpasswords, get_authpasswords, extract_field
+from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
+     get_authkeys, ssh_authpasswords, davs_authpasswords, ftps_authpasswords, \
+     get_authpasswords, extract_field
 
 
 class User(object):
@@ -138,12 +139,15 @@ def refresh_users(configuration, protocol):
     last_update = conf['time_stamp']
     old_usernames = [i.username for i in conf['users']]
     cur_usernames = []
-    if protocol in ('ssh', 'sftp', 'scp', 'rsync', 'ftps'):
+    if protocol in ('ssh', 'sftp', 'scp', 'rsync'):
         proto_authkeys = ssh_authkeys
         proto_authpasswords = ssh_authpasswords
     elif protocol in ('dav', 'davs'):
         proto_authkeys = davs_authkeys
         proto_authpasswords = davs_authpasswords
+    elif protocol in ('ftp', 'ftps'):
+        proto_authkeys = ftps_authkeys
+        proto_authpasswords = ftps_authpasswords
     else:
         logger.error("invalid protocol: %s" % protocol)
     authkeys_pattern = os.path.join(conf['root_dir'], '*', proto_authkeys)

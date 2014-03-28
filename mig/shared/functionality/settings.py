@@ -34,7 +34,7 @@ from shared.defaults import any_vgrid, default_mrsl_filename, \
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.settings import load_settings, load_widgets, load_profile, \
-     load_ssh, load_davs
+     load_ssh, load_davs, load_ftps
 from shared.profilekeywords import get_profile_specs
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
@@ -66,6 +66,8 @@ ssh_edit = edit_defaults.copy()
 ssh_edit['height'] = '200px'
 davs_edit = edit_defaults.copy()
 davs_edit['height'] = '200px'
+ftps_edit = edit_defaults.copy()
+ftps_edit['height'] = '200px'
 style_edit = edit_defaults.copy()
 style_edit['parserfile'] = css_parsers
 style_edit['stylesheet'] = css_stylesheets
@@ -325,6 +327,8 @@ def main(client_id, user_arguments_dict):
         valid_topics.append('ssh')
     if configuration.site_enable_davs:
         valid_topics.append('davs')
+    if configuration.site_enable_ftps:
+        valid_topics.append('ftps')
     topics = accepted['topic']
     topics = [i for i in topics if i in valid_topics]
     output_objects.append({'object_type': 'header', 'text'
@@ -811,16 +815,21 @@ SSH/SFTP access to your MiG account
 </td></tr>
 <tr><td>
 <p>
-You can configure SFTP login to your %(site)s account for efficient file access.
-Login takes place with public key or password and your automatic username:
+You can configure SFTP login to your %(site)s account for efficient file
+access. Login takes place with public key or password and your automatic
+username:
 <pre>%(username)s</pre>
 </p>
 <p>
-You can use any existing SSH/RSA key, including the key.pem you received along with your user certificate, or create a new one. In any case you need to save the contents of the corresponding public key (X.pub) in the text area below, before you can connect as described in the following sections.
+You can use any existing SSH/RSA key, including the key.pem you received
+along with your user certificate, or create a new one. In any case you
+need to save the contents of the corresponding public key (X.pub) in the
+text area below, before you can connect as described in the following sections.
 </p>
 <p>
 <h3>Graphical SFTP access</h3>
-The FireFTP plugin for Firefox is known to generally work for graphical access to your MiG home over SFTP.
+The FireFTP plugin for Firefox is known to generally work for graphical
+access to your MiG home over SFTP.
 Enter the following values in the FireFTP Account Manager:
 <pre>
 Host %(sftp_server)s
@@ -932,24 +941,30 @@ value="%(default_authpassword)s" />
 <div id="davsaccess">
 <table class="davssettings">
 <tr class="title"><td class="centertext">
-WebDAV access to your MiG account
+Secure WebDAV access to your MiG account
 </td></tr>
 <tr><td>
 </td></tr>
 <tr><td>
 <p>
-You can configure WebDAV login to your %(site)s account for efficient file access.
-Login takes place with public key or password and your automatic username:
+You can configure secure WebDAV login to your %(site)s account for efficient
+file access. Login takes place with public key or password and your automatic
+username:
 <pre>%(username)s</pre>
 </p>
 <p>
-You can use any existing RSA key, including the key.pem you received along with your user certificate, or create a new one. In any case you need to save the contents of the corresponding public key (X.pub) in the text area below, before you can connect as described in the following sections.
+You can use any existing RSA key, including the key.pem you received along with
+your user certificate, or create a new one. In any case you need to save the
+contents of the corresponding public key (X.pub) in the text area below, before
+you can connect as described in the following sections.
 </p>
 <p>
 <h3>Graphical WebDAV access</h3>
 Several native file browsers and web browsers are known to generally work for
-graphical access to your MiG home over WebDAV when password support is enabled.<br />
-Enter the address https://%(davs_server)s:%(davs_port)s and when fill in the login details:
+graphical access to your MiG home over WebDAV when password support is enabled.
+<br />
+Enter the address https://%(davs_server)s:%(davs_port)s and when fill in the
+login details:
 <pre>
 Username %(username)s
 Password YOUR_PASSWORD_HERE
@@ -1027,6 +1042,136 @@ value="%(default_authpassword)s" />
             'username': client_alias(client_id),
             'davs_server': davs_server,
             'davs_port': davs_port,
+            }
+
+        output_objects.append({'object_type': 'html_form', 'text': html})
+
+    if 'ftps' in topics:
+
+        # load current ftps
+
+        current_ftps_dict = load_ftps(client_id, configuration)
+        if not current_ftps_dict:
+            
+            # no current ftps found
+            
+            current_ftps_dict = {}
+
+        default_authkeys = current_ftps_dict.get('authkeys', '')
+        default_authpassword = current_ftps_dict.get('authpassword', '')
+        ftps_server = configuration.user_ftps_address
+        # address may be empty to use all interfaces - then use FQDN
+        if not ftps_server:
+            ftps_server = configuration.server_fqdn
+        ftps_ctrl_port = configuration.user_ftps_ctrl_port
+        html = \
+        '''
+<div id="ftpsaccess">
+<table class="ftpssettings">
+<tr class="title"><td class="centertext">
+Secure FTP access to your MiG account
+</td></tr>
+<tr><td>
+</td></tr>
+<tr><td>
+<p>
+You can configure secure FTP login to your %(site)s account for efficient file
+access. Login takes place with public key or password and your automatic
+username:
+<pre>%(username)s</pre>
+</p>
+<p>
+You can use any existing RSA key, including the key.pem you received along with
+your user certificate, or create a new one. In any case you need to save the
+contents of the corresponding public key (X.pub) in the text area below, before
+you can connect as described in the following sections.
+</p>
+<p>
+<h3>Graphical FTP access</h3>
+Several native file browsers and web browsers are known to generally work for
+graphical access to your MiG home over FTP when password support is enabled.
+<br />
+Enter the address ftps://%(ftps_server)s:%(ftps_ctrl_port)s and when fill in the
+login details:
+<pre>
+Username %(username)s
+Password YOUR_PASSWORD_HERE
+</pre>
+other graphical clients should work as well.
+</p>
+<p>
+<h3>Command line FTP access on Linux/UN*X</h3>
+Save something like the following lines in your local ~/.netrc
+to avoid typing the full login details every time:<br />
+<pre>
+machine %(ftps_server)s
+login %(username)s
+password YOUR_PASSWORD_HERE
+</pre>
+</p>
+<p>
+From then on you can use e.g. lftp or CurlFtpFS to access your MiG home:
+<pre>
+lftp -e "set ssl:ca-file $HOME/.mig/cacert.pem; set ftp:ssl-protect-data on" \\
+    -p %(ftps_ctrl_port)s %(ftps_server)s
+</pre>
+<pre>
+curlftpfs -o ssl -o cacert=$HOME/.mig/cacert.pem \\
+    %(ftps_server)s:%(ftps_ctrl_port)s mig-home -o uid=$(id -u) -o gid=$(id -g)
+</pre>
+</p>
+</td></tr>
+<form method="post" action="settingsaction.py">
+<input type="hidden" name="topic" value="ftps" />
+'''
+        
+        keyword_keys = "authkeys"
+        if 'publickey' in configuration.user_ftps_auth:
+            html += '''
+<tr><td>
+'''
+            area = '''
+<textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
+%(default_authkeys)s
+</textarea>
+'''
+            html += wrap_edit_area(keyword_keys, area, ftps_edit, 'BASIC')
+            html += '''
+(leave empty to disable ftps access with public keys)
+</td></tr>
+'''
+            
+        keyword_password = "authpassword"
+        if 'password' in configuration.user_ftps_auth:
+            # We only want a single password and a masked input field
+            html += '''
+<tr><td>
+<input type=password id="%(keyword_password)s" size=40 name="password"
+value="%(default_authpassword)s" />
+(leave empty to disable ftps access with password)
+</td></tr>
+'''
+        
+        html += '''
+<tr><td>
+<input type="submit" value="Save ftps" />
+</form>
+</td></tr>
+'''
+        
+        html += '''
+</table>
+</div>
+'''
+        html = html % {
+            'default_authkeys': default_authkeys,
+            'default_authpassword': default_authpassword,
+            'site': configuration.short_title,
+            'keyword_keys': keyword_keys,
+            'keyword_password': keyword_password,
+            'username': client_alias(client_id),
+            'ftps_server': ftps_server,
+            'ftps_ctrl_port': ftps_ctrl_port,
             }
 
         output_objects.append({'object_type': 'html_form', 'text': html})

@@ -31,8 +31,8 @@ import datetime
 import shared.parser as parser
 from shared.base import client_id_dir
 from shared.defaults import settings_filename, profile_filename, \
-     widgets_filename, ssh_conf_dir, davs_conf_dir, authkeys_filename, \
-     authpasswords_filename, keyword_unchanged
+     widgets_filename, ssh_conf_dir, davs_conf_dir, ftps_conf_dir, \
+     authkeys_filename, authpasswords_filename, keyword_unchanged
 from shared.fileio import pickle, unpickle
 from shared.modified import mark_user_modified
 from shared.profilekeywords import get_keywords_dict as get_profile_fields
@@ -163,20 +163,23 @@ def parse_and_save_passwords(passwords_path, passwords_content, client_id,
         msg = 'ERROR: writing %s passwords file: %s' % (client_id, exc)
     return (status, msg)
 
-def parse_and_save_ssh(publickeys, password, client_id, configuration):
-    """Validate and write ssh entries"""
+def _parse_and_save_auth_pw_keys(publickeys, password, client_id,
+                                 configuration, proto, proto_conf_dir):
+    """Validate and write publickey and password settings for proto
+    (ssh/davs/ftps) in proto_conf_dir.
+    """
     client_dir = client_id_dir(client_id)
-    ssh_conf_path = os.path.join(configuration.user_home, client_dir,
-                                 ssh_conf_dir)
-    # Create ssh conf dir for any old users
+    proto_conf_path = os.path.join(configuration.user_home, client_dir,
+                                 proto_conf_dir)
+    # Create proto conf dir for any old users
     try:
-        os.mkdir(ssh_conf_path)
+        os.mkdir(proto_conf_path)
     except:
         pass
-    keys_path = os.path.join(ssh_conf_path, authkeys_filename)
+    keys_path = os.path.join(proto_conf_path, authkeys_filename)
     key_status = parse_and_save_publickeys(keys_path, publickeys, client_id,
                                            configuration)
-    pw_path = os.path.join(ssh_conf_path, authpasswords_filename)
+    pw_path = os.path.join(proto_conf_path, authpasswords_filename)
     pw_status = parse_and_save_passwords(pw_path, password, client_id,
                                          configuration)
     status = (key_status[0] and pw_status[0], key_status[1] + pw_status[1])
@@ -184,26 +187,20 @@ def parse_and_save_ssh(publickeys, password, client_id, configuration):
         mark_user_modified(configuration, client_id)
     return status
 
+def parse_and_save_ssh(publickeys, password, client_id, configuration):
+    """Validate and write ssh entries"""
+    return _parse_and_save_auth_pw_keys(publickeys, password, client_id,
+                                        configuration, 'ssh', ssh_conf_dir)
+
 def parse_and_save_davs(publickeys, password, client_id, configuration):
     """Validate and write davs entries"""
-    client_dir = client_id_dir(client_id)
-    davs_conf_path = os.path.join(configuration.user_home, client_dir,
-                                  davs_conf_dir)
-    # Create davs conf dir for any old users
-    try:
-        os.mkdir(davs_conf_path)
-    except:
-        pass
-    keys_path = os.path.join(davs_conf_path, authkeys_filename)
-    key_status = parse_and_save_publickeys(keys_path, publickeys, client_id,
-                                           configuration)
-    pw_path = os.path.join(davs_conf_path, authpasswords_filename)
-    pw_status = parse_and_save_passwords(pw_path, password, client_id,
-                                         configuration)
-    status = (key_status[0] and pw_status[0], key_status[1] + pw_status[1])
-    if status[0]:
-        mark_user_modified(configuration, client_id)
-    return status
+    return _parse_and_save_auth_pw_keys(publickeys, password, client_id,
+                                        configuration, 'davs', davs_conf_dir)
+
+def parse_and_save_ftps(publickeys, password, client_id, configuration):
+    """Validate and write ftps entries"""
+    return _parse_and_save_auth_pw_keys(publickeys, password, client_id,
+                                        configuration, 'ftps', ftps_conf_dir)
 
 def load_section_helper(client_id, configuration, section_filename,
                         section_keys, include_meta=False):
@@ -247,21 +244,23 @@ def load_profile(client_id, configuration, include_meta=False):
     return load_section_helper(client_id, configuration, profile_filename,
                                get_profile_fields().keys(), include_meta)
 
-def load_ssh(client_id, configuration):
-    """Load ssh keys and password from user ssh_conf_dir"""
-
+def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir):
+    """Helper to load  keys and password for proto (ssh/davs/ftps) from user
+    proto_conf_dir.
+    """
     section_dict = {}
     client_dir = client_id_dir(client_id)
-    keys_path = os.path.join(configuration.user_home, client_dir, ssh_conf_dir,
-                             authkeys_filename)
-    pw_path = os.path.join(configuration.user_home, client_dir, ssh_conf_dir,
-                           authpasswords_filename)
+    keys_path = os.path.join(configuration.user_home, client_dir,
+                             proto_conf_dir, authkeys_filename)
+    pw_path = os.path.join(configuration.user_home, client_dir,
+                           proto_conf_dir, authpasswords_filename)
     try:
         keys_fd = open(keys_path)
         section_dict['authkeys'] = keys_fd.read()
         keys_fd.close()
     except Exception, exc:
-        configuration.logger.error("load ssh publickeys failed: %s" % exc)
+        configuration.logger.error("load %s publickeys failed: %s" % (proto,
+                                                                      exc))
     try:
         password = ''
         if os.path.exists(pw_path):
@@ -272,36 +271,21 @@ def load_ssh(client_id, configuration):
             pw_fd.close()
         section_dict['authpassword'] = password
     except Exception, exc:
-        configuration.logger.error("load ssh password failed: %s" % exc)
+        configuration.logger.error("load %s password failed: %s" % (proto,
+                                                                    exc))
     return section_dict
+
+def load_ssh(client_id, configuration):
+    """Load ssh keys and password from user ssh_conf_dir"""
+    return _load_auth_pw_keys(client_id, configuration, 'ssh', ssh_conf_dir)
 
 def load_davs(client_id, configuration):
     """Load davs keys and password from user davs_conf_dir"""
+    return _load_auth_pw_keys(client_id, configuration, 'davs', davs_conf_dir)
 
-    section_dict = {}
-    client_dir = client_id_dir(client_id)
-    keys_path = os.path.join(configuration.user_home, client_dir, davs_conf_dir,
-                             authkeys_filename)
-    pw_path = os.path.join(configuration.user_home, client_dir, davs_conf_dir,
-                           authpasswords_filename)
-    try:
-        keys_fd = open(keys_path)
-        section_dict['authkeys'] = keys_fd.read()
-        keys_fd.close()
-    except Exception, exc:
-        configuration.logger.error("load davs publickeys failed: %s" % exc)
-    try:
-        password = ''
-        if os.path.exists(pw_path):
-            pw_fd = open(pw_path)
-            password_hash = pw_fd.read()
-            if password_hash.strip():
-                password = keyword_unchanged
-            pw_fd.close()
-        section_dict['authpassword'] = password
-    except Exception, exc:
-        configuration.logger.error("load davs password failed: %s" % exc)
-    return section_dict
+def load_ftps(client_id, configuration):
+    """Load ftps keys and password from user ftps_conf_dir"""
+    return _load_auth_pw_keys(client_id, configuration, 'ftps', ftps_conf_dir)
 
 def update_section_helper(client_id, configuration, section_filename, changes,
                           defaults, create_missing=True):
