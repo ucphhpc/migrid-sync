@@ -76,6 +76,7 @@ import time
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import TLS_FTPHandler
 from pyftpdlib.servers import FTPServer
+from pyftpdlib.filesystems import AbstractedFS
 
 from shared.base import client_dir_id, client_alias, invisible_path
 from shared.conf import get_configuration_object
@@ -88,7 +89,7 @@ configuration, logger = None, None
 
 
 class MiGUserAuthorizer(DummyAuthorizer):
-    """Autehnticate/authorize againstMiG users DB"""
+    """Authenticate/authorize against MiG users DB and user password files"""
 
     users = None
     authenticated_user = None
@@ -163,12 +164,33 @@ class MiGUserAuthorizer(DummyAuthorizer):
         return False
 
 
+class MiGRestrictedFilesystem(AbstractedFS):
+    """Restrict access to user home and symlinks into the dirs configured in
+    chroot_exceptions. Prevent access to a few hidden files.
+    """
+    
+    def validpath(self, path):
+        """Check that user is allowed inside path checking against configured
+        chroot_exceptions and built-in hidden paths.
+        """
+        daemon_conf = configuration.daemon_conf
+        try:
+            get_fs_path(path, daemon_conf['root_dir'],
+                        daemon_conf['chroot_exceptions'])
+            logger.info("accepted access to %s" % path)
+            return True
+        except ValueError:
+            logger.error("rejected access to %s" % path)
+            return False
+
+
 def start_service(conf):
     """Main server"""
     authorizer = MiGUserAuthorizer()
     handler = TLS_FTPHandler
     handler.certfile = conf.user_ftps_key
     handler.authorizer = authorizer
+    handler.abstracted_fs = MiGRestrictedFilesystem
     handler.passive_ports = range(conf.user_ftps_pasv_ports[0],
                                   conf.user_ftps_pasv_ports[1])
     
