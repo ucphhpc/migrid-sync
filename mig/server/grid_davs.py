@@ -241,7 +241,7 @@ class MiGDAVAuthHandler(DAVAuthHandler):
 
     def _check_auth_publickey(self, username, key):
         offered = None
-        if self.allow_publickey and self.users.has_key(username):
+        if self.users.has_key(username):
             # list of User login objects for username
             entries = self.users[username]
             offered = key.get_base64()

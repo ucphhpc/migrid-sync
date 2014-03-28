@@ -408,7 +408,6 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("chmod on missing path %s :: %s" % (path,
                                                                   real_path))
             return paramiko.SFTP_NO_SUCH_FILE
-        old_mode = os.stat(real_path).st_mode
         # Only allow change of mode on files and only outside chmod_exceptions
         if self._acceptable_chmod(real_path):
             # Only allow permission changes that won't give excessive access
