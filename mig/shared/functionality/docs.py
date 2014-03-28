@@ -288,7 +288,9 @@ Core communication with dedicated resources use OpenSSH client utilities:"""})
                            'text': 'OpenSSH secure remote shell and file transfer, BSD'})
     output_objects.append({'object_type': 'text', 'text' : ''})
 
+    password_dep = False
     if configuration.site_enable_sftp:
+        password_dep = True
         output_objects.append({'object_type': 'text', 'text' :
                                """SFTP access is delivered using Paramiko:"""})
         output_objects.append({'object_type': 'link', 
@@ -296,9 +298,28 @@ Core communication with dedicated resources use OpenSSH client utilities:"""})
                                'class': 'urllink',
                                'title': 'Paramiko Home Page',
                                'text': 'Paramiko SSH2 Module (LGPL)'})
+    if configuration.site_enable_davs:
+        password_dep = True
+        output_objects.append({'object_type': 'text', 'text' :
+                               """WebDAVS access is delivered using pywebdav:"""})
+        output_objects.append({'object_type': 'link', 
+                               'destination' : 'https://code.google.com/p/pywebdav/',
+                               'class': 'urllink',
+                               'title': 'PyWebDAV Home Page',
+                               'text': 'PyWebDAV DAV(S) Server Module (GPL)'})
+    if configuration.site_enable_ftps:
+        password_dep = True
+        output_objects.append({'object_type': 'text', 'text' :
+                               """FTPS access is delivered using pyftpdlib:"""})
+        output_objects.append({'object_type': 'link', 
+                               'destination' : 'http://code.google.com/p/pyftpdlib/',
+                               'class': 'urllink',
+                               'title': 'pyftpdlib Home Page',
+                               'text': 'pyftpdlib FTP(S) Server Module (MIT)'})
+    if password_dep:
         output_objects.append({'object_type': 'text', 'text' : """
-and the optional password authentication support relies on the PBKDF2 module
-(embedded) from:"""})
+The optional password authentication support in SFTP/DAVS/FTPS servers relies
+on the PBKDF2 module (embedded) from:"""})
         output_objects.append({'object_type': 'link', 
                                'destination' : 'https://github.com/mitsuhiko/python-pbkdf2',
                                'class': 'urllink',

@@ -110,13 +110,19 @@ def fix_missing(config_file, verbose=True):
         'user_davs_address': fqdn,
         'user_davs_port': 4443,
         'user_davs_key': '~/certs/key.pem',
-        'user_davs_auth': ['publickey'],
+        'user_davs_auth': ['password'],
         'user_davs_alias': '',
+        'user_ftps_address': fqdn,
+        'user_ftps_ctrl_port': 8021,
+        'user_ftps_pasv_ports': range(8100, 8500),
+        'user_ftps_key': '~/certs/key.pem',
+        'user_ftps_auth': ['password'],
+        'user_ftps_alias': '',
         'user_openid_provider': '',
         'user_openid_address': fqdn,
         'user_openid_port': 8443,
         'user_openid_key': '~/certs/key.pem',
-        'user_openid_auth': ['publickey'],
+        'user_openid_auth': ['password'],
         'user_openid_alias': '',
         'user_openid_store': '~/state/openid_store/',
         'logfile': 'server.log',
@@ -231,13 +237,19 @@ class Configuration:
     user_davs_address = ''
     user_davs_port = 4443
     user_davs_key = ''
-    user_davs_auth = ['publickey']
+    user_davs_auth = ['password']
     user_davs_alias = ''
+    user_ftps_address = ''
+    user_ftps_ctrl_port = 8021
+    user_ftps_pasv_ports = range(8100, 8500)
+    user_ftps_key = ''
+    user_ftps_auth = ['password']
+    user_ftps_alias = ''
     user_openid_provider = ''
     user_openid_address = ''
     user_openid_port = 8443
     user_openid_key = ''
-    user_openid_auth = ['publickey']
+    user_openid_auth = ['password']
     user_openid_alias = ''
     user_openid_store = ''
     server_home = ''
@@ -500,34 +512,53 @@ class Configuration:
             self.freeze_home = ''
         if config.has_option('GLOBAL', 'user_sftp_address'):
             self.user_sftp_address = config.get('GLOBAL', 
-                                                 'user_sftp_address')
+                                                'user_sftp_address')
         if config.has_option('GLOBAL', 'user_sftp_port'):
             self.user_sftp_port = config.getint('GLOBAL', 
-                                                 'user_sftp_port')
+                                                'user_sftp_port')
         if config.has_option('GLOBAL', 'user_sftp_key'):
             self.user_sftp_key = config.get('GLOBAL', 
-                                                 'user_sftp_key')
+                                            'user_sftp_key')
         if config.has_option('GLOBAL', 'user_sftp_auth'):
             self.user_sftp_auth = config.get('GLOBAL', 
-                                                 'user_sftp_auth').split()
+                                             'user_sftp_auth').split()
         if config.has_option('GLOBAL', 'user_sftp_alias'):
             self.user_sftp_alias = config.get('GLOBAL', 
-                                                 'user_sftp_alias')
+                                              'user_sftp_alias')
         if config.has_option('GLOBAL', 'user_davs_address'):
             self.user_davs_address = config.get('GLOBAL', 
-                                                 'user_davs_address')
+                                                'user_davs_address')
         if config.has_option('GLOBAL', 'user_davs_port'):
             self.user_davs_port = config.getint('GLOBAL', 
-                                                 'user_davs_port')
+                                                'user_davs_port')
         if config.has_option('GLOBAL', 'user_davs_key'):
             self.user_davs_key = config.get('GLOBAL', 
-                                                 'user_davs_key')
+                                            'user_davs_key')
         if config.has_option('GLOBAL', 'user_davs_auth'):
             self.user_davs_auth = config.get('GLOBAL', 
-                                                 'user_davs_auth').split()
+                                             'user_davs_auth').split()
         if config.has_option('GLOBAL', 'user_davs_alias'):
             self.user_davs_alias = config.get('GLOBAL', 
-                                                 'user_davs_alias')
+                                              'user_davs_alias')
+        if config.has_option('GLOBAL', 'user_ftps_address'):
+            self.user_ftps_address = config.get('GLOBAL', 
+                                                'user_ftps_address')
+        if config.has_option('GLOBAL', 'user_ftps_ctrl_port'):
+            self.user_ftps_ctrl_port = config.getint('GLOBAL', 
+                                                     'user_ftps_ctrl_port')
+        if config.has_option('GLOBAL', 'user_ftps_pasv_ports'):
+            text_range = config.get('GLOBAL', 'user_ftps_pasv_ports')
+            first, last = text_range.split(':')[:2]
+            self.user_ftps_pasv_ports = range(int(first), int(last))
+        if config.has_option('GLOBAL', 'user_ftps_key'):
+            self.user_ftps_key = config.get('GLOBAL', 
+                                            'user_ftps_key')
+        if config.has_option('GLOBAL', 'user_ftps_auth'):
+            self.user_ftps_auth = config.get('GLOBAL', 
+                                             'user_ftps_auth').split()
+        if config.has_option('GLOBAL', 'user_ftps_alias'):
+            self.user_ftps_alias = config.get('GLOBAL', 
+                                              'user_ftps_alias')
         if config.has_option('GLOBAL', 'user_openid_provider'):
             self.user_openid_provider = config.get('GLOBAL', 
                                                    'user_openid_provider')
@@ -792,6 +823,10 @@ class Configuration:
             self.site_enable_davs = config.getboolean('SITE', 'enable_davs')
         else:
             self.site_enable_davs = True
+        if config.has_option('SITE', 'enable_ftps'):
+            self.site_enable_ftps = config.getboolean('SITE', 'enable_ftps')
+        else:
+            self.site_enable_ftps = True
         if config.has_option('SITE', 'enable_openid'):
             self.site_enable_openid = config.getboolean('SITE', 'enable_openid')
         else:

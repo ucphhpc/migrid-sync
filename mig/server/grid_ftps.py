@@ -93,10 +93,10 @@ class MiGUserAuthorizer(DummyAuthorizer):
     users = None
     authenticated_user = None
 
-    def update_logins(self):
+    def update_logins(self, username):
         """Update login DB"""
 
-        # TODO: move update to connect handler?
+        # TODO: only refresh for username?
 
         daemon_conf = configuration.daemon_conf
 
@@ -109,7 +109,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
 
         logger.debug("update usermap")
         usermap = {}
-        for user_obj in configuration.daemon_conf['users']:
+        for user_obj in daemon_conf['users']:
             if not usermap.has_key(user_obj.username):
                 usermap[user_obj.username] = []
             usermap[user_obj.username].append(user_obj)
@@ -122,8 +122,10 @@ class MiGUserAuthorizer(DummyAuthorizer):
         for (username, user_obj_list) in self.users.items():
             if self.has_user(username):
                 self.remove_user(username)
-            # TODO: should we allow multiple entries?
-            user_obj = user_obj_list[0]
+            # We prefer last entry with password but fall back to any entry
+            # to assure at least a hit
+            user_obj = (user_obj_list + [i for i in user_obj_list \
+                                         if i.password is not None])[-1]
             home_path = os.path.join(daemon_conf['root_dir'], user_obj.home)
             logger.debug("add user to user_table: %s" % user_obj)
             # The add_user format and perm string meaning is explained at:
@@ -143,7 +145,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
         first place!
         """
         logger.debug("Authenticating %s" % username)
-        self.update_logins()
+        self.update_logins(username)
         
         offered = None
         if 'password' in configuration.user_ftps_auth and \
@@ -234,17 +236,6 @@ if __name__ == '__main__':
     logger = logging
 
 
-    # TMP: until we get real conf
-    configuration.site_enable_ftps = True
-    configuration.user_ftps_address = ''
-    configuration.user_ftps_ctrl_port = 8023
-    configuration.user_ftps_pasv_ports = range(8050, 8100)
-    configuration.user_ftps_key = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "ftpd-keycert.pem"))
-    configuration.user_ftps_auth = "password"
-    configuration.user_ftps_alias = "email"    
-
-
     if not configuration.site_enable_ftps:
         err_msg = "FTPS access to user homes is disabled in configuration!"
         logger.error(err_msg)
@@ -259,42 +250,6 @@ unless it is available in mig/server/MiGserver.conf
     address = configuration.user_ftps_address
     ctrl_port = configuration.user_ftps_ctrl_port
     pasv_ports = configuration.user_ftps_pasv_ports
-    default_host_key = """
------BEGIN RSA PRIVATE KEY-----
-MIIEogIBAAKCAQEA404IBMReHOdvhhJ5YtgquY3DNi0v0QwfPUk+EcH/CxFW8UCC
-SUJe85up6lEQmOE9yKvrh+3yJgIjdV/ASOw9bd/u0NgNoPwl6A6P8GzHp94vz7UP
-nTp+PEUbA8gwqXnzzdeuF3dLDSXuGHdcv8qQEVRBwj/haecO0fgZcfd4fmLDAG53
-e/Vwc4lVIp4xx+OQowm9RW3nsAZge1DUoxlStD1/rEzBq1DvVx1Wu8pWS48f2ABH
-fHt2Z4ozypMB+a4B56jervcZCNkV/fN2bdGZ8z07hNbn/EkaH2tPw/d62zdHddum
-u7Pi0tYwMZz9GN3t18r9qi5ldUJuJNeNvNc7swIBIwKCAQBuZ7rAfKK9lPunhVDm
-3gYfnKClSSXakNv5MjQXQPg4k2S+UohsudZZERgEGL7rK5MJspb44Um6sJThPSLh
-l1EJe2VeH8wa/iEKUDdI5GD5w7DSmcXBZY3FgKa4sbE8X84wx9g3SJIq9SqA6YTS
-LzAIasDasVA6wK9tTJ6lEczPq2VkxkzpKauDMgI6SpaBV+7Un3OM7VJEbWeaJVoZ
-9I/2AHfp1hDpIfmaYBCnn2Ky70PBGA8DqAnHUKiid2dfZr8jKLu287LaUHxzIZXz
-qSzS6Vg1K0kc5FrgTgrjaXAGNtMenXZdw2/7PMuBDaNuNUApFUlAP5LGvPQ9IRCt
-YggDAoGBAP7z3lm74yxrzSa7HRASO2v3vp7jsbaYl4jPCc+6UruBFJlmUUdIQ2fh
-8i2S1M5mAvZiJ/PKLQ3r6RXxWZOeh4Vw479HFCVHr5GstSfLolJ5svY8iWEoEGdN
-D8aQTQrVAJwAPbLbF4eH5lgSokjOZcWMKsekk4vX2WmCMKWCMms/AoGBAOQ9Fffg
-B8TMc1b+jTcj1Py5TiFsxIe3usYjn8Pgg8kpoGfdBoS/TxwoR0MbJdrPgXDKLlLn
-A4GG6/7lFmxagCAfUyR2wAsOwAugcaFwS3K4QHGPiv9cgKxt9xhuhhDqXGI2lgAu
-oJLcRYBvomPQ+3cGGgifclETTWgkzD5dNVaNAoGBAMStf6RPHPZhyiUxQk4581NK
-FrUWDMAPUFOYZqePvCo/AUMjC4AhzZlH5rVxRRRAEOnz8u9EMWKCycB4Wwt6S0mu
-25OOmoMorAKpzZO6WKYGHFeNyRBvXRx9Rq8e3FjQM6uLKEglW0tLlG/T3EbLG09A
-PkI9IV1AHL8bShlHLjV5AoGBAJyBqKn4tN64FJNsuJrWve8f+w+bCmuxL53PSPtY
-H9plr9IxKQqRz9jLKY0Z7hJiZ2NIz07KS4wEvxUvX9VFXyv4OQMPmaEur5LxrQD8
-i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
-8V/rAoGAEUheXHIqv9n+3oXLvHadC3aApiz1TcyttDM0AjZoSHpXoBB3AIpPdU8O
-0drRG9zJTyU/BC02FvsGAMo0ZpGQRVMuN1Jj7sHsPaUdV38P4G0EaSQJDNxwFKVN
-3stfzMDGtKM9lntAsfFQ8n4yvvEbn/quEWad6srf1yxt9B4t5JA=
------END RSA PRIVATE KEY-----
-"""
-    try:
-        host_key_fd = open(configuration.user_ftps_key, 'r')
-        host_rsa_key = host_key_fd.read()
-        host_key_fd.close()
-    except IOError:
-        logger.info("No valid host key provided - using default")
-        host_rsa_key = default_host_key
     # Allow access to vgrid linked dirs and mounted storage resource dirs
     chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
                          os.path.abspath(configuration.vgrid_public_base),
@@ -314,7 +269,6 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'allow_password': 'password' in configuration.user_ftps_auth,
         'allow_publickey': 'publickey' in configuration.user_ftps_auth,
         'user_alias': configuration.user_ftps_alias,
-        'host_rsa_key': host_rsa_key,
         'users': [],
         'time_stamp': 0,
         'logger': logger,
