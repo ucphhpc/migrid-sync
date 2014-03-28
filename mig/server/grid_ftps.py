@@ -76,12 +76,11 @@ import time
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import TLS_FTPHandler
 from pyftpdlib.servers import FTPServer
-from pyftpdlib.filesystems import AbstractedFS
+from pyftpdlib.filesystems import AbstractedFS, FilesystemError
 
-from shared.base import client_dir_id, client_alias, invisible_path
+from shared.base import invisible_path
 from shared.conf import get_configuration_object
-from shared.griddaemons import get_fs_path, strip_root, \
-     flags_to_mode, acceptable_chmod, refresh_users
+from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users
 from shared.useradm import check_password_hash
 
 
@@ -101,14 +100,14 @@ class MiGUserAuthorizer(DummyAuthorizer):
 
         daemon_conf = configuration.daemon_conf
 
-        logger.info("update user list")
+        logger.debug("update user list")
 
         # automatic reload of users if more than refresh_delay seconds old
         refresh_delay = 60
         if daemon_conf['time_stamp'] + refresh_delay < time.time():
             daemon_conf = refresh_users(configuration, 'ftps')
 
-        logger.info("update usermap")
+        logger.debug("update usermap")
         usermap = {}
         for user_obj in configuration.daemon_conf['users']:
             if not usermap.has_key(user_obj.username):
@@ -116,7 +115,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
             usermap[user_obj.username].append(user_obj)
         self.users = usermap
         logger.info("updated usermap: %s" % self.users)
-        logger.info("update user_table")
+        logger.debug("update user_table")
         # Fill users in dictionary for fast lookup. We create a list of
         # matching User objects since each user may have multiple logins (e.g.
         # public keys)
@@ -126,10 +125,12 @@ class MiGUserAuthorizer(DummyAuthorizer):
             # TODO: should we allow multiple entries?
             user_obj = user_obj_list[0]
             home_path = os.path.join(daemon_conf['root_dir'], user_obj.home)
-            logger.info("add user to user_table: %s" % user_obj)
+            logger.debug("add user to user_table: %s" % user_obj)
+            # The add_user format and perm string meaning is explained at:
+            # http://code.google.com/p/pyftpdlib/wiki/Tutorial#2.2_-_Users
             self.add_user(username, user_obj.password,
-                          home_path, perm='elradfmw')
-        logger.info("updated user_table: %s" % self.user_table)
+                          home_path, perm='elradfmwM')
+        logger.debug("updated user_table: %s" % self.user_table)
 
     def validate_authentication(self, username, password, handler):
         """Password auth against usermap.
@@ -141,7 +142,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
         Paranoid users / grid owners should not enable password access in the
         first place!
         """
-        logger.info("Authenticating %s" % username)
+        logger.debug("Authenticating %s" % username)
         self.update_logins()
         
         offered = None
@@ -177,11 +178,33 @@ class MiGRestrictedFilesystem(AbstractedFS):
         try:
             get_fs_path(path, daemon_conf['root_dir'],
                         daemon_conf['chroot_exceptions'])
-            logger.info("accepted access to %s" % path)
+            logger.debug("accepted access to %s" % path)
             return True
         except ValueError:
             logger.error("rejected access to %s" % path)
             return False
+
+    def chmod(self, path, mode):
+        """Change file/directory mode with MiG restrictions"""
+        real_path = self.ftp2fs(path)
+        daemon_conf = configuration.daemon_conf
+        # Only allow change of mode on files and only outside chmod_exceptions
+        if acceptable_chmod(path, daemon_conf['chmod_exceptions']):
+            # Only allow permission changes that won't give excessive access
+            # or remove own access.
+            new_mode = (mode & 0755) | 0600
+            logger.info("chmod %s (%s) without damage on %s :: %s" % \
+                        (new_mode, mode, path, real_path))
+            return AbstractedFS.chmod(self, path, new_mode)
+        # Prevent users from messing up access modes
+        logger.error("chmod %s rejected on path %s :: %s" % (mode, path,
+                                                             real_path))
+        raise FilesystemError("requested permission change no allowed")
+
+    def listdir(self, path):
+        """List the content of a directory with MiG restrictions"""
+        return [i for i in AbstractedFS.listdir(self, path) if not \
+                invisible_path(i)]
 
 
 def start_service(conf):
