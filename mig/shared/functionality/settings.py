@@ -816,15 +816,12 @@ SSH/SFTP access to your MiG account
 <tr><td>
 <p>
 You can configure SFTP login to your %(site)s account for efficient file
-access. Login takes place with public key or password and your automatic
+access. Login takes place with %(auth_methods)s and your automatic
 username:
 <pre>%(username)s</pre>
 </p>
 <p>
-You can use any existing SSH/RSA key, including the key.pem you received
-along with your user certificate, or create a new one. In any case you
-need to save the contents of the corresponding public key (X.pub) in the
-text area below, before you can connect as described in the following sections.
+%(pw_key_notes)s
 </p>
 <p>
 <h3>Graphical SFTP access</h3>
@@ -867,8 +864,15 @@ sshfs %(sftp_server)s: mig-home -o uid=$(id -u) -o gid=$(id -g)
 <input type="hidden" name="topic" value="ssh" />
 '''
         
+        pw_key_notes = ''
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_sftp_auth:
+            pw_key_notes += '''
+You can use any existing RSA key, including the key.pem you received along with
+your user certificate, or create a new one. In any case you need to save the
+contents of the corresponding public key (X.pub) in the text area below, to be
+able to connect with username and key as described in the following sections.
+'''
             html += '''
 <tr><td>
 '''
@@ -885,6 +889,10 @@ sshfs %(sftp_server)s: mig-home -o uid=$(id -u) -o gid=$(id -g)
             
         keyword_password = "authpassword"
         if 'password' in configuration.user_sftp_auth:
+            pw_key_notes += '''
+Please enter and save your desired password in the text field below, to be able
+to connect with username and password as described in the following sections.
+'''
             # We only want a single password and a masked input field
             html += '''
 <tr><td>
@@ -914,6 +922,8 @@ value="%(default_authpassword)s" />
             'username': client_alias(client_id),
             'sftp_server': sftp_server,
             'sftp_port': sftp_port,
+            'pw_key_notes': pw_key_notes,
+            'auth_methods': ' or '.join(configuration.user_sftp_auth),
             }
 
         output_objects.append({'object_type': 'html_form', 'text': html})
@@ -948,15 +958,12 @@ Secure WebDAV access to your MiG account
 <tr><td>
 <p>
 You can configure secure WebDAV login to your %(site)s account for efficient
-file access. Login takes place with public key or password and your automatic
+file access. Login takes place with %(auth_methods)s and your automatic
 username:
 <pre>%(username)s</pre>
 </p>
 <p>
-You can use any existing RSA key, including the key.pem you received along with
-your user certificate, or create a new one. In any case you need to save the
-contents of the corresponding public key (X.pub) in the text area below, before
-you can connect as described in the following sections.
+%(pw_key_notes)s
 </p>
 <p>
 <h3>Graphical WebDAV access</h3>
@@ -995,8 +1002,15 @@ fusedav https://%(davs_server)s:%(davs_port)s mig-home -o uid=$(id -u) -o gid=$(
 <input type="hidden" name="topic" value="davs" />
 '''
         
+        pw_key_notes = ''
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_davs_auth:
+            pw_key_notes += '''
+You can use any existing RSA key, including the key.pem you received along with
+your user certificate, or create a new one. In any case you need to save the
+contents of the corresponding public key (X.pub) in the text area below, to be
+able to connect with username and key as described in the following sections.
+'''
             html += '''
 <tr><td>
 '''
@@ -1013,6 +1027,10 @@ fusedav https://%(davs_server)s:%(davs_port)s mig-home -o uid=$(id -u) -o gid=$(
             
         keyword_password = "authpassword"
         if 'password' in configuration.user_davs_auth:
+            pw_key_notes += '''
+Please enter and save your desired password in the text field below, to be able
+to connect with username and password as described in the following sections.
+'''
             # We only want a single password and a masked input field
             html += '''
 <tr><td>
@@ -1042,6 +1060,8 @@ value="%(default_authpassword)s" />
             'username': client_alias(client_id),
             'davs_server': davs_server,
             'davs_port': davs_port,
+            'pw_key_notes': pw_key_notes,
+            'auth_methods': ' or '.join(configuration.user_davs_auth),
             }
 
         output_objects.append({'object_type': 'html_form', 'text': html})
@@ -1076,15 +1096,12 @@ Secure FTP access to your MiG account
 <tr><td>
 <p>
 You can configure secure FTP login to your %(site)s account for efficient file
-access. Login takes place with public key or password and your automatic
+access. Login takes place with %(auth_methods)s and your automatic
 username:
 <pre>%(username)s</pre>
 </p>
 <p>
-You can use any existing RSA key, including the key.pem you received along with
-your user certificate, or create a new one. In any case you need to save the
-contents of the corresponding public key (X.pub) in the text area below, before
-you can connect as described in the following sections.
+%(pw_key_notes)s
 </p>
 <p>
 <h3>Graphical FTP access</h3>
@@ -1125,8 +1142,15 @@ curlftpfs -o ssl -o cacert=$HOME/.mig/cacert.pem \\
 <input type="hidden" name="topic" value="ftps" />
 '''
         
+        pw_key_notes = ''
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_ftps_auth:
+            pw_key_notes += '''
+You can use any existing RSA key, including the key.pem you received along with
+your user certificate, or create a new one. In any case you need to save the
+contents of the corresponding public key (X.pub) in the text area below, to be
+able to connect with username and key as described in the following sections.
+'''
             html += '''
 <tr><td>
 '''
@@ -1143,6 +1167,11 @@ curlftpfs -o ssl -o cacert=$HOME/.mig/cacert.pem \\
             
         keyword_password = "authpassword"
         if 'password' in configuration.user_ftps_auth:
+            pw_key_notes += '''
+Please enter and save your desired password in the text field below, to be able
+to connect with username and password as described in the following sections.
+'''
+
             # We only want a single password and a masked input field
             html += '''
 <tr><td>
@@ -1172,6 +1201,8 @@ value="%(default_authpassword)s" />
             'username': client_alias(client_id),
             'ftps_server': ftps_server,
             'ftps_ctrl_port': ftps_ctrl_port,
+            'pw_key_notes': pw_key_notes,
+            'auth_methods': ' or '.join(configuration.user_ftps_auth),
             }
 
         output_objects.append({'object_type': 'html_form', 'text': html})
