@@ -156,7 +156,7 @@ $(document).ready(function() {
                            'text':'''
  <div id="confirm_dialog" title="Confirm" style="background:#fff;">
   <div id="confirm_text"><!-- filled by js --></div>
-   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"/></textarea>
+   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"></textarea>
  </div>
 '''})
     

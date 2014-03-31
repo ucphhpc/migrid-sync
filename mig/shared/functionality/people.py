@@ -123,7 +123,7 @@ $(document).ready(function() {
                            'text':'''
  <div id="confirm_dialog" title="Confirm" style="background:#fff;">
   <div id="confirm_text"><!-- filled by js --></div>
-   <textarea cols="72" rows="10" id="confirm_input" style="display:none;"/></textarea>
+   <textarea cols="72" rows="10" id="confirm_input" style="display:none;"></textarea>
  </div>
 '''                       })
 

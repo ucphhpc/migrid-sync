@@ -55,7 +55,7 @@ def advanced_editor_deps(include_jquery=True):
     out = ''
     if include_jquery:
         out += '<script type="text/javascript" src="/images/js/jquery.js"></script>'
-    out += '''<!--- MartkItUp configuration --->
+    out += '''<!-- MartkItUp configuration -->
 <link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/skins/markitup/style.css" />
 <link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/txt2tags/style.css" title="txt2tags"/>
 <link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/html/style.css" title="html"/>
@@ -238,13 +238,13 @@ def edit_file(path, real_path, output_format='html', includes=edit_includes):
 <form id="editor_form" method="post" action="editfile.py">
 <input type="hidden" name="output_format" value="%(output_format)s" />
 <input id="editorpath" type="text" size="80" name="path" value="%(path)s" />
-<p>
+<br /><br />
 Edit contents:<br />
 <textarea id="editorarea" cols="80" rows="25" wrap="off" name="editarea">'''
     for line in text:
         html += line
 
-    html += '</textarea>'
+    html += '</textarea></form>'
     if 'switcher' in includes:
         html += '''
 <ul id="switcher">

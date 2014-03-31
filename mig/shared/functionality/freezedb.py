@@ -123,7 +123,7 @@ $(document).ready(function() {
  <div id="confirm_dialog" title="Confirm" style="background:#fff;">
   <div id="confirm_text"><!-- filled by js --></div>
    <textarea cols="40" rows="4" id="confirm_input"
-       style="display:none;" /></textarea>
+       style="display:none;"></textarea>
  </div>
 '''                       })
     output_objects.append({'object_type': 'header', 'text'
