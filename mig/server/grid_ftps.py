@@ -191,10 +191,13 @@ class MiGRestrictedFilesystem(AbstractedFS):
         real_path = self.ftp2fs(path)
         daemon_conf = configuration.daemon_conf
         # Only allow change of mode on files and only outside chmod_exceptions
-        if acceptable_chmod(path, daemon_conf['chmod_exceptions']):
+        if acceptable_chmod(path, mode, daemon_conf['chmod_exceptions']):
             # Only allow permission changes that won't give excessive access
             # or remove own access.
-            new_mode = (mode & 0755) | 0600
+            if os.path.isdir(path):
+                new_mode = (mode & 0775) | 0750
+            else:
+                new_mode = (mode & 0664) | 0640
             logger.info("chmod %s (%s) without damage on %s :: %s" % \
                         (new_mode, mode, path, real_path))
             return AbstractedFS.chmod(self, path, new_mode)

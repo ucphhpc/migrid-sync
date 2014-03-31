@@ -152,10 +152,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                                                              reply))
         return reply
     
-    def _acceptable_chmod(self, sftp_path):
+    def _acceptable_chmod(self, sftp_path, mode):
         """Wrap helper"""
         self.logger.debug("acceptable_chmod: %s" % sftp_path)
-        reply = acceptable_chmod(sftp_path, self.chmod_exceptions)
+        reply = acceptable_chmod(sftp_path, mode, self.chmod_exceptions)
         self.logger.debug("acceptable_chmod returns: %s :: %s" % (sftp_path,
                                                                   reply))
         return reply
@@ -409,10 +409,13 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                                                                   real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         # Only allow change of mode on files and only outside chmod_exceptions
-        if self._acceptable_chmod(real_path):
+        if self._acceptable_chmod(real_path, mode):
             # Only allow permission changes that won't give excessive access
             # or remove own access.
-            new_mode = (mode & 0755) | 0600
+            if os.path.isdir(path):
+                new_mode = (mode & 0775) | 0750
+            else:
+                new_mode = (mode & 0664) | 0640
             self.logger.info("chmod %s (%s) without damage on %s :: %s" % \
                                 (new_mode, mode, path, real_path))
             try:

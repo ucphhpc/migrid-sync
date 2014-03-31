@@ -151,10 +151,10 @@ class MiGFilesystemHandler(FilesystemHandler):
                                                              reply))
         return reply
     
-    def _acceptable_chmod(self, davs_path):
+    def _acceptable_chmod(self, davs_path, mode):
         """Wrap helper"""
         self.logger.debug("acceptable_chmod: %s" % davs_path)
-        reply = acceptable_chmod(davs_path, self.chmod_exceptions)
+        reply = acceptable_chmod(davs_path, mode, self.chmod_exceptions)
         self.logger.debug("acceptable_chmod returns: %s :: %s" % (davs_path,
                                                                   reply))
         return reply
