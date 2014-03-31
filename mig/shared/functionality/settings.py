@@ -363,6 +363,7 @@ def main(client_id, user_arguments_dict):
         html = \
              '''
         <div id="settings">
+        <form method="post" action="settingsaction.py">
         <table class="settings">
         <tr class="title"><td class="centertext">
         Select your %s settings
@@ -370,7 +371,6 @@ def main(client_id, user_arguments_dict):
         <tr><td>
         </td></tr>
         <tr><td>
-        <form method="post" action="settingsaction.py">
         <input type="hidden" name="topic" value="general" />
         Please note that if you want to set multiple values (e.g. addresses)
         in the same field, you must write each value on a separate line but
@@ -451,9 +451,9 @@ def main(client_id, user_arguments_dict):
             """
         <tr><td>
         <input type="submit" value="Save Settings" />
-        </form>
         </td></tr>
         </table>
+        </form>
         </div>
         """
         output_objects.append({'object_type': 'html_form', 'text': html})
@@ -465,6 +465,7 @@ def main(client_id, user_arguments_dict):
         html = \
         '''
 <div id="defaultmrsl">
+<form method="post" action="editfile.py">
 <table class="defaultjob">
 <tr class="title"><td class="centertext">
 Default job on submit page
@@ -477,7 +478,6 @@ If you use the same fields and values in many of your jobs, you can save your pr
 <tr><td>
 </td></tr>
 <tr><td>
-<form method="post" action="editfile.py">
 <input type="hidden" name="path" value="%(mrsl_template)s" />
 <input type="hidden" name="newline" value="unix" />
 '''
@@ -493,9 +493,9 @@ If you use the same fields and values in many of your jobs, you can save your pr
 </td></tr>
 <tr><td>
 <input type="submit" value="Save template" />
-</form>
 </td></tr>
 </table>
+</form>
 </div>
 '''
         html = html % {
@@ -513,6 +513,7 @@ If you use the same fields and values in many of your jobs, you can save your pr
         html = \
              '''
 <div id="defaultcss">
+<form method="post" action="editfile.py">
 <table class="defaultstyle">
 <tr class="title"><td class="centertext">
 Default CSS (style) for all pages
@@ -531,7 +532,6 @@ You can copy paste from the available style file links below if you want to over
 <tr><td>
 </td></tr>
 <tr><td>
-<form method="post" action="editfile.py">
 <input type="hidden" name="path" value="%(css_template)s" />
 <input type="hidden" name="newline" value="unix" />
 '''
@@ -546,9 +546,9 @@ You can copy paste from the available style file links below if you want to over
 </td></tr>
 <tr><td>
 <input type="submit" value="Save style" />
-</form>
 </td></tr>
 </table>
+</form>
 </div>
 '''
         html = html % {
@@ -574,6 +574,7 @@ You can copy paste from the available style file links below if you want to over
         html = \
              '''
 <div id="widgets">
+<form method="post" action="settingsaction.py">
 <table class="widgets">
 <tr class="title"><td class="centertext">
 Default user defined widgets for all pages
@@ -613,7 +614,6 @@ You can simply copy/paste from the available widget file links below if you want
 <div class="warningtext">Please note that the widgets parser is rather grumpy so you may have to avoid blank lines in your widget code below. Additionally any errors in your widgets code may cause severe corruption in your pages, so it may be a good idea to keep another browser tab/window open on this page while experimenting.</div> 
 </td></tr>
 <tr><td>
-<form method="post" action="settingsaction.py">
 <input type="hidden" name="topic" value="widgets" />
 </td></tr>
 <tr><td>
@@ -664,9 +664,9 @@ You can simply copy/paste from the available widget file links below if you want
              '''
         <tr><td>
         <input type="submit" value="Save Widgets" />
-        </form>
 </td></tr>
 </table>
+</form>
 </div>
 '''
         output_objects.append({'object_type': 'html_form', 'text': html})
@@ -699,6 +699,7 @@ You can simply copy/paste from the available widget file links below if you want
         html = \
              '''
 <div id="profile">
+<form method="post" action="settingsaction.py">
 <table class="profile">
 <tr class="title"><td class="centertext">
 Public profile information visible to other users.
@@ -713,7 +714,6 @@ If you want to let other users know more about you can add your own text here. I
 </div> 
 </td></tr>
 <tr><td>
-<form method="post" action="settingsaction.py">
 <input type="hidden" name="topic" value="profile" />
 </td></tr>
 <tr><td>
@@ -779,9 +779,9 @@ If you want to let other users know more about you can add your own text here. I
              '''
         <tr><td>
         <input type="submit" value="Save Profile" />
-        </form>
 </td></tr>
 </table>
+</form>
 </div>
 '''
         output_objects.append({'object_type': 'html_form', 'text': html})
@@ -807,6 +807,7 @@ If you want to let other users know more about you can add your own text here. I
         html = \
         '''
 <div id="sshaccess">
+<form method="post" action="settingsaction.py">
 <table class="sshsettings">
 <tr class="title"><td class="centertext">
 SSH/SFTP access to your MiG account
@@ -850,7 +851,7 @@ sftp %(sftp_server)s
 sshfs %(sftp_server)s: mig-home -o uid=$(id -u) -o gid=$(id -g)
 </pre>
 </td></tr>
-<form method="post" action="settingsaction.py">
+<tr><td>
 <input type="hidden" name="topic" value="ssh" />
 '''
         
@@ -864,6 +865,7 @@ contents of the corresponding public key (X.pub) in the text area below, to be
 able to connect with username and key as described in the following sections.
 '''
             html += '''
+</td></tr>
 <tr><td>
 '''
             area = '''
@@ -895,12 +897,12 @@ value="%(default_authpassword)s" />
         html += '''
 <tr><td>
 <input type="submit" value="Save ssh" />
-</form>
 </td></tr>
 '''
         
         html += '''
 </table>
+</form>
 </div>
 '''
         html = html % {
@@ -939,6 +941,7 @@ value="%(default_authpassword)s" />
         html = \
         '''
 <div id="davsaccess">
+<form method="post" action="settingsaction.py">
 <table class="davssettings">
 <tr class="title"><td class="centertext">
 Secure WebDAV access to your MiG account
@@ -946,16 +949,11 @@ Secure WebDAV access to your MiG account
 <tr><td>
 </td></tr>
 <tr><td>
-<p>
 You can configure secure WebDAV login to your %(site)s account for efficient
 file access. Login takes place with %(auth_methods)s and your automatic
 username:
 <pre>%(username)s</pre>
-</p>
-<p>
 %(pw_key_notes)s
-</p>
-<p>
 <h3>Graphical WebDAV access</h3>
 Several native file browsers and web browsers are known to generally work for
 graphical access to your MiG home over WebDAV when password support is enabled.
@@ -967,8 +965,6 @@ Username %(username)s
 Password YOUR_PASSWORD_HERE
 </pre>
 other graphical clients should work as well.
-</p>
-<p>
 <h3>Command line WebDAV access on Linux/UN*X</h3>
 Save something like the following lines in your local ~/.netrc
 to avoid typing the full login details every time:<br />
@@ -977,8 +973,6 @@ machine %(davs_server)s
 login %(username)s
 password YOUR_PASSWORD_HERE
 </pre>
-</p>
-<p>
 From then on you can use e.g. cadaver or fusedav to access your MiG home:
 <pre>
 cadaver https://%(davs_server)s:%(davs_port)s
@@ -986,9 +980,8 @@ cadaver https://%(davs_server)s:%(davs_port)s
 <pre>
 fusedav https://%(davs_server)s:%(davs_port)s mig-home -o uid=$(id -u) -o gid=$(id -g)
 </pre>
-</p>
 </td></tr>
-<form method="post" action="settingsaction.py">
+<tr><td>
 <input type="hidden" name="topic" value="davs" />
 '''
         
@@ -1002,6 +995,7 @@ contents of the corresponding public key (X.pub) in the text area below, to be
 able to connect with username and key as described in the following sections.
 '''
             html += '''
+</td></tr>
 <tr><td>
 '''
             area = '''
@@ -1033,12 +1027,12 @@ value="%(default_authpassword)s" />
         html += '''
 <tr><td>
 <input type="submit" value="Save davs" />
-</form>
 </td></tr>
 '''
         
         html += '''
 </table>
+</form>
 </div>
 '''
         html = html % {
@@ -1077,6 +1071,7 @@ value="%(default_authpassword)s" />
         html = \
         '''
 <div id="ftpsaccess">
+<form method="post" action="settingsaction.py">
 <table class="ftpssettings">
 <tr class="title"><td class="centertext">
 Secure FTP access to your MiG account
@@ -1084,16 +1079,11 @@ Secure FTP access to your MiG account
 <tr><td>
 </td></tr>
 <tr><td>
-<p>
 You can configure secure FTP login to your %(site)s account for efficient file
 access. Login takes place with %(auth_methods)s and your automatic
 username:
 <pre>%(username)s</pre>
-</p>
-<p>
 %(pw_key_notes)s
-</p>
-<p>
 <h3>Graphical FTP access</h3>
 Several native file browsers and web browsers are known to generally work for
 graphical access to your MiG home over FTP when password support is enabled.
@@ -1105,8 +1095,6 @@ Username %(username)s
 Password YOUR_PASSWORD_HERE
 </pre>
 other graphical clients should work as well.
-</p>
-<p>
 <h3>Command line FTP access on Linux/UN*X</h3>
 Save something like the following lines in your local ~/.netrc
 to avoid typing the full login details every time:<br />
@@ -1115,8 +1103,6 @@ machine %(ftps_server)s
 login %(username)s
 password YOUR_PASSWORD_HERE
 </pre>
-</p>
-<p>
 From then on you can use e.g. lftp or CurlFtpFS to access your MiG home:
 <pre>
 lftp -e "set ssl:ca-file $HOME/.mig/cacert.pem; set ftp:ssl-protect-data on" \\
@@ -1126,9 +1112,8 @@ lftp -e "set ssl:ca-file $HOME/.mig/cacert.pem; set ftp:ssl-protect-data on" \\
 curlftpfs -o ssl -o cacert=$HOME/.mig/cacert.pem \\
     %(ftps_server)s:%(ftps_ctrl_port)s mig-home -o uid=$(id -u) -o gid=$(id -g)
 </pre>
-</p>
 </td></tr>
-<form method="post" action="settingsaction.py">
+<tr><td>
 <input type="hidden" name="topic" value="ftps" />
 '''
         
@@ -1142,6 +1127,7 @@ contents of the corresponding public key (X.pub) in the text area below, to be
 able to connect with username and key as described in the following sections.
 '''
             html += '''
+</td></tr>
 <tr><td>
 '''
             area = '''
@@ -1174,12 +1160,12 @@ value="%(default_authpassword)s" />
         html += '''
 <tr><td>
 <input type="submit" value="Save ftps" />
-</form>
 </td></tr>
 '''
         
         html += '''
 </table>
+</form>
 </div>
 '''
         html = html % {
