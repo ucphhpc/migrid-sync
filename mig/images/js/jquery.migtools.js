@@ -136,7 +136,7 @@ function mig_submit_dict(dict, callback_ok, callback_error) {
     }
 
     // do the job submission
-    $.getJSON("submitfields.py", dict, 
+    $.post("submitfields.py", dict, 
               function(reply, statusText) {
                   var res = extract_result(reply);
                   var success = res[0];
@@ -146,7 +146,7 @@ function mig_submit_dict(dict, callback_ok, callback_error) {
                   } else {
                       callback_error(message);
                   }
-    });
+    }, "json");
     return;
 }
 
@@ -297,13 +297,13 @@ function compile_submit() {
 		        + "\", \"other_files\": [" + extra_names + "]"
 			+ ", \"comment\": \"Pending Job: " + job_id +"\"}\n";
 	     // if writing it out goes wrong, we cannot do much. 
-	     $.getJSON("editfile.py", {
+	     $.post("editfile.py", {
 			   "path": compiled_dir + output_name + ".info",
 			   "editarea": json,
 			   "output_format": "json",
 		       }, function(reply, statusText) {
-			   list_refresh( );
-		       });
+			   list_refresh();
+		       }, "json");
 	     // write status message
 	     var files = base_name + ".m";
 	     if (extra_names != "") {
@@ -432,22 +432,22 @@ function list_refresh() {
         return true;
     }
 
-    $.getJSON("ls.py", { "path": compiled_dir, "output_format": "json"},
+    $.post("ls.py", { "path": compiled_dir, "output_format": "json"},
               function(reply, statusText) {
                   var res = extract_info_files(reply);
                   if (res[0]) { // success
-                      $.each(res[1], function(i,path) {
-                                 $.getJSON("/cert_redirect/" + path, {},
+                      $.each(res[1], function(i, path) {
+                                 $.post("/cert_redirect/" + path, {},
                                            function(reply, statusText) {
                                                appendRow(reply);
-                                           });
+                                           }, "json");
                              });
                   } else {
                       $( app_list_body ).append("<tr><td colspan=\"5\">" 
 					    + res[1][0]);
                       return;
                   }
-              });
+              }, "json");
     return;
 }
               
@@ -633,7 +633,7 @@ function rm_compiled(name) {
 		     compiled_dir + name + ".info"];
 	// weird hack: cannot pass several "path" to one call with jquery
 	$.each(files, function(i,path) {
-		   	$.getJSON("rm.py", { 
+		   	$.post("rm.py", { 
 				      "output_format" : "json", 
 				      "path" : path,
 				  }, 
@@ -641,7 +641,7 @@ function rm_compiled(name) {
 				      if (path.match(/.*info$/)) {
 					  list_refresh( ); 
 				      }
-				  });
+				  }, "json");
 	       });
     } 
     
@@ -742,7 +742,7 @@ function out_refresh() {
         return true;
     }
 
-    $.getJSON("ls.py", { "path": run_output_dir, "output_format": "json"},
+    $.post("ls.py", { "path": run_output_dir, "output_format": "json"},
               function(reply, statusText) {
                   var res = extract_zip_files(reply);
                   if (res[0]) { // success
@@ -752,7 +752,7 @@ function out_refresh() {
 						+ res[1][0]);
                       return;
                   }
-              });
+              }, "json");
     return;
 }
 
@@ -770,12 +770,12 @@ function rm_output(name) {
     var yes = confirm("Delete " + name + " from output directory?");
 
     if (yes) {
-	$.getJSON("rm.py", { "output_format" : "json", 
+	$.post("rm.py", { "output_format" : "json", 
 			     "path" : run_output_dir + name,
 			   }, 
 		  function(a,b) { 
 		      out_refresh( ); 
-		  });
+		  },"json");
     } 
     return;
 }

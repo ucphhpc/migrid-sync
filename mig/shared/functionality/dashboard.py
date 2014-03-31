@@ -89,89 +89,112 @@ $(document).ready(function() {
           $("#cert_stats").addClass("spinner").css("padding-left", "20px");
           $("#cert_stats").html("Loading certificate information...");
           /* Run certificate request in the background and handle as soon as results come in */
-          $.getJSON("userstats.py?output_format=json;stats=certificate", {}, function(jsonRes, textStatus) {
-            var i = 0;
-            var certificate = null;
-            var renew_days = 30;
-            var day_msecs = 24*60*60*1000;
-            // Grab results from json response and place them in resource status.
-            for(i=0; i<jsonRes.length; i++) {
-                if (jsonRes[i].object_type == "user_stats") {    
-                    certificate = jsonRes[i].certificate;
-                    var expire_date = new Date(certificate.expire);
-                    //alert("inspect certificate stats result: " + certificate);
-                    $("#cert_stats").removeClass("spinner").css("padding-left", "0px");
-                    $("#cert_stats").empty();
-                    $("#cert_stats").append("Your user certificate expires on " +
-                    expire_date + ".");
-                    // Use date from time diff in ms to avoid calendar mangling
-                    var show_renew = new Date(expire_date.getTime() - renew_days*day_msecs);
-                    if(new Date().getTime() > show_renew.getTime()) {
-                        $("#cert_stats").addClass("warningtext");
-                        $("#cert_stats").append("&nbsp;<a class='certrenewlink' href='reqcert.py'>Renew certificate</a>.");
-                    }
-                    break;
-                }
-            }
+          $.ajax({
+              url: "userstats.py?output_format=json;stats=certificate",
+              type: "GET",
+              dataType: "json",
+              cache: false,
+              success: function(jsonRes, textStatus) {
+                  var i = 0;
+                  var certificate = null;
+                  var renew_days = 30;
+                  var day_msecs = 24*60*60*1000;
+                  // Grab results from json response and place them in resource status.
+                  for(i=0; i<jsonRes.length; i++) {
+                      if (jsonRes[i].object_type == "user_stats") {    
+                          certificate = jsonRes[i].certificate;
+                          var expire_date = new Date(certificate.expire);
+                          //alert("inspect certificate stats result: " + certificate);
+                          $("#cert_stats").removeClass("spinner").css("padding-left", "0px");
+                          $("#cert_stats").empty();
+                          $("#cert_stats").append("Your user certificate expires on " +
+                          expire_date + ".");
+                          // Use date from time diff in ms to avoid calendar mangling
+                          var show_renew = new Date(expire_date.getTime() - renew_days*day_msecs);
+                          if(new Date().getTime() > show_renew.getTime()) {
+                              $("#cert_stats").addClass("warningtext");
+                              $("#cert_stats").append("&nbsp;<a class=\'certrenewlink\' href=\'reqcert.py\'>Renew certificate</a>.");
+                          }
+                          break;
+                      }
+                  }
+              }
           });
           /* Run jobs request in the background and handle as soon as results come in */
-          $.getJSON("userstats.py?output_format=json;stats=jobs", {}, function(jsonRes, textStatus) {
-            var i = 0;
-            var jobs = null;
-            // Grab results from json response and place them in job status.
-            for(i=0; i<jsonRes.length; i++) {
-                if (jsonRes[i].object_type == "user_stats") {    
-                    jobs = jsonRes[i].jobs;
-                    //alert("inspect stats result: " + jobs);
-                    $("#jobs_stats").removeClass("spinner").css("padding-left", "0px");
-                    $("#jobs_stats").empty();
-                    $("#jobs_stats").append("You have submitted a total of " + jobs.total +
-                    " jobs: " + jobs.parse + " parse, " + jobs.queued + " queued, " +
-                     jobs.frozen + " frozen, " + jobs.executing + " executing, " +
-                     jobs.finished + " finished, " + jobs.retry + " retry, " +
-                     jobs.canceled + " canceled, " + jobs.expired + " expired and " +
-                    jobs.failed + " failed.");
-                    break;
-                }
-            }   
-
-            });
+          $.ajax({
+              url: "userstats.py?output_format=json;stats=jobs",
+              type: "GET",
+              dataType: "json",
+              cache: false,
+              success: function(jsonRes, textStatus) {
+                  var i = 0;
+                  var jobs = null;
+                  // Grab results from json response and place them in job status.
+                  for(i=0; i<jsonRes.length; i++) {
+                      if (jsonRes[i].object_type == "user_stats") {    
+                          jobs = jsonRes[i].jobs;
+                          //alert("inspect stats result: " + jobs);
+                          $("#jobs_stats").removeClass("spinner").css("padding-left", "0px");
+                          $("#jobs_stats").empty();
+                          $("#jobs_stats").append("You have submitted a total of " + jobs.total +
+                              " jobs: " + jobs.parse + " parse, " + jobs.queued + " queued, " +
+                              jobs.frozen + " frozen, " + jobs.executing + " executing, " +
+                              jobs.finished + " finished, " + jobs.retry + " retry, " +
+                              jobs.canceled + " canceled, " + jobs.expired + " expired and " +
+                              jobs.failed + " failed.");
+                         break;
+                      }
+                  }   
+              }
+          });
           /* Run resources request in the background and handle as soon as results come in */
-          $.getJSON("userstats.py?output_format=json;stats=resources", {}, function(jsonRes, textStatus) {
-            var i = 0;
-            var resources = null;
-            // Grab results from json response and place them in resource status.
-            for(i=0; i<jsonRes.length; i++) {
-                if (jsonRes[i].object_type == "user_stats") {    
-                    resources = jsonRes[i].resources;
-                    //alert("inspect resources stats result: " + resources);
-                    $("#res_stats").removeClass("spinner").css("padding-left", "0px");
-                    $("#res_stats").empty();
-                    $("#res_stats").append(resources.resources + " resources providing " +
-                    resources.exes + " execution units in total allow execution of your jobs.");
-                    break;
-                }
-            }
+          $.ajax({
+              url: "userstats.py?output_format=json;stats=resources",
+              type: "GET",
+              dataType: "json",
+              cache: false,
+              success: function(jsonRes, textStatus) {
+                  var i = 0;
+                  var resources = null;
+                  // Grab results from json response and place them in resource status.
+                  for(i=0; i<jsonRes.length; i++) {
+                      if (jsonRes[i].object_type == "user_stats") {    
+                          resources = jsonRes[i].resources;
+                          //alert("inspect resources stats result: " + resources);
+                          $("#res_stats").removeClass("spinner").css("padding-left", "0px");
+                          $("#res_stats").empty();
+                          $("#res_stats").append(resources.resources + " resources providing " +
+                          resources.exes + " execution units in total allow execution of your jobs.");
+                          break;
+                      }
+                  }
+              }
           });
           /* Run disk request in the background and handle as soon as results come in */
-          $.getJSON("userstats.py?output_format=json;stats=disk", {}, function(jsonRes, textStatus) {
-            var i = 0;
-            var disk = null;
-            // Grab results from json response and place them in resource status.
-            for(i=0; i<jsonRes.length; i++) {
-                if (jsonRes[i].object_type == "user_stats") {    
-                    disk = jsonRes[i].disk;
-                    //alert("inspect disk stats result: " + disk);
-                    $("#disk_stats").removeClass("spinner").css("padding-left", "0px");
-                    $("#disk_stats").empty();
-                    $("#disk_stats").append("Your own " + disk.own_files +" files and " +
-                    disk.own_directories + " directories take up " + roundNumber(disk.own_megabytes, 2) +
-                    " MB in total and you additionally share " + disk.vgrid_files +
-                    " files and " + disk.vgrid_directories + " directories of " +
-                    roundNumber(disk.vgrid_megabytes, 2) + " MB in total.");
-                    break;
-                }
-            }
+          $.ajax({
+              url:"userstats.py?output_format=json;stats=disk",
+              type: "GET",
+              dataType: "json",
+              cache: false,
+              success: function(jsonRes, textStatus) {
+                  var i = 0;
+                  var disk = null;
+                  // Grab results from json response and place them in resource status.
+                  for(i=0; i<jsonRes.length; i++) {
+                      if (jsonRes[i].object_type == "user_stats") {    
+                          disk = jsonRes[i].disk;
+                          //alert("inspect disk stats result: " + disk);
+                          $("#disk_stats").removeClass("spinner").css("padding-left", "0px");
+                          $("#disk_stats").empty();
+                          $("#disk_stats").append("Your own " + disk.own_files +" files and " +
+                              disk.own_directories + " directories take up " + roundNumber(disk.own_megabytes, 2) +
+                              " MB in total and you additionally share " + disk.vgrid_files +
+                              " files and " + disk.vgrid_directories + " directories of " +
+                              roundNumber(disk.vgrid_megabytes, 2) + " MB in total.");
+                          break;
+                      }
+                  }
+              }
           });
      }
 );

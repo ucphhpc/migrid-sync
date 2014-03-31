@@ -262,7 +262,7 @@ TextAreaEditor.prototype = {
     out = '''
 <div class="inlineeditor" id="%sinlineeditor">
 <div class="editortoolbar" id="%stoolbar">
-<!--- filled by script --->
+<!-- filled by script -->
 </div>
 %s
 <script type="text/javascript">
@@ -814,16 +814,11 @@ SSH/SFTP access to your MiG account
 <tr><td>
 </td></tr>
 <tr><td>
-<p>
 You can configure SFTP login to your %(site)s account for efficient file
 access. Login takes place with %(auth_methods)s and your automatic
 username:
 <pre>%(username)s</pre>
-</p>
-<p>
 %(pw_key_notes)s
-</p>
-<p>
 <h3>Graphical SFTP access</h3>
 The FireFTP plugin for Firefox is known to generally work for graphical
 access to your MiG home over SFTP.
@@ -837,8 +832,6 @@ Port %(sftp_port)s
 Private Key ~/.mig/key.pem
 </pre>
 other graphical clients may work as well.
-</p>
-<p>
 <h3>Command line SFTP/SSHFS access on Linux/UN*X</h3>
 Save something like the following lines in your local ~/.ssh/config
 to avoid typing the full login details every time:<br />
@@ -849,8 +842,6 @@ User %(username)s
 Port %(sftp_port)s
 IdentityFile ~/.mig/key.pem
 </pre>
-</p>
-<p>
 From then on you can use sftp and sshfs to access your MiG home:
 <pre>
 sftp %(sftp_server)s
@@ -858,7 +849,6 @@ sftp %(sftp_server)s
 <pre>
 sshfs %(sftp_server)s: mig-home -o uid=$(id -u) -o gid=$(id -g)
 </pre>
-</p>
 </td></tr>
 <form method="post" action="settingsaction.py">
 <input type="hidden" name="topic" value="ssh" />

@@ -384,24 +384,25 @@ if (jQuery) (function($){
                 $("#editor_dialog").dialog('open');             
                 
                 // Grab file info
-                $.getJSON('cat.py',
-                          { path: $(el).attr(pathAttribute),
-                            output_format: 'json' },
-                          function(jsonRes, textStatus) {
-                    
-                              var file_output = '';
-                              for (i = 0; i < jsonRes.length; i++) {
-                                  if (jsonRes[i].object_type=='file_output') {
-                                      for (j = 0; j < jsonRes[i].lines.length; j++) {
-                                          file_output += jsonRes[i].lines[j];
-                                      }
-                                  }
-                              }
-
-                              $("#editor_dialog textarea[name='editarea']").val(file_output);
-                              $("#editor_dialog div.spinner").hide();
-
-                          });
+                $.ajax({
+                    url: 'cat.py',
+                    data: { path: $(el).attr(pathAttribute), output_format: 'json' },
+                    type: "GET",
+                    dataType: "json",
+                    cache: false,
+                    success: function(jsonRes, textStatus) {
+                        var file_output = '';
+                        for (i = 0; i < jsonRes.length; i++) {
+                            if (jsonRes[i].object_type=='file_output') {
+                                for (j = 0; j < jsonRes[i].lines.length; j++) {
+                                    file_output += jsonRes[i].lines[j];
+                                }
+                            }
+                        }
+                        $("#editor_dialog textarea[name='editarea']").val(file_output);
+                        $("#editor_dialog div.spinner").hide();
+                    }
+                });
                 
             },
             create:    function (action, el, pos) {                
