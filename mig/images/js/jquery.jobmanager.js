@@ -204,10 +204,8 @@ if (jQuery) (function($){
       
   }
 
-  $(document).ready(
+  $.fn.jobmanager = function() {
 
-    function() {
-    
     $.tablesorter.addWidget({
         id: "multiselect",
         format: function(table) {
@@ -364,58 +362,62 @@ if (jQuery) (function($){
             limit_opts += "job_id=" + filter_id + ';';
         }
         // add some html
-        $.getJSON("jobstatus.py?output_format=json;"+limit_opts, {}, function(jsonRes, textStatus) {
-        
-            var jobList = new Array();
-            var i = 0;
-            
-            // Grab jobs from json response and place them in jobList.
-            for(i = 0; i < jsonRes.length; i++) {
-                if ((jsonRes[i].object_type == "job_list") && (jsonRes[i].jobs.length > 0)) {
-                  jobList = jobList.concat(jsonRes[i].jobs);
-                  job_count++;
+        $.ajax({
+            url: "jobstatus.py?output_format=json;"+limit_opts, 
+            type: "GET",
+            dataType: "json",
+            cache: false, // Avoid IE caching
+            success: 
+            function(jsonRes, textStatus) {
+                var jobList = new Array();
+                var i = 0;
+
+                // Grab jobs from json response and place them in jobList.
+                for(i = 0; i < jsonRes.length; i++) {
+                    if ((jsonRes[i].object_type == "job_list") && (jsonRes[i].jobs.length > 0)) {
+                        jobList = jobList.concat(jsonRes[i].jobs);
+                        job_count++;
+                    }
                 }
-            }
-    
-            // Remove busy marker
-            $("#jm_jobmanager tbody").html("");
-            // Wrap each json result into html
-            $.each(jobList, function(i, item) {
-                if (item.schedule_hint != null) {
-                    sched_hint = " ("+item.schedule_hint+")";
-                } else {
-                    sched_hint = "";
-                }
-                if (item.outputfileslink != null) {
-                    output_url = item.outputfileslink.destination;
-                } else {
-                    /* dummy value of user home for jobs without output files */
-                    output_url = "ls.py?path=";
-                }
-                $("#jm_jobmanager tbody").append("<tr id='"+item.job_id.match(/^([0-9_]+)__/)[1]+"'>"+
+
+                // Remove busy marker
+                $("#jm_jobmanager tbody").html("");
+                // Wrap each json result into html
+                $.each(jobList, function(i, item) {
+                    if (item.schedule_hint != null) {
+                        sched_hint = " ("+item.schedule_hint+")";
+                    } else {
+                        sched_hint = "";
+                    }
+                    if (item.outputfileslink != null) {
+                        output_url = item.outputfileslink.destination;
+                    } else {
+                        /* dummy value of user home for jobs without output files */
+                        output_url = "ls.py?path=";
+                    }
+                    $("#jm_jobmanager tbody").append("<tr id='"+item.job_id.match(/^([0-9_]+)__/)[1]+"'>"+
                   "<td><div class='sortkey'></div><input type='checkbox' name='job_identifier' value='"+item.job_id+"' /></td>"+
                   "<td><div class='sortkey'>"+item.job_id.match(/^([0-9]+)_/)[1]+"</div>"+item.job_id+"</td>"+
                   "<input type='hidden' name='job_output' value='"+output_url+"' />"+
                   "<td><div class='sortkey'>"+item.status+"</div><div class='jobstatus'>"+item.status+sched_hint+"</div></td>"+
                   "<td><div class='sortkey'>"+toTimestamp(item.received_timestamp)+"</div>"+item.received_timestamp+"</td>"+
                   "</tr>"
-                  );
+                    );
 
-            });
+                });
 
-        var sorting = [[1,1]];
-        // Inform tablesorter of new data
-        $("#jm_jobmanager").trigger("update");
-        if (job_count > 0) {
-          $("#jm_jobmanager").trigger("sorton", [sorting]);
-        }
-        
-      });
-
+                var sorting = [[1,1]];
+                // Inform tablesorter of new data
+                $("#jm_jobmanager").trigger("update");
+                if (job_count > 0) {
+                    $("#jm_jobmanager").trigger("sorton", [sorting]);
+                }
+            }
+        });
     });
 
     $("#append").click();
-    
+
     $("#checkAll").bind("click", function(event) {
         event.stopPropagation();
 
@@ -427,7 +429,6 @@ if (jQuery) (function($){
         }
         return true;
     });
-    
-  });
-  
+  };
+
 })(jQuery);

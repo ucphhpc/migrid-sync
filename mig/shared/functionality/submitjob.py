@@ -204,16 +204,18 @@ def main(client_id, user_arguments_dict):
     }
 
     $(document).ready( function() {
-         console.log("document ready handler");
+         //console.log("document ready handler");
          switchTo("%s");
          $("#basicdialog").click(openBasicUpload);
          $("#fancydialog").click(openFancyUpload);
+         /*
          console.log("TMP: open fancydialog");
          try {
              openFancyUpload();
          } catch(err) {
              console.log("error openFancyUpload: "+err);
          }
+         */
     });
 
 </script>
@@ -258,7 +260,7 @@ Empty fields will simply result in the default value being used and each field
 is accompanied by a help link providing further details about the field."""})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<table class="submitjob">
+<div class="submitjob">
 <form method="post" action="submitfields.py" id="miginput">
 """
                           })
@@ -369,16 +371,15 @@ is accompanied by a help link providing further details about the field."""})
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-<tr>
-<td><br /></td>
-<td class=centertext>
-<input type='submit' value='Submit Job' />
+<br />
+<table class='centertext'>
+<tr><td><input type='submit' value='Submit Job' />
 <input type='checkbox' name='save_as_default'> Save as default job template
-</td>
-<td><br /></td>
-</tr>
-</form>
+</td></tr>
 </table>
+<br />
+</form>
+</div>
 """
                            })
     output_objects.append({'object_type': 'html_form', 
@@ -415,9 +416,9 @@ Actual examples for inspiration:
 Please note that textarea.py chokes if no nonempty KEYWORD_X_Y_Z fields 
 are supplied: thus we simply send a bogus jobname which does nothing
 -->
+<form method="post" action="textarea.py" id="miginput">
 <table class="submitjob">
 <tr><td class=centertext>
-<form method="post" action="textarea.py" id="miginput">
 <input type=hidden name=jobname_0_0_0 value=" " />
 <textarea cols="82" rows="25" name="mrsltextarea_0">
 %(default_mrsl)s
@@ -426,9 +427,9 @@ are supplied: thus we simply send a bogus jobname which does nothing
 <tr><td>
 <center><input type="submit" value="Submit Job" /></center>
 <input type="checkbox" name="save_as_default" >Save as default job template
-</form>
 </td></tr>
 </table>
+</form>
 """
                            % {'default_mrsl': default_mrsl}})
 
@@ -445,6 +446,7 @@ are supplied: thus we simply send a bogus jobname which does nothing
                           })
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
+<form enctype='multipart/form-data' action='textarea.py' method='post'>
 <table class='files'>
 <tr class=title><td class=centertext colspan=4>
 Upload job files
@@ -453,7 +455,6 @@ Upload job files
 Upload file to current directory (%(dest_dir)s)
 </td></tr>
 <tr><td colspan=2>
-<form enctype='multipart/form-data' action='textarea.py' method='post'>
 Extract package files (.zip, .tar.gz, .tar.bz2)
 </td><td colspan=2>
 <input type=checkbox name='extract_0' />
@@ -474,11 +475,10 @@ Optional remote filename (extra useful in windows)
 <input name='default_remotefilename_0' type='hidden' value='%(dest_dir)s'/>
 <input name='remotefilename_0' type='text' size='50' value='%(dest_dir)s'/>
 <input type='submit' value='Upload' name='sendfile'/>
+</td></tr>
+</table>
 </form>
-</td></tr>
-<tr><td colspan=3>
-<hr>
-</td></tr>
+<table class='files'>
 <tr class=title><td class=centertext colspan=4>
 Upload other files efficiently (using chunking).
 </td></tr>
@@ -489,7 +489,7 @@ Upload other files efficiently (using chunking).
 <button id='fancydialog'>Open Fancy Upload dialog</button>
 </td></tr>
 </table>
-</div>
+</div><!-- files_form-->
 
 <div id='basicuploadchunked_dialog' title='Upload File' style='display: none;'>
   
@@ -642,7 +642,4 @@ Upload other files efficiently (using chunking).
 {% } %}
 </script>
     '''})
-
-    output_objects.append({'object_type': 'html_form', 
-                           'text': '\n</div><!-- files_form-->'})
     return (output_objects, status)

@@ -146,7 +146,7 @@ description, you can likely just leave the field alone.''' % configuration.short
     store_fields = resconfkeywords.get_storenode_specs(configuration)
 
     output_objects.append({'object_type': 'html_form', 'text': """
-<form method='post' action='reseditaction.py''>
+<form method='post' action='reseditaction.py'>
 """
                            })
 

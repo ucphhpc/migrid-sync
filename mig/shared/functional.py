@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# functional - [insert a few words of module description on this line]
+# functional - functionality helpers
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -65,10 +65,11 @@ def validate_input(
     ):
     """A wrapper used by most back end functionality"""
 
-    # always allow output_format, we don't want to use
-    # unnecessary lines in all scripts to specify this
+    # always allow output_format and underscore cache prevention dummy, we
+    # don't want to use unnecessary lines in all scripts to specify this
 
     defaults['output_format'] = ['allow_me']
+    defaults['_'] = ['allow_me']
     (accepted, rejected) = validated_input(user_arguments_dict,
             defaults)
     warn_on_rejects(rejected, output_objects)

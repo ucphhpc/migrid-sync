@@ -94,6 +94,7 @@ def main(client_id, user_arguments_dict):
         allow_rejects=False,
         )
     if not validate_status:
+        logger.error("jobstatus input validation failed: %s" % accepted)
         return (accepted, returnvalues.CLIENT_ERROR)
 
     flags = ''.join(accepted['flags'])

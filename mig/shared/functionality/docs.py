@@ -401,12 +401,12 @@ official site support pages:'''})
                                configuration.site_title,
                                'plain_text': configuration.site_external_doc})
 
-    html = '<p>Filter (using *,? etc.)'
+    html = '<br />Filter (using *,? etc.)'
     html += "<form method='post' action='docs.py'>"
     html += "<input type='hidden' name='show' value='' />"
     html += "<input type='text' name='search' value='' />"
     html += "<input type='submit' value='Filter' />"
-    html += '</form></p><br />'
+    html += '</form><br />'
     output_objects.append({'object_type': 'html_form', 'text': html})
 
     # Fall back to show all topics

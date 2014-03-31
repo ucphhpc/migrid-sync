@@ -35,6 +35,7 @@ import os
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
+from shared.useradm import extract_field
 
 
 def signature():
@@ -181,7 +182,7 @@ $(document).ready(function() {
     output_objects.append({'object_type': 'sectionheader', 'text' :
                            "Welcome to the %s" % \
                            configuration.site_title})
-    welcome_line = "Hi %(SSL_CLIENT_S_DN_CN)s" % os.environ
+    welcome_line = "Hi %s" % extract_field(client_id, "full_name")
     output_objects.append({'object_type': 'text', 'text': welcome_line})
     dashboard_info = """
 This is your private entry page or your dashboard where you can get a
@@ -198,19 +199,12 @@ you can navigate your pages using the menu on the left.
 This is a general status overview for your Grid activities. Please note that some
 of the numbers are cached for a while to keep server load down.
 </p>
-<p>
-<div id="jobs_stats"><!-- for jquery --></div>
-</p>
-<p>
-<div id="res_stats"><!-- for jquery --></div>
-</p>
-<p>
-<div id="disk_stats"><!-- for jquery --></div>
-</p>
-<p>
-<div id="cert_stats"><!-- for jquery --></div>
-<div id="cert_renew" class="hidden"><a href="reqcert.py">renew certificate</a></div>
-</p>
+<div id="jobs_stats"><!-- for jquery --></div><br />
+<div id="res_stats"><!-- for jquery --></div><br />
+<div id="disk_stats"><!-- for jquery --></div><br />
+<div id="cert_stats"><!-- for jquery --></div><br />
+<div id="cert_renew" class="hidden"><a href="reqcert.py">renew certificate</a>
+</div>
 '''})
 
     output_objects.append({'object_type': 'sectionheader', 'text' :

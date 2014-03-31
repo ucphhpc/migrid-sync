@@ -405,7 +405,7 @@ def js_tmpl(entry_path='/'):
     js += advanced_editor_deps(include_jquery=False)
     js += lock_info('this file', -1)
     js += '''
-    <script type="text/javascript">
+<script type="text/javascript">
 
     try {
         /* jquery-ui-1.8.x option format */

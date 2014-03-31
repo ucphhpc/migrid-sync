@@ -659,9 +659,13 @@ if (jQuery) (function($){
          $(folder_pane).addClass('wait');
 
          statusbar.html('<span class="spinner" style="padding-left: 20px;">loading directory entries...</span>');
-         $.getJSON(options.connector,
-                   { path: t, output_format: 'json', flags: 'fa' },
-                   function(jsonRes, textStatus) {
+         $.ajax({
+                url: options.connector,
+                type: "GET",
+                dataType: "json",
+                data: { path: t, output_format: 'json', flags: 'fa' },
+                cache: false,
+                success: function(jsonRes, textStatus) {
           // Place ls.py output in listing array
           var cur_folder_names = new Array();
           var cur_file_names = new Array();
@@ -830,7 +834,7 @@ if (jQuery) (function($){
                     function(action, el, pos) {
                         (options['actions'][action])(action, el, pos);                                            
                     });
-            }            
+            }
             // Bind actions to entries in a non-blocking way to avoid 
             // unresponsive script warnings with many entries
 
@@ -962,9 +966,11 @@ if (jQuery) (function($){
                   +first_child+"/']").click();                       
             }
             
-        });
- 
+          }
+       });
      }
+
+     
       
      function bindBranch(t) {
          $(t).find('LI').bind(
@@ -1161,9 +1167,8 @@ if (jQuery) (function($){
               $("#editor_output").html(edit_out);
               $(".fm_files").parent().reload('');
           }
-         });
+       });
     });
-        
   };
 
 })(jQuery);

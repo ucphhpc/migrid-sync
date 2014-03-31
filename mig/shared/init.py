@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# init - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# init - shared helpers to init functionality backends
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -85,7 +85,7 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
         output_objects.append(header_object)
     if client_id:
         # add the user-defined menu and widgets (if possible)
-        title = find_entry(output_objects,'title')
+        title = find_entry(output_objects, 'title')
         if title:
             settings = load_settings(client_id, configuration)
             if settings:

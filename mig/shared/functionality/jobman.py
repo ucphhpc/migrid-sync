@@ -169,6 +169,30 @@ def js_tmpl():
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
 <script type="text/javascript" src="/images/js/jquery.jobmanager.js"></script>
+<script type="text/javascript">
+
+    try {
+        /* jquery-ui-1.8.x option format */
+        $.ui.dialog.prototype.options.bgiframe = true;
+    } catch(err) {
+        /* jquery-ui-1.7.x option format */
+        $.ui.dialog.defaults.bgiframe = true;
+    }
+
+    $(document).ready(function() {
+
+        /* wrap in try/catch for debugging - disabled in prodution */
+        /*
+        try {
+        */    
+            $("#jm_jobmanager").jobmanager({});
+        /*
+        } catch(err) {
+            alert("Internal error in job manager: " + err);
+        }
+        */
+    });
+</script>
 '''
   return js
 
