@@ -113,7 +113,6 @@ class MiGFilesystemHandler(FilesystemHandler):
     def __init__(self, directory, uri, server_conf, dav_conf, verbose=False):
         """Simply call parent constructor"""
         FilesystemHandler.__init__(self, directory, uri, verbose)
-        self.logger = logger
         self.root = directory
         self.daemon_conf = server_conf.daemon_conf
         self.chroot_exceptions = self.daemon_conf['chroot_exceptions']
@@ -123,26 +122,23 @@ class MiGFilesystemHandler(FilesystemHandler):
     
     def _get_fs_path(self, davs_path):
         """Wrap helper"""
-        self.logger.debug("get_fs_path: %s" % davs_path)
+        logger.debug("get_fs_path: %s" % davs_path)
         reply = get_fs_path(davs_path, self.root, self.chroot_exceptions)
-        self.logger.debug("get_fs_path returns: %s :: %s" % (davs_path,
-                                                             reply))
+        logger.debug("get_fs_path returns: %s :: %s" % (davs_path, reply))
         return reply
 
     def _strip_root(self, davs_path):
         """Wrap helper"""
-        self.logger.debug("strip_root: %s" % davs_path)
+        logger.debug("strip_root: %s" % davs_path)
         reply = strip_root(davs_path, self.root, self.chroot_exceptions)
-        self.logger.debug("strip_root returns: %s :: %s" % (davs_path,
-                                                             reply))
+        logger.debug("strip_root returns: %s :: %s" % (davs_path, reply))
         return reply
     
     def _acceptable_chmod(self, davs_path, mode):
         """Wrap helper"""
-        self.logger.debug("acceptable_chmod: %s" % davs_path)
+        logger.debug("acceptable_chmod: %s" % davs_path)
         reply = acceptable_chmod(davs_path, mode, self.chmod_exceptions)
-        self.logger.debug("acceptable_chmod returns: %s :: %s" % (davs_path,
-                                                                  reply))
+        logger.debug("acceptable_chmod returns: %s :: %s" % (davs_path, reply))
         return reply
 
     def uri2local(self, uri):
@@ -154,8 +150,8 @@ class MiGFilesystemHandler(FilesystemHandler):
         try:
             filename = self._get_fs_path(rel_path)
         except ValueError, vae:
-            self.logger.warning("illegal path requested: %s :: %s" % (rel_path,
-                                                                      vae))
+            logger.warning("illegal path requested: %s :: %s" % (rel_path,
+                                                                 vae))
             raise DAV_NotFound
         return filename
 
@@ -165,8 +161,7 @@ class MiGFilesystemHandler(FilesystemHandler):
         """
         
         fileloc = self.uri2local(uri)
-        filelist = []
-        
+        filelist = []        
         if os.path.exists(fileloc):
             if os.path.isdir(fileloc):
                 try:
@@ -180,11 +175,16 @@ class MiGFilesystemHandler(FilesystemHandler):
                     newloc = os.path.join(fileloc, filename)
                     filelist.append(self.local2uri(newloc))
                     
-                    self.logger.info('get_childs: Childs %s' % filelist)
-                    
+                    logger.info('get_childs: Childs %s' % filelist)
         return filelist
                 
+    def get_data(self, uri, range=None):
+        """return the content of an object"""
+        reply = FilesystemHandler.get_data(self, uri, range)
+        logger.info("returning get_data reply: %s" % reply)
+        return reply
 
+                
 class MiGDAVAuthHandler(DAVAuthHandler):
     """
     Provides MiG specific authentication based on parameters. The calling
@@ -234,9 +234,9 @@ class MiGDAVAuthHandler(DAVAuthHandler):
             for entry in entries:
                 if entry.public_key is not None:
                     allowed = entry.public_key.get_base64()
-                    self.logger.debug("Public key check for %s" % username)
+                    logger.debug("Public key check for %s" % username)
                     if allowed == offered:
-                        self.logger.info("Public key match for %s" % username)
+                        logger.info("Public key match for %s" % username)
                         self.authenticated_user = username
                         return paramiko.AUTH_SUCCESSFUL
 
@@ -254,19 +254,34 @@ class MiGDAVAuthHandler(DAVAuthHandler):
         logger.info("leaving root directory alone")
         
 
+    def send_body_chunks_if_http11(self, DATA, code, msg=None, desc=None,
+                                   ctype='text/xml; encoding="utf-8"',
+                                   headers={}):
+        """Override default send_body_chunks_if_http11 method of
+        DAVRequestHandler and thus DAVAuthHandler:
+        The native version takes the chunking approach if possible, but that
+        causes trouble for empty files. Force single send_body in that case.
+        Without this fix opening of empty files hangs until connection times
+        out for all clients.
+        """
+        if (not DATA or self.request_version == 'HTTP/1.0' or
+            not self._config.DAV.getboolean('chunked_http_response')):
+            self.send_body(DATA, code, msg, desc, ctype, headers)
+        else:
+            self.send_body_chunks(DATA, code, msg, desc, ctype, headers)
+        
     def send_body(self, DATA, code=None, msg=None, desc=None,
                   ctype='application/octet-stream', headers={}):
         """Override default send_body method of DAVRequestHandler and thus
         DAVAuthHandler:
-        For some silly reason pywebdav somtimes calls send_body with str code
-        but back-end send_response from BaseHTTPServer.py expects int. Foce
+        For some silly reason pywebdav sometimes calls send_body with str code
+        but back-end send_response from BaseHTTPServer.py expects int. Force
         conversion if needed.
         Without this fix locking/writing of files fails with mapped network
         drives on Windows.
         """
         if isinstance(code, basestring) and code.isdigit():
             code = int(code)
-                                               
         DAVAuthHandler.send_body(self, DATA, code, msg, desc, ctype, headers)
         
     def get_userinfo(self, username, password, command):
@@ -283,8 +298,8 @@ class MiGDAVAuthHandler(DAVAuthHandler):
         self.users = usermap
         logger.debug("get_userinfo found users: %s" % self.users)
 
-        host = self.server_conf.user_davs_address.strip()
-        port = self.server_conf.user_davs_port
+        host = self._config.DAV.host
+        port = self._config.DAV.port
         verbose = self._config.DAV.getboolean('verbose')
 
         if 'password' in self.server_conf.user_davs_auth and \
@@ -299,9 +314,8 @@ class MiGDAVAuthHandler(DAVAuthHandler):
             logger.error(err_msg)
             print err_msg
         return None
-            
-            
-            
+
+
 def run(configuration):
     """SSL wrap HTTP server for secure DAV access"""
 
@@ -311,11 +325,22 @@ def run(configuration):
 
     handler.protocol_version = 'HTTP/1.1'
 
-    # Pass conf options to DAV handler in required object format
+    # Extract server address for daemon and DAV URIs
+
+    host = configuration.user_davs_address.strip()
+    port = configuration.user_davs_port
+
+    # Pass conf options to DAV handler in required object format.
+    # Server accepts empty address to mean all available IPs but URIs need
+    # a real FQDN
 
     dav_conf_dict = configuration.dav_cfg
-    dav_conf_dict['host'] = configuration.user_davs_address
-    dav_conf_dict['port'] = configuration.user_davs_port
+    if host:
+        dav_conf_dict['host'] = host
+    else:
+        from socket import getfqdn
+        dav_conf_dict['host'] = getfqdn()        
+    dav_conf_dict['port'] = port
     dav_conf = setup_dummy_config(**dav_conf_dict)
     # inject options
     handler.server_conf = configuration
@@ -327,8 +352,6 @@ def run(configuration):
     verbose = dav_conf.DAV.getboolean('verbose')
     noauth = dav_conf.DAV.getboolean('noauth')
     nossl = dav_conf.DAV.getboolean('nossl')
-    host = dav_conf_dict['host'].strip()
-    port = dav_conf_dict['port']
 
     if not os.path.isdir(directory):
         logger.error('%s is not a valid directory!' % directory)
@@ -354,7 +377,7 @@ def run(configuration):
 
     init_filesystem_handler(handler, directory, host, port, verbose)
 
-    # initialize server on specified port
+    # initialize server on specified address and port
     runner = server((host, port), handler)
 
     # Wrap in SSL if enabled
@@ -419,6 +442,7 @@ if __name__ == "__main__":
     # code execution vulnerabilities
     chmod_exceptions = [os.path.abspath(configuration.vgrid_private_base),
                          os.path.abspath(configuration.vgrid_public_base)]
+
     configuration.daemon_conf = {
         'address': configuration.user_davs_address,
         'port': configuration.user_davs_port,
