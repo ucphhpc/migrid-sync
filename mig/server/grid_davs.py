@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_davs - secure DAV server providing access to MiG user homes
-# Copyright (C) 2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,31 +28,17 @@
 """Provide secure DAV access to MiG user homes"""
 
 import BaseHTTPServer
-#import SimpleHTTPServer
 import SocketServer
-#import base64
-#import glob
-#import logging
 import ssl
 import os
-#import socket
 import shutil
 import sys
-#import threading
-#import time
 import urlparse
-#from StringIO import StringIO
 
-#import pywebdav.lib
 from pywebdav.server.fileauth import DAVAuthHandler
-#from pywebdav.server.mysqlauth import MySQLAuthHandler
 from pywebdav.server.fshandler import FilesystemHandler
 #from pywebdav.server.daemonize import startstop
-
 from pywebdav.lib.errors import DAV_NotFound
-#from pywebdav.lib.INI_Parse import Configuration
-#from pywebdav.lib import VERSION, AUTHOR
-
 
 from shared.base import client_dir_id, client_alias, invisible_path
 from shared.conf import get_configuration_object
@@ -268,6 +254,21 @@ class MiGDAVAuthHandler(DAVAuthHandler):
         logger.info("leaving root directory alone")
         
 
+    def send_body(self, DATA, code=None, msg=None, desc=None,
+                  ctype='application/octet-stream', headers={}):
+        """Override default send_body method of DAVRequestHandler and thus
+        DAVAuthHandler:
+        For some silly reason pywebdav somtimes calls send_body with str code
+        but back-end send_response from BaseHTTPServer.py expects int. Foce
+        conversion if needed.
+        Without this fix locking/writing of files fails with mapped network
+        drives on Windows.
+        """
+        if isinstance(code, basestring) and code.isdigit():
+            code = int(code)
+                                               
+        DAVAuthHandler.send_body(self, DATA, code, msg, desc, ctype, headers)
+        
     def get_userinfo(self, username, password, command):
         """Authenticate user against user DB. Returns 1 on success and None
         otherwise.
