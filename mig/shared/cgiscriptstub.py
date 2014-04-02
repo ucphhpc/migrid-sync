@@ -91,9 +91,7 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg,
     if output == None:
         output = 'Output could _not_ be extracted!'
 
-    header_out = ''
-    for (key, val) in headers:
-        header_out += "%s: %s\n" % (key, val)
+    header_out = '\n'.join(["%s: %s" % (key, val) for (key, val) in headers]) 
     
     # configuration.logger.debug("raw output:\n%s\n%s" % (header_out, output))
     
