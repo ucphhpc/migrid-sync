@@ -40,6 +40,7 @@ from shared.init import initialize_main_variables, find_entry
 def html_tmpl(configuration):
     """HTML page base: some upload and menu entries depend on configuration"""
 
+    edit_includes = ['switcher']
     fill_entries = {}
     if 'submitjob' in configuration.site_default_menu:
         fill_entries["menu_submit_entry"] = '''
@@ -51,6 +52,7 @@ def html_tmpl(configuration):
             <label for="submitmrsl_0">Submit mRSL files (also .mRSL files included in packages):</label>
             <input type="checkbox" checked="" name="submitmrsl_0"/>
             '''
+        edit_includes.append('submit')
     else:
         fill_entries["menu_submit_entry"] = ''
         fill_entries["upload_submit_entry"] = ''
@@ -285,7 +287,7 @@ def html_tmpl(configuration):
     <div id="editor_dialog" title="Editor" style="display: none;">
     <div class="spinner" style="padding-left: 20px;">Loading file...</div>
     %s
-''' % edit_file('', '', output_format='json', includes=['switcher', 'submit'])
+''' % edit_file('', '', output_format='json', includes=edit_includes)
     html += '''
     <div id="editor_output"></div>
     </div>
