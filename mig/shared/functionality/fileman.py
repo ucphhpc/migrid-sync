@@ -50,7 +50,7 @@ def html_tmpl(configuration):
         '''
         fill_entries["upload_submit_entry"] = '''
             <label for="submitmrsl_0">Submit mRSL files (also .mRSL files included in packages):</label>
-            <input type="checkbox" checked="" name="submitmrsl_0"/>
+            <input id="submitmrsl_0" type="checkbox" checked="" name="submitmrsl_0"/>
             '''
         edit_includes.append('submit')
     else:
@@ -65,7 +65,7 @@ def html_tmpl(configuration):
             </ul>
         </div>
         <div class="fm_addressbar">
-            <input type="hidden" value="/" name="fm_current_path" readonly="true"/>
+            <input type="hidden" value="/" name="fm_current_path" />
         </div>
         <div class="fm_folders">
             <ul class="jqueryFileTree">
@@ -76,7 +76,7 @@ def html_tmpl(configuration):
         </div>
         <div class="fm_files">
         
-            <table id="fm_filelisting" cellspacing="0">
+            <table id="fm_filelisting" style="border-spacing=0;" >
             <thead>
                 <tr>
                     <th>Name</th>
@@ -177,7 +177,7 @@ def html_tmpl(configuration):
             <form id="fancyfileupload" action="uploadchunked.py?output_format=json;action=put"
                 method="POST" enctype="multipart/form-data">
                 <fieldset id="fancyfileuploaddestbox">
-                    <label id="fancyfileuploaddestlabel" for="fancyfileupload">
+                    <label id="fancyfileuploaddestlabel" for="fancyfileuploaddest">
                         Optional final destination dir:
                     </label>
                     <input id="fancyfileuploaddest" type="text" size=60 value="">
@@ -223,15 +223,15 @@ def html_tmpl(configuration):
                     <br />
             
                     <label for="remotefilename_0">Optional remote filename (extra useful in windows):</label>
-                    <input type="text" value="./" size="50" name="remotefilename_0" />
+                    <input id="remotefilename_0" type="text" value="./" size="50" name="remotefilename_0" />
                     <br />
             
                     <label for="extract_0">Extract package files (.zip, .tar.gz, .tar.bz2)</label>
-                    <input type="checkbox" name="extract_0"/>
+                    <input id="extract_0" type="checkbox" name="extract_0"/>
                     <br />
             
                     <label for="fileupload_0_0_0">File:</label>
-                    <input type="file" name="fileupload_0_0_0"/>
+                    <input id="fileupload_0_0_0" type="file" name="fileupload_0_0_0"/>
                     <input type="submit" value="Upload" onClick="$(\'#upload_output\').html(\'<div><span style=\\\'margin-left: 20px;\\\'>uploading ... please wait</span></div>\').addClass(\'info\').addClass(\'spinner\');" />
                 </fieldset>
             </form>
@@ -247,7 +247,7 @@ def html_tmpl(configuration):
             <input type="hidden" name="output_format" value="json" />
             <input type="hidden" name="current_dir" value="./" />
             <label for="path">Enter the new name:</label>
-            <input type="text" name="path"/>            
+            <input id="path" type="text" name="path"/>            
         </fieldset>
         </form>
         <div id="mkdir_output"></div>
@@ -262,7 +262,7 @@ def html_tmpl(configuration):
         <input type="hidden" name="dst" value="" />
         
         <label for="name">Enter the new name:</label>
-        <input type="text" name="name" value="" />
+        <input id="name" type="text" name="name" value="" />
     </fieldset>
     </form>
     <div id="rename_output"></div>
@@ -277,7 +277,7 @@ def html_tmpl(configuration):
         <input type="hidden" name="current_dir" value="" />
         
         <label for="dst">Enter the zip file name:</label>
-        <input type="text" name="dst" value="" />
+        <input id="dst" type="text" name="dst" value="" />
     </fieldset>
     </form>
     <div id="zip_output"></div>

@@ -497,9 +497,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
         if i['object_type'] == 'start':
             pass
         elif i['object_type'] == 'error_text':
-            lines.append('<p class=errortext>%s</p>' % html_escape(i['text']))
+            lines.append('<p class="errortext">%s</p>' % html_escape(i['text']))
         elif i['object_type'] == 'warning':
-            lines.append('<p class=warningtext>%s</p>' % html_escape(i['text']))
+            lines.append('<p class="warningtext">%s</p>' % html_escape(i['text']))
         elif i['object_type'] == 'header':
             lines.append('<h1>%s</h1>' % html_escape(i['text']))
         elif i['object_type'] == 'sectionheader':
@@ -804,7 +804,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                                      - cols) + '</tr>')
                             cols = columns
 
-                        lines.append('<tr class=%s>' % row_class)
+                        lines.append('<tr class="%s">' % row_class)
                         cols = 0
                         lines.append('<td><br /></td>')
                         cols += 1
@@ -832,7 +832,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                         lines.append('</tr>')
                     elif 'file' == entry['type']:
                         this_file = entry
-                        lines.append('<tr class=%s>' % row_class)
+                        lines.append('<tr class="%s">' % row_class)
                         cols = 0
                         lines.append('<td><br /></td>')
                         cols += 1
@@ -972,10 +972,10 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             row_number = 1
             if not sandboxinfos:
                 help_text = 'No sandboxes found - please download a sandbox below to proceed'
-                lines.append('<tr class=%s><td colspan=4>%s</td></tr>' % (row_name[row_number], help_text))
+                lines.append('<tr class="%s"><td colspan=4>%s</td></tr>' % (row_name[row_number], help_text))
             for sandboxinfo in sandboxinfos:
                 row_class = row_name[row_number % 2]
-                lines.append('<tr class=%s>%s</tr>'
+                lines.append('<tr class="%s">%s</tr>'
                              % (row_class, html_table_if_have_keys(sandboxinfo,
                                                                    ['username', 'resource', 'jobs',
                                                                     'walltime'])))
@@ -987,10 +987,10 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
 <thead class="title">
     <tr>
         <th>Name</th>
-        <th width="8"><!-- View --></th>
-        <th width="8"><!-- Owner --></th>
+        <th class="icon"><!-- View --></th>
+        <th class="icon"><!-- Owner --></th>
         <th>Description</th>
-        <th width="8">Resources</th>
+        <th class="icon">Resources</th>
         <th>Created</th>
     </tr>
 </thead>
@@ -1018,7 +1018,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                     '<table class="runtimeenvsw" frame=hsides rules=none cellpadding=5>'
             for software in i['software']:
                 software_html += \
-                    '<tr><td><img src="%s" width="80" height="80" /></td><td></td></tr>'\
+                    '<tr><td><img alt="logo" src="%s" width="80" height="80" /></td><td></td></tr>'\
                      % software['icon']
                 software_html += '<tr><td>Name:</td><td>%s</td></tr>'\
                      % software['name']
@@ -1082,13 +1082,13 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             frozenarchives = i['frozenarchives']
             delcol_html = ''
             if not configuration.site_permanent_freeze:
-                delcol_html = '<th width="8"><!-- Owner --></th>'
+                delcol_html = '<th class="icon"><!-- Owner --></th>'
             
             lines.append('''<table class="frozenarchives columnsort" id="frozenarchivetable">
 <thead class="title">
     <tr>
         <th>ID</th>
-        <th width="8"><!-- View --></th>
+        <th class="icon"><!-- View --></th>
         %s
         <th>Name</th>
         <th>Created</th>
@@ -1157,11 +1157,11 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
     <div class="toolbar">        
       <div class="pager" id="pager">
       <form style="display: inline;" action="">
-        <img class="first" src="/images/icons/arrow_left.png"/>
-        <img class="prev" src="/images/icons/arrow_left.png"/>
+        <img class="first" alt="first" src="/images/icons/arrow_left.png"/>
+        <img class="prev" alt="prev" src="/images/icons/arrow_left.png"/>
         <input type="text" class="pagedisplay" size=15 />
-        <img class="next" src="/images/icons/arrow_right.png"/>
-        <img class="last" src="/images/icons/arrow_right.png"/>
+        <img class="next" alt="next" src="/images/icons/arrow_right.png"/>
+        <img class="last" alt="last" src="/images/icons/arrow_right.png"/>
         <select class="pagesize">
 '''
             for value in page_entries:
@@ -1188,15 +1188,15 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
 <thead class="title">
 <tr>
   <th>Resource ID</th>
-  <th width="8"><!-- View / Admin --></th>
-  <th width="8"><!-- Remove owner --></th>
-  <th class=centertext>Runtime envs</th>
-  <th class=centertext>Alias</th>
-  <th class=centertext>Nodes</th>
-  <th class=centertext>CPUs</th>
-  <th class=centertext>Mem (MB)</th>
-  <th class=centertext>Disk (GB)</th>
-  <th class=centertext>Arch</th>
+  <th class="icon"><!-- View / Admin --></th>
+  <th class="icon"><!-- Remove owner --></th>
+  <th class="centertext">Runtime envs</th>
+  <th class="centertext">Alias</th>
+  <th class="centertext">Nodes</th>
+  <th class="centertext">CPUs</th>
+  <th class="centertext">Mem (MB)</th>
+  <th class="centertext">Disk (GB)</th>
+  <th class="centertext">Arch</th>
 </tr>
 </thead>
 <tbody>
@@ -1221,13 +1221,13 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                     # List number of runtime environments in field and add
                     # actual names as mouse-over
                     rte_list = obj.get('RUNTIMEENVIRONMENT', [])
-                    lines.append('<td class=centertext title="%s">' % \
+                    lines.append('<td class="centertext" title="%s">' % \
                                  ', '.join(rte_list))
                     lines.append('%d' % len(rte_list))
                     lines.append('</td>')
                     # Remaining fields
                     for name in res_fields:
-                        lines.append('<td class=centertext>')
+                        lines.append('<td class="centertext">')
                         lines.append('%s' % obj.get(name, ''))
                         lines.append('</td>')
                     lines.append('</tr>')
@@ -1266,14 +1266,14 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 notify_headers = ''
                 for proto in configuration.notify_protocols:
                     user_fields.append('send%slink' % proto)
-                    notify_headers += '  <th class=centertext>%s</th>' % proto
+                    notify_headers += '  <th class="centertext">%s</th>' % proto
                 users = i['users']
                 lines.append("<table class='users columnsort' id='usertable'>")
                 lines.append('''
 <thead class="title">
 <tr>
   <th>User ID</th>
-  <th width="8"><!-- View --></th>
+  <th class="icon"><!-- View --></th>
   %s
 </tr>
 </thead>
@@ -1290,7 +1290,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                     lines.append('</td>')
                     # Remaining fields
                     for name in user_fields:
-                        lines.append('<td class=centertext>')
+                        lines.append('<td class="centertext">')
                         if obj.has_key(name):
                             lines.append('%s' % html_link(obj[name]))
                         else:
@@ -1521,8 +1521,8 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
 <thead class="title">
 <tr>
   <th title="VGrid name with slashes indicating nesting">Name</th>
-  <th title="Ownership actions" width="8"><!-- Owner --></th>
-  <th title="Membership actions" width="8"><!-- Member --></th>
+  <th title="Ownership actions" class="icon"><!-- Owner --></th>
+  <th title="Membership actions" class="icon"><!-- Member --></th>
   %s
 </tr>
 </thead>
@@ -1544,7 +1544,7 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                                  % html_link(obj['memberlink']))
                     lines.append('</td>')
                     for key in configuration.site_vgrid_links:
-                        lines.append('<td class=centertext>')
+                        lines.append('<td class="centertext">')
                         for link in component_links[key]:
                             if obj.has_key(link):
                                 lines.append('%s ' % html_link(obj[link]))

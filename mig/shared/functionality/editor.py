@@ -240,7 +240,7 @@ def edit_file(path, real_path, output_format='html', includes=edit_includes):
 <input id="editorpath" type="text" size="80" name="path" value="%(path)s" />
 <br /><br />
 Edit contents:<br />
-<textarea id="editorarea" cols="80" rows="25" wrap="off" name="editarea">'''
+<textarea id="editorarea" cols="80" rows="25" name="editarea">'''
     for line in text:
         html += line
 

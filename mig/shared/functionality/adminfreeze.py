@@ -303,7 +303,7 @@ when filling in the details.'''
         </ul>
     </div>
     <div class='fm_addressbar'>
-        <input type='hidden' value='/' name='fm_current_path' readonly='readonly' />
+        <input type='hidden' value='/' name='fm_current_path' />
     </div>
     <div class='fm_folders'>
         <ul class='jqueryFileTree'>
@@ -313,7 +313,7 @@ when filling in the details.'''
         </ul>
     </div>
     <div class='fm_files'>
-        <table id='fm_filelisting' style='font-size:13px;' cellspacing='0'>
+        <table id='fm_filelisting' style='font-size:13px; border-spacing=0;'>
             <thead>
                 <tr>
                     <th>Name</th>
@@ -348,7 +348,7 @@ when filling in the details.'''
     <form id='fancyfileupload' action='uploadchunked.py?output_format=json;action=put'
         method='POST' enctype='multipart/form-data'>
         <fieldset id='fancyfileuploaddestbox'>
-            <label id='fancyfileuploaddestlabel' for='fancyfileupload'>
+            <label id='fancyfileuploaddestlabel' for='fancyfileuploaddest'>
                 Optional final destination dir:
             </label>
             <input id='fancyfileuploaddest' type='text' size=60 value=''>
@@ -391,12 +391,12 @@ when filling in the details.'''
 <br /><b>Name:</b><br />
 <input type='text' name='freeze_name' size=30 />
 <br /><b>Description:</b><br />
-<textarea cols='80' rows='20' wrap='off' name='freeze_description'></textarea>
+<textarea cols='80' rows='20' name='freeze_description'></textarea>
 <br />
 <div id='freezefiles'>
 <b>Freeze Archive Files:</b>
 <input type='button' id='addfilebutton' value='Add file/directory' />
-<input type='button' id='adduploadbutton' value='Add upload' '/>
+<input type='button' id='adduploadbutton' value='Add upload' />
 <div id='copyfiles'>
 <!-- Dynamically filled -->
 </div>

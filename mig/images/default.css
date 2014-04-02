@@ -206,7 +206,9 @@ table.monitorruntimeenvdone {
 table.liveio table {
   border: 0px solid #000;
 }
-
+table th.icon {
+  width: 8px;
+}
 
 .menublock {
   width: 160px;

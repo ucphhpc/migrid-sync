@@ -386,7 +386,7 @@ def main(client_id, user_arguments_dict):
                 continue
             html += \
                 """
-            <tr class=title><td>
+            <tr class='title'><td>
             %s
             </td></tr>
             <tr><td>
@@ -411,7 +411,7 @@ def main(client_id, user_arguments_dict):
                             selected = ''
                             if choice in current_choice:
                                 selected = 'checked'
-                            html += '<input type="checkbox" name="%s" %s value=%s>%s<br />'\
+                            html += '<input type="checkbox" name="%s" %s value="%s">%s<br />'\
                                     % (keyword, selected, choice, choice)
                         html += '</div>'
                 except:
@@ -435,12 +435,12 @@ def main(client_id, user_arguments_dict):
                     current_choice = current_settings_dict[keyword]
 
                 if len(valid_choices) > 0:
-                    html += '<select name=%s>' % keyword
+                    html += '<select name="%s">' % keyword
                     for choice in valid_choices:
                         selected = ''
                         if choice == current_choice:
                             selected = 'selected'
-                        html += '<option %s value=%s>%s</option>'\
+                        html += '<option %s value="%s">%s</option>'\
                              % (selected, choice, choice)
                     html += '</select><br />'
             html += """
@@ -648,7 +648,7 @@ You can simply copy/paste from the available widget file links below if you want
                             selected = ''
                             if choice in current_choice:
                                 selected = 'checked'
-                            html += '<input type="checkbox" name="%s" %s value=%s>%s<br />'\
+                            html += '<input type="checkbox" name="%s" %s value="%s">%s<br />'\
                                     % (keyword, selected, choice, choice)
                         html += '</div>'
                 except:
@@ -748,7 +748,7 @@ If you want to let other users know more about you can add your own text here. I
                             selected = ''
                             if choice in current_choice:
                                 selected = 'checked'
-                            html += '<input type="checkbox" name="%s" %s value=%s>%s<br />'\
+                            html += '<input type="checkbox" name="%s" %s value="%s">%s<br />'\
                                     % (keyword, selected, choice, choice)
                         html += '</div>'
                 except:
@@ -766,12 +766,12 @@ If you want to let other users know more about you can add your own text here. I
                     current_choice = current_profile_dict[keyword]
 
                 if len(valid_choices) > 0:
-                    html += '<select name=%s>' % keyword
+                    html += '<select name="%s">' % keyword
                     for choice in valid_choices:
                         selected = ''
                         if choice == current_choice:
                             selected = 'selected'
-                        html += '<option %s value=%s>%s</option>'\
+                        html += '<option %s value="%s">%s</option>'\
                              % (selected, choice, choice)
                     html += '</select><br />'
 
