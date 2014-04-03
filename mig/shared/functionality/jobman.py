@@ -32,32 +32,13 @@ import datetime
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
+from shared.defaults import default_pager_entries
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 
-def html_tmpl():
-  """HTML page base"""
-
-  html = '''
-  <div>
-    <div class="toolbar">        
-      <div class="pager" id="pager">
-      <form style="display: inline;" action="">
-        <img class="first" src="/images/icons/arrow_left.png"/>
-        <img class="prev" src="/images/icons/arrow_left.png"/>
-        <input type="text" class="pagedisplay" size=5 />
-        <img class="next" src="/images/icons/arrow_right.png"/>
-        <img class="last" src="/images/icons/arrow_right.png"/>
-        <select class="pagesize">
-          <option value="10">10 jobs per page</option>
-          <option value="15" selected>15 jobs per page</option>
-          <option value="20">20 jobs per page</option>
-          <option value="25">25 jobs per page</option>
-          <option value="40">40 jobs per page</option>
-          <option value="50">50 jobs per page</option>
-          <option value="75">75 jobs per page</option>
-          <option value="100">100 jobs per page</option>
-        </select>
+def pager_append():
+    """Additional html for the pager to extend navigation"""
+    return '''
         load <select class="maxjobs">
           <option value="100" selected>100</option>
           <option value="200">200</option>
@@ -68,28 +49,42 @@ def html_tmpl():
           <option value="-1">all</option>
         </select> last jobs
         matching <input class="filterid" name="filterid" size=16 value="*_%s_*"/>
-      </form>
-      <div id="append"  style="display: inline;"><img src="/images/icons/arrow_refresh.png" /></div>
-      </div>
-      
+        <div id="append" style="display: inline;">
+            <img alt="refresh" src="/images/icons/arrow_refresh.png" />
+        </div>
+''' % datetime.date.today().year
+
+def html_pre():
+    """HTML page start"""
+    html = '  <div>'
+    return html
+
+def html_post():
+    """HTML page end"""
+
+    html = '''
+    <div class="jm_container">
+        <table id="jm_jobmanager">
+            <thead>
+                <tr>
+                    <th style="width: 20px;">
+                        <input type="checkbox" id="checkAll" />
+                    </th>
+                    <th>Job ID</th>
+                    <th style="width: 120px;">Status</th>
+                    <th style="width: 180px;">Date</th>
+                </tr>        
+            </thead>
+            <tbody>
+                <tr><td>.</td><td>Job ID</td><td>Status</td><td>Date</td></tr>
+            </tbody>
+        </table>
     </div>
-    <div class="stuff">
-      <table id="jm_jobmanager">
-      <thead>
-        <tr>
-          <th style="width: 20px;"><input type="checkbox" id="checkAll" /></th>
-          <th>Job ID</th>
-          <th style="width: 120px;">Status</th>
-          <th style="width: 180px;">Date</th>
-        </tr>        
-      </thead>
-      <tbody>
-        <tr><td>.</td><td>Job ID</td><td>Status</td><td>Date</td></tr>
-      </tbody>
-    </table>
-    </div>
-    
-    <div id="jm_touchscreen"><input type="checkbox">Enable touch screen interface (all clicks trigger menu)</div>
+    <div id="jm_touchscreen"><input type="checkbox">Enable touch screen
+    interface (all clicks trigger menu)</div>
+'''
+    # Close div from html_pre and add top level context menu
+    html += '''
   </div>
   
   <ul id="job_context" class="contextMenu">
@@ -148,13 +143,13 @@ def html_tmpl():
   </ul>
   
   <div id="cmd_helper" title="Command output" style="display: none;"></div>
-  ''' % datetime.date.today().year
-  return html
+'''
+    return html
 
 def js_tmpl():
-  """Javascript to include in the page header"""
+    """Javascript to include in the page header"""
   
-  js = '''
+    js = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.contextmenu.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
@@ -194,22 +189,22 @@ def js_tmpl():
     });
 </script>
 '''
-  return js
+    return js
 
 def signature():
-  """Signature of the main function"""
+    """Signature of the main function"""
 
-  defaults = {'dir' : ['']}
-  return ['', defaults]
+    defaults = {'dir' : ['']}
+    return ['', defaults]
 
 def main(client_id, user_arguments_dict):
-  """Main function used by front end"""
+    """Main function used by front end"""
 
-  (configuration, logger, output_objects, op_name) = \
-      initialize_main_variables(client_id, op_header=False)
-  client_dir = client_id_dir(client_id)
-  defaults = signature()[1]
-  (validate_status, accepted) = validate_input_and_cert(
+    (configuration, logger, output_objects, op_name) = \
+                    initialize_main_variables(client_id, op_header=False)
+    client_dir = client_id_dir(client_id)
+    defaults = signature()[1]
+    (validate_status, accepted) = validate_input_and_cert(
       user_arguments_dict,
       defaults,
       output_objects,
@@ -217,16 +212,20 @@ def main(client_id, user_arguments_dict):
       configuration,
       allow_rejects=False,
       )
-  if not validate_status:
-      return (accepted, returnvalues.CLIENT_ERROR)
+    if not validate_status:
+        return (accepted, returnvalues.CLIENT_ERROR)
   
-  status = returnvalues.OK
+    status = returnvalues.OK
   
-  title_entry = find_entry(output_objects, 'title')
-  title_entry['text'] = 'Job Manager'
-  title_entry['javascript'] = js_tmpl()
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Job Manager'
+    title_entry['javascript'] = js_tmpl()
   
-  output_objects.append({'object_type': 'header', 'text': 'Job Manager'})
-  output_objects.append({'object_type': 'html_form', 'text': html_tmpl()})
+    output_objects.append({'object_type': 'header', 'text': 'Job Manager'})
+    output_objects.append({'object_type': 'html_form', 'text': html_pre()})
+    output_objects.append({'object_type': 'table_pager', 'entry_name': 'jobs',
+                           'default_entries': default_pager_entries,
+                           'form_append': pager_append()})
+    output_objects.append({'object_type': 'html_form', 'text': html_post()})
   
-  return (output_objects, status)
+    return (output_objects, status)

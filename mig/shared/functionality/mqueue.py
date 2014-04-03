@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mqueue - POSIX like message queue job inter-communication
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -161,9 +161,9 @@ take several seconds on the resources, however. That is, use it for tasks like
 orchestrating long running jobs, and not for low latency communication.
 '''})
         html = '''
+<form name="mqueueform" method="post" action="mqueue.py">
 <table class="mqueue">
 <tr><td class=centertext>
-<form name="mqueueform" method="post" action="mqueue.py" id="miginput">
 </td></tr>
 <tr><td>
 Action:<br />
@@ -186,9 +186,9 @@ Queue:<br />
 </td></tr>
 <tr><td>
 <input type="submit" value="Apply" />
-</form>
 </td></tr>
 </table>
+</form>
 ''' % (queue, msg)
         output_objects.append({'object_type': 'html_form', 'text'
                                : html})

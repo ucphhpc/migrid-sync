@@ -131,9 +131,15 @@ table.resources {
   padding: 2px;
   text-align: left;
 }
+table.resource td {
+  padding: 5px;
+}
 table.people {
   padding: 2px;
   text-align: left;
+}
+table.user td {
+  padding: 5px;
 }
 table.forum {
   padding: 2px;
@@ -154,7 +160,6 @@ table.downloads {
 table.runtimeenvs {
   padding: 2px;
 }
-
 table.runtimeenvdetails {
   padding: 2px;
 }
@@ -164,11 +169,17 @@ table.runtimeenvdetails td {
 table.runtimeenvsw {
   border: 0px solid #000;
 }
+table.runtimeenvsw td {
+  padding: 5px;
+}
 table.runtimeenventry {
   border: 0px solid #000;
 }
 table.runtimeenvvars {
   border: 0px solid #000;
+}
+table.runtimeenvvars td {
+  padding: 5px;
 }
 table.frozenarchivedetails {
   margin-top: 10px;

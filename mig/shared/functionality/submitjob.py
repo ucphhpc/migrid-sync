@@ -127,8 +127,8 @@ def main(client_id, user_arguments_dict):
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload.css" media="screen">
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.css" media="screen">
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.custom.css" media="screen"/>
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
@@ -261,7 +261,7 @@ is accompanied by a help link providing further details about the field."""})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <div class="submitjob">
-<form method="post" action="submitfields.py" id="miginput">
+<form method="post" action="submitfields.py">
 """
                           })
     show_fields = get_job_specs(configuration)
@@ -361,8 +361,11 @@ is accompanied by a help link providing further details about the field."""})
                     selected = ''
                     if str(res_value) == str(name):
                         selected = 'selected'
+                    display = "%s" % name
+                    if display == '':
+                        display = ' '
                     value_select += """<option %s value='%s'>%s</option>\n""" \
-                                    % (selected, name, name)
+                                    % (selected, name, display)
                 value_select += """</select><br />\n"""    
             output_objects.append({'object_type': 'html_form', 'text'
                                    : value_select
@@ -416,16 +419,16 @@ Actual examples for inspiration:
 Please note that textarea.py chokes if no nonempty KEYWORD_X_Y_Z fields 
 are supplied: thus we simply send a bogus jobname which does nothing
 -->
-<form method="post" action="textarea.py" id="miginput">
+<form method="post" action="textarea.py">
 <table class="submitjob">
-<tr><td class=centertext>
+<tr><td class="centertext">
 <input type=hidden name=jobname_0_0_0 value=" " />
 <textarea cols="82" rows="25" name="mrsltextarea_0">
 %(default_mrsl)s
 </textarea>
 </td></tr>
-<tr><td>
-<center><input type="submit" value="Submit Job" /></center>
+<tr><td class='centertext'>
+<input type="submit" value="Submit Job" />
 <input type="checkbox" name="save_as_default" >Save as default job template
 </td></tr>
 </table>
@@ -448,12 +451,12 @@ are supplied: thus we simply send a bogus jobname which does nothing
                           : """
 <form enctype='multipart/form-data' action='textarea.py' method='post'>
 <table class='files'>
-<tr class=title><td class=centertext colspan=4>
+<tr class='title'><td class='centertext' colspan=4>
 Upload job files
 </td></tr>
-<tr><td colspan=4>
+<tr><td colspan=3>
 Upload file to current directory (%(dest_dir)s)
-</td></tr>
+</td><td><br /></td></tr>
 <tr><td colspan=2>
 Extract package files (.zip, .tar.gz, .tar.bz2)
 </td><td colspan=2>
@@ -466,12 +469,12 @@ Submit mRSL files (also .mRSL files included in packages)
 </td></tr>
 <tr><td>    
 File to upload
-</td><td class=righttext colspan=3>
-<input name='fileupload_0_0_0' type='file' size='50'/>
+</td><td class='righttext' colspan=3>
+<input name='fileupload_0_0_0' type='file'/>
 </td></tr>
 <tr><td>
 Optional remote filename (extra useful in windows)
-</td><td class=righttext colspan=3>
+</td><td class='righttext' colspan=3>
 <input name='default_remotefilename_0' type='hidden' value='%(dest_dir)s'/>
 <input name='remotefilename_0' type='text' size='50' value='%(dest_dir)s'/>
 <input type='submit' value='Upload' name='sendfile'/>
@@ -479,13 +482,12 @@ Optional remote filename (extra useful in windows)
 </table>
 </form>
 <table class='files'>
-<tr class=title><td class=centertext colspan=4>
+<tr class='title'><td class='centertext' colspan=2>
 Upload other files efficiently (using chunking).
 </td></tr>
-<tr><td colspan=2>
+<tr><td class='centertext'>
 <button id='basicdialog'>Open Basic Upload dialog</button>
-</td></tr>
-<tr><td colspan=2>
+</td><td class='centertext'>
 <button id='fancydialog'>Open Fancy Upload dialog</button>
 </td></tr>
 </table>
@@ -495,7 +497,7 @@ Upload other files efficiently (using chunking).
   
     <fieldset>
         <p id='basicfileuploaddestbox'>
-            <label id='basicfileuploaddestlabel' for='basicfileupload'>
+            <label id='basicfileuploaddestlabel' for='basicfileuploaddest'>
                 Optional final destination dir:
             </label>
             <input id='basicfileuploaddest' type='text' size=60 value=''>
@@ -537,7 +539,7 @@ Upload other files efficiently (using chunking).
     <form id='fancyfileupload' action='uploadchunked.py?output_format=json;action=put'
         method='POST' enctype='multipart/form-data'>
         <fieldset id='fancyfileuploaddestbox'>
-            <label id='fancyfileuploaddestlabel' for='fancyfileupload'>
+            <label id='fancyfileuploaddestlabel' for='fancyfileuploaddest'>
                 Optional final destination dir:
             </label>
             <input id='fancyfileuploaddest' type='text' size=60 value=''>

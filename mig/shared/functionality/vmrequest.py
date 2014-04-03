@@ -75,9 +75,9 @@ def main(client_id, user_arguments_dict):
 <input type="hidden" name="output_format" value="html">
 <input type="hidden" name="action" value="create">
 
-<table style="margin: 10px; width: 96%;">
+<table style="margin: 0px; width: 100%;">
 <tr>
-  <td width="200">Machine name</td>
+  <td style="width: 20%;">Machine name</td>
   <td>
   <input type="text" name="machine_name" size="30" value="MyVirtualDesktop">
   </td>
@@ -88,7 +88,7 @@ def main(client_id, user_arguments_dict):
 <legend><input type="radio" name="machine_type" value="pre" checked="checked">Prebuilt</legend>
 <table>
 <tr>
-  <td width="200">Choose a OS version</td>
+  <td style="width: 20%;">Choose a OS version</td>
   <td>
   
 <select name="os">
@@ -102,7 +102,7 @@ def main(client_id, user_arguments_dict):
   </td>
 </tr>
 <tr>
-  <td width="200">Choose a machine image</td>
+  <td>Choose a machine image</td>
   <td>
   
 <select name="flavor">
@@ -116,7 +116,7 @@ def main(client_id, user_arguments_dict):
   </td>
 </tr>
 <tr>
-  <td width="200">Select a runtime environment providing the chosen OS and
+  <td>Select a runtime environment providing the chosen OS and
 flavor combination.
 For Ubuntu systems you can typically just use a runtime env from the same year,
 like VBOX3.1-IMAGES-2010-1 for ubuntu-10.* versions.</td>
@@ -142,7 +142,7 @@ like VBOX3.1-IMAGES-2010-1 for ubuntu-10.* versions.</td>
 <span class="warningtext">Custom builds are currently unavailable.</span>
 <table>
 <tr>
-  <td width="200">Software</td>
+  <td style="width: 20%;">Software</td>
   <td>
 <input type=text size=80 name="machine_software" readonly
 value='iptables acpid x11vnc xorg gdm xfce4 gcc make netsurf python-openssl' />

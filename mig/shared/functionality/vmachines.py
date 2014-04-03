@@ -107,14 +107,14 @@ def main(client_id, user_arguments_dict):
 
     welcome_text = 'Welcome to your %s virtual machine management!' % \
                    configuration.short_title
-    desc_text = '''<p>On this page you can:
+    desc_text = '''On this page you can:
 <ul>
     <li>Request Virtual Machines, by clicking on the button above</li>
     <li>See your virtual machines in the list below.</li>
     <li>Start, and connect to your Virtual Machine by clicking on it.</li>
     <li>Edit or delete your Virtual Machine from the Advanced tab.</li>
 </ul>
-</p>'''
+'''
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Virtual Machines'

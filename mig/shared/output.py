@@ -89,14 +89,6 @@ def txt_cond_summary(job_cond_msg):
     return '\n'.join(lines)
 
 
-def resource_format(ret_val, ret_msg, out_obj):
-    txt = ret_val
-    for i in out_obj:
-        if i['object_type'] == 'link':
-            txt += i['destination']
-    return txt
-
-
 def txt_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in txt format"""
 
@@ -305,15 +297,6 @@ ctime\t%(ctime)s
 
                     lines.append('\n')
         elif i['object_type'] == 'filewcs':
-
-            # if len(i["jobs"]) > 0:
-                # jobs = i["jobs"]
-                # lines.append("||------------------------------------||")
-                # lines.append("|| Job ID | Status | Queued timestamp ||")
-                # for obj in jobs:
-                #    lines.append("|| %s | %s | %s ||" % (obj["job_id"], obj["status"], obj["queued_timestamp"]))
-                # lines.append("||------------------------------------||")
-
             filewcs = i['filewcs']
             if len(filewcs) == 0:
                 lines.append('No files to run wc on\n')
@@ -497,9 +480,11 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
         if i['object_type'] == 'start':
             pass
         elif i['object_type'] == 'error_text':
-            lines.append('<p class="errortext">%s</p>' % html_escape(i['text']))
+            lines.append('<p class="errortext">%s</p>' % \
+                         html_escape(i['text']))
         elif i['object_type'] == 'warning':
-            lines.append('<p class="warningtext">%s</p>' % html_escape(i['text']))
+            lines.append('<p class="warningtext">%s</p>' % \
+                         html_escape(i['text']))
         elif i['object_type'] == 'header':
             lines.append('<h1>%s</h1>' % html_escape(i['text']))
         elif i['object_type'] == 'sectionheader':
@@ -546,15 +531,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
         elif i['object_type'] == 'link':
             lines.append(html_link(i))
         elif i['object_type'] == 'job_list':
-
-            # lines.append("<a href="%s">%s</a>" % (i["destination"], i["text"])
-
             if len(i['jobs']) > 0:
                 jobs = i['jobs']
                 lines.append("<table class='jobs'>")
-
-                # <tr><td>Job ID</td><td>Status</td><td>Queued timestamp</td></tr>"
-
                 for obj in jobs:
                     lines.append('<tr><th>Job Id</th><th>%s</th></tr>'
                                   % obj['job_id'])
@@ -564,8 +543,8 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                         lines.append('<tr><td>Execute</td><td>%s</td></tr>'
                                  % obj['execute'])
                     if obj.has_key('verified'):
-                        lines.append('<tr><td>Verified status</td><td>%s</td></tr>'
-                                 % obj['verified'])
+                        lines.append('<tr><td>Verified status</td>'
+                                     '<td>%s</td></tr>' % obj['verified'])
                     if obj.has_key('verified_timestamp'):
                         lines.append('<tr><td>Verified</td><td>%s</td></tr>'
                                  % obj['verified_timestamp'])
@@ -579,14 +558,15 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                         lines.append('<tr><td>Scheduled</td><td>%s</td></tr>'
                                  % obj['schedule_timestamp'])
                     if obj.has_key('schedule_hint'):
-                        lines.append('<tr><td>Schedule result</td><td>%s</td></tr>'
-                                 % obj['schedule_hint'])
+                        lines.append('<tr><td>Schedule result</td>'
+                                     '<td>%s</td></tr>' % obj['schedule_hint'])
                     if obj.has_key('schedule_hits'):
-                        lines.append('<tr><td>Suitable resources</td><td>%s</td></tr>'
-                                 % obj['schedule_hits'])
+                        lines.append('<tr><td>Suitable resources</td>'
+                                     '<td>%s</td></tr>' % obj['schedule_hits'])
                     if obj.has_key('expected_delay'):
-                        lines.append('<tr><td>Expected delay</td><td>%s</td></tr>'
-                                 % obj['expected_delay'])
+                        lines.append(
+                            '<tr><td>Expected delay</td><td>%s</td></tr>' % \
+                            obj['expected_delay'])
                     if obj.has_key('executing_timestamp'):
                         lines.append('<tr><td>Executing</td><td>%s</td></tr>'
                                  % obj['executing_timestamp'])
@@ -609,32 +589,33 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                         count = execution_history['count']
                         single_history = \
                             execution_history['execution_history']
-                        lines.append('<tr><td>Execution history</td><td>#%s</td></tr>'
-                                 % count)
+                        lines.append('<tr><td>Execution history</td>'
+                                     '<td>#%s</td></tr>' % count)
                         if single_history.has_key('queued'):
-                            lines.append('<tr><td>Queued %s</td><td>%s</td></tr>'
-                                     % (count, single_history['queued'
-                                    ]))
+                            lines.append(
+                                '<tr><td>Queued %s</td><td>%s</td></tr>'
+                                % (count, single_history['queued']))
                         if single_history.has_key('executing'):
-                            lines.append('<tr><td>Executing %s</td><td>%s</td></tr>'
-                                     % (count,
-                                    single_history['executing']))
+                            lines.append(
+                                '<tr><td>Executing %s</td><td>%s</td></tr>'
+                                % (count, single_history['executing']))
                         if single_history.has_key('resource'):
-                            lines.append('<tr><td>Resource %s</td><td>%s</td></tr>'
-                                     % (count,
-                                    single_history['resource']))
+                            lines.append(
+                                '<tr><td>Resource %s</td><td>%s</td></tr>'
+                                % (count, single_history['resource']))
                         if single_history.has_key('vgrid'):
-                            lines.append('<tr><td>VGrid %s</td><td>%s</td></tr>'
-                                     % (count,
-                                    single_history['vgrid']))
+                            lines.append(
+                                '<tr><td>VGrid %s</td><td>%s</td></tr>'
+                                % (count, single_history['vgrid']))
                         if single_history.has_key('failed'):
-                            lines.append('<tr><td>Failed %s</td><td>%s</td></tr>'
-                                     % (count, single_history['failed'
-                                    ]))
+                            lines.append(
+                                '<tr><td>Failed %s</td><td>%s</td></tr>'
+                                % (count, single_history['failed']))
                         if single_history.has_key('failed_message'):
-                            lines.append('<tr><td>Failed message %s</td><td>%s</td></tr>'
-                                     % (count,
-                                    single_history['failed_message']))
+                            lines.append(
+                                '<tr>'
+                                '<td>Failed message %s</td><td>%s</td></tr>'
+                                % (count, single_history['failed_message']))
 
                     if obj.has_key('statuslink'):
                         lines.append('<tr><td>Links</td><td>')
@@ -656,7 +637,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                     if obj.has_key('outputfileslink'):
                         lines.append('<br />%s'
                                  % html_link(obj['outputfileslink']))
-                    lines.append('</td></tr><tr><td><br /></td></tr>')
+                    lines.append('<tr><td colspan=2><br /></td></tr>')
 
 
                 lines.append('</table>')
@@ -664,8 +645,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             resubmitobjs = i['resubmitobjs']
             if len(resubmitobjs) == 0:
                 continue
-            lines.append("<table class='resubmit'><tr><th>Job ID</th><th>Resubmit status</th><th>New job ID</th><th>Message</th></tr>"
-                         )
+            lines.append("<table class='resubmit'><tr><th>Job ID</th>"
+                         "<th>Resubmit status</th><th>New job ID</th>"
+                         "<th>Message</th></tr>")
             for resubmitobj in resubmitobjs:
                 lines.append('<tr>%s</tr>'
                               % html_table_if_have_keys(resubmitobj,
@@ -676,8 +658,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             changedstatusjobs = i['changedstatusjobs']
             if len(changedstatusjobs) == 0:
                 continue
-            lines.append("<table class='changedstatusjobs'><tr><th>Job ID</th><th>Old status</th><th>New status</th><th>Message</th></tr>"
-                         )
+            lines.append("<table class='changedstatusjobs'><tr><th>Job ID</th>"
+                         "<th>Old status</th><th>New status</th>"
+                         "<th>Message</th></tr>")
             for changedstatus in changedstatusjobs:
                 lines.append('<tr>%s</tr>'
                               % html_table_if_have_keys(changedstatus,
@@ -688,8 +671,8 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             saveschedulejobs = i['saveschedulejobs']
             if len(saveschedulejobs) == 0:
                 continue
-            lines.append("<table class='saveschedulejobs'><tr><th>Job ID</th><th>Message</th></tr>"
-                         )
+            lines.append("<table class='saveschedulejobs'><tr><th>Job ID</th>"
+                         "<th>Message</th></tr>")
             for saveschedule in saveschedulejobs:
                 lines.append('<tr>%s</tr>'
                               % html_table_if_have_keys(saveschedule,
@@ -700,8 +683,8 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             checkcondjobs = i['checkcondjobs']
             if len(checkcondjobs) == 0:
                 continue
-            lines.append("<table class='checkcondjobs'><tr><th>Job ID</th><th>Feasibility</th><th>Message</th></tr>"
-                         )
+            lines.append("<table class='checkcondjobs'><tr><th>Job ID</th>"
+                         "<th>Feasibility</th><th>Message</th></tr>")
             for checkcond in checkcondjobs:
                 checkcond['cond_summary'] = html_cond_summary(checkcond)
                 lines.append('<tr>%s</tr>'
@@ -712,8 +695,11 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             stats = i['stats']
             if len(stats) == 0:
                 continue
-            lines.append("<table class='stats'><tr><th>Filename</th><th>Device</th><th>Inode</th><th>Mode</th><th>Nlink</th><th>User ID</th><th>Group ID</th><th>RDEV</th><th>Size</th><th>Last accessed</th><th>Modified time</th><th>Created time</th></tr>"
-                         )
+            lines.append("<table class='stats'><tr><th>Filename</th>"
+                         "<th>Device</th><th>Inode</th><th>Mode</th>"
+                         "<th>Nlink</th><th>User ID</th><th>Group ID</th>"
+                         "<th>RDEV</th><th>Size</th><th>Last accessed</th>"
+                         "<th>Modified time</th><th>Created time</th></tr>")
             for stat in stats:
                 lines.append('<tr>%s</tr>'
                               % html_table_if_have_keys(stat, [
@@ -736,8 +722,10 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             if len(fileuploadobjs) == 0:
                 lines.append('No jobs submitted!')
             else:
-                lines.append("<table class='fileupload'><tr><th>Filename</th><th>Saved</th><th>Extract packages</th><th>Submit flag</th><th>File size</th><th>Message</th></tr>"
-                             )
+                lines.append("<table class='fileupload'><tr><th>Filename</th>"
+                             "<th>Saved</th><th>Extract packages</th>"
+                             "<th>Submit flag</th><th>File size</th>"
+                             "<th>Message</th></tr>")
                 for fileuploadobj in fileuploadobjs:
                     lines.append('<tr>%s</tr>'
                                   % html_table_if_have_keys(fileuploadobj,
@@ -752,8 +740,8 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 lines.append('</table>')
         elif i['object_type'] == 'jobobj':
             job_dict = i['jobobj'].to_dict()
-            lines.append("<table class='jobobj'><tr><th>Field</th><th>Value</th></tr>"
-                         )
+            lines.append("<table class='jobobj'><tr><th>Field</th><th>Value"
+                         "</th></tr>")
             for (key, val) in job_dict.items():
                 lines.append('<tr><td>%s</td><td>%s</td></tr>' % (key,
                              val))
@@ -771,8 +759,8 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             cols = 0
             lines.append('<td>Info</td>')
             cols += 1
-            lines.append("<td><input type='checkbox' name='allbox' value='allbox' onclick='un_check()' /></td>"
-                         )
+            lines.append("<td><input type='checkbox' name='allbox' value="
+                         "'allbox' onclick='un_check()' /></td>")
             cols += 1
 
             # lines.append("<td><br /></td>"
@@ -783,7 +771,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             lines.append('</tr>')
             lines.append('<tr>')
             cols = 0
-            lines.append('<td colspan=%d><hr width=100%%></td>'
+            lines.append('<td colspan=%d><hr></td>'
                           % (columns - cols))
             lines.append('</tr>')
 
@@ -808,8 +796,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                         cols = 0
                         lines.append('<td><br /></td>')
                         cols += 1
-                        lines.append("<td><input type='checkbox' name='path' value='%s' /></td>"
-                                     % directory['dirname_with_dir'])
+                        lines.append("<td><input type='checkbox' name='path' "
+                                     "value='%s' /></td>" % \
+                                     directory['dirname_with_dir'])
                         cols += 1
                         if directory.has_key('actual_dir'):
                             lines.append('<td>%s</td>'
@@ -817,26 +806,33 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                         else:
                             lines.append('<td><br /></td>')
                         cols += 1
-                        lines.append("<td><a href='ls.py?path=%s;flags=%s;output_format=html'>show</a></td><td>DIR</td>"
+                        ls_url = 'ls.py?path=%s;flags=%s;output_format=html' \
                                  % (directory['dirname_with_dir'],
-                                dir_listing['flags']))
+                                    dir_listing['flags'])
+                        lines.append(
+                            "<td><a href='%s'>show</a></td>"
+                            % ls_url)
                         cols += 1
-                        lines.append("<td><a href='rmdir.py?path=%s;output_format=html'>remove</a></td>"
-                                 % directory['dirname_with_dir'])
+                        lines.append("<td>DIR</td>")
+                        cols += 1
+                        rm_url = 'rmdir.py?path=%s;output_format=html' \
+                                 % directory['dirname_with_dir']
+                        lines.append("<td><a href='%s'>remove</a></td>"
+                                     % rm_url)
                         cols += 1
                         lines.append('<td>%s</td>' % directory['name'])
                         cols += 1
-                        lines.append('<td><br /></td>' * (columns - cols)
+                        lines.append('<td><br /></td>' * (columns - cols) 
                                  + '</tr>')
                         cols = columns
-                        lines.append('</tr>')
                     elif 'file' == entry['type']:
                         this_file = entry
                         lines.append('<tr class="%s">' % row_class)
                         cols = 0
                         lines.append('<td><br /></td>')
                         cols += 1
-                        lines.append("<td><input type='checkbox' name='path' value='%s' /></td>"
+                        lines.append("<td><input type='checkbox' name='path' "
+                                     "value='%s' /></td>"
                                      % this_file['file_with_dir'])
                         cols += 1
                         if this_file.has_key('long_format'):
@@ -849,11 +845,15 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                                  % ('cert_redirect',
                                 this_file['file_with_dir']))
                         cols += 1
-                        lines.append("<td><a href='editor.py?path=%s;output_format=html'>edit</a></td>"
-                                 % this_file['file_with_dir'])
+                        edit_url = 'editor.py?path=%s;output_format=html' % \
+                                   this_file['file_with_dir']
+                        lines.append("<td><a href='%s'>edit</a></td>"
+                                     % edit_url)
                         cols += 1
-                        lines.append("<td><a href='rm.py?path=%s;output_format=html'>delete</a></td>"
-                                 % this_file['file_with_dir'])
+                        rm_url = 'rm.py?path=%s;output_format=html' % \
+                                 this_file['file_with_dir']
+                        lines.append("<td><a href='%s'>delete</a></td>"
+                                     % rm_url)
                         cols += 1
                         lines.append('<td>%s</td>' % this_file['name'])
                         cols += 1
@@ -864,17 +864,16 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                         lines.append('<td><br /></td>' * (columns - cols)
                                  + '</tr>')
                         cols = columns
-                        lines.append('</tr>')
                     row_number += 1
-            lines.append('</form></table>')
+            lines.append('</table>')
             lines.append('')
         elif i['object_type'] == 'filewcs':
             filewcs = i['filewcs']
             if len(filewcs) == 0:
                 lines.append('No files to run wc on')
             else:
-                lines.append('<table class="wc"><tr><th>File</th><th>Lines</th><th>Words</th><th>Bytes</th></tr>'
-                             )
+                lines.append('<table class="wc"><tr><th>File</th><th>Lines</th>'
+                             '<th>Words</th><th>Bytes</th></tr>')
                 for filewc in filewcs:
                     lines.append('<tr><td>%s</td>' % filewc['name'])
                     lines.append('<td>')
@@ -906,11 +905,12 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             if len(links) == 0:
                 lines.append('No links found!')
             else:
-                lines.append('<table class="links"><tr><th>Name</th><th>Link</th></tr>'
-                             )
+                lines.append('<table class="links"><tr><th>Name</th>'
+                             '<th>Link</th></tr>')
                 for link in links:
                     lines.append('<tr><td>%s</td><td>%s</td></tr>'
-                                  % (html_escape(link['text']), html_link(link)))
+                                  % (html_escape(link['text']),
+                                     html_link(link)))
                 lines.append('</table>')
         elif i['object_type'] == 'multilinkline':
             links = i['links']
@@ -946,8 +946,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             if len(submitstatuslist) == 0:
                 lines.append('No job submit status found!')
             else:
-                lines.append('<table class="submitstatus"><tr><th>File</th><th>Status</th><th>Job Id</th><th>Message</th></tr>'
-                             )
+                lines.append('<table class="submitstatus"><tr><th>File</th>'
+                             '<th>Status</th><th>Job Id</th><th>Message</th>'
+                             '</tr>')
                 for submitstatus in submitstatuslist:
                     lines.append('<tr>%s</tr>'
                                   % html_table_if_have_keys(submitstatus,
@@ -959,31 +960,35 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             if len(objects) == 0:
                 lines.append('No objects found!')
             else:
-                lines.append('<table class="objects"><tr><th>Object</th><th>Info</th></tr>'
-                             )
+                lines.append('<table class="objects"><tr><th>Object</th>'
+                             '<th>Info</th></tr>')
                 for (name, val) in objects:
                     lines.append('<tr><td>%s</td><td>%s</td></tr>'
                                   % (name, val))
                 lines.append('</table>')
         elif i['object_type'] == 'sandboxinfos':
             sandboxinfos = i['sandboxinfos']
-            lines.append('<table class="sandboxinfo"><tr><th>Username</th><th>Resource(s)</th><th>Jobs</th><th>Walltime</th></tr>'
-                         )
+            lines.append('<table class="sandboxinfo"><tr><th>Username</th>'
+                         '<th>Resource(s)</th><th>Jobs</th><th>Walltime</th>'
+                         '</tr>')
             row_number = 1
             if not sandboxinfos:
-                help_text = 'No sandboxes found - please download a sandbox below to proceed'
-                lines.append('<tr class="%s"><td colspan=4>%s</td></tr>' % (row_name[row_number], help_text))
+                help_text = 'No sandboxes found - please download a sandbox '
+                'below to proceed'
+                lines.append('<tr class="%s"><td colspan=4>%s</td></tr>' % \
+                             (row_name[row_number], help_text))
             for sandboxinfo in sandboxinfos:
                 row_class = row_name[row_number % 2]
                 lines.append('<tr class="%s">%s</tr>'
-                             % (row_class, html_table_if_have_keys(sandboxinfo,
-                                                                   ['username', 'resource', 'jobs',
-                                                                    'walltime'])))
+                             % (row_class, html_table_if_have_keys(
+                                 sandboxinfo, ['username', 'resource', 'jobs',
+                                               'walltime'])))
                 row_number += 1
             lines.append('</table>')
         elif i['object_type'] == 'runtimeenvironments':
             runtimeenvironments = i['runtimeenvironments']
-            lines.append('''<table class="runtimeenvs columnsort" id="runtimeenvtable">
+            lines.append('''
+<table class="runtimeenvs columnsort" id="runtimeenvtable">
 <thead class="title">
     <tr>
         <th>Name</th>
@@ -1014,34 +1019,38 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
 </table>''')
         elif i['object_type'] == 'runtimeenvironment':
 
-            software_html = \
-                    '<table class="runtimeenvsw" frame=hsides rules=none cellpadding=5>'
+            software_html = '<table class="runtimeenvsw">'
             for software in i['software']:
-                software_html += \
-                    '<tr><td><img alt="logo" src="%s" width="80" height="80" /></td><td></td></tr>'\
-                     % software['icon']
-                software_html += '<tr><td>Name:</td><td>%s</td></tr>'\
-                     % software['name']
-                software_html += \
-                    '<tr><td>Url:</td><td><a class="urllink" href="%s">%s</a></td></tr>'\
-                     % (software['url'], software['url'])
-                software_html += \
-                    '<tr><td>Description:</td><td>%s</td></tr>'\
-                     % software['description']
-                software_html += '<tr><td>Version:</td><td>%s</td></tr>'\
-                     % software['version']
+                software_html += '''
+<tr>
+    <td><img alt="logo" src="%(icon)s" width="80" height="80" /></td><td></td>
+</tr>
+<tr><td>Name:</td><td>%(name)s</td>
+</tr>
+<tr>
+    <td>Url:</td><td><a class="urllink" href="%(url)s">%(url)s</a></td>
+</tr>
+<tr>
+    <td>Description:</td><td>%(description)s</td>
+</tr>
+<tr><td>Version:</td><td>%(version)s</td>
+</tr>
+''' % software
             software_html += '</table>'
 
-            environment_html = \
-                    '<table class="runtimeenvvars" frame=hsides rules=none cellpadding=5>'
+            environment_html = '<table class="runtimeenvvars">'
             for environment in i['environments']:
-                environment_html += \
-                                 '<tr><td>Name:</td><td>%(name)s (use with ${%(name)s})</td></tr>'
-                environment_html += \
-                    '<tr><td>Example:</td><td>%(example)s</td></tr>'
-                environment_html += \
-                    '<tr><td>Description:</td><td>%(description)s</td></tr>'
-                environment_html = environment_html % environment
+                environment_html += '''
+<tr>
+    <td>Name:</td><td>%(name)s (use with ${%(name)s})</td>
+</tr>
+<tr>
+    <td>Example:</td><td>%(example)s</td>
+</tr>
+<tr>
+    <td>Description:</td><td>%(description)s</td>
+    </tr>
+''' % environment
             environment_html += '</table>'
 
             lines.append('<table class="runtimeenvdetails">')
@@ -1051,29 +1060,34 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                           % i['description'])
             lines.append('<tr><td>Needed&nbsp;software</td><td>%s</td></tr>'
                           % software_html)
-            lines.append('<tr><td>Environment&nbsp;variables</td><td>%s</td></tr>'
-                          % environment_html)
+            lines.append('<tr><td>Environment&nbsp;variables</td>'
+                         '<td>%s</td></tr>' % environment_html)
             if i['testprocedure']:
-                lines.append("<tr><td>Testprocedure</td><td valign='top'>%s</td></tr>"
-                             % i['testprocedure'])
+                lines.append("<tr><td>Testprocedure</td>"
+                             "<td style='vertical-align:top;'>%s</td></tr>" % \
+                             i['testprocedure'])
             if i['verifystdout']:
-                lines.append("<tr><td>Verifystdout</td><td valign='top'>%s</td></tr>"
+                lines.append("<tr><td>Verifystdout</td>"
+                             "<td style='vertical-align:top;'>%s</td></tr>"
                              % i['verifystdout'])
             if i['verifystderr']:
-                lines.append("<tr><td>Verifystderr</td><td valign='top'>%s</td></tr>"
+                lines.append("<tr><td>Verifystderr</td>"
+                             "<td style='vertical-align:top;'>%s</td></tr>"
                              % i['verifystderr'])
             if i['verifystatus']:
-                lines.append("<tr><td>Verifystatus</td><td valign='top'>%s</td></tr>"
+                lines.append("<tr><td>Verifystatus</td>"
+                             "<td style='vertical-align:top;'>%s</td></tr>"
                              % i['verifystatus'])
             lines.append('<tr><td>Created</td><td>%s</td></tr>'
-                          % i['created'])
+                         % i['created'])
             lines.append('<tr><td>Creator</td><td>%s</td></tr>'
-                          % i['creator'])
+                         % i['creator'])
             lines.append('<tr><td>Job&nbsp;count</td><td>%s</td></tr>'
-                          % i['job_count'])
-            view_providers = [{'text': name,
-                               'destination': 'viewres.py?unique_resource_name=%s'
-                               % name} for name in i['providers']]
+                         % i['job_count'])
+            view_providers = [
+                {'text': name,
+                 'destination': 'viewres.py?unique_resource_name=%s'
+                 % name} for name in i['providers']]
             provider_links = [html_link(res) for res in view_providers]
             lines.append('<tr><td>Resources</td><td>%s</td></tr>'
                           % ', '.join(provider_links))
@@ -1084,7 +1098,8 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             if not configuration.site_permanent_freeze:
                 delcol_html = '<th class="icon"><!-- Owner --></th>'
             
-            lines.append('''<table class="frozenarchives columnsort" id="frozenarchivetable">
+            lines.append('''
+<table class="frozenarchives columnsort" id="frozenarchivetable">
 <thead class="title">
     <tr>
         <th>ID</th>
@@ -1137,9 +1152,12 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             frozenfile_html += '</tbody></table>'
             lines.append(frozenfile_html)
             lines.append('<table class="frozenarchivedetails">')
-            lines.append('<tr><td class="title">ID</td><td>%s</td></tr>' % i['id'])
-            lines.append('<tr><td class="title">Name</td><td>%s</td></tr>' % i['name'])
-            lines.append('<tr><td class="title">Description</td><td class="border">%s</td></tr>'
+            lines.append('<tr><td class="title">ID</td><td>%s</td></tr>' % \
+                         i['id'])
+            lines.append('<tr><td class="title">Name</td><td>%s</td></tr>' % \
+                         i['name'])
+            lines.append('<tr><td class="title">Description</td>'
+                         '<td class="border">%s</td></tr>'
                           % i['description'].replace('\n', '<br />'))
             lines.append('<tr><td class="title">Creator</td><td>%s</td></tr>'
                           % i['creator'])
@@ -1157,6 +1175,10 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
     <div class="toolbar">        
       <div class="pager" id="pager">
       <form style="display: inline;" action="">
+'''
+            if i.get('form_prepend', False):
+                toolbar += '%(form_prepend)s' % i
+            toolbar += '''            
         <img class="first" alt="first" src="/images/icons/arrow_left.png"/>
         <img class="prev" alt="prev" src="/images/icons/arrow_left.png"/>
         <input type="text" class="pagedisplay" size=15 />
@@ -1172,6 +1194,10 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                            % (selected, value, value, '%(entry_name)s')
             toolbar += '''
         </select>
+'''
+            if i.get('form_append', False):
+                toolbar += '%(form_append)s' % i
+            toolbar += '''
       </form>
       </div>
     </div>
@@ -1180,11 +1206,11 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             lines.append(toolbar % {'entry_name': i['entry_name']})
         elif i['object_type'] == 'resource_list':
             if len(i['resources']) > 0:
-                res_fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK',
-                              'ARCHITECTURE']
+                res_fields = ['PUBLICNAME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY',
+                              'DISK', 'ARCHITECTURE']
                 resources = i['resources']
-                lines.append("<table class='resources columnsort' id='resourcetable'>")
                 lines.append('''
+<table class="resources columnsort" id="resourcetable">
 <thead class="title">
 <tr>
   <th>Resource ID</th>
@@ -1207,8 +1233,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                     res_type = 'real'
                     if obj.get('SANDBOX', False):
                         res_type = 'sandbox'
-                    lines.append('<td class="%sres" title="%s resource">%s</td>' % \
-                                 (res_type, res_type, obj['name']))
+                    lines.append(
+                        '<td class="%sres" title="%s resource">%s</td>' % \
+                        (res_type, res_type, obj['name']))
                     lines.append('<td>')
                     # view or admin link depending on ownership
                     if obj.has_key('resdetailslink'):
@@ -1237,8 +1264,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
         elif i['object_type'] == 'resource_info':
             resource_html = ''
             resource_html += '<h3>%s</h3>' % i['unique_resource_name']
-            resource_html += \
-                          '<table class="resource" frame=hsides rules=none cellpadding=5>'
+            resource_html += '<table class="resource">'
             resource_html += '<tr><td colspan=2><h3>General</h3></td></tr>'
             for (key, val) in i['fields']:
                 resource_html += \
@@ -1266,11 +1292,11 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 notify_headers = ''
                 for proto in configuration.notify_protocols:
                     user_fields.append('send%slink' % proto)
-                    notify_headers += '  <th class="centertext">%s</th>' % proto
+                    notify_headers += '  <th class="centertext">%s</th>' % \
+                                      proto
                 users = i['users']
-                lines.append("<table class='users columnsort' id='usertable'>")
                 lines.append('''
-<thead class="title">
+<table class="users columnsort" id="usertable"><thead class="title">
 <tr>
   <th>User ID</th>
   <th class="icon"><!-- View --></th>
@@ -1303,8 +1329,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
         elif i['object_type'] == 'user_info':
             user_html = ''
             user_html += '<h3>%s</h3>' % i['user_id']
-            user_html += \
-                          '<table class="user" frame=hsides rules=none cellpadding=5>'
+            user_html += '<table class="user">'
             for (key, val) in i['fields']:
                 user_html += \
                           '<tr><td>%s</td><td>%s</td></tr>' % \
@@ -1318,8 +1343,8 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 lines.append('<p class="status_message">%s</p>' % i['status'])
             if len(i['threads']) > 0:
                 threads = i['threads']
-                lines.append("<table class='forum_threads columnsort' id='forumtable'>")
                 lines.append('''
+<table class="forum_threads columnsort" id="forumtable">
 <thead class="title">
 <tr>
   <th>Last Update</th>
@@ -1369,9 +1394,11 @@ Search threads</a>
 <form method="post" action="?">
 <input type="hidden" name="action" value="search"/>
 <input type="hidden" name="vgrid_name" value="%s"/>
-<p>Subject: <input id="search_form_main" name="msg_subject" maxlength="%s"
+<p>Subject:
+<input id="search_form_main" name="msg_subject" type="text" maxlength="%s"
 size="80" value=""/></p>
-<p class="hidden_form">Body: <input name="msg_body" maxlength="%s" size="80" value=""/></p>
+<p class="hidden_form">Body:
+<input name="msg_body" type="text" maxlength="%s" size="80" value=""/></p>
 <p>
 <input class="submit_button" type="submit" value="Search threads"/>
 <input class="submit_button" type="submit" value="Cancel"
@@ -1392,8 +1419,8 @@ Start a new thread</a>
 <form method="post" action="?">
 <input type="hidden" name="action" value="new_thread"/>
 <input type="hidden" name="vgrid_name" value="%s"/>
-<p>Subject: <input id="new_form_main" name="msg_subject" maxlength="%s"
-size="80"/>
+<p>Subject: <input id="new_form_main" type="text" name="msg_subject"
+maxlength="%s" size="80"/>
 </p>
 <p><textarea name="msg_body" rows="10" cols="80"></textarea></p>
 <p>
@@ -1414,7 +1441,8 @@ onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
 <form method="post" action="?">
 <input type="hidden" name="action" value="toggle_subscribe"/>
 <input type="hidden" name="vgrid_name" value="%s"/>
-<input class="submit_button" type="submit" value="Subscribe/unsubscribe to forum updates"/>
+<input class="submit_button" type="submit"
+  value="Subscribe/unsubscribe to forum updates"/>
 </form>
 </div>
 ''' % i['vgrid_name'])
@@ -1424,8 +1452,8 @@ onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
                 lines.append('<p class="status_message">%s</p>' % i['status'])
             if len(i['messages']) > 0:
                 lines.append("<h2>%s</h2>" % i['messages'][0]['subject'])
-                lines.append("<table class='forum_messages columnsort' id='forumtable'>")
                 lines.append('''
+<table class="forum_messages columnsort" id="forumtable">
 <thead class="title">
 <tr>
   <th>Date</th>
@@ -1485,7 +1513,8 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
 <input type="hidden" name="action" value="toggle_subscribe"/>
 <input type="hidden" name="vgrid_name" value="%s"/>
 <input type="hidden" name="thread" value="%s"/>
-<input class="submit_button" type="submit" value="Subscribe/unsubscribe to thread updates"/>
+<input class="submit_button" type="submit"
+  value="Subscribe/unsubscribe to thread updates"/>
 </form>
 </div>
 ''' % (i['vgrid_name'], i['thread']))
@@ -1510,11 +1539,16 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                     'forum': ['privateforumlink'],
                     'monitor': ['privatemonitorlink'],
                     }
-                lines.append("<table class='vgrids columnsort' id='vgridtable'>")
-                # make vgrid component links optional, as it is in the configuration
+                lines.append("""
+<table class='vgrids columnsort' id='vgridtable'>
+""")
+                # make vgrid component links optional, like it is in the
+                # configuration
                 for key in configuration.site_vgrid_links:
                     titles.append('''
-  <th class="centertext %(class)s" title="%(hover)s" colspan="1">%(title)s</th>
+  <th class="centertext %(class)s" title="%(hover)s" colspan="1">
+      %(title)s
+  </th>
 ''' % vgrid_items[key])
 
                 lines.append('''
@@ -1587,7 +1621,8 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
 
     if status_line:
         status_line = status_line.replace('TIMING_INFO', timing_info)
-        lines.append(get_cgi_html_footer(configuration, status_line, True, include_widgets, user_widgets))
+        lines.append(get_cgi_html_footer(configuration, status_line, True,
+                                         include_widgets, user_widgets))
     return '\n'.join(lines)
 
 
@@ -1682,6 +1717,7 @@ def json_format(configuration, ret_val, ret_msg, out_obj):
         return None
 
 def file_format(configuration, ret_val, ret_msg, out_obj):
+    """Dump raw file contents"""
     
     file_content = ''
     
@@ -1793,9 +1829,12 @@ def format_timedelta(timedelta):
         seconds_str = "0%s" % (seconds_str)
 
     if (years > 0):
-        result = "%s years, %s days, %s:%s:%s" % (str(years), str(days), hours_str, minutes_str, seconds_str)
+        result = "%s years, %s days, %s:%s:%s" % (str(years), str(days),
+                                                  hours_str, minutes_str,
+                                                  seconds_str)
     elif (days > 0):
-        result = "%s days, %s:%s:%s" % (str(days), hours_str, minutes_str, seconds_str)
+        result = "%s days, %s:%s:%s" % (str(days), hours_str, minutes_str,
+                                        seconds_str)
     else:
         result = "%s:%s:%s" % (hours_str, minutes_str, seconds_str)
         

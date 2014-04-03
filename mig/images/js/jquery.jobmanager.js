@@ -418,6 +418,14 @@ if (jQuery) (function($){
 
     $("#append").click();
 
+    /* refresh when pressing enter in the filter input box */
+    $("input.filterid").keypress(function (e) {
+        if (e.which == 13) {
+            $("#append").click();
+            return false;
+        }
+    });
+
     $("#checkAll").bind("click", function(event) {
         event.stopPropagation();
 

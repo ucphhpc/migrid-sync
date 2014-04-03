@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ls - emulate ls command
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -383,10 +383,10 @@ def main(client_id, user_arguments_dict):
         """
 <div class='files'>
 <table class='files'>
-<tr class=title><td class=centertext colspan=2>
+<tr class=title><td class=centertext>
 Working directory:
 </td></tr>
-<tr><td class=centertext>
+<tr><td class='centertext'>
 """
     output_objects.append({'object_type': 'html_form', 'text'
                           : location_pre_html})
@@ -415,6 +415,7 @@ Working directory:
     more_html = \
               """
 <div class='files'>
+<form method='post' name='fileform' onSubmit='return selectedFilesAction();'>
 <table class='files'>
 <tr class=title><td class=centertext colspan=2>
 Advanced file actions
@@ -424,7 +425,6 @@ Action on paths selected below
 (please hold mouse cursor over button for a description):
 </td>
 <td class=centertext>
-<form method='post' name='fileform' onSubmit='return selectedFilesAction();'>
 <input type='hidden' name='output_format' value='html' />
 <input type='hidden' name='flags' value='v' />
 <input type='submit' title='Show concatenated contents (cat)' onClick='document.pressed=this.value' value='cat' />
@@ -439,6 +439,7 @@ Action on paths selected below
 <input type='submit' onClick='document.pressed=this.value' value='submit' title='Submit file (submit)' />
 </td></tr>
 </table>    
+</form>
 </div>
 """
 
@@ -498,17 +499,17 @@ Action on paths selected below
     output_objects.append({'object_type': 'html_form', 'text'
                            : """
     <div class='files'>
+    <form method='post' action='ls.py'>
     <table class='files'>
     <tr class=title><td class=centertext>
     Filter paths (wildcards like * and ? are allowed)
-    <form method='post' action='ls.py'>
     <input type='hidden' name='output_format' value='html' />
     <input type='hidden' name='flags' value='%s' />
     <input type='text' name='path' value='' />
     <input type='submit' value='Filter' />
-    </form>
     </td></tr>
     </table>    
+    </form>
     </div>
     """
                            % flags})
@@ -520,7 +521,7 @@ Action on paths selected below
     <tr class=title><td class=centertext colspan=4>
     File view options
     </td></tr>
-    <tr><td><br /></td></tr>
+    <tr><td colspan=4><br /></td></tr>
     <tr class=title><td>Parameter</td><td>Setting</td><td>Enable</td><td>Disable</td></tr>
     <tr><td>Long format</td><td>
     %s</td><td>"""\
@@ -683,6 +684,7 @@ Name of new directory to be created in current directory (%(dest_dir)s)
 </td></tr>
 </table>
 <br />
+<form enctype='multipart/form-data' action='textarea.py' method='post'>
 <table class='files'>
 <tr class=title><td class=centertext colspan=4>
 Upload file
@@ -691,7 +693,6 @@ Upload file
 Upload file to current directory (%(dest_dir)s)
 </td></tr>
 <tr><td colspan=2>
-<form enctype='multipart/form-data' action='textarea.py' method='post'>
 Extract package files (.zip, .tar.gz, .tar.bz2)
 </td><td colspan=2>
 <input type=checkbox name='extract_0' />
@@ -704,17 +705,18 @@ Submit mRSL files (also .mRSL files included in packages)
 <tr><td>    
 File to upload
 </td><td class=righttext colspan=3>
-<input name='fileupload_0_0_0' type='file' size='50'/>
+<input name='fileupload_0_0_0' type='file'/>
 </td></tr>
 <tr><td>
 Optional remote filename (extra useful in windows)
 </td><td class=righttext colspan=3>
 <input name='default_remotefilename_0' type='hidden' value='%(dest_dir)s'/>
-<input name='remotefilename_0' type='input' size='50' value='%(dest_dir)s'/>
+<input name='remotefilename_0' type='text' size='50' value='%(dest_dir)s'/>
 <input type='submit' value='Upload' name='sendfile'/>
-</form>
 </td></tr>
 </table>
+</form>
+<form enctype='multipart/form-data' action='upload.py' method='post'>
 <table class='files'>
 <tr class=title><td class=centertext colspan=4>
 Upload file with progress
@@ -722,22 +724,19 @@ Upload file with progress
 <tr><td colspan=4>
 Upload file to current directory (%(dest_dir)s)
 </td></tr>
-<tr><td colspan=2>
-<form enctype='multipart/form-data' action='upload.py' method='post'>
-</td></tr>
 <tr><td>
 File to upload
 </td><td class=righttext colspan=3>
-<input name='fileupload' type='file' size='50'/>
+<input name='fileupload' type='file'/>
 </td></tr>
 <tr><td>
 Optional remote filename (extra useful in windows)
 </td><td class=righttext colspan=3>
-<input name='path' type='input' size='50' value='%(dest_dir)s'/>
+<input name='path' type='text' size='50' value='%(dest_dir)s'/>
 <input type='submit' value='Upload' name='sendfile'/>
-</form>
 </td></tr>
 </table>
+</form>
     """
                                % {'dest_dir': relative_dir + os.sep}})
 

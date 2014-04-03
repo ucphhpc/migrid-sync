@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # liveio - communication with running jobs
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -118,9 +118,9 @@ directory on the resource and your MiG home respectively.
 <table class="liveio">
 <tr>
 <td>
+<form method="post" action="liveio.py">
 <table class="liveio">
 <tr><td class=centertext>
-<form method="post" action="liveio.py" id="miginput">
 </td></tr>
 <tr><td>
 Action:<br />
@@ -143,12 +143,12 @@ Destination path:<br />
 </td></tr>
 <tr><td>
 <input type="submit" value="Send request" />
-</form>
 </td></tr>
 </table>
+</form>
 </td>
 <td>
-<script language="javascript">
+<script type="text/javascript">
 fields = 1;
 max_fields = 64;
 function addInput() {

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resedit - Resource editor back end
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -235,7 +235,11 @@ description, you can likely just leave the field alone.''' % configuration.short
                     selected = ''
                     if i < len(res_value) and res_value[i] == name:
                         selected = 'selected'
-                    value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
+                    display = "%s" % name
+                    if display == '':
+                        display = ' '
+                    value_select += """<option %s value='%s'>%s</option>\n""" \
+                                    % (selected, name, display)
                 value_select += """</select><br />\n"""    
             output_objects.append({'object_type': 'html_form', 'text'
                                    : """<br />
@@ -249,7 +253,8 @@ description, you can likely just leave the field alone.''' % configuration.short
     (title, field) = ('Runtime Environments', 'RUNTIMEENVIRONMENT')
     re_list = conf[field]
     show = re_list + [('', []) for i in range(extra_selects)]
-    re_select = "<input type='hidden' name='runtime_env_fields' value='%s' />\n" % len(show)
+    re_select = "<input type='hidden' name='runtime_env_fields' value='%s'/>\n" \
+                % len(show)
     i = 0
     for active in show:
         re_select += "<select name='runtimeenvironment%d'>\n" % i
@@ -257,7 +262,11 @@ description, you can likely just leave the field alone.''' % configuration.short
             selected = ''
             if active[0] == name:
                 selected = 'selected'
-            re_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
+            display = "%s" % name
+            if display == '':
+                display = ' '
+            re_select += """<option %s value='%s'>%s</option>\n""" % \
+                         (selected, name, display)
         re_select += """</select><br />\n"""
         values = '\n'.join(['%s=%s' % pair for pair in active[1]])
         re_select += "<textarea cols='%d' rows='%d' name='re_values%d'>%s</textarea><br />\n" % \
@@ -331,7 +340,11 @@ each selected runtimeenvironment.<br />
                     selected = ''
                     if i < len(exe_value) and exe_value[i] == name:
                         selected = 'selected'
-                    value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
+                    display = "%s" % name
+                    if display == '':
+                        display = ' '
+                    value_select += """<option %s value='%s'>%s</option>\n""" \
+                                    % (selected, name, display)
                 value_select += """</select><br />\n"""    
             output_objects.append({'object_type': 'html_form', 'text'
                                    : """<br />
@@ -398,7 +411,11 @@ each selected runtimeenvironment.<br />
                     selected = ''
                     if i < len(store_value) and store_value[i] == name:
                         selected = 'selected'
-                    value_select += """<option %s value='%s'>%s</option>\n""" % (selected, name, name)
+                    display = "%s" % name
+                    if display == '':
+                        display = ' '
+                    value_select += """<option %s value='%s'>%s</option>\n""" \
+                                    % (selected, name, display)
                 value_select += """</select><br />\n"""    
             output_objects.append({'object_type': 'html_form', 'text'
                                    : """<br />

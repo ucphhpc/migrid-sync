@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewuser - Display public details about a user
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -77,7 +77,7 @@ def build_useritem_object_from_user_dict(configuration, user_id, user_home,
             img_data = inline_image(os.path.join(user_home, img_path))
         else:
             img_data = img_path
-        img_html += '<img src="%s">' % img_data
+        img_html += '<img alt="portrait" src="%s">' % img_data
     img_html += '</div>'
     public_profile = user_dict[CONF].get('PUBLIC_PROFILE', [])
     if not public_profile:
