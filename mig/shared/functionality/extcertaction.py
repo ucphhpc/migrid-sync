@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extcertaction - handle external certificate sign up and send email to admins
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,6 +36,7 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.notification import send_email
+from shared.safeinput import html_escape
 from shared.serial import dumps
 from shared.useradm import db_name, distinguished_name_to_user, \
      create_user, fill_user
@@ -170,7 +171,8 @@ multiple "key=val" fields separated by "/".
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : '''Could not create the user account for you:
-Please report this problem to the grid administrators (%s).''' % admin_email})
+Please report this problem to the grid administrators (%s).''' % \
+                 html_escape(admin_email)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({'object_type': 'text', 'text'
@@ -191,7 +193,8 @@ Please use the navigation menu to the left to proceed using it.
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : """Request could not be sent to grid administrators. Please
-contact them manually on %s if this error persists.""" % admin_email})
+contact them manually on %s if this error persists.""" % \
+             html_escape(admin_email)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     logger.info('Wrote existing certificate sign up request to %s' % req_path)
@@ -253,7 +256,7 @@ Command to delete user again on %(site)s server:
              : """An error occured trying to send the email requesting the
 grid administrators to sign up with an existing certificate. Please email the
 grid administrators (%s) manually and include the session ID: %s"""
-             % (admin_email, tmp_id)})
+             % (html_escape(admin_email), tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append(
@@ -262,5 +265,5 @@ grid administrators (%s) manually and include the session ID: %s"""
 account with your existing certificate will be verified and handled as soon as
 possible, so please be patient. In case of inquiries about this request,
 please email the grid administrators (%s) and include the session ID: %s"""
-         % (configuration.short_title, admin_email, tmp_id)})
+         % (configuration.short_title, html_escape(admin_email), tmp_id)})
     return (output_objects, returnvalues.OK)

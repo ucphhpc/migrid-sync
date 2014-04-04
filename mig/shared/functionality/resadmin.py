@@ -98,7 +98,7 @@ def display_resource(
             'failed to find host identifier from unique resource name!')
         (hosturl, identifier) = (None, 0)
 
-    html += '<a name="%s"></a>' % resourcename
+    html += '<a id="%s"></a>' % resourcename
     html += '<h1>%s</h1>\n' % resourcename
     html += '<h3>Configuration</h3>'
     html += '''
@@ -110,10 +110,13 @@ or make any changes manually in the text box below.<br />
 Resource configuration docs
 </a>
 ''' % (hosturl, identifier)  
-    html += '<table class=resources>\n<tr><td class=centertext>'
+    html += ''
     html += '''
 <form method="post" action="updateresconfig.py">
-<textarea cols="100" rows="25" wrap="off" name="resconfig">'''
+<table class=resources>
+<tr>
+<td class=centertext>
+<textarea cols="100" rows="25" name="resconfig">'''
     for line in raw_conf:
         html += '%s\n' % line.strip()
     html += \
@@ -123,13 +126,16 @@ Resource configuration docs
 <input type="submit" value="Save" />
 ----------
 <input type="reset" value="Forget changes" />
-</form>
 '''\
          % resourcename
 
     html += '''
-</td></tr></table><p>
-<table class=resources><tr class=title><td colspan="5">Front End</td></tr>
+</td></tr>
+</table>
+</form>
+<p>
+<table class=resources>
+<tr class=title><td colspan="5">Front End</td></tr>
 '''
 
     if not frontend:
@@ -267,7 +273,6 @@ from the certificate.<br />
 <input type="hidden" name="unique_resource_name" value="%s" />
 <input type="hidden" name="output_format" value="html" />
 <input type="text" name="cert_id" size="72" />
-</td><td>
 <input type="submit" value=" Add " />
 </form>
 </td></tr></table><br />
@@ -314,10 +319,10 @@ from the certificate.<br />
         if not vgrid_name in allowed_vgrids:
             html += '<option value=%s>%s' % (vgrid_name, vgrid_name)
 
-    html += """</select></td>"""
-    html += '''<td>Message to owners:
+    html += """</select>"""
+    html += '''&nbsp; Message to owners:
 <input type="text" name="request_text" size=50 value="" />
-<input type="submit" value="send" /></td>
+<input type="submit" value="send" />
 '''
     html += '</form></tr></table><p>'
 
@@ -344,8 +349,8 @@ from the certificate.<br />
                 if re_dict['TESTPROCEDURE'] != []:
                     html += '<option value=%s>%s' % (env, env)
 
-    html += """</select></td>"""
-    html += '<td><input type="submit" name="submit" value="verify" /></td>'
+    html += """</select>"""
+    html += '<input type="submit" name="submit" value="verify" />'
     html += '</form></tr></table><p>'
 
     # create html to select and call script to display testprocedure history
@@ -370,8 +375,8 @@ resource with its current configuration.
                 if re_dict['TESTPROCEDURE'] != []:
                     html += '<option value=%s>%s' % (env, env)
 
-    html += """</select></td>"""
-    html += '<td><input type="submit" name="submit" value="Show" /></td>'
+    html += """</select>"""
+    html += '<input type="submit" name="submit" value="Show" />'
     html += '</form></tr></table><p>'
     return html
 

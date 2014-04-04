@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# addresowner - Add resource owner
+# addresowner - add resource owner
 # Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -54,8 +54,10 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id)
+        initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Add Resource Owner'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -128,17 +130,25 @@ def main(client_id, user_arguments_dict):
 <input type=hidden name=unique_resource_name value='%s' />
 <input type=hidden name=cert_id value='%s' />
 <input type=hidden name=protocol value='%s' />
-<table align='center'>
+<table>
 <tr>
-<td>Custom message to user</td><td><textarea name=request_text cols=72 rows=10>
+<td class='title'>Custom message to user</td>
+</tr>
+<tr>
+<td><textarea name=request_text cols=72 rows=10>
 We have granted you ownership access to our %s resource.
 You can access the resource administration page from the Resources page.
 
 Regards, the %s resource owners
 </textarea></td>
 </tr>
-<tr><td><input type='submit' value='Inform user' /></td><td></td></tr></table>
-</form>""" % (unique_resource_name, cert_id, any_protocol,
+<tr>
+<td><input type='submit' value='Inform user' /></td>
+</tr>
+</table>
+</form>
+<br />
+""" % (unique_resource_name, cert_id, any_protocol,
               unique_resource_name, unique_resource_name)})
     output_objects.append({'object_type': 'link', 'destination':
                            'resadmin.py?unique_resource_name=%s' % \

@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# addvgridmember - Add a VGrid member
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# addvgridmember - add vgrid member
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -51,8 +51,10 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id)
+        initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Add VGrid Member'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -221,17 +223,24 @@ directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
 <input type=hidden name=vgrid_name value='%s' />
 <input type=hidden name=cert_id value='%s' />
 <input type=hidden name=protocol value='%s' />
-<table align='center'>
+<table>
 <tr>
-<td>Custom message to user</td><td><textarea name=request_text cols=72 rows=10>
+<td class='title'>Custom message to user</td>
+</tr><tr>
+<td><textarea name=request_text cols=72 rows=10>
 We have granted you membership access to our %s VGrid.
 You can access the VGrid components from the VGrids page.
 
 Regards, the %s VGrid owners
 </textarea></td>
 </tr>
-<tr><td><input type='submit' value='Inform user' /></td><td></td></tr></table>
-</form>""" % (vgrid_name, cert_id, any_protocol, vgrid_name, vgrid_name)})
+<tr>
+<td><input type='submit' value='Inform user' /></td>
+</tr>
+</table>
+</form>
+<br />
+""" % (vgrid_name, cert_id, any_protocol, vgrid_name, vgrid_name)})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

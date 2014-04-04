@@ -199,6 +199,9 @@ table.monitor {
   font-size: 10px;
 }
 table.monitorstats {}
+table.monitorstats td {
+  vertical-align: top;
+}
 table.monitorjobs {
   border: 0px solid #000;
 }

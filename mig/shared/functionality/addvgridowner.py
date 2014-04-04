@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# addvgridowner - [insert a few words of module description on this line]
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# addvgridowner - add vgrid owner
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -87,8 +87,10 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id)
+        initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Add VGrid Owner'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -340,17 +342,24 @@ directory exists with the same name!'''})
 <input type=hidden name=vgrid_name value='%s' />
 <input type=hidden name=cert_id value='%s' />
 <input type=hidden name=protocol value='%s' />
-<table align='center'>
+<table>
 <tr>
-<td>Custom message to user</td><td><textarea name=request_text cols=72 rows=10>
+<td class='title'>Custom message to user</td>
+</tr><tr>
+<td><textarea name=request_text cols=72 rows=10>
 We have granted you ownership access to our %s VGrid.
 You can access the VGrid administration page from the VGrids page.
 
 Regards, the %s VGrid owners
 </textarea></td>
 </tr>
-<tr><td><input type='submit' value='Inform user' /></td><td></td></tr></table>
-</form>""" % (vgrid_name, cert_id, any_protocol, vgrid_name, vgrid_name)})
+<tr>
+<td><input type='submit' value='Inform user' /></td>
+</tr>
+</table>
+</form>
+<br />
+""" % (vgrid_name, cert_id, any_protocol, vgrid_name, vgrid_name)})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

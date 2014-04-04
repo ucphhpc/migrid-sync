@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# createvgrid - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# createvgrid - create a vgrid with all the collaboration components
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -908,10 +908,12 @@ for server side scripting with Python, ASP or PHP for security reasons.
                        pub_readme, logger)
         pub_entry_page = os.path.join(public_base_dir, 'index.html')
         if not os.path.exists(pub_entry_page):
-            write_file("""<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01
-Transitional//EN'>
+            write_file("""<!DOCTYPE html>
 <html>
-<head><title>Public entry page not created yet..</title></head>
+<head>
+<meta http-equiv='Content-Type' content='text/html;charset=utf-8'/>
+<title>Public entry page not created yet..</title>
+</head>
 <body>
 No public entrypage created yet! (If you are owner of the vgrid, overwrite
 public_base/%s/index.html to place it here)
@@ -946,17 +948,15 @@ for server side scripting with Python, ASP or PHP for security reasons.
                        priv_readme, logger)
         priv_entry_page = os.path.join(private_base_dir, 'index.html')
         if not os.path.exists(priv_entry_page):
-            write_file("""<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01
-Transitional//EN'>
+            write_file("""<!DOCTYPE html>
 <html>
-<head><title>Private entry page not created yet..</title></head>
+<head>
+<meta http-equiv='Content-Type' content='text/html;charset=utf-8'/>
+<title>Private entry page not created yet..</title>
+</head>
 <body>
 No private entrypage created yet! (If you are owner of the vgrid, overwrite
 private_base/%s/index.html to place it here)<br>
-<p><a href='http://validator.w3.org/check?uri=referer'>
-<img src='http://www.w3.org/Icons/valid-html401' alt='Valid HTML 4.01
-Transitional' height='31' width='88' /></a>
-</p>
 </body>
 </html>""" % vgrid_name, priv_entry_page, logger)
     except Exception, exc:

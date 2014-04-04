@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reseditaction - Resource editor action handler back end
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,6 +42,7 @@ from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_resource_create_request_mail
 from shared.resource import prepare_conf, write_resource_config, \
      create_resource, update_resource, resource_owners
+from shared.safeinput import html_escape
 
 
 def signature():
@@ -135,7 +136,7 @@ Please manually contact the %s server administrator(s) (%s)
 and provide this information''' % (tmp_id, msg, 
                                    configuration.short_title, 
                                    configuration.short_title,
-                                   configuration.admin_email )
+                                   html_escape(configuration.admin_email))
                                })
             return False
         output += """Your creation request of the resource: <b>%s</b>
@@ -163,7 +164,7 @@ The public key you must add:<br />
     else:
         public_key_info = '''<br />
 Please request an SSH public key from the %s administrator(s) (%s)<br />
-<br />''' % (configuration.short_title, configuration.admin_email)
+<br />''' % (configuration.short_title, html_escape(configuration.admin_email))
 
     output += """
 Please make sure the %s server can SSH to your resource without a passphrase.

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # autocreate - create user from signed (grid.dk) confusa certificate
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,11 +39,12 @@ import time
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.init import initialize_main_variables
+from shared.fileio import write_file
 from shared.functional import validate_input, REJECT_UNSET
+from shared.init import initialize_main_variables
+from shared.safeinput import html_escape
 from shared.useradm import db_name, distinguished_name_to_user, \
      create_user, fill_user
-from shared.fileio import write_file
 try:
     import shared.arcwrapper as arc
 except Exception, exc:
@@ -219,7 +220,8 @@ multiple "key=val" fields separated by "/".
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : '''Could not create the user account for you:
-Please report this problem to the grid administrators (%s).''' % admin_email})
+Please report this problem to the grid administrators (%s).''' % \
+                 html_escape(admin_email)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({'object_type': 'text', 'text'

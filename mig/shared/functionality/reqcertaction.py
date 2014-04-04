@@ -38,6 +38,7 @@ from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_email
+from shared.safeinput import html_escape
 from shared.serial import dumps
 from shared.useradm import fill_distinguished_name
 
@@ -197,7 +198,7 @@ resources anyway.
                       % (req_path, err))
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Request could not be sent to grid administrators. Please contact them manually on %s if this error persists.'
-                               % admin_email})
+                               % html_escape(admin_email)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     logger.info('Wrote certificate request to %s' % req_path)
@@ -288,7 +289,7 @@ Command to delete user again on %(site)s server:
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'An error occured trying to send the email requesting the grid administrators to create a new certificate. Please email them (%s) manually and include the session ID: %s'
-                               % (admin_email, tmp_id)})
+                               % (html_escape(admin_email), tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
