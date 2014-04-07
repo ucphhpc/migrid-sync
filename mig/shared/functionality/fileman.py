@@ -35,14 +35,14 @@ from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert
 from shared.functionality.editor import advanced_editor_deps, lock_info, \
      edit_file
-from shared.init import initialize_main_variables, find_entry
+from shared.init import initialize_main_variables, find_entry, extract_menu
 
-def html_tmpl(configuration):
+def html_tmpl(configuration, title_entry):
     """HTML page base: some upload and menu entries depend on configuration"""
 
     edit_includes = ['switcher']
     fill_entries = {}
-    if 'submitjob' in configuration.site_default_menu:
+    if 'submitjob' in extract_menu(configuration, title_entry):
         fill_entries["menu_submit_entry"] = '''
         <li class="submit separator">
             <a href="#submit">submit</a>
@@ -483,7 +483,7 @@ def main(client_id, user_arguments_dict):
     
     output_objects.append({'object_type': 'header', 'text': 'File Manager' })
     output_objects.append({'object_type': 'html_form', 'text':
-                           html_tmpl(configuration)})
+                           html_tmpl(configuration, title_entry)})
 
     if len(all_paths) > 1:
         output_objects.append({'object_type': 'sectionheader', 'text':

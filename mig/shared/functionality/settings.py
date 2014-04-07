@@ -32,10 +32,11 @@ from shared.base import client_alias, client_id_dir
 from shared.defaults import any_vgrid, default_mrsl_filename, \
      default_css_filename, profile_img_max_kb, profile_img_extensions
 from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables, find_entry
+from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
      load_ssh, load_davs, load_ftps
 from shared.profilekeywords import get_profile_specs
+from shared.safeinput import html_escape
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
 from shared.useradm import get_default_mrsl, get_default_css
@@ -314,10 +315,10 @@ def main(client_id, user_arguments_dict):
     title_entry['javascript'] = javascript
 
     valid_topics = ['general', 'style']
-    if 'submitjob' in configuration.site_default_menu:
+    active_menu = extract_menu(configuration, title_entry)
+    if 'submitjob' in active_menu:
         valid_topics.append('job')
-    if 'people' in configuration.site_user_menu + \
-           configuration.site_default_menu:
+    if 'people' in active_menu:
         valid_topics.append('profile')
     if configuration.site_script_deps:
         valid_topics.append('widgets')
@@ -731,7 +732,7 @@ If you want to let other users know more about you can add your own text here. I
             </td></tr>
             <tr><td>
             """\
-                 % (keyword, val['Description'])
+                 % (keyword, html_escape(val['Description']))
             if val['Type'] == 'multiplestrings':
                 try:
 

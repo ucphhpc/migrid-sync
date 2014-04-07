@@ -108,4 +108,14 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
 
     return (configuration, logger, output_objects, op_name)
 
-
+def extract_menu(configuration, title_entry):
+    """Extract the list of active menu items from title_entry. Useful to
+    detect if a particular feature should be enabled for this particular set
+    of default and user configured menu items.
+    """
+    if title_entry:
+        menu_items = title_entry['base_menu'] + \
+                     title_entry.get('user_menu', [])
+    else:
+        menu_items = configuration.site_default_menu
+    return menu_items
