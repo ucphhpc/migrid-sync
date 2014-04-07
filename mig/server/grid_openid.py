@@ -53,7 +53,7 @@
 
 
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
-from SocketServer import ForkingMixIn
+from SocketServer import ThreadingMixIn
 from urlparse import urlparse
 
 import base64
@@ -95,7 +95,7 @@ from openid.store.filestore import FileOpenIDStore
 from openid.consumer import discover
 
 
-class OpenIDHTTPServer(ForkingMixIn, HTTPServer):
+class OpenIDHTTPServer(ThreadingMixIn, HTTPServer):
     """
     http server that contains a reference to an OpenID Server and
     knows its base URL.
@@ -217,7 +217,13 @@ class ServerHandler(BaseHTTPRequestHandler):
         # right?
         request = self.server.lastCheckIDRequest.get(self.user)
 
-        print "handleAllow with last request %s" % request
+        print "handleAllow with last request %s , query %s" % (request, query)
+
+        # Old IE 8 does not send contents of submit buttons thus only the
+        # fields login_as and password are set with the allow requests. We
+        # manually add a yes here if so to avoid the else case.
+        if not 'yes' in query and not 'no' in query:
+            query['yes'] = 'yes'
         
         if 'yes' in query:
             if 'login_as' in query:
