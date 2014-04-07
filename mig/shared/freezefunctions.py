@@ -125,7 +125,7 @@ def get_frozen_files(freeze_id, configuration):
     files = []
     for (root, _, filenames) in os.walk(frozen_dir):
         for name in filenames:
-            if name.startswith('.') or name in [freeze_meta_filename]:
+            if name in [freeze_meta_filename]:
                 continue
             frozen_path = os.path.join(root, name)
             rel_path = os.path.join(root.replace(frozen_dir, '', 1), name)

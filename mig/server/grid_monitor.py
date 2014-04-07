@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_monitor - Monitor page generator
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -126,7 +126,7 @@ $(document).ready(function() {
         '''
 <!-- end of raw header: this line is used by showvgridmonitor -->
 <h1>Statistics/monitor for the %(vgrid_name)s VGrid</h1>
-<div id="generatornote" class="smallcontent">
+<div class="generatornote smallcontent">
 This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 </div>
 '''\
@@ -262,7 +262,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
         }
 
     html += \
-        """<h2>Job Stats</h2><table class=monitorstats><tr><td valign=top>
+        """<h2>Job Stats</h2><table class=monitorstats><tr><td>
 <table class=monitorjobs><tr class=title><td>Job State</td><td>Number of jobs</td></tr>
 <tr><td>Parse</td><td>%(parse_count)s</td></tr>
 <tr><td>Queued</td><td>%(queued_count)s</td></tr>
@@ -275,7 +275,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 <tr><td>Finished</td><td>%(finished_count)s</td></tr>
 <tr><td>Total</td><td>%(number_of_jobs)s</td></tr>
 </table>
-</td><td valign=top>
+</td><td>
 <table class=monitorresreq>
 <tr class=title><td>Requirement</td><td>Requested</td><td>Done</td></tr>
 <tr><td>Cpucount</td><td>%(cpucount_requested)s</td><td>%(cpucount_done)s</td></tr>
@@ -286,7 +286,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 <tr><td>Runtime Envs</td><td>%(runtimeenv_requested)s</td><td>%(runtimeenv_done)s</td></tr>
 <tr><td>Used Walltime</td><td colspan='2'>%(used_walltime)s</td></tr>
 </table><br />
-</td><td valign=top>
+</td><td>
 <div class=monitorruntimeenvdetails>
 <table class=monitorruntimeenvdone>
 <tr class=title><td>Runtime Envs Done</td><td></td></tr>
@@ -616,7 +616,7 @@ Listing the last request from each resource<br />
 <table class="monitor columnsort">
 <thead class="title">
 <tr>
-  <th width="1"><!-- Status icon --></th>
+  <th class="icon"><!-- Status icon --></th>
   <th>Resource ID, unit</th>
   <th>Last seen</th>
   <th>VGrid</th>
@@ -644,7 +644,7 @@ Listing the last check for each resource<br />
 <table class="monitor columnsort">
 <thead class="title">
 <tr>
-  <th width="1"><!-- Status icon --></th>
+  <th class="icon"><!-- Status icon --></th>
   <th>Resource ID, unit</th>
   <th>Last Status</th>
   <th>VGrid</th>

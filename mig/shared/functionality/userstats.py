@@ -103,7 +103,7 @@ def main(client_id, user_arguments_dict):
         if os.environ.has_key('SSL_CLIENT_V_END'):
             expire = os.environ['SSL_CLIENT_V_END']
         else:
-            expire = "%s" % datetime.datetime.now()
+            expire = "unknown"
         total_cert = {'client_id': client_id, 'expire': expire}
         # Server may not want to reveal too much, but we want to provide
         # easy access to all safe SSL_* environment fields. This list of
@@ -117,7 +117,7 @@ def main(client_id, user_arguments_dict):
         for field in os.environ:
             for expose in expose_env_prefixes:
                 if field.startswith(expose):
-                    total_cert[field] = os.environ[field]
+                    total_cert[field] = os.environ.get(field, "unknown")
                 
         user_stats['certificate'] = total_cert
 

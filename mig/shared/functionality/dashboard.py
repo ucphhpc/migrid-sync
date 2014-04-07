@@ -103,10 +103,13 @@ $(document).ready(function() {
                   for(i=0; i<jsonRes.length; i++) {
                       if (jsonRes[i].object_type == "user_stats") {    
                           certificate = jsonRes[i].certificate;
-                          var expire_date = new Date(certificate.expire);
                           //alert("inspect certificate stats result: " + certificate);
                           $("#cert_stats").removeClass("spinner").css("padding-left", "0px");
                           $("#cert_stats").empty();
+                          if (certificate.expire == "unknown") {
+                              break;
+                          }
+                          var expire_date = new Date(certificate.expire);
                           $("#cert_stats").append("Your user certificate expires on " +
                           expire_date + ".");
                           // Use date from time diff in ms to avoid calendar mangling
@@ -210,7 +213,7 @@ $(document).ready(function() {
     dashboard_info = """
 This is your private entry page or your dashboard where you can get a
 quick status overview and find pointers to help and documentation.
-When you are logged in with your user certificate, as you are now,
+When you are logged in with your user credentials/certificate, as you are now,
 you can navigate your pages using the menu on the left.
 """ % os.environ
     output_objects.append({'object_type': 'text', 'text': dashboard_info})

@@ -53,6 +53,7 @@
 
 
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+from SocketServer import ForkingMixIn
 from urlparse import urlparse
 
 import base64
@@ -94,10 +95,12 @@ from openid.store.filestore import FileOpenIDStore
 from openid.consumer import discover
 
 
-class OpenIDHTTPServer(HTTPServer):
+class OpenIDHTTPServer(ForkingMixIn, HTTPServer):
     """
     http server that contains a reference to an OpenID Server and
     knows its base URL.
+    Extended to fork on requests to avoid one slow or broken login stalling
+    the rest.
     """
     def __init__(self, *args, **kwargs):
         HTTPServer.__init__(self, *args, **kwargs)
@@ -108,7 +111,7 @@ class OpenIDHTTPServer(HTTPServer):
         else:
             self.base_url = 'http://%s/' % (self.server_name,)
 
-        # We serve from sub dir to easy targeted proxying
+        # We serve from sub dir to ease targeted proxying
         self.server_base = 'openid'
         self.base_url += "%s/" % self.server_base
 
