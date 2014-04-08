@@ -37,6 +37,16 @@ from fileio import md5sum_file, write_file, copy_file, copy_rec, move_file, \
      move_rec, remove_rec
 from shared.serial import load, dump
 
+freeze_flavors = {
+    'freeze': {'adminfreeze_title': 'Freeze Archive',
+               'createfreeze_title': 'Create Frozen Archive',
+               'showfreeze_title': 'Show Frozen Archive Details',
+               'deletefreeze_title': 'Delete Frozen Archive'},
+    'phd': {'adminfreeze_title': 'PhD Thesis Archival',
+            'createfreeze_title': 'Create Thesis Archive',
+            'showfreeze_title': 'Show Archived Thesis Details',
+            'deletefreeze_title': 'Delete Archived Thesis'}
+    }
 
 def build_freezeitem_object(configuration, freeze_dict):
     """Build a frozen archive object based on input freeze_dict"""
@@ -49,7 +59,7 @@ def build_freezeitem_object(configuration, freeze_dict):
                 'size': file_item['size'],
                 'md5sum': file_item['md5sum'],
                 })
-    return {
+    freeze_obj = {
         'object_type': 'frozenarchive',
         'id': freeze_dict['ID'],
         'name': freeze_dict['NAME'],
@@ -59,6 +69,10 @@ def build_freezeitem_object(configuration, freeze_dict):
                                 ].timetuple()),
         'frozenfiles': freeze_files,
         }
+    for field in ('author', 'organization', 'publish', 'flavor'):
+        if not freeze_dict.get(field.upper(), None) is None:
+            freeze_obj[field] = freeze_dict[field.upper()]
+    return freeze_obj
 
 def list_frozen_archives(configuration, client_id):
     """Find all frozen_archives owned by user"""
@@ -150,9 +164,8 @@ def get_frozen_archive(freeze_id, configuration):
     freeze_dict.update(meta_out)
     return (True, freeze_dict)
 
-def create_frozen_archive(freeze_name, freeze_description, freeze_copy,
-                          freeze_move, freeze_upload, client_id,
-                          configuration):
+def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
+                          freeze_upload, client_id, configuration):
     """Create a new frozen archive with meta data fields and provided
     freeze_copy files from user home, freeze_move from temporary upload dir
     and freeze_upload files from form.
@@ -170,9 +183,8 @@ def create_frozen_archive(freeze_name, freeze_description, freeze_copy,
         'ID': freeze_id,
         'CREATED_TIMESTAMP': datetime.datetime.now(),
         'CREATOR': client_id,
-        'NAME': freeze_name,
-        'DESCRIPTION': freeze_description,
         }
+    freeze_dict.update(freeze_meta)
     logger.info("create_frozen_archive: save meta for %s" % freeze_id)
     try:
         dump(freeze_dict, os.path.join(frozen_dir, freeze_meta_filename))

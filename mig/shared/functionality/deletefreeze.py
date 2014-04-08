@@ -29,17 +29,19 @@
 """Deletion of frozen archives"""
 
 import shared.returnvalues as returnvalues
+from shared.freezefunctions import freeze_flavors, is_frozen_archive, \
+     get_frozen_archive, delete_frozen_archive
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
-from shared.freezefunctions import is_frozen_archive, \
-     get_frozen_archive, delete_frozen_archive
+from shared.safeinput import html_escape
 
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'freeze_id': REJECT_UNSET}
+    defaults = {'freeze_id': REJECT_UNSET,
+                'flavor': ['freeze']}
     return ['frozenarchive', defaults]
 
 
@@ -52,8 +54,6 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Delete frozen archive'
     defaults = signature()[1]
-    output_objects.append({'object_type': 'header', 'text'
-                           : 'Delete frozen archive'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -64,17 +64,30 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-    
+
     if not correct_handler('POST'):
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : 'Only accepting POST requests to prevent unintended updates'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    flavor = accepted['flavor'][-1]
+
+    if not flavor in freeze_flavors.keys():
+        output_objects.append({'object_type': 'error_text', 'text':
+                           'Invalid freeze flavor: %s' % flavor})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    title = freeze_flavors[flavor]['deletefreeze_title']
+    output_objects.append({'object_type': 'header', 'text': title})
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = title
+
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'text', 'text':
-                           '''Freezing archives is not enabled on this site.
-    Please contact the Grid admins if you think it should be.'''})
+                               '''Freezing archives is not enabled on this site.
+Please contact the Grid admins %s if you think it should be.
+''' % html_escape(configuration.admin_email)})
         return (output_objects, returnvalues.OK)
 
     freeze_id = accepted['freeze_id'][-1]
@@ -99,6 +112,14 @@ def main(client_id, user_arguments_dict):
              % freeze_id})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    # Prevent easy delete if the frozen archive if configuration forbids it
+    if configuration.site_permanent_freeze:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             "Can't delete frozen archive '%s' yourself due to site policy"
+             % freeze_id})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     # Make sure the frozen archive belongs to the user trying to delete it
     if client_id != freeze_dict['CREATOR']:
         logger.error("%s: illegal access attempt for '%s': %s" % \
@@ -107,12 +128,12 @@ def main(client_id, user_arguments_dict):
         'You are not the owner of frozen archive "%s"' % freeze_id})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # Prevent easy delete if the frozen archive if configuration forbids it
-    if configuration.site_permanent_freeze:
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             "Can't delete frozen archive '%s' yourself due to site policy"
-             % freeze_id})
+    if freeze_dict.get('FLAVOR','freeze') != flavor:
+        logger.error("%s: flavor mismatch for '%s': %s vs %s" % \
+                     (op_name, freeze_id, flavor, freeze_dict))
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : 'No such %s archive "%s"' % (flavor,
+                                                              freeze_id)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Delete the frozen archive

@@ -31,13 +31,13 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import max_freeze_files, upload_tmp_dir
+from shared.defaults import max_freeze_files
 from shared.fileio import strip_dir
-from shared.freezefunctions import create_frozen_archive
+from shared.freezefunctions import freeze_flavors, create_frozen_archive
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
-from shared.init import initialize_main_variables
-from shared.safeinput import valid_path
+from shared.init import initialize_main_variables, find_entry
+from shared.safeinput import valid_path, html_escape
 from shared.validstring import valid_user_path
 
 
@@ -45,8 +45,12 @@ def signature():
     """Signature of the main function"""
 
     defaults = {
+        'flavor': ['freeze'],
         'freeze_name': REJECT_UNSET,
         'freeze_description': REJECT_UNSET,
+        'freeze_publish': ['False'],
+        'freeze_author': [''],
+        'freeze_organization': [''],
         }
     return ['text', defaults]
 
@@ -115,8 +119,6 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Create frozen archive'})
     # All non-file fields must be validated
     validate_args = dict([(key, user_arguments_dict.get(key, val)) for \
                          (key, val) in defaults.items()])
@@ -137,18 +139,47 @@ def main(client_id, user_arguments_dict):
              : 'Only accepting POST requests to prevent unintended use'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    flavor = accepted['flavor'][-1]
+
+    if not flavor in freeze_flavors.keys():
+        output_objects.append({'object_type': 'error_text', 'text':
+                           'Invalid freeze flavor: %s' % flavor})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    title = freeze_flavors[flavor]['createfreeze_title']
+    output_objects.append({'object_type': 'header', 'text': title})
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = title
+
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'text', 'text':
-                           '''Freezing archives is not enabled on this site.
-    Please contact the Grid admins if you think it should be.'''})
+                               '''Freezing archives is not enabled on this site.
+Please contact the Grid admins %s if you think it should be.
+''' % html_escape(configuration.admin_email)})
         return (output_objects, returnvalues.OK)
 
     freeze_name = accepted['freeze_name'][-1].strip()
     freeze_description = accepted['freeze_description'][-1].strip()
+    freeze_publish = bool(accepted['freeze_publish'][-1].strip())
     if not freeze_name:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'You must provide a name for the freeze!'})
-        return (output_objects, returnvalues.OK)
+                               'You must provide a name for the archive!'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    freeze_meta = {'NAME': freeze_name, 'DESCRIPTION': freeze_description,
+                  'FLAVOR': flavor}
+
+    if flavor == 'phd':
+        freeze_author = accepted['freeze_author'][-1].strip()
+        freeze_organization = accepted['freeze_organization'][-1].strip()
+        if not freeze_author or not freeze_organization:
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'You must provide author and organization '
+                                   'for the thesis!'})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        freeze_meta.update({'AUTHOR': freeze_author,
+                            'ORGANIZATION': freeze_organization,
+                            'PUBLISH': freeze_publish})
 
     # Now parse and validate files to archive
 
@@ -182,10 +213,9 @@ def main(client_id, user_arguments_dict):
                               max_freeze_files)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    (retval, retmsg) = create_frozen_archive(freeze_name, freeze_description,
-                                             copy_files, move_files,
-                                             upload_files, client_id,
-                                             configuration)
+    (retval, retmsg) = create_frozen_archive(freeze_meta, copy_files,
+                                             move_files, upload_files,
+                                             client_id, configuration)
     if not retval:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Error creating new frozen archive: %s'
@@ -198,12 +228,13 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'text', 'text'
                            : 'Created frozen archive with ID %s successfuly!'
                            % freeze_id})
-    output_objects.append({'object_type': 'link',
-                           'destination': 'showfreeze.py?freeze_id=%s' % \
-                           freeze_id,
-                           'class': 'viewlink',
-                           'title': 'View your frozen archive',
-                           'text': 'View new %s frozen archive'
-                           % freeze_id,
-                           })
+    output_objects.append({
+        'object_type': 'link',
+        'destination': 'showfreeze.py?freeze_id=%s;flavor=%s' % (freeze_id,
+                                                                 flavor),
+        'class': 'viewlink',
+        'title': 'View your frozen archive',
+        'text': 'View new %s frozen archive'
+        % freeze_id,
+        })
     return (output_objects, returnvalues.OK)

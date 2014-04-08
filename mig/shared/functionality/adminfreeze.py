@@ -29,14 +29,15 @@
 
 import shared.returnvalues as returnvalues
 from shared.defaults import upload_tmp_dir
+from shared.freezefunctions import freeze_flavors
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
-
+from shared.safeinput import html_escape
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {}
+    defaults = {'flavor': ['freeze']}
     return ['html_form', defaults]
 
 
@@ -46,8 +47,6 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Make frozen archive'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -59,8 +58,24 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    flavor = accepted['flavor'][-1]
+
+    if not flavor in freeze_flavors.keys():
+        output_objects.append({'object_type': 'error_text', 'text':
+                           'Invalid freeze flavor: %s' % flavor})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    title = freeze_flavors[flavor]['adminfreeze_title']
+    output_objects.append({'object_type': 'header', 'text': title})
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'Freeze Archive'
+    title_entry['text'] = title
+
+    if not configuration.site_enable_freeze:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Freezing archives is not enabled on this site.
+Please contact the Grid admins %s if you think it should be.
+''' % html_escape(configuration.admin_email)})
+        return (output_objects, returnvalues.OK)
 
     # jquery support for dynamic addition of copy/upload fields
 
@@ -75,7 +90,6 @@ def main(client_id, user_arguments_dict):
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.custom.css" media="screen"/>
-
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
@@ -282,20 +296,7 @@ $(document).ready(function() {
 </script>
 '''
 
-    if not configuration.site_enable_freeze:
-        output_objects.append({'object_type': 'text', 'text':
-                           '''Freezing archives is not enabled on this site.
-    Please contact the Grid admins if you think it should be.'''})
-        return (output_objects, returnvalues.OK)
-
-    output_objects.append(
-        {'object_type': 'text', 'text'
-         : '''Note that a frozen archive can not be changed after creation
-and it can only be manually removed by the management, so please be careful
-when filling in the details.'''
-         })
-
-    files_form = """
+    shared_files_form = """
 <!-- and now this... we do not want to see it, except in a dialog: -->
 <div id='fm_filechooser' style='display:none'>
     <div class='fm_path_breadcrumbs'>
@@ -384,14 +385,25 @@ when filling in the details.'''
     <div id='fancyuploadchunked_output'></div>
 </div>
     """
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : files_form})
-    html_form = """
+
+    if flavor == 'freeze':
+        intro_text = """
+Please enter your archive details below and select any files to be included in
+the archive.
+<p class='warn_message'>Note that a frozen archive can not be changed after
+creation and it can only be manually removed by the management, so please be
+careful when filling in the details.
+</p>
+"""
+        files_form = shared_files_form
+        freeze_form = """
 <form enctype='multipart/form-data' method='post' action='createfreeze.py'>
-<br /><b>Name:</b><br />
+<b>Name:</b><br />
+<input type='hidden' name='flavor' value='freeze' />
 <input type='text' name='freeze_name' size=30 />
 <br /><b>Description:</b><br />
 <textarea cols='80' rows='20' name='freeze_description'></textarea>
+<br />
 <br />
 <div id='freezefiles'>
 <b>Freeze Archive Files:</b>
@@ -404,10 +416,57 @@ when filling in the details.'''
 <!-- Dynamically filled -->
 </div>
 </div>
+<br />
 <input type='submit' value='Create Archive' />
 </form>
 """
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : html_form})
+    if flavor == 'phd':
+        intro_text = """
+Please enter your PhD details below and select any files associated with your
+thesis.
+<p class='warn_message'>Note that a thesis archive can not be changed after
+creation and it can only be manually removed by the management, so please be
+careful when filling in the details.
+</p>
+"""
+        files_form = shared_files_form
+        freeze_form = """
+<form enctype='multipart/form-data' method='post' action='createfreeze.py'>
+<b>Thesis Title:</b><br />
+<input type='hidden' name='flavor' value='phd' />
+<input type='text' name='freeze_name' size=80 />
+<br /><b>Author Name:</b><br />
+<input type='text' name='freeze_author' size=40 />
+<br /><b>Organization:</b><br />
+<input type='text' name='freeze_organization' size=40 />
+<br />
+<br />
+<div id='freezefiles'>
+<b>Thesis and Associated Files to Archive:</b>
+<input type='button' id='addfilebutton' value='Add file/directory' />
+<input type='button' id='adduploadbutton' value='Add upload' />
+<div id='copyfiles'>
+<!-- Dynamically filled -->
+</div>
+<div id='uploadfiles'>
+<!-- Dynamically filled -->
+</div>
+</div>
+<br />
+<div id='freezepublish'>
+<input type='checkbox' name='freeze_publish' />
+<b>Make Dataset Publicly Available</b>
+</div>
+<br /><b>Dataset Description:</b><br />
+<textarea cols='80' rows='20' name='freeze_description'></textarea>
+<br />
+<br />
+<input type='submit' value='Archive Thesis' />
+</form>
+"""
+
+    output_objects.append({'object_type': 'html_form', 'text': intro_text})
+    output_objects.append({'object_type': 'html_form', 'text': files_form})
+    output_objects.append({'object_type': 'html_form', 'text': freeze_form})
 
     return (output_objects, returnvalues.OK)

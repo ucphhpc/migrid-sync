@@ -791,7 +791,8 @@ def guess_type(name):
                     'flavor', 'hypervisor_re', 'sys_re', 'time_start',
                     'time_end', ):
             __type_map[key] = valid_fqdn
-        for key in ('cert_name', 'org', 'machine_software', 'freeze_name', ):
+        for key in ('cert_name', 'org', 'machine_software', 'freeze_name',
+                    'freeze_author', 'freeze_organization', ):
             __type_map[key] = valid_commonname
         for key in ('cert_id', ):
             __type_map[key] = valid_distinguished_name

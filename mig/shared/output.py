@@ -1151,11 +1151,22 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
 ''' % frozenfile
             frozenfile_html += '</tbody></table>'
             lines.append(frozenfile_html)
+            flavor = i.get('flavor', 'freeze')
             lines.append('<table class="frozenarchivedetails">')
             lines.append('<tr><td class="title">ID</td><td>%s</td></tr>' % \
                          i['id'])
-            lines.append('<tr><td class="title">Name</td><td>%s</td></tr>' % \
-                         i['name'])
+            if flavor == 'freeze':
+                lines.append('<tr><td class="title">Name</td>'
+                             '<td>%s</td></tr>' % i['name'])
+            elif flavor == 'phd':
+                lines.append('<tr><td class="title">Title</td>'
+                             '<td>%s</td></tr>' % i['name'])
+            if i.get('author', False):
+                lines.append('<tr><td class="title">Author</td>'
+                             '<td>%s</td></tr>' % i['author'])
+            if i.get('organization', False):
+                lines.append('<tr><td class="title">Organization</td>'
+                             '<td>%s</td></tr>' % i['organization'])
             lines.append('<tr><td class="title">Description</td>'
                          '<td class="border">%s</td></tr>'
                           % i['description'].replace('\n', '<br />'))

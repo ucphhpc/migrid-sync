@@ -75,7 +75,7 @@ authpasswords_filename = 'authorized_passwords'
 settings_filename = 'settings'
 widgets_filename = 'widgets'
 profile_filename = 'userprofile'
-freeze_meta_filename = 'meta.txt'
+freeze_meta_filename = 'meta.pck'
 # The htaccess file prevents illegal http access to user files. We completely
 # hide it to not confuse users and to prevent all modification. It is 'only'
 # a matter of users not accidentally giving away file privacy, though.

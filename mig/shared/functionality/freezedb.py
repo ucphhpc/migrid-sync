@@ -167,19 +167,20 @@ $(document).ready(function() {
             return (output_objects, returnvalues.SYSTEM_ERROR)
         freeze_item = build_freezeitem_object(configuration, freeze_dict)
         freeze_id = freeze_item['id']
+        flavor = freeze_item.get('flavor', 'freeze')
         
-        freeze_item['viewfreezelink'] = {'object_type': 'link',
-                                         'destination':
-                                         "showfreeze.py?freeze_id=%s" % \
-                                         freeze_id,
-                                         'class': 'infolink',
-                                         'title': 'View frozen archive %s' % \
-                                         freeze_id, 
-                                         'text': ''}
+        freeze_item['viewfreezelink'] = {
+            'object_type': 'link',
+            'destination': "showfreeze.py?freeze_id=%s;flavor=%s" % \
+            (freeze_id, flavor),
+            'class': 'infolink', 
+            'title': 'View frozen archive %s' % freeze_id, 
+            'text': ''}
         if client_id == freeze_item['creator']:
             js_name = 'delete%s' % hexlify(freeze_id)
             helper = html_post_helper(js_name, 'deletefreeze.py',
-                                      {'freeze_id': freeze_id})
+                                      {'freeze_id': freeze_id,
+                                       'flavor': flavor})
             output_objects.append({'object_type': 'html_form', 'text': helper})
             freeze_item['delfreezelink'] = {
                 'object_type': 'link', 'destination':
@@ -204,5 +205,3 @@ $(document).ready(function() {
                            'text': 'Create a new frozen archive'})
 
     return (output_objects, returnvalues.OK)
-
-

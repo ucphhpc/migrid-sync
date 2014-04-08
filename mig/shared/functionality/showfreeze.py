@@ -30,9 +30,10 @@
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries
 from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
-     build_freezeitem_object
+     build_freezeitem_object, freeze_flavors
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
+from shared.safeinput import html_escape
 
 
 def signature():
@@ -40,7 +41,7 @@ def signature():
 
     defaults = {
         'freeze_id': REJECT_UNSET,
-        }
+        'flavor': ['freeze']}
     return ['html_form', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -49,10 +50,6 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'Frozen archive details'
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Show frozen archive details'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -63,6 +60,25 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    flavor = accepted['flavor'][-1]
+
+    if not flavor in freeze_flavors.keys():
+        output_objects.append({'object_type': 'error_text', 'text':
+                           'Invalid freeze flavor: %s' % flavor})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    title = freeze_flavors[flavor]['showfreeze_title']
+    output_objects.append({'object_type': 'header', 'text': title})
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = title
+
+    if not configuration.site_enable_freeze:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Freezing archives is not enabled on this site.
+Please contact the Grid admins %s if you think it should be.
+''' % html_escape(configuration.admin_email)})
+        return (output_objects, returnvalues.OK)
 
     # jquery support for tablesorter
 
@@ -106,12 +122,6 @@ $(document).ready(function() {
 </script>
 ''' % default_pager_entries
 
-    if not configuration.site_enable_freeze:
-        output_objects.append({'object_type': 'text', 'text':
-                           '''Freezing archives is not enabled on this site.
-    Please contact the Grid admins if you think it should be.'''})
-        return (output_objects, returnvalues.OK)
-
     freeze_id = accepted['freeze_id'][-1]
 
     # NB: the restrictions on freeze_id prevents illegal directory traversal
@@ -124,14 +134,22 @@ $(document).ready(function() {
                                % freeze_id})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-
     (load_status, freeze_dict) = get_frozen_archive(freeze_id, configuration)
     if not load_status:
         logger.error("%s: load failed for '%s': %s" % \
                      (op_name, freeze_id, freeze_dict))
         output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Could not read details for "%s"' % freeze_id})
+                               : 'Could not read details for "%s"' % \
+                               freeze_id})
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    if freeze_dict.get('FLAVOR','freeze') != flavor:
+        logger.error("%s: flavor mismatch for '%s': %s vs %s" % \
+                     (op_name, freeze_id, flavor, freeze_dict))
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : 'No such %s archive "%s"' % (flavor,
+                                                              freeze_id)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     output_objects.append({'object_type': 'table_pager', 'entry_name':
                            'frozen files', 'default_entries':
