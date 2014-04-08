@@ -401,6 +401,8 @@ careful when filling in the details.
 <b>Name:</b><br />
 <input type='hidden' name='flavor' value='freeze' />
 <input type='text' name='freeze_name' size=30 />
+<input type='hidden' name='freeze_author' value='UNUSED' />
+<input type='hidden' name='freeze_organization' value='UNUSED' />
 <br /><b>Description:</b><br />
 <textarea cols='80' rows='20' name='freeze_description'></textarea>
 <br />
@@ -415,6 +417,11 @@ careful when filling in the details.
 <div id='uploadfiles'>
 <!-- Dynamically filled -->
 </div>
+</div>
+<br />
+<div id='freezepublish'>
+<input type='checkbox' name='freeze_publish' />
+<b>Make Dataset Publicly Available</b>
 </div>
 <br />
 <input type='submit' value='Create Archive' />
