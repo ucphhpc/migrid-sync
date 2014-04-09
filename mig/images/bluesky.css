@@ -60,7 +60,7 @@ tr, td {
 
 h1{
   padding: 4px;
-  border-top: px solid #000;
+  border-top: 1px solid #000;
   border-bottom: 1px solid #000;
   font-size: 16px;  
   color: #000;
@@ -93,7 +93,7 @@ div.container {
   font-size: 16px;
   background: none;
   border-radius: 5px;
-  -moz-border-radius: 5px;
+  border: 0px;
 }
 
 .navmenu ul {
@@ -164,7 +164,6 @@ div.container {
 
 .navmenu ul li a, .navsubmenu ul li a {
   border-radius: 4px;
-  -moz-border-radius: 4px;
   display: inline;
   
   background-repeat: no-repeat;
@@ -197,7 +196,6 @@ div.container {
 
 .styled_button {
   border-radius: 4px;
-  -moz-border-radius: 4px;
   display: inline;
   
   background-repeat: no-repeat;
@@ -242,7 +240,6 @@ div.container {
 
 .editortoolbar {
   border-radius: 4px;
-  -moz-border-radius: 4px;
   padding: 6px;
   background: #ddd;
 }
@@ -251,7 +248,6 @@ div.container {
 #migheader {
   font-size: 30px;
   border-radius: 4px;
-  -moz-border-radius: 4px;
   letter-spacing: 0.2em;
   margin: 0;
   /*padding: 20px 10px 10px 10px;*/
@@ -333,7 +329,7 @@ table.frozenarchivedetails td {
   padding: 4px;
 }
 table.frozenarchivedetails td.title {
-  text-decoration: bold;
+  font-weight: bold;
 }
 table.frozenarchivedetails td.border {
   border: 1px solid #000;
@@ -437,7 +433,6 @@ table.liveio table {
   background: #fff;
   border: 2px ridge #63a4f0;
   border-radius: 4px;
-  -moz-border-radius: 4px;
   margin: 2%;
   padding: 5px 5px;
   text-align: center;
@@ -466,7 +461,6 @@ table.liveio table {
   padding: 0px 0px 5px 0px;
   border: 0px;
   border-radius: 4px;
-  -moz-border-radius: 4px;
   width: 98%;
   text-align: center;
   font-size: 17px;
@@ -791,10 +785,9 @@ table.liveio table {
 .owner {
   border: 1px solid gold;
   border-radius: 4px;
-  -moz-border-radius: 4px;
 }
 .member {
-  background-color: none;
+  background-color: transparent;
 }
 .public {
   background-color: silver;

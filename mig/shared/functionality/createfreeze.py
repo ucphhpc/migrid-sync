@@ -165,8 +165,6 @@ Please contact the Grid admins %s if you think it should be.
     freeze_department = accepted['freeze_department'][-1].strip()
     freeze_organization = accepted['freeze_organization'][-1].strip()
     freeze_publish = (accepted['freeze_publish'][-1].strip() != 'False')
-    logger.info("%s: with publish value: %s (%s)" % (op_name, freeze_publish,
-                                                     accepted['freeze_publish'][-1]))
     if not freeze_name:
         output_objects.append({'object_type': 'error_text', 'text':
                                'You must provide a name for the archive!'})

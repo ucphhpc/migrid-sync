@@ -201,7 +201,7 @@ The MiG software license follows below:<br />
 
     lic_text = ''.join(lic_lines[2:-1])
     output_objects.append({'object_type': 'html_form', 'text'
-                           : '<tt>%s</tt><br />' % \
+                           : '<code>%s</code><br />' % \
                            lic_text.replace('\n', '<br \>')})
 
     output_objects.append({'object_type': 'header', 'text'
