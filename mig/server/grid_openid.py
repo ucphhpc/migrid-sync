@@ -319,12 +319,12 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     def approved(self, request, identifier=None):
         response = request.answer(True, identity=identifier)
-        self.addSRegResponse(request, response)
+        # TODO: re-enable this SReg data?
+        #self.addSRegResponse(request, response)
         return response
 
     def rejected(self, request, identifier=None):
         response = request.answer(False, identity=identifier)
-        self.addSRegResponse(request, response)
         return response
 
     def handleCheckIDRequest(self, request):
@@ -375,7 +375,8 @@ class ServerHandler(BaseHTTPRequestHandler):
                 user = id_map[cert_id]
                 #print "looked up user %s in DB: %s" % (username, user)
                 enc_pw = user.get('password', None)
-                print "Check password %s against enc %s" % (password, enc_pw)
+                print "Check password %s against enc %s" % \
+                      (base64.b64encode(password), enc_pw)
                 if password and base64.b64encode(password) == user['password']:
                     print "Correct password for user %s" % username
                     return True
@@ -937,7 +938,8 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'users': [],
         'time_stamp': 0,
         'logger': logger,
-        'nossl': False,
+        # TODO: test and switch to ssl as default
+        'nossl': True,
         }
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)
