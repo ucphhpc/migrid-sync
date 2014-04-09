@@ -877,6 +877,16 @@ def start_service(configuration):
 if __name__ == '__main__':
     configuration = get_configuration_object()
     logger = configuration.logger
+    nossl = False
+
+    # Allow configuration overrides on command line
+    if sys.argv[1:]:
+        nossl = bool(sys.argv[1])
+    if sys.argv[2:]:
+        configuration.user_openid_address = sys.argv[2]
+    if sys.argv[3:]:
+        configuration.user_openid_port = int(sys.argv[3])
+    
     if not configuration.site_enable_openid:
         err_msg = "OpenID service is disabled in configuration!"
         logger.error(err_msg)
@@ -938,8 +948,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'users': [],
         'time_stamp': 0,
         'logger': logger,
-        # TODO: test and switch to ssl as default
-        'nossl': True,
+        'nossl': nossl,
         }
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)

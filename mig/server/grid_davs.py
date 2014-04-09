@@ -31,7 +31,6 @@ import BaseHTTPServer
 import SocketServer
 import ssl
 import os
-import shutil
 import sys
 import urlparse
 
@@ -40,10 +39,10 @@ from pywebdav.server.fshandler import FilesystemHandler
 #from pywebdav.server.daemonize import startstop
 from pywebdav.lib.errors import DAV_NotFound
 
-from shared.base import client_dir_id, client_alias, invisible_path
+from shared.base import invisible_path
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, \
-     flags_to_mode, acceptable_chmod, refresh_users
+     acceptable_chmod, refresh_users
 from shared.useradm import check_password_hash
 
 
@@ -238,7 +237,8 @@ class MiGDAVAuthHandler(DAVAuthHandler):
                     if allowed == offered:
                         logger.info("Public key match for %s" % username)
                         self.authenticated_user = username
-                        return paramiko.AUTH_SUCCESSFUL
+                        return True
+        return False
 
     def _chroot_user(self, username, host, port, verbose):
         """Swith to user home"""
@@ -404,6 +404,23 @@ def run(configuration):
 if __name__ == "__main__":
     configuration = get_configuration_object()
     logger = configuration.logger
+    nossl = False
+
+    # TMP: separate logger for now
+    #logger = configuration.logger
+    import logging
+    logging.basicConfig(filename="davs.log", level=logging.DEBUG,
+                        format="%(asctime)s %(levelname)s %(message)s")
+    logger = logging
+
+    # Allow configuration overrides on command line
+    if sys.argv[1:]:
+        nossl = bool(sys.argv[1])
+    if sys.argv[2:]:
+        configuration.user_davs_address = sys.argv[2]
+    if sys.argv[3:]:
+        configuration.user_davs_port = int(sys.argv[3])
+
     configuration.dav_cfg = {
                'verbose': False,
                'directory': configuration.user_home,
@@ -419,15 +436,9 @@ if __name__ == "__main__":
                'chunked_http_response': True,
                'mimecheck': True,
                'baseurl': '',
-               'nossl': False,
+               'nossl': nossl,
         }
 
-    # TMP: separate logger for now
-    #logger = configuration.logger
-    import logging
-    logging.basicConfig(filename="davs.log", level=logging.DEBUG,
-                        format="%(asctime)s %(levelname)s %(message)s")
-    logger = logging
     if not configuration.site_enable_davs:
         err_msg = "DAVS access to user homes is disabled in configuration!"
         logger.error(err_msg)
@@ -456,6 +467,7 @@ if __name__ == "__main__":
         'time_stamp': 0,
         'logger': logger,
         }
+
 
     print """
 Running grid davs server for user dav access to their MiG homes.

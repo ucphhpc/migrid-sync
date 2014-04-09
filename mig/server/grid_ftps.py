@@ -212,37 +212,40 @@ class MiGRestrictedFilesystem(AbstractedFS):
                 invisible_path(i)]
 
     ### Force symlinks to look like real dirs to avoid client confusion ###
-    if hasattr(os, 'lstat'):
-        def lstat(self, path):
-            """Modified to always return real stat to hide symlinks"""
-            return self.stat(path)
+    def lstat(self, path):
+        """Modified to always return real stat to hide symlinks"""
+        return self.stat(path)
         
-    if hasattr(os, 'readlink'):
-        def readlink(self, path):
-            """Modified to always return just path to hide symlinks"""
-            return path
+    def readlink(self, path):
+        """Modified to always return just path to hide symlinks"""
+        return path
 
     def islink(self, path):
         """Modified to always return False to hide symlinks"""
         return False
 
     def lexists(self, path):
-        """Modified to always return real exists to hide symlinks"""
-        return self.exists(path)
+        """Modified to always check with stat to hide symlinks"""
+        try:
+            self.stat(path)
+            return True
+        except:
+            return False
 
 
 def start_service(conf):
     """Main server"""
+    daemon_conf = configuration.daemon_conf
     authorizer = MiGUserAuthorizer()
-    if configuration.user_ftps_key:
+    if daemon_conf['nossl'] or not configuration.user_ftps_key:
+        logger.warning('Not wrapping connections in SSL - only for testing!')
+        handler = FTPHandler
+    else:
         logger.info("Using fully encrypted mode")
         handler = TLS_FTPHandler
         # requires SSL for both control and data channel
         handler.tls_control_required = True
         handler.tls_data_required = True
-    else:
-        logger.warning("Using unencrypted mode - only for testing!")
-        handler = FTPHandler
     handler.certfile = conf.user_ftps_key
     handler.authorizer = authorizer
     handler.abstracted_fs = MiGRestrictedFilesystem
@@ -256,12 +259,21 @@ def start_service(conf):
 
 if __name__ == '__main__':
     configuration = get_configuration_object()
+    logger = configuration.logger
+    nossl = False
+
     # TMP: separate logger for now
-    #logger = configuration.logger
     logging.basicConfig(filename="ftps.log", level=logging.DEBUG,
                         format="%(asctime)s %(levelname)s %(message)s")
     logger = logging
 
+    # Allow configuration overrides on command line
+    if sys.argv[1:]:
+        nossl = bool(sys.argv[1])
+    if sys.argv[2:]:
+        configuration.user_ftps_address = sys.argv[2]
+    if sys.argv[3:]:
+        configuration.user_ftps_ctrl_port = int(sys.argv[3])
 
     if not configuration.site_enable_ftps:
         err_msg = "FTPS access to user homes is disabled in configuration!"
@@ -299,6 +311,7 @@ unless it is available in mig/server/MiGserver.conf
         'users': [],
         'time_stamp': 0,
         'logger': logger,
+        'nossl': nossl,
         }
     info_msg = "Listening on address '%s' and port %d" % (address, ctrl_port)
     logger.info(info_msg)
