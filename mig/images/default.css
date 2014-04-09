@@ -620,11 +620,6 @@ table th.icon {
   overflow: auto;
   background: #fff;
   border: 1px inset grey;
-  margin: 0 auto;
-}
-.centertext .scrollselect { 
-  /* hackaround to get the div centered, not its contents */
-  margin: auto auto;
 }
 
 /* Job manager */

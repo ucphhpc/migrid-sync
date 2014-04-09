@@ -570,13 +570,8 @@ table.liveio table {
   overflow: auto;
   background: #fff;
   border: 1px inset grey;
-  /* hackaround to get the div centered, not its contents */
-  margin: auto auto;
-  text-align: left;
-}
-.centertext .scrollselect { 
-  /* hackaround to get contents centered as well */
-  text-align: center;
+  /* center div but not contents */
+  margin: 0 auto;
 }
 
 /* File manager */
