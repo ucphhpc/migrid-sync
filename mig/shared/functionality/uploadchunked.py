@@ -231,7 +231,7 @@ def main(client_id, user_arguments_dict):
         for (rel_path, err) in upload_rejected:
             uploaded.append(
                 {'object_type': 'uploadfile', 'name': rel_path, 'size': -1,
-                 "error": err})
+                 "error": "upload rejected: %s" % err})
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif action == "status" and not upload_files:
         # Default to entire cache dir

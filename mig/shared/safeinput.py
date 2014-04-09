@@ -792,7 +792,8 @@ def guess_type(name):
                     'time_end', ):
             __type_map[key] = valid_fqdn
         for key in ('cert_name', 'org', 'machine_software', 'freeze_name',
-                    'freeze_author', 'freeze_organization', ):
+                    'freeze_author', 'freeze_department',
+                    'freeze_organization', ):
             __type_map[key] = valid_commonname
         for key in ('cert_id', ):
             __type_map[key] = valid_distinguished_name

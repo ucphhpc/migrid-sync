@@ -1308,7 +1308,7 @@ $.fn.delete_upload = function(name, dest_dir) {
         type: "POST",
         async: false,
         success: function(data, textStatus, jqXHR) {
-            console.log("delete success handler: "+name);
+            //console.log("delete success handler: "+name);
             //console.log("data: "+$.fn.dump(data));
             $.each(data, function (index, obj) {
                 //console.log("delete result obj: "+index+" "+$.fn.dump(obj));
@@ -1320,7 +1320,7 @@ $.fn.delete_upload = function(name, dest_dir) {
                         if (file.error != undefined) {
                             console.log("found file error: "+file.error);
                         } else if (file[name]) {
-                            console.log("found success marker: "+file[name]);
+                            //console.log("found success marker: "+file[name]);
                             deleted = true;
                         }
                         // Break upon first hit
@@ -1335,6 +1335,7 @@ $.fn.delete_upload = function(name, dest_dir) {
 };
 
 $.fn.move_upload = function(name, dest_dir) {
+    console.log("move upload: "+name+" "+dest_dir);
     var moved = false;
     $.ajax({
         url: move_url,
@@ -1344,7 +1345,7 @@ $.fn.move_upload = function(name, dest_dir) {
         type: "POST",
         async: false,
         success: function(data, textStatus, jqXHR) {
-            console.log("move success handler: "+name);
+            //console.log("move success handler: "+name);
             //console.log("data: "+$.fn.dump(data));
             $.each(data, function (index, obj) {
                 //console.log("move result obj: "+index+" "+$.fn.dump(obj));
@@ -1356,7 +1357,7 @@ $.fn.move_upload = function(name, dest_dir) {
                         if (file.error != undefined) {
                             console.log("found file error: "+file.error);
                         } else if (file[name]) {
-                            console.log("found success marker: "+file[name]);
+                            //console.log("found success marker: "+file[name]);
                             moved = true;
                         }
                         // Break upon first hit
@@ -1799,6 +1800,8 @@ function mig_fancyuploadchunked_init(name, callback) {
             dataType: "json",
             maxChunkSize: 32000000, // 32 MB
             filesContainer: ".uploadfileslist",
+            maxRetries: 100,
+            retryTimeout: 500,
             disableImageLoad: true,
             disableAudioPreview: true,
             disableVideoPreview: true,
@@ -1867,9 +1870,26 @@ function mig_fancyuploadchunked_init(name, callback) {
             },
             fail: function (e, data) {
                 console.log("fail file");
+                // jQuery Widget Factory uses "namespace-widgetname" since version 1.10.0:
+                var uploader = $(this).data('blueimp-fileupload') || $(this).data('fileupload');
+                var retries = data.context.data('retries') || 0;
+                var max_tries = uploader.options.maxRetries;
+                if (data.errorThrown != 'abort') {
+                    retries += 1;
+                    data.context.data('retries', retries);
+                    showWarning("upload error in retry no. "+retries+" of "+max_tries, 0, 2000);
+                    if (retries <= max_tries) {
+                        data.submit();
+                        return;
+                    }
+                }
+                data.context.removeData('retries');
                 $.each(data.files, function (index, file) {
                     if (file.error != undefined) {
                         showError("uploading of "+file.name+" failed: "+file.error);
+                    } else if (data.errorThrown != 'abort' && retries >= max_tries) {
+                        console.log("manually reporting network error for "+file.name);
+                        file.error = "gave up after "+retries+" tries (network error?)";
                     } else {
                         console.log("cancelled file: "+file.name);
                     }
