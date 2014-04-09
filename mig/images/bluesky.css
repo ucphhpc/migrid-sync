@@ -86,6 +86,22 @@ div.container {
   margin: 1%;
 }
 
+.menublock {
+  width: 100%;
+  float: left;
+  margin: 0;
+  padding: 0;
+}
+.contentblock {
+  margin: 4px;
+  padding: 0;
+  /* No footer overlap with menu here */
+  min-height: 0px;
+}
+/* override block layout for maximized areas like wshell */
+#nomenu {
+  margin: 4px;
+}
 
 /* Horizontal Menu */
 .navmenu {
@@ -548,19 +564,29 @@ table.liveio table {
 }
 
 .scrollselect {
-    height: 120px;
-    width: 600px;
-    padding: 5px;
-    overflow: auto;
-    background: #fff;
-    border: 1px inset grey;
-}
-
-.centertext .scrollselect { 
+  height: 120px;
+  width: 600px;
+  padding: 5px;
+  overflow: auto;
+  background: #fff;
+  border: 1px inset grey;
   /* hackaround to get the div centered, not its contents */
-  margin:0 auto;
+  margin: auto auto;
+  text-align: left;
+}
+.centertext .scrollselect { 
+  /* hackaround to get contents centered as well */
+  text-align: center;
 }
 
+/* File manager */
+#fm_filemanager {
+  text-align: left;
+}
+/* Generic context menu styles */
+.contextMenu {
+  text-align: left;
+}
 /* Job manager */
 .jm {
   margin-top: -15px; 

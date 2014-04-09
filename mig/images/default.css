@@ -614,17 +614,17 @@ table th.icon {
 }
 
 .scrollselect {
-    height: 120px;
-    width: 570px; /* matches 80col textarea width in default text size */
-    padding: 5px;
-    overflow: auto;
-    background: #fff;
-    border: 1px inset grey;
+  height: 120px;
+  width: 570px; /* matches 80col textarea width in default text size */
+  padding: 5px;
+  overflow: auto;
+  background: #fff;
+  border: 1px inset grey;
+  margin: 0 auto;
 }
-
 .centertext .scrollselect { 
   /* hackaround to get the div centered, not its contents */
-  margin: 0 auto;
+  margin: auto auto;
 }
 
 /* Job manager */
