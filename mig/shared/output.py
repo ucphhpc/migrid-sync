@@ -1161,15 +1161,24 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             elif flavor == 'phd':
                 lines.append('<tr><td class="title">Title</td>'
                              '<td>%s</td></tr>' % i['name'])
-            if i.get('author', False):
+            if i.get('author', 'UNSET') != 'UNSET':
                 lines.append('<tr><td class="title">Author</td>'
                              '<td>%s</td></tr>' % i['author'])
-            if i.get('organization', False):
+            if i.get('department', 'UNSET') != 'UNSET':
+                lines.append('<tr><td class="title">Department</td>'
+                             '<td>%s</td></tr>' % i['department'])
+            if i.get('organization', 'UNSET') != 'UNSET':
                 lines.append('<tr><td class="title">Organization</td>'
                              '<td>%s</td></tr>' % i['organization'])
             lines.append('<tr><td class="title">Description</td>'
                          '<td class="border">%s</td></tr>'
                           % i['description'].replace('\n', '<br />'))
+            if i.get('publish', False):
+                published = 'yes'                
+            else:
+                published = 'no'
+            lines.append('<tr><td class="title">Published</td>'
+                             '<td>%s</td></tr>' % published)
             lines.append('<tr><td class="title">Creator</td><td>%s</td></tr>'
                           % i['creator'])
             lines.append('<tr><td class="title">Created</td><td>%s</td></tr>'

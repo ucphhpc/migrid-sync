@@ -50,6 +50,7 @@ def signature():
         'freeze_description': REJECT_UNSET,
         'freeze_publish': ['False'],
         'freeze_author': [''],
+        'freeze_department': [''],
         'freeze_organization': [''],
         }
     return ['text', defaults]
@@ -160,26 +161,27 @@ Please contact the Grid admins %s if you think it should be.
 
     freeze_name = accepted['freeze_name'][-1].strip()
     freeze_description = accepted['freeze_description'][-1].strip()
-    freeze_publish = bool(accepted['freeze_publish'][-1].strip())
+    freeze_author = accepted['freeze_author'][-1].strip()
+    freeze_department = accepted['freeze_department'][-1].strip()
+    freeze_organization = accepted['freeze_organization'][-1].strip()
+    freeze_publish = (accepted['freeze_publish'][-1].strip() != 'False')
+    logger.info("%s: with publish value: %s (%s)" % (op_name, freeze_publish,
+                                                     accepted['freeze_publish'][-1]))
     if not freeze_name:
         output_objects.append({'object_type': 'error_text', 'text':
                                'You must provide a name for the archive!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     freeze_meta = {'NAME': freeze_name, 'DESCRIPTION': freeze_description,
-                  'FLAVOR': flavor}
+                   'FLAVOR': flavor, 'AUTHOR': freeze_author, 'DEPARTMENT':
+                   freeze_department, 'ORGANIZATION': freeze_organization,
+                   'PUBLISH': freeze_publish}
 
-    if flavor == 'phd':
-        freeze_author = accepted['freeze_author'][-1].strip()
-        freeze_organization = accepted['freeze_organization'][-1].strip()
-        if not freeze_author or not freeze_organization:
-            output_objects.append({'object_type': 'error_text', 'text':
-                                   'You must provide author and organization '
-                                   'for the thesis!'})
-            return (output_objects, returnvalues.CLIENT_ERROR)
-        freeze_meta.update({'AUTHOR': freeze_author,
-                            'ORGANIZATION': freeze_organization,
-                            'PUBLISH': freeze_publish})
+    if flavor == 'phd' and (not freeze_author or not freeze_department):
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'You must provide author and department for '
+                               'the thesis!'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Now parse and validate files to archive
 

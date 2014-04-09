@@ -401,8 +401,9 @@ careful when filling in the details.
 <b>Name:</b><br />
 <input type='hidden' name='flavor' value='freeze' />
 <input type='text' name='freeze_name' size=30 />
-<input type='hidden' name='freeze_author' value='UNUSED' />
-<input type='hidden' name='freeze_organization' value='UNUSED' />
+<input type='hidden' name='freeze_author' value='UNSET' />
+<input type='hidden' name='freeze_department' value='UNSET' />
+<input type='hidden' name='freeze_organization' value='UNSET' />
 <br /><b>Description:</b><br />
 <textarea cols='80' rows='20' name='freeze_description'></textarea>
 <br />
@@ -441,11 +442,12 @@ careful when filling in the details.
 <form enctype='multipart/form-data' method='post' action='createfreeze.py'>
 <b>Thesis Title:</b><br />
 <input type='hidden' name='flavor' value='phd' />
+<input type='hidden' name='freeze_organization' value='UNSET' />
 <input type='text' name='freeze_name' size=80 />
 <br /><b>Author Name:</b><br />
 <input type='text' name='freeze_author' size=40 />
-<br /><b>Organization:</b><br />
-<input type='text' name='freeze_organization' size=40 />
+<br /><b>Department:</b><br />
+<input type='text' name='freeze_department' size=40 />
 <br />
 <br />
 <div id='freezefiles'>

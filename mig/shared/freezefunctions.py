@@ -69,7 +69,7 @@ def build_freezeitem_object(configuration, freeze_dict):
                                 ].timetuple()),
         'frozenfiles': freeze_files,
         }
-    for field in ('author', 'organization', 'publish', 'flavor'):
+    for field in ('author', 'department', 'organization', 'publish', 'flavor'):
         if not freeze_dict.get(field.upper(), None) is None:
             freeze_obj[field] = freeze_dict[field.upper()]
     return freeze_obj
