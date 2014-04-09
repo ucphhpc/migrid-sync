@@ -50,7 +50,7 @@ def my_id():
     return extract_client_id()
 
 
-def stub(function, user_arguments_dict):
+def stub(function, configuration, user_arguments_dict):
     """Run backend function with supplied arguments"""
 
     before_time = time.time()
@@ -58,7 +58,17 @@ def stub(function, user_arguments_dict):
     # get ID of user currently logged in
 
     main = id
-    client_id = extract_client_id()
+    if configuration.user_openid_provider:
+        #  We can't import from useradm before environ is ready because it
+        # tries to use environ for conf loading
+        from shared.useradm import get_openid_user_map
+        id_map = get_openid_user_map(configuration)
+    else:
+        id_map = None
+    
+    # get and log ID of user currently logged in
+
+    client_id = extract_client_id(id_map)
     output_objects = []
     try:
         exec 'from %s import main' % function
@@ -117,6 +127,7 @@ def application(environ, start_response):
     # make sure print calls do not interfere with wsgi
 
     sys.stdout = sys.stderr
+    configuration = get_configuration_object()
     fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
                                     environ=environ)
     user_arguments_dict = fieldstorage_to_dict(fieldstorage)
@@ -128,10 +139,15 @@ def application(environ, start_response):
         output_format = user_arguments_dict['output_format'][0]
 
     try:
-        backend = os.path.basename(environ['SCRIPT_URL']).replace('.py'
-                , '')
+        # Environment contains python script _somewhere_ , try in turn
+        # and fall back to dashboard if all fails
+        script_path = environ.get('SCRIPT_URL', False) or \
+                      environ.get('PATH_INFO', False) or \
+                      environ.get('REQUEST_URI', 'dashboard.py').split('?')[0]
+        backend = os.path.basename(script_path).replace('.py' , '')
         module_path = 'shared.functionality.%s' % backend
-        (output_objs, ret_val) = stub(module_path, user_arguments_dict)
+        (output_objs, ret_val) = stub(module_path, configuration,
+                                      user_arguments_dict)
         status = '200 OK'
     except Exception, exc:
         status = '500 ERROR'
@@ -159,7 +175,6 @@ def application(environ, start_response):
         start_entry['headers'] = default_headers
     response_headers = start_entry['headers']
 
-    configuration = get_configuration_object()
     output = format_output(configuration, ret_code, ret_msg, output_objs, output_format)
     if not [i for i in response_headers if 'Content-Length' == i[0]]:
         response_headers.append(('Content-Length', str(len(output))))
