@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# updatevgrid - [insert a few words of module description on this line]
+# updatevgrid - update or repair vgrid components
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -55,7 +55,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id)
+        initialize_main_variables(client_id, op_header=False)
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -82,12 +82,13 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = "Update VGrid: %s" % vgrid_name
 
-    title_entry['javascript'] = '''
+    title_entry['style'] = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-
+'''
+    title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
@@ -119,7 +120,7 @@ $(document).ready(function() {
  </div>
 '''                       })
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
+    output_objects.append({'object_type': 'header', 'text'
                           : "Update '%s'" % vgrid_name })
 
     if not vgrid_is_owner(vgrid_name, client_id, configuration):

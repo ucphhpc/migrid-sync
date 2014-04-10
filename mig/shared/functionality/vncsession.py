@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vncsession - Start a new VNC session
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -85,7 +85,7 @@ def main(client_id, user_arguments_dict):
 
     script = \
         """
-    <script type="text/javascript">
+    <script type='text/javascript'>
       function endVNC () {
       if (!window.XMLHttpRequest)
         var httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
@@ -295,7 +295,7 @@ def main(client_id, user_arguments_dict):
             logger.error('%s' % ret)
             return (output_objects, status)
 
-        html = \
+    html = \
             '''Opening embedded vnc applet here:<br />
 <b>This will only work if your browser includes a java plugin!</b><br />
 <applet code="vncviewer" archive="vncviewer.jar" codebase="%s/vnc/" width="%s" height="%s">
@@ -305,18 +305,11 @@ def main(client_id, user_arguments_dict):
 <br />
 VNC port: %s<br />
 Display number: %s<p>
-'''\
-             % (
-            configuration.migserver_http_url,
-            repr(int(width) + 50),
-            repr(int(height) + 50),
-            repr(vnc_port),
-            password,
-            vnc_port,
-            display_number,
-            )
+''' % (configuration.migserver_http_url, repr(int(width) + 50),
+       repr(int(height) + 50), repr(vnc_port), password, vnc_port,
+       display_number)
     output_objects.append({'object_type': 'html_form', 'text': html})
-
+        
     # TODO: remove temp passwdfile. This should be done when the display has been left.
     # It can't be removed now, since Xvnc reads the password when clients connects again.
 

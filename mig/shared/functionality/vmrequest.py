@@ -46,6 +46,9 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
+    output_objects.append({'object_type': 'header', 'text':
+                           '%s Request Virtual Machine' % \
+                           configuration.short_title})
     status = returnvalues.OK
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -61,16 +64,15 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Virtual Machines'
-    output_objects.append({'object_type': 'header', 'text':
-                           '%s Request Virtual Machine' % \
-                           configuration.short_title})
-    if not configuration.site_enable_vmachines:
-        output_objects.append({'object_type': 'error_text', 'text':
-                               "Virtual machines are disabled on this server"})
-        status = returnvalues.CLIENT_ERROR
-        return (output_objects, status)
 
-    build_form = """
+    if not configuration.site_enable_vmachines:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Virtual machines are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
+
+    build_form = '''
 <form method="post" action="vmachines.py">
 <input type="hidden" name="output_format" value="html">
 <input type="hidden" name="action" value="create">
@@ -92,11 +94,11 @@ def main(client_id, user_arguments_dict):
   <td>
   
 <select name="os">
-"""
+'''
     for os in vms.available_os_list(configuration):
         build_form += '<option value="%s">%s</option>\n' % \
                       (os, os.capitalize())
-    build_form += """
+    build_form += '''
 </select>
 
   </td>
@@ -106,7 +108,7 @@ def main(client_id, user_arguments_dict):
   <td>
   
 <select name="flavor">
-"""
+'''
     for flavor in vms.available_flavor_list(configuration):
         build_form += '<option value="%s">%s</option>\n' % \
                       (flavor, flavor.capitalize())
@@ -128,7 +130,7 @@ like VBOX3.1-IMAGES-2010-1 for ubuntu-10.* versions.</td>
     for sys_re in vms.available_sys_re_list(configuration):
         build_form += '<option value="%s">%s</option>\n' % \
                       (sys_re, sys_re)
-    build_form += """
+    build_form += '''
 </select>
 
   </td>
@@ -145,7 +147,7 @@ like VBOX3.1-IMAGES-2010-1 for ubuntu-10.* versions.</td>
   <td style="width: 20%;">Software</td>
   <td>
 <input type=text size=80 name="machine_software" readonly
-value='iptables acpid x11vnc xorg gdm xfce4 gcc make netsurf python-openssl' />
+value="iptables acpid x11vnc xorg gdm xfce4 gcc make netsurf python-openssl" />
   </td>
 </tr>
 </table>
@@ -154,6 +156,6 @@ value='iptables acpid x11vnc xorg gdm xfce4 gcc make netsurf python-openssl' />
 <input type="submit" value="Submit machine request!">
 
 </form>
-"""
+'''
     output_objects.append({'object_type': 'html_form', 'text': build_form})
     return (output_objects, status)

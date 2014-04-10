@@ -50,16 +50,47 @@ def signature():
     defaults = {'path': [''], 'current_dir': ['']}
     return ['html_form', defaults]
 
-def advanced_editor_deps(include_jquery=True):
-    """Add js and css dependencies for advanced editor"""
-    out = ''
-    if include_jquery:
-        out += '<script type="text/javascript" src="/images/js/jquery.js"></script>'
-    out += '''<!-- MartkItUp configuration -->
+def advanced_editor_css_deps():
+    """Add css dependencies for advanced editor"""
+    css = '''
+<!-- MartkItUp style -->
 <link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/skins/markitup/style.css" />
 <link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/txt2tags/style.css" title="txt2tags"/>
 <link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/html/style.css" title="html"/>
 
+<!-- style fixes -->
+<style type="text/css">
+<!--
+/* fancy editor switcher */
+#switcher {
+    padding: 2px;
+}
+#switcher li {
+    list-style:none;
+    float:left;
+    padding: 4px;
+}
+#switcher .currentSet {
+    font-weight:bold;
+    color:#990066;
+}
+
+/* prevent menu float from interfering with editor button header */
+.markItUp {
+    overflow: auto;
+}
+-->
+</style>
+'''
+    return css
+
+def advanced_editor_js_deps(include_jquery=True):
+    """Add js dependencies for advanced editor"""
+    js = ''
+    if include_jquery:
+        js += '<script type="text/javascript" src="/images/js/jquery.js"></script>'
+    js += '''
+<!-- MartkItUp scripts -->
 <script type="text/javascript" src="/images/lib/markitup/markitup/jquery.markitup.js"></script>
 <script type="text/javascript" src="/images/lib/markitup/markitup/sets/html/set.js"></script>
 <script type="text/javascript">
@@ -116,32 +147,8 @@ myTxt2TagsSettings["nameSpace"] = "txt2tags";
     $("#switcher .currentSet").click();
     });
 </script>
-<style type="text/css">
-<!--
-/* fancy editor switcher */
-#switcher {
-    padding: 2px;
-}
-#switcher li {
-    list-style:none;
-    float:left;
-    padding: 4px;
-}
-#switcher .currentSet {
-    font-weight:bold;
-    color:#990066;
-}
-
-
-/* prevent menu float from interfering with editor button header */
-.markItUp {
-    overflow: auto;
-}
-
--->
-</style>
 ''' 
-    return out
+    return js
 
 def lock_info(real_path, time_left):
     """This function generates javascript similar to that used in Moin Moin Wiki
@@ -244,7 +251,7 @@ Edit contents:<br />
     for line in text:
         html += line
 
-    html += '</textarea></form>'
+    html += '</textarea>'
     if 'switcher' in includes:
         html += '''
 <ul id="switcher">
@@ -356,8 +363,8 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s file web editor' % configuration.short_title
-    title_entry['javascript'] = ''
-    title_entry['javascript'] += advanced_editor_deps()
+    title_entry['style'] = advanced_editor_css_deps()
+    title_entry['javascript'] = advanced_editor_js_deps()
     title_entry['javascript'] += lock_info('this file', -1)
     output_objects.append({'object_type': 'header', 'text'
                           : 'Editing file in %s home directory' % \

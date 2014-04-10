@@ -37,7 +37,7 @@ from shared.freezefunctions import freeze_flavors, create_frozen_archive
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
-from shared.safeinput import valid_path, html_escape
+from shared.safeinput import valid_path
 from shared.validstring import valid_user_path
 
 
@@ -154,9 +154,9 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Freezing archives is not enabled on this site.
-Please contact the Grid admins %s if you think it should be.
-''' % html_escape(configuration.admin_email)})
+                               '''Freezing archives is disabled on this site.
+Please contact the Grid admins %s if you think it should be enabled.
+''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 
     freeze_name = accepted['freeze_name'][-1].strip()

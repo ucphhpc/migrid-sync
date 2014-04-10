@@ -33,14 +33,14 @@ their home directories.
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert
-from shared.functionality.editor import advanced_editor_deps, lock_info, \
-     edit_file
+from shared.functionality.editor import advanced_editor_css_deps, \
+     advanced_editor_js_deps, lock_info, edit_file
 from shared.init import initialize_main_variables, find_entry, extract_menu
 
 def html_tmpl(configuration, title_entry):
     """HTML page base: some upload and menu entries depend on configuration"""
 
-    edit_includes = ['switcher']
+    edit_includes = ['switcher', 'save']
     fill_entries = {}
     if 'submitjob' in extract_menu(configuration, title_entry):
         fill_entries["menu_submit_entry"] = '''
@@ -294,10 +294,9 @@ def html_tmpl(configuration, title_entry):
     '''
     return html
 
-def js_tmpl(entry_path='/'):
-    """Javascript to include in the page header"""
-
-    js = '''
+def css_tmpl():
+    """Stylesheets to include in the page header"""
+    css = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.contextmenu.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
@@ -308,7 +307,13 @@ def js_tmpl(entry_path='/'):
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.custom.css" media="screen"/>
+'''
+    css += advanced_editor_css_deps()
+    return css
 
+def js_tmpl(entry_path='/'):
+    """Javascript to include in the page header"""
+    js = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
@@ -404,7 +409,7 @@ def js_tmpl(entry_path='/'):
 {% } %}
 </script>
 '''
-    js += advanced_editor_deps(include_jquery=False)
+    js += advanced_editor_js_deps(include_jquery=False)
     js += lock_info('this file', -1)
     js += '''
 <script type="text/javascript">
@@ -479,7 +484,8 @@ def main(client_id, user_arguments_dict):
     entry_path = all_paths[-1]
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'File Manager'
-    title_entry['javascript'] = js_tmpl(entry_path)                
+    title_entry['style'] = css_tmpl()
+    title_entry['javascript'] = js_tmpl(entry_path)
     
     output_objects.append({'object_type': 'header', 'text': 'File Manager' })
     output_objects.append({'object_type': 'html_form', 'text':

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # uploadprogress - Plain file upload progress monitor back end
-# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -72,11 +72,11 @@ def main(client_id, user_arguments_dict):
     size_list = [int(size) for size in accepted['size']]
 
     refresh_secs = 5
-    script = '<meta http-equiv="refresh" content="%s" />' % refresh_secs
+    meta = '<meta http-equiv="refresh" content="%s" />' % refresh_secs
     
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s Upload Progress Monitor' % configuration.short_title
-    title_entry['javascript'] = script
+    title_entry['meta'] = meta
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -142,7 +142,7 @@ def main(client_id, user_arguments_dict):
     # Stop reload when all done
     
     if not False in done_list:
-        title_entry['javascript'] = ''
+        title_entry['meta'] = ''
         
     output_objects.append({'object_type': 'progress_list',
                            'progress_list': progress_items})

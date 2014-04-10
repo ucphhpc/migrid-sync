@@ -79,14 +79,17 @@ def create_monitor(vgrid_name):
         'short_title': configuration.short_title,
         }
 
-    html = get_cgi_html_header(configuration,
+    html = get_cgi_html_header(
+        configuration,
         '%(short_title)s Monitor, VGrid %(vgrid_name)s' % html_vars,
         '',
         True,
         '''<meta http-equiv="refresh" content="%(sleep_secs)s" />
-
+        ''' % html_vars,
+        '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-
+        ''',                       
+        '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 
@@ -118,7 +121,7 @@ $(document).ready(function() {
      }
 );
 </script>
-''' % html_vars,
+        ''',
         '',
         False,
         )

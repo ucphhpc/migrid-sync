@@ -33,7 +33,6 @@ from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
      build_freezeitem_object, freeze_flavors
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
-from shared.safeinput import html_escape
 
 
 def signature():
@@ -75,19 +74,20 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Freezing archives is not enabled on this site.
-Please contact the Grid admins %s if you think it should be.
-''' % html_escape(configuration.admin_email)})
+                               '''Freezing archives is disabled on this site.
+Please contact the Grid admins %s if you think it should be enabled.
+''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 
     # jquery support for tablesorter
 
-    title_entry['javascript'] = '''
+    title_entry['style'] = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-
+'''
+    title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>

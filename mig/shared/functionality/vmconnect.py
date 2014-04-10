@@ -47,6 +47,8 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
+    output_objects.append({'object_type': 'header', 'text':
+                           '%s Virtual Desktop' % configuration.short_title})
     status = returnvalues.OK
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -62,14 +64,13 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Virtual Machines'
-    output_objects.append({'object_type': 'header', 'text':
-                           '%s Virtual Desktop' % configuration.short_title})
 
     if not configuration.site_enable_vmachines:
-        output_objects.append({'object_type': 'error_text', 'text':
-                               "Virtual machines are disabled on this server"})
-        status = returnvalues.CLIENT_ERROR
-        return (output_objects, status)
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Virtual machines are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
 
     settings_dict = load_settings(client_id, configuration)
     if not settings_dict or not settings_dict.has_key('VNCDISPLAY'):

@@ -50,9 +50,9 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Frozen archives'})
     defaults = signature()[1]
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'Frozen Archives'
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -64,14 +64,18 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Frozen Archives'
+
     # jquery support for tablesorter and confirmation on "leave":
 
-    title_entry['javascript'] = '''
+    title_entry['style'] = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-
+'''
+    title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js">
@@ -126,13 +130,12 @@ $(document).ready(function() {
        style="display:none;"></textarea>
  </div>
 '''                       })
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Frozen archives'})
 
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'text', 'text':
-                           '''Freezing archives is not enabled on this site.
-    Please contact the Grid admins if you think it should be.'''})
+                               '''Freezing archives is disabled on this site.
+Please contact the Grid admins %s if you think it should be enabled.
+''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 
     output_objects.append(

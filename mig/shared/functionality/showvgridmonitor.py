@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# showvgridmonitor - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# showvgridmonitor - show private vgrid monitor to vgrid participants
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""Show the monitor page for requested vgrids - all_vgrids keyword for all allowed vgrids"""
+"""Show the monitor page for requested vgrids - all_vgrids keyword for all
+allowed vgrids"""
 
 import os
 
@@ -60,10 +61,12 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    script = '''<meta http-equiv="refresh" content="%s" />
-    
+    meta = '''<meta http-equiv="refresh" content="%s" />
+''' % configuration.sleep_secs
+    style = '''    
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-
+'''
+    script = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 
@@ -95,10 +98,12 @@ $(document).ready(function() {
      }
 );
 </script>
-''' % configuration.sleep_secs
+'''
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s Monitor' % configuration.short_title
+    title_entry['meta'] = meta
+    title_entry['style'] = style
     title_entry['javascript'] = script
 
     allowed_vgrids = user_allowed_vgrids(configuration, client_id)

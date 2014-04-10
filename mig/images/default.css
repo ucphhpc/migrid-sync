@@ -554,11 +554,11 @@ table th.icon {
   font-weight: bold;
 }
 
-.errortext {
+.errortext, .criticaltext {
   color: red;
 }
 
-.warningtext {
+.warningtext, .importanttext {
   color: orange;
 }
 

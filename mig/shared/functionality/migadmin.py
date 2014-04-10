@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migadmin - admin control panel with daemon status monitor
-# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -72,10 +72,12 @@ def main(client_id, user_arguments_dict):
     job_list = accepted['job_id']
     lines = int(accepted['lines'][-1])
 
-    script = '''<meta http-equiv="refresh" content="%s" />
-    
+    meta = '''<meta http-equiv="refresh" content="%s" />
+''' % configuration.sleep_secs
+    style = '''    
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-
+'''
+    script = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 
 <script type="text/javascript" >
@@ -83,10 +85,12 @@ def main(client_id, user_arguments_dict):
 $(document).ready(function() {
 );
 </script>
-''' % configuration.sleep_secs
+'''
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s administration panel' % configuration.short_title
+    title_entry['meta'] = meta
+    title_entry['style'] = style
     title_entry['javascript'] = script
 
     if not is_admin(client_id, configuration, logger):
@@ -171,6 +175,12 @@ $(document).ready(function() {
                     'im_notify.py']
     if configuration.site_enable_sftp:
         daemon_names.append('grid_sftp.py')
+    if configuration.site_enable_davs:
+        daemon_names.append('grid_davs.py')
+    if configuration.site_enable_ftps:
+        daemon_names.append('grid_ftps.py')
+    if configuration.site_enable_openid:
+        daemon_names.append('grid_openid.py')
     for proc in daemon_names:
         pgrep_proc = subprocess.Popen(['pgrep', '-f', proc],
                                       stdout=subprocess.PIPE,

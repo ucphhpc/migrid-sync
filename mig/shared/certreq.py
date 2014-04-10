@@ -32,15 +32,19 @@ from safeinput import name_extras, password_extras, password_min_len, \
     password_max_len, valid_password_chars, valid_name_chars, dn_max_len
 
 
-def js_helpers(fields):
-    """Javascript to include in the cert/ext req page header"""
-
-    js = '''
+def cert_css_helpers():
+    """Stylesheets to include in the cert/ext req page header"""
+    css = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
+'''
+    return css
 
+def cert_js_helpers(fields):
+    """Javascript to include in the cert/ext req page header"""
+    js = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>

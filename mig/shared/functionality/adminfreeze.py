@@ -32,7 +32,6 @@ from shared.defaults import upload_tmp_dir
 from shared.freezefunctions import freeze_flavors
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
-from shared.safeinput import html_escape
 
 def signature():
     """Signature of the main function"""
@@ -72,14 +71,14 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Freezing archives is not enabled on this site.
-Please contact the Grid admins %s if you think it should be.
-''' % html_escape(configuration.admin_email)})
+                               '''Freezing archives is disabled on this site.
+Please contact the Grid admins %s if you think it should be enabled.
+''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 
     # jquery support for dynamic addition of copy/upload fields
 
-    title_entry['javascript'] = '''
+    title_entry['style'] = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.contextmenu.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
@@ -90,7 +89,8 @@ Please contact the Grid admins %s if you think it should be.
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.custom.css" media="screen"/>
-
+'''
+    title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>

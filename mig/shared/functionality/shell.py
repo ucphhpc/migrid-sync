@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# shell - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# shell - advanced shell
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -63,13 +63,16 @@ def main(client_id, user_arguments_dict):
     if accepted['menu'][-1] == 'no':
         title_entry['skipmenu'] = True
         title_entry['skipwidgets'] = True
-        title_entry['javascript'] = '''
+        title_entry['style'] = '''
 <style type="text/css">
 #content { margin: 10px }
 </style>'''
-    # Please have href points to the CSS file and have basedir changed to the directory where JavaScripts are placed.
-    title_entry['javascript']+='''
-<link rel="stylesheet" type="text/css" href="/images/css/shell.css"/>
+    # Please have href points to the CSS file and have basedir changed to the
+    # directory where JavaScripts are placed.
+    title_entry['style'] += '''
+<link rel="stylesheet" type="text/css" href="/images/css/shell.css" media="screen"/>
+'''
+    title_entry['javascript'] = '''
 <script type="text/javascript">
   var  basedir="/images/js/";
 

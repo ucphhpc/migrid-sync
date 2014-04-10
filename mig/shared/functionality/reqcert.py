@@ -32,10 +32,11 @@ import os
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.certreq import valid_password_chars, valid_name_chars, \
-    password_min_len, password_max_len, js_helpers
-from shared.init import initialize_main_variables, find_entry
+    password_min_len, password_max_len, cert_css_helpers, cert_js_helpers
 from shared.functional import validate_input
+from shared.init import initialize_main_variables, find_entry
 from shared.useradm import distinguished_name_to_user
+from shared.safeinput import html_escape
 
 
 def signature():
@@ -61,11 +62,12 @@ def main(client_id, user_arguments_dict):
     title_entry['skipmenu'] = True
     form_fields = ['full_name', 'organization', 'email', 'country', 'state',
                    'password', 'verifypassword', 'comment']
-    title_entry['javascript'] = js_helpers(form_fields)
+    title_entry['style'] = cert_css_helpers()
+    title_entry['javascript'] = cert_js_helpers(form_fields)
     output_objects.append({'object_type': 'html_form',
                            'text':'''
  <div id="contextual_help">
-  <div class="help_gfx_bubble"><!--- graphically connect field with help text---></div>
+  <div class="help_gfx_bubble"><!-- graphically connect field with help text --></div>
   <div class="help_message"><!-- filled by js --></div>
  </div>
 '''                       })
@@ -116,8 +118,8 @@ old files, jobs and privileges.</p>''' % \
         user_fields.update(distinguished_name_to_user(client_id))
 
     user_fields.update({
-        'valid_name_chars': valid_name_chars,
-        'valid_password_chars': valid_password_chars,
+        'valid_name_chars': html_escape(valid_name_chars),
+        'valid_password_chars': html_escape(valid_password_chars),
         'password_min_len': password_min_len,
         'password_max_len': password_max_len,
         'site': configuration.short_title
@@ -125,9 +127,11 @@ old files, jobs and privileges.</p>''' % \
 
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
-Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the certificate request to the %(site)s administrators.<p>
-<b><font color='red'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br />
-That is, if You're a student/employee at KU, please enter institute acronym (NBI, DIKU, etc.) in the Organization field and use your corresponding USER@ACRONYM.dk or USER@*.ku.dk address in the Email field.</font></b></p>
+Please enter your information in at least the <span class=mandatory>mandatory</span> fields below and press the Send button to submit the certificate request to the %(site)s administrators.
+<p class='criticaltext highlight_message'>
+IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br />
+That is, if You're a student/employee at KU, please enter institute acronym (NBI, DIKU, etc.) in the Organization field and use your corresponding USER@ACRONYM.dk or USER@*.ku.dk address in the Email field.
+</p>
 <hr />
 <div class=form_container>
 <!-- use post here to avoid field contents in URL -->
@@ -141,15 +145,15 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
 <tr><td class='mandatory label'>Password</td><td><input id='password_field' type=password name=password maxlength=%(password_max_len)s value='%(password)s' /> </td><td class=fill_space><br /></td></tr>
 <tr><td class='mandatory label'>Verify password</td><td><input id='verifypassword_field' type=password name=verifypassword maxlength=%(password_max_len)s value='%(verifypassword)s' /></td><td class=fill_space><br /></td></tr>
 <tr><td class='optional label'>Optional comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea id='comment_field' rows=4 name=comment></textarea></td><td class=fill_space><br /></td></tr>
-<tr><td class='label'><!--- empty area ---></td><td><input id='submit_button' type=submit value=Send /></td><td class=fill_space><br /></td></tr>
+<tr><td class='label'><!-- empty area --></td><td><input id='submit_button' type=submit value=Send /></td><td class=fill_space><br /></td></tr>
 </table>
 </form>
 </div>
 <hr />
-<p>
+<br />
 <div class='warn_message'>Please note that passwords may be accessible to the %(site)s administrators!</div>
-</p>
-<!--- Hidden help text --->
+<br />
+<!-- Hidden help text -->
 <div id='help_text'>
   <div id='full_name_help'>Your full name, restricted to the characters in '%(valid_name_chars)s'</div>
   <div id='organization_help'>Organization name or acronym  matching email</div>
@@ -160,8 +164,7 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
   <div id='verifypassword_help'>Please repeat password</div>
   <div id='comment_help'>Optional, but a short informative comment may help us verify your certificate needs and thus speed up our response.</div>
 </div>
-"""
-                           % user_fields})
+""" % user_fields})
 
     return (output_objects, returnvalues.OK)
 

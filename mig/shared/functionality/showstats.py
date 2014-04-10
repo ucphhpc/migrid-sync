@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showstats - read statistics from couchdb and display them 
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -429,36 +429,39 @@ The query you have requested did not return any data.
                     ,'summary': [bar_default + cols]
                     ,'vgrid': [bar_default + cols]
                        }
-    include_viz = """
+    include_viz_css = '''
+         <link rel="stylesheet" type="text/css" 
+             href="/images/css/stats.visualize.css" />
+'''
+    include_viz_js = '''
 <!-- 
  http://www.filamentgroup.com/lab/jquery_visualize_plugin_accessible_charts_graphs_from_tables_html5_canvas/ 
  http://github.com/marclove/jquery-visualize
 -->
-         <link rel="stylesheet" type="text/css" 
-             href="/images/css/stats.visualize.css" />
          <script type="text/javascript" 
                  src="/images/js/jquery.js"></script>
          <script type="text/javascript" 
                  src="/images/js/visualize.jQuery.js"></script>
          <script type="text/javascript">
              jQuery(function(){
-"""
+'''
     for v in viz_options[display]:
-        include_viz += "$('.stats').visualize({" + v + "});"
-    include_viz +="""
+        include_viz_js += "$('.stats').visualize({" + v + "});"
+    include_viz_js +="""
                  });
          </script>
 """
 
 
-    include_viz += """
+    include_viz_css += """
     <style>
     .visualize {padding: 70px 40px %(height)spx;}
     </style>
     """%{'height': height}
     
     
-    title_entry['javascript'] = include_viz
+    title_entry['style'] = include_viz_css
+    title_entry['javascript'] = include_viz_js
 
     # and done
     return (output_objects, returnvalues.OK)

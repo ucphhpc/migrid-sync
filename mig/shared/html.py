@@ -163,6 +163,8 @@ def get_cgi_html_header(
     title,
     header,
     html=True,
+    meta='',
+    styles='',
     scripts='',
     bodyfunctions='',
     menu=True,
@@ -177,18 +179,17 @@ def get_cgi_html_header(
         return ''
 
     # Use HTML5
-    out = \
-        '''<!DOCTYPE html>
+    out = '''<!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
-<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+<!-- page specific meta tags -->
+%s
 
-<link rel="icon" type="image/vnd.microsoft.icon" href="%s"/>
-
-%s''' % (configuration.site_default_css, configuration.site_user_css,
-            configuration.site_fav_icon, scripts)
+<!-- site default style -->
+<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+''' % (meta, configuration.site_default_css)
+    user_styles = ''
     user_scripts = ''
     user_pre_menu = ''
     user_post_menu = ''
@@ -198,6 +199,7 @@ def get_cgi_html_header(
         pre_menu = '\n'.join(user_widgets.get('PREMENU', ['<!-- empty -->']))
         post_menu = '\n'.join(user_widgets.get('POSTMENU', ['<!-- empty -->']))
         pre_content = '\n'.join(user_widgets.get('PRECONTENT', ['<!-- empty -->']))
+        user_styles += '<!-- begin user supplied style dependencies -->'
         user_scripts += '<!-- begin user supplied script dependencies -->'
         for dep in script_deps:
             # Avoid reloading already included scripts
@@ -207,9 +209,10 @@ def get_cgi_html_header(
 <script type="text/javascript" src="/images/js/%s"></script>
 ''' % dep
                 elif dep.endswith('.css'):
-                    user_scripts += '''
+                    user_styles += '''
 <link rel="stylesheet" type="text/css" href="/images/css/%s" media="screen"/>
 ''' % dep
+        user_styles += '<!-- end user supplied style dependencies -->'
         user_scripts += '<!-- end user supplied script dependencies -->'
         user_pre_menu = '''<div class="premenuwidgets">
 <!-- begin user supplied pre menu widgets -->
@@ -228,6 +231,21 @@ def get_cgi_html_header(
 </div>''' % pre_content
         
     out += '''
+<!-- specific page styles -->
+%s
+
+%s
+
+<!-- override with any site-specific styles -->
+<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+<!-- finally override with user-specific styles -->
+<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+
+<link rel="icon" type="image/vnd.microsoft.icon" href="%s"/>
+
+<!-- specific page scripts -->
+%s
+
 %s
 <title>
 %s
@@ -242,8 +260,10 @@ def get_cgi_html_header(
 %s
 </span>
 </div>
-''' % (user_scripts, title, bodyfunctions, configuration.site_logo_image,
-            configuration.site_logo_text)
+''' % (styles, user_styles, configuration.site_custom_css,
+       configuration.site_user_css, configuration.site_fav_icon, scripts,
+       user_scripts, title, bodyfunctions, configuration.site_logo_image,
+       configuration.site_logo_text)
     menu_lines = ''
     if menu:
         maximize = ''

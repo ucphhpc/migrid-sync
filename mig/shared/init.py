@@ -44,10 +44,12 @@ def make_start_entry(headers=[]):
     """Create start entry for output_objects"""
     return make_basic_entry('start', {'headers': headers})
 
-def make_title_entry(text, javascript='', bodyfunctions='',
+def make_title_entry(text, meta='', style='', javascript='', bodyfunctions='',
                      skipmenu=False):
     """Create title entry for output_objects"""
     return make_basic_entry('title', {'text': text,
+                                      'meta': meta,
+                                      'style': style,
                                       'javascript': javascript,
                                       'bodyfunctions': bodyfunctions,
                                       'skipmenu': skipmenu,

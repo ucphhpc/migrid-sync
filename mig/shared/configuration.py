@@ -837,7 +837,7 @@ class Configuration:
         else:
             self.site_enable_vmachines = False
         if config.has_option('SITE', 'enable_freeze'):
-            self.site_enable_freeze = config.get('SITE', 'enable_freeze')
+            self.site_enable_freeze = config.getboolean('SITE', 'enable_freeze')
         else:
             self.site_enable_freeze = False
         if config.has_option('SITE', 'permanent_freeze'):
@@ -854,6 +854,10 @@ class Configuration:
             self.site_default_css = config.get('SITE', 'default_css')
         else:
             self.site_default_css = '%s/site.css' % self.site_styles
+        if config.has_option('SITE', 'custom_css'):
+            self.site_custom_css = config.get('SITE', 'custom_css')
+        else:
+            self.site_custom_css = '%s/site-custom.css' % self.site_styles
         if config.has_option('SITE', 'user_css'):
             self.site_user_css = config.get('SITE', 'user_css')
         else:

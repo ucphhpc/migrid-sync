@@ -30,7 +30,8 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.certreq import valid_name_chars, dn_max_len, js_helpers
+from shared.certreq import valid_name_chars, dn_max_len, cert_css_helpers, \
+     cert_js_helpers
 from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
 from shared.useradm import distinguished_name_to_user
@@ -66,11 +67,12 @@ def main(client_id, user_arguments_dict):
     title_entry['skipmenu'] = True
     form_fields = ['cert_id', 'cert_name', 'organization', 'email', 'country', 'state',
                    'comment']
-    title_entry['javascript'] = js_helpers(form_fields)
+    title_entry['style'] = cert_css_helpers()
+    title_entry['javascript'] = cert_js_helpers(form_fields)
     output_objects.append({'object_type': 'html_form',
                            'text':'''
  <div id="contextual_help">
-  <div class="help_gfx_bubble"><!--- graphically connect field with help text---></div>
+  <div class="help_gfx_bubble"><!-- graphically connect field with help text--></div>
   <div class="help_message"><!-- filled by js --></div>
  </div>
 '''                       })
@@ -95,9 +97,9 @@ This page is used to sign up for %(site)s with an existing certificate from a Ce
 You can use it if you already have a x509 certificate from another accepted CA. In this way you can simply use your existing certificate for %(site)s access instead of requesting a new one.
 <br />
 The page tries to auto load any certificate your browser provides and fill in the fields accordingly, but in case it can't guess all <span class=mandatory>mandatory</span> fields, you still need to fill in those.<br />
-Please enter any missing information below and press the Send button to submit the external certificate sign up request to the %(site)s administrators.<p>
-<b><font color='red'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br />
-That is, if You're a student/employee at KU, please enter institute acronym (NBI, DIKU, etc.) in the Organization field and use your corresponding USER@ACRONYM.dk or USER@*.ku.dk address in the Email field.</font></b></p>
+Please enter any missing information below and press the Send button to submit the external certificate sign up request to the %(site)s administrators.
+<p class='criticaltext highlight_message'>IMPORTANT: Please help us verify your identity by providing Organization and Email data that we can easily validate!<br />
+That is, if You're a student/employee at KU, please enter institute acronym (NBI, DIKU, etc.) in the Organization field and use your corresponding USER@ACRONYM.dk or USER@*.ku.dk address in the Email field.</p>
 <hr />
 <div class=form_container>
 <!-- use post here to avoid field contents in URL -->
@@ -110,11 +112,11 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
 <tr><td class='mandatory label'>Two letter country-code</td><td><input id='country_field' type=text name=country maxlength=2 value='%(country)s' /></td><td class=fill_space></td></tr>
 <tr><td class='optional label'>State</td><td><input id='state_field' type=text name=state value='%(state)s' /></td><td class=fill_space></td></tr>
 <tr><td class='optional label'>Comment or reason why you should<br />be granted a %(site)s certificate:</td><td><textarea id='comment_field' rows=4 name=comment></textarea></td><td class=fill_space></td></tr>
-<tr><td class='label'><!--- empty area ---></td><td><input id='submit_button' type='submit' value='Send' /></td><td class=fill_space></td></tr>
+<tr><td class='label'><!-- empty area --></td><td><input id='submit_button' type='submit' value='Send' /></td><td class=fill_space></td></tr>
 </table>
 </form>
 </div>
-<!--- Hidden help text --->
+<!-- Hidden help text -->
 <div id='help_text'>
   <div id='cert_id_help'>Must be the exact Distinguished Name (DN) of your certificate</div>
   <div id='cert_name_help'>Your full name, restricted to the characters in '%(valid_name_chars)s'</div>

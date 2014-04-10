@@ -67,6 +67,8 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
+    output_objects.append({'object_type': 'header', 'text':
+                           'Virtual Machines'})
     status = returnvalues.OK
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -93,40 +95,18 @@ def main(client_id, user_arguments_dict):
     sys_re = accepted['sys_re'][-1]
     action = accepted['action'][-1]
 
-    machine_req = {'memory': memory, 'disk': disk, 'cpu_count': cpu_count,
-                   'cpu_time': cpu_time, 'architecture': architecture,
-                   'vgrid': vgrid, 'os': os, 'flavor': flavor,
-                   'hypervisor_re': hypervisor_re, 'sys_re': sys_re}
-    
-    menu_items = ['vmrequest']
-
-    # Html fragments
-
-    submenu = render_menu(configuration, menu_class='navsubmenu',
-                          base_menu=[], user_menu=menu_items)
-
-    welcome_text = 'Welcome to your %s virtual machine management!' % \
-                   configuration.short_title
-    desc_text = '''On this page you can:
-<ul>
-    <li>Request Virtual Machines, by clicking on the button above</li>
-    <li>See your virtual machines in the list below.</li>
-    <li>Start, and connect to your Virtual Machine by clicking on it.</li>
-    <li>Edit or delete your Virtual Machine from the Advanced tab.</li>
-</ul>
-'''
-
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Virtual Machines'
 
     # jquery support for tablesorter and confirmation on "leave":
 
-    title_entry['javascript'] = '''
+    title_entry['style'] = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-
+'''
+    title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
@@ -152,6 +132,36 @@ $(document).ready(function() {
 </script>
 '''
 
+    if not configuration.site_enable_vmachines:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Virtual machines are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
+
+    machine_req = {'memory': memory, 'disk': disk, 'cpu_count': cpu_count,
+                   'cpu_time': cpu_time, 'architecture': architecture,
+                   'vgrid': vgrid, 'os': os, 'flavor': flavor,
+                   'hypervisor_re': hypervisor_re, 'sys_re': sys_re}
+    
+    menu_items = ['vmrequest']
+
+    # Html fragments
+
+    submenu = render_menu(configuration, menu_class='navsubmenu',
+                          base_menu=[], user_menu=menu_items)
+
+    welcome_text = 'Welcome to your %s virtual machine management!' % \
+                   configuration.short_title
+    desc_text = '''On this page you can:
+<ul>
+    <li>Request Virtual Machines, by clicking on the button above</li>
+    <li>See your virtual machines in the list below.</li>
+    <li>Start, and connect to your Virtual Machine by clicking on it.</li>
+    <li>Edit or delete your Virtual Machine from the Advanced tab.</li>
+</ul>
+'''
+
     output_objects.append({'object_type': 'html_form',
                            'text':'''
  <div id="confirm_dialog" title="Confirm" style="background:#fff;">
@@ -160,13 +170,6 @@ $(document).ready(function() {
  </div>
 '''})
     
-    output_objects.append({'object_type': 'header', 'text':
-                           'Virtual Machines'})
-    if not configuration.site_enable_vmachines:
-        output_objects.append({'object_type': 'text', 'text':
-                           '''Virtual Machines are not enabled on this site.
-    Please contact the Grid admins if you think they should be.'''})
-        return (output_objects, status)
     output_objects.append({'object_type': 'html_form', 'text': submenu})
     output_objects.append({'object_type': 'html_form', 'text'
                           : '<p>&nbsp;</p>'})

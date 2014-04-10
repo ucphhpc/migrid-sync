@@ -490,6 +490,12 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
         elif i['object_type'] == 'sectionheader':
             lines.append('<h3>%s</h3>' % html_escape(i['text']))
         elif i['object_type'] == 'title':
+            meta = ''
+            if i.has_key('meta'):
+                meta = i['meta']
+            style = ''
+            if i.has_key('style'):
+                style = i['style']
             javascript = ''
             if i.has_key('javascript'):
                 javascript = i['javascript']
@@ -514,6 +520,8 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 configuration, html_escape(i['text']),
                 '',
                 True,
+                meta,
+                style,
                 javascript,
                 bodyfunctions,
                 include_menu,
@@ -1835,6 +1843,8 @@ def format_output(
             out_obj = [{
                 'object_type': 'title',
                 'text': '%s error' % configuration.short_title,
+                'meta': '',
+                'style': '',
                 'javascript': '',
                 'bodyfunctions': '',
                 }] + out_obj
