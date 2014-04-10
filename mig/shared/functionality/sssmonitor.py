@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sssmonitor - Global SSS monitor back end
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -52,7 +52,10 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False,
                                   op_menu=client_id)
-
+    output_objects.append({'object_type': 'header', 'text'
+                          : '%s Screen Saver Sandbox Monitor' % \
+                            configuration.short_title 
+                          })
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
@@ -63,10 +66,12 @@ def main(client_id, user_arguments_dict):
     sort = accepted['sort'][-1]
     group_by = accepted['group_by'][-1].lower()
 
-    output_objects.append({'object_type': 'header', 'text'
-                          : '%s Screen Saver Sandbox Monitor' % \
-                            configuration.short_title 
-                          })
+    if not configuration.site_enable_sandboxes:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Sandbox resources are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
 
     # Load the user file
 

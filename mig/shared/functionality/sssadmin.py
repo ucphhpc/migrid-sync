@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sssadmin - SSS sandbox generator and monitor for individual users
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,8 +32,8 @@ import datetime
 import shared.returnvalues as returnvalues
 from shared.defaults import default_vgrid
 from shared.functional import validate_input, REJECT_UNSET
-from shared.init import initialize_main_variables
 from shared.gridstat import GridStat
+from shared.init import initialize_main_variables
 from shared.sandbox import load_sandbox_db, save_sandbox_db
 
 # sandbox db has the format: {username: (password, [list_of_resources])}
@@ -43,7 +43,6 @@ PW, RESOURCES = 0, 1
 
 def signature():
     """Signature of the main function"""
-
     defaults = {
         'username': REJECT_UNSET,
         'password': REJECT_UNSET,
@@ -52,108 +51,114 @@ def signature():
         }
     return ['html_form', defaults]
 
-
 def print_hd_selection():
     """Returns html section where a user chooses disc space"""
-
-    html = \
-        """<tr><td>How much disc space can 
-    you allow the sandbox to use?</td>
-    <td><select name='hd_size'>
-    <option value='100'>100 MB</option>
-    <option value='1000'>1 GB</option>
-    <option value='2000'>2 GB</option>
-    </select>
-    </td></tr>"""
+    html = """
+    <tr>
+        <td>How much disc space can you allow the sandbox to use?</td>
+        <td><select name='hd_size'>
+        <option value='100'>100 MB</option>
+        <option value='1000'>1 GB</option>
+        <option value='2000'>2 GB</option>
+        </select>
+        </td>
+    </tr>
+"""
     return html
-
 
 def print_net_selection():
     """Returns html section where a user chooses max download and upload speed"""
-
-    html = \
-        """<tr><td>What is the max download/upload bandwidth in kB/s
-    you will allow the sandbox to use?</td>
-    <td><select name='net_bw'>
-    <option value='0'>No limit</option>
-    <option value='2048'>2048/1024</option>
-    <option value='1024'>1024/512</option>
-    <option value='512'>512/256</option>
-    <option value='256' selected>256/128</option>
-    <option value='128'>128/64</option>
-    </select>
-    </td></tr>"""
+    html = """
+    <tr>
+        <td>What is the max download/upload bandwidth in kB/s you will allow
+the sandbox to use?</td>
+        <td><select name='net_bw'>
+        <option value='0'>No limit</option>
+        <option value='2048'>2048/1024</option>
+        <option value='1024'>1024/512</option>
+        <option value='512'>512/256</option>
+        <option value='256' selected>256/128</option>
+        <option value='128'>128/64</option>
+        </select>
+        </td>
+    </tr>
+"""
     return html
-
 
 def print_mem_selection():
     """Prints html section where a user amount of physical memory"""
-
-    html = \
-        """<tr><td>How much physical memory
-          does your PC have?</td>
-    <td><select name='memory'>
-    <option value='256'>256 MB</option>
-    <option value='512' selected>512 MB</option>
-    <option value='1024'>1 GB</option>
-    <option value='2048'>2 GB</option>
-    <option value='4096'>4 GB</option>
-    </select></td></tr>"""
+    html = """
+    <tr>
+        <td>How much physical memory does your PC have?</td>
+        <td><select name='memory'>
+        <option value='256'>256 MB</option>
+        <option value='512' selected>512 MB</option>
+        <option value='1024'>1 GB</option>
+        <option value='2048'>2 GB</option>
+        <option value='4096'>4 GB</option>
+        </select></td>
+    </tr>
+"""
     return html
-
 
 def print_os_selection():
     """Prints html section where a user chooses which OS he uses"""
-
-    html = \
-        """<tr><td align='left' colspan='1'>Which operating system 
-          are you using?</td>
-    <td><select name='operating_system'>
-    <option value='win'>Windows XP/Vista</option>
-    <option value='linux'>Linux</option>
-    </select></td></tr>"""
+    html = """
+    <tr>
+        <td>Which operating system are you using?</td>
+        <td><select name='operating_system'>
+        <option value='win'>Windows XP/Vista</option>
+        <option value='linux'>Linux</option>
+        </select></td>
+    </tr>
+"""
     return html
-
 
 def print_windows_solution_selection():
     """Prints html section where a user chooses whether he wants
     the screensaver or the windows service model"""
-
-    html = \
-        """<tr><td>If Windows, do you want 
-          the screensaver <br /> or the service model? If unsure, choose screensaver</td>
-    <td><select name='win_solution'>
-    <option value='screensaver'>Screensaver</option>
-    <option value='service'>Windows Service</option>
-    </select></td></tr>"""
+    html = """
+    <tr>
+        <td>If Windows, do you want the screensaver or the service model? If
+unsure, choose screensaver</td>
+        <td><select name='win_solution'>
+        <option value='screensaver'>Screensaver</option>
+        <option value='service'>Windows Service</option>
+        </select></td>
+    </tr>
+"""
     return html
-
 
 def print_expert_settings(display):
     """Prints html section where a user chooses whether he wants
     the advanced settings like image format and vgrid"""
-
     if display:
-        html = \
-            """<tr><td align='center' colspan='1'>Which kind of disk image would you like?</td>
-    <td><select name='image_format'>
-    <option value='qcow'>qcow</option>
-    <option value='raw'>raw</option>
-    </select></td></tr>
-    <tr><td align='center' colspan='1'>Which VGrid do you want the sandbox to work for?</td>
-    <td><select name='vgrid'>
-    <option value='%(default_vgrid)s'>%(default_vgrid)s</option>
-    </select></td></tr>
+        html = """
+    <tr>
+        <td>Which kind of disk image would you like?</td>
+        <td><select name='image_format'>
+        <option value='qcow'>qcow</option>
+        <option value='raw'>raw</option>
+        </select></td>
+    </tr>
+    <tr>
+        <td>Which VGrid do you want the sandbox to work for?
+        </td>
+        <td><select name='vgrid'>
+        <option value='%(default_vgrid)s'>%(default_vgrid)s</option>
+        </select></td>
+    </tr>
 """ % {'default_vgrid': default_vgrid}
     else:
-        html = \
-            """
-             <input type=hidden name='image_format' value='qcow' />
-             <input type='hidden' name='vgrid' value='%(default_vgrid)s' />
+        html = """
+    <tr>
+        <td colspan='2'>
+        <input type=hidden name='image_format' value='qcow' />
+        <input type='hidden' name='vgrid' value='%(default_vgrid)s' />
+        </td>
+    </tr>
 """ % {'default_vgrid': default_vgrid}
-
     return html
-
 
 def count_jobs(grid_stat, resource_name):
     """Counts number of jobs executed by given resource"""
@@ -164,7 +169,6 @@ def count_jobs(grid_stat, resource_name):
                                 resource_name, 'FINISHED')
     return value
 
-
 def sum_walltime(grid_stat, resource_name):
     """Sum total walltime used by jobs executed by given resource"""
 
@@ -174,18 +178,19 @@ def sum_walltime(grid_stat, resource_name):
                                 resource_name, 'USED_WALLTIME')
     return value
 
-
 def show_download(configuration, userdb, user, passwd, expert):
     """Shows download form"""
 
     # Download sandbox section
 
-    html = \
-        """<form method='post' action='ssscreateimg.py?MiG-SSS.zip'> 
+    html = """<form method='post' action='ssscreateimg.py?MiG-SSS.zip'> 
     <table class=sandboxcreateimg>
-    <tr class=title><td align='center' colspan='2'>
-    Download new sandbox
-    </td></tr>"""
+        <tr class='title'>
+            <td class='centertext' colspan='2'>
+            Download New Sandbox
+            </td>
+        </tr>
+"""
 
     html += print_hd_selection()
     html += print_mem_selection()
@@ -194,36 +199,39 @@ def show_download(configuration, userdb, user, passwd, expert):
     html += print_windows_solution_selection()
     html += print_expert_settings(expert)
 
-    html += \
-        """<tr><td>
-    <input type='hidden' name='username' value='%s' />
-    <input type='hidden' name='password' value='%s' />
-"""\
-         % (user, passwd)
-    html += """</td></tr>
-        """
-    html += \
-        """<tr><td>Press 'Submit' to download - please note that it 
-          may<br /> take up to 2 minutes to generate your sandbox</td>
-          <td align='center'><input type='submit' value='Submit' />
-          </form>
-          </td></tr>
-
+    html += """
+        <tr>
+            <td colspan='2'>
+            <input type='hidden' name='username' value='%s' />
+            <input type='hidden' name='password' value='%s' />
+            </td>
+        </tr>
+"""% (user, passwd)
+    html += """
+        <tr>
+            <td>Press 'Submit' to download - please note that it may take up
+to 2 minutes to generate your sandbox</td>
+            <td><input type='submit' value='Submit' />
+            </td>
+        </tr>
     </table>
-    <br />
-    <table class=sandboxadmin>
-    <tr><td align='center'>
-    Advanced users may want to fine tune the sandbox to download by switching to expert mode:
-    <form action='sssadmin.py' method='post'>
-    <input type='hidden' name='username' value='%s' />
-    <input type='hidden' name='password' value='%s' />
-    <input type='hidden' name='expert' value='%s' />
-    <input type='submit' value='Toggle expert mode' />
-    </form>
-    </td></tr>    
-    </table> 
-    """\
-         % (user, passwd, not expert)
+</form>
+<br />
+<table class=sandboxadmin>
+    <tr>
+        <td class='centertext'>
+        Advanced users may want to fine tune the sandbox to download by
+switching to expert mode:
+        <form action='sssadmin.py' method='post'>
+        <input type='hidden' name='username' value='%s' />
+        <input type='hidden' name='password' value='%s' />
+        <input type='hidden' name='expert' value='%s' />
+        <input type='submit' value='Toggle expert mode' />
+        </form>
+        </td>
+    </tr>    
+</table> 
+    """% (user, passwd, not expert)
     return html
 
 
@@ -233,7 +241,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, _) = \
         initialize_main_variables(client_id, op_header=False,
                                   op_menu=client_id)
-
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Personal Sandbox Administration and Monitor'})
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
@@ -241,6 +250,7 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'link', 'destination'
                               : 'ssslogin.py', 'text': 'Retry login'})
         return (accepted, returnvalues.CLIENT_ERROR)
+
     username = accepted['username'][-1].strip()
     password = accepted['password'][-1].strip()
     newuser = accepted['newuser'][-1].strip()
@@ -250,8 +260,12 @@ def main(client_id, user_arguments_dict):
         expert = True
     admin_email = configuration.admin_email
 
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Personal Sandbox Administration and Monitor'})
+    if not configuration.site_enable_sandboxes:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Sandbox resources are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
 
     # Load the user DB
 

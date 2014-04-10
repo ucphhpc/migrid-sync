@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sssgetresscript - Load current resource scripts for SSS
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -48,7 +48,6 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_title=False,
                                   op_menu=client_id)
-
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
@@ -69,6 +68,13 @@ def main(client_id, user_arguments_dict):
                                : 'SSS script download'})
     else:
         output_objects.append({'object_type': 'start'})
+
+    if not configuration.site_enable_sandboxes:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Sandbox resources are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
 
     (result, unique_resource_name) = get_resource_name(sandboxkey, logger)
     if not result:

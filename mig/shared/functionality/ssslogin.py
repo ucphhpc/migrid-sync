@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssslogin - SSS welcome and login backend
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -71,15 +71,21 @@ html['english'] = \
 </table>
 <br />
 <table class='sandboxlogin'>
-<tr><td align='center' colspan='1'>Choose a user name:</td>
-<td><input type='text' name='username' size='10' /></td></tr>
-
-<tr><td align='center' colspan='1'>Choose a password:</td>
-<td><input type='password' name='password' size='10' /></td></tr>
-
-<tr><td>I'm a new user</td><td align='left' colspan='1'><input type='checkbox' name='newuser' /></td></tr>
-
-<tr><td align='center' colspan='2'><input type='submit' value='Send' /></td></tr>
+<tr>
+<td class='righttext'>Choose a user name:</td>
+<td class='lefttext'><input type='text' name='username' size='10' /></td>
+</tr>
+<tr>
+<td class='righttext'>Choose a password:</td>
+<td class='lefttext'><input type='password' name='password' size='10' /></td>
+</tr>
+<tr>
+<td class='righttext'>I'm a new user</td>
+<td class='lefttext'><input type='checkbox' name='newuser' /></td>
+</tr>
+<tr>
+<td class='centertext' colspan='2'><input type='submit' value='Send' /></td>
+</tr>
 
 
 </table></form>
@@ -137,13 +143,20 @@ def main(client_id, user_arguments_dict):
                           : '%s Screen Saver Sandbox' % \
                             configuration.short_title
                             })
-
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
     language = accepted['language'][-1]
+
+    if not configuration.site_enable_sandboxes:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Sandbox resources are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
 
     if not language in html.keys():
         output_objects.append({'object_type': 'error_text', 'text'

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssscreateimg - Back end to SSS zip generator
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -72,11 +72,9 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False,
                                   op_menu=client_id)
-
     output_objects.append({'object_type': 'header', 'text'
                           : '%s Screen Saver Sandbox Download' % \
                             configuration.short_title })
-
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
@@ -103,6 +101,13 @@ def main(client_id, user_arguments_dict):
     ip_address = 'UNKNOWN'
     if os.environ.has_key('REMOTE_ADDR'):
         ip_address = os.environ['REMOTE_ADDR']
+
+    if not configuration.site_enable_sandboxes:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Sandbox resources are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
 
     # check that requested image format is valid
 

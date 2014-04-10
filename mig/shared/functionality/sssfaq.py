@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# sssfaq - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# sssfaq - SSS frequently asked questions
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -155,13 +155,20 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : '%s Screen Saver Sandbox FAQ' % \
                             configuration.short_title })
-
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
     language = accepted['language'][-1]
+
+    if not configuration.site_enable_sandboxes:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Sandbox resources are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
 
     if not language in html.keys():
         output_objects.append({'object_type': 'error_text', 'text'
