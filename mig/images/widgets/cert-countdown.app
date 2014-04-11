@@ -7,6 +7,14 @@ Requires: jquery.js, jquery.countdown.js, jquery.countdown.css
 -->
 <script type="text/javascript">
 $(document).ready(function() {
+    // Append custom css to head tag since inline style is not strictly valid
+    var extra_style = '<style type="text/css">\n';
+    extra_style += '  .hasCountdown { overflow: hidden; }\n';
+    extra_style += '  .highwarn { color: red; }\n';
+    extra_style += '  .midwarn { color: orange; }\n';
+    extra_style += '  .lowwarn { color: yellow; }\n';
+    extra_style += '</style>\n';
+    $('head').append(extra_style);
     $.getJSON("userstats.py?output_format=json;stats=certificate", {}, function(jsonRes, textStatus) {
         var i = 0;
         var certificate = null;
@@ -40,11 +48,5 @@ $(document).ready(function() {
     });
 });
 </script>
-<style type="text/css">
-    .hasCountdown { overflow: hidden; }
-    .highwarn { color: red; }
-    .midwarn { color: orange; }
-    .lowwarn { color: yellow; }
-</style>
 <h4>Certificate expires in:</h4>
-<div id="cert_countdown">No certificate data loaded.</div>
+<div id="cert_countdown" class="smallcontent">No certificate data loaded.</div>

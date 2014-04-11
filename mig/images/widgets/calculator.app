@@ -14,4 +14,3 @@ $(document).ready(function() {
 <div class="calculator">
 <p>Please enable Javascript to view this calculator widget.</p>
 </div>
-

@@ -17,4 +17,3 @@ $(document).ready(function() {
 <div class="simplecalendar">
 <p>Please enable Javascript to view this calendar widget.</p>
 </div>
-

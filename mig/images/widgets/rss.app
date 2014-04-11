@@ -17,4 +17,3 @@ $(document).ready(function() {
 <div class="rssfeed">
 <p>Please enable Javascript to view this rssfeed widget.</p>
 </div>
-

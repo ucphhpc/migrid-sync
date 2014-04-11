@@ -13,4 +13,3 @@ $(document).ready(function() {
 <div class="appoutput">
 <p>Please enable Javascript to view this hello widget.</p>
 </div>
-

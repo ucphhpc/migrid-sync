@@ -31,4 +31,3 @@ Requires: jquery.js
 <div class="gcal">
 <p>Please enable Javascript to view this google calendar widget.</p>
 </div>
-

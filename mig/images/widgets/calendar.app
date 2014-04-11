@@ -14,4 +14,3 @@ $(document).ready(function() {
 <div class="calendar">
 <p>Please enable Javascript to view this calendar widget.</p>
 </div>
-

@@ -15,4 +15,3 @@ $(document).ready(function() {
 <div class="epiclock">
 <p>Please enable Javascript to view this epiclock widget.</p>
 </div>
-

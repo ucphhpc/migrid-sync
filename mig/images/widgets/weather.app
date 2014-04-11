@@ -14,4 +14,3 @@ $(document).ready(function() {
 <div class="weatherfeed">
 <p>Please enable Javascript to view this weatherfeed widget.</p>
 </div>
-

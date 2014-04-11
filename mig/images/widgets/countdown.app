@@ -17,4 +17,3 @@ $(document).ready(function() {
 <div class="countdown">
 <p>Please enable Javascript to view this countdown widget.</p>
 </div>
-
