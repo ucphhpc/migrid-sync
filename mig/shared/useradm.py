@@ -643,12 +643,15 @@ def get_openid_user_map(configuration):
     user_map = load_user_db(db_path)
     user_alias = configuration.user_openid_alias
     for cert_id in user_map.keys():
-        url = configuration.user_openid_provider + client_alias(cert_id)
-        id_map[url] = cert_id
+        full = configuration.user_openid_provider + client_alias(cert_id)
+        id_map[full] = cert_id
         if user_alias:
             short_id = extract_field(cert_id, user_alias)
-            url = configuration.user_openid_provider + client_alias(short_id)
-            id_map[url] = cert_id
+            # Allow both raw alias field value and asciified alias
+            raw = configuration.user_openid_provider + short_id
+            enc = configuration.user_openid_provider + client_alias(short_id)
+            id_map[raw] = cert_id
+            id_map[enc] = cert_id
     return id_map
     
 def migrate_users(

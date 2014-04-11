@@ -176,6 +176,8 @@ def refresh_users(configuration, protocol):
         cur_usernames.append(user_alias)
         if conf['user_alias']:
             short_id = extract_field(user_id, conf['user_alias'])
+            # Allow both raw alias field value and asciified alias            
+            cur_usernames.append(short_id)
             logger.debug("find short_alias for %s" % short_alias)
             short_alias = client_alias(short_id)
             cur_usernames.append(short_alias)
@@ -219,6 +221,13 @@ def refresh_users(configuration, protocol):
             if short_id:
                 logger.debug(
                     "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
+                    (user_id, short_id, user_dir, user_key))
+                conf['users'].append(
+                    User(username=short_id, home=user_dir, password=None,
+                         public_key=user_key, chroot=True),
+                    )
+                logger.debug(
+                    "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
                     (user_id, short_alias, user_dir, user_key))
                 conf['users'].append(
                     User(username=short_alias, home=user_dir, password=None,
@@ -233,6 +242,13 @@ def refresh_users(configuration, protocol):
                      password=user_password, public_key=None, chroot=True))
             # Add short alias copy if user aliasing is enabled
             if short_id:
+                logger.debug(
+                    "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
+                    (user_id, short_id, user_dir, user_password))
+                conf['users'].append(
+                    User(username=short_id, home=user_dir,
+                         password=user_password, public_key=None, chroot=True),
+                    )
                 logger.debug(
                     "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
                     (user_id, short_alias, user_dir, user_password))

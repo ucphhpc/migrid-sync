@@ -369,6 +369,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             user_match = [client_alias(cert_id)]
             if user_alias:
                 short_id = extract_field(cert_id, user_alias)
+                # Allow both raw alias field value and asciified alias
+                user_match.append(short_id)
                 user_match.append(client_alias(short_id))
                 print "short alias for %s: %s" % (short_id, client_alias(short_id))
             if username in user_match:
