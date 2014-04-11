@@ -28,6 +28,7 @@
 """View and communicate with other users that allow it"""
 
 from binascii import hexlify
+from urllib import quote
 
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries, any_vgrid
@@ -158,7 +159,7 @@ $(document).ready(function() {
                                     {'object_type': 'link',
                                      'destination':
                                      'viewuser.py?cert_id=%s'\
-                                     % visible_user_id,
+                                     % quote(visible_user_id),
                                      'class': 'infolink',
                                      'title': 'View details for %s' % \
                                      visible_user_id, 
