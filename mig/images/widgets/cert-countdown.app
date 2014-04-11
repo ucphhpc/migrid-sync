@@ -9,6 +9,8 @@ Requires: jquery.js, jquery.countdown.js, jquery.countdown.css
 $(document).ready(function() {
     // Append custom css to head tag since inline style is not strictly valid
     var extra_style = '<style type="text/css">\n';
+    // remove padding to avoid seconds entry below rest in Chrome
+    extra_style += '  .countdown_row { padding: 0; }\n';
     extra_style += '  .hasCountdown { overflow: hidden; }\n';
     extra_style += '  .highwarn { color: red; }\n';
     extra_style += '  .midwarn { color: orange; }\n';
@@ -24,11 +26,15 @@ $(document).ready(function() {
         var high_days = 7;
         var day_msecs = 24*60*60*1000;
         var today = new Date();
+        var expire = new Date(today.getTime());
         // Grab results from json response and place them in resource status
         for(i=0; i<jsonRes.length; i++) {
             if (jsonRes[i].object_type == "user_stats") {
                 certificate = jsonRes[i].certificate;
-                var expire = new Date(certificate.expire);
+                // server returns -1 if no cert info is available
+                if (certificate.expire >= 0) {
+                    expire = new Date(certificate.expire);
+                }
                 $("#cert_countdown").html("");
                 $("#cert_countdown").countdown({until: expire});
                 // Use date from time diff in ms to avoid calendar mangling
