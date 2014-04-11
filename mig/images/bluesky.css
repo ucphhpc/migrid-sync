@@ -444,7 +444,7 @@ table.liveio table {
 }
 
 
-#content {
+#content, .content {
   /* background: #ccc; */
   background: #fff;
   border: 2px ridge #63a4f0;

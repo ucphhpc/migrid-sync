@@ -178,17 +178,6 @@ def get_cgi_html_header(
     if not html:
         return ''
 
-    # Use HTML5
-    out = '''<!DOCTYPE html>
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-<!-- page specific meta tags -->
-%s
-
-<!-- site default style -->
-<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
-''' % (meta, configuration.site_default_css)
     user_styles = ''
     user_scripts = ''
     user_pre_menu = ''
@@ -199,8 +188,6 @@ def get_cgi_html_header(
         pre_menu = '\n'.join(user_widgets.get('PREMENU', ['<!-- empty -->']))
         post_menu = '\n'.join(user_widgets.get('POSTMENU', ['<!-- empty -->']))
         pre_content = '\n'.join(user_widgets.get('PRECONTENT', ['<!-- empty -->']))
-        user_styles += '<!-- begin user supplied style dependencies -->'
-        user_scripts += '<!-- begin user supplied script dependencies -->'
         for dep in script_deps:
             # Avoid reloading already included scripts
             if dep and scripts.find(dep) == -1:
@@ -212,8 +199,6 @@ def get_cgi_html_header(
                     user_styles += '''
 <link rel="stylesheet" type="text/css" href="/images/css/%s" media="screen"/>
 ''' % dep
-        user_styles += '<!-- end user supplied style dependencies -->'
-        user_scripts += '<!-- end user supplied script dependencies -->'
         user_pre_menu = '''<div class="premenuwidgets">
 <!-- begin user supplied pre menu widgets -->
 %s
@@ -230,11 +215,27 @@ def get_cgi_html_header(
 <!-- end user supplied pre content widgets -->
 </div>''' % pre_content
         
-    out += '''
+    # Please note that we insert user widget styles after our own styles even
+    # though it means that dependencies may override defaults (e.g. zss* and
+    # jobman even/odd color. Such style clashes should be solved elsewhere.
+
+    # Use HTML5
+    out = '''<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<!-- page specific meta tags -->
+%s
+
+<!-- site default style -->
+<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+
 <!-- specific page styles -->
 %s
 
+<!-- begin user supplied style dependencies -->
 %s
+<!-- end user supplied style dependencies -->
 
 <!-- override with any site-specific styles -->
 <link rel="stylesheet" type="text/css" href="%s" media="screen"/>
@@ -246,7 +247,9 @@ def get_cgi_html_header(
 <!-- specific page scripts -->
 %s
 
+<!-- begin user supplied script dependencies -->
 %s
+<!-- end user supplied script dependencies -->
 <title>
 %s
 </title>
@@ -260,9 +263,10 @@ def get_cgi_html_header(
 %s
 </span>
 </div>
-''' % (styles, user_styles, configuration.site_custom_css,
-       configuration.site_user_css, configuration.site_fav_icon, scripts,
-       user_scripts, title, bodyfunctions, configuration.site_logo_image,
+''' % (meta, configuration.site_default_css, styles, user_styles,
+       configuration.site_custom_css, configuration.site_user_css,
+       configuration.site_fav_icon, scripts, user_scripts, title,
+       bodyfunctions, configuration.site_logo_image,
        configuration.site_logo_text)
     menu_lines = ''
     if menu:

@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# pubvgridprojs - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# pubvgridprojs - list vgrids with public project page
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,6 +25,10 @@
 # -- END_HEADER ---
 #
 
+"""List of public vgrid pages without cert requirement so that we can advertise
+them to the public (unused so far).
+"""
+
 import os
 
 import shared.returnvalues as returnvalues
@@ -44,20 +48,19 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Public project links'})
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Public project links'})
-
     vgrid_public_base = configuration.vgrid_public_base
     linklist = []
     for public_vgrid_dir in os.listdir(vgrid_public_base):
         if os.path.exists(os.path.join(vgrid_public_base,
-                          public_vgrid_dir, '.enable_public_page')):
+                          public_vgrid_dir, 'index.html')):
 
             # public project listing is enabled, link to the vgrid's public page
 
@@ -71,5 +74,3 @@ def main(client_id, user_arguments_dict):
                           : linklist})
 
     return (output_objects, returnvalues.OK)
-
-

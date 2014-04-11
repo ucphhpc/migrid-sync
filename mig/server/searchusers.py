@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # searchusers - Search in MiG user database
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -53,11 +53,8 @@ Where SEARCH_OPTIONS may be one or more of:
    -v                  Verbose output
 
 Each search value can be a string or a pattern with * and ? as wildcards.
-"""\
-         % {'name': name}
+""" % {'name': name}
 
-
-# ## Main ###
 
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()

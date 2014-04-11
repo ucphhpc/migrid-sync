@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scriptinput - Handles html form style input from user
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -102,7 +102,6 @@ def parse_input(user_arguments_dict, fields):
 
     return (parsed_input, error)
 
-
 def parse_argument(
     user_arguments_dict,
     name,
@@ -152,7 +151,6 @@ def parse_argument(
     else:
         safe = html_escape(raw)
     return (raw, safe, error)
-
 
 def fieldstorage_to_dict(fieldstorage, fields=[]):
     """Get a plain dictionary, rather than the '.value' system used by

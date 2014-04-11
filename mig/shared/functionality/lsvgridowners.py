@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# lsvgridowners - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# lsvgridowners - simple list of vgrid owners for a grid with access
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,9 @@
 # -- END_HEADER ---
 #
 
-"""List all user IDs in the list of owners for a given vgrid"""
+"""List all user IDs in the list of owners for a given vgrid if user is an
+owner of the vgrid.
+"""
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -56,6 +58,7 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
     vgrid_name = accepted['vgrid_name'][-1]
 
     # Validity of user and vgrid names is checked in this init function so
@@ -78,5 +81,3 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'list', 'list': msg})
     return (output_objects, returnvalues.OK)
-
-

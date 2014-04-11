@@ -132,11 +132,11 @@ def handle_update(configuration, client_id, resource_id, user_vars,
                                    '''Failed to send request with ID "%s" to
 the %s administrator(s):
 %s
-Please manually contact the %s server administrator(s) (%s)
+Please manually contact the %s grid administrator(s) (%s)
 and provide this information''' % (tmp_id, msg, 
                                    configuration.short_title, 
                                    configuration.short_title,
-                                   html_escape(configuration.admin_email))
+                                   configuration.admin_email)
                                })
             return False
         output += """Your creation request of the resource: <b>%s</b>
@@ -172,7 +172,7 @@ The %s server's public key should be in ~/.ssh/authorized_keys for the MiG
 user on the resource frontend. %s
 <br />
 Also, please note that %s resources require the curl command line tool from
-<a href="http://www.curl.haxx.se">cURL</a>. 
+<a href='http://www.curl.haxx.se'>cURL</a>. 
 <br />
 <a href='resadmin.py'>View existing resources</a> where your new resource 
 will also eventually show up.
@@ -182,7 +182,6 @@ will also eventually show up.
     output_objects.append({'object_type': 'html_form', 'text': output})
 
     return True
-
 
 
 def main(client_id, user_arguments_dict):

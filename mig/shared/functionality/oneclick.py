@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # oneclick - Oneclick resource backend
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -51,7 +51,6 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                         : '%s One-click resource' % configuration.short_title
                           })
-
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
@@ -60,6 +59,14 @@ def main(client_id, user_arguments_dict):
 
     debug = ('true' == accepted['debug'][0].lower())
     console = ('true' == accepted['console'][0].lower())
+
+    if not configuration.site_enable_sandboxes:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Sandbox resources are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
+
 
     (status, result) = get_resource(client_id, configuration, logger)
     if not status:
@@ -104,14 +111,17 @@ cputime: %(cputime)s
         output_objects.append({'object_type': 'text', 'text'
                                    : body})
     else:
-        body = \
-             """
-        <applet codebase='%(codebase)s' code='%(oneclick_code)s' archive='%(oneclick_archive)s' width='800' height='600'>
+        body = """
+        <object type='application/x-java-applet' height='600' width='800'>
+        <param name='codebase' value='%(codebase)s' />
+        <param name='code' value='%(oneclick_code)s' />
+        <param name='archive' value='%(oneclick_archive)s' />
         <param name='server' value='%(server)s'>
         <param name='sandboxkey' value='%(sandboxkey)s'>
         <param name='resource_name' value='%(resource_name)s'>
         <param name='cputime' value='%(cputime)s'>
-        </applet>
+        OneClick applet failed to run (requires Java plug-in).
+        </object>
         <p>
         Your computer will act as a %(site)s One-click resource as long as this browser
         window/tab remains open.
@@ -125,8 +135,11 @@ cputime: %(cputime)s
         Other Java implementations may <i>appear</i> to work but not really deliver job results correctly, so if you want to be sure, please install the Sun Java plugin.
         <br />
         Your browser provides the following Java information:<br />
-        <applet codebase='%(codebase)s' code='%(info_code)s' height='60' alt='Java plugin not installed or disabled' width='400'>
-        </applet>
+        <object type='application/x-java-applet' height='60' width='400'>
+        <param name='codebase' value='%(codebase)s' />
+        <param name='code' value='%(info_code)s' />
+        Java plugin not installed or disabled.
+        </object>
         """ % fields
         output_objects.append({'object_type': 'html_form', 'text'
                                : body})

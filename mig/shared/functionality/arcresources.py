@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# resadmin - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# arcresources - list arc resources and queues
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -196,6 +196,13 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = 'ARC Queues'
     output_objects.append({'object_type': 'header', 'text'
                           : 'Available ARC queues'})
+
+    if not configuration.site_enable_griddk:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Grid.dk features are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
 
     # could factor out from here, to be usable from outside
     if not configuration.arc_clusters:

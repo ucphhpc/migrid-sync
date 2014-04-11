@@ -34,6 +34,7 @@ import base64
 import re
 
 import shared.returnvalues as returnvalues
+from shared.defaults import cert_valid_days
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
@@ -184,7 +185,7 @@ resources anyway.
         'email': email,
         'comment': comment,
         'password': base64.b64encode(password),
-        'expire': int(time.time() + (((2 * 365.25) * 24) * 60) * 60),
+        'expire': int(time.time() + cert_valid_days * 24 * 60 * 60),
         }
     fill_distinguished_name(user_dict)
     user_id = user_dict['distinguished_name']
@@ -198,7 +199,7 @@ resources anyway.
                       % (req_path, err))
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Request could not be sent to grid administrators. Please contact them manually on %s if this error persists.'
-                               % html_escape(admin_email)})
+                               % admin_email})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     logger.info('Wrote certificate request to %s' % req_path)
@@ -289,10 +290,15 @@ Command to delete user again on %(site)s server:
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'An error occured trying to send the email requesting the grid administrators to create a new certificate. Please email them (%s) manually and include the session ID: %s'
-                               % (html_escape(admin_email), tmp_id)})
+                               % (admin_email, tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : "Request sent to grid administrators: Your certificate request will be verified and handled as soon as possible, so please be patient. Once handled an email will be sent to the account you have specified ('%s') with further information. In case of inquiries about this request, please include the session ID: %s"
-                           % (email, tmp_id)})
+    output_objects.append(
+        {'object_type': 'text', 'text'
+         : """Request sent to grid administrators: Your certificate request
+will be verified and handled as soon as possible, so please be patient. Once
+handled an email will be sent to the account you have specified ('%s') with
+further information. In case of inquiries about this request, please email
+the grid administrators (%s) and include the session ID: %s"""
+         % (email, configuration.admin_email, tmp_id)})
     return (output_objects, returnvalues.OK)

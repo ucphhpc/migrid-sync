@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createuser - Create or renew a MiG user with all the necessary directories
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,6 +34,7 @@ import getopt
 import base64
 from getpass import getpass
 
+from shared.defaults import cert_valid_days
 from shared.serial import load
 from shared.useradm import init_user_adm, create_user, \
     fill_distinguished_name, fill_user
@@ -67,11 +68,8 @@ Where OPTIONS may be one or more of:
    -i CERT_DN          Use CERT_DN as user ID no matter what other fields suggest
    -u USER_FILE        Read user information from pickle file
    -v                  Verbose output
-"""\
-         % {'name': name, 'cert_warn': cert_warn}
+""" % {'name': name, 'cert_warn': cert_warn}
 
-
-# ## Main ###
 
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
@@ -170,8 +168,7 @@ if '__main__' == __name__:
     # Default to one year of certificate validity (only used by CA scripts)
 
     if not user_dict.has_key('expire'):
-        user_dict['expire'] = int(time.time() + (((2 * 365.25) * 24)
-                                   * 60) * 60)
+        user_dict['expire'] = int(time.time() + cert_valid_days * 24 * 60 * 60)
     if user_id:
         user_dict['distinguished_name'] = user_id
     elif not user_dict.has_key('distinguished_name'):

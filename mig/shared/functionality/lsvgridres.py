@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# lsvgridres - [insert a few words of module description on this line]
+# lsvgridres - simple list of vgrid resources for a grid with access
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,9 @@
 # -- END_HEADER ---
 #
 
-"""List all resources availble for a given vgrid"""
+"""List all resources available for a given vgrid if user has access to the
+vgrid.
+"""
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -56,6 +58,7 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
     vgrid_name = accepted['vgrid_name'][-1]
 
     # Validity of user and vgrid names is checked in this init function so
@@ -78,5 +81,3 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'list', 'list': msg})
     return (output_objects, returnvalues.OK)
-
-

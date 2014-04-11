@@ -295,18 +295,22 @@ def main(client_id, user_arguments_dict):
             logger.error('%s' % ret)
             return (output_objects, status)
 
-    html = \
-            '''Opening embedded vnc applet here:<br />
+    html = """Opening embedded vnc applet here:<br />
 <b>This will only work if your browser includes a java plugin!</b><br />
-<applet code="vncviewer" archive="vncviewer.jar" codebase="%s/vnc/" width="%s" height="%s">
-<param name="port" value="%s">
-<param name="password" value="%s">
-</applet>
+<object type='application/x-java-applet' width='%s' height='%s'>
+<param name='codebase' value='%s/vnc/' />
+<param name='code' value='vncviewer' />
+<param name='archive' value='vncviewer.jar' />
+<param name='port' value='%s'>
+<param name='password' value='%s'>
+Java plugin not installed or disabled.
+</object>
 <br />
-VNC port: %s<br />
-Display number: %s<p>
-''' % (configuration.migserver_http_url, repr(int(width) + 50),
-       repr(int(height) + 50), repr(vnc_port), password, vnc_port,
+VNC port: %s
+<br />
+Display number: %s
+""" % (repr(int(width) + 50), repr(int(height) + 50),
+       configuration.migserver_http_url, repr(vnc_port), password, vnc_port,
        display_number)
     output_objects.append({'object_type': 'html_form', 'text': html})
         

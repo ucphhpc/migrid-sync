@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# lsresowners - [insert a few words of module description on this line]
+# lsresowners - simple list of resource owners for a resource with access
 # Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,9 @@
 # -- END_HEADER ---
 #
 
-"""List all CNs in the list of administrators for a given resource"""
+"""List all CNs in the list of administrators for a given resource if user is
+an owner.
+"""
 
 import os
 
@@ -60,6 +62,7 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
     unique_resource_name = accepted['unique_resource_name'][-1]
 
     if not is_owner(client_id, unique_resource_name,
@@ -85,5 +88,3 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'list', 'list': msg})
     return (output_objects, returnvalues.OK)
-
-

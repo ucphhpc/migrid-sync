@@ -61,6 +61,8 @@ default_pager_entries = 25
 default_http_port = 80
 default_https_port = 443
 
+cert_valid_days = 365
+
 exe_leader_name = "execution-leader"
 
 htaccess_filename = '.htaccess'

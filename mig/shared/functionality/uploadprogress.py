@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Plain file upload progress monitor back end"""
+"""Plain file upload progress monitor back end (obsoleted by fancyupload)"""
 
 import os
 
@@ -56,7 +56,6 @@ def main(client_id, user_arguments_dict):
     client_dir = client_id_dir(client_id)
     status = returnvalues.OK
     defaults = signature()[1]
-
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -71,11 +70,19 @@ def main(client_id, user_arguments_dict):
     path_list = accepted['path']
     size_list = [int(size) for size in accepted['size']]
 
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = '%s Upload Progress Monitor' % configuration.short_title
+
+    if not configuration.site_enable_griddk:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Grid.dk features are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
+
     refresh_secs = 5
     meta = '<meta http-equiv="refresh" content="%s" />' % refresh_secs
     
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s Upload Progress Monitor' % configuration.short_title
     title_entry['meta'] = meta
 
     # Please note that base_dir must end in slash to avoid access to other

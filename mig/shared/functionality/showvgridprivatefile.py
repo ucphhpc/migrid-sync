@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showvgridprivatefile - View VGrid private files for owners and members
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

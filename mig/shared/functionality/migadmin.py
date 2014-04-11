@@ -118,30 +118,34 @@ $(document).ready(function() {
 
     show, drop = '', ''
     general = """
-<p>
 <h1>Server Status</h1>
+<p class='importanttext'>
+This page automatically refreshes every %s seconds.
+</p>
+<p>
+You can see the current grid daemon status and server logs below. The buttons
+provide access to e.g. managing the grid job queues.
+</p>
 <form method='get' action='migadmin.py'>
     <input type='hidden' name='action' value='' />
     <input type='submit' value='Show last log lines' />
     <input type='text' size='2' name='lines' value='%s' />
 </form>
-</p>
-<p>
+<br />
 <form method='get' action='migadmin.py'>
     <input type='hidden' name='lines' value='%s' />
     <input type='hidden' name='action' value='reloadconfig' />
     <input type='submit' value='Reload Configuration' />
 </form>
-</p>
-""" % (lines, lines)
-    show += """<p>
+<br />
+""" % (configuration.sleep_secs, lines, lines)
+    show += """
 <form method='get' action='migadmin.py'>
     <input type='hidden' name='lines' value='%s' />
     <input type='submit' value='Log Jobs' />
     <select name='action'>
 """ % lines
     drop += """
-<p>
 <form method='get' action='migadmin.py'>
     <input type='hidden' name='lines' value='%s' />
     <input type='submit' value='Drop Job' />
@@ -151,28 +155,32 @@ $(document).ready(function() {
         selected = ''
         if action.find(queue) != -1:
             selected = 'selected'
-        show += "<option %s value='show%s' />%s</option>" % (selected, queue,
+        show += "<option %s value='show%s'>%s</option>" % (selected, queue,
                                                              queue)
-        drop += "<option %s value='drop%s' />%s</option>" % (selected, queue,
+        drop += "<option %s value='drop%s'>%s</option>" % (selected, queue,
                                                              queue)
     show += """
     </select>
 </form>
-</p>"""
+<br />
+"""
     drop += """
     </select>
     <input type='text' size='20' name='job_id' value='' />
 </form>
-</p>"""
+<br />
+"""
     html += general
     html += show
     html += drop
 
     daemons = """
-<p>
+<div id='daemonstatus'>
 """
-    daemon_names = ['grid_script.py', 'grid_monitor.py', 'ssh_multiplex.py',
-                    'im_notify.py']
+    daemon_names = ['grid_script.py', 'grid_monitor.py', 'ssh_multiplex.py']
+    # No need to run im_notify unless any im notify protocols are enabled
+    if [i for i in configuration.notify_protocols if i != 'email']:
+        daemon_names.append('im_notify.py')
     if configuration.site_enable_sftp:
         daemon_names.append('grid_sftp.py')
     if configuration.site_enable_davs:
@@ -193,7 +201,9 @@ $(document).ready(function() {
         else:
             daemons += "<div class='status_offline'>%s not running!</div>" % \
                        proc
-    daemons += """</p>"""
+    daemons += """</div>
+<br />
+"""
     html += daemons
     
     log_path_list = []
@@ -204,8 +214,9 @@ $(document).ready(function() {
             log_path_list.append(os.path.join(configuration.mig_code_base,
                                               name, configuration.logfile))
     for log_path in log_path_list:
-        html += '''<p>
-<h1>%s</h1><textarea rows=%s cols=200 readonly="yes">
+        html += '''
+<h1>%s</h1>
+<textarea rows=%s cols=200 readonly="readonly">
 ''' % (log_path, lines)
         try:
             logger.debug("loading %d lines from %s" % (lines, log_path))
@@ -234,7 +245,7 @@ $(document).ready(function() {
                                    : 'Error reading log (%s)' % exc})
             return (output_objects, returnvalues.SYSTEM_ERROR)
         html += '''</textarea>
-</p>'''
+'''
 
     output_objects.append({'object_type': 'html_form', 'text'
                               : html})

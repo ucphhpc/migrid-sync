@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # deleteuser - Remove a MiG user
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -51,11 +51,8 @@ Where OPTIONS may be one or more of:
    -h                  Show this help
    -i CERT_DN          Use CERT_DN as user ID no matter what other fields suggest
    -v                  Verbose output
-"""\
-         % {'name': name}
+""" % {'name': name}
 
-
-# ## Main ###
 
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()

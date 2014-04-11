@@ -811,6 +811,10 @@ class Configuration:
             self.site_external_doc = config.get('SITE', 'external_doc')
         else:
             self.site_external_doc = "http://code.google.com/p/migrid/wiki/FrontPage"
+        if config.has_option('SITE', 'enable_griddk'):
+            self.site_enable_griddk = config.getboolean('SITE', 'enable_griddk')
+        else:
+            self.site_enable_griddk = True
         if config.has_option('SITE', 'enable_sandboxes'):
             self.site_enable_sandboxes = config.getboolean('SITE', 'enable_sandboxes')
         else:

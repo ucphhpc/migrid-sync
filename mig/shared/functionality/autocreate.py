@@ -39,10 +39,10 @@ import time
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
+from shared.defaults import cert_valid_days
 from shared.fileio import write_file
 from shared.functional import validate_input, REJECT_UNSET
 from shared.init import initialize_main_variables
-from shared.safeinput import html_escape
 from shared.useradm import db_name, distinguished_name_to_user, \
      create_user, fill_user
 try:
@@ -190,9 +190,7 @@ multiple "key=val" fields separated by "/".
         'email': email,
         'password': '',
         'comment': '%s: %s' % ('Existing certificate', comment),
-        'expire': int(time.time() + (((2 * 365.25) * 24) * 60) * 60),
-        # JB: Why this arbitrary value (2 years)?? 
-        #     Can we inspect the SSL certificate?
+        'expire': int(time.time() + cert_valid_days * 24 * 60 * 60),
         }
 
     # If server allows automatic addition of users with a CA validated cert
@@ -207,13 +205,12 @@ multiple "key=val" fields separated by "/".
         try:
             create_user(user_dict, configuration.config_file, 
                         db_path, ask_renew=False)
-
-            if accepted['proxy_upload'] != ['']:
+            if configuration.site_enable_griddk and \
+                   accepted['proxy_upload'] != ['']:
                 # save the file, display expiration date
                 proxy_out = handle_proxy(proxy_content, cert_id, 
                                          configuration)
                 output_objects.extend(proxy_out)
-                
         except Exception, err:
             logger.error('Failed to create user with existing certificate %s: %s'
                      % (cert_id, err))
@@ -221,7 +218,7 @@ multiple "key=val" fields separated by "/".
                 {'object_type': 'error_text', 'text'
                  : '''Could not create the user account for you:
 Please report this problem to the grid administrators (%s).''' % \
-                 html_escape(admin_email)})
+                 admin_email})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({'object_type': 'text', 'text'
@@ -229,12 +226,12 @@ Please report this problem to the grid administrators (%s).''' % \
 Please use the navigation menu to the left to proceed using it.
 '''})
         return (output_objects, returnvalues.OK)
-
     else:
-        output_objects.append({'object_type': 'error_text', 
-                               'text': 'Automatic user creation disabled.\n' +
-                               'Please send a mail to the Grid ' +
-                               'administrators (%s) if you ' % admin_email +
-                               'think this is an error.' })
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Automatic user creation disabled on this site.
+Please contact the Grid admins %s if you think it should be enabled.
+''' % configuration.admin_email})
+        
+        return (output_objects, returnvalues.OK)
         return (output_objects, returnvalues.ERROR)
 

@@ -130,6 +130,13 @@ def main(client_id, user_arguments_dict):
     path = accepted['path'][-1]
     restrict = accepted['restrict'][-1]
 
+    if not configuration.site_enable_griddk:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Grid.dk features are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
+
     logger.info('Filtered input validated with result: %s' % accepted)
 
     # Please note that base_dir must end in slash to avoid access to other

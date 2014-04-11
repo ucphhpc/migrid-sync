@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# managejobs - [insert a few words of module description on this line]
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# managejobs - simple job management interface
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

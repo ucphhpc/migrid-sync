@@ -503,7 +503,7 @@ table th.icon {
   color: white;
 }
 
-#content {
+#content, .content {
   background: white;
   border: 1px solid black;
   border-radius: 4px;

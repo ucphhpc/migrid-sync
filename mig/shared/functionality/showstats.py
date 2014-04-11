@@ -28,9 +28,11 @@
 # showstats.py by Jost Berthold (berthold@diku.dk)
 # Extended by Jesper Rude Selknnæs, 06.2010, to include statistics per VO
 #
+
 """Read usage statistics from couchdb and display it in html table and
-   graphics. Uses jquery visualization module and views defined in
-   couchdb (for sgas-experimental)."""
+graphics. Uses jquery visualization module and views defined in
+couchdb (for sgas-experimental).
+"""
 
 import os
 import urllib
@@ -69,7 +71,8 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
-
+    output_objects.append({'object_type': 'header', 'text':
+                           'Grid Usage Statistics'})
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
@@ -85,6 +88,13 @@ def main(client_id, user_arguments_dict):
     time_start    = accepted['time_start'][-1]
     time_end      = accepted['time_end'][-1]
     display       = accepted['display'][-1] # machine, user, vgrid, summary
+
+    if not configuration.site_enable_griddk:
+        output_objects.append({'object_type': 'text', 'text':
+                               '''Grid.dk features are disabled on this site.
+Please contact the Grid admins %s if you think they should be enabled.
+''' % configuration.admin_email})
+        return (output_objects, returnvalues.OK)
 
     # check arguments against configured lists of valid inputs:
     reject = False
@@ -119,13 +129,19 @@ def main(client_id, user_arguments_dict):
                  os.path.basename(sys.argv[0])
     updateform +='''
                 <table class="runtimeenventry">
-                  <tr>
-                    <th>Grouping by time
-                    <th>Start (YYYY-MM)
-                    <th>End (YYYY-MM)
-                    <th>Category
-                  <tr>
-                    <td><select name="group_in_time">
+                  <thead>
+                    <tr>
+                    <th>Grouping by time</th>
+                    <th>Start (YYYY-MM)</th>
+                    <th>End (YYYY-MM)</th>
+                    <th>Category</th>
+                    <th><!-- dummy for update button --></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <select name="group_in_time">
 '''
 #     updateform += \
 #      ''.join([ '\n<option value="' + t + '">' + t.title() + '</option>'
@@ -137,10 +153,11 @@ def main(client_id, user_arguments_dict):
         updateform += 'value="' + t + '">' + t.title() + '</option>\n'
     updateform +='''
                         </select>
-                    <td><input type="text" name="time_start" value="%s">
-                    <td><input type="text" name="time_end" value="%s">
+                      </td>
+                      <td><input type="text" name="time_start" value="%s"></td>
+                      <td><input type="text" name="time_end" value="%s"></td>
 ''' %  (time_start, time_end) + '''
-                    <td><select name="display">
+                      <td><select name="display">
 '''
 #     updateform += \
 #     ''.join([ '\n<option value="' + d + '">' + d.title() + '</option>'
@@ -152,7 +169,10 @@ def main(client_id, user_arguments_dict):
         updateform += 'value="' + d + '">' + d.title() + '</option>\n'
     updateform +='''
                         </select>
-                    <td><input type="submit" value="Update View">
+                      </td>
+                      <td><input type="submit" value="Update View"></td>
+                    </tr>
+                  </tbody>  
                 </table>
             </form>
             <hr>
