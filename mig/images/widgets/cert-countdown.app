@@ -32,7 +32,7 @@ $(document).ready(function() {
             if (jsonRes[i].object_type == "user_stats") {
                 certificate = jsonRes[i].certificate;
                 // server returns -1 if no cert info is available
-                if (certificate.expire >= 0) {
+                if (certificate.expire != -1) {
                     expire = new Date(certificate.expire);
                 }
                 $("#cert_countdown").html("");

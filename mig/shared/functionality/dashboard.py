@@ -104,10 +104,9 @@ $(document).ready(function() {
                   for(i=0; i<jsonRes.length; i++) {
                       if (jsonRes[i].object_type == "user_stats") {    
                           certificate = jsonRes[i].certificate;
-                          //alert("inspect certificate stats result: " + certificate);
                           $("#cert_stats").removeClass("spinner").css("padding-left", "0px");
                           $("#cert_stats").empty();
-                          if (certificate.expire < 0) {
+                          if (certificate.expire == -1) {
                               break;
                           }
                           var expire_date = new Date(certificate.expire);
