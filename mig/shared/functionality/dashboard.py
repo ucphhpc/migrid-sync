@@ -107,7 +107,7 @@ $(document).ready(function() {
                           //alert("inspect certificate stats result: " + certificate);
                           $("#cert_stats").removeClass("spinner").css("padding-left", "0px");
                           $("#cert_stats").empty();
-                          if (certificate.expire == "unknown") {
+                          if (certificate.expire < 0) {
                               break;
                           }
                           var expire_date = new Date(certificate.expire);
