@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # refunctions - runtime environment functions
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -52,6 +52,8 @@ def list_runtime_environments(configuration):
                 configuration.logger.info(
                     'refunctions.py: not able to create directory %s: %s'
                     % (configuration.re_home, err))
+                return (False, "runtime env setup is broken")
+            dir_content = []
 
     for entry in dir_content:
 

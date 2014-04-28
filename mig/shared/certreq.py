@@ -28,8 +28,14 @@
 """This module contains various helper contents for the certificate request
 handlers"""
 
+import os
+import time
+
+from fileio import delete_file
+# Expose some helper variables for functionality backends
 from safeinput import name_extras, password_extras, password_min_len, \
     password_max_len, valid_password_chars, valid_name_chars, dn_max_len
+from shared.serial import load, dump
 
 
 def cert_css_helpers():
@@ -188,4 +194,83 @@ def cert_js_helpers(fields):
 </script>
 """
     return js
+
+def build_certreqitem_object(configuration, certreq_dict):
+    """Build a certreq object based on input certreq_dict"""
+
+    certreq_obj = {
+        'object_type': 'certreq',
+        'id': certreq_dict['id'],
+        'full_name': certreq_dict['full_name'],
+        'email': certreq_dict['email'],
+        'organization': certreq_dict['organization'],
+        'country': certreq_dict['country'],
+        'state': certreq_dict['state'],
+        'comment': certreq_dict['comment'],
+        'created': time.ctime(certreq_dict['created']),
+        }
+    return certreq_obj
+
+def list_cert_reqs(configuration):
+    """Find all pending certificate requests"""
+    logger = configuration.logger
+    certreq_list = []
+    dir_content = []
+
+    try:
+        dir_content = os.listdir(configuration.user_pending)
+    except Exception:
+        if not os.path.isdir(configuration.user_pending):
+            try:
+                os.mkdir(configuration.user_pending)
+            except Exception, err:
+                logger.error(
+                    'certreqfunctions.py: not able to create directory %s: %s'
+                    % (configuration.certreq_home, err))
+                return (False, "archive setup is broken")
+            dir_content = []
+
+    for entry in dir_content:
+
+        # Skip dot files/dirs
+
+        if entry.startswith('.'):
+            continue
+        if is_cert_req(entry, configuration):
+            certreq_list.append(entry)
+        else:
+            logger.warning(
+                '%s in %s is not a file, move it?'
+                % (entry, configuration.user_pending))
+    return (True, certreq_list)
+
+def is_cert_req(req_id, configuration):
+    """Check that req_id is an existing certificate request"""
+    req_path = os.path.join(configuration.user_pending, req_id)
+    if os.path.isfile(req_path):
+        return True
+    else:
+        return False
+
+def get_cert_req(req_id, configuration):
+    """Helper to fetch dictionary for a pending certificate request"""
+    req_path = os.path.join(configuration.user_pending, req_id)
+    req_dict = load(req_path)
+    if not req_dict:
+        return (False, 'Could not open certificate request %s' % req_id)
+    else:
+        req_dict['id'] = req_id
+        req_dict['created'] = os.path.getctime(req_path)
+        return (True, req_dict)
+
+def accept_cert_req(req_id, configuration):
+    """Helper to accept a pending certificate request"""
+    req_path = os.path.join(configuration.user_pending, req_id)
+    # TODO: run createuser
+    return False
+
+def delete_cert_req(req_id, configuration):
+    """Helper to delete a pending certificate request"""
+    req_path = os.path.join(configuration.user_pending, req_id)
+    return delete_file(req_path, configuration.logger)
 

@@ -1126,8 +1126,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 dellink = single_freeze.get('delfreezelink', '')
                 dellink_html = ''
                 if dellink and not configuration.site_permanent_freeze:
-                    dellink = html_link(dellink)
-                    dellink_html = '<td>%s</td>' % dellink
+                    dellink_html = '<td>%s</td>' % html_link(dellink)
                 lines.append('''
 <tr>
 <td>%s</td><td>%s</td>%s<td>%s</td><td>%s</td><td>%s</td>
@@ -1192,6 +1191,49 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             lines.append('<tr><td class="title">Created</td><td>%s</td></tr>'
                           % i['created'])
             lines.append('</table>')
+        elif i['object_type'] == 'certreqs':
+            certreqs = i['certreqs']
+            lines.append('''
+<table class="certreqs columnsort" id="certreqtable">
+<thead class="title">
+    <tr>
+        <th>ID</th>
+        <th class="icon"><!-- Add --></th>
+        <th class="icon"><!-- Del --></th>
+        <th>Full Name</th>
+        <th>Email</th>
+        <th>Organization</th>
+        <th>Country</th>
+        <th>State</th>
+        <th>Comment</th>
+        <th>Created</th>
+    </tr>
+</thead>
+<tbody>
+'''
+                         )
+            for single_certreq in certreqs:
+                addlink = single_certreq.get('addcertreqlink', '')
+                addlink_html = ''
+                if addlink:
+                    addlink_html = '%s' % html_link(addlink)
+                dellink = single_certreq.get('delcertreqlink', '')
+                dellink_html = ''
+                if dellink:
+                    dellink_html = '%s' % html_link(dellink)
+                lines.append('''
+<tr>
+<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+</tr>''' % (single_certreq['id'], addlink_html, dellink_html,
+            single_certreq['full_name'], single_certreq['email'],
+            single_certreq['organization'], single_certreq['country'],
+            single_certreq['state'], single_certreq['comment'],
+            single_certreq['created']))
+            
+            lines.append('''
+</tbody>
+</table>
+<br/>''')
         elif i['object_type'] == 'table_pager':
             page_entries = i.get('page_entries', [5, 10, 20, 25, 40, 50, 80,
                                                   100, 250, 500, 1000])

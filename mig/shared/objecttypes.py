@@ -121,6 +121,12 @@ uploadfiles = {
     'required_list': [('files', 'uploadfile'), ],
     'optional': [],
     }
+certreq = {
+    'object_type': 'certreq',
+    'required': ['id', 'full_name', 'email', 'organization', 'country',
+                 'state', 'comment', 'created', ],
+    'optional': [],
+    }
 changedstatusjob = {'object_type': 'changedstatusjob',
                     'required': ['job_id'], 'optional': []}
 saveschedulejob = {'object_type': 'saveschedulejob',
@@ -171,6 +177,8 @@ runtimeenvironments = {'object_type': 'runtimeenvironments',
 frozenarchives = {'object_type': 'frozenarchives',
                        'required_list': [('frozenarchives',
                        'frozenarchive')]}
+certreqs = {'object_type': 'certreqs', 
+            'required_list': [('certreqs', 'certreq')]}
 changedstatusjobs = {'object_type': 'changedstatusjobs',
                      'required_list': [('changedstatusjobs',
                      'changedstatusjob')]}
@@ -247,6 +255,8 @@ valid_types_list = [
     frozenarchives,
     uploadfile,
     uploadfiles,
+    certreq,
+    certreqs,
     file_not_found,
     filewc,
     filewcs,

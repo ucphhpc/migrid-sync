@@ -31,11 +31,11 @@ from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries
-from shared.freezefunctions import build_freezeitem_object
+from shared.freezefunctions import build_freezeitem_object, \
+     list_frozen_archives, get_frozen_archive
 from shared.functional import validate_input_and_cert
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
-from shared.freezefunctions import list_frozen_archives, get_frozen_archive
 
 
 def signature():
@@ -51,7 +51,7 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Frozen archives'})
+                          : 'Frozen Archives'})
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,

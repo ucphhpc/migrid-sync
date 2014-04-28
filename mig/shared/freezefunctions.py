@@ -91,6 +91,7 @@ def list_frozen_archives(configuration, client_id):
                     'freezefunctions.py: not able to create directory %s: %s'
                     % (configuration.freeze_home, err))
                 return (False, "archive setup is broken")
+            dir_content = []
 
     for entry in dir_content:
 

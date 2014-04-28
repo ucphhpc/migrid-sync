@@ -772,7 +772,7 @@ def guess_type(name):
         for key in ('vgrid_name', 'fileupload', 'public_image',
                     'site_script_deps', 'jobname', ):
             __type_map[key] = valid_path
-        for key in ('job_id', 'resource', 'search', 'name', ):
+        for key in ('job_id', 'req_id', 'resource', 'search', 'name', ):
             __type_map[key] = valid_job_id_pattern
         for key in ('action', 're_name', 're_template', 'lang', 'machine_name',
                     'freeze_id', ):
