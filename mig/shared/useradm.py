@@ -643,8 +643,10 @@ def get_openid_user_map(configuration):
     user_map = load_user_db(db_path)
     user_alias = configuration.user_openid_alias
     for cert_id in user_map.keys():
-        full = configuration.user_openid_provider + client_alias(cert_id)
+        full = configuration.user_openid_provider + client_id_dir(cert_id)
         id_map[full] = cert_id
+        alias = configuration.user_openid_provider + client_alias(cert_id)
+        id_map[alias] = cert_id
         if user_alias:
             short_id = extract_field(cert_id, user_alias)
             # Allow both raw alias field value and asciified alias

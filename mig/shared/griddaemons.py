@@ -173,6 +173,8 @@ def refresh_users(configuration, protocol):
         user_dir = user_home.replace(conf['root_dir'] + os.sep, '')
         user_id = client_dir_id(user_dir)
         user_alias = client_alias(user_id)
+        # we always accept both dir formatted and asciified distinguished name
+        cur_usernames.append(user_dir)
         cur_usernames.append(user_alias)
         if conf['user_alias']:
             short_id = extract_field(user_id, conf['user_alias'])

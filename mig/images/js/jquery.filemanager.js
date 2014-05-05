@@ -579,6 +579,11 @@ if (jQuery) (function($){
             }
         };
 
+    /* TODO: enable dragndrop after fixing issue with 
+       - single click on a file enables drag even after mouse up
+       - after double click any move of the cursor result in drag
+    */
+
     var defaults = {
         root: '/',      
         connector: 'somewhere.py',
@@ -592,7 +597,7 @@ if (jQuery) (function($){
         loadMessage: 'Loading...',
         actions: callbacks,
         subPath: '/',
-        dragndrop: true,
+        dragndrop: false,
         filespacer: true
     };
     var options = $.extend(defaults, user_options);
@@ -871,22 +876,19 @@ if (jQuery) (function($){
             $("tr.recent.file, tr.recent.directory").each(function() { 
                 var t = $(this); 
                 setTimeout(function() {
-                    t.dblclick(function(event) { doubleClickEvent(this); });
                     t.mousedown(function(event) { event.preventDefault(); })
-                }, 10);
-                setTimeout(function() {
-                    
+                    t.dblclick(function(event) { doubleClickEvent(this); });
                 }, 10);
             });
             
             // Associate drag'n'drop
             if (options.dragndrop) {
                 $("tr.recent.file, tr.recent.directory, li.recent.directory").each(function() { 
-                    var t = $(this); 
+                    var t = $(this);                     
                     setTimeout(function() {
                         t.draggable(
-                            {cursorAt: 
-                             { cursor: 'move', top: 0, left: -10 },
+                            {
+                            cursorAt: { cursor: 'move', top: 0, left: -10 },
                              distance: 5,
                              helper: function(event) {
                                  return $("<div style='display: block;'>&nbsp;</div>")
@@ -897,6 +899,7 @@ if (jQuery) (function($){
                             }
                         )
                     }, 10);
+
                 });
             }
 
