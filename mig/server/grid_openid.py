@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# cgiscriptstub - [insert a few words of module description on this line]
+# grid_openid - openid server authenticating users against user database
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -65,7 +65,7 @@ import ssl
 import sys
 import time
 
-from shared.base import client_alias
+from shared.base import client_alias, client_id_dir
 from shared.conf import get_configuration_object
 from shared.useradm import load_user_db, extract_field
 
@@ -366,7 +366,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         id_map = load_user_db(db_path)
         user_alias = configuration.user_openid_alias
         for cert_id in id_map.keys():
-            user_match = [client_alias(cert_id)]
+            user_match = [client_id_dir(cert_id), client_alias(cert_id)]
             if user_alias:
                 short_id = extract_field(cert_id, user_alias)
                 # Allow both raw alias field value and asciified alias
