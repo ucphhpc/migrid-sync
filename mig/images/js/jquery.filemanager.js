@@ -606,7 +606,9 @@ if (jQuery) (function($){
     $.each(callbacks, function(name, fct) {
                if (options['actions'][name] == undefined) {
                    options['actions'][name] = callbacks[name];
-               } // else { alert(name + " overloaded");}
+               } else { 
+                   //console.log(name + " overloaded");
+               }
            });
 
     return this.each(function() {
@@ -901,22 +903,22 @@ if (jQuery) (function($){
                     }, 10);
 
                 });
-            }
 
-            $("tr.recent.directory, li.recent.directory").each(function() { 
-                var t = $(this); 
-                setTimeout(function() {
-                    t.droppable(
-                        { greedy: true,
-                          drop: function(event, ui) {
-                              clipboard['is_dir'] = $(ui.helper).hasClass('directory');
-                              clipboard['path'] = $(ui.helper).attr(pathAttribute);
-                              copy($(ui.helper).attr('rel_path'), 
-                                   $(this).attr('rel_path'));
-                          }
-                        })
-                }, 10);
-            });
+                $("tr.recent.directory, li.recent.directory").each(function() { 
+                    var t = $(this); 
+                    setTimeout(function() {
+                        t.droppable(
+                            { greedy: true,
+                              drop: function(event, ui) {
+                                  clipboard['is_dir'] = $(ui.helper).hasClass('directory');
+                                  clipboard['path'] = $(ui.helper).attr(pathAttribute);
+                                  copy($(ui.helper).attr('rel_path'), 
+                                       $(this).attr('rel_path'));
+                              }
+                            })
+                    }, 10);
+                });
+            }
 
             // remove recent markers
             $("tr.recent, li.recent").each(function() { 
