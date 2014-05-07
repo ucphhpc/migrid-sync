@@ -289,6 +289,9 @@ Debian.
 Python FTP server library (pyftpdlib) is required for the optional
 grid_ftps daemon to work and the python-pyftpdlib package provides all
 required components for it on Debian.
+PyWebDAV is required for the optional grid_davs daemon to work and the 
+python-webdav package in a recent version may provide all required components
+for it on Debian. 
 
 The four CLAUSE arguments can be used to comment out the explicit
 setting of user, group, serveralias and ports in the apache conf by
