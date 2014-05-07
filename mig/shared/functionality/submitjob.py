@@ -406,11 +406,11 @@ The full list of keywords with their default values and format is available in
 the on-demand <a href='docs.py?show=job'>mRSL Documentation</a>.
 <p>
 Actual examples for inspiration:
-<a href=/cpuinfo.mRSL>CPU Info</a>,
-<a href=/basic-io.mRSL>Basic I/O</a>,
-<a href=/notification.mRSL>Job Notification</a>,
-<a href=/povray.mRSL>Povray</a> and
-<a href=/vcr.mRSL>VCR</a>
+<a href=/public/cpuinfo.mRSL>CPU Info</a>,
+<a href=/public/basic-io.mRSL>Basic I/O</a>,
+<a href=/public/notification.mRSL>Job Notification</a>,
+<a href=/public/povray.mRSL>Povray</a> and
+<a href=/public/vcr.mRSL>VCR</a>
 </div>
     """})
 
