@@ -95,7 +95,7 @@ from openid.store.filestore import FileOpenIDStore
 from openid.consumer import discover
 
 
-class OpenIDHTTPServer(ThreadingMixIn, HTTPServer):
+class OpenIDHTTPServer(HTTPServer):
     """
     http server that contains a reference to an OpenID Server and
     knows its base URL.
@@ -121,6 +121,11 @@ class OpenIDHTTPServer(ThreadingMixIn, HTTPServer):
 
     def setOpenIDServer(self, oidserver):
         self.openid = oidserver
+
+
+class ThreadedOpenIDHTTPServer(ThreadingMixIn, OpenIDHTTPServer):
+    """Multi-threaded version of the OpenIDHTTPServer"""
+    pass
 
 
 class ServerHandler(BaseHTTPRequestHandler):
@@ -217,7 +222,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         # right?
         request = self.server.lastCheckIDRequest.get(self.user)
 
-        print "handleAllow with last request %s , query %s" % (request, query)
+        print "handleAllow with last request %s from user %s , query %s" % (request, self.user, query)
 
         # Old IE 8 does not send contents of submit buttons thus only the
         # fields login_as and password are set with the allow requests. We
@@ -228,6 +233,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         if 'yes' in query:
             if 'login_as' in query:
                 self.user = self.query['login_as']
+                #print "handleAllow set user %s" % self.user
 
             if request.idSelect():
                 identity = self.server.base_url + 'id/' + query['identifier']
@@ -267,7 +273,9 @@ class ServerHandler(BaseHTTPRequestHandler):
         cookies = self.headers.get('Cookie')
         if cookies:
             morsel = Cookie.BaseCookie(cookies).get('user')
-            if morsel:
+            # Added morsel value check here since IE sends empty string from
+            # cookie after initial user=;expire is sent. Others leave it out.
+            if morsel and morsel.value != '':
                 self.user = morsel.value
 
     def isAuthorized(self, identity_url, trust_root):
@@ -337,7 +345,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             response = request.answer(False)
             self.displayResponse(response)
         else:
-            print "adding user request to last dict"
+            print "adding user request to last dict: %s : %s" % (self.user, request)
             self.server.lastCheckIDRequest[self.user] = request
             self.showDecidePage(request)
 
@@ -401,10 +409,11 @@ class ServerHandler(BaseHTTPRequestHandler):
             if self.checkLogin(self.user, self.password):
                 if not self.query['success_to']:
                     self.query['success_to'] = '%s/id/' % self.server.base_url
-                print "login succeded: redirect to %s" % self.query['success_to']
+                print "doLogin succeded: redirect to %s" % self.query['success_to']
                 self.redirect(self.query['success_to'])
             else:
                 # TODO: Login failed - is this correct behaviour?
+                print "doLogin failed! query was %s (%s %s)" % (self.query, self.user, self.password)
                 self.user = None
                 self.redirect(self.query['success_to'])
         elif 'cancel' in self.query:
@@ -847,7 +856,10 @@ def start_service(configuration):
     daemon_conf = configuration.daemon_conf
     nossl = daemon_conf['nossl']
     addr = (host, port)
-    httpserver = OpenIDHTTPServer(addr, ServerHandler)
+    # TODO: is this threaded version robust enough (thread safety)?
+    #OpenIDServer = OpenIDHTTPServer
+    OpenIDServer = ThreadedOpenIDHTTPServer
+    httpserver = OpenIDServer(addr, ServerHandler)
 
     # Instantiate OpenID consumer store and OpenID consumer.  If you
     # were connecting to a database, you would create the database
