@@ -130,11 +130,15 @@ class ThreadedOpenIDHTTPServer(ThreadingMixIn, OpenIDHTTPServer):
 
 class ServerHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        self.user = None
-        self.password = None
+        self.clearUser()
         BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
-
+    def clearUser(self):
+        self.user = None
+        self.user_dn = None
+        self.user_dn_dir = None
+        self.password = None
+        
     def do_GET(self):
         try:
             self.parsed_uri = urlparse(self.path)
@@ -234,6 +238,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             if 'login_as' in query:
                 self.user = self.query['login_as']
                 #print "handleAllow set user %s" % self.user
+            elif 'identifier' in query:
+                self.user = self.query['identifier']
 
             if request.idSelect():
                 identity = self.server.base_url + 'id/' + query['identifier']
@@ -255,10 +261,11 @@ class ServerHandler(BaseHTTPRequestHandler):
                 if self.query.get('remember', 'no') == 'yes':
                     self.server.approved[(identity, trust_root)] = 'always'
 
+                print "handleAllow approving login %s" % identity
                 response = self.approved(request, identity)
             else:
                 print "handleAllow rejected login %s" % identity
-                self.user = None
+                self.clearUser()
                 response = self.rejected(request, identity)    
         elif 'no' in query:
             response = request.answer(False)
@@ -374,7 +381,8 @@ class ServerHandler(BaseHTTPRequestHandler):
         id_map = load_user_db(db_path)
         user_alias = configuration.user_openid_alias
         for cert_id in id_map.keys():
-            user_match = [client_id_dir(cert_id), client_alias(cert_id)]
+            cert_dir = client_id_dir(cert_id)
+            user_match = [cert_dir, client_alias(cert_id)]
             if user_alias:
                 short_id = extract_field(cert_id, user_alias)
                 # Allow both raw alias field value and asciified alias
@@ -389,6 +397,8 @@ class ServerHandler(BaseHTTPRequestHandler):
                       (base64.b64encode(password), enc_pw)
                 if password and base64.b64encode(password) == user['password']:
                     print "Correct password for user %s" % username
+                    self.user_dn = cert_id
+                    self.user_dn_dir = cert_dir
                     return True
                 else:
                     print "Failed password check for user %s" % username
@@ -401,7 +411,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             if 'user' in self.query:
                 self.user = self.query['user']
             else:
-                self.user = None
+                self.clearUser()
             if 'password' in self.query:
                 self.password = self.query['password']
             else:
@@ -414,7 +424,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             else:
                 # TODO: Login failed - is this correct behaviour?
                 print "doLogin failed! query was %s (%s %s)" % (self.query, self.user, self.password)
-                self.user = None
+                self.clearUser()
                 self.redirect(self.query['success_to'])
         elif 'cancel' in self.query:
             self.redirect(self.query['fail_to'])
@@ -510,12 +520,16 @@ class ServerHandler(BaseHTTPRequestHandler):
         expected_user = request.identity[len(id_url_base):]
 
         if request.idSelect(): # We are being asked to select an ID
+            # Create a dropdown for selecting user ID on the right format
+            db_path = os.path.join(configuration.mig_code_base, 'server',
+                                   'MiG-users.db')
+            print "Loading user DB"
+            id_map = load_user_db(db_path)
+            user_alias = configuration.user_openid_alias
+
             msg = '''\
-            <p>A site has asked for your identity.  You may select an
-            identifier by which you would like this site to know you.
-            On a production site this would likely be a drop down list
-            of pre-created accounts or have the facility to generate
-            a random anonymous identifier.
+            <p>A site has asked for your identity. Please select your
+            ID in the list and enter your password to login.
             </p>
             '''
             fdata = {
@@ -527,7 +541,20 @@ class ServerHandler(BaseHTTPRequestHandler):
             <form method="POST" action="/%(server_base)s/allow">
             <table>
               <tr><td>Identity:</td>
-                 <td>%(id_url_base)s<input type='text' name='identifier'></td></tr>
+                 <td>%(id_url_base)s<select id="id_select" name="identifier">
+            '''
+            for cert_id in id_map.keys():
+                cert_dir = client_id_dir(cert_id)
+                if user_alias:
+                    user_id = extract_field(cert_id, user_alias)
+                else:
+                    user_id = cert_id
+                form += '''
+                   <option value="%s">%s</option>
+                   ''' % (cert_dir, user_id)
+            form += '''
+              </select>
+              </td></tr>
               <tr><td>Password:</td>
                  <td><input type="password" name="password"></td></tr>
               <tr><td>Trust Root:</td><td>%(trust_root)s</td></tr>
@@ -539,7 +566,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             <input type="submit" name="yes" value="yes" />
             <input type="submit" name="no" value="no" />
             </form>
-            '''%fdata
+            '''
+            form = form % fdata
         elif expected_user == self.user:
             msg = '''\
             <p>A new site has asked to confirm your identity.  If you
