@@ -97,7 +97,7 @@ from openid.consumer import discover
 
 class OpenIDHTTPServer(HTTPServer):
     """
-    http server that contains a reference to an OpenID Server and
+    http(s) server that contains a reference to an OpenID Server and
     knows its base URL.
     Extended to fork on requests to avoid one slow or broken login stalling
     the rest.
@@ -105,11 +105,17 @@ class OpenIDHTTPServer(HTTPServer):
     def __init__(self, *args, **kwargs):
         HTTPServer.__init__(self, *args, **kwargs)
 
-        if self.server_port != 80:
-            self.base_url = ('http://%s:%s/' %
-                             (self.server_name, self.server_port))
+        if configuration.daemon_conf['nossl']:
+            proto = 'http'
+            proto_port = 80
         else:
-            self.base_url = 'http://%s/' % (self.server_name,)
+            proto = 'https'
+            proto_port = 443
+        if self.server_port != proto_port:
+            self.base_url = ('%s://%s:%s/' %
+                             (proto, self.server_name, self.server_port))
+        else:
+            self.base_url = '%s://%s/' % (proto, self.server_name,)
 
         # We serve from sub dir to ease targeted proxying
         self.server_base = 'openid'
@@ -909,7 +915,6 @@ def start_service(configuration):
         httpserver.socket = ssl.wrap_socket(httpserver.socket,
                                             certfile=cert_path,
                                             server_side=True)
-        httpserver.base_url = httpserver.base_url.replace('http', 'https', 1)
         
     print 'Server running at:'
     print httpserver.base_url
@@ -923,12 +928,12 @@ if __name__ == '__main__':
 
     # Allow configuration overrides on command line
     if sys.argv[1:]:
-        nossl = bool(sys.argv[1])
+        nossl = sys.argv[1].lower() in ('yes', 'true', '1')
     if sys.argv[2:]:
         configuration.user_openid_address = sys.argv[2]
     if sys.argv[3:]:
         configuration.user_openid_port = int(sys.argv[3])
-    
+
     if not configuration.site_enable_openid:
         err_msg = "OpenID service is disabled in configuration!"
         logger.error(err_msg)
