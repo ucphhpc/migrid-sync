@@ -37,7 +37,7 @@ from getpass import getpass
 from shared.defaults import cert_valid_days
 from shared.serial import load
 from shared.useradm import init_user_adm, create_user, \
-    fill_distinguished_name, fill_user
+    fill_distinguished_name, fill_user, load_user_dict
 
 cert_warn = \
     """
@@ -66,6 +66,7 @@ Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -i CERT_DN          Use CERT_DN as user ID no matter what other fields suggest
+   -r                  Renew user account with existing values
    -u USER_FILE        Read user information from pickle file
    -v                  Verbose output
 """ % {'name': name, 'cert_warn': cert_warn}
@@ -76,10 +77,12 @@ if '__main__' == __name__:
     conf_path = None
     force = False
     verbose = False
+    ask_renew = True
+    default_renew = False
     user_file = None
     user_id = None
     user_dict = {}
-    opt_args = 'c:d:fhi:u:v'
+    opt_args = 'c:d:fhi:ru:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -99,6 +102,9 @@ if '__main__' == __name__:
             sys.exit(0)
         elif opt == '-i':
             user_id = val
+        elif opt == '-r':
+            default_renew = True
+            ask_renew = False
         elif opt == '-u':
             user_file = val
         elif opt == '-v':
@@ -145,6 +151,14 @@ if '__main__' == __name__:
             print 'Error in user name extraction: %s' % err
             usage()
             sys.exit(1)
+    elif default_renew and user_id:
+        saved = load_user_dict(user_id, conf_path, db_path, verbose)
+        if not saved:
+            print 'Error: no such user in user db: %s' % user_id
+            usage()
+            sys.exit(1)
+        user_dict.update(saved)
+        del user_dict['expire']
     else:
         if verbose:
             print '''Entering interactive mode
@@ -181,7 +195,8 @@ if '__main__' == __name__:
     if verbose:
         print 'using user dict: %s' % user_dict
     try:
-        create_user(user_dict, conf_path, db_path, force, verbose)
+        create_user(user_dict, conf_path, db_path, force, verbose, ask_renew,
+                    default_renew)
     except Exception, exc:
         print exc
         sys.exit(1)

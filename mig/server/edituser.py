@@ -27,9 +27,9 @@
 
 """Edit MiG user in user database and file system"""
 
+import getopt
 import os
 import sys
-import getopt
 
 from shared.useradm import init_user_adm, edit_user
 

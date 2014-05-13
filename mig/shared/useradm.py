@@ -148,6 +148,24 @@ def load_user_db(db_path):
     return load(db_path)
 
 
+def load_user_dict(user_id, conf_path, db_path, verbose=False):
+    """Load user dictionary from user DB"""
+
+    if conf_path:
+        configuration = Configuration(conf_path)
+    else:
+        configuration = get_configuration_object()
+
+    try:
+        user_db = load_user_db(db_path)
+        if verbose:
+            print 'Loaded existing user DB from: %s' % db_path
+    except Exception, err:
+        print 'Failed to load user DB: %s' % err
+        return None
+    return user_db.get(user_id, None)
+
+
 def save_user_db(user_db, db_path):
     """Save pickled user DB"""
 
@@ -290,26 +308,20 @@ def create_user(
     try:
         filehandle = open(htaccess_path, 'w')
 
-        # Match all known fields or require the client to come from a SID path.
-        #
-        # IMPORTANT:
-        # The fall back to explicitly allow no client certificate is necessary
-        # with apache2, where symlink target directories are checked against all
-        # Directory directives and thus preventing SID links to user homes from
-        # being used without a certificate, if htaccess doesn't explicitly allow
-        # it.
-        # As this is the required SID behaviour used to hand in job results, the
-        # fallback is needed to avoid breaking all job handling.
-        # With apache 1.x the symlink was not further checked and thus the
-        # htaccess requirement was simply ignored from those SID paths.
-        # It is *critical* that all other access to user homes are secured with
-        # SID or cert requirement to prevent unauthorized access.
+        # Match certificate or OpenID distinguished name
+
+        info = user.copy()
 
         access = 'SSLRequire ('
         access += '%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s"'
         access += ')\n'
+        if configuration.user_openid_provider:
+            info['oid_url'] = os.path.join(configuration.user_openid_provider,
+                                           client_dir)
+            access += 'require user %(oid_url)s\n'
+            access += 'Satisfy any\n'
 
-        filehandle.write(access % user)
+        filehandle.write(access % info)
         filehandle.close()
 
         # try to prevent further user modification
