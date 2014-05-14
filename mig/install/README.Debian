@@ -1,9 +1,10 @@
 Introduction:
 =============
 This document contains some notes about the installation of a MiG server on
-a Debian box. Most of it probably applies to most other UNIX/Linux distributions.
+a Debian/Ubuntu box. Most of it probably applies to most other
+UNIX/Linux distributions. 
 MiG relies on the Apache web server for all web interfaces, OpenSSH for the
-job handout and optionally the MoinMoin wiki, but apart from that you
+job handout and optionally Trac and Mercurial, but apart from that you
 will only need a Python interpreter to run your own grid using the MiG
 software.
 
@@ -69,6 +70,8 @@ Enable the apache actions module:
 # a2enmod actions
 Enable the apache rewrite module:
 # a2enmod rewrite
+Enable the apache wsgi module:
+# a2enmod wsgi
 Some of those may be already enabled by default.
 
 Test that the basic HTTP server works after starting it with:
@@ -124,11 +127,11 @@ Include /etc/apache/conf.d
 
 Apache 2.x:
 -----------
-Debian uses a custom sites-available / sites-enabled model. The
+Debian/Ubuntu uses a custom sites-available / sites-enabled model. The
 following instructions rely on that model, so if you do not have it, you
 can fall back to use the instructions for apache 1.x above.
 
-Copy the generatd configuration to the sites-available dir:
+Copy the generated configuration to the sites-available dir:
 # cp /path/to/generated/MiG.conf /etc/apache2/sites-available/MiG
 or for the static version:
 # cp ~mig/path/to/migbase/mig/apache/MiG.conf.Debian /etc/apache2/sites-available/MiG
@@ -154,11 +157,14 @@ to be updated or provided to the configuration generator.
 
 You can use the MiG CA certificate bundle from
 mig/apache/MiG-ca-bundle.crt for the SSLCACertificateFile in the apache
-configuration, to allow users with our MiG certificates to connect. They
+configuration, to allow users with *our* MiG certificates to connect. They
 will still need to be added as users on your particular server to be
 able to do anything, however. They can request user creation themselves
 through the extcert.py CGI script which should appear if they connect
 without being previously added.
+
+Alternatively you can set up your own CA and create user certificates to
+whoever you want.
 
 Finally restart apache (use the init.d scripts as above) to activate the
 changes and check that you can access the https pages on the server by
@@ -192,10 +198,11 @@ and after submitting the form you will receive further instructions by
 email.
 
 
-VGrid wiki:
-===========
-In order to support VGrid wikis you will need to install the MoinMoin package:
-# aptitude install python-moinmoin
+VGrid Components:
+=================
+In order to support VGrid collaboration components like tracker, wiki,
+source code managementm etc. you will need to install additional
+packages as covered in the main README file.
 
 Now make sure that the install paths are configured in your
 MiGserver.conf so that creating a new VGrid succeeds.

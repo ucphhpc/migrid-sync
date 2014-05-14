@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # install - MiG server install helpers
-# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,13 +33,13 @@ Creates MiG server and Apache configurations to fit the provided settings.
 Create MiG developer account with dedicated web server and daemons.
 """
 
-import sys
+import crypt
+import datetime
 import os
 import re
 import random
-import crypt
 import socket
-import datetime
+import sys
 
 from shared.defaults import default_http_port, default_https_port
 
@@ -77,6 +77,7 @@ def generate_confs(
     destination=os.path.dirname(sys.argv[0]),
     public_fqdn='localhost',
     cert_fqdn='localhost',
+    oid_fqdn='localhost',
     sid_fqdn='localhost',
     user='mig',
     group='mig',
@@ -88,6 +89,12 @@ def generate_confs(
     mig_state='/home/mig/state',
     mig_certs='/home/mig/certs',
     enable_sftp='True',
+    enable_davs='True',
+    enable_ftps='True',
+    enable_openid='True',
+    openid_provider='https://localhost/openid/id/',
+    daemon_keycert='',
+    alias_field='',
     moin_etc='',
     moin_share='',
     hg_path='',
@@ -96,11 +103,13 @@ def generate_confs(
     trac_ini_path='',
     public_port=default_http_port,
     cert_port=default_https_port,
-    sid_port=default_https_port+1,
+    oid_port=default_https_port+1,
+    sid_port=default_https_port+2,
     user_clause='User',
     group_clause='Group',
     listen_clause='#Listen',
     serveralias_clause='#ServerAlias',
+    distro='Debian',
     ):
     """Generate Apache and MiG server confs with specified variables"""
 
@@ -111,13 +120,16 @@ def generate_confs(
     user_dict = {}
     user_dict['__PUBLIC_FQDN__'] = public_fqdn
     user_dict['__CERT_FQDN__'] = cert_fqdn
+    user_dict['__OID_FQDN__'] = oid_fqdn
     user_dict['__SID_FQDN__'] = sid_fqdn
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
     user_dict['__PUBLIC_PORT__'] = str(public_port)
     user_dict['__CERT_PORT__'] = str(cert_port)
+    user_dict['__OID_PORT__'] = str(oid_port)
     user_dict['__SID_PORT__'] = str(sid_port)
-    user_dict['__MIG_HOME__'] = mig_code
+    user_dict['__MIG_BASE__'] = os.path.dirname(mig_code.rstrip(os.sep))
+    user_dict['__MIG_CODE__'] = mig_code
     user_dict['__MIG_STATE__'] = mig_state
     user_dict['__MIG_CERTS__'] = mig_certs
     user_dict['__APACHE_ETC__'] = apache_etc
@@ -125,6 +137,13 @@ def generate_confs(
     user_dict['__APACHE_LOCK__'] = apache_lock
     user_dict['__APACHE_LOG__'] = apache_log
     user_dict['__ENABLE_SFTP__'] = enable_sftp
+    user_dict['__ENABLE_DAVS__'] = enable_davs
+    user_dict['__ENABLE_FTPS__'] = enable_ftps
+    user_dict['__ENABLE_OPENID__'] = enable_openid
+    user_dict['__OPENID_PROVIDER_BASE__'] = openid_provider
+    user_dict['__OPENID_PROVIDER_ID__'] = openid_provider
+    user_dict['__DAEMON_KEYCERT__'] = daemon_keycert
+    user_dict['__ALIAS_FIELD__'] = alias_field
     user_dict['__MOIN_ETC__'] = moin_etc
     user_dict['__MOIN_SHARE__'] = moin_share
     user_dict['__HG_PATH__'] = hg_path
@@ -135,9 +154,13 @@ def generate_confs(
     user_dict['__GROUP_CLAUSE__'] = group_clause
     user_dict['__LISTEN_CLAUSE__'] = listen_clause
     user_dict['__SERVERALIAS_CLAUSE__'] = serveralias_clause
+    user_dict['__DISTRO__'] = distro
 
     # Apache fails on duplicate Listen directives so comment in that case
-    same_port, same_fqdn = (cert_port == sid_port), (cert_fqdn == sid_fqdn)
+    port_list = [cert_port, oid_port, sid_port]
+    fqdn_list = [cert_fqdn, oid_fqdn, sid_fqdn]
+    same_port = (len(port_list) != len(dict(zip(port_list, port_list)).keys()))
+    same_fqdn = (len(fqdn_list) != len(dict(zip(fqdn_list, fqdn_list)).keys()))
     user_dict['__IF_SEPARATE_PORTS__'] = '#'
     if not same_port:
         user_dict['__IF_SEPARATE_PORTS__'] = ''
@@ -145,14 +168,33 @@ def generate_confs(
     if same_fqdn and same_port:
         print """
 WARNING: you probably have to use either different fqdn or port settings for
-cert and sid based https!
+cert, oid and sid based https!
 """
+
+    user_dict['__IF_SEPARATE_PORTS__'] = '#'
 
     # Enable mercurial module in trackers if Trac is available
     user_dict['__HG_COMMENTED__'] = '#'
     if user_dict['__HG_PATH__']:
         user_dict['__HG_COMMENTED__'] = ''
 
+    # Enable OpenID auth module only if openid_provider is given
+    if user_dict['__OPENID_PROVIDER_BASE__'].strip():
+        user_dict['__OPENID_COMMENTED__'] = ''
+    else:
+        user_dict['__OPENID_COMMENTED__'] = '#'
+
+    # Enable Debian/Ubuntu specific lines only there
+    if user_dict['__DISTRO__'].lower() in ('ubuntu', 'debian'):
+        user_dict['__NOT_DEB_COMMENTED__'] = ''
+    else:
+        user_dict['__NOT_DEB_COMMENTED__'] = '#'
+
+    # Only set ID sub url if openid_provider is set - trailing slash matters
+    if user_dict['__OPENID_PROVIDER_BASE__']:
+        user_dict['__OPENID_PROVIDER_ID__'] = os.path.join(openid_provider,
+                                                           'id') + os.sep
+        
     try:
         os.makedirs(destination)
     except OSError:
@@ -168,6 +210,10 @@ cert and sid based https!
     if str(cert_port) != str(default_https_port):
         print "adding explicit cert port (%s)" % [cert_port, default_https_port]
         user_dict['__CERT_URL__'] += ':%(__CERT_PORT__)s' % user_dict
+    user_dict['__OID_URL__'] = 'https://%(__OID_FQDN__)s' % user_dict
+    if str(oid_port) != str(default_https_port):
+        print "adding explicit oid port (%s)" % [oid_port, default_https_port]
+        user_dict['__OID_URL__'] += ':%(__OID_PORT__)s' % user_dict
     user_dict['__SID_URL__'] = 'https://%(__SID_FQDN__)s' % user_dict
     if str(sid_port) != str(default_https_port):
         print "adding explicit sid port (%s)" % [sid_port, default_https_port]
@@ -180,6 +226,7 @@ cert and sid based https!
                       ("apache-httpd-template.conf", "httpd.conf"),
                       ("apache-ports-template.conf", "ports.conf"),
                       ("apache-MiG-template.conf", "MiG.conf"),
+                      ("apache-mimic-deb-template.conf", "mimic-deb.conf"),
                       ("apache-init.d-template", "apache-%s" % user),
                       ("apache-MiG-template.conf", "MiG.conf"),
                       ("trac-MiG-template.ini", "trac.ini"),
@@ -205,14 +252,15 @@ def create_user(
     debug=False,
     public_fqdn=socket.getfqdn(),
     cert_fqdn=socket.getfqdn(),
+    oid_fqdn=socket.getfqdn(),    
     sid_fqdn=socket.getfqdn(),
     ):
     """Create MiG unix user with supplied user and group name and show
     commands to make it a MiG developer account.
-    If sid_fqdn is set to a fqdn different from the default fqdn of this host
-    the apache web server configuration will use the same port for cert and
-    sid https access but on diffrent IP adresses. Otherwise it will use two
-    different ports on the same address.
+    If oid_fqdn and sid_fqdn are set to a fqdn different from the default fqdn
+    of this host the apache web server configuration will use the same port for
+    cert, oid and sid https access but on diffrent IP adresses. Otherwise it
+    will use three different ports on the same address.
     """
 
     # make sure not to wreak havoc if no user supplied
@@ -280,8 +328,8 @@ def create_user(
 
     # print "uid: %d, gid: %d" % (uid, gid)
 
-    reserved_ports = range(3 * uid, 3 * uid + 3)
-    public_port, cert_port, sid_port = reserved_ports[:3]
+    reserved_ports = range(4 * uid, 4 * uid + 4)
+    public_port, cert_port, oid_port, sid_port = reserved_ports[:4]
 
     mig_dir = os.path.join(home, 'mig')
     server_dir = os.path.join(mig_dir, 'server')
@@ -305,7 +353,7 @@ def create_user(
     print '# Add the next line to %s and run the script:'\
          % firewall_script
     print 'iptables -A INPUT -p tcp --dport %d:%d -j ACCEPT # webserver: %s'\
-         % (public_port, sid_port, user)
+         % (reserved_ports[0], reserved_ports[-1], user)
 
     sshd_conf = '/etc/ssh/sshd_config'
     print """# Unless 'AllowGroups %s' is already included, append %s
@@ -333,14 +381,16 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     dst = os.path.join(src, '%s-confs' % user)
 
     server_alias = '#ServerAlias'
-    if socket.gethostbyname(sid_fqdn) != socket.gethostbyname(cert_fqdn):
-        sid_port = cert_port
+    if socket.gethostbyname(sid_fqdn) != socket.gethostbyname(oid_fqdn) != \
+           socket.gethostbyname(cert_fqdn):
+        sid_port = oid_port = cert_port
         server_alias = 'ServerAlias'
     generate_confs(
         src,
         dst,
         public_fqdn,
         cert_fqdn,
+        oid_fqdn,
         sid_fqdn,
         user,
         group,
@@ -352,6 +402,12 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         state_dir,
         cert_dir,
         enable_sftp,
+        enable_davs,
+        enable_ftps,
+        enable_openid,
+        openid_provider,
+        daemon_keycert,
+        alias_field,
         moin_etc,
         moin_share,
         hg_path,
@@ -360,6 +416,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         trac_ini_path,
         public_port,
         cert_port,
+        oid_port,
         sid_port,
         'User',
         'Group',
@@ -422,14 +479,15 @@ sudo cp -f -p %(server_conf)s %(trac_ini)s %(server_dir)s/
 %(sudo_cmd)s '%(server_dir)s/checkconf.py'
 """ % settings
 
-    used_ports = [public_port, cert_port, sid_port]
+    used_ports = [public_port, cert_port, oid_port, sid_port]
     extra_ports = [port for port in reserved_ports if not port in used_ports]
     print """
 #############################################################
 Created %s in group %s with pw %s
 Reserved ports:
 HTTP:\t\t%d
-HTTPS users:\t\t%d
+HTTPS certificate users:\t\t%d
+HTTPS openid users:\t\t%d
 HTTPS resources:\t\t%d
 Extra ports:\t\t%s
 
@@ -444,6 +502,7 @@ sudo %s/%s start
         pw,
         public_port,
         cert_port,
+        oid_port,
         sid_port,
         ', '.join(["%d" % port for port in extra_ports]),
         apache_dir,

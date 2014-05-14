@@ -45,15 +45,15 @@ fi
 if [ -z $MIG_STATE ]; then 
     MIG_STATE=${MIG_PATH}/state
 fi
-if [ -z $MIG_HOME ]; then 
-    MIG_HOME=${MIG_PATH}/mig
+if [ -z $MIG_CODE ]; then 
+    MIG_CODE=${MIG_PATH}/mig
 fi
 if [ -n $MIG_CONF ]; then 
     CUSTOMCONF="MIG_CONF=$MIG_CONF "
 fi
 # you probably do not want to modify these...
-MIG_SERVER=${MIG_HOME}/server/grid_script.py
-MIG_MONITOR=${MIG_HOME}/server/grid_monitor.py
+MIG_SERVER=${MIG_CODE}/server/grid_script.py
+MIG_MONITOR=${MIG_CODE}/server/grid_monitor.py
 DELAY=5
 
 start() {
@@ -66,7 +66,7 @@ start() {
 	    exit $RET
 	else 
 	    # some input for the mig server...
-	    echo "" >> ${MIG_HOME}/server/server.stdin
+	    echo "" >> ${MIG_CODE}/server/server.stdin
 	    success
 	fi
 	echo

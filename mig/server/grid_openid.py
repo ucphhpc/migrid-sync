@@ -886,7 +886,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 def start_service(configuration):
     host = configuration.user_openid_address
     port = configuration.user_openid_port
-    data_path = configuration.user_openid_store
+    data_path = configuration.openid_store
     daemon_conf = configuration.daemon_conf
     nossl = daemon_conf['nossl']
     addr = (host, port)
@@ -947,7 +947,7 @@ unless it is available in mig/server/MiGserver.conf
 """
     address = configuration.user_openid_address
     port = configuration.user_openid_port
-    session_store = configuration.user_openid_store
+    session_store = configuration.openid_store
     default_host_key = """
 -----BEGIN RSA PRIVATE KEY-----
 MIIEogIBAAKCAQEA404IBMReHOdvhhJ5YtgquY3DNi0v0QwfPUk+EcH/CxFW8UCC
@@ -987,7 +987,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
     configuration.daemon_conf = {
         'address': address,
         'port': port,
-        'session_store': os.path.abspath(configuration.user_openid_store),
+        'session_store': os.path.abspath(configuration.openid_store),
         'allow_password': 'password' in configuration.user_openid_auth,
         'allow_publickey': 'publickey' in configuration.user_openid_auth,
         'user_alias': configuration.user_openid_alias,

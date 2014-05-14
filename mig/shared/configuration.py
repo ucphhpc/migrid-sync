@@ -83,6 +83,7 @@ def fix_missing(config_file, verbose=True):
         'sss_home': '~/state/sss_home/',
         'sandbox_home': '~/state/sandbox_home',
         'freeze_home': '~/state/freeze_home',
+        'openid_store': '~/state/openid_store/',
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
         'site_vgrid_links': 'files web wiki scm tracker forum monitor',
@@ -118,13 +119,12 @@ def fix_missing(config_file, verbose=True):
         'user_ftps_key': '~/certs/key.pem',
         'user_ftps_auth': ['password'],
         'user_ftps_alias': '',
-        'user_openid_provider': '',
         'user_openid_address': fqdn,
         'user_openid_port': 8443,
         'user_openid_key': '~/certs/key.pem',
         'user_openid_auth': ['password'],
         'user_openid_alias': '',
-        'user_openid_store': '~/state/openid_store/',
+        'user_openid_provider': '',
         'logfile': 'server.log',
         'loglevel': 'info',
         'sleep_period_for_empty_jobs': '80',
@@ -219,6 +219,7 @@ class Configuration:
     sandbox_home = ''
     freeze_home = ''
     javabin_home = ''
+    openid_store = ''
     vgrid_component_links = []
     moin_etc = ''
     moin_share = ''
@@ -245,13 +246,12 @@ class Configuration:
     user_ftps_key = ''
     user_ftps_auth = ['password']
     user_ftps_alias = ''
-    user_openid_provider = ''
     user_openid_address = ''
     user_openid_port = 8443
     user_openid_key = ''
     user_openid_auth = ['password']
     user_openid_alias = ''
-    user_openid_store = ''
+    user_openid_provider = ''
     server_home = ''
     vms_builder_home = ''
     sessid_to_mrsl_link_home = ''
@@ -261,6 +261,7 @@ class Configuration:
     backup_http_urls = ''
     migserver_https_url = ''
     migserver_https_cert_url = ''
+    migserver_https_oid_url = ''
     migserver_https_sid_url = ''
     backup_https_urls = ''
     sleep_period_for_empty_jobs = ''
@@ -501,6 +502,11 @@ class Configuration:
                                                        'migserver_https_cert_url')
         else:
             self.migserver_https_cert_url = self.migserver_https_url
+        if config.has_option('GLOBAL', 'migserver_https_oid_url'):
+            self.migserver_https_oid_url = config.get('GLOBAL',
+                                                       'migserver_https_oid_url')
+        else:
+            self.migserver_https_oid_url = self.migserver_https_url
         if config.has_option('GLOBAL', 'migserver_https_sid_url'):
             self.migserver_https_sid_url = config.get('GLOBAL',
                                                        'migserver_https_sid_url')
@@ -510,6 +516,8 @@ class Configuration:
             self.freeze_home = config.get('GLOBAL', 'freeze_home')
         else:
             self.freeze_home = ''
+        if config.has_option('GLOBAL', 'openid_store'):
+            self.openid_store = config.get('GLOBAL', 'openid_store')
         if config.has_option('GLOBAL', 'user_sftp_address'):
             self.user_sftp_address = config.get('GLOBAL', 
                                                 'user_sftp_address')
@@ -559,9 +567,6 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_ftps_alias'):
             self.user_ftps_alias = config.get('GLOBAL', 
                                               'user_ftps_alias')
-        if config.has_option('GLOBAL', 'user_openid_provider'):
-            self.user_openid_provider = config.get('GLOBAL', 
-                                                   'user_openid_provider')
         if config.has_option('GLOBAL', 'user_openid_address'):
             self.user_openid_address = config.get('GLOBAL', 
                                                  'user_openid_address')
@@ -577,10 +582,9 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_openid_alias'):
             self.user_openid_alias = config.get('GLOBAL', 
                                                  'user_openid_alias')
-        if config.has_option('GLOBAL', 'user_openid_store'):
-            self.user_openid_store = config.get('GLOBAL', 'user_openid_store')
-        else:
-            self.user_openid_store = os.path.join(self.server_home, 'openid_store')
+        if config.has_option('GLOBAL', 'user_openid_provider'):
+            self.user_openid_provider = config.get('GLOBAL', 
+                                                   'user_openid_provider')
         if config.has_option('GLOBAL', 'mig_code_base'):
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:

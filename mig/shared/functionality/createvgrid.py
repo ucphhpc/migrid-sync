@@ -203,7 +203,7 @@ def create_scm(
         kind = 'public'
         scm_alias = 'vgridpublicscm'
         server_url = configuration.migserver_http_url
-    server_url_without_port = ':'.join(server_url.split(':')[:2])
+    server_url_optional_port = ':'.join(server_url.split(':')[:2])
     cgi_template_script = os.path.join(configuration.hgweb_scripts,
                                        'hgweb.cgi')
     wsgi_template_script = os.path.join(configuration.hgweb_scripts,
@@ -245,7 +245,7 @@ be possible if case you do not have administrator privileges.
 
 On the client a ~/.hgrc with something like:
 [auth]
-migserver.prefix = %(server_url_without_port)s
+migserver.prefix = %(server_url_optional_port)s
 migserver.key = /path/to/mig/key.pem
 migserver.cert = /path/to/mig/cert.pem
 
@@ -263,7 +263,7 @@ Please refer to the Mercurial documentation for further information about
 the commands and work flows of this distributed SCM.
 ''' % {'vgrid_name': vgrid_name, 'kind': kind, 'scm_alias': scm_alias,
        'server_url': server_url,
-       'server_url_without_port': server_url_without_port}
+       'server_url_optional_port': server_url_optional_port}
 
     cgi_scm_script = os.path.join(scm_dir, 'cgi-bin', 'hgweb.cgi')
     wsgi_scm_script = os.path.join(scm_dir, 'wsgi-bin', 'hgweb.wsgi')

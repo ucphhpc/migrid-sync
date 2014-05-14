@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # generateconfs - create custom MiG server configuration files
-# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -24,8 +24,6 @@
 #
 # -- END_HEADER ---
 #
-
-# IMPORTANT: Run script with sudo or as root
 
 """Generate the configurations for a custom MiG server installation.
 Creates MiG server and Apache configurations to fit the provided settings.
@@ -53,6 +51,7 @@ if '__main__' == __name__:
         'destination',
         'public_fqdn',
         'cert_fqdn',
+        'oid_fqdn',
         'sid_fqdn',
         'user',
         'group',
@@ -64,6 +63,12 @@ if '__main__' == __name__:
         'mig_state',
         'mig_certs',
         'enable_sftp',
+        'enable_davs',
+        'enable_ftps',
+        'enable_openid',
+        'openid_provider',
+        'daemon_keycert',
+        'alias_field',
         'moin_etc',
         'moin_share',
         'hg_path',
@@ -72,11 +77,13 @@ if '__main__' == __name__:
         'trac_ini_path',
         'public_port',
         'cert_port',
+        'oid_port',
         'sid_port',
         'user_clause',
         'group_clause',
         'listen_clause',
         'serveralias_clause',
+        'distro',
         )
     settings = {}
     for key in names:
@@ -121,29 +128,32 @@ For a default setup you will probably want to copy the MiG daemon conf to the
 server code directory:
 cp %(destination)s/MiGserver.conf %(mig_code)s/server/
 
-If you are running apache 2.x on Debian you can use the sites-available and
-sites-enabled structure with:
-cp %(destination)s/MiG.conf %(apache_etc)s/sites-available/MiG
-a2ensite MiG
+If you are running apache 2.x on Debian/Ubuntu you can use the sites-available
+and sites-enabled structure with:
+sudo cp %(destination)s/MiG.conf %(apache_etc)s/sites-available/MiG
+sudo a2ensite MiG
 
 On other distro and apache combinations you will likely want to rely on the
 automatic inclusion of configurations in the conf.d directory instead:
-cp %(destination)s/MiG.conf %(apache_etc)s/conf.d/
+sudo cp %(destination)s/MiG.conf %(apache_etc)s/conf.d/
+and on Redhat based systems possibly mimic Debian with
+sudo cp %(destination)s/mimic-deb.conf %(apache_etc)s/conf/httpd.conf
+sudo cp %(destination)s/envvars /etc/sysconfig/httpd
 
 You may also want to consider copying the generated apache2.conf,
 httpd.conf, ports.conf and envvars to %(apache_etc)s/:
-cp %(destination)s/apache2.conf %(apache_etc)s/
-cp %(destination)s/httpd.conf %(apache_etc)s/
-cp %(destination)s/ports.conf %(apache_etc)s/
-cp %(destination)s/envvars %(apache_etc)s/
+sudo cp %(destination)s/apache2.conf %(apache_etc)s/
+sudo cp %(destination)s/httpd.conf %(apache_etc)s/
+sudo cp %(destination)s/ports.conf %(apache_etc)s/
+sudo cp %(destination)s/envvars %(apache_etc)s/
 
-and the generated trac.ini to %(mig_code)s/server/:
+and if Trac is enabled, the generated trac.ini to %(mig_code)s/server/:
 cp %(destination)s/trac.ini %(mig_code)s/server/
 
 On a MiG developer server the dedicated apache init script is added with:
-cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
+sudo cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
 
-Please reload or restart your apache daemons to catch the configuration
-changes.
+Please reload or restart your apache daemons afterwards to catch the
+configuration changes.
 ''' % conf
     sys.exit(0)

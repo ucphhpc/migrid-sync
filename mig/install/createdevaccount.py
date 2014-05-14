@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createdevaccount - create a MiG server development account
-# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -24,8 +24,6 @@
 #
 # -- END_HEADER ---
 #
-
-# IMPORTANT: Run script with sudo or as root
 
 """Add a unprivileged user with access to a personal MiG server.
 Still needs some semi-automated setup of apache, sudo and iptables
@@ -61,6 +59,7 @@ if __name__ == '__main__':
     settings = {
         'public_fqdn': socket.getfqdn(),
         'cert_fqdn': socket.getfqdn(),
+        'oid_fqdn': socket.getfqdn(),
         'sid_fqdn': socket.getfqdn(),
         'debug_mode': True,
         }
@@ -101,6 +100,7 @@ if __name__ == '__main__':
         create_user(login, login, debug=settings["debug_mode"],
                     public_fqdn=settings["public_fqdn"],
                     cert_fqdn=settings["cert_fqdn"],
+                    oid_fqdn=settings["oid_fqdn"],
                     sid_fqdn=settings["sid_fqdn"])
 
     sys.exit(0)
