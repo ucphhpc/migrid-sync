@@ -15,33 +15,30 @@ about the GPL v2 license under which MiG is distributed.
 Please refer to the information available at the aforementioned URL
 especially the wiki pages including:
 
-http://code.google.com/p/migrid/wiki/GettingStarted
+https://code.google.com/p/migrid/wiki/GettingStarted
 
 
 = Requirements =
 A MiG server basically requires an Apache web server, the OpenSSH client
 tools and a Python interpreter with a few external modules.
 -Apache 1.3.x or 2.x (http://httpd.apache.org/)
--Apache SSL module (http://httpd.apache.org/docs/2.0/mod/mod_ssl.html)
--Apache Rewrite module (http://httpd.apache.org/docs/2.0/mod/mod_rewrite.html)
--OpenSSH clients (http://openssh.org/)
--Python 2.5 or later but not 3.x
--Python JSON module
---json-py (http://sourceforge.net/projects/json-py/)
---simplejson (http://undefined.org/python/#simplejson)
---... others may also work
--Python Enchant module (http://pyenchant.sourceforge.net/). 
+-Apache SSL module (http://httpd.apache.org/docs/current/mod/mod_ssl.html)
+-Apache Rewrite module (http://httpd.apache.org/docs/current/mod/mod_rewrite.html)
+-OpenSSH clients (http://www.openssh.org/)
+-Python 2.6 or later but not 3.x (https://www.python.org/)
+-Python Enchant module (https://pypi.python.org/pypi/pyenchant). 
 
-Optional WSGI interface, Wiki, SCM and tracker VGrid features require:
--Apache WSGI module (http://code.google.com/p/modwsgi/)
+Optional WSGI interface, OpenID login, Wiki, SCM and tracker VGrid features require:
+-Apache WSGI module (https://code.google.com/p/modwsgi/)
+-Apache OpenID module (http://findingscience.com/mod_auth_openid/)
 -Mercurial (http://mercurial.selenic.com/)
 -Trac (http://trac.edgewall.org/)
 -Trac plugins (e.g. http://trac-hacks.org/)
 
 On Debian servers the corresponding packages can be installed with:
 sudo aptitude install apache2-mpm-prefork libapache2-mod-wsgi \
-     openssh-client python-json python-enchant mercurial trac \
-     trac-mercurial
+     libapache2-mod-auth-openid openssh-client python python-enchant \
+     mercurial trac trac-mercurial
 
 Additional packaged Trac extensions can be installed with:
 sudo aptitude install trac-customfieldadmin trac-graphviz \
@@ -139,7 +136,7 @@ If you run MiG with different apache and mig users, you will most likely
 need to provide both users write access to the mig user home, though.
 
 Download and unpack the MiG source or make a checkout from svn as described on:
-http://code.google.com/p/migrid/source/checkout
+https://code.google.com/p/migrid/source/checkout
 
 At this point it may be comfortable to copy some of the basic
 account configuration files from mig/install/mig-user to ~/ but this is
@@ -233,11 +230,12 @@ or similarly with Debian apache 2.x:
 		   --listen_clause='#Listen' \
 		   --serveralias_clause='ServerAlias'
 
-and a minimal setup with CentOS apache 2.x (requires manual tweaks):
+and a storage-only setup with CentOS apache 2.x and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --public_fqdn=escistore01.hpc.ku.dk \
                    --cert_fqdn=escistore01.hpc.ku.dk \
-                   --sid_fqdn=escistore02.hpc.ku.dk --user=mig --group=mig \
+                   --oid_fqdn=escistore02.hpc.ku.dk \
+                   --sid_fqdn=escistore03.hpc.ku.dk --user=mig --group=mig \
                    --apache_etc=/etc/httpd \
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
@@ -245,14 +243,15 @@ and a minimal setup with CentOS apache 2.x (requires manual tweaks):
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
-                   --hg_path= \
-                   --hgweb_scripts= \
-                   --trac_admin_path= \
-                   --trac_ini_path= \
-                   --public_port=80 --cert_port=443 --sid_port=443 \
-                   --user_clause=User --group_clause=Group \
-                   --listen_clause='#Listen' \
-                   --serveralias_clause='#ServerAlias'
+                   --hg_path='' --hgweb_scripts='' \
+                   --trac_admin_path='' --trac_ini_path='' \
+                   --public_port=80 --cert_port=443 --oid_port=443 --sid_port=443 \
+                   --openid_provider=https://escistore02.hpc.ku.dk:8000/openid/ \
+                   --enable_openid=True --enable_sftp=True --enable_davs=True \
+                   --enable_ftps=True --user_clause=User \
+                   --group_clause=Group --listen_clause='#Listen' \
+                   --serveralias_clause='#ServerAlias' --alias_field=email \
+                   --daemon_keycert=~/certs/combined.pem --distro=centos 
 
 Most of the arguments should be relatively straight forward, but you
 need to provide the MIG_CERTS path where your apache server key and

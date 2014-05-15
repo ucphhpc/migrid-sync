@@ -1797,14 +1797,8 @@ def json_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in json format"""
 
     try:
-        try:
-            import json
-        except:
-            import simplejson as json
         # python >=2.6 includes native json module with loads/dumps methods
-        # python <2.6 + python-json module with read/write methods
-        if not hasattr(json, 'dumps') and hasattr(json, 'write'):
-            json.dumps = json.write
+        import json
         return json.dumps(out_obj)
     except Exception, exc:
         configuration.logger.error('json unavailable (%s) - using txt' % exc)

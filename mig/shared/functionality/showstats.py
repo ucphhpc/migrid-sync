@@ -34,16 +34,12 @@ graphics. Uses jquery visualization module and views defined in
 couchdb (for sgas-experimental).
 """
 
+import json
 import os
 import urllib
 import re
 import sys
 import time
-
-try:
-    from simplejson import loads
-except:
-    loads = eval # HACK
 
 import shared.returnvalues as returnvalues
 from shared.init import initialize_main_variables, find_entry
@@ -267,7 +263,7 @@ Please contact the Grid admins %s if you think they should be enabled.
     #  2. convert from json to dictionary, extract values we need
     # ...we do not really need json here...
     reply = jsonreply.replace('\r','')
-    data = loads(reply)['rows'] # :: list of dict with "key","value"
+    data = json.loads(reply)['rows'] # :: list of dict with "key","value"
 
     if not data:
         output_objects.append({'object_type': 'sectionheader', 'text' :
