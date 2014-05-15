@@ -54,6 +54,10 @@ fi
 # you probably do not want to modify these...
 MIG_SERVER=${MIG_CODE}/server/grid_script.py
 MIG_MONITOR=${MIG_CODE}/server/grid_monitor.py
+MIG_SFTP=${MIG_CODE}/server/grid_sftp.py
+MIG_DAVS=${MIG_CODE}/server/grid_davs.py
+MIG_FTPS=${MIG_CODE}/server/grid_ftps.py
+MIG_OPENID=${MIG_CODE}/server/grid_openid.py
 DELAY=5
 
 start() {
@@ -78,6 +82,43 @@ start() {
 	echo
 	# if monitor does not work, too bad... continue
 	[ $RET2 ] || echo "Warning: Monitor not started."
+	echo
+	echo -n "Starting MiG SFTP daemon:"
+	daemon --user ${MIG_USER} \
+	           "$CUSTOMCONF ${MIG_SFTP} 2>&1 > ${MIG_STATE}/sftp.out &"
+	RET2=$?
+	[ $RET2 ] && success
+	echo
+	# if sftp does not work, too bad... continue
+	[ $RET2 ] || echo "Warning: SFTP not started."
+	echo
+	echo -n "Starting MiG DAVS daemon:"
+	daemon --user ${MIG_USER} \
+	           "$CUSTOMCONF ${MIG_DAVS} 2>&1 > ${MIG_STATE}/davs.out &"
+	RET2=$?
+	[ $RET2 ] && success
+	echo
+	# if davs does not work, too bad... continue
+	[ $RET2 ] || echo "Warning: DAVS not started."
+	echo
+	echo -n "Starting MiG FTPS daemon:"
+	daemon --user ${MIG_USER} \
+	           "$CUSTOMCONF ${MIG_FTPS} 2>&1 > ${MIG_STATE}/ftps.out &"
+	RET2=$?
+	[ $RET2 ] && success
+	echo
+	# if ftps does not work, too bad... continue
+	[ $RET2 ] || echo "Warning: FTPS not started."
+	echo
+	echo -n "Starting MiG OPENID daemon:"
+	daemon --user ${MIG_USER} \
+	           "$CUSTOMCONF ${MIG_OPENID} 2>&1 > ${MIG_STATE}/openid.out &"
+	RET2=$?
+	[ $RET2 ] && success
+	echo
+	# if openid does not work, too bad... continue
+	[ $RET2 ] || echo "Warning: OPENID not started."
+
 	touch /var/lock/subsys/MiG
 	return $RET
 }	
@@ -85,6 +126,18 @@ start() {
 stop() {
 	echo -n "Shutting down MiG monitor: "
 	killproc ${MIG_MONITOR}
+	echo
+	echo -n "Shutting down MiG sftp: "
+	killproc ${MIG_SFTP}
+	echo
+	echo -n "Shutting down MiG davs: "
+	killproc ${MIG_DAVS}
+	echo
+	echo -n "Shutting down MiG ftps: "
+	killproc ${MIG_FTPS}
+	echo
+	echo -n "Shutting down MiG openid: "
+	killproc ${MIG_OPENID}
 	echo
 	pid=`pidofproc ${MIG_SERVER}`
 	if [ -z "$pid" ]; then
@@ -123,6 +176,10 @@ case "$1" in
     status)
 	status ${MIG_SERVER}
 	status ${MIG_MONITOR}
+	status ${MIG_SFTP}
+	status ${MIG_DAVS}
+	status ${MIG_FTPS}
+	status ${MIG_OPENID}
 	;;
     restart)
     	stop

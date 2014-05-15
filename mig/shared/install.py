@@ -92,7 +92,7 @@ def generate_confs(
     enable_davs='True',
     enable_ftps='True',
     enable_openid='True',
-    openid_provider='https://localhost/openid/id/',
+    openid_provider='',
     daemon_keycert='',
     alias_field='',
     moin_etc='',
