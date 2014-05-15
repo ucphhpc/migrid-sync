@@ -815,30 +815,34 @@ class Configuration:
             self.site_external_doc = config.get('SITE', 'external_doc')
         else:
             self.site_external_doc = "http://code.google.com/p/migrid/wiki/FrontPage"
+        if config.has_option('SITE', 'enable_wsgi'):
+            self.site_enable_wsgi = config.getboolean('SITE', 'enable_wsgi')
+        else:
+            self.site_enable_wsgi = False
         if config.has_option('SITE', 'enable_griddk'):
             self.site_enable_griddk = config.getboolean('SITE', 'enable_griddk')
         else:
-            self.site_enable_griddk = True
+            self.site_enable_griddk = False
         if config.has_option('SITE', 'enable_sandboxes'):
             self.site_enable_sandboxes = config.getboolean('SITE', 'enable_sandboxes')
         else:
-            self.site_enable_sandboxes = True
+            self.site_enable_sandboxes = False
         if config.has_option('SITE', 'enable_sftp'):
             self.site_enable_sftp = config.getboolean('SITE', 'enable_sftp')
         else:
-            self.site_enable_sftp = True
+            self.site_enable_sftp = False
         if config.has_option('SITE', 'enable_davs'):
             self.site_enable_davs = config.getboolean('SITE', 'enable_davs')
         else:
-            self.site_enable_davs = True
+            self.site_enable_davs = False
         if config.has_option('SITE', 'enable_ftps'):
             self.site_enable_ftps = config.getboolean('SITE', 'enable_ftps')
         else:
-            self.site_enable_ftps = True
+            self.site_enable_ftps = False
         if config.has_option('SITE', 'enable_openid'):
             self.site_enable_openid = config.getboolean('SITE', 'enable_openid')
         else:
-            self.site_enable_openid = True
+            self.site_enable_openid = False
         if config.has_option('SITE', 'enable_vmachines'):
             self.site_enable_vmachines = config.getboolean('SITE',
                                                            'enable_vmachines')

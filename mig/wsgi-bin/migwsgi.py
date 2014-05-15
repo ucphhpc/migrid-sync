@@ -128,6 +128,7 @@ def application(environ, start_response):
 
     sys.stdout = sys.stderr
     configuration = get_configuration_object()
+
     fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
                                     environ=environ)
     user_arguments_dict = fieldstorage_to_dict(fieldstorage)
@@ -139,6 +140,9 @@ def application(environ, start_response):
         output_format = user_arguments_dict['output_format'][0]
 
     try:
+        if not configuration.site_enable_wsgi:
+            raise Exception("WSGI interface not enabled for this grid")
+        
         # Environment contains python script _somewhere_ , try in turn
         # and fall back to dashboard if all fails
         script_path = environ.get('SCRIPT_URL', False) or \
@@ -151,9 +155,17 @@ def application(environ, start_response):
         status = '200 OK'
     except Exception, exc:
         status = '500 ERROR'
-        (output_objs, ret_val) = ([{'object_type': 'error_text', 'text'
-                                  : exc}, {'object_type': 'text', 'text'
-                                  : str(environ)}],
+        (output_objs, ret_val) = ([{'object_type': 'title', 'text'
+                                    : 'Unsupported Interface'},
+                                   {'object_type': 'error_text', 'text'
+                                    : str(exc)},
+                                   # Enable next two lines only for debugging
+                                   # {'object_type': 'text', 'text':
+                                   # str(environ)}
+                                   {'object_type': 'link', 'text':
+                                    'Go to default interface',
+                                    'destination': '/index.html'},
+                                   ],
                                   returnvalues.SYSTEM_ERROR)
 
     (ret_code, ret_msg) = ret_val

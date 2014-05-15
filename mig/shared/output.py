@@ -470,7 +470,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     timing_info = 'no timing information'
     status_line = \
         """
-    <div id="exitcode">
+    <div id='exitcode'>
 Exit code: %s Description: %s (TIMING_INFO)<br />
     </div>
 <br />    

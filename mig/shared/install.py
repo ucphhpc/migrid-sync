@@ -91,6 +91,10 @@ def generate_confs(
     enable_sftp='True',
     enable_davs='True',
     enable_ftps='True',
+    enable_wsgi='True',
+    enable_sandboxes='True',
+    enable_vmachines='True',
+    enable_freeze='True',
     enable_openid='True',
     openid_provider='',
     daemon_keycert='',
@@ -139,6 +143,10 @@ def generate_confs(
     user_dict['__ENABLE_SFTP__'] = enable_sftp
     user_dict['__ENABLE_DAVS__'] = enable_davs
     user_dict['__ENABLE_FTPS__'] = enable_ftps
+    user_dict['__ENABLE_WSGI__'] = enable_wsgi
+    user_dict['__ENABLE_SANDBOXES__'] = enable_sandboxes
+    user_dict['__ENABLE_VMACHINES__'] = enable_vmachines
+    user_dict['__ENABLE_FREEZE__'] = enable_freeze
     user_dict['__ENABLE_OPENID__'] = enable_openid
     user_dict['__OPENID_PROVIDER_BASE__'] = openid_provider
     user_dict['__OPENID_PROVIDER_ID__'] = openid_provider
@@ -178,6 +186,12 @@ cert, oid and sid based https!
     if user_dict['__HG_PATH__']:
         user_dict['__HG_COMMENTED__'] = ''
 
+    # Enable WSGI web interface only if explicitly requested
+    if user_dict['__ENABLE_WSGI__']:
+        user_dict['__WSGI_COMMENTED__'] = ''
+    else:
+        user_dict['__WSGI_COMMENTED__'] = '#'
+
     # Enable OpenID auth module only if openid_provider is given
     if user_dict['__OPENID_PROVIDER_BASE__'].strip():
         user_dict['__OPENID_COMMENTED__'] = ''
@@ -187,8 +201,10 @@ cert, oid and sid based https!
     # Enable Debian/Ubuntu specific lines only there
     if user_dict['__DISTRO__'].lower() in ('ubuntu', 'debian'):
         user_dict['__NOT_DEB_COMMENTED__'] = ''
+        user_dict['__IS_DEB_COMMENTED__'] = '#'
     else:
         user_dict['__NOT_DEB_COMMENTED__'] = '#'
+        user_dict['__IS_DEB_COMMENTED__'] = ''
 
     # Only set ID sub url if openid_provider is set - trailing slash matters
     if user_dict['__OPENID_PROVIDER_BASE__']:
@@ -404,6 +420,10 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_sftp,
         enable_davs,
         enable_ftps,
+        enable_wsgi,
+        enable_sandboxes,
+        enable_vmachines,
+        enable_freeze,
         enable_openid,
         openid_provider,
         daemon_keycert,
