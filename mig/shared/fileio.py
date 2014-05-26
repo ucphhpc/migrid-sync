@@ -28,9 +28,11 @@
 """IO operations"""
 
 from hashlib import md5
+import errno
 import fcntl
 import os
 import shutil
+import tempfile
 import time
 import zipfile
 
@@ -287,17 +289,24 @@ def move(src, dst):
     """
     return shutil.move(src, dst)
 
+def makedirs_rec(dir_path, configuration):
+    """Make sure dir_path is created if it doesn't already exist"""
+    try:
+        os.makedirs(dir_path)
+    except OSError, err:
+        if err.errno != errno.EEXIST:
+            configuration.logger.error("Could not makedirs_rec %s: %s" % \
+                                       (dir_path, err))
+            return False
+    return True
+    
 def _move_helper(src, dst, configuration, recursive):
     """Move a file/dir to dst where dst must be a new file/dir path and the
     parent dir is created if necessary. The recursive flag is used to enable
     recursion.
     """
     dst_dir = os.path.dirname(dst)
-    try:
-        os.makedirs(dst_dir)
-    except:
-        # probably already exists
-        pass
+    makedirs_rec(dst_dir, configuration)
     try:
         # Always use the same recursive move
         shutil.move(src, dst)
@@ -323,11 +332,7 @@ def _copy_helper(src, dst, configuration, recursive):
     flag enables recursive copy.
     """
     dst_dir = os.path.dirname(dst)
-    try:
-        os.makedirs(dst_dir)
-    except:
-        # probably already exists
-        pass
+    makedirs_rec(dst_dir, configuration)
     try:
         if recursive:
             shutil.copytree(src, dst)
@@ -392,6 +397,14 @@ def strip_dir(path):
     else:
         name = os.path.basename(path)
     return name
+
+def make_temp_file(suffix='', prefix='tmp', dir=None, text=False):
+    """Expose tempfile.mkstemp functionality"""
+    return tempfile.mkstemp(suffix, prefix, dir, text)
+
+def make_temp_dir(suffix='', prefix='tmp', dir=None):
+    """Expose tempfile.mkdtemp functionality"""
+    return tempfile.mkdtemp(suffix, prefix, dir)
 
 def md5sum_file(path, chunk_size, max_chunks=-1):
     """Simple md5 hashing for checksumming of files inspired by  

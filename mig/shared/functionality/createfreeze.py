@@ -33,7 +33,8 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import max_freeze_files
 from shared.fileio import strip_dir
-from shared.freezefunctions import freeze_flavors, create_frozen_archive
+from shared.freezefunctions import freeze_flavors, create_frozen_archive, \
+     published_url
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
@@ -222,11 +223,11 @@ Please contact the Grid admins %s if you think it should be enabled.
                                % retmsg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    freeze_id = retmsg
+    freeze_id = freeze_meta['ID'] = retmsg
     logger.info("%s: successful for '%s': %s" % (op_name,
                                                  freeze_id, client_id))
     output_objects.append({'object_type': 'text', 'text'
-                           : 'Created frozen archive with ID %s successfuly!'
+                           : 'Created frozen archive with ID %s successfully!'
                            % freeze_id})
     output_objects.append({
         'object_type': 'link',
@@ -237,4 +238,16 @@ Please contact the Grid admins %s if you think it should be enabled.
         'text': 'View new %s frozen archive'
         % freeze_id,
         })
+    if freeze_publish:
+        public_url = published_url(freeze_meta, configuration)
+        output_objects.append({'object_type': 'text', 'text'
+                           : 'The archive is publicly available at:'})
+        output_objects.append({
+            'object_type': 'link',
+            'destination': public_url,
+            'class': 'viewlink',
+            'title': 'View published archive',
+            'text': public_url,
+        })
+
     return (output_objects, returnvalues.OK)

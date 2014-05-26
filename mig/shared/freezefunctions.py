@@ -27,14 +27,14 @@
 
 """Freeze archive functions"""
 
+import base64
 import datetime
 import os
-import tempfile
 import time
 
-from shared.defaults import freeze_meta_filename
+from shared.defaults import freeze_meta_filename, public_archive_dir
 from fileio import md5sum_file, write_file, copy_file, copy_rec, move_file, \
-     move_rec, remove_rec
+     move_rec, remove_rec, makedirs_rec, make_symlink, make_temp_dir
 from shared.serial import load, dump
 
 freeze_flavors = {
@@ -47,6 +47,19 @@ freeze_flavors = {
             'showfreeze_title': 'Show Archived Thesis Details',
             'deletefreeze_title': 'Delete Archived Thesis'}
     }
+
+def public_freeze_id(freeze_dict):
+    """Translate internal freeze_id to a public identifier used when publishing
+    frozen archives. In the future we may want to map to a global DOI but we
+    just map to to url safe base64 version of the freeze ID for now.
+    """
+    return base64.urlsafe_b64encode(freeze_dict['ID'])
+
+def published_url(freeze_dict, configuration):
+    """Translate internal freeze_id to a published archive URL"""
+    return os.path.join(configuration.migserver_http_url, 'public',
+                        public_archive_dir, public_freeze_id(freeze_dict),
+                        'index.html')
 
 def build_freezeitem_object(configuration, freeze_dict):
     """Build a frozen archive object based on input freeze_dict"""
@@ -83,15 +96,12 @@ def list_frozen_archives(configuration, client_id):
     try:
         dir_content = os.listdir(configuration.freeze_home)
     except Exception:
-        if not os.path.isdir(configuration.freeze_home):
-            try:
-                os.mkdir(configuration.freeze_home)
-            except Exception, err:
-                logger.error(
-                    'freezefunctions.py: not able to create directory %s: %s'
-                    % (configuration.freeze_home, err))
-                return (False, "archive setup is broken")
-            dir_content = []
+        if not makedirs_rec(configuration.freeze_home, configuration):
+            logger.error(
+                'freezefunctions.py: not able to create directory %s'
+                % configuration.freeze_home)
+            return (False, "archive setup is broken")
+        dir_content = []
 
     for entry in dir_content:
 
@@ -173,8 +183,8 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
     """
     logger = configuration.logger
     try:
-        frozen_dir = tempfile.mkdtemp(prefix='archive-',
-                                       dir=configuration.freeze_home)
+        frozen_dir = make_temp_dir(prefix='archive-',
+                                   dir=configuration.freeze_home)
     except Exception, err:
         return (False, 'Error preparing new frozen archive: %s' % err)
 
@@ -186,6 +196,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
         'CREATOR': client_id,
         }
     freeze_dict.update(freeze_meta)
+    frozen_files = []
     logger.info("create_frozen_archive: save meta for %s" % freeze_id)
     try:
         dump(freeze_dict, os.path.join(frozen_dir, freeze_meta_filename))
@@ -198,6 +209,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
                               (freeze_copy, freeze_id))
     for (real_source, rel_dst) in freeze_copy:
         freeze_path = os.path.join(frozen_dir, rel_dst)
+        frozen_files.append(rel_dst)
         logger.debug("create_frozen_archive: copy %s" % freeze_path)
         if os.path.isdir(real_source):
             (status, msg) = copy_rec(real_source, freeze_path, configuration)
@@ -216,6 +228,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
     for (real_source, rel_dst) in freeze_move:
         # Strip relative dir from move targets
         freeze_path = os.path.join(frozen_dir, os.path.basename(rel_dst))
+        frozen_files.append(os.path.basename(rel_dst))
         logger.debug("create_frozen_archive: move %s" % freeze_path)
         if os.path.isdir(real_source):
             (status, msg) = move_rec(real_source, freeze_path, configuration)
@@ -233,11 +246,57 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
                               ([i[0] for i in freeze_upload], freeze_id))
     for (filename, contents) in freeze_upload:
         freeze_path = os.path.join(frozen_dir, filename)
+        frozen_files.append(filename)
         logger.debug("create_frozen_archive: write %s" % freeze_path)
         if not write_file(contents, freeze_path, logger):
             logger.error("create_frozen_archive: failed: %s" % err)
             remove_rec(frozen_dir, configuration)
             return (False, 'Error writing frozen archive')
+
+    if freeze_dict['PUBLISH']:
+        base_path = os.path.join(configuration.wwwpublic, public_archive_dir)
+        public_path = os.path.join(base_path, public_freeze_id(freeze_dict))
+        index_path = os.path.join(public_path, 'index.html')
+        public_meta = [('CREATOR', 'Owner'), ('NAME', 'Name'),
+                       ('DESCRIPTION', 'Description'),
+                       ('CREATED_TIMESTAMP', 'Date')]
+        contents = """<html>
+<head>
+<meta http-equiv='Content-Type' content='text/html;charset=utf-8'/>
+<!-- site default style -->
+<link rel='stylesheet' type='text/css' href='%s' media='screen'/>
+<!-- override with any site-specific styles -->
+<link rel='stylesheet' type='text/css' href='%s' media='screen'/>
+<title>Public Archive</title>
+</head>
+<body>
+<div class='content'>
+<h1>Public Archive</h1>
+This is a public archive with meta data and files.
+<h2>Archive Meta Data</h2>
+        """ % (configuration.site_default_css, configuration.site_custom_css)
+        for (meta_key, meta_label) in public_meta:
+            meta_value = freeze_dict.get(meta_key, '')
+            if meta_value:
+                contents += """%s: %s<br/>
+""" % (meta_label, meta_value)
+        contents += """
+<h2>Archive Files</h2>
+        """
+        for rel_path in frozen_files:
+            contents += """<a href='%s'>%s</a><br/>
+""" % (rel_path, rel_path)
+        contents += """
+</div>
+</body>
+</html>
+        """
+        if not makedirs_rec(base_path, configuration) or \
+               not make_symlink(frozen_dir, public_path, logger) or \
+               not write_file(contents, index_path, configuration.logger):
+            logger.error("create_frozen_archive: publish failed")
+            remove_rec(frozen_dir, configuration)
+            return (False, 'Error publishing frozen archive')
     return (True, freeze_id)
 
 def delete_frozen_archive(freeze_id, configuration):
