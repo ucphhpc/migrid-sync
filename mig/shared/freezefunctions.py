@@ -32,7 +32,8 @@ import datetime
 import os
 import time
 
-from shared.defaults import freeze_meta_filename, public_archive_dir
+from shared.defaults import freeze_meta_filename, wwwpublic_alias, \
+     public_archive_dir, public_archive_index
 from fileio import md5sum_file, write_file, copy_file, copy_rec, move_file, \
      move_rec, remove_rec, makedirs_rec, make_symlink, make_temp_dir
 from shared.serial import load, dump
@@ -55,11 +56,16 @@ def public_freeze_id(freeze_dict):
     """
     return base64.urlsafe_b64encode(freeze_dict['ID'])
 
+def published_dir(freeze_dict, configuration):
+    """Translate internal freeze_id to a published archive dir"""
+    return os.path.join(configuration.wwwpublic, public_archive_dir,
+                        public_freeze_id(freeze_dict))
+
 def published_url(freeze_dict, configuration):
     """Translate internal freeze_id to a published archive URL"""
     return os.path.join(configuration.migserver_http_url, 'public',
                         public_archive_dir, public_freeze_id(freeze_dict),
-                        'index.html')
+                        public_archive_index)
 
 def build_freezeitem_object(configuration, freeze_dict):
     """Build a frozen archive object based on input freeze_dict"""
@@ -82,7 +88,8 @@ def build_freezeitem_object(configuration, freeze_dict):
                                 ].timetuple()),
         'frozenfiles': freeze_files,
         }
-    for field in ('author', 'department', 'organization', 'publish', 'flavor'):
+    for field in ('author', 'department', 'organization', 'publish',
+                  'publish_url', 'flavor'):
         if not freeze_dict.get(field.upper(), None) is None:
             freeze_obj[field] = freeze_dict[field.upper()]
     return freeze_obj
@@ -196,6 +203,10 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
         'CREATOR': client_id,
         }
     freeze_dict.update(freeze_meta)
+    if freeze_meta['PUBLISH']:
+        real_pub_dir = published_dir(freeze_dict, configuration)
+        real_pub_index = os.path.join(real_pub_dir, public_archive_index)
+        freeze_dict['PUBLISH_URL'] = published_url(freeze_dict, configuration)
     frozen_files = []
     logger.info("create_frozen_archive: save meta for %s" % freeze_id)
     try:
@@ -254,9 +265,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
             return (False, 'Error writing frozen archive')
 
     if freeze_dict['PUBLISH']:
-        base_path = os.path.join(configuration.wwwpublic, public_archive_dir)
-        public_path = os.path.join(base_path, public_freeze_id(freeze_dict))
-        index_path = os.path.join(public_path, 'index.html')
+        published_id = public_freeze_id(freeze_dict)
         public_meta = [('CREATOR', 'Owner'), ('NAME', 'Name'),
                        ('DESCRIPTION', 'Description'),
                        ('CREATED_TIMESTAMP', 'Date')]
@@ -267,14 +276,17 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
 <link rel='stylesheet' type='text/css' href='%s' media='screen'/>
 <!-- override with any site-specific styles -->
 <link rel='stylesheet' type='text/css' href='%s' media='screen'/>
-<title>Public Archive</title>
+<title>Public Archive: %s</title>
 </head>
 <body>
 <div class='content'>
 <h1>Public Archive</h1>
-This is a public archive with meta data and files.
+This is the public archive with unique ID %s .<br/>
+The user supplied meta data and files are available below.
+
 <h2>Archive Meta Data</h2>
-        """ % (configuration.site_default_css, configuration.site_custom_css)
+        """ % (configuration.site_default_css, configuration.site_custom_css,
+        published_id, published_id)
         for (meta_key, meta_label) in public_meta:
             meta_value = freeze_dict.get(meta_key, '')
             if meta_value:
@@ -291,9 +303,8 @@ This is a public archive with meta data and files.
 </body>
 </html>
         """
-        if not makedirs_rec(base_path, configuration) or \
-               not make_symlink(frozen_dir, public_path, logger) or \
-               not write_file(contents, index_path, configuration.logger):
+        if not make_symlink(frozen_dir, real_pub_dir, logger) or \
+               not write_file(contents, real_pub_index, configuration.logger):
             logger.error("create_frozen_archive: publish failed")
             remove_rec(frozen_dir, configuration)
             return (False, 'Error publishing frozen archive')

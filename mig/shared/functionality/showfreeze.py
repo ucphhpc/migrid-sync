@@ -143,7 +143,7 @@ $(document).ready(function() {
                                freeze_id})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    if freeze_dict.get('FLAVOR','freeze') != flavor:
+    if freeze_dict.get('FLAVOR', 'freeze') != flavor:
         logger.error("%s: flavor mismatch for '%s': %s vs %s" % \
                      (op_name, freeze_id, flavor, freeze_dict))
         output_objects.append({'object_type': 'error_text', 'text'

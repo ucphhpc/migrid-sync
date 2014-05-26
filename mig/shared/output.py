@@ -1181,7 +1181,10 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                          '<td class="border">%s</td></tr>'
                           % i['description'].replace('\n', '<br />'))
             if i.get('publish', False):
-                published = 'yes'                
+                published = 'yes'
+                publish_url = i.get('publish_url', '')
+                published += ' (<a href="%s">%s</a>)' % (publish_url,
+                                                         publish_url)
             else:
                 published = 'no'
             lines.append('<tr><td class="title">Published</td>'

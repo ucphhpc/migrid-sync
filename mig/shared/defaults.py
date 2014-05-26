@@ -95,4 +95,6 @@ max_upload_chunks = 10
 
 upload_block_size = 64 * 1024 * 1024
 upload_tmp_dir = '.upload-cache'
+wwwpublic_alias = 'public'
 public_archive_dir = 'archives'
+public_archive_index = 'published-archive.html'
