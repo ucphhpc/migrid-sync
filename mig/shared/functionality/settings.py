@@ -50,8 +50,9 @@ except Exception, exc:
 
 
 cm_prefix = '/images/lib/codemirror'
-cm_css_prefix = '%s/css' % cm_prefix
-cm_js_prefix = '%s/js' % cm_prefix
+cm_css_prefix = '%s/lib' % cm_prefix
+cm_js_prefix = '%s/lib' % cm_prefix
+cm_addon_prefix = '%s/addon' % cm_prefix
 txt_parsers, txt_stylesheets = ['parsedummy.js'], []
 css_parsers, css_stylesheets = ["parsecss.js"], ["%s/csscolors.css" % cm_css_prefix]
 web_parsers = ["parsexml.js", "parsecss.js", "tokenizejavascript.js",
@@ -121,11 +122,13 @@ def wrap_edit_area(name, area, edit_opts=edit_defaults, toolbar_buttons='ALL'):
       return;
     }
     var first = true;
+    var line = this.editor.getCursor()
     do {
-      var cursor = this.editor.getSearchCursor(text, first);
+      if (!first) line = 0;
+      var cursor = this.editor.getSearchCursor(text, line, first);
       first = false;
       while (cursor.findNext()) {
-        cursor.select();
+        this.editor.setSelection(cursor.from(), cursor.to());
         return;
       }
     } while (confirm("End of document reached. Start over?"));
@@ -138,9 +141,9 @@ def wrap_edit_area(name, area, edit_opts=edit_defaults, toolbar_buttons='ALL'):
       return;
     }
     var to = document.getElementById(this.replaceid).value;
-    var cursor = this.editor.getSearchCursor(from, false);
+    var cursor = this.editor.getSearchCursor(from, this.editor.pos, false);
     while (cursor.findNext()) {
-      cursor.select();
+      this.editor.setSelection(cursor.from(), cursor.to());
       if (confirm("Replace selected entry with '" + to + "'?")) {
         cursor.replace(to);
       }
@@ -190,18 +193,22 @@ def wrap_edit_area(name, area, edit_opts=edit_defaults, toolbar_buttons='ALL'):
   jump: function() {
     var line = document.getElementById(this.jumpid).value;
     if (line && !isNaN(Number(line)))
-      this.editor.jumpToLine(Number(line));
+      this.editor.scrollIntoView(Number(line));
     else
       alert("Please specify a line to jump to in the jump field!");
   },
 
   line: function() {
-    this.editor.setLineNumbers(!this.editor.lineNumbers);
+    this.editor.setOption("lineNumbers", !this.editor.getOption("lineNumbers"));
     this.editor.focus();
   },
 
   reindent: function() {
-    this.editor.reindent();
+    var that = this.editor;
+    var last = that.lineCount();
+    that.operation(function() {
+                       for (var i = 0; i < last; ++i) that.indentLine(i);
+                   });
   },
   
   spell: function() {
@@ -268,7 +275,8 @@ TextAreaEditor.prototype = {
 %s
 <script type="text/javascript">
 %s
-var editor = new TextAreaEditor(document.getElementById("%stoolbar"), "%s", %s);
+var editor = new TextAreaEditor(document.getElementById("%stoolbar"),
+                                document.getElementById("%s"), %s);
 </script>
 </div>
 '''
@@ -306,12 +314,20 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                client_dir)) + os.sep
 
+    css = '''
+<link rel="stylesheet" type="text/css" href="%s/codemirror.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="%s/dialog/dialog.css" media="screen"/>
+''' % (cm_css_prefix, cm_addon_prefix)
     javascript = '''
 <script type="text/javascript" src="%s/codemirror.js"></script>
-''' % cm_js_prefix
+<script src="%s/dialog/dialog.js"></script>
+<script src="%s/search/searchcursor.js"></script>
+<script src="%s/search/search.js"></script>
+''' % (cm_js_prefix, cm_addon_prefix, cm_addon_prefix, cm_addon_prefix)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Settings'
+    title_entry['style'] = css
     title_entry['javascript'] = javascript
 
     valid_topics = ['general', 'style']
