@@ -210,22 +210,15 @@ The MiG software license follows below:<br />
     output_objects.append({'object_type': 'text', 'text' : """
 This software is mainly implemented in Python and extension modules:"""})
     output_objects.append({'object_type': 'link', 
-                           'destination' : 'http://python.org/',
+                           'destination' : 'https://www.python.org/',
                            'class': 'urllink',
                            'title': 'Python Home Page',
                            'text': 'Python (PSF license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
     output_objects.append({'object_type': 'link', 
-                           'destination' :
-                           'http://sourceforge.net/projects/json-py/',
+                           'destination' : 'https://pypi.python.org/pypi/pyenchant',
                            'class': 'urllink',
-                           'title': 'Python JSON Module Home Page',
-                           'text': 'Python JSON Module (LGPL license)'})
-    output_objects.append({'object_type': 'text', 'text' : ''})
-    output_objects.append({'object_type': 'link', 
-                           'destination' : 'http://pyenchant.sourceforge.net/',
-                           'class': 'urllink',
-                           'title': 'Python Enchant Module Home Page',
+                           'title': 'Python Enchant Module at Python Package Index',
                            'text': 'Python Enchant Module (LGPL license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
     output_objects.append({'object_type': 'text', 'text' : """
@@ -238,7 +231,7 @@ Web interfaces are served with the Apache web server:"""})
                            '(Apache 2.0 license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
     output_objects.append({'object_type': 'link', 
-                           'destination' : 'http://code.google.com/p/modwsgi/',
+                           'destination' : 'https://code.google.com/p/modwsgi/',
                            'class': 'urllink',
                            'title': 'Apache WSGI Module Home Page',
                            'text': 'Apache WSGI Module (Apache 2.0 license)'})
@@ -254,7 +247,7 @@ Web interfaces are served with the Apache web server:"""})
     output_objects.append({'object_type': 'text', 'text' : ''})
     output_objects.append({'object_type': 'link', 
                            'destination' :
-                           'http://marijn.haverbeke.nl/codemirror/',
+                           'http://codemirror.net/',
                            'class': 'urllink',
                            'title': 'CodeMirror Home Page',
                            'text': 'CodeMirror web code editor (BSD '
@@ -276,7 +269,6 @@ Web interfaces are served with the Apache web server:"""})
                            'text': 'pixel-mixer.com icons (free to use, '
                            'acknowledgement required)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
-
     output_objects.append({'object_type': 'link', 
                            'destination' :
                            'http://www.famfamfam.com/lab/icons/silk/',
@@ -285,7 +277,6 @@ Web interfaces are served with the Apache web server:"""})
                            'text': 'famfamfam.com silk icons (Creative '
                            'Commons 2.5 license)'})
     output_objects.append({'object_type': 'text', 'text' : ''})
-
     output_objects.append({'object_type': 'link', 
                            'destination' :
                            'http://www.kde-look.org/content/show.php/'
@@ -297,9 +288,8 @@ Web interfaces are served with the Apache web server:"""})
     output_objects.append({'object_type': 'text', 'text' :
                            "Core communication with dedicated resources use "
                            "OpenSSH client utilities:"})
-
     output_objects.append({'object_type': 'link', 
-                           'destination' : 'http://openssh.org/',
+                           'destination' : 'http://www.openssh.com/',
                            'class': 'urllink',
                            'title': 'OpenSSH HomePage',
                            'text': 'OpenSSH secure remote shell and file '
@@ -312,9 +302,9 @@ Web interfaces are served with the Apache web server:"""})
         output_objects.append({'object_type': 'text', 'text' :
                                "SFTP access is delivered using Paramiko:"})
         output_objects.append({'object_type': 'link', 
-                               'destination' : 'http://www.lag.net/paramiko/',
+                               'destination' : 'https://pypi.python.org/pypi/paramiko',
                                'class': 'urllink',
-                               'title': 'Paramiko Home Page',
+                               'title': 'Paramiko at Python Package Index',
                                'text': 'Paramiko SSH2 Module (LGPL)'})
     if configuration.site_enable_davs:
         password_dep = True
@@ -332,7 +322,7 @@ Web interfaces are served with the Apache web server:"""})
                                "FTPS access is delivered using pyftpdlib:"})
         output_objects.append({'object_type': 'link', 
                                'destination' :
-                               'http://code.google.com/p/pyftpdlib/',
+                               'https://code.google.com/p/pyftpdlib/',
                                'class': 'urllink',
                                'title': 'pyftpdlib Home Page',
                                'text': 'pyftpdlib FTP(S) Server Module (MIT)'})
@@ -342,10 +332,10 @@ The optional password authentication support in SFTP/DAVS/FTPS servers relies
 on the PBKDF2 module (embedded) from:"""})
         output_objects.append({'object_type': 'link', 
                                'destination' :
-                               'https://github.com/mitsuhiko/python-pbkdf2',
+                               'https://pypi.python.org/pypi/pbkdf2',
                                'class': 'urllink',
-                               'title': 'PBKDF2 Home Page',
-                               'text': 'PBKDF2 Module (BSD)'})
+                               'title': 'pbkdf2 at Python Package Index',
+                               'text': 'PBKDF2 Module (MIT)'})
     if configuration.moin_share and configuration.moin_etc:
         output_objects.append({'object_type': 'text', 'text' :
                                """Wikis are delivered using MoinMoin:"""})
