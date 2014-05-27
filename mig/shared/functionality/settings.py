@@ -53,6 +53,7 @@ cm_prefix = '/images/lib/codemirror'
 cm_css_prefix = '%s/lib' % cm_prefix
 cm_js_prefix = '%s/lib' % cm_prefix
 cm_addon_prefix = '%s/addon' % cm_prefix
+cm_mode_prefix = '%s/mode' % cm_prefix
 txt_parsers, txt_stylesheets = ['parsedummy.js'], []
 css_parsers, css_stylesheets = ["parsecss.js"], ["%s/csscolors.css" % cm_css_prefix]
 web_parsers = ["parsexml.js", "parsecss.js", "tokenizejavascript.js",
@@ -73,14 +74,17 @@ ftps_edit['height'] = '200px'
 style_edit = edit_defaults.copy()
 style_edit['parserfile'] = css_parsers
 style_edit['stylesheet'] = css_stylesheets
+style_edit['mode'] = 'css'
 widgets_edit = edit_defaults.copy()
 widgets_edit['parserfile'] = web_parsers
 widgets_edit['stylesheet'] = web_stylesheets
 widgets_edit['height'] = '400px'
+widgets_edit['mode'] = 'htmlmixed'
 profile_edit = edit_defaults.copy()
 profile_edit['parserfile'] = web_parsers
 profile_edit['stylesheet'] = web_stylesheets
 profile_edit['height'] = '200px'
+profile_edit['mode'] = 'htmlmixed'
 
 
 def py_to_js(options):
@@ -323,7 +327,15 @@ def main(client_id, user_arguments_dict):
 <script src="%s/dialog/dialog.js"></script>
 <script src="%s/search/searchcursor.js"></script>
 <script src="%s/search/search.js"></script>
-''' % (cm_js_prefix, cm_addon_prefix, cm_addon_prefix, cm_addon_prefix)
+<script src="%s/edit/matchbrackets.js"></script>
+<script src="%s/xml/xml.js"></script>
+<script src="%s/javascript/javascript.js"></script>
+<script src="%s/css/css.js"></script>
+<script src="%s/htmlmixed/htmlmixed.js"></script>
+<script src="%s/python/python.js"></script>
+''' % (cm_js_prefix, cm_addon_prefix, cm_addon_prefix, cm_addon_prefix,
+       cm_addon_prefix, cm_mode_prefix, cm_mode_prefix, cm_mode_prefix,
+       cm_mode_prefix, cm_mode_prefix)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Settings'
