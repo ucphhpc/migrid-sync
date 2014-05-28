@@ -54,6 +54,7 @@ cm_css_prefix = '%s/lib' % cm_prefix
 cm_js_prefix = '%s/lib' % cm_prefix
 cm_addon_prefix = '%s/addon' % cm_prefix
 cm_mode_prefix = '%s/mode' % cm_prefix
+# TODO: do we still need these parse and stylesheet args at all?
 txt_parsers, txt_stylesheets = ['parsedummy.js'], []
 css_parsers, css_stylesheets = ["parsecss.js"], ["%s/csscolors.css" % cm_css_prefix]
 web_parsers = ["parsexml.js", "parsecss.js", "tokenizejavascript.js",
@@ -61,16 +62,13 @@ web_parsers = ["parsexml.js", "parsecss.js", "tokenizejavascript.js",
 web_stylesheets = ["%s/%s" % (cm_css_prefix, i) for i in \
                    ["xmlcolors.css", "jscolors.css", "csscolors.css"]]
 edit_defaults = {'parserfile': txt_parsers, 'stylesheet': txt_stylesheets,
-                  'path': "%s/" % cm_js_prefix, 'autoMatchParens': "true",
-                  'tabMode': "spaces", 'indentUnit': 4, 'height': '600px'}
+                 'path': "%s/" % cm_js_prefix, 'autoMatchParens': "true",
+                 'tabMode': "spaces", 'indentUnit': 4,
+                 }
 general_edit = edit_defaults.copy()
-general_edit['height'] = '50px'
 ssh_edit = edit_defaults.copy()
-ssh_edit['height'] = '200px'
 davs_edit = edit_defaults.copy()
-davs_edit['height'] = '200px'
 ftps_edit = edit_defaults.copy()
-ftps_edit['height'] = '200px'
 style_edit = edit_defaults.copy()
 style_edit['parserfile'] = css_parsers
 style_edit['stylesheet'] = css_stylesheets
@@ -78,12 +76,10 @@ style_edit['mode'] = 'css'
 widgets_edit = edit_defaults.copy()
 widgets_edit['parserfile'] = web_parsers
 widgets_edit['stylesheet'] = web_stylesheets
-widgets_edit['height'] = '400px'
 widgets_edit['mode'] = 'htmlmixed'
 profile_edit = edit_defaults.copy()
 profile_edit['parserfile'] = web_parsers
 profile_edit['stylesheet'] = web_stylesheets
-profile_edit['height'] = '200px'
 profile_edit['mode'] = 'htmlmixed'
 
 
@@ -321,21 +317,19 @@ def main(client_id, user_arguments_dict):
     css = '''
 <link rel="stylesheet" type="text/css" href="%s/codemirror.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%s/dialog/dialog.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/codemirror.custom.css" media="screen"/>
 ''' % (cm_css_prefix, cm_addon_prefix)
     javascript = '''
 <script type="text/javascript" src="%s/codemirror.js"></script>
 <script src="%s/dialog/dialog.js"></script>
 <script src="%s/search/searchcursor.js"></script>
 <script src="%s/search/search.js"></script>
-<script src="%s/edit/matchbrackets.js"></script>
 <script src="%s/xml/xml.js"></script>
 <script src="%s/javascript/javascript.js"></script>
 <script src="%s/css/css.js"></script>
 <script src="%s/htmlmixed/htmlmixed.js"></script>
-<script src="%s/python/python.js"></script>
 ''' % (cm_js_prefix, cm_addon_prefix, cm_addon_prefix, cm_addon_prefix,
-       cm_addon_prefix, cm_mode_prefix, cm_mode_prefix, cm_mode_prefix,
-       cm_mode_prefix, cm_mode_prefix)
+       cm_mode_prefix, cm_mode_prefix, cm_mode_prefix, cm_mode_prefix)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Settings'
@@ -451,7 +445,7 @@ def main(client_id, user_arguments_dict):
                                                                keyword)
                     if current_settings_dict.has_key(keyword):
                         area += '\n'.join(current_settings_dict[keyword])
-                    area += '</textarea><br />'
+                    area += '</textarea>'
                     html += wrap_edit_area(keyword, area, general_edit, 'BASIC')
 
             elif val['Type'] == 'string':
@@ -686,7 +680,7 @@ You can simply copy/paste from the available widget file links below if you want
                          (keyword, keyword)
                     if current_widgets_dict.has_key(keyword):
                         area += '\n'.join(current_widgets_dict[keyword])
-                    area += '</textarea><br />'
+                    area += '</textarea>'
                     html += wrap_edit_area(keyword, area, widgets_edit)
 
         html += \
@@ -786,7 +780,7 @@ If you want to let other users know more about you can add your own text here. I
                          (keyword, keyword)
                     if current_profile_dict.has_key(keyword):
                         area += '\n'.join(current_profile_dict[keyword])
-                    area += '</textarea><br />'
+                    area += '</textarea>'
                     html += wrap_edit_area(keyword, area, profile_edit)
             elif val['Type'] == 'boolean':
                 valid_choices = [True, False]
