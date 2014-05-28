@@ -54,32 +54,16 @@ cm_css_prefix = '%s/lib' % cm_prefix
 cm_js_prefix = '%s/lib' % cm_prefix
 cm_addon_prefix = '%s/addon' % cm_prefix
 cm_mode_prefix = '%s/mode' % cm_prefix
-# TODO: do we still need these parse and stylesheet args at all?
-txt_parsers, txt_stylesheets = ['parsedummy.js'], []
-css_parsers, css_stylesheets = ["parsecss.js"], ["%s/csscolors.css" % cm_css_prefix]
-web_parsers = ["parsexml.js", "parsecss.js", "tokenizejavascript.js",
-               "parsejavascript.js", "parsehtmlmixed.js"]
-web_stylesheets = ["%s/%s" % (cm_css_prefix, i) for i in \
-                   ["xmlcolors.css", "jscolors.css", "csscolors.css"]]
-edit_defaults = {'parserfile': txt_parsers, 'stylesheet': txt_stylesheets,
-                 'path': "%s/" % cm_js_prefix, 'autoMatchParens': "true",
-                 'tabMode': "spaces", 'indentUnit': 4,
-                 }
+edit_defaults = {'matchBrackets': "true", 'indentUnit': 4}
 general_edit = edit_defaults.copy()
 ssh_edit = edit_defaults.copy()
 davs_edit = edit_defaults.copy()
 ftps_edit = edit_defaults.copy()
 style_edit = edit_defaults.copy()
-style_edit['parserfile'] = css_parsers
-style_edit['stylesheet'] = css_stylesheets
 style_edit['mode'] = 'css'
 widgets_edit = edit_defaults.copy()
-widgets_edit['parserfile'] = web_parsers
-widgets_edit['stylesheet'] = web_stylesheets
 widgets_edit['mode'] = 'htmlmixed'
 profile_edit = edit_defaults.copy()
-profile_edit['parserfile'] = web_parsers
-profile_edit['stylesheet'] = web_stylesheets
 profile_edit['mode'] = 'htmlmixed'
 
 
@@ -324,12 +308,14 @@ def main(client_id, user_arguments_dict):
 <script src="%s/dialog/dialog.js"></script>
 <script src="%s/search/searchcursor.js"></script>
 <script src="%s/search/search.js"></script>
+<script src="%s/edit/matchbrackets.js"></script>
 <script src="%s/xml/xml.js"></script>
 <script src="%s/javascript/javascript.js"></script>
 <script src="%s/css/css.js"></script>
 <script src="%s/htmlmixed/htmlmixed.js"></script>
 ''' % (cm_js_prefix, cm_addon_prefix, cm_addon_prefix, cm_addon_prefix,
-       cm_mode_prefix, cm_mode_prefix, cm_mode_prefix, cm_mode_prefix)
+       cm_addon_prefix, cm_mode_prefix, cm_mode_prefix, cm_mode_prefix,
+       cm_mode_prefix)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Settings'
