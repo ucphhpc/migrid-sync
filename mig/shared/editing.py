@@ -32,6 +32,275 @@ file editor.
 import os
 import time
 
+# CodeMirror helpers
+
+cm_prefix = '/images/lib/codemirror'
+cm_css_prefix = '%s/lib' % cm_prefix
+cm_js_prefix = '%s/lib' % cm_prefix
+cm_addon_prefix = '%s/addon' % cm_prefix
+cm_mode_prefix = '%s/mode' % cm_prefix
+
+cm_css = '''
+<!-- CodeMirror style -->
+<link rel="stylesheet" type="text/css" href="%s/codemirror.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="%s/dialog/dialog.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/codemirror.custom.css" media="screen"/>
+''' % (cm_css_prefix, cm_addon_prefix)
+cm_javascript = '''
+<!-- CodeMirror scripts -->
+<script type="text/javascript" src="%s/codemirror.js"></script>
+<script src="%s/dialog/dialog.js"></script>
+<script src="%s/search/searchcursor.js"></script>
+<script src="%s/search/search.js"></script>
+<script src="%s/edit/matchbrackets.js"></script>
+<script src="%s/xml/xml.js"></script>
+<script src="%s/javascript/javascript.js"></script>
+<script src="%s/css/css.js"></script>
+<script src="%s/htmlmixed/htmlmixed.js"></script>
+''' % (cm_js_prefix, cm_addon_prefix, cm_addon_prefix, cm_addon_prefix,
+       cm_addon_prefix, cm_mode_prefix, cm_mode_prefix, cm_mode_prefix,
+       cm_mode_prefix)
+
+cm_options = {'matchBrackets': "true", 'indentUnit': 4}
+
+miu_css = '''
+<!-- MarkItUp style -->
+<link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/skins/markitup/style.css" />
+<link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/txt2tags/style.css" title="txt2tags"/>
+<link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/html/style.css" title="html"/>
+'''
+miu_javascript = '''
+<!-- MarkItUp scripts -->
+<script type="text/javascript" src="/images/lib/markitup/markitup/jquery.markitup.js"></script>
+<script type="text/javascript" src="/images/lib/markitup/markitup/sets/html/set.js"></script>
+<script type="text/javascript">
+var myHtmlSettings = mySettings;
+myHtmlSettings["nameSpace"] = "html";
+</script>
+<script type="text/javascript" src="/images/lib/markitup/markitup/sets/txt2tags/set.js"></script>
+<script type="text/javascript">
+var myTxt2TagsSettings = mySettings;
+myTxt2TagsSettings["nameSpace"] = "txt2tags";
+</script>
+'''
+miu_options = {}
+
+def py_to_js(options):
+    """Format python dictionary as dictionary string used in javascript"""
+
+    out = []
+    for (key, val) in options.items():
+        if isinstance(val, basestring):
+            val = '"%s"' % val
+        out.append('%s: %s' % (key, val))
+    return '{%s}' % ', '.join(out)
+
+def wrap_edit_area(name, area, edit_opts=cm_options, toolbar_buttons='ALL',
+                   exec_callback=None):
+    """Wrap HTML textarea in user friendly editor with syntax highlighting
+    and optional basic toolbar.
+    if exec_callback is set to a string the wrapping will not be executed but
+    a function called the provided exec_callback name will be prepared for
+    delayed wrapping.
+    """
+    run_script = '''
+var editor = new TextAreaEditor(document.getElementById("%stoolbar"),
+                                    document.getElementById("%s"), %s);
+'''
+    if exec_callback:
+        run_script = '''
+function %s() {
+%s        
+}
+''' % (exec_callback, run_script)
+        
+    init_buttons = ''
+    button_impl = ''
+    if toolbar_buttons:
+        # TODO: switch to python generated html with icon buttons!
+        init_buttons = '''  
+  this.spellcheck;
+  makeField(this.searchid, 15);
+  makeButton("Search", "search");
+  makeField(this.replaceid, 15);
+  makeButton("Replace", "replace");
+  makeButton("Replace All", "replaceall");
+  makeSpace("SearchSep");
+  makeButton("Undo", "undo");
+  makeButton("Redo", "redo");
+  makeSpace("UndoSep");
+  makeButton("Help", "help");
+'''
+        button_impl = '''
+  search: function() {
+    var text = document.getElementById(this.searchid).value;
+    if (!text) {
+      alert("Please specify something in the search field!");
+      return;
+    }
+    var first = true;
+    var line = this.editor.getCursor()
+    do {
+      if (!first) line = 0;
+      var cursor = this.editor.getSearchCursor(text, line, first);
+      first = false;
+      while (cursor.findNext()) {
+        this.editor.setSelection(cursor.from(), cursor.to());
+        return;
+      }
+    } while (confirm("End of document reached. Start over?"));
+  },
+
+  replace: function() {
+    var from = document.getElementById(this.searchid).value;
+    if (!from) {
+      alert("Please specify something to replace in the search field!");
+      return;
+    }
+    var to = document.getElementById(this.replaceid).value;
+    var cursor = this.editor.getSearchCursor(from, this.editor.pos, false);
+    while (cursor.findNext()) {
+      this.editor.setSelection(cursor.from(), cursor.to());
+      if (confirm("Replace selected entry with '" + to + "'?")) {
+        cursor.replace(to);
+      }
+    }
+  },
+
+  replaceall: function() {
+    var from = document.getElementById(this.searchid).value, to;
+    if (!from) {
+      alert("Please specify something to replace in the search field!");
+      return;
+    }
+    var to = document.getElementById(this.replaceid).value;
+
+    var cursor = this.editor.getSearchCursor(from, false);
+    while (cursor.findNext()) {
+      cursor.replace(to);
+    }
+  },
+
+  undo: function() {
+    this.editor.undo();
+  },
+  
+  redo: function() {
+    this.editor.redo();
+  },
+  
+  help: function() {
+    alert("Quick help:\\n\\nShortcuts:\\nCtrl-z: undo\\nCtrl-y: redo\\nTab re-indents line\\nEnter inserts a new indented line\\n\\nPlease refer the CodeMirror manual for more detailed help.");
+  },
+'''
+
+    if toolbar_buttons == 'ALL':
+        init_buttons += '''
+  makeSpace("HelpSep");
+  makeField(this.jumpid, 2);
+  makeButton("Jump to line", "jump");
+  makeSpace("JumpSep");
+  makeButton("Re-Indent all", "reindent");
+  makeSpace("IndentSep");
+  makeButton("Toggle line numbers", "line");
+  //makeSpace("LineSep");
+  //makeButton("Toggle spell check", "spell");
+'''
+        button_impl += '''
+  jump: function() {
+    var line = document.getElementById(this.jumpid).value;
+    if (line && !isNaN(Number(line)))
+      this.editor.scrollIntoView(Number(line));
+    else
+      alert("Please specify a line to jump to in the jump field!");
+  },
+
+  line: function() {
+    this.editor.setOption("lineNumbers", !this.editor.getOption("lineNumbers"));
+    this.editor.focus();
+  },
+
+  reindent: function() {
+    var that = this.editor;
+    var last = that.lineCount();
+    that.operation(function() {
+                       for (var i = 0; i < last; ++i) that.indentLine(i);
+                   });
+  },
+  
+  spell: function() {
+    if (this.spellcheck == undefined) this.spellcheck = !this.editor.options.disableSpellcheck;
+    this.spellcheck = !this.spellcheck
+    this.editor.setSpellcheck(this.spellcheck);
+    this.editor.focus();
+  },
+'''
+
+    script = '''
+/*
+Modified version of the MirrorFrame example from CodeMirror:
+Adds a basic toolbar to the editor widget with limited use of alert popups.
+*/
+
+
+function dumpobj(obj) {
+  alert("dump: " + obj.toSource());
+}
+
+
+function TextAreaEditor(toolbar, textarea, options) {
+  this.bar = toolbar;
+  this.prefix = textarea;
+  this.searchid = this.prefix + "searchfield";
+  this.replaceid = this.prefix + "replacefield";
+  this.jumpid = this.prefix + "jumpfield";
+
+  var self = this;
+  function makeButton(name, action) {
+    var button = document.createElement("INPUT");
+    button.type = "button";
+    button.value = name;
+    self.bar.appendChild(button);
+    button.onclick = function() { self[action].call(self); };
+  }
+  function makeField(name, size) {
+    var field = document.createElement("INPUT");
+    field.type = "text";
+    field.id = name;
+    field.size = size;
+    self.bar.appendChild(field);
+  }
+  function makeSpace(name) {
+    var elem = document.createTextNode(" | ");
+    self.bar.appendChild(elem);
+  }
+
+%s  
+
+  this.editor = CodeMirror.fromTextArea(textarea, options);
+}
+
+TextAreaEditor.prototype = {
+%s
+};
+''' % (init_buttons, button_impl)
+    out = '''
+<div class="inlineeditor" id="%sinlineeditor">
+<div class="editortoolbar" id="%stoolbar">
+<!-- filled by script -->
+</div>
+%s
+<script type="text/javascript">
+%s
+'''
+    out += run_script
+    out += '''
+</script>
+</div>
+'''
+    return out % (name, name, area, script, name, name, py_to_js(edit_opts))
+
+
 # Edit lock functions
 
 

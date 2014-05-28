@@ -36,7 +36,9 @@ import time
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.editing import acquire_edit_lock, get_edit_lock_suffix
+from shared.editing import acquire_edit_lock, get_edit_lock_suffix, cm_css, \
+     cm_javascript, cm_options, miu_css, miu_javascript, miu_options, \
+     wrap_edit_area
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.validstring import valid_user_path
@@ -53,12 +55,12 @@ def signature():
 def advanced_editor_css_deps():
     """Add css dependencies for advanced editor"""
     css = '''
-<!-- MartkItUp style -->
-<link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/skins/markitup/style.css" />
-<link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/txt2tags/style.css" title="txt2tags"/>
-<link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/html/style.css" title="html"/>
+%s
 
-<!-- style fixes -->
+%s
+
+<!-- TODO: move to markitup.custom.css -->
+<!-- MarkItUp style fixes -->
 <style type="text/css">
 <!--
 /* fancy editor switcher */
@@ -81,7 +83,7 @@ def advanced_editor_css_deps():
 }
 -->
 </style>
-'''
+''' % (miu_css, cm_css)
     return css
 
 def advanced_editor_js_deps(include_jquery=True):
@@ -90,18 +92,11 @@ def advanced_editor_js_deps(include_jquery=True):
     if include_jquery:
         js += '<script type="text/javascript" src="/images/js/jquery.js"></script>'
     js += '''
-<!-- MartkItUp scripts -->
-<script type="text/javascript" src="/images/lib/markitup/markitup/jquery.markitup.js"></script>
-<script type="text/javascript" src="/images/lib/markitup/markitup/sets/html/set.js"></script>
-<script type="text/javascript">
-var myHtmlSettings = mySettings;
-myHtmlSettings["nameSpace"] = "html";
-</script>
-<script type="text/javascript" src="/images/lib/markitup/markitup/sets/txt2tags/set.js"></script>
-<script type="text/javascript">
-var myTxt2TagsSettings = mySettings;
-myTxt2TagsSettings["nameSpace"] = "txt2tags";
-</script>
+%s
+
+%s
+
+%s
 
 <script type="text/javascript">
     function enableStyleSheet(title) {
@@ -141,13 +136,17 @@ myTxt2TagsSettings["nameSpace"] = "txt2tags";
                     enableStyleSheet("txt2tags");
                     $("#editorarea").markItUp(myTxt2TagsSettings);
                     break;
+                case "codemirror":
+                    cm_wrap($("#editorarea"));
+                    break;
             }
             return false;
         });
     $("#switcher .currentSet").click();
     });
 </script>
-''' 
+''' % (cm_javascript, miu_javascript, wrap_edit_area("editarea", "editorarea",
+       cm_options, "BASIC", "cm_wrap"))
     return js
 
 def lock_info(real_path, time_left):
@@ -255,7 +254,8 @@ Edit contents:<br />
     if 'switcher' in includes:
         html += '''
 <ul id="switcher">
-<li class="html currentSet"><a href="#">HTML Editor</a></li>
+<li class="html currentSet"><a href="#">HTML/Text Editor</a></li>
+<li class="codemirror"><a href="#">Code Editor</a></li>
 <li class="txt2tags"><a href="#">Txt2Tags Editor</a></li>
 <li class="remove"><a href="#">Raw text field</a></li>
 </ul>

@@ -31,6 +31,7 @@ import shared.returnvalues as returnvalues
 from shared.base import client_alias, client_id_dir
 from shared.defaults import any_vgrid, default_mrsl_filename, \
      default_css_filename, profile_img_max_kb, profile_img_extensions
+from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
@@ -49,222 +50,16 @@ except Exception, exc:
     pass
 
 
-cm_prefix = '/images/lib/codemirror'
-cm_css_prefix = '%s/lib' % cm_prefix
-cm_js_prefix = '%s/lib' % cm_prefix
-cm_addon_prefix = '%s/addon' % cm_prefix
-cm_mode_prefix = '%s/mode' % cm_prefix
-edit_defaults = {'matchBrackets': "true", 'indentUnit': 4}
-general_edit = edit_defaults.copy()
-ssh_edit = edit_defaults.copy()
-davs_edit = edit_defaults.copy()
-ftps_edit = edit_defaults.copy()
-style_edit = edit_defaults.copy()
+general_edit = cm_options.copy()
+ssh_edit = cm_options.copy()
+davs_edit = cm_options.copy()
+ftps_edit = cm_options.copy()
+style_edit = cm_options.copy()
 style_edit['mode'] = 'css'
-widgets_edit = edit_defaults.copy()
+widgets_edit = cm_options.copy()
 widgets_edit['mode'] = 'htmlmixed'
-profile_edit = edit_defaults.copy()
+profile_edit = cm_options.copy()
 profile_edit['mode'] = 'htmlmixed'
-
-
-def py_to_js(options):
-    """Format python dictionary as dictionary string used in javascript"""
-
-    out = []
-    for (key, val) in options.items():
-        if isinstance(val, basestring):
-            val = '"%s"' % val
-        out.append('%s: %s' % (key, val))
-    return '{%s}' % ', '.join(out)
-
-def wrap_edit_area(name, area, edit_opts=edit_defaults, toolbar_buttons='ALL'):
-    """Wrap HTML textarea in user friendly editor with syntax highlighting
-    and optional basic toolbar.
-    """
-    init_buttons = ''
-    button_impl = ''
-    if toolbar_buttons:
-        # TODO: switch to python generated html with icon buttons!
-        init_buttons = '''  
-  this.spellcheck;
-  makeField(this.searchid, 15);
-  makeButton("Search", "search");
-  makeField(this.replaceid, 15);
-  makeButton("Replace", "replace");
-  makeButton("Replace All", "replaceall");
-  makeSpace("SearchSep");
-  makeButton("Undo", "undo");
-  makeButton("Redo", "redo");
-  makeSpace("UndoSep");
-  makeButton("Help", "help");
-'''
-        button_impl = '''
-  search: function() {
-    var text = document.getElementById(this.searchid).value;
-    if (!text) {
-      alert("Please specify something in the search field!");
-      return;
-    }
-    var first = true;
-    var line = this.editor.getCursor()
-    do {
-      if (!first) line = 0;
-      var cursor = this.editor.getSearchCursor(text, line, first);
-      first = false;
-      while (cursor.findNext()) {
-        this.editor.setSelection(cursor.from(), cursor.to());
-        return;
-      }
-    } while (confirm("End of document reached. Start over?"));
-  },
-
-  replace: function() {
-    var from = document.getElementById(this.searchid).value;
-    if (!from) {
-      alert("Please specify something to replace in the search field!");
-      return;
-    }
-    var to = document.getElementById(this.replaceid).value;
-    var cursor = this.editor.getSearchCursor(from, this.editor.pos, false);
-    while (cursor.findNext()) {
-      this.editor.setSelection(cursor.from(), cursor.to());
-      if (confirm("Replace selected entry with '" + to + "'?")) {
-        cursor.replace(to);
-      }
-    }
-  },
-
-  replaceall: function() {
-    var from = document.getElementById(this.searchid).value, to;
-    if (!from) {
-      alert("Please specify something to replace in the search field!");
-      return;
-    }
-    var to = document.getElementById(this.replaceid).value;
-
-    var cursor = this.editor.getSearchCursor(from, false);
-    while (cursor.findNext()) {
-      cursor.replace(to);
-    }
-  },
-
-  undo: function() {
-    this.editor.undo();
-  },
-  
-  redo: function() {
-    this.editor.redo();
-  },
-  
-  help: function() {
-    alert("Quick help:\\n\\nShortcuts:\\nCtrl-z: undo\\nCtrl-y: redo\\nTab re-indents line\\nEnter inserts a new indented line\\n\\nPlease refer the CodeMirror manual for more detailed help.");
-  },
-'''
-
-    if toolbar_buttons == 'ALL':
-        init_buttons += '''
-  makeSpace("HelpSep");
-  makeField(this.jumpid, 2);
-  makeButton("Jump to line", "jump");
-  makeSpace("JumpSep");
-  makeButton("Re-Indent all", "reindent");
-  makeSpace("IndentSep");
-  makeButton("Toggle line numbers", "line");
-  //makeSpace("LineSep");
-  //makeButton("Toggle spell check", "spell");
-'''
-        button_impl += '''
-  jump: function() {
-    var line = document.getElementById(this.jumpid).value;
-    if (line && !isNaN(Number(line)))
-      this.editor.scrollIntoView(Number(line));
-    else
-      alert("Please specify a line to jump to in the jump field!");
-  },
-
-  line: function() {
-    this.editor.setOption("lineNumbers", !this.editor.getOption("lineNumbers"));
-    this.editor.focus();
-  },
-
-  reindent: function() {
-    var that = this.editor;
-    var last = that.lineCount();
-    that.operation(function() {
-                       for (var i = 0; i < last; ++i) that.indentLine(i);
-                   });
-  },
-  
-  spell: function() {
-    if (this.spellcheck == undefined) this.spellcheck = !this.editor.options.disableSpellcheck;
-    this.spellcheck = !this.spellcheck
-    this.editor.setSpellcheck(this.spellcheck);
-    this.editor.focus();
-  },
-'''
-
-    script = '''
-/*
-Modified version of the MirrorFrame example from CodeMirror:
-Adds a basic toolbar to the editor widget with limited use of alert popups.
-*/
-
-
-function dumpobj(obj) {
-  alert("dump: " + obj.toSource());
-}
-
-
-function TextAreaEditor(toolbar, textarea, options) {
-  this.bar = toolbar;
-  this.prefix = textarea;
-  this.searchid = this.prefix + "searchfield";
-  this.replaceid = this.prefix + "replacefield";
-  this.jumpid = this.prefix + "jumpfield";
-
-  var self = this;
-  function makeButton(name, action) {
-    var button = document.createElement("INPUT");
-    button.type = "button";
-    button.value = name;
-    self.bar.appendChild(button);
-    button.onclick = function() { self[action].call(self); };
-  }
-  function makeField(name, size) {
-    var field = document.createElement("INPUT");
-    field.type = "text";
-    field.id = name;
-    field.size = size;
-    self.bar.appendChild(field);
-  }
-  function makeSpace(name) {
-    var elem = document.createTextNode(" | ");
-    self.bar.appendChild(elem);
-  }
-
-%s  
-
-  this.editor = CodeMirror.fromTextArea(textarea, options);
-}
-
-TextAreaEditor.prototype = {
-%s
-};
-''' % (init_buttons, button_impl)
-    out = '''
-<div class="inlineeditor" id="%sinlineeditor">
-<div class="editortoolbar" id="%stoolbar">
-<!-- filled by script -->
-</div>
-%s
-<script type="text/javascript">
-%s
-var editor = new TextAreaEditor(document.getElementById("%stoolbar"),
-                                document.getElementById("%s"), %s);
-</script>
-</div>
-'''
-    return out % (name, name, area, script, name, name, py_to_js(edit_opts))
 
 
 def signature():
@@ -298,29 +93,10 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                client_dir)) + os.sep
 
-    css = '''
-<link rel="stylesheet" type="text/css" href="%s/codemirror.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="%s/dialog/dialog.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/codemirror.custom.css" media="screen"/>
-''' % (cm_css_prefix, cm_addon_prefix)
-    javascript = '''
-<script type="text/javascript" src="%s/codemirror.js"></script>
-<script src="%s/dialog/dialog.js"></script>
-<script src="%s/search/searchcursor.js"></script>
-<script src="%s/search/search.js"></script>
-<script src="%s/edit/matchbrackets.js"></script>
-<script src="%s/xml/xml.js"></script>
-<script src="%s/javascript/javascript.js"></script>
-<script src="%s/css/css.js"></script>
-<script src="%s/htmlmixed/htmlmixed.js"></script>
-''' % (cm_js_prefix, cm_addon_prefix, cm_addon_prefix, cm_addon_prefix,
-       cm_addon_prefix, cm_mode_prefix, cm_mode_prefix, cm_mode_prefix,
-       cm_mode_prefix)
-
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Settings'
-    title_entry['style'] = css
-    title_entry['javascript'] = javascript
+    title_entry['style'] = cm_css
+    title_entry['javascript'] = cm_javascript
 
     valid_topics = ['general', 'style']
     active_menu = extract_menu(configuration, title_entry)
@@ -496,7 +272,7 @@ If you use the same fields and values in many of your jobs, you can save your pr
 %(default_mrsl)s
 </textarea>
 '''
-        html += wrap_edit_area(keyword, area, edit_defaults, 'BASIC')
+        html += wrap_edit_area(keyword, area, cm_options, 'BASIC')
         
         html += '''
 </td></tr>
