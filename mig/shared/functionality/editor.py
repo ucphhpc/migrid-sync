@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editor - Online editor back end
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,9 +36,9 @@ import time
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.editing import acquire_edit_lock, get_edit_lock_suffix, cm_css, \
+from shared.editing import acquire_edit_lock, edit_lock_suffix, cm_css, \
      cm_javascript, cm_options, miu_css, miu_javascript, miu_options, \
-     wrap_edit_area
+     init_editor_js, run_editor_js, kill_editor_js
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.validstring import valid_user_path
@@ -96,8 +96,6 @@ def advanced_editor_js_deps(include_jquery=True):
 
 %s
 
-%s
-
 <script type="text/javascript">
     function enableStyleSheet(title) {
         var i, a, main;
@@ -114,7 +112,9 @@ def advanced_editor_js_deps(include_jquery=True):
                if(a.getAttribute("title") == title) a.disabled = true;
            }
        }
-   }
+    }
+
+    %s
 
     $(document).ready(function() {
         $("#switcher li").click(function() {
@@ -123,21 +123,32 @@ def advanced_editor_js_deps(include_jquery=True):
             $(this).addClass("currentSet");
 
             $("#editorarea").markItUpRemove();
+            /* TODO: we need this function to tear down codemirror html, etc */
+            //$("#editorarea").codeMirrorRemove();
+            //$("#editorarea").codeMirrorRemove();
+            $(".codemirror-ui-button-frame").parent().remove();
+            $(".CodeMirror").remove();
+            $("#editorarea").show();
             /* stylesheet button settings collide for different sets
-            disable all set stylesheets and  enable only selected one */
+            disable all set stylesheets and enable only selected one */
             disableStyleSheet("html");
-            disableStyleSheet("txt2tags");
+            //disableStyleSheet("txt2tags");
+            disableStyleSheet("codemirror-ui");
+            %s
             switch(newSet) {
                 case "html":
                     enableStyleSheet("html");
                     $("#editorarea").markItUp(myHtmlSettings);
                     break;
+                /*
                 case "txt2tags":
                     enableStyleSheet("txt2tags");
                     $("#editorarea").markItUp(myTxt2TagsSettings);
                     break;
+                */
                 case "codemirror":
-                    cm_wrap($("#editorarea"));
+                    enableStyleSheet("codemirror-ui");
+                    %s
                     break;
             }
             return false;
@@ -145,8 +156,10 @@ def advanced_editor_js_deps(include_jquery=True):
     $("#switcher .currentSet").click();
     });
 </script>
-''' % (cm_javascript, miu_javascript, wrap_edit_area("editarea", "editorarea",
-       cm_options, "BASIC", "cm_wrap"))
+''' % (cm_javascript, miu_javascript, init_editor_js("editorarea",
+       cm_options, wrap_in_tags=False), kill_editor_js("editorarea",
+       wrap_in_tags=False), run_editor_js("editorarea",
+       wrap_in_tags=False))
     return js
 
 def lock_info(real_path, time_left):
@@ -233,11 +246,11 @@ def edit_file(path, real_path, output_format='html', includes=edit_includes):
     text = ['']
     if os.path.isfile(real_path):
         try:
-            fd = open(real_path, 'rb')
-            text = fd.readlines()
-            fd.close()
-        except Exception, e:
-            return 'Failed to open file %s: %s' % (path, e)
+            src_fd = open(real_path, 'rb')
+            text = src_fd.readlines()
+            src_fd.close()
+        except Exception, exc:
+            return 'Failed to open file %s: %s' % (path, exc)
 
     html = \
         '''Select file:<br />
@@ -256,7 +269,7 @@ Edit contents:<br />
 <ul id="switcher">
 <li class="html currentSet"><a href="#">HTML/Text Editor</a></li>
 <li class="codemirror"><a href="#">Code Editor</a></li>
-<li class="txt2tags"><a href="#">Txt2Tags Editor</a></li>
+<!-- <li class="txt2tags"><a href="#">Txt2Tags Editor</a></li> -->
 <li class="remove"><a href="#">Raw text field</a></li>
 </ul>
 '''
@@ -322,7 +335,7 @@ Type:
 </form>
 <p>
 '''
-    return html % {'path': path, 'lock_suffix': get_edit_lock_suffix(),
+    return html % {'path': path, 'lock_suffix': edit_lock_suffix,
                    'output_format': output_format}
 
 

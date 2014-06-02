@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# editing - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# editing - helper functions for the inline editors
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,6 +32,8 @@ file editor.
 import os
 import time
 
+from shared.defaults import edit_lock_suffix, edit_lock_timeout
+
 # CodeMirror helpers
 
 cm_prefix = '/images/lib/codemirror'
@@ -39,34 +41,46 @@ cm_css_prefix = '%s/lib' % cm_prefix
 cm_js_prefix = '%s/lib' % cm_prefix
 cm_addon_prefix = '%s/addon' % cm_prefix
 cm_mode_prefix = '%s/mode' % cm_prefix
+cmui_prefix = '/images/lib/codemirror-ui'
+cmui_js_prefix = '%s/js' % cmui_prefix
+cmui_css_prefix = '%s/css' % cmui_prefix
+cmui_images_prefix = '%s/images/silk' % cmui_prefix
 
 cm_css = '''
 <!-- CodeMirror style -->
 <link rel="stylesheet" type="text/css" href="%s/codemirror.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%s/dialog/dialog.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="%s/codemirror-ui.css" media="screen" title="codemirror-ui" />
 <link rel="stylesheet" type="text/css" href="/images/css/codemirror.custom.css" media="screen"/>
-''' % (cm_css_prefix, cm_addon_prefix)
+<link rel="stylesheet" type="text/css" href="/images/css/codemirror-ui.custom.css" media="screen"/>
+''' % (cm_css_prefix, cm_addon_prefix, cmui_css_prefix)
 cm_javascript = '''
 <!-- CodeMirror scripts -->
 <script type="text/javascript" src="%s/codemirror.js"></script>
-<script src="%s/dialog/dialog.js"></script>
-<script src="%s/search/searchcursor.js"></script>
-<script src="%s/search/search.js"></script>
-<script src="%s/edit/matchbrackets.js"></script>
-<script src="%s/xml/xml.js"></script>
-<script src="%s/javascript/javascript.js"></script>
-<script src="%s/css/css.js"></script>
-<script src="%s/htmlmixed/htmlmixed.js"></script>
+<script type="text/javascript" src="%s/dialog/dialog.js"></script>
+<script type="text/javascript" src="%s/search/searchcursor.js"></script>
+<script type="text/javascript" src="%s/search/search.js"></script>
+<script type="text/javascript" src="%s/edit/matchbrackets.js"></script>
+<script type="text/javascript" src="%s/xml/xml.js"></script>
+<script type="text/javascript" src="%s/javascript/javascript.js"></script>
+<script type="text/javascript" src="%s/css/css.js"></script>
+<script type="text/javascript" src="%s/htmlmixed/htmlmixed.js"></script>
+<!-- CodeMirror UI scripts -->
+<script type="text/javascript" src="%s/codemirror-ui.js"></script>
 ''' % (cm_js_prefix, cm_addon_prefix, cm_addon_prefix, cm_addon_prefix,
        cm_addon_prefix, cm_mode_prefix, cm_mode_prefix, cm_mode_prefix,
-       cm_mode_prefix)
+       cm_mode_prefix, cmui_js_prefix)
 
 cm_options = {'matchBrackets': "true", 'indentUnit': 4}
+cmui_options = {'path': cmui_js_prefix, 'imagePath': cmui_images_prefix,
+                'searchMode': 'popup'}
 
 miu_css = '''
 <!-- MarkItUp style -->
-<link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/skins/markitup/style.css" />
+<link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/skins/markitup/style.css"/>
+<!--
 <link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/txt2tags/style.css" title="txt2tags"/>
+-->
 <link rel="stylesheet" type="text/css" href="/images/lib/markitup/markitup/sets/html/style.css" title="html"/>
 '''
 miu_javascript = '''
@@ -77,11 +91,13 @@ miu_javascript = '''
 var myHtmlSettings = mySettings;
 myHtmlSettings["nameSpace"] = "html";
 </script>
+<!--
 <script type="text/javascript" src="/images/lib/markitup/markitup/sets/txt2tags/set.js"></script>
 <script type="text/javascript">
 var myTxt2TagsSettings = mySettings;
-myTxt2TagsSettings["nameSpace"] = "txt2tags";
+myTxt2TagsSettings["nameSpace"] = "markitup-txt2tags";
 </script>
+-->
 '''
 miu_options = {}
 
@@ -95,224 +111,80 @@ def py_to_js(options):
         out.append('%s: %s' % (key, val))
     return '{%s}' % ', '.join(out)
 
+def html_wrap_js(code):
+    """Wrap a chunk of javascript in HTML script tags"""
+    return '''
+<script type="text/javascript">
+    %s
+</script>
+''' % code
+
+def create_editor_area(name, area):
+    """Create HTML textarea for use by user friendly code editor with syntax
+    highlighting and basic toolbar.
+    """
+    out = '''
+    <div class="inlineeditor" id="%sinlineeditor">
+    %s
+    </div>
+    ''' % (name, area)
+    return out
+
+def init_editor_js(name, edit_opts, wrap_in_tags=True):
+    """Return javascript to init wrap of HTML textarea in user friendly code
+    editor with syntax highlighting and basic toolbar.
+    If wrap_in_tags is set the javascript will be wrapped in html script tags.
+    """
+    out = '''
+    function run_%s_editor() {
+        var textarea = document.getElementById("%s");
+        var uiOptions = %s;
+        var codeMirrorOptions = %s;
+        new CodeMirrorUI(textarea, uiOptions, codeMirrorOptions);
+    }
+    ''' % (name, name, py_to_js(cmui_options), py_to_js(edit_opts))
+    if wrap_in_tags:
+        out = html_wrap_js(out)
+    return out
+
+def run_editor_js(name, wrap_in_tags=True):
+    """Create javascript to actually wrap a previously initialized HTML
+    textarea in user friendly code editor with syntax highlighting and basic
+    toolbar.
+    If wrap_in_tags is set the javascript will be wrapped in html script tags.
+    """
+    out = '''
+    var %s_editor = run_%s_editor();
+    ''' % (name, name)
+    if wrap_in_tags:
+        out = html_wrap_js(out)
+    return out
+
+def kill_editor_js(name, wrap_in_tags=True):
+    """Create javascript to actually unwrap a previously wrapped HTML
+    textarea code editor.
+    If wrap_in_tags is set the javascript will be wrapped in html script tags.
+    """
+    out = '''
+    delete %s_editor;
+    ''' % name
+    if wrap_in_tags:
+        out = html_wrap_js(out)
+    return out
+
 def wrap_edit_area(name, area, edit_opts=cm_options, toolbar_buttons='ALL',
                    exec_callback=None):
-    """Wrap HTML textarea in user friendly editor with syntax highlighting
-    and optional basic toolbar.
-    if exec_callback is set to a string the wrapping will not be executed but
-    a function called the provided exec_callback name will be prepared for
-    delayed wrapping.
+    """Wrap HTML textarea in user friendly code editor with syntax highlighting
+    and basic toolbar.
+    The area variable should contain a string with HTML form code to wrap.
     """
-    run_script = '''
-var editor = new TextAreaEditor(document.getElementById("%stoolbar"),
-                                    document.getElementById("%s"), %s);
-'''
-    if exec_callback:
-        run_script = '''
-function %s() {
-%s        
-}
-''' % (exec_callback, run_script)
-        
-    init_buttons = ''
-    button_impl = ''
-    if toolbar_buttons:
-        # TODO: switch to python generated html with icon buttons!
-        init_buttons = '''  
-  this.spellcheck;
-  makeField(this.searchid, 15);
-  makeButton("Search", "search");
-  makeField(this.replaceid, 15);
-  makeButton("Replace", "replace");
-  makeButton("Replace All", "replaceall");
-  makeSpace("SearchSep");
-  makeButton("Undo", "undo");
-  makeButton("Redo", "redo");
-  makeSpace("UndoSep");
-  makeButton("Help", "help");
-'''
-        button_impl = '''
-  search: function() {
-    var text = document.getElementById(this.searchid).value;
-    if (!text) {
-      alert("Please specify something in the search field!");
-      return;
-    }
-    var first = true;
-    var line = this.editor.getCursor()
-    do {
-      if (!first) line = 0;
-      var cursor = this.editor.getSearchCursor(text, line, first);
-      first = false;
-      while (cursor.findNext()) {
-        this.editor.setSelection(cursor.from(), cursor.to());
-        return;
-      }
-    } while (confirm("End of document reached. Start over?"));
-  },
-
-  replace: function() {
-    var from = document.getElementById(this.searchid).value;
-    if (!from) {
-      alert("Please specify something to replace in the search field!");
-      return;
-    }
-    var to = document.getElementById(this.replaceid).value;
-    var cursor = this.editor.getSearchCursor(from, this.editor.pos, false);
-    while (cursor.findNext()) {
-      this.editor.setSelection(cursor.from(), cursor.to());
-      if (confirm("Replace selected entry with '" + to + "'?")) {
-        cursor.replace(to);
-      }
-    }
-  },
-
-  replaceall: function() {
-    var from = document.getElementById(this.searchid).value, to;
-    if (!from) {
-      alert("Please specify something to replace in the search field!");
-      return;
-    }
-    var to = document.getElementById(this.replaceid).value;
-
-    var cursor = this.editor.getSearchCursor(from, false);
-    while (cursor.findNext()) {
-      cursor.replace(to);
-    }
-  },
-
-  undo: function() {
-    this.editor.undo();
-  },
-  
-  redo: function() {
-    this.editor.redo();
-  },
-  
-  help: function() {
-    alert("Quick help:\\n\\nShortcuts:\\nCtrl-z: undo\\nCtrl-y: redo\\nTab re-indents line\\nEnter inserts a new indented line\\n\\nPlease refer the CodeMirror manual for more detailed help.");
-  },
-'''
-
-    if toolbar_buttons == 'ALL':
-        init_buttons += '''
-  makeSpace("HelpSep");
-  makeField(this.jumpid, 2);
-  makeButton("Jump to line", "jump");
-  makeSpace("JumpSep");
-  makeButton("Re-Indent all", "reindent");
-  makeSpace("IndentSep");
-  makeButton("Toggle line numbers", "line");
-  //makeSpace("LineSep");
-  //makeButton("Toggle spell check", "spell");
-'''
-        button_impl += '''
-  jump: function() {
-    var line = document.getElementById(this.jumpid).value;
-    if (line && !isNaN(Number(line)))
-      this.editor.scrollIntoView(Number(line));
-    else
-      alert("Please specify a line to jump to in the jump field!");
-  },
-
-  line: function() {
-    this.editor.setOption("lineNumbers", !this.editor.getOption("lineNumbers"));
-    this.editor.focus();
-  },
-
-  reindent: function() {
-    var that = this.editor;
-    var last = that.lineCount();
-    that.operation(function() {
-                       for (var i = 0; i < last; ++i) that.indentLine(i);
-                   });
-  },
-  
-  spell: function() {
-    if (this.spellcheck == undefined) this.spellcheck = !this.editor.options.disableSpellcheck;
-    this.spellcheck = !this.spellcheck
-    this.editor.setSpellcheck(this.spellcheck);
-    this.editor.focus();
-  },
-'''
-
-    script = '''
-/*
-Modified version of the MirrorFrame example from CodeMirror:
-Adds a basic toolbar to the editor widget with limited use of alert popups.
-*/
-
-
-function dumpobj(obj) {
-  alert("dump: " + obj.toSource());
-}
-
-
-function TextAreaEditor(toolbar, textarea, options) {
-  this.bar = toolbar;
-  this.prefix = textarea;
-  this.searchid = this.prefix + "searchfield";
-  this.replaceid = this.prefix + "replacefield";
-  this.jumpid = this.prefix + "jumpfield";
-
-  var self = this;
-  function makeButton(name, action) {
-    var button = document.createElement("INPUT");
-    button.type = "button";
-    button.value = name;
-    self.bar.appendChild(button);
-    button.onclick = function() { self[action].call(self); };
-  }
-  function makeField(name, size) {
-    var field = document.createElement("INPUT");
-    field.type = "text";
-    field.id = name;
-    field.size = size;
-    self.bar.appendChild(field);
-  }
-  function makeSpace(name) {
-    var elem = document.createTextNode(" | ");
-    self.bar.appendChild(elem);
-  }
-
-%s  
-
-  this.editor = CodeMirror.fromTextArea(textarea, options);
-}
-
-TextAreaEditor.prototype = {
-%s
-};
-''' % (init_buttons, button_impl)
-    out = '''
-<div class="inlineeditor" id="%sinlineeditor">
-<div class="editortoolbar" id="%stoolbar">
-<!-- filled by script -->
-</div>
-%s
-<script type="text/javascript">
-%s
-'''
-    out += run_script
-    out += '''
-</script>
-</div>
-'''
-    return out % (name, name, area, script, name, name, py_to_js(edit_opts))
+    out = create_editor_area(name, area)
+    out += init_editor_js(name, edit_opts)
+    out += run_editor_js(name)
+    return out
 
 
 # Edit lock functions
-
-
-def get_edit_lock_suffix():
-    return '.editor_lock__'
-
-
-def get_edit_lock_default_timeout():
-    """Allow locking files for 600 seconds i.e. 10 minutes."""
-
-    return 600
-
 
 def acquire_edit_lock(real_path, client_id):
     """Try to lock file in real_path for exclusive editing. On success the
@@ -326,9 +198,9 @@ def acquire_edit_lock(real_path, client_id):
     version of the file, only from truncating any concurrent changes.
     """
 
-    default_timeout = get_edit_lock_default_timeout()
+    default_timeout = edit_lock_timeout
     take_lock = False
-    lock_path = real_path + get_edit_lock_suffix()
+    lock_path = real_path + edit_lock_suffix
     info_path = lock_path + os.sep + 'info'
 
     # We need atomic operation in locking - check for file or create followed by
@@ -389,7 +261,7 @@ def got_edit_lock(real_path, client_id):
     """Check that caller actually acquired the required file editing lock. 
     """
 
-    lock_path = real_path + get_edit_lock_suffix()
+    lock_path = real_path + edit_lock_suffix
     info_path = lock_path + os.sep + 'info'
 
     # We need atomic operation in locking - check for file or create followed by
@@ -417,7 +289,7 @@ def got_edit_lock(real_path, client_id):
         now = time.mktime(time.gmtime())
         owner = info_lines[0].strip()
         timestamp = float(info_lines[1].strip())
-        time_left = get_edit_lock_default_timeout() - (now - timestamp)
+        time_left = edit_lock_timeout - (now - timestamp)
     except Exception, err:
         print 'Error: %s - not accepting invalid lock' % err
         return False
@@ -447,7 +319,7 @@ def release_edit_lock(real_path, client_id):
     # rmdir won't do! rename is atomic, so it can work as removal of lock.
     # create unique dir in tmp to avoid clashes and manual clean up on errors
 
-    lock_path = real_path + get_edit_lock_suffix()
+    lock_path = real_path + edit_lock_suffix
     stale_lock_path = lock_path + 'stale__'
     stale_info_path = stale_lock_path + os.sep + 'info'
     try:

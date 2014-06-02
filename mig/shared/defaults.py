@@ -98,3 +98,7 @@ upload_tmp_dir = '.upload-cache'
 wwwpublic_alias = 'public'
 public_archive_dir = 'archives'
 public_archive_index = 'published-archive.html'
+
+edit_lock_suffix = '.editor_lock__'
+edit_lock_timeout = 600
+
