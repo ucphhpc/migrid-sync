@@ -117,36 +117,38 @@ def advanced_editor_js_deps(include_jquery=True):
     %s
 
     $(document).ready(function() {
+        var lastEdit = "raw";
         $("#switcher li").click(function() {
             $("#switcher li").removeClass("currentSet");
             newSet = $(this).attr("class");
             $(this).addClass("currentSet");
 
-            $("#editorarea").markItUpRemove();
-            /* TODO: we need this function to tear down codemirror html, etc */
-            //$("#editorarea").codeMirrorRemove();
-            //$("#editorarea").codeMirrorRemove();
-            $(".codemirror-ui-button-frame").parent().remove();
-            $(".CodeMirror").remove();
-            $("#editorarea").show();
-            /* stylesheet button settings collide for different sets
-            disable all set stylesheets and enable only selected one */
-            disableStyleSheet("html");
-            //disableStyleSheet("txt2tags");
-            disableStyleSheet("codemirror-ui");
-            %s
+            if (lastEdit == "MarkItUp") {
+                $("#editorarea").markItUpRemove();
+                /* stylesheet button settings collide for different sets
+                disable all set stylesheets and enable only selected one */
+                disableStyleSheet("html");
+                //disableStyleSheet("txt2tags");
+            } else if (lastEdit == "CodeMirror") {
+                %s
+                disableStyleSheet("codemirror-ui");
+            }
+            lastEdit = "raw";
             switch(newSet) {
                 case "html":
+                    lastEdit = "MarkItUp";
                     enableStyleSheet("html");
                     $("#editorarea").markItUp(myHtmlSettings);
                     break;
                 /*
                 case "txt2tags":
+                    lastEdit = "MarkItUp";
                     enableStyleSheet("txt2tags");
                     $("#editorarea").markItUp(myTxt2TagsSettings);
                     break;
                 */
                 case "codemirror":
+                    lastEdit = "CodeMirror";
                     enableStyleSheet("codemirror-ui");
                     %s
                     break;

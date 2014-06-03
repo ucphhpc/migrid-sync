@@ -136,13 +136,14 @@ def init_editor_js(name, edit_opts, wrap_in_tags=True):
     If wrap_in_tags is set the javascript will be wrapped in html script tags.
     """
     out = '''
+    var %s_editor;
     function run_%s_editor() {
         var textarea = document.getElementById("%s");
         var uiOptions = %s;
         var codeMirrorOptions = %s;
-        new CodeMirrorUI(textarea, uiOptions, codeMirrorOptions);
+        return new CodeMirrorUI(textarea, uiOptions, codeMirrorOptions);
     }
-    ''' % (name, name, py_to_js(cmui_options), py_to_js(edit_opts))
+    ''' % (name, name, name, py_to_js(cmui_options), py_to_js(edit_opts))
     if wrap_in_tags:
         out = html_wrap_js(out)
     return out
@@ -154,7 +155,7 @@ def run_editor_js(name, wrap_in_tags=True):
     If wrap_in_tags is set the javascript will be wrapped in html script tags.
     """
     out = '''
-    var %s_editor = run_%s_editor();
+    %s_editor = run_%s_editor();
     ''' % (name, name)
     if wrap_in_tags:
         out = html_wrap_js(out)
@@ -166,8 +167,10 @@ def kill_editor_js(name, wrap_in_tags=True):
     If wrap_in_tags is set the javascript will be wrapped in html script tags.
     """
     out = '''
-    delete %s_editor;
-    ''' % name
+    if (%s_editor != undefined) {
+        %s_editor.toTextArea();
+    }
+    ''' % (name, name)
     if wrap_in_tags:
         out = html_wrap_js(out)
     return out
