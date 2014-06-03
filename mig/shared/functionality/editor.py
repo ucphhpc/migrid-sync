@@ -269,8 +269,8 @@ Edit contents:<br />
     if 'switcher' in includes:
         html += '''
 <ul id="switcher">
-<li class="html currentSet"><a href="#">HTML/Text Editor</a></li>
-<li class="codemirror"><a href="#">Code Editor</a></li>
+<li class="html"><a href="#">HTML/Text Editor</a></li>
+<li class="codemirror currentSet"><a href="#">Code Editor</a></li>
 <!-- <li class="txt2tags"><a href="#">Txt2Tags Editor</a></li> -->
 <li class="remove"><a href="#">Raw text field</a></li>
 </ul>

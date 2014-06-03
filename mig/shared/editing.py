@@ -50,10 +50,11 @@ cm_css = '''
 <!-- CodeMirror style -->
 <link rel="stylesheet" type="text/css" href="%s/codemirror.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%s/dialog/dialog.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="%s/fold/foldgutter.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%s/codemirror-ui.css" media="screen" title="codemirror-ui" />
 <link rel="stylesheet" type="text/css" href="/images/css/codemirror.custom.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/codemirror-ui.custom.css" media="screen"/>
-''' % (cm_css_prefix, cm_addon_prefix, cmui_css_prefix)
+''' % (cm_css_prefix, cm_addon_prefix, cm_addon_prefix, cmui_css_prefix)
 cm_javascript = '''
 <!-- CodeMirror scripts -->
 <script type="text/javascript" src="%s/codemirror.js"></script>
@@ -61,6 +62,12 @@ cm_javascript = '''
 <script type="text/javascript" src="%s/search/searchcursor.js"></script>
 <script type="text/javascript" src="%s/search/search.js"></script>
 <script type="text/javascript" src="%s/edit/matchbrackets.js"></script>
+<script type="text/javascript" src="%s/fold/foldcode.js"></script>
+<script type="text/javascript" src="%s/fold/foldgutter.js"></script>
+<script type="text/javascript" src="%s/fold/brace-fold.js"></script>
+<script type="text/javascript" src="%s/fold/xml-fold.js"></script>
+<script type="text/javascript" src="%s/fold/comment-fold.js"></script>
+<!-- CodeMirror mode scripts -->
 <script type="text/javascript" src="%s/xml/xml.js"></script>
 <script type="text/javascript" src="%s/javascript/javascript.js"></script>
 <script type="text/javascript" src="%s/css/css.js"></script>
@@ -68,10 +75,14 @@ cm_javascript = '''
 <!-- CodeMirror UI scripts -->
 <script type="text/javascript" src="%s/codemirror-ui.js"></script>
 ''' % (cm_js_prefix, cm_addon_prefix, cm_addon_prefix, cm_addon_prefix,
-       cm_addon_prefix, cm_mode_prefix, cm_mode_prefix, cm_mode_prefix,
-       cm_mode_prefix, cmui_js_prefix)
+       cm_addon_prefix, cm_addon_prefix, cm_addon_prefix, cm_addon_prefix,
+       cm_addon_prefix, cm_addon_prefix, cm_mode_prefix, cm_mode_prefix,
+       cm_mode_prefix, cm_mode_prefix, cmui_js_prefix)
 
-cm_options = {'matchBrackets': "true", 'indentUnit': 4}
+cm_options = {'matchBrackets': True, 'indentUnit': 4,
+              'lineNumbers': True, 'foldGutter': True,
+              'gutters': ['CodeMirror-linenumbers', 'CodeMirror-foldgutter']
+              }
 cmui_options = {'path': cmui_js_prefix, 'imagePath': cmui_images_prefix,
                 'searchMode': 'popup'}
 
@@ -108,6 +119,8 @@ def py_to_js(options):
     for (key, val) in options.items():
         if isinstance(val, basestring):
             val = '"%s"' % val
+        elif isinstance(val, bool):
+            val = ('%s' % val).lower()
         out.append('%s: %s' % (key, val))
     return '{%s}' % ', '.join(out)
 
@@ -141,7 +154,9 @@ def init_editor_js(name, edit_opts, wrap_in_tags=True):
         var textarea = document.getElementById("%s");
         var uiOptions = %s;
         var codeMirrorOptions = %s;
-        return new CodeMirrorUI(textarea, uiOptions, codeMirrorOptions);
+        var cmui = new CodeMirrorUI(textarea, uiOptions, codeMirrorOptions);
+        cmui.mirror.on("blur", function() { cmui.mirror.save(); });
+        return cmui;
     }
     ''' % (name, name, name, py_to_js(cmui_options), py_to_js(edit_opts))
     if wrap_in_tags:
