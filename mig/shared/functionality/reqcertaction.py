@@ -39,7 +39,6 @@ from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_email
-from shared.safeinput import html_escape
 from shared.serial import dumps
 from shared.useradm import fill_distinguished_name
 
@@ -64,7 +63,8 @@ def forced_org_email_match(org, email, configuration):
 
     logger = configuration.logger
     # Policy regexps: prioritized order with most general last
-    force_org_email = [('DIKU', ['^[a-zA-Z0-9_.+-]+@diku.dk$']),
+    force_org_email = [('DIKU', ['^[a-zA-Z0-9_.+-]+@diku.dk$',
+                                 '^[a-zA-Z0-9_.+-]+@di.ku.dk$']),
                        ('NBI', ['^[a-zA-Z0-9_.+-]+@nbi.ku.dk$',
                                '^[a-zA-Z0-9_.+-]+@nbi.dk$',
                                '^[a-zA-Z0-9_.+-]+@fys.ku.dk$']),
