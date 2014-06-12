@@ -401,6 +401,8 @@ if (jQuery) (function($){
                         }
                         $("#editor_dialog textarea[name='editarea']").val(file_output);
                         $("#editor_dialog div.spinner").hide();
+                        // Force refresh on editor field
+                        $("#switcher .currentSet").click();
                     }
                 });
                 

@@ -38,7 +38,7 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.editing import acquire_edit_lock, edit_lock_suffix, cm_css, \
      cm_javascript, cm_options, miu_css, miu_javascript, miu_options, \
-     init_editor_js, run_editor_js, kill_editor_js
+     init_editor_js, run_editor_js, change_editor_mode_js, kill_editor_js
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.validstring import valid_user_path
@@ -116,6 +116,57 @@ def advanced_editor_js_deps(include_jquery=True):
 
     %s
 
+    %s
+
+    function autoDetectMode() {
+        //console.log("autoDetectMode");
+        var mode, ext;
+        var path = $("#editorpath").val();
+        //console.log("autoDetectMode path: "+path);
+        var filename = path.split("/").pop();
+        var parts = filename.split(".");
+        if (parts.length == 1 || ( parts[0] == "" && parts.length == 2 ) ) {
+            ext = "";
+        }
+        ext = parts.pop(); 
+        if (ext == "py") {
+            mode = "python";
+        } else if (ext == "java") {
+            mode = "java";
+        } else if (ext == "pl") {
+            mode = "perl";
+        } else if (ext == "c") {
+            mode = "clike";
+        } else if (ext == "cc") {
+            mode = "clike";
+        } else if (ext == "cpp") {
+            mode = "clike";
+        } else if (ext == "sh") {
+            mode = "shell";
+        } else if (ext == "tex") {
+            mode = "stex";
+        } else if (ext == "rst") {
+            mode = "rst";
+        } else if (ext == "yaml") {
+            mode = "yaml";
+        } else if (ext == "xml") {
+            mode = "xml";
+        } else if (ext == "html") {
+            mode = "htmlmixed";
+        } else if (ext == "js") {
+            mode = "javascript";
+        } else if (ext == "json") {
+            mode = "javascript";
+        } else if (ext == "css") {
+            mode = "css";
+        } else {
+            // mode null means plain text
+            mode = "null";
+        }
+        console.log("autoDetectMode mode: "+mode);
+        change_editorarea_editor_mode(mode);
+    }
+    
     $(document).ready(function() {
         var lastEdit = "raw";
         $("#switcher li").click(function() {
@@ -130,7 +181,12 @@ def advanced_editor_js_deps(include_jquery=True):
                 disableStyleSheet("html");
                 //disableStyleSheet("txt2tags");
             } else if (lastEdit == "CodeMirror") {
+                // Do not let kill truncate recently loaded contents
+                var contents = $("#editorarea").val();
                 %s
+                if (lastEdit == "CodeMirror") {
+                    $("#editorarea").val(contents)
+                }
                 disableStyleSheet("codemirror-ui");
             }
             lastEdit = "raw";
@@ -151,6 +207,7 @@ def advanced_editor_js_deps(include_jquery=True):
                     lastEdit = "CodeMirror";
                     enableStyleSheet("codemirror-ui");
                     %s
+                    autoDetectMode();
                     break;
             }
             return false;
@@ -159,9 +216,9 @@ def advanced_editor_js_deps(include_jquery=True):
     });
 </script>
 ''' % (cm_javascript, miu_javascript, init_editor_js("editorarea",
-       cm_options, wrap_in_tags=False), kill_editor_js("editorarea",
-       wrap_in_tags=False), run_editor_js("editorarea",
-       wrap_in_tags=False))
+       cm_options, wrap_in_tags=False), change_editor_mode_js("editorarea",
+       wrap_in_tags=False), kill_editor_js("editorarea", wrap_in_tags=False),
+       run_editor_js("editorarea", wrap_in_tags=False))
     return js
 
 def lock_info(real_path, time_left):
@@ -267,8 +324,8 @@ Edit contents:<br />
     if 'switcher' in includes:
         html += '''
 <ul id="switcher">
-<li class="html"><a href="#">HTML/Text Editor</a></li>
-<li class="codemirror currentSet"><a href="#">Code Editor</a></li>
+<li class="html currentSet"><a href="#">HTML/Text Editor</a></li>
+<li class="codemirror"><a href="#">Code Editor</a></li>
 <!-- <li class="txt2tags"><a href="#">Txt2Tags Editor</a></li> -->
 <li class="remove"><a href="#">Raw text field</a></li>
 </ul>

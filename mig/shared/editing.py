@@ -67,6 +67,7 @@ cm_javascript = '''
 <script type="text/javascript" src="%s/fold/brace-fold.js"></script>
 <script type="text/javascript" src="%s/fold/xml-fold.js"></script>
 <script type="text/javascript" src="%s/fold/comment-fold.js"></script>
+<script type="text/javascript" src="%s/mode/loadmode.js"></script>
 <!-- CodeMirror mode scripts -->
 <script type="text/javascript" src="%s/xml/xml.js"></script>
 <script type="text/javascript" src="%s/javascript/javascript.js"></script>
@@ -76,8 +77,8 @@ cm_javascript = '''
 <script type="text/javascript" src="%s/codemirror-ui.js"></script>
 ''' % (cm_js_prefix, cm_addon_prefix, cm_addon_prefix, cm_addon_prefix,
        cm_addon_prefix, cm_addon_prefix, cm_addon_prefix, cm_addon_prefix,
-       cm_addon_prefix, cm_addon_prefix, cm_mode_prefix, cm_mode_prefix,
-       cm_mode_prefix, cm_mode_prefix, cmui_js_prefix)
+       cm_addon_prefix, cm_addon_prefix, cm_addon_prefix, cm_mode_prefix,
+       cm_mode_prefix, cm_mode_prefix, cm_mode_prefix, cmui_js_prefix)
 
 cm_options = {'matchBrackets': True, 'indentUnit': 4,
               'lineNumbers': True, 'foldGutter': True,
@@ -149,29 +150,47 @@ def init_editor_js(name, edit_opts, wrap_in_tags=True):
     If wrap_in_tags is set the javascript will be wrapped in html script tags.
     """
     out = '''
-    var %s_editor;
-    function run_%s_editor() {
-        var textarea = document.getElementById("%s");
-        var uiOptions = %s;
-        var codeMirrorOptions = %s;
+    var %(name)s_editor;
+    function run_%(name)s_editor() {
+        var textarea = document.getElementById("%(name)s");
+        var uiOptions = %(js_cmui_opts)s;
+        var codeMirrorOptions = %(js_edit_opts)s;
         var cmui = new CodeMirrorUI(textarea, uiOptions, codeMirrorOptions);
         cmui.mirror.on("blur", function() { cmui.mirror.save(); });
         return cmui;
     }
-    ''' % (name, name, name, py_to_js(cmui_options), py_to_js(edit_opts))
+    ''' % {'name': name, 'js_cmui_opts': py_to_js(cmui_options),
+           'js_edit_opts': py_to_js(edit_opts)}
     if wrap_in_tags:
         out = html_wrap_js(out)
     return out
 
-def run_editor_js(name, wrap_in_tags=True):
+def run_editor_js(name, wrap_in_tags=True, mode=""):
     """Create javascript to actually wrap a previously initialized HTML
     textarea in user friendly code editor with syntax highlighting and basic
     toolbar.
     If wrap_in_tags is set the javascript will be wrapped in html script tags.
     """
     out = '''
-    %s_editor = run_%s_editor();
-    ''' % (name, name)
+    %(name)s_editor = run_%(name)s_editor();
+    ''' % {'name': name, 'cm_mode_prefix': cm_mode_prefix}
+    if wrap_in_tags:
+        out = html_wrap_js(out)
+    return out
+
+def change_editor_mode_js(name, wrap_in_tags=True):
+    """Create javascript to change mode for a previously initialized HTML
+    textarea in user friendly code editor with syntax highlighting and basic
+    toolbar.
+    If wrap_in_tags is set the javascript will be wrapped in html script tags.
+    """
+    out = '''
+    function change_%(name)s_editor_mode(mode) {
+        %(name)s_editor.mirror.setOption("mode", mode);
+        CodeMirror.modeURL = "%(cm_mode_prefix)s/%%N/%%N.js";
+        CodeMirror.autoLoadMode(%(name)s_editor.mirror, mode);
+    }
+    ''' % {'name': name, 'cm_mode_prefix': cm_mode_prefix}
     if wrap_in_tags:
         out = html_wrap_js(out)
     return out
@@ -182,10 +201,10 @@ def kill_editor_js(name, wrap_in_tags=True):
     If wrap_in_tags is set the javascript will be wrapped in html script tags.
     """
     out = '''
-    if (%s_editor != undefined) {
-        %s_editor.toTextArea();
+    if (%(name)s_editor != undefined) {
+        %(name)s_editor.toTextArea();
     }
-    ''' % (name, name)
+    ''' % {'name': name}
     if wrap_in_tags:
         out = html_wrap_js(out)
     return out
