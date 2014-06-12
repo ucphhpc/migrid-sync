@@ -245,11 +245,11 @@ function newcountdown(path, minutes) {
 def edit_file(path, real_path, output_format='html', includes=edit_includes):
     """Format and return the contents of a given file"""
 
-    text = ['']
+    text = ''
     if os.path.isfile(real_path):
         try:
             src_fd = open(real_path, 'rb')
-            text = src_fd.readlines()
+            text = src_fd.read()
             src_fd.close()
         except Exception, exc:
             return 'Failed to open file %s: %s' % (path, exc)
@@ -261,11 +261,9 @@ def edit_file(path, real_path, output_format='html', includes=edit_includes):
 <input id="editorpath" type="text" size="80" name="path" value="%(path)s" />
 <br /><br />
 Edit contents:<br />
-<textarea id="editorarea" cols="80" rows="25" name="editarea">'''
-    for line in text:
-        html += line
-
-    html += '</textarea>'
+<textarea id="editorarea" cols="80" rows="25"
+          name="editarea">%(text)s</textarea>
+'''
     if 'switcher' in includes:
         html += '''
 <ul id="switcher">
@@ -338,7 +336,7 @@ Type:
 <p>
 '''
     return html % {'path': path, 'lock_suffix': edit_lock_suffix,
-                   'output_format': output_format}
+                   'output_format': output_format, 'text': text}
 
 
 def main(client_id, user_arguments_dict):
