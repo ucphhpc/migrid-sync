@@ -97,6 +97,9 @@ def advanced_editor_js_deps(include_jquery=True):
 %s
 
 <script type="text/javascript">
+    /* Keep track of editor type */
+    var lastEdit = "raw";
+    
     function enableStyleSheet(title) {
         var i, a, main;
         for(i=0; (a = document.getElementsByTagName("link")[i]); i++) {
@@ -166,50 +169,51 @@ def advanced_editor_js_deps(include_jquery=True):
         console.log("autoDetectMode mode: "+mode);
         change_editorarea_editor_mode(mode);
     }
+
+    function disable_editorarea_editor(lastEdit) {
+        if (lastEdit == "MarkItUp") {
+            $("#editorarea").markItUpRemove();
+            /* stylesheet button settings collide for different sets
+            disable all set stylesheets and enable only selected one */
+            disableStyleSheet("html");
+            //disableStyleSheet("txt2tags");
+        } else if (lastEdit == "CodeMirror") {
+            %s
+            disableStyleSheet("codemirror-ui");
+        }
+    }
+
+    function enable_editorarea_editor(newSet) {
+        lastEdit = "raw";
+        switch(newSet) {
+            case "html":
+                lastEdit = "MarkItUp";
+                enableStyleSheet("html");
+                $("#editorarea").markItUp(myHtmlSettings);
+                break;
+            /*
+            case "txt2tags":
+                lastEdit = "MarkItUp";
+                enableStyleSheet("txt2tags");
+                $("#editorarea").markItUp(myTxt2TagsSettings);
+                break;
+            */
+            case "codemirror":
+                lastEdit = "CodeMirror";
+                enableStyleSheet("codemirror-ui");
+                %s
+                autoDetectMode();
+                break;
+        }
+    }
     
     $(document).ready(function() {
-        var lastEdit = "raw";
         $("#switcher li").click(function() {
             $("#switcher li").removeClass("currentSet");
             newSet = $(this).attr("class");
             $(this).addClass("currentSet");
-
-            if (lastEdit == "MarkItUp") {
-                $("#editorarea").markItUpRemove();
-                /* stylesheet button settings collide for different sets
-                disable all set stylesheets and enable only selected one */
-                disableStyleSheet("html");
-                //disableStyleSheet("txt2tags");
-            } else if (lastEdit == "CodeMirror") {
-                // Do not let kill truncate recently loaded contents
-                var contents = $("#editorarea").val();
-                %s
-                if (lastEdit == "CodeMirror") {
-                    $("#editorarea").val(contents)
-                }
-                disableStyleSheet("codemirror-ui");
-            }
-            lastEdit = "raw";
-            switch(newSet) {
-                case "html":
-                    lastEdit = "MarkItUp";
-                    enableStyleSheet("html");
-                    $("#editorarea").markItUp(myHtmlSettings);
-                    break;
-                /*
-                case "txt2tags":
-                    lastEdit = "MarkItUp";
-                    enableStyleSheet("txt2tags");
-                    $("#editorarea").markItUp(myTxt2TagsSettings);
-                    break;
-                */
-                case "codemirror":
-                    lastEdit = "CodeMirror";
-                    enableStyleSheet("codemirror-ui");
-                    %s
-                    autoDetectMode();
-                    break;
-            }
+            disable_editorarea_editor(lastEdit);
+            enable_editorarea_editor(newSet);
             return false;
         });
     $("#switcher .currentSet").click();

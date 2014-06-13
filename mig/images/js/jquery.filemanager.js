@@ -399,10 +399,16 @@ if (jQuery) (function($){
                                 }
                             }
                         }
+                        // Force refresh on editor field truncating any unsaved contents
+                        disable_editorarea_editor(lastEdit);
                         $("#editor_dialog textarea[name='editarea']").val(file_output);
                         $("#editor_dialog div.spinner").hide();
-                        // Force refresh on editor field
-                        $("#switcher .currentSet").click();
+                        var activeEntry = $("#switcher .currentSet");
+                        // activeEntry has currentSet and type class - extract type
+                        activeEntry.removeClass("currentSet");
+                        var activeSet = activeEntry.attr("class");
+                        activeEntry.addClass("currentSet");
+                        enable_editorarea_editor(activeSet)
                     }
                 });
                 
