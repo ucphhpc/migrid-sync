@@ -40,7 +40,7 @@ from shared.init import initialize_main_variables, find_entry, extract_menu
 def html_tmpl(configuration, title_entry):
     """HTML page base: some upload and menu entries depend on configuration"""
 
-    edit_includes = ['switcher', 'save']
+    edit_includes = ['switcher']
     fill_entries = {}
     if 'submitjob' in extract_menu(configuration, title_entry):
         fill_entries["menu_submit_entry"] = '''
