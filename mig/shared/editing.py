@@ -51,7 +51,7 @@ cm_css = '''
 <link rel="stylesheet" type="text/css" href="%s/codemirror.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%s/dialog/dialog.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%s/fold/foldgutter.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="%s/codemirror-ui.css" media="screen" title="codemirror-ui" />
+<link rel="stylesheet" type="text/css" href="%s/codemirror-ui.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/codemirror.custom.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/css/codemirror-ui.custom.css" media="screen"/>
 ''' % (cm_css_prefix, cm_addon_prefix, cm_addon_prefix, cmui_css_prefix)

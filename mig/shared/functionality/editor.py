@@ -179,7 +179,8 @@ def advanced_editor_js_deps(include_jquery=True):
             //disableStyleSheet("txt2tags");
         } else if (lastEdit == "CodeMirror") {
             %s
-            disableStyleSheet("codemirror-ui");
+            /* no need to fiddle with stylesheet here */
+            //disableStyleSheet("codemirror-ui");
         }
     }
 
@@ -200,7 +201,8 @@ def advanced_editor_js_deps(include_jquery=True):
             */
             case "codemirror":
                 lastEdit = "CodeMirror";
-                enableStyleSheet("codemirror-ui");
+                /* no need to fiddle with stylesheet here */
+                //enableStyleSheet("codemirror-ui");
                 %s
                 autoDetectMode();
                 break;
