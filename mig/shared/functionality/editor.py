@@ -144,6 +144,48 @@ def advanced_editor_js_deps(include_jquery=True):
             mode = "clike";
         } else if (ext == "cpp") {
             mode = "clike";
+        } else if (ext == "f") {
+            mode = "fortran";
+        } else if (ext == "f90") {
+            mode = "fortran";
+        } else if (ext == "f95") {
+            mode = "fortran";
+        } else if (ext == "for") {
+            mode = "fortran";
+        } else if (ext == "rb") {
+            mode = "ruby";
+        } else if (ext == "rbw") {
+            mode = "ruby";
+        } else if (ext == "hs") {
+            mode = "haskell";
+        } else if (ext == "hi") {
+            mode = "haskell";
+        } else if (ext == "ml") {
+            mode = "mllike";
+        } else if (ext == "mli") {
+            mode = "mllike";
+        } else if (ext == "erl") {
+            mode = "erlang";
+        } else if (ext == "hrl") {
+            mode = "erlang";
+        } else if (ext == "groovy") {
+            mode = "groovy";
+        } else if (ext == "gy") {
+            mode = "groovy";
+        } else if (ext == "gvy") {
+            mode = "groovy";
+        } else if (ext == "gsh") {
+            mode = "groovy";
+        } else if (ext == "go") {
+            mode = "go";
+        } else if (ext == "fs") {
+            mode = "mllike";
+        } else if (ext == "fsx") {
+            mode = "mllike";
+        } else if (ext == "m") {
+            mode = "octave";
+        } else if (ext == "mat") {
+            mode = "octave";
         } else if (ext == "sh") {
             mode = "shell";
         } else if (ext == "tex") {
