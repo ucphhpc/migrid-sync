@@ -28,17 +28,27 @@ tools and a Python interpreter with a few external modules.
 -Python 2.6 or later but not 3.x (https://www.python.org/)
 -Python Enchant module (https://pypi.python.org/pypi/pyenchant). 
 
-Optional WSGI interface, OpenID login, Wiki, SCM and tracker VGrid features require:
+Optional WSGI interface, OpenID login, efficient file access services,
+Wiki, SCM and tracker VGrid features require:
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
 -Apache OpenID module (http://findingscience.com/mod_auth_openid/)
+-Python OpenID module (https://pypi.python.org/pypi/python-openid/)
+-Python pbkdf2 module (https://pypi.python.org/pypi/pbkdf2)
+-Python Paramiko module (https://pypi.python.org/pypi/paramiko/)
+-Python FTPD library (https://pypi.python.org/pypi/pyftpdlib)
+-Python WebDAV module (https://pypi.python.org/pypi/PyWebDAV)
 -Mercurial (http://mercurial.selenic.com/)
 -Trac (http://trac.edgewall.org/)
 -Trac plugins (e.g. http://trac-hacks.org/)
 
-On Debian servers the corresponding packages can be installed with:
-sudo aptitude install apache2-mpm-prefork libapache2-mod-wsgi \
-     libapache2-mod-auth-openid openssh-client python python-enchant \
-     mercurial trac trac-mercurial
+On Debian servers the corresponding basic packages can be installed with:
+sudo aptitude install apache2-mpm-prefork openssh-client python \
+     python-enchant
+
+and the optional dependencies similarly with:
+sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
+     python-openid python-pbkdf2 python-paramiko mercurial trac \
+     trac-mercurial
 
 Additional packaged Trac extensions can be installed with:
 sudo aptitude install trac-customfieldadmin trac-graphviz \
@@ -295,6 +305,9 @@ required components for it on Debian.
 PyWebDAV is required for the optional grid_davs daemon to work and the 
 python-webdav package in a recent version may provide all required components
 for it on Debian. 
+All optional file server services like sftp, ftps and davs rely on the
+python pbkdf2 module for password auth support and the python-pbkdf2
+package provides all required components for it on Debian.
 
 The four CLAUSE arguments can be used to comment out the explicit
 setting of user, group, serveralias and ports in the apache conf by
