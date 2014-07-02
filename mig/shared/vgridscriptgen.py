@@ -551,7 +551,7 @@ sh_ext = 'sh'
 python_lang = 'python'
 python_cmd = '/usr/bin/python'
 python_ext = 'py'
-curl_cmd = '/usr/bin/curl'
+curl_cmd = 'curl'
 dest_dir = '.'
 
 # Only run interactive commands if called directly as executable
