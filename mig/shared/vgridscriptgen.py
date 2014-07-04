@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# vgridscriptgen - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# vgridscriptgen - vgrid and resource script generator backend
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -551,6 +551,7 @@ sh_ext = 'sh'
 python_lang = 'python'
 python_cmd = '/usr/bin/python'
 python_ext = 'py'
+# curl_cmd must be generic for cross platform support
 curl_cmd = 'curl'
 dest_dir = '.'
 
