@@ -639,7 +639,7 @@ def start_resource_exe(
                  % (unique_resource_name, exe_name)
             logger.error(msg)
             return (False, msg)
-        elif 'stopped' != pgid and 'finished' != pgid:
+        elif pgid not in ['', 'stopped', 'finished']:
             msg = 'pgid has unexpected value during exe start: %s'\
                  % pgid
             logger.error(msg)
@@ -1206,9 +1206,9 @@ def resource_exe_action(
         if 'status' == action:
             pgid_file.seek(0, 0)
             pgid = pgid_file.readline().strip()
-            if 'stopped' == pgid:
+            if pgid in ['', 'stopped']:
                 return (True,
-                        "Exe is not running (pgid on server is 'stopped')"
+                        "Exe is not running (pgid on server is '%s')" % pgid
                         )
             elif 'finished' == pgid and exe['continious']:
                 return (True,
@@ -1276,7 +1276,7 @@ def resource_exe_action(
 
             # now find out if pgid has been received or it is still "starting"
 
-            if 'stopped' == pgid or 'finished' == pgid:
+            if pgid in ['', 'stopped', 'finished']:
                 return (True, 'Exe is not running, pgid status is %s'
                          % pgid)
             elif pgid.isdigit():
