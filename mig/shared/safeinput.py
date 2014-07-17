@@ -45,6 +45,8 @@ VALID_PATH_CHARACTERS = letters + digits + '/.,_-+='\
 VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + '?!#$\xa4%&()[]{}*'\
      + '"' + "'`|^~" + '\\' + '\n\r\t'
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
+VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
+VALID_URL_CHARACTERS = VALID_BASEURL_CHARACTERS + '?;&%='
 VALID_JOB_ID_CHARACTERS = VALID_FQDN_CHARACTERS + '_'
 VALID_JOB_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_+@$%'
 REJECT_UNSET = 'MUST_BE_SET_AND_NO_DEFAULT_VALUE'
@@ -260,6 +262,36 @@ def valid_distinguished_name(
 
     valid_chars = VALID_DN_CHARACTERS + extra_chars
     __valid_contents(distinguished_name, valid_chars, min_length,
+                     max_length)
+
+
+def valid_base_url(
+    base_url,
+    min_length=1,
+    max_length=255,
+    extra_chars='',
+    ):
+    """Verify that supplied base_url only contains
+    characters that we consider valid. 
+    """
+
+    valid_chars = VALID_BASEURL_CHARACTERS + extra_chars
+    __valid_contents(base_url, valid_chars, min_length,
+                     max_length)
+
+
+def valid_url(
+    url,
+    min_length=1,
+    max_length=1024,
+    extra_chars='',
+    ):
+    """Verify that supplied url only contains
+    characters that we consider valid. 
+    """
+
+    valid_chars = VALID_URL_CHARACTERS + extra_chars
+    __valid_contents(url, valid_chars, min_length,
                      max_length)
 
 

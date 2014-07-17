@@ -65,16 +65,6 @@ import ssl
 import sys
 import time
 
-from shared.base import client_alias, client_id_dir
-from shared.conf import get_configuration_object
-from shared.useradm import load_user_db, extract_field
-
-configuration, logger = None, None
-
-def quoteattr(s):
-    qs = cgi.escape(s, 1)
-    return '"%s"' % (qs,)
-
 try:
     import openid
 except ImportError:
@@ -93,6 +83,31 @@ from openid.extensions import sreg
 from openid.server import server
 from openid.store.filestore import FileOpenIDStore
 from openid.consumer import discover
+
+from shared.base import client_alias, client_id_dir
+from shared.conf import get_configuration_object
+from shared.safeinput import valid_distinguished_name, valid_password, \
+     valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url
+from shared.useradm import load_user_db, extract_field
+
+configuration, logger = None, None
+
+def quoteattr(val):
+    """Escape string for safe printing"""
+    esc = cgi.escape(val, 1)
+    return '"%s"' % (esc,)
+
+def valid_mode_name(arg):
+    """Make sure only valid mode names are allowed"""
+    valid_job_id(arg)
+
+def valid_cert_dir(arg):
+    """Make sure only valid cert dir names are allowed"""
+    valid_distinguished_name(arg, extra_chars='+_')
+
+def invalid_argument(arg):
+    """Always raise exception to mark argument invalid"""
+    raise ValueError("Unexpected query variable: %s" % quoteattr(arg))
 
 
 class OpenIDHTTPServer(HTTPServer):
@@ -126,6 +141,7 @@ class OpenIDHTTPServer(HTTPServer):
         self.lastCheckIDRequest = {}
 
     def setOpenIDServer(self, oidserver):
+        """Override openid attribute"""
         self.openid = oidserver
 
 
@@ -135,30 +151,65 @@ class ThreadedOpenIDHTTPServer(ThreadingMixIn, OpenIDHTTPServer):
 
 
 class ServerHandler(BaseHTTPRequestHandler):
+    """Override BaseHTTPRequestHandler to handle OpenID protocol"""
+
+    # Input validation helper which must hold validators for all valid query
+    # string variables. Any other variables must trigger a client error.
+
+    validators = {
+        'username': valid_cert_dir,
+        'login_as': valid_cert_dir,
+        'identifier': valid_cert_dir,
+        'user': valid_cert_dir,
+        'password': valid_password,
+        'yes': valid_ascii,
+        'no': valid_ascii,
+        'remember': valid_ascii,
+        'cancel': valid_ascii,
+        'submit': valid_distinguished_name,
+        'success_to': valid_url,
+        'fail_to': valid_url,
+        'openid.assoc_handle': valid_password,
+        'openid.claimed_id': valid_base_url,
+        'openid.identity': valid_base_url,
+        'openid.mode': valid_mode_name,
+        'openid.ns': valid_base_url,
+        'openid.realm': valid_base_url,
+        'openid.return_to': valid_url,
+        'openid.trust_root': valid_base_url,
+        }
+
     def __init__(self, *args, **kwargs):
         self.clearUser()
         BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
     def clearUser(self):
+        """Reset all saved user variables"""
         self.user = None
         self.user_dn = None
         self.user_dn_dir = None
         self.password = None
         
     def do_GET(self):
+        """Handle all HTTP GET requests"""
         try:
             self.parsed_uri = urlparse(self.path)
             self.query = {}
-            for k, v in cgi.parse_qsl(self.parsed_uri[4]):
-                self.query[k] = v
+            for (key, val) in cgi.parse_qsl(self.parsed_uri[4]):
+                print "DEBUG: checking input arg %s: '%s'" % (key, val)
+                validate_helper = self.validators.get(key, invalid_argument)
+                # Let validation errors pass to general exception handler below
+                validate_helper(val)
+                self.query[key] = val
 
             self.setUser()
 
+            print "DEBUG: checking path '%s'" % self.parsed_uri[2]
+            valid_path(self.parsed_uri[2])
             path = self.parsed_uri[2]
 
             # Strip server_base before testing location
             path = path.replace("%s/" % self.server.server_base, '', 1)
-            #print path
 
             if path == '/':
                 self.showMainPage()
@@ -189,22 +240,29 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.wfile.write(cgitb.html(sys.exc_info(), context=10))
 
     def do_POST(self):
+        """Handle all HTTP POST requests"""
         try:
             self.parsed_uri = urlparse(self.path)
 
-            self.setUser()
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
 
             self.query = {}
-            for k, v in cgi.parse_qsl(post_data):
-                self.query[k] = v
+            for (key, val) in cgi.parse_qsl(post_data):
+                print "DEBUG: checking post input arg %s: '%s'" % (key, val)
+                validate_helper = self.validators.get(key, invalid_argument)
+                # Let validation errors pass to general exception handler below
+                validate_helper(val)
+                self.query[key] = val
 
+            self.setUser()
+
+            print "DEBUG: checking path '%s'" % self.parsed_uri[2]
+            valid_path(self.parsed_uri[2])
             path = self.parsed_uri[2]
 
             # Strip server_base before testing location
             path = path.replace("%s/" % self.server.server_base, '', 1)
-            #print path
 
             if path == '/openidserver':
                 self.serverEndPoint(self.query)
@@ -283,6 +341,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
 
     def setUser(self):
+        """Read any saved user value from cookie"""
         cookies = self.headers.get('Cookie')
         if cookies:
             morsel = Cookie.BaseCookie(cookies).get('user')
@@ -292,6 +351,7 @@ class ServerHandler(BaseHTTPRequestHandler):
                 self.user = morsel.value
 
     def isAuthorized(self, identity_url, trust_root):
+        """Check if user is authorized"""
         if self.user is None:
             return False
 
@@ -302,6 +362,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         return self.server.approved.get(key) is not None
 
     def serverEndPoint(self, query):
+        """End-point handler"""
         try:
             request = self.server.openid.decodeRequest(query)
         except server.ProtocolError, why:
@@ -320,6 +381,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.displayResponse(response)
 
     def addSRegResponse(self, request, response):
+        """SReg extended attributes handler"""
         sreg_req = sreg.SRegRequest.fromOpenIDRequest(request)
 
         # In a real application, this data would be user-specific,
@@ -339,16 +401,19 @@ class ServerHandler(BaseHTTPRequestHandler):
         response.addExtension(sreg_resp)
 
     def approved(self, request, identifier=None):
+        """Accept helper"""
         response = request.answer(True, identity=identifier)
         # TODO: re-enable this SReg data?
         #self.addSRegResponse(request, response)
         return response
 
     def rejected(self, request, identifier=None):
+        """Reject helper"""
         response = request.answer(False, identity=identifier)
         return response
 
     def handleCheckIDRequest(self, request):
+        """Check ID handler"""
         print "handleCheckIDRequest with req %s" % request
         is_authorized = self.isAuthorized(request.identity, request.trust_root)
         if is_authorized:
@@ -363,6 +428,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.showDecidePage(request)
 
     def displayResponse(self, response):
+        """Response helper"""
         try:
             webresponse = self.server.openid.encodeResponse(response)
         except server.EncodingError, why:
@@ -413,6 +479,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         return False
                 
     def doLogin(self):
+        """Login handler"""
         if 'submit' in self.query:
             if 'user' in self.query:
                 self.user = self.query['user']
@@ -438,6 +505,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             assert 0, 'strange login %r' % (self.query,)
 
     def redirect(self, url):
+        """Redirect helper"""
         self.send_response(302)
         self.send_header('Location', url)
         self.writeUserHeader()
@@ -445,6 +513,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def writeUserHeader(self):
+        """Response helper"""
         if self.user is None:
             t1970 = time.gmtime(0)
             expires = time.strftime(
@@ -454,6 +523,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.send_header('Set-Cookie', 'user=%s' % self.user)
 
     def showAboutPage(self):
+        """About page provider"""
         endpoint_url = self.server.base_url + 'openidserver'
 
         def link(url):
@@ -482,6 +552,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         """ % (link(endpoint_url), resource_markup,))
 
     def showErrorPage(self, error_message):
+        """Error page provider"""
         self.showPage(400, 'Error Processing Request', err='''\
         <p>%s</p>
         <!--
@@ -518,6 +589,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         ''' % error_message)
 
     def showDecidePage(self, request):
+        """Decide page provider"""
         id_url_base = self.server.base_url+'id/'
         # XXX: This may break if there are any synonyms for id_url_base,
         # such as referring to it by IP address or a CNAME.
@@ -638,9 +710,10 @@ class ServerHandler(BaseHTTPRequestHandler):
         self.showPage(200, 'Approve OpenID request?', msg=msg, form=form)
 
     def showIdPage(self, path):
-        link_tag = '<link rel="openid.server" href="%sopenidserver">' %\
+        """User info page provider"""
+        link_tag = '<link rel="openid.server" href="%sopenidserver">' % \
               self.server.base_url
-        yadis_loc_tag = '<meta http-equiv="x-xrds-location" content="%s">'%\
+        yadis_loc_tag = '<meta http-equiv="x-xrds-location" content="%s">' % \
             (self.server.base_url+'yadis/'+path[4:])
         disco_tags = link_tag + yadis_loc_tag
         ident = self.server.base_url + path[1:]
@@ -665,6 +738,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         ''' % (ident, msg))
 
     def showYadis(self, user):
+        """YADIS page provider"""
         self.send_response(200)
         self.send_header('Content-type', 'application/xrds+xml')
         self.end_headers()
@@ -691,6 +765,7 @@ class ServerHandler(BaseHTTPRequestHandler):
      endpoint_url, user_url))
 
     def showServerYadis(self):
+        """Server YADIS page provider"""
         self.send_response(200)
         self.send_header('Content-type', 'application/xrds+xml')
         self.end_headers()
@@ -713,7 +788,8 @@ class ServerHandler(BaseHTTPRequestHandler):
 """%(discover.OPENID_IDP_2_0_TYPE, endpoint_url,))
 
     def showMainPage(self):
-        yadis_tag = '<meta http-equiv="x-xrds-location" content="%s">'%\
+        """Main page provider"""
+        yadis_tag = '<meta http-equiv="x-xrds-location" content="%s">' % \
             (self.server.base_url + 'serveryadis')
         if self.user:
             openid_url = self.server.base_url + 'id/' + self.user
@@ -729,7 +805,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             not <a href='/%s/login'>logged in</a>.</p>""" % \
             self.server.server_base
 
-        self.showPage(200, 'Main Page', head_extras = yadis_tag, msg='''\
+        self.showPage(200, 'Main Page', head_extras = yadis_tag, msg=''' \
         <p>This is a simple OpenID server implemented using the <a
         href="http://openid.schtuff.com/">Python OpenID
         library</a>.</p>
@@ -745,6 +821,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         ''' % (user_message, quoteattr(self.server.base_url), self.server.base_url))
 
     def showLoginPage(self, success_to, fail_to):
+        """Login page provider"""
         self.showPage(200, 'Login Page', form='''\
         <h2>Login</h2>
         <p>Please enter your MiG username and password to prove your identify
@@ -761,7 +838,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     def showPage(self, response_code, title,
                  head_extras='', msg=None, err=None, form=None):
-
+        """Show page helper"""
         if self.user is None:
             user_link = '<a href="/%s/login">not logged in</a>.' % \
                         self.server.server_base
@@ -884,6 +961,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
 
 def start_service(configuration):
+    """Service launcher"""
     host = configuration.user_openid_address
     port = configuration.user_openid_port
     data_path = configuration.openid_store
