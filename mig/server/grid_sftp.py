@@ -579,12 +579,15 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
 
     server = SimpleSSHServer(users=usermap, conf=conf)
     transport.start_server(server=server)
-    channel = transport.accept()
+    channel = transport.accept(conf['auth_timeout'])
     username = server.get_authenticated_user()
     if username is not None:
         user = usermap[username]
         logger.info("Login for %s from %s" % (username, addr))
         print "Login for %s from %s" % (username, addr)
+    else:
+        print "Login from %s failed - closing connection" % (addr, )
+        transport.close()
 
     # Ignore user connection here as we only care about sftp.
     # Keep the connection alive until user disconnects or server is halted.
@@ -616,7 +619,10 @@ def start_service(configuration):
 
     logger.debug("Accepting connections")
     while True:
+        client_tuple = None
         try:
+            logger.info('accept with %d active sessions' % \
+                        threading.active_count())
             client_tuple = server_socket.accept()
             # accept may return None or tuple with None part in corner cases
             if client_tuple == None or None in client_tuple:
@@ -624,9 +630,11 @@ def start_service(configuration):
             (client, addr) = client_tuple
         except KeyboardInterrupt:
             # forward KeyboardInterrupt to main thread
+            server_socket.close()
             raise
         except Exception, err:
-            logger.warning('ignoring failed client connection: %s' % err)
+            logger.warning('ignoring failed client connection for %s: %s' % \
+                           (client_tuple, err))
             continue
         # automatic reload of users if more than refresh_delay seconds old
         refresh_delay = 60
@@ -715,6 +723,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'users': [],
         'time_stamp': 0,
         'logger': logger,
+        'auth_timeout': 60,
         'stop_running': threading.Event()
         }
     info_msg = "Listening on address '%s' and port %d" % (address, port)
