@@ -74,18 +74,40 @@ def vgrid_add_remove_table(vgrid_name,
 
     # read list of current items and create form to remove one
 
-    (status, msg) = vgrid_list(vgrid_name, '%ss' % item_string, configuration)
+    (status, inherit) = vgrid_list(vgrid_name, '%ss' % item_string, configuration)
     if not status:
         out.append({'object_type': 'error_text',
-                    'text': msg })
+                    'text': inherit })
+        return (False, out)
+    (status, direct) = vgrid_list(vgrid_name, '%ss' % item_string,
+                                   configuration, recursive=False)
+    if not status:
+        out.append({'object_type': 'error_text',
+                    'text': direct })
         return (False, out)
 
-    # success, so msg is a list of user names (DNs) or unique resource ids
-    if len(msg) <= 0:
-        out.append({'object_type': 'text', 
-                    'text': 'No %ss found!' % str.title(item_string)
-                    })
-    else:
+    # success, so direct and inherit are lists of unique user/resource IDs
+    extras = [i for i in inherit if not i in direct]
+    if extras:
+        table = '''
+        <br />
+        Inherited %(item)ss of %(vgrid)s:
+        <table class="vgrid%(item)s">
+          <thead><tr><th></th><th>%(item)s</th></thead>
+          <tbody>
+''' % {'item': item_string,
+       'vgrid': vgrid_name}
+
+        for elem in extras:
+            if elem:
+                table += \
+"          <tr><td></td><td>%s</td></tr>"\
+                     % elem
+        table += '''
+        </tbody></table>
+'''
+        out.append({'object_type': 'html_form', 'text': table})
+    if direct:
         form = '''
       <form method="post" action="rm%(scriptname)s.py">
         <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
@@ -93,22 +115,22 @@ def vgrid_add_remove_table(vgrid_name,
         <table class="vgrid%(item)s">
           <thead><tr><th>Remove</th><th>%(item)s</th></thead>
           <tbody>
-''' % { 'item': item_string,
-        'scriptname': script_suffix,
-        'vgrid': vgrid_name }
+''' % {'item': item_string,
+       'scriptname': script_suffix,
+       'vgrid': vgrid_name}
 
-        for elem in msg:
+        for elem in direct:
             if elem:
                 form += \
 "          <tr><td><input type=radio name='%s' value='%s' /></td><td>%s</td></tr>"\
                      % (qu_string, elem, elem)
-        form += '              </tbody></table>'
         form += '''
+        </tbody></table>
         <input type="submit" value="Remove %s" />
       </form>
 ''' % item_string
                     
-        out.append({'object_type': 'html_form', 'text': form })
+        out.append({'object_type': 'html_form', 'text': form})
 
     # form to add a new item
 

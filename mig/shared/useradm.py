@@ -504,7 +504,7 @@ def edit_user(
     # By using the high level add/remove API the corresponding vgrid components
     # get properly updated, too
 
-    vgrid_map = get_vgrid_map(configuration)
+    vgrid_map = get_vgrid_map(configuration, recursive=False)
     for (vgrid_name, vgrid) in vgrid_map[VGRIDS].items():
         if client_id in vgrid[OWNERS]:
             (add_status, err) = vgrid_add_owners(configuration, vgrid_name,

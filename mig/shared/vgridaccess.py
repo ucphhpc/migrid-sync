@@ -27,6 +27,7 @@
 
 """User access to VGrids"""
 
+import copy
 import os
 import time
 import fcntl
@@ -43,7 +44,8 @@ from shared.resource import list_resources, real_to_anon_res_map
 from shared.serial import load, dump
 from shared.user import list_users, real_to_anon_user_map, get_user_conf
 from shared.vgrid import vgrid_list_vgrids, vgrid_allowed, vgrid_resources, \
-     user_allowed_vgrids, vgrid_owners, vgrid_members, vgrid_list_subvgrids
+     user_allowed_vgrids, vgrid_owners, vgrid_members, vgrid_list_subvgrids, \
+     vgrid_list_parents
 
 MAP_SECTIONS = (USERS, RESOURCES, VGRIDS) = ("__users__", "__resources__",
                                              "__vgrids__")
@@ -242,8 +244,9 @@ def refresh_resource_map(configuration):
     return resource_map
 
 def refresh_vgrid_map(configuration):
-    """Refresh map of users and resources with their vgrid participation. Uses
-    a pickled dictionary for efficiency. 
+    """Refresh map of users and resources with their direct vgrid
+    participation. That is, without inheritance. Uses a pickled dictionary for
+    efficiency. 
     Resource and user IDs are stored in their raw (non-anonymized form).
     Only update map for users and resources that updated conf after last map
     save.
@@ -282,7 +285,8 @@ def refresh_vgrid_map(configuration):
                 continue
             if not vgrid_map[VGRIDS].has_key(vgrid) or \
                    os.path.getmtime(conf_path) >= map_stamp:
-                (status, entries) = list_call(vgrid, configuration)
+                (status, entries) = list_call(vgrid, configuration,
+                                              recursive=False)
                 if not status:
                     entries = []
                 vgrid_changes[vgrid] = (vgrid_map[VGRIDS].get(vgrid, []),
@@ -460,26 +464,53 @@ def get_resource_map(configuration):
     last_load[RESOURCES] = time.time()
     return resource_map
 
-def get_vgrid_map(configuration):
+def vgrid_inherit_map(configuration, vgrid_map):
+    """Takes a vgrid_map and returns a copy extended with inherited values.
+    That is, if the vgrid_map has vgrid A with owner John Doe all sub-vgrids
+    A/B, A/B/C, A/M, etc. get their owner list set to include John Doe as well.
+    """
+    inherit_map = copy.deepcopy(vgrid_map)
+    # Sort vgrids and extend participation from the end to keep it simple
+    # and efficient
+    all_vgrids = inherit_map[VGRIDS].keys()
+    all_vgrids.sort()
+    for vgrid_name in all_vgrids[::-1]:
+        vgrid = inherit_map[VGRIDS][vgrid_name]
+        for parent_name in vgrid_list_parents(vgrid_name, configuration):
+            parent_vgrid = inherit_map[VGRIDS][parent_name]
+            for field in (OWNERS, MEMBERS, RESOURCES):
+                vgrid[field] += [i for i in parent_vgrid[field] if not i in \
+                                 vgrid[field]]
+    return inherit_map
+                
+def get_vgrid_map(configuration, recursive=True):
     """Returns the current map of vgrids and their configurations. Caches the
     map for load prevention with repeated calls within short time span.
+    the recursive parameter is there to request extension of all sub-vgrids
+    participation with inherited entities. The raw vgrid map only mirrors the
+    direct participation.
     """
     if last_load[VGRIDS] + MAP_CACHE_SECONDS > time.time():
         configuration.logger.debug("using cached vgrid map")
-        return last_map[VGRIDS]
-    modified_vgrids, modified_stamp_ = check_vgrids_modified(configuration)
-    if modified_vgrids:
-        configuration.logger.info("refreshing vgrid map (%s)" % modified_vgrids)
-        vgrid_map = refresh_vgrid_map(configuration)
-        reset_vgrids_modified(configuration)
-        last_map[VGRIDS] = vgrid_map
+        vgrid_map = last_map[VGRIDS]
     else:
-        configuration.logger.debug("No changes - not refreshing")
-        vgrid_map, map_stamp = load_vgrid_map(configuration)
-        last_map[VGRIDS] = vgrid_map
-        last_refresh[VGRIDS] = map_stamp
-    last_load[VGRIDS] = time.time()
-    return vgrid_map
+        modified_vgrids, modified_stamp_ = check_vgrids_modified(configuration)
+        if modified_vgrids:
+            configuration.logger.info("refreshing vgrid map (%s)" % \
+                                      modified_vgrids)
+            vgrid_map = refresh_vgrid_map(configuration)
+            reset_vgrids_modified(configuration)
+            last_map[VGRIDS] = vgrid_map
+        else:
+            configuration.logger.debug("No changes - not refreshing")
+            vgrid_map, map_stamp = load_vgrid_map(configuration)
+            last_map[VGRIDS] = vgrid_map
+            last_refresh[VGRIDS] = map_stamp
+        last_load[VGRIDS] = time.time()
+    if recursive:
+        return vgrid_inherit_map(configuration, vgrid_map)
+    else:
+        return vgrid_map
 
 def user_owned_res_confs(configuration, client_id):
     """Extract a map of resources that client_id owns.
@@ -760,3 +791,7 @@ if "__main__" == __name__:
     re_resources = resources_using_re(conf, runtime_env)
     print "%s in use on resources: %s" % \
           (runtime_env, ', '.join([i for i in re_resources]))
+    direct_map = get_vgrid_map(conf, recursive=False)
+    print "direct vgrid map vgrids: %s" % direct_map[VGRIDS]
+    inherited_map = get_vgrid_map(conf, recursive=True)
+    print "inherited vgrid map vgrids: %s" % inherited_map[VGRIDS]
