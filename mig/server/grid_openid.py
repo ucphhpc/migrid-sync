@@ -105,6 +105,14 @@ def valid_cert_dir(arg):
     """Make sure only valid cert dir names are allowed"""
     valid_distinguished_name(arg, extra_chars='+_')
 
+def valid_identity_url(arg):
+    """Make sure only valid url followed by cert dir names are allowed"""
+    valid_distinguished_name(arg, extra_chars=':+_')
+
+def valid_session_hash(arg):
+    """Make sure only valid session hashes are allowed"""
+    valid_password(arg, extra_chars='=', max_length=512)
+
 def invalid_argument(arg):
     """Always raise exception to mark argument invalid"""
     raise ValueError("Unexpected query variable: %s" % quoteattr(arg))
@@ -170,8 +178,13 @@ class ServerHandler(BaseHTTPRequestHandler):
         'success_to': valid_url,
         'fail_to': valid_url,
         'openid.assoc_handle': valid_password,
-        'openid.claimed_id': valid_base_url,
-        'openid.identity': valid_base_url,
+        'openid.assoc_type': valid_password,
+        'openid.dh_consumer_public': valid_session_hash,
+        'openid.dh_gen': valid_password,
+        'openid.dh_modulus': valid_session_hash,
+        'openid.session_type': valid_mode_name,
+        'openid.claimed_id': valid_identity_url,
+        'openid.identity': valid_identity_url,
         'openid.mode': valid_mode_name,
         'openid.ns': valid_base_url,
         'openid.realm': valid_base_url,
@@ -196,7 +209,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.parsed_uri = urlparse(self.path)
             self.query = {}
             for (key, val) in cgi.parse_qsl(self.parsed_uri[4]):
-                print "DEBUG: checking input arg %s: '%s'" % (key, val)
+                #print "DEBUG: checking input arg %s: '%s'" % (key, val)
                 validate_helper = self.validators.get(key, invalid_argument)
                 # Let validation errors pass to general exception handler below
                 validate_helper(val)
@@ -204,7 +217,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             self.setUser()
 
-            print "DEBUG: checking path '%s'" % self.parsed_uri[2]
+            #print "DEBUG: checking path '%s'" % self.parsed_uri[2]
             valid_path(self.parsed_uri[2])
             path = self.parsed_uri[2]
 
@@ -238,6 +251,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             self.wfile.write(cgitb.html(sys.exc_info(), context=10))
+            print "ERROR: %s" % cgitb.html(sys.exc_info(), context=10)
 
     def do_POST(self):
         """Handle all HTTP POST requests"""
@@ -249,7 +263,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             self.query = {}
             for (key, val) in cgi.parse_qsl(post_data):
-                print "DEBUG: checking post input arg %s: '%s'" % (key, val)
+                #print "DEBUG: checking post input arg %s: '%s'" % (key, val)
                 validate_helper = self.validators.get(key, invalid_argument)
                 # Let validation errors pass to general exception handler below
                 validate_helper(val)
@@ -257,7 +271,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             self.setUser()
 
-            print "DEBUG: checking path '%s'" % self.parsed_uri[2]
+            #print "DEBUG: checking path '%s'" % self.parsed_uri[2]
             valid_path(self.parsed_uri[2])
             path = self.parsed_uri[2]
 
@@ -280,6 +294,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             self.wfile.write(cgitb.html(sys.exc_info(), context=10))
+            print "ERROR: %s" % cgitb.html(sys.exc_info(), context=10)
 
     def handleAllow(self, query):
         """Handle requests to allow authentication:
