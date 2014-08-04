@@ -132,7 +132,7 @@ def html_escape(contents):
     of XSS vulnerabilities.
     """
 
-    # We us html_escape as a general protection even though it is
+    # We use html_escape as a general protection even though it is
     # mostly html (cgi) related
 
     return cgi.escape(contents)

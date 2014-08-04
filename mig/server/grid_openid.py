@@ -69,7 +69,7 @@ try:
     import openid
 except ImportError:
     sys.stderr.write("""
-Failed to import the OpenID library. In order to use this example, you
+Failed to import the OpenID library. In order to use this server, you
 must either install the library (see INSTALL in the root of the
 distribution) or else add the library to python's import path (the
 PYTHONPATH environment variable).
@@ -550,7 +550,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             return '<dt>%s</dt><dd>%s</dd>' % (link(url), text)
 
         resources = [
-            (self.server.base_url, "This example server's home page"),
+            (self.server.base_url, "This OpenID server's home page"),
             ('http://www.openidenabled.com/',
              'An OpenID community Web site, home of this library'),
             ('http://www.openid.net/', 'the official OpenID Web site'),
@@ -839,7 +839,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         """Login page provider"""
         self.showPage(200, 'Login Page', form='''\
         <h2>Login</h2>
-        <p>Please enter your MiG username and password to prove your identify
+        <p>Please enter your %s username and password to prove your identify
         to this OpenID service.</p>
         <form method="GET" action="/%s/loginsubmit">
           <input type="hidden" name="success_to" value="%s" />
@@ -849,7 +849,8 @@ class ServerHandler(BaseHTTPRequestHandler):
           <input type="submit" name="submit" value="Log In" />
           <input type="submit" name="cancel" value="Cancel" />
         </form>
-        ''' % (self.server.server_base, success_to, fail_to))
+        ''' % (configuration.short_title, self.server.server_base,
+               success_to, fail_to))
 
     def showPage(self, response_code, title,
                  head_extras='', msg=None, err=None, form=None):
@@ -885,7 +886,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             ''' % form
 
         contents = {
-            'title': 'Python OpenID Server Example - ' + title,
+            'title': configuration.short_title + ' OpenID Server - ' + title,
+            'short_title': configuration.short_title,
             'head_extras': head_extras,
             'body': body,
             'user_link': user_link,
@@ -962,7 +964,7 @@ class ServerHandler(BaseHTTPRequestHandler):
     <table class="banner">
       <tr>
         <td class="leftbanner">
-          <h1><a href="%(root_url)s">Python OpenID Server Example</a></h1>
+          <h1><a href="%(root_url)s">%(short_title)s OpenID Server</a></h1>
         </td>
         <td class="rightbanner">
           You are %(user_link)s
@@ -1033,7 +1035,7 @@ if __name__ == '__main__':
         print err_msg
         sys.exit(1)
     print """
-Running grid openid server for user authentication againts MiG.
+Running grid openid server for user authentication against MiG user DB.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
