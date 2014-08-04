@@ -117,6 +117,41 @@ def invalid_argument(arg):
     """Always raise exception to mark argument invalid"""
     raise ValueError("Unexpected query variable: %s" % quoteattr(arg))
 
+def lookup_full_identity(username):
+    """Look up the full identity for username consisting of e.g. just an email
+    address.
+    The method to extract the full identity depends on the back end database
+    and the format of the ID can be overriden here as well.
+    If username matches either the full ID or the configured alias field from
+    it, the full ID is returned on a URL-friendly form. On no match the
+    original username is returned in unchanged form.
+    """
+    # print "DEBUG: lookup full ID for %s" % username
+    
+    db_path = os.path.join(configuration.mig_code_base, 'server', 
+                           'MiG-users.db')
+    # print "DEBUG: Loading user DB"
+    id_map = load_user_db(db_path)
+    user_alias = configuration.user_openid_alias
+
+    # Loop through all full IDs in user DB and check if username
+    # matches either a full ID or the shorter alias form of the full ID
+    for full_id in id_map.keys():
+        # print "DEBUG: compare against %s" % full_id
+        alias_value = None
+        url_friendly = client_id_dir(full_id)
+        # Fetch the optional single attribute alias used for username
+        if user_alias:
+            alias_value = extract_field(full_id, user_alias)
+        # print "DEBUG: check %s and %s" % (full_id, alias_value)
+        if username in (full_id, url_friendly, alias_value):
+            # Translate raw ID on the form
+            # /C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk
+            # to the URL-friendly form
+            # +C=DK+ST=NA+L=NA+O=NBI+OU=NA+CN=Jonas_Bardino+emailAddress=bardino@nbi.ku.dk
+            return url_friendly
+    return username
+
 
 class OpenIDHTTPServer(HTTPServer):
     """
@@ -209,7 +244,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.parsed_uri = urlparse(self.path)
             self.query = {}
             for (key, val) in cgi.parse_qsl(self.parsed_uri[4]):
-                #print "DEBUG: checking input arg %s: '%s'" % (key, val)
+                # print "DEBUG: checking input arg %s: '%s'" % (key, val)
                 validate_helper = self.validators.get(key, invalid_argument)
                 # Let validation errors pass to general exception handler below
                 validate_helper(val)
@@ -217,7 +252,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             self.setUser()
 
-            #print "DEBUG: checking path '%s'" % self.parsed_uri[2]
+            # print "DEBUG: checking path '%s'" % self.parsed_uri[2]
             valid_path(self.parsed_uri[2])
             path = self.parsed_uri[2]
 
@@ -263,7 +298,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             self.query = {}
             for (key, val) in cgi.parse_qsl(post_data):
-                #print "DEBUG: checking post input arg %s: '%s'" % (key, val)
+                # print "DEBUG: checking post input arg %s: '%s'" % (key, val)
                 validate_helper = self.validators.get(key, invalid_argument)
                 # Let validation errors pass to general exception handler below
                 validate_helper(val)
@@ -271,7 +306,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             self.setUser()
 
-            #print "DEBUG: checking path '%s'" % self.parsed_uri[2]
+            # print "DEBUG: checking path '%s'" % self.parsed_uri[2]
             valid_path(self.parsed_uri[2])
             path = self.parsed_uri[2]
 
@@ -301,11 +336,11 @@ class ServerHandler(BaseHTTPRequestHandler):
         Must verify user is already logged in or validate username/password
         pair against user DB.
         """
-        # pretend this next bit is keying off the user's session or something,
-        # right?
         request = self.server.lastCheckIDRequest.get(self.user)
 
-        print "handleAllow with last request %s from user %s , query %s" % (request, self.user, query)
+        print "handleAllow with last request %s from user %s" % \
+              (request, self.user)
+        # print "DEBUG: full query %s" % query
 
         # Old IE 8 does not send contents of submit buttons thus only the
         # fields login_as and password are set with the allow requests. We
@@ -321,7 +356,9 @@ class ServerHandler(BaseHTTPRequestHandler):
                 self.user = self.query['identifier']
 
             if request.idSelect():
-                identity = self.server.base_url + 'id/' + query['identifier']
+                # Do any ID expansion to a specified format
+                identity = self.server.base_url + 'id/' + \
+                           lookup_full_identity(query.get('identifier', ''))
             else:
                 identity = request.identity
 
@@ -438,7 +475,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             response = request.answer(False)
             self.displayResponse(response)
         else:
-            print "adding user request to last dict: %s : %s" % (self.user, request)
+            # print "DEBUG: adding user request to last dict: %s : %s" % (self.user, request)
             self.server.lastCheckIDRequest[self.user] = request
             self.showDecidePage(request)
 
@@ -464,24 +501,23 @@ class ServerHandler(BaseHTTPRequestHandler):
         """Check username and password in MiG user DB""" 
         db_path = os.path.join(configuration.mig_code_base, 'server',
                                'MiG-users.db')
-        print "Loading user DB"
+        # print "Loading user DB"
         id_map = load_user_db(db_path)
         user_alias = configuration.user_openid_alias
         for cert_id in id_map.keys():
             cert_dir = client_id_dir(cert_id)
-            user_match = [cert_dir, client_alias(cert_id)]
+            user_match = [cert_id, cert_dir, client_alias(cert_id)]
             if user_alias:
                 short_id = extract_field(cert_id, user_alias)
                 # Allow both raw alias field value and asciified alias
                 user_match.append(short_id)
                 user_match.append(client_alias(short_id))
-                print "short alias for %s: %s" % (short_id, client_alias(short_id))
+                # print "DEBUG: short alias for %s: %s" % (short_id, client_alias(short_id))
             if username in user_match:
                 user = id_map[cert_id]
                 #print "looked up user %s in DB: %s" % (username, user)
                 enc_pw = user.get('password', None)
-                print "Check password %s against enc %s" % \
-                      (base64.b64encode(password), enc_pw)
+                # print "DEBUG: Check password against enc %s" % enc_pw
                 if password and base64.b64encode(password) == user['password']:
                     print "Correct password for user %s" % username
                     self.user_dn = cert_id
@@ -613,11 +649,6 @@ class ServerHandler(BaseHTTPRequestHandler):
         expected_user = request.identity[len(id_url_base):]
 
         if request.idSelect(): # We are being asked to select an ID
-            # Create a dropdown for selecting user ID on the right format
-            db_path = os.path.join(configuration.mig_code_base, 'server',
-                                   'MiG-users.db')
-            print "Loading user DB"
-            id_map = load_user_db(db_path)
             user_alias = configuration.user_openid_alias
 
             msg = '''\
@@ -625,28 +656,22 @@ class ServerHandler(BaseHTTPRequestHandler):
             ID in the list and enter your password to login.
             </p>
             '''
+            if user_alias:
+                alias_mark = '[...]'
+            else:
+                alias_mark = ''
             fdata = {
                 'id_url_base': id_url_base,
                 'trust_root': request.trust_root,
                 'server_base': self.server.server_base,
+                'alias_mark': alias_mark,
                 }
             form = '''\
             <form method="POST" action="/%(server_base)s/allow">
             <table>
               <tr><td>Identity:</td>
-                 <td>%(id_url_base)s<select id="id_select" name="identifier">
-            '''
-            for cert_id in id_map.keys():
-                cert_dir = client_id_dir(cert_id)
-                if user_alias:
-                    user_id = extract_field(cert_id, user_alias)
-                else:
-                    user_id = cert_id
-                form += '''
-                   <option value="%s">%s</option>
-                   ''' % (cert_dir, user_id)
-            form += '''
-              </select>
+                 <td>%(id_url_base)s%(alias_mark)s<input id="id_select"
+                     name="identifier" />
               </td></tr>
               <tr><td>Password:</td>
                  <td><input type="password" name="password"></td></tr>
