@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # server - Failover server wrapper script
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -135,10 +135,13 @@ base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
 
 components = []
 components.append(('grid_script.py', None))
-components.append(('MiGMonitor.py', None))
-
-# TODO: add next line when notify is ready
-# components(("im_notify.py"], None))
+components.append(('grid_monitor.py', None))
+components.append(('grid_imnotify.py', None))
+components.append(('grid_sshmux.py', None))
+components.append(('grid_sftp.py', None))
+components.append(('grid_ftps.py', None))
+components.append(('grid_davs.py', None))
+components.append(('grid_openid.py', None))
 
 # Use first argument (if given) as path to config file
 
@@ -169,4 +172,3 @@ while True:
             stop_server(components)
 
     time.sleep(10)
-

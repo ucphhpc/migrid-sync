@@ -6,6 +6,12 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
+=== September ??th, 2014 ===
+Feature release. A lot of storage service features and
+improvements. New OpenID, WebDAV and FTPS servicesplus fancy upload and
+persistent archive support.
+
+
 === February 20th, 2013 ===
 Minor bugfix release.
 
@@ -152,6 +158,15 @@ More detailed changelogs for the public releases.
 The full changelog is available from the repository:
 http://code.google.com/p/migrid/source/list
 
+== 1.5.0 ==
+- Full OpenID integration: OpenID login service and user login support
+- WebDAV service for file access and mount support
+- FTPS service for file access and mount support
+- Fancy HTML5 chunked uploads added to remove big upload limitations
+- Persistent file archives to freeze a set of e.g. research files
+- Renamed some daemons to grid_*.py for consistency
+- Fix for edituser not properly handling inheritance
+- Fix for stray drag-n-drop file copy in file manager
 
 == 1.4.3 ==
 -Fixes a port bug in the configuration generator for the single IP setup

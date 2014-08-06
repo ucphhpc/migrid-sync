@@ -246,10 +246,10 @@ provide access to e.g. managing the grid job queues.
     daemons = """
 <div id='daemonstatus'>
 """
-    daemon_names = ['grid_script.py', 'grid_monitor.py', 'ssh_multiplex.py']
+    daemon_names = ['grid_script.py', 'grid_monitor.py', 'grid_sshmux.py']
     # No need to run im_notify unless any im notify protocols are enabled
     if [i for i in configuration.notify_protocols if i != 'email']:
-        daemon_names.append('im_notify.py')
+        daemon_names.append('grid_imnotify.py')
     if configuration.site_enable_sftp:
         daemon_names.append('grid_sftp.py')
     if configuration.site_enable_davs:

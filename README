@@ -37,6 +37,7 @@ Wiki, SCM and tracker VGrid features require:
 -Python Paramiko module (https://pypi.python.org/pypi/paramiko/)
 -Python FTPD library (https://pypi.python.org/pypi/pyftpdlib)
 -Python WebDAV module (https://pypi.python.org/pypi/PyWebDAV)
+-Python watchdog module (https://pypi.python.org/pypi/watchdog)
 -Mercurial (http://mercurial.selenic.com/)
 -Trac (http://trac.edgewall.org/)
 -Trac plugins (e.g. http://trac-hacks.org/)
@@ -91,6 +92,10 @@ be done. More information about MoinMoin at:
 
 On Debian servers the corresponding packages can be installed with:
 sudo aptitude install python-moinmoin
+
+The optional grid_events daemon requires the watchdog module which may
+be installed with:
+sudo pip install watchdog
 
 
 = Installing MiG =
@@ -332,8 +337,8 @@ checkconf.py script in the same directory.
 The central daemon is grid_script.py which takes care of all job
 management on the server. If you want to include grid monitor web pages you
 should additionally run the grid_monitor.py daemon. The optional job
-notifications and ssh multiplexing daemons are available as im_notify.py
-/ im_notify_stdout.py and ssh_multiplex.py in the same location. In case
+notifications and ssh multiplexing daemons are available as grid_imnotify.py
+/ grid_imnotify_stdout.py and grid_sshmux.py in the same location. In case
 you don't know what they do, you can most likely safely ignore them and
 just run the grid_script.py daemon.
 

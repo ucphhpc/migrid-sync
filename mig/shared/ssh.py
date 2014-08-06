@@ -263,7 +263,7 @@ def execute_on_resource(
         multiplex = str(resource_config['SSHMULTIPLEX'])
 
     # Use manually added SSHMULTIPLEXMASTER variable to only run master
-    # from sessions initiated by ssh_multiplex.py: There's a race in the
+    # from sessions initiated by grid_sshmux.py: There's a race in the
     # handling of ControlMaster=auto in openssh-4.3 resulting in error:
     # ControlSocket $SOCKET already exists
     # (see http://article.gmane.org/gmane.network.openssh.devel/13839)

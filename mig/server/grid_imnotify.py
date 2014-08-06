@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# im_notify - IM notifier daemon
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# grid_imnotify - IM notifier daemon
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -292,17 +292,17 @@ print '''This script should only be started by MiG admins and only on the main
 MiG server. Multiple running instances - even on separate servers - results in
 conflicts!
 
-Please use dummy IM deamon in im_notify_stdout.py instead if *not* running on
+Please use dummy IM deamon in grid_imnotify_stdout.py instead if *not* running on
 main MiG server!
 '''
 if len(sys.argv) < 2 or sys.argv[1]\
      != 'i_am_admin_and_on_main_mig_server':
     print '''
 To start dummy deamon run:
-python im_notify_stdout.py
+python grid_imnotify_stdout.py
 
 To really start this daemon run:
-python im_notify.py i_am_admin_and_on_main_mig_server
+python grid_imnotify.py i_am_admin_and_on_main_mig_server
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf

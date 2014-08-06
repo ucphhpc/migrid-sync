@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# im_notify_stdout - Dummy IM daemon
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# grid_imnotify_stdout - Dummy IM daemon
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,7 +37,7 @@ from shared.conf import get_configuration_object
 
 print '''This is a dummy MiG IM notification daemon which just prints requests.
 
-The real notification daemon, im_notify.py, hard codes accounts and thus
+The real notification daemon, grid_imnotify.py, hard codes accounts and thus
 does not support multiple instances. So please only run this dummy daemon and
 *not* the real daemon anywhere but on the main official MiG server.
 

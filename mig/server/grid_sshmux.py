@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# ssh_multiplex - open multiplexing master connections
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# grid_sshmux - open ssh multiplexing master connections
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -24,9 +24,6 @@
 #
 # -- END_HEADER ---
 #
-
-# TODO: move to grid_script in order to better deal with restarts
-# and log rotation
 
 """Keep persistent connections up to significantly speed up
 resource ssh calls. This daemon simply opens dummy connections
@@ -54,7 +51,7 @@ def persistent_connection(resource_config, logger):
     hostname = resource_config['HOSTURL']
 
     # Mark this session as a multiplexing master to avoid races:
-    # see further details in shared.ssh.py
+    # see further details in shared/ssh.py
 
     resource_config['SSHMULTIPLEXMASTER'] = True
     while True:
@@ -163,4 +160,3 @@ for (hostname, conf) in persistent_hosts.items():
 print 'Send interrupt (ctrl-c) twice to stop persistent connections'
 while True:
     sleep(60)
-
