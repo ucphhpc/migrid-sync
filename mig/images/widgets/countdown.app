@@ -1,6 +1,6 @@
 <!-- 
 Name: Countdown
-Author: Jonas Bardino <bardino AT diku DOT dk>
+Author: Jonas Bardino <bardino AT nbi DOT ku DOT dk>
 License: GPLv2
 Description: Basic count down using JQuery countdown plugin (modification of plugin demo)
 Requires: jquery.js, jquery.countdown.js, jquery.countdown.css

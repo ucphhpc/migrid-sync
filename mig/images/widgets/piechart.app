@@ -1,6 +1,6 @@
 <!--
 Name: Pie chart
-Author: Jonas Bardino <bardino AT diku DOT dk>
+Author: Jonas Bardino <bardino AT nbi DOT ku DOT dk>
 License: GPLv2
 Description: Pie chart using JQuery Google Charts plugin (modification of default demo)
 Requires: jquery.js, jquery.jgcharts.js

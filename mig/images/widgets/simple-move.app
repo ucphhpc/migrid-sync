@@ -1,9 +1,9 @@
 <!-- 
 Name: Simple move
-Author: Jonas Bardino <bardino AT diku DOT dk>
+Author: Jonas Bardino <bardino AT nbi DOT ku DOT dk>
 License: GPLv2
 Description: Movable widgets using the JQuery UI Sortable widget (modification of default demo)
-Requires: jquery.js, jquery-ui.js, jquery-ui.css
+Requires: jquery.js, jquery-ui.js, jquery-ui.css, jquery-ui-theme.css
 -->
 <style type="text/css">
 #movearea { width: 100%; float: right; }

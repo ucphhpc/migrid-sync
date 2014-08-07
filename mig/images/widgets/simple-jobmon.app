@@ -1,6 +1,6 @@
 <!-- 
 Name: Job Monitor
-Author: Jonas Bardino <bardino AT diku DOT dk>
+Author: Jonas Bardino <bardino AT nbi DOT ku DOT dk>
 License: GPLv2
 Description: Basic job monitor showing latest five jobs
 Requires: jquery.js

@@ -1,6 +1,6 @@
 <!-- 
 Name: Clock
-Author: Jonas Bardino <bardino AT diku DOT dk>
+Author: Jonas Bardino <bardino AT nbi DOT ku DOT dk>
 License: GPLv2
 Description: Basic clock using JQuery epiclock plugin (modification of plugin demo)
 Requires: jquery.js, jquery.epiclock.js, jquery.epiclock.css

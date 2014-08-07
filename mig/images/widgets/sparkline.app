@@ -1,6 +1,6 @@
 <!--
 Name: Sparkline
-Author: Jonas Bardino <bardino AT diku DOT dk>
+Author: Jonas Bardino <bardino AT nbi DOT ku DOT dk>
 License: GPLv2
 Description: Inline mini chart using JQuery Sparklines plugin (modification of default demo)
 Requires: jquery.js, jquery.sparkline.js

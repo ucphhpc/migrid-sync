@@ -1,9 +1,9 @@
 <!-- 
 Name: Progress Bar
-Author: Jonas Bardino <bardino AT diku DOT dk>
+Author: Jonas Bardino <bardino AT nbi DOT ku DOT dk>
 License: GPLv2
 Description: Dummy progress bas using JQuery UI progressbar widget (modification of default demo)
-Requires: jquery.js, jquery-ui.js, jquery-ui.css
+Requires: jquery.js, jquery-ui.js, jquery-ui.css, jquery-ui-theme.css
 -->
 <script type="text/javascript">
 $(document).ready(function() {

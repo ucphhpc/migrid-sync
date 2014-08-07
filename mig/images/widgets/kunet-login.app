@@ -1,5 +1,7 @@
 <!--
 Name: KUnet Login
+Author: Jonas Bardino <bardino AT nbi DOT ku DOT dk>
+License: GPLv2
 Description: Basic KUnet login wrapper to avoid repeated typing of silly username
 Requires: jquery.js
 -->

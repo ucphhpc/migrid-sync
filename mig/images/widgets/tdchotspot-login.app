@@ -1,5 +1,7 @@
 <!--
 Name: TDC Hotspot Login
+Author: Jonas Bardino <bardino AT nbi DOT ku DOT dk>
+License: GPLv2
 Description: Basic TDC Hotspot login wrapper for convenient direct login
 Requires: jquery.js
 -->
