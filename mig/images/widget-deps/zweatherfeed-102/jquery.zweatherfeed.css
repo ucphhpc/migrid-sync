@@ -40,5 +40,6 @@
 	font-size: 0.8em;
 }
 
-.odd { background-color: #e8e8fc; }
-.even { background-color: #d4d4e8; }
+/* prepended with weatherRow to avoid interference with MiG tables */
+.weatherRow.odd { background-color: #e8e8fc; }
+.weatherRow.even { background-color: #d4d4e8; }

@@ -45,8 +45,9 @@ body {
 	margin: 0.2em 0 0.4em 0;
 }
 
-.odd { background-color: #e8e8fc; }
-.even { background-color: #d4d4e8; }
+/* prepended with rssRow to avoid interference with MiG tables */
+.rssRow.odd { background-color: #e8e8fc; }
+.rssRow.even { background-color: #d4d4e8; }
 
 .rssRow .rssMedia {
 	padding: 0.5em;
