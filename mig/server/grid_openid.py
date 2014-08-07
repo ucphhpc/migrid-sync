@@ -759,10 +759,16 @@ class ServerHandler(BaseHTTPRequestHandler):
         ident = self.server.base_url + path[1:]
 
         approved_trust_roots = []
-        for (aident, trust_root) in self.server.approved.keys():
-            if aident == ident:
-                trs = '<li><tt>%s</tt></li>\n' % cgi.escape(trust_root)
-                approved_trust_roots.append(trs)
+        # Don't disclose information about other active login sessions
+        ident_user = path.split('/')[-1]
+        if self.user == ident_user:
+            for (aident, trust_root) in self.server.approved.keys():
+                if aident == ident:
+                    trs = '<li><tt>%s</tt></li>\n' % cgi.escape(trust_root)
+                    approved_trust_roots.append(trs)
+        else:
+            print "Not disclosing trust roots for %s (active login %s)" % \
+                  (ident_user, self.user)
 
         if approved_trust_roots:
             prepend = '<p>Approved trust roots:</p>\n<ul>\n'
