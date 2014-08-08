@@ -72,6 +72,8 @@ Enable the apache rewrite module:
 # a2enmod rewrite
 Enable the apache wsgi module:
 # a2enmod wsgi
+Enable the apache wsgi module:
+# a2enmod authopenid
 Some of those may be already enabled by default.
 
 Test that the basic HTTP server works after starting it with:

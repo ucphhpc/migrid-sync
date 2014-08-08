@@ -67,8 +67,13 @@ import sys
 import threading
 import time
 from StringIO import StringIO
-import paramiko
-import paramiko.util
+
+try:
+    import paramiko
+    import paramiko.util
+except ImportError:
+    print "ERROR: the python paramiko module is required for this daemon"
+    sys.exit(1)
 
 from shared.base import invisible_path
 from shared.conf import get_configuration_object

@@ -68,15 +68,7 @@ import time
 try:
     import openid
 except ImportError:
-    sys.stderr.write("""
-Failed to import the OpenID library. In order to use this server, you
-must either install the library (see INSTALL in the root of the
-distribution) or else add the library to python's import path (the
-PYTHONPATH environment variable).
-
-For more information, see the README in the root of the library
-distribution or http://www.openidenabled.com/
-""")
+    print "ERROR: the python openid module is required for this daemon"
     sys.exit(1)
 
 from openid.extensions import sreg
@@ -515,9 +507,9 @@ class ServerHandler(BaseHTTPRequestHandler):
                 # print "DEBUG: short alias for %s: %s" % (short_id, client_alias(short_id))
             if username in user_match:
                 user = id_map[cert_id]
-                #print "looked up user %s in DB: %s" % (username, user)
+                print "looked up user %s in DB: %s" % (username, user)
                 enc_pw = user.get('password', None)
-                # print "DEBUG: Check password against enc %s" % enc_pw
+                print "DEBUG: Check password against enc %s" % enc_pw
                 if password and base64.b64encode(password) == user['password']:
                     print "Correct password for user %s" % username
                     self.user_dn = cert_id
@@ -547,7 +539,8 @@ class ServerHandler(BaseHTTPRequestHandler):
                 self.redirect(self.query['success_to'])
             else:
                 # TODO: Login failed - is this correct behaviour?
-                print "doLogin failed! query was %s (%s %s)" % (self.query, self.user, self.password)
+                print "doLogin failed for %s!" % self.user
+                #print "doLogin full query: %s" % self.query
                 self.clearUser()
                 self.redirect(self.query['success_to'])
         elif 'cancel' in self.query:

@@ -99,8 +99,6 @@ def generate_confs(
     openid_provider='',
     daemon_keycert='',
     alias_field='',
-    moin_etc='',
-    moin_share='',
     hg_path='',
     hgweb_scripts='',
     trac_admin_path='',
@@ -152,8 +150,6 @@ def generate_confs(
     user_dict['__OPENID_PROVIDER_ID__'] = openid_provider
     user_dict['__DAEMON_KEYCERT__'] = daemon_keycert
     user_dict['__ALIAS_FIELD__'] = alias_field
-    user_dict['__MOIN_ETC__'] = moin_etc
-    user_dict['__MOIN_SHARE__'] = moin_share
     user_dict['__HG_PATH__'] = hg_path
     user_dict['__HGWEB_SCRIPTS__'] = hgweb_scripts
     user_dict['__TRAC_ADMIN_PATH__'] = trac_admin_path
@@ -358,8 +354,6 @@ def create_user(
     cert_dir = '%s/MiG-certificates' % apache_dir
     # We don't have a free port for sftp
     enable_sftp = 'False'
-    moin_etc = '/etc/moin'
-    moin_share = '/usr/share/moin'
     hg_path = '/usr/bin/hg'
     hgweb_scripts = '/usr/share/doc/mercurial-common/examples/'
     trac_admin_path = '/usr/bin/trac-admin'
@@ -428,8 +422,6 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         openid_provider,
         daemon_keycert,
         alias_field,
-        moin_etc,
-        moin_share,
         hg_path,
         hgweb_scripts,
         trac_admin_path,

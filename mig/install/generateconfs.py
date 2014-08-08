@@ -73,8 +73,6 @@ if '__main__' == __name__:
         'openid_provider',
         'daemon_keycert',
         'alias_field',
-        'moin_etc',
-        'moin_share',
         'hg_path',
         'hgweb_scripts',
         'trac_admin_path',

@@ -28,28 +28,31 @@ tools and a Python interpreter with a few external modules.
 -Python 2.6 or later but not 3.x (https://www.python.org/)
 -Python Enchant module (https://pypi.python.org/pypi/pyenchant). 
 
-Optional WSGI interface, OpenID login, efficient file access services,
-Wiki, SCM and tracker VGrid features require:
+Optional WSGI interface, OpenID login, instant messaging service,
+efficient file access services, event handler service, spell checking,
+Wiki, SCM and tracker VGrid features require: 
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
 -Apache OpenID module (http://findingscience.com/mod_auth_openid/)
 -Python OpenID module (https://pypi.python.org/pypi/python-openid/)
 -Python pbkdf2 module (https://pypi.python.org/pypi/pbkdf2)
+-Python irclib module (https://pypi.python.org/pypi/python-irclib/)
 -Python Paramiko module (https://pypi.python.org/pypi/paramiko/)
 -Python FTPD library (https://pypi.python.org/pypi/pyftpdlib)
 -Python WebDAV module (https://pypi.python.org/pypi/PyWebDAV)
 -Python watchdog module (https://pypi.python.org/pypi/watchdog)
+-Python Enchant module (https://pypi.python.org/pypi/pyenchant). 
 -Mercurial (http://mercurial.selenic.com/)
 -Trac (http://trac.edgewall.org/)
 -Trac plugins (e.g. http://trac-hacks.org/)
 
-On Debian servers the corresponding basic packages can be installed with:
-sudo aptitude install apache2-mpm-prefork openssh-client python \
-     python-enchant
+On Debian/Ubuntu servers the corresponding basic packages can be
+installed with:
+sudo aptitude install apache2-mpm-prefork openssh-client python
 
-and the optional dependencies similarly with:
+and most of the optional dependencies similarly with:
 sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
-     python-openid python-pbkdf2 python-paramiko mercurial trac \
-     trac-mercurial
+     python-openid python-pbkdf2 python-irclib python-paramiko \
+     python-enchant mercurial trac trac-mercurial
 
 Additional packaged Trac extensions can be installed with:
 sudo aptitude install trac-customfieldadmin trac-graphviz \
@@ -86,12 +89,15 @@ Thus you may have to experiment with the installed plugins in a
 conservative way.
 
 With the inclusion of Trac we no longer rely on the MoinMoin software
-for stand-alone wikis, but if anyone wants to include them it can still
-be done. More information about MoinMoin at:
--MoinMoin (http://moinmo.in/)
+for stand-alone wikis.
 
-On Debian servers the corresponding packages can be installed with:
-sudo aptitude install python-moinmoin
+The optional grid_ftps daemon requires the pyftpdlib module in a recent
+version, so it is easiest to install it with pip:
+sudo pip install pyftpdlib
+
+The optional grid_davs daemon requires the pywebdav module in a recent
+version, so it is easiest to install it with pip:
+sudo pip install pywebdav
 
 The optional grid_events daemon requires the watchdog module which may
 be installed with:
@@ -114,9 +120,9 @@ MiG does not include the actual Apache web server or OpenSSH clients, so
 you will need to install those using either packages provided by your
 distribution or install it from source.
 
-MiG is tested on Debian and Redhat Linux using Apache 1.3 or 2.X with mod-ssl
-respectively but other distribution and apache combinations should also
-work.
+MiG is tested on Debian/Ubuntu and Redhat Linux using Apache 1.3 or 2.X
+with mod-ssl respectively but other distribution and apache combinations
+should also work.
 MiG relies on apache's mod-ssl for automatic certificate validation and
 access control. Furthermore quite a bit of rewrite rules are used for
 access and convenience so the mod-rewrite apache module is required
@@ -176,6 +182,7 @@ settings:
 --destination=DESTINATION
 --public_fqdn=PUBLIC_FQDN
 --cert_fqdn=CERT_FQDN
+--oid_fqdn=OID_FQDN
 --sid_fqdn=SID_FQDN
 --user=USER
 --group=GROUP
@@ -186,19 +193,30 @@ settings:
 --mig_code=MIG_CODE
 --mig_state=MIG_STATE
 --mig_certs=MIG_CERTS
---moin_etc=MOIN_ETC
---moin_share=MOIN_SHARE
+--enable_sftp=ENABLE_SFTP
+--enable_davs=ENABLE_DAVS
+--enable_ftps=ENABLE_FTPS
+--enable_wsgi=ENABLE_WSGI
+--enable_sandboxes=ENABLE_SANDBOXES
+--enable_vmachines=ENABLE_VMACHINES
+--enable_freeze=ENABLE_FREEZE
+--enable_openid=ENABLE_OPENID
+--openid_provider=OPENID_PROVIDER
+--daemon_keycert=DAEMON_KEYCERT
+--alias_field=ALIAS_FIELD
 --hg_path=HG_PATH
 --hgweb_scripts=HGWEB_SCRIPTS
 --trac_admin_path=TRAC_ADMIN_PATH
 --trac_ini_path=TRAC_INI_PATH
 --public_port=PUBLIC_PORT
 --cert_port=CERT_PORT
+--oid_port=OID_PORT
 --sid_port=SID_PORT
 --user_clause=USER_CLAUSE
 --group_clause=GROUP_CLAUSE
 --listen_clause=LISTEN_CLAUSE
 --serveralias_clause=SERVERALIAS_CLAUSE
+--distro=DISTRO
 
 For one of our servers running MiG as the 'mig' user with the code
 checked out directly in the home directory and with Debian apache 1.3.x
@@ -214,7 +232,6 @@ defaults, this could be:
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/home/mig/MiG-certificates \
-                   --moin_etc=/etc/moin --moin_share=/usr/share/moin \
                    --hg_path=/usr/bin/hg \
                    --hgweb_scripts=/usr/share/doc/mercurial/examples \
                    --trac_admin_path=/usr/bin/trac-admin \
@@ -224,7 +241,7 @@ defaults, this could be:
                    --listen_clause='Listen' \
                    --serveralias_clause='#ServerAlias'
 
-or similarly with Debian apache 2.x:
+or similarly with Debian apache 2.x without OpenID:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --public_fqdn=dk.migrid.org \
                    --cert_fqdn=dk-cert.migrid.org \
@@ -242,6 +259,32 @@ or similarly with Debian apache 2.x:
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
                    --public_port=80 --cert_port=443 --sid_port=443 \
                    --enable_openid=False --enable_wsgi=True --enable_sftp=True \
+                   --enable_sandboxes=True --enable_vmachines=True \
+                   --user_clause=User --group_clause=Group \
+                   --listen_clause='#Listen' \
+                   --serveralias_clause='ServerAlias'
+or the same with OpenID:
+./generateconfs.py --source=. --destination=generated-confs \
+                   --public_fqdn=dk.migrid.org \
+                   --cert_fqdn=dk-cert.migrid.org \
+                   --sid_fqdn=dk-sid.migrid.org \
+                   --oid_fqdn=dk-oid.migrid.org \
+		   --user=mig --group=mig \
+                   --apache_etc=/etc/apache2 \
+                   --apache_run=/var/run/apache2 \
+                   --apache_lock=/var/lock/apache2 \
+                   --apache_log=/var/log/apache2 \
+                   --mig_code=/home/mig/mig \
+                   --mig_state=/home/mig/state \
+                   --mig_certs=/etc/apache2/MiG-certificates \
+                   --hg_path=/usr/bin/hg \
+                   --hgweb_scripts=/usr/share/doc/mercurial-common/examples \
+                   --trac_admin_path=/usr/bin/trac-admin \
+                   --trac_ini_path=/home/mig/mig/server/trac.ini \
+                   --public_port=80 --cert_port=443 --sid_port=443 \
+		   --oid_port=443 --enable_openid=True \
+                   --openid_provider=https://dk-oid.migrid.org:8443/openid/ \
+		   --enable_wsgi=True --enable_sftp=True \
                    --enable_sandboxes=True --enable_vmachines=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
@@ -279,40 +322,33 @@ certificates (used for MiG server to server communication).
 The actual keys and certificates can be added later, so you can just
 choose a suitable directory path at first.
 
-The moin, hg and trac path pairs are optional and can be set to the 
-empty string if moin/mercurial/trac is not available or if VGrid wikis,
+The hg and trac path pairs are optional and can be set to the 
+empty string if mercurial/trac is not available or if VGrid wikis,
 SCMs and trackers should simply not be enabled. If you want VGrid
 trackers including mercurial integration, but don't want the direct
 VGrid SCM links, you can set the trac_X and hg_X options but leave out
 the scm entry in the ordered list of vgrid_links in the SITE
 section. The same procedure applies for visibility of the other VGrid
 components.
-On Debian the moinmoin-common package provides all the necessary wiki
-requirements. It is still necessary to tweak the system wide wikiconfig
-template in /usr/share/moin/config/wikiconfig.py to get the moin
-underlay links using /moin_staticXYZ instead of /wiki and front page
-setup right. With recent version of moin you may also need to change the
-instance_dir variable to point to the parent of the wikiconfig_dir
-instead of the same dir. There's a diff between the default
-wikiconfig.py and the one that we use in mig/install/wikiconfig.py.MiG.diff .
-We recommend to just leave out MoinMoin of the mix and using the wiki
-included with Trac.
 
 Similarly the mercurial package provides all required components for 
-VGrid SCMs on Debian. The same applies for the trac + trac-mercurial
+VGrid SCMs on Debian/Ubuntu. The same applies for the trac + trac-mercurial
 packages.
 Paramiko is required for the optional grid_sftp daemon to work and the
 python-paramiko package provides all required components for it on
-Debian.
-Python FTP server library (pyftpdlib) is required for the optional
-grid_ftps daemon to work and the python-pyftpdlib package provides all
-required components for it on Debian.
+Debian/Ubuntu.
+Python FTP server library (pyftpdlib) in a recent version (1.x) is required
+for the optional grid_ftps daemon to work and the python-pyftpdlib
+package provides all required components for it on recent
+Debian/Ubuntu. If no recent version is available, it can still easily be
+installed with pip instead.
 PyWebDAV is required for the optional grid_davs daemon to work and the 
 python-webdav package in a recent version may provide all required components
-for it on Debian. 
+for it on Debian/Ubuntu. If no recent version is available, it can still
+easily be installed with pip instead.
 All optional file server services like sftp, ftps and davs rely on the
 python pbkdf2 module for password auth support and the python-pbkdf2
-package provides all required components for it on Debian.
+package provides all required components for it on Debian/Ubuntu.
 
 The four CLAUSE arguments can be used to comment out the explicit
 setting of user, group, serveralias and ports in the apache conf by

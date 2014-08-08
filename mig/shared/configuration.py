@@ -87,8 +87,6 @@ def fix_missing(config_file, verbose=True):
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
         'site_vgrid_links': 'files web wiki scm tracker forum monitor',
-        'moin_etc': '/etc/moin',
-        'moin_share': '/usr/share/moin',
         'hg_path': '/usr/bin/hg',
         'hgweb_scripts': '/usr/share/doc/mercurial-common/examples/',
         'trac_admin_path': '/usr/bin/trac-admin',
@@ -221,8 +219,6 @@ class Configuration:
     javabin_home = ''
     openid_store = ''
     vgrid_component_links = []
-    moin_etc = ''
-    moin_share = ''
     hg_path = ''
     hgweb_scripts = ''
     trac_admin_path = ''
@@ -658,14 +654,6 @@ class Configuration:
         if config.has_option('FEASIBILITY', 'job_cond_red'):
             self.job_cond_red = config.get('FEASIBILITY', 
                                                    'job_cond_red').split()
-        if config.has_option('WIKI', 'moin_etc'):
-            self.moin_etc = config.get('WIKI', 'moin_etc')
-        else:
-            self.moin_etc = ''
-        if config.has_option('WIKI', 'moin_share'):
-            self.moin_share = config.get('WIKI', 'moin_share')
-        else:
-            self.moin_share = ''
         if config.has_option('SCM', 'hg_path'):
             self.hg_path = config.get('SCM', 'hg_path')
         else:

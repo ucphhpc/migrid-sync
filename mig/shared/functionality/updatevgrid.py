@@ -205,19 +205,6 @@ $(document).ready(function() {
 
     # Try component creation or repair
 
-    if configuration.moin_share and configuration.moin_etc:
-
-        # create public, member, owner wiki's in the vgrid dirs
-
-        output_objects.append({'object_type': 'text', 'text'
-                               : 'vgrid wiki update warnings:'})
-        for wiki_dir in [public_wiki_dir, private_wiki_dir,
-                         vgrid_wiki_dir]:
-            tmp_output = []
-            create_wiki(configuration, client_id, vgrid_name, wiki_dir,
-                        tmp_output, repair=True)
-            output_objects += tmp_output
-
     all_scm_dirs = ['', '', '']
     if configuration.hg_path and configuration.hgweb_scripts:
 

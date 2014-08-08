@@ -34,10 +34,14 @@ import os
 import sys
 import urlparse
 
-from pywebdav.server.fileauth import DAVAuthHandler
-from pywebdav.server.fshandler import FilesystemHandler
-#from pywebdav.server.daemonize import startstop
-from pywebdav.lib.errors import DAV_NotFound
+try:
+    from pywebdav.server.fileauth import DAVAuthHandler
+    from pywebdav.server.fshandler import FilesystemHandler
+    # from pywebdav.server.daemonize import startstop
+    from pywebdav.lib.errors import DAV_NotFound
+except ImportError:
+    print "ERROR: the python pywebdav module is required for this daemon"
+    sys.exit(1)
 
 from shared.base import invisible_path
 from shared.conf import get_configuration_object

@@ -336,14 +336,16 @@ on the PBKDF2 module (embedded) from:"""})
                                'class': 'urllink',
                                'title': 'pbkdf2 at Python Package Index',
                                'text': 'PBKDF2 Module (MIT)'})
-    if configuration.moin_share and configuration.moin_etc:
-        output_objects.append({'object_type': 'text', 'text' :
-                               """Wikis are delivered using MoinMoin:"""})
+    if [i for i in configuration.notify_protocols if not i == 'email']:
+        output_objects.append({'object_type': 'text', 'text' : """
+The optional instant messaging support in the imnotify server relies
+on the irclib module from:"""})
         output_objects.append({'object_type': 'link', 
-                               'destination' : 'http://moinmo.in/',
+                               'destination' :
+                               'https://pypi.python.org/pypi/python-irclib',
                                'class': 'urllink',
-                               'title': 'MoinMoin Wiki Home Page',
-                               'text': 'MoinMoin Wiki Engine (GPL)'})
+                               'title': 'Python irclib at Python Package Index',
+                               'text': 'Python irclib Module (LGPL)'})
     if configuration.hg_path and configuration.hgweb_scripts:
         output_objects.append({'object_type': 'text', 'text' :
                                "SCM repositories are delivered with Mercurial:"

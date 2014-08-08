@@ -31,8 +31,8 @@ afterwards...
 
 This is very much bound to the exact setup used on the main MiG servers
 where things like remote login, firewalling, home dirs and sudo are set up
-for separated developer accounts. Some paths like for apache and moin moin is
-similarly hard coded to the Debian defaults on those servers.
+for separated developer accounts. Some paths like for apache and vgrid helpers
+are similarly hard coded to the Debian defaults on those servers.
 """
 
 import getopt

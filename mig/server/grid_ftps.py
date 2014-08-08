@@ -73,10 +73,15 @@ import os
 import sys
 import time
 
-from pyftpdlib.authorizers import DummyAuthorizer
-from pyftpdlib.handlers import FTPHandler, TLS_FTPHandler
-from pyftpdlib.servers import FTPServer
-from pyftpdlib.filesystems import AbstractedFS, FilesystemError
+try:
+    from pyftpdlib.authorizers import DummyAuthorizer
+    from pyftpdlib.handlers import FTPHandler, TLS_FTPHandler
+    from pyftpdlib.servers import FTPServer
+    from pyftpdlib.filesystems import AbstractedFS, FilesystemError
+except ImportError:
+    print "ERROR: the python pyftpdlib module is required for this daemon"
+    raise
+    sys.exit(1)
 
 from shared.base import invisible_path
 from shared.conf import get_configuration_object

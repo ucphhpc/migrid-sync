@@ -45,7 +45,12 @@ import os
 import sys
 import time
 import thread
-import irclib
+
+try:
+    import irclib
+except ImportError:
+    print "ERROR: the python irclib module is required for this daemon"
+    sys.exit(1)
 
 from shared.conf import get_configuration_object
 

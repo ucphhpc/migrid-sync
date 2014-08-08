@@ -78,4 +78,4 @@ if '__main__' == __name__:
         fix_entities(conf_path, db_path, force, verbose)
     except Exception, err:
         print err
-        sys.exit(1)        
+        sys.exit(1)
