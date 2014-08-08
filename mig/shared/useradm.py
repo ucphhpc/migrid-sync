@@ -891,6 +891,54 @@ def fix_entities(
                                             (kind, kind_path, exc))
 
 
+def fix_userdb_keys(
+    conf_path,
+    db_path,
+    force=False,
+    verbose=False,
+    ):
+    """Fix any old leftover colon separated keys in user DB by replacing them
+    with the new DN form from the associated user dict.
+    """
+
+    user_db = {}
+    if conf_path:
+        configuration = Configuration(conf_path)
+    else:
+        configuration = get_configuration_object()
+
+    if os.path.exists(db_path):
+        try:
+            user_db = load_user_db(db_path)
+            if verbose:
+                print 'Loaded existing user DB from: %s' % db_path
+        except Exception, err:
+            if not force:
+                raise Exception('Failed to load user DB: %s' % err)
+
+    for (client_id, user) in user_db.items():
+        fill_distinguished_name(user)
+        old_id = client_id
+        new_id = user['distinguished_name']        
+        if old_id == new_id:
+            continue
+        if verbose:
+            print 'updating user on old format %s to new format %s' % \
+                  (old_id, new_id)
+
+        try:
+            del user_db[client_id]
+            user_db[new_id] = user
+            save_user_db(user_db, db_path)
+            if verbose:
+                print 'User %s was successfully updated in user DB!'\
+                      % client_id
+        except Exception, err:
+            if not force:
+                raise Exception('Failed to update %s in user DB: %s' % \
+                                (client_id, err))
+
+
 def default_search():
     """Default search filter to match all users"""
 
