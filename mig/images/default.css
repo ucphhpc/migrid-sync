@@ -152,6 +152,10 @@ table.sandboxlogin {}
 table.sandboxinfo {}
 table.sandboxcreateimg {}
 
+/* Make sure that e.g. wide CodeMirror instances don't overflow table width */
+table.fixedlayout {
+  table-layout: fixed;
+}
 
 table.downloads {
   text-align: center;
@@ -402,6 +406,7 @@ table th.icon {
   border: 1px inset grey;
   padding: 3px;
   background: white;
+  /*max-width: 1280px;*/
 }
 
 .editortoolbar {

@@ -82,7 +82,8 @@ cm_javascript = '''
 
 cm_options = {'matchBrackets': True, 'indentUnit': 4,
               'lineNumbers': True, 'foldGutter': True,
-              'gutters': ['CodeMirror-linenumbers', 'CodeMirror-foldgutter']
+              'gutters': ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+              'lineWrapping': False,
               }
 cmui_options = {'path': cmui_js_prefix, 'imagePath': cmui_images_prefix,
                 'searchMode': 'popup'}

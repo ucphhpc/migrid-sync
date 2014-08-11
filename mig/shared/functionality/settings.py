@@ -149,7 +149,7 @@ def main(client_id, user_arguments_dict):
              '''
         <div id="settings">
         <form method="post" action="settingsaction.py">
-        <table class="settings">
+        <table class="settings fixedlayout">
         <tr class="title"><td class="centertext">
         Select your %s settings
         </td></tr>
@@ -251,7 +251,7 @@ def main(client_id, user_arguments_dict):
         '''
 <div id="defaultmrsl">
 <form method="post" action="editfile.py">
-<table class="defaultjob">
+<table class="defaultjob fixedlayout">
 <tr class="title"><td class="centertext">
 Default job on submit page
 </td></tr>
@@ -299,7 +299,7 @@ If you use the same fields and values in many of your jobs, you can save your pr
              '''
 <div id="defaultcss">
 <form method="post" action="editfile.py">
-<table class="defaultstyle">
+<table class="defaultstyle fixedlayout">
 <tr class="title"><td class="centertext">
 Default CSS (style) for all pages
 </td></tr>
@@ -360,7 +360,7 @@ You can copy paste from the available style file links below if you want to over
              '''
 <div id="widgets">
 <form method="post" action="settingsaction.py">
-<table class="widgets">
+<table class="widgets fixedlayout">
 <tr class="title"><td class="centertext">
 Default user defined widgets for all pages
 </td></tr>
@@ -485,7 +485,7 @@ You can simply copy/paste from the available widget file links below if you want
              '''
 <div id="profile">
 <form method="post" action="settingsaction.py">
-<table class="profile">
+<table class="profile fixedlayout">
 <tr class="title"><td class="centertext">
 Public profile information visible to other users.
 </td></tr>
@@ -593,7 +593,7 @@ If you want to let other users know more about you can add your own text here. I
         '''
 <div id="sshaccess">
 <form method="post" action="settingsaction.py">
-<table class="sshsettings">
+<table class="sshsettings fixedlayout">
 <tr class="title"><td class="centertext">
 SSH/SFTP access to your MiG account
 </td></tr>
@@ -727,7 +727,7 @@ value="%(default_authpassword)s" />
         '''
 <div id="davsaccess">
 <form method="post" action="settingsaction.py">
-<table class="davssettings">
+<table class="davssettings fixedlayout">
 <tr class="title"><td class="centertext">
 Secure WebDAV access to your MiG account
 </td></tr>
@@ -857,7 +857,7 @@ value="%(default_authpassword)s" />
         '''
 <div id="ftpsaccess">
 <form method="post" action="settingsaction.py">
-<table class="ftpssettings">
+<table class="ftpssettings fixedlayout">
 <tr class="title"><td class="centertext">
 Secure FTP access to your MiG account
 </td></tr>
