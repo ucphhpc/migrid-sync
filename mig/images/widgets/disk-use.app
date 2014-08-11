@@ -3,7 +3,7 @@ Name: Disk Use Progress Bar
 Author: Ole B. Michelsen <ole AT michelsen DOT dk>
 License: GPLv2
 Description: Progress bar of used disk space in MiG, assumes a quota of 1 GB
-Requires: jquery.js, jquery-ui.js, jquery-ui.css, jquery-ui-theme.css
+Requires: jquery.js, jquery-ui.js, jquery-ui.css, jquery-ui-theme.css, jquery-ui-theme.custom.css
 -->
 <script type="text/javascript">
 $(document).ready(function() {

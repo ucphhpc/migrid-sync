@@ -146,10 +146,6 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript" src="/images/js/jquery.iframe-transport.js"></script>
 <!-- The basic File Upload plugin -->
 <script type="text/javascript" src="/images/js/jquery.fileupload.js"></script>
-<!-- save basic fileuploader before overwriting it with ui version below -->
-<script type="text/javascript">
-        $.fn.basicfileupload = $.fn.fileupload;
-</script>
 <!-- The File Upload processing plugin -->
 <script type="text/javascript" src="/images/js/jquery.fileupload-process.js"></script>
 <!-- The File Upload image preview & resize plugin -->
@@ -160,10 +156,6 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript" src="/images/js/jquery.fileupload-ui.js"></script>
 <!-- The File Upload jQuery UI plugin -->
 <script type="text/javascript" src="/images/js/jquery.fileupload-jquery-ui.js"></script>
-<!-- not really needed but save ui fileuploader for symmetry -->
-<script type="text/javascript">
-        $.fn.fancyfileupload = $.fn.fileupload;
-</script>
 
 <script type="text/javascript" >
 
@@ -190,13 +182,6 @@ def main(client_id, user_arguments_dict):
         }
     }
 
-    function openBasicUpload() {
-        var open_dialog = mig_basicuploadchunked_init("basicuploadchunked_dialog");
-        var remote_path = ".";
-        open_dialog("Upload Files", function() { return false; },
-                    remote_path, false);
-    }
-
     function openFancyUpload() {
         var open_dialog = mig_fancyuploadchunked_init("fancyuploadchunked_dialog");
         var remote_path = ".";
@@ -207,16 +192,7 @@ def main(client_id, user_arguments_dict):
     $(document).ready( function() {
          //console.log("document ready handler");
          switchTo("%s");
-         $("#basicdialog").click(openBasicUpload);
          $("#fancydialog").click(openFancyUpload);
-         /*
-         console.log("TMP: open fancydialog");
-         try {
-             openFancyUpload();
-         } catch(err) {
-             console.log("error openFancyUpload: "+err);
-         }
-         */
     });
 
 </script>
@@ -483,56 +459,14 @@ Optional remote filename (extra useful in windows)
 </table>
 </form>
 <table class='files'>
-<tr class='title'><td class='centertext' colspan=2>
+<tr class='title'><td class='centertext'>
 Upload other files efficiently (using chunking).
 </td></tr>
 <tr><td class='centertext'>
-<button id='basicdialog'>Open Basic Upload dialog</button>
-</td><td class='centertext'>
-<button id='fancydialog'>Open Fancy Upload dialog</button>
+<button id='fancydialog'>Open Upload dialog</button>
 </td></tr>
 </table>
 </div><!-- files_form-->
-
-<div id='basicuploadchunked_dialog' title='Upload File' style='display: none;'>
-  
-    <fieldset>
-        <p id='basicfileuploaddestbox'>
-            <label id='basicfileuploaddestlabel' for='basicfileuploaddest'>
-                Optional final destination dir:
-            </label>
-            <input id='basicfileuploaddest' type='text' size=60 value=''>
-        </p>
-      
-        <label for='basicfileupload'>File:</label>
-        <input id='basicfileupload' type='file' name='files[]' multiple>
-    </fieldset>
-
-    <div id='uploadfiles' class='uploadfiles'>
-        <div id='globalprogress' class='uploadprogress'>
-          <div class='progress-label'>= Init =</div>
-        </div>
-        <div id='actionbuttons'>
-            <button id='pauseupload'>Pause/Resume</button>
-            <button id='cancelupload'>Cancel</button>
-        </div>
-        <br />
-        <div id='recentupload'>
-            <b>Recently uploaded files:</b> <button id='clearuploads'>Clear</button>
-            <div id='uploadedfiles'>
-                <!-- dynamically filled by javascript after uploads -->
-            </div>
-        </div>
-        <br />
-        <div id='recentfail'>
-            <b>Recently failed uploads:</b> <button id='clearfailed'>Clear</button>
-            <div id='failedfiles'>
-                <!-- dynamically filled by javascript after uploads -->
-            </div>
-        </div>
-        <div id='basicuploadchunked_output'></div>
-    </div>
-</div>      
 
 <div id='fancyuploadchunked_dialog' title='Upload File' style='display: none;'>
 
