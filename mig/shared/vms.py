@@ -6,7 +6,7 @@
 #
 # vms - shared virtual machine functions
 #
-# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -542,13 +542,14 @@ mkdir %(user_conf)s/HardDisks
     # VM requires static MAC to avoid NIC renaming and ioapic for multi-cpu
     job += """
 mv %(data_disk)s %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s
-$VBOXMANAGE -q openmedium disk +JOBID+_%(data_disk)s
-$VBOXMANAGE -q openmedium disk %(sys_disk)s
+# Note: openmedium no longer needed with vbox4.0+
+#$VBOXMANAGE -q openmedium disk %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s
+#$VBOXMANAGE -q openmedium disk %(user_conf)s/HardDisks/%(sys_disk)s
 $VBOXMANAGE -q createvm --name '%(name)s' --register
 $VBOXMANAGE -q modifyvm '%(name)s' --nic1 nat --macaddress1 %(mac)s --cpus %(cpu_count)d --memory %(memory)d %(arch_opts)s --hwvirtex on --ioapic on
 $VBOXMANAGE -q storagectl '%(name)s' --name 'IDE Controller' --add ide
-$VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium '%(sys_disk)s'
-$VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium '+JOBID+_%(data_disk)s'
+$VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium %(user_conf)s/HardDisks/'%(sys_disk)s'
+$VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium %(user_conf)s/HardDisks/'+JOBID+_%(data_disk)s'
 $VBOXMANAGE -q sharedfolder add '%(name)s' --name 'MIG_JOBDIR' --hostpath "$MIG_JOBDIR"
 $VBOXMANAGE -q guestproperty set '%(name)s' job_id +JOBID+
 $VBOXMANAGE -q guestproperty set '%(name)s' proxy_host %(proxy_host)s
@@ -558,8 +559,9 @@ $VBOXMANAGE -q sharedfolder remove '%(name)s' --name 'MIG_JOBDIR'
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 0 --device 0 --type hdd --medium none
 $VBOXMANAGE -q storageattach '%(name)s' --storagectl 'IDE Controller' --port 1 --device 0 --type hdd --medium none
 $VBOXMANAGE -q storagectl '%(name)s' --name 'IDE Controller' --remove
-$VBOXMANAGE -q closemedium disk %(sys_disk)s
-$VBOXMANAGE -q closemedium disk +JOBID+_%(data_disk)s
+# Note: closemedium no longer needed with vbox4.0+
+#$VBOXMANAGE -q closemedium disk %(sys_disk)s
+#$VBOXMANAGE -q closemedium disk +JOBID+_%(data_disk)s
 $VBOXMANAGE -q unregistervm '%(name)s' --delete
 mv %(user_conf)s/HardDisks/+JOBID+_%(data_disk)s %(data_disk)s
 

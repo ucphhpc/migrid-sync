@@ -691,7 +691,7 @@ class Configuration:
             self.vm_default_hypervisor = config.get('VMACHINES',
                                                     'default_hypervisor')
         else:
-            self.vm_default_hypervisor = 'vbox31'
+            self.vm_default_hypervisor = 'vbox4x'
         if config.has_option('VMACHINES', 'default_disk_format'):
             self.vm_default_disk_format = config.get('VMACHINES',
                                                      'default_disk_format')
@@ -701,11 +701,11 @@ class Configuration:
             self.vm_default_hypervisor_re = config.get(
                 'VMACHINES', 'default_hypervisor_re')
         else:
-            self.vm_default_hypervisor_re = 'VIRTUALBOX-3.1.X-1'
+            self.vm_default_hypervisor_re = 'VIRTUALBOX-4.X-1'
         if config.has_option('VMACHINES', 'default_sys_re'):
             self.vm_default_sys_re = config.get('VMACHINES', 'default_sys_re')
         else:
-            self.vm_default_sys_re = 'VBOX3.1-IMAGES-2012-1'
+            self.vm_default_sys_re = 'VBOX4.X-IMAGES-2012-1'
         if config.has_option('VMACHINES', 'default_sys_base'):
             self.vm_default_sys_base = config.get('VMACHINES',
                                                   'default_sys_base')
