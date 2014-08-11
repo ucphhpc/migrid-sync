@@ -44,6 +44,7 @@ if (jQuery) (function($){
     window.open(url);
     $("#cmd_helper div[title='"+el_id+"']").removeClass("spinner").addClass("ok");
     $("#cmd_helper div[title='"+el_id+"'] p").append("<br/>Opened in new window/tab");
+    $("#cmd_helper div[title='"+el_id+"']").css("height", "auto");
     return true;
   }
 
@@ -199,7 +200,8 @@ if (jQuery) (function($){
         $("#cmd_helper div[title='"+el_id+"']").removeClass("spinner").addClass("ok");
         $("#cmd_helper div[title='"+el_id+"'] p").append(success_message);
         
-      }      
+      }
+      $("#cmd_helper div[title='"+el_id+"']").css("height", "auto");
     }, "json");
       
   }
