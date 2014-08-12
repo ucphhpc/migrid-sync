@@ -241,8 +241,9 @@ def vnc_applet(
     You just specifify a jobidentifier and where all happy.
     """
 
-    # New 2.5 version from http://www.tightvnc.com needed for working keyboard
-    # with recent VM images. Please refer to state/wwwpublic/README for details
+    # New 2.5+ version from http://www.tightvnc.com needed for working keyboard
+    # with recent VM images. Please refer to state/wwwpublic/README.vnc for
+    # details
 
     vnc_dir = 'vnc'
     jar_name = 'tightvnc-jviewer.jar'
@@ -262,7 +263,8 @@ def vnc_applet(
                                   configuration.vm_applet_port)
         
     applet = '<APPLET CODE="%s" ARCHIVE="%s" ' % (code_hook, jar_name)
-    applet += ' CODEBASE="http://%s/%s/"' % (host_address, vnc_dir)
+    applet += ' CODEBASE="%s/public/%s/"' % (configuration.migserver_https_url,
+                                             vnc_dir)
     applet += ' WIDTH="%d" HEIGHT="%d">' % (width, height)
     applet += '<PARAM NAME="PORT" VALUE="%d">' % configuration.vm_client_port
     applet += '<PARAM NAME="PASSWORD" VALUE="%s">' % password
