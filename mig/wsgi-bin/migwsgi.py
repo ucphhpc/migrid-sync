@@ -32,25 +32,16 @@ import time
 
 import shared.returnvalues as returnvalues
 from shared.conf import get_configuration_object
-from shared.httpsclient import extract_client_id
 from shared.objecttypes import get_object_type_info
 from shared.output import validate, format_output
 from shared.scriptinput import fieldstorage_to_dict
-
 
 def object_type_info(object_type):
     """Lookup object type"""
 
     return get_object_type_info(object_type)
 
-
-def my_id():
-    """Return DN of user currently logged in"""
-
-    return extract_client_id()
-
-
-def stub(function, configuration, user_arguments_dict):
+def stub(function, configuration, client_id, user_arguments_dict):
     """Run backend function with supplied arguments"""
 
     before_time = time.time()
@@ -58,17 +49,7 @@ def stub(function, configuration, user_arguments_dict):
     # get ID of user currently logged in
 
     main = id
-    if configuration.user_openid_provider:
-        #  We can't import from useradm before environ is ready because it
-        # tries to use environ for conf loading
-        from shared.useradm import get_openid_user_map
-        id_map = get_openid_user_map(configuration)
-    else:
-        id_map = None
     
-    # get and log ID of user currently logged in
-
-    client_id = extract_client_id(id_map)
     output_objects = []
     try:
         exec 'from %s import main' % function
@@ -129,6 +110,14 @@ def application(environ, start_response):
     sys.stdout = sys.stderr
     configuration = get_configuration_object()
 
+    # get and log ID of user currently logged in
+
+    # We can't import helper before environ is ready because it indirectly
+    # tries to use pre-mangled environ for conf loading
+    
+    from shared.httpsclient import extract_client_id
+    client_id = extract_client_id(configuration, os.environ)
+
     fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
                                     environ=environ)
     user_arguments_dict = fieldstorage_to_dict(fieldstorage)
@@ -151,7 +140,7 @@ def application(environ, start_response):
         backend = os.path.basename(script_path).replace('.py' , '')
         module_path = 'shared.functionality.%s' % backend
         (output_objs, ret_val) = stub(module_path, configuration,
-                                      user_arguments_dict)
+                                      client_id, user_arguments_dict)
         status = '200 OK'
     except Exception, exc:
         status = '500 ERROR'

@@ -80,7 +80,8 @@ from shared.base import client_alias, client_id_dir
 from shared.conf import get_configuration_object
 from shared.safeinput import valid_distinguished_name, valid_password, \
      valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url
-from shared.useradm import load_user_db, extract_field
+from shared.useradm import load_user_db, extract_field, cert_field_map, \
+     get_openid_user_dn
 
 configuration, logger = None, None
 
@@ -109,6 +110,32 @@ def invalid_argument(arg):
     """Always raise exception to mark argument invalid"""
     raise ValueError("Unexpected query variable: %s" % quoteattr(arg))
 
+def lookup_full_user(username):
+    """Look up the full user identity for username consisting of e.g. just an
+    email address.
+    The method to extract the full identity depends on the back end database.
+    If username matches either the openid link, the full ID or the dir version
+    from it, a tuple with the expanded username and the full user dictionary
+    is returned.
+    On no match a tuple with the unchanged username and an empty dictionary
+    is returned.
+    """
+    # print "DEBUG: lookup full user for %s" % username
+    
+    db_path = os.path.join(configuration.mig_code_base, 'server', 
+                           'MiG-users.db')
+    # print "DEBUG: Loading user DB"
+    id_map = load_user_db(db_path)
+
+    login_url = os.path.join(configuration.user_openid_provider, username)
+    distinguished_name = get_openid_user_dn(configuration, login_url)
+
+    # print "DEBUG: compare against %s" % full_id
+    if distinguished_name in id_map:
+        url_friendly = client_id_dir(distinguished_name)
+        return (url_friendly, id_map[distinguished_name])
+    return (username, {})
+
 def lookup_full_identity(username):
     """Look up the full identity for username consisting of e.g. just an email
     address.
@@ -120,29 +147,7 @@ def lookup_full_identity(username):
     """
     # print "DEBUG: lookup full ID for %s" % username
     
-    db_path = os.path.join(configuration.mig_code_base, 'server', 
-                           'MiG-users.db')
-    # print "DEBUG: Loading user DB"
-    id_map = load_user_db(db_path)
-    user_alias = configuration.user_openid_alias
-
-    # Loop through all full IDs in user DB and check if username
-    # matches either a full ID or the shorter alias form of the full ID
-    for full_id in id_map.keys():
-        # print "DEBUG: compare against %s" % full_id
-        alias_value = None
-        url_friendly = client_id_dir(full_id)
-        # Fetch the optional single attribute alias used for username
-        if user_alias:
-            alias_value = extract_field(full_id, user_alias)
-        # print "DEBUG: check %s and %s" % (full_id, alias_value)
-        if username in (full_id, url_friendly, alias_value):
-            # Translate raw ID on the form
-            # /C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk
-            # to the URL-friendly form
-            # +C=DK+ST=NA+L=NA+O=NBI+OU=NA+CN=Jonas_Bardino+emailAddress=bardino@nbi.ku.dk
-            return url_friendly
-    return username
+    return lookup_full_user(username)[0]
 
 
 class OpenIDHTTPServer(HTTPServer):
@@ -217,6 +222,10 @@ class ServerHandler(BaseHTTPRequestHandler):
         'openid.realm': valid_base_url,
         'openid.return_to': valid_url,
         'openid.trust_root': valid_base_url,
+        'openid.ns.sreg': valid_base_url,
+        'openid.sreg.required': valid_ascii,
+        'openid.sreg.optional': valid_ascii,
+        'openid.sreg.policy_url': valid_base_url,
         }
 
     def __init__(self, *args, **kwargs):
@@ -349,8 +358,11 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             if request.idSelect():
                 # Do any ID expansion to a specified format
-                identity = self.server.base_url + 'id/' + \
-                           lookup_full_identity(query.get('identifier', ''))
+                if configuration.daemon_conf['expandusername']:
+                    user_id = lookup_full_identity(query.get('identifier', ''))
+                else:
+                    user_id = query.get('identifier', '')
+                identity = self.server.base_url + 'id/' + user_id
             else:
                 identity = request.identity
 
@@ -426,29 +438,33 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     def addSRegResponse(self, request, response):
         """SReg extended attributes handler"""
+        if not self.user:
+            return 
         sreg_req = sreg.SRegRequest.fromOpenIDRequest(request)
 
-        # In a real application, this data would be user-specific,
-        # and the user should be asked for permission to release
-        # it.
-        sreg_data = {
-            'nickname': self.user,
-            # TODO: load real user data from DB
-            'fullname': 'Some One',
-            'email': 'someone@nowhere.org',
-            'country': 'DK',
-            # Unofficial fields
-            'org': 'Some Organization'
-            }
+        (username, user) = lookup_full_user(self.user)
 
+        if not user:
+            print "WARNING: addSRegResponse user lookup failed!"
+            return
+        
+        sreg_data = {}
+        for field in cert_field_map.keys():
+            # Backends choke on empty fields 
+            if user[field]:
+                sreg_data[field] = user[field]
+        # print "DEBUG: addSRegResponse added data:\n%s\n%s\n%s" % \
+        #      (sreg_data, sreg_req.required, request)
+        ## TMP!! fake request for all sreg fields
+        #sreg_req.required += sreg_data.keys()
         sreg_resp = sreg.SRegResponse.extractResponse(sreg_req, sreg_data)
+        # print "DEBUG: addSRegResponse send response:\n%s" % sreg_resp.data
         response.addExtension(sreg_resp)
 
     def approved(self, request, identifier=None):
         """Accept helper"""
         response = request.answer(True, identity=identifier)
-        # TODO: re-enable this SReg data?
-        #self.addSRegResponse(request, response)
+        self.addSRegResponse(request, response)
         return response
 
     def rejected(self, request, identifier=None):
@@ -495,29 +511,20 @@ class ServerHandler(BaseHTTPRequestHandler):
                                'MiG-users.db')
         # print "Loading user DB"
         id_map = load_user_db(db_path)
-        user_alias = configuration.user_openid_alias
-        for cert_id in id_map.keys():
-            cert_dir = client_id_dir(cert_id)
-            user_match = [cert_id, cert_dir, client_alias(cert_id)]
-            if user_alias:
-                short_id = extract_field(cert_id, user_alias)
-                # Allow both raw alias field value and asciified alias
-                user_match.append(short_id)
-                user_match.append(client_alias(short_id))
-                # print "DEBUG: short alias for %s: %s" % (short_id, client_alias(short_id))
-            if username in user_match:
-                user = id_map[cert_id]
-                print "looked up user %s in DB: %s" % (username, user)
-                enc_pw = user.get('password', None)
-                print "DEBUG: Check password against enc %s" % enc_pw
-                if password and base64.b64encode(password) == user['password']:
-                    print "Correct password for user %s" % username
-                    self.user_dn = cert_id
-                    self.user_dn_dir = cert_dir
-                    return True
-                else:
-                    print "Failed password check for user %s" % username
-                    break
+        login_url = os.path.join(configuration.user_openid_provider, username)
+        distinguished_name = get_openid_user_dn(configuration, login_url)
+        if distinguished_name in id_map:
+            user = id_map[distinguished_name]
+            print "looked up user %s in DB: %s" % (username, user)
+            enc_pw = user.get('password', None)
+            # print "DEBUG: Check password against enc %s" % enc_pw
+            if password and base64.b64encode(password) == user['password']:
+                print "Correct password for user %s" % username
+                self.user_dn = distinguished_name
+                self.user_dn_dir = client_id_dir(distinguished_name)
+                return True
+            else:
+                print "Failed password check for user %s" % username
         print "Invalid login for user %s" % username
         return False
                 
@@ -540,7 +547,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             else:
                 # TODO: Login failed - is this correct behaviour?
                 print "doLogin failed for %s!" % self.user
-                #print "doLogin full query: %s" % self.query
+                # print "doLogin full query: %s" % self.query
                 self.clearUser()
                 self.redirect(self.query['success_to'])
         elif 'cancel' in self.query:
@@ -1044,14 +1051,17 @@ if __name__ == '__main__':
     configuration = get_configuration_object()
     logger = configuration.logger
     nossl = False
+    expandusername = False
 
     # Allow configuration overrides on command line
     if sys.argv[1:]:
         nossl = sys.argv[1].lower() in ('yes', 'true', '1')
     if sys.argv[2:]:
-        configuration.user_openid_address = sys.argv[2]
+        expandusername = sys.argv[2].lower() in ('yes', 'true', '1')
     if sys.argv[3:]:
-        configuration.user_openid_port = int(sys.argv[3])
+        configuration.user_openid_address = sys.argv[3]
+    if sys.argv[4:]:
+        configuration.user_openid_port = int(sys.argv[4])
 
     if not configuration.site_enable_openid:
         err_msg = "OpenID service is disabled in configuration!"
@@ -1115,6 +1125,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'time_stamp': 0,
         'logger': logger,
         'nossl': nossl,
+        'expandusername': expandusername
         }
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)

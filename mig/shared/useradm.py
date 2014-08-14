@@ -34,7 +34,8 @@ import shutil
 import fnmatch
 import datetime
 
-from shared.base import client_id_dir, client_alias, sandbox_resource
+from shared.base import client_id_dir, client_dir_id, client_alias, \
+     sandbox_resource
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.defaults import keyword_auto, ssh_conf_dir, davs_conf_dir, \
@@ -71,7 +72,14 @@ cert_field_order = [
     ('email', 'emailAddress'),
     ]
 cert_field_map = dict(cert_field_order)
-
+openid_field_order = [
+    ('username', 'USER'),
+    ('faculty', 'O'),
+    ('institute', 'OU'),
+    ('full_name', 'CN'),
+    ('email', 'MAIL'),
+    ]
+openid_field_map = dict(openid_field_order)
 
 def init_user_adm():
     """Shared init function for all user administration scripts"""
@@ -667,6 +675,60 @@ def get_openid_user_map(configuration):
             id_map[raw] = cert_id
             id_map[enc] = cert_id
     return id_map
+    
+def get_openid_user_dn(configuration, login_url):
+    """Translate OpenID user identified by login_url into a distinguished_name
+    on the cert format.
+    We first lookup the login_url suffix in the openid_to_user_link_home to
+    find a matching cert-style user home from simple IDs and translate that
+    into the corresponding distinguished name.
+    If we don't succeed we try looking up the user from an optionally openid
+    login alias from the configuration and return the corresponding
+    distinguished name. 
+    As a last resort we check if login_url (suffix) is already on the cert
+    distinguished name or cert dir format and return the distinguished name
+    format if so.
+    """
+    configuration.logger.info('extracting openid dn from %s' % login_url)
+    openid_prefix = configuration.user_openid_provider.rstrip('/') + '/'
+    if not login_url.startswith(openid_prefix):
+        configuration.logger.error("invalid openid login: %s" % login_url)
+        return None
+    raw_login = login_url.replace(openid_prefix, '')
+    # Lookup native user_home from openid user symlink
+    link_path = os.path.join(configuration.openid_to_user_link_home, raw_login)
+    if os.path.islink(link_path):
+        native_path = os.path.realpath(link_path)
+        native_dir = os.path.basename(native_path)
+        distinguished_name = client_dir_id(native_dir)
+        configuration.logger.info('found full ID %s from %s link' % \
+                                  (distinguished_name, login_url))
+        return distinguished_name
+    elif configuration.user_openid_alias:
+        db_path = os.path.join(configuration.mig_code_base, 'server',
+                               'MiG-users.db')
+        user_map = load_user_db(db_path)
+        user_alias = configuration.user_openid_alias
+        for (distinguished_name, user) in user_map.items():
+            if user[user_alias] in (raw_login, client_alias(raw_login)):
+                configuration.logger.info('found full ID %s from %s alias' % \
+                                          (distinguished_name, login_url))
+                return distinguished_name
+
+    # Fall back to try direct DN (possibly on cert dir form)
+    configuration.logger.info('fall back to direct ID %s from %s' % \
+                              (raw_login, login_url))
+    # Force to dir format and check if user home exists
+    cert_dir = client_id_dir(raw_login)
+    base_path = os.path.join(configuration.user_home, cert_dir)
+    if not os.path.isdir(base_path):
+        configuration.logger.error('no such openid user %s: %s' % \
+                                   (cert_dir, login_url))
+        return None
+    distinguished_name = client_dir_id(cert_dir)
+    configuration.logger.info('accepting direct user %s from %s' % \
+                              (distinguished_name, login_url))
+    return distinguished_name
     
 def migrate_users(
     conf_path,

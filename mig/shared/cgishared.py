@@ -66,7 +66,7 @@ def init_cgi_script_with_cert(print_header=True, content_type='text/html'):
 
     # get DN of user currently logged in
 
-    client_id = extract_client_id()
+    client_id = extract_client_id(configuration)
     if not client_id:
         msg = 'No client ID available from SSL env - not authenticated!'
         logger.error(msg)
@@ -93,7 +93,7 @@ def init_cgiscript_possibly_with_cert(print_header=True,
 
     # get DN of user currently logged in
 
-    client_id = extract_client_id()
+    client_id = extract_client_id(configuration)
     if not client_id:
         logger.debug('(No client ID available in SSL session)')
 

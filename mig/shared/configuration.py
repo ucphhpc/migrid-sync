@@ -77,6 +77,7 @@ def fix_missing(config_file, verbose=True):
         'mig_system_files': '~/state/mig_system_files/',
         'wwwpublic': '~/state/wwwpublic/',
         'vm_home': '~/state/vm_home',
+        'openid_to_user_link_home': '~/state/openid_to_user_link_home/',
         'server_cert': '~/certs/cert.pem',
         'server_key': '~/certs/key.pem',
         'ca_cert': '~/certs/ca.pem',
@@ -188,7 +189,8 @@ def fix_missing(config_file, verbose=True):
 
 
 class Configuration:
-
+    """Server configuration in parsed form"""
+    
     mig_server_id = None
     mrsl_files_dir = ''
     re_files_dir = ''
@@ -217,6 +219,7 @@ class Configuration:
     sandbox_home = ''
     freeze_home = ''
     javabin_home = ''
+    openid_to_user_link_home = ''
     openid_store = ''
     vgrid_component_links = []
     hg_path = ''
@@ -514,6 +517,11 @@ class Configuration:
             self.freeze_home = ''
         if config.has_option('GLOBAL', 'openid_store'):
             self.openid_store = config.get('GLOBAL', 'openid_store')
+        if config.has_option('GLOBAL', 'openid_to_user_link_home'):
+            self.openid_to_user_link_home = config.get(
+                'GLOBAL', 'openid_to_user_link_home')
+        else:
+            self.openid_to_user_link_home = self.user_home
         if config.has_option('GLOBAL', 'user_sftp_address'):
             self.user_sftp_address = config.get('GLOBAL', 
                                                 'user_sftp_address')

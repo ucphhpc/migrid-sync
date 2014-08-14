@@ -27,6 +27,7 @@
 
 """Interface between CGI and functionality"""
 
+import os
 import sys
 import cgi
 import cgitb
@@ -45,14 +46,9 @@ def init_cgi_script(delayed_input=None):
     configuration = get_configuration_object()
     logger = configuration.logger
 
-    if configuration.user_openid_provider:
-        id_map = get_openid_user_map(configuration)
-    else:
-        id_map = None
-    
     # get and log ID of user currently logged in
 
-    client_id = extract_client_id(id_map)
+    client_id = extract_client_id(configuration)
     logger.info('script: %s cert: %s' % (sys.argv[0], client_id))
     if not delayed_input:
         fieldstorage = cgi.FieldStorage()

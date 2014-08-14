@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # xmlrpcinterface - Provides the entire XMLRPC interface over CGI
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,7 @@ import time
 from SimpleXMLRPCServer import CGIXMLRPCRequestHandler
 
 import shared.returnvalues as returnvalues
+from shared.conf import get_configuration_object
 from shared.httpsclient import extract_client_id
 from shared.objecttypes import get_object_type_info
 from shared.output import validate
@@ -79,22 +80,17 @@ def object_type_info(object_type):
 
     return get_object_type_info(object_type)
 
-
-def my_id():
-    """Return DN of user currently logged in"""
-
-    return extract_client_id()
-
-
 def stub(function, user_arguments_dict):
     """Run backend function with supplied arguments"""
 
     before_time = time.time()
 
+    configuration = get_configuration_object()
+
     # get ID of user currently logged in
 
     main = id
-    client_id = extract_client_id()
+    client_id = extract_client_id(configuration)
     output_objects = []
     try:
         exec 'from %s import main' % function
@@ -571,7 +567,6 @@ if '__main__' == __name__:
     server.register_function(AllMethodSignatures)
 
     server.register_function(object_type_info)
-    server.register_function(my_id)
     server.register_function(jobstatus)
     server.register_function(ls)
     server.register_function(liveio)
