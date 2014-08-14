@@ -34,6 +34,7 @@ import base64
 import re
 
 import shared.returnvalues as returnvalues
+from shared.base import client_id_dir
 from shared.defaults import cert_valid_days
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import correct_handler
@@ -186,9 +187,16 @@ resources anyway.
         'comment': comment,
         'password': base64.b64encode(password),
         'expire': int(time.time() + cert_valid_days * 24 * 60 * 60),
+        'openid_names': [],
         }
     fill_distinguished_name(user_dict)
     user_id = user_dict['distinguished_name']
+    add_names = []
+    if configuration.user_openid_provider:
+        add_names.append(client_id_dir(user_id))
+        if configuration.user_openid_alias:
+            add_names.append(user_dict[configuration.user_openid_alias])
+        user_dict['openid_names'] += add_names
     req_path = None
     try:
         (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)

@@ -257,6 +257,17 @@ def create_user(
                 raise Exception('Nothing more to do for existing user %s' % \
                                 client_id)
 
+    # Add optional OpenID usernames to user (pickle may include some already)
+    
+    user['openid_names'] = user.get('openid_names', [])
+    add_names = []
+    if configuration.user_openid_provider:
+        add_names.append(client_dir)
+        if configuration.user_openid_alias:
+            add_names.append(user[configuration.user_openid_alias])
+    user['openid_names'] += [name for name in add_names if not name in \
+                             user['openid_names']]
+    
     try:
         user_db[client_id] = user
         dump(user_db, db_path)
@@ -284,6 +295,7 @@ def create_user(
     css_path = os.path.join(home_dir, default_css_filename)
     required_dirs = (settings_dir, cache_dir, mrsl_dir, pending_dir, ssh_dir,
                      davs_dir, ftps_dir)
+            
     if not renew:
         if verbose:
             print 'Creating dirs and files for new user: %s' % client_id
@@ -311,6 +323,17 @@ def create_user(
             except Exception, exc:
                 pass
             
+    # Always write/update any openid symlinks
+
+    for name in user.get('openid_names', []):
+        link_path = os.path.join(configuration.user_home, name)
+        if not os.path.exists(link_path):
+            try:
+                os.symlink(client_dir, link_path)
+            except:
+                if not force:
+                    raise Exception('could not symlink home: %s' % link_path)
+    
     # Always write htaccess to catch any updates
 
     try:
@@ -323,11 +346,11 @@ def create_user(
         access = 'SSLRequire ('
         access += '%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s"'
         access += ')\n'
-        if configuration.user_openid_provider:
-            info['oid_url'] = os.path.join(configuration.user_openid_provider,
-                                           client_dir)
-            access += 'require user %(oid_url)s\n'
-            access += 'Satisfy any\n'
+        for name in user.get('openid_names', []):
+            oid_url = os.path.join(configuration.user_openid_provider,
+                                   name)
+            access += 'require user %s\n' % oid_url
+        access += 'Satisfy any\n'
 
         filehandle.write(access % info)
         filehandle.close()
@@ -485,6 +508,27 @@ def edit_user(
         print 'User dirs for %s was successfully renamed!'\
                   % client_id
 
+    # Update any OpenID symlinks
+
+    for name in old_user.get('openid_names', []):
+        link_path = os.path.join(configuration.user_home, name)
+        if os.path.exists(link_path):
+            try:
+                os.remove(link_path)
+            except:
+                if not force:
+                    raise Exception('could not remove symlink: %s' % link_path)
+    for name in user_dict.get('openid_names', []):
+        new_path = os.path.join(base_dir, new_client_dir)
+        link_path = os.path.join(configuration.user_home, name)
+        if not os.path.exists(link_path):
+            try:
+                os.symlink(new_client_dir, link_path)
+            
+            except:
+                if not force:
+                    raise Exception('could not symlink home: %s' % link_path)
+                
     # Loop through resource map and update user resource ownership
     
     res_map = get_resource_map(configuration)
@@ -632,6 +676,17 @@ def delete_user(
             raise Exception('Failed to remove %s from user DB: %s'\
                             % (client_id, err))
 
+    # Remove any OpenID symlinks
+
+    for name in user.get('openid_names', []):
+        link_path = os.path.join(configuration.user_home, name)
+        if os.path.exists(link_path):
+            try:
+                os.remove(link_path)
+            except:
+                if not force:
+                    raise Exception('could not remove symlink: %s' % link_path)
+
     # Remove user dirs recursively
 
     for base_dir in (configuration.user_home,
@@ -679,10 +734,10 @@ def get_openid_user_map(configuration):
 def get_openid_user_dn(configuration, login_url):
     """Translate OpenID user identified by login_url into a distinguished_name
     on the cert format.
-    We first lookup the login_url suffix in the openid_to_user_link_home to
-    find a matching cert-style user home from simple IDs and translate that
+    We first lookup the login_url suffix in the user_home to find a matching
+    symlink from the simple ID to the cert-style user home and translate that
     into the corresponding distinguished name.
-    If we don't succeed we try looking up the user from an optionally openid
+    If we don't succeed we try looking up the user from an optional openid
     login alias from the configuration and return the corresponding
     distinguished name. 
     As a last resort we check if login_url (suffix) is already on the cert
@@ -696,7 +751,7 @@ def get_openid_user_dn(configuration, login_url):
         return None
     raw_login = login_url.replace(openid_prefix, '')
     # Lookup native user_home from openid user symlink
-    link_path = os.path.join(configuration.openid_to_user_link_home, raw_login)
+    link_path = os.path.join(configuration.user_home, raw_login)
     if os.path.islink(link_path):
         native_path = os.path.realpath(link_path)
         native_dir = os.path.basename(native_path)
