@@ -242,7 +242,10 @@ def create_user(
             else:
                 renew = default_renew
             if renew:
-                if user_db[client_id]['password'] != user['password']:
+                # OpenID users do not provide a password
+                if not user['password']:
+                    user['password'] = user_db[client_id]['password']
+                elif user_db[client_id]['password'] != user['password']:
                     if verbose:
                         print 'Renewal request supplied a different password: '
                         print 'Please re-request with the original password '
@@ -259,14 +262,12 @@ def create_user(
 
     # Add optional OpenID usernames to user (pickle may include some already)
     
-    user['openid_names'] = user.get('openid_names', [])
+    openid_names = user.get('openid_names', [])
     add_names = []
-    if configuration.user_openid_provider:
-        add_names.append(client_dir)
-        if configuration.user_openid_alias:
-            add_names.append(user[configuration.user_openid_alias])
-    user['openid_names'] += [name for name in add_names if not name in \
-                             user['openid_names']]
+    if configuration.user_openid_provider and configuration.user_openid_alias:
+        add_names.append(user[configuration.user_openid_alias])
+    user['openid_names'] = dict([(name, 0) for name in add_names + \
+                                 openid_names]).keys()
     
     try:
         user_db[client_id] = user

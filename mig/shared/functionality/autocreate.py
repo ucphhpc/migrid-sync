@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# autocreate - create user from signed (grid.dk) confusa certificate
+# autocreate - auto create user from signed certificate or openid login
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,13 +25,13 @@
 # -- END_HEADER ---
 #
 
-"""Automatic sign up back end for external certificates
+"""Automatic sign up back end for external certificates and OpenID logins
 
-   Also see extcertaction.py. Differences: 
-     - no e-mail, only auto_create functionality or nothing
+   Also see req-/extcertaction.py. Differences: 
+     - no e-mail sent: only auto-create functionality or nothing
      - automatic upload of a proxy certificate when provided
-     - no special check for DIKU organisation
-     - allows empty country, email, and state
+     - no special check for KU organisation
+     - allows empty fields for things like country, email, and state
 """
 
 import os
@@ -39,32 +39,50 @@ import time
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.defaults import cert_valid_days
+from shared.defaults import cert_valid_days, oid_valid_days
 from shared.fileio import write_file
 from shared.functional import validate_input, REJECT_UNSET
 from shared.init import initialize_main_variables
 from shared.useradm import db_name, distinguished_name_to_user, \
-     create_user, fill_user
+     create_user, fill_user, fill_distinguished_name
 try:
     import shared.arcwrapper as arc
 except Exception, exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass
 
-def signature():
+def signature(login_type):
     """Signature of the main function"""
 
-    defaults = {
-        'cert_id': REJECT_UNSET,
-        'cert_name': REJECT_UNSET,
-        'org': REJECT_UNSET,
-        'email': [''],
-        'country': [''],
-        'state': [''],
-        'comment': ['(Created through autocreate)'],
-        'proxy_upload': [''],
-        'proxy_uploadfilename': [''],
-        }
+    if login_type == 'oid':
+        defaults = {
+            'openid.ns.sreg': [''],
+            'openid.sreg.full_name': REJECT_UNSET,
+            'openid.sreg.organization': REJECT_UNSET,
+            'openid.sreg.organizational_unit': REJECT_UNSET,
+            'openid.sreg.email': REJECT_UNSET,
+            'openid.sreg.country': ['DK'],
+            'openid.sreg.state': [''],
+            'openid.sreg.locality': [''],
+            'password': [''],
+            'comment': ['(Created through autocreate)'],
+            'proxy_upload': [''],
+            'proxy_uploadfilename': [''],
+            }
+    elif login_type == 'cert':
+        defaults = {
+            'cert_id': REJECT_UNSET,
+            'cert_name': REJECT_UNSET,
+            'org': REJECT_UNSET,
+            'email': [''],
+            'country': [''],
+            'state': [''],
+            'comment': ['(Created through autocreate)'],
+            'proxy_upload': [''],
+            'proxy_uploadfilename': [''],
+            }
+    else:
+        raise ValueError("no such login_type: %s" % login_type)
     return ['text', defaults]
 
 
@@ -121,18 +139,27 @@ def handle_proxy(proxy_string, client_id, config):
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
-
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
+        initialize_main_variables(client_id, op_header=False, op_menu=False)
     logger = configuration.logger
-    logger.debug("starting autocreate")
-    logger.debug('Arguments: %s' % user_arguments_dict)
+    logger.info('autocrate: args: %s' % user_arguments_dict)
     
     output_objects.append({'object_type': 'header', 'text'
                           : 'Automatic %s sign up' % \
                             configuration.short_title })
-
-    defaults = signature()[1]
+    if os.environ.get('SSL_CLIENT_S_DN', ''):
+        login_type = 'cert'
+        base_url = configuration.migserver_https_cert_url
+    elif os.environ.get('REMOTE_USER', ''):
+        login_type = 'oid'
+        base_url = configuration.migserver_https_oid_url
+    else:
+        output_objects.append(
+            {'object_type': 'error_text', 'text': 'missing credentials'}
+            )
+        return (accepted, returnvalues.CLIENT_ERROR)
+        
+    defaults = signature(login_type)[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
@@ -140,22 +167,44 @@ def main(client_id, user_arguments_dict):
 
     logger.debug('Accepted arguments: %s' % accepted)
 
+    # Unfortunately OpenID redirect does not use POST
+    if login_type != 'oid' and not correct_handler('POST'):
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only accepting POST requests to prevent unintended updates'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     admin_email = configuration.admin_email
 
     # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
-
-    cert_id = accepted['cert_id'][-1].strip()
-    cert_name = accepted['cert_name'][-1].strip().title()
-    country = accepted['country'][-1].strip().upper()
-    state = accepted['state'][-1].strip().title()
-    org = accepted['org'][-1].strip()
+        
+    if login_type == 'cert':
+        cert_id = accepted['cert_id'][-1].strip()
+        full_name = accepted['full_name'][-1].strip().title()
+        country = accepted['country'][-1].strip().upper()
+        state = accepted['state'][-1].strip().title()
+        organization = accepted['org'][-1].strip()
+        organizational_unit = ''
+        locality = ''
+        # lower case email address
+        email = accepted['email'][-1].strip().lower()
+        openid_names = []
+    elif login_type == 'oid':
+        full_name = accepted['openid.sreg.full_name'][-1].strip().title()
+        country = accepted['openid.sreg.country'][-1].strip().upper()
+        state = accepted['openid.sreg.state'][-1].strip().title()
+        organization = accepted['openid.sreg.organization'][-1].strip()
+        organizational_unit = accepted['openid.sreg.organizational_unit'][-1].strip()
+        locality = accepted['openid.sreg.locality'][-1].strip()
+        # lower case email address
+        email = accepted['openid.sreg.email'][-1].strip().lower()
+        id_url = os.environ['REMOTE_USER'].strip()
+        openid_prefix = configuration.user_openid_provider.rstrip('/') + '/'
+        raw_login = id_url.replace(openid_prefix, '')
+        openid_names = [raw_login]
 
     # we should have the proxy file read...
     proxy_content = accepted['proxy_upload'][-1]
-
-    # lower case email address
-
-    email = accepted['email'][-1].strip().lower()
 
     # keep comment to a single line
 
@@ -165,38 +214,41 @@ def main(client_id, user_arguments_dict):
 
     comment = comment.replace("'", ' ')
 
-    logger.debug('Extracted: %s' % \
-                 [ n + "=" + eval(n) \
-                   for n in ['cert_id','cert_name','country','state', \
-                             'org','proxy_content','email','comment'] \
-                 ])
-
-    try:
-        distinguished_name_to_user(cert_id)
-    except:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '''Illegal Distinguished name:
-Please note that the distinguished name must be a valid certificate DN with
-multiple "key=val" fields separated by "/".
-'''})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     user_dict = {
-        'distinguished_name': cert_id,
-        'full_name': cert_name,
-        'organization': org,
+        'full_name': full_name,
+        'organization': organization,
+        'organizational_unit': organizational_unit,
+        'locality': locality,
         'state': state,
         'country': country,
         'email': email,
         'password': '',
         'comment': '%s: %s' % ('Existing certificate', comment),
-        'expire': int(time.time() + cert_valid_days * 24 * 60 * 60),
+        'openid_names': openid_names,
         }
+
+    if login_type == 'cert':
+        user_dict['expire'] = int(time.time() + cert_valid_days * 24 * 60 * 60)
+        try:
+            distinguished_name_to_user(cert_id)
+            user_dict['distinguished_name'] = cert_id,
+        except:
+            output_objects.append({'object_type': 'error_text', 'text'
+                                   : '''Illegal Distinguished name:
+Please note that the distinguished name must be a valid certificate DN with
+multiple "key=val" fields separated by "/".
+'''})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+    elif login_type == 'oid':
+        user_dict['expire'] = int(time.time() + oid_valid_days * 24 * 60 * 60)
+        fill_distinguished_name(user_dict)
+        cert_id = user_dict['distinguished_name']
 
     # If server allows automatic addition of users with a CA validated cert
     # we create the user immediately and skip mail
     
-    if configuration.auto_add_cert_user:
+    if login_type == 'cert' and configuration.auto_add_cert_user or \
+           login_type == 'oid' and configuration.auto_add_oid_user:
         fill_user(user_dict)
 
         # Now all user fields are set and we can begin adding the user
@@ -204,7 +256,7 @@ multiple "key=val" fields separated by "/".
         db_path = os.path.join(configuration.mig_server_home, db_name)
         try:
             create_user(user_dict, configuration.config_file, 
-                        db_path, ask_renew=False)
+                        db_path, ask_renew=False, default_renew=True)
             if configuration.site_enable_griddk and \
                    accepted['proxy_upload'] != ['']:
                 # save the file, display expiration date
@@ -221,17 +273,15 @@ Please report this problem to the grid administrators (%s).''' % \
                  admin_email})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        output_objects.append({'object_type': 'text', 'text'
-                                   : '''Created the user account for you:
-Please use the navigation menu to the left to proceed using it.
-'''})
+        output_objects.append({'object_type': 'html_form', 'text'
+                                   : '''Created the user account for you -
+please open <a href="%s">your personal page</a> to proceed using it.
+''' % base_url})
         return (output_objects, returnvalues.OK)
     else:
         output_objects.append({'object_type': 'error_text', 'text':
                                '''Automatic user creation disabled on this site.
 Please contact the Grid admins %s if you think it should be enabled.
-''' % configuration.admin_email})
-        
-        return (output_objects, returnvalues.OK)
+''' % configuration.admin_email})        
         return (output_objects, returnvalues.ERROR)
 

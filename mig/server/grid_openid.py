@@ -98,6 +98,12 @@ def valid_cert_dir(arg):
     """Make sure only valid cert dir names are allowed"""
     valid_distinguished_name(arg, extra_chars='+_')
 
+def valid_cert_fields(arg):
+    """Make sure only valid cert field names are allowed"""
+    valid_job_id(arg, extra_chars=',')
+    if [i for i in arg.split(',') if not i in cert_field_map.keys()]:
+        invalid_argument(arg)
+
 def valid_identity_url(arg):
     """Make sure only valid url followed by cert dir names are allowed"""
     valid_distinguished_name(arg, extra_chars=':+_')
@@ -180,6 +186,12 @@ class OpenIDHTTPServer(HTTPServer):
         self.approved = {}
         self.lastCheckIDRequest = {}
 
+        # Add our own SReg fields to list of valid fields from sreg 1.1 spec
+        for (key, val) in cert_field_map.items():
+            if not key in sreg.data_fields:
+                sreg.data_fields[key] = key.replace('_', ' ').title()
+        print "DEBUG: sreg fields: %s" % sreg.data_fields
+
     def setOpenIDServer(self, oidserver):
         """Override openid attribute"""
         self.openid = oidserver
@@ -223,7 +235,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         'openid.return_to': valid_url,
         'openid.trust_root': valid_base_url,
         'openid.ns.sreg': valid_base_url,
-        'openid.sreg.required': valid_ascii,
+        'openid.sreg.required': valid_cert_fields,
         'openid.sreg.optional': valid_ascii,
         'openid.sreg.policy_url': valid_base_url,
         }
@@ -453,12 +465,14 @@ class ServerHandler(BaseHTTPRequestHandler):
             # Backends choke on empty fields 
             if user[field]:
                 sreg_data[field] = user[field]
-        # print "DEBUG: addSRegResponse added data:\n%s\n%s\n%s" % \
-        #      (sreg_data, sreg_req.required, request)
+            else:
+                sreg_data[field] = 'NA'
+        print "DEBUG: addSRegResponse added data:\n%s\n%s\n%s" % \
+              (sreg_data, sreg_req.required, request)
         ## TMP!! fake request for all sreg fields
         #sreg_req.required += sreg_data.keys()
         sreg_resp = sreg.SRegResponse.extractResponse(sreg_req, sreg_data)
-        # print "DEBUG: addSRegResponse send response:\n%s" % sreg_resp.data
+        print "DEBUG: addSRegResponse send response:\n%s" % sreg_resp.data
         response.addExtension(sreg_resp)
 
     def approved(self, request, identifier=None):

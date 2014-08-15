@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# reqcert - Certificate request and sign up front end
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# extoid - Handle user input from external openid sign up
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,13 +25,13 @@
 # -- END_HEADER ---
 #
 
-"""Front end to request certificate and sign up"""
+"""Front end to handle external OpenID sign up"""
 
 import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.reqcert import main
+from shared.functionality.extoid import main
 from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
 run_cgi_script_possibly_with_cert(main)

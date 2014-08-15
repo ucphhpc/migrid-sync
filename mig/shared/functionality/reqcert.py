@@ -93,7 +93,7 @@ def main(client_id, user_arguments_dict):
         extcert_url = os.environ['REQUEST_URI'].replace('-sid', '-bin')
         extcert_url = os.path.join(os.path.dirname(extcert_url), 'extcert.py')
         extcert_link = {'object_type': 'link', 'destination': extcert_url,
-                        'text': 'Sign up with existing certificate'}
+                        'text': 'Sign up with existing certificate (%s)' % client_id}
         output_objects.append({'object_type': 'warning', 'text'
                               : 'Apparently you already have a suitable %s certificate that you may sign up with:' % \
                                 configuration.short_title

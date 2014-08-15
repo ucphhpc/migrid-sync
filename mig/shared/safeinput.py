@@ -825,7 +825,7 @@ def guess_type(name):
             __type_map[key] = valid_fqdn
         for key in ('cert_name', 'org', 'machine_software', 'freeze_name',
                     'freeze_author', 'freeze_department',
-                    'freeze_organization', ):
+                    'freeze_organization', 'openid.sreg.full_name', ):
             __type_map[key] = valid_commonname
         for key in ('cert_id', ):
             __type_map[key] = valid_distinguished_name
@@ -836,7 +836,8 @@ def guess_type(name):
                     'inputfiles', 'outputfiles', 'verifyfiles', 'notify',
                     'vgrid', 'runtimeenvironment', ):
             __type_map[key] = valid_plain_text
-        for key in ('aol', 'yahoo', 'msn', 'icq', 'jabber', 'email', ):
+        for key in ('aol', 'yahoo', 'msn', 'icq', 'jabber', 'email',
+                    'openid.sreg.email', ):
             __type_map[key] = valid_email_address
         for key in ('editarea', 'execute', 'premenu', 'postmenu', 'precontent',
                     'postcontent', 'publickeys', 'freeze_description'):
@@ -849,6 +850,8 @@ def guess_type(name):
             __type_map[key] = valid_alphanumeric
         for key in ('proxy_upload', ):
             __type_map[key] = valid_printable
+        for key in ('openid.ns', 'openid.ns.sreg', ):
+            __type_map[key] = valid_base_url
         
     # Return type checker from __type_map with fall back to alphanumeric
     

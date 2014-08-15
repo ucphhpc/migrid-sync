@@ -79,8 +79,10 @@ def extract_client_id(configuration, environ=os.environ):
     if configuration.user_openid_provider and not distinguished_name:
         login = environ.get(client_login_field, '').strip()
         if not login:
-            return "NOSUCHUSER"
-        # Throw away any extra ID fields from environment
-        pop_openid_query_fields(environ)
+            return ""
+        if environ["REQUEST_URI"].find('oidaccountaction.py') == -1 and \
+               environ["REQUEST_URI"].find('autocreate.py') == -1:
+            # Throw away any extra ID fields from environment
+            pop_openid_query_fields(environ)
         distinguished_name = get_openid_user_dn(configuration, login)
     return distinguished_name
