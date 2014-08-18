@@ -61,7 +61,7 @@ def main(client_id, user_arguments_dict):
                     : 'Welcome to the %s OpenID account sign up page' % \
                     configuration.short_title}
     output_objects.append(header_entry)
-    
+
     output_objects.append({'object_type': 'html_form', 'text'
                           : """<h2>Simple Login: OpenID</h2>
 <p>
@@ -77,8 +77,22 @@ with this site as well.
 <form method='post' action='%(extoid_url)s'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-<input type='hidden' name='openid.sreg.required' value='full_name,country,email,organization,organizational_unit' />
+<!--
+<input type='hidden' name='openid.sreg.required' value='KUID,CN,MAIL,O,OU,ROLE,full_name,country,email,organization,organizational_unit' />
+-->
+<input type='hidden' name='openid.sreg.required' value='KUID,CN,MAIL,O,OU,ROLE' />
 <input id='extoid_button' type='submit' value='Sign Up with OpenID' />
+</form>
+</div>
+<div class='form_container'>
+<form method='post' action='%(kitoid_url)s'>
+<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+<!--
+<input type='hidden' name='openid.sreg.required' value='KUID,CN,MAIL,O,OU,ROLE,full_name,country,email,organization,organizational_unit' />
+-->
+<input type='hidden' name='openid.sreg.required' value='KUID,CN,MAIL,O,OU,ROLE' />
+<input id='extoid_button' type='submit' value='Sign Up with KIT OpenID' />
 </form>
 </div>
 <h2>Advanced Login: Client Certificate</h2>
@@ -105,11 +119,13 @@ up with that instead of requesting a new one.
 </div>
 """ % {'short_title': configuration.short_title,
        'extoid_url': os.path.join(configuration.migserver_https_oid_url,
-                                      'cgi-sid', 'autocreate.py'),
+                                  'cgi-sid', 'autocreate.py'),
+       'kitoid_url': os.path.join(configuration.migserver_https_sid_url,
+                                  'wsgi-bin', 'autocreate.py'),
        'reqcert_url': os.path.join(configuration.migserver_https_sid_url,
-                                      'cgi-sid', 'reqcert.py'),
+                                   'cgi-sid', 'reqcert.py'),
        'extcert_url': os.path.join(configuration.migserver_https_cert_url,
-                                      'cgi-bin', 'extcert.py'),
+                                   'cgi-bin', 'extcert.py'),
        }})
 
     return (output_objects, returnvalues.OK)

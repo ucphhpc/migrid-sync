@@ -57,13 +57,24 @@ def signature(login_type):
     if login_type == 'oid':
         defaults = {
             'openid.ns.sreg': [''],
-            'openid.sreg.full_name': REJECT_UNSET,
-            'openid.sreg.organization': REJECT_UNSET,
-            'openid.sreg.organizational_unit': REJECT_UNSET,
-            'openid.sreg.email': REJECT_UNSET,
+            'openid.sreg.short_id': [''],
+            'openid.sreg.full_name': [''],
+            'openid.sreg.organization': [''],
+            'openid.sreg.organizational_unit': [''],
+            'openid.sreg.email': [''],
             'openid.sreg.country': ['DK'],
             'openid.sreg.state': [''],
             'openid.sreg.locality': [''],
+            'openid.sreg.role': [''],
+            'openid.sreg.KUID': [''],
+            'openid.sreg.CN': [''],
+            'openid.sreg.O': [''],
+            'openid.sreg.OU': [''],
+            'openid.sreg.MAIL': [''],
+            'openid.sreg.C': [''],
+            'openid.sreg.ST': [''],
+            'openid.sreg.L': [''],
+            'openid.sreg.ROLE': [''],
             'password': [''],
             'comment': ['(Created through autocreate)'],
             'proxy_upload': [''],
@@ -142,7 +153,7 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
     logger = configuration.logger
-    logger.info('autocrate: args: %s' % user_arguments_dict)
+    logger.info('autocreate: args: %s' % user_arguments_dict)
     
     output_objects.append({'object_type': 'header', 'text'
                           : 'Automatic %s sign up' % \
@@ -155,9 +166,8 @@ def main(client_id, user_arguments_dict):
         base_url = configuration.migserver_https_oid_url
     else:
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'missing credentials'}
-            )
-        return (accepted, returnvalues.CLIENT_ERROR)
+            {'object_type': 'error_text', 'text': 'Missing user credentials'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
         
     defaults = signature(login_type)[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
@@ -179,7 +189,7 @@ def main(client_id, user_arguments_dict):
     # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
         
     if login_type == 'cert':
-        cert_id = accepted['cert_id'][-1].strip()
+        uniq_id = accepted['cert_id'][-1].strip()
         full_name = accepted['full_name'][-1].strip().title()
         country = accepted['country'][-1].strip().upper()
         state = accepted['state'][-1].strip().title()
@@ -190,14 +200,23 @@ def main(client_id, user_arguments_dict):
         email = accepted['email'][-1].strip().lower()
         openid_names = []
     elif login_type == 'oid':
-        full_name = accepted['openid.sreg.full_name'][-1].strip().title()
-        country = accepted['openid.sreg.country'][-1].strip().upper()
-        state = accepted['openid.sreg.state'][-1].strip().title()
-        organization = accepted['openid.sreg.organization'][-1].strip()
-        organizational_unit = accepted['openid.sreg.organizational_unit'][-1].strip()
-        locality = accepted['openid.sreg.locality'][-1].strip()
+        uniq_id = accepted['openid.sreg.KUID'][-1].strip() or \
+                   accepted['openid.sreg.short_id'][-1].strip()
+        full_name = accepted['openid.sreg.CN'][-1].strip().title() or \
+                    accepted['openid.sreg.full_name'][-1].strip().title()
+        country = accepted['openid.sreg.C'][-1].strip().upper() or \
+                  accepted['openid.sreg.country'][-1].strip().upper()
+        state = accepted['openid.sreg.ST'][-1].strip().title() or \
+                accepted['openid.sreg.state'][-1].strip().title()
+        organization = accepted['openid.sreg.O'][-1].strip() or \
+                       accepted['openid.sreg.organization'][-1].strip()
+        organizational_unit = accepted['openid.sreg.OU'][-1].strip() or \
+                              accepted['openid.sreg.organizational_unit'][-1].strip()
+        locality = accepted['openid.sreg.L'][-1].strip() or \
+                   accepted['openid.sreg.locality'][-1].strip()
         # lower case email address
-        email = accepted['openid.sreg.email'][-1].strip().lower()
+        email = accepted['openid.sreg.MAIL'][-1].strip().lower() or \
+                accepted['openid.sreg.email'][-1].strip().lower()
         id_url = os.environ['REMOTE_USER'].strip()
         openid_prefix = configuration.user_openid_provider.rstrip('/') + '/'
         raw_login = id_url.replace(openid_prefix, '')
@@ -215,6 +234,7 @@ def main(client_id, user_arguments_dict):
     comment = comment.replace("'", ' ')
 
     user_dict = {
+        'short_id': uniq_id,
         'full_name': full_name,
         'organization': organization,
         'organizational_unit': organizational_unit,
@@ -227,11 +247,18 @@ def main(client_id, user_arguments_dict):
         'openid_names': openid_names,
         }
 
+    # We must receive some ID from the provider
+    if not uniq_id and not email:
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'No ID information received!'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     if login_type == 'cert':
         user_dict['expire'] = int(time.time() + cert_valid_days * 24 * 60 * 60)
         try:
-            distinguished_name_to_user(cert_id)
-            user_dict['distinguished_name'] = cert_id,
+            distinguished_name_to_user(uniq_id)
+            user_dict['distinguished_name'] = uniq_id,
         except:
             output_objects.append({'object_type': 'error_text', 'text'
                                    : '''Illegal Distinguished name:
@@ -242,7 +269,7 @@ multiple "key=val" fields separated by "/".
     elif login_type == 'oid':
         user_dict['expire'] = int(time.time() + oid_valid_days * 24 * 60 * 60)
         fill_distinguished_name(user_dict)
-        cert_id = user_dict['distinguished_name']
+        uniq_id = user_dict['distinguished_name']
 
     # If server allows automatic addition of users with a CA validated cert
     # we create the user immediately and skip mail
@@ -260,12 +287,12 @@ multiple "key=val" fields separated by "/".
             if configuration.site_enable_griddk and \
                    accepted['proxy_upload'] != ['']:
                 # save the file, display expiration date
-                proxy_out = handle_proxy(proxy_content, cert_id, 
+                proxy_out = handle_proxy(proxy_content, uniq_id, 
                                          configuration)
                 output_objects.extend(proxy_out)
         except Exception, err:
             logger.error('Failed to create user with existing certificate %s: %s'
-                     % (cert_id, err))
+                     % (uniq_id, err))
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : '''Could not create the user account for you:

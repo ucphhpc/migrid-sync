@@ -72,14 +72,6 @@ cert_field_order = [
     ('email', 'emailAddress'),
     ]
 cert_field_map = dict(cert_field_order)
-openid_field_order = [
-    ('username', 'USER'),
-    ('faculty', 'O'),
-    ('institute', 'OU'),
-    ('full_name', 'CN'),
-    ('email', 'MAIL'),
-    ]
-openid_field_map = dict(openid_field_order)
 
 def init_user_adm():
     """Shared init function for all user administration scripts"""
@@ -513,7 +505,7 @@ def edit_user(
 
     for name in old_user.get('openid_names', []):
         link_path = os.path.join(configuration.user_home, name)
-        if os.path.exists(link_path):
+        if os.path.islink(link_path):
             try:
                 os.remove(link_path)
             except:
@@ -525,7 +517,6 @@ def edit_user(
         if not os.path.exists(link_path):
             try:
                 os.symlink(new_client_dir, link_path)
-            
             except:
                 if not force:
                     raise Exception('could not symlink home: %s' % link_path)
@@ -666,7 +657,9 @@ def delete_user(
                 raise Exception("User DB entry '%s' doesn't exist!" % \
                                 client_id)
 
+    
     try:
+        user_dict = user_db.get(client_id, user)
         del user_db[client_id]
         save_user_db(user_db, db_path)
         if verbose:
@@ -679,9 +672,9 @@ def delete_user(
 
     # Remove any OpenID symlinks
 
-    for name in user.get('openid_names', []):
+    for name in user_dict.get('openid_names', []):
         link_path = os.path.join(configuration.user_home, name)
-        if os.path.exists(link_path):
+        if os.path.islink(link_path):
             try:
                 os.remove(link_path)
             except:

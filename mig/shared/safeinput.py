@@ -824,8 +824,9 @@ def guess_type(name):
                     'time_end', ):
             __type_map[key] = valid_fqdn
         for key in ('cert_name', 'org', 'machine_software', 'freeze_name',
-                    'freeze_author', 'freeze_department',
-                    'freeze_organization', 'openid.sreg.full_name', ):
+                    'freeze_author', 'freeze_department', 'freeze_organization',
+                    'openid.sreg.cn', 'openid.sreg.fullname',
+                    'openid.sreg.full_name', ):
             __type_map[key] = valid_commonname
         for key in ('cert_id', ):
             __type_map[key] = valid_distinguished_name
@@ -837,7 +838,7 @@ def guess_type(name):
                     'vgrid', 'runtimeenvironment', ):
             __type_map[key] = valid_plain_text
         for key in ('aol', 'yahoo', 'msn', 'icq', 'jabber', 'email',
-                    'openid.sreg.email', ):
+                    'openid.sreg.email', 'openid.sreg.mail', ):
             __type_map[key] = valid_email_address
         for key in ('editarea', 'execute', 'premenu', 'postmenu', 'precontent',
                     'postcontent', 'publickeys', 'freeze_description'):

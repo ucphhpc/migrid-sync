@@ -191,12 +191,9 @@ resources anyway.
         }
     fill_distinguished_name(user_dict)
     user_id = user_dict['distinguished_name']
-    add_names = []
-    if configuration.user_openid_provider:
-        add_names.append(client_id_dir(user_id))
-        if configuration.user_openid_alias:
-            add_names.append(user_dict[configuration.user_openid_alias])
-        user_dict['openid_names'] += add_names
+    if configuration.user_openid_provider and configuration.user_openid_alias:
+        user_dict['openid_names'] += \
+                                  [user_dict[configuration.user_openid_alias]]
     req_path = None
     try:
         (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)

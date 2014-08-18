@@ -85,6 +85,11 @@ from shared.useradm import load_user_db, extract_field, cert_field_map, \
 
 configuration, logger = None, None
 
+# Update with extra fields
+cert_field_map.update({'role': 'ROLE', 'mail': 'MAIL', 'short_id': 'KUID'})
+cert_field_names = cert_field_map.keys()
+cert_field_aliases = cert_field_map.values()
+
 def quoteattr(val):
     """Escape string for safe printing"""
     esc = cgi.escape(val, 1)
@@ -101,7 +106,8 @@ def valid_cert_dir(arg):
 def valid_cert_fields(arg):
     """Make sure only valid cert field names are allowed"""
     valid_job_id(arg, extra_chars=',')
-    if [i for i in arg.split(',') if not i in cert_field_map.keys()]:
+    if [i for i in arg.split(',') if not i in cert_field_names + \
+        cert_field_aliases]:
         invalid_argument(arg)
 
 def valid_identity_url(arg):
@@ -190,6 +196,8 @@ class OpenIDHTTPServer(HTTPServer):
         for (key, val) in cert_field_map.items():
             if not key in sreg.data_fields:
                 sreg.data_fields[key] = key.replace('_', ' ').title()
+                if not val in sreg.data_fields:
+                    sreg.data_fields[val] = key.replace('_', ' ').title()
         print "DEBUG: sreg fields: %s" % sreg.data_fields
 
     def setOpenIDServer(self, oidserver):
@@ -232,6 +240,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         'openid.mode': valid_mode_name,
         'openid.ns': valid_base_url,
         'openid.realm': valid_base_url,
+        'openid.success_to': valid_url,
         'openid.return_to': valid_url,
         'openid.trust_root': valid_base_url,
         'openid.ns.sreg': valid_base_url,
@@ -462,11 +471,14 @@ class ServerHandler(BaseHTTPRequestHandler):
         
         sreg_data = {}
         for field in cert_field_map.keys():
-            # Backends choke on empty fields 
-            if user[field]:
+            if user.get(field, None):
+                # Add both the field and the alias value for now
                 sreg_data[field] = user[field]
+                sreg_data[cert_field_map[field]] = user[field]
             else:
+                # Backends choke on empty fields 
                 sreg_data[field] = 'NA'
+                sreg_data[cert_field_map[field]] = 'NA'
         print "DEBUG: addSRegResponse added data:\n%s\n%s\n%s" % \
               (sreg_data, sreg_req.required, request)
         ## TMP!! fake request for all sreg fields
