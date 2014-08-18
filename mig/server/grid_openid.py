@@ -537,7 +537,9 @@ class ServerHandler(BaseHTTPRequestHandler):
                                'MiG-users.db')
         # print "Loading user DB"
         id_map = load_user_db(db_path)
-        login_url = os.path.join(configuration.user_openid_provider, username)
+        # username may be None here
+        login_url = os.path.join(configuration.user_openid_provider,
+                                 username or '')
         distinguished_name = get_openid_user_dn(configuration, login_url)
         if distinguished_name in id_map:
             user = id_map[distinguished_name]
@@ -779,7 +781,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         """User info page provider"""
         link_tag = '<link rel="openid.server" href="%sopenidserver">' % \
               self.server.base_url
-        yadis_loc_tag = '<meta http-equiv="x-xrds-location" content="%s">' % \
+        yadis_loc_tag = '<meta http-equiv="x-xrds-location" content="%s"/>' % \
             (self.server.base_url+'yadis/'+path[4:])
         disco_tags = link_tag + yadis_loc_tag
         ident = self.server.base_url + path[1:]
@@ -790,7 +792,8 @@ class ServerHandler(BaseHTTPRequestHandler):
         if self.user == ident_user:
             for (aident, trust_root) in self.server.approved.keys():
                 if aident == ident:
-                    trs = '<li><tt>%s</tt></li>\n' % cgi.escape(trust_root)
+                    trs = '<li><span class="verbatim">%s</span></li>\n' % \
+                          cgi.escape(trust_root)
                     approved_trust_roots.append(trs)
         else:
             print "Not disclosing trust roots for %s (active login %s)" % \
@@ -861,14 +864,14 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     def showMainPage(self):
         """Main page provider"""
-        yadis_tag = '<meta http-equiv="x-xrds-location" content="%s">' % \
+        yadis_tag = '<meta http-equiv="x-xrds-location" content="%s"/>' % \
             (self.server.base_url + 'serveryadis')
         if self.user:
             openid_url = self.server.base_url + 'id/' + self.user
             user_message = """\
             <p>You are logged in as %s. Your OpenID identity URL is
-            <tt><a href=%s>%s</a></tt>. Enter that URL at an OpenID
-            consumer to test this server.</p>
+            <span class='verbatim'><a href=%s>%s</a></span>.
+            Enter that URL at an OpenID consumer to test this server.</p>
             """ % (self.user, quoteattr(openid_url), openid_url)
         else:
             user_message = """\
@@ -889,7 +892,8 @@ class ServerHandler(BaseHTTPRequestHandler):
         computer is behind a firewall, you will not be able to use
         OpenID consumers outside of the firewall with it.</p>
 
-        <p>The URL for this server is <a href=%s><tt>%s</tt></a>.</p>
+        <p>The URL for this server is
+        <a href=%s><span class="verbatim">%s</span></a>.</p>
         ''' % (user_message, quoteattr(self.server.base_url), self.server.base_url))
 
     def showLoginPage(self, success_to, fail_to):
@@ -942,6 +946,16 @@ class ServerHandler(BaseHTTPRequestHandler):
             </div>
             ''' % form
 
+        default_css = os.path.join(configuration.migserver_https_sid_url,
+                                   configuration.site_default_css.strip('/'))
+        custom_css = os.path.join(configuration.migserver_https_sid_url,
+                                  configuration.site_custom_css.strip('/'))
+        fav_icon = os.path.join(configuration.migserver_https_sid_url,
+                                configuration.site_fav_icon.strip('/'))
+        site_logo = os.path.join(configuration.migserver_https_sid_url,
+                                 '/images/site-logo.png'.strip('/'))
+        copyright_logo = os.path.join(configuration.migserver_https_sid_url,
+                                      '/images/copyright.png'.strip('/'))
         contents = {
             'title': configuration.short_title + ' OpenID Server - ' + title,
             'short_title': configuration.short_title,
@@ -949,6 +963,11 @@ class ServerHandler(BaseHTTPRequestHandler):
             'body': body,
             'user_link': user_link,
             'root_url': '/%s/' % self.server.server_base,
+            'site_default_css': default_css,
+            'site_custom_css': custom_css,
+            'site_fav_icon': fav_icon,
+            'site_logo': site_logo,
+            'copyright_logo': copyright_logo,
             }
 
         self.send_response(response_code)
@@ -956,80 +975,52 @@ class ServerHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
-        self.wfile.write('''<html>
+        self.wfile.write('''<!DOCTYPE html>
+<html>
   <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
     <title>%(title)s</title>
     %(head_extras)s
+<!-- site default style -->
+<link rel="stylesheet" type="text/css" href="%(site_default_css)s" media="screen"/>
+<!-- override with any site-specific styles -->
+<link rel="stylesheet" type="text/css" href="%(site_custom_css)s" media="screen"/>
+
+<link rel="icon" type="image/vnd.microsoft.icon" href="%(site_fav_icon)s"/>
   </head>
-  <style type="text/css">
-      h1 a:link {
-          color: black;
-          text-decoration: none;
-      }
-      h1 a:visited {
-          color: black;
-          text-decoration: none;
-      }
-      h1 a:hover {
-          text-decoration: underline;
-      }
-      body {
-        font-family: verdana,sans-serif;
-        width: 50em;
-        margin: 1em;
-      }
-      div {
-        padding: .5em;
-      }
-      table {
-        margin: none;
-        padding: none;
-      }
-      .banner {
-        padding: none 1em 1em 1em;
-        width: 100%%;
-      }
-      .leftbanner {
-        text-align: left;
-      }
-      .rightbanner {
-        text-align: right;
-        font-size: smaller;
-      }
-      .error {
-        border: 1px solid #ff0000;
-        background: #ffaaaa;
-        margin: .5em;
-      }
-      .message {
-        border: 1px solid #2233ff;
-        background: #eeeeff;
-        margin: .5em;
-      }
-      .form {
-        border: 1px solid #777777;
-        background: #ddddcc;
-        margin: .5em;
-        margin-top: 1em;
-        padding-bottom: 0em;
-      }
-      dd {
-        margin-bottom: 0.5em;
-      }
-  </style>
   <body>
-    <table class="banner">
-      <tr>
-        <td class="leftbanner">
-          <h1><a href="%(root_url)s">%(short_title)s OpenID Server</a></h1>
-        </td>
-        <td class="rightbanner">
+<div id="topspace">
+</div>
+<div id="toplogo">
+<a href="%(root_url)s"><img src="%(site_logo)s" id="logoimage" alt="site logo"/>
+</a>
+<span id="logotitle">
+%(short_title)s OpenID Server
+</span>
+</div>
+
+<div class="contentblock" id="nomenu">
+<div id="migheader">
+
+</div>
+    <div id="content">
+    <div class="banner">
+      <div class="container righttext">
           You are %(user_link)s
-        </td>
-      </tr>
-    </table>
+      </div>
+    </div>
 %(body)s
-  </body>
+  </div>
+</div>
+<div id="bottomlogo">
+<img src="%(copyright_logo)s" id="creditsimage" alt=""/>
+<span id="credits">
+2003-2014, <a href="http://www.migrid.org">The MiG Project</a>
+</span>
+</div>
+<div id="bottomspace">
+</div>
+</body>
 </html>
 ''' % contents)
 
