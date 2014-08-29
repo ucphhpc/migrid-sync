@@ -170,6 +170,9 @@ def refresh_users(configuration, protocol):
     for (auth_file, path) in matches:
         logger.debug("Checking %s" % path)
         user_home = path.replace(os.sep + auth_file, '')
+        # Skip OpenID alias symlinks
+        if os.path.islink(user_home):
+            continue
         user_dir = user_home.replace(conf['root_dir'] + os.sep, '')
         user_id = client_dir_id(user_dir)
         user_alias = client_alias(user_id)
