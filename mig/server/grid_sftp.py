@@ -420,7 +420,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             if os.path.isdir(path):
                 new_mode = (mode & 0775) | 0750
             else:
-                new_mode = (mode & 0664) | 0640
+                new_mode = (mode & 0775) | 0640
             self.logger.info("chmod %s (%s) without damage on %s :: %s" % \
                                 (new_mode, mode, path, real_path))
             try:

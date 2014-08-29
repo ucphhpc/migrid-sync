@@ -202,7 +202,7 @@ class MiGRestrictedFilesystem(AbstractedFS):
             if os.path.isdir(path):
                 new_mode = (mode & 0775) | 0750
             else:
-                new_mode = (mode & 0664) | 0640
+                new_mode = (mode & 0775) | 0640
             logger.info("chmod %s (%s) without damage on %s :: %s" % \
                         (new_mode, mode, path, real_path))
             return AbstractedFS.chmod(self, path, new_mode)
