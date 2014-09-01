@@ -28,6 +28,7 @@
 """Common HTTPS client functions for e.g. access control"""
 
 import os
+import socket
 from urllib import urlencode
 from urlparse import parse_qsl
 
@@ -86,3 +87,12 @@ def extract_client_id(configuration, environ=os.environ):
             pop_openid_query_fields(environ)
         distinguished_name = get_openid_user_dn(configuration, login)
     return distinguished_name
+
+def check_source_ip(remote_ip, unique_resource_name):
+    """Check if remote_ip matches any IP available for the FQDN from
+    unique_resource_name"""
+    resource_fqdn = '.'.join(unique_resource_name.split('.')[:-1])
+    (_, _, resource_ip_list) = socket.gethostbyname_ex(resource_fqdn)
+    if not remote_ip in resource_ip_list:
+        raise ValueError("Source IP address %s not in resource alias IPs %s" % \
+                         (remote_ip, ', '.join(resource_ip_list)))

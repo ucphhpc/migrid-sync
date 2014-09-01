@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # getrespgid - Get PGID of process on resource for kill in clean up
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,6 +33,7 @@ import fcntl
 import shared.returnvalues as returnvalues
 from shared.findtype import is_owner
 from shared.functional import validate_input, REJECT_UNSET
+from shared.httpsclient import check_source_ip
 from shared.init import initialize_main_variables
 from shared.validstring import valid_dir_input
 
@@ -75,8 +76,6 @@ def main(client_id, user_arguments_dict):
     else:
         output_objects.append({'object_type': 'start'})
 
-    # TODO: add session ID check here
-
     # Please note that base_dir must end in slash to avoid access to other
     # resource dirs when own name is a prefix of another resource name
     
@@ -105,6 +104,17 @@ def main(client_id, user_arguments_dict):
 appears to be an illegal directory traversal attempt!: unique_resource_name %s,
 exe %s, client_id %s''' % (unique_resource_name, exe_name, client_id))
         return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # Check that resource address matches request source to make DoS harder
+    try:
+        check_source_ip(remote_ip, unique_resource_name)
+    except ValueError, vae:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'invalid request: %s' % vae})
+        logger.error("Invalid put pgid: %s" % vae)
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # TODO: add full session ID check here
 
     if 'FE' == res_type:
         pgid_path = os.path.join(base_dir, 'FE.PGID')

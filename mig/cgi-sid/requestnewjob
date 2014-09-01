@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# requestnewjob - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# requestnewjob - handle job requests from resources
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,6 +25,8 @@
 # -- END_HEADER ---
 #
 
+"""Handle request for a job from a resource"""
+
 import cgi
 import os
 import sys
@@ -35,6 +37,7 @@ from shared.conf import get_resource_configuration
 from shared.cgishared import init_cgiscript_possibly_with_cert
 from shared.fileio import send_message_to_grid_script
 from shared.findtype import is_resource
+from shared.httpsclient import check_source_ip
 from shared.validstring import valid_dir_input
 
 # ## Main ###
@@ -51,8 +54,6 @@ if str(os.getenv('HTTPS')) != 'on':
     o.out('Please use HTTPS with session id for authenticating job requests!'
           )
     o.reply_and_exit(o.ERROR)
-
-# TODO: add session ID check here
 
 remote_ip = str(os.getenv('REMOTE_ADDR'))
 
@@ -102,6 +103,16 @@ if not valid_dir_input(configuration.resource_home,
     o.internal('requestnewjob called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, client_id %s'
                 % (unique_resource_name, exe, client_id))
     o.reply_and_exit(o.CLIENT_ERROR)
+
+# Check that resource address matches request source to make DoS harder
+try:
+    check_source_ip(remote_ip, unique_resource_name)
+except ValueError, vae:
+    o.out("Warning: job request not sent from expected resource address!")
+    o.internal("invalid job request: %s" % vae)
+    o.reply_and_exit(o.CLIENT_ERROR)
+
+# TODO: add full session ID check here
 
 lock_file = os.path.abspath(os.path.join(base_dir, 'jobrequest_pending.%s' % exe))
 filehandle = None
@@ -203,14 +214,6 @@ except:
     o.out('REQUESTNEWJOB error! Specified exe_pgid is not an integer (%s)'
            % exe_pgid)
     o.reply_and_exit(o.ERROR)
-
-# Check that resource address matches request source
-# TODO: get real ip and enable this check
-# remote_ip = str(os.getenv("REMOTE_ADDR"))
-# resource_ip = "0.0.0.0"
-# if remote_ip != resource_ip:
-#    print "Warning: job request not sent from expected resource address!"
-#    logger.warning("job request not issued from address of resource! (%s != %s)", remote_ip, resource_ip)
 
 if not is_resource(unique_resource_name, configuration.resource_home):
     o.out('REQUESTNEWJOB error! Your unique_resource_name is not recognized'+
