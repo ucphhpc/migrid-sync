@@ -826,7 +826,8 @@ def guess_type(name):
         for key in ('cert_name', 'org', 'machine_software', 'freeze_name',
                     'freeze_author', 'freeze_department', 'freeze_organization',
                     'openid.sreg.cn', 'openid.sreg.fullname',
-                    'openid.sreg.full_name', ):
+                    'openid.sreg.full_name', 'openid.sreg.nickname',
+                    'openid.sreg.o', 'openid.sreg.ou', ):
             __type_map[key] = valid_commonname
         for key in ('cert_id', ):
             __type_map[key] = valid_distinguished_name

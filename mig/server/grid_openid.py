@@ -86,7 +86,9 @@ from shared.useradm import load_user_db, extract_field, cert_field_map, \
 configuration, logger = None, None
 
 # Update with extra fields
-cert_field_map.update({'role': 'ROLE', 'mail': 'MAIL', 'short_id': 'KUID'})
+cert_field_map.update({'role': 'ROLE', 'mail': 'MAIL', 'short_id': 'KUID',
+                       'timezone': 'TZ', 'nickname': 'KUID', 'fullname': 'CN',
+                       'o': 'O', 'ou': 'OU'})
 cert_field_names = cert_field_map.keys()
 cert_field_aliases = cert_field_map.values()
 
@@ -699,7 +701,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             <table>
               <tr><td>Identity:</td>
                  <td>%(id_url_base)s%(alias_mark)s<input id="id_select"
-                     name="identifier" />
+                     name="identifier" autofocus />
               </td></tr>
               <tr><td>Password:</td>
                  <td><input type="password" name="password"></td></tr>
@@ -737,7 +739,7 @@ class ServerHandler(BaseHTTPRequestHandler):
               <input type="checkbox" id="remember" name="remember" value="yes"
                   /><label for="remember">Remember this
                   decision</label><br />
-              Password: <input type="password" name="password"><br />
+              Password: <input type="password" name="password" autofocus /><br />
               <input type="submit" name="yes" value="yes" />
               <input type="submit" name="no" value="no" />
             </form>''' % fdata
@@ -769,7 +771,8 @@ class ServerHandler(BaseHTTPRequestHandler):
               <input type="checkbox" id="remember" name="remember" value="yes"
                   /><label for="remember">Remember this
                   decision</label><br />
-              <input type="hidden" name="login_as" value="%(expected_user)s"/>
+              <input type="hidden" name="login_as" value="%(expected_user)s"
+                  autofocus />
               Password: <input type="password" name="password"><br />
               <input type="submit" name="yes" value="yes" />
               <input type="submit" name="no" value="no" />
@@ -905,7 +908,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         <form method="GET" action="/%s/loginsubmit">
           <input type="hidden" name="success_to" value="%s" />
           <input type="hidden" name="fail_to" value="%s" />
-          Username: <input type="text" name="user" value="" /><br />
+          Username: <input type="text" name="user" value="" autofocus /><br />
           Password: <input type="password" name="password"><br />
           <input type="submit" name="submit" value="Log In" />
           <input type="submit" name="cancel" value="Cancel" />
