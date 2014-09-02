@@ -340,18 +340,28 @@ def refresh_vgrid_map(configuration):
 
     # Update list of mutually agreed vgrid participations for dirty resources
     # and resources assigned to dirty vgrids
+    configuration.logger.info("update res vgrid participations: %s" % vgrid_changes)
     update_res = [i for i in dirty.get(RESOURCES, []) if i not in MAP_SECTIONS]
+    # configuration.logger.info("update vgrid allow res")
     for (vgrid, (old, new)) in vgrid_changes.items():
+        # configuration.logger.info("update res vgrid %s" % vgrid)
         for res in [i for i in vgrid_map[RESOURCES].keys() \
                     if i not in update_res]:
+            # Sandboxes do not change their vgrid participation
+            if sandbox_resource(res):
+                continue
+            # configuration.logger.info("update res vgrid %s for res %s" % (vgrid, res))
             if vgrid_allowed(res, old) != vgrid_allowed(res, new):
                 update_res.append(res)
+    # configuration.logger.info("update res assign vgrid")
     for res in [i for i in update_res if i not in missing_res]:
         allow = []
         for vgrid in vgrid_map[RESOURCES][res][ASSIGN]:
             if vgrid_allowed(res, vgrid_map[VGRIDS][vgrid][RESOURCES]):
                 allow.append(vgrid)
             vgrid_map[RESOURCES][res][ALLOW] = allow
+
+    configuration.logger.info("done updating vgrid res participations")
 
     # Find all users and their vgrid assignments
     
