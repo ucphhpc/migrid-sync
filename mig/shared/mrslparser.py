@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mrslparser - Parse mRSL job descriptions
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,6 +25,8 @@
 # -- END_HEADER ---
 #
 
+"""Job description parser and validator"""
+
 import os
 import time
 import types
@@ -36,6 +38,7 @@ from shared.conf import get_configuration_object
 from shared.defaults import default_vgrid, any_vgrid
 from shared.fileio import unpickle, pickle, send_message_to_grid_script
 from shared.refunctions import is_runtime_environment
+from shared.safeinput import html_escape, valid_path
 from shared.vgrid import user_allowed_vgrids
 
 try:
@@ -112,8 +115,9 @@ def parse(
     logger = configuration.logger
     client_dir = client_id_dir(client_id)
 
-    # return a tuple (bool status, str msg). This is done because cgi-scripts are not allowed to print anything
-    # before 'the first two special lines' are printed
+    # return a tuple (bool status, str msg). This is done because cgi-scripts
+    # are not allowed to print anything before 'the first two special lines'
+    # are printed
 
     result = parser.parse(localfile_spaces)
 
@@ -163,9 +167,8 @@ def parse(
 
     for vgrid_name in vgrid_list:
         if not vgrid_name in allowed_vgrids:
-            return (False,
-                    "Failure: You must be an owner or member of the '%s' vgrid to submit a job to it!"
-                     % vgrid_name)
+            return (False, """Failure: You must be an owner or member of the
+'%s' vgrid to submit a job to it!""" % vgrid_name)
 
     # Fall back to default vgrid if no vgrid was supplied
 
@@ -176,9 +179,11 @@ def parse(
 
         vgrid_list.append(default_vgrid)
 
-    # convert specified runtime environments to upper-case and verify they actually exist
+    # convert specified runtime environments to upper-case and verify they
+    # actually exist
 
-    # do not check runtime envs if the job is for ARC (submission will fail later)
+    # do not check runtime envs if the job is for ARC (submission will
+    # fail later)
     if global_dict.get('JOBTYPE', 'unset') != 'arc' \
         and global_dict.has_key('RUNTIMEENVIRONMENT'):
         re_entries_uppercase = []
@@ -186,16 +191,18 @@ def parse(
             specified_re = specified_re.upper()
             re_entries_uppercase.append(specified_re)
             if not is_runtime_environment(specified_re, configuration):
-                return (False,
-                        "You have specified a non-nexisting runtime environment '%s', therefore the job can not be run on any resources."
-                         % specified_re)
+                return (False, """You have specified a non-nexisting runtime
+environment '%s', therefore the job can not be run on any resources.""" % \
+                        specified_re)
 
         global_dict['RUNTIMEENVIRONMENT'] = re_entries_uppercase
 
     if global_dict.get('JOBTYPE', 'unset').lower() == 'interactive':
 
-        # if jobtype is interactive append command to create the notification file .interactivejobfinished that breaks
-        # the infinite loop waiting for the interactive job to finish and send output files to the MiG server
+        # if jobtype is interactive append command to create the notification
+        # file .interactivejobfinished that breaks the infinite loop waiting
+        # for the interactive job to finish and send output files to the MiG
+        # server
 
         global_dict['EXECUTE'].append('touch .interactivejobfinished')
 
@@ -215,9 +222,10 @@ def parse(
         global_dict['FORCEDDESTINATION'] = forceddestination
         re_name = forceddestination['RE_NAME']
 
-        # verify the verifyfiles entries are not modified (otherwise RE creator can specify multiple
-        # ::VERIFYFILES:: keywords and give the entries other names (perhaps overwriting files in
-        # the home directories of resource owners executing the testprocedure)
+        # verify the verifyfiles entries are not modified (otherwise RE creator
+        # can specify multiple ::VERIFYFILES:: keywords and give the entries
+        # other names (perhaps overwriting files in the home directories of
+        # resource owners executing the testprocedure)
 
         for verifyfile in global_dict['VERIFYFILES']:
             verifytypes = ['.status', '.stderr', '.stdout']
@@ -227,9 +235,8 @@ def parse(
                         verifytype):
                     found = True
             if not found:
-                return (False,
-                        'You are not allowed to specify the ::VERIFY:: keyword in a testprocedure, it is done automatically'
-                        )
+                return (False, '''You are not allowed to specify the
+::VERIFY:: keyword in a testprocedure, it is done automatically''')
 
     # normalize any path fields to be taken relative to home
 
@@ -255,11 +262,19 @@ def parse(
                     # keep external targets as is - normpath breaks '://'
 
                     normalized_parts.append(part)
+                    check_path = part.split('/')[-1]
                 else:
 
-                    # normalize path to avoid e.g. './' which breaks dir handling on resource
+                    # normalize path to avoid e.g. './' which breaks dir
+                    # handling on resource
 
-                    normalized_parts.append(os.path.normpath(part))
+                    check_path = os.path.normpath(part)
+                    normalized_parts.append(check_path)
+                try:
+                    valid_path(check_path)
+                except Exception, exc:
+                    return (False, 'Invalid %s part in %s: %s' % \
+                            (field, html_escape(part), exc))
             normalized_field.append(' '.join(normalized_parts))
         global_dict[field] = normalized_field
 
@@ -302,7 +317,8 @@ def parse(
 
     if not outfile == 'AUTOMATIC':
 
-        # an outfile was specified, so this is just for testing - dont tell grid_script
+        # an outfile was specified, so this is just for testing - dont tell
+        # grid_script
 
         return (True, '')
 
@@ -311,9 +327,8 @@ def parse(
     message = 'USERJOBFILE %s/%s\n' % (client_dir, job_id)
 
     if not send_message_to_grid_script(message, logger, configuration):
-        return (False,
-                'Fatal error: Could not get exclusive access or write to %s'
-                 % configuration.grid_stdin)
+        return (False, '''Fatal error: Could not get exclusive access or write
+to %s''' % configuration.grid_stdin)
 
     if forceddestination and forceddestination.has_key('RE_NAME'):
 
@@ -363,5 +378,3 @@ def parse(
     # phew, we made it. Everything ok
 
     return (True, '')
-
-
