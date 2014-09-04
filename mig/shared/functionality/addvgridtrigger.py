@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# addvgridres - add vgrid resource
+# addvgridtrigger - add vgrid trigger
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,15 +25,17 @@
 # -- END_HEADER ---
 #
 
-"""Add a resource to a given vgrid"""
+"""Add a trigger to a given vgrid"""
 
 import os
+import time
 
+from shared.defaults import any_state, keyword_auto
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_resource, \
-     vgrid_list_subvgrids, vgrid_add_resources
+from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
+     vgrid_list_subvgrids, vgrid_add_triggers
 import shared.returnvalues as returnvalues
 
 
@@ -41,7 +43,14 @@ def signature():
     """Signature of the main function"""
 
     defaults = {'vgrid_name': REJECT_UNSET,
-                'unique_resource_name': REJECT_UNSET}
+                'rule_id': [keyword_auto],
+                'target_input': REJECT_UNSET,
+                'target_output': [''],
+                'target_template': [''],
+                'target_change': [any_state],
+                'run_as': [keyword_auto],
+                'action': [keyword_auto],
+                }
     return ['', defaults]
 
 
@@ -52,7 +61,7 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Add VGrid Resource'})
+                          : 'Add VGrid Trigger'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -71,14 +80,34 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     vgrid_name = accepted['vgrid_name'][-1]
-    unique_resource_name = accepted['unique_resource_name'][-1].lower()
+    rule_id = accepted['rule_id'][-1]
+    target_input = accepted['target_input'][-1]
+    target_output = accepted['target_output'][-1]
+    target_template = accepted['target_template'][-1]
+    target_change = accepted['target_change'][-1]
+    run_as = accepted['run_as'][-1]
+    action = accepted['action'][-1]
+
+    # TODO: better generator for AUTO ID?
+    
+    if rule_id == keyword_auto:
+        rule_id = "%d" % (time.time() * 1E8)
+
+    if run_as == keyword_auto:
+        run_as = client_id
+
+    if action == keyword_auto:
+        action = 'submit'
+
+    if target_change not in ('new', 'changed', 'deleted'):
+        target_change = any_state
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
 
     (ret_val, msg, ret_variables) = \
         init_vgrid_script_add_rem(vgrid_name, client_id,
-                                  unique_resource_name, 'resource',
+                                  rule_id, 'trigger',
                                   configuration)
     if not ret_val:
         output_objects.append({'object_type': 'error_text', 'text'
@@ -92,11 +121,10 @@ def main(client_id, user_arguments_dict):
 
     # don't add if already in vgrid or parent vgrid
 
-    if vgrid_is_resource(vgrid_name, unique_resource_name,
-                         configuration):
+    if vgrid_is_trigger(vgrid_name, rule_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is already a resource in the vgrid'
-                               % unique_resource_name})
+                              : '%s is already a trigger in the vgrid'
+                               % rule_id})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't add if already in subvgrid
@@ -109,30 +137,38 @@ def main(client_id, user_arguments_dict):
                                % subvgrids})
         return (output_objects, returnvalues.SYSTEM_ERROR)
     for subvgrid in subvgrids:
-        if vgrid_is_resource(subvgrid, unique_resource_name,
-                             configuration):
-            output_objects.append({'object_type': 'error_text', 'text':
-                                   '''%s is already in a sub-vgrid (%s).
-Remove the resource from the subvgrid and try again''' % (unique_resource_name,
-                                                          subvgrid)})
+        if vgrid_is_trigger(subvgrid, rule_id, configuration):
+            output_objects.append({'object_type': 'error_text', 'text'
+                                  : '''%s is already in a sub-vgrid (%s).
+Remove the trigger from the subvgrid and try again''' % \
+                                   (rule_id, subvgrid)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     base_dir = os.path.abspath(configuration.vgrid_home + os.sep
                                 + vgrid_name) + os.sep
-    resources_file = base_dir + 'resources'
+    triggers_file = base_dir + 'triggers'
+
+    rule_dict = {'rule_id': rule_id,
+                 'target_input': target_input,
+                 'target_output': target_output,
+                 'target_change': target_change,
+                 'target_template': target_template,
+                 'run_as': run_as,
+                 'action': action
+                 }
 
     # Add to list and pickle
 
-    (add_status, add_msg) = vgrid_add_resources(configuration, vgrid_name,
-                                                [unique_resource_name])
+    (add_status, add_msg) = vgrid_add_triggers(configuration, vgrid_name,
+                                                [rule_dict])
     if not add_status:
         output_objects.append({'object_type': 'error_text', 'text': '%s'
                                % add_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : 'New resource %s successfully added to %s vgrid!'
-                           % (unique_resource_name, vgrid_name)})
+                          : 'New trigger %s successfully added to %s vgrid!'
+                           % (rule_id, vgrid_name)})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

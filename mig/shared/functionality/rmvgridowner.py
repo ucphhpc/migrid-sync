@@ -197,7 +197,7 @@ def remove_vgrid_entry(vgrid, configuration):
                         configuration.vgrid_private_base, 
                         configuration.vgrid_files_home]:
 
-            # delete public, member, and owner wikis/scms/trackers
+            # delete public, member, and owner scms/trackers
             # we just remove and do not check success for these
 
             if configuration.hg_path and configuration.hgweb_scripts:

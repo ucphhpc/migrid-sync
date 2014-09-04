@@ -29,6 +29,7 @@
 and trigger any associated actions based on rule database.
 """
 
+import fnmatch
 import glob
 import os
 import sys
@@ -42,6 +43,7 @@ except ImportError:
     sys.exit(1)
 
 from shared.conf import get_configuration_object
+from shared.defaults import any_state
 from shared.serial import load
 
 # Global trigger rule dictionary with rules for all VGrids
@@ -70,27 +72,33 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
         logger.debug("%s rule file: %s" % (state, src_path))
         rel_path = src_path.replace(os.path.join(configuration.vgrid_home, ""),
                                     '')
-        vgrid_name = rel_path.replace(os.sep + 'events', '')
+        vgrid_name = rel_path.replace(os.sep + 'triggers', '')
         vgrid_prefix = os.path.join(configuration.vgrid_files_home,
                                     vgrid_name, '')
         logger.info("refresh %s rules from %s" % (vgrid_name, src_path))
         try:
             new_rules = load(src_path)
         except Exception, exc:
-            new_rules = {}
+            new_rules = []
             if state != "deleted":
                 logger.error("failed to load saved event handler rules from %s" % \
                              src_path)
         logger.info("loaded new rules from %s:\n%s" % (src_path, new_rules))
-        all_rules.update(new_rules)
-        for target in all_rules.keys():
-            if target.startswith(vgrid_prefix) and target not in new_rules.keys():
+        # TODO: is this remove overzealous for nested vgrids?
+        # Remove all old rules for this vgrid
+        for target_path in all_rules.keys():
+            if target_path.startswith(vgrid_prefix):
                 logger.info("removing old rule for %s: %s" % \
-                            (target, all_rules[target]))
-                del all_rules[target]
+                            (target_path, all_rules[target_path]))
+                del all_rules[target_path]
             else:
                 logger.debug("leaving rule for %s (%s): %s" % \
                              (target, vgrid_prefix, all_rules[target]))
+        for entry in new_rules:
+            logger.info("updating rule entry:\n%s" % entry)
+            target_input = entry['target_input']
+            target_path = os.path.join(vgrid_prefix, target_input)
+            all_rules[target_path] = all_rules.get(target_path, []) + [entry]
         logger.info("all rules:\n%s" % all_rules)
 
     def on_modified(self, event):
@@ -124,11 +132,17 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         if event.is_directory:
             logger.debug("skipping event handling for directory: %s" % src_path)
         logger.info("got %s event for file: %s" % (state, src_path))
-        rule = all_rules.get(src_path, {})
-        if rule:
-            logger.info("TODO: trigger action for %s: %s" % (src_path, rule))
-        else:
-            logger.debug("skipping %s with no matching rules" % src_path)
+        logger.info("filter %s against %s" % (all_rules.keys(), src_path))
+        for (target_path, rule_list) in all_rules.items():
+            for rule in rule_list:
+                if not rule['target_change'] in (any_state, state):
+                    logger.debug("skipping %s with state mismatch" % target_path)
+                    continue
+                if fnmatch.fnmatch(src_path, target_path):
+                    logger.info("TODO: trigger %s for %s: %s" % \
+                                (rule['action'], src_path, rule))
+                else:
+                    logger.debug("skipping %s with no matching rules" % target_path)
 
     def on_modified(self, event):
         """Handle modified files"""
@@ -168,7 +182,7 @@ unless it is available in mig/server/MiGserver.conf
     # Monitor rule configurations
 
     rule_monitor = Observer()
-    rule_patterns = [os.path.join(configuration.vgrid_home, "*", "events")]
+    rule_patterns = [os.path.join(configuration.vgrid_home, "*", "triggers")]
     rule_handler = MiGRuleEventHandler(patterns=rule_patterns,
                                        ignore_directories=False,
                                        case_sensitive=True)

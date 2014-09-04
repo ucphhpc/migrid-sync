@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# rmvgridres - remove resource from vgrid
+# rmvgridtrigger - remove trigger from vgrid
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -29,7 +29,7 @@ import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.rmvgridres import main
+from shared.functionality.rmvgridtrigger import main
 from shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

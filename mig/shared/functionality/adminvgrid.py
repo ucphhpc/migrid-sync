@@ -25,7 +25,9 @@
 # -- END_HEADER ---
 #
 
-"""List owners, members, res's and show html controls to administrate a vgrid"""
+"""List owners, members, resources and triggers for vgrid and show html
+controls to administrate them.
+"""
 
 from binascii import hexlify
 
@@ -47,12 +49,12 @@ def vgrid_add_remove_table(vgrid_name,
                            item_string, 
                            script_suffix, 
                            configuration):
-    """Create a table of owners/members/resources (item_string), allowing to
-    remove one item by selecting (radio button) and calling a script, and
-    a form to add a new entry. 
+    """Create a table of owners/members/resources/triggers (item_string),
+    allowing to remove one item by selecting (radio button) and calling a
+    script, and a form to add a new entry. 
     
     Arguments: vgrid_name, the vgrid to operate on
-               item_string, one of owner, member, resource
+               item_string, one of owner, member, resource, trigger
                script_suffix, will be prepended with "add" and "rm" for forms
                configuration, for loading the list of current items 
                
@@ -61,44 +63,66 @@ def vgrid_add_remove_table(vgrid_name,
 
     out = []
 
-    if not item_string in ['owner', 'member', 'resource']:
+    if not item_string in ['owner', 'member', 'resource', 'trigger']:
         out.append({'object_type': 'error_text', 'text': 
                     'Internal error: Unknown item type %s.' % item_string
                     })
         return (False, out)
 
+    optional = False
+    extra_fields = []
     if item_string == 'resource':
-        qu_string = 'unique_resource_name'
+        id_field = 'unique_resource_name'
+    elif item_string == 'trigger':
+        id_field = 'rule_id'
+        extra_fields = ['target_input', 'target_output', 'target_template',
+                        'target_change', 'run_as', 'action']
+        optional = True
     else:
-        qu_string = 'cert_id'
+        id_field = 'cert_id'
 
     # read list of current items and create form to remove one
 
-    (status, inherit) = vgrid_list(vgrid_name, '%ss' % item_string, configuration)
+    (status, inherit) = vgrid_list(vgrid_name, '%ss' % item_string,
+                                   configuration, recursive=True,
+                                   allow_missing=optional)
     if not status:
         out.append({'object_type': 'error_text',
                     'text': inherit })
         return (False, out)
     (status, direct) = vgrid_list(vgrid_name, '%ss' % item_string,
-                                   configuration, recursive=False)
+                                  configuration, recursive=False,
+                                  allow_missing=optional)
     if not status:
         out.append({'object_type': 'error_text',
                     'text': direct })
         return (False, out)
 
-    # success, so direct and inherit are lists of unique user/resource IDs
+    extra_titles_html = ''
+    for field in extra_fields:
+        extra_titles_html += '<th>%s</th>' % field.replace('_', ' ').title()
+
+    # success, so direct and inherit are lists of unique user/res/trigger IDs
     extras = [i for i in inherit if not i in direct]
     if extras:
         table = '''
         <br />
         Inherited %(item)ss of %(vgrid)s:
         <table class="vgrid%(item)s">
-          <thead><tr><th></th><th>%(item)s</th></thead>
+          <thead><tr><th></th><th>%(item)s</th>%(extra_titles)s</thead>
           <tbody>
 ''' % {'item': item_string,
-       'vgrid': vgrid_name}
+       'vgrid': vgrid_name,
+       'extra_titles': extra_titles_html}
 
         for elem in extras:
+            extra_fields_html = ''
+            if isinstance(elem, dict) and elem.has_key(id_field):
+                for field in extra_fields:
+                    extra_fields_html += '<td>%s</td>' % elem[field]
+                form += \
+"""          <tr><td></td><td>%s</td>%s</tr>""" % (elem[id_field],
+                                                   extra_fields_html)
             if elem:
                 table += \
 "          <tr><td></td><td>%s</td></tr>"\
@@ -113,17 +137,26 @@ def vgrid_add_remove_table(vgrid_name,
         <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
         Current %(item)ss of %(vgrid)s:
         <table class="vgrid%(item)s">
-          <thead><tr><th>Remove</th><th>%(item)s</th></thead>
+          <thead><tr><th>Remove</th><th>%(item)s</th>%(extra_titles)s</thead>
           <tbody>
 ''' % {'item': item_string,
        'scriptname': script_suffix,
-       'vgrid': vgrid_name}
+       'vgrid': vgrid_name,
+       'extra_titles': extra_titles_html}
 
         for elem in direct:
-            if elem:
+            extra_fields_html = ''
+            if isinstance(elem, dict) and elem.has_key(id_field):
+                for field in extra_fields:
+                    extra_fields_html += '<td>%s</td>' % elem[field]
                 form += \
-"          <tr><td><input type=radio name='%s' value='%s' /></td><td>%s</td></tr>"\
-                     % (qu_string, elem, elem)
+"""          <tr><td><input type=radio name='%s' value='%s' /></td>
+                 <td>%s</td>%s</tr>""" % (id_field, elem[id_field],
+                 elem[id_field], extra_fields_html)
+            elif elem:
+                form += \
+"""          <tr><td><input type=radio name='%s' value='%s' /></td>
+                 <td>%s</td></tr>""" % (id_field, elem, elem)
         form += '''
         </tbody></table>
         <input type="submit" value="Remove %s" />
@@ -134,15 +167,21 @@ def vgrid_add_remove_table(vgrid_name,
 
     # form to add a new item
 
+    extra_fields_html = ''
+    for field in extra_fields:
+        extra_fields_html += '%s <input type="text" size=70 name="%s" /><br/>' % \
+                             (field.replace('_', ' ').title(), field)
     out.append({'object_type': 'html_form',
                 'text': '''
       <form method="post" action="add%(script)s.py">
           <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
-          <input type="text" size=70 name="%(qu_string)s" />
+          ID <input type="text" size=70 name="%(id_field)s" /><br/>
+          %(extra_fields)s
           <input type="submit" value="Add vgrid %(item)s" />
       </form>
 ''' % {'vgrid': vgrid_name, 'item': item_string, 
-       'script': script_suffix, 'qu_string': qu_string }
+       'script': script_suffix, 'id_field': id_field,
+       'extra_fields': extra_fields_html }
                })
     
     return (True, out)
@@ -218,10 +257,8 @@ $(document).ready(function() {
                           : "Administrate '%s'" % vgrid_name })
 
     if not vgrid_is_owner(vgrid_name, client_id, configuration):
-
         output_objects.append({'object_type': 'error_text', 'text': 
                     'Only owners of %s can administrate it.' % vgrid_name })
-
         js_name = 'reqvgridowner%s' % hexlify(vgrid_name)
         helper = html_post_helper(js_name, 'sendrequestaction.py',
                                   {'vgrid_name': vgrid_name,
@@ -238,31 +275,20 @@ $(document).ready(function() {
                                'class': 'addadminlink',
                                'title': 'Request ownership of %s' % vgrid_name,
                                'text': 'Apply to become an owner'})
-
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-#    (ret, msg) = create_html(vgrid_name, configuration)
-
-#def vgrid_add_remove_table(vgrid_name,item_string,script_suffix, configuration):
-
-    for (item, scr) in zip(['owner','member','resource'],
-                        ['vgridowner','vgridmember', 'vgridres']):
-        
-        # section header == title(item_string)
-
+    for (item, scr) in zip(['owner', 'member', 'resource', 'trigger'],
+                        ['vgridowner', 'vgridmember', 'vgridres',
+                         'vgridtrigger']):
         output_objects.append({'object_type': 'sectionheader',
-                               'text': "%ss" % str.title(item)
+                               'text': "%ss" % item.title()
                                })
-
         (status, oobjs) = vgrid_add_remove_table(vgrid_name, item, 
                                                  scr, configuration)
         if not status:
-
             output_objects.extend(oobjs)
             return (output_objects, returnvalues.SYSTEM_ERROR)
-
         else:
-
             output_objects.append({'object_type': 'html_form', 
                                    'text': '<div class="div-%s">' % item })
             output_objects.append({'object_type': 'link', 
@@ -270,7 +296,7 @@ $(document).ready(function() {
                                    "javascript:toggleHidden('.div-%s');" % item,
                                    'class': 'removeitemlink',
                                    'title': 'Toggle view',
-                                   'text': 'Hide %ss' % str.title(item) })
+                                   'text': 'Hide %ss' % item.title() })
             output_objects.extend(oobjs)
             output_objects.append({'object_type': 'html_form', 
                                    'text': '</div><div class="hidden div-%s">' % item})
@@ -279,7 +305,7 @@ $(document).ready(function() {
                                    "javascript:toggleHidden('.div-%s');" % item,
                                    'class': 'additemlink',
                                    'title': 'Toggle view',
-                                   'text': 'Show %ss' % str.title(item) })
+                                   'text': 'Show %ss' % item.title() })
             output_objects.append({'object_type': 'html_form', 
                                    'text': '</div>' })
 
@@ -301,6 +327,5 @@ $(document).ready(function() {
                            'text': '''
       To delete <b>%(vgrid)s</b> remove all members and owners ending with yourself.
 ''' % {'vgrid': vgrid_name}})
-
 
     return (output_objects, returnvalues.OK)

@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# rmvgridres - remove vgrid resource
+# rmvgridtrigger - remove vgrid trigger
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,21 +25,21 @@
 # -- END_HEADER ---
 #
 
-"""Remove a resource from a given vgrid"""
+"""Remove a trigger from a given vgrid"""
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-     vgrid_is_resource, vgrid_remove_resources
+     vgrid_is_trigger, vgrid_remove_triggers
 
 
 def signature():
     """Signature of the main function"""
 
     defaults = {'vgrid_name': REJECT_UNSET,
-                'unique_resource_name': REJECT_UNSET}
+                'rule_id': REJECT_UNSET}
     return ['text', defaults]
 
 
@@ -50,7 +50,7 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Remove VGrid Resource'})
+                          : 'Remove VGrid Trigger'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -69,14 +69,14 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     vgrid_name = accepted['vgrid_name'][-1]
-    unique_resource_name = accepted['unique_resource_name'][-1].lower()
+    rule_id = accepted['rule_id'][-1]
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
 
     (ret_val, msg, ret_variables) = \
         init_vgrid_script_add_rem(vgrid_name, client_id,
-                                  unique_resource_name, 'resource',
+                                  rule_id, 'trigger',
                                   configuration)
     if not ret_val:
         output_objects.append({'object_type': 'error_text', 'text'
@@ -90,35 +90,36 @@ def main(client_id, user_arguments_dict):
 
     if not vgrid_is_owner(vgrid_name, client_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '''You must be an owner of the VGrid to
-remove a vgrid resource!'''
+                              : '''You must be an owner of the vgrid to remove 
+a vgrid trigger!'''
                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't remove if not a participant
 
-    if not vgrid_is_resource(vgrid_name, unique_resource_name, configuration):
+    if not vgrid_is_trigger(vgrid_name, rule_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is not a resource in %s or a parent vgrid.'
-                               % (unique_resource_name, vgrid_name)})
+                              : '%s is not a trigger in %s or a parent vgrid.'
+                               % (rule_id, vgrid_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # remove
 
-    (rm_status, rm_msg) = vgrid_remove_resources(configuration, vgrid_name,
-                                                 unique_resource_name)
+    (rm_status, rm_msg) = vgrid_remove_triggers(configuration, vgrid_name,
+                                                 rule_id)
     if not rm_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : rm_msg})
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '''%s might be listed as a resource of this
-VGrid because it is a resource of a parent VGrid. Removal must be performed
-from the most significant VGrid possible.''' % unique_resource_name})
+                              : '''%s might be listed as a trigger of this 
+VGrid because it is a trigger of a parent VGrid. Removal must be performed 
+from the most significant VGrid possible.'''
+                               % rule_id})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : 'Resource %s successfully removed from %s vgrid!'
-                           % (unique_resource_name, vgrid_name)})
+                          : 'Trigger %s successfully removed from %s vgrid!'
+                           % (rule_id, vgrid_name)})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

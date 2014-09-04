@@ -129,14 +129,6 @@ def main(client_id, user_arguments_dict):
 
         # links for everyone: public pages and membership request
 
-        vgrid_obj['publicwikilink'] = {'object_type': 'link',
-                'destination': '%s/vgridpublicwiki/%s'\
-                                       % (configuration.migserver_http_url,
-                                          vgrid_name),
-                                       'class': 'wikilink public',
-                                       'title': 'Open %s public wiki' % \
-                                       vgrid_name,
-                                       'text': 'Open'}
         vgrid_obj['publicscmlink'] = {'object_type': 'link',
                 'destination': '%s/vgridpublicscm/%s'\
                                        % (configuration.migserver_http_url,
@@ -224,13 +216,6 @@ def main(client_id, user_arguments_dict):
                                              'title': 'Open shared %s folder' \
                                              % vgrid_name, 
                                              'text': 'Open'}
-            vgrid_obj['memberwikilink'] = {'object_type': 'link',
-                                           'destination': '/vgridwiki/%s' % \
-                                           vgrid_name,
-                                           'class': 'wikilink member',
-                                           'title': 'Open %s members wiki' % \
-                                           vgrid_name,
-                                           'text': 'Open'}
             vgrid_obj['memberscmlink'] = {'object_type': 'link',
                                           'destination': '/vgridscm/%s' % \
                                           vgrid_name,
@@ -282,13 +267,6 @@ def main(client_id, user_arguments_dict):
         # owners are allowed to edit pages and administrate
 
         if vgrid_is_owner(vgrid_name, client_id, configuration):
-            vgrid_obj['ownerwikilink'] = {'object_type': 'link',
-                                          'destination': '/vgridownerwiki/%s' \
-                                          % vgrid_name,
-                                          'class': 'wikilink owner',
-                                          'title': 'Open %s owners wiki' % \
-                                          vgrid_name,
-                                          'text': 'Open'}
             vgrid_obj['ownerscmlink'] = {'object_type': 'link',
                                          'destination': '/vgridownerscm/%s' % \
                                          vgrid_name,

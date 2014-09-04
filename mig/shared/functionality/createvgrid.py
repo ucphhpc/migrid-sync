@@ -44,7 +44,7 @@ from shared.init import initialize_main_variables
 from shared.useradm import distinguished_name_to_user
 from shared.validstring import valid_dir_input
 from shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
-     vgrid_set_resources
+     vgrid_set_resources, vgrid_set_triggers
 
 
 def signature():
@@ -646,9 +646,6 @@ attempt by '%s': vgrid name '%s'""" % (client_id, vgrid_name))
     public_base_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
                         vgrid_name)) + os.sep
-    public_wiki_dir = \
-        os.path.abspath(os.path.join(configuration.vgrid_public_base,
-                        vgrid_name, '.vgridwiki')) + os.sep
     public_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
                         vgrid_name, '.vgridscm')) + os.sep
@@ -658,9 +655,6 @@ attempt by '%s': vgrid name '%s'""" % (client_id, vgrid_name))
     private_base_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name)) + os.sep
-    private_wiki_dir = \
-        os.path.abspath(os.path.join(configuration.vgrid_private_base,
-                        vgrid_name, '.vgridwiki')) + os.sep
     private_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name, '.vgridscm')) + os.sep
@@ -673,9 +667,6 @@ attempt by '%s': vgrid name '%s'""" % (client_id, vgrid_name))
     vgrid_files_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
                         vgrid_name)) + os.sep
-    vgrid_wiki_dir = \
-        os.path.abspath(os.path.join(configuration.vgrid_files_home,
-                        vgrid_name, '.vgridwiki')) + os.sep
     vgrid_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
                         vgrid_name, '.vgridscm')) + os.sep
@@ -921,6 +912,16 @@ for job input and output.
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not save resource list: %s' % \
                                resource_msg})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    # create empty pickled triggers list
+
+    (trigger_status, trigger_msg) = vgrid_set_triggers(configuration,
+                                                          vgrid_name, [])
+    if not trigger_status:
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Could not save trigger list: %s' % \
+                               trigger_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if new_base_vgrid:

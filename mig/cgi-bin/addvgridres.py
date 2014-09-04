@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# addvgridres - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# addvgridres - add resource to vgrid
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

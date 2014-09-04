@@ -146,15 +146,17 @@ def main(client_id, user_arguments_dict):
 
         # reverse list to remove files and directories of subdirs first
 
-        list = range(len(vgrid_name_parts))
-        list.reverse()
-        reverse_list = list
+        list_range = range(len(vgrid_name_parts))
+        list_range.reverse()
+        reverse_list = list_range
 
-        # remove first entry in reversed list (SUBVGRID in VGRID/SUBVGRID since we not it was the symbolic link and is not a dir)
+        # remove first entry in reversed list (SUBVGRID in VGRID/SUBVGRID since
+        # we know it was the symbolic link and is not a dir)
 
         reverse_list = reverse_list[1:]
 
-        # remove empty placeholder dirs in home dir, private_base and public_base dirs
+        # remove empty placeholder dirs in home dir, private_base and
+        # public_base dirs
 
         base_dirs = [user_dir]
         for base_dir in base_dirs:
@@ -167,19 +169,14 @@ def main(client_id, user_arguments_dict):
                 current_path = base_dir + current_vgrid_path
                 if not os.path.isdir(current_path):
                     output_objects.append({'object_type': 'error_text',
-                            'text'
-                            : 'Error removing vgrid placeholder dirs: %s is not a directory, not going to remove.'
-                             % current_vgrid_path})
+                            'text': '''Error removing vgrid placeholder dirs:
+%s is not a directory, not going to remove.''' % current_vgrid_path})
                     continue
 
-                # verify that == compares content not address of list
-                # if [].append(not_allowed_here_filename) == os.listdir(current_path):
-
-                if not os.listdir(current_path) == []:
+                if os.listdir(current_path):
                     output_objects.append({'object_type': 'error_text',
-                            'text'
-                            : 'Could not remove vgrid placeholder dirs: %s is not an empty directory (not critical)'
-                             % current_vgrid_path})
+                            'text': '''Could not remove vgrid placeholder dirs:
+%s is not an empty directory (not critical)''' % current_vgrid_path})
                 else:
 
                     # remove empty directory
@@ -187,10 +184,10 @@ def main(client_id, user_arguments_dict):
                     try:
                         os.rmdir(current_path)
                     except Exception, exc:
-                        output_objects.append({'object_type'
-                                : 'error_text', 'text'
-                                : 'Error removing vgrid placeholder dirs: exception removing empty directory %s'
-                                 % exc})
+                        output_objects.append(
+                            {'object_type': 'error_text',
+                             'text': '''Error removing vgrid placeholder dirs:
+exception removing empty directory %s''' % exc})
                         return (output_objects,
                                 returnvalues.SYSTEM_ERROR)
 
@@ -202,9 +199,9 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s of member of %s' % (rm_msg,
                               vgrid_name)})
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '(If Vgrid %s has sub-vgrids then removal must be performed from the most significant VGrid possible.)'
-                               % vgrid_name})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''(If Vgrid %s has sub-vgrids then removal must
+be performed from the most significant VGrid possible.)''' % vgrid_name})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     unmap_inheritance(configuration, vgrid_name, cert_id)

@@ -69,17 +69,16 @@ def vgrid_allowed(client_id, allowed_pattern):
             return True
     return False
 
-def vgrid_is_cert_in_list(
+def vgrid_is_entity_in_list(
     vgrid_name,
-    client_id,
+    entity_id,
     group,
     configuration,
-    recursive=True
+    recursive=True,
+    dict_field=False,
     ):
-    """Return True if specified client_id is in group
-    ('owners', 'members', 'resources') of vgrid.
-    Please note that client_id is a misleading name when
-    called for resources, where it is actually the unique resource ID.
+    """Return True if specified entity_id is in group
+    ('owners', 'members', 'resources', 'triggers') of vgrid.
     """
 
     # Get the list of entities of specified type (group) in vgrid (vgrid_name)
@@ -88,11 +87,13 @@ def vgrid_is_cert_in_list(
 
     if not status:
         configuration.logger.error(
-            'unexpected status in vgrid_is_cert_in_list: %s' % entries)
+            'unexpected status in vgrid_is_entity_in_list: %s' % entries)
         return False
 
-    return vgrid_allowed(client_id, entries)
-
+    if dict_field:
+        entries = [i[dict_field] for i in entries]
+        
+    return vgrid_allowed(entity_id, entries)
 
 def vgrid_is_owner(vgrid_name, client_id, configuration):
     """Check if client_id is an owner of vgrid_name. Please note
@@ -101,8 +102,8 @@ def vgrid_is_owner(vgrid_name, client_id, configuration):
 
     if vgrid_is_default(vgrid_name):
         return False
-    return vgrid_is_cert_in_list(vgrid_name, client_id, 'owners',
-                                 configuration)
+    return vgrid_is_entity_in_list(vgrid_name, client_id, 'owners',
+                                   configuration)
 
 
 def vgrid_is_member(vgrid_name, client_id, configuration):
@@ -112,12 +113,12 @@ def vgrid_is_member(vgrid_name, client_id, configuration):
 
     if vgrid_is_default(vgrid_name):
         return True
-    return vgrid_is_cert_in_list(vgrid_name, client_id, 'members',
-                                 configuration)
+    return vgrid_is_entity_in_list(vgrid_name, client_id, 'members',
+                                   configuration)
 
 
-def vgrid_is_resource(vgrid_name, client_id, configuration):
-    """Check if client_id is a resource in vgrid_name. Please note
+def vgrid_is_resource(vgrid_name, res_id, configuration):
+    """Check if res_id is a resource in vgrid_name. Please note
     that everyone is a member of the default vgrid.
     They still explicitly have to sign up to accept jobs
     from it, though.
@@ -125,8 +126,15 @@ def vgrid_is_resource(vgrid_name, client_id, configuration):
 
     if vgrid_is_default(vgrid_name):
         return True
-    return vgrid_is_cert_in_list(vgrid_name, client_id, 'resources',
-                                 configuration)
+    return vgrid_is_entity_in_list(vgrid_name, res_id, 'resources',
+                                   configuration)
+
+
+def vgrid_is_trigger(vgrid_name, rule_id, configuration):
+    """Check if rule_id is a trigger in vgrid_name"""
+
+    return vgrid_is_entity_in_list(vgrid_name, rule_id, 'triggers',
+                                   configuration, dict_field='rule_id')
 
 
 def vgrid_list_subvgrids(vgrid_name, configuration):
@@ -221,6 +229,9 @@ def init_vgrid_script_add_rem(
                     (subject, configuration.short_title)
             msg += \
                 ' (OK, if removing or e.g. the resource creation is pending)'
+    elif subject_type == 'trigger':
+        # Rules are checked later
+        pass
     else:
         msg += 'unknown subject type in init_vgrid_script_add_rem'
         return (False, msg, [])
@@ -258,16 +269,19 @@ def init_vgrid_script_list(vgrid_name, client_id, configuration):
                                     configuration):
         msg += 'Failure: You must be an owner or member of '\
              + vgrid_name\
-             + ' vgrid to get a list of members/owners/resources'
+             + ' vgrid to get a list of members/owners/resources/triggers'
         return (False, msg, None)
 
     return (True, msg, [])
 
 
-def vgrid_list(vgrid_name, group, configuration, recursive=True):
+def vgrid_list(vgrid_name, group, configuration, recursive=True,
+               allow_missing=False):
     """Shared helper function to get a list of group entities in vgrid. The
     optional recursive argument is used to switch between direct vgrid and
     recursive vgrid operation including entities from parent vgrids.
+    If allow_missing is set a missing entity file results in success and an
+    empty list.
     """
 
     if group == 'owners':
@@ -276,6 +290,8 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True):
         name = 'members'
     elif group == 'resources':
         name = 'resources'
+    elif group == 'triggers':
+        name = 'triggers'
     else:
         return (False, "vgrid_list: unknown 'group'")
     if recursive:
@@ -301,6 +317,8 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True):
 
             if msg != ['']:
                 output.extend(msg)
+        elif allow_missing and not os.path.exists(name_path):
+            output = []
         else:
             return (False, msg)
     return (True, output)
@@ -316,6 +334,10 @@ def vgrid_members(vgrid_name, configuration, recursive=True):
 def vgrid_resources(vgrid_name, configuration, recursive=True):
     """Extract resources list for a vgrid"""
     return vgrid_list(vgrid_name, 'resources', configuration, recursive)
+
+def vgrid_triggers(vgrid_name, configuration, recursive=True):
+    """Extract triggers list for a vgrid"""
+    return vgrid_list(vgrid_name, 'triggers', configuration, recursive)
 
 def vgrid_match_resources(vgrid_name, resources, configuration):
     """Return a list of resources filtered to only those allowed in
@@ -436,43 +458,53 @@ def vgrid_access_match(configuration, job_owner, job, res_id, res):
             break
     return answer
 
-def vgrid_add_entities(configuration, vgrid_name, kind, clients):
-    """Append list of clients to pickled list of kind for vgrid_name"""
+def vgrid_add_entities(configuration, vgrid_name, kind, id_list):
+    """Append list of IDs to pickled list of kind for vgrid_name"""
     entity_file = os.path.join(configuration.vgrid_home, vgrid_name, kind)
     try:
         entities = load(entity_file)
-        entities += [i for i in clients if not i in entities]
+        entities += [i for i in id_list if not i in entities]
         dump(entities, entity_file)
         mark_vgrid_modified(configuration, vgrid_name)
         return (True, '')
     except Exception, exc:
         return (False, "could not add %s for %s: %s" % (kind, vgrid_name, exc))
 
-def vgrid_add_owners(configuration, vgrid_name, clients):
-    """Append clients to pickled list of owners for vgrid_name"""
+def vgrid_add_owners(configuration, vgrid_name, id_list):
+    """Append id_list to pickled list of owners for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'owners',
-                              clients)
+                              id_list)
 
-def vgrid_add_members(configuration, vgrid_name, clients):
-    """Append clients to pickled list of members for vgrid_name"""
+def vgrid_add_members(configuration, vgrid_name, id_list):
+    """Append id_list to pickled list of members for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'members',
-                              clients)
+                              id_list)
 
-def vgrid_add_resources(configuration, vgrid_name, clients):
-    """Append clients to pickled list of resources for vgrid_name"""
+def vgrid_add_resources(configuration, vgrid_name, id_list):
+    """Append id_list to pickled list of resources for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'resources',
-                              clients)
+                              id_list)
 
-def vgrid_remove_entities(configuration, vgrid_name, kind, clients,
-                          allow_empty):
-    """Remove list of clients from pickled list of kind for vgrid_name.
+def vgrid_add_triggers(configuration, vgrid_name, id_list):
+    """Append id_list to pickled list of triggers for vgrid_name"""
+    return vgrid_add_entities(configuration, vgrid_name, 'triggers',
+                              id_list)
+
+def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
+                          allow_empty, dict_field=False):
+    """Remove list of IDs from pickled list of kind for vgrid_name.
     The allow_empty argument can be used to prevent removal of e.g. the last
     owner.
+    Use the dict_field if the entries are dictionaries and the id_list should
+    be matched against dict_field in each of them. 
     """
     entity_file = os.path.join(configuration.vgrid_home, vgrid_name, kind)
     try:
         entities = load(entity_file)
-        entities = [i for i in entities if not i in clients]
+        if dict_field:
+            entities = [i for i in entities if not i[dict_field] in id_list]
+        else:
+            entities = [i for i in entities if not i in id_list]
         if not entities and not allow_empty:
             raise ValueError("not allowed to remove last entry of %s" % kind)
         dump(entities, entity_file)
@@ -482,49 +514,60 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, clients,
         return (False, "could not remove %s for %s: %s" % (kind, vgrid_name,
                                                            exc))
 
-def vgrid_remove_owners(configuration, vgrid_name, clients, allow_empty=False):
-    """Remove clients from pickled list of owners for vgrid_name"""
+def vgrid_remove_owners(configuration, vgrid_name, id_list, allow_empty=False):
+    """Remove id_list from pickled list of owners for vgrid_name"""
     return vgrid_remove_entities(configuration, vgrid_name, 'owners',
-                              clients, allow_empty)
+                                 id_list, allow_empty)
 
-def vgrid_remove_members(configuration, vgrid_name, clients, allow_empty=True):
-    """Remove clients from pickled list of members for vgrid_name"""
+def vgrid_remove_members(configuration, vgrid_name, id_list, allow_empty=True):
+    """Remove id_list from pickled list of members for vgrid_name"""
     return vgrid_remove_entities(configuration, vgrid_name, 'members',
-                              clients, allow_empty)
+                                 id_list, allow_empty)
 
-def vgrid_remove_resources(configuration, vgrid_name, clients,
+def vgrid_remove_resources(configuration, vgrid_name, id_list,
                            allow_empty=True):
-    """Remove clients from pickled list of resources for vgrid_name"""
+    """Remove id_list from pickled list of resources for vgrid_name"""
     return vgrid_remove_entities(configuration, vgrid_name, 'resources',
-                              clients, allow_empty)
+                                 id_list, allow_empty)
 
-def vgrid_set_entities(configuration, vgrid_name, kind, clients, allow_empty):
-    """Set kind list to provided clients for given vgrid. The allow_empty
+def vgrid_remove_triggers(configuration, vgrid_name, id_list,
+                           allow_empty=True):
+    """Remove id_list from pickled list of triggers for vgrid_name"""
+    return vgrid_remove_entities(configuration, vgrid_name, 'triggers',
+                                 id_list, allow_empty, dict_field='rule_id')
+
+def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
+    """Set kind list to provided id_list for given vgrid. The allow_empty
     argument cam be used to e.g. prevent empty owners lists.
     """
     entity_file = os.path.join(configuration.vgrid_home, vgrid_name, kind)
     try:
-        if not clients and not allow_empty:
+        if not id_list and not allow_empty:
             raise ValueError("not allowed to set empty list of %s" % kind)
-        dump(clients, entity_file)
+        dump(id_list, entity_file)
         mark_vgrid_modified(configuration, vgrid_name)
         return (True, '')
     except Exception, exc:
         return (False, "could not set %s for %s: %s" % (kind, vgrid_name, exc))
 
-def vgrid_set_owners(configuration, vgrid_name, clients, allow_empty=False):
+def vgrid_set_owners(configuration, vgrid_name, id_list, allow_empty=False):
     """Set list of owners for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 'owners', clients,
+    return vgrid_set_entities(configuration, vgrid_name, 'owners', id_list,
                               allow_empty)
 
-def vgrid_set_members(configuration, vgrid_name, clients, allow_empty=True):
+def vgrid_set_members(configuration, vgrid_name, id_list, allow_empty=True):
     """Set list of members for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 'members', clients,
+    return vgrid_set_entities(configuration, vgrid_name, 'members', id_list,
                               allow_empty)
 
-def vgrid_set_resources(configuration, vgrid_name, clients, allow_empty=True):
+def vgrid_set_resources(configuration, vgrid_name, id_list, allow_empty=True):
     """Set list of resources for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 'resources', clients,
+    return vgrid_set_entities(configuration, vgrid_name, 'resources', id_list,
+                              allow_empty)
+
+def vgrid_set_triggers(configuration, vgrid_name, id_list, allow_empty=True):
+    """Set list of triggers for given vgrid"""
+    return vgrid_set_entities(configuration, vgrid_name, 'triggers', id_list,
                               allow_empty)
 
 def validated_vgrid_list(configuration, job_dict):

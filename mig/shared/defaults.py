@@ -44,6 +44,7 @@ all_vgrids = keyword_all
 all_jobs = keyword_all
 
 any_protocol = keyword_any
+any_state = keyword_any
 
 sandbox_names = ['sandbox', 'oneclick', 'ps3live']
 
@@ -82,7 +83,7 @@ freeze_meta_filename = 'meta.pck'
 # The htaccess file prevents illegal http access to user files. We completely
 # hide it to not confuse users and to prevent all modification. It is 'only'
 # a matter of users not accidentally giving away file privacy, though.
-_dot_vgrid = ['.vgrid%s' % i for i in ['wiki', 'scm', 'tracker','forum']]
+_dot_vgrid = ['.vgrid%s' % i for i in ['wiki', 'scm', 'tracker', 'forum']]
 user_invisible_files = [htaccess_filename] + _dot_vgrid
 
 profile_img_max_kb = 128

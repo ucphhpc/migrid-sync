@@ -28,21 +28,17 @@
 """Update a VGrid with missing components"""
 
 import os
-import shutil
-import subprocess
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
-from shared.fileio import write_file, pickle, make_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
-from shared.validstring import valid_dir_input
-from shared.vgrid import vgrid_is_owner
-from shared.functionality.createvgrid import create_wiki, create_scm, \
-     create_tracker, create_forum
+from shared.vgrid import vgrid_is_owner, vgrid_list, vgrid_set_entities
+from shared.functionality.createvgrid import create_scm, create_tracker, \
+     create_forum
 
 def signature():
     """Signature of the main function"""
@@ -155,9 +151,6 @@ $(document).ready(function() {
     public_base_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
                         vgrid_name)) + os.sep
-    public_wiki_dir = \
-        os.path.abspath(os.path.join(configuration.vgrid_public_base,
-                        vgrid_name, '.vgridwiki')) + os.sep
     public_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
                         vgrid_name, '.vgridscm')) + os.sep
@@ -167,9 +160,6 @@ $(document).ready(function() {
     private_base_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name)) + os.sep
-    private_wiki_dir = \
-        os.path.abspath(os.path.join(configuration.vgrid_private_base,
-                        vgrid_name, '.vgridwiki')) + os.sep
     private_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name, '.vgridscm')) + os.sep
@@ -182,9 +172,6 @@ $(document).ready(function() {
     vgrid_files_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
                         vgrid_name)) + os.sep
-    vgrid_wiki_dir = \
-        os.path.abspath(os.path.join(configuration.vgrid_files_home,
-                        vgrid_name, '.vgridwiki')) + os.sep
     vgrid_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
                         vgrid_name, '.vgridscm')) + os.sep
@@ -202,6 +189,28 @@ $(document).ready(function() {
             os.mkdir(path)
         except Exception, exc:
             pass
+
+    # Try entity creation or repair
+
+    output_objects.append({'object_type': 'text', 'text'
+                           : 'vgrid entity update warnings:'})
+    for kind in ['owners', 'members', 'resources', 'triggers']:
+        (status, id_list) = vgrid_list(vgrid_name, kind, configuration,
+                                      recursive=False, allow_missing = False)
+        logger.info("vgrid_list returned %s : %s" % (status, id_list))
+        if not status:
+            if kind == 'owners':
+                id_list = [client_id]
+            else:
+                id_list = []
+            (set_status, set_msg) = vgrid_set_entities(configuration,
+                                                       vgrid_name, kind,
+                                                       id_list,
+                                                       (kind != 'owners'))
+            if not set_status:
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       'Could not create missing %s list: %s'
+                                       % (kind, set_msg)})
 
     # Try component creation or repair
 
