@@ -1624,9 +1624,6 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                     'files': ['sharedfolderlink'],
                     'web': ['enterprivatelink', 'editprivatelink',
                             'enterpubliclink', 'editpubliclink'],
-                    'wiki': ['ownerwikilink', 'memberwikilink'
-                             #'publicwikilink'
-                             ],
                     'scm': ['ownerscmlink', 'memberscmlink'
                             #'publicscmlink'
                             ],

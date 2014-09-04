@@ -257,7 +257,7 @@ def remove_rec(dir_path, configuration):
     Remove the given dir_path, and all subdirectories, recursively.
     This function sets the permissions on files and subdirectories
     before using shutil.rmtree, which is necessary when removing
-    VGrid directories (wiki script and mercurial script).
+    VGrid component dot directories.
 
     Returns Boolean to indicate success, writes messages to log.
     """

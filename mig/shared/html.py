@@ -97,8 +97,6 @@ vgrid_items['files'] = {'class': 'vgridfiles', 'title': 'Files',
                         'hover': 'Open shared files'}
 vgrid_items['web'] = {'class': 'vgridweb', 'title': 'Web Pages', 
                         'hover': 'View/edit private and public web pages'}
-vgrid_items['wiki'] = {'class': 'vgridwiki', 'title': 'Wiki', 
-                        'hover': 'Enter private and public WikiWiki pages'}
 vgrid_items['scm'] = {'class': 'vgridscm', 'title': 'SCM', 
                       'hover':
                       'Inspect private and public Source Code Management systems'}
