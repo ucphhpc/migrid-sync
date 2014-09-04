@@ -86,11 +86,11 @@ from shared.useradm import load_user_db, extract_field, cert_field_map, \
 configuration, logger = None, None
 
 # Update with extra fields
-cert_field_map.update({'role': 'ROLE', 'mail': 'MAIL', 'short_id': 'KUID',
-                       'timezone': 'TZ', 'nickname': 'KUID', 'fullname': 'CN',
-                       'o': 'O', 'ou': 'OU'})
+cert_field_map.update({'role': 'ROLE', 'timezone': 'TZ', 'nickname': 'NICK',
+                       'fullname': 'CN', 'o': 'O', 'ou': 'OU'})
 cert_field_names = cert_field_map.keys()
-cert_field_aliases = cert_field_map.values()
+cert_field_values = cert_field_map.values()
+cert_field_aliases = {}
 
 def quoteattr(val):
     """Escape string for safe printing"""
@@ -108,8 +108,7 @@ def valid_cert_dir(arg):
 def valid_cert_fields(arg):
     """Make sure only valid cert field names are allowed"""
     valid_job_id(arg, extra_chars=',')
-    if [i for i in arg.split(',') if not i in cert_field_names + \
-        cert_field_aliases]:
+    if [i for i in arg.split(',') if not i in cert_field_names]:
         invalid_argument(arg)
 
 def valid_identity_url(arg):
@@ -198,9 +197,13 @@ class OpenIDHTTPServer(HTTPServer):
         for (key, val) in cert_field_map.items():
             if not key in sreg.data_fields:
                 sreg.data_fields[key] = key.replace('_', ' ').title()
-                if not val in sreg.data_fields:
-                    sreg.data_fields[val] = key.replace('_', ' ').title()
         print "DEBUG: sreg fields: %s" % sreg.data_fields
+        for name in cert_field_names:
+            cert_field_aliases[name] = []
+            for target in [i for i in cert_field_names if name != i]:
+                if cert_field_map[name] == cert_field_map[target]:
+                    cert_field_aliases[name].append(target) 
+        print "DEBUG: cert field aliases: %s" % cert_field_aliases
 
     def setOpenIDServer(self, oidserver):
         """Override openid attribute"""
@@ -472,15 +475,22 @@ class ServerHandler(BaseHTTPRequestHandler):
             return
         
         sreg_data = {}
-        for field in cert_field_map.keys():
-            if user.get(field, None):
-                # Add both the field and the alias value for now
-                sreg_data[field] = user[field]
-                sreg_data[cert_field_map[field]] = user[field]
+        for field in cert_field_names:
+            print "DEBUG: addSRegResponse lookup val for %s: %s" % (field, user.get(field, None))
+            # Skip fields already set by alias
+            if sreg_data.has_key(field):
+                continue
+            # Backends choke on empty fields 
+            found = user.get(field, None)
+            if found:
+                val = found
             else:
-                # Backends choke on empty fields 
-                sreg_data[field] = 'NA'
-                sreg_data[cert_field_map[field]] = 'NA'
+                val = 'NA'
+            # Add both the field and any alias values for now if found
+            sreg_data[field] = val
+            if found:
+                for alias in cert_field_aliases[field]:
+                    sreg_data[alias] = val
         print "DEBUG: addSRegResponse added data:\n%s\n%s\n%s" % \
               (sreg_data, sreg_req.required, request)
         ## TMP!! fake request for all sreg fields

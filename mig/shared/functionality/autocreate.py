@@ -71,16 +71,6 @@ def signature(login_type):
             'openid.sreg.state': [''],
             'openid.sreg.locality': [''],
             'openid.sreg.role': [''],
-            'openid.sreg.KUID': [''],
-            'openid.sreg.CN': [''],
-            'openid.sreg.O': [''],
-            'openid.sreg.OU': [''],
-            'openid.sreg.MAIL': [''],
-            'openid.sreg.C': [''],
-            'openid.sreg.ST': [''],
-            'openid.sreg.L': [''],
-            'openid.sreg.ROLE': [''],
-            'openid.sreg.TZ': [''],
             'password': [''],
             'comment': ['(Created through autocreate)'],
             'proxy_upload': [''],
@@ -207,28 +197,20 @@ def main(client_id, user_arguments_dict):
         email = accepted['email'][-1].strip().lower()
         openid_names = []
     elif login_type == 'oid':
-        uniq_id = accepted['openid.sreg.KUID'][-1].strip() or \
+        uniq_id = accepted['openid.sreg.nickname'][-1].strip() or \
                    accepted['openid.sreg.short_id'][-1].strip()
-        full_name = accepted['openid.sreg.CN'][-1].strip().title() or \
-                    accepted['openid.sreg.full_name'][-1].strip().title() or \
+        full_name = accepted['openid.sreg.full_name'][-1].strip().title() or \
                     accepted['openid.sreg.fullname'][-1].strip().title()
-        country = accepted['openid.sreg.C'][-1].strip().upper() or \
-                  accepted['openid.sreg.country'][-1].strip().upper()
-        state = accepted['openid.sreg.ST'][-1].strip().title() or \
-                accepted['openid.sreg.state'][-1].strip().title()
-        organization = accepted['openid.sreg.O'][-1].strip() or \
-                       accepted['openid.sreg.organization'][-1].strip() or \
+        country = accepted['openid.sreg.country'][-1].strip().upper()
+        state = accepted['openid.sreg.state'][-1].strip().title()
+        organization = accepted['openid.sreg.organization'][-1].strip() or \
                        accepted['openid.sreg.o'][-1].strip()
-        organizational_unit = accepted['openid.sreg.OU'][-1].strip() or \
-                              accepted['openid.sreg.organizational_unit'][-1].strip() or \
+        organizational_unit = accepted['openid.sreg.organizational_unit'][-1].strip() or \
                               accepted['openid.sreg.ou'][-1].strip()
-        locality = accepted['openid.sreg.L'][-1].strip() or \
-                   accepted['openid.sreg.locality'][-1].strip()
-        timezone = accepted['openid.sreg.TZ'][-1].strip() or \
-                   accepted['openid.sreg.timezone'][-1].strip()
+        locality = accepted['openid.sreg.locality'][-1].strip()
+        timezone = accepted['openid.sreg.timezone'][-1].strip()
         # lower case email address
-        email = accepted['openid.sreg.MAIL'][-1].strip().lower() or \
-                accepted['openid.sreg.email'][-1].strip().lower()
+        email = accepted['openid.sreg.email'][-1].strip().lower()
         id_url = os.environ['REMOTE_USER'].strip()
         openid_prefix = configuration.user_openid_provider.rstrip('/') + '/'
         raw_login = id_url.replace(openid_prefix, '')

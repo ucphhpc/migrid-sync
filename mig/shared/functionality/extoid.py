@@ -73,45 +73,41 @@ When you click the Sign Up with OpenID button you will be taken to a login
 page where you need to login and accept that your login is allowed for login
 with this site as well.
 </p>
+<!--
 <div class='form_container'>
 <form method='post' action='%(extoid_url)s'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-<!--
 <input type='hidden' name='openid.sreg.required' value='KUID,CN,MAIL,O,OU,ROLE,full_name,country,email,organization,organizational_unit' />
--->
 <input type='hidden' name='openid.sreg.required' value='KUID,CN,MAIL,O,OU,ROLE' />
 <input id='extoid_button' type='submit' value='Sign Up with OpenID (ALLCAPS attr)' />
 </form>
+</div>
+-->
 <div class='form_container'>
 <form method='post' action='%(extoid_url)s'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-<!--
-<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,role' />
--->
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,role' />
 <input id='extoid_button' type='submit' value='Sign Up with OpenID (OID style attr)' />
 </form>
 </div>
+<!--
 <div class='form_container'>
 <form method='post' action='%(kitoid_url)s'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-<!--
 <input type='hidden' name='openid.sreg.required' value='KUID,CN,MAIL,O,OU,ROLE,full_name,country,email,organization,organizational_unit' />
--->
 <input type='hidden' name='openid.sreg.required' value='KUID,CN,MAIL,O,OU,ROLE' />
 <input id='extoid_button' type='submit' value='Sign Up with KIT OpenID (ALLCAPS attr)' />
 </form>
 </div>
+-->
 <div class='form_container'>
 <form method='post' action='%(kitoid_url)s'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-<!--
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,role' />
--->
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email' />
 <input id='extoid_button' type='submit' value='Sign Up with KIT OpenID (OID style attr)' />
 </form>
