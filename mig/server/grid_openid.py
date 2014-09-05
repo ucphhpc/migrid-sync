@@ -476,7 +476,6 @@ class ServerHandler(BaseHTTPRequestHandler):
         
         sreg_data = {}
         for field in cert_field_names:
-            print "DEBUG: addSRegResponse lookup val for %s: %s" % (field, user.get(field, None))
             # Skip fields already set by alias
             if sreg_data.has_key(field):
                 continue
