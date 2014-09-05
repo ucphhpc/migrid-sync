@@ -108,13 +108,14 @@ def get_job_id(configuration):
 def fill_mrsl_template(
     mrsl_fd_or_path,
     trigger_path,
+    state_change,
     rule,
     configuration,
     ):
     """Generate a job description in mrsl_fd_or_path from a job template using
     the trigger details in the rule dictionary and the actual (relative)
-    trigger_path of the file change that triggered the event. Please note that
-    mrsl_fd_or_path may be a path or a file-like object.
+    trigger_path of the file and what kind of change triggered the event.
+    Please note that mrsl_fd_or_path may be a path or a file-like object.
     """
     logger = configuration.logger
     logger.debug("fill template based on trigger for %s and rule %s" % \
@@ -138,6 +139,7 @@ def fill_mrsl_template(
         replace_map = {'+TRIGGERPATH+': trigger_path,
                        '+TRIGGERDIRNAME+': os.path.dirname(trigger_path),
                        '+TRIGGERFILENAME+': os.path.basename(trigger_path),
+                       '+TRIGGERCHANGE+': state_change,
                        '+TRIGGERVGRIDNAME+': rule['vgrid_name'],
                        '+TRIGGERRUNAS+': rule['run_as'],
                        '+TRIGGERINPUT+': rule['target_input'],

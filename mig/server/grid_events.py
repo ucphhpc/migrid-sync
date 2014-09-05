@@ -44,7 +44,6 @@ except ImportError:
     sys.exit(1)
 
 from shared.conf import get_configuration_object
-from shared.defaults import any_state
 from shared.job import fill_mrsl_template, new_job
 from shared.serial import load
 from shared.vgrid import vgrid_is_owner_or_member, vgrid_owners
@@ -133,7 +132,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         logger.info("filter %s against %s" % (all_rules.keys(), src_path))
         for (target_path, rule_list) in all_rules.items():
             for rule in rule_list:
-                if not rule['target_change'] in (any_state, state):
+                if not state in rule['target_change'].split():
                     logger.debug("skipping %s with state mismatch" % \
                                  target_path)
                     continue
@@ -153,8 +152,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         mrsl_fd = tempfile.NamedTemporaryFile(delete=False)
                         mrsl_path = mrsl_fd.name
                         try:
-                            if not fill_mrsl_template(mrsl_fd, rel_path, rule,
-                                                      configuration):
+                            if not fill_mrsl_template(mrsl_fd, rel_path, state,
+                                                      rule, configuration):
                                 raise Exception("fill template failed")
                                         
                             logger.debug("filled template for %s in %s" % \

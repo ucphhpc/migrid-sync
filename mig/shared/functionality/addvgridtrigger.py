@@ -90,7 +90,7 @@ def main(client_id, user_arguments_dict):
     target_input = accepted['target_input'][-1].lstrip(os.sep)
     target_output = accepted['target_output'][-1].lstrip(os.sep)
     target_template = accepted['target_template'][-1].lstrip(os.sep)
-    target_change = accepted['target_change'][-1]
+    target_change = ' '.join(accepted['target_change'])
     run_as = accepted['run_as'][-1]
     action = accepted['action'][-1]
 
@@ -104,11 +104,11 @@ def main(client_id, user_arguments_dict):
     if run_as == keyword_auto:
         run_as = client_id
 
-    if action not in valid_actions + [keyword_auto]:
+    if action not in valid_actions:
         action = valid_actions[0]
 
-    if target_change not in valid_changes + [any_state]:
-        target_change = any_state
+    if any_state in target_change.split():
+        target_change = ' '.join(valid_changes)
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
@@ -157,6 +157,12 @@ def main(client_id, user_arguments_dict):
                                   : '''%s is already in a sub-vgrid (%s).
 Remove the trigger from the subvgrid and try again''' % \
                                    (rule_id, subvgrid)})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+    for change in target_change.split():
+        if not change in valid_changes:
+            output_objects.append({'object_type': 'error_text', 'text'
+                              : "found invalid change value %s" % change})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     base_dir = os.path.abspath(configuration.vgrid_home + os.sep

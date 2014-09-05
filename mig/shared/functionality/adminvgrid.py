@@ -120,10 +120,10 @@ def vgrid_add_remove_table(vgrid_name,
             if isinstance(elem, dict) and elem.has_key(id_field):
                 for field in extra_fields:
                     extra_fields_html += '<td>%s</td>' % elem[field]
-                form += \
+                table += \
 """          <tr><td></td><td>%s</td>%s</tr>""" % (elem[id_field],
                                                    extra_fields_html)
-            if elem:
+            elif elem:
                 table += \
 "          <tr><td></td><td>%s</td></tr>"\
                      % elem
@@ -169,8 +169,8 @@ def vgrid_add_remove_table(vgrid_name,
 
     extra_fields_html = ''
     for field in extra_fields:
-        extra_fields_html += '%s <input type="text" size=70 name="%s" /><br/>' % \
-                             (field.replace('_', ' ').title(), field)
+        extra_fields_html += '%s <input type="text" size=70 name="%s" /><br/>' \
+                             % (field.replace('_', ' ').title(), field)
     out.append({'object_type': 'html_form',
                 'text': '''
       <form method="post" action="add%(script)s.py">
@@ -265,16 +265,17 @@ $(document).ready(function() {
                                    'request_type': 'vgridowner',
                                    'request_text': ''})
         output_objects.append({'object_type': 'html_form', 'text': helper})
-        output_objects.append({'object_type': 'link',
-                               'destination':
-                               "javascript: confirmDialog(%s, '%s', '%s');"\
-                               % (js_name, "Request ownership of " + \
-                                  vgrid_name + ":<br/>" + \
-                                  "\nPlease write a message to the owners (field below).",
-                                  'request_text'),
-                               'class': 'addadminlink',
-                               'title': 'Request ownership of %s' % vgrid_name,
-                               'text': 'Apply to become an owner'})
+        output_objects.append(
+            {'object_type': 'link',
+             'destination':
+             "javascript: confirmDialog(%s, '%s', '%s');"\
+             % (js_name, "Request ownership of " + \
+                vgrid_name + ":<br/>" + \
+                "\nPlease write a message to the owners below.",
+                'request_text'),
+             'class': 'addadminlink',
+             'title': 'Request ownership of %s' % vgrid_name,
+             'text': 'Apply to become an owner'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     for (item, scr) in zip(['owner', 'member', 'resource', 'trigger'],
@@ -291,21 +292,24 @@ $(document).ready(function() {
         else:
             output_objects.append({'object_type': 'html_form', 
                                    'text': '<div class="div-%s">' % item })
-            output_objects.append({'object_type': 'link', 
-                                   'destination': 
-                                   "javascript:toggleHidden('.div-%s');" % item,
-                                   'class': 'removeitemlink',
-                                   'title': 'Toggle view',
-                                   'text': 'Hide %ss' % item.title() })
+            output_objects.append(
+                {'object_type': 'link', 
+                 'destination': 
+                 "javascript:toggleHidden('.div-%s');" % item,
+                 'class': 'removeitemlink',
+                 'title': 'Toggle view',
+                 'text': 'Hide %ss' % item.title() })
             output_objects.extend(oobjs)
-            output_objects.append({'object_type': 'html_form', 
-                                   'text': '</div><div class="hidden div-%s">' % item})
-            output_objects.append({'object_type': 'link', 
-                                   'destination': 
-                                   "javascript:toggleHidden('.div-%s');" % item,
-                                   'class': 'additemlink',
-                                   'title': 'Toggle view',
-                                   'text': 'Show %ss' % item.title() })
+            output_objects.append(
+                {'object_type': 'html_form', 
+                 'text': '</div><div class="hidden div-%s">' % item})
+            output_objects.append(
+                {'object_type': 'link', 
+                 'destination': 
+                 "javascript:toggleHidden('.div-%s');" % item,
+                 'class': 'additemlink',
+                 'title': 'Toggle view',
+                 'text': 'Show %ss' % item.title() })
             output_objects.append({'object_type': 'html_form', 
                                    'text': '</div>' })
 
@@ -325,7 +329,7 @@ $(document).ready(function() {
                            'text': "Delete %s " % vgrid_name})
     output_objects.append({'object_type': 'html_form',
                            'text': '''
-      To delete <b>%(vgrid)s</b> remove all members and owners ending with yourself.
+To delete <b>%(vgrid)s</b> remove all members and owners ending with yourself.
 ''' % {'vgrid': vgrid_name}})
 
     return (output_objects, returnvalues.OK)
