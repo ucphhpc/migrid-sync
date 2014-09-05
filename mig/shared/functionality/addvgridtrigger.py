@@ -35,9 +35,13 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
-     vgrid_list_subvgrids, vgrid_add_triggers
+     vgrid_list_subvgrids, vgrid_add_triggers, vgrid_is_owner_or_member
 import shared.returnvalues as returnvalues
 
+# Valid trigger actions - with the first one as default action
+
+valid_actions = ['submit']
+valid_changes = ['created', 'modified', 'deleted', 'moved']
 
 def signature():
     """Signature of the main function"""
@@ -79,27 +83,31 @@ def main(client_id, user_arguments_dict):
              : 'Only accepting POST requests to prevent unintended updates'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    vgrid_name = accepted['vgrid_name'][-1]
+    # strip leftmost slashes from all fields used in filenames to avoid
+    # interference with os.path.join
     rule_id = accepted['rule_id'][-1]
-    target_input = accepted['target_input'][-1]
-    target_output = accepted['target_output'][-1]
-    target_template = accepted['target_template'][-1]
+    vgrid_name = accepted['vgrid_name'][-1].lstrip(os.sep)
+    target_input = accepted['target_input'][-1].lstrip(os.sep)
+    target_output = accepted['target_output'][-1].lstrip(os.sep)
+    target_template = accepted['target_template'][-1].lstrip(os.sep)
     target_change = accepted['target_change'][-1]
     run_as = accepted['run_as'][-1]
     action = accepted['action'][-1]
 
-    # TODO: better generator for AUTO ID?
+    # we just use a high res timestamp as automatic rule_id
     
     if rule_id == keyword_auto:
         rule_id = "%d" % (time.time() * 1E8)
 
+    # default to run as user adding rule
+    
     if run_as == keyword_auto:
         run_as = client_id
 
-    if action == keyword_auto:
-        action = 'submit'
+    if action not in valid_actions + [keyword_auto]:
+        action = valid_actions[0]
 
-    if target_change not in ('new', 'changed', 'deleted'):
+    if target_change not in valid_changes + [any_state]:
         target_change = any_state
 
     # Validity of user and vgrid names is checked in this init function so
@@ -118,6 +126,13 @@ def main(client_id, user_arguments_dict):
         # In case of warnings, msg is non-empty while ret_val remains True
 
         output_objects.append({'object_type': 'warning', 'text': msg})
+
+    # we only allow owners/members to have triggers associated
+
+    if not vgrid_is_owner_or_member(vgrid_name, run_as, configuration):
+        output_objects.append({'object_type': 'error_text', 'text': 
+                    'Only owners of %s can own triggers.' % vgrid_name })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't add if already in vgrid or parent vgrid
 
@@ -149,6 +164,7 @@ Remove the trigger from the subvgrid and try again''' % \
     triggers_file = base_dir + 'triggers'
 
     rule_dict = {'rule_id': rule_id,
+                 'vgrid_name': vgrid_name,
                  'target_input': target_input,
                  'target_output': target_output,
                  'target_change': target_change,

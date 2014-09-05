@@ -33,6 +33,7 @@ import fnmatch
 import glob
 import os
 import sys
+import tempfile
 import time
 
 try:
@@ -44,7 +45,9 @@ except ImportError:
 
 from shared.conf import get_configuration_object
 from shared.defaults import any_state
+from shared.job import fill_mrsl_template, new_job
 from shared.serial import load
+from shared.vgrid import vgrid_is_owner_or_member, vgrid_owners
 
 # Global trigger rule dictionary with rules for all VGrids
 
@@ -81,19 +84,13 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
         except Exception, exc:
             new_rules = []
             if state != "deleted":
-                logger.error("failed to load saved event handler rules from %s" % \
+                logger.error("failed to load event handler rules from %s" % \
                              src_path)
         logger.info("loaded new rules from %s:\n%s" % (src_path, new_rules))
-        # TODO: is this remove overzealous for nested vgrids?
         # Remove all old rules for this vgrid
         for target_path in all_rules.keys():
-            if target_path.startswith(vgrid_prefix):
-                logger.info("removing old rule for %s: %s" % \
-                            (target_path, all_rules[target_path]))
-                del all_rules[target_path]
-            else:
-                logger.debug("leaving rule for %s (%s): %s" % \
-                             (target, vgrid_prefix, all_rules[target]))
+            all_rules[target_path] = [i for i in all_rules[target_path] if \
+                                      i['vgrid_name'] != vgrid_name] 
         for entry in new_rules:
             logger.info("updating rule entry:\n%s" % entry)
             target_input = entry['target_input']
@@ -130,19 +127,57 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         state = event.event_type
         src_path = event.src_path
         if event.is_directory:
-            logger.debug("skipping event handling for directory: %s" % src_path)
+            logger.debug("skipping event handling for directory: %s" % \
+                         src_path)
         logger.info("got %s event for file: %s" % (state, src_path))
         logger.info("filter %s against %s" % (all_rules.keys(), src_path))
         for (target_path, rule_list) in all_rules.items():
             for rule in rule_list:
                 if not rule['target_change'] in (any_state, state):
-                    logger.debug("skipping %s with state mismatch" % target_path)
+                    logger.debug("skipping %s with state mismatch" % \
+                                 target_path)
                     continue
+                # run_as user may have been removed from vgrid
+                if not vgrid_is_owner_or_member(rule['vgrid_name'],
+                                                rule['run_as'], configuration):
+                    run_as = vgrid_owners(rule['vgrid_name'], configuration)[0]
+                    logger.warning("no such run_as user %s - fall back %s" % \
+                                   (rule['run_as'], run_as))
+                    rule['run_as'] = run_as
                 if fnmatch.fnmatch(src_path, target_path):
-                    logger.info("TODO: trigger %s for %s: %s" % \
+                    logger.info("trigger %s for %s: %s" % \
                                 (rule['action'], src_path, rule))
+                    rel_path = src_path.replace(configuration.vgrid_files_home,
+                                                '').lstrip(os.sep)
+                    if rule['action'] == 'submit':                        
+                        mrsl_fd = tempfile.NamedTemporaryFile(delete=False)
+                        mrsl_path = mrsl_fd.name
+                        try:
+                            if not fill_mrsl_template(mrsl_fd, rel_path, rule,
+                                                      configuration):
+                                raise Exception("fill template failed")
+                                        
+                            logger.debug("filled template for %s in %s" % \
+                                        (target_path, mrsl_path))
+                            (success, msg) = new_job(mrsl_path,
+                                                     rule['run_as'],
+                                                     configuration, False)
+                            if success:
+                                logger.info("submitted job for %s: %s" % \
+                                            (target_path, msg))
+                            else:
+                                raise Exception(msg)
+                        except Exception, exc:
+                            logger.error("failed to submit job for %s: %s" % \
+                                         (target_path, exc))
+                        try:
+                            os.remove(mrsl_path)
+                        except Exception, exc:
+                            logger.warning("clean up after submit failed: %s" \
+                                           % exc)
                 else:
-                    logger.debug("skipping %s with no matching rules" % target_path)
+                    logger.debug("skipping %s with no matching rules" % \
+                                 target_path)
 
     def on_modified(self, event):
         """Handle modified files"""

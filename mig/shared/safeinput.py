@@ -830,7 +830,7 @@ def guess_type(name):
                     'openid.sreg.full_name', 'openid.sreg.nickname',
                     'openid.sreg.o', 'openid.sreg.ou', ):
             __type_map[key] = valid_commonname
-        for key in ('cert_id', ):
+        for key in ('cert_id', 'run_as', ):
             __type_map[key] = valid_distinguished_name
         for key in ('request_text', 'public_profile', 'resconfig',
                     'redescription', 'testprocedure', 'environment',

@@ -41,6 +41,7 @@ output_dir = 'job_output'
 
 
 class Job:
+    """Job objects"""
 
     # job_id = None
 
@@ -51,6 +52,7 @@ class Job:
         pass
 
     def to_dict(self):
+        """Object to dictionary helper"""
         res = {}
         for attr in dir(self):
 
@@ -103,6 +105,61 @@ def get_job_id(configuration):
     return val
 
 
+def fill_mrsl_template(
+    mrsl_fd_or_path,
+    trigger_path,
+    rule,
+    configuration,
+    ):
+    """Generate a job description in mrsl_fd_or_path from a job template using
+    the trigger details in the rule dictionary and the actual (relative)
+    trigger_path of the file change that triggered the event. Please note that
+    mrsl_fd_or_path may be a path or a file-like object.
+    """
+    logger = configuration.logger
+    logger.debug("fill template based on trigger for %s and rule %s" % \
+                (trigger_path, rule))
+    template_path = os.path.join(configuration.vgrid_files_home,
+                                 rule['vgrid_name'], rule['target_template'])
+    if isinstance(mrsl_fd_or_path, basestring):
+        mrsl_fd = open(mrsl_fd_or_path, 'w+b')
+        do_close = True
+    else:
+        mrsl_fd = mrsl_fd_or_path
+        do_close = False
+
+    filled_template = ''
+    try:
+        template_fd = open(template_path, 'r')
+        raw_template = template_fd.read()
+        template_fd.close()
+        # TODO: add replace vars for each matching input and output file?
+        filled_template = raw_template
+        replace_map = {'+TRIGGERPATH+': trigger_path,
+                       '+TRIGGERDIRNAME+': os.path.dirname(trigger_path),
+                       '+TRIGGERFILENAME+': os.path.basename(trigger_path),
+                       '+TRIGGERVGRIDNAME+': rule['vgrid_name'],
+                       '+TRIGGERRUNAS+': rule['run_as'],
+                       '+TRIGGERINPUT+': rule['target_input'],
+                       '+TRIGGEROUTPUT+': rule['target_output'],
+                       }
+                       
+        for (key, val) in replace_map.items():
+            filled_template = filled_template.replace(key, val)
+
+        logger.info("filled_template is:\n%s" % filled_template)
+
+        mrsl_fd.write(filled_template)
+        mrsl_fd.flush()
+
+        if do_close:
+            mrsl_fd.close()
+    except Exception, exc:
+        logger.error("failed to read and fill template from %s: %s" % \
+                     (template_path, exc))
+        return False
+    return True
+
 def new_job(
     filename,
     client_id,
@@ -110,11 +167,11 @@ def new_job(
     forceddestination,
     returnjobid=False,
     ):
-    """ This function submits a file to the MiG system by assigning
+    """This function submits a file to the MiG system by assigning
     a unique name to the new job and sends it to the parser.
     It should be called by all other functions when a job should be submitted.
-    New: function can now be called with returnjobid argument so new output model
-    can get job_id seperately (instead of the return message string)
+    New: function can now be called with returnjobid argument so new output
+    model can get job_id seperately (instead of the return message string)
     """
 
     mig_server_id = configuration.mig_server_id
@@ -140,13 +197,11 @@ def new_job(
             return (True, '%s is the job id assigned.' % job_id)
     else:
         if returnjobid:
-            return (False,
-                    'parse failed, Error in mRSL file - or parser - or subsystem :)\n%s'
-                     % parsemsg, None)
+            return (False, '''parse failed, Error in mRSL file - or parser -
+or subsystem :)\n%s''' % parsemsg, None)
         else:
-            return (False,
-                    'parse failed, Error in mRSL file - or parser - or subsystem :)\n%s'
-                     % parsemsg)
+            return (False, '''parse failed, Error in mRSL file - or parser -
+or subsystem :)\n%s''' % parsemsg)
 
 
 def failed_restart(
@@ -155,6 +210,7 @@ def failed_restart(
     job_id,
     configuration,
     ):
+    """Helper for notifying grid_script when a exe restart failed"""
 
     # returns a tuple (bool status, str msg)
 
@@ -175,6 +231,7 @@ def finished_job(
     job_id,
     configuration,
     ):
+    """Helper for notifying grid_script when a job finishes"""
 
     # returns a tuple (bool status, str msg)
 
@@ -190,6 +247,7 @@ def finished_job(
 
 def create_job_object_from_pickled_mrsl(filepath, logger,
         external_dict):
+    """Helper for submit from pickled mRSL"""
     job_dict = unpickle(filepath, logger)
     if not job_dict:
         return (False, 'could not unpickle mrsl file %s' % filepath)
@@ -197,12 +255,14 @@ def create_job_object_from_pickled_mrsl(filepath, logger,
     for (key, value) in job_dict.iteritems():
         if str(type(value)) == "<type 'time.struct_time'>":
 
-            # time.struct_time objects cannot be marshalled in the xmlrpc version we use
+            # time.struct_time objects cannot be marshalled in the xmlrpc
+            # version we use
 
             value = str(value)
         if external_dict.has_key(key):
 
-            # ok, this info can be shown to the user (avoid leaking info that break anonymity)
+            # ok, this info can be shown to the user (avoid leaking info that
+            # break anonymity)
 
             setattr(jobo, key, value)
     return (True, jobo)
@@ -214,17 +274,18 @@ def get_job_ids_with_specified_project_name(
     mrsl_files_dir,
     logger,
     ):
+    """Helper for finding a job with a given project field"""
 
     client_dir = client_id_dir(client_id)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    base_dir = os.path.abspath(os.path.join(mrsl_files_dir, client_dir))\
+    base_dir = os.path.abspath(os.path.join(mrsl_files_dir, client_dir)) \
          + os.sep
 
-    # this is heavy :-/ we must loop all the mrsl files submitted by the user to find the
-    # job ids belonging to the specified project
+    # this is heavy :-/ we must loop all the mrsl files submitted by the user
+    # to find the job ids belonging to the specified project
 
     matching_job_ids = []
     all_files = os.listdir(base_dir)
@@ -240,6 +301,7 @@ def get_job_ids_with_specified_project_name(
 
 
 def fields_to_mrsl(configuration, user_arguments_dict, external_dict):
+    """Generate mRSL from fields"""
     spec = []
     for key in external_dict.keys():
         attr_name = key
