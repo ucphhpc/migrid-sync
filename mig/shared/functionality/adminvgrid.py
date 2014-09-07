@@ -75,8 +75,7 @@ def vgrid_add_remove_table(vgrid_name,
         id_field = 'unique_resource_name'
     elif item_string == 'trigger':
         id_field = 'rule_id'
-        extra_fields = ['target_input', 'target_output', 'target_template',
-                        'target_change', 'run_as', 'action']
+        extra_fields = ['path', 'changes', 'run_as', 'action', 'arguments']
         optional = True
     else:
         id_field = 'cert_id'
@@ -119,7 +118,10 @@ def vgrid_add_remove_table(vgrid_name,
             extra_fields_html = ''
             if isinstance(elem, dict) and elem.has_key(id_field):
                 for field in extra_fields:
-                    extra_fields_html += '<td>%s</td>' % elem[field]
+                    val = elem[field]
+                    if not isinstance(val, basestring):
+                        val = ' '.join(val)
+                    extra_fields_html += '<td>%s</td>' % val
                 table += \
 """          <tr><td></td><td>%s</td>%s</tr>""" % (elem[id_field],
                                                    extra_fields_html)
@@ -148,7 +150,10 @@ def vgrid_add_remove_table(vgrid_name,
             extra_fields_html = ''
             if isinstance(elem, dict) and elem.has_key(id_field):
                 for field in extra_fields:
-                    extra_fields_html += '<td>%s</td>' % elem[field]
+                    val = elem[field]
+                    if not isinstance(val, basestring):
+                        val = ' '.join(val)
+                    extra_fields_html += '<td>%s</td>' % val
                 form += \
 """          <tr><td><input type=radio name='%s' value='%s' /></td>
                  <td>%s</td>%s</tr>""" % (id_field, elem[id_field],

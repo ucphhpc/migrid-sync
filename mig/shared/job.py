@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # job - Core job helper functions
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -121,7 +121,7 @@ def fill_mrsl_template(
     logger.debug("fill template based on trigger for %s and rule %s" % \
                 (trigger_path, rule))
     template_path = os.path.join(configuration.vgrid_files_home,
-                                 rule['vgrid_name'], rule['target_template'])
+                                 rule['vgrid_name'], rule['arguments'][-1])
     if isinstance(mrsl_fd_or_path, basestring):
         mrsl_fd = open(mrsl_fd_or_path, 'w+b')
         do_close = True
@@ -134,17 +134,21 @@ def fill_mrsl_template(
         template_fd = open(template_path, 'r')
         raw_template = template_fd.read()
         template_fd.close()
-        # TODO: add replace vars for each matching input and output file?
         filled_template = raw_template
+        trigger_filename = os.path.basename(trigger_path)
+        trigger_dirname = os.path.dirname(trigger_path)
+        (prefix, extension) = os.path.splitext(trigger_filename)
         replace_map = {'+TRIGGERPATH+': trigger_path,
-                       '+TRIGGERDIRNAME+': os.path.dirname(trigger_path),
-                       '+TRIGGERFILENAME+': os.path.basename(trigger_path),
+                       '+TRIGGERDIRNAME+': trigger_dirname,
+                       '+TRIGGERFILENAME+': trigger_filename,
+                       '+TRIGGERPREFIX+': prefix,
+                       '+TRIGGEREXTENSION+': extension,
                        '+TRIGGERCHANGE+': state_change,
                        '+TRIGGERVGRIDNAME+': rule['vgrid_name'],
                        '+TRIGGERRUNAS+': rule['run_as'],
-                       '+TRIGGERINPUT+': rule['target_input'],
-                       '+TRIGGEROUTPUT+': rule['target_output'],
                        }
+        
+        # TODO: provide exact expanded wildcards?
                        
         for (key, val) in replace_map.items():
             filled_template = filled_template.replace(key, val)

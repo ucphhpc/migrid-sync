@@ -38,12 +38,14 @@ import time
 
 try:
     from watchdog.observers import Observer
-    from watchdog.events import PatternMatchingEventHandler, FileModifiedEvent
+    from watchdog.events import PatternMatchingEventHandler, FileMovedEvent, \
+         FileModifiedEvent, FileCreatedEvent, FileDeletedEvent
 except ImportError:
     print "ERROR: the python watchdog module is required for this daemon"
     sys.exit(1)
 
 from shared.conf import get_configuration_object
+from shared.defaults import valid_trigger_changes
 from shared.job import fill_mrsl_template, new_job
 from shared.serial import load
 from shared.vgrid import vgrid_is_owner_or_member, vgrid_owners
@@ -92,9 +94,9 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
                                       i['vgrid_name'] != vgrid_name] 
         for entry in new_rules:
             logger.info("updating rule entry:\n%s" % entry)
-            target_input = entry['target_input']
-            target_path = os.path.join(vgrid_prefix, target_input)
-            all_rules[target_path] = all_rules.get(target_path, []) + [entry]
+            path = entry['path']
+            abs_path = os.path.join(vgrid_prefix, path)
+            all_rules[abs_path] = all_rules.get(abs_path, []) + [entry]
         logger.info("all rules:\n%s" % all_rules)
 
     def on_modified(self, event):
@@ -115,6 +117,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
     and the corresponding action triggers.
     """
 
+    event_map = {'modified': FileModifiedEvent, 'created': FileCreatedEvent,
+                 'deleted': FileDeletedEvent, 'moved': FileMovedEvent}
+
     def __init__(self, patterns=None, ignore_patterns=None,
                  ignore_directories=False, case_sensitive=False):
         """Constructor"""
@@ -132,7 +137,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         logger.info("filter %s against %s" % (all_rules.keys(), src_path))
         for (target_path, rule_list) in all_rules.items():
             for rule in rule_list:
-                if not state in rule['target_change'].split():
+                if not state in rule['changes']:
                     logger.debug("skipping %s with state mismatch" % \
                                  target_path)
                     continue
@@ -148,7 +153,22 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                 (rule['action'], src_path, rule))
                     rel_path = src_path.replace(configuration.vgrid_files_home,
                                                 '').lstrip(os.sep)
-                    if rule['action'] == 'submit':                        
+                    if rule['action'] in ['trigger-%s' % i for i in \
+                                          valid_trigger_changes]:
+                        change = rule['action'].replace('trigger-', '')
+                        FakeEvent = self.event_map[change]
+                        logger.info("handle %s %s" % \
+                                    (rule['action'],
+                                     ' '.join(rule['arguments'])))
+                        vgrid_prefix = os.path.join(
+                            configuration.vgrid_files_home, rule['vgrid_name'])
+                        for argument in rule['arguments']:
+                            pattern = os.path.join(vgrid_prefix, argument)
+                            logger.info("trigger %s %s" % (change, pattern))
+                            for path in glob.glob(pattern):
+                                fake = FakeEvent(path)
+                                self.handle_event(fake)
+                    elif rule['action'] == 'submit':
                         mrsl_fd = tempfile.NamedTemporaryFile(delete=False)
                         mrsl_path = mrsl_fd.name
                         try:

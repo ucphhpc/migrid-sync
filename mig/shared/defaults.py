@@ -104,3 +104,8 @@ public_archive_index = 'published-archive.html'
 edit_lock_suffix = '.editor_lock__'
 edit_lock_timeout = 600
 
+# Valid trigger actions - with the first one as default action
+
+valid_trigger_changes = ['created', 'modified', 'deleted', 'moved']
+valid_trigger_actions = ['submit'] + ['trigger-%s' % i for i in \
+                                      valid_trigger_changes]

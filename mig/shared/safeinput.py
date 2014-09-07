@@ -800,10 +800,10 @@ def guess_type(name):
         # TODO: extend to include all used variables here
 
         for key in ('path', 'src', 'dst', 'current_dir', 'cmd', 'pattern',
-                    'target_input', 'target_output', ):
+                    'arguments', ):
             __type_map[key] = valid_path_pattern
         for key in ('vgrid_name', 'fileupload', 'public_image',
-                    'site_script_deps', 'jobname', 'target_template' ):
+                    'site_script_deps', 'jobname', ):
             __type_map[key] = valid_path
         for key in ('job_id', 'req_id', 'resource', 'search', 'name', ):
             __type_map[key] = valid_job_id_pattern
@@ -828,7 +828,7 @@ def guess_type(name):
                     'freeze_author', 'freeze_department', 'freeze_organization',
                     'openid.sreg.cn', 'openid.sreg.fullname',
                     'openid.sreg.full_name', 'openid.sreg.nickname',
-                    'openid.sreg.o', 'openid.sreg.ou', 'target_change', ):
+                    'openid.sreg.o', 'openid.sreg.ou', 'changes', ):
             __type_map[key] = valid_commonname
         for key in ('cert_id', 'run_as', ):
             __type_map[key] = valid_distinguished_name
