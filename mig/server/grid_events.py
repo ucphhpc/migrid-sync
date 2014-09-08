@@ -48,7 +48,7 @@ from shared.conf import get_configuration_object
 from shared.defaults import valid_trigger_changes
 from shared.job import fill_mrsl_template, new_job
 from shared.serial import load
-from shared.vgrid import vgrid_is_owner_or_member, vgrid_owners
+from shared.vgrid import vgrid_is_owner_or_member
 
 # Global trigger rule dictionary with rules for all VGrids
 
@@ -126,6 +126,59 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         PatternMatchingEventHandler.__init__(self, patterns, ignore_patterns,
                                              ignore_directories,
                                              case_sensitive)
+
+    def __handle_trigger(self, event, target_path, rule):
+        """Actually handle valid trigger for a specific event and the
+        corresponding target_path pattern and trigger rule.
+        """
+        state = event.event_type
+        src_path = event.src_path
+        _chain = getattr(event, '_chain', [src_path])
+        base_dir = configuration.vgrid_files_home
+        rel_path = src_path.replace(base_dir, '').lstrip(os.sep)
+        vgrid_prefix = os.path.join(base_dir, rule['vgrid_name'])
+        if rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
+            change = rule['action'].replace('trigger-', '')
+            FakeEvent = self.event_map[change]
+            for argument in rule['arguments']:
+                pattern = os.path.join(vgrid_prefix, argument)
+                for path in glob.glob(pattern):
+                    # Prevent obvious trigger chain cycles
+                    if path in _chain:
+                        logger.warning("breaking trigger cycle %s" % \
+                                       ' <-> '.join(_chain+[path]))
+                        continue
+                    fake = FakeEvent(path)
+                    fake._chain = _chain + [path]
+                    logger.info("fire %s event on %s" % (change, path))
+                    self.handle_event(fake)
+        elif rule['action'] == 'submit':
+            mrsl_fd = tempfile.NamedTemporaryFile(delete=False)
+            mrsl_path = mrsl_fd.name
+            try:
+                if not fill_mrsl_template(mrsl_fd, rel_path, state, rule,
+                                          configuration):
+                    raise Exception("fill template failed")
+                            
+                logger.debug("filled template for %s in %s" % \
+                             (target_path, mrsl_path))
+                (success, msg) = new_job(mrsl_path, rule['run_as'],
+                                         configuration, False)
+                if success:
+                    logger.info("submitted job for %s: %s" % (target_path,
+                                                              msg))
+                else:
+                    raise Exception(msg)
+            except Exception, exc:
+                logger.error("failed to submit job for %s: %s" % (target_path,
+                                                                  exc))
+            try:
+                os.remove(mrsl_path)
+            except Exception, exc:
+                logger.warning("clean up after submit failed: %s" % exc)
+        else:
+            logger.error("unsupported action: %(action)s" % rule)
+
     def handle_event(self, event):
         """Trigger any rule actions bound to file state change"""
         state = event.event_type
@@ -149,51 +202,10 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         logger.warning("no such user in vgrid: %(run_as)s" \
                                        % rule)
                         continue
+                    
                     logger.info("trigger %s for %s: %s" % \
                                 (rule['action'], src_path, rule))
-                    rel_path = src_path.replace(configuration.vgrid_files_home,
-                                                '').lstrip(os.sep)
-                    if rule['action'] in ['trigger-%s' % i for i in \
-                                          valid_trigger_changes]:
-                        change = rule['action'].replace('trigger-', '')
-                        FakeEvent = self.event_map[change]
-                        logger.info("handle %s %s" % \
-                                    (rule['action'],
-                                     ' '.join(rule['arguments'])))
-                        vgrid_prefix = os.path.join(
-                            configuration.vgrid_files_home, rule['vgrid_name'])
-                        for argument in rule['arguments']:
-                            pattern = os.path.join(vgrid_prefix, argument)
-                            logger.info("trigger %s %s" % (change, pattern))
-                            for path in glob.glob(pattern):
-                                fake = FakeEvent(path)
-                                self.handle_event(fake)
-                    elif rule['action'] == 'submit':
-                        mrsl_fd = tempfile.NamedTemporaryFile(delete=False)
-                        mrsl_path = mrsl_fd.name
-                        try:
-                            if not fill_mrsl_template(mrsl_fd, rel_path, state,
-                                                      rule, configuration):
-                                raise Exception("fill template failed")
-                                        
-                            logger.debug("filled template for %s in %s" % \
-                                        (target_path, mrsl_path))
-                            (success, msg) = new_job(mrsl_path,
-                                                     rule['run_as'],
-                                                     configuration, False)
-                            if success:
-                                logger.info("submitted job for %s: %s" % \
-                                            (target_path, msg))
-                            else:
-                                raise Exception(msg)
-                        except Exception, exc:
-                            logger.error("failed to submit job for %s: %s" % \
-                                         (target_path, exc))
-                        try:
-                            os.remove(mrsl_path)
-                        except Exception, exc:
-                            logger.warning("clean up after submit failed: %s" \
-                                           % exc)
+                    self.__handle_trigger(event, target_path, rule)
                 else:
                     logger.debug("skipping %s with no matching rules" % \
                                  target_path)
