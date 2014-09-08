@@ -134,21 +134,21 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             logger.debug("skipping event handling for directory: %s" % \
                          src_path)
         logger.info("got %s event for file: %s" % (state, src_path))
-        logger.info("filter %s against %s" % (all_rules.keys(), src_path))
+        logger.debug("filter %s against %s" % (all_rules.keys(), src_path))
         for (target_path, rule_list) in all_rules.items():
             for rule in rule_list:
-                if not state in rule['changes']:
-                    logger.debug("skipping %s with state mismatch" % \
-                                 target_path)
-                    continue
-                # run_as user may have been removed from vgrid
-                if not vgrid_is_owner_or_member(rule['vgrid_name'],
-                                                rule['run_as'], configuration):
-                    run_as = vgrid_owners(rule['vgrid_name'], configuration)[0]
-                    logger.warning("no such run_as user %s - fall back %s" % \
-                                   (rule['run_as'], run_as))
-                    rule['run_as'] = run_as
                 if fnmatch.fnmatch(src_path, target_path):
+                    if not state in rule['changes']:
+                        logger.info("skipping %s without change match (%s)" \
+                                    % (target_path, state))
+                        continue
+                    # user may have been removed from vgrid - log and ignore
+                    if not vgrid_is_owner_or_member(rule['vgrid_name'],
+                                                    rule['run_as'],
+                                                    configuration):
+                        logger.warning("no such user in vgrid: %(run_as)s" \
+                                       % rule)
+                        continue
                     logger.info("trigger %s for %s: %s" % \
                                 (rule['action'], src_path, rule))
                     rel_path = src_path.replace(configuration.vgrid_files_home,

@@ -174,6 +174,10 @@ def vgrid_add_remove_table(vgrid_name,
 
     extra_fields_html = ''
     for field in extra_fields:
+        # Always run as rule creator to avoid users being able to act on behalf
+        # of ANY other user using triggers (=exploit)
+        if field == 'run_as':
+            continue
         extra_fields_html += '%s <input type="text" size=70 name="%s" /><br/>' \
                              % (field.replace('_', ' ').title(), field)
     out.append({'object_type': 'html_form',

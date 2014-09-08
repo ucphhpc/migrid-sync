@@ -47,7 +47,6 @@ def signature():
                 'rule_id': [keyword_auto],
                 'path': REJECT_UNSET,
                 'changes': [any_state],
-                'run_as': [keyword_auto],
                 'action': [keyword_auto],
                 'arguments': [''],
                 }
@@ -86,7 +85,6 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1].lstrip(os.sep)
     path = accepted['path'][-1].lstrip(os.sep)
     changes = [i.strip() for i in ' '.join(accepted['changes']).split()]
-    run_as = accepted['run_as'][-1]
     action = accepted['action'][-1]
     arguments = [i.strip() for i in ' '.join(accepted['arguments']).split()]
 
@@ -95,12 +93,7 @@ def main(client_id, user_arguments_dict):
     if rule_id == keyword_auto:
         rule_id = "%d" % (time.time() * 1E8)
 
-    # default to run as user adding rule
-    
-    if run_as == keyword_auto:
-        run_as = client_id
-
-    if action not in valid_trigger_actions:
+    if action == keyword_auto:
         action = valid_trigger_actions[0]
 
     if any_state in changes:
@@ -122,13 +115,6 @@ def main(client_id, user_arguments_dict):
         # In case of warnings, msg is non-empty while ret_val remains True
 
         output_objects.append({'object_type': 'warning', 'text': msg})
-
-    # we only allow owners/members to have triggers associated
-
-    if not vgrid_is_owner_or_member(vgrid_name, run_as, configuration):
-        output_objects.append({'object_type': 'error_text', 'text': 
-                    'Only owners of %s can own triggers.' % vgrid_name })
-        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't add if already in vgrid or parent vgrid
 
@@ -155,6 +141,11 @@ Remove the trigger from the subvgrid and try again''' % \
                                    (rule_id, subvgrid)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
+    if not action in valid_trigger_actions:
+        output_objects.append({'object_type': 'error_text', 'text'
+                               : "invalid action value %s" % action})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    
     for change in changes:
         if not change in valid_trigger_changes:
             output_objects.append({'object_type': 'error_text', 'text'
@@ -165,7 +156,7 @@ Remove the trigger from the subvgrid and try again''' % \
                  'vgrid_name': vgrid_name,
                  'path': path,
                  'changes': changes,
-                 'run_as': run_as,
+                 'run_as': client_id,
                  'action': action,
                  'arguments': arguments,
                  }
