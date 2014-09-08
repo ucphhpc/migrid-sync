@@ -352,7 +352,7 @@ if (jQuery) (function($){
         var output_url = '';
         var max_jobs = -1;
         var filter_id = '';
-        var limit_opts = '';
+        var limit_opts = 'flags=i;';
 
         // Read out current max jobs and filter settings from fields
         max_jobs = parseInt($(".maxjobs", config.container).val());
