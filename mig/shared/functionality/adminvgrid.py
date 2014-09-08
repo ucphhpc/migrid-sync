@@ -32,6 +32,8 @@ controls to administrate them.
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues
+from shared.defaults import any_state, keyword_auto, valid_trigger_changes, \
+     valid_trigger_actions
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
@@ -45,7 +47,8 @@ def signature():
     return ['html_form', defaults]
 
 
-def vgrid_add_remove_table(vgrid_name, 
+def vgrid_add_remove_table(client_id,
+                           vgrid_name, 
                            item_string, 
                            script_suffix, 
                            configuration):
@@ -71,11 +74,18 @@ def vgrid_add_remove_table(vgrid_name,
 
     optional = False
     extra_fields = []
+    
     if item_string == 'resource':
         id_field = 'unique_resource_name'
     elif item_string == 'trigger':
         id_field = 'rule_id'
-        extra_fields = ['path', 'changes', 'run_as', 'action', 'arguments']
+        # Always run as rule creator to avoid users being able to act on behalf
+        # of ANY other user using triggers (=exploit)
+        extra_fields = [('path', None),
+                        ('changes', [any_state] + valid_trigger_changes),
+                        ('run_as', client_id),
+                        ('action', [keyword_auto] + valid_trigger_actions),
+                        ('arguments', None)]
         optional = True
     else:
         id_field = 'cert_id'
@@ -98,7 +108,7 @@ def vgrid_add_remove_table(vgrid_name,
         return (False, out)
 
     extra_titles_html = ''
-    for field in extra_fields:
+    for (field, _) in extra_fields:
         extra_titles_html += '<th>%s</th>' % field.replace('_', ' ').title()
 
     # success, so direct and inherit are lists of unique user/res/trigger IDs
@@ -117,7 +127,7 @@ def vgrid_add_remove_table(vgrid_name,
         for elem in extras:
             extra_fields_html = ''
             if isinstance(elem, dict) and elem.has_key(id_field):
-                for field in extra_fields:
+                for (field, _) in extra_fields:
                     val = elem[field]
                     if not isinstance(val, basestring):
                         val = ' '.join(val)
@@ -149,7 +159,7 @@ def vgrid_add_remove_table(vgrid_name,
         for elem in direct:
             extra_fields_html = ''
             if isinstance(elem, dict) and elem.has_key(id_field):
-                for field in extra_fields:
+                for (field, _) in extra_fields:
                     val = elem[field]
                     if not isinstance(val, basestring):
                         val = ' '.join(val)
@@ -173,13 +183,18 @@ def vgrid_add_remove_table(vgrid_name,
     # form to add a new item
 
     extra_fields_html = ''
-    for field in extra_fields:
-        # Always run as rule creator to avoid users being able to act on behalf
-        # of ANY other user using triggers (=exploit)
-        if field == 'run_as':
-            continue
-        extra_fields_html += '%s <input type="text" size=70 name="%s" /><br/>' \
-                             % (field.replace('_', ' ').title(), field)
+    for (field, limit) in extra_fields:
+        extra_fields_html += '%s ' % field.replace('_', ' ').title()
+        if isinstance(limit, basestring):
+            add_html = '%s<br/>' % limit
+        elif limit == None:
+            add_html = '<input type="text" size=70 name="%s" /><br/>' % field
+        else:
+            add_html = '<select name="%s">' % field
+            for val in limit:
+                add_html += '<option value="%s">%s</option>' % (val, val)
+            add_html += '</select><br/>'
+        extra_fields_html += add_html
     out.append({'object_type': 'html_form',
                 'text': '''
       <form method="post" action="add%(script)s.py">
@@ -293,7 +308,7 @@ $(document).ready(function() {
         output_objects.append({'object_type': 'sectionheader',
                                'text': "%ss" % item.title()
                                })
-        (status, oobjs) = vgrid_add_remove_table(vgrid_name, item, 
+        (status, oobjs) = vgrid_add_remove_table(client_id, vgrid_name, item, 
                                                  scr, configuration)
         if not status:
             output_objects.extend(oobjs)
