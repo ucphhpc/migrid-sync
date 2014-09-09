@@ -108,7 +108,6 @@ with this site as well.
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,role' />
-<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email' />
 <input id='extoid_button' type='submit' value='Sign Up with KIT OpenID (OID style attr)' />
 </form>
 </div>

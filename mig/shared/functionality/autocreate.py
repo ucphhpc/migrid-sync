@@ -181,6 +181,7 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     admin_email = configuration.admin_email
+    openid_names = []
 
     # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
         
@@ -195,7 +196,7 @@ def main(client_id, user_arguments_dict):
         timezone = ''
         # lower case email address
         email = accepted['email'][-1].strip().lower()
-        openid_names = []
+        raw_login = None
     elif login_type == 'oid':
         uniq_id = accepted['openid.sreg.nickname'][-1].strip() or \
                    accepted['openid.sreg.short_id'][-1].strip()
@@ -212,9 +213,15 @@ def main(client_id, user_arguments_dict):
         # lower case email address
         email = accepted['openid.sreg.email'][-1].strip().lower()
         id_url = os.environ['REMOTE_USER'].strip()
-        openid_prefix = configuration.user_openid_provider.rstrip('/') + '/'
-        raw_login = id_url.replace(openid_prefix, '')
-        openid_names = [raw_login]
+        raw_login = None
+        for oid_provider in configuration.user_openid_providers:
+            openid_prefix = oid_provider.rstrip('/') + '/'
+            if id_url.startswith(openid_prefix):
+                raw_login = id_url.replace(openid_prefix, '')
+                break
+
+    if raw_login:
+        openid_names.append(raw_login)
 
     # we should have the proxy file read...
     proxy_content = accepted['proxy_upload'][-1]

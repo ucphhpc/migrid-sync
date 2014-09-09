@@ -226,6 +226,21 @@ def create_user(
             if not force:
                 raise Exception('Failed to load user DB!')
 
+        # Prevent alias clashes by preventing addition of new users with same
+        # alias. We only allow renew of existing user.
+        if configuration.user_openid_providers and \
+               configuration.user_openid_alias:
+            user_aliases = dict([(key, val[configuration.user_openid_alias]) \
+                                 for (key, val) in user_db.items()])
+            alias = user[configuration.user_openid_alias]
+            if alias in user_aliases.values() and \
+                   user_aliases.get(client_id, None) != alias:
+                if verbose:
+                    print 'Attempting create_user with conflicting alias %s' % \
+                          alias
+                raise Exception(
+                    'A conflicting user with alias %s already exists' % alias)
+
         if user_db.has_key(client_id):
             if ask_renew:
                 print 'User DB entry for "%s" already exists' % client_id
@@ -256,7 +271,7 @@ def create_user(
     
     openid_names = user.get('openid_names', [])
     add_names = []
-    if configuration.user_openid_provider and configuration.user_openid_alias:
+    if configuration.user_openid_providers and configuration.user_openid_alias:
         add_names.append(user[configuration.user_openid_alias])
     user['openid_names'] = dict([(name, 0) for name in add_names + \
                                  openid_names]).keys()
@@ -340,9 +355,9 @@ def create_user(
         access += '%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s"'
         access += ')\n'
         for name in user.get('openid_names', []):
-            oid_url = os.path.join(configuration.user_openid_provider,
-                                   name)
-            access += 'require user %s\n' % oid_url
+            for oid_provider in configuration.user_openid_providers:
+                oid_url = os.path.join(oid_provider, name)
+                access += 'require user %s\n' % oid_url
         access += 'Satisfy any\n'
 
         filehandle.write(access % info)
@@ -712,17 +727,18 @@ def get_openid_user_map(configuration):
     user_map = load_user_db(db_path)
     user_alias = configuration.user_openid_alias
     for cert_id in user_map.keys():
-        full = configuration.user_openid_provider + client_id_dir(cert_id)
-        id_map[full] = cert_id
-        alias = configuration.user_openid_provider + client_alias(cert_id)
-        id_map[alias] = cert_id
-        if user_alias:
-            short_id = extract_field(cert_id, user_alias)
-            # Allow both raw alias field value and asciified alias
-            raw = configuration.user_openid_provider + short_id
-            enc = configuration.user_openid_provider + client_alias(short_id)
-            id_map[raw] = cert_id
-            id_map[enc] = cert_id
+        for oid_provider in configuration.user_openid_providers:
+            full = oid_provider + client_id_dir(cert_id)
+            id_map[full] = cert_id
+            alias = oid_provider + client_alias(cert_id)
+            id_map[alias] = cert_id
+            if user_alias:
+                short_id = extract_field(cert_id, user_alias)
+                # Allow both raw alias field value and asciified alias
+                raw = oid_provider + short_id
+                enc = oid_provider + client_alias(short_id)
+                id_map[raw] = cert_id
+                id_map[enc] = cert_id
     return id_map
     
 def get_openid_user_dn(configuration, login_url):
@@ -739,11 +755,17 @@ def get_openid_user_dn(configuration, login_url):
     format if so.
     """
     configuration.logger.info('extracting openid dn from %s' % login_url)
-    openid_prefix = configuration.user_openid_provider.rstrip('/') + '/'
-    if not login_url.startswith(openid_prefix):
+    found_openid_prefix = False
+    for oid_provider in configuration.user_openid_providers:
+        oid_prefix = oid_provider.rstrip('/') + '/'
+        if login_url.startswith(oid_prefix):
+            found_openid_prefix = oid_prefix
+            break
+    if not found_openid_prefix:
         configuration.logger.error("invalid openid login: %s" % login_url)
         return None
-    raw_login = login_url.replace(openid_prefix, '')
+    raw_login = login_url.replace(found_openid_prefix, '')
+    configuration.logger.info("trying openid raw login: %s" % raw_login)
     # Lookup native user_home from openid user symlink
     link_path = os.path.join(configuration.user_home, raw_login)
     if os.path.islink(link_path):

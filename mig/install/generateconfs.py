@@ -70,7 +70,7 @@ if '__main__' == __name__:
         'enable_vmachines',
         'enable_freeze',
         'enable_openid',
-        'openid_provider',
+        'openid_providers',
         'daemon_keycert',
         'alias_field',
         'hg_path',

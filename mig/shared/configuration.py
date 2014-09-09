@@ -104,7 +104,8 @@ def fix_missing(config_file, verbose=True):
         'smtp_sender': 'MiG Server <%s@%s>' % (user, fqdn),
         'user_sftp_address': fqdn,
         'user_sftp_port': 2222,
-        'user_sftp_key': '~/certs/key.pem',
+        'user_sftp_key': '~/certs/server.key',
+        'user_sftp_cert': '~/certs/server.crt',
         'user_sftp_auth': ['publickey'],
         'user_sftp_alias': '',
         'user_davs_address': fqdn,
@@ -123,7 +124,7 @@ def fix_missing(config_file, verbose=True):
         'user_openid_key': '~/certs/key.pem',
         'user_openid_auth': ['password'],
         'user_openid_alias': '',
-        'user_openid_provider': '',
+        'user_openid_providers': [],
         'logfile': 'server.log',
         'loglevel': 'info',
         'sleep_period_for_empty_jobs': '80',
@@ -231,6 +232,7 @@ class Configuration:
     user_sftp_address = ''
     user_sftp_port = 2222
     user_sftp_key = ''
+    user_sftp_cert = ''
     user_sftp_auth = ['publickey']
     user_sftp_alias = ''
     user_davs_address = ''
@@ -249,7 +251,7 @@ class Configuration:
     user_openid_key = ''
     user_openid_auth = ['password']
     user_openid_alias = ''
-    user_openid_provider = ''
+    user_openid_providers = []
     server_home = ''
     vms_builder_home = ''
     sessid_to_mrsl_link_home = ''
@@ -526,6 +528,9 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_sftp_key'):
             self.user_sftp_key = config.get('GLOBAL', 
                                             'user_sftp_key')
+        if config.has_option('GLOBAL', 'user_sftp_cert'):
+            self.user_sftp_cert = config.get('GLOBAL', 
+                                            'user_sftp_cert')
         if config.has_option('GLOBAL', 'user_sftp_auth'):
             self.user_sftp_auth = config.get('GLOBAL', 
                                              'user_sftp_auth').split()
@@ -581,9 +586,9 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_openid_alias'):
             self.user_openid_alias = config.get('GLOBAL', 
                                                  'user_openid_alias')
-        if config.has_option('GLOBAL', 'user_openid_provider'):
-            self.user_openid_provider = config.get('GLOBAL', 
-                                                   'user_openid_provider')
+        if config.has_option('GLOBAL', 'user_openid_providers'):
+            self.user_openid_providers = config.get('GLOBAL', 
+                                                   'user_openid_providers').split()
         if config.has_option('GLOBAL', 'mig_code_base'):
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:

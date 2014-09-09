@@ -77,7 +77,7 @@ def extract_client_id(configuration, environ=os.environ):
     """
 
     distinguished_name = environ.get(client_id_field, '').strip()
-    if configuration.user_openid_provider and not distinguished_name:
+    if configuration.user_openid_providers and not distinguished_name:
         login = environ.get(client_login_field, '').strip()
         if not login:
             return ""

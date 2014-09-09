@@ -96,7 +96,7 @@ def generate_confs(
     enable_vmachines='True',
     enable_freeze='True',
     enable_openid='True',
-    openid_provider='',
+    openid_providers='',
     daemon_keycert='',
     alias_field='',
     hg_path='',
@@ -146,8 +146,10 @@ def generate_confs(
     user_dict['__ENABLE_VMACHINES__'] = enable_vmachines
     user_dict['__ENABLE_FREEZE__'] = enable_freeze
     user_dict['__ENABLE_OPENID__'] = enable_openid
-    user_dict['__OPENID_PROVIDER_BASE__'] = openid_provider
-    user_dict['__OPENID_PROVIDER_ID__'] = openid_provider
+    # Default to first OpenID provider
+    user_dict['__OPENID_PROVIDER_BASE__'] = openid_providers.split()[0]
+    user_dict['__OPENID_PROVIDER_ID__'] = openid_providers.split()[0]
+    user_dict['__OPENID_ALL_PROVIDER_IDS__'] = openid_providers
     user_dict['__DAEMON_KEYCERT__'] = daemon_keycert
     user_dict['__ALIAS_FIELD__'] = alias_field
     user_dict['__HG_PATH__'] = hg_path
@@ -188,7 +190,7 @@ cert, oid and sid based https!
     else:
         user_dict['__WSGI_COMMENTED__'] = '#'
 
-    # Enable OpenID auth module only if openid_provider is given
+    # Enable OpenID auth module only if openid_providers is given
     if user_dict['__OPENID_PROVIDER_BASE__'].strip():
         user_dict['__OPENID_COMMENTED__'] = ''
     else:
@@ -202,10 +204,13 @@ cert, oid and sid based https!
         user_dict['__NOT_DEB_COMMENTED__'] = '#'
         user_dict['__IS_DEB_COMMENTED__'] = ''
 
-    # Only set ID sub url if openid_provider is set - trailing slash matters
+    # Only set ID sub url if openid_providers is set - trailing slash matters
     if user_dict['__OPENID_PROVIDER_BASE__']:
-        user_dict['__OPENID_PROVIDER_ID__'] = os.path.join(openid_provider,
+        user_dict['__OPENID_PROVIDER_ID__'] = os.path.join(openid_providers[0],
                                                            'id') + os.sep
+        user_dict['__OPENID_ALL_PROVIDER_IDS__'] = ' '.join(
+            [os.path.join(oid_provider, 'id') + os.sep for oid_provider in \
+             openid_providers.split()])
         
     try:
         os.makedirs(destination)
@@ -419,7 +424,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_vmachines,
         enable_freeze,
         enable_openid,
-        openid_provider,
+        openid_providers,
         daemon_keycert,
         alias_field,
         hg_path,

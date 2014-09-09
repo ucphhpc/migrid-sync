@@ -191,7 +191,7 @@ resources anyway.
         }
     fill_distinguished_name(user_dict)
     user_id = user_dict['distinguished_name']
-    if configuration.user_openid_provider and configuration.user_openid_alias:
+    if configuration.user_openid_providers and configuration.user_openid_alias:
         user_dict['openid_names'] += \
                                   [user_dict[configuration.user_openid_alias]]
     req_path = None

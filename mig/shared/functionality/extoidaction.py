@@ -97,7 +97,7 @@ def main(client_id, user_arguments_dict):
     # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
 
     id_url = os.environ['REMOTE_USER'].strip()
-    openid_prefix = configuration.user_openid_provider.rstrip('/') + '/'
+    openid_prefix = configuration.user_openid_providers[0].rstrip('/') + '/'
     raw_login = id_url.replace(openid_prefix, '')
     full_name = accepted['openid.sreg.full_name'][-1].strip().title()
     country = accepted['openid.sreg.country'][-1].strip().upper()
@@ -135,7 +135,7 @@ def main(client_id, user_arguments_dict):
         }
     fill_distinguished_name(user_dict)
     user_id = user_dict['distinguished_name']
-    if configuration.user_openid_provider and configuration.user_openid_alias:
+    if configuration.user_openid_providers and configuration.user_openid_alias:
         user_dict['openid_names'].append(
             user_dict[configuration.user_openid_alias])
 

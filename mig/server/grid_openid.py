@@ -140,7 +140,7 @@ def lookup_full_user(username):
     # print "DEBUG: Loading user DB"
     id_map = load_user_db(db_path)
 
-    login_url = os.path.join(configuration.user_openid_provider, username)
+    login_url = os.path.join(configuration.user_openid_providers[0], username)
     distinguished_name = get_openid_user_dn(configuration, login_url)
 
     # print "DEBUG: compare against %s" % full_id
@@ -549,7 +549,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         # print "Loading user DB"
         id_map = load_user_db(db_path)
         # username may be None here
-        login_url = os.path.join(configuration.user_openid_provider,
+        login_url = os.path.join(configuration.user_openid_providers[0],
                                  username or '')
         distinguished_name = get_openid_user_dn(configuration, login_url)
         if distinguished_name in id_map:
