@@ -28,6 +28,11 @@
 """This module contains general functions for validating input
 to an extent where it can be used in back ends and output
 without worrying about XSS vulnerabilities, etc.
+
+The valid characters are defined in utf8 encoding but the validations work on
+unicode decoded strings since a single character may take up multiple bytes in
+the byte string version and we want to validate on a character by character
+basis.
 """
 
 import cgi
@@ -37,12 +42,22 @@ from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
 from shared.validstring import valid_user_path, valid_dir_input
 
+### Use utf8 byte string representation here ("something" and not u"something")
+### We explicitly translate to the unicode representation in the functions
+
+# We allow ascii plus the most common accented letters in utf8 for names.
+# http://practicaltypography.com/common-accented-characters.html
+# ./getglyphs.py http://practicaltypography.com/common-accented-characters.html
+# found glyphs: áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ
+
+VALID_ACCENTED = 'áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ'
+
 VALID_PATH_CHARACTERS = letters + digits + '/.,_-+='\
-     + ' :;+@%\xe6\xf8\xe5\xc6\xd8\xc5'
+     + ' :;+@%' + VALID_ACCENTED
 
 # Plain text here only - *no* html tags, i.e. no '<' or '>' !!
 
-VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + '?!#$\xa4%&()[]{}*'\
+VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + '?!#$%&()[]{}*'\
      + '"' + "'`|^~" + '\\' + '\n\r\t'
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
 VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
@@ -56,7 +71,7 @@ ALLOW_UNSAFE = \
 # Allow these chars in addition to plain letters and digits
 # We explicitly allow email chars in CN to work around broken DNs
 
-name_extras = ' -@.'
+name_extras = VALID_ACCENTED + ' -@.'
 
 ############################################################################
 # IMPORTANT: never allow '+' and '_' in DN: reserved for path translation! #
@@ -94,13 +109,17 @@ def __valid_contents(
     min_length=0,
     max_length=-1,
     ):
-    """This is a general function to verify that the supplied contents
-    only contains characters from the supplied valid_chars string.
+    """This is a general function to verify that the supplied contents string
+    only contains characters from the supplied valid_chars string. Both input
+    strings are on byte string format but we explicitly convert to unicode
+    first to compare full character by character and avoid comparing single
+    bytes from multibyte characters.
     Additionally a check for valid length is supported by use of the
     min_length and max_length parameters.
     """
 
-    contents = str(contents)
+    contents = str(contents).decode('utf8')
+    valid_chars = str(valid_chars).decode('utf8')
     if len(contents) < min_length:
         raise InputException('shorter than minimum length (%d)'
                               % min_length)
@@ -110,7 +129,6 @@ def __valid_contents(
     for char in contents:
         if not char in valid_chars:
             raise InputException('found invalid character: %s' % char)
-
 
 def __filter_contents(contents, valid_chars):
     """This is a general function to filter out any illegal characters
@@ -999,3 +1017,14 @@ class InputException(Exception):
         return repr(self.value)
 
 
+if __name__ == '__main__':
+    for test_cn in ('Firstname Lastname', 'Test Æøå', 'Test Überh4x0r',
+                    'Test Maybe Invalid Źacãŕ', 'Test Invalid /!$'):
+        try:
+            print "Testing valid_commonname: %s" % test_cn
+            print "DEBUG %s only in %s" % ([test_cn], [VALID_NAME_CHARACTERS])
+            valid_commonname(test_cn)
+            print "Accepted commonname!"
+        except Exception, exc:
+            print "Rejected %s : %s" % (test_cn, exc)
+            

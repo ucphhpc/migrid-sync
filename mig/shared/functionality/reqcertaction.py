@@ -173,11 +173,6 @@ resources anyway.
 '''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if cert_name.upper().find('DO NOT SEND') != -1:
-        output_objects.append({'object_type': 'text', 'text'
-                          : "Test request ignored!"})
-        return (output_objects, returnvalues.OK)
-
     user_dict = {
         'full_name': cert_name,
         'organization': org,
@@ -194,6 +189,15 @@ resources anyway.
     if configuration.user_openid_providers and configuration.user_openid_alias:
         user_dict['openid_names'] += \
                                   [user_dict[configuration.user_openid_alias]]
+    logger.info('got reqcert request: %s' % user_dict)
+
+    # For testing only
+    
+    if cert_name.upper().find('DO NOT SEND') != -1:
+        output_objects.append({'object_type': 'text', 'text'
+                          : "Test request ignored!"})
+        return (output_objects, returnvalues.OK)
+
     req_path = None
     try:
         (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
