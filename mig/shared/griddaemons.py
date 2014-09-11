@@ -31,18 +31,19 @@ import glob
 import logging
 import os
 import time
+import socket
 
 from shared.base import client_dir_id, client_alias, invisible_path
 from shared.ssh import parse_pub_key
 from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
      get_authkeys, ssh_authpasswords, davs_authpasswords, ftps_authpasswords, \
      get_authpasswords, extract_field
-
+from shared.fileio import unpickle
 
 class User(object):
     """User login class to hold a single valid login for a user"""
     def __init__(self, username, password, 
-                 chroot=True, home=None, public_key=None):
+                 chroot=True, home=None, public_key=None, ip_addr=None):
         self.username = username
         self.password = password
         self.chroot = chroot
@@ -54,6 +55,8 @@ class User(object):
         self.home = home
         if self.home is None:
             self.home = self.username
+
+        self.ip_addr = ip_addr
 
     def __str__(self):
         """String formater"""
@@ -132,7 +135,6 @@ def acceptable_chmod(path, mode, chmod_exceptions):
         return True
     else:
         return False
-
 
 def refresh_users(configuration, protocol):
     '''Reload users from conf if it changed on disk. Add user entries for all
@@ -268,4 +270,53 @@ def refresh_users(configuration, protocol):
     logger.info("Refreshed users from configuration (%d users)" % \
                 len(conf['users']))
     conf['time_stamp'] = time.time()
+    return conf
+
+
+def refresh_jobs(configuration, protocol):
+    conf = configuration.daemon_conf
+    logger = conf.get("logger", logging.getLogger())
+    old_usernames = [i.username for i in conf['jobs']]
+    cur_usernames = []
+    if protocol in ('sftp'):
+        proto_authkeys = ssh_authkeys
+        proto_authpasswords = None
+    else:
+        logger.error("invalid protocol: %s" % protocol)
+
+    for (_, _, filenames) in os.walk(configuration.sessid_to_mrsl_link_home):
+        for filename in filenames:
+            filepath = os.path.join(configuration.sessid_to_mrsl_link_home, filename)
+            if os.path.islink(filepath) and filepath.endswith('.mRSL'):
+                sessionid = filename[:-5]
+                job_dict = unpickle(filepath, logger)
+                
+                # We only allow connections from executing jobs that
+                # has a public key
+                if job_dict and \
+                        job_dict.has_key('STATUS') and \
+                        job_dict['STATUS'] == 'EXECUTING' and \
+                        job_dict.has_key('SESSIONID') and \
+                        job_dict['SESSIONID'] == sessionid and \
+                        job_dict.has_key('USER_CERT') and \
+                        job_dict.has_key('MOUNT') and \
+                        job_dict.has_key('MOUNTSSHPUBLICKEY'):
+                    user_alias = sessionid
+                    user_dir = job_dict['USER_CERT'].replace(' ', '_').replace('/', '+')
+                    user_key = job_dict['MOUNTSSHPUBLICKEY']  
+                    user_url = job_dict['RESOURCE_CONFIG']['HOSTURL']
+                    user_ip = socket.gethostbyname_ex(user_url)[2][0]
+                    
+                    conf['jobs'].append(User(username=user_alias, 
+                                home=user_dir, password=None,
+                                public_key=user_key, chroot=True, ip_addr=user_ip))
+                    cur_usernames.append(user_alias)
+                
+    removed = [i for i in old_usernames if not i in cur_usernames]
+    if removed:
+        logger.info("Removing login for %d finished jobs" % len(removed))
+        conf['jobs'] = [i for i in conf['jobs'] if not i.username in removed]
+    logger.info("Refreshed jobs from configuration (%d jobs)" % \
+                len(conf['jobs']))
+
     return conf

@@ -37,7 +37,7 @@ def curl_cmd_send(resource_filename, mig_server_filename,
 
     return "curl --location --fail --silent --insecure --upload-file '"\
          + resource_filename + "' -X SIDPUT '" + https_sid_url_arg\
-         + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
+         + '/sid_redirect/' + job_dict['SESSIONID'] + '/'\
          + mig_server_filename + "'"
 
 
@@ -52,7 +52,7 @@ def curl_cmd_get(mig_server_filename, resource_filename,
         cmd += '\n'
     cmd += "curl --location --fail --silent --insecure -o '" + resource_filename\
          + "' '" + https_sid_url_arg + '/sid_redirect/'\
-         + job_dict['MIGSESSIONID'] + '/' + mig_server_filename + "'"
+         + job_dict['SESSIONID'] + '/' + mig_server_filename + "'"
     return cmd
 
 
@@ -67,7 +67,7 @@ def curl_cmd_get_special(file_extension, resource_filename,
         cmd += '\n'
     cmd += "curl --location --fail --silent --insecure -o '" + resource_filename\
          + "' '" + https_sid_url_arg + '/sid_redirect/'\
-         + job_dict['MIGSESSIONID'] + file_extension + "'"
+         + job_dict['SESSIONID'] + file_extension + "'"
     return cmd
 
 
@@ -77,7 +77,7 @@ def curl_cmd_request_interactive(https_sid_url_arg):
     int_command = "curl --location --fail --silent --insecure '"\
          + https_sid_url_arg\
          + '/cgi-sid/requestinteractivejob.py?sessionid='\
-         + job_dict['MIGSESSIONID'] + '&jobid=' + job_dict['JOB_ID']\
+         + job_dict['SESSIONID'] + '&jobid=' + job_dict['JOB_ID']\
          + '&exe=' + exe + '&unique_resource_name='\
          + resource_conf['RESOURCE_ID'] + '&localjobname='\
          + localjobname + "'\n"
@@ -459,6 +459,26 @@ if os.path.isfile("%s"):
         cmd += 'iosid_fd.write("%s")\n' % job_dict['MIGIOSESSIONID']
         cmd += 'iosid_fd.close()\n'
         return cmd
+    
+    def generate_mountsshprivatekey_file(self,
+                                         result='generate_mountsshprivatekey_file'):
+        """Generate file containing mount ssh private key."""
+
+        cmd = '# Create file used containing mount private key.\n'
+        cmd += 'mountprivkey_fd = open("%s.mount.key", "w")\n' % localjobname
+        cmd += 'mountprivKey_fd.write("%s")\n' % job_dict['MOUNTSSHPRIVATEKEY']
+        cmd += 'mountprivkey_fd.close()\n'
+        return cmd
+
+    def generate_mountsshknownhosts_file(self,
+                                         result='generate_mountsshknownhosts_file'):
+        """Generate file containing mount ssh known_hosts."""
+
+        cmd = '# Create known_hosts file used when mounting job home.\n'
+        cmd += 'mountknownhosts_fd = open("%s.mount.known_host", "w")\n' % localjobname
+        cmd += 'mountknownhosts_fd.write("%s")\n' % job_dict['MOUNTSSHKNOWNHOSTS']
+        cmd += 'mountknownhosts_fd.close()\n'
+        return cmd
 
     def chmod_executables(self, result='chmod_status'):
         """Make sure EXECUTABLES are actually executable"""
@@ -555,6 +575,11 @@ if not os.environ.get("MIG_JOBDIR", ""):
                              + key_and_value[1] + '")\n'
 
         return cmd
+    
+    def mount(self, login, host, port, result='mount_status'):
+        print "WARNING: genjobscriptpython.mount _NOT_ implemented"
+ 
+        return '# TODO: Implement MiG home mount\n'
 
     def execute(self, pretext, posttext):
         """Command execution"""
@@ -588,6 +613,11 @@ if not os.environ.get("MIG_JOBDIR", ""):
         cmd += 'status_handle.close()\n'
 
         return cmd
+
+    def umount(self, status='umount_status'):
+        print "WARNING: genjobscriptpython.umount _NOT_ implemented"
+ 
+        return '# TODO: Implement MiG home umount\n'
 
     def output_files_missing(self, result='missing_counter'):
         """Check availability of outputfiles:

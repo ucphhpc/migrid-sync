@@ -29,6 +29,7 @@
 
 import os
 import time
+import socket
 from binascii import hexlify
 from copy import deepcopy
 
@@ -38,7 +39,7 @@ import genjobscriptjava
 from shared.base import client_id_dir
 from shared.fileio import write_file, pickle, make_symlink
 from shared.mrslparser import expand_variables
-from shared.ssh import copy_file_to_resource
+from shared.ssh import copy_file_to_resource, generate_ssh_rsa_key_pair
 
 try:
     import shared.mrsltoxrsl as mrsltoxrsl
@@ -91,6 +92,7 @@ def create_empty_job(
     job_dict['OUTPUTFILES'] = ''
     job_dict['ARGUMENTS'] = ''
     job_dict['EXECUTABLES'] = ''
+    job_dict['MOUNT'] = ''
     job_dict['CPUTIME'] = str(cputime)
     job_dict['MEMORY'] = 16
     job_dict['DISK'] = 1
@@ -117,7 +119,7 @@ def create_empty_job(
 
     pickle(helper_dict, helper_dict_filename, logger)
 
-    return job_dict
+    return (job_dict, 'OK')
 
 
 def create_restart_job(
@@ -151,7 +153,7 @@ def create_restart_job(
     empty_job['SESSIONID'] = 'RESTARTFAILEDDUMMYID'
     empty_job['IOSESSIONID'] = 'RESTARTFAILEDDUMMYID'
     empty_job['EMPTY_JOB'] = True
-    return empty_job
+    return (empty_job, 'OK')
 
 
 # Returns sessionid if successfull, None if NON-successfull
@@ -178,8 +180,55 @@ def create_job_script(
     # Deep copy job for local changes
     job_dict = deepcopy(job)
 
-    job_dict['MIGSESSIONID'] = sessionid
-    job_dict['MIGIOSESSIONID'] = iosessionid
+    job_dict['SESSIONID'] = sessionid
+    job_dict['IOSESSIONID'] = iosessionid
+
+    # Create ssh rsa keys and known_hosts for job mount
+
+    mount_private_key = ""
+    mount_public_key = ""
+    mount_known_hosts = ""
+    
+    if job_dict['MOUNT'] != []:
+
+        # Ensure SSHFS on resource
+    
+        if not configuration.res_default_sshfs_re in job_dict['RUNTIMEENVIRONMENT']:
+            job_dict['RUNTIMEENVIRONMENT'].append(configuration.res_default_sshfs_re)
+        
+        # Generate public/private key pair for sshfs
+
+        (mount_private_key, mount_public_key) = generate_ssh_rsa_key_pair()
+        
+        # Generate known_hosts 
+    
+        if not os.path.exists(configuration.user_sftp_key_pub): 
+            msg = "job generation failed:" 
+            msg = "%s configuration.user_sftp_key_pub: '%s' -> File _NOT_ found" % \
+                (msg, configuration.user_sftp_key_pub) 
+            print msg
+            logger.error(msg)
+            return (None, msg)
+
+        sftp_address = configuration.user_sftp_address
+        if sftp_address == '':
+            sftp_address = configuration.server_fqdn
+
+        sftp_addresses = socket.gethostbyname_ex(sftp_address or socket.getfqdn())
+        sftp_port = configuration.user_sftp_port
+        
+        mount_known_hosts = "[%s]:%s" % (sftp_addresses[0], sftp_port)
+        for idx in xrange(1, len(sftp_addresses)):
+            mount_known_hosts = "%s,%s:%s" % (mount_known_hosts, sftp_addresses[idx], sftp_port)            
+        
+        fd = open(configuration.user_sftp_key_pub, 'r')        
+        mount_known_hosts = "%s %s" % (mount_known_hosts, fd.read())
+        fd.close()
+
+    job_dict['MOUNTSSHPUBLICKEY'] = mount_public_key
+    job_dict['MOUNTSSHPRIVATEKEY'] = mount_private_key 
+    job_dict['MOUNTSSHKNOWNHOSTS'] = mount_known_hosts
+  
     if not job_dict.has_key('MAXPRICE'):
         job_dict['MAXPRICE'] = '0'
     # Finally expand reserved job variables like +JOBID+ and +JOBNAME+
@@ -268,7 +317,7 @@ def create_job_script(
             'job scripts were not generated. Perhaps you have specified an invalid SCRIPTLANGUAGE ? '
         print msg
         logger.error(msg)
-        return (msg, None)
+        return (None, msg)
 
     inputfiles_path = path_without_extension + '.getinputfiles'
 
@@ -353,9 +402,9 @@ def create_job_script(
                  % inputfiles_path
             print '\nERROR: ' + str(err)
             logger.error(msg)
-            return (msg, None)
+            return (None, msg)
 
-        return (sessionid, iosessionid)
+        return (job_dict, 'OK')
 
     # Copy file to the resource
 
@@ -372,7 +421,7 @@ def create_job_script(
             os.remove(inputfiles_path)
         except:
             logger.error('could not remove ' + inputfiles_path)
-    return (sessionid, iosessionid)
+    return (job_dict, 'OK')
 
 
 def create_arc_job(
@@ -394,9 +443,9 @@ def create_arc_job(
     """
 
     if not configuration.arc_clusters:
-        return ('No ARC support!', None)
+        return (None, 'No ARC support!')
     if not job['JOBTYPE'] == 'arc':
-        return ('Error. This is not an ARC job', None)
+        return (None, 'Error. This is not an ARC job')
 
     # Deep copy job for local changes
     job_dict = deepcopy(job)
@@ -407,7 +456,7 @@ def create_arc_job(
 
     # we do not want to see empty jobs here. Test as done in create_job_script.
     if client_id == configuration.empty_job_name:
-        return ('Error. empty job for ARC?', None)
+        return (None, 'Error. empty job for ARC?')
 
 
     # generate random session ID:
@@ -442,7 +491,7 @@ def create_arc_job(
     except Exception, err:
         # error during translation, pass a message
         logger.error('Error during xRSL translation: %s' % err.__str__())
-        return (err.__str__(), None)
+        return (None, err.__str__())
     
         # we submit directly from here (the other version above does 
         # copyFileToResource and gen_job_script generates all files)
@@ -465,8 +514,11 @@ def create_arc_job(
 
         # if no exception occurred, we are done:
 
-        msg = arc_job_ids[0]
-        result = sessionid
+        job_dict['ARCID'] = arc_job_ids[0]
+        job_dict['SESSIONID'] = sessionid
+       
+        msg = 'OK'
+        result = job_dict
 
     # when errors occurred, pass a message to the caller.
     except arc.ARCWrapperError, err:
@@ -487,7 +539,7 @@ def create_arc_job(
         logger.error('Unsuccessful ARC job submission: %s' % msg)
     else:
         logger.debug('submitted to ARC as job %s' % msg)
-    return (msg, result)
+    return (result, msg)
 
     # errors are handled inside grid_script. For ARC jobs, set status = FAILED
     # on errors, and include the message
@@ -591,7 +643,16 @@ def gen_job_script(
     getinputfiles_array.append(generator.print_on_error('generate_iosessionid_file'
                                , '0',
                                'failed to generate iosessionid file!'))
-
+    getinputfiles_array.append(generator.generate_mountsshprivatekey_file('generate_mountsshprivatekey_file'
+                               ))
+    getinputfiles_array.append(generator.print_on_error('generate_mountsshprivatekey_file'
+                               , '0',
+                               'failed to generate mountsshprivatekey file!'))
+    getinputfiles_array.append(generator.generate_mountsshknownhosts_file('generate_mountsshknownhosts_file'
+                               ))
+    getinputfiles_array.append(generator.print_on_error('generate_mountsshknownhosts_file'
+                               , '0',
+                               'failed to generate mountsshknownhosts file!'))
     getinputfiles_array.append(generator.total_status(['get_special_status'
                                , 'get_input_status',
                                'get_executables_status',
@@ -620,20 +681,41 @@ def gen_job_script(
     job_array.append(generator.print_on_error('chmod_status', '0',
                      'failed to make one or more EXECUTABLES executable'
                      ))
+    job_array.append(generator.log_on_error('chmod_status', '0', 'system: chmod'))
+    
     job_array.append(generator.comment('set environments'))
     job_array.append(generator.set_environments('env_status'))
     job_array.append(generator.print_on_error('env_status', '0',
                      'failed to initialize one or more ENVIRONMENTs'))
+    job_array.append(generator.log_on_error('env_status', '0', 'system: set environments'))
+    
     job_array.append(generator.comment('set runtimeenvironments'))
     job_array.append(generator.set_runtime_environments(resource_config['RUNTIMEENVIRONMENT'
                      ], 're_status'))
     job_array.append(generator.print_on_error('re_status', '0',
                      'failed to initialize one or more RUNTIMEENVIRONMENTs'
                      ))
+    job_array.append(generator.log_on_error('re_status', '0', 'system: set RUNTIMEENVIRONMENTs'))
+
     job_array.append(generator.comment('enforce some basic job limits'))
     job_array.append(generator.set_limits())
+    if job_dictionary['MOUNT'] != '':
+        job_array.append(generator.comment('Mount job home'))
+        job_array.append(generator.mount(job_dictionary['SESSIONID'], 
+                                         configuration.server_fqdn, 
+                                         configuration.user_sftp_port, 
+                                         'mount_status'))
+        job_array.append(generator.print_on_error('mount_status', '0',
+                     'failded to mount job home'))
+        job_array.append(generator.log_on_error('mount_status', '0', 'system: mount'))
     job_array.append(generator.comment('execute!'))
     job_array.append(generator.execute('EXECUTING: ', '--Exit code:'))
+    if job_dictionary['MOUNT'] != '':
+        job_array.append(generator.comment('Unmount job home'))
+        job_array.append(generator.umount('umount_status'))
+        job_array.append(generator.print_on_error('umount_status', '0',
+                     'failded to umount job home'))
+        job_array.append(generator.log_on_error('umount_status', '0', 'system: umount'))
     job_array.append(generator.comment('exit script'))
     job_array.append(generator.exit_script('0', 'job'))
 
@@ -798,7 +880,5 @@ def gen_job_script(
     write_file('\n'.join(sendupdatefiles_array),
                configuration.mig_system_files + job_dictionary['JOB_ID']
                 + '.sendupdatefiles', logger)
-
+   
     return True
-
-

@@ -78,9 +78,8 @@ except ImportError:
 from shared.base import invisible_path
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
-     acceptable_chmod, refresh_users
+     acceptable_chmod, refresh_users, refresh_jobs
 from shared.useradm import check_password_hash
-
 
 configuration, logger = None, None
 
@@ -133,6 +132,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         self.users = users
 
         # list of User login objects for user_name
+        
         entries = self.users[self.user_name]
         for entry in entries:
             if entry.chroot:
@@ -469,6 +469,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         self.logger = conf.get("logger", logging.getLogger())
         self.event = threading.Event()
         self.users = users
+        self.client_addr = kwargs.get('client_addr')
         self.authenticated_user = None
         self.allow_password = conf.get('allow_password', True)
         self.allow_publickey = conf.get('allow_publickey', True)
@@ -494,7 +495,10 @@ class SimpleSSHServer(paramiko.ServerInterface):
             entries = self.users[username]
             offered = password
             for entry in entries:
-                if entry.password is not None:
+                if entry.password is not None and \
+                    (entry.ip_addr is None or
+                     entry.ip_addr == self.client_addr[0]):
+
                     allowed = entry.password
                     self.logger.debug("Password check for %s" % username)
                     if check_password_hash(offered, allowed):
@@ -509,12 +513,16 @@ class SimpleSSHServer(paramiko.ServerInterface):
     def check_auth_publickey(self, username, key):
         """Public key auth against usermap"""
         offered = None
+
         if self.allow_publickey and self.users.has_key(username):
             # list of User login objects for username
             entries = self.users[username]
             offered = key.get_base64()
             for entry in entries:
-                if entry.public_key is not None:
+                if entry.public_key is not None and \
+                    (entry.ip_addr is None or 
+                     entry.ip_addr == self.client_addr[0]):
+
                     allowed = entry.public_key.get_base64()
                     self.logger.debug("Public key check for %s" % username)
                     if allowed == offered:
@@ -546,18 +554,24 @@ class SimpleSSHServer(paramiko.ServerInterface):
         return True
 
 
-def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
+def accept_client(client, addr, root_dir, users, jobs, host_rsa_key, conf={}):
     """Handle a single client session"""
     logger = conf.get("logger", logging.getLogger())
     logger.debug("In session handler thread from %s %s" % (client, addr))
     # Fill users in dictionary for fast lookup. We create a list of matching
     # User objects since each user may have multiple logins (e.g. public keys)
+     
     usermap = {}
     for user_obj in users:
         if not usermap.has_key(user_obj.username):
             usermap[user_obj.username] = []
         usermap[user_obj.username].append(user_obj)
-
+        
+    for user_obj in jobs:
+        if not usermap.has_key(user_obj.username):
+            usermap[user_obj.username] = []
+        usermap[user_obj.username].append(user_obj)
+    
     host_key_file = StringIO(host_rsa_key)
     host_key = paramiko.RSAKey(file_obj=host_key_file)
     transport = paramiko.Transport(client)
@@ -582,13 +596,15 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
                                     transport=transport, fs_root=root_dir,
                                     users=usermap, conf=conf)
 
-    server = SimpleSSHServer(users=usermap, conf=conf)
+    server = SimpleSSHServer(users=usermap, conf=conf, client_addr=addr)
     transport.start_server(server=server)
+    
     channel = transport.accept(conf['auth_timeout'])
     username = server.get_authenticated_user()
     if username is not None:
-        user = usermap[username]
+        #user = usermap[username]
         logger.info("Login for %s from %s" % (username, addr))
+                #print "type: %s"  % type(entry.public_key)
         print "Login for %s from %s" % (username, addr)
     else:
         print "Login from %s failed - closing connection" % (addr, )
@@ -645,10 +661,12 @@ def start_service(configuration):
         refresh_delay = 60
         if daemon_conf['time_stamp'] + refresh_delay < time.time():
             daemon_conf = refresh_users(configuration, 'sftp')
+        daemon_conf = refresh_jobs(configuration, 'sftp')
         logger.info("Handling session from %s %s" % (client, addr))
         worker = threading.Thread(target=accept_client,
                                   args=[client, addr, daemon_conf['root_dir'],
                                         daemon_conf['users'],
+                                        daemon_conf['jobs'],
                                         daemon_conf['host_rsa_key'],
                                         daemon_conf,])
         worker.start()
@@ -726,6 +744,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'user_alias': configuration.user_sftp_alias,
         'host_rsa_key': host_rsa_key,
         'users': [],
+        'jobs': [],
         'time_stamp': 0,
         'logger': logger,
         'auth_timeout': 60,

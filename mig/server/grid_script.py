@@ -427,11 +427,11 @@ while True:
                              dict_userjob)
                 continue
             logger.debug('ARC Job' )
-            (arc_id, session_id) = jobscriptgenerator.create_arc_job(\
+            (arc_job, msg) = jobscriptgenerator.create_arc_job(\
                                     dict_userjob, configuration, logger)
-            if not session_id:
+            if not arc_job:
                 # something has gone wrong
-                logger.error('Job NOT submitted (%s)' % arc_id) 
+                logger.error('Job NOT submitted (%s)' % msg) 
                 # discard this job (as FAILED, including message)
                 # see gridscript::requeue_job for how to do this...
                 
@@ -442,7 +442,7 @@ while True:
                     {'QUEUED_TIMESTAMP': dict_userjob['QUEUED_TIMESTAMP'],
                      'EXECUTING_TIMESTAMP': dict_userjob['FAILED_TIMESTAMP'],
                      'FAILED_TIMESTAMP': dict_userjob['FAILED_TIMESTAMP'],
-                     'FAILED_MESSAGE': ('ARC Submission failed: %s' % arc_id),
+                     'FAILED_MESSAGE': ('ARC Submission failed: %s' % msg),
                      'UNIQUE_RESOURCE_NAME': 'ARC',})
                 dict_userjob['EXECUTION_HISTORY'] = [hist]
 
@@ -451,14 +451,14 @@ while True:
 
             else:
                 # all fine, job is now in some ARC queue
-                logger.debug('Job submitted (%s,%s)' % (session_id, arc_id))
+                logger.debug('Job submitted (%s,%s)' % (arc_job['SESSIONID'], arc_job['ARCID']))
                 # set some job fields for job status retrieval, and
                 # put in exec.queue for job status queries and timeout
-                dict_userjob['SESSIONID'] = session_id
+                dict_userjob['SESSIONID'] = arc_job['SESSIONID']
                 # abuse these two fields, 
                 # expected by timeout thread to be there anyway
                 dict_userjob['UNIQUE_RESOURCE_NAME'] = 'ARC'
-                dict_userjob['EXE'] = arc_id
+                dict_userjob['EXE'] = arc_job['ARCID']
 
                 # this one is used by the timeout thread as well
                 # We put in a wild guess, 10 minutes. Perhaps not enough
@@ -807,7 +807,7 @@ while True:
             else:
                 sleep_factor = 2.0
             print 'N'
-            empty_job = jobscriptgenerator.create_empty_job(
+            (empty_job, msg) = jobscriptgenerator.create_empty_job(
                 unique_resource_name,
                 exe,
                 cputime,
@@ -817,7 +817,7 @@ while True:
                 configuration,
                 logger,
                 )
-            (sessionid, iosessionid) = \
+            (new_job, msg) = \
                 jobscriptgenerator.create_job_script(
                 unique_resource_name,
                 exe,
@@ -827,7 +827,7 @@ while True:
                 configuration,
                 logger,
                 )
-            if sessionid and iosessionid:
+            if new_job:
                 last_request_dict['JOB_ID'] = empty_job['JOB_ID']
                 last_request_dict['STATUS'] = 'No jobs in queue'
                 if last_job_failed:
@@ -843,8 +843,8 @@ while True:
                 last_request_dict['EXE'] = exe
                 last_request_dict['RESOURCE_CONFIG'] = resource_config
                 last_request_dict['LOCALJOBNAME'] = localjobname
-                last_request_dict['SESSIONID'] = sessionid
-                last_request_dict['IOSESSIONID'] = iosessionid
+                last_request_dict['SESSIONID'] = new_job['SESSIONID']
+                last_request_dict['IOSESSIONID'] = new_job['IOSESSIONID']
                 last_request_dict['CPUTIME'] = empty_job['CPUTIME']
                 last_request_dict['EMPTY_JOB'] = True
 
@@ -938,7 +938,7 @@ while True:
                     sleep_factor = 1.0
                 else:
                     sleep_factor = 2.0
-                empty_job = jobscriptgenerator.create_empty_job(
+                (empty_job, msg) = jobscriptgenerator.create_empty_job(
                     unique_resource_name,
                     exe,
                     cputime,
@@ -948,7 +948,7 @@ while True:
                     configuration,
                     logger,
                     )
-                (sessionid, iosessionid) = \
+                (new_job, msg) = \
                     jobscriptgenerator.create_job_script(
                     unique_resource_name,
                     exe,
@@ -958,7 +958,7 @@ while True:
                     configuration,
                     logger,
                     )
-                if sessionid and iosessionid:
+                if new_job:
                     last_request_dict['JOB_ID'] = empty_job['JOB_ID']
                     last_request_dict['STATUS'] = \
                         'No jobs in queue can be executed by resource'
@@ -974,8 +974,8 @@ while True:
                     last_request_dict['RESOURCE_CONFIG'] = \
                         resource_config
                     last_request_dict['LOCALJOBNAME'] = localjobname
-                    last_request_dict['SESSIONID'] = sessionid
-                    last_request_dict['IOSESSIONID'] = iosessionid
+                    last_request_dict['SESSIONID'] = new_job['SESSIONID']
+                    last_request_dict['IOSESSIONID'] = new_job['IOSESSIONID']
                     last_request_dict['CPUTIME'] = empty_job['CPUTIME']
                     last_request_dict['EMPTY_JOB'] = True
 
@@ -993,7 +993,7 @@ while True:
                                              job_dict['JOB_ID'] + '.mRSL')
                 mrsl_dict = unpickle(mrsl_filename, logger)
                 if mrsl_dict:
-                    (sessionid, iosessionid) = \
+                    (new_job, msg) = \
                         jobscriptgenerator.create_job_script(
                         unique_resource_name,
                         exe,
@@ -1003,7 +1003,7 @@ while True:
                         configuration,
                         logger,
                         )
-                    if sessionid and iosessionid:
+                    if new_job:
 
                         # mrsl_dict now contains entire job_dict with updates
                         
@@ -1031,8 +1031,10 @@ while True:
                         mrsl_dict['RESOURCE_VGRID'] = active_res_vgrid
                         mrsl_dict['RESOURCE_CONFIG'] = resource_config
                         mrsl_dict['LOCALJOBNAME'] = localjobname
-                        mrsl_dict['SESSIONID'] = sessionid
-                        mrsl_dict['IOSESSIONID'] = iosessionid
+                        mrsl_dict['SESSIONID'] = new_job['SESSIONID']
+                        mrsl_dict['IOSESSIONID'] = new_job['IOSESSIONID']
+                        mrsl_dict['MOUNTSSHPUBLICKEY'] = new_job['MOUNTSSHPUBLICKEY']
+                        mrsl_dict['MOUNTSSHPRIVATEKEY'] = new_job['MOUNTSSHPRIVATEKEY']
 
                         # pickle the new version
 
@@ -1083,7 +1085,9 @@ while True:
 
                         job_queue.enqueue_job(job_dict,
                                 job_queue.queue_length())
-                        logger.error('error creating new job script')
+                        msg = 'error creating new job script, job requeued'
+                        print msg
+                        logger.error(msg)
                 else:
                     logger.error('error unpickling mRSL: %s'
                                   % mrsl_filename)
@@ -1306,7 +1310,7 @@ while True:
 
         logger.info('Restart exe failed: adding retry job for %s %s'
                      % (res_name, exe_name))
-        retry_job = jobscriptgenerator.create_restart_job(
+        (retry_job, msg) = jobscriptgenerator.create_restart_job(
             res_name,
             exe_name,
             300,

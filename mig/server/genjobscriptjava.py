@@ -89,9 +89,9 @@ class GenJobScriptJava:
 #
 
 '''
-        init = init + 'mig_session_id: ' + job_dict['MIGSESSIONID']\
+        init = init + 'mig_session_id: ' + job_dict['SESSIONID']\
              + '\n'
-        init = init + 'mig_iosession_id: ' + job_dict['MIGIOSESSIONID']\
+        init = init + 'mig_iosession_id: ' + job_dict['IOSESSIONID']\
              + '\n'
         init = init + 'job_id: ' + job_dict['JOB_ID'] + '\n'
         return init
@@ -150,6 +150,14 @@ class GenJobScriptJava:
                                   result='generate_iosessionid_file'):
         return ''
 
+    def generate_mountsshprivatekey_file(self,
+                                         result='generate__mountsshprivatekey_file'):
+        return ''
+
+    def generate_mountsshknownhosts_file(self,
+                                    result='generate_mountsshknownhosts_file'):
+        return ''
+
     def chmod_executables(self, result='chmod_status'):
         return ''
 
@@ -167,12 +175,18 @@ class GenJobScriptJava:
                                  result='re_result'):
         return ''
 
+    def mount(self, login, host, port, status='umount_status'):
+        return ''
+
     def execute(self, pretext, posttext):
         cmd = ''
         for exe in job_dict['EXECUTE']:
             cmd += 'execute: ' + exe + '\n'
 
         return cmd
+
+    def umount(self, status='umount_status'):
+        return ''
 
     def output_files_missing(self, result='missing_counter'):
         return ''
@@ -184,15 +198,15 @@ class GenJobScriptJava:
         cmd = ''
 
         cmd += 'stdout: ' + https_sid_url_arg\
-               + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
+               + '/sid_redirect/' + job_dict['SESSIONID'] + '/'\
                + output_dir + '/' + job_dict['JOB_ID'] + '/'\
                + job_dict['JOB_ID'] + '.stdout\n'
         cmd += 'stderr: ' + https_sid_url_arg\
-               + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
+               + '/sid_redirect/' + job_dict['SESSIONID'] + '/'\
                + output_dir + '/' + job_dict['JOB_ID'] + '/'\
                + job_dict['JOB_ID'] + '.stderr\n'
         cmd += 'io-status: ' + https_sid_url_arg\
-               + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
+               + '/sid_redirect/' + job_dict['SESSIONID'] + '/'\
                + output_dir + '/' + job_dict['JOB_ID'] + '/'\
                + job_dict['JOB_ID'] + '.io-status\n'
         return cmd
@@ -202,7 +216,7 @@ class GenJobScriptJava:
         for name in files:
             if name.count('status') > 0:
                 cmd += 'status: ' + https_sid_url_arg\
-                     + '/sid_redirect/' + job_dict['MIGSESSIONID'] + '/'\
+                     + '/sid_redirect/' + job_dict['SESSIONID'] + '/'\
                      + output_dir + '/' + job_dict['JOB_ID'] + '/'\
                      + name + '\n'
         return cmd

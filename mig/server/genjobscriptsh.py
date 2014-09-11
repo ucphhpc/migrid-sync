@@ -52,7 +52,7 @@ def curl_cmd_send(resource_filename, mig_server_filename,
         # Relative paths are uploaded to the corresponding session on the server
 
         dst_url = https_sid_url_arg + '/sid_redirect/'\
-             + job_dict['MIGSESSIONID'] + '/' + mig_server_filename
+             + job_dict['SESSIONID'] + '/' + mig_server_filename
 
         # MiG server needs to know that this PUT uses a session ID
 
@@ -77,7 +77,7 @@ def curl_cmd_send_mqueue(resource_filename, queue, https_sid_url_arg):
 
     return 'curl --location --connect-timeout 30 --max-time 3600 '\
            + upload_bw_limit + ' --fail --silent --insecure '\
-           + '-F "action=send" -F "iosessionid=' + job_dict['MIGSESSIONID']\
+           + '-F "action=send" -F "iosessionid=' + job_dict['SESSIONID']\
            + '" -F "queue=' + queue + '" -F "msg=<' + resource_filename\
            + '" -F "output_format=txt" ' + https_sid_url_arg\
            + '/cgi-sid/mqueue.py'
@@ -104,7 +104,7 @@ def curl_cmd_get(mig_server_filename, resource_filename,
         # Relative paths are downloaded from the corresponding session on the server
 
         src_url = https_sid_url_arg + '/sid_redirect/'\
-             + job_dict['MIGSESSIONID'] + '/' + mig_server_filename
+             + job_dict['SESSIONID'] + '/' + mig_server_filename
 
     # Live input requires variable expansion in filenames (double quotes)
 
@@ -128,7 +128,7 @@ def curl_cmd_get_special(file_extension, resource_filename,
     cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
            + download_bw_limit + ' --fail --silent --insecure --create-dirs '\
            + "-o '" + resource_filename + "' '" + https_sid_url_arg\
-           + '/sid_redirect/' + job_dict['MIGSESSIONID'] + file_extension + "'"
+           + '/sid_redirect/' + job_dict['SESSIONID'] + file_extension + "'"
     return cmd
 
 
@@ -145,7 +145,7 @@ def curl_cmd_get_mqueue(queue, resource_filename, https_sid_url_arg):
     cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
            + download_bw_limit + ' --fail --silent --insecure --create-dirs '\
            + '-o "' + resource_filename + '" -F "action=receive" '\
-           + '-F "iosessionid=' + job_dict['MIGSESSIONID'] + '" -F "queue='\
+           + '-F "iosessionid=' + job_dict['SESSIONID'] + '" -F "queue='\
            + queue + '" -F "output_format=file" ' + https_sid_url_arg\
            + '/cgi-sid/mqueue.py'
     return cmd
@@ -158,7 +158,7 @@ def curl_cmd_request_interactive(https_sid_url_arg):
         "curl --location --connect-timeout 30 --max-time 3600 --fail --silent --insecure '"\
          + https_sid_url_arg\
          + '/cgi-sid/requestinteractivejob.py?sessionid='\
-         + job_dict['MIGSESSIONID'] + '&jobid=' + job_dict['JOB_ID']\
+         + job_dict['SESSIONID'] + '&jobid=' + job_dict['JOB_ID']\
          + '&exe=' + exe + '&unique_resource_name='\
          + resource_conf['RESOURCE_ID'] + '&localjobname='\
          + localjobname + "'\n"
@@ -201,6 +201,8 @@ class GenJobScriptSh:
         filename_without_extension = filename_without_ext
         global localjobname
         localjobname = localjobnam
+        global status_log
+        status_log = '%s.status' % job_dict['JOB_ID'] 
         global io_log
         io_log = '%s.io-status' % job_dict['JOB_ID']
 
@@ -286,8 +288,11 @@ class GenJobScriptSh:
     def init_status(self):
         """Initialize status file"""
 
-        return "echo 'Internal job setup failed!' > %s.status\n"\
-             % job_dict['JOB_ID']
+        return 'touch %s\n' % status_log
+
+    def log_status(self, status_type, result='ret'):
+         
+        return 'echo "%s $%s" >> %s\n' % (status_type, result, status_log)
 
     def init_io_log(self):
         """Open IO status log"""
@@ -351,7 +356,6 @@ class GenJobScriptSh:
         cmd += """# Now 'return' status is available in %s
 
 """ % result
-
         return cmd
 
     def get_special_input_files(self, result='get_special_status'):
@@ -419,7 +423,6 @@ class GenJobScriptSh:
         cmd += """# Now 'return' status is available in %s
 
 """ % result
-
         return cmd
 
     def get_io_files(self, result='get_io_status'):
@@ -459,6 +462,7 @@ class GenJobScriptSh:
 
 """ % result
         return cmd
+
 
     def generate_input_filelist(self, result='generate_input_filelist'):
         """Generate filelist (user/system) of which files 
@@ -542,7 +546,11 @@ class GenJobScriptSh:
         cmd += \
             '&& echo -n "%s.system.outputfiles " >> %s.inputfiles\\\n'\
              % (localjobname, localjobname)
-        cmd += '&& echo -n "%s.job" >> %s.inputfiles\n'\
+        cmd += '&& echo -n "%s.job " >> %s.inputfiles\\\n'\
+             % (localjobname, localjobname)
+        cmd += '&& echo -n "%s.mount.key " >> %s.inputfiles\\\n'\
+             % (localjobname, localjobname)
+        cmd += '&& echo -n "%s.mount.known_hosts" >> %s.inputfiles\n'\
              % (localjobname, localjobname)
         cmd += '%s=$?\n' % result
         return cmd
@@ -601,13 +609,34 @@ class GenJobScriptSh:
         return cmd
 
     def generate_iosessionid_file(self,
-                                  result='generate_iosessionid_file'):
+                                result='generate_iosessionid_file'):
         """Generate file containing io-sessionid."""
 
         cmd = '# Create file used containing io-sessionid.\n'
         cmd += '%s=0\n' % result
         cmd += 'echo -n "%s" > %s.iosessionid\n'\
-             % (job_dict['MIGIOSESSIONID'], localjobname)
+             % (job_dict['IOSESSIONID'], localjobname)
+        cmd += '%s=$?\n' % result
+        return cmd
+
+    def generate_mountsshprivatekey_file(self, 
+                                    result='generate_mountsshprivatekey_file'):
+        """Generate file containing mount ssh private key."""
+        cmd = '# Create private key file used when mounting job home\n'
+        cmd += '%s=0\n' % result
+        cmd += 'echo -n "%s" > %s.mount.key\n'\
+             % (job_dict['MOUNTSSHPRIVATEKEY'], localjobname)
+        cmd += '%s=$?\n' % result
+        return cmd         
+
+    def generate_mountsshknownhosts_file(self,
+                                    result='generate_mountsshknownhosts_file'):
+        """Generate file containing ssh mount known_hosts."""
+       
+        cmd = '# Create known_hosts file used when mounting job home\n'
+        cmd += '%s=0\n' % result
+        cmd += 'echo -n "%s" > %s.mount.known_hosts\n'\
+             % (job_dict['MOUNTSSHKNOWNHOSTS'], localjobname)
         cmd += '%s=$?\n' % result
         return cmd
 
@@ -691,7 +720,6 @@ class GenJobScriptSh:
         cmd += """# Now 'return' status is available in %s
 
 """ % result
-
         return cmd
 
     def set_limits(self):
@@ -758,7 +786,50 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         cmd += """# Now 'return' status is available in %s
 
 """ % result
+        return cmd
 
+    def mount(self, login, host, port, result='mount_status'):
+        """Mount job home sshfs
+         Continue on errors but return total status."""
+
+        cmd = '%s=0\n' % result
+        cmd += 'chmod 600 %s.mount.key\n' % (localjobname)
+        
+        for mount in job_dict['MOUNT']:
+ 
+            # "mount_point" or "mig_server_path resource_mount_point"
+
+            parts = mount.split()
+        
+            if len(parts) == 1:
+                mig_home_path = ''
+                resource_mount_point = str(parts[0])
+            else:
+                mig_home_path = str(parts[0])
+                resource_mount_point = str(parts[1])
+            
+            # Always strip leading slashes to avoid absolute paths
+
+            mig_home_path = mig_home_path.lstrip('/')
+            resource_mount_point = resource_mount_point.lstrip('/')
+
+            cmd += 'mkdir -p %s\n' % (resource_mount_point)
+            cmd += '${SSHFS_MOUNT} -oPort=%s' % (port) + \
+                        ' -oIdentityFile=${PWD}/%s.mount.key' % \
+                            (localjobname) + \
+                        ' -oUserKnownHostsFile=${PWD}/%s.mount.known_hosts' % \
+                            (localjobname) + \
+                        ' %s@%s:%s %s ' % \
+                            (login, host, mig_home_path, resource_mount_point) + \
+                        ' -o uid=$(id -u) -o gid=$(id -g)\n'
+            cmd += 'last_mount_status=$?\n'
+            cmd += 'if [ $last_mount_status -ne 0 ]; then\n'
+            cmd += '    %s=$last_mount_status\n' % result
+            cmd += 'fi\n'
+
+        cmd += """# Now 'return' status is available in %s
+
+""" % result
         return cmd
 
     def execute(self, pretext, posttext):
@@ -780,10 +851,6 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         exe_dict = {'job_id': job_dict['JOB_ID'], 'job_log': 'joblog'}
         cmd = ''
 
-        # Truncate setup error message in .status file now that
-        # we're past job init
-
-        cmd += "echo -n '' > %(job_id)s.status\n" % exe_dict
         cmd += '''__MiG_LAST_RET=0
 {
 '''
@@ -827,7 +894,42 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
 } 1> %(job_id)s.stdout 2> %(job_id)s.stderr
 '''\
              % exe_dict
+        return cmd
 
+    def umount(self, result='umount_status'):
+        """Unmounts job home
+	    Continue on errors but return total status."""
+
+        cmd = '%s=0\n' % result
+        
+        for mount in job_dict['MOUNT']:
+ 
+            # "resource_mount_point" or 
+            # mig_home_path resource_mount_point"
+
+            parts = mount.split()
+        
+            if len(parts) == 1:
+                mig_home_path = ''
+                resource_mount_point = str(parts[0])
+            else:
+                mig_home_path = str(parts[0])
+                resource_mount_point = str(parts[1])
+            
+            # Always strip leading slashes to avoid absolute paths
+
+            mig_home_path = mig_home_path.lstrip('/')
+            resource_mount_point = resource_mount_point.lstrip('/')
+
+            cmd += '${SSHFS_UMOUNT} %s\n' % (resource_mount_point)
+            cmd += 'last_umount_status=$?\n'
+            cmd += 'if [ $last_umount_status -ne 0 ]; then\n'
+            cmd += '    %s=$last_umount_status\n' % result
+            cmd += 'fi\n'
+
+        cmd += """# Now 'return' status is available in %s
+
+""" % result
         return cmd
 
     def output_files_missing(self, result='missing_counter'):
@@ -853,7 +955,6 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         cmd += """# Now 'return' status is available in %s
 
 """ % result
-
         return cmd
 
     def send_output_files(self, result='send_output_status'):
@@ -1002,6 +1103,19 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
 
         cmd = 'if [ $' + result + ' -ne ' + successcode + ' ]; then\n'
         cmd += '\techo "WARNING: ' + msg + "\($" + result + "\)\"\n"
+        cmd += 'fi\n'
+        return cmd
+
+    def log_on_error(
+        self,
+        result='ret',
+        successcode='0',
+        msg='ERROR: unexpected exit code!',
+        ):
+        """Log msg unless result contains success code"""
+
+        cmd = 'if [ $' + result + ' -ne ' + successcode + ' ]; then\n'
+        cmd += self.log_status(msg, result)
         cmd += 'fi\n'
         return cmd
 

@@ -31,6 +31,7 @@ import base64
 import os
 import paramiko
 import tempfile
+import StringIO
 
 from shared.conf import get_resource_exe, get_configuration_object
 
@@ -39,7 +40,19 @@ def parse_pub_key(public_key):
     """Parse public_key string to paramiko key.
     Throws exception if key is broken.
     """
-    head, tail = public_key.split(' ')[:2]
+    public_key_elms = public_key.split(' ')
+    
+    # Either we have 'from' or 'ssh-' as first element
+   
+    if public_key_elms[0][0:4] == 'ssh-':
+	ssh_type_idx = 0
+    elif public_key_elms[1][0:4] == 'ssh-':
+        ssh_type_idx = 1 
+    else:
+        msg = 'Invalid ssh public key: %s' % public_key
+	raise ValueError(msg)
+
+    head, tail = public_key.split(' ')[ssh_type_idx:2+ssh_type_idx]
     bits = base64.decodestring(tail)
     msg = paramiko.Message(bits)
     if head == 'ssh-rsa':
@@ -422,3 +435,15 @@ def execute_remote_ssh(
                                resource_config, logger)
 
 
+def generate_ssh_rsa_key_pair(size=2048, public_key_prefix='', public_key_postfix=''):
+    """Generates ssh rsa key pair"""
+
+    rsa_key = paramiko.RSAKey.generate(size)
+
+    string_io_obj = StringIO.StringIO()
+    rsa_key.write_private_key(string_io_obj)
+
+    private_key = string_io_obj.getvalue()
+    public_key = ("%s ssh-rsa %s %s" % (public_key_prefix, rsa_key.get_base64(), public_key_postfix)).strip()
+   
+    return (private_key, public_key)

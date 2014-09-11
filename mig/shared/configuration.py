@@ -105,7 +105,7 @@ def fix_missing(config_file, verbose=True):
         'user_sftp_address': fqdn,
         'user_sftp_port': 2222,
         'user_sftp_key': '~/certs/server.key',
-        'user_sftp_cert': '~/certs/server.crt',
+        'user_sftp_key_pub': '~/certs/server.pub',
         'user_sftp_auth': ['publickey'],
         'user_sftp_alias': '',
         'user_davs_address': fqdn,
@@ -232,7 +232,7 @@ class Configuration:
     user_sftp_address = ''
     user_sftp_port = 2222
     user_sftp_key = ''
-    user_sftp_cert = ''
+    user_sftp_key_pub = ''
     user_sftp_auth = ['publickey']
     user_sftp_alias = ''
     user_davs_address = ''
@@ -528,9 +528,9 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_sftp_key'):
             self.user_sftp_key = config.get('GLOBAL', 
                                             'user_sftp_key')
-        if config.has_option('GLOBAL', 'user_sftp_cert'):
-            self.user_sftp_cert = config.get('GLOBAL', 
-                                            'user_sftp_cert')
+        if config.has_option('GLOBAL', 'user_sftp_key_pub'):
+            self.user_sftp_key_pub = config.get('GLOBAL', 
+                                            'user_sftp_key_pub')
         if config.has_option('GLOBAL', 'user_sftp_auth'):
             self.user_sftp_auth = config.get('GLOBAL', 
                                              'user_sftp_auth').split()
@@ -686,7 +686,10 @@ class Configuration:
             self.trac_id_field = config.get('TRACKER', 'trac_id_field')
         else:
             self.trac_id_field = 'email'
-
+        if config.has_option('RESOURCES', 'default_sshfs_re'):
+            self.res_default_sshfs_re = config.get('RESOURCES', 'default_sshfs_re')
+        else:
+            self.res_default_sshfs_re = 'SSHFS-2.X-1'
         if config.has_option('VMACHINES', 'default_os'):
             self.vm_default_os = config.get('VMACHINES', 'default_os')
         else:

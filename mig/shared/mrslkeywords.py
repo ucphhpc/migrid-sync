@@ -137,6 +137,20 @@ Copies myscript and myfile_or_url from your %s home to the resource, but myfile_
         'Editor': 'input',
         'Required': False,
         }))
+    specs.append(('MOUNT', {
+        'Title': 'Mount',
+        'Description': '''Mounts your %s home on resource before job execution.''' % configuration.short_title,
+        'Example': '''
+:::MOUNT:::
+home_path resource_mount_point
+
+Mounts your %s home_path on resource_mount_point, the mount is disabled when the job finishes.
+''' % configuration.short_title ,
+        'Type': 'multiplestrings',
+        'Value': [],
+        'Editor': 'input',
+        'Required': False,
+        }))
     specs.append(('RESOURCE', {
         'Title': 'Target Resources',
         'Description': '''A list of resources allowed to execute the job (default is unset which means any resource).
@@ -208,7 +222,7 @@ To submit with execution on the first suitable and allowed VGrid.
         'Description': 'Amount of memory required to execute the job. The amount is specified in megabytes ',
         'Example': '128',
         'Type': 'int',
-        'Value': 32,
+        'Value': 64,
         'Editor': 'input',
         'Required': False,
         }))
