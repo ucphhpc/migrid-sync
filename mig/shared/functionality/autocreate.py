@@ -223,6 +223,10 @@ def main(client_id, user_arguments_dict):
             oid_extras['institute'] = org_unit
             org = org_unit.upper()
             org_unit = 'NA'
+
+        # Stay on virtual host - extra useful while we test dual OpenID
+        base_url = os.environ['SCRIPT_URI'].replace('autocreate.py',
+                                                    'fileman.py')
         
         role = accepted['openid.sreg.role'][-1].strip()
         locality = accepted['openid.sreg.locality'][-1].strip()
