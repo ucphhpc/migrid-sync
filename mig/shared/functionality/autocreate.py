@@ -42,6 +42,7 @@ from shared.base import client_id_dir
 from shared.defaults import cert_valid_days, oid_valid_days
 from shared.fileio import write_file
 from shared.functional import validate_input, REJECT_UNSET
+from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.useradm import db_name, distinguished_name_to_user, \
      create_user, fill_user, fill_distinguished_name
@@ -84,6 +85,7 @@ def signature(login_type):
             'email': [''],
             'country': [''],
             'state': [''],
+            'role': [''],
             'comment': ['(Created through autocreate)'],
             'proxy_upload': [''],
             'proxy_uploadfilename': [''],
@@ -142,7 +144,6 @@ def handle_proxy(proxy_string, client_id, config):
                        'No proxy certificate to load: %s' % err.what()})
     return output
 
-
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
@@ -181,17 +182,18 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     admin_email = configuration.admin_email
-    openid_names = []
+    openid_names, oid_extras = [], {}
 
-    # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
+    # force name + state to capitalized form (henrik karlsen -> Henrik Karlsen)
         
     if login_type == 'cert':
         uniq_id = accepted['cert_id'][-1].strip()
         full_name = accepted['full_name'][-1].strip().title()
         country = accepted['country'][-1].strip().upper()
         state = accepted['state'][-1].strip().title()
-        organization = accepted['org'][-1].strip()
-        organizational_unit = ''
+        org = accepted['org'][-1].strip()
+        org_unit = ''
+        role = accepted['role'][-1].strip()
         locality = ''
         timezone = ''
         # lower case email address
@@ -200,14 +202,29 @@ def main(client_id, user_arguments_dict):
     elif login_type == 'oid':
         uniq_id = accepted['openid.sreg.nickname'][-1].strip() or \
                    accepted['openid.sreg.short_id'][-1].strip()
-        full_name = accepted['openid.sreg.full_name'][-1].strip().title() or \
-                    accepted['openid.sreg.fullname'][-1].strip().title()
+        full_name = accepted['openid.sreg.fullname'][-1].strip().title() or \
+                    accepted['openid.sreg.full_name'][-1].strip().title()
         country = accepted['openid.sreg.country'][-1].strip().upper()
         state = accepted['openid.sreg.state'][-1].strip().title()
-        organization = accepted['openid.sreg.organization'][-1].strip() or \
-                       accepted['openid.sreg.o'][-1].strip()
-        organizational_unit = accepted['openid.sreg.organizational_unit'][-1].strip() or \
-                              accepted['openid.sreg.ou'][-1].strip()
+        org = accepted['openid.sreg.o'][-1].strip() or \
+              accepted['openid.sreg.organization'][-1].strip()
+        org_unit = accepted['openid.sreg.ou'][-1].strip() or \
+                   accepted['openid.sreg.organizational_unit'][-1].strip()
+
+        # Remap some oid attributes if on kit format with faculty in
+        # organization and institute in organizational_unit. We can add them
+        # as different fields as long as we make sure the x509 fields are
+        # preserved.
+        # We do that to allow autocreate updating existing cert users.
+        
+        if org_unit not in ('', 'NA'):
+            org_unit = org_unit.upper()
+            oid_extras['faculty'] = org
+            oid_extras['institute'] = org_unit
+            org = org_unit.upper()
+            org_unit = 'NA'
+        
+        role = accepted['openid.sreg.role'][-1].strip()
         locality = accepted['openid.sreg.locality'][-1].strip()
         timezone = accepted['openid.sreg.timezone'][-1].strip()
         # lower case email address
@@ -237,17 +254,19 @@ def main(client_id, user_arguments_dict):
     user_dict = {
         'short_id': uniq_id,
         'full_name': full_name,
-        'organization': organization,
-        'organizational_unit': organizational_unit,
+        'organization': org,
+        'organizational_unit': org_unit,
         'locality': locality,
         'state': state,
         'country': country,
         'email': email,
+        'role': role,
         'timezone': timezone,
         'password': '',
         'comment': '%s: %s' % ('Existing certificate', comment),
         'openid_names': openid_names,
         }
+    user_dict.update(oid_extras)
 
     # We must receive some ID from the provider
     if not uniq_id and not email:
@@ -280,6 +299,8 @@ multiple "key=val" fields separated by "/".
            login_type == 'oid' and configuration.auto_add_oid_user:
         fill_user(user_dict)
 
+        logger.info('create user: %s' % user_dict)
+        
         # Now all user fields are set and we can begin adding the user
 
         db_path = os.path.join(configuration.mig_server_home, db_name)
@@ -293,8 +314,7 @@ multiple "key=val" fields separated by "/".
                                          configuration)
                 output_objects.extend(proxy_out)
         except Exception, err:
-            logger.error('Failed to create user with existing certificate %s: %s'
-                     % (uniq_id, err))
+            logger.error('create failed for %s: %s' % (uniq_id, err))
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : '''Could not create the user account for you:
