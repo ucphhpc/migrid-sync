@@ -73,43 +73,25 @@ When you click the Sign Up with OpenID button you will be taken to a login
 page where you need to login and accept that your login is allowed for login
 with this site as well.
 </p>
-<!--
-<div class='form_container'>
-<form method='post' action='%(extoid_url)s'>
-<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-<input type='hidden' name='openid.sreg.required' value='KUID,CN,MAIL,O,OU,ROLE,full_name,country,email,organization,organizational_unit' />
-<input type='hidden' name='openid.sreg.required' value='KUID,CN,MAIL,O,OU,ROLE' />
-<input id='extoid_button' type='submit' value='Sign Up with OpenID (ALLCAPS attr)' />
-</form>
-</div>
--->
-<div class='form_container'>
-<form method='post' action='%(extoid_url)s'>
-<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,role' />
-<input id='extoid_button' type='submit' value='Sign Up with OpenID (OID style attr)' />
-</form>
-</div>
-<!--
 <div class='form_container'>
 <form method='post' action='%(kitoid_url)s'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-<input type='hidden' name='openid.sreg.required' value='KUID,CN,MAIL,O,OU,ROLE,full_name,country,email,organization,organizational_unit' />
-<input type='hidden' name='openid.sreg.required' value='KUID,CN,MAIL,O,OU,ROLE' />
-<input id='extoid_button' type='submit' value='Sign Up with KIT OpenID (ALLCAPS attr)' />
+<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
+<input id='extoid_button' type='submit' value='Sign Up with KU OpenID' />
 </form>
 </div>
--->
+<p>
+If you already have a MiG user certificate and account here you can also choose
+to sign up for OpenID access through the local MiG OpenID server.
 <div class='form_container'>
-<form method='post' action='%(kitoid_url)s'>
+<form method='post' action='%(extoid_url)s'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,role' />
-<input id='extoid_button' type='submit' value='Sign Up with KIT OpenID (OID style attr)' />
+<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
+<input id='extoid_button' type='submit' value='Sign Up with MiG OpenID' />
 </form>
+</p>
 </div>
 <h2>Advanced Login: Client Certificate</h2>
 <p>
@@ -121,7 +103,7 @@ the usual good password practice rules.<br />
 </p>
 <div class='form_container'>
 <form method='get' action='%(reqcert_url)s'>
-<input id='reqcert_button' type='submit' value='Request a User Certificate' />
+<input id='reqcert_button' type='submit' value='Request a MiG User Certificate' />
 </form>
 </div>
 <p>
@@ -130,7 +112,7 @@ up with that instead of requesting a new one.
 </p>
 <div class='form_container'>
 <form method='get' action='%(extcert_url)s'>
-<input id='extcert_button' type='submit' value='Sign Up With Existing User Certificate' />
+<input id='extcert_button' type='submit' value='Sign Up With External User Certificate' />
 </form>
 </div>
 """ % {'short_title': configuration.short_title,

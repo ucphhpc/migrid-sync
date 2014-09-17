@@ -184,13 +184,13 @@ def main(client_id, user_arguments_dict):
     admin_email = configuration.admin_email
     openid_names, oid_extras = [], {}
 
-    # force name + state to capitalized form (henrik karlsen -> Henrik Karlsen)
+    # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
         
     if login_type == 'cert':
         uniq_id = accepted['cert_id'][-1].strip()
         full_name = accepted['full_name'][-1].strip().title()
         country = accepted['country'][-1].strip().upper()
-        state = accepted['state'][-1].strip().title()
+        state = accepted['state'][-1].strip().upper()
         org = accepted['org'][-1].strip()
         org_unit = ''
         role = accepted['role'][-1].strip()
@@ -205,7 +205,7 @@ def main(client_id, user_arguments_dict):
         full_name = accepted['openid.sreg.fullname'][-1].strip().title() or \
                     accepted['openid.sreg.full_name'][-1].strip().title()
         country = accepted['openid.sreg.country'][-1].strip().upper()
-        state = accepted['openid.sreg.state'][-1].strip().title()
+        state = accepted['openid.sreg.state'][-1].strip().upper()
         org = accepted['openid.sreg.o'][-1].strip() or \
               accepted['openid.sreg.organization'][-1].strip()
         org_unit = accepted['openid.sreg.ou'][-1].strip() or \
