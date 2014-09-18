@@ -167,7 +167,9 @@ $(document).ready(function() {
     log_content = read_trigger_log(configuration, vgrid_name)
     output_objects.append({'object_type': 'html_form', 'text'
                           : '''
- <textarea style="width: 100%%;" rows=10 readonly="readonly">%s</textarea>
+ <div class="form_container">
+ <textarea rows=10 readonly="readonly">%s</textarea>
+ </div>
  ''' % log_content})
 
     output_objects.append({'object_type': 'sectionheader', 'text'

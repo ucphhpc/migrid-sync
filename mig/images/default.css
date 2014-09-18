@@ -677,6 +677,10 @@ table th.icon {
   background: url('/images/icons/table_gear.png') no-repeat;
   padding-left: 18px;
 }
+.workflowslink {
+  background: url('/images/icons/table_refresh.png') no-repeat;
+  padding-left: 18px;
+}
 .forumlink {
   background: url('/images/icons/comments.png') no-repeat;
   padding-left: 18px;
