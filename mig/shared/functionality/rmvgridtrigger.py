@@ -71,6 +71,8 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1]
     rule_id = accepted['rule_id'][-1]
 
+    logger.info("rmvgridtrigger %s" % vgrid_name)
+
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
 
@@ -121,8 +123,8 @@ from the most significant VGrid possible.'''
                           : 'Trigger %s successfully removed from %s vgrid!'
                            % (rule_id, vgrid_name)})
     output_objects.append({'object_type': 'link', 'destination':
-                           'vgridworkflows.py?vgrid_name=%s' % vgrid_name, 'text':
-                           'Back to workflows for %s' % vgrid_name})
+                           'vgridworkflows.py?vgrid_name=%s' % vgrid_name,
+                           'text': 'Back to workflows for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)
 
 

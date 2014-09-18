@@ -30,10 +30,8 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir
 from shared.functional import validate_input
 from shared.init import initialize_main_variables, find_entry
-from shared.safeinput import html_escape
 
 
 def signature():
@@ -47,7 +45,6 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
-    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
@@ -55,7 +52,8 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s OpenID account sign up' % configuration.short_title
+    title_entry['text'] = '%s OpenID account sign up' % \
+                          configuration.short_title
     title_entry['skipmenu'] = True
     header_entry = {'object_type': 'header', 'text'
                     : 'Welcome to the %s OpenID account sign up page' % \
@@ -115,7 +113,7 @@ up with that instead of requesting a new one.
 <input id='extcert_button' type='submit' value='Sign Up With External User Certificate' />
 </form>
 </div>
-""" % {'short_title': configuration.short_title,
+""" % {
        'extoid_url': os.path.join(configuration.migserver_https_oid_url,
                                   'wsgi-bin', 'autocreate.py'),
        'kitoid_url': os.path.join(configuration.migserver_https_sid_url,

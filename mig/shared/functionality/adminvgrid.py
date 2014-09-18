@@ -315,8 +315,8 @@ $(document).ready(function() {
                                'text': "%ss" % item.title()
                                })
         if item == 'trigger':
-            # Always run as rule creator to avoid users being able to act on behalf
-            # of ANY other user using triggers (=exploit)
+            # Always run as rule creator to avoid users being able to act on
+            # behalf of ANY other user using triggers (=exploit)
             extra_fields = [('path', None),
                             ('changes', [keyword_all] + valid_trigger_changes),
                             ('run_as', client_id),
@@ -326,7 +326,8 @@ $(document).ready(function() {
             extra_fields = []
 
         (status, oobjs) = vgrid_add_remove_table(client_id, vgrid_name, item, 
-                                                 scr, configuration, extra_fields)
+                                                 scr, configuration,
+                                                 extra_fields)
         if not status:
             output_objects.extend(oobjs)
             return (output_objects, returnvalues.SYSTEM_ERROR)

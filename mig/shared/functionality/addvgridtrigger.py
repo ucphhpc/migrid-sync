@@ -36,7 +36,7 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
-     vgrid_list_subvgrids, vgrid_add_triggers, vgrid_is_owner_or_member
+     vgrid_list_subvgrids, vgrid_add_triggers
 import shared.returnvalues as returnvalues
 
 
@@ -98,6 +98,8 @@ def main(client_id, user_arguments_dict):
 
     if any_state in changes:
         changes = valid_trigger_changes
+
+    logger.info("addvgridtrigger %s" % vgrid_name)
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
@@ -174,6 +176,6 @@ Remove the trigger from the subvgrid and try again''' % \
                           : 'New trigger %s successfully added to %s vgrid!'
                            % (rule_id, vgrid_name)})
     output_objects.append({'object_type': 'link', 'destination':
-                           'vgridworkflows.py?vgrid_name=%s' % vgrid_name, 'text':
-                           'Back to workflows for %s' % vgrid_name})
+                           'vgridworkflows.py?vgrid_name=%s' % vgrid_name,
+                           'text': 'Back to workflows for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)

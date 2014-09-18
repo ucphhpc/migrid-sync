@@ -67,7 +67,7 @@ def read_trigger_log(configuration, vgrid_name):
             log_content += log_fd.read()
             configuration.logger.info('read\n%s' % log_content)
             log_fd.close()
-        except Exception, exc:
+        except IOError:
             pass
     return log_content
 
@@ -96,12 +96,6 @@ def main(client_id, user_arguments_dict):
                                '''You must be an owner or member of %s vgrid to
 access the workflows.''' % vgrid_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
-
-    # Please note that base_dir must end in slash to avoid access to other
-    # user dirs when own name is a prefix of another user name
-
-    base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
-                                            vgrid_name)) + os.sep
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'VGrid Workflows'
@@ -155,11 +149,11 @@ $(document).ready(function() {
     output_objects.append({'object_type': 'header', 'text'
                           : 'VGrid Workflows for %s' % vgrid_name})
 
-    logger.info("vgridworkflows %s" % (vgrid_name))
+    logger.info("vgridworkflows %s" % vgrid_name)
 
     # Create empty triggers if missing
 
-    (list_status, list_msg) = vgrid_triggers(vgrid_name, configuration)
+    (list_status, _) = vgrid_triggers(vgrid_name, configuration)
     if not list_status:
         (add_status, add_msg) = vgrid_set_triggers(configuration, vgrid_name,
                                                    [])
