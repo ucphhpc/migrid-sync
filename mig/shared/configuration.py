@@ -87,7 +87,7 @@ def fix_missing(config_file, verbose=True):
         'openid_store': '~/state/openid_store/',
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
-        'site_vgrid_links': 'files web tracker monitor',
+        'site_vgrid_links': 'files web tracker workflows monitor',
         'hg_path': '/usr/bin/hg',
         'hgweb_scripts': '/usr/share/doc/mercurial-common/examples/',
         'trac_admin_path': '/usr/bin/trac-admin',
@@ -108,23 +108,28 @@ def fix_missing(config_file, verbose=True):
         'user_sftp_key_pub': '~/certs/server.pub',
         'user_sftp_auth': ['publickey'],
         'user_sftp_alias': '',
+        'user_sftp_log': 'sftp.log',
         'user_davs_address': fqdn,
         'user_davs_port': 4443,
         'user_davs_key': '~/certs/key.pem',
         'user_davs_auth': ['password'],
         'user_davs_alias': '',
+        'user_davs_log': 'davs.log',
         'user_ftps_address': fqdn,
         'user_ftps_ctrl_port': 8021,
         'user_ftps_pasv_ports': range(8100, 8500),
         'user_ftps_key': '~/certs/key.pem',
         'user_ftps_auth': ['password'],
         'user_ftps_alias': '',
+        'user_ftps_log': 'ftps.log',
         'user_openid_address': fqdn,
         'user_openid_port': 8443,
         'user_openid_key': '~/certs/key.pem',
         'user_openid_auth': ['password'],
         'user_openid_alias': '',
+        'user_openid_log': 'openid.log',
         'user_openid_providers': [],
+        'user_events_log': 'events.log',
         'logfile': 'server.log',
         'loglevel': 'info',
         'sleep_period_for_empty_jobs': '80',
@@ -235,23 +240,28 @@ class Configuration:
     user_sftp_key_pub = ''
     user_sftp_auth = ['publickey']
     user_sftp_alias = ''
+    user_sftp_log = 'sftp.log'
     user_davs_address = ''
     user_davs_port = 4443
     user_davs_key = ''
     user_davs_auth = ['password']
     user_davs_alias = ''
+    user_davs_log = 'davs.log'
     user_ftps_address = ''
     user_ftps_ctrl_port = 8021
     user_ftps_pasv_ports = range(8100, 8500)
     user_ftps_key = ''
     user_ftps_auth = ['password']
     user_ftps_alias = ''
+    user_ftps_log = 'ftps.log'
     user_openid_address = ''
     user_openid_port = 8443
     user_openid_key = ''
     user_openid_auth = ['password']
     user_openid_alias = ''
+    user_openid_log = 'openid.log'
     user_openid_providers = []
+    user_events_log = 'events.log'
     server_home = ''
     vms_builder_home = ''
     sessid_to_mrsl_link_home = ''
@@ -537,6 +547,8 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_sftp_alias'):
             self.user_sftp_alias = config.get('GLOBAL', 
                                               'user_sftp_alias')
+        if config.has_option('GLOBAL', 'user_sftp_log'):
+            self.user_sftp_log = config.get('GLOBAL', 'user_sftp_log')
         if config.has_option('GLOBAL', 'user_davs_address'):
             self.user_davs_address = config.get('GLOBAL', 
                                                 'user_davs_address')
@@ -552,6 +564,8 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_davs_alias'):
             self.user_davs_alias = config.get('GLOBAL', 
                                               'user_davs_alias')
+        if config.has_option('GLOBAL', 'user_davs_log'):
+            self.user_davs_log = config.get('GLOBAL', 'user_davs_log')
         if config.has_option('GLOBAL', 'user_ftps_address'):
             self.user_ftps_address = config.get('GLOBAL', 
                                                 'user_ftps_address')
@@ -571,6 +585,8 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_ftps_alias'):
             self.user_ftps_alias = config.get('GLOBAL', 
                                               'user_ftps_alias')
+        if config.has_option('GLOBAL', 'user_ftps_log'):
+            self.user_ftps_log = config.get('GLOBAL', 'user_ftps_log')
         if config.has_option('GLOBAL', 'user_openid_address'):
             self.user_openid_address = config.get('GLOBAL', 
                                                  'user_openid_address')
@@ -586,9 +602,13 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_openid_alias'):
             self.user_openid_alias = config.get('GLOBAL', 
                                                  'user_openid_alias')
+        if config.has_option('GLOBAL', 'user_openid_log'):
+            self.user_openid_log = config.get('GLOBAL', 'user_openid_log')
         if config.has_option('GLOBAL', 'user_openid_providers'):
             self.user_openid_providers = config.get('GLOBAL', 
                                                    'user_openid_providers').split()
+        if config.has_option('GLOBAL', 'user_events_log'):
+            self.user_events_log = config.get('GLOBAL', 'user_events_log')
         if config.has_option('GLOBAL', 'mig_code_base'):
             self.mig_code_base = config.get('GLOBAL', 'mig_code_base')
         else:

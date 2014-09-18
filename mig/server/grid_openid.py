@@ -56,10 +56,11 @@ from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
 from urlparse import urlparse
 
-import base64
 import Cookie
+import base64
 import cgi
 import cgitb
+import logging
 import os
 import ssl
 import sys
@@ -1078,9 +1079,14 @@ def start_service(configuration):
 
 if __name__ == '__main__':
     configuration = get_configuration_object()
-    logger = configuration.logger
     nossl = False
     expandusername = False
+
+    # Use separate logger
+    logging.basicConfig(filename=configuration.user_openid_log,
+                        level=logging.INFO,
+                        format="%(asctime)s %(levelname)s %(message)s")
+    logger = logging
 
     # Allow configuration overrides on command line
     if sys.argv[1:]:

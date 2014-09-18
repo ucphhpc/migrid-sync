@@ -264,11 +264,11 @@ def start_service(conf):
 
 if __name__ == '__main__':
     configuration = get_configuration_object()
-    logger = configuration.logger
     nossl = False
 
-    # TMP: separate logger for now
-    logging.basicConfig(filename="ftps.log", level=logging.DEBUG,
+    # Use separate logger
+    logging.basicConfig(filename=configuration.user_ftps_log,
+                        level=logging.DEBUG,
                         format="%(asctime)s %(levelname)s %(message)s")
     logger = logging
 

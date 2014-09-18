@@ -1631,6 +1631,7 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                                 #'publictrackerlink'
                                 ],
                     'forum': ['privateforumlink'],
+                    'workflows': ['privateworkflowslink'],
                     'monitor': ['privatemonitorlink'],
                     }
                 lines.append("""

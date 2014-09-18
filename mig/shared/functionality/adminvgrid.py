@@ -32,7 +32,7 @@ controls to administrate them.
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues
-from shared.defaults import any_state, keyword_auto, valid_trigger_changes, \
+from shared.defaults import keyword_all, keyword_auto, valid_trigger_changes, \
      valid_trigger_actions
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.html import html_post_helper
@@ -51,10 +51,12 @@ def vgrid_add_remove_table(client_id,
                            vgrid_name, 
                            item_string, 
                            script_suffix, 
-                           configuration):
+                           configuration,
+                           extra_fields=[]):
     """Create a table of owners/members/resources/triggers (item_string),
     allowing to remove one item by selecting (radio button) and calling a
-    script, and a form to add a new entry. 
+    script, and a form to add a new entry.
+    Used from separate workflows page, too.
     
     Arguments: vgrid_name, the vgrid to operate on
                item_string, one of owner, member, resource, trigger
@@ -73,19 +75,11 @@ def vgrid_add_remove_table(client_id,
         return (False, out)
 
     optional = False
-    extra_fields = []
     
     if item_string == 'resource':
         id_field = 'unique_resource_name'
     elif item_string == 'trigger':
         id_field = 'rule_id'
-        # Always run as rule creator to avoid users being able to act on behalf
-        # of ANY other user using triggers (=exploit)
-        extra_fields = [('path', None),
-                        ('changes', [any_state] + valid_trigger_changes),
-                        ('run_as', client_id),
-                        ('action', [keyword_auto] + valid_trigger_actions),
-                        ('arguments', None)]
         optional = True
     else:
         id_field = 'cert_id'
@@ -184,24 +178,37 @@ def vgrid_add_remove_table(client_id,
 
     extra_fields_html = ''
     for (field, limit) in extra_fields:
-        extra_fields_html += '%s ' % field.replace('_', ' ').title()
+        extra_fields_html += '<tr><td>%s</td><td>' % \
+                             field.replace('_', ' ').title()
         if isinstance(limit, basestring):
-            add_html = '%s<br/>' % limit
+            add_html = '%s' % limit
         elif limit == None:
-            add_html = '<input type="text" size=70 name="%s" /><br/>' % field
+            add_html = '<input type="text" size=70 name="%s" />' % field
         else:
-            add_html = '<select name="%s">' % field
+            multiple = ''
+            if keyword_all in limit:
+                multiple = 'multiple'
+            add_html = '<select %s name="%s">' % (multiple, field)
             for val in limit:
                 add_html += '<option value="%s">%s</option>' % (val, val)
-            add_html += '</select><br/>'
-        extra_fields_html += add_html
+            add_html += '</select>'
+        extra_fields_html += add_html + '</td></tr>'
     out.append({'object_type': 'html_form',
                 'text': '''
       <form method="post" action="add%(script)s.py">
-          <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
-          ID <input type="text" size=70 name="%(id_field)s" /><br/>
-          %(extra_fields)s
-          <input type="submit" value="Add vgrid %(item)s" />
+      <fieldset>
+      <legend>Add vgrid %(item)s</legend>
+      <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
+      <table>
+      <tr>
+      <td>ID</td><td><input type="text" size=70 name="%(id_field)s" /></td>
+      </tr>
+      %(extra_fields)s
+      <tr>
+      <td colspan="2"><input type="submit" value="Add %(item)s" /></td>
+      </tr>
+      </table>
+      </fieldset>
       </form>
 ''' % {'vgrid': vgrid_name, 'item': item_string, 
        'script': script_suffix, 'id_field': id_field,
@@ -302,14 +309,24 @@ $(document).ready(function() {
              'text': 'Apply to become an owner'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    for (item, scr) in zip(['owner', 'member', 'resource', 'trigger'],
-                        ['vgridowner', 'vgridmember', 'vgridres',
-                         'vgridtrigger']):
+    for (item, scr) in zip(['owner', 'member', 'resource'],
+                        ['vgridowner', 'vgridmember', 'vgridres']):
         output_objects.append({'object_type': 'sectionheader',
                                'text': "%ss" % item.title()
                                })
+        if item == 'trigger':
+            # Always run as rule creator to avoid users being able to act on behalf
+            # of ANY other user using triggers (=exploit)
+            extra_fields = [('path', None),
+                            ('changes', [keyword_all] + valid_trigger_changes),
+                            ('run_as', client_id),
+                            ('action', [keyword_auto] + valid_trigger_actions),
+                            ('arguments', None)]
+        else:
+            extra_fields = []
+
         (status, oobjs) = vgrid_add_remove_table(client_id, vgrid_name, item, 
-                                                 scr, configuration)
+                                                 scr, configuration, extra_fields)
         if not status:
             output_objects.extend(oobjs)
             return (output_objects, returnvalues.SYSTEM_ERROR)

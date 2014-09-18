@@ -238,6 +238,14 @@ def main(client_id, user_arguments_dict):
                                              'title': 'Open %s private forum' \
                                              % vgrid_name, 
                                                'text': 'Open'}
+            vgrid_obj['privateworkflowslink'] = {'object_type': 'link',
+                                             'destination':
+                                             'vgridworkflows.py?vgrid_name=%s' % \
+                                             vgrid_name,
+                                             'class': 'workflowslink',
+                                             'title': 'Open %s private workflows' \
+                                             % vgrid_name, 
+                                               'text': 'Open'}
             vgrid_obj['privatemonitorlink'] = {'object_type': 'link',
                                                'destination':
                                                'showvgridmonitor.py?vgrid_name=%s'\

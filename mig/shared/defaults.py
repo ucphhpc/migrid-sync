@@ -109,3 +109,7 @@ edit_lock_timeout = 600
 valid_trigger_changes = ['created', 'modified', 'deleted', 'moved']
 valid_trigger_actions = ['submit'] + ['trigger-%s' % i for i in \
                                       valid_trigger_changes]
+
+workflows_log_name = 'workflow-triggers.log'
+workflows_log_size = 1024*1024
+workflows_log_cnt = 2

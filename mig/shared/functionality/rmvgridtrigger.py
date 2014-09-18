@@ -121,8 +121,8 @@ from the most significant VGrid possible.'''
                           : 'Trigger %s successfully removed from %s vgrid!'
                            % (rule_id, vgrid_name)})
     output_objects.append({'object_type': 'link', 'destination':
-                           'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
-                           'Back to administration for %s' % vgrid_name})
+                           'vgridworkflows.py?vgrid_name=%s' % vgrid_name, 'text':
+                           'Back to workflows for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)
 
 

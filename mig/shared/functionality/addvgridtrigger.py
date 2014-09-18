@@ -174,6 +174,6 @@ Remove the trigger from the subvgrid and try again''' % \
                           : 'New trigger %s successfully added to %s vgrid!'
                            % (rule_id, vgrid_name)})
     output_objects.append({'object_type': 'link', 'destination':
-                           'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
-                           'Back to administration for %s' % vgrid_name})
+                           'vgridworkflows.py?vgrid_name=%s' % vgrid_name, 'text':
+                           'Back to workflows for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)

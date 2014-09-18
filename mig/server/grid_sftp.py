@@ -674,7 +674,13 @@ def start_service(configuration):
 
 if __name__ == "__main__":
     configuration = get_configuration_object()
-    logger = configuration.logger
+
+    # Use separate logger
+    logging.basicConfig(filename=configuration.user_sftp_log,
+                        level=logging.INFO,
+                        format="%(asctime)s %(levelname)s %(message)s")
+    logger = logging
+
     if not configuration.site_enable_sftp:
         err_msg = "SFTP access to user homes is disabled in configuration!"
         logger.error(err_msg)

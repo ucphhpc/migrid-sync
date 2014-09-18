@@ -31,6 +31,8 @@ and trigger any associated actions based on rule database.
 
 import fnmatch
 import glob
+import logging
+import logging.handlers
 import os
 import sys
 import tempfile
@@ -45,7 +47,8 @@ except ImportError:
     sys.exit(1)
 
 from shared.conf import get_configuration_object
-from shared.defaults import valid_trigger_changes
+from shared.defaults import valid_trigger_changes, workflows_log_name, \
+     workflows_log_size, workflows_log_cnt
 from shared.job import fill_mrsl_template, new_job
 from shared.serial import load
 from shared.vgrid import vgrid_is_owner_or_member
@@ -127,13 +130,47 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                              ignore_directories,
                                              case_sensitive)
 
+    def __workflow_log(self, configuration, vgrid_name, msg, level='info'):
+        """Wrapper to send a single msg to vgrid workflows page log file"""
+        log_path = os.path.join(configuration.vgrid_home, vgrid_name,
+                                workflows_log_name)
+        workflows_logger = logging.getLogger('workflows')
+        workflows_logger.setLevel(logging.INFO)
+        handler = logging.handlers.RotatingFileHandler(
+            log_path, maxBytes=workflows_log_size,
+            backupCount=workflows_log_cnt-1)
+        #handler = logging.FileHandler(log_path)
+        formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+        handler.setFormatter(formatter)
+        workflows_logger.addHandler(handler)
+        if level == 'error':
+            workflows_logger.error(msg)
+        elif level == 'warning':
+            workflows_logger.warning(msg)
+        else:
+            workflows_logger.info(msg)
+        handler.flush()
+        workflows_logger.removeHandler(handler)
+
+    def __workflow_err(self, configuration, vgrid_name, msg):
+        """Wrapper to send a single error msg to vgrid workflows page log"""
+        self.__workflow_log(configuration, vgrid_name, msg, 'error')
+
+    def __workflow_warn(self, configuration, vgrid_name, msg):
+        """Wrapper to send a single warning msg to vgrid workflows page log"""
+        self.__workflow_log(configuration, vgrid_name, msg, 'warning')
+
+    def __workflow_info(self, configuration, vgrid_name, msg):
+        """Wrapper to send a single error msg to vgrid workflows page log"""
+        self.__workflow_log(configuration, vgrid_name, msg, 'info')
+
     def __handle_trigger(self, event, target_path, rule):
         """Actually handle valid trigger for a specific event and the
         corresponding target_path pattern and trigger rule.
         """
         state = event.event_type
         src_path = event.src_path
-        _chain = getattr(event, '_chain', [src_path])
+        _chain = getattr(event, '_chain', [(src_path, state)])
         base_dir = configuration.vgrid_files_home
         rel_path = src_path.replace(base_dir, '').lstrip(os.sep)
         vgrid_prefix = os.path.join(base_dir, rule['vgrid_name'])
@@ -143,14 +180,23 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             for argument in rule['arguments']:
                 pattern = os.path.join(vgrid_prefix, argument)
                 for path in glob.glob(pattern):
+                    _chain += [(path, change)]
                     # Prevent obvious trigger chain cycles
-                    if path in _chain:
-                        logger.warning("breaking trigger cycle %s" % \
-                                       ' <-> '.join(_chain+[path]))
+                    if (path, change) in _chain[:-1]:
+                        flat_chain = ["%s : %s" % pair for pair in _chain]
+                        chain_str = ' <-> '.join(flat_chain)
+                        rel_chain_str = chain_str.replace(
+                            configuration.vgrid_files_home, '')
+                        logger.warning("breaking trigger cycle %s" % chain_str)
+                        self.__workflow_warn(configuration, rule['vgrid_name'],
+                                             "breaking trigger cycle %s" % \
+                                             rel_chain_str)
                         continue
                     fake = FakeEvent(path)
-                    fake._chain = _chain + [path]
+                    fake._chain = _chain
                     logger.info("fire %s event on %s" % (change, path))
+                    self.__workflow_info(configuration, rule['vgrid_name'],
+                                         "%s event on %s" % (change, path))
                     self.handle_event(fake)
         elif rule['action'] == 'submit':
             mrsl_fd = tempfile.NamedTemporaryFile(delete=False)
@@ -167,11 +213,17 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                 if success:
                     logger.info("submitted job for %s: %s" % (target_path,
                                                               msg))
+                    self.__workflow_info(configuration, rule['vgrid_name'],
+                                         "submitted job for %s: %s" % \
+                                         (target_path, msg))
                 else:
                     raise Exception(msg)
             except Exception, exc:
                 logger.error("failed to submit job for %s: %s" % (target_path,
                                                                   exc))
+                self.__workflow_err(configuration, rule['vgrid_name'],
+                                    "failed to submit job for %s: %s" % \
+                                    (target_path, exc))
             try:
                 os.remove(mrsl_path)
             except Exception, exc:
@@ -239,7 +291,12 @@ unless it is available in mig/server/MiGserver.conf
 
     configuration = get_configuration_object()
     print os.environ.get('MIG_CONF', 'DEFAULT'), configuration.server_fqdn
-    logger = configuration.logger
+
+    # Use: separate logger
+    logging.basicConfig(filename=configuration.user_events_log,
+                        level=logging.INFO,
+                        format="%(asctime)s %(levelname)s %(message)s")
+    logger = logging
 
     keep_running = True
 

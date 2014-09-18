@@ -29,8 +29,9 @@
 
 import BaseHTTPServer
 import SocketServer
-import ssl
+import logging
 import os
+import ssl
 import sys
 import urlparse
 
@@ -410,10 +411,9 @@ if __name__ == "__main__":
     logger = configuration.logger
     nossl = False
 
-    # TMP: separate logger for now
-    #logger = configuration.logger
-    import logging
-    logging.basicConfig(filename="davs.log", level=logging.DEBUG,
+    # Use separate logger
+    logging.basicConfig(filename=configuration.user_davs_log,
+                        level=logging.DEBUG,
                         format="%(asctime)s %(levelname)s %(message)s")
     logger = logging
 
