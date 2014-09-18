@@ -821,7 +821,7 @@ def guess_type(name):
                     'arguments', ):
             __type_map[key] = valid_path_pattern
         for key in ('vgrid_name', 'fileupload', 'public_image',
-                    'site_script_deps', 'jobname', ):
+                    'site_script_deps', 'jobname', 'mount' ):
             __type_map[key] = valid_path
         for key in ('job_id', 'req_id', 'resource', 'search', 'name', ):
             __type_map[key] = valid_job_id_pattern
