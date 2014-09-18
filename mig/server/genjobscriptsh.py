@@ -795,7 +795,7 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         cmd = '%s=0\n' % result
         cmd += 'chmod 600 %s.mount.key\n' % (localjobname)
         
-        for mount in job_dict['MOUNT']:
+        for mount in job_dict.get('MOUNT', []):
  
             # "mount_point" or "mig_server_path resource_mount_point"
 
@@ -902,7 +902,7 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
 
         cmd = '%s=0\n' % result
         
-        for mount in job_dict['MOUNT']:
+        for mount in job_dict.get('MOUNT', []):
  
             # "resource_mount_point" or 
             # mig_home_path resource_mount_point"

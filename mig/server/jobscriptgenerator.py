@@ -92,7 +92,7 @@ def create_empty_job(
     job_dict['OUTPUTFILES'] = ''
     job_dict['ARGUMENTS'] = ''
     job_dict['EXECUTABLES'] = ''
-    job_dict['MOUNT'] = ''
+    job_dict['MOUNT'] = []
     job_dict['CPUTIME'] = str(cputime)
     job_dict['MEMORY'] = 16
     job_dict['DISK'] = 1
@@ -189,7 +189,7 @@ def create_job_script(
     mount_public_key = ""
     mount_known_hosts = ""
     
-    if job_dict['MOUNT'] != []:
+    if job_dict.get('MOUNT', []) != []:
 
         # Ensure SSHFS on resource
     
@@ -699,7 +699,7 @@ def gen_job_script(
 
     job_array.append(generator.comment('enforce some basic job limits'))
     job_array.append(generator.set_limits())
-    if job_dictionary['MOUNT'] != '':
+    if job_dictionary.get('MOUNT', []) != []:
         job_array.append(generator.comment('Mount job home'))
         job_array.append(generator.mount(job_dictionary['SESSIONID'], 
                                          configuration.server_fqdn, 
@@ -710,7 +710,7 @@ def gen_job_script(
         job_array.append(generator.log_on_error('mount_status', '0', 'system: mount'))
     job_array.append(generator.comment('execute!'))
     job_array.append(generator.execute('EXECUTING: ', '--Exit code:'))
-    if job_dictionary['MOUNT'] != '':
+    if job_dictionary.get('MOUNT', []) != []:
         job_array.append(generator.comment('Unmount job home'))
         job_array.append(generator.umount('umount_status'))
         job_array.append(generator.print_on_error('umount_status', '0',
