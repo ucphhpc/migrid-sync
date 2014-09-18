@@ -139,7 +139,6 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         handler = logging.handlers.RotatingFileHandler(
             log_path, maxBytes=workflows_log_size,
             backupCount=workflows_log_cnt-1)
-        #handler = logging.FileHandler(log_path)
         formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
         handler.setFormatter(formatter)
         workflows_logger.addHandler(handler)
@@ -174,6 +173,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         base_dir = configuration.vgrid_files_home
         rel_path = src_path.replace(base_dir, '').lstrip(os.sep)
         vgrid_prefix = os.path.join(base_dir, rule['vgrid_name'])
+        self.__workflow_info(configuration, rule['vgrid_name'],
+                             "handle %s for %s" % (rule['action'], rel_path))
         if rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
             change = rule['action'].replace('trigger-', '')
             FakeEvent = self.event_map[change]
@@ -194,9 +195,10 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         continue
                     fake = FakeEvent(path)
                     fake._chain = _chain
-                    logger.info("fire %s event on %s" % (change, path))
+                    logger.info("trigger %s event on %s" % (change, path))
                     self.__workflow_info(configuration, rule['vgrid_name'],
-                                         "%s event on %s" % (change, path))
+                                         "trigger %s event on %s" % (change,
+                                                                     path))
                     self.handle_event(fake)
         elif rule['action'] == 'submit':
             mrsl_fd = tempfile.NamedTemporaryFile(delete=False)

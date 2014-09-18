@@ -40,7 +40,8 @@ from shared.defaults import keyword_all, keyword_auto, valid_trigger_changes, \
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.functionality.adminvgrid import vgrid_add_remove_table
 from shared.init import initialize_main_variables, find_entry
-from shared.vgrid import vgrid_is_owner_or_member
+from shared.vgrid import vgrid_is_owner_or_member, vgrid_triggers, \
+     vgrid_set_triggers
 
 default_pager_entries = 20
 
@@ -155,6 +156,17 @@ $(document).ready(function() {
                           : 'VGrid Workflows for %s' % vgrid_name})
 
     logger.info("vgridworkflows %s" % (vgrid_name))
+
+    # Create empty triggers if missing
+
+    (list_status, list_msg) = vgrid_triggers(vgrid_name, configuration)
+    if not list_status:
+        (add_status, add_msg) = vgrid_set_triggers(configuration, vgrid_name,
+                                                   [])
+        if not add_status:
+            output_objects.append({'object_type': 'error_text', 'text': '%s'
+                                   % add_msg})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
 
     #job_list = []
     #output_objects.append({'object_type': 'sectionheader', 'text'
