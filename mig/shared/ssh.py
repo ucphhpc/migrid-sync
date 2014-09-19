@@ -47,7 +47,7 @@ def parse_pub_key(public_key):
     if len(public_key_elms) > 0 and \
         public_key_elms[0][0:4] == 'ssh-':
 	    ssh_type_idx = 0
-    elif len(public_key_elms > 1) > 4 and \
+    elif len(public_key_elms) > 1 and \
         public_key_elms[1][0:4] == 'ssh-':
         ssh_type_idx = 1 
     else:
