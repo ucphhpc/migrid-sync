@@ -495,9 +495,12 @@ class SimpleSSHServer(paramiko.ServerInterface):
             entries = self.users[username]
             offered = password
             for entry in entries:
-                if entry.password is not None and \
-                    (entry.ip_addr is None or
-                     entry.ip_addr == self.client_addr[0]):
+                if entry.password is not None:
+                    # TODO: Add ssh tunneling on resource frontends
+                    #       before enforcing ip check
+                    # and \
+                    #(entry.ip_addr is None or
+                    # entry.ip_addr == self.client_addr[0]):
 
                     allowed = entry.password
                     self.logger.debug("Password check for %s" % username)
@@ -519,9 +522,12 @@ class SimpleSSHServer(paramiko.ServerInterface):
             entries = self.users[username]
             offered = key.get_base64()
             for entry in entries:
-                if entry.public_key is not None and \
-                    (entry.ip_addr is None or 
-                     entry.ip_addr == self.client_addr[0]):
+                if entry.public_key is not None:
+                    # TODO: Add ssh tunneling on resource frontends
+                    #       before enforcing ip check
+                    # and \
+                    # (entry.ip_addr is None or 
+                    #  entry.ip_addr == self.client_addr[0]):
 
                     allowed = entry.public_key.get_base64()
                     self.logger.debug("Public key check for %s" % username)
