@@ -821,7 +821,7 @@ def guess_type(name):
                     'arguments', ):
             __type_map[key] = valid_path_pattern
         for key in ('vgrid_name', 'fileupload', 'public_image',
-                    'site_script_deps', 'jobname', 'mount' ):
+                    'site_script_deps', 'jobname', ):
             __type_map[key] = valid_path
         for key in ('job_id', 'req_id', 'resource', 'search', 'name', ):
             __type_map[key] = valid_job_id_pattern
@@ -855,7 +855,7 @@ def guess_type(name):
                     'software', 'verifystdout', 'verifystderr', 'verifystatus',
                     'msg_subject', 'msg_body', 'comment', 'msg', 'executables',
                     'inputfiles', 'outputfiles', 'verifyfiles', 'notify',
-                    'vgrid', 'runtimeenvironment', ):
+                    'vgrid', 'runtimeenvironment','mount', ):
             __type_map[key] = valid_plain_text
         for key in ('aol', 'yahoo', 'msn', 'icq', 'jabber', 'email',
                     'openid.sreg.email', 'openid.sreg.mail', ):
