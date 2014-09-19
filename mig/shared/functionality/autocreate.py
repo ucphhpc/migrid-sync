@@ -225,8 +225,9 @@ def main(client_id, user_arguments_dict):
             org_unit = 'NA'
 
         # Stay on virtual host - extra useful while we test dual OpenID
-        base_url = os.environ['SCRIPT_URI'].replace('autocreate.py',
-                                                    'fileman.py')
+        base_url = os.environ.get('REQUEST_URI',
+                                  base_url).split('?')[0].replace('autocreate',
+                                                                  'fileman')
         
         role = accepted['openid.sreg.role'][-1].strip()
         locality = accepted['openid.sreg.locality'][-1].strip()
