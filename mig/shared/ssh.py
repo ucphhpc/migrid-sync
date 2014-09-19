@@ -52,7 +52,7 @@ def parse_pub_key(public_key):
         ssh_type_idx = 1 
     else:
         msg = 'Invalid ssh public key: %s' % public_key
-	raise ValueError(msg)
+        raise ValueError(msg)
 
     head, tail = public_key.split(' ')[ssh_type_idx:2+ssh_type_idx]
     bits = base64.decodestring(tail)
