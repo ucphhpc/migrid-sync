@@ -312,8 +312,8 @@ def refresh_jobs(configuration, protocol):
                     try:    
                         _ = parse_pub_key(user_key)
                     except Exception, exc:
-                        logger.warning("Skipping broken key %s for user %s (%s)" % \
-                               (user_key, user_id, exc))
+                        logger.warning("Skipping broken key '%s' for user %s (%s)" % \
+                               (user_key, user_alias, exc))
                         continue 
                     
                     conf['jobs'].append(User(username=user_alias, 
