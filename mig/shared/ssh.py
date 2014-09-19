@@ -51,7 +51,7 @@ def parse_pub_key(public_key):
         public_key_elms[1][0:4] == 'ssh-':
         ssh_type_idx = 1 
     else:
-        msg = 'Invalid ssh public key: %s' % public_key
+        msg = 'Invalid ssh public key: (%s)' % public_key
         raise ValueError(msg)
 
     head, tail = public_key.split(' ')[ssh_type_idx:2+ssh_type_idx]

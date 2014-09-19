@@ -48,6 +48,7 @@ class User(object):
         self.password = password
         self.chroot = chroot
         self.public_key = public_key
+        
         if type(public_key) in (str, unicode):
             # We already checked that key is valid if we got here
             self.public_key = parse_pub_key(public_key)
@@ -303,9 +304,17 @@ def refresh_jobs(configuration, protocol):
                         job_dict.has_key('MOUNTSSHPUBLICKEY'):
                     user_alias = sessionid
                     user_dir = job_dict['USER_CERT'].replace(' ', '_').replace('/', '+')
-                    user_key = job_dict['MOUNTSSHPUBLICKEY']  
+                    user_key = job_dict['MOUNTSSHPUBLICKEY']
                     user_url = job_dict['RESOURCE_CONFIG']['HOSTURL']
                     user_ip = socket.gethostbyname_ex(user_url)[2][0]
+
+                     # Make sure pub key is valid
+                    try:    
+                        _ = parse_pub_key(user_key)
+                    except Exception, exc:
+                        logger.warning("Skipping broken key %s for user %s (%s)" % \
+                               (user_key, user_id, exc))
+                        continue 
                     
                     conf['jobs'].append(User(username=user_alias, 
                                 home=user_dir, password=None,
