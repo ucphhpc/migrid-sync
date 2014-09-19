@@ -191,11 +191,6 @@ def create_job_script(
     
     if job_dict.get('MOUNT', []) != []:
 
-        # Ensure SSHFS on resource
-    
-        if not configuration.res_default_sshfs_re in job_dict['RUNTIMEENVIRONMENT']:
-            job_dict['RUNTIMEENVIRONMENT'].append(configuration.res_default_sshfs_re)
-        
         # Generate public/private key pair for sshfs
 
         (mount_private_key, mount_public_key) = generate_ssh_rsa_key_pair()

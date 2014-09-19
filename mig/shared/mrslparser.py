@@ -194,7 +194,9 @@ def parse(
                 return (False, """You have specified a non-nexisting runtime
 environment '%s', therefore the job can not be run on any resources.""" % \
                         specified_re)
-
+        if global_dict.get('MOUNT', []) != []:
+            re_entries_uppercase.append(configuration.res_default_mount_re.upper())
+            
         global_dict['RUNTIMEENVIRONMENT'] = re_entries_uppercase
 
     if global_dict.get('JOBTYPE', 'unset').lower() == 'interactive':

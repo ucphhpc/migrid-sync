@@ -706,10 +706,10 @@ class Configuration:
             self.trac_id_field = config.get('TRACKER', 'trac_id_field')
         else:
             self.trac_id_field = 'email'
-        if config.has_option('RESOURCES', 'default_sshfs_re'):
-            self.res_default_sshfs_re = config.get('RESOURCES', 'default_sshfs_re')
+        if config.has_option('RESOURCES', 'default_mount_re'):
+            self.res_default_mount_re = config.get('RESOURCES', 'default_mount_re')
         else:
-            self.res_default_sshfs_re = 'SSHFS-2.X-1'
+            self.res_default_mount_re = 'SSHFS-2.X-1'
         if config.has_option('VMACHINES', 'default_os'):
             self.vm_default_os = config.get('VMACHINES', 'default_os')
         else:
