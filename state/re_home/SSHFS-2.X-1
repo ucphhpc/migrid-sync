@@ -39,7 +39,7 @@ p22
 sa(dp23
 S'example'
 p24
-S'"/usr/bin/fusermount -uz"'
+S'"/bin/fusermount -uz"'
 p25
 sS'description'
 p26
