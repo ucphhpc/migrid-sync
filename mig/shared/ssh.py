@@ -43,10 +43,12 @@ def parse_pub_key(public_key):
     public_key_elms = public_key.split(' ')
     
     # Either we have 'from' or 'ssh-' as first element
-   
-    if public_key_elms[0][0:4] == 'ssh-':
-	ssh_type_idx = 0
-    elif public_key_elms[1][0:4] == 'ssh-':
+  
+    if len(public_key_elms) > 0 and \
+        public_key_elms[0][0:4] == 'ssh-':
+	    ssh_type_idx = 0
+    elif len(public_key_elms > 1) > 4 and \
+        public_key_elms[1][0:4] == 'ssh-':
         ssh_type_idx = 1 
     else:
         msg = 'Invalid ssh public key: %s' % public_key
