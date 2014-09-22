@@ -53,6 +53,20 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
+/* 
+   Make sure we can always use console.log without scripts crashing. IE<=9
+   does not init it unless in developer mode and things thus randomly fail
+   without a trace.
+*/
+if (!window.console) {
+  var noOp = function(){}; // no-op function
+  console = {
+    log: noOp,
+    warn: noOp,
+    error: noOp
+  }
+}
+
 if (jQuery) (function($){
   
     var pathAttribute = 'rel_path';
