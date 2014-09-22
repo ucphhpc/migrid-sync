@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# extoid - external openid account sign up backend
+# signup - general sign up entry point backend
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Sign up for account with external OpenID back end"""
+"""Sign up for account with certificate or OpenID back end"""
 
 import os
 
@@ -52,11 +52,10 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s OpenID account sign up' % \
-                          configuration.short_title
+    title_entry['text'] = '%s account sign up' % configuration.short_title
     title_entry['skipmenu'] = True
     header_entry = {'object_type': 'header', 'text'
-                    : 'Welcome to the %s OpenID account sign up page' % \
+                    : 'Welcome to the %s account sign up page' % \
                     configuration.short_title}
     output_objects.append(header_entry)
 
@@ -66,7 +65,7 @@ def main(client_id, user_arguments_dict):
 Before you can use this site you need a user account. However, it is possible
 to sign up with an existing OpenID login.<br />
 Thus, if you are a KU user you simply use your usual KU username and password
-like you do on KUnet.<br />
+like you do on KUnet and KU webmail.<br />
 When you click the Sign Up with OpenID button you will be taken to a login
 page where you need to login and accept that your login is allowed for login
 with this site as well.
@@ -76,18 +75,18 @@ with this site as well.
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
-<input id='extoid_button' type='submit' value='Sign Up with KU OpenID' />
+<input id='kitoid_button' type='submit' value='Sign Up with KU OpenID' />
 </form>
 </div>
 <p>
 If you already have a MiG user certificate and account here you can also choose
-to sign up for OpenID access through the local MiG OpenID server.
+to allow OpenID access through the local MiG OpenID server.
 <div class='form_container'>
-<form method='post' action='%(extoid_url)s'>
+<form method='post' action='%(migoid_url)s'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
-<input id='extoid_button' type='submit' value='Sign Up with MiG OpenID' />
+<input id='migoid_button' type='submit' value='Sign Up with MiG OpenID' />
 </form>
 </p>
 </div>
@@ -105,7 +104,7 @@ the usual good password practice rules.<br />
 </form>
 </div>
 <p>
-If you already have a x509 user certificate that we trust, you can also sign
+If you already have an x509 user certificate that we trust, you can also sign
 up with that instead of requesting a new one.
 </p>
 <div class='form_container'>
@@ -114,9 +113,9 @@ up with that instead of requesting a new one.
 </form>
 </div>
 """ % {
-       'extoid_url': os.path.join(configuration.migserver_https_oid_url,
+       'migoid_url': os.path.join(configuration.migserver_https_sid_url,
                                   'wsgi-bin', 'autocreate.py'),
-       'kitoid_url': os.path.join(configuration.migserver_https_sid_url,
+       'kitoid_url': os.path.join(configuration.migserver_https_oid_url,
                                   'wsgi-bin', 'autocreate.py'),
        'reqcert_url': os.path.join(configuration.migserver_https_sid_url,
                                    'cgi-sid', 'reqcert.py'),
@@ -125,5 +124,3 @@ up with that instead of requesting a new one.
        }})
 
     return (output_objects, returnvalues.OK)
-
-

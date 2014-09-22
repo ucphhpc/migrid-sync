@@ -98,6 +98,7 @@ def generate_confs(
     enable_openid='True',
     openid_providers='',
     daemon_keycert='',
+    daemon_pubkey='',
     alias_field='',
     hg_path='',
     hgweb_scripts='',
@@ -151,6 +152,7 @@ def generate_confs(
     user_dict['__OPENID_PROVIDER_ID__'] = openid_providers.split()[0]
     user_dict['__OPENID_ALL_PROVIDER_IDS__'] = openid_providers
     user_dict['__DAEMON_KEYCERT__'] = daemon_keycert
+    user_dict['__DAEMON_PUBKEY__'] = daemon_pubkey
     user_dict['__ALIAS_FIELD__'] = alias_field
     user_dict['__HG_PATH__'] = hg_path
     user_dict['__HGWEB_SCRIPTS__'] = hgweb_scripts
@@ -426,6 +428,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_openid,
         openid_providers,
         daemon_keycert,
+        daemon_pubkey,
         alias_field,
         hg_path,
         hgweb_scripts,

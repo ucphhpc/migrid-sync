@@ -28,6 +28,7 @@
 """Module with functions to generate output in format
 specified by the client."""
 
+import os
 import traceback
 
 import shared.returnvalues as returnvalues
@@ -493,6 +494,16 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             meta = ''
             if i.has_key('meta'):
                 meta = i['meta']
+            if configuration.site_enable_openid:
+                oid_url = os.path.join(configuration.migserver_https_sid_url,
+                                       'cgi-sid', 'oiddiscover.py')
+                # TMP!
+                oid_url = os.path.join(configuration.migserver_https_oid_url,
+                                       'public', 'oid.xml')
+                meta += '''
+<!-- advertise any valid OpenID entry points in line with spec --> 
+<meta http-equiv="X-XRDS-Location" content="%s" />
+''' % oid_url
             style = ''
             if i.has_key('style'):
                 style = i['style']

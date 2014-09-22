@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# extoid - Handle user input from external openid sign up
+# signup - Handle user input from external sign up
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,13 +25,13 @@
 # -- END_HEADER ---
 #
 
-"""Front end to handle external OpenID sign up"""
+"""Front end to handle external sign up"""
 
 import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.extoid import main
+from shared.functionality.signup import main
 from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
 run_cgi_script_possibly_with_cert(main)
