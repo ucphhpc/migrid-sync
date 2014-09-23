@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# jobscriptgenerator - [insert a few words of module description on this line]
+# jobscriptgenerator - dynamically generate job script right before job handout
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -59,6 +59,7 @@ def create_empty_job(
     configuration,
     logger,
     ):
+    """Helper to create empty job for idle resources"""
 
     job_dict = {'': ''}
     helper_dict_filename = os.path.join(configuration.resource_home,
@@ -77,8 +78,9 @@ def create_empty_job(
             int(float(configuration.sleep_period_for_empty_jobs)
                  * sleep_factor)
 
-    logger.info('request_cputime: %d, sleep_factor: %.1f, cputime: %d, sleep time: %d'
-                , max_cputime, sleep_factor, cputime, sleep_time)
+    logger.info(
+        'request_cputime: %d, sleep_factor: %.1f, cputime: %d, sleep time: %d',
+        max_cputime, sleep_factor, cputime, sleep_time)
     job_id = configuration.empty_job_name + '.' + unique_resource_name\
          + '.' + exe + '.' + localjobname
 
@@ -132,7 +134,9 @@ def create_restart_job(
     configuration,
     logger,
     ):
-    """Wrapper to create a dummy job for forcing repeated restart of dead exes"""
+    """Wrapper to create a dummy job for forcing repeated restart of dead
+    exes.
+    """
 
     empty_job, _ = create_empty_job(
         unique_resource_name,
@@ -144,6 +148,7 @@ def create_restart_job(
         configuration,
         logger,
         )
+
     empty_job['UNIQUE_RESOURCE_NAME'] = unique_resource_name
     empty_job['EXE'] = exe
     empty_job['LOCALJOBNAME'] = localjobname
@@ -156,9 +161,6 @@ def create_restart_job(
     return (empty_job, 'OK')
 
 
-# Returns sessionid if successfull, None if NON-successfull
-
-
 def create_job_script(
     unique_resource_name,
     exe,
@@ -168,6 +170,11 @@ def create_job_script(
     configuration,
     logger,
     ):
+    """Helper to create actual jobs for handout to a resource.
+
+    Returns tuple with job dict on success and None otherwise.
+    The job dict includes random generated sessionid and a I/O session id.
+    """
 
     job_dict = {'': ''}
     sessionid = hexlify(open('/dev/urandom').read(32))
@@ -175,7 +182,6 @@ def create_job_script(
     helper_dict_filename = os.path.join(configuration.resource_home,
                                         unique_resource_name,
                                         'empty_job_helper_dict.%s' % exe)
-
     
     # Deep copy job for local changes
     job_dict = deepcopy(job)
@@ -199,8 +205,8 @@ def create_job_script(
     
         if not os.path.exists(configuration.user_sftp_key_pub): 
             msg = "job generation failed:" 
-            msg = "%s configuration.user_sftp_key_pub: '%s' -> File _NOT_ found" % \
-                (msg, configuration.user_sftp_key_pub) 
+            msg = "%s user_sftp_key_pub: '%s' -> File _NOT_ found" % \
+                  (msg, configuration.user_sftp_key_pub) 
             print msg
             logger.error(msg)
             return (None, msg)
@@ -209,12 +215,14 @@ def create_job_script(
         if sftp_address == '':
             sftp_address = configuration.server_fqdn
 
-        sftp_addresses = socket.gethostbyname_ex(sftp_address or socket.getfqdn())
+        sftp_addresses = socket.gethostbyname_ex(sftp_address or \
+                                                 socket.getfqdn())
         sftp_port = configuration.user_sftp_port
         
         mount_known_hosts = "[%s]:%s" % (sftp_addresses[0], sftp_port)
         for idx in xrange(1, len(sftp_addresses)):
-            mount_known_hosts = "%s,%s:%s" % (mount_known_hosts, sftp_addresses[idx], sftp_port)            
+            mount_known_hosts = "%s,%s:%s" % (mount_known_hosts,
+                                              sftp_addresses[idx], sftp_port)
         
         fd = open(configuration.user_sftp_key_pub, 'r')        
         mount_known_hosts = "%s %s" % (mount_known_hosts, fd.read())
@@ -309,7 +317,8 @@ def create_job_script(
         )
     if not gen_res:
         msg = \
-            'job scripts were not generated. Perhaps you have specified an invalid SCRIPTLANGUAGE ? '
+            'job scripts were not generated. Perhaps you have specified ' + \
+            'an invalid SCRIPTLANGUAGE ? '
         print msg
         logger.error(msg)
         return (None, msg)
@@ -320,7 +329,8 @@ def create_job_script(
 
     if resource_config.get('SANDBOX', False):
 
-        # Move file to webserver_home for download as we can't push it to sandboxes
+        # Move file to webserver_home for download as we can't push it to
+        # sandboxes
 
         try:
 
@@ -331,12 +341,13 @@ def create_job_script(
                     localjobname + '.getinputfiles')
             os.rename(inputfiles_path, webserver_path)
 
-            # ########## ATTENTION HACK TO MAKE JVM SANDBOXES WORK ########################################
-            # This should be changed to use the (to be developed) RE pre/post processing framework       #
-            # For now the user must have a jvm dir in his home dir where the classfiles is located       #
-            # this should be changed so that the execution homepath can be specified in the mRSL jobfile #
-            #                                                                                            #
-            # Martin Rehr 08/09/06                                                                       #
+            # ########## ATTENTION HACK TO MAKE JVM SANDBOXES WORK ############
+            # This should be changed to use the (to be developed) RE pre/post 
+            # processing framework. For now the user must have a jvm dir in his
+            # home dir where the classfiles is located this should be changed
+            # so that the execution homepath can be specified in the mRSL
+            # jobfile
+            # Martin Rehr 08/09/06
 
             # If this is a oneclick job link the users jvm dir to
             # webserver_home/sandboxkey.oneclick
@@ -424,9 +435,9 @@ def create_arc_job(
     configuration,
     logger,
     ):
-    """Analogon to create_job_script for ARC jobs:
-    Creates symLinks for receiving result files, translates job dict to ARC xrsl,
-    and stores resulting job script (xrsl + sh script) for submitting.
+    """Analog to create_job_script for ARC jobs:
+    Creates symLinks for receiving result files, translates job dict to ARC
+    xrsl, and stores resulting job script (xrsl + sh script) for submitting.
     
     We do _not_ create a separate job_dict with copies and SESSIONID inside,
     as opposed to create_job_script, all we need is the link from 
@@ -471,8 +482,8 @@ def create_arc_job(
                  configuration.sessid_to_mrsl_link_home + sessionid + '.mRSL')
                ]
 
-    def symlink ((dest,loc)): make_symlink(dest,loc,logger)
-    map(symlink, linklist)
+    for (dest, loc) in linklist:
+        make_symlink(dest, loc, logger)
 
     # the translation generates an xRSL object which specifies to execute
     # a shell script with script_name. If sessionid != None, results will
@@ -530,7 +541,8 @@ def create_arc_job(
     os.remove(script_name)
     # and remove the created links immediately if failed
     if not result:
-        map(os.remove, [link for (_,link) in linklist] )
+        for (_, link) in linklist:
+            os.remove(link)
         logger.error('Unsuccessful ARC job submission: %s' % msg)
     else:
         logger.debug('submitted to ARC as job %s' % msg)
@@ -552,11 +564,13 @@ def gen_job_script(
     exe,
     logger,
     ):
-
+    """Generate job script from job_dictionary before handout to resource"""
+    
     script_language = resource_config['SCRIPTLANGUAGE']
     if not script_language in configuration.scriptlanguages:
-        print 'Unknown script language! (conflict with configuration.scriptlanguages?) %s not in %s'\
-             % (script_language, configuration.scriptlanguages)
+        print 'Unknown script language! (conflict with scriptlanguages in ' + \
+              'configuration?) %s not in %s' % (script_language,
+                                                configuration.scriptlanguages)
         return False
 
     if script_language == 'python':
@@ -582,8 +596,8 @@ def gen_job_script(
                 resource_config, configuration.migserver_https_sid_url,
                 localjobname, path_without_extension)
     else:
-        print 'Unknown script language! (is in configuration.scriptlanguages but not in jobscriptgenerator) %s '\
-             % script_language
+        print 'Unknown script language! (is in configuration but not in ' + \
+              'jobscriptgenerator) %s ' % script_language
         return False
 
     # String concatenation in python: [X].join is much faster
@@ -597,10 +611,10 @@ def gen_job_script(
     getinputfiles_array.append(generator.init_io_log())
     getinputfiles_array.append(generator.comment('get special inputfiles'
                                ))
-    getinputfiles_array.append(generator.get_special_input_files('get_special_status'
-                               ))
-    getinputfiles_array.append(generator.log_io_status('get_special_input_files'
-                               , 'get_special_status'))
+    getinputfiles_array.append(generator.get_special_input_files(
+        'get_special_status'))
+    getinputfiles_array.append(generator.log_io_status(
+        'get_special_input_files', 'get_special_status'))
     getinputfiles_array.append(generator.print_on_error('get_special_status'
                                , '0',
                                'failed to fetch special input files!'))
@@ -612,85 +626,81 @@ def gen_job_script(
     getinputfiles_array.append(generator.print_on_error('get_input_status'
                                , '0', 'failed to fetch input files!'))
     getinputfiles_array.append(generator.comment('get executables'))
-    getinputfiles_array.append(generator.get_executables('get_executables_status'
-                               ))
+    getinputfiles_array.append(generator.get_executables(
+        'get_executables_status'))
     getinputfiles_array.append(generator.log_io_status('get_executables'
                                , 'get_executables_status'))
-    getinputfiles_array.append(generator.print_on_error('get_executables_status'
-                               , '0',
-                               'failed to fetch executable files!'))
+    getinputfiles_array.append(generator.print_on_error(
+    'get_executables_status', '0', 'failed to fetch executable files!'))
 
     # client_dir equals empty_job_name for sleep jobs
 
-    getinputfiles_array.append(generator.generate_output_filelists(client_dir
-                                != configuration.empty_job_name,
-                               'generate_output_filelists'))
-    getinputfiles_array.append(generator.print_on_error('generate_output_filelists'
-                               , '0',
-                               'failed to generate output filelists!'))
-    getinputfiles_array.append(generator.generate_input_filelist('generate_input_filelist'
-                               ))
-    getinputfiles_array.append(generator.print_on_error('generate_input_filelist'
-                               , '0',
-                               'failed to generate input filelist!'))
-    getinputfiles_array.append(generator.generate_iosessionid_file('generate_iosessionid_file'
-                               ))
-    getinputfiles_array.append(generator.print_on_error('generate_iosessionid_file'
-                               , '0',
-                               'failed to generate iosessionid file!'))
-    getinputfiles_array.append(generator.generate_mountsshprivatekey_file('generate_mountsshprivatekey_file'
-                               ))
-    getinputfiles_array.append(generator.print_on_error('generate_mountsshprivatekey_file'
-                               , '0',
-                               'failed to generate mountsshprivatekey file!'))
-    getinputfiles_array.append(generator.generate_mountsshknownhosts_file('generate_mountsshknownhosts_file'
-                               ))
-    getinputfiles_array.append(generator.print_on_error('generate_mountsshknownhosts_file'
-                               , '0',
-                               'failed to generate mountsshknownhosts file!'))
-    getinputfiles_array.append(generator.total_status(['get_special_status'
-                               , 'get_input_status',
-                               'get_executables_status',
-                               'generate_output_filelists'],
-                               'total_status'))
+    getinputfiles_array.append(generator.generate_output_filelists(
+        client_dir != configuration.empty_job_name,
+        'generate_output_filelists'))
+    getinputfiles_array.append(generator.print_on_error(
+        'generate_output_filelists', '0',
+        'failed to generate output filelists!'))
+    getinputfiles_array.append(generator.generate_input_filelist(
+        'generate_input_filelist'))
+    getinputfiles_array.append(generator.print_on_error(
+        'generate_input_filelist', '0', 'failed to generate input filelist!'))
+    getinputfiles_array.append(generator.generate_iosessionid_file(
+        'generate_iosessionid_file'))
+    getinputfiles_array.append(generator.print_on_error(
+        'generate_iosessionid_file', '0',
+        'failed to generate iosessionid file!'))
+    getinputfiles_array.append(generator.generate_mountsshprivatekey_file(
+        'generate_mountsshprivatekey_file'))
+    getinputfiles_array.append(generator.print_on_error(
+        'generate_mountsshprivatekey_file', '0',
+        'failed to generate mountsshprivatekey file!'))
+    getinputfiles_array.append(generator.generate_mountsshknownhosts_file(
+        'generate_mountsshknownhosts_file'))
+    getinputfiles_array.append(generator.print_on_error(
+        'generate_mountsshknownhosts_file', '0',
+        'failed to generate mountsshknownhosts file!'))
+    getinputfiles_array.append(generator.total_status(
+        ['get_special_status', 'get_input_status', 'get_executables_status',
+         'generate_output_filelists'], 'total_status'))
     getinputfiles_array.append(generator.exit_on_error('total_status',
-                               '0', 'total_status'))
+                                                       '0', 'total_status'))
     getinputfiles_array.append(generator.comment('exit script'))
-    getinputfiles_array.append(generator.exit_script('0',
-                               'get input files'))
+    getinputfiles_array.append(generator.exit_script('0', 'get input files'))
 
     job_array = []
     job_array.append(generator.script_init())
     job_array.append(generator.set_core_environments())
     job_array.append(generator.print_start('job'))
-    job_array.append(generator.comment('TODO: switch to job directory here'
-                     ))
-    job_array.append(generator.comment('make sure job status files exist'
-                     ))
+    job_array.append(generator.comment('TODO: switch to job directory here'))
+    job_array.append(generator.comment('make sure job status files exist'))
     job_array.append(generator.create_files([job_dictionary['JOB_ID']
                       + '.stdout', job_dictionary['JOB_ID'] + '.stderr'
                      , job_dictionary['JOB_ID'] + '.status']))
     job_array.append(generator.init_status())
     job_array.append(generator.comment('chmod +x'))
     job_array.append(generator.chmod_executables('chmod_status'))
-    job_array.append(generator.print_on_error('chmod_status', '0',
-                     'failed to make one or more EXECUTABLES executable'
-                     ))
-    job_array.append(generator.log_on_error('chmod_status', '0', 'system: chmod'))
+    job_array.append(generator.print_on_error(
+        'chmod_status', '0',
+        'failed to make one or more EXECUTABLES executable'))
+    job_array.append(generator.log_on_error('chmod_status', '0',
+                                            'system: chmod'))
     
     job_array.append(generator.comment('set environments'))
     job_array.append(generator.set_environments('env_status'))
-    job_array.append(generator.print_on_error('env_status', '0',
-                     'failed to initialize one or more ENVIRONMENTs'))
-    job_array.append(generator.log_on_error('env_status', '0', 'system: set environments'))
+    job_array.append(generator.print_on_error(
+        'env_status', '0', 'failed to initialize one or more ENVIRONMENTs'))
+    job_array.append(generator.log_on_error('env_status', '0',
+                                            'system: set environments'))
     
     job_array.append(generator.comment('set runtimeenvironments'))
-    job_array.append(generator.set_runtime_environments(resource_config['RUNTIMEENVIRONMENT'
-                     ], 're_status'))
-    job_array.append(generator.print_on_error('re_status', '0',
-                     'failed to initialize one or more RUNTIMEENVIRONMENTs'
-                     ))
-    job_array.append(generator.log_on_error('re_status', '0', 'system: set RUNTIMEENVIRONMENTs'))
+    job_array.append(generator.set_runtime_environments(
+        resource_config['RUNTIMEENVIRONMENT'], 're_status'))
+    job_array.append(generator.print_on_error(
+        're_status', '0',
+        'failed to initialize one or more RUNTIMEENVIRONMENTs'))
+    job_array.append(generator.log_on_error('re_status', '0',
+                                            'system: set RUNTIMEENVIRONMENTs'))
 
     job_array.append(generator.comment('enforce some basic job limits'))
     job_array.append(generator.set_limits())
@@ -701,16 +711,18 @@ def gen_job_script(
                                          configuration.user_sftp_port, 
                                          'mount_status'))
         job_array.append(generator.print_on_error('mount_status', '0',
-                     'failded to mount job home'))
-        job_array.append(generator.log_on_error('mount_status', '0', 'system: mount'))
+                                                  'failded to mount job home'))
+        job_array.append(generator.log_on_error('mount_status', '0',
+                                                'system: mount'))
     job_array.append(generator.comment('execute!'))
     job_array.append(generator.execute('EXECUTING: ', '--Exit code:'))
     if job_dictionary.get('MOUNT', []) != []:
         job_array.append(generator.comment('Unmount job home'))
         job_array.append(generator.umount('umount_status'))
-        job_array.append(generator.print_on_error('umount_status', '0',
-                     'failded to umount job home'))
-        job_array.append(generator.log_on_error('umount_status', '0', 'system: umount'))
+        job_array.append(generator.print_on_error(
+            'umount_status', '0', 'failded to umount job home'))
+        job_array.append(generator.log_on_error('umount_status', '0',
+                                                'system: umount'))
     job_array.append(generator.comment('exit script'))
     job_array.append(generator.exit_script('0', 'job'))
 
@@ -720,23 +732,20 @@ def gen_job_script(
     # missing output (from say a failed job) is logged but
     # ignored in relation to getupdatefiles success.
 
-    getupdatefiles_array.append(generator.print_start('get update files'
-                                 ))
+    getupdatefiles_array.append(generator.print_start('get update files'))
     getupdatefiles_array.append(generator.init_io_log())
 
     getupdatefiles_array.append(generator.comment('get io files'))
     getupdatefiles_array.append(generator.get_io_files('get_io_status'))
     getupdatefiles_array.append(generator.log_io_status('get_io_files'
                                  , 'get_io_status'))
-    getupdatefiles_array.append(generator.print_on_error('get_io_status'
-                                 , '0',
-                                 'failed to get one or more IO files'))
-    getupdatefiles_array.append(generator.exit_on_error('get_io_status'
-                                 , '0', 'get_io_status'))
+    getupdatefiles_array.append(generator.print_on_error(
+        'get_io_status', '0', 'failed to get one or more IO files'))
+    getupdatefiles_array.append(generator.exit_on_error(
+        'get_io_status', '0', 'get_io_status'))
 
     getupdatefiles_array.append(generator.comment('exit script'))
-    getupdatefiles_array.append(generator.exit_script('0',
-                                 'get update files'))
+    getupdatefiles_array.append(generator.exit_script('0', 'get update files'))
 
     sendoutputfiles_array = []
 
@@ -744,64 +753,58 @@ def gen_job_script(
     # missing output (from say a failed job) is logged but
     # ignored in relation to sendoutputfiles success.
 
-    sendoutputfiles_array.append(generator.print_start('send output files'
-                                 ))
+    sendoutputfiles_array.append(generator.print_start('send output files'))
     sendoutputfiles_array.append(generator.init_io_log())
-    sendoutputfiles_array.append(generator.comment('check output files'
-                                 ))
-    sendoutputfiles_array.append(generator.output_files_missing('missing_counter'
-                                 ))
-    sendoutputfiles_array.append(generator.log_io_status('output_files_missing'
-                                 , 'missing_counter'))
-    sendoutputfiles_array.append(generator.print_on_error('missing_counter'
-                                 , '0', 'missing output files'))
+    sendoutputfiles_array.append(generator.comment('check output files'))
+                                                   
+    sendoutputfiles_array.append(generator.output_files_missing(
+        'missing_counter'))
+    sendoutputfiles_array.append(generator.log_io_status(
+        'output_files_missing', 'missing_counter'))
+    sendoutputfiles_array.append(generator.print_on_error(
+        'missing_counter', '0', 'missing output files'))
     sendoutputfiles_array.append(generator.comment('send output files'))
-    sendoutputfiles_array.append(generator.send_output_files('send_output_status'
-                                 ))
-    sendoutputfiles_array.append(generator.log_io_status('send_output_files'
-                                 , 'send_output_status'))
-    sendoutputfiles_array.append(generator.print_on_error('send_output_status'
-                                 , '0',
-                                 'failed to send one or more outputfiles'
-                                 ))
-    sendoutputfiles_array.append(generator.exit_on_error('send_output_status'
-                                 , '0', 'send_output_status'))
+    sendoutputfiles_array.append(generator.send_output_files(
+        'send_output_status'))
+    sendoutputfiles_array.append(generator.log_io_status('send_output_files',
+                                                         'send_output_status'))
+    sendoutputfiles_array.append(generator.print_on_error(
+        'send_output_status', '0', 'failed to send one or more outputfiles'))
+    sendoutputfiles_array.append(generator.exit_on_error(
+        'send_output_status', '0', 'send_output_status'))
 
     sendoutputfiles_array.append(generator.comment('send io files'))
     sendoutputfiles_array.append(generator.send_io_files('send_io_status'))
     sendoutputfiles_array.append(generator.log_io_status('send_io_files'
-                                 , 'send_io_status'))
-    sendoutputfiles_array.append(generator.print_on_error('send_io_status'
-                                 , '0',
-                                 'failed to send one or more IO files'))
-    sendoutputfiles_array.append(generator.exit_on_error('send_io_status'
-                                 , '0', 'send_io_status'))
+                                                         , 'send_io_status'))
+    sendoutputfiles_array.append(generator.print_on_error(
+        'send_io_status', '0', 'failed to send one or more IO files'))
+    sendoutputfiles_array.append(generator.exit_on_error(
+        'send_io_status', '0', 'send_io_status'))
     sendoutputfiles_array.append(generator.comment('send status files'))
-    sendoutputfiles_array.append(generator.send_status_files([job_dictionary['JOB_ID'
-                                 ] + '.io-status'],
-                                 'send_io_status_status'))
-    sendoutputfiles_array.append(generator.print_on_error('send_io_status_status'
-                                 , '0', 'failed to send io-status file'
-                                 ))
-    sendoutputfiles_array.append(generator.exit_on_error('send_io_status_status'
-                                 , '0', 'send_io_status_status'))
+    sendoutputfiles_array.append(generator.send_status_files(
+        [job_dictionary['JOB_ID'] + '.io-status'], 'send_io_status_status'))
+    sendoutputfiles_array.append(generator.print_on_error(
+        'send_io_status_status', '0', 'failed to send io-status file'))
+    sendoutputfiles_array.append(generator.exit_on_error(
+        'send_io_status_status', '0', 'send_io_status_status'))
 
     # Please note that .status upload marks the end of the
     # session and thus it must be the last uploaded file.
 
-    sendoutputfiles_array.append(generator.send_status_files([job_dictionary['JOB_ID'
-                                 ] + '.status'], 'send_status_status'))
-    sendoutputfiles_array.append(generator.print_on_error('send_status_status'
-                                 , '0', 'failed to send status file'))
-    sendoutputfiles_array.append(generator.exit_on_error('send_status_status'
-                                 , '0', 'send_status_status'))
+    sendoutputfiles_array.append(generator.send_status_files(
+    [job_dictionary['JOB_ID'] + '.status'], 'send_status_status'))
+    sendoutputfiles_array.append(generator.print_on_error(
+        'send_status_status', '0', 'failed to send status file'))
+    sendoutputfiles_array.append(generator.exit_on_error(
+        'send_status_status', '0', 'send_status_status'))
 
     # Note that ID.sendouputfiles is called from frontend_script
     # so exit on failure can be handled there.
 
     sendoutputfiles_array.append(generator.comment('exit script'))
     sendoutputfiles_array.append(generator.exit_script('0',
-                                 'send output files'))
+                                                       'send output files'))
 
     sendupdatefiles_array = []
 
@@ -809,23 +812,21 @@ def gen_job_script(
     # missing output (from say a failed job) is logged but
     # ignored in relation to sendupdatefiles success.
 
-    sendupdatefiles_array.append(generator.print_start('send update files'
-                                 ))
+    sendupdatefiles_array.append(generator.print_start('send update files'))
     sendupdatefiles_array.append(generator.init_io_log())
 
     sendupdatefiles_array.append(generator.comment('send io files'))
     sendupdatefiles_array.append(generator.send_io_files('send_io_status'))
     sendupdatefiles_array.append(generator.log_io_status('send_io_files'
-                                 , 'send_io_status'))
-    sendupdatefiles_array.append(generator.print_on_error('send_io_status'
-                                 , '0',
-                                 'failed to send one or more IO files'))
-    sendupdatefiles_array.append(generator.exit_on_error('send_io_status'
-                                 , '0', 'send_io_status'))
+                                                         , 'send_io_status'))
+    sendupdatefiles_array.append(generator.print_on_error(
+        'send_io_status', '0', 'failed to send one or more IO files'))
+    sendupdatefiles_array.append(generator.exit_on_error(
+        'send_io_status', '0', 'send_io_status'))
 
     sendupdatefiles_array.append(generator.comment('exit script'))
     sendupdatefiles_array.append(generator.exit_script('0',
-                                 'send update files'))
+                                                       'send update files'))
 
     # clean up must be done with SSH (when the .status file
     # has been uploaded): Job script can't safely/reliably clean up
