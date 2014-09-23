@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# cgishared - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# cgishared - cgi helper function
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

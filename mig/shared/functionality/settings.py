@@ -163,13 +163,16 @@ def main(client_id, user_arguments_dict):
         </td></tr>
         <tr><td>
         </td></tr>
-        ''' % configuration.site_title
+        ''' % configuration.short_title
         settings_entries = get_settings_specs()
         for (keyword, val) in settings_entries:
+            if 'SUBMITUI' == keyword and \
+                   'job' not in valid_topics:
+                continue
             if 'notify' == val['Context'] and \
                    keyword.lower() not in configuration.notify_protocols:
                 continue
-            html += \
+            entry = \
                 """
             <tr class='title'><td>
             %s
@@ -191,14 +194,16 @@ def main(client_id, user_arguments_dict):
                         current_choice = current_settings_dict[keyword]
 
                     if len(valid_choices) > 0:
-                        html += '<div class="scrollselect">'
+                        entry += '<div class="scrollselect">'
                         for choice in valid_choices:
                             selected = ''
                             if choice in current_choice:
                                 selected = 'checked'
-                            html += '<input type="checkbox" name="%s" %s value="%s">%s<br />'\
+                            entry += '<input type="checkbox" name="%s" %s value="%s">%s<br />'\
                                     % (keyword, selected, choice, choice)
-                        html += '</div>'
+                        entry += '</div>'
+                    else:
+                        entry = ''
                 except:
                     # failed on evaluating configuration.%s
 
@@ -208,7 +213,7 @@ def main(client_id, user_arguments_dict):
                     if current_settings_dict.has_key(keyword):
                         area += '\n'.join(current_settings_dict[keyword])
                     area += '</textarea>'
-                    html += wrap_edit_area(keyword, area, general_edit, 'BASIC')
+                    entry += wrap_edit_area(keyword, area, general_edit, 'BASIC')
 
             elif val['Type'] == 'string':
 
@@ -220,17 +225,19 @@ def main(client_id, user_arguments_dict):
                     current_choice = current_settings_dict[keyword]
 
                 if len(valid_choices) > 0:
-                    html += '<select name="%s">' % keyword
+                    entry += '<select name="%s">' % keyword
                     for choice in valid_choices:
                         selected = ''
                         if choice == current_choice:
                             selected = 'selected'
-                        html += '<option %s value="%s">%s</option>'\
+                        entry += '<option %s value="%s">%s</option>'\
                              % (selected, choice, choice)
-                    html += '</select><br />'
-            html += """
+                    entry += '</select><br />'
+                else:
+                    entry = ''
+            html += """%s
             </td></tr>
-            """
+            """ % entry
 
         html += \
             """
@@ -652,6 +659,7 @@ able to connect with username and key as described in the following sections.
             html += '''
 </td></tr>
 <tr><td>
+<h3>Authorized Public Keys</h3>
 '''
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
@@ -673,6 +681,7 @@ to connect with username and password as described in the following sections.
             # We only want a single password and a masked input field
             html += '''
 <tr><td>
+<h3>Authorized Password</h3>
 <input type=password id="%(keyword_password)s" size=40 name="password"
 value="%(default_authpassword)s" />
 (leave empty to disable sftp access with password)
@@ -782,6 +791,7 @@ able to connect with username and key as described in the following sections.
             html += '''
 </td></tr>
 <tr><td>
+<h3>Authorized Public Keys</h3>
 '''
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
@@ -803,6 +813,7 @@ to connect with username and password as described in the following sections.
             # We only want a single password and a masked input field
             html += '''
 <tr><td>
+<h3>Authorized Password</h3>
 <input type=password id="%(keyword_password)s" size=40 name="password"
 value="%(default_authpassword)s" />
 (leave empty to disable davs access with password)
@@ -914,6 +925,7 @@ able to connect with username and key as described in the following sections.
             html += '''
 </td></tr>
 <tr><td>
+<h3>Authorized Public Keys</h3>
 '''
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
@@ -936,6 +948,7 @@ to connect with username and password as described in the following sections.
             # We only want a single password and a masked input field
             html += '''
 <tr><td>
+<h3>Authorized Password</h3>
 <input type=password id="%(keyword_password)s" size=40 name="password"
 value="%(default_authpassword)s" />
 (leave empty to disable ftps access with password)
