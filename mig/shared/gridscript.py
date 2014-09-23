@@ -108,7 +108,9 @@ def check_mrsl_files(
 
     check_mrsl_files_start_time = time.time()
 
-    for (root, dirs, files) in os.walk(configuration.mrsl_files_dir):
+    # TODO: switch to listdir or glob? all files are in mrsl_files_dir/*/*.mRSL
+    
+    for (root, _, files) in os.walk(configuration.mrsl_files_dir):
 
         # skip all dot dirs - they are from repos etc and _not_ jobs
 
@@ -193,16 +195,40 @@ def check_mrsl_files(
     logger.info('setting time of last_start_file %s to %s'
                  % (last_start_file, check_mrsl_files_start_time))
     io.touch(last_start_file, check_mrsl_files_start_time)
+    check_mrsl_files_end_time = time.time()
+    logger.info('finished checking for mRSL files in %fs' % \
+                (check_mrsl_files_end_time-check_mrsl_files_start_time))
 
 
-def remove_jobrequest_pending_files(configuration):
-    for (root, dirs, files) in os.walk(configuration.resource_home):
-        for name in files:
+def remove_jobrequest_pending_files(configuration, only_new=True):
+    """Remove pending job requests from previous runs"""
+    logger = configuration.logger
+    last_start = 0
+    last_start_file = os.path.join(configuration.mig_system_files,
+                                   'grid_script_laststart')
+    if os.path.exists(last_start_file):
+        last_start = os.path.getmtime(last_start_file)
 
-            # skip all dot dirs - they are from repos etc and _not_ jobs
+    check_pending_files_start_time = time.time()
 
-            if root.find(os.sep + '.') != -1:
-                continue
+    for dir_name in os.listdir(configuration.resource_home):
+
+        # skip all dot dirs - they are from repos etc and _not_ jobs
+
+        if dir_name.startswith('.'):
+            continue
+
+        root = os.path.join(configuration.resource_home, dir_name)
+
+        # skip all dirs without any recent changes
+
+        if only_new and os.path.getmtime(root) < last_start:
+            logger.info(
+                'remove pending jobrequest files: skipping unchanged dir: %s' \
+                % root)
+            continue
+
+        for name in os.listdir(root):
             if name.startswith('jobrequest_pending.'):
 
                 # remove it
@@ -213,6 +239,10 @@ def remove_jobrequest_pending_files(configuration):
                 except Exception, err:
                     print 'could not remove jobrequest_pending file %s %s'\
                          % (filename, err)
+
+    check_pending_files_end_time = time.time()
+    logger.info('finished cleaning pending jobrequests in %fs' % \
+                (check_pending_files_end_time-check_pending_files_start_time))
 
 
 def server_cleanup(
@@ -371,7 +401,7 @@ def requeue_job(
     configuration,
     logger,
     ):
-
+    """Requeue a failed job by moving it from executing_queue to job_queue"""
     if not job_dict:
         msg = 'requeue_job: %s is no longer in executing queue'
         print failed_msg
@@ -503,15 +533,12 @@ def arc_job_status(
     except arc.ARCWrapperError, err:
         logger.error('Error during ARC status retrieval: %s'\
                      % err.what())
-        pass
     except arc.NoProxyError, err:
         logger.error('Error during ARC status retrieval: %s'\
                      % err.what())
-        pass
     except Exception, err:
         logger.error('Error during ARC status retrieval: %s'\
                      % err.__str__())
-        pass
     return jobinfo['status']
 
 def clean_arc_job(
@@ -530,7 +557,7 @@ def clean_arc_job(
     """
 
 
-    logger.debug('Cleanup for ARC job %s, status %s' % (job_dict['JOB_ID'],status))
+    logger.debug('Cleanup for ARC job %s, status %s' % (job_dict['JOB_ID'], status))
 
     if not status in ['FINISHED', 'CANCELED', 'FAILED']:
         logger.error('inconsistent cleanup request: %s for job %s' % \
