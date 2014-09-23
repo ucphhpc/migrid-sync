@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobscriptgenerator - [insert a few words of module description on this line]
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -134,7 +134,7 @@ def create_restart_job(
     ):
     """Wrapper to create a dummy job for forcing repeated restart of dead exes"""
 
-    empty_job = create_empty_job(
+    empty_job, _ = create_empty_job(
         unique_resource_name,
         exe,
         request_cputime,
