@@ -852,7 +852,7 @@ while True:
                         executing_queue.queue_length())
                 logger.info('empty job script created')
             else:
-                msg = 'Failed to create job script: %s' % sessionid
+                msg = 'Failed to create job script: %s' % msg
                 print msg
                 logger.error(msg)
                 continue
@@ -1058,8 +1058,8 @@ while True:
                         # Save actual VGrid for fair VGrid cycling
 
                         try:
-                            vgrid_index = \
-                                vgrids_in_prioritized_order.index(active_vgrid)
+                            vgrid_index = vgrids_in_prioritized_order.index(
+                                active_res_vgrid)
                         except StandardError:
 
                             # fall back to simple increment
