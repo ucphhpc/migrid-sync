@@ -87,6 +87,7 @@ if '__main__' == __name__:
         'listen_clause',
         'serveralias_clause',
         'distro',
+        'landing_page',
         )
     settings = {}
     for key in names:
@@ -130,6 +131,8 @@ if '__main__' == __name__:
 For a default setup you will probably want to copy the MiG daemon conf to the
 server code directory:
 cp %(destination)s/MiGserver.conf %(mig_code)s/server/
+and the default landing page to the user_home directory:
+cp %(destination)s/index.html %(mig_state)s/user_home/
 
 If you are running apache 2.x on Debian/Ubuntu you can use the sites-available
 and sites-enabled structure with:

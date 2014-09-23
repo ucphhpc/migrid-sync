@@ -113,6 +113,7 @@ def generate_confs(
     listen_clause='#Listen',
     serveralias_clause='#ServerAlias',
     distro='Debian',
+    landing_page='/cgi-bin/dashboard.py',
     ):
     """Generate Apache and MiG server confs with specified variables"""
 
@@ -163,6 +164,7 @@ def generate_confs(
     user_dict['__LISTEN_CLAUSE__'] = listen_clause
     user_dict['__SERVERALIAS_CLAUSE__'] = serveralias_clause
     user_dict['__DISTRO__'] = distro
+    user_dict['__LANDING_PAGE__'] = landing_page
 
     # Apache fails on duplicate Listen directives so comment in that case
     port_list = [cert_port, oid_port, sid_port]
@@ -250,6 +252,7 @@ cert, oid and sid based https!
                       ("apache-MiG-template.conf", "MiG.conf"),
                       ("trac-MiG-template.ini", "trac.ini"),
                       ("MiGserver-template.conf", "MiGserver.conf"),
+                      ("index-template.html", "index.html"),
                       # service script for MiG daemons
                       ("MiG-init.d-template", "MiG"),
                       ]

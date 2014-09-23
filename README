@@ -313,7 +313,9 @@ and a storage-only setup with CentOS apache 2.x and OpenID login:
                    --enable_freeze=True --user_clause=User \
                    --group_clause=Group --listen_clause='#Listen' \
                    --serveralias_clause='#ServerAlias' --alias_field=email \
-                   --daemon_keycert=~/certs/combined.pem --distro=centos 
+                   --daemon_keycert=~/certs/combined.pem --distro=centos \
+                   --landing_page='/wsgi-bin/fileman.py'
+
 
 Most of the arguments should be relatively straight forward, but you
 need to provide the MIG_CERTS path where your apache server key and
