@@ -33,11 +33,24 @@ import shared.returnvalues as returnvalues
 from shared.functional import validate_input
 from shared.init import initialize_main_variables, find_entry
 
+def get_valid_topics(configuration):
+    """Get a map of valid show topics and their associated helper URLs"""
+    valid_topics = {
+        'kitoid': {'url': os.path.join(configuration.migserver_https_oid_url,
+                                       'wsgi-bin', 'autocreate.py')},
+        'migoid': {'url': os.path.join(configuration.migserver_https_sid_url,
+                                       'wsgi-bin', 'autocreate.py')},
+        'migcert': {'url': os.path.join(configuration.migserver_https_sid_url,
+                                        'cgi-sid', 'reqcert.py')},
+        'extcert': {'url': os.path.join(configuration.migserver_https_cert_url,
+                                        'cgi-bin', 'extcert.py')}
+        }
+    return valid_topics
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {}
+    defaults = {'show': ['kitoid', 'migcert']}
     return ['html_form', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -51,6 +64,12 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    valid_show = get_valid_topics(configuration)
+    show = [i.lower() for i in accepted['show'] if i.lower() in valid_show]
+    if not show:
+        logger.info('%s showing default topics' % op_name)
+        show = defaults['show']
+
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s account sign up' % configuration.short_title
     title_entry['skipmenu'] = True
@@ -59,16 +78,22 @@ def main(client_id, user_arguments_dict):
                     configuration.short_title}
     output_objects.append(header_entry)
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : """<h2>Simple Login: OpenID</h2>
+    html = """<h2>Signup for %s</h2>
 <p>
-Before you can use this site you need a user account. However, it is possible
-to sign up with an existing OpenID login.<br />
-Thus, if you are a KU user you simply use your usual KU username and password
-like you do on KUnet and KU webmail.<br />
-When you click the Sign Up with OpenID button you will be taken to a login
-page where you need to login and accept that your login is allowed for login
-with this site as well.
+Before you can use this site you need a user account. You can sign up for one
+here as described below.
+</p>
+""" % configuration.short_title
+    if configuration.user_openid_providers and 'kitoid' in show or \
+           'migoid' in show:
+        html += """<h2>OpenID</h2>
+The simplest sign up method is to use an existing OpenID login if you have one.
+"""
+        if 'kitoid' in show:
+            html += """
+<p>
+If you are a KU user, your usual login for KU Net and KU webmail works for
+OpenID as well.
 </p>
 <div class='form_container'>
 <form method='post' action='%(kitoid_url)s'>
@@ -78,9 +103,12 @@ with this site as well.
 <input id='kitoid_button' type='submit' value='Sign Up with KU OpenID' />
 </form>
 </div>
+"""
+        if 'migoid' in show:
+            html += """
 <p>
-If you already have a MiG user certificate and account here you can also choose
-to allow OpenID access through the local MiG OpenID server.
+If you already have a MiG user certificate and account here you can sign up for
+OpenID access to the account using the local MiG OpenID server.
 <div class='form_container'>
 <form method='post' action='%(migoid_url)s'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
@@ -90,37 +118,59 @@ to allow OpenID access through the local MiG OpenID server.
 </form>
 </p>
 </div>
-<h2>Advanced Login: Client Certificate</h2>
+"""
+            
+        html += """
 <p>
-Advanced users may choose to use a client certificate for even more secure
-access. It is a bit cumbersome to get and install such a client certificate,
-so if you want to keep it simple, just go with the OpenID method above
-instead. It still provides a solid security solution as long as you follow
-the usual good password practice rules.<br />
+When you click the Sign Up with OpenID button you will be taken to a login
+page where you need to login and accept that your login is allowed for login
+with this site as well.
+</p>
+"""
+
+    if 'migcert' in show or 'extcert' in show:
+        html += """
+<h2>Client Certificate</h2>
+<p>
+We provide high security access control with client certificates, like the ones
+you may know from digital signature providers. It is a bit cumbersome to get
+and install such a client certificate, so if you want to keep it simple and
+have other access options, you may want to use those instead.
+</p>
+"""
+        if 'migcert' in show:
+            html += """
+<p>
+You can sign up for an account with an associated x509 user certificate here.
 </p>
 <div class='form_container'>
-<form method='get' action='%(reqcert_url)s'>
-<input id='reqcert_button' type='submit' value='Request a MiG User Certificate' />
+<form method='get' action='%(migcert_url)s'>
+<input id='reqcert_button' type='submit' value='Sign Up with a MiG User Certificate' />
 </form>
 </div>
+"""
+        if 'extcert' in show:
+            html += """
 <p>
 If you already have an x509 user certificate that we trust, you can also sign
 up with that instead of requesting a new one.
 </p>
 <div class='form_container'>
 <form method='get' action='%(extcert_url)s'>
-<input id='extcert_button' type='submit' value='Sign Up With External User Certificate' />
+<input id='extcert_button' type='submit' value='Sign Up with External User Certificate' />
 </form>
 </div>
-""" % {
-       'migoid_url': os.path.join(configuration.migserver_https_sid_url,
-                                  'wsgi-bin', 'autocreate.py'),
-       'kitoid_url': os.path.join(configuration.migserver_https_oid_url,
-                                  'wsgi-bin', 'autocreate.py'),
-       'reqcert_url': os.path.join(configuration.migserver_https_sid_url,
-                                   'cgi-sid', 'reqcert.py'),
-       'extcert_url': os.path.join(configuration.migserver_https_cert_url,
-                                   'cgi-bin', 'extcert.py'),
-       }})
-
+"""
+        html += """
+<p>
+When you click the Sign Up with User Certificate button you will be taken to a
+certificate web form where you need to provide your certificate details.
+</p>
+"""
+    var_map = {'kitoid_url': valid_show['kitoid']['url'],
+               'migoid_url':valid_show['migoid']['url'],
+               'migcert_url': valid_show['migcert']['url'],
+               'extcert_url': valid_show['extcert']['url'],
+               }
+    output_objects.append({'object_type': 'html_form', 'text': html % var_map})
     return (output_objects, returnvalues.OK)

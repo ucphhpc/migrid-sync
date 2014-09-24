@@ -40,7 +40,7 @@ from shared.profilekeywords import get_profile_specs
 from shared.safeinput import html_escape
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
-from shared.useradm import get_default_mrsl, get_default_css
+from shared.useradm import get_default_mrsl, get_default_css, extract_field
 from shared.vgrid import vgrid_list_vgrids
 
 try:
@@ -182,7 +182,7 @@ def main(client_id, user_arguments_dict):
             </td></tr>
             <tr><td>
             """\
-                 % (keyword, val['Description'])
+                 % (keyword.replace('_', ' ').title(), val['Description'])
             if val['Type'] == 'multiplestrings':
                 try:
 
@@ -423,7 +423,7 @@ You can simply copy/paste from the available widget file links below if you want
             </td></tr>
             <tr><td>
             """\
-                 % (keyword, val['Description'])
+                 % (keyword.replace('_', ' ').title(), val['Description'])
             if val['Type'] == 'multiplestrings':
                 try:
 
@@ -523,7 +523,7 @@ If you want to let other users know more about you can add your own text here. I
             </td></tr>
             <tr><td>
             """\
-                 % (keyword, html_escape(val['Description']))
+                 % (keyword.replace('_', ' ').title(), html_escape(val['Description']))
             if val['Type'] == 'multiplestrings':
                 try:
 
@@ -591,6 +591,9 @@ If you want to let other users know more about you can add your own text here. I
 
         default_authkeys = current_ssh_dict.get('authkeys', '')
         default_authpassword = current_ssh_dict.get('authpassword', '')
+        username = client_alias(client_id)
+        if configuration.user_sftp_alias:
+            username = extract_field(client_id, configuration.user_sftp_alias)
         sftp_server = configuration.user_sftp_address
         # address may be empty to use all interfaces - then use FQDN
         if not sftp_server:
@@ -705,7 +708,7 @@ value="%(default_authpassword)s" />
             'site': configuration.short_title,
             'keyword_keys': keyword_keys,
             'keyword_password': keyword_password,
-            'username': client_alias(client_id),
+            'username': username,
             'sftp_server': sftp_server,
             'sftp_port': sftp_port,
             'pw_key_notes': pw_key_notes,
@@ -727,6 +730,9 @@ value="%(default_authpassword)s" />
 
         default_authkeys = current_davs_dict.get('authkeys', '')
         default_authpassword = current_davs_dict.get('authpassword', '')
+        username = client_alias(client_id)
+        if configuration.user_davs_alias:
+            username = extract_field(client_id, configuration.user_davs_alias)
         davs_server = configuration.user_davs_address
         # address may be empty to use all interfaces - then use FQDN
         if not davs_server:
@@ -837,7 +843,7 @@ value="%(default_authpassword)s" />
             'site': configuration.short_title,
             'keyword_keys': keyword_keys,
             'keyword_password': keyword_password,
-            'username': client_alias(client_id),
+            'username': username,
             'davs_server': davs_server,
             'davs_port': davs_port,
             'pw_key_notes': pw_key_notes,
@@ -859,6 +865,9 @@ value="%(default_authpassword)s" />
 
         default_authkeys = current_ftps_dict.get('authkeys', '')
         default_authpassword = current_ftps_dict.get('authpassword', '')
+        username = client_alias(client_id)
+        if configuration.user_ftps_alias:
+            username = extract_field(client_id, configuration.user_ftps_alias)
         ftps_server = configuration.user_ftps_address
         # address may be empty to use all interfaces - then use FQDN
         if not ftps_server:
@@ -972,7 +981,7 @@ value="%(default_authpassword)s" />
             'site': configuration.short_title,
             'keyword_keys': keyword_keys,
             'keyword_password': keyword_password,
-            'username': client_alias(client_id),
+            'username': username,
             'ftps_server': ftps_server,
             'ftps_ctrl_port': ftps_ctrl_port,
             'pw_key_notes': pw_key_notes,
