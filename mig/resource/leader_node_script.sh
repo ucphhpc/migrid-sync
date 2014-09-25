@@ -203,6 +203,8 @@ control_requests() {
         export MIG_JOBDIR="$execution_dir/job-dir_$localjobname"
         export MIG_EXENODE=$execution_node
         export MIG_ADMINEMAIL="$admin_email"
+        export MIG_LRMS_OUT="MiG_$exe.out"
+        export MIG_LRMS_ERR="MiG_$exe.err"
         #echo "MiG environment settings:" >> $exehostlog
         #env|grep -E '^MIG_' >> $exehostlog
 
@@ -309,6 +311,8 @@ control_submit() {
         export MIG_JOBDIR="$execution_dir/job-dir_$localjobname"
         export MIG_EXENODE=$execution_node
         export MIG_ADMINEMAIL="$admin_email"
+        export MIG_LRMS_OUT="MiG_$exe.out"
+        export MIG_LRMS_ERR="MiG_$exe.err"
 
         #complete_file_available "job-dir_${localjobname}/${localjobname}.inputfiles_available" || echo "$exe: $localjobname input not yet available" >> $exehostlog
         complete_file_available "job-dir_${localjobname}/${localjobname}.inputfiles_available" || continue
@@ -386,7 +390,7 @@ control_submit() {
             echo "run real job $localjobname in the background" >> $exehostlog
         fi
         echo "`date`: ${prepend_execute} ${command}" >> $exehostlog
-        
+        echo -n "`date` ($localjobname): " >> $joblog         
         if [ $background -eq 1 ]; then
             # Use new subshell with redirection to limit side effects.
             # It is necessary to temporarily enable monitor mode (job control) to get
@@ -478,6 +482,8 @@ control_finished() {
         export MIG_JOBDIR="$execution_dir/job-dir_$localjobname"
         export MIG_EXENODE=$execution_node
         export MIG_ADMINEMAIL="$admin_email"
+        export MIG_LRMS_OUT="MiG_$exe.out"
+        export MIG_LRMS_ERR="MiG_$exe.err"
 
         # Now start job monitoring
         cd job-dir_${localjobname}
@@ -516,6 +522,12 @@ control_finished() {
             cd ${work_dir}
             continue
         fi
+        
+        # Write LRMS error messages to exehostlog  
+        if [ -s $MIG_JOBDIR/$MIG_LRMS_ERR ] ; then
+            echo "`date` ($localjobname): `cat $MIG_JOBDIR/$MIG_LRMS_ERR`" >> $joblog
+        fi
+         
         echo "`date`: job $localjobname finished" >> $exehostlog 2>> $exehostlog
         
         #echo "removing .job file" >> $exehostlog 2>> $exehostlog
@@ -568,6 +580,8 @@ control_results() {
         export MIG_JOBDIR="$execution_dir/job-dir_$localjobname"
         export MIG_EXENODE=$execution_node
         export MIG_ADMINEMAIL="$admin_email"
+        export MIG_LRMS_OUT="MiG_$exe.out"
+        export MIG_LRMS_ERR="MiG_$exe.err"
 
         # Now start job handling
         cd job-dir_${localjobname}
@@ -672,6 +686,8 @@ control_updates() {
         export MIG_JOBDIR="$execution_dir/job-dir_$localjobname"
         export MIG_EXENODE=$execution_node
         export MIG_ADMINEMAIL="$admin_email"
+        export MIG_LRMS_OUT="MiG_$exe.out"
+        export MIG_LRMS_ERR="MiG_$exe.err"
 
         if [ ! -f run_handle_updates.${localjobname} ]; then
             echo "updates disabled for $localjobname" 1>> $exehostlog 2>> $exehostlog
