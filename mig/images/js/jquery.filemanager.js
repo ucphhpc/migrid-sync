@@ -73,9 +73,14 @@ if (jQuery) (function($){
 
     // Use touchscreen interface without need for right clicking
     function touchscreenChecker() {
-        var touchscreen = $("#fm_touchscreen input[type='checkbox']").is(":checked");
-
+        var touchscreen = $("#fm_touchscreen[type='checkbox']").is(":checked");
         return touchscreen;
+    }
+
+    // Show dot files/dirs
+    function showDotfilesChecker() {
+        var showDotfiles = $("#fm_dotfiles[type='checkbox']").is(":checked");
+        return showDotfiles;
     }
 
     $.fn.dump = function(element) {
@@ -725,6 +730,7 @@ if (jQuery) (function($){
           var is_dir = false;
           var base_css_style = 'file';
           var icon = '';
+          var dotfile = '';
           var entry_title = '';
           var entry_html = '';
 
@@ -744,6 +750,7 @@ if (jQuery) (function($){
               is_dir = listing[i]['type'] == 'directory';
               base_css_style = 'file';
               icon = '';
+              dotfile = '';
               dir_prefix = '__';
                         
               // Stats for the statusbar
@@ -754,6 +761,9 @@ if (jQuery) (function($){
               if (t != '/') { // Do not prepend the fake-root.
                   path = t+path;  
               }
+              if (listing[i]['name'].charAt(0) == '.') {
+                  dotfile = 'fm_dotfile'
+              }
 
               entry_title = path + ' ' + listing[i]['special'];
               if (is_dir) {
@@ -761,8 +771,8 @@ if (jQuery) (function($){
                   icon = 'directoryicon ' + listing[i]['extra_class'];
 
                   path += '/';
-                  folders +=  '<li class="recent ' + icon + ' ' +
-                      base_css_style + ' collapsed" rel_path="' + path +
+                  folders +=  '<li class="recent ' + icon + ' ' + dotfile + 
+                      ' ' + base_css_style + ' collapsed" rel_path="' + path +
                       '" title="' + entry_title + '"><div>' +
                       listing[i]['name'] + '</div></li>\n';
                   dir_prefix = '##';
@@ -779,7 +789,7 @@ if (jQuery) (function($){
                  from excessive html DOM manipulation. Mark the entry as
                  recent to ease targetted context menu and drag n' drop later
               */
-              entry_html = '<tr class="recent ' + base_css_style +
+              entry_html = '<tr class="recent ' + base_css_style + ' ' + dotfile + 
                   '" title="' + entry_title + '" rel_path="' + path + '">' + 
                   '<td style="padding-left: 20px;" class="' + icon + ' ext_' + 
                   listing[i]['file_info']['ext'] + '"><div>' + dir_prefix +
@@ -941,6 +951,23 @@ if (jQuery) (function($){
                     }, 10);
                 });
             }
+
+            // show/hide dotfiles
+            var do_show = showDotfilesChecker();
+            $("tr.fm_dotfile, li.fm_dotfile").each(function() { 
+                var t = $(this); 
+                setTimeout(function() {
+                    if (do_show && t.css('display') == 'none') {
+                        t.toggle();
+                    } else if (!do_show && t.css('display') != 'none') {
+                        t.toggle();
+                    }
+                }, 10);
+            });
+            // make sure tablesorter style is applied
+            setTimeout(function() {
+                $(".fm_files table").trigger("update");
+            }, 10);
 
             // remove recent markers
             $("tr.recent, li.recent").each(function() { 

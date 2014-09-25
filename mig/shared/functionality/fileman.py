@@ -93,8 +93,10 @@ def html_tmpl(configuration, title_entry):
         </div>                
         <div class="fm_statusbar">&nbsp;</div>
     </div>
-    <div id="fm_touchscreen"><input type="checkbox">
-        Enable touch screen interface (all clicks trigger menu)</div>
+    <div id="fm_options"><input id="fm_touchscreen" type="checkbox">
+        Enable touch screen interface (all clicks trigger menu)
+        <input id="fm_dotfiles" type="checkbox">
+        Show hidden files and dirs</div>
     
     <ul id="folder_context" class="contextMenu">
         <li class="mkdir separator">

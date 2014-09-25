@@ -214,6 +214,9 @@
   border-top: 1px solid #ccc;  
   background-color: #eee;
 }
+.fm_dotfile {
+  display: none;
+}
 * html #fm_statusbar {
   height:1px;
 }
