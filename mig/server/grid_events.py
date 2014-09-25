@@ -34,6 +34,7 @@ import glob
 import logging
 import logging.handlers
 import os
+import re
 import sys
 import tempfile
 import time
@@ -243,8 +244,12 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         logger.info("got %s event for file: %s" % (state, src_path))
         logger.debug("filter %s against %s" % (all_rules.keys(), src_path))
         for (target_path, rule_list) in all_rules.items():
-            for rule in rule_list:
-                if fnmatch.fnmatch(src_path, target_path):
+            # Do not use ordinary fnmatch as it lets '*' match anything
+            # including '/' which leads to greedy matching in subdirs
+            as_regexp = fnmatch.translate(target_path).replace('.*', '[^/]*')
+            if re.match(as_regexp, src_path):
+                logger.debug("matched %s for %s" % (src_path, as_regexp))
+                for rule in rule_list:
                     if not state in rule['changes']:
                         logger.info("skipping %s without change match (%s)" \
                                     % (target_path, state))
@@ -260,9 +265,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     logger.info("trigger %s for %s: %s" % \
                                 (rule['action'], src_path, rule))
                     self.__handle_trigger(event, target_path, rule)
-                else:
-                    logger.debug("skipping %s with no matching rules" % \
-                                 target_path)
+            else:
+                logger.debug("skipping %s with no matching rules" % \
+                             target_path)
 
     def on_modified(self, event):
         """Handle modified files"""
