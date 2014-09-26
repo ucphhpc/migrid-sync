@@ -96,6 +96,10 @@ if (jQuery) (function($){
                 }
             }, 10);
         });
+        // make sure tablesorter style is applied
+        setTimeout(function() {
+            $(".fm_files table").trigger("update");
+        }, 10);
     }
 
     $.fn.dump = function(element) {
@@ -969,11 +973,6 @@ if (jQuery) (function($){
 
             // show/hide dotfiles
             refreshDotfiles();
-
-            // make sure tablesorter style is applied
-            setTimeout(function() {
-                $(".fm_files table").trigger("update");
-            }, 10);
 
             // remove recent markers
             $("tr.recent, li.recent").each(function() { 
