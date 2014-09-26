@@ -172,16 +172,17 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         src_path = event.src_path
         _chain = getattr(event, '_chain', [(src_path, state)])
         base_dir = configuration.vgrid_files_home
-        rel_path = src_path.replace(base_dir, '').lstrip(os.sep)
+        rel_src = src_path.replace(base_dir, '').lstrip(os.sep)
         vgrid_prefix = os.path.join(base_dir, rule['vgrid_name'])
         self.__workflow_info(configuration, rule['vgrid_name'],
-                             "handle %s for %s" % (rule['action'], rel_path))
+                             "handle %s for %s" % (rule['action'], rel_src))
         if rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
             change = rule['action'].replace('trigger-', '')
             FakeEvent = self.event_map[change]
             for argument in rule['arguments']:
                 pattern = os.path.join(vgrid_prefix, argument)
                 for path in glob.glob(pattern):
+                    rel_path = path.replace(configuration.vgrid_files_home, '')
                     _chain += [(path, change)]
                     # Prevent obvious trigger chain cycles
                     if (path, change) in _chain[:-1]:
@@ -199,13 +200,13 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     logger.info("trigger %s event on %s" % (change, path))
                     self.__workflow_info(configuration, rule['vgrid_name'],
                                          "trigger %s event on %s" % (change,
-                                                                     path))
+                                                                     rel_path))
                     self.handle_event(fake)
         elif rule['action'] == 'submit':
             mrsl_fd = tempfile.NamedTemporaryFile(delete=False)
             mrsl_path = mrsl_fd.name
             try:
-                if not fill_mrsl_template(mrsl_fd, rel_path, state, rule,
+                if not fill_mrsl_template(mrsl_fd, rel_src, state, rule,
                                           configuration):
                     raise Exception("fill template failed")
                             
@@ -218,7 +219,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                                               msg))
                     self.__workflow_info(configuration, rule['vgrid_name'],
                                          "submitted job for %s: %s" % \
-                                         (target_path, msg))
+                                         (rel_src, msg))
                 else:
                     raise Exception(msg)
             except Exception, exc:
@@ -226,7 +227,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                                                   exc))
                 self.__workflow_err(configuration, rule['vgrid_name'],
                                     "failed to submit job for %s: %s" % \
-                                    (target_path, exc))
+                                    (rel_src, exc))
             try:
                 os.remove(mrsl_path)
             except Exception, exc:
