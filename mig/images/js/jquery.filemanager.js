@@ -77,10 +77,25 @@ if (jQuery) (function($){
         return touchscreen;
     }
 
-    // Show dot files/dirs
+    // Visibility of dot files/dirs
     function showDotfilesChecker() {
         var showDotfiles = $("#fm_dotfiles[type='checkbox']").is(":checked");
         return showDotfiles;
+    }
+
+    // Show/hide dot files/dirs
+    function refreshDotfiles() {
+        var do_show = showDotfilesChecker();
+        $("tr.fm_dotfile, li.fm_dotfile").each(function() { 
+            var t = $(this); 
+            setTimeout(function() {
+                if (do_show && t.css('display') == 'none') {
+                    t.toggle();
+                } else if (!do_show && t.css('display') != 'none') {
+                    t.toggle();
+                }
+            }, 10);
+        });
     }
 
     $.fn.dump = function(element) {
@@ -953,17 +968,8 @@ if (jQuery) (function($){
             }
 
             // show/hide dotfiles
-            var do_show = showDotfilesChecker();
-            $("tr.fm_dotfile, li.fm_dotfile").each(function() { 
-                var t = $(this); 
-                setTimeout(function() {
-                    if (do_show && t.css('display') == 'none') {
-                        t.toggle();
-                    } else if (!do_show && t.css('display') != 'none') {
-                        t.toggle();
-                    }
-                }, 10);
-            });
+            refreshDotfiles();
+
             // make sure tablesorter style is applied
             setTimeout(function() {
                 $(".fm_files table").trigger("update");
@@ -976,6 +982,12 @@ if (jQuery) (function($){
                     t.removeClass('recent');
                 }, 10);
             });
+
+            // bind reload to dotfiles checkbox
+            $("#fm_dotfiles[type='checkbox']").bind('click', 
+                function() { 
+                    refreshDotfiles();
+                });
 
             // Binds: Expands and a call to showbranch
             // or
