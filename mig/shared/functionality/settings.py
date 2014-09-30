@@ -235,6 +235,18 @@ def main(client_id, user_arguments_dict):
                     entry += '</select><br />'
                 else:
                     entry = ''
+            elif val['Type'] == 'boolean':
+                current_choice = ''
+                if current_settings_dict.has_key(keyword):
+                    current_choice = current_settings_dict[keyword]
+                entry += '<select name="%s">' % keyword
+                for choice in (True, False):
+                    selected = ''
+                    if choice == current_choice:
+                        selected = 'selected'
+                    entry += '<option %s value="%s">%s</option>'\
+                             % (selected, choice, choice)
+                entry += '</select><br />'
             html += """%s
             </td></tr>
             """ % entry
@@ -363,11 +375,21 @@ You can copy paste from the available style file links below if you want to over
             
             current_widgets_dict = {}
 
+        edit_widgets = ''
+        enabled_note = ''
+        if not current_settings_dict.get('ENABLE_WIDGETS', True):
+            edit_widgets = 'hidden'
+            enabled_note = '''
+<div class="warningtext">Widgets are disabled on your <em>general settings</em>
+page. Please enable them there first if you want to customize your grid pages.
+</div>
+'''
+
         html = \
-             '''
+             '''%s
 <div id="widgets">
 <form method="post" action="settingsaction.py">
-<table class="widgets fixedlayout">
+<table class="widgets fixedlayout %s">
 <tr class="title"><td class="centertext">
 Default user defined widgets for all pages
 </td></tr>
@@ -409,7 +431,7 @@ You can simply copy/paste from the available widget file links below if you want
 <input type="hidden" name="topic" value="widgets" />
 </td></tr>
 <tr><td>
-''' % configuration.short_title
+''' % (enabled_note, edit_widgets, configuration.short_title)
 
         widgets_entries = get_widgets_specs()
         for (keyword, val) in widgets_entries:

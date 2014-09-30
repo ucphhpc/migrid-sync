@@ -103,7 +103,8 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
                 user_menu = settings.get('SITE_USER_MENU', None)
                 if configuration.site_user_menu and user_menu:
                     title['user_menu'] = user_menu
-            if configuration.site_script_deps:
+            if settings.get('ENABLE_WIDGETS', True) and \
+                   configuration.site_script_deps:
                 user_widgets = load_widgets(client_id, configuration)
                 if user_widgets:
                     title['user_widgets'] = user_widgets

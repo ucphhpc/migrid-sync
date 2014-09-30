@@ -124,6 +124,17 @@ def get_settings_specs():
         'Context': 'appearance',
         'Required': False,
         }))
+    specs.append(('ENABLE_WIDGETS', {
+        'Title': 'Enable widgets',
+        'Description': 'If you want to be able to customize your grid pages '
+        'with custom content. Widgets are specified on your widgets settings '
+        'page when enabled.',
+        'Example': 'True',
+        'Type': 'boolean',
+        'Value': True,
+        'Context': 'appearance',
+        'Required': False,
+        }))
     return specs
 
 def get_keywords_dict():
