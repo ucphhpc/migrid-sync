@@ -10,27 +10,48 @@ import time
 
 import paramiko
 
+local = False
 bench_hosts = {}
-bench_hosts['openssh'] = {
-    'hostname': 'apu02.esci.nbi.dk',
-    'port': 22,
-    'username': 'bardino',
-    #'key_path': os.path.expanduser('~/.ssh/id_rsa'),
-    'key_path' : None,
-    'user_key' : None,
-    }
-bench_hosts['paramiko'] = {
-    'hostname': 'apu02.esci.nbi.dk',
-    'port': 2222,
-    'username': 'YmFyZGlub0BkaWt1LmRr',
-    #'key_path': os.path.expanduser('~/.mig/id_rsa'), 
-    'key_path' : None,
-    'user_key' : None,
-    }
+if local:
+    bench_hosts['openssh'] = {
+        'hostname': 'localhost',
+        'port': 22,
+        'username': 'jonas',
+        #'key_path': os.path.expanduser('~/.ssh/id_rsa'),
+        'key_path' : None,
+        'user_key' : None,
+        }
+    bench_hosts['paramiko'] = {
+        'hostname': '127.0.0.1',
+        'port': 2222,
+        'username': 'bardino@nbi.ku.dk',
+        #'key_path': os.path.expanduser('~/.mig/id_rsa'), 
+        'key_path' : None,
+        'user_key' : None,
+        }
+else:
+    bench_hosts['openssh'] = {
+        'hostname': 'escistore02.hpc.ku.dk',
+        'port': 22,
+        'username': 'bardino',
+        #'key_path': os.path.expanduser('~/.ssh/id_rsa'),
+        'key_path' : None,
+        'user_key' : None,
+        }
+    bench_hosts['paramiko'] = {
+        'hostname': 'escistore02.hpc.ku.dk',
+        'port': 2222,
+        'username': 'bardino@nbi.ku.dk',
+        #'key_path': os.path.expanduser('~/.mig/id_rsa'), 
+        'key_path' : None,
+        'user_key' : None,
+        }
 
 enable_compression = False
 #bench_sizes = [1, 1024, 16*1024, 256*1024, 1024*1024, 16*1024*1024, 256*1024*1024, 1024*1024*1024]
-bench_sizes = [1, 1024, 16*1024, 256*1024, 1024*1024, 16*1024*1024, 256*1024*1024]
+#bench_sizes = [1, 1024, 16*1024, 256*1024, 1024*1024, 16*1024*1024, 256*1024*1024]
+bench_sizes = [1, 1024, 4*1024, 16*1024, 64*1024, 256*1024, 1024*1024, 4*1024*1024, 16*1024*1024, 64*1024*1024, 256*1024*1024, , 1024*1024*1024]
+#bench_sizes = [1, 1024, 16*1024, 256*1024, 1024*1024, 16*1024*1024]
 #bench_sizes = [1, 1024]
 bench_pattern = 'bench-sftp-%s-%d.bin'
 
@@ -131,4 +152,6 @@ def run_bench(conf, bench_specs):
 if __name__ == '__main__':
     cfg = {}
     paramiko.util.log_to_file('bench-sftp.log')
+    if sys.argv[1:]:
+        local = (sys.argv[1].lower()[0] in ('t', 'y', '1'))
     run_bench(cfg, bench_hosts)
