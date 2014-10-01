@@ -110,11 +110,13 @@ def fill_mrsl_template(
     trigger_path,
     state_change,
     rule,
+    expand_map,
     configuration,
     ):
     """Generate a job description in mrsl_fd_or_path from a job template using
     the trigger details in the rule dictionary and the actual (relative)
     trigger_path of the file and what kind of change triggered the event.
+    expand_map is a dictionary mapping variables to actual values.
     Please note that mrsl_fd_or_path may be a path or a file-like object.
     """
     logger = configuration.logger
@@ -135,22 +137,7 @@ def fill_mrsl_template(
         raw_template = template_fd.read()
         template_fd.close()
         filled_template = raw_template
-        trigger_filename = os.path.basename(trigger_path)
-        trigger_dirname = os.path.dirname(trigger_path)
-        (prefix, extension) = os.path.splitext(trigger_filename)
-        replace_map = {'+TRIGGERPATH+': trigger_path,
-                       '+TRIGGERDIRNAME+': trigger_dirname,
-                       '+TRIGGERFILENAME+': trigger_filename,
-                       '+TRIGGERPREFIX+': prefix,
-                       '+TRIGGEREXTENSION+': extension,
-                       '+TRIGGERCHANGE+': state_change,
-                       '+TRIGGERVGRIDNAME+': rule['vgrid_name'],
-                       '+TRIGGERRUNAS+': rule['run_as'],
-                       }
-        
-        # TODO: provide exact expanded wildcards?
-                       
-        for (key, val) in replace_map.items():
+        for (key, val) in expand_map.items():
             filled_template = filled_template.replace(key, val)
 
         logger.info("filled_template is:\n%s" % filled_template)

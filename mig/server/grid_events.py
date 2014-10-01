@@ -59,6 +59,28 @@ from shared.vgrid import vgrid_is_owner_or_member
 all_rules = {}
 configuration, logger = None, None
 
+def get_expand_map(trigger_path, rule, state_change):
+    """Generate a dictionary with the supported variables to be expanded and
+    the actual expanded values based on trigger_path and rule dictionary.
+    """
+    trigger_filename = os.path.basename(trigger_path)
+    trigger_dirname = os.path.dirname(trigger_path)
+    (prefix, extension) = os.path.splitext(trigger_filename)
+    expand_map = {'+TRIGGERPATH+': trigger_path,
+                   '+TRIGGERDIRNAME+': trigger_dirname,
+                   '+TRIGGERFILENAME+': trigger_filename,
+                   '+TRIGGERPREFIX+': prefix,
+                   '+TRIGGEREXTENSION+': extension,
+                   '+TRIGGERCHANGE+': state_change,
+                   '+TRIGGERVGRIDNAME+': rule['vgrid_name'],
+                   '+TRIGGERRUNAS+': rule['run_as'],
+                   }
+        
+    # TODO: provide exact expanded wildcards?
+
+    return expand_map    
+
+
 class MiGRuleEventHandler(PatternMatchingEventHandler):
     """Rule pattern-matching event handler to take care of VGrid rule changes
     and update the global rule database.
@@ -180,7 +202,15 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             change = rule['action'].replace('trigger-', '')
             FakeEvent = self.event_map[change]
             for argument in rule['arguments']:
-                pattern = os.path.join(vgrid_prefix, argument)
+                # Expand dynamic variables in argument
+                expand_map = get_expand_map(rel_src, rule, state)
+                filled_argument = argument
+                for (key, val) in expand_map.items():
+                    filled_argument = filled_argument.replace(key, val)
+                self.__workflow_info(configuration, rule['vgrid_name'],
+                                     "expanded argument %s to %s" % \
+                                     (argument, filled_argument))
+                pattern = os.path.join(vgrid_prefix, filled_argument)
                 for path in glob.glob(pattern):
                     rel_path = path.replace(configuration.vgrid_files_home, '')
                     _chain += [(path, change)]
@@ -205,9 +235,10 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         elif rule['action'] == 'submit':
             mrsl_fd = tempfile.NamedTemporaryFile(delete=False)
             mrsl_path = mrsl_fd.name
+            expand_map = get_expand_map(rel_src, rule, state)
             try:
                 if not fill_mrsl_template(mrsl_fd, rel_src, state, rule,
-                                          configuration):
+                                          expand_map, configuration):
                     raise Exception("fill template failed")
                             
                 logger.debug("filled template for %s in %s" % \
