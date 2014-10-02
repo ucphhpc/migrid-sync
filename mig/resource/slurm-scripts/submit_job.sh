@@ -27,11 +27,17 @@ secs=$(($MIG_JOBCPUTIME%60))
 # 2 sockets of 16 cores each). Otherwise we would request the right number
 # with --mincpus=${MIG_JOBCPUCOUNT} . We don't want multiple jobs on the same
 # node anyway.
-sbatch --time="$mins:$secs" --nodes="$MIG_JOBNODECOUNT" --exclusive \
-    --mem="$MIG_JOBMEMORY" --no-requeue --job-name="$MIG_JOBNAME" \
-    -o "$MIG_LRMS_OUT" -e "$MIG_LRMS_ERR" --workdir="$MIG_JOBDIR" \
-    $mail_opt -p "$MIG_EXEUNIT" $@
+# 
+# NOTE: --mem="""$MIG_JOBMEMORY""" is disabled for now as MiG jobs enforces virtual
+#    memory due to the usage of ulimit where slurm enforces real memory
+
+cmd="sbatch --time="""$mins:$secs""" --nodes="""$MIG_JOBNODECOUNT""" --exclusive \
+    --no-requeue --job-name="""$MIG_JOBNAME""" \
+    -o """$MIG_LRMS_OUT""" -e """$MIG_LRMS_ERR""" --workdir="""$MIG_JOBDIR""" \
+    $mail_opt -p """$MIG_EXEUNIT""" $@"
+$cmd
 if [ $? -ne 0 ]; then
+    echo "Submit command: $cmd"
     echo "Failed to submit to SLURM - try again later"
     exit 1 
 fi
