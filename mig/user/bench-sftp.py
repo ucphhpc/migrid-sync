@@ -31,15 +31,17 @@ if local:
         }
 else:
     bench_hosts['openssh'] = {
-        'hostname': 'escistore02.hpc.ku.dk',
+        #'hostname': 'escistore02.hpc.ku.dk',
+        'hostname': 'dk.migrid.org',
         'port': 22,
-        'username': 'bardino',
+        'username': 'jones',
         #'key_path': os.path.expanduser('~/.ssh/id_rsa'),
         'key_path' : None,
         'user_key' : None,
         }
     bench_hosts['paramiko'] = {
-        'hostname': 'escistore02.hpc.ku.dk',
+        #'hostname': 'escistore02.hpc.ku.dk',
+        'hostname': 'dk.migrid.org',
         'port': 2222,
         'username': 'bardino@nbi.ku.dk',
         #'key_path': os.path.expanduser('~/.mig/id_rsa'), 
