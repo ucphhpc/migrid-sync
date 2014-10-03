@@ -613,6 +613,7 @@ def accept_client(client, addr, root_dir, users, jobs, host_rsa_key, conf={}):
                 #print "type: %s"  % type(entry.public_key)
         print "Login for %s from %s" % (username, addr)
     else:
+        logger.warning("Login from %s failed" % (addr, ))
         print "Login from %s failed - closing connection" % (addr, )
         transport.close()
 
