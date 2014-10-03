@@ -254,9 +254,9 @@ def main(client_id, user_arguments_dict):
 
 <script type="text/javascript" >
 
-    var toggleHidden = function( classname ) {
+    var toggleHidden = function(classname) {
         // classname supposed to have a leading dot 
-        $( classname ).toggleClass('hidden');
+        $(classname).toggleClass('hidden');
     }
 
 $(document).ready(function() {
