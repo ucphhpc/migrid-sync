@@ -753,40 +753,56 @@ table th.icon {
   background: url('/images/icons/page_white_get.png') no-repeat;
   padding-left: 18px;
 }
+.settingsbutton {
+  padding: 8px;
+  border: 2px solid grey;
+  border-radius: 4px;
+  background-repeat: no-repeat;
+  background-position: 1px center;
+  background-color: #eef;
+}
+a.settingsbutton {
+  text-decoration: none;
+  font-weight: bold;
+}
+.activebutton {
+  border: 2px solid #369;
+  background-color: #fff;
+}
 .generalsettingslink {
-  background: url('/images/icons/table.png') no-repeat;
+  background-image: url('/images/icons/table.png');
   padding-left: 18px;
 }
 .jobsettingslink {
-  background: url('/images/icons/cog.png') no-repeat;
+  background-image: url('/images/icons/cog.png');
   padding-left: 18px;
 }
 .stylesettingslink {
-  background: url('/images/icons/psd.png') no-repeat;
+  background-image: url('/images/icons/psd.png');
   padding-left: 18px;
 }
 .profilesettingslink {
-  background: url('/images/icons/user.png') no-repeat;
+  background-image: url('/images/icons/user.png');
   padding-left: 18px;
 }
 .widgetssettingslink {
-  background: url('/images/icons/application.png') no-repeat;
+  background-image: url('/images/icons/application.png');
   padding-left: 18px;
 }
-.sshsettingslink {
-  background: url('/images/icons/computer_link.png') no-repeat;
+.sftpsettingslink {
+  background-image: url('/images/icons/computer_link.png');
   padding-left: 18px;
 }
-.davssettingslink {
-  background: url('/images/icons/computer_link.png') no-repeat;
+.webdavssettingslink {
+  background-image: url('/images/icons/computer_link.png');
   padding-left: 18px;
 }
 .ftpssettingslink {
-  background: url('/images/icons/computer_link.png') no-repeat;
+  background-image: url('/images/icons/computer_link.png');
   padding-left: 18px;
 }
 .arcsettingslink {
-  background: url('/images/icons/ng-arc.png') no-repeat;
+  background-image: url('/images/icons/ng-arc.png');
   padding-left: 18px;
 }
 .newpostlink {

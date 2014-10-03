@@ -25,6 +25,8 @@
 # -- END_HEADER ---
 #
 
+"""Backe end for personal settings"""
+
 import os
 import tempfile
 
@@ -51,9 +53,9 @@ def extend_defaults(defaults, user_args):
         keywords_dict = widgets_keywords()
     elif topic == 'profile':
         keywords_dict = profile_keywords()
-    elif topic == 'ssh':
+    elif topic == 'sftp':
         keywords_dict = {'publickeys': '', 'password': ''}
-    elif topic == 'davs':
+    elif topic == 'webdavs':
         keywords_dict = {'publickeys': '', 'password': ''}
     elif topic == 'ftps':
         keywords_dict = {'publickeys': '', 'password': ''}
@@ -107,7 +109,7 @@ def main(client_id, user_arguments_dict):
         keywords_dict = widgets_keywords()
     elif topic == 'profile':
         keywords_dict = profile_keywords()
-    elif topic in ('ssh', 'davs', 'ftps'):
+    elif topic in ('sftp', 'webdavs', 'ftps'):
         # We don't use mRSL parser here
         keywords_dict = {}
     else:
@@ -130,9 +132,9 @@ def main(client_id, user_arguments_dict):
         os.write(filehandle, topic_mrsl)
         os.close(filehandle)
     except Exception:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Problem writing temporary topic file on server.'
-                              })
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Problem writing temporary topic file on server.'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Parse topic
@@ -149,13 +151,13 @@ def main(client_id, user_arguments_dict):
         (parse_status, parse_msg) = \
                        parse_and_save_profile(tmptopicfile, client_id,
                                               configuration)
-    elif topic == 'ssh':
+    elif topic == 'sftp':
         publickeys = '\n'.join(accepted.get('publickeys', ['']))
         password = accepted.get('password', [''])[-1].strip()
         (parse_status, parse_msg) = \
                        parse_and_save_ssh(publickeys, password, client_id,
                                           configuration)
-    elif topic == 'davs':
+    elif topic == 'webdavs':
         publickeys = '\n'.join(accepted.get('publickeys', ['']))
         password = accepted.get('password', [''])[-1].strip()
         (parse_status, parse_msg) = \
@@ -175,10 +177,13 @@ def main(client_id, user_arguments_dict):
         
     try:
         os.remove(tmptopicfile)
-    except Exception:
+    except Exception, exc:
         pass  # probably deleted by parser!
 
-        # output_objects.append({"object_type":"error_text", "text": "Could not remove temporary topic file %s, exception: %s" % (tmptopicfile, e)})
+        # output_objects.append(
+        #    {"object_type":"error_text", "text":
+        #     "Could not remove temporary topic file %s, exception: %s" % \
+        #     (tmptopicfile, exc)})
 
     if not parse_status:
         output_objects.append({'object_type': 'error_text', 'text'

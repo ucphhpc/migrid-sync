@@ -174,6 +174,12 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'submitstatuslist',
                               'submitstatuslist': [submitstatus]})
 
+    output_objects.append({'object_type': 'link',
+                           'destination': 'javascript:history.back()',
+                           'class': 'backlink',
+                           'title': 'Go back to previous page',
+                           'text': 'Back to previous page'})
+
     return (output_objects, returnvalues.OK)
 
 

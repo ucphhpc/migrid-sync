@@ -25,6 +25,8 @@
 # -- END_HEADER ---
 #
 
+"""Provide all the settings subpages"""
+
 import os
 
 import shared.returnvalues as returnvalues
@@ -61,7 +63,6 @@ widgets_edit['mode'] = 'htmlmixed'
 profile_edit = cm_options.copy()
 profile_edit['mode'] = 'htmlmixed'
 
-
 def signature():
     """Signature of the main function"""
 
@@ -95,8 +96,32 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Settings'
-    title_entry['style'] = cm_css
-    title_entry['javascript'] = cm_javascript
+    # prepare support for toggling the views (by css/jquery)
+    title_entry['style'] = '''
+<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
+%s
+''' % cm_css
+    title_entry['javascript'] = '''
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+
+%s
+
+<script type="text/javascript" >
+
+    var toggleHidden = function(classname) {
+        // classname supposed to have a leading dot 
+        $(classname).toggleClass("hidden");
+    }
+
+$(document).ready(function() {
+     }
+);
+</script>
+''' % cm_javascript
 
     valid_topics = ['general', 'style']
     active_menu = extract_menu(configuration, title_entry)
@@ -109,26 +134,36 @@ def main(client_id, user_arguments_dict):
     if configuration.arc_clusters:
         valid_topics.append('arc')
     if configuration.site_enable_sftp:
-        valid_topics.append('ssh')
+        valid_topics.append('sftp')
     if configuration.site_enable_davs:
-        valid_topics.append('davs')
+        valid_topics.append('webdavs')
     if configuration.site_enable_ftps:
         valid_topics.append('ftps')
     topics = accepted['topic']
     topics = [i for i in topics if i in valid_topics]
+    topic_titles = dict([(i, i.title()) for i in valid_topics])
+    for (key, val) in [('sftp', 'SFTP'), ('webdavs', 'WebDAVS'),
+                       ('ftps', 'FTPS')]:
+        if key in valid_topics:
+            topic_titles[key] = val
     output_objects.append({'object_type': 'header', 'text'
                           : 'Settings'})
 
     links = []
     for name in valid_topics:
+        active_menu = ''
+        if topics[0]  == name:
+            active_menu = 'activebutton'
         links.append({'object_type': 'link', 
                       'destination': "settings.py?topic=%s" % name,
-                      'class': '%ssettingslink' % name,
-                      'title': 'Switch to %s settings' % name,
-                      'text' : '%s settings' % name,
+                      'class': '%ssettingslink settingsbutton %s' % \
+                      (name, active_menu),
+                      'title': 'Switch to %s settings' % topic_titles[name],
+                      'text' : '%s' % topic_titles[name],
                       })
 
-    output_objects.append({'object_type': 'multilinkline', 'links': links})
+    output_objects.append({'object_type': 'multilinkline', 'links': links,
+                           'sep': '  '})
     output_objects.append({'object_type': 'text', 'text': ''})
 
     # load current settings
@@ -141,7 +176,8 @@ def main(client_id, user_arguments_dict):
         current_settings_dict = {}
 
     if not topics:
-        output_objects.append({'object_type': 'error_text', 'text': 'No valid topics!'})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'No valid topics!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if 'general' in topics:
@@ -199,21 +235,23 @@ def main(client_id, user_arguments_dict):
                             selected = ''
                             if choice in current_choice:
                                 selected = 'checked'
-                            entry += '<input type="checkbox" name="%s" %s value="%s">%s<br />'\
-                                    % (keyword, selected, choice, choice)
+                            entry += '''
+                <input type="checkbox" name="%s" %s value="%s">%s<br />''' % \
+                            (keyword, selected, choice, choice)
                         entry += '</div>'
                     else:
                         entry = ''
                 except:
                     # failed on evaluating configuration.%s
 
-                    area = \
-                         '''<textarea id="%s" cols=40 rows=1 name="%s">''' % (keyword,
-                                                               keyword)
+                    area = '''
+                <textarea id="%s" cols=40 rows=1 name="%s">''' % \
+                    (keyword, keyword)
                     if current_settings_dict.has_key(keyword):
                         area += '\n'.join(current_settings_dict[keyword])
                     area += '</textarea>'
-                    entry += wrap_edit_area(keyword, area, general_edit, 'BASIC')
+                    entry += wrap_edit_area(keyword, area, general_edit,
+                                            'BASIC')
 
             elif val['Type'] == 'string':
 
@@ -254,7 +292,7 @@ def main(client_id, user_arguments_dict):
         html += \
             """
         <tr><td>
-        <input type="submit" value="Save Settings" />
+        <input type="submit" value="Save General Settings" />
         </td></tr>
         </table>
         </form>
@@ -277,7 +315,9 @@ Default job on submit page
 <tr><td>
 </td></tr>
 <tr><td>
-If you use the same fields and values in many of your jobs, you can save your preferred job description here to always start out with that description on your submit job page.
+If you use the same fields and values in many of your jobs, you can save your
+preferred job description here to always start out with that description on
+your submit job page.
 </td></tr>
 <tr><td>
 </td></tr>
@@ -296,7 +336,7 @@ If you use the same fields and values in many of your jobs, you can save your pr
         html += '''
 </td></tr>
 <tr><td>
-<input type="submit" value="Save template" />
+<input type="submit" value="Save Job Template" />
 </td></tr>
 </table>
 </form>
@@ -325,13 +365,22 @@ Default CSS (style) for all pages
 <tr><td>
 </td></tr>
 <tr><td>
-If you want to customize the look and feel of the %(site)s web interfaces you can override default values here. If you leave the style file blank you will just use the default style.<br />
-You can copy paste from the available style file links below if you want to override specific parts.<br />
-<div class="warningtext">Please note that you can not save an empty style file, but must at least leave a blank line to use defaults. Additionally any errors in your style code may cause severe corruption in your pages, so it may be a good idea to keep another browser tab/window open on this page while experimenting.
+If you want to customize the look and feel of the %(site)s web interfaces you
+can override default values here. If you leave the style file blank you will
+just use the default style.<br />
+You can copy paste from the available style file links below if you want to
+override specific parts.<br />
+<div class="warningtext">Please note that you can not save an empty style
+file, but must at least leave a blank line to use defaults. Additionally some
+errors in your style code may potentially cause severe corruption in your page
+layouts, so it may be a good idea to keep another browser tab/window ready to
+(re)move your .default.css file to restore the defaults while experimenting
+here.
 </div>
 </td></tr>
 <tr><td>
-<a class="urllink" href="/images/default.css">default</a> , <a class="urllink" href="/images/bluesky.css">bluesky</a>
+<a class="urllink" href="/images/default.css">default</a> ,
+<a class="urllink" href="/images/bluesky.css">bluesky</a>
 </td></tr>
 <tr><td>
 </td></tr>
@@ -349,7 +398,7 @@ You can copy paste from the available style file links below if you want to over
         html += '''
 </td></tr>
 <tr><td>
-<input type="submit" value="Save style" />
+<input type="submit" value="Save Style Settings" />
 </td></tr>
 </table>
 </form>
@@ -375,29 +424,10 @@ You can copy paste from the available style file links below if you want to over
             
             current_widgets_dict = {}
 
-        edit_widgets = ''
-        enabled_note = ''
-        if not current_settings_dict.get('ENABLE_WIDGETS', True):
-            edit_widgets = 'hidden'
-            enabled_note = '''
-<div class="warningtext">Widgets are disabled on your <em>general settings</em>
-page. Please enable them there first if you want to customize your grid pages.
-</div>
-'''
-
-        html = \
-             '''%s
-<div id="widgets">
-<form method="post" action="settingsaction.py">
-<table class="widgets fixedlayout %s">
-<tr class="title"><td class="centertext">
-Default user defined widgets for all pages
-</td></tr>
-<tr><td>
-</td></tr>
-<tr><td>
-If you want to customize the look and feel of the %s web interfaces you can add your own widgets here. If you leave the widgets blank you will just get the default empty widget spaces.<br />
-You can simply copy/paste from the available widget file links below if you want to reuse existing widgets.<br />
+        show_widgets = current_settings_dict.get('ENABLE_WIDGETS', True)
+        if show_widgets:
+            edit_widgets = '''You can simply copy/paste from the available
+widget file links below if you want to reuse existing widgets.<br />
 </td></tr>
 <tr><td>
 <a class="urllink" href="/images/widgets/hello-grid.app">hello grid</a>,
@@ -425,17 +455,37 @@ You can simply copy/paste from the available widget file links below if you want
 <a class="urllink" href="/images/widgets/tdchotspot-login.app">TDC Hotspot login</a>
 </td></tr>
 <tr><td>
-<div class="warningtext">Please note that the widgets parser is rather grumpy so you may have to avoid blank lines in your widget code below. Additionally any errors in your widgets code may cause severe corruption in your pages, so it may be a good idea to keep another browser tab/window open on this page while experimenting.</div> 
+<div class="warningtext">Please note that the widgets parser is rather grumpy
+so you may have to avoid blank lines in your widget code below. Additionally
+any errors in your widgets code may cause severe corruption in your pages, so
+it may be a good idea to keep another browser tab/window ready for emergency
+disabling of widgets while experimenting here.</div> 
 </td></tr>
 <tr><td>
 <input type="hidden" name="topic" value="widgets" />
 </td></tr>
 <tr><td>
-''' % (enabled_note, edit_widgets, configuration.short_title)
+'''
+            
+        html = \
+             '''<div id="widgets">
+<form method="post" action="settingsaction.py">
+<table class="widgets fixedlayout">
+<tr class="title"><td class="centertext">
+Default user defined widgets for all pages
+</td></tr>
+<tr><td>
+</td></tr>
+<tr><td>
+If you want to customize the look and feel of the %s web interfaces you can
+add your own widgets here. If you leave the widgets blank you will just get
+the default empty widget spaces.<br />
+''' % configuration.short_title
 
         widgets_entries = get_widgets_specs()
+        widgets_html = ''
         for (keyword, val) in widgets_entries:
-            html += \
+            widgets_html += \
                 """
             <tr class=title><td>
             %s
@@ -457,14 +507,15 @@ You can simply copy/paste from the available widget file links below if you want
                         current_choice = current_widgets_dict[keyword]
 
                     if len(valid_choices) > 0:
-                        html += '<div class="scrollselect">'
+                        widgets_html += '<div class="scrollselect">'
                         for choice in valid_choices:
                             selected = ''
                             if choice in current_choice:
                                 selected = 'checked'
-                            html += '<input type="checkbox" name="%s" %s value="%s">%s<br />'\
-                                    % (keyword, selected, choice, choice)
-                        html += '</div>'
+                            widgets_html += '''
+                    <input type="checkbox" name="%s" %s value="%s">%s<br />'''\
+                            % (keyword, selected, choice, choice)
+                        widgets_html += '</div>'
                 except:
                     area = \
                          """<textarea id='%s' cols=78 rows=10 name='%s'>""" % \
@@ -472,17 +523,30 @@ You can simply copy/paste from the available widget file links below if you want
                     if current_widgets_dict.has_key(keyword):
                         area += '\n'.join(current_widgets_dict[keyword])
                     area += '</textarea>'
-                    html += wrap_edit_area(keyword, area, widgets_edit)
+                    widgets_html += wrap_edit_area(keyword, area, widgets_edit)
 
+        if show_widgets:
+            edit_widgets += '''
+        %s
+        <tr><td>
+        <input type="submit" value="Save Widgets Settings" />
+</td></tr>
+''' % widgets_html
+        else:
+            edit_widgets = '''
+<br/>
+<div class="warningtext">
+Widgets are disabled on your <em>General</em> settings page. Please enable
+them there first if you want to customize your grid pages.
+</div>
+'''            
         html += \
              '''
-        <tr><td>
-        <input type="submit" value="Save Widgets" />
-</td></tr>
+%s
 </table>
 </form>
 </div>
-'''
+''' % edit_widgets
         output_objects.append({'object_type': 'html_form', 'text': html})
 
     if 'profile' in topics:
@@ -521,10 +585,13 @@ Public profile information visible to other users.
 <tr><td>
 </td></tr>
 <tr><td>
-If you want to let other users know more about you can add your own text here. If you leave the text area blank you will just get the default empty profile information.<br />
+If you want to let other users know more about you can add your own text here.
+If you leave the text area blank you will just get the default empty profile
+information.<br />
 </td></tr>
 <tr><td>
-<div class="warningtext">Please note that the profile parser is rather grumpy so you may have to avoid blank lines in your text below.
+<div class="warningtext">Please note that the profile parser is rather grumpy
+so you may have to avoid blank lines in your text below.
 </div> 
 </td></tr>
 <tr><td>
@@ -544,8 +611,8 @@ If you want to let other users know more about you can add your own text here. I
             %s
             </td></tr>
             <tr><td>
-            """\
-                 % (keyword.replace('_', ' ').title(), html_escape(val['Description']))
+            """ % (keyword.replace('_', ' ').title(),
+                   html_escape(val['Description']))
             if val['Type'] == 'multiplestrings':
                 try:
 
@@ -562,8 +629,9 @@ If you want to let other users know more about you can add your own text here. I
                             selected = ''
                             if choice in current_choice:
                                 selected = 'checked'
-                            html += '<input type="checkbox" name="%s" %s value="%s">%s<br />'\
-                                    % (keyword, selected, choice, choice)
+                            html += '''
+                <input type="checkbox" name="%s" %s value="%s">%s<br />''' % \
+                            (keyword, selected, choice, choice)
                         html += '</div>'
                 except:
                     area = \
@@ -589,10 +657,9 @@ If you want to let other users know more about you can add your own text here. I
                              % (selected, choice, choice)
                     html += '</select><br />'
 
-        html += \
-             '''
+        html += '''
         <tr><td>
-        <input type="submit" value="Save Profile" />
+        <input type="submit" value="Save Profile Settings" />
 </td></tr>
 </table>
 </form>
@@ -600,9 +667,9 @@ If you want to let other users know more about you can add your own text here. I
 '''
         output_objects.append({'object_type': 'html_form', 'text': html})
 
-    if 'ssh' in topics:
+    if 'sftp' in topics:
 
-        # load current ssh
+        # load current ssh/sftp
 
         current_ssh_dict = load_ssh(client_id, configuration)
         if not current_ssh_dict:
@@ -627,27 +694,39 @@ If you want to let other users know more about you can add your own text here. I
 <form method="post" action="settingsaction.py">
 <table class="sshsettings fixedlayout">
 <tr class="title"><td class="centertext">
-SSH/SFTP access to your MiG account
+SFTP access to your %(site)s account
 </td></tr>
 <tr><td>
 </td></tr>
 <tr><td>
 You can configure SFTP login to your %(site)s account for efficient file
-access. Login takes place with %(auth_methods)s and your automatic
-username:
-<pre>%(username)s</pre>
-%(pw_key_notes)s
+access. On Linux/UN*X it also allows transparent access through SSHFS.
+<br/>
+<h3>Login Details</h3>
+<ul>
+<li>Host <em>%(sftp_server)s</em></li>
+<li>Port <em>%(sftp_port)s</em></li>
+<li>Username <em>%(username)s</em></li>
+<li>%(auth_methods)s <em>as you choose below</em></li>
+</ul>
+</td></tr>
+<tr><td>
+<input type="hidden" name="topic" value="sftp" />
+<div class="div-sftp-client-notes hidden">
+<a href="javascript:toggleHidden('.div-sftp-client-notes');"
+    class="removeitemlink" title="Toggle view">
+    Show less SFTP client details...</a>
 <h3>Graphical SFTP access</h3>
 The FireFTP plugin for Firefox is known to generally work for graphical
-access to your MiG home over SFTP.
+access to your %(site)s home over SFTP.
 Enter the following values in the FireFTP Account Manager:
 <pre>
 Host %(sftp_server)s
 Login %(username)s
-Password YOUR_KEY_PASSWORD_HERE
+Password YOUR_PASSWORD_HERE (passphrase if you configured public key access)
 Security SFTP
 Port %(sftp_port)s
-Private Key ~/.mig/key.pem
+Private Key ~/.mig/key.pem (if you configured public key access)
 </pre>
 other graphical clients may work as well.
 <h3>Command line SFTP/SSHFS access on Linux/UN*X</h3>
@@ -660,31 +739,33 @@ User %(username)s
 Port %(sftp_port)s
 IdentityFile ~/.mig/key.pem
 </pre>
-From then on you can use sftp and sshfs to access your MiG home:
+From then on you can use sftp and sshfs to access your %(site)s home:
 <pre>
 sftp %(sftp_server)s
 </pre>
 <pre>
 sshfs %(sftp_server)s: mig-home -o uid=$(id -u) -o gid=$(id -g)
 </pre>
-</td></tr>
-<tr><td>
-<input type="hidden" name="topic" value="ssh" />
+</div>
+<div class="div-sftp-client-notes">
+<a href="javascript:toggleHidden('.div-sftp-client-notes');"
+    class="additemlink" title="Toggle view">Show more SFTP client details...
+    </a>
+</div>
 '''
         
-        pw_key_notes = ''
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_sftp_auth:
-            pw_key_notes += '''
-You can use any existing RSA key, including the key.pem you received along with
-your user certificate, or create a new one. In any case you need to save the
-contents of the corresponding public key (X.pub) in the text area below, to be
-able to connect with username and key as described in the following sections.
-'''
             html += '''
 </td></tr>
 <tr><td>
 <h3>Authorized Public Keys</h3>
+You can use any existing RSA key, or create a new one. If you signed up with a
+x509 user certificate, you should also have received such a key.pem along with
+your user certificate. In any case you need to save the contents of the
+corresponding public key (X.pub) in the text area below, to be able to connect
+with username and key as described in the Login Details.
+<br/>
 '''
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
@@ -699,14 +780,14 @@ able to connect with username and key as described in the following sections.
             
         keyword_password = "authpassword"
         if 'password' in configuration.user_sftp_auth:
-            pw_key_notes += '''
-Please enter and save your desired password in the text field below, to be able
-to connect with username and password as described in the following sections.
-'''
+
             # We only want a single password and a masked input field
             html += '''
 <tr><td>
 <h3>Authorized Password</h3>
+Please enter and save your desired password in the text field below, to be able
+to connect with username and password as described in the Login Details.
+<br/>
 <input type=password id="%(keyword_password)s" size=40 name="password"
 value="%(default_authpassword)s" />
 (leave empty to disable sftp access with password)
@@ -715,7 +796,7 @@ value="%(default_authpassword)s" />
         
         html += '''
 <tr><td>
-<input type="submit" value="Save ssh" />
+<input type="submit" value="Save SFTP Settings" />
 </td></tr>
 '''
         
@@ -733,13 +814,12 @@ value="%(default_authpassword)s" />
             'username': username,
             'sftp_server': sftp_server,
             'sftp_port': sftp_port,
-            'pw_key_notes': pw_key_notes,
-            'auth_methods': ' or '.join(configuration.user_sftp_auth),
+            'auth_methods': ' / '.join(configuration.user_sftp_auth).title(),
             }
 
         output_objects.append({'object_type': 'html_form', 'text': html})
 
-    if 'davs' in topics:
+    if 'webdavs' in topics:
 
         # load current davs
 
@@ -766,19 +846,31 @@ value="%(default_authpassword)s" />
 <form method="post" action="settingsaction.py">
 <table class="davssettings fixedlayout">
 <tr class="title"><td class="centertext">
-Secure WebDAV access to your MiG account
+WebDAVS access to your %(site)s account
 </td></tr>
 <tr><td>
+
 </td></tr>
 <tr><td>
-You can configure secure WebDAV login to your %(site)s account for efficient
-file access. Login takes place with %(auth_methods)s and your automatic
-username:
-<pre>%(username)s</pre>
-%(pw_key_notes)s
-<h3>Graphical WebDAV access</h3>
+You can configure WebDAVS login to your %(site)s account for transparent file
+access from your PC or workstation.<br/>
+<h3>Login Details</h3>
+<ul>
+<li>Host <em>%(davs_server)s</em></li>
+<li>Port <em>%(davs_port)s</em></li>
+<li>Username <em>%(username)s</em></li>
+<li>%(auth_methods)s <em>as you choose below</em></li>
+</ul>
+</td></tr>
+<tr><td>
+<input type="hidden" name="topic" value="webdavs" />
+<div class="div-webdavs-client-notes hidden">
+<a href="javascript:toggleHidden('.div-webdavs-client-notes');"
+    class="removeitemlink" title="Toggle view">
+    Show less WebDAVS client details...</a>
+<h3>Graphical WebDAVS access</h3>
 Several native file browsers and web browsers are known to generally work for
-graphical access to your MiG home over WebDAV when password support is enabled.
+graphical access to your %(site)s home over WebDAVS.
 <br />
 Enter the address https://%(davs_server)s:%(davs_port)s and when fill in the
 login details:
@@ -787,7 +879,7 @@ Username %(username)s
 Password YOUR_PASSWORD_HERE
 </pre>
 other graphical clients should work as well.
-<h3>Command line WebDAV access on Linux/UN*X</h3>
+<h3>Command line WebDAVS access on Linux/UN*X</h3>
 Save something like the following lines in your local ~/.netrc
 to avoid typing the full login details every time:<br />
 <pre>
@@ -795,32 +887,32 @@ machine %(davs_server)s
 login %(username)s
 password YOUR_PASSWORD_HERE
 </pre>
-From then on you can use e.g. cadaver or fusedav to access your MiG home:
+From then on you can use e.g. cadaver or fusedav to access your %(site)s home:
 <pre>
 cadaver https://%(davs_server)s:%(davs_port)s
 </pre>
 <pre>
 fusedav https://%(davs_server)s:%(davs_port)s mig-home -o uid=$(id -u) -o gid=$(id -g)
 </pre>
-</td></tr>
-<tr><td>
-<input type="hidden" name="topic" value="davs" />
+</div>
+<div class="div-webdavs-client-notes">
+<a href="javascript:toggleHidden('.div-webdavs-client-notes');"
+    class="additemlink" title="Toggle view">
+    Show more WebDAVS client details...</a>
+</div>
 '''
         
-        pw_key_notes = ''
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_davs_auth:
-            pw_key_notes += '''
-You can use any existing RSA key, including the key.pem you received along with
-your user certificate, or create a new one. In any case you need to save the
-contents of the corresponding public key (X.pub) in the text area below, to be
-able to connect with username and key as described in the following sections.
-'''
             html += '''
 </td></tr>
 <tr><td>
 <h3>Authorized Public Keys</h3>
-'''
+You can use any existing RSA key, including the key.pem you received along with
+your user certificate, or create a new one. In any case you need to save the
+contents of the corresponding public key (X.pub) in the text area below, to be
+able to connect with username and key as described in the Login Details.
+<br/>'''
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
 %(default_authkeys)s
@@ -834,14 +926,13 @@ able to connect with username and key as described in the following sections.
             
         keyword_password = "authpassword"
         if 'password' in configuration.user_davs_auth:
-            pw_key_notes += '''
-Please enter and save your desired password in the text field below, to be able
-to connect with username and password as described in the following sections.
-'''
             # We only want a single password and a masked input field
             html += '''
 <tr><td>
 <h3>Authorized Password</h3>
+Please enter and save your desired password in the text field below, to be able
+to connect with username and password as described in the Login Details.
+<br/>
 <input type=password id="%(keyword_password)s" size=40 name="password"
 value="%(default_authpassword)s" />
 (leave empty to disable davs access with password)
@@ -850,7 +941,7 @@ value="%(default_authpassword)s" />
         
         html += '''
 <tr><td>
-<input type="submit" value="Save davs" />
+<input type="submit" value="Save WebDAVS Settings" />
 </td></tr>
 '''
         
@@ -868,8 +959,7 @@ value="%(default_authpassword)s" />
             'username': username,
             'davs_server': davs_server,
             'davs_port': davs_port,
-            'pw_key_notes': pw_key_notes,
-            'auth_methods': ' or '.join(configuration.user_davs_auth),
+            'auth_methods': ' / '.join(configuration.user_davs_auth).title(),
             }
 
         output_objects.append({'object_type': 'html_form', 'text': html})
@@ -901,28 +991,46 @@ value="%(default_authpassword)s" />
 <form method="post" action="settingsaction.py">
 <table class="ftpssettings fixedlayout">
 <tr class="title"><td class="centertext">
-Secure FTP access to your MiG account
+FTPS access to your %(site)s account
 </td></tr>
 <tr><td>
 </td></tr>
 <tr><td>
-You can configure secure FTP login to your %(site)s account for efficient file
-access. Login takes place with %(auth_methods)s and your automatic
-username:
-<pre>%(username)s</pre>
-%(pw_key_notes)s
-<h3>Graphical FTP access</h3>
-Several native file browsers and web browsers are known to generally work for
-graphical access to your MiG home over FTP when password support is enabled.
-<br />
-Enter the address ftps://%(ftps_server)s:%(ftps_ctrl_port)s and when fill in the
-login details:
+You can configure FTPS login to your %(site)s account for efficient file
+access.<br/>
+<h3>Login Details</h3>
+<ul>
+<li>Host <em>%(ftps_server)s</em></li>
+<li>Port <em>%(ftps_ctrl_port)s</em></li>
+<li>Username <em>%(username)s</em></li>
+<li>%(auth_methods)s <em>as you choose below</em></li>
+</ul>
+</td></tr>
+<tr><td>
+<input type="hidden" name="topic" value="ftps" />
+<div class="div-ftps-client-notes hidden">
+<a href="javascript:toggleHidden('.div-ftps-client-notes');"
+    class="removeitemlink" title="Toggle view">
+    Show less FTPS client details...</a>
+<h3>Graphical FTPS access</h3>
+The FireFTP plugin for Firefox is known to generally work for graphical
+access to your %(site)s home over FTPS.
+Enter the following values in the FireFTP Account Manager:
+<pre>
+Host %(ftps_server)s
+Login %(username)s
+Password YOUR_PASSWORD_HERE
+Security FTPS
+Port %(ftps_ctrl_port)s
+</pre>
+Other FTP clients and web browsers may work as well if you enter the address
+ftps://%(ftps_server)s:%(ftps_ctrl_port)s
+and fill in the login details when prompted:
 <pre>
 Username %(username)s
 Password YOUR_PASSWORD_HERE
 </pre>
-other graphical clients should work as well.
-<h3>Command line FTP access on Linux/UN*X</h3>
+<h3>Command line FTPS access on Linux/UN*X</h3>
 Save something like the following lines in your local ~/.netrc
 to avoid typing the full login details every time:<br />
 <pre>
@@ -930,7 +1038,7 @@ machine %(ftps_server)s
 login %(username)s
 password YOUR_PASSWORD_HERE
 </pre>
-From then on you can use e.g. lftp or CurlFtpFS to access your MiG home:
+From then on you can use e.g. lftp or CurlFtpFS to access your %(site)s home:
 <pre>
 lftp -e "set ssl:ca-file $HOME/.mig/cacert.pem; set ftp:ssl-protect-data on" \\
     -p %(ftps_ctrl_port)s %(ftps_server)s
@@ -939,24 +1047,25 @@ lftp -e "set ssl:ca-file $HOME/.mig/cacert.pem; set ftp:ssl-protect-data on" \\
 curlftpfs -o ssl -o cacert=$HOME/.mig/cacert.pem \\
     %(ftps_server)s:%(ftps_ctrl_port)s mig-home -o uid=$(id -u) -o gid=$(id -g)
 </pre>
-</td></tr>
-<tr><td>
-<input type="hidden" name="topic" value="ftps" />
+</div>
+<div class="div-ftps-client-notes">
+<a href="javascript:toggleHidden('.div-ftps-client-notes');"
+    class="additemlink" title="Toggle view">Show more FTPS client details...
+</a>
+</div>
 '''
         
-        pw_key_notes = ''
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_ftps_auth:
-            pw_key_notes += '''
-You can use any existing RSA key, including the key.pem you received along with
-your user certificate, or create a new one. In any case you need to save the
-contents of the corresponding public key (X.pub) in the text area below, to be
-able to connect with username and key as described in the following sections.
-'''
             html += '''
 </td></tr>
 <tr><td>
 <h3>Authorized Public Keys</h3>
+You can use any existing RSA key, including the key.pem you received along with
+your user certificate, or create a new one. In any case you need to save the
+contents of the corresponding public key (X.pub) in the text area below, to be
+able to connect with username and key as described in the Login Details.
+<br/>
 '''
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
@@ -971,15 +1080,14 @@ able to connect with username and key as described in the following sections.
             
         keyword_password = "authpassword"
         if 'password' in configuration.user_ftps_auth:
-            pw_key_notes += '''
-Please enter and save your desired password in the text field below, to be able
-to connect with username and password as described in the following sections.
-'''
 
             # We only want a single password and a masked input field
             html += '''
 <tr><td>
 <h3>Authorized Password</h3>
+Please enter and save your desired password in the text field below, to be able
+to connect with username and password as described in the Login Details.
+<br/>
 <input type=password id="%(keyword_password)s" size=40 name="password"
 value="%(default_authpassword)s" />
 (leave empty to disable ftps access with password)
@@ -988,7 +1096,7 @@ value="%(default_authpassword)s" />
         
         html += '''
 <tr><td>
-<input type="submit" value="Save ftps" />
+<input type="submit" value="Save FTPS Settings" />
 </td></tr>
 '''
         
@@ -1006,8 +1114,7 @@ value="%(default_authpassword)s" />
             'username': username,
             'ftps_server': ftps_server,
             'ftps_ctrl_port': ftps_ctrl_port,
-            'pw_key_notes': pw_key_notes,
-            'auth_methods': ' or '.join(configuration.user_ftps_auth),
+            'auth_methods': ' / '.join(configuration.user_ftps_auth).title(),
             }
 
         output_objects.append({'object_type': 'html_form', 'text': html})
@@ -1029,7 +1136,7 @@ value="%(default_authpassword)s" />
                                        % proxy.GetIdentitySN()})
                 output_objects.append(
                     {'object_type': 'text', 
-                     'text': 'Proxy certificate will expire on %s (in %s sec.)' \
+                     'text': 'Proxy certificate will expire on %s (in %s sec.)'
                      % (proxy.Expires(), proxy.getTimeleft())
                      })
         except arc.NoProxyError, err:
