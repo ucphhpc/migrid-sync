@@ -28,11 +28,12 @@
 """User administration functions"""
 
 import base64
-import os
-import sys
-import shutil
-import fnmatch
 import datetime
+import fnmatch
+import os
+import re
+import shutil
+import sys
 
 from shared.base import client_id_dir, client_dir_id, client_alias, \
      sandbox_resource
@@ -351,8 +352,20 @@ def create_user(
 
         info = user.copy()
 
+        # utf8 chars like the \xc3\xb8 are returned as \\xC3\\xB8 in Apache's
+        # SSL_CLIENT_S_DN variable, thus we allow both direct dn and mangled
+        # match in htaccess
+        
+        dn_enc = info['distinguished_name'].encode('string_escape')
+
+        def upper_repl(match):
+            return '\\\\x' + match.group(1).upper()
+        
+        info['distinguished_name_enc'] = re.sub(r'\\x(..)', upper_repl, dn_enc)
+
         access = 'SSLRequire ('
-        access += '%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s"'
+        access += '%%{SSL_CLIENT_S_DN} eq "%(distinguished_name)s" or '
+        access += '%%{SSL_CLIENT_S_DN} eq "%(distinguished_name_enc)s"'
         access += ')\n'
         for name in user.get('openid_names', []):
             for oid_provider in configuration.user_openid_providers:
