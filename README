@@ -269,7 +269,7 @@ or the same with OpenID:
                    --cert_fqdn=dk-cert.migrid.org \
                    --sid_fqdn=dk-sid.migrid.org \
                    --oid_fqdn=dk-oid.migrid.org \
-		   --user=mig --group=mig \
+                   --user=mig --group=mig \
                    --apache_etc=/etc/apache2 \
                    --apache_run=/var/run/apache2 \
                    --apache_lock=/var/lock/apache2 \
@@ -282,13 +282,15 @@ or the same with OpenID:
                    --trac_admin_path=/usr/bin/trac-admin \
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
                    --public_port=80 --cert_port=443 --sid_port=443 \
-		   --oid_port=443 --enable_openid=True \
+                   --oid_port=443 --enable_openid=True \
                    --openid_providers=https://dk-oid.migrid.org:8443/openid/ \
-		   --enable_wsgi=True --enable_sftp=True \
+                   --enable_wsgi=True --enable_sftp=True \
+                   --enable_davs=True --enable_ftps=True \
                    --enable_sandboxes=True --enable_vmachines=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
-                   --serveralias_clause='ServerAlias'
+                   --serveralias_clause='ServerAlias' --alias_field=email \
+                   --daemon_keycert=~/certs/combined.pem
 
 and a storage-only setup with CentOS apache 2.x and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
