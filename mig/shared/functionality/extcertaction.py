@@ -89,10 +89,17 @@ def main(client_id, user_arguments_dict):
     smtp_server = configuration.smtp_server
     user_pending = os.path.abspath(configuration.user_pending)
 
-    # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
-
     cert_id = accepted['cert_id'][-1].strip()
-    cert_name = accepted['cert_name'][-1].strip().title()
+
+    # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
+    # please note that we get utf8 coded bytes here and title() treats such
+    # chars as word termination. Temporarily force to unicode.
+
+    raw_name = accepted['cert_name'][-1].strip() 
+    try:
+        cert_name = raw_name.decode("utf8").title().encode("utf8")
+    except Exception:
+        cert_name = raw_name.title()
     country = accepted['country'][-1].strip().upper()
     state = accepted['state'][-1].strip().title()
     org = accepted['org'][-1].strip()

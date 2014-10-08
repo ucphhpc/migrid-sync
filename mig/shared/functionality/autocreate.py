@@ -185,10 +185,16 @@ def main(client_id, user_arguments_dict):
     openid_names, oid_extras = [], {}
 
     # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
-        
+    # please note that we get utf8 coded bytes here and title() treats such
+    # chars as word termination. Temporarily force to unicode.
+
     if login_type == 'cert':
         uniq_id = accepted['cert_id'][-1].strip()
-        full_name = accepted['full_name'][-1].strip().title()
+        raw_name = accepted['full_name'][-1].strip() 
+        try:
+            full_name = raw_name.decode("utf8").title().encode("utf8")
+        except Exception:
+            full_name = raw_name.title()
         country = accepted['country'][-1].strip().upper()
         state = accepted['state'][-1].strip().upper()
         org = accepted['org'][-1].strip()

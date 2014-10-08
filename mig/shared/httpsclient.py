@@ -69,6 +69,13 @@ def pop_openid_query_fields(environ):
     environ['QUERY_STRING'] = mangled_query
     return openid_vars
 
+def unescape(esc_str):
+    """Remove backslash escapes from a string"""
+    try:
+        return esc_str.decode('string_escape')
+    except Exception, exc:
+        return esc_str
+
 def extract_client_id(configuration, environ=os.environ):
     """Extract unique user cert ID from HTTPS or fall back to try REMOTE_USER
     login environment set by OpenID.
@@ -76,9 +83,12 @@ def extract_client_id(configuration, environ=os.environ):
     of load.
     """
 
-    distinguished_name = environ.get(client_id_field, '').strip()
+    # We accept utf8 chars (e.g. '\xc3') in client_id_field but they get
+    # auto backslash-escaped in environ so we need to unescape first
+    
+    distinguished_name = unescape(environ.get(client_id_field, '')).strip()
     if configuration.user_openid_providers and not distinguished_name:
-        login = environ.get(client_login_field, '').strip()
+        login = unescape(environ.get(client_login_field, '')).strip()
         if not login:
             return ""
         if environ["REQUEST_URI"].find('oidaccountaction.py') == -1 and \
@@ -94,5 +104,5 @@ def check_source_ip(remote_ip, unique_resource_name):
     resource_fqdn = '.'.join(unique_resource_name.split('.')[:-1])
     (_, _, resource_ip_list) = socket.gethostbyname_ex(resource_fqdn)
     if not remote_ip in resource_ip_list:
-        raise ValueError("Source IP address %s not in resource alias IPs %s" % \
-                         (remote_ip, ', '.join(resource_ip_list)))
+        raise ValueError("Source IP address %s not in resource alias IPs %s" \
+                         % (remote_ip, ', '.join(resource_ip_list)))
