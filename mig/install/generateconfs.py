@@ -69,6 +69,7 @@ if '__main__' == __name__:
         'enable_sandboxes',
         'enable_vmachines',
         'enable_freeze',
+        'enable_hsts',
         'enable_openid',
         'openid_providers',
         'daemon_keycert',
