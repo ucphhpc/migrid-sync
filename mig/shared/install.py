@@ -95,6 +95,7 @@ def generate_confs(
     enable_sandboxes='True',
     enable_vmachines='True',
     enable_freeze='True',
+    enable_hsts='',
     enable_openid='True',
     openid_providers='',
     daemon_keycert='',
@@ -147,6 +148,7 @@ def generate_confs(
     user_dict['__ENABLE_SANDBOXES__'] = enable_sandboxes
     user_dict['__ENABLE_VMACHINES__'] = enable_vmachines
     user_dict['__ENABLE_FREEZE__'] = enable_freeze
+    user_dict['__ENABLE_HSTS__'] = enable_hsts
     user_dict['__ENABLE_OPENID__'] = enable_openid
     # Default to first OpenID provider
     user_dict['__OPENID_PROVIDER_BASE__'] = openid_providers.split()[0]
@@ -193,6 +195,12 @@ cert, oid and sid based https!
         user_dict['__WSGI_COMMENTED__'] = ''
     else:
         user_dict['__WSGI_COMMENTED__'] = '#'
+
+    # Enable HSTS security improvement only if explicitly requested
+    if user_dict['__ENABLE_HSTS__']:
+        user_dict['__HSTS_COMMENTED__'] = ''
+    else:
+        user_dict['__HSTS_COMMENTED__'] = '#'
 
     # Enable OpenID auth module only if openid_providers is given
     if user_dict['__OPENID_PROVIDER_BASE__'].strip():
@@ -428,6 +436,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_sandboxes,
         enable_vmachines,
         enable_freeze,
+        enable_hsts,
         enable_openid,
         openid_providers,
         daemon_keycert,
