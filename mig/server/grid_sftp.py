@@ -78,7 +78,7 @@ except ImportError:
 from shared.base import invisible_path
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
-     acceptable_chmod, refresh_users, refresh_jobs
+     acceptable_chmod, refresh_users, refresh_jobs, force_utf8
 from shared.useradm import check_password_hash
 
 configuration, logger = None, None
@@ -143,10 +143,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     
     def _get_fs_path(self, sftp_path):
         """Wrap helper"""
-        self.logger.debug("get_fs_path: %s" % sftp_path)
+        #self.logger.debug("get_fs_path: %s" % sftp_path)
         reply = get_fs_path(sftp_path, self.root, self.chroot_exceptions)
-        self.logger.debug("get_fs_path returns: %s :: %s" % (sftp_path,
-                                                             reply))
+        #self.logger.debug("get_fs_path returns: %s :: %s" % (sftp_path,
+        #                                                     reply))
         return reply
 
     def _strip_root(self, sftp_path):
@@ -169,10 +169,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def open(self, path, flags, attr):
         """Handle operations of same name"""        
+        path = force_utf8(path)
         self.logger.debug('open %s' % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
+            self.logger.warning('open %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         self.logger.debug("open on %s :: %s (%s %s)" % \
                           (path, real_path, repr(flags), repr(attr)))
@@ -211,10 +213,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def list_folder(self, path):
         """Handle operations of same name"""
+        path = force_utf8(path)
         self.logger.debug('list_folder %s' % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
+            self.logger.warning('list_folder %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         self.logger.debug("list_folder %s :: %s" % (path, real_path))
         reply = []
@@ -244,10 +248,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def stat(self, path):
         """Handle operations of same name"""
+        path = force_utf8(path)
         self.logger.debug('stat %s' % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
+            self.logger.warning('stat %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         self.logger.debug("stat %s :: %s" % (path, real_path))
         # for consistency with lstat
@@ -264,10 +270,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def lstat(self, path):
         """Handle operations of same name"""
+        path = force_utf8(path)
         self.logger.debug('lstat %s' % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
+            self.logger.warning('lstat %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         self.logger.debug("lstat %s :: %s" % (path, real_path))
 
@@ -285,10 +293,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def remove(self, path):
         """Handle operations of same name"""
+        path = force_utf8(path)
         self.logger.debug("remove %s" % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
+            self.logger.warning('remove %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         self.logger.debug("remove %s :: %s" % (path, real_path))
         # Prevent removal of special files - link to vgrid dirs, etc.
@@ -310,10 +320,13 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def rename(self, oldpath, newpath):
         """Handle operations of same name"""
+        oldpath = force_utf8(oldpath)
+        newpath = force_utf8(newpath)
         self.logger.debug("rename %s %s" % (oldpath, newpath))
         try:
             real_oldpath = self._get_fs_path(oldpath)
         except ValueError, err:
+            self.logger.warning('rename %s %s: %s' % (oldpath, newpath, err))
             return paramiko.SFTP_PERMISSION_DENIED
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_oldpath):
@@ -337,10 +350,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def mkdir(self, path, mode):
         """Handle operations of same name"""
+        path = force_utf8(path)
         self.logger.debug("mkdir %s" % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
+            self.logger.warning('mkdir %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         try:
             # Force MiG default mode
@@ -353,10 +368,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def rmdir(self, path):
         """Handle operations of same name"""
+        path = force_utf8(path)
         self.logger.debug("rmdir %s" % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
+            self.logger.warning('rmdir %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_path):
@@ -378,10 +395,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def chattr(self, path, attr):
         """Handle operations of same name"""
+        path = force_utf8(path)
         self.logger.debug("chattr %s" % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
+            self.logger.warning('chattr %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
             self.logger.error("chattr on missing path %s :: %s" % (path,
@@ -404,10 +423,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def chmod(self, path, mode):
         """Handle operations of same name"""
+        path = force_utf8(path)
         self.logger.debug("chmod %s" % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
+            self.logger.warning('chmod %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
             self.logger.error("chmod on missing path %s :: %s" % (path,
@@ -437,10 +458,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
          
     def readlink(self, path):
         """Handle operations of same name"""
+        path = force_utf8(path)
         self.logger.debug("readlink %s" % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError, err:
+            self.logger.warning('readlink %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
             self.logger.error("readlink on missing path %s :: %s" % \
@@ -455,6 +478,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def symlink(self, target_path, path):
         """Handle operations of same name"""
+        target_path = force_utf8(target_path)
+        path = force_utf8(path)
         self.logger.debug('symlink %s %s' % (target_path, path))
         # Prevent users from creating symlinks for security reasons
         self.logger.error("symlink rejected on path %s :: %s" % (target_path,

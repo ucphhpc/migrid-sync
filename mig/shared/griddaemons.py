@@ -64,11 +64,26 @@ class User(object):
         return 'username: %s\nhome: %s\npassword: %s\npublic_key: %s' % \
                (self.username, self.home, self.password, self.public_key)
 
+
+def force_utf8(val):
+    """Internal helper to encode unicode strings to utf8 version"""
+    # We run into all kind of nasty encoding problems if we mix
+    if not isinstance(val, unicode):
+        return val
+    return val.encode("utf8")
+
+def force_unicode(val):
+    """Internal helper to decode unicode strings from utf8 version"""
+    # We run into all kind of nasty encoding problems if we mix
+    if not isinstance(val, unicode):
+        return val.decode("utf8")
+    return val
+
 def get_fs_path(user_path, root, chroot_exceptions):
     """Internal helper to translate path with chroot and invisible files
     in mind"""
-    real_path = "%s/%s" % (root, user_path)
-    real_path = real_path.replace('//', '/')
+    # Make sure leading slashes in user_path don't throw away root
+    real_path = os.path.normpath(os.path.join(root, user_path.strip(os.sep)))
     accept_roots = [root] + chroot_exceptions
 
     accepted = False
