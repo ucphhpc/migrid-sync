@@ -57,7 +57,6 @@ configuration, logger = None, None
 class ThreadedHTTPServer(SocketServer.ThreadingMixIn,
                          BaseHTTPServer.HTTPServer):
     """Handle requests in a separate thread."""
-
     pass
 
 
@@ -258,6 +257,16 @@ class MiGDAVAuthHandler(DAVAuthHandler):
                 return
         logger.info("leaving root directory alone")
         
+    def send_header(self, keyword, value):
+        """Override default send_header method of
+        DAVRequestHandler and thus DAVAuthHandler:
+        Mangle requests to send custom 'WWW-Authenticate' header instead of
+        the hard-coded 'PyWebDAV' value.
+        """
+        if keyword == 'WWW-Authenticate':
+            value = value.replace("PyWebDAV", self.server_conf.short_title)
+            
+        DAVAuthHandler.send_header(self, keyword, value)
 
     def send_body_chunks_if_http11(self, DATA, code, msg=None, desc=None,
                                    ctype='text/xml; encoding="utf-8"',
