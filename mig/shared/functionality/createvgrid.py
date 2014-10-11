@@ -28,7 +28,6 @@
 """Create a new VGrid"""
 
 import os
-import shutil
 import subprocess
 import ConfigParser
 from email.utils import parseaddr
@@ -41,10 +40,10 @@ from shared.fileio import write_file, make_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.useradm import distinguished_name_to_user
+from shared.useradm import distinguished_name_to_user, get_openid_user_map
 from shared.validstring import valid_dir_input
 from shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
-     vgrid_set_resources, vgrid_set_triggers
+     vgrid_set_resources, vgrid_set_triggers, vgrid_create_allowed
 
 
 def signature():
@@ -636,6 +635,17 @@ def main(client_id, user_arguments_dict):
                               : 'Illegal vgrid_name: %s' % vgrid_name})
         logger.warning("""createvgrid possible illegal directory access
 attempt by '%s': vgrid name '%s'""" % (client_id, vgrid_name))
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    user_map = get_openid_user_map(configuration)
+    user_dict = user_map.get(client_id, None)
+    # Optional limitation of create vgrid permission
+    if not user_dict or \
+           not vgrid_create_allowed(configuration, user_dict):
+        logger.warning("user %s is not allowed to create vgrids!" % client_id)
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Only privileged users can create VGrids'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other

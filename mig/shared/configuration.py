@@ -88,6 +88,7 @@ def fix_missing(config_file, verbose=True):
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
         'site_vgrid_links': 'files web tracker workflows monitor',
+        'site_vgrid_creators': 'distinguished_name:*',
         'hg_path': '/usr/bin/hg',
         'hgweb_scripts': '/usr/share/doc/mercurial-common/examples/',
         'trac_admin_path': '/usr/bin/trac-admin',
@@ -226,7 +227,8 @@ class Configuration:
     freeze_home = ''
     javabin_home = ''
     openid_store = ''
-    vgrid_component_links = []
+    site_vgrid_links = []
+    site_vgrid_creators = [('distinguished_name', '*')]
     hg_path = ''
     hgweb_scripts = ''
     trac_admin_path = ''
@@ -821,11 +823,9 @@ class Configuration:
             self.site_user_menu = [i for i in req if menu_items.has_key(i)]
         else:
             self.site_user_menu = []
-        if config.has_option('SITE', 'vgrid_links'):
-            req = config.get('SITE', 'vgrid_links').split()
-            self.site_vgrid_links = [i for i in req if i in vgrid_items]
-        else:
-            self.site_vgrid_links = vgrid_items.keys()
+        if config.has_option('SITE', 'vgrid_creators'):
+            req = config.get('SITE', 'vgrid_creators').split()
+            self.site_vgrid_creators = [i.split(':', 2) for i in req]
         if config.has_option('SITE', 'script_deps'):
             self.site_script_deps = config.get('SITE', 'script_deps').split()
         else:

@@ -585,4 +585,15 @@ def validated_vgrid_list(configuration, job_dict):
         job_vgrids = [job_vgrids]
     return job_vgrids
 
+def vgrid_create_allowed(configuration, user_dict):
+    """Check if user with user_dict is allowed to create vgrid_name based on
+    optional configuration limits.
+    """
+    for (key, val) in configuration.site_vgrid_creators:
+        if not fnmatch.fnmatch(user_dict.get(key, 'NO SUCH FIELD'), val):
+            configuration.logger.warning("creator mismatch: %s[%s] vs %s" % \
+                                         (user_dict, key, val))
+            return False
+    return True
+
     
