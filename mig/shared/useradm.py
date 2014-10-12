@@ -813,6 +813,16 @@ def get_openid_user_dn(configuration, login_url):
     configuration.logger.info('accepting direct user %s from %s' % \
                               (distinguished_name, login_url))
     return distinguished_name
+
+def get_full_user_map(configuration):
+    """Load complete user map including any OpenID aliases"""
+    db_path = os.path.join(configuration.mig_code_base, 'server',
+                           'MiG-users.db')
+    user_map = load_user_db(db_path)
+    oid_aliases = get_openid_user_map(configuration)
+    for (alias, cert_id) in oid_aliases.items():
+        user_map[alias] = user_map.get(cert_id, {})
+    return user_map
     
 def migrate_users(
     conf_path,

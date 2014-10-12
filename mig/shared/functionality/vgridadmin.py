@@ -34,8 +34,9 @@ from shared.defaults import default_vgrid, all_vgrids, default_pager_entries
 from shared.functional import validate_input_and_cert
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
+from shared.useradm import get_full_user_map
 from shared.vgrid import vgrid_list_vgrids, vgrid_is_owner, \
-    vgrid_is_member, vgrid_is_owner_or_member
+    vgrid_is_member, vgrid_is_owner_or_member, vgrid_create_allowed
 
 
 def signature():
@@ -405,16 +406,25 @@ VGrids share files, a number of collaboration tools and resources. Members can a
     output_objects.append({'object_type': 'table_pager', 'entry_name': 'VGrids',
                            'default_entries': default_pager_entries})
     output_objects.append(member_list)
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Additional VGrids'})
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'Please enter a name for the new VGrid to add, using slashes to specify nesting. I.e. if you own a VGrid called ABC, you can create a sub-VGrid called DEF by entering ABC/DEF below.'})
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : '''<form method="post" action="createvgrid.py">
+
+    user_map = get_full_user_map(configuration)
+    user_dict = user_map.get(client_id, None)
+    # Optional limitation of create vgrid permission
+    if user_dict and vgrid_create_allowed(configuration, user_dict):
+        output_objects.append({'object_type': 'sectionheader', 'text'
+                               : 'Additional VGrids'})
+
+        output_objects.append(
+            {'object_type': 'text', 'text':
+             '''Please enter a name for the new VGrid to add, using slashes to
+ specify nesting. I.e. if you own a VGrid called ABC, you can create a
+ sub-VGrid called DEF by entering ABC/DEF below.'''})
+        output_objects.append({'object_type': 'html_form', 'text':
+                                '''<form method="post" action="createvgrid.py">
     <input type="text" size=40 name="vgrid_name" />
     <input type="hidden" name="output_format" value="html" />
     <input type="submit" value="Create VGrid" />
     </form>
-    '''})
+ '''})
 
     return (output_objects, status)
