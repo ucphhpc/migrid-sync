@@ -823,6 +823,11 @@ class Configuration:
             self.site_user_menu = [i for i in req if menu_items.has_key(i)]
         else:
             self.site_user_menu = []
+        if config.has_option('SITE', 'vgrid_links'):
+            self.site_vgrid_links = config.get('SITE', 'vgrid_links').split()
+        else:
+            self.site_vgrid_links = ['files', 'web', 'tracker', 'workflows',
+                                     'monitor']
         if config.has_option('SITE', 'vgrid_creators'):
             req = config.get('SITE', 'vgrid_creators').split()
             self.site_vgrid_creators = [i.split(':', 2) for i in req]
