@@ -88,7 +88,7 @@ def fix_missing(config_file, verbose=True):
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
         'site_vgrid_links': 'files web tracker workflows monitor',
-        'site_vgrid_creators': 'distinguished_name:*',
+        'site_vgrid_creators': 'distinguished_name:.*',
         'hg_path': '/usr/bin/hg',
         'hgweb_scripts': '/usr/share/doc/mercurial-common/examples/',
         'trac_admin_path': '/usr/bin/trac-admin',
@@ -228,7 +228,7 @@ class Configuration:
     javabin_home = ''
     openid_store = ''
     site_vgrid_links = []
-    site_vgrid_creators = [('distinguished_name', '*')]
+    site_vgrid_creators = [('distinguished_name', '.*')]
     hg_path = ''
     hgweb_scripts = ''
     trac_admin_path = ''

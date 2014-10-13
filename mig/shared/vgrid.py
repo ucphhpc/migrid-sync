@@ -27,8 +27,9 @@
 
 """VGrid specific helper functions"""
 
-import os
 import fnmatch
+import os
+import re
 
 from shared.defaults import default_vgrid
 from shared.findtype import is_user, is_resource
@@ -590,10 +591,8 @@ def vgrid_create_allowed(configuration, user_dict):
     optional configuration limits.
     """
     for (key, val) in configuration.site_vgrid_creators:
-        if not fnmatch.fnmatch(user_dict.get(key, 'NO SUCH FIELD'), val):
+        if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
             configuration.logger.warning("creator mismatch: %s[%s] vs %s" % \
                                          (user_dict, key, val))
             return False
     return True
-
-    
