@@ -68,6 +68,7 @@ oid_valid_days = 365
 exe_leader_name = "execution-leader"
 
 htaccess_filename = '.htaccess'
+welcome_filename = 'welcome.txt'
 default_mrsl_filename = '.default.mrsl'
 default_css_filename = '.default.css'
 spell_dictionary_filename = '.personal_dictionary'

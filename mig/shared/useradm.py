@@ -40,9 +40,9 @@ from shared.base import client_id_dir, client_dir_id, client_alias, \
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
 from shared.defaults import keyword_auto, ssh_conf_dir, davs_conf_dir, \
-     ftps_conf_dir, htaccess_filename, settings_filename, profile_filename, \
-     default_css_filename, widgets_filename, authkeys_filename, \
-     authpasswords_filename
+     ftps_conf_dir, htaccess_filename, welcome_filename, settings_filename, \
+     profile_filename, default_css_filename, widgets_filename, \
+     authkeys_filename, authpasswords_filename
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, \
@@ -299,6 +299,7 @@ def create_user(
     davs_dir = os.path.join(home_dir, davs_conf_dir)
     ftps_dir = os.path.join(home_dir, ftps_conf_dir)
     htaccess_path = os.path.join(home_dir, htaccess_filename)
+    welcome_path = os.path.join(home_dir, welcome_filename)
     settings_path = os.path.join(settings_dir, settings_filename)
     profile_path = os.path.join(settings_dir, profile_filename)
     widgets_path = os.path.join(settings_dir, widgets_filename)
@@ -385,6 +386,30 @@ def create_user(
         if not force:
             raise Exception('could not create htaccess file: %s' % \
                             htaccess_path)
+
+    # Always write welcome message to catch any updates
+
+    welcome_msg = '''Welcome to %(short_title)s!
+
+You should have received a user guide to introduce you to the basic use of the
+site.
+
+Feel free to contact us if you have any questions.
+
+Kind regards,
+The %(short_title)s admins
+%(admin_email)s
+''' % {'short_title': configuration.short_title,
+       'admin_email': configuration.admin_email}
+    configuration.logger.info("write welcome msg in %s" % welcome_path)
+    try:
+        filehandle = open(welcome_path, 'w')
+        filehandle.write(welcome_msg)
+        filehandle.close()
+    except:
+        if not force:
+            raise Exception('could not create welcome file: %s' % \
+                            welcome_path)
 
     # Always write/update basic settings with email to support various mail
     # requests and to avoid log errors.
