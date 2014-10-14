@@ -53,7 +53,8 @@ from shared.serial import load, dump
 from shared.settings import update_settings, update_profile, update_widgets
 from shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
      vgrid_add_members, vgrid_remove_members
-from shared.vgridaccess import get_resource_map, get_vgrid_map, VGRIDS, \
+from shared.vgridaccess import get_resource_map, get_vgrid_map, \
+     refresh_user_map, refresh_resource_map, refresh_vgrid_map, VGRIDS, \
      OWNERS, MEMBERS
 
 db_name = 'MiG-users.db'
@@ -359,6 +360,7 @@ def create_user(
         dn_enc = info['distinguished_name'].encode('string_escape')
 
         def upper_repl(match):
+            """Translate hex codes to upper case form"""
             return '\\\\x' + match.group(1).upper()
         
         info['distinguished_name_enc'] = re.sub(r'\\x(..)', upper_repl, dn_enc)
@@ -540,14 +542,15 @@ def edit_user(
                 if not force:
                     raise Exception('could not remove symlink: %s' % link_path)
     for name in user_dict.get('openid_names', []):
-        new_path = os.path.join(base_dir, new_client_dir)
+        new_path = os.path.join(configuration.user_home, new_client_dir)
         link_path = os.path.join(configuration.user_home, name)
         if not os.path.exists(link_path):
             try:
                 os.symlink(new_client_dir, link_path)
             except:
                 if not force:
-                    raise Exception('could not symlink home: %s' % link_path)
+                    raise Exception('could not symlink new home: %s' % \
+                                    link_path)
                 
     # Loop through resource map and update user resource ownership
     
@@ -646,6 +649,13 @@ def edit_user(
     configuration.logger.info("Force new user renew to fix access")
     create_user(user_dict, conf_path, db_path, force, verbose,
                 ask_renew=False, default_renew=True)
+    configuration.logger.info("Force access map updates to avoid web stall")
+    configuration.logger.info("Force update user map")
+    refresh_user_map(configuration)
+    configuration.logger.info("Force update resource map")
+    refresh_resource_map(configuration)
+    configuration.logger.info("Force update vgrid map")
+    refresh_vgrid_map(configuration)
     return user_dict
 
 
