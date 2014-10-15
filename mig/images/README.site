@@ -1,9 +1,11 @@
 = MiG web page style =
-The site.css file is used by all MiG web pages, so base site-wide style can
-easily be modified by simply changing the symlink to another css file. 
+The default.css file is used by all MiG web pages, but base site-wide style can
+easily be modified by simply changing the default_css value in the SITE section
+of MiGserver.conf to point to another css file. 
 
 Furthermore any small site style tweaks can be added in site-custom.css and
 finally users can customize their pages on their Settings page.
 
-Please note that the file or symlink site-logo.png is used as the top logo on all pages.
+Please note that the SITE section in MiGserver.conf also provides overrides for
+fav_icon and logo_text / logo_image used as the top logo on all pages.
 Similarly the status-icons dir or symlink holds e.g. the resource monitor icons.

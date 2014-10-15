@@ -889,7 +889,7 @@ class Configuration:
         if config.has_option('SITE', 'default_css'):
             self.site_default_css = config.get('SITE', 'default_css')
         else:
-            self.site_default_css = '%s/site.css' % self.site_styles
+            self.site_default_css = '%s/default.css' % self.site_styles
         if config.has_option('SITE', 'custom_css'):
             self.site_custom_css = config.get('SITE', 'custom_css')
         else:
@@ -901,7 +901,7 @@ class Configuration:
         if config.has_option('SITE', 'fav_icon'):
             self.site_fav_icon = config.get('SITE', 'fav_icon')
         else:
-            self.site_fav_icon = '%s/favicon.ico' % self.site_images
+            self.site_fav_icon = '%s/MiG-favicon.ico' % self.site_images
         if config.has_option('SITE', 'logo_text'):
             self.site_logo_text = config.get('SITE', 'logo_text')
         else:
@@ -909,7 +909,7 @@ class Configuration:
         if config.has_option('SITE', 'logo_image'):
             self.site_logo_image = config.get('SITE', 'logo_image')
         else:
-            self.site_logo_image = '%s/site-logo.png' % self.site_images
+            self.site_logo_image = '%s/MiG-logo-small.png' % self.site_images
         if config.has_option('SITE', 'credits_text'):
             self.site_credits_text = config.get('SITE', 'credits_text')
         else:
