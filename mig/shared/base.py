@@ -107,6 +107,18 @@ def invisible_path(path):
             return True
     return False
 
+def requested_page(environ=None, fallback='dashboard.py'):
+    """Lookup requested page from environ or os.environ if not provided.
+    Return fallback if no page was found in environ.
+    """
+    if not environ:
+        environ = os.environ
+    page_path = environ.get('SCRIPT_URL', False) or \
+                environ.get('PATH_INFO', False) or \
+                environ.get('REQUEST_URI', fallback).split('?', 1)[0]
+    return page_path
+
+
 if __name__ == '__main__':
     orig_id = '/X=ab/Y=cdef ghi/Z=klmn'
     client_dir = client_id_dir(orig_id)

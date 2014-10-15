@@ -28,6 +28,7 @@
 import os
 import sys
 
+from shared.base import requested_page
 
 # Define all possible menu items
 menu_items = {}
@@ -271,7 +272,7 @@ def get_cgi_html_header(
     menu_lines = ''
     if menu:
         maximize = ''
-        current_page = os.path.basename(sys.argv[0]).replace('.py', '')
+        current_page = os.path.basename(requested_page()).replace('.py', '')
         menu_lines = render_menu(configuration, 'navmenu', current_page,
                                  base_menu, user_menu)
         out += '''

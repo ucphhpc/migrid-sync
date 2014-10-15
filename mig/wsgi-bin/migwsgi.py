@@ -31,6 +31,7 @@ import cgi
 import time
 
 import shared.returnvalues as returnvalues
+from shared.base import requested_page
 from shared.conf import get_configuration_object
 from shared.objecttypes import get_object_type_info
 from shared.output import validate, format_output
@@ -134,9 +135,7 @@ def application(environ, start_response):
         
         # Environment contains python script _somewhere_ , try in turn
         # and fall back to dashboard if all fails
-        script_path = environ.get('SCRIPT_URL', False) or \
-                      environ.get('PATH_INFO', False) or \
-                      environ.get('REQUEST_URI', 'dashboard.py').split('?')[0]
+        script_path = requested_page(environ, 'dashboard.py')
         backend = os.path.basename(script_path).replace('.py' , '')
         module_path = 'shared.functionality.%s' % backend
         (output_objs, ret_val) = stub(module_path, configuration,
