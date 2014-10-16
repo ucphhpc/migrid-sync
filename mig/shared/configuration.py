@@ -118,7 +118,7 @@ def fix_missing(config_file, verbose=True):
         'user_davs_log': 'davs.log',
         'user_ftps_address': fqdn,
         'user_ftps_ctrl_port': 8021,
-        'user_ftps_pasv_ports': range(8100, 8500),
+        'user_ftps_pasv_ports': range(8100, 8400),
         'user_ftps_key': '~/certs/combined.pem',
         'user_ftps_auth': ['password'],
         'user_ftps_alias': '',
