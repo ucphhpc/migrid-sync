@@ -36,6 +36,22 @@ if (jQuery) (function($){
         return touchscreen;
     }
 
+    function dump(element) {
+        /* some browsers support toSource as easy dump */
+        if (element.toSource != undefined) {
+            return element.toSource();
+        }
+        var a = ["Element dump:"];
+        a.push("Raw: " + element);
+        for (var k in element) {
+            if (element.hasOwnProperty(k)) {
+                a.push(k + ": " + element[k]);
+            }
+        }
+        a.push("HTML: " + element.innerHTML);
+        return(a.join('\n'));
+    }
+
   function toTimestamp(strDate) {
       return Date.parse(strDate);
   }
@@ -215,7 +231,7 @@ if (jQuery) (function($){
             $("#jm_jobmanager tbody tr td input").bind("click", function(event) {
 
                 var job_id = $(this).parent().parent().attr("id");
-                var is_checked = $("#"+job_id+" input").attr("checked");
+                var is_checked = $("#"+job_id+" input").prop("checked");
                 
                 if (is_checked) {
                     $("#"+job_id).addClass("ui-selected");
@@ -341,7 +357,7 @@ if (jQuery) (function($){
     .tablesorterPager(config);
 
     // Check CheckAll when read all
-    $("#jm_jobmanager").bind("sortEnd", function() { $("#checkAll").attr("checked", false); });
+    $("#jm_jobmanager").bind("sortEnd", function() { $("#checkAll").prop("checked", false); });
     
     $("#append").click(function() {
 
@@ -431,7 +447,7 @@ if (jQuery) (function($){
     $("#checkAll").bind("click", function(event) {
         event.stopPropagation();
 
-        $("#jm_jobmanager tbody input[type='checkbox']").attr("checked", $("#checkAll").is(":checked"));
+        $("#jm_jobmanager tbody input[type='checkbox']").prop("checked", $("#checkAll").is(":checked"));
         if ($("#checkAll").is(":checked")) {
             $("#jm_jobmanager tbody tr").addClass("ui-selected");
         } else {
