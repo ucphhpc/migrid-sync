@@ -74,18 +74,18 @@ import sys
 import time
 
 try:
-    from pyftpdlib.authorizers import DummyAuthorizer
+    from pyftpdlib.authorizers import DummyAuthorizer, AuthenticationFailed
     from pyftpdlib.handlers import FTPHandler, TLS_FTPHandler
     from pyftpdlib.servers import FTPServer
     from pyftpdlib.filesystems import AbstractedFS, FilesystemError
 except ImportError:
     print "ERROR: the python pyftpdlib module is required for this daemon"
     raise
-    sys.exit(1)
 
 from shared.base import invisible_path
 from shared.conf import get_configuration_object
-from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users
+from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
+     hit_rate_limit, update_rate_limit, expire_rate_limit
 from shared.useradm import check_password_hash
 
 
@@ -98,8 +98,18 @@ class MiGUserAuthorizer(DummyAuthorizer):
     users = None
     authenticated_user = None
 
+    min_expire_delay = 300
+    last_expire = time.time()
+
     def update_logins(self, username):
         """Update login DB"""
+
+        # We don't have a handle_request for server so expire here instead
+        
+        if self.last_expire + self.min_expire_delay < time.time():
+            self.last_expire = time.time()
+            expired = expire_rate_limit(configuration, "ftps")
+            logger.debug("expired rate limit entries: %s" % expired)
 
         # TODO: only refresh for username?
 
@@ -153,7 +163,9 @@ class MiGUserAuthorizer(DummyAuthorizer):
         self.update_logins(username)
         
         offered = None
-        if 'password' in configuration.user_ftps_auth and \
+        if hit_rate_limit(configuration, "ftps", handler.remote_ip, username):
+            logger.warning("Rate limiting login from %s" % handler.remote_ip)
+        elif 'password' in configuration.user_ftps_auth and \
                self.has_user(username):
             # list of User login objects for username
             entries = [self.user_table[username]]
@@ -165,11 +177,18 @@ class MiGUserAuthorizer(DummyAuthorizer):
                     if check_password_hash(offered, allowed):
                         logger.info("Authenticated %s" % username)
                         self.authenticated_user = username
+                        update_rate_limit(configuration, "ftps",
+                                          handler.remote_ip, username, True)
                         return True
         err_msg = "Password authentication failed for %s" % username
         logger.error(err_msg)
         print err_msg
-        return False
+        self.authenticated_user = None
+        update_rate_limit(configuration, "ftps", handler.remote_ip, username,
+                          False)
+        # Must raise AuthenticationFailed exception since version 1.0.0 instead
+        # of returning bool
+        raise AuthenticationFailed(err_msg)
 
 
 class MiGRestrictedFilesystem(AbstractedFS):

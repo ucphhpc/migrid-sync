@@ -151,8 +151,9 @@ def generate_confs(
     user_dict['__ENABLE_HSTS__'] = enable_hsts
     user_dict['__ENABLE_OPENID__'] = enable_openid
     # Default to first OpenID provider
-    user_dict['__OPENID_PROVIDER_BASE__'] = openid_providers.split()[0]
-    user_dict['__OPENID_PROVIDER_ID__'] = openid_providers.split()[0]
+    openid_provider_list = openid_providers.split() or ['']
+    user_dict['__OPENID_PROVIDER_BASE__'] = openid_provider_list[0]
+    user_dict['__OPENID_PROVIDER_ID__'] = openid_provider_list[0]
     user_dict['__OPENID_ALL_PROVIDER_IDS__'] = openid_providers
     user_dict['__DAEMON_KEYCERT__'] = daemon_keycert
     user_dict['__DAEMON_PUBKEY__'] = daemon_pubkey
@@ -370,8 +371,20 @@ def create_user(
     apache_lock = '%s/lock' % apache_dir
     apache_log = '%s/log' % apache_dir
     cert_dir = '%s/MiG-certificates' % apache_dir
-    # We don't have a free port for sftp
+    # We don't have frees port for daemons
     enable_sftp = 'False'
+    enable_davs = 'False'
+    enable_ftps = 'False'
+    enable_openid = 'False'
+    enable_wsgi = 'True'
+    enable_sandboxes = 'True'
+    enable_vmachines = 'True'
+    enable_freeze = 'True'
+    enable_hsts = 'False'
+    openid_providers = ''
+    daemon_keycert = ''
+    daemon_pubkey = ''
+    alias_field = 'email'
     hg_path = '/usr/bin/hg'
     hgweb_scripts = '/usr/share/doc/mercurial-common/examples/'
     trac_admin_path = '/usr/bin/trac-admin'

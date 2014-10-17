@@ -91,5 +91,7 @@ extra_environment['SCRIPT_URI'] = 'https://localhost/cgi-bin/%s'\
      % script
 os.environ.update(extra_environment)
 
+if not os.path.isabs(script):
+    script = os.path.abspath(script)
 print "Running %s with environment:\n%s" % (script, os.environ)
 subprocess.call(script, stdin=open('/dev/null', 'r'))

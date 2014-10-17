@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# io - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# iobase - wrapper to wrap local and dist io in one
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

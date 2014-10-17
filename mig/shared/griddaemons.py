@@ -27,18 +27,22 @@
 
 """General MiG daemon functions"""
 
+import fnmatch
 import glob
 import logging
 import os
-import time
+import shelve
 import socket
+import time
 
 from shared.base import client_dir_id, client_alias, invisible_path
+from shared.fileio import unpickle, acquire_file_lock, release_file_lock
 from shared.ssh import parse_pub_key
 from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
      get_authkeys, ssh_authpasswords, davs_authpasswords, ftps_authpasswords, \
      get_authpasswords, extract_field
-from shared.fileio import unpickle
+
+default_max_hits, default_fail_cache = 5, 120
 
 class User(object):
     """User login class to hold a single valid login for a user"""
@@ -344,3 +348,180 @@ def refresh_jobs(configuration, protocol):
                 len(conf['jobs']))
 
     return conf
+
+
+def hit_rate_limit(configuration, proto, client_address, client_id,
+                   max_fails=default_max_hits,
+                   fail_cache=default_fail_cache):
+    """Check if proto login from client_address with client_id should be
+    filtered due to too many recently failed login attempts. Returns True if
+    so and False otherwise based on a lookup in rate limit database defined in
+    configuration.
+    The rate limit database is a shelve with client_address as key and
+    dictionaries mapping proto to list of failed attempts.
+    We allow up to max_fails failed logins within the last fail_cache seconds.
+    """
+    logger = configuration.logger
+    refuse = False
+    hits = 0
+    now = time.time()
+    lock_path = configuration.rate_limit_db + '.lock'
+    
+    lock_handle = acquire_file_lock(lock_path, False)
+
+    try:
+        rate_limits = shelve.open(configuration.rate_limit_db)
+        _cached = rate_limits.get(client_address, {})
+        if _cached:
+            _failed = _cached.get(proto, [])
+            for (time_stamp, client_id) in _failed:
+                if time_stamp + fail_cache < now:
+                    continue
+                hits += 1
+            if hits >= max_fails:
+                refuse = True 
+        rate_limits.close()
+    except Exception, exc:
+        logger.error("hit rate limit failed: %s" % exc)
+
+    release_file_lock(lock_handle)
+
+    logger.info("hit rate limit found %d hit(s) for %s on %s from %s" % \
+                (hits, client_id, proto, client_address))
+    return refuse
+
+def update_rate_limit(configuration, proto, client_address, client_id,
+                      success):
+    """Update rate limit database after proto login from client_address with
+    client_id and login success status.
+    The rate limit database is a shelve with client_address as key and
+    dictionaries mapping proto to list of failed attempts.
+    We simply append failed attempts and success results in the list getting
+    cleared for that proto and address combination.
+    Please note that we have to explicitly update root values because we use
+    shelves without writeback.
+    """
+    logger = configuration.logger
+    lock_path = configuration.rate_limit_db + '.lock'
+    _failed = []
+    cur = {}
+    status = {True: "success", False: "failure"}
+
+    lock_handle = acquire_file_lock(lock_path, True)
+
+    try:
+        rate_limits = shelve.open(configuration.rate_limit_db)
+        logger.debug("update rate limit db: %s" % rate_limits)
+        _cached = rate_limits.get(client_address, {})
+        cur.update(_cached)
+        if not _cached or success:
+            cur[proto] = []
+        else:
+            _failed = _cached.get(proto, [])
+            _failed.append((time.time(), client_id))
+            cur[proto] = _failed
+        rate_limits[client_address] = cur
+        rate_limits.close()
+    except Exception, exc:
+        logger.error("update rate limit failed: %s" % exc)
+
+    release_file_lock(lock_handle)
+    
+    logger.info("update rate limit %s for %s from %s on %s to %s" % \
+                (status[success], client_id, client_address, proto, _failed))
+        
+
+def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
+    """Remove rate limit database entries older than fail_cache seconds. Only
+    entries with protocol matching proto pattern will be touched.
+    Returns a list of expired entries.
+    Please note that we have to explicitly update root values because we use
+    shelves without writeback.
+    """
+    logger = configuration.logger
+    lock_path = configuration.rate_limit_db + '.lock'
+    now = time.time()
+    expired = []
+    
+    lock_handle = acquire_file_lock(lock_path, True)
+
+    logger.debug("expire entries older than %ds at %s" % (fail_cache, now))
+    try:
+        rate_limits = shelve.open(configuration.rate_limit_db)
+        for _client_address in rate_limits.keys():
+            cur = {}
+            for _proto in rate_limits[_client_address]:
+                if not fnmatch.fnmatch(_proto, proto):
+                    continue
+                _failed = rate_limits[_client_address][_proto]
+                _keep = []
+                for (time_stamp, client_id) in _failed:
+                    if time_stamp + fail_cache < now:
+                        expired.append((_client_address, _proto, time_stamp,
+                                        client_id))
+                    else:
+                        _keep.append((time_stamp, client_id))
+                cur[proto] = _keep
+            rate_limits[_client_address] = cur
+        rate_limits.close()
+    except Exception, exc:
+        logger.error("expire rate limit failed: %s" % exc)
+        
+    release_file_lock(lock_handle)
+
+    logger.info("expire rate limit on proto %s expired %s" % (proto, expired))
+
+    return expired
+
+if __name__ == "__main__":
+    from shared.conf import get_configuration_object
+    conf = get_configuration_object()
+    logging.basicConfig(filename=None, level=logging.INFO,
+                        format="%(asctime)s %(levelname)s %(message)s")
+    conf.logger = logging
+    test_proto, test_address, test_id = 'DUMMY', '127.0.0.42', 'mylocaluser'
+    print "Running unit test on rate limit functions"
+    print "Force expire all"
+    expired = expire_rate_limit(conf, test_proto, fail_cache=0)
+    print "Expired: %s" % expired
+    print "Emulate rate limit"
+    for i in range(default_max_hits + 1):
+        hit = hit_rate_limit(conf, test_proto, test_address, test_id)
+        print "Blocked: %s" % hit
+        update_rate_limit(conf, test_proto, test_address, test_id, False)
+        print "Updated fail for %s from %s" % (test_id, test_address)
+        time.sleep(1)
+    other_proto, other_address, other_id = "BOGUS", '127.10.20.30', 'otheruser'
+    print "Update with other proto"
+    update_rate_limit(conf, other_proto, test_address, test_id, False)
+    print "Update with other address"
+    update_rate_limit(conf, test_proto, other_address, test_id, False)
+    print "Update with other user"
+    update_rate_limit(conf, test_proto, test_address, other_id, False)
+    print "Check with same user from other address"
+    hit = hit_rate_limit(conf, test_proto, other_address, test_id)
+    print "Blocked: %s" % hit
+    print "Check with other user from same address"
+    hit = hit_rate_limit(conf, test_proto, test_address, other_id)
+    print "Blocked: %s" % hit
+    time.sleep(1)
+    print "Emulate cache time out"
+    hit = hit_rate_limit(conf, test_proto, test_address, test_id,
+                         fail_cache=1)
+    print "Blocked: %s" % hit
+    print "Force expire some entries"
+    expired = expire_rate_limit(conf, test_proto,
+                                fail_cache=default_max_hits)
+    print "Expired: %s" % expired
+    print "Test reset on success"
+    hit = hit_rate_limit(conf, test_proto, test_address, test_id)
+    print "Blocked: %s" % hit
+    update_rate_limit(conf, test_proto, test_address, test_id, True)
+    print "Updated success for %s from %s" % (test_id, test_address)
+    hit = hit_rate_limit(conf, test_proto, test_address, test_id)
+    print "Blocked: %s" % hit
+    print "Check with same user from other address"
+    hit = hit_rate_limit(conf, test_proto, other_address, test_id)
+    print "Blocked: %s" % hit
+
+    

@@ -33,6 +33,7 @@ import logging
 import os
 import ssl
 import sys
+import time
 import urlparse
 
 try:
@@ -47,7 +48,8 @@ except ImportError:
 from shared.base import invisible_path
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, \
-     acceptable_chmod, refresh_users
+     acceptable_chmod, refresh_users, hit_rate_limit, update_rate_limit, \
+     expire_rate_limit
 from shared.useradm import check_password_hash
 
 
@@ -198,7 +200,7 @@ class MiGDAVAuthHandler(DAVAuthHandler):
     the MiG user DB.
     """
 
-    # TODO: add pubkey auth
+    # TODO: add actual pubkey auth
 
     # Do not forget to set IFACE_CLASS by caller
     # ex.: IFACE_CLASS = FilesystemHandler('/tmp', 'http://localhost/')
@@ -214,7 +216,11 @@ class MiGDAVAuthHandler(DAVAuthHandler):
     def _check_auth_password(self, username, password):
         """Verify supplied username and password against user DB"""
         offered = None
-        if self.users.has_key(username):
+        if hit_rate_limit(configuration, "davs", self.client_address[0],
+                          username):
+            logger.warning("Rate limiting login from %s" % \
+                           self.client_address[0])
+        elif self.users.has_key(username):
             # list of User login objects for username
             entries = self.users[username]
             offered = password
@@ -224,13 +230,23 @@ class MiGDAVAuthHandler(DAVAuthHandler):
                     logger.debug("Password check for %s" % username)
                     if check_password_hash(offered, allowed):
                         self.authenticated_user = username
+                        update_rate_limit(configuration, "davs",
+                                          self.client_address[0], username,
+                                          True)
                         return True
+        update_rate_limit(configuration, "davs", self.client_address[0],
+                          username, False)                    
         return False
 
 
     def _check_auth_publickey(self, username, key):
+        """Verify supplied username and public key against user DB"""
         offered = None
-        if self.users.has_key(username):
+        if hit_rate_limit(configuration, "davs", self.client_address[0],
+                          username):
+            logger.warning("Rate limiting login from %s" % \
+                           self.client_address[0])
+        elif self.users.has_key(username):
             # list of User login objects for username
             entries = self.users[username]
             offered = key.get_base64()
@@ -241,7 +257,12 @@ class MiGDAVAuthHandler(DAVAuthHandler):
                     if allowed == offered:
                         logger.info("Public key match for %s" % username)
                         self.authenticated_user = username
+                        update_rate_limit(configuration, "davs",
+                                          self.client_address[0], username,
+                                          True)
                         return True
+        update_rate_limit(configuration, "davs", self.client_address[0],
+                          username, False)                    
         return False
 
     def _chroot_user(self, username, host, port, verbose):
@@ -312,8 +333,8 @@ class MiGDAVAuthHandler(DAVAuthHandler):
         self.users = usermap
         logger.debug("get_userinfo found users: %s" % self.users)
 
-        host = self._config.DAV.host
-        port = self._config.DAV.port
+        host = configuration.daemon_conf.get('address')
+        port = configuration.daemon_conf.get('port')
         verbose = self._config.DAV.getboolean('verbose')
 
         if 'password' in self.server_conf.user_davs_auth and \
@@ -409,8 +430,15 @@ def run(configuration):
         
     print('Listening on %s (%i)' % (host, port))
 
+    min_expire_delay = 300
+    last_expire = time.time()
     try:
-        runner.serve_forever()
+        while True:
+            runner.handle_request()
+            if last_expire + min_expire_delay < time.time():
+                last_expire = time.time()
+                expired = expire_rate_limit(configuration, "davs")
+                logger.debug("Expired rate limit entries: %s" % expired)
     except KeyboardInterrupt:
         logger.info('Killed by user')
 

@@ -87,6 +87,7 @@ def fix_missing(config_file, verbose=True):
         'openid_store': '~/state/openid_store/',
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
+        'rate_limit_db': '~/mig/mig_system_files/daemon-rate-limit.db',
         'site_vgrid_links': 'files web tracker workflows monitor',
         'site_vgrid_creators': 'distinguished_name:.*',
         'hg_path': '/usr/bin/hg',
@@ -227,6 +228,7 @@ class Configuration:
     freeze_home = ''
     javabin_home = ''
     openid_store = ''
+    rate_limit_db = ''
     site_vgrid_links = []
     site_vgrid_creators = [('distinguished_name', '.*')]
     hg_path = ''
@@ -525,6 +527,11 @@ class Configuration:
                                                        'migserver_https_sid_url')
         else:
             self.migserver_https_sid_url = self.migserver_https_url
+        if config.has_option('GLOBAL', 'rate_limit_db'):
+            self.rate_limit_db = config.get('GLOBAL', 'rate_limit_db')
+        else:
+            self.rate_limit_db = os.path.join(self.mig_system_files,
+                                              'daemon-rate-limit.db')
         if config.has_option('GLOBAL', 'freeze_home'):
             self.freeze_home = config.get('GLOBAL', 'freeze_home')
         else:

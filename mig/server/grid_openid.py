@@ -49,8 +49,9 @@
 
 # = End of original copyright notice =
 
-"""Interface between CGI and functionality"""
-
+"""OpenID server to let users authenticate with username and password from
+our local user DB.
+"""
 
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
@@ -77,11 +78,13 @@ from openid.server import server
 from openid.store.filestore import FileOpenIDStore
 from openid.consumer import discover
 
-from shared.base import client_alias, client_id_dir
+from shared.base import client_id_dir
 from shared.conf import get_configuration_object
+from shared.griddaemons import hit_rate_limit, update_rate_limit, \
+     expire_rate_limit
 from shared.safeinput import valid_distinguished_name, valid_password, \
      valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url
-from shared.useradm import load_user_db, extract_field, cert_field_map, \
+from shared.useradm import load_user_db, cert_field_map, \
      get_openid_user_dn
 
 configuration, logger = None, None
@@ -402,7 +405,9 @@ class ServerHandler(BaseHTTPRequestHandler):
                 print "no password in query"
                 self.password = None
 
-            if self.checkLogin(self.user, self.password):
+            if not hit_rate_limit(configuration, "openid",
+                                  self.client_address[0], self.user) and \
+                                  self.checkLogin(self.user, self.password):
                 print "handleAllow validated login %s" % identity
                 trust_root = request.trust_root
                 if self.query.get('remember', 'no') == 'yes':
@@ -410,10 +415,14 @@ class ServerHandler(BaseHTTPRequestHandler):
 
                 print "handleAllow approving login %s" % identity
                 response = self.approved(request, identity)
+                update_rate_limit(configuration, "openid",
+                                  self.client_address[0], self.user, True)
             else:
                 print "handleAllow rejected login %s" % identity
                 self.clearUser()
                 response = self.rejected(request, identity)    
+                update_rate_limit(configuration, "openid",
+                                  self.client_address[0], self.user, False)
         elif 'no' in query:
             response = request.answer(False)
 
@@ -579,17 +588,23 @@ class ServerHandler(BaseHTTPRequestHandler):
                 self.password = self.query['password']
             else:
                 self.password = None
-            if self.checkLogin(self.user, self.password):
+            if not hit_rate_limit(configuration, "openid",
+                                  self.client_address[0], self.user) and \
+                                  self.checkLogin(self.user, self.password):
                 if not self.query['success_to']:
                     self.query['success_to'] = '%s/id/' % self.server.base_url
                 print "doLogin succeded: redirect to %s" % self.query['success_to']
                 self.redirect(self.query['success_to'])
+                update_rate_limit(configuration, "openid",
+                                  self.client_address[0], self.user, True)
             else:
                 # TODO: Login failed - is this correct behaviour?
                 print "doLogin failed for %s!" % self.user
                 # print "doLogin full query: %s" % self.query
                 self.clearUser()
                 self.redirect(self.query['success_to'])
+                update_rate_limit(configuration, "openid",
+                                  self.client_address[0], self.user, False)
         elif 'cancel' in self.query:
             self.redirect(self.query['fail_to'])
         else:
@@ -960,15 +975,15 @@ class ServerHandler(BaseHTTPRequestHandler):
             ''' % form
 
         default_css = os.path.join(configuration.migserver_https_sid_url,
-                                   configuration.site_default_css.strip('/'))
+                                   configuration.site_default_css.lstrip('/'))
         custom_css = os.path.join(configuration.migserver_https_sid_url,
-                                  configuration.site_custom_css.strip('/'))
+                                  configuration.site_custom_css.lstrip('/'))
         fav_icon = os.path.join(configuration.migserver_https_sid_url,
-                                configuration.site_fav_icon.strip('/'))
+                                configuration.site_fav_icon.lstrip('/'))
         site_logo = os.path.join(configuration.migserver_https_sid_url,
-                                 '/images/site-logo.png'.strip('/'))
-        copyright_logo = os.path.join(configuration.migserver_https_sid_url,
-                                      '/images/copyright.png'.strip('/'))
+                                 configuration.site_logo_image.lstrip('/'))
+        creds_logo = os.path.join(configuration.migserver_https_sid_url,
+                                  configuration.site_credits_image.lstrip('/'))
         contents = {
             'title': configuration.short_title + ' OpenID Server - ' + title,
             'short_title': configuration.short_title,
@@ -980,7 +995,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             'site_custom_css': custom_css,
             'site_fav_icon': fav_icon,
             'site_logo': site_logo,
-            'copyright_logo': copyright_logo,
+            'credits_logo': creds_logo,
+            'credits_text': configuration.site_credits_text,
             }
 
         self.send_response(response_code)
@@ -1026,9 +1042,9 @@ class ServerHandler(BaseHTTPRequestHandler):
   </div>
 </div>
 <div id="bottomlogo">
-<img src="%(copyright_logo)s" id="creditsimage" alt=""/>
+<img src="%(credits_logo)s" id="creditsimage" alt=""/>
 <span id="credits">
-2003-2014, <a href="http://www.migrid.org">The MiG Project</a>
+%(credits_text)s
 </span>
 </div>
 <div id="bottomspace">
@@ -1074,8 +1090,15 @@ def start_service(configuration):
         
     print 'Server running at:'
     print httpserver.base_url
-    httpserver.serve_forever()
-
+    min_expire_delay = 300
+    last_expire = time.time()
+    while True:
+        httpserver.handle_request()
+        if last_expire + min_expire_delay < time.time():
+            last_expire = time.time()
+            expired = expire_rate_limit(configuration, "openid")
+            logger.debug("expired: %s" % expired)
+            
 
 if __name__ == '__main__':
     configuration = get_configuration_object()
@@ -1084,7 +1107,8 @@ if __name__ == '__main__':
 
     # Use separate logger
     logging.basicConfig(filename=configuration.user_openid_log,
-                        level=logging.INFO,
+                        #level=logging.INFO,
+                        level=logging.DEBUG,
                         format="%(asctime)s %(levelname)s %(message)s")
     logger = logging
 

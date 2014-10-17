@@ -434,3 +434,25 @@ def md5sum_file(path, chunk_size, max_chunks=-1):
     except Exception, exc:
         return "checksum failed: %s" % exc
 
+def acquire_file_lock(lock_path, exclusive=True):
+    """Uses fcntl to acquire the lock in lock_path in exclusive mode unless
+    otherwise specified.
+    Should be used on seperate lock files and not on the file that is
+    meant to be synchronized itself.
+    Returns the lock handle used to unlock the file again. We recommend
+    explicitly calling release_file_lock when done, but technically it should
+    be enough to delete all references to the handle and let garbage
+    collection automatically unlock it.
+    """
+    if exclusive:
+        lock_mode = fcntl.LOCK_EX
+    else:
+        lock_mode = fcntl.LOCK_SH
+    lock_handle = open(lock_path, "w")
+    fcntl.flock(lock_handle.fileno(), lock_mode)
+    return lock_handle
+
+def release_file_lock(lock_handle):
+    """Uses fcntl to release the lock held in lock_handle."""
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
+
