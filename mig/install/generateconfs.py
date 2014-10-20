@@ -162,5 +162,11 @@ sudo cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
 
 Please reload or restart your apache daemons afterwards to catch the
 configuration changes.
+
+The experimental migrid-init.d contains a standard SysV init style helper
+script to launch all MiG daemons. It was written for CentOS but may work
+on other platforms, too.
+You can install it with:
+sudo cp %(destination)s/migrid-init.d /etc/init.d/migrid
 ''' % conf
     sys.exit(0)

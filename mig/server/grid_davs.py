@@ -445,7 +445,6 @@ def run(configuration):
 
 if __name__ == "__main__":
     configuration = get_configuration_object()
-    logger = configuration.logger
     nossl = False
 
     # Use separate logger

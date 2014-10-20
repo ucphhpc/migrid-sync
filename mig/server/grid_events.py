@@ -329,9 +329,8 @@ unless it is available in mig/server/MiGserver.conf
 '''
 
     configuration = get_configuration_object()
-    print os.environ.get('MIG_CONF', 'DEFAULT'), configuration.server_fqdn
 
-    # Use: separate logger
+    # Use separate logger
     logging.basicConfig(filename=configuration.user_events_log,
                         level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")

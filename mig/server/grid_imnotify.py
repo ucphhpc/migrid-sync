@@ -291,148 +291,149 @@ def irc_process_forever(*args):
     irc.process_forever()
 
 
-# ## MAIN ###
+if __name__ == '__main__':
+    print '''This script should only be started by MiG admins and only on the main
+    MiG server. Multiple running instances - even on separate servers - results in
+    conflicts!
 
-print '''This script should only be started by MiG admins and only on the main
-MiG server. Multiple running instances - even on separate servers - results in
-conflicts!
+    Please use dummy IM deamon in grid_imnotify_stdout.py instead if *not*
+    running on main MiG server!
+    '''
+    if len(sys.argv) < 2 or sys.argv[1]\
+         != 'i_am_admin_and_on_main_mig_server':
+        print '''
+    To start dummy deamon run:
+    python grid_imnotify_stdout.py
 
-Please use dummy IM deamon in grid_imnotify_stdout.py instead if *not* running on
-main MiG server!
-'''
-if len(sys.argv) < 2 or sys.argv[1]\
-     != 'i_am_admin_and_on_main_mig_server':
-    print '''
-To start dummy deamon run:
-python grid_imnotify_stdout.py
+    To really start this daemon run:
+    python grid_imnotify.py i_am_admin_and_on_main_mig_server
 
-To really start this daemon run:
-python grid_imnotify.py i_am_admin_and_on_main_mig_server
+    Set the MIG_CONF environment to the server configuration path
+    unless it is available in mig/server/MiGserver.conf
+    '''
+        sys.exit(1)
 
-Set the MIG_CONF environment to the server configuration path
-unless it is available in mig/server/MiGserver.conf
-'''
-    sys.exit(1)
+    port = 6667
+    server = 'im.bitlbee.org'
+    nickname = 'migdaemon'
+    target = '#bitlbee'
+    bitlbee_password = 'klapHaT1'
+    if len(sys.argv) > 2:
+        os.environ['MIG_CONF'] = sys.argv[2]
+    configuration = get_configuration_object()
+    stdin_path = configuration.im_notify_stdin
+    irc = None
+    line = None
+    attempt = 0
+    max_retries = 2
 
-port = 6667
-server = 'im.bitlbee.org'
-nickname = 'migdaemon'
-target = '#bitlbee'
-bitlbee_password = 'klapHaT1'
-if len(sys.argv) > 2:
-    os.environ['MIG_CONF'] = sys.argv[2]
-configuration = get_configuration_object()
-stdin_path = configuration.im_notify_stdin
-irc = None
-line = None
-attempt = 0
-max_retries = 2
-
-try:
-    if not os.path.exists(stdin_path):
-        print 'creating im_notify input pipe %s' % stdin_path
-        try:
-            os.mkfifo(stdin_path)
-        except Exception, err:
-            print 'Could not create missing IM stdin pipe %s: %s'\
-                 % (stdin_path, err)
-except:
-    print 'error opening IM stdin! %s' % sys.exc_info()[0]
-    sys.exit(1)
-
-keep_running = True
-
-print 'Starting Real IM daemon - Ctrl-C to quit'
-
-print 'Reading commands from %s' % stdin_path
-try:
-    im_notify_stdin = open(stdin_path, 'r')
-except KeyboardInterrupt:
-    keep_running = False
-except Exception, err:
-    print 'could not open IM stdin %s, exception: %s' % (stdin_path,
-            err)
-    sys.exit(1)
-
-while keep_running:
     try:
-        if not irc:
-            print 'Initialising IRC access to %s' % server
-            irc = irclib.IRC()
+        if not os.path.exists(stdin_path):
+            print 'creating im_notify input pipe %s' % stdin_path
             try:
-                irc_server = irc.server().connect(server, port,
-                        nickname)
-            except irclib.ServerConnectionError, exc:
-                print 'Could not connect to irc server: %s' % exc
-                irc = None
-                time.sleep(30)
-                continue
+                os.mkfifo(stdin_path)
+            except Exception, err:
+                print 'Could not create missing IM stdin pipe %s: %s'\
+                     % (stdin_path, err)
+    except:
+        print 'error opening IM stdin! %s' % sys.exc_info()[0]
+        sys.exit(1)
 
-            irc_server.add_global_handler('connect', on_connect)
-            irc_server.add_global_handler('join', on_join)
-            irc_server.add_global_handler('disconnect', on_disconnect)
-            irc_server.add_global_handler('privmsg', on_privmsg)
-            irc_server.add_global_handler('pubmsg', on_pubmsg)
-            thread.start_new_thread(irc_process_forever, ())
+    keep_running = True
 
-        # Handle messages
+    print 'Starting Real IM daemon - Ctrl-C to quit'
 
-        # Examples:
-        # send_msg(irc_server, "henrik_karlsen@hotmail.com", "msn", "hej du")
-        # send_msg(irc_server, "karlsen@jabbernet.dk", "jabber", "hej du")
-        # send_msg(irc_server, "henrik_karlsen@hotmail.com", "msn", "hej du")
-        # send_msg(irc_server, "migtestaccount@YAHOO", "yahoo", "hej du")
-        # send_msg(irc_server, "8961036", "icq", "hej du")
-        # send_msg(irc_server, "henrikkarlsen2@login.oscar.aol.com", "aol", "hej du")
-
-        # If last delivery failed we still have request line set
-
-        if not line or attempt >= max_retries:
-            line = im_notify_stdin.readline()
-            attempt = 0
-        if line.upper().startswith('SENDMESSAGE '):
-
-            # The received line should be on a format similar to:
-            # SENDMESSAGE PROTOCOL TO MESSAGE ex:
-            # SENDMESSAGE jabber account@jabber.org this is the message
-
-            # split string
-
-            split_line = line.split(' ', 3)
-            if len(split_line) != 4:
-                print 'received SENDMESSAGE not on correct format %s'\
-                     % line
-                continue
-
-            protocol = split_line[1]
-            recipient = split_line[2]
-            message = split_line[3]
-
-            print 'Sending message: protocol: %s to: %s message: %s'\
-                 % (protocol, recipient, message)
-            send_msg(irc_server, recipient, protocol, message)
-            print 'Message sent to %s' % recipient
-        elif line.upper().startswith('SHOWBUDDIES'):
-            print 'Buddy list:'
-            for (key, val) in nick_and_id_dict.items():
-                print '%s:\n\t%s' % (key, val)
-            print '-----'
-        elif line.upper().startswith('SHUTDOWN'):
-            print '--- SAFE SHUTDOWN INITIATED ---'
-            break
-        elif line:
-            print 'unknown message received: %s' % line
-        line = None
-
-        # Throttle down
-
-        time.sleep(1)
+    print 'Reading commands from %s' % stdin_path
+    try:
+        im_notify_stdin = open(stdin_path, 'r')
     except KeyboardInterrupt:
         keep_running = False
-    except Exception, exc:
-        print 'Caught unexpected exception: %s' % exc
-        irc = None
-        attempt += 1
+    except Exception, err:
+        print 'could not open IM stdin %s, exception: %s' % (stdin_path,
+                err)
+        sys.exit(1)
 
-print 'Real IM daemon shutting down'
-sys.exit(0)
+    while keep_running:
+        try:
+            if not irc:
+                print 'Initialising IRC access to %s' % server
+                irc = irclib.IRC()
+                try:
+                    irc_server = irc.server().connect(server, port,
+                            nickname)
+                except irclib.ServerConnectionError, exc:
+                    print 'Could not connect to irc server: %s' % exc
+                    irc = None
+                    time.sleep(30)
+                    continue
+
+                irc_server.add_global_handler('connect', on_connect)
+                irc_server.add_global_handler('join', on_join)
+                irc_server.add_global_handler('disconnect', on_disconnect)
+                irc_server.add_global_handler('privmsg', on_privmsg)
+                irc_server.add_global_handler('pubmsg', on_pubmsg)
+                thread.start_new_thread(irc_process_forever, ())
+
+            # Handle messages
+
+            # Examples:
+            # msg = "hey there"
+            # send_msg(irc_server, "henrik_karlsen@hotmail.com", "msn", msg)
+            # send_msg(irc_server, "karlsen@jabbernet.dk", "jabber", msg)
+            # send_msg(irc_server, "henrik_karlsen@hotmail.com", "msn", msg)
+            # send_msg(irc_server, "migtestaccount@YAHOO", "yahoo", msg)
+            # send_msg(irc_server, "8961036", "icq", msg)
+            # send_msg(irc_server, "henrikkarlsen2@login.oscar.aol.com", "aol",
+            #          msg)
+
+            # If last delivery failed we still have request line set
+
+            if not line or attempt >= max_retries:
+                line = im_notify_stdin.readline()
+                attempt = 0
+            if line.upper().startswith('SENDMESSAGE '):
+
+                # The received line should be on a format similar to:
+                # SENDMESSAGE PROTOCOL TO MESSAGE ex:
+                # SENDMESSAGE jabber account@jabber.org this is the message
+
+                # split string
+
+                split_line = line.split(' ', 3)
+                if len(split_line) != 4:
+                    print 'received SENDMESSAGE not on correct format %s'\
+                         % line
+                    continue
+
+                protocol = split_line[1]
+                recipient = split_line[2]
+                message = split_line[3]
+
+                print 'Sending message: protocol: %s to: %s message: %s'\
+                     % (protocol, recipient, message)
+                send_msg(irc_server, recipient, protocol, message)
+                print 'Message sent to %s' % recipient
+            elif line.upper().startswith('SHOWBUDDIES'):
+                print 'Buddy list:'
+                for (key, val) in nick_and_id_dict.items():
+                    print '%s:\n\t%s' % (key, val)
+                print '-----'
+            elif line.upper().startswith('SHUTDOWN'):
+                print '--- SAFE SHUTDOWN INITIATED ---'
+                break
+            elif line:
+                print 'unknown message received: %s' % line
+            line = None
+
+            # Throttle down
+
+            time.sleep(1)
+        except KeyboardInterrupt:
+            keep_running = False
+        except Exception, exc:
+            print 'Caught unexpected exception: %s' % exc
+            irc = None
+            attempt += 1
+
+    print 'Real IM daemon shutting down'
+    sys.exit(0)

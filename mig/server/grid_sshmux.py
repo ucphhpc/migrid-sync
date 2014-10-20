@@ -103,60 +103,59 @@ def graceful_shutdown(signum, frame):
     sys.exit(0)
 
 
-# ## Main ###
+if __name__ == '__main__':
+    configuration = get_configuration_object()
+    logger = configuration.logger
 
-configuration = get_configuration_object()
-logger = configuration.logger
+    persistent_hosts = {}
+    resource_path = configuration.resource_home
+    for unique_resource_name in os.listdir(configuration.resource_home):
+        res_dir = os.path.realpath(configuration.resource_home + os.sep
+                                    + unique_resource_name)
 
-persistent_hosts = {}
-resource_path = configuration.resource_home
-for unique_resource_name in os.listdir(configuration.resource_home):
-    res_dir = os.path.realpath(configuration.resource_home + os.sep
-                                + unique_resource_name)
+        # skip all dot dirs - they are from repos etc and _not_ jobs
 
-    # skip all dot dirs - they are from repos etc and _not_ jobs
-
-    if res_dir.find(os.sep + '.') != -1:
-        continue    
-    if not os.path.isdir(res_dir):
-        continue
-    dir_name = os.path.basename(res_dir)
-    if sandbox_resource(dir_name):
-        continue
-    try:
-        (status, res_conf) = \
-            get_resource_configuration(configuration.resource_home,
-                unique_resource_name, logger)
-        if not status:
+        if res_dir.find(os.sep + '.') != -1:
+            continue    
+        if not os.path.isdir(res_dir):
             continue
-        if res_conf.has_key('SSHMULTIPLEX') and res_conf['SSHMULTIPLEX'
-                ]:
-            print 'adding multiplexing resource %s'\
-                 % unique_resource_name
-            fqdn = res_conf['HOSTURL']
-            res_conf['HOMEDIR'] = res_dir
-            persistent_hosts[fqdn] = res_conf
-    except Exception, err:
+        dir_name = os.path.basename(res_dir)
+        if sandbox_resource(dir_name):
+            continue
+        try:
+            (status, res_conf) = \
+                get_resource_configuration(configuration.resource_home,
+                    unique_resource_name, logger)
+            if not status:
+                continue
+            if res_conf.has_key('SSHMULTIPLEX') and res_conf['SSHMULTIPLEX'
+                    ]:
+                print 'adding multiplexing resource %s'\
+                     % unique_resource_name
+                fqdn = res_conf['HOSTURL']
+                res_conf['HOMEDIR'] = res_dir
+                persistent_hosts[fqdn] = res_conf
+        except Exception, err:
 
-        # else:
-        #    print "ignoring non-multiplexing resource %s" % unique_resource_name
+            # else:
+            #    print "ignoring non-multiplexing resource %s" % unique_resource_name
 
-        print "Failed to open resource conf '%s': %s"\
-             % (unique_resource_name, err)
+            print "Failed to open resource conf '%s': %s"\
+                 % (unique_resource_name, err)
 
-threads = {}
+    threads = {}
 
-# register ctrl+c signal handler to shutdown system gracefully
+    # register ctrl+c signal handler to shutdown system gracefully
 
-signal.signal(signal.SIGINT, graceful_shutdown)
-for (hostname, conf) in persistent_hosts.items():
-    if not threads.has_key(hostname):
-        threads[hostname] = \
-            threading.Thread(target=persistent_connection, args=(conf,
-                             logger))
-        threads[hostname].setDaemon(True)
-        threads[hostname].start()
+    signal.signal(signal.SIGINT, graceful_shutdown)
+    for (hostname, conf) in persistent_hosts.items():
+        if not threads.has_key(hostname):
+            threads[hostname] = \
+                threading.Thread(target=persistent_connection, args=(conf,
+                                 logger))
+            threads[hostname].setDaemon(True)
+            threads[hostname].start()
 
-print 'Send interrupt (ctrl-c) twice to stop persistent connections'
-while True:
-    sleep(60)
+    print 'Send interrupt (ctrl-c) twice to stop persistent connections'
+    while True:
+        sleep(60)

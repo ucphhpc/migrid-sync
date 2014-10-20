@@ -1,4 +1,4 @@
-/home/mig/mig/server/*.log /home/mig/mig/cgi-bin/*.log /home/mig/mig/cgi-sid/*.log /home/mig/last-scp.err {
+/home/mig/state/log/*.log /home/mig/state/log/*.out /home/mig/last-scp.err {
 	weekly
 	missingok
 	rotate 52
@@ -14,13 +14,4 @@
                echo RELOADCONFIG >> /home/mig/mig/server/grid_stdin; \
 	   fi;
 	endscript
-}
-
-/var/log/faubackup-sync.log {
-	weekly
-	missingok
-	rotate 4
-	compress
-	notifempty
-	create 640 mig mig
 }

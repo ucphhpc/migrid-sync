@@ -56,6 +56,7 @@ def fix_missing(config_file, verbose=True):
         'mrsl_files_dir': '~/state/mrsl_files/',
         're_files_dir': '~/state/re_files/',
         're_pending_dir': '~/state/re_pending/',
+        'log_dir': '~/state/log/',
         're_home': '~/state/re_home/',
         'grid_stdin': '~/mig/server/server.stdin',
         'im_notify_stdin': '~/mig/server/notify.stdin',
@@ -203,6 +204,7 @@ class Configuration:
     mrsl_files_dir = ''
     re_files_dir = ''
     re_pending_dir = ''
+    log_dir = ''
     re_home = ''
     grid_stdin = ''
     im_notify_stdin = ''
@@ -386,17 +388,21 @@ class Configuration:
             config.set('GLOBAL', key, expanded_val)
 
         try:
+            self.log_dir = config.get('GLOBAL', 'log_dir')
             self.logfile = config.get('GLOBAL', 'logfile')
             self.loglevel = config.get('GLOBAL', 'loglevel')
         except:
 
             # Fall back to file in current dir
 
-            self.logfile = 'MiGserver.log'
+            self.log_dir = '.'
+            self.logfile = 'mig.log'
             self.loglevel = 'info'
-
+            
+        self.log_path = os.path.join(self.log_dir, self.logfile)
+        
         if verbose:
-            print 'logging to:', self.logfile, '; level:', self.loglevel
+            print 'logging to:', self.log_path, '; level:', self.loglevel
 
         # reopen or initialize logger
 
@@ -406,7 +412,7 @@ class Configuration:
 
             self.logger_obj.hangup()
         else:
-            self.logger_obj = Logger(self.logfile, self.loglevel)
+            self.logger_obj = Logger(self.log_path, self.loglevel)
 
         logger = self.logger_obj.logger
         self.logger = logger
@@ -972,6 +978,13 @@ class Configuration:
                 else:
                     logger.error('ca_path is neither a file or directory!'
                                  )
+        # Force absolute log paths
+
+        for log_var in ('user_sftp_log', 'user_davs_log', 'user_ftps_log',
+                        'user_openid_log', 'user_events_log'):
+            log_path = getattr(self, log_var)
+            if not os.path.isabs(log_path):
+                setattr(self, log_var, os.path.join(self.log_dir, log_path))
             
         # cert and key for generating a default proxy for nordugrid/ARC resources 
 
