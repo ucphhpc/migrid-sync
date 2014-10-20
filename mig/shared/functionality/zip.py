@@ -220,11 +220,11 @@ def main(client_id, user_arguments_dict):
             try:
                 if os.path.isdir(real_path):
                     for root, dirs, files in os.walk(real_path):
-                        # TODO: no pure (empty) directory support yet
+                        relative_root = root.replace(real_dir + os.sep, '')
                         for entry in files:
                             real_target = os.path.join(root, entry)
-                            relative_target = os.path.join(root.replace(
-                                real_dir, ''), entry)
+                            relative_target = os.path.join(relative_root,
+                                                           entry)
                             if real_dest == real_target:
                                 output_objects.append(
                                     {'object_type': 'text', 'text'
@@ -232,6 +232,9 @@ def main(client_id, user_arguments_dict):
                                      % relative_dest})
                                 continue
                             zip_file.write(real_target, relative_target)
+                        if not files:
+                            dir_info = zipfile.ZipInfo(relative_root + os.sep)
+                            zip_file.writestr(dir_info, '')
                 else:
                     zip_file.write(real_path, real_path.replace(real_dir, ''))
             except Exception, exc:
