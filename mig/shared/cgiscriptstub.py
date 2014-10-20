@@ -35,6 +35,7 @@ cgitb.enable()
 import time
 
 import shared.returnvalues as returnvalues
+from shared.base import requested_page
 from shared.conf import get_configuration_object
 from shared.httpsclient import extract_client_id
 from shared.output import format_output
@@ -49,7 +50,7 @@ def init_cgi_script(delayed_input=None):
     # get and log ID of user currently logged in
 
     client_id = extract_client_id(configuration)
-    logger.info('script: %s cert: %s' % (sys.argv[0], client_id))
+    logger.info('script: %s cert: %s' % (requested_page(), client_id))
     if not delayed_input:
         fieldstorage = cgi.FieldStorage()
         user_arguments_dict = fieldstorage_to_dict(fieldstorage)

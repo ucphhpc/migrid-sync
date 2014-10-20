@@ -30,6 +30,7 @@
 import os
 import sys
 
+from shared.base import requested_page
 from shared.conf import get_configuration_object
 from shared.settings import load_settings, load_widgets
 
@@ -77,7 +78,7 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
     output_objects = []
     start_entry = make_start_entry()
     output_objects.append(start_entry)
-    op_name = os.path.basename(sys.argv[0]).replace('.py', '')
+    op_name = os.path.basename(requested_page()).replace('.py', '')
 
     if op_title:
         title_object = make_title_entry('%s' % op_name, skipmenu=(not op_menu))

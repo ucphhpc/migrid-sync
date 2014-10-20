@@ -36,15 +36,16 @@ couchdb (for sgas-experimental).
 
 import json
 import os
-import urllib
 import re
 import sys
 import time
+import urllib
 
 import shared.returnvalues as returnvalues
-from shared.init import initialize_main_variables, find_entry
-from shared.functional import validate_input
 import shared.vgrid as vgrid
+from shared.base import requested_page
+from shared.functional import validate_input
+from shared.init import initialize_main_variables, find_entry
 
 # allowed parameters, first value is default
 displays = ['machine','user', 'vgrid', 'summary']
@@ -54,11 +55,11 @@ time_groups = ['month', 'week', 'day']
 def signature():
     """Signature of the main function"""
 
-    defaults = { 'group_in_time':time_groups[0:1]
-                 ,'display'     :displays[0:1]
-                 ,'time_start'  :['2009-09'] # allowed are year-month strings
-                 ,'time_end'    :[time.strftime('%Y-%m')] # ditto. 
-               }
+    defaults = { 'group_in_time': time_groups[0:1],
+                 'display': displays[0:1],
+                 'time_start': ['2009-09'], # allowed are year-month strings
+                 'time_end': [time.strftime('%Y-%m')] # ditto. 
+                 }
     return ['html_form', defaults]
 
 
@@ -81,9 +82,9 @@ def main(client_id, user_arguments_dict):
 
     # read view options
     group_in_time = accepted['group_in_time'][-1] # day, week, month
-    time_start    = accepted['time_start'][-1]
-    time_end      = accepted['time_end'][-1]
-    display       = accepted['display'][-1] # machine, user, vgrid, summary
+    time_start = accepted['time_start'][-1]
+    time_end = accepted['time_end'][-1]
+    display = accepted['display'][-1] # machine, user, vgrid, summary
 
     if not configuration.site_enable_griddk:
         output_objects.append({'object_type': 'text', 'text':
@@ -122,7 +123,7 @@ Please contact the Grid admins %s if you think they should be enabled.
 
     # always include a form to re-display with different values:
     updateform = '           <form action="%s" >' %  \
-                 os.path.basename(sys.argv[0])
+                 os.path.basename(requested_page())
     updateform +='''
                 <table class="runtimeenventry">
                   <thead>
