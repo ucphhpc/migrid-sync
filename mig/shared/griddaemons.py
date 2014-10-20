@@ -307,7 +307,8 @@ def refresh_jobs(configuration, protocol):
     for (_, _, filenames) in os.walk(configuration.sessid_to_mrsl_link_home):
         for filename in filenames:
             filepath = os.path.join(configuration.sessid_to_mrsl_link_home, filename)
-            if os.path.islink(filepath) and filepath.endswith('.mRSL'):
+            if os.path.islink(filepath) and filepath.endswith('.mRSL') and \
+                   os.path.exists(filepath):
                 sessionid = filename[:-5]
                 job_dict = unpickle(filepath, logger)
                 
