@@ -13,15 +13,21 @@
 #	Customization of the MiG installation should be specified by
 #	variables in /etc/sysconfig/MiG
 #
-# Made from the template /usr/share/doc/initscripts-8.45.25/sysinitvfiles
-# from our CEntOS-5.2 installation on grid.dk
+# Made from the template /usr/share/doc/initscripts-X/sysinitvfiles
+# from our CentOS installation
 #
 # <tags ...>
 #
 # chkconfig: - 90 10
 # description: MiG is a Grid solution with minimal installation requirements
 # processname: grid_script.py(default)
-# processname: grid_monitor.py(default)
+# processname: grid_monitor.py
+# processname: grid_sshmux.py
+# processname: grid_events.py
+# processname: grid_openid.py
+# processname: grid_sftp.py
+# processname: grid_davs.py
+# processname: grid_ftps.py
 # config: /etc/sysconfig/MiG
 # 
 
@@ -35,35 +41,38 @@ if [ -f /etc/sysconfig/MiG ]; then
     . /etc/sysconfig/MiG
 fi
 # define default locations and user for MiG if not set:
-if [ -z $MIG_USER ]; then 
+if [ -z "$MIG_USER" ]; then 
     MIG_USER=mig
 fi
-if [ -z $MIG_PATH ]; then 
+if [ -z "$MIG_PATH" ]; then
     MIG_PATH=/home/${MIG_USER}
 fi
 # more configurable paths:
-if [ -z $MIG_STATE ]; then 
+if [ -z "$MIG_STATE" ]; then 
     MIG_STATE=${MIG_PATH}/state
 fi
-if [ -z $MIG_CODE ]; then 
+if [ -z "$MIG_CODE" ]; then 
     MIG_CODE=${MIG_PATH}/mig
 fi
-if [ -n $MIG_CONF ]; then 
+if [ -n "$MIG_CONF" ]; then 
     CUSTOMCONF="MIG_CONF=$MIG_CONF "
 fi
 # you probably do not want to modify these...
-MIG_SERVER=${MIG_CODE}/server/grid_script.py
+MIG_LOG=${MIG_STATE}/log
+MIG_SCRIPT=${MIG_CODE}/server/grid_script.py
 MIG_MONITOR=${MIG_CODE}/server/grid_monitor.py
+MIG_SSHMUX=${MIG_CODE}/server/grid_sshmux.py
+MIG_EVENTS=${MIG_CODE}/server/grid_events.py
+MIG_OPENID=${MIG_CODE}/server/grid_openid.py
 MIG_SFTP=${MIG_CODE}/server/grid_sftp.py
 MIG_DAVS=${MIG_CODE}/server/grid_davs.py
 MIG_FTPS=${MIG_CODE}/server/grid_ftps.py
-MIG_OPENID=${MIG_CODE}/server/grid_openid.py
 DELAY=5
 
-start() {
+start_script() {
 	echo -n "Starting MiG server daemon: "
 	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_SERVER} 2>&1 > ${MIG_STATE}/server.out &"
+	           "$CUSTOMCONF ${MIG_SCRIPT} > ${MIG_LOG}/server.out 2>&1 &"
 	RET=$?
 	if [ $RET -ne 0 ]; then 
 	    failure
@@ -74,72 +83,93 @@ start() {
 	    success
 	fi
 	echo
+}
+start_monitor() {
 	echo -n "Starting MiG monitor daemon:"
 	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_MONITOR} 2>&1 > ${MIG_STATE}/monitor.out &"
+	           "$CUSTOMCONF ${MIG_MONITOR} > ${MIG_LOG}/monitor.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
-	# if monitor does not work, too bad... continue
 	[ $RET2 ] || echo "Warning: Monitor not started."
 	echo
+}
+start_sshmux() {
+	echo -n "Starting MiG SSHMux daemon:"
+	daemon --user ${MIG_USER} \
+	           "$CUSTOMCONF ${MIG_SSHMUX} > ${MIG_LOG}/sshmux.out 2>&1 &"
+	RET2=$?
+	[ $RET2 ] && success
+	echo
+	[ $RET2 ] || echo "Warning: SSHMux not started."
+	echo
+}
+start_events() {
+	echo -n "Starting MiG events daemon:"
+	daemon --user ${MIG_USER} \
+	           "$CUSTOMCONF ${MIG_EVENTS} > ${MIG_LOG}/events.out 2>&1 &"
+	RET2=$?
+	[ $RET2 ] && success
+	echo
+	[ $RET2 ] || echo "Warning: Events not started."
+	echo
+}
+start_openid() {
+	echo -n "Starting MiG OpenID daemon:"
+	daemon --user ${MIG_USER} \
+	           "$CUSTOMCONF ${MIG_OPENID} > ${MIG_LOG}/openid.out 2>&1 &"
+	RET2=$?
+	[ $RET2 ] && success
+	echo
+	[ $RET2 ] || echo "Warning: OpenID not started."
+	echo
+}
+start_sftp() {
 	echo -n "Starting MiG SFTP daemon:"
 	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_SFTP} 2>&1 > ${MIG_STATE}/sftp.out &"
+	           "$CUSTOMCONF ${MIG_SFTP} > ${MIG_LOG}/sftp.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
-	# if sftp does not work, too bad... continue
 	[ $RET2 ] || echo "Warning: SFTP not started."
 	echo
+}
+start_davs() {
 	echo -n "Starting MiG DAVS daemon:"
 	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_DAVS} 2>&1 > ${MIG_STATE}/davs.out &"
+	           "$CUSTOMCONF ${MIG_DAVS} > ${MIG_LOG}/davs.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
-	# if davs does not work, too bad... continue
 	[ $RET2 ] || echo "Warning: DAVS not started."
 	echo
+}
+start_ftps() {
 	echo -n "Starting MiG FTPS daemon:"
 	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_FTPS} 2>&1 > ${MIG_STATE}/ftps.out &"
+	           "$CUSTOMCONF ${MIG_FTPS} > ${MIG_LOG}/ftps.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
-	# if ftps does not work, too bad... continue
 	[ $RET2 ] || echo "Warning: FTPS not started."
-	echo
-	echo -n "Starting MiG OPENID daemon:"
-	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_OPENID} 2>&1 > ${MIG_STATE}/openid.out &"
-	RET2=$?
-	[ $RET2 ] && success
-	echo
-	# if openid does not work, too bad... continue
-	[ $RET2 ] || echo "Warning: OPENID not started."
 
 	touch /var/lock/subsys/MiG
 	return $RET
-}	
+}
 
-stop() {
-	echo -n "Shutting down MiG monitor: "
-	killproc ${MIG_MONITOR}
-	echo
-	echo -n "Shutting down MiG sftp: "
-	killproc ${MIG_SFTP}
-	echo
-	echo -n "Shutting down MiG davs: "
-	killproc ${MIG_DAVS}
-	echo
-	echo -n "Shutting down MiG ftps: "
-	killproc ${MIG_FTPS}
-	echo
-	echo -n "Shutting down MiG openid: "
-	killproc ${MIG_OPENID}
-	echo
-	pid=`pidofproc ${MIG_SERVER}`
+start_all() {
+    start_script
+    start_monitor
+    start_sshmux
+    start_events
+    start_openid
+    start_sftp
+    start_davs
+    start_ftps
+}
+
+stop_script() {
+	pid=`pidofproc ${MIG_SCRIPT}`
 	if [ -z "$pid" ]; then
 	    echo -n "MiG server is not running..."
 	    failure
@@ -157,33 +187,120 @@ stop() {
 		failure
 		echo
 		echo -n "Killing MiG server"
-		killproc ${MIG_SERVER} -KILL;
+		killproc ${MIG_SCRIPT} -KILL;
 	    fi
 	    echo
-	fi
-	
+	fi	
 	rm -f /var/lock/subsys/MiG
 	return $RET
 }
+stop_monitor() {
+	echo -n "Shutting down MiG monitor: "
+	killproc ${MIG_MONITOR}
+	echo
+}
+stop_sshmux() {
+	echo -n "Shutting down MiG sshmux: "
+	killproc ${MIG_SSHMUX}
+	echo
+}
+stop_events() {
+	echo -n "Shutting down MiG events: "
+	killproc ${MIG_EVENTS}
+	echo
+}
+stop_openid() {
+	echo -n "Shutting down MiG openid: "
+	killproc ${MIG_OPENID}
+	echo
+}
+stop_sftp() {
+	echo -n "Shutting down MiG sftp: "
+	killproc ${MIG_SFTP}
+	echo
+}
+stop_davs() {
+	echo -n "Shutting down MiG davs: "
+	killproc ${MIG_DAVS}
+	echo
+}
+stop_ftps() {
+	echo -n "Shutting down MiG ftps: "
+	killproc ${MIG_FTPS}
+	echo
+}
+
+stop_all() {
+    stop_monitor
+    stop_sshmux
+    stop_events
+    stop_openid
+    stop_sftp
+    stop_davs
+    stop_ftps
+    stop_script
+}
+
+status_script() {
+    status ${MIG_SCRIPT}
+}
+status_monitor() {
+    status ${MIG_MONITOR}
+}
+status_sshmux() {
+    status ${MIG_SSHMUX}
+}
+status_events() {
+    status ${MIG_EVENTS}
+}
+status_openid() {
+    status ${MIG_OPENID}
+}
+status_sftp() {
+    status ${MIG_SFTP}
+}
+status_davs() {
+    status ${MIG_DAVS}
+}
+status_ftps() {
+    status ${MIG_FTPS} 
+}
+
+status_all() {
+    status_script
+    status_monitor
+    status_sshmux
+    status_events
+    status_openid
+    status_sftp
+    status_davs
+    status_ftps
+}
+
+
+# Force valid target
+case "$2" in
+    script|monitor|sshmux|events|openid|sftp|davs|ftps)
+        TARGET="$2"
+	;;
+    *)
+        TARGET="all"
+	;;
+esac
 
 case "$1" in
     start)
-	start
+        eval "start_$TARGET"
 	;;
     stop)
-	stop
+        eval "stop_$TARGET"
 	;;
     status)
-	status ${MIG_SERVER}
-	status ${MIG_MONITOR}
-	status ${MIG_SFTP}
-	status ${MIG_DAVS}
-	status ${MIG_FTPS}
-	status ${MIG_OPENID}
+        eval "status_$TARGET"
 	;;
     restart)
-    	stop
-	start
+        eval "stop_$TARGET"
+        eval "start_$TARGET"
 	;;
 #    reload)
 #	<cause the service configuration to be reread, either with
@@ -202,138 +319,8 @@ case "$1" in
 #	;;
     *)
 #	echo "Usage: <servicename> {start|stop|status|reload|restart[|probe]"
-	echo "Usage: <servicename> {start|stop|status|restart]"
+	echo "Usage: MiG {start|stop|status|restart} [daemon]"
 	exit 1
 	;;
 esac
 exit $?
-
-Notes: 
-
-- The restart and reload functions may be (and commonly are)
-  combined into one test, vis:
-    restart|reload)
-- You are not prohibited from adding other commands; list all commands
-  which you intend to be used interactively to the usage message.
-- Notice the change in that stop() and start() are now shell functions.
-  This means that restart can be implemented as
-     stop
-     start
-  instead of
-     $0 stop
-     $0 start
-  This saves a few shell invocations.
-
-Functions in /etc/init.d/functions
-=======================================
-
-daemon  [ --check <name> ] [ --user <username>] 
-	[+/-nicelevel] program [arguments] [&]
-
-	Starts a daemon, if it is not already running.  Does
-	other useful things like keeping the daemon from dumping
-	core if it terminates unexpectedly.
-	
-	--check <name>:
-	   Check that <name> is running, as opposed to simply the
-	   first argument passed to daemon().
-	--user <username>:
-	   Run command as user <username>
-
-killproc program [signal]
-
-	Sends a signal to the program; by default it sends a SIGTERM,
-	and if the process doesn't die, it sends a SIGKILL a few
-	seconds later.
-
-	It also tries to remove the pidfile, if it finds one.
-
-pidofproc program
-
-	Tries to find the pid of a program; checking likely pidfiles,
-	and using the pidof program.  Used mainly from within other
-	functions in this file, but also available to scripts.
-
-status program
-
-	Prints status information.  Assumes that the program name is
-	the same as the servicename.
-
-
-Tags
-====
-
-# chkconfig: <startlevellist> <startpriority> <endpriority>
-
-	Required.  <startlevellist> is a list of levels in which
-	the service should be started by default.  <startpriority>
-	and <endpriority> are priority numbers.  For example:
-	# chkconfig: 2345 20 80
-	Read 'man chkconfig' for more information.
-
-	Unless there is a VERY GOOD, EXPLICIT reason to the
-	contrary, the <endpriority> should be equal to
-	100 - <startpriority>
-	
-# description: <multi-line description of service>
-
-	Required.  Several lines of description, continued with '\'
-	characters.  The initial comment and following whitespace
-	on the following lines is ignored.
-
-# description[ln]: <multi-line description of service in the language \
-#                  ln, whatever that is>
-
-	Optional.  Should be the description translated into the
-	specified language.
-
-# processname:
-
-	Optional, multiple entries allowed.  For each process name
-	started by the script, there should be a processname entry.
-	For example, the samba service starts two daemons:
-	# processname: smdb
-	# processname: nmdb
-
-# config:
-
-	Optional, multiple entries allowed.  For each static config
-	file used by the daemon, use a single entry.  For example:
-	# config: /etc/httpd/conf/httpd.conf
-	# config: /etc/httpd/conf/srm.conf
-
-	Optionally, if the server will automatically reload the config
-	file if it is changed, you can append the word "autoreload" to
-	the line:
-	# config: /etc/foobar.conf autoreload
-
-# pidfile:
-
-	Optional, multiple entries allowed.  Use just like the config
-	entry, except that it points at pidfiles.  It is assumed that
-	the pidfiles are only updated at process creation time, and
-	not later.  The first line of this file should be the ASCII
-	representation of the PID; a terminating newline is optional.
-	Any lines other than the first line are not examined.
-
-# probe: true
-
-	Optional, used IN PLACE of processname, config, and pidfile.
-	If it exists, then a proper reload-if-necessary cycle may be
-	acheived by running these commands:
-
-	command=$(/etc/rc.d/init.d/SCRIPT probe)
-	[ -n "$command" ] && /etc/rc.d/init.d/SCRIPT $command
-
-	where SCRIPT is the name of the service's sysv init script.
-
-	Scripts that need to do complex processing could, as an
-	example, return "run /var/tmp/<servicename.probe.$$"
-	and implement a "run" command which would execute the
-	named script and then remove it.
-
-	Note that the probe command should simply "exit 0" if nothing
-	needs to be done to bring the service into sync with its
-	configuration files.
-
-Copyright (c) 2000 Red Hat Software, Inc.
