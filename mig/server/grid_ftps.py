@@ -118,7 +118,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
         logger.debug("update user list")
 
         # automatic reload of users if more than refresh_delay seconds old
-        refresh_delay = 60
+        refresh_delay = 5
         if daemon_conf['time_stamp'] + refresh_delay < time.time():
             daemon_conf = refresh_users(configuration, 'ftps')
 

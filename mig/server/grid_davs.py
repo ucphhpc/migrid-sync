@@ -127,21 +127,21 @@ class MiGFilesystemHandler(FilesystemHandler):
     
     def _get_fs_path(self, davs_path):
         """Wrap helper"""
-        logger.debug("get_fs_path: %s" % davs_path)
+        #logger.debug("get_fs_path: %s" % davs_path)
         reply = get_fs_path(davs_path, self.root, self.chroot_exceptions)
         logger.debug("get_fs_path returns: %s :: %s" % (davs_path, reply))
         return reply
 
     def _strip_root(self, davs_path):
         """Wrap helper"""
-        logger.debug("strip_root: %s" % davs_path)
+        #logger.debug("strip_root: %s" % davs_path)
         reply = strip_root(davs_path, self.root, self.chroot_exceptions)
         logger.debug("strip_root returns: %s :: %s" % (davs_path, reply))
         return reply
     
     def _acceptable_chmod(self, davs_path, mode):
         """Wrap helper"""
-        logger.debug("acceptable_chmod: %s" % davs_path)
+        #logger.debug("acceptable_chmod: %s" % davs_path)
         reply = acceptable_chmod(davs_path, mode, self.chmod_exceptions)
         logger.debug("acceptable_chmod returns: %s :: %s" % (davs_path, reply))
         return reply
@@ -172,6 +172,7 @@ class MiGFilesystemHandler(FilesystemHandler):
                 try:
                     files = os.listdir(fileloc)
                 except:
+                    logger.warning("could not listfiles in %s" % uri)
                     raise DAV_NotFound
                 
                 for filename in files:
@@ -180,7 +181,7 @@ class MiGFilesystemHandler(FilesystemHandler):
                     newloc = os.path.join(fileloc, filename)
                     filelist.append(self.local2uri(newloc))
                     
-                    logger.info('get_childs: Childs %s' % filelist)
+        logger.info('get_childs: Childs %s' % filelist)
         return filelist
                 
     def get_data(self, uri, range=None):
