@@ -78,18 +78,28 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
     cert_path = os.path.expanduser('~/.mig/cert.pem')
     if not os.path.exists(cert_path):
         cert_path = os.path.expanduser('/sdcard/.mig/cert.pem')
-    wrap_targets = {'www.migrid.org': {'cert_port': cert_port,
-                                       'ssl_cert': cert_path,
-                                       'ssl_key': key_path}, 
-                    'dk.migrid.org': {'cert_port': cert_port,
-                                      'ssl_cert': cert_path,
-                                       'ssl_key': key_path}, 
-                    'dk-cert.migrid.org': {'cert_port': cert_port,
-                                           'ssl_cert': cert_path,
-                                           'ssl_key': key_path},
-                    'dk-sid.migrid.org': {'cert_port': cert_port,
-                                          'ssl_cert': cert_path,
-                                          'ssl_key': key_path}}
+    wrap_targets = {
+	'www.migrid.org': {
+	    'cert_port': cert_port,
+            'ssl_cert': cert_path,
+            'ssl_key': key_path
+	    }, 
+        'dk-cert.migrid.org': {
+	    'cert_port': cert_port,
+            'ssl_cert': cert_path,
+            'ssl_key': key_path
+	    },
+        'dk-oid.migrid.org': {
+	    'cert_port': cert_port,
+            'ssl_cert': cert_path,
+            'ssl_key': key_path
+	    }, 
+        'dk-sid.migrid.org': {
+	    'cert_port': cert_port,
+            'ssl_cert': cert_path,
+            'ssl_key': key_path
+	    }
+    }
     wrap_ssl = False
     sock = None
     key = None

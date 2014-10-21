@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# native-ssl - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# native-ssl - native ssl socket access
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,7 +38,7 @@ try:
     HOME = os.getenv('HOME')
 except Exception:
     HOME = '.'
-args = ['dk.migrid.org', 443, '%s/.mig/key.pem' % HOME,
+args = ['dk-cert.migrid.org', 443, '%s/.mig/key.pem' % HOME,
         '%s/.mig/cert.pem' % HOME]
 input_args = sys.argv[1:]
 if len(input_args) > 4:

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rss - RSS feed generator functions
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -97,17 +97,21 @@ def write_rss_feed(rss_feed, destination, insert_header=''):
 
 
 if __name__ == "__main__":
+    from shared.conf import get_configuration_object
+    conf = get_configuration_object()
     feed_base = "demofeed"
     feed_raw = "%s.xml" % feed_base
     feed_css_style = "%s.css" % feed_base
     feed_page = "%s.html" % feed_base
+    dashboard_url = configuration.https_cert_url + '/cgi-bin/dashboard.py'
+    docs_url = configuration.https_cert_url + '/cgi-bin/docs.py'
     entries = [{'title': 'Dashboard page',
-                'link': 'https://dk.migrid.org/cgi-bin/dashboard.py',
-                'guid': 'https://dk.migrid.org/cgi-bin/dashboard.py',
+                'link': dashboard_url,
+                'guid': dashboard_url,
                 'description': 'MiG user dashboard page'},
                {'title': 'Docs page',
-                'link': 'https://dk.migrid.org/cgi-bin/docs.py',
-                'guid': 'https://dk.migrid.org/cgi-bin/docs.py',
+                'link': docs_url,
+                'guid': docs_url,
                 'description': 'MiG user docs page'}]
     data = {'title': 'Demo feed', 'link': 'demofeed.xml', 'docs': 'Demo output',
             'css_url': feed_css_style, 'description': 'MiG demo feed',

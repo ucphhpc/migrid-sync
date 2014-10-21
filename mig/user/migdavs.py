@@ -59,15 +59,9 @@ from requests.exceptions import ConnectionError
 
 ### Global configuration ###
 
-server_fqdn = 'dk.migrid.org'
+server_fqdn = 'dk-cert.migrid.org'
 #server_fqdn = 'localhost'
 server_port = 4443
-server_host_key = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0ImsGTKx3Rky7jaGDRVts" \
-"e80YUcVTYW5NCvU0ntclfosdlFdDli8S3tOLk47DcwZkYt1/XY4rP/LN6unVTiZK7dpRTACuSGr" \
-"Kc/TVM63TzG9Zwq1M95pNLdhgRJen1Ez7CzbrWDcsFJNfjxJtvnIWuKmXJ8NBbmhw1nqtZRdvcF" \
-"7aLX12KxCxcpJLPtU0N/cbRghi2BTYsGbPUrVd1vYJKhtvc2dQ+vfOiYGSj1bo3LOdTsLmpOoIm" \
-"GvYyGnpA8mVgc4sbWW6/RVSkIJxnyoUeP/xgsMQlfcXLZ/9vi/QPe64UVAAAdk18+eNnjHq2Qs8" \
-"fxHMVyV2vhLpP/xFdJVNQ=="
 
 
 class MiGDAVClient(python_webdav.client.Client):
