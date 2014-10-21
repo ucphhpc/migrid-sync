@@ -72,7 +72,7 @@ DELAY=5
 start_script() {
 	echo -n "Starting MiG server daemon: "
 	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_SCRIPT} > ${MIG_LOG}/server.out 2>&1 &"
+	           "$CUSTOMCONF ${MIG_SCRIPT} >> ${MIG_LOG}/mig.out 2>&1 &"
 	RET=$?
 	if [ $RET -ne 0 ]; then 
 	    failure
@@ -87,7 +87,7 @@ start_script() {
 start_monitor() {
 	echo -n "Starting MiG monitor daemon:"
 	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_MONITOR} > ${MIG_LOG}/monitor.out 2>&1 &"
+	           "$CUSTOMCONF ${MIG_MONITOR} >> ${MIG_LOG}/monitor.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
@@ -97,7 +97,7 @@ start_monitor() {
 start_sshmux() {
 	echo -n "Starting MiG SSHMux daemon:"
 	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_SSHMUX} > ${MIG_LOG}/sshmux.out 2>&1 &"
+	           "$CUSTOMCONF ${MIG_SSHMUX} >> ${MIG_LOG}/sshmux.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
@@ -107,7 +107,7 @@ start_sshmux() {
 start_events() {
 	echo -n "Starting MiG events daemon:"
 	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_EVENTS} > ${MIG_LOG}/events.out 2>&1 &"
+	           "$CUSTOMCONF ${MIG_EVENTS} >> ${MIG_LOG}/events.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
@@ -117,7 +117,7 @@ start_events() {
 start_openid() {
 	echo -n "Starting MiG OpenID daemon:"
 	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_OPENID} > ${MIG_LOG}/openid.out 2>&1 &"
+	           "$CUSTOMCONF ${MIG_OPENID} >> ${MIG_LOG}/openid.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
@@ -127,7 +127,7 @@ start_openid() {
 start_sftp() {
 	echo -n "Starting MiG SFTP daemon:"
 	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_SFTP} > ${MIG_LOG}/sftp.out 2>&1 &"
+	           "$CUSTOMCONF ${MIG_SFTP} >> ${MIG_LOG}/sftp.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
@@ -137,7 +137,7 @@ start_sftp() {
 start_davs() {
 	echo -n "Starting MiG DAVS daemon:"
 	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_DAVS} > ${MIG_LOG}/davs.out 2>&1 &"
+	           "$CUSTOMCONF ${MIG_DAVS} >> ${MIG_LOG}/davs.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
@@ -147,7 +147,7 @@ start_davs() {
 start_ftps() {
 	echo -n "Starting MiG FTPS daemon:"
 	daemon --user ${MIG_USER} \
-	           "$CUSTOMCONF ${MIG_FTPS} > ${MIG_LOG}/ftps.out 2>&1 &"
+	           "$CUSTOMCONF ${MIG_FTPS} >> ${MIG_LOG}/ftps.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
