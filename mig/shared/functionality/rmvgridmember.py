@@ -34,8 +34,8 @@ from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
-from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_member, \
-     vgrid_remove_members
+from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
+     vgrid_is_member, vgrid_remove_members, vgrid_list_subvgrids
 from shared.vgridaccess import unmap_inheritance
 
 
@@ -78,7 +78,7 @@ def main(client_id, user_arguments_dict):
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
 
-    (ret_val, msg, ret_variables) = \
+    (ret_val, msg, _) = \
         init_vgrid_script_add_rem(vgrid_name, client_id, cert_id,
                                   'member', configuration)
     if not ret_val:
@@ -93,6 +93,31 @@ def main(client_id, user_arguments_dict):
                               : '%s is not a member of %s or a parent vgrid.'
                                % (cert_id, vgrid_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # owner of subvgrid?
+
+    (status, subvgrids) = vgrid_list_subvgrids(vgrid_name,
+            configuration)
+    if not status:
+        output_objects.append({'object_type': 'error_text', 'text'
+                              : 'Error getting list of subvgrids: %s'
+                               % subvgrids})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    # TODO: we DO allow ownership of sub vgrids with parent membership so we
+    # should support the (cumbersome) relinking of vgrid shares here. Leave it
+    # to user to do it manually for now with temporary removal of ownership
+
+    for subvgrid in subvgrids:
+        if vgrid_is_owner(subvgrid, cert_id, configuration, recursive=False):
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : """%s is already an owner of a sub vgrid ('%s'). While we
+we DO support members being owners of sub-vgrids, we do not support removing
+parent vgrid members at the moment. Please (temporarily) remove the person as
+owner of all sub vgrids first and then try this operation again.""" % \
+                 (cert_id, subvgrid)})
+            return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
     # vgrid dirs when own name is a prefix of another name

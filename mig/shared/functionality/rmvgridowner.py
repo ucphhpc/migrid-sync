@@ -41,8 +41,8 @@ from shared.init import initialize_main_variables
 from shared.parseflags import force
 from shared.useradm import distinguished_name_to_user
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-       vgrid_owners, vgrid_members, vgrid_resources, vgrid_list_subvgrids, \
-       vgrid_remove_owners
+     vgrid_is_member, vgrid_owners, vgrid_members, vgrid_resources, \
+     vgrid_list_subvgrids, vgrid_remove_owners, vgrid_list_parents
 from shared.vgridaccess import unmap_vgrid, unmap_inheritance
 
 def signature():
@@ -87,8 +87,8 @@ def rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
              })
         return False
 
-def unlink_shared_folders(user_dir, vgrid):
-    """Utility function to remove links to shared vgrid folders.
+def unlink_share(user_dir, vgrid):
+    """Utility function to remove link to shared vgrid folder.
 
     user_dir: the full path to the user home where deletion should happen
 
@@ -98,15 +98,39 @@ def unlink_shared_folders(user_dir, vgrid):
 
     Note: Removed links are hard-coded (as in other modules)
         user_dir/vgrid
+    In case of a sub-vgrid, enclosing empty directories are removed as well.
+    """
+    success = True
+    msg = ""
+    path = os.path.join(user_dir, vgrid)
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+            path = os.path.dirname(path)
+            if os.path.isdir(path) and os.listdir(path) == []: 
+                os.removedirs(path)
+    except Exception, err:
+        success = False
+        msg += "\nCould not remove link %s: %s" % (path, err)
+    return (success, msg[1:])
+
+def unlink_web_folders(user_dir, vgrid):
+    """Utility function to remove links to shared vgrid web folders.
+
+    user_dir: the full path to the user home where deletion should happen
+
+    vgrid: the name of the vgrid to delete   
+
+    Returns boolean success indicator and potential messages as a pair.
+
+    Note: Removed links are hard-coded (as in other modules)
         user_dir/private_base/vgrid
         user_dir/public_base/vgrid
     In case of a sub-vgrid, enclosing empty directories are removed as well.
     """
-
     success = True
     msg = ""
-
-    for infix in ["", "private_base", "public_base"]:
+    for infix in ["private_base", "public_base"]:
         path = os.path.join(user_dir, infix, vgrid)
         try:
             if os.path.exists(path):
@@ -117,7 +141,6 @@ def unlink_shared_folders(user_dir, vgrid):
         except Exception, err:
             success = False
             msg += "\nCould not remove link %s: %s" % (path, err)
-
     return (success, msg[1:])
 
 def abandon_vgrid_files(vgrid, configuration):
@@ -193,9 +216,9 @@ def remove_vgrid_entry(vgrid, configuration):
 
     else:
 
-        for prefix in [ configuration.vgrid_public_base, 
-                        configuration.vgrid_private_base, 
-                        configuration.vgrid_files_home]:
+        for prefix in [configuration.vgrid_public_base, 
+                       configuration.vgrid_private_base, 
+                       configuration.vgrid_files_home]:
 
             # delete public, member, and owner scms/trackers
             # we just remove and do not check success for these
@@ -240,11 +263,13 @@ def main(client_id, user_arguments_dict):
     flags = ''.join(accepted['flags'])
     cert_id = accepted['cert_id'][-1]
     cert_dir = client_id_dir(cert_id)
+    # inherited vgrid membership
+    inherit_vgrid_member = False
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
 
-    (ret_val, msg, ret_variables) = \
+    (ret_val, msg, _) = \
         init_vgrid_script_add_rem(vgrid_name, client_id, cert_id,
                                   'owner', configuration)
     if not ret_val:
@@ -259,12 +284,6 @@ def main(client_id, user_arguments_dict):
                               : '%s is not an owner of %s or a parent vgrid.'
                                % (cert_id, vgrid_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
-
-    # Please note that base_dir must end in slash to avoid access to other
-    # vgrid dirs when own name is a prefix of another name
-
-    base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
-                               vgrid_name)) + os.sep
 
     # we need the local owners file to detect inherited ownerships
 
@@ -326,16 +345,43 @@ Owner removal has to be performed at the topmost vgrid''' % cert_id})
                                              output_objects):
                         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-            # unlink shared folders (web pages and files)
-
             user_dir = os.path.abspath(os.path.join(configuration.user_home,
                                                     cert_dir)) + os.sep
-            (success, msg) = unlink_shared_folders(user_dir, vgrid_name)
+        
+            # Do not touch vgrid share if still a member of a parent vgrid
+            
+            if vgrid_is_member(vgrid_name, cert_id, configuration):
+                # list is in top-down order 
+                parent_vgrids = vgrid_list_parents(vgrid_name, configuration)
+                inherit_vgrid_member = vgrid_name
+                for parent in parent_vgrids:
+                    if vgrid_is_member(parent, cert_id, configuration,
+                                       recursive=False):
+                        inherit_vgrid_member = parent
+                        break
+                output_objects.append(
+                    {'object_type': 'text', 'text'
+                     : '''NOTE: %s is still a member of parent vgrid %s.
+                     Preserving access to corresponding vgrid.''' % \
+                     (cert_id, inherit_vgrid_member)
+                     })
+            else:
+                (success, msg) = unlink_share(user_dir, vgrid_name)
+                if not success: 
+                    logger.error('Could not remove share link: %s.' % msg)
+                    output_objects.append({'object_type': 'error_text', 'text'
+                                           : 'Could not remove share links: %s.'
+                                           % msg})
+                    return (output_objects, returnvalues.SYSTEM_ERROR)
+
+            # unlink shared web folders
+
+            (success, msg) = unlink_web_folders(user_dir, vgrid_name)
             if not success: 
-                logger.error('Could not remove links: %s.' % msg)
+                logger.error('Could not remove web links: %s.' % msg)
                 output_objects.append({'object_type': 'error_text', 'text'
-                                       : 'Could not remove links: %s.' 
-                                         % msg})
+                                       : 'Could not remove web links: %s.' 
+                                       % msg})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
 
             # remove user from saved owners list
@@ -347,6 +393,8 @@ Owner removal has to be performed at the topmost vgrid''' % cert_id})
                                        % (rm_msg, vgrid_name)})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
 
+            # Any parent vgrid membership is left untouched here as we only
+            # force a normal refresh in unmap_inheritance
             unmap_inheritance(configuration, vgrid_name, cert_id)
 
             output_objects.append({'object_type': 'text', 'text'
@@ -462,10 +510,9 @@ To leave (and delete) %s, first remove all members.'''
 
             user_dir = os.path.abspath(os.path.join(configuration.user_home,
                                                     cert_dir)) + os.sep
-            (unlinked, msg1)  = unlink_shared_folders(user_dir, vgrid_name)
-
+            (share_lnk, msg1)  = unlink_share(user_dir, vgrid_name)
+            (web_lnk, msg1)  = unlink_web_folders(user_dir, vgrid_name)
             (abandoned, msg2) = abandon_vgrid_files(vgrid_name, configuration)
-
         else:
 
             # owner owns an upper vgrid, ownership is inherited
@@ -473,7 +520,8 @@ To leave (and delete) %s, first remove all members.'''
             logger.debug('%s looks like a sub-vgrid, ownership inherited.'
                          % vgrid_name)
             logger.debug('Only removing entry, leaving files in place.')
-            unlinked = True
+            share_lnk = True
+            web_lnk = True
             abandoned = True
             msg1 = ''
             msg2 = ''
@@ -488,7 +536,7 @@ To leave (and delete) %s, first remove all members.'''
                                'destination': 'vgridadmin.py', 
                                'text': 'Back to the overview.'})
 
-        if not unlinked or not abandoned or not removed:
+        if not share_lnk or not web_lnk or not abandoned or not removed:
 
             logger.error('Errors while removing %s:\n%s.'
                          % (vgrid_name, '\n'.join([msg1,msg2,msg3])))

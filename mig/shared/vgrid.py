@@ -75,11 +75,14 @@ def vgrid_is_entity_in_list(
     entity_id,
     group,
     configuration,
-    recursive=True,
+    recursive,
     dict_field=False,
     ):
     """Return True if specified entity_id is in group
     ('owners', 'members', 'resources', 'triggers') of vgrid.
+    If recursive is True the entities from parent vgrids will be included. The
+    optional dict_field is used to check against the trigger case where entries
+    are dicts rather than raw strings.
     """
 
     # Get the list of entities of specified type (group) in vgrid (vgrid_name)
@@ -96,7 +99,7 @@ def vgrid_is_entity_in_list(
         
     return vgrid_allowed(entity_id, entries)
 
-def vgrid_is_owner(vgrid_name, client_id, configuration):
+def vgrid_is_owner(vgrid_name, client_id, configuration, recursive=True):
     """Check if client_id is an owner of vgrid_name. Please note
     that nobody owns the default vgrid.
     """
@@ -104,10 +107,10 @@ def vgrid_is_owner(vgrid_name, client_id, configuration):
     if vgrid_is_default(vgrid_name):
         return False
     return vgrid_is_entity_in_list(vgrid_name, client_id, 'owners',
-                                   configuration)
+                                   configuration, recursive)
 
 
-def vgrid_is_member(vgrid_name, client_id, configuration):
+def vgrid_is_member(vgrid_name, client_id, configuration, recursive=True):
     """Check if client_id is a member of vgrid_name. Please note
     that everybody is a member of the default vgrid.
     """
@@ -115,10 +118,10 @@ def vgrid_is_member(vgrid_name, client_id, configuration):
     if vgrid_is_default(vgrid_name):
         return True
     return vgrid_is_entity_in_list(vgrid_name, client_id, 'members',
-                                   configuration)
+                                   configuration, recursive)
 
 
-def vgrid_is_resource(vgrid_name, res_id, configuration):
+def vgrid_is_resource(vgrid_name, res_id, configuration, recursive=True):
     """Check if res_id is a resource in vgrid_name. Please note
     that everyone is a member of the default vgrid.
     They still explicitly have to sign up to accept jobs
@@ -128,14 +131,14 @@ def vgrid_is_resource(vgrid_name, res_id, configuration):
     if vgrid_is_default(vgrid_name):
         return True
     return vgrid_is_entity_in_list(vgrid_name, res_id, 'resources',
-                                   configuration)
+                                   configuration, recursive)
 
 
-def vgrid_is_trigger(vgrid_name, rule_id, configuration):
+def vgrid_is_trigger(vgrid_name, rule_id, configuration, recursive=True):
     """Check if rule_id is a trigger in vgrid_name"""
 
     return vgrid_is_entity_in_list(vgrid_name, rule_id, 'triggers',
-                                   configuration, dict_field='rule_id')
+                                   configuration, recursive, 'rule_id')
 
 
 def vgrid_list_subvgrids(vgrid_name, configuration):
@@ -160,7 +163,7 @@ def vgrid_list_subvgrids(vgrid_name, configuration):
 
 
 def vgrid_list_parents(vgrid_name, configuration):
-    """Return list of parent vgrids of vgrid_name"""
+    """Return list of parent vgrids of vgrid_name listed with root first"""
 
     result_list = []
     parts = vgrid_name.split(os.sep)

@@ -38,7 +38,7 @@ from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.useradm import distinguished_name_to_user
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-    vgrid_is_member, vgrid_list_subvgrids, vgrid_add_owners
+    vgrid_is_member, vgrid_list_subvgrids, vgrid_add_owners, vgrid_list_parents
 import shared.returnvalues as returnvalues
 
 
@@ -111,6 +111,8 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1]
     cert_id = accepted['cert_id'][-1]
     cert_dir = client_id_dir(cert_id)
+    # inherited vgrid membership
+    inherit_vgrid_member = False
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
@@ -132,14 +134,13 @@ def main(client_id, user_arguments_dict):
              % (cert_id, vgrid_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # don't add if already a member
+    # don't add if already a direct member
 
-    if vgrid_is_member(vgrid_name, cert_id, configuration):
+    if vgrid_is_member(vgrid_name, cert_id, configuration, recursive=False):
         output_objects.append(
             {'object_type': 'error_text', 'text'
-             : '''%s is already a member of %s or a parent vgrid. Please remove
-the person first and then try this operation again.''' % (cert_id, vgrid_name)
-             })
+             : '%s is already a member of %s - please remove first.'
+             % (cert_id, vgrid_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # owner of subvgrid?
@@ -153,14 +154,14 @@ the person first and then try this operation again.''' % (cert_id, vgrid_name)
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     for subvgrid in subvgrids:
-        if vgrid_is_owner(subvgrid, cert_id, configuration):
+        if vgrid_is_owner(subvgrid, cert_id, configuration, recursive=False):
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : """%s is already an owner of a sub vgrid ('%s'). Please
 remove the person first and then try this operation again.""" % (cert_id,
                                                                  subvgrid)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-        if vgrid_is_member(subvgrid, cert_id, configuration):
+        if vgrid_is_member(subvgrid, cert_id, configuration, recursive=False):
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : """%s is already a member of a sub vgrid ('%s'). Please
@@ -168,8 +169,25 @@ remove the person first and then try this operation again.""" % (cert_id,
                                                                  subvgrid)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # getting here means cert_id is neither owner or member of any parent or
-    # sub-vgrids.
+    # we DO allow ownership if member of parent vgrid - only handle with care
+
+    if vgrid_is_member(vgrid_name, cert_id, configuration):
+        # list is in top-down order 
+        parent_vgrids = vgrid_list_parents(vgrid_name, configuration)
+        inherit_vgrid_member = vgrid_name
+        for parent in parent_vgrids:
+            if vgrid_is_member(parent, cert_id, configuration,
+                               recursive=False):
+                inherit_vgrid_member = parent
+                break
+        output_objects.append(
+            {'object_type': 'text', 'text'
+             : '''NOTE: %s is already a member of parent vgrid %s.''' % \
+             (cert_id, inherit_vgrid_member)
+             })
+
+    # getting here means cert_id is not owner of any parent or child vgrids.
+    # may still be member of a parent grid but not a child vgrid.
 
     public_base_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
@@ -206,7 +224,9 @@ exists with the same name! %s''' % user_dir + vgrid_name})
 exists with the same name!'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if os.path.exists(user_dir + vgrid_name):
+    # vgrid share already exists if user is a member of parent vgrid
+    
+    if not inherit_vgrid_member and os.path.exists(user_dir + vgrid_name):
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : '''Could not add owner, a file or directory in the home
@@ -240,6 +260,7 @@ directory exists with the same name!'''})
         pass
 
     if is_subvgrid:
+        share_dir = None
         try:
 
             # Example:
@@ -257,17 +278,15 @@ directory exists with the same name!'''})
 
             # create dirs if they do not exist
 
-            dir1 = user_dir + vgrid_name_without_last_fragment
-            if not os.path.isdir(dir1):
-                os.makedirs(dir1)
-                dir2 = user_public_base\
-                     + vgrid_name_without_last_fragment
-            if not os.path.isdir(dir2):
-                os.makedirs(dir2)
-                dir3 = user_private_base\
-                     + vgrid_name_without_last_fragment
-            if not os.path.isdir(dir3):
-                os.makedirs(dir3)
+            share_dir = user_dir + vgrid_name_without_last_fragment
+            if not os.path.isdir(share_dir):
+                os.makedirs(share_dir)
+            pub_dir = user_public_base + vgrid_name_without_last_fragment
+            if not os.path.isdir(pub_dir):
+                os.makedirs(pub_dir)
+            priv_dir = user_private_base + vgrid_name_without_last_fragment
+            if not os.path.isdir(priv_dir):
+                os.makedirs(priv_dir)
         except Exception, exc:
 
             # out of range? should not be possible due to is_subvgrid check
@@ -276,20 +295,20 @@ directory exists with the same name!'''})
                 {'object_type': 'error_text', 'text'
                  : ('Could not create needed dirs on %s server! %s'
                     % (configuration.short_title, exc))})
-            logger.error('%s when looking for dir %s.' % (exc, dir1))
+            logger.error('%s when looking for dir %s.' % (exc, share_dir))
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # create symlink from users home directory to vgrid file directory
+    # unless member of parent vgrid so that it is included already
 
     link_src = os.path.abspath(configuration.vgrid_files_home + os.sep
                                 + vgrid_name) + os.sep
     link_dst = user_dir + vgrid_name
 
-    # create symlink to vgrid files
-
-    if not make_symlink(link_src, link_dst, logger):
+    if not inherit_vgrid_member and \
+           not make_symlink(link_src, link_dst, logger):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not create link to vgrid files!'})
+                              : 'Could not create link to vgrid share!'})
         logger.error('Could not create link to vgrid files (%s -> %s)'
                      % (link_src, link_dst))
         return (output_objects, returnvalues.SYSTEM_ERROR)

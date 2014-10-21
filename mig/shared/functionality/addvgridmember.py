@@ -116,15 +116,21 @@ the person first and then try this operation again.''' % (cert_id, vgrid_name)
                                % subvgrids})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    # TODO: we DO allow ownership of sub vgrids with parent membership so we
+    # should support the (cumbersome) relinking of vgrid shares here. Leave it
+    # to user to do it manually for now with temporary removal of ownership
+
     for subvgrid in subvgrids:
-        if vgrid_is_owner(subvgrid, cert_id, configuration):
+        if vgrid_is_owner(subvgrid, cert_id, configuration, recursive=False):
             output_objects.append(
                 {'object_type': 'error_text', 'text'
-                 : """%s is already an owner of a sub vgrid ('%s'). Please
-remove the person first and then try this operation again.""" % (cert_id,
-                                                                 subvgrid)})
+                 : """%s is already an owner of a sub vgrid ('%s'). While we
+we DO support members being owners of sub-vgrids, we do not support adding
+parent vgrid members at the moment. Please (temporarily) remove the person as
+owner of all sub vgrids first and then try this operation again.""" % \
+                 (cert_id, subvgrid)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-        if vgrid_is_member(subvgrid, cert_id, configuration):
+        if vgrid_is_member(subvgrid, cert_id, configuration, recursive=False):
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : """%s is already a member of a sub vgrid ('%s'). Please
