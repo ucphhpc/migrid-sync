@@ -140,7 +140,13 @@ $(document).ready(function() {
     if configuration.site_enable_ftps:
         valid_topics.append('ftps')
     topics = accepted['topic']
+    # Backwards compatibility
+    if topics and topics[0] == 'ssh':
+        topics[0] = 'sftp'
     topics = [i for i in topics if i in valid_topics]
+    # Default to general if no valid topics given
+    if not topics:
+        topics.append(valid_topics[0])
     topic_titles = dict([(i, i.title()) for i in valid_topics])
     for (key, val) in [('sftp', 'SFTP'), ('webdavs', 'WebDAVS'),
                        ('ftps', 'FTPS')]:
