@@ -441,7 +441,8 @@ def run(configuration):
                 expired = expire_rate_limit(configuration, "davs")
                 logger.debug("Expired rate limit entries: %s" % expired)
     except KeyboardInterrupt:
-        logger.info('Killed by user')
+        # forward KeyboardInterrupt to main thread
+        raise
 
 
 if __name__ == "__main__":
@@ -509,7 +510,6 @@ if __name__ == "__main__":
         'logger': logger,
         }
 
-
     print """
 Running grid davs server for user dav access to their MiG homes.
 
@@ -520,6 +520,8 @@ unless it is available in mig/server/MiGserver.conf
     try:
         run(configuration)
     except KeyboardInterrupt:
-        logger.info("received interrupt - shutting down")
+        info_msg = "Received user interrupt"
+        logger.info(info_msg)
+        print info_msg
     except Exception, exc:
         logger.error("exiting on unexpected exception: %s" % exc)
