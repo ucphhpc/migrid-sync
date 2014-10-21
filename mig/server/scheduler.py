@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scheduler - base scheduler class used by all schedulers
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -382,6 +382,11 @@ class Scheduler:
         server = {}
         if self.servers.has_key(server_id):
             server = self.servers[server_id]
+        elif self.servers.has_key(self.conf.server_fqdn):
+            # Did server_fqdn change in MiGserver.conf?
+            self.logger.warning("find_server: %s not found - use self" % \
+                                server_id)
+            server = self.servers[self.conf.server_fqdn]
         return server
 
     def update_servers(self, server_conf):
@@ -1453,7 +1458,7 @@ class Scheduler:
 
             # self.logger.info("%s is %d away" % (res_id, res_dist))
 
-            # Note: We do'nt know future CPUTIME of other resources, but just
+            # Note: We don't know future CPUTIME of other resources, but just
             # keep last requested time as a qualified guess
 
             if not self.job_fits_resource(job, res):
