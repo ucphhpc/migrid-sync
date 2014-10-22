@@ -33,11 +33,11 @@ import os
 
 # REJECT_UNSET is not used directly but exposed to functionality
 
-from shared.safeinput import validated_input, valid_user_path, \
-     REJECT_UNSET
 from shared.findtype import is_user
+from shared.safeinput import validated_input, REJECT_UNSET
 
 def warn_on_rejects(rejects, output_objects):
+    """Helper to fill in output_objects in case of rejects"""
     if rejects:
         for (key, err_list) in rejects.items():
             for err in err_list:
@@ -57,26 +57,42 @@ def merge_defaults(user_input, defaults):
             user_input[key] = val
 
 
+def prefilter_input(user_arguments_dict, prefilter_map):
+    """Apply filters from filter_map to user_arguments_dict values inline"""
+    for (key, prefilter) in prefilter_map.items():
+        if user_arguments_dict.has_key(key):
+            orig = user_arguments_dict[key]
+            if isinstance(orig, basestring):
+                res = prefilter(orig)
+            else:
+                res = [prefilter(i) for i in orig]
+            user_arguments_dict[key] = res
+
+
 def validate_input(
     user_arguments_dict,
     defaults,
     output_objects,
     allow_rejects,
+    prefilter_map=None,
     ):
     """A wrapper used by most back end functionality"""
 
-    # always allow output_format and underscore cache prevention dummy, we
+    # always allow output_format and underscore cache-prevention dummy, we
     # don't want to use unnecessary lines in all scripts to specify this
 
     defaults['output_format'] = ['allow_me']
     defaults['_'] = ['allow_me']
+    if prefilter_map:
+        prefilter_input(user_arguments_dict, prefilter_map)
     (accepted, rejected) = validated_input(user_arguments_dict,
             defaults)
     warn_on_rejects(rejected, output_objects)
-    if len(rejected.keys()) > 0:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Input arguments were rejected - not allowed for this script!'
-                              })
+    if rejected.keys() and not allow_rejects:
+        output_objects.append(
+            {'object_type': 'error_text', 'text'
+             : 'Input arguments were rejected - not allowed for this script!'
+             })
         return (False, output_objects)
     return (True, accepted)
 
@@ -89,6 +105,7 @@ def validate_input_and_cert(
     configuration,
     allow_rejects,
     require_user=True,
+    filter_values=None,
     ):
     """A wrapper used by most back end functionality"""
     
@@ -116,30 +133,35 @@ def validate_input_and_cert(
         extcert_link = {'object_type': 'link', 'destination': extcert_url,
                         'text': 'Sign up with existing certificate'}
         if not client_id:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'Apparently you do not have a suitable user certificate, but you can request one:'
-                                  })
+            output_objects.append(
+                {'object_type': 'text', 'text': '''Apparently you do not have
+a suitable user certificate, but you can request one:'''
+                 })
             output_objects.append(certreq_link)
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'However, if you own a suitable certificate you can sign up with it:'
-                                  })
+            output_objects.append(
+                {'object_type': 'text', 'text': '''However, if you own a
+suitable certificate you can sign up with it:'''
+                 })
             output_objects.append(extcert_link)
         else:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'Apparently you already have a suitable certificate you can sign up with:'
-                                  })
+            output_objects.append(
+                {'object_type': 'text', 'text': '''Apparently you already have
+a suitable certificate you can sign up with:'''
+                 })
             output_objects.append(extcert_link)
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'However, you can still request a dedicated user certificate if you prefer:'
-                                  })
+            output_objects.append(
+                {'object_type': 'text', 'text': '''However, you can still
+request a dedicated user certificate if you prefer:'''
+                 })
             output_objects.append(certreq_link)
 
-        output_objects.append({'object_type': 'text', 'text'
-                              : 'If you already received a user certificate you probably just need to import it in your browser.'
-                              })
+        output_objects.append(
+            {'object_type': 'text', 'text': '''If you already received a user
+certificate you probably just need to import it in your browser.'''
+             })
         output_objects.append({'object_type': 'text', 'text': ''})
         return (False, output_objects)
     (status, retval) = validate_input(user_arguments_dict, defaults,
-            output_objects, allow_rejects)
+            output_objects, allow_rejects, filter_values)
 
     return (status, retval)

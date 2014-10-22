@@ -113,6 +113,7 @@ def main(client_id, user_arguments_dict):
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
+        logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
     if not correct_handler('POST'):

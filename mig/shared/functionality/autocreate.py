@@ -44,6 +44,7 @@ from shared.fileio import write_file
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
+from shared.safeinput import filter_commonname
 from shared.useradm import db_name, distinguished_name_to_user, \
      create_user, fill_user, fill_distinguished_name
 try:
@@ -150,7 +151,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
     logger = configuration.logger
-    logger.info('autocreate: args: %s' % user_arguments_dict)
+    logger.info('%s: args: %s' % (op_name, user_arguments_dict))
+    prefilter_map = {}
     
     output_objects.append({'object_type': 'header', 'text'
                           : 'Automatic %s sign up' % \
@@ -161,15 +163,20 @@ def main(client_id, user_arguments_dict):
     elif os.environ.get('REMOTE_USER', ''):
         login_type = 'oid'
         base_url = configuration.migserver_https_oid_url
+        for name in ('openid.sreg.cn', 'openid.sreg.fullname',
+                     'openid.sreg.full_name'):
+            prefilter_map[name] = filter_commonname
     else:
         output_objects.append(
             {'object_type': 'error_text', 'text': 'Missing user credentials'})
         return (output_objects, returnvalues.CLIENT_ERROR)
         
     defaults = signature(login_type)[1]
-    (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+    (validate_status, accepted) = validate_input(
+        user_arguments_dict, defaults, output_objects, allow_rejects=False,
+        prefilter_map=prefilter_map)
     if not validate_status:
+        logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
     logger.debug('Accepted arguments: %s' % accepted)
@@ -184,39 +191,49 @@ def main(client_id, user_arguments_dict):
     admin_email = configuration.admin_email
     openid_names, oid_extras = [], {}
 
-    # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
-    # please note that we get utf8 coded bytes here and title() treats such
-    # chars as word termination. Temporarily force to unicode.
-
+    # Extract raw values
     if login_type == 'cert':
         uniq_id = accepted['cert_id'][-1].strip()
-        raw_name = accepted['full_name'][-1].strip() 
-        try:
-            full_name = raw_name.decode("utf8").title().encode("utf8")
-        except Exception:
-            full_name = raw_name.title()
-        country = accepted['country'][-1].strip().upper()
-        state = accepted['state'][-1].strip().upper()
+        full_name = accepted['full_name'][-1].strip()
+        country = accepted['country'][-1].strip()
+        state = accepted['state'][-1].strip()
         org = accepted['org'][-1].strip()
         org_unit = ''
         role = accepted['role'][-1].strip()
         locality = ''
         timezone = ''
-        # lower case email address
-        email = accepted['email'][-1].strip().lower()
+        email = accepted['email'][-1].strip()
         raw_login = None
     elif login_type == 'oid':
         uniq_id = accepted['openid.sreg.nickname'][-1].strip() or \
                    accepted['openid.sreg.short_id'][-1].strip()
-        full_name = accepted['openid.sreg.fullname'][-1].strip().title() or \
-                    accepted['openid.sreg.full_name'][-1].strip().title()
-        country = accepted['openid.sreg.country'][-1].strip().upper()
-        state = accepted['openid.sreg.state'][-1].strip().upper()
+        raw_name = accepted['openid.sreg.fullname'][-1].strip() or \
+                    accepted['openid.sreg.full_name'][-1].strip()
+        country = accepted['openid.sreg.country'][-1].strip()
+        state = accepted['openid.sreg.state'][-1].strip()
         org = accepted['openid.sreg.o'][-1].strip() or \
               accepted['openid.sreg.organization'][-1].strip()
         org_unit = accepted['openid.sreg.ou'][-1].strip() or \
                    accepted['openid.sreg.organizational_unit'][-1].strip()
+        role = accepted['openid.sreg.role'][-1].strip()
+        locality = accepted['openid.sreg.locality'][-1].strip()
+        timezone = accepted['openid.sreg.timezone'][-1].strip()
+        email = accepted['openid.sreg.email'][-1].strip()
 
+    # Fix case of values:
+    # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
+    # please note that we get utf8 coded bytes here and title() treats such
+    # chars as word termination. Temporarily force to unicode.
+    try:
+        full_name = raw_name.decode("utf8").title().encode("utf8")
+    except Exception:
+        logger.warning("could not use unicode form to capitalize full name")
+        full_name = raw_name.title()
+    country = country.upper()
+    state = state.upper()
+    email = email.lower()
+
+    if login_type == 'oid':
         # Remap some oid attributes if on kit format with faculty in
         # organization and institute in organizational_unit. We can add them
         # as different fields as long as we make sure the x509 fields are
@@ -234,12 +251,6 @@ def main(client_id, user_arguments_dict):
         base_url = os.environ.get('REQUEST_URI',
                                   base_url).split('?')[0].replace('autocreate',
                                                                   'fileman')
-        
-        role = accepted['openid.sreg.role'][-1].strip()
-        locality = accepted['openid.sreg.locality'][-1].strip()
-        timezone = accepted['openid.sreg.timezone'][-1].strip()
-        # lower case email address
-        email = accepted['openid.sreg.email'][-1].strip().lower()
         id_url = os.environ['REMOTE_USER'].strip()
         raw_login = None
         for oid_provider in configuration.user_openid_providers:

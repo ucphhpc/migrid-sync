@@ -77,6 +77,7 @@ def main(client_id, user_arguments_dict):
         require_user=False
         )
     if not validate_status:
+        logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
     if not correct_handler('POST'):

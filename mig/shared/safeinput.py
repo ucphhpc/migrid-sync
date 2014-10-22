@@ -40,7 +40,7 @@ from string import letters, digits, printable
 
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
-from shared.validstring import valid_user_path, valid_dir_input
+from shared.validstring import valid_user_path
 
 ### Use utf8 byte string representation here ("something" and not u"something")
 ### We explicitly translate to the unicode representation in the functions
@@ -542,7 +542,13 @@ def filter_alphanumeric_and_spaces(contents):
 def filter_commonname(contents):
     """Filter supplied contents to only contain valid commonname characters"""
 
-    return __filter_contents(contents, letters + ' ' + '_-')
+    return __filter_contents(contents, VALID_NAME_CHARACTERS)
+
+
+def filter_password(contents):
+    """Filter supplied contents to only contain valid password characters"""
+
+    return __filter_contents(contents, VALID_PASSWORD_CHARACTERS)
 
 
 def filter_plain_text(contents):
@@ -749,7 +755,7 @@ def validated_password(user_arguments_dict, name, default):
         valid_password(first)
     except InputException, iex:
         err += '%s' % iex
-    return (filter_commonname(first), err)
+    return (filter_password(first), err)
 
 
 def validated_integer(user_arguments_dict, name, default):
@@ -861,7 +867,7 @@ def guess_type(name):
                     'openid.sreg.email', 'openid.sreg.mail', ):
             __type_map[key] = valid_email_address
         for key in ('editarea', 'execute', 'premenu', 'postmenu', 'precontent',
-                    'postcontent', 'publickeys', 'freeze_description'):
+                    'postcontent', 'publickeys', 'freeze_description', ):
             __type_map[key] = valid_free_text
         for key in ('show', ):
             __type_map[key] = valid_label_text
