@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notification - instant message and email notification helpers
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,8 +32,7 @@ import smtplib
 import threading
 from urllib import quote
 
-from shared.defaults import email_keyword_list
-from shared.job import output_dir
+from shared.defaults import email_keyword_list, job_output_dir
 from shared.settings import load_settings
 from shared.validstring import is_valid_email_address
 
@@ -61,7 +60,7 @@ def create_notify_message(
 
     var_dict = {'https_cert_url': configuration.migserver_https_cert_url,
                 'jobid': jobid, 'retries': job_retries,
-                'output_dir': output_dir,
+                'out_dir': job_output_dir,
                 'site' : configuration.short_title}
 
     entity_mapper = {'vgridmember': 'member', 'vgridowner': 'owner',
@@ -87,10 +86,10 @@ The job commands and their exit codes:
         txt += \
             '''
 Link to stdout file:
-%(https_cert_url)s/cert_redirect/%(output_dir)s/%(jobid)s/%(jobid)s.stdout (might not be available)
+%(https_cert_url)s/cert_redirect/%(out_dir)s/%(jobid)s/%(jobid)s.stdout (might not be available)
 
 Link to stderr file:
-%(https_cert_url)s/cert_redirect/%(output_dir)s/%(jobid)s/%(jobid)s.stderr (might not be available)
+%(https_cert_url)s/cert_redirect/%(out_dir)s/%(jobid)s/%(jobid)s.stderr (might not be available)
 
 Replies to this message will not be read!
 '''\

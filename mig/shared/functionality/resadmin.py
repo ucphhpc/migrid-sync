@@ -360,7 +360,7 @@ Show testprocedure history for the selected runtime environment and the
 resource with its current configuration.
     <table class=resources>
     <tr><td>
-    <form method="post" action="showresupporthistory.py">
+    <form method="post" action="showresupport.py">
     <input type="hidden" name="unique_resource_name" value="%s" />
     <select name="re_name">"""\
          % resourcename
@@ -375,7 +375,7 @@ resource with its current configuration.
                     verify_history += '<option value=%s>%s' % (env, env)
 
     verify_history += """</select>"""
-    verify_history += '<input type="submit" name="submit" value="Show" />'
+    verify_history += '<input type="submit" value="Show" />'
     verify_history += '</form></tr></table><p>'
 
     # TODO: reimplement showresupporthistory in new style and re-enable here

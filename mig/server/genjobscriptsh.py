@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# genjobscriptsh - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# genjobscriptsh - helpers for sh jobs
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,7 +29,7 @@
 
 import os
 
-from shared.job import output_dir
+from shared.defaults import job_output_dir
 
 
 class GenJobScriptSh:
@@ -1039,8 +1039,8 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
 
         cmd = '%s=0\n' % result
         for name in files:
-            name_on_mig_server = os.path.join(output_dir, self.job_dict['JOB_ID'],
-                                              name)
+            name_on_mig_server = os.path.join(job_output_dir,
+                                              self.job_dict['JOB_ID'], name)
             cmd += '[ -e "%s" ] && ' % name
             cmd += '%s\n' % self.__curl_cmd_send(name, name_on_mig_server)
             cmd += 'last_send_status=$?\n'

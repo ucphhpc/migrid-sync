@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # gridscript - main script helper functions
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,8 +32,8 @@ import time
 
 import shared.fileio as io
 from shared.base import client_id_dir
+from shared.defaults import job_output_dir
 from shared.fileio import send_message_to_grid_script
-from shared.job import output_dir
 from shared.notification import notify_user_thread
 try:
     import shared.arcwrapper as arc
@@ -352,7 +352,7 @@ def server_cleanup(
     if job_id.find(configuration.empty_job_name) != -1:
         empty_prefix = os.path.join(configuration.user_home,
                                     configuration.empty_job_name,
-                                    output_dir, job_id)
+                                    job_output_dir, job_id)
         for name in ['.status', '.io-status', '.stdout', '.stderr']:
             status_path = os.path.realpath(os.path.join(empty_prefix,
                                                         job_id + name))

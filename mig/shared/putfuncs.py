@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# putfuncs - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# putfuncs - helpers for the put handler
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,6 +35,7 @@ import re
 
 import shared.fileio as io
 from shared.base import client_id_dir
+from shared.defaults import job_output_dir
 
 
 def template_fits_file(template, filename, allowed_time=3.0):
@@ -44,6 +45,7 @@ def template_fits_file(template, filename, allowed_time=3.0):
     """
 
     fit = True
+    msg = ''
 
     # Allow comparison to take up to allowed_time seconds
 
@@ -52,41 +54,34 @@ def template_fits_file(template, filename, allowed_time=3.0):
     try:
         comparelines = open(template, 'r').readlines()
     except Exception, err:
-
-        # print "Failed to read", template
-
-        return False
+        msg = "Failed to read template file"
+        return (False, msg)
 
     try:
         filelines = open(filename, 'r').readlines()
     except Exception, err:
-
-        # print "Failed to read", filename
-
         if len(comparelines) == 0:
 
             # No file matches an empty template
 
-            return True
+            return (True, msg)
         else:
-            return False
+            msg = "Failed to read file to verify"
+            return (False, msg)
 
     if len(filelines) != len(comparelines):
-
-        # print "line count mismatch between %s and %s", template, filename
-
-        return False
+        msg = "line count mismatch between template and file to verify"
+        return (False, msg)
 
     i = 0
 
-    # print "start time:", start_time
+    #print "start time:", start_time
 
     while i < len(filelines):
         compare_time = time.time() - start_time
         if compare_time > allowed_time:
-
-            # print "Template fit of %s against %s timed out after %d lines (%d seconds)" % (template, filename, i, compare_time)
-
+            msg = "Template fit against file timed out after %d lines (%ds)" \
+                  % (i, compare_time)
             fit = False
             break
 
@@ -96,19 +91,15 @@ def template_fits_file(template, filename, allowed_time=3.0):
         # print line, "?~" , compare
 
         i += 1
-
-        # os.system("sleep %d" % (i))
-
         if not re.match(compare, line):
-
             # print line, "!~" , compare
-
+            msg = "found mismatch: '%s' vs '%s' (%s)" % (line, compare, line==compare)
             fit = False
             break
 
-    # print "Comparison of %s against %s done in %.4f seconds" % (template, filename, compare_time)
+    #print "Comparison of %s against %s done in %.4f seconds" % (template, filename, compare_time)
 
-    return fit
+    return (fit, msg)
 
 
 def verify_results(job_dict, logger, configuration):
@@ -154,18 +145,18 @@ def verify_results(job_dict, logger, configuration):
                 continue
 
             job_id = job_dict['JOB_ID']
-            filename = os.path.join(user_home, client_id, job_id + '.'
-                                     + check)
-            logger.debug('Matching %s against %s', verifyname, filename)
-            match = template_fits_file(verifyname, filename)
+            filename = os.path.join(user_home, client_dir, job_output_dir,
+                                    job_id, job_id + '.' + check)
+            logger.info('Matching %s against %s', verifyname, filename)
+            (match, err) = template_fits_file(verifyname, filename)
             if match:
-                job_dict['VERIFIED'] += ' %s: %s!' % (check, 'OK')
+                job_dict['VERIFIED'] += ' %s: %s' % (check, 'OK')
             else:
-                job_dict['VERIFIED'] += ' %s: %s!' % (check, 'FAILED')
+                job_dict['VERIFIED'] += ' %s: %s (%s)' % (check, 'FAILED', err)
                 verified = False
 
-            logger.info('verified %s against actual results - match: %s'
-                        , verify, match)
+            logger.info('verified %s against actual results - match: %s (%s)'
+                        % (verify, match, err))
         if verified:
             job_dict['VERIFIED'] = 'SUCCESS -' + job_dict['VERIFIED']
         else:

@@ -34,12 +34,11 @@ import datetime
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.conf import get_resource_exe
-from shared.defaults import all_jobs
+from shared.defaults import all_jobs, job_output_dir
 from shared.fileio import unpickle, pickle
 from shared.functional import validate_input_and_cert
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
-from shared.job import output_dir
 from shared.ssh import copy_file_to_resource
 from shared.validstring import valid_user_path
 
@@ -437,7 +436,7 @@ jobs before and during execution.
                  })
             if action == 'send':
                 if not dst:
-                    target_path = '%s/%s/*' % (output_dir, job_id)
+                    target_path = '%s/%s/*' % (job_output_dir, job_id)
                 else:
                     target_path = dst
                 output_objects.append({'object_type': 'link', 'destination'

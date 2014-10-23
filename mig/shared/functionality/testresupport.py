@@ -132,7 +132,6 @@ def main(client_id, user_arguments_dict):
                                client_dir)) + os.sep
 
     for visible_res_name in resource_list:
-        logger.info("testing %s on %s" % (re_name, visible_res_name))
         if not visible_res_name in visible_res.keys():
             logger.warning('User %s not allowed to view %s (%s)' % \
                            (client_id, visible_res_name, visible_res.keys()))
@@ -168,7 +167,6 @@ def main(client_id, user_arguments_dict):
             status = returnvalues.CLIENT_ERROR
             continue
 
-        logger.info("create base64 for %s on %s" % (re_name, visible_res_name))
         base64string = ''
         for stringpart in re_dict['TESTPROCEDURE']:
             base64string += stringpart
@@ -192,7 +190,6 @@ def main(client_id, user_arguments_dict):
         forceddestination_dict = {'UNIQUE_RESOURCE_NAME': visible_res_name,
                                   'RE_NAME': re_name}
 
-        logger.info("submit for %s on %s" % (re_name, visible_res_name))
         (success, msg) = new_job(mrslfile, client_id, configuration,
                                 forceddestination_dict)
         if not success:
@@ -211,8 +208,5 @@ def main(client_id, user_arguments_dict):
             {'object_type': 'text', 'text':
              'Runtime environment test job for %s successfuly submitted! %s' \
              % (visible_res_name, msg)})
-        logger.info("done for %s on %s" % (re_name, visible_res_name))
-
-    logger.info("returning %s:\n%s" % (status, output_objects))
 
     return (output_objects, status)

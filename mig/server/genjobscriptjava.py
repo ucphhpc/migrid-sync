@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# genjobscriptjava - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# genjobscriptjava - helpers for jvm jobs
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,7 +30,7 @@ the remote java mechanism where to retrieve the executable
  and corresponding files.
 """
 
-from shared.job import output_dir
+from shared.defaults import job_output_dir
 
 
 class GenJobScriptJava:
@@ -199,15 +199,15 @@ class GenJobScriptJava:
 
         cmd += 'stdout: ' + https_sid_url_arg\
                + '/sid_redirect/' + job_dict['SESSIONID'] + '/'\
-               + output_dir + '/' + job_dict['JOB_ID'] + '/'\
+               + job_output_dir + '/' + job_dict['JOB_ID'] + '/'\
                + job_dict['JOB_ID'] + '.stdout\n'
         cmd += 'stderr: ' + https_sid_url_arg\
                + '/sid_redirect/' + job_dict['SESSIONID'] + '/'\
-               + output_dir + '/' + job_dict['JOB_ID'] + '/'\
+               + job_output_dir + '/' + job_dict['JOB_ID'] + '/'\
                + job_dict['JOB_ID'] + '.stderr\n'
         cmd += 'io-status: ' + https_sid_url_arg\
                + '/sid_redirect/' + job_dict['SESSIONID'] + '/'\
-               + output_dir + '/' + job_dict['JOB_ID'] + '/'\
+               + job_output_dir + '/' + job_dict['JOB_ID'] + '/'\
                + job_dict['JOB_ID'] + '.io-status\n'
         return cmd
 
@@ -217,7 +217,7 @@ class GenJobScriptJava:
             if name.count('status') > 0:
                 cmd += 'status: ' + https_sid_url_arg\
                      + '/sid_redirect/' + job_dict['SESSIONID'] + '/'\
-                     + output_dir + '/' + job_dict['JOB_ID'] + '/'\
+                     + job_output_dir + '/' + job_dict['JOB_ID'] + '/'\
                      + name + '\n'
         return cmd
 

@@ -1153,22 +1153,6 @@ class Scheduler:
         if res.get('ANONYMOUS', True):
             public_id = anon_resource_id(public_id)
             
-        # TODO: switch FORCEDDESTINATION jobs to use new RESOURCE field
-        if job.has_key('FORCEDDESTINATION'):
-            unique_resource_name = res['RESOURCE_ID']
-            job_forced_dict = job['FORCEDDESTINATION']
-            if job_forced_dict['UNIQUE_RESOURCE_NAME']\
-                 == unique_resource_name:
-
-                # self.logger.info("jobs forceddestination matches this resource (%s)" % unique_resource_name)
-
-                return True
-            else:
-
-                # self.logger.info("jobs forceddestination does not match this resource (job: %s, res: %s)" % (job_forced_dict["UNIQUE_RESOURCE_NAME"], unique_resource_name))
-
-                return False
-
         if job.get('RESOURCE', []):
             res_match = False
             for job_dest in job['RESOURCE']:

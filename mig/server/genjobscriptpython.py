@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# genjobscriptpython - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# genjobscriptpython - helpers for python jobs
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,7 +29,7 @@
 
 import os
 
-from shared.job import output_dir
+from shared.defaults import job_output_dir
 
 
 class GenJobScriptPython:
@@ -684,8 +684,8 @@ if not os.environ.get("MIG_JOBDIR", ""):
 
         cmd = ''
         for name in files:
-            name_on_mig_server = os.path.join(output_dir, self.job_dict['JOB_ID'],
-                                              name)
+            name_on_mig_server = os.path.join(job_output_dir,
+                                              self.job_dict['JOB_ID'], name)
 
             # cmd += "os.popen(\"%s\")\n" % curl_cmd_send(name)
 
