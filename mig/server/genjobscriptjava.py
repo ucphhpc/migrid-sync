@@ -236,6 +236,15 @@ class GenJobScriptJava:
 
         return ''
 
+    def log_on_error(
+        self, 
+        resilt='ret',
+        successcode='0',
+        msg='ERROR: unexpected exit code!',
+        ):
+        
+        return ''
+
     def exit_on_error(
         self,
         result='ret',

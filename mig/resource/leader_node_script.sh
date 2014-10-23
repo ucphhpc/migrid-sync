@@ -523,9 +523,9 @@ control_finished() {
             continue
         fi
         
-        # Write LRMS error messages to exehostlog  
+        # Write LRMS error messages to joblog  
         if [ -s $MIG_JOBDIR/$MIG_LRMS_ERR ] ; then
-            echo "`date` ($localjobname): `cat $MIG_JOBDIR/$MIG_LRMS_ERR`" >> $joblog
+            echo "`date` ($localjobname) LRMS ERROR: `cat $MIG_JOBDIR/$MIG_LRMS_ERR`" >> $joblog
         fi
          
         echo "`date`: job $localjobname finished" >> $exehostlog 2>> $exehostlog

@@ -31,147 +31,6 @@ import os
 
 from shared.job import output_dir
 
-def curl_cmd_send(resource_filename, mig_server_filename,
-                  https_sid_url_arg):
-    """Upload files"""
-
-    upload_bw_limit = ''
-    if resource_conf.has_key('MAXUPLOADBANDWIDTH')\
-         and resource_conf['MAXUPLOADBANDWIDTH'] > 0:
-        upload_bw_limit = '--limit-rate %ik'\
-             % resource_conf['MAXUPLOADBANDWIDTH']
-
-    if mig_server_filename.find('://') != -1:
-
-        # Pass URLs for external sources directly to curl
-
-        dst_url = mig_server_filename
-        sid_put_marker = ''
-    else:
-
-        # Relative paths are uploaded to the corresponding session on the server
-
-        dst_url = https_sid_url_arg + '/sid_redirect/'\
-             + job_dict['SESSIONID'] + '/' + mig_server_filename
-
-        # MiG server needs to know that this PUT uses a session ID
-
-        sid_put_marker = '-X SIDPUT'
-
-    # Live output requires variable expansion in filenames (double quotes)
-
-    return 'curl --location --connect-timeout 30 --max-time 3600 '\
-         + upload_bw_limit + ' --fail --silent --insecure '\
-         + '--upload-file "' + resource_filename + '" '\
-         + sid_put_marker + ' "' + dst_url + '"'
-
-
-def curl_cmd_send_mqueue(resource_filename, queue, https_sid_url_arg):
-    """Send message to mqueue"""
-
-    upload_bw_limit = ''
-    if resource_conf.has_key('MAXUPLOADBANDWIDTH')\
-         and resource_conf['MAXUPLOADBANDWIDTH'] > 0:
-        upload_bw_limit = '--limit-rate %ik'\
-             % resource_conf['MAXUPLOADBANDWIDTH']
-
-    return 'curl --location --connect-timeout 30 --max-time 3600 '\
-           + upload_bw_limit + ' --fail --silent --insecure '\
-           + '-F "action=send" -F "iosessionid=' + job_dict['SESSIONID']\
-           + '" -F "queue=' + queue + '" -F "msg=<' + resource_filename\
-           + '" -F "output_format=txt" ' + https_sid_url_arg\
-           + '/cgi-sid/mqueue.py'
-
-
-def curl_cmd_get(mig_server_filename, resource_filename,
-                 https_sid_url_arg):
-    """Download files"""
-
-    download_bw_limit = ''
-    if resource_conf.has_key('MAXDOWNLOADBANDWIDTH')\
-         and resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
-        download_bw_limit = '--limit-rate %ik'\
-             % resource_conf['MAXDOWNLOADBANDWIDTH']
-
-    cmd = ''
-    if mig_server_filename.find('://') != -1:
-
-        # Pass URLs for external sources directly to curl
-
-        src_url = mig_server_filename
-    else:
-
-        # Relative paths are downloaded from the corresponding session on the server
-
-        src_url = https_sid_url_arg + '/sid_redirect/'\
-             + job_dict['SESSIONID'] + '/' + mig_server_filename
-
-    # Live input requires variable expansion in filenames (double quotes)
-
-    cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
-         + download_bw_limit + ' --fail --silent --insecure --create-dirs '\
-         + '-o "' + resource_filename + '" "' + src_url + '"'
-    return cmd
-
-
-def curl_cmd_get_special(file_extension, resource_filename,
-                         https_sid_url_arg):
-    """Download internal job files"""
-
-    download_bw_limit = ''
-    if resource_conf.has_key('MAXDOWNLOADBANDWIDTH')\
-         and resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
-        download_bw_limit = '--limit-rate %ik'\
-             % resource_conf['MAXDOWNLOADBANDWIDTH']
-
-    cmd = ''
-    cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
-           + download_bw_limit + ' --fail --silent --insecure --create-dirs '\
-           + "-o '" + resource_filename + "' '" + https_sid_url_arg\
-           + '/sid_redirect/' + job_dict['SESSIONID'] + file_extension + "'"
-    return cmd
-
-
-def curl_cmd_get_mqueue(queue, resource_filename, https_sid_url_arg):
-    """Receive message from mqueue"""
-
-    download_bw_limit = ''
-    if resource_conf.has_key('MAXDOWNLOADBANDWIDTH')\
-         and resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
-        download_bw_limit = '--limit-rate %ik'\
-             % resource_conf['MAXDOWNLOADBANDWIDTH']
-
-    cmd = ''
-    cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
-           + download_bw_limit + ' --fail --silent --insecure --create-dirs '\
-           + '-o "' + resource_filename + '" -F "action=receive" '\
-           + '-F "iosessionid=' + job_dict['SESSIONID'] + '" -F "queue='\
-           + queue + '" -F "output_format=file" ' + https_sid_url_arg\
-           + '/cgi-sid/mqueue.py'
-    return cmd
-
-
-def curl_cmd_request_interactive(https_sid_url_arg):
-    """CGI request for interactive job"""
-
-    int_command = \
-        "curl --location --connect-timeout 30 --max-time 3600 --fail --silent --insecure '"\
-         + https_sid_url_arg\
-         + '/cgi-sid/requestinteractivejob.py?sessionid='\
-         + job_dict['SESSIONID'] + '&jobid=' + job_dict['JOB_ID']\
-         + '&exe=' + exe + '&unique_resource_name='\
-         + resource_conf['RESOURCE_ID'] + '&localjobname='\
-         + localjobname + "'\n"
-    int_command += '# wait until interactive command is done\n'
-    int_command += 'while [ 1 ]; do\n'
-    int_command += '   if [ -f .interactivejobfinished ]; then\n'
-    int_command += '        break\n'
-    int_command += '   else\n'
-    int_command += '        sleep 3\n'
-    int_command += '   fi\n'
-    int_command += 'done\n'
-    return int_command
-
 
 class GenJobScriptSh:
 
@@ -183,29 +42,167 @@ class GenJobScriptSh:
         resource_config,
         exe_unit,
         https_sid_url,
-        localjobnam,
+        localjobname,
         filename_without_ext,
         ):
 
-        # TODO: this is damn ugly! why not use self.X instead of global?
+        self.job_dict = job_dictionary
+        self.resource_conf = resource_config
+        self.exe = exe_unit
+        self.https_sid_url_arg = https_sid_url
+        self.filename_without_extension = filename_without_ext
+        self.localjobname = localjobname
 
-        global job_dict
-        job_dict = job_dictionary
-        global resource_conf
-        resource_conf = resource_config
-        global exe
-        exe = exe_unit
-        global https_sid_url_arg
-        https_sid_url_arg = https_sid_url
-        global filename_without_extension
-        filename_without_extension = filename_without_ext
-        global localjobname
-        localjobname = localjobnam
-        global status_log
-        status_log = '%s.status' % job_dict['JOB_ID'] 
-        global io_log
-        io_log = '%s.io-status' % job_dict['JOB_ID']
+        exe_dir = ''
+        exe_list = self.resource_conf.get('EXECONFIG', [])
+        for exe_conf in exe_list:
+            if exe_conf['name'] == self.exe:
+                localexedir = exe_conf['execution_dir']
+                break
 
+        self.localjobdir = "%s/job-dir_%s" % (localexedir, self.localjobname)
+        self.status_log = '%s/%s.status' % (self.localjobdir, self.job_dict['JOB_ID']) 
+        self.io_log = '%s.io-status' % (self.job_dict['JOB_ID'])
+ 
+
+    def __curl_cmd_send(self, resource_filename, mig_server_filename):
+        """Upload files"""
+
+        upload_bw_limit = ''
+        if self.resource_conf.has_key('MAXUPLOADBANDWIDTH')\
+             and self.resource_conf['MAXUPLOADBANDWIDTH'] > 0:
+            upload_bw_limit = '--limit-rate %ik'\
+                 % self.resource_conf['MAXUPLOADBANDWIDTH']
+
+        if mig_server_filename.find('://') != -1:
+
+            # Pass URLs for external sources directly to curl
+
+            dst_url = mig_server_filename
+            sid_put_marker = ''
+        else:
+
+            # Relative paths are uploaded to the corresponding session on the server
+
+            dst_url = self.https_sid_url_arg + '/sid_redirect/'\
+                 + self.job_dict['SESSIONID'] + '/' + mig_server_filename
+
+            # MiG server needs to know that this PUT uses a session ID
+
+            sid_put_marker = '-X SIDPUT'
+
+            # Live output requires variable expansion in filenames (double quotes)
+
+            return 'curl --location --connect-timeout 30 --max-time 3600 '\
+                + upload_bw_limit + ' --fail --silent --insecure '\
+                + '--upload-file "' + resource_filename + '" '\
+                + sid_put_marker + ' "' + dst_url + '"'
+
+
+    def __curl_cmd_send_mqueue(self, resource_filename, queue):
+        """Send message to mqueue"""
+
+        upload_bw_limit = ''
+        if self.resource_conf.has_key('MAXUPLOADBANDWIDTH')\
+             and self.resource_conf['MAXUPLOADBANDWIDTH'] > 0:
+            upload_bw_limit = '--limit-rate %ik'\
+              % self.resource_conf['MAXUPLOADBANDWIDTH']
+
+        return 'curl --location --connect-timeout 30 --max-time 3600 '\
+            + upload_bw_limit + ' --fail --silent --insecure '\
+            + '-F "action=send" -F "iosessionid=' + self.job_dict['SESSIONID']\
+            + '" -F "queue=' + queue + '" -F "msg=<' + resource_filename\
+            + '" -F "output_format=txt" ' + self.https_sid_url_arg\
+            + '/cgi-sid/mqueue.py'
+
+
+    def __curl_cmd_get(self, mig_server_filename, resource_filename):
+        """Download files"""
+
+        download_bw_limit = ''
+        if self.resource_conf.has_key('MAXDOWNLOADBANDWIDTH')\
+             and self.resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
+            download_bw_limit = '--limit-rate %ik'\
+                 % self.resource_conf['MAXDOWNLOADBANDWIDTH']
+
+        cmd = ''
+        if mig_server_filename.find('://') != -1:
+
+            # Pass URLs for external sources directly to curl
+
+            src_url = mig_server_filename
+        else:
+
+            # Relative paths are downloaded from the corresponding session on the server
+
+            src_url = self.https_sid_url_arg + '/sid_redirect/'\
+                 + self.job_dict['SESSIONID'] + '/' + mig_server_filename
+
+        # Live input requires variable expansion in filenames (double quotes)
+
+        cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
+            + download_bw_limit + ' --fail --silent --insecure --create-dirs '\
+            + '-o "' + resource_filename + '" "' + src_url + '"'
+        return cmd
+
+
+    def __curl_cmd_get_special(self, file_extension, resource_filename):
+        """Download internal job files"""
+
+        download_bw_limit = ''
+        if self.resource_conf.has_key('MAXDOWNLOADBANDWIDTH')\
+            and self.resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
+            download_bw_limit = '--limit-rate %ik'\
+                 % self.resource_conf['MAXDOWNLOADBANDWIDTH']
+
+        cmd = ''
+        cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
+            + download_bw_limit + ' --fail --silent --insecure --create-dirs '\
+            + "-o '" + resource_filename + "' '" + self.https_sid_url_arg\
+            + '/sid_redirect/' + self.job_dict['SESSIONID'] + file_extension + "'"
+        return cmd
+
+
+    def __curl_cmd_get_mqueue(self, queue, resource_filename):
+        """Receive message from mqueue"""
+
+        download_bw_limit = ''
+        if self.resource_conf.has_key('MAXDOWNLOADBANDWIDTH')\
+            and self.resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
+            download_bw_limit = '--limit-rate %ik'\
+                 % self.resource_conf['MAXDOWNLOADBANDWIDTH']
+
+        cmd = ''
+        cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
+            + download_bw_limit + ' --fail --silent --insecure --create-dirs '\
+            + '-o "' + resource_filename + '" -F "action=receive" '\
+            + '-F "iosessionid=' + self.job_dict['SESSIONID'] + '" -F "queue='\
+            + queue + '" -F "output_format=file" ' + self.https_sid_url_arg\
+            + '/cgi-sid/mqueue.py'
+        return cmd
+
+
+    def __curl_cmd_request_interactive(self):
+        """CGI request for interactive job"""
+
+        int_command = \
+            "curl --location --connect-timeout 30 --max-time 3600 --fail --silent --insecure '"\
+                + self.https_sid_url_arg\
+                + '/cgi-sid/requestinteractivejob.py?sessionid='\
+                + self.job_dict['SESSIONID'] + '&jobid=' + self.job_dict['JOB_ID']\
+                + '&exe=' + self.exe + '&unique_resource_name='\
+                + self.resource_conf['RESOURCE_ID'] + '&localjobname='\
+                + self.localjobname + "'\n"
+        int_command += '# wait until interactive command is done\n'
+        int_command += 'while [ 1 ]; do\n'
+        int_command += '   if [ -f .interactivejobfinished ]; then\n'
+        int_command += '        break\n'
+        int_command += '   else\n'
+        int_command += '        sleep 3\n'
+        int_command += '   fi\n'
+        int_command += 'done\n'
+        return int_command
+   
     def comment(self, string):
         """Insert comment"""
 
@@ -214,18 +211,18 @@ class GenJobScriptSh:
     def script_init(self):
         """initialize script"""
 
-        requested = {'CPUTIME': job_dict['CPUTIME']}
-        requested['NODECOUNT'] = job_dict.get('NODECOUNT', 1)
-        requested['CPUCOUNT'] = job_dict.get('CPUCOUNT', 1)
-        requested['MEMORY'] = job_dict.get('MEMORY', 1)
-        requested['DISK'] = job_dict.get('DISK', 1)
-        requested['JOBID'] = job_dict.get('JOB_ID', 'UNKNOWN')
+        requested = {'CPUTIME': self.job_dict['CPUTIME']}
+        requested['NODECOUNT'] = self.job_dict.get('NODECOUNT', 1)
+        requested['CPUCOUNT'] = self.job_dict.get('CPUCOUNT', 1)
+        requested['MEMORY'] = self.job_dict.get('MEMORY', 1)
+        requested['DISK'] = self.job_dict.get('DISK', 1)
+        requested['JOBID'] = self.job_dict.get('JOB_ID', 'UNKNOWN')
         requested['ADMINEMAIL'] = ''
-        if resource_conf.has_key('ADMINEMAIL'):
+        if self.resource_conf.has_key('ADMINEMAIL'):
 
             # Format to mail flag is normally user[@host][,user[@host],...]
 
-            requested['ADMINEMAIL'] = resource_conf['ADMINEMAIL'
+            requested['ADMINEMAIL'] = self.resource_conf['ADMINEMAIL'
                     ].replace(' ', ',')
 
         # Use bash explicitly here because /bin/sh may not support echo -n , which
@@ -275,7 +272,7 @@ class GenJobScriptSh:
         """print 'starting new name script ...'"""
 
         return "echo 'Starting new %s script with JOB_ID: %s'\n"\
-             % (name, job_dict['JOB_ID'])
+             % (name, self.job_dict['JOB_ID'])
 
     def create_files(self, files):
         """Create supplied files"""
@@ -288,34 +285,35 @@ class GenJobScriptSh:
     def init_status(self):
         """Initialize status file"""
 
-        return 'touch %s\n' % status_log
+        return 'touch %s\n' % self.status_log
 
     def log_status(self, status_type, result='ret'):
-         
-        return 'echo "%s $%s" >> %s\n' % (status_type, result, status_log)
+        """Write to status log"""
+
+        return 'echo "%s $%s" >> %s\n' % (status_type, result, self.status_log)
 
     def init_io_log(self):
         """Open IO status log"""
 
-        return 'touch %s\n' % io_log
+        return 'touch %s\n' % self.io_log
 
     def log_io_status(self, io_type, result='ret'):
         """Write to IO status log"""
 
-        return 'echo "%s $%s" >> %s\n' % (io_type, result, io_log)
+        return 'echo "%s $%s" >> %s\n' % (io_type, result, self.io_log)
 
     def create_job_directory(self):
         """if directory with name JOB_ID doesnt exists, then create."""
 
-        return "[ ! -d '" + resource_conf['RESOURCEHOME']\
-             + job_dict['JOB_ID'] + "' ] && mkdir '"\
-             + resource_conf['RESOURCEHOME'] + job_dict['JOB_ID']\
+        return "[ ! -d '" + self.resource_conf['RESOURCEHOME']\
+             + self.job_dict['JOB_ID'] + "' ] && mkdir '"\
+             + self.resource_conf['RESOURCEHOME'] + self.job_dict['JOB_ID']\
              + "'\n"
 
     def cd_to_job_directory(self):
         """Enter execution directory"""
 
-        return 'cd ' + resource_conf['RESOURCEHOME'] + job_dict['JOB_ID'
+        return 'cd ' + self.resource_conf['RESOURCEHOME'] + self.job_dict['JOB_ID'
                 ] + '\n'
 
     def get_input_files(self, result='get_input_status'):
@@ -323,7 +321,7 @@ class GenJobScriptSh:
         Continue on errors but return total status."""
 
         cmd = '%s=0\n' % result
-        for infile in job_dict['INPUTFILES']:
+        for infile in self.job_dict['INPUTFILES']:
 
             # "filename" or "mig_server_filename resource_filename"
 
@@ -346,8 +344,8 @@ class GenJobScriptSh:
 
             resource_filename = resource_filename.lstrip('/')
 
-            cmd += '%s\n' % curl_cmd_get(mig_server_filename,
-                    resource_filename, https_sid_url_arg)
+            cmd += '%s\n' % self.__curl_cmd_get(mig_server_filename,
+                    resource_filename)
             cmd += 'last_get_status=$?\n'
             cmd += 'if [ $last_get_status -ne 0 ]; then\n'
             cmd += '    %s=$last_get_status\n' % result
@@ -362,23 +360,20 @@ class GenJobScriptSh:
         """get the internal job files from the grid server"""
 
         cmd = ''
-        cmd += '%s && \\' % curl_cmd_get_special('.job', localjobname
-                 + '.job', https_sid_url_arg)
+        cmd += '%s && \\' % self.__curl_cmd_get_special('.job', self.localjobname
+                 + '.job')
         cmd += '''
 %s
-''' % curl_cmd_get_special('.getupdatefiles',
-                localjobname + '.getupdatefiles',
-                https_sid_url_arg)
+''' % self.__curl_cmd_get_special('.getupdatefiles',
+                self.localjobname + '.getupdatefiles')
         cmd += '''
 %s
-''' % curl_cmd_get_special('.sendupdatefiles',
-                localjobname + '.sendupdatefiles',
-                https_sid_url_arg)
+''' % self.__curl_cmd_get_special('.sendupdatefiles',
+                self.localjobname + '.sendupdatefiles')
         cmd += '''
 %s
-''' % curl_cmd_get_special('.sendoutputfiles',
-                localjobname + '.sendoutputfiles',
-                https_sid_url_arg)
+''' % self.__curl_cmd_get_special('.sendoutputfiles',
+                self.localjobname + '.sendoutputfiles')
         cmd += '%s=$?\n' % result
         cmd += """# Now 'return' status is available in %s
 
@@ -390,7 +385,7 @@ class GenJobScriptSh:
         Continue on errors but return total status."""
 
         cmd = '%s=0\n' % result
-        for executables in job_dict['EXECUTABLES']:
+        for executables in self.job_dict['EXECUTABLES']:
 
             # "filename" or "mig_server_filename resource_filename"
 
@@ -413,8 +408,8 @@ class GenJobScriptSh:
 
             resource_filename = resource_filename.lstrip('/')
 
-            cmd += '%s\n' % curl_cmd_get(mig_server_filename,
-                    resource_filename, https_sid_url_arg)
+            cmd += '%s\n' % self.__curl_cmd_get(mig_server_filename,
+                    resource_filename)
             cmd += 'last_get_status=$?\n'
             cmd += 'if [ $last_get_status -ne 0 ]; then\n'
             cmd += '    %s=$last_get_status\n' % result
@@ -446,11 +441,9 @@ class GenJobScriptSh:
         cmd += 'for name in ${src[@]}; do\n'
         cmd += '    name_on_resource=$dst/`basename $name`\n'
         cmd += '    if [ "$target" = "mqueue" ]; then\n'
-        cmd += '        %s\n' % curl_cmd_get_mqueue('$name', '$name_on_resource',
-                                                    https_sid_url_arg)
+        cmd += '        %s\n' % self.__curl_cmd_get_mqueue('$name', '$name_on_resource')
         cmd += '    else\n'
-        cmd += '        %s\n' % curl_cmd_get('$name', '$name_on_resource',
-                                         https_sid_url_arg)
+        cmd += '        %s\n' % self.__curl_cmd_get('$name', '$name_on_resource')
         cmd += '    fi\n'
         cmd += '    last_get_status=$?\n'
         cmd += '    if [ $last_get_status -ne 0 ]; then\n'
@@ -473,7 +466,7 @@ class GenJobScriptSh:
         cmd += '%s=0\n' % result
         fe_move_dict = {}
 
-        for infile in job_dict['INPUTFILES']:
+        for infile in self.job_dict['INPUTFILES']:
 
             # "filename" or "mig_server_filename resource_filename"
 
@@ -503,7 +496,7 @@ class GenJobScriptSh:
             if not fe_move_dict.has_key(fe_move):
                 fe_move_dict[fe_move] = True
 
-        for executables in job_dict['EXECUTABLES']:
+        for executables in self.job_dict['EXECUTABLES']:
 
             # "filename" or "mig_server_filename resource_filename"
 
@@ -533,25 +526,25 @@ class GenJobScriptSh:
             if not fe_move_dict.has_key(fe_move):
                 fe_move_dict[fe_move] = True
 
-        cmd += 'echo -n "" > %s.inputfiles\\\n' % localjobname
+        cmd += 'echo -n "" > %s.inputfiles\\\n' % self.localjobname
         for file in fe_move_dict.keys():
             cmd += \
                 '&& if [ -e %s ]; then echo -n "%s " >> %s.inputfiles; fi\\\n'\
-                 % (file, file, localjobname)
+                 % (file, file, self.localjobname)
 
         # Systemfiles
 
         cmd += '&& echo -n "%s.user.outputfiles " >> %s.inputfiles\\\n'\
-             % (localjobname, localjobname)
+             % (self.localjobname, self.localjobname)
         cmd += \
             '&& echo -n "%s.system.outputfiles " >> %s.inputfiles\\\n'\
-             % (localjobname, localjobname)
+             % (self.localjobname, self.localjobname)
         cmd += '&& echo -n "%s.job " >> %s.inputfiles\\\n'\
-             % (localjobname, localjobname)
+             % (self.localjobname, self.localjobname)
         cmd += '&& echo -n "%s.mount.key " >> %s.inputfiles\\\n'\
-             % (localjobname, localjobname)
+             % (self.localjobname, self.localjobname)
         cmd += '&& echo -n "%s.mount.known_hosts" >> %s.inputfiles\n'\
-             % (localjobname, localjobname)
+             % (self.localjobname, self.localjobname)
         cmd += '%s=$?\n' % result
         return cmd
 
@@ -565,8 +558,8 @@ class GenJobScriptSh:
             '# Create files used by master_node_script to determine which output files to transfer to FE\n'
         cmd += '%s=0\n' % result
 
-        cmd += 'echo -n "" > %s.user.outputfiles\\\n' % localjobname
-        for outputfile in job_dict['OUTPUTFILES']:
+        cmd += 'echo -n "" > %s.user.outputfiles\\\n' % self.localjobname
+        for outputfile in self.job_dict['OUTPUTFILES']:
 
             # "filename" or "resource_filename mig_server_filename"
 
@@ -588,23 +581,23 @@ class GenJobScriptSh:
 
         for file in exe_move_dict.keys():
             cmd += '&& echo -n "%s " >> %s.user.outputfiles\\\n'\
-                 % (file, localjobname)
+                 % (file, self.localjobname)
 
         cmd += '&& echo -n "" > %s.system.outputfiles\\\n'\
-             % localjobname
+             % self.localjobname
 
         # Sleep jobs only generate .status
 
         if real_job:
             cmd += \
                 '&& echo -n "%s.stderr " >> %s.system.outputfiles\\\n'\
-                 % (job_dict['JOB_ID'], localjobname)
+                 % (self.job_dict['JOB_ID'], self.localjobname)
             cmd += \
                 '&& echo -n "%s.stdout " >> %s.system.outputfiles\\\n'\
-                 % (job_dict['JOB_ID'], localjobname)
+                 % (self.job_dict['JOB_ID'], self.localjobname)
 
         cmd += '&& echo -n "%s.status" >> %s.system.outputfiles\n'\
-             % (job_dict['JOB_ID'], localjobname)
+             % (self.job_dict['JOB_ID'], self.localjobname)
         cmd += '%s=$?\n' % result
         return cmd
 
@@ -615,7 +608,7 @@ class GenJobScriptSh:
         cmd = '# Create file used containing io-sessionid.\n'
         cmd += '%s=0\n' % result
         cmd += 'echo -n "%s" > %s.iosessionid\n'\
-             % (job_dict['IOSESSIONID'], localjobname)
+             % (self.job_dict['IOSESSIONID'], self.localjobname)
         cmd += '%s=$?\n' % result
         return cmd
 
@@ -625,7 +618,7 @@ class GenJobScriptSh:
         cmd = '# Create private key file used when mounting job home\n'
         cmd += '%s=0\n' % result
         cmd += 'echo -n "%s" > %s.mount.key\n'\
-             % (job_dict['MOUNTSSHPRIVATEKEY'], localjobname)
+             % (self.job_dict['MOUNTSSHPRIVATEKEY'], self.localjobname)
         cmd += '%s=$?\n' % result
         return cmd         
 
@@ -636,7 +629,7 @@ class GenJobScriptSh:
         cmd = '# Create known_hosts file used when mounting job home\n'
         cmd += '%s=0\n' % result
         cmd += 'echo -n "%s" > %s.mount.known_hosts\n'\
-             % (job_dict['MOUNTSSHKNOWNHOSTS'], localjobname)
+             % (self.job_dict['MOUNTSSHKNOWNHOSTS'], self.localjobname)
         cmd += '%s=$?\n' % result
         return cmd
 
@@ -645,7 +638,7 @@ class GenJobScriptSh:
 
         cmd = '%s=0\n' % result
         executables = []
-        for line in job_dict['EXECUTABLES']:
+        for line in self.job_dict['EXECUTABLES']:
 
             # "filename" or "mig_server_filename resource_filename"
 
@@ -668,22 +661,16 @@ class GenJobScriptSh:
 
     def set_core_environments(self):
         """Set missing core environments: LRMS may strip them during submit"""
-        requested = {'CPUTIME': job_dict['CPUTIME']}
-        requested['NODECOUNT'] = job_dict.get('NODECOUNT', 1)
-        requested['CPUCOUNT'] = job_dict.get('CPUCOUNT', 1)
-        requested['MEMORY'] = job_dict.get('MEMORY', 1)
-        requested['DISK'] = job_dict.get('DISK', 1)
-        requested['JOBID'] = job_dict.get('JOB_ID', 'UNKNOWN')
-        requested['LOCALJOBNAME'] = localjobname
-        requested['EXE'] = exe
+        requested = {'CPUTIME': self.job_dict['CPUTIME']}
+        requested['NODECOUNT'] = self.job_dict.get('NODECOUNT', 1)
+        requested['CPUCOUNT'] = self.job_dict.get('CPUCOUNT', 1)
+        requested['MEMORY'] = self.job_dict.get('MEMORY', 1)
+        requested['DISK'] = self.job_dict.get('DISK', 1)
+        requested['JOBID'] = self.job_dict.get('JOB_ID', 'UNKNOWN')
+        requested['LOCALJOBNAME'] = self.localjobname
+        requested['EXE'] = self.exe
         requested['EXECUTION_DIR'] = ''
-        exe_list = resource_conf.get('EXECONFIG', [])
-        for exe_conf in exe_list:
-            if exe_conf['name'] == exe:
-                requested['EXECUTION_DIR'] = exe_conf['execution_dir']
-                break
-        requested['JOBDIR'] = '%(EXECUTION_DIR)s/job-dir_%(LOCALJOBNAME)s' % \
-                              requested
+        requested['JOBDIR'] =  self.localjobdir
         cmd = '''
 [ -z "$MIG_JOBNODES" ] && export MIG_JOBNODES="%(NODECOUNT)s"
 [ -z "$MIG_JOBNODECOUNT" ] && export MIG_JOBNODECOUNT="%(NODECOUNT)s"
@@ -704,7 +691,7 @@ class GenJobScriptSh:
 
         cmd = ''
 
-        for env in job_dict['ENVIRONMENT']:
+        for env in self.job_dict['ENVIRONMENT']:
             if cmd:
 
                 # combine all commands into one AND'ed command line to allow single
@@ -726,10 +713,10 @@ class GenJobScriptSh:
         """Set local resource limits to prevent fork bombs, OOM and such.
         Limits are set slightly higher to avoid overhead problems.
         """
-        requested = {'CPUTIME': int(job_dict['CPUTIME']) + 10}
-        requested['CPUCOUNT'] = int(job_dict.get('CPUCOUNT', 1))
-        requested['MEMORY'] = int(job_dict.get('MEMORY', 1)) + 16
-        requested['DISK'] = int(job_dict.get('DISK', 1)) + 1
+        requested = {'CPUTIME': int(self.job_dict['CPUTIME']) + 10}
+        requested['CPUCOUNT'] = int(self.job_dict.get('CPUCOUNT', 1))
+        requested['MEMORY'] = int(self.job_dict.get('MEMORY', 1)) + 16
+        requested['DISK'] = int(self.job_dict.get('DISK', 1)) + 1
         # Arbitrary values low enough to prevent fork bombs
         requested['MAXPROCS'] = 1024
         # Multipliers for expected units in seconds and kb
@@ -757,7 +744,7 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
 
         # loop the runtimeenvs that the job require
 
-        for env in job_dict['RUNTIMEENVIRONMENT']:
+        for env in self.job_dict['RUNTIMEENVIRONMENT']:
 
             # set the envs as specified in the resources config file
 
@@ -793,9 +780,9 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
          Continue on errors but return total status."""
 
         cmd = '%s=0\n' % result
-        cmd += 'chmod 600 %s.mount.key\n' % (localjobname)
+        cmd += 'chmod 600 %s.mount.key\n' % (self.localjobname)
         
-        for mount in job_dict.get('MOUNT', []):
+        for mount in self.job_dict.get('MOUNT', []):
  
             # "mount_point" or "mig_server_path resource_mount_point"
 
@@ -816,9 +803,9 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
             cmd += 'mkdir -p %s\n' % (resource_mount_point)
             cmd += '${SSHFS_MOUNT} -oPort=%s' % (port) + \
                         ' -oIdentityFile=${PWD}/%s.mount.key' % \
-                            (localjobname) + \
+                            (self.localjobname) + \
                         ' -oUserKnownHostsFile=${PWD}/%s.mount.known_hosts' % \
-                            (localjobname) + \
+                            (self.localjobname) + \
                         ' %s@%s:%s %s ' % \
                             (login, host, mig_home_path, resource_mount_point) + \
                         ' -o uid=$(id -u) -o gid=$(id -g)\n'
@@ -848,15 +835,17 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
 
         # TODO: job_log is different from exe job log in parent dir
 
-        exe_dict = {'job_id': job_dict['JOB_ID'], 'job_log': 'joblog'}
+        exe_dict = {'job_id': self.job_dict['JOB_ID'], 
+                    'job_log': '${MIG_JOBDIR}/%s.log' % self.job_dict['JOB_ID'],
+                    'job_status': '${MIG_JOBDIR}/%s.status' % self.job_dict['JOB_ID']
+                   }
         cmd = ''
 
         cmd += '''__MiG_LAST_RET=0
 {
 '''
 
-        for exe in job_dict['EXECUTE']:
-            exe_dict['job_id'] = job_dict['JOB_ID']
+        for exe in self.job_dict['EXECUTE']:
 
             # Make sure any apostrophes in EXECUTE do not interfere
             # with our own in logging
@@ -879,11 +868,11 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
                 """
     echo 'EXECUTING: %(exe_escaped)s' >> %(job_log)s
     echo -n '--Exit code: ' >> %(job_log)s
-    echo -n '%(exe_escaped)s ' >> %(job_id)s.status
+    echo -n '%(exe_escaped)s ' >> %(job_status)s
     (exit $__MiG_LAST_RET)
     %(exe)s
     __MiG_LAST_RET=$?
-    echo $__MiG_LAST_RET >> %(job_id)s.status
+    echo $__MiG_LAST_RET >> %(job_status)s
     echo $__MiG_LAST_RET >> %(job_log)s
 """\
                  % exe_dict
@@ -901,24 +890,22 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
 	    Continue on errors but return total status."""
 
         cmd = '%s=0\n' % result
-        
-        for mount in job_dict.get('MOUNT', []):
+        cmd += 'cd ${MIG_JOBDIR}\n' 
+ 
+        for mount in self.job_dict.get('MOUNT', []):
  
             # "resource_mount_point" or 
-            # mig_home_path resource_mount_point"
+            # "mig_home_path resource_mount_point"
 
             parts = mount.split()
         
             if len(parts) == 1:
-                mig_home_path = ''
                 resource_mount_point = str(parts[0])
             else:
-                mig_home_path = str(parts[0])
                 resource_mount_point = str(parts[1])
             
             # Always strip leading slashes to avoid absolute paths
 
-            mig_home_path = mig_home_path.lstrip('/')
             resource_mount_point = resource_mount_point.lstrip('/')
 
             cmd += '${SSHFS_UMOUNT} %s\n' % (resource_mount_point)
@@ -938,7 +925,7 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         """
 
         cmd = '%s=0\n' % result
-        for outputfile in job_dict['OUTPUTFILES']:
+        for outputfile in self.job_dict['OUTPUTFILES']:
 
             # "filename" or "mig_server_filename resource_filename"
 
@@ -967,7 +954,7 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         """
 
         cmd = '%s=0\n' % result
-        for outputfile in job_dict['OUTPUTFILES']:
+        for outputfile in self.job_dict['OUTPUTFILES']:
 
             # "filename" or "resource_filename mig_server_filename"
 
@@ -986,8 +973,8 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
             mig_server_filename = mig_server_filename.lstrip('/')
 
             cmd += '[ ! -e "%s" ] || ' % resource_filename
-            cmd += '%s\n' % curl_cmd_send(resource_filename,
-                    mig_server_filename, https_sid_url_arg)
+            cmd += '%s\n' % self.__curl_cmd_send(resource_filename,
+                    mig_server_filename)
             cmd += 'last_send_status=$?\n'
             cmd += 'if [ $last_send_status -ne 0 ]; then\n'
             cmd += '    %s=$last_send_status\n' % result
@@ -1025,13 +1012,11 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         cmd += 'for name in ${src[@]}; do\n'
         cmd += '    name_on_mig_server=$dst/`basename $name`\n'
         cmd += '    if [ "$target" = "mqueue" ]; then\n'
-        cmd += '        %s\n' % curl_cmd_send_mqueue('$name', '$dst',
-                                                     https_sid_url_arg)
+        cmd += '        %s\n' % self.__curl_cmd_send_mqueue('$name', '$dst')
         cmd += '    else\n'
 
         cmd += '        [ ! -e "$name" ] || '
-        cmd += '%s\n' % curl_cmd_send('$name', '$name_on_mig_server',
-                                      https_sid_url_arg)
+        cmd += '%s\n' % self.__curl_cmd_send('$name', '$name_on_mig_server')
         cmd += '    fi\n'
         cmd += '    last_send_status=$?\n'
         cmd += '    if [ $last_send_status -ne 0 ]; then\n'
@@ -1054,11 +1039,10 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
 
         cmd = '%s=0\n' % result
         for name in files:
-            name_on_mig_server = os.path.join(output_dir, job_dict['JOB_ID'],
+            name_on_mig_server = os.path.join(output_dir, self.job_dict['JOB_ID'],
                                               name)
             cmd += '[ -e "%s" ] && ' % name
-            cmd += '%s\n' % curl_cmd_send(name, name_on_mig_server,
-                    https_sid_url_arg)
+            cmd += '%s\n' % self.__curl_cmd_send(name, name_on_mig_server)
             cmd += 'last_send_status=$?\n'
             cmd += 'if [ $last_send_status -ne 0 ]; then\n'
             cmd += '    %s=$last_send_status\n' % result
@@ -1073,10 +1057,10 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         """Request interactive job"""
 
         # return curl_cmd_request_interactive(https_sid_url_arg,
-        #                                    job_dict, resource_conf,
+        #                                    self.job_dict, self.resource_conf,
         #                                    exe)
 
-        return curl_cmd_request_interactive(https_sid_url_arg)
+        return self.__curl_cmd_request_interactive()
 
     def save_status(self, result='ret'):
         """Save exit code in supplied result"""
@@ -1140,7 +1124,7 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         """
 
         return 'echo "' + name + ' script end reached '\
-             + job_dict['JOB_ID'] + '" \nexit ' + exitcode + '\n'\
+             + self.job_dict['JOB_ID'] + '" \nexit ' + exitcode + '\n'\
              + '### END OF SCRIPT ###\n'
 
     def clean_up(self):
@@ -1151,7 +1135,7 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         cmd = ''
 
         cmd += 'cd ..\n'
-        cmd += 'rm -rf --one-file-system ' + job_dict['JOB_ID'] + '\n'
+        cmd += 'rm -rf --one-file-system ' + self.job_dict['JOB_ID'] + '\n'
         return cmd
 
 
