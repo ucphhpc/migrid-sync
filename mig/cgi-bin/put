@@ -202,8 +202,14 @@ if not client_id:
         dict['STATUS'] = 'FINISHED'
         dict['FINISHED_TIMESTAMP'] = time.gmtime()
 
+        # verify results and add VERIFIED field to job
+        
+        o.internal('starting to verify results')
+        verify_results(dict, logger, configuration)
+
         # pickle the file again, with the updated status
 
+        o.internal('save updated job')
         repickle = pickle(dict, filepath, logger)
         if not repickle:
             o.out('error changing status!')
@@ -273,8 +279,6 @@ if not client_id:
                        % err)
                 o.reply_and_exit(o.ERROR)
 
-        o.internal('starting to verify results!')
-        verify_results(dict, logger, configuration)
 
         # ####### NOTIFY USER ########
         notifier = notify_user_thread(

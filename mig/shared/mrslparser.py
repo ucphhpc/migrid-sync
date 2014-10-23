@@ -217,27 +217,28 @@ environment '%s', therefore the job can not be run on any resources.""" % \
 
     global_dict['RECEIVED_TIMESTAMP'] = time.gmtime()
     global_dict['STATUS'] = 'PARSE'
-    if forceddestination and forceddestination.has_key('RE_NAME'):
-
-        # global_dict["FORCEDDESTINATION"] = forceddestination["UNIQUE_RESOURCE_NAME"]
-
+    if forceddestination:
         global_dict['FORCEDDESTINATION'] = forceddestination
-        re_name = forceddestination['RE_NAME']
+        if forceddestination.has_key('UNIQUE_RESOURCE_NAME'):
+            global_dict["RESOURCE"] = "%(UNIQUE_RESOURCE_NAME)s_*" % \
+                                      forceddestination
+        if forceddestination.has_key('RE_NAME'):
+            re_name = forceddestination['RE_NAME']
 
-        # verify the verifyfiles entries are not modified (otherwise RE creator
-        # can specify multiple ::VERIFYFILES:: keywords and give the entries
-        # other names (perhaps overwriting files in the home directories of
-        # resource owners executing the testprocedure)
+            # verify the verifyfiles entries are not modified (otherwise RE creator
+            # can specify multiple ::VERIFYFILES:: keywords and give the entries
+            # other names (perhaps overwriting files in the home directories of
+            # resource owners executing the testprocedure)
 
-        for verifyfile in global_dict['VERIFYFILES']:
-            verifytypes = ['.status', '.stderr', '.stdout']
-            found = False
-            for verifytype in verifytypes:
-                if verifyfile == 'verify_runtime_env_%s%s' % (re_name,
-                        verifytype):
-                    found = True
-            if not found:
-                return (False, '''You are not allowed to specify the
+            for verifyfile in global_dict['VERIFYFILES']:
+                verifytypes = ['.status', '.stderr', '.stdout']
+                found = False
+                for verifytype in verifytypes:
+                    if verifyfile == 'verify_runtime_env_%s%s' % (re_name,
+                            verifytype):
+                        found = True
+                if not found:
+                    return (False, '''You are not allowed to specify the
 ::VERIFY:: keyword in a testprocedure, it is done automatically''')
 
     # normalize any path fields to be taken relative to home
