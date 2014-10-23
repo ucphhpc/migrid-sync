@@ -62,7 +62,7 @@ def init_cgi_script_with_cert(print_header=True, content_type='text/html'):
 
     configuration = get_configuration_object()
     logger = configuration.logger
-    o = CGIOutput(logger)
+    out = CGIOutput(logger)
 
     # get DN of user currently logged in
 
@@ -70,11 +70,11 @@ def init_cgi_script_with_cert(print_header=True, content_type='text/html'):
     if not client_id:
         msg = 'No client ID available from SSL env - not authenticated!'
         logger.error(msg)
-        o.out(msg)
-        o.reply_and_exit(o.ERROR)
+        out.out(msg)
+        out.reply_and_exit(out.ERROR)
 
     logger.info('script: %s cert: %s' % (sys.argv[0], client_id))
-    return (logger, configuration, client_id, o)
+    return (logger, configuration, client_id, out)
 
 
 def init_cgiscript_possibly_with_cert(print_header=True,
@@ -89,7 +89,7 @@ def init_cgiscript_possibly_with_cert(print_header=True,
 
     configuration = get_configuration_object()
     logger = configuration.logger
-    o = CGIOutput(logger)
+    out = CGIOutput(logger)
 
     # get DN of user currently logged in
 
@@ -98,4 +98,4 @@ def init_cgiscript_possibly_with_cert(print_header=True,
         logger.debug('(No client ID available in SSL session)')
 
     logger.info('script: %s cert: %s' % (sys.argv[0], client_id))
-    return (logger, configuration, client_id, o)
+    return (logger, configuration, client_id, out)

@@ -418,15 +418,9 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                 retmsg = ''
                 if status:
-
-                    # TODO: avoid recursive imports and put code back in action
-                    # from shared.mrslparser import parse
-                    # (status, retmsg) = parse(tmpfile, "testprocedure_job_id", "testprocedure_test_parse__cert_name_not_specified", False, outfile="%s.parsed" % tmpfile)
-
-                    msg += \
-                        'handling of testprocedures is temporarily disabled!'
-                    status = False
-
+                    from shared.mrslparser import parse
+                    (status, retmsg) = parse(tmpfile, "testprocedure_job_id", "testprocedure_test_parse__cert_name_not_specified", False, outfile="%s.parsed" % tmpfile)
+                    
                 # remove temporary files no matter what happened
 
                 if tmpfile:

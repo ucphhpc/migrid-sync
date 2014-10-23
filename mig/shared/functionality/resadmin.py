@@ -335,7 +335,6 @@ from the certificate.<br />
     <table class=resources>
     <tr><td>
     <form method="post" action="testresupport.py">
-    <input type="hidden" name="with_html" value="true" />
     <input type="hidden" name="unique_resource_name" value="%s" />
     <select name="re_name">"""\
          % resourcename
@@ -350,12 +349,12 @@ from the certificate.<br />
                     html += '<option value=%s>%s' % (env, env)
 
     html += """</select>"""
-    html += '<input type="submit" name="submit" value="verify" />'
+    html += '<input type="submit" value="verify" />'
     html += '</form></tr></table><p>'
 
     # create html to select and call script to display testprocedure history
 
-    html += \
+    verify_history = \
         """
 Show testprocedure history for the selected runtime environment and the
 resource with its current configuration.
@@ -373,11 +372,16 @@ resource with its current configuration.
         if re_dict:
             if re_dict.has_key('TESTPROCEDURE'):
                 if re_dict['TESTPROCEDURE'] != []:
-                    html += '<option value=%s>%s' % (env, env)
+                    verify_history += '<option value=%s>%s' % (env, env)
 
-    html += """</select>"""
-    html += '<input type="submit" name="submit" value="Show" />'
-    html += '</form></tr></table><p>'
+    verify_history += """</select>"""
+    verify_history += '<input type="submit" name="submit" value="Show" />'
+    verify_history += '</form></tr></table><p>'
+
+    # TODO: reimplement showresupporthistory in new style and re-enable here
+
+    #html += verify_history
+
     return html
 
 
