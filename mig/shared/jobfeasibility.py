@@ -660,8 +660,8 @@ def validate_files(configuration, job, errors, mrsl_attribute,
         
         # Extra check for VERIFYFILES to match status extension
 
-        if verify_file and not os.path.splitext(filename)[1] in \
-               ['status', 'stdout', 'stderr']:
+        if verify_file and not True in [filename.endswith(i) for i in \
+               ['status', 'stdout', 'stderr']]:
             invalid_verify.append(filename)
             continue
 
