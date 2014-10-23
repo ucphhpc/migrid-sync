@@ -843,7 +843,7 @@ def get_openid_user_dn(configuration, login_url):
     if not os.path.isdir(base_path):
         configuration.logger.error('no such openid user %s: %s' % \
                                    (cert_dir, login_url))
-        return None
+        return ''
     distinguished_name = client_dir_id(cert_dir)
     configuration.logger.info('accepting direct user %s from %s' % \
                               (distinguished_name, login_url))
