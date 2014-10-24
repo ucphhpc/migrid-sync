@@ -305,7 +305,7 @@ def refresh_jobs(configuration, protocol):
     logger = conf.get("logger", logging.getLogger())
     old_usernames = [i.username for i in conf['jobs']]
     cur_usernames = []
-    if not protocol in ('sftp'):
+    if not protocol in ('sftp',):
         logger.error("invalid protocol: %s" % protocol)
         return conf
 
