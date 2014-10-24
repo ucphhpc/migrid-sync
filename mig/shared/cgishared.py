@@ -27,8 +27,7 @@
 
 """Common cgi functions"""
 
-import sys
-
+from shared.base import requested_page
 from shared.cgioutput import CGIOutput
 from shared.conf import get_configuration_object
 from shared.httpsclient import extract_client_id
@@ -54,35 +53,12 @@ def cgiscript_header(header_info=None, content_type='text/html'):
     print ''
 
 
-def init_cgi_script_with_cert(print_header=True, content_type='text/html'):
-    """Prepare for CGI script with client certificate"""
-
-    if print_header:
-        cgiscript_header(content_type=content_type)
-
-    configuration = get_configuration_object()
-    logger = configuration.logger
-    out = CGIOutput(logger)
-
-    # get DN of user currently logged in
-
-    client_id = extract_client_id(configuration)
-    if not client_id:
-        msg = 'No client ID available from SSL env - not authenticated!'
-        logger.error(msg)
-        out.out(msg)
-        out.reply_and_exit(out.ERROR)
-
-    logger.info('script: %s cert: %s' % (sys.argv[0], client_id))
-    return (logger, configuration, client_id, out)
-
-
 def init_cgiscript_possibly_with_cert(print_header=True,
                                       content_type='text/html'):
-    """Prepare for CGI script with optional client certificate"""
-
-    # script used by 'requestnewjob' and 'put' where certs are not
-    # required for resources with sessionid
+    """Prepare for CGI script with optional client certificate. Only used from
+    some of the cgi scripts still on the legacy-form like requestnewjob and
+    put. I.e. scripts where certs are not required due to use of sessionid.
+    """
 
     if print_header:
         cgiscript_header(content_type=content_type)
@@ -97,5 +73,5 @@ def init_cgiscript_possibly_with_cert(print_header=True,
     if not client_id:
         logger.debug('(No client ID available in SSL session)')
 
-    logger.info('script: %s cert: %s' % (sys.argv[0], client_id))
+    logger.info('script: %s cert: %s' % (requested_page(), client_id))
     return (logger, configuration, client_id, out)
