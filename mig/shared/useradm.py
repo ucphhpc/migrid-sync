@@ -789,7 +789,7 @@ def get_openid_user_map(configuration):
                 id_map[enc] = cert_id
     return id_map
     
-def get_openid_user_dn(configuration, login_url):
+def get_openid_user_dn(configuration, login_url, user_check=True):
     """Translate OpenID user identified by login_url into a distinguished_name
     on the cert format.
     We first lookup the login_url suffix in the user_home to find a matching
@@ -801,8 +801,12 @@ def get_openid_user_dn(configuration, login_url):
     As a last resort we check if login_url (suffix) is already on the cert
     distinguished name or cert dir format and return the distinguished name
     format if so.
+    If the optional user_check flag is set to False the user dir check is
+    skipped resulting in the openid name being returned even for users not
+    yet signed up.
     """
-    configuration.logger.info('extracting openid dn from %s' % login_url)
+    logger = configuration.logger
+    logger.info('extracting openid dn from %s' % login_url)
     found_openid_prefix = False
     for oid_provider in configuration.user_openid_providers:
         oid_prefix = oid_provider.rstrip('/') + '/'
@@ -810,17 +814,17 @@ def get_openid_user_dn(configuration, login_url):
             found_openid_prefix = oid_prefix
             break
     if not found_openid_prefix:
-        configuration.logger.error("invalid openid login: %s" % login_url)
-        return None
+        logger.error("openid login from invalid provider: %s" % login_url)
+        return ''
     raw_login = login_url.replace(found_openid_prefix, '')
-    configuration.logger.info("trying openid raw login: %s" % raw_login)
+    logger.info("trying openid raw login: %s" % raw_login)
     # Lookup native user_home from openid user symlink
     link_path = os.path.join(configuration.user_home, raw_login)
     if os.path.islink(link_path):
         native_path = os.path.realpath(link_path)
         native_dir = os.path.basename(native_path)
         distinguished_name = client_dir_id(native_dir)
-        configuration.logger.info('found full ID %s from %s link' % \
+        logger.info('found full ID %s from %s link' % \
                                   (distinguished_name, login_url))
         return distinguished_name
     elif configuration.user_openid_alias:
@@ -830,24 +834,29 @@ def get_openid_user_dn(configuration, login_url):
         user_alias = configuration.user_openid_alias
         for (distinguished_name, user) in user_map.items():
             if user[user_alias] in (raw_login, client_alias(raw_login)):
-                configuration.logger.info('found full ID %s from %s alias' % \
+                logger.info('found full ID %s from %s alias' % \
                                           (distinguished_name, login_url))
                 return distinguished_name
 
     # Fall back to try direct DN (possibly on cert dir form)
-    configuration.logger.info('fall back to direct ID %s from %s' % \
+    logger.info('fall back to direct ID %s from %s' % \
                               (raw_login, login_url))
     # Force to dir format and check if user home exists
     cert_dir = client_id_dir(raw_login)
     base_path = os.path.join(configuration.user_home, cert_dir)
-    if not os.path.isdir(base_path):
-        configuration.logger.error('no such openid user %s: %s' % \
-                                   (cert_dir, login_url))
+    if os.path.isdir(base_path):
+        distinguished_name = client_dir_id(cert_dir)
+        logger.info('accepting direct user %s from %s' % \
+                    (distinguished_name, login_url))
+        return distinguished_name
+    elif not user_check:
+        logger.info('accepting raw user %s from %s' % \
+                    (raw_login, login_url))
+        return raw_login
+    else:
+        logger.error('no such openid user %s: %s' % \
+                     (cert_dir, login_url))
         return ''
-    distinguished_name = client_dir_id(cert_dir)
-    configuration.logger.info('accepting direct user %s from %s' % \
-                              (distinguished_name, login_url))
-    return distinguished_name
 
 def get_full_user_map(configuration):
     """Load complete user map including any OpenID aliases"""

@@ -34,6 +34,7 @@ import os
 # REJECT_UNSET is not used directly but exposed to functionality
 
 from shared.findtype import is_user
+from shared.httpsclient import extract_client_cert
 from shared.safeinput import validated_input, REJECT_UNSET
 
 def warn_on_rejects(rejects, output_objects):
@@ -107,58 +108,50 @@ def validate_input_and_cert(
     require_user=True,
     filter_values=None,
     ):
-    """A wrapper used by most back end functionality"""
+    """A wrapper used by most back end functionality - redirects to sign up
+    if client_id is missing.
+    """
     
-    cert_error = ''
+    creds_error = ''
     if not client_id:
-        cert_error = "Invalid or missing user certificate"
+        creds_error = "Invalid or missing user credentials"
     elif require_user and not is_user(client_id, configuration.user_home):
-        cert_error = "No such user (%s)" % client_id
+        creds_error = "No such user (%s)" % client_id
 
-    if cert_error:
+    if creds_error:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : cert_error
+                              : creds_error
                               })
 
-        # Redirect to req or ext cert page with suitable certificate requirement
-        # but without changing access method (CGI vs. WSGI).
+        # Redirect to sign-up cert page trying to guess relevant choices
 
-        certreq_url = os.environ['REQUEST_URI'].replace('-bin', '-sid')
-        certreq_url = os.path.join(os.path.dirname(certreq_url), 'reqcert.py')
-        extcert_url = os.environ['REQUEST_URI'].replace('-sid', '-bin')
-        extcert_url = os.path.join(os.path.dirname(extcert_url), 'extcert.py')
-
-        certreq_link = {'object_type': 'link', 'destination': certreq_url,
-                        'text': 'Request a new user certificate'}
-        extcert_link = {'object_type': 'link', 'destination': extcert_url,
-                        'text': 'Sign up with existing certificate'}
+        signup_url = os.path.join(configuration.migserver_https_sid_url,
+                                  'cgi-sid', 'signup.py')
         if not client_id:
             output_objects.append(
-                {'object_type': 'text', 'text': '''Apparently you do not have
-a suitable user certificate, but you can request one:'''
+                {'object_type': 'text', 'text': '''Apparently you do not
+already have access to %s, but you can sign up:''' % configuration.short_title
                  })
-            output_objects.append(certreq_link)
-            output_objects.append(
-                {'object_type': 'text', 'text': '''However, if you own a
-suitable certificate you can sign up with it:'''
-                 })
-            output_objects.append(extcert_link)
+            signup_query = '?show=kitoid;show=migoid;show=migcert;show=extcert'
+            output_objects.append({'object_type': 'link', 'text': signup_url,
+                                   'destination': signup_url + signup_query})
         else:
             output_objects.append(
                 {'object_type': 'text', 'text': '''Apparently you already have
-a suitable certificate you can sign up with:'''
+suitable credentials and just need to sign up for an account on:'''
                  })
-            output_objects.append(extcert_link)
-            output_objects.append(
-                {'object_type': 'text', 'text': '''However, you can still
-request a dedicated user certificate if you prefer:'''
-                 })
-            output_objects.append(certreq_link)
+            if extract_client_cert(configuration):
+                signup_query = '?show=kitoid;show=extcert'
+            else:
+                # TODO: it would be nice to logout/expire session cookie here!
+                signup_query = ''
+            output_objects.append({'object_type': 'link', 'text': signup_url,
+                                   'destination': signup_url + signup_query})
 
         output_objects.append(
-            {'object_type': 'text', 'text': '''If you already received a user
-certificate you probably just need to import it in your browser.'''
-             })
+            {'object_type': 'text', 'text': '''If you already signed up and
+received a user certificate you probably just need to import it in your
+browser.'''})
         output_objects.append({'object_type': 'text', 'text': ''})
         return (False, output_objects)
     (status, retval) = validate_input(user_arguments_dict, defaults,

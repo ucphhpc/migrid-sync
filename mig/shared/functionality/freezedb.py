@@ -50,8 +50,6 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Frozen Archives'})
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -122,6 +120,8 @@ $(document).ready(function() {
 </script>
 ''' % default_pager_entries
 
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Frozen Archives'})
     output_objects.append({'object_type': 'html_form',
                            'text':'''
  <div id="confirm_dialog" title="Confirm" style="background:#fff;">

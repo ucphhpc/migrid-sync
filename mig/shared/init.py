@@ -28,7 +28,6 @@
 """Script initialization helper functions"""
 
 import os
-import sys
 
 from shared.base import requested_page
 from shared.conf import get_configuration_object
@@ -97,7 +96,8 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
                     base_menu = 'default'
                 if base_menu == 'simple' and configuration.site_simple_menu:
                     title['base_menu'] = configuration.site_simple_menu
-                elif base_menu == 'advanced' and configuration.site_advanced_menu:
+                elif base_menu == 'advanced' and \
+                         configuration.site_advanced_menu:
                     title['base_menu'] = configuration.site_advanced_menu
                 else:
                     title['base_menu'] = configuration.site_default_menu

@@ -43,6 +43,7 @@ from shared.defaults import cert_valid_days, oid_valid_days
 from shared.fileio import write_file
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import correct_handler
+from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables
 from shared.safeinput import filter_commonname
 from shared.useradm import db_name, distinguished_name_to_user, \
@@ -73,6 +74,11 @@ def signature(login_type):
             'openid.sreg.state': [''],
             'openid.sreg.locality': [''],
             'openid.sreg.role': [''],
+            # Please note that we only get sreg.required here if user is
+            # already logged in at OpenID provider when signing up so
+            # that we do not get the required attributes
+            'openid.sreg.required': [''],
+            'openid.ns': [''],
             'password': [''],
             'comment': ['(Created through autocreate)'],
             'proxy_upload': [''],
@@ -295,6 +301,15 @@ def main(client_id, user_arguments_dict):
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : 'No ID information received!'})
+        if accepted.get('openid.sreg.required', '') and \
+               extract_client_openid(configuration):
+            output_objects.append(
+                {'object_type': 'text', 'text': '''Please note that sign-up
+for OpenID access does not work if you are already signed in with your OpenID
+provider - and that appears to be the case now.
+You probably have to either wait until your OpenID session expires or log out
+and remove any session cookies for %s before it will work.''' % \
+                 configuration.migserver_https_oid_url})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if login_type == 'cert':

@@ -871,7 +871,8 @@ def guess_type(name):
             __type_map[key] = valid_free_text
         for key in ('show', ):
             __type_map[key] = valid_label_text
-        for key in ('password', 'verifypassword', ):
+        # sreg required may have commas - reuse password
+        for key in ('password', 'verifypassword', 'openid.sreg.required', ):
             __type_map[key] = valid_password
         for key in ('architecture', 'hostidentifier', ):
             __type_map[key] = valid_alphanumeric

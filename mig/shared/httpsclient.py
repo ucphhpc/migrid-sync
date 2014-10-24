@@ -73,12 +73,11 @@ def unescape(esc_str):
     """Remove backslash escapes from a string"""
     try:
         return esc_str.decode('string_escape')
-    except Exception, exc:
+    except:
         return esc_str
 
-def extract_client_id(configuration, environ=os.environ):
-    """Extract unique user cert ID from HTTPS or fall back to try REMOTE_USER
-    login environment set by OpenID.
+def extract_client_cert(configuration, environ=os.environ):
+    """Extract unique user cert ID from SSL cert value.
     Optionally takes current environment instead of using os.environ from time
     of load.
     """
@@ -86,16 +85,36 @@ def extract_client_id(configuration, environ=os.environ):
     # We accept utf8 chars (e.g. '\xc3') in client_id_field but they get
     # auto backslash-escaped in environ so we need to unescape first
     
-    distinguished_name = unescape(environ.get(client_id_field, '')).strip()
+    return unescape(environ.get(client_id_field, '')).strip()
+
+def extract_client_openid(configuration, environ=os.environ):
+    """Extract unique user credentials from REMOTE_USER value.
+    Optionally takes current environment instead of using os.environ from time
+    of load.
+    """
+
+    # We accept utf8 chars (e.g. '\xc3') in client_login_field but they get
+    # auto backslash-escaped in environ so we need to unescape first
+    
+    login = unescape(environ.get(client_login_field, '')).strip()
+    if not login:
+        return ""
+    # Let backend do user_check
+    return get_openid_user_dn(configuration, login, user_check=False)
+
+def extract_client_id(configuration, environ=os.environ):
+    """Extract unique user cert ID from HTTPS or fall back to try REMOTE_USER
+    login environment set by OpenID.
+    Optionally takes current environment instead of using os.environ from time
+    of load.
+    """
+    distinguished_name = extract_client_cert(configuration, environ)
     if configuration.user_openid_providers and not distinguished_name:
-        login = unescape(environ.get(client_login_field, '')).strip()
-        if not login:
-            return ""
         if environ["REQUEST_URI"].find('oidaccountaction.py') == -1 and \
                environ["REQUEST_URI"].find('autocreate.py') == -1:
             # Throw away any extra ID fields from environment
             pop_openid_query_fields(environ)
-        distinguished_name = get_openid_user_dn(configuration, login)
+        distinguished_name = extract_client_openid(configuration, environ)
     return distinguished_name
 
 def check_source_ip(remote_ip, unique_resource_name):
