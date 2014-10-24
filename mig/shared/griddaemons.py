@@ -35,12 +35,13 @@ import shelve
 import socket
 import time
 
-from shared.base import client_dir_id, client_alias, invisible_path
+from shared.base import client_dir_id, client_id_dir, client_alias, \
+    invisible_path
 from shared.fileio import unpickle, acquire_file_lock, release_file_lock
 from shared.ssh import parse_pub_key
 from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
-     get_authkeys, ssh_authpasswords, davs_authpasswords, ftps_authpasswords, \
-     get_authpasswords, extract_field
+    get_authkeys, ssh_authpasswords, davs_authpasswords, ftps_authpasswords, \
+    get_authpasswords, extract_field
 
 default_max_hits, default_fail_cache = 5, 120
 
@@ -179,6 +180,8 @@ def refresh_users(configuration, protocol):
         proto_authpasswords = ftps_authpasswords
     else:
         logger.error("invalid protocol: %s" % protocol)
+        return conf
+
     authkeys_pattern = os.path.join(conf['root_dir'], '*', proto_authkeys)
     authpasswords_pattern = os.path.join(conf['root_dir'], '*',
                                          proto_authpasswords)
@@ -294,52 +297,56 @@ def refresh_users(configuration, protocol):
 
 
 def refresh_jobs(configuration, protocol):
+    '''Refresh job keys based on the job state.
+    Add user entries for all active job keys. 
+    Removes all the user entries for jobs no longer active.
+    '''
     conf = configuration.daemon_conf
     logger = conf.get("logger", logging.getLogger())
     old_usernames = [i.username for i in conf['jobs']]
     cur_usernames = []
-    if protocol in ('sftp'):
-        proto_authkeys = ssh_authkeys
-        proto_authpasswords = None
-    else:
+    if not protocol in ('sftp'):
         logger.error("invalid protocol: %s" % protocol)
+        return conf
 
-    for (_, _, filenames) in os.walk(configuration.sessid_to_mrsl_link_home):
-        for filename in filenames:
-            filepath = os.path.join(configuration.sessid_to_mrsl_link_home, filename)
-            if os.path.islink(filepath) and filepath.endswith('.mRSL') and \
-                   os.path.exists(filepath):
-                sessionid = filename[:-5]
-                job_dict = unpickle(filepath, logger)
+    for filename in os.listdir(configuration.sessid_to_mrsl_link_home):
+        filepath = os.path.join(configuration.sessid_to_mrsl_link_home, filename)
+        
+        job_dict = None
+        if os.path.islink(filepath) and filepath.endswith('.mRSL') and \
+               os.path.exists(filepath):
+            sessionid = filename[:-5]
+            job_dict = unpickle(filepath, logger)
                 
-                # We only allow connections from executing jobs that
-                # has a public key
-                if job_dict and \
-                        job_dict.has_key('STATUS') and \
-                        job_dict['STATUS'] == 'EXECUTING' and \
-                        job_dict.has_key('SESSIONID') and \
-                        job_dict['SESSIONID'] == sessionid and \
-                        job_dict.has_key('USER_CERT') and \
-                        job_dict.has_key('MOUNT') and \
-                        job_dict.has_key('MOUNTSSHPUBLICKEY'):
-                    user_alias = sessionid
-                    user_dir = job_dict['USER_CERT'].replace(' ', '_').replace('/', '+')
-                    user_key = job_dict['MOUNTSSHPUBLICKEY']
-                    user_url = job_dict['RESOURCE_CONFIG']['HOSTURL']
-                    user_ip = socket.gethostbyname_ex(user_url)[2][0]
+        # We only allow connections from executing jobs that
+        # has a public key
+        if not job_dict is None and type(job_dict) == dict and \
+               job_dict.has_key('STATUS') and \
+               job_dict['STATUS'] == 'EXECUTING' and \
+               job_dict.has_key('SESSIONID') and \
+               job_dict['SESSIONID'] == sessionid and \
+               job_dict.has_key('USER_CERT') and \
+               job_dict.has_key('MOUNT') and \
+               job_dict.has_key('MOUNTSSHPUBLICKEY'):
+            user_alias = sessionid
+            user_dir = client_id_dir(job_dict['USER_CERT'])
+            user_key = job_dict['MOUNTSSHPUBLICKEY']
+            user_url = job_dict['RESOURCE_CONFIG']['HOSTURL']
+            user_ip = socket.gethostbyname_ex(user_url)[2][0]
 
-                     # Make sure pub key is valid
-                    try:    
-                        _ = parse_pub_key(user_key)
-                    except Exception, exc:
-                        logger.warning("Skipping broken key '%s' for user %s (%s)" % \
+            # Make sure pub key is valid
+            try:    
+                _ = parse_pub_key(user_key)
+            except Exception, exc:
+                logger.warning("Skipping broken key '%s' for user %s (%s)" % \
                                (user_key, user_alias, exc))
-                        continue 
+                continue 
                     
-                    conf['jobs'].append(User(username=user_alias, 
-                                home=user_dir, password=None,
-                                public_key=user_key, chroot=True, ip_addr=user_ip))
-                    cur_usernames.append(user_alias)
+            conf['jobs'].append(User(username=user_alias, 
+                                     home=user_dir, password=None,
+                                     public_key=user_key, chroot=True, 
+                                     ip_addr=user_ip))
+            cur_usernames.append(user_alias)
                 
     removed = [i for i in old_usernames if not i in cur_usernames]
     if removed:
