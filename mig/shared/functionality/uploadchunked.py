@@ -90,7 +90,7 @@ def parse_form_upload(user_args, client_id, configuration, base_dir):
     logger = configuration.logger
     cache_dir = os.path.join(base_dir, upload_tmp_dir) + os.sep
 
-    # TMP! only support single filename and chunk for now
+    # TODO: we only support single filename and chunk for now; extend?
     #for name_index in xrange(max_upload_files):
     #    if user_args.has_key(filename_field) and \
     #           len(user_args[filename_field]) > name_index:

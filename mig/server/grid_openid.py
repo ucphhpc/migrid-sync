@@ -201,13 +201,13 @@ class OpenIDHTTPServer(HTTPServer):
         for (key, val) in cert_field_map.items():
             if not key in sreg.data_fields:
                 sreg.data_fields[key] = key.replace('_', ' ').title()
-        print "DEBUG: sreg fields: %s" % sreg.data_fields
+        # print "DEBUG: sreg fields: %s" % sreg.data_fields
         for name in cert_field_names:
             cert_field_aliases[name] = []
             for target in [i for i in cert_field_names if name != i]:
                 if cert_field_map[name] == cert_field_map[target]:
                     cert_field_aliases[name].append(target) 
-        print "DEBUG: cert field aliases: %s" % cert_field_aliases
+        # print "DEBUG: cert field aliases: %s" % cert_field_aliases
 
     def setOpenIDServer(self, oidserver):
         """Override openid attribute"""
@@ -500,12 +500,10 @@ class ServerHandler(BaseHTTPRequestHandler):
             if found:
                 for alias in cert_field_aliases[field]:
                     sreg_data[alias] = val
-        print "DEBUG: addSRegResponse added data:\n%s\n%s\n%s" % \
+        # print "DEBUG: addSRegResponse added data:\n%s\n%s\n%s" % \
               (sreg_data, sreg_req.required, request)
-        ## TMP!! fake request for all sreg fields
-        #sreg_req.required += sreg_data.keys()
         sreg_resp = sreg.SRegResponse.extractResponse(sreg_req, sreg_data)
-        print "DEBUG: addSRegResponse send response:\n%s" % sreg_resp.data
+        # print "DEBUG: addSRegResponse send response:\n%s" % sreg_resp.data
         response.addExtension(sreg_resp)
 
     def approved(self, request, identifier=None):

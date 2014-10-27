@@ -121,8 +121,6 @@ def main(client_id, user_arguments_dict):
         discovery_uris = ''
 
     output_objects.append({'object_type': 'text', 'text':
-                           'DEBUG: env: %s' % os.environ})
-    output_objects.append({'object_type': 'text', 'text':
                            'Advertising valid OpenID endpoints:'})
 
     discovery_doc = discovery_doc % discovery_uris
