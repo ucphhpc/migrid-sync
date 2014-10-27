@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # publicscriptgen - Basic script generator functions
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -239,6 +239,8 @@ def ca_check_init(lang):
             """
     if [ -z \"$ca_cert_file\" ]; then
         ca_check='--insecure'
+    elif [ \"$ca_cert_file\" == 'AUTO' ]; then
+        ca_check=''
     else
         ca_check=\"--cacert $ca_cert_file\"
     fi
@@ -248,6 +250,8 @@ def ca_check_init(lang):
             """
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = \"--cacert %s\" % (ca_cert_file)
 """
@@ -698,7 +702,7 @@ def init_script(
     header = \
         """
 mig%s - a part of the MiG scripts
-Copyright (C) 2004-2011  MiG Core Developers lead by Brian Vinter
+Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 
 This file is part of MiG.
 
