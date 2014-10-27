@@ -119,8 +119,9 @@ migserver.prefix = %(server_url_optional_port)s
 migserver.key = /path/to/mig/key.pem
 migserver.cert = /path/to/mig/cert.pem
 
-[web]
-cacerts = /path/to/mig/cacert.pem
+# Disabled: we no longer rely on MiG CA signed server certificates
+#[web]
+#cacerts = /path/to/mig/cacert.pem
 
 should allow access with your certificate.
 In the above /path/to/mig is typically /home/USER/.mig where USER is

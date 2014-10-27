@@ -1045,13 +1045,17 @@ login %(username)s
 password YOUR_PASSWORD_HERE
 </pre>
 From then on you can use e.g. lftp or CurlFtpFS to access your %(site)s home:
+<!--
+TODO: we need to provide the intermediate cert for server cert check like this
+set ssl:ca-file sub.class1.server.ca.pem
+-->
 <pre>
-lftp -e "set ssl:ca-file $HOME/.mig/cacert.pem; set ftp:ssl-protect-data on" \\
-    -p %(ftps_ctrl_port)s %(ftps_server)s
+lftp -e "set ssl:verify-certificate no; set ftp:ssl-protect-data on" \\
+     -p %(ftps_ctrl_port)s %(ftps_server)s
 </pre>
 <pre>
-curlftpfs -o ssl -o cacert=$HOME/.mig/cacert.pem \\
-    %(ftps_server)s:%(ftps_ctrl_port)s mig-home -o uid=$(id -u) -o gid=$(id -g)
+curlftpfs -o ssl %(ftps_server)s:%(ftps_ctrl_port)s mig-home \\
+          -o user=%(username)s -ouid=$(id -u) -o gid=$(id -g) -o no_verify_peer
 </pre>
 </div>
 <div class="div-ftps-client-notes">
