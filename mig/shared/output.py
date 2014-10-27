@@ -497,9 +497,6 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             if configuration.site_enable_openid:
                 oid_url = os.path.join(configuration.migserver_https_sid_url,
                                        'cgi-sid', 'oiddiscover.py')
-                # TMP!
-                oid_url = os.path.join(configuration.migserver_https_oid_url,
-                                       'public', 'oid.xml')
                 meta += '''
 <!-- advertise any valid OpenID entry points in line with spec --> 
 <meta http-equiv="X-XRDS-Location" content="%s" />
