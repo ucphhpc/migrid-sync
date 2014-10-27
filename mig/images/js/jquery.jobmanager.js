@@ -343,8 +343,9 @@ if (jQuery) (function($){
     });
     
     var config = {container: $("#pager"), size: 300};
+    var doSort = true;
     $("#jm_jobmanager")
-    .tablesorter({  widgets: ["zebra", "multiselect", "contextual"],
+    .tablesorter({  widgets: ["zebra", "multiselect", "contextual", "saveSort"],
                     textExtraction: function(node) {
                                     var stuff = $("div", node).html();
                                     if (stuff == null) {
@@ -352,12 +353,14 @@ if (jQuery) (function($){
                                     }
                                     return stuff;
                                   },
+                    sortColumn: 'Job ID',
                     headers: {0: {sorter: false}}
                   })
     .tablesorterPager(config);
 
     // Check CheckAll when read all
     $("#jm_jobmanager").bind("sortEnd", function() { $("#checkAll").prop("checked", false); });
+    
     
     $("#append").click(function() {
 
@@ -427,8 +430,13 @@ if (jQuery) (function($){
                 var sorting = [[1,1]];
                 // Inform tablesorter of new data
                 $("#jm_jobmanager").trigger("update");
-                if (job_count > 0) {
-                    $("#jm_jobmanager").trigger("sorton", [sorting]);
+                // NOTE: disabled now that we use saveSort widget
+                if (doSort)  { // only first time now that we use saveSort
+                // Disabled explicit sort as it breaks zebra-coloring for some reason
+                //    if (job_count > 0) {
+                //        $("#jm_jobmanager").trigger("sorton", [sorting]);
+                //    }
+                    doSort = false;
                 }
             }
         });

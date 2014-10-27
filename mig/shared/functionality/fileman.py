@@ -323,6 +323,7 @@ def js_tmpl(entry_path='/'):
 <script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
 <script type="text/javascript" src="/images/js/jquery.xbreadcrumbs.js"></script>
 <!-- The Templates plugin is included to render the upload/download listings -->

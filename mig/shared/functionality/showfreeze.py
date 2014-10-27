@@ -91,6 +91,7 @@ Please contact the Grid admins %s if you think it should be enabled.
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 
 <script type="text/javascript" >
@@ -110,7 +111,7 @@ $(document).ready(function() {
           }
 
 
-          $("#frozenfilestable").tablesorter({widgets: ["zebra"],
+          $("#frozenfilestable").tablesorter({widgets: ["zebra", "saveSort"],
                                         sortList:sortOrder,
                                         textExtraction: imgTitle
                                         })

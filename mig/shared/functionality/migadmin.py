@@ -92,6 +92,7 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js">
 </script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
 
@@ -113,7 +114,7 @@ $(document).ready(function() {
           // table initially sorted by col. 9 (created)
           var sortOrder = [[9,0]];
 
-          $("#certreqtable").tablesorter({widgets: ["zebra"],
+          $("#certreqtable").tablesorter({widgets: ["zebra", "saveSort"],
                                         sortList:sortOrder
                                         })
                                .tablesorterPager({ container: $("#pager"),

@@ -70,6 +70,7 @@ if (!window.console) {
 if (jQuery) (function($){
   
     var pathAttribute = 'rel_path';
+    var doSort = true;
 
     // Use touchscreen interface without need for right clicking
     function touchscreenChecker() {
@@ -846,7 +847,10 @@ if (jQuery) (function($){
             var sorting = [[0, 0]]; 
             $(".fm_files table").trigger("update");
             if (!emptyDir)  { // Don't try and sort an empty table, this causes error!
-                $(".fm_files table").trigger("sorton", [sorting]);
+                if (doSort)  { // only first time now that we use saveSort
+                    $(".fm_files table").trigger("sorton", [sorting]);
+                    doSort = false;
+                }
             }
             
             // Update statusbar
@@ -1079,7 +1083,7 @@ if (jQuery) (function($){
          return node.childNodes[0].innerHTML; 
      };
      $(".fm_files table", obj).tablesorter(
-         {widgets: ['zebra'],
+         {widgets: ['zebra', 'saveSort'],
           textExtraction: myTextExtraction,
           sortColumn: 'Name'});
 

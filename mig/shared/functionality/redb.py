@@ -76,6 +76,7 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
 
@@ -106,7 +107,7 @@ $(document).ready(function() {
               return key;
           }
 
-          $("#runtimeenvtable").tablesorter({widgets: ["zebra"],
+          $("#runtimeenvtable").tablesorter({widgets: ["zebra", "saveSort"],
                                         sortList:sortOrder,
                                         textExtraction: imgTitle
                                         })

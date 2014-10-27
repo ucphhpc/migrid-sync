@@ -109,6 +109,7 @@ access the workflows.''' % vgrid_name})
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 
 <script type="text/javascript">
@@ -126,7 +127,7 @@ $(document).ready(function() {
               return key;
           }
 
-          $("#workflowstable").tablesorter({widgets: ["zebra"],
+          $("#workflowstable").tablesorter({widgets: ["zebra", "saveSort"],
                                         sortList:sortOrder,
                                         textExtraction: imgTitle
                                         })

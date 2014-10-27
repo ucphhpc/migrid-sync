@@ -98,6 +98,7 @@ Please contact the Grid admins %s if you think it should be enabled.
 <script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
+<script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
 <script type="text/javascript" src="/images/js/jquery.xbreadcrumbs.js"></script>
 <!-- The Templates plugin is included to render the upload/download listings -->
