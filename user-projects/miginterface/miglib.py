@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # 
 # miglib - a part of the MiG scripts
-# Copyright (C) 2004-2010  MiG Core Developers lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 # 
 # This file is part of MiG.
 # 
@@ -34,7 +34,7 @@ import StringIO
 
 def version():
     """Show version details"""
-    print 'MiG User Scripts: $Revision: 1251 $,$Revision: 1251 $'
+    print 'MiG User Scripts: $Revision: 2477 $,$Revision: 2477 $'
 
 def check_var(name, var):
     """Check that conf variable, name, is set"""
@@ -73,6 +73,8 @@ def expand_name(path_list, server_flags, destinations):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -121,6 +123,8 @@ def cancel_job(job_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -169,6 +173,8 @@ def cat_file(path_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -211,6 +217,8 @@ def show_doc(search, show):
 
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -253,6 +261,8 @@ def get_file(src_path, dst_path):
 
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -301,6 +311,8 @@ def head_file(lines, path_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -349,6 +361,8 @@ def job_action(action, job_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -397,6 +411,8 @@ def job_liveio(action, job_id, src_list, dst):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -445,6 +461,8 @@ def ls_file(path_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -493,6 +511,8 @@ def mk_dir(path_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -535,6 +555,8 @@ def job_mqueue(action, queue, msg):
 
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -583,6 +605,8 @@ def mv_file(src_list, dst):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -625,6 +649,8 @@ def put_file(src_path, dst_path, submit_mrsl, extract_package):
 
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -675,6 +701,8 @@ def read_file(first, last, src_path, dst_path):
 
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -723,6 +751,8 @@ def rm_file(path_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -771,6 +801,8 @@ def rm_dir(path_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -819,6 +851,8 @@ def stat_file(path_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -867,6 +901,8 @@ def job_status(job_list, max_job_count):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -909,6 +945,8 @@ def submit_file(src_path, dst_path, submit_mrsl, extract_package):
 
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -965,6 +1003,8 @@ def resubmit_job(job_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -1013,6 +1053,8 @@ def tail_file(lines, path_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -1061,6 +1103,8 @@ def touch_file(path_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -1109,6 +1153,8 @@ def truncate_file(size, path_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -1157,6 +1203,8 @@ def unzip_file(src_list, dst):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -1205,6 +1253,8 @@ def wc_file(path_list):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -1247,6 +1297,8 @@ def write_file(first, last, src_path, dst_path):
 
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
@@ -1295,6 +1347,8 @@ def zip_file(current_dir, src_list, dst):
     
     if not ca_cert_file:
         ca_check = '--insecure'
+    elif ca_cert_file == 'AUTO':
+        ca_check = ''
     else:
         ca_check = "--cacert %s" % (ca_cert_file)
 
