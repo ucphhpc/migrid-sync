@@ -38,9 +38,10 @@ basis.
 import cgi
 from string import letters, digits, printable
 
+from shared.base import force_unicode
+from shared.validstring import valid_user_path
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
-from shared.validstring import valid_user_path
 
 ### Use utf8 byte string representation here ("something" and not u"something")
 ### We explicitly translate to the unicode representation in the functions
@@ -118,8 +119,8 @@ def __valid_contents(
     min_length and max_length parameters.
     """
 
-    contents = str(contents).decode('utf8')
-    valid_chars = str(valid_chars).decode('utf8')
+    contents = force_unicode(str(contents))
+    valid_chars = force_unicode(str(valid_chars))
     if len(contents) < min_length:
         raise InputException('shorter than minimum length (%d)'
                               % min_length)

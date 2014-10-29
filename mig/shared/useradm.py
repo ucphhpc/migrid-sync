@@ -33,6 +33,7 @@ import fnmatch
 import os
 import re
 import shutil
+import sqlite3
 import sys
 
 from shared.base import client_id_dir, client_dir_id, client_alias, \
@@ -867,6 +868,57 @@ def get_full_user_map(configuration):
     for (alias, cert_id) in oid_aliases.items():
         user_map[alias] = user_map.get(cert_id, {})
     return user_map
+
+def __oid_sessions_execute(configuration, query, query_vars, commit=False):
+    """Execute query on Apache mod auth OpenID sessions DB from configuration
+    with sql query_vars inserted.
+    Use the commit flag to specify if the query should be followed by a db
+    commit to save any changes.
+    """
+    logger = configuration.logger
+    sessions = []
+    if not configuration.user_openid_providers or \
+           not configuration.openid_store:
+        logger.error("no openid configuration")
+        return (False, sessions)
+    session_db_path = os.path.join(configuration.openid_store,
+                                   'mod_auth_openid-users.db')
+    if not os.path.exists(session_db_path):
+        logger.error("could not find openid session db: %s" % session_db_path)
+        return (False, sessions)
+    try:
+        conn = sqlite3.connect(session_db_path)
+        cur = conn.cursor()
+        logger.info("execute query %s with args %s on openid sessions" % \
+                    (query, query_vars))
+        cur.execute(query, query_vars)
+        sessions = cur.fetchall()
+        if commit:
+            conn.commit()
+        conn.close()
+    except Exception, exc:
+        logger.error("failed to execute query %s with args %s: %s" % \
+                     (query, query_vars, exc))
+        return (False, sessions)
+    logger.info("got openid sessions out for %s" % sessions)
+    return (True, sessions)
+
+def find_oid_sessions(configuration, identity):
+    """Find active OpenID session(s) for user with OpenID identity. Queries the
+    Apache mod auth openid sqlite database directly.
+    """
+    query = 'SELECT * FROM sessionmanager WHERE identity=?'
+    args = (identity, )
+    return __oid_sessions_execute(configuration, query, args, False)
+
+def expire_oid_sessions(configuration, identity):
+    """Expire active OpenID session(s) for user with OpenID identity. Modifies
+    the Apache mod auth openid sqlite database directly.
+    """
+    query = 'DELETE FROM sessionmanager WHERE identity=?'
+    args = (identity, )
+    return __oid_sessions_execute(configuration, query, args, True)
+        
     
 def migrate_users(
     conf_path,

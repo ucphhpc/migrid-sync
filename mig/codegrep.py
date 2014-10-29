@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codegrep - a simple helper to locate strings in the project code.
-# Copyright (C) 2007  Jonas Bardino
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

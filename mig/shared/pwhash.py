@@ -1,4 +1,4 @@
-# coding: utf8
+# -*- coding: utf-8 -*-
 """
 
     Securely hash and check passwords using PBKDF2.

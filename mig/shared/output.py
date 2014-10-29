@@ -491,9 +491,15 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
         elif i['object_type'] == 'sectionheader':
             lines.append('<h3>%s</h3>' % html_escape(i['text']))
         elif i['object_type'] == 'title':
-            meta = ''
-            if i.has_key('meta'):
-                meta = i['meta']
+            meta = i.get('meta', '')
+            style = i.get('style', '')
+            javascript = i.get('javascript', '')
+            bodyfunctions = i.get('bodyfunctions', '')
+            include_menu = not i.get('skipmenu', False)
+            include_widgets = not i.get('skipwidgets', False)
+            base_menu = i.get('base_menu', configuration.site_default_menu)
+            user_menu = i.get('user_menu', [])
+            user_widgets = i.get('user_widgets', {})
             if configuration.site_enable_openid:
                 oid_url = os.path.join(configuration.migserver_https_sid_url,
                                        'cgi-sid', 'oiddiscover.py')
@@ -501,29 +507,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
 <!-- advertise any valid OpenID entry points in line with spec --> 
 <meta http-equiv="X-XRDS-Location" content="%s" />
 ''' % oid_url
-            style = ''
-            if i.has_key('style'):
-                style = i['style']
-            javascript = ''
-            if i.has_key('javascript'):
-                javascript = i['javascript']
-            bodyfunctions = ''
-            if i.has_key('bodyfunctions'):
-                bodyfunctions = i['bodyfunctions']
-            include_menu = True
-            if i.has_key('skipmenu'):
-                include_menu = not i['skipmenu']
-            if i.has_key('skipwidgets'):
-                include_widgets = not i['skipwidgets']
-            base_menu, user_menu = [], []
-            if i.has_key('base_menu'):
-                base_menu = i['base_menu']
-            else:
-                base_menu = configuration.site_default_menu
-            if i.has_key('user_menu'):
-                user_menu = i['user_menu']
-            if i.has_key('user_widgets'):
-                user_widgets = i['user_widgets']
+
             lines.append(get_cgi_html_header(
                 configuration, html_escape(i['text']),
                 '',

@@ -34,7 +34,7 @@ import base64
 import re
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir
+from shared.base import client_id_dir, force_utf8, force_unicode
 from shared.defaults import cert_valid_days
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import correct_handler
@@ -140,7 +140,7 @@ def main(client_id, user_arguments_dict):
 
     raw_name = accepted['cert_name'][-1].strip() 
     try:
-        cert_name = raw_name.decode("utf8").title().encode("utf8")
+        cert_name = force_utf8(force_unicode(raw_name).title())
     except Exception:
         cert_name = raw_name.title()
     country = accepted['country'][-1].strip().upper()

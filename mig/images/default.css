@@ -321,6 +321,9 @@ table th.icon {
 .navmenu ul li.docs a {
   background-image: url('/images/icons/txt.png');
 }
+.navmenu ul li.logout a {
+  background-image: url('/images/icons/door_in.png');
+}
 
 .navmenu ul li a:hover, .navsubmenu ul li a:hover {
   background-color: #369;

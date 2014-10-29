@@ -816,13 +816,13 @@ class Configuration:
             self.site_default_menu = ['dashboard', 'submitjob', 'files',
                                       'jobs', 'vgrids', 'resources',
                                       'downloads', 'runtimeenvs', 'people',
-                                      'settings', 'docs']
+                                      'settings', 'docs', 'logout']
         if config.has_option('SITE', 'simple_menu'):
             req = config.get('SITE', 'simple_menu').split()
             self.site_simple_menu = [i for i in req if menu_items.has_key(i)]
         else:
             self.site_simple_menu = ['dashboard', 'files', 'vgrids',
-                                     'settings']
+                                     'settings', 'logout']
         if config.has_option('SITE', 'advanced_menu'):
             req = config.get('SITE', 'advanced_menu').split()
             self.site_advanced_menu = [i for i in req if menu_items.has_key(i)]
@@ -830,7 +830,8 @@ class Configuration:
             self.site_advanced_menu = ['dashboard', 'submitjob', 'files',
                                       'jobs', 'vgrids', 'resources',
                                       'downloads', 'runtimeenvs', 'people',
-                                      'settings', 'vmachines', 'shell', 'docs']
+                                      'settings', 'vmachines', 'shell', 'docs',
+                                       'logout']
         if config.has_option('SITE', 'user_menu'):
             req = config.get('SITE', 'user_menu').split()
             self.site_user_menu = [i for i in req if menu_items.has_key(i)]

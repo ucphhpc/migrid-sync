@@ -38,7 +38,7 @@ import os
 import time
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir
+from shared.base import client_id_dir, force_utf8, force_unicode
 from shared.defaults import cert_valid_days, oid_valid_days
 from shared.fileio import write_file
 from shared.functional import validate_input, REJECT_UNSET
@@ -231,7 +231,7 @@ def main(client_id, user_arguments_dict):
     # please note that we get utf8 coded bytes here and title() treats such
     # chars as word termination. Temporarily force to unicode.
     try:
-        full_name = raw_name.decode("utf8").title().encode("utf8")
+        full_name = force_utf8(force_unicode(raw_name).title())
     except Exception:
         logger.warning("could not use unicode form to capitalize full name")
         full_name = raw_name.title()

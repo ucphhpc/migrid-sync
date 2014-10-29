@@ -75,11 +75,11 @@ except ImportError:
     print "ERROR: the python paramiko module is required for this daemon"
     sys.exit(1)
 
-from shared.base import invisible_path
+from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
-     acceptable_chmod, refresh_users, refresh_jobs, force_utf8, \
-     hit_rate_limit, update_rate_limit, expire_rate_limit
+     acceptable_chmod, refresh_users, refresh_jobs, hit_rate_limit, \
+     update_rate_limit, expire_rate_limit
 from shared.useradm import check_password_hash
 
 configuration, logger = None, None

@@ -70,20 +70,6 @@ class User(object):
                (self.username, self.home, self.password, self.public_key)
 
 
-def force_utf8(val):
-    """Internal helper to encode unicode strings to utf8 version"""
-    # We run into all kind of nasty encoding problems if we mix
-    if not isinstance(val, unicode):
-        return val
-    return val.encode("utf8")
-
-def force_unicode(val):
-    """Internal helper to decode unicode strings from utf8 version"""
-    # We run into all kind of nasty encoding problems if we mix
-    if not isinstance(val, unicode):
-        return val.decode("utf8")
-    return val
-
 def get_fs_path(user_path, root, chroot_exceptions):
     """Internal helper to translate path with chroot and invisible files
     in mind"""

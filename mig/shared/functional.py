@@ -33,9 +33,11 @@ import os
 
 # REJECT_UNSET is not used directly but exposed to functionality
 
+from shared.base import requested_page
 from shared.findtype import is_user
-from shared.httpsclient import extract_client_cert
+from shared.httpsclient import extract_client_cert, extract_client_openid
 from shared.safeinput import validated_input, REJECT_UNSET
+from shared.useradm import expire_oid_sessions
 
 def warn_on_rejects(rejects, output_objects):
     """Helper to fill in output_objects in case of rejects"""
@@ -111,14 +113,15 @@ def validate_input_and_cert(
     """A wrapper used by most back end functionality - redirects to sign up
     if client_id is missing.
     """
-    
+
+    logger = configuration.logger
     creds_error = ''
     if not client_id:
         creds_error = "Invalid or missing user credentials"
     elif require_user and not is_user(client_id, configuration.user_home):
         creds_error = "No such user (%s)" % client_id
 
-    if creds_error:
+    if creds_error and not requested_page().endswith('oidlogout.py'):
         output_objects.append({'object_type': 'error_text', 'text'
                               : creds_error
                               })
@@ -135,6 +138,10 @@ already have access to %s, but you can sign up:''' % configuration.short_title
             signup_query = '?show=kitoid;show=migoid;show=migcert;show=extcert'
             output_objects.append({'object_type': 'link', 'text': signup_url,
                                    'destination': signup_url + signup_query})
+            output_objects.append(
+                {'object_type': 'text', 'text': '''If you already signed up and
+received a user certificate you probably just need to import it in your
+browser.'''})
         else:
             output_objects.append(
                 {'object_type': 'text', 'text': '''Apparently you already have
@@ -143,16 +150,18 @@ suitable credentials and just need to sign up for an account on:'''
             if extract_client_cert(configuration):
                 signup_query = '?show=kitoid;show=extcert'
             else:
-                # TODO: it would be nice to logout/expire session cookie here!
+                # Force logout/expire session cookie here to support signup
+                identity = extract_client_openid(configuration, lookup_dn=False)
+                if identity:
+                    logger.info("expire openid user %s" % identity)
+                    (success, _) = expire_oid_sessions(configuration, identity)
+                else:
+                    logger.info("no openid user logged in")
+
                 signup_query = ''
             output_objects.append({'object_type': 'link', 'text': signup_url,
                                    'destination': signup_url + signup_query})
 
-        output_objects.append(
-            {'object_type': 'text', 'text': '''If you already signed up and
-received a user certificate you probably just need to import it in your
-browser.'''})
-        output_objects.append({'object_type': 'text', 'text': ''})
         return (False, output_objects)
     (status, retval) = validate_input(user_arguments_dict, defaults,
             output_objects, allow_rejects, filter_values)

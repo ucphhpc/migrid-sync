@@ -118,6 +118,20 @@ def requested_page(environ=None, fallback='dashboard.py'):
                 environ.get('REQUEST_URI', fallback).split('?', 1)[0]
     return page_path
 
+def force_utf8(val):
+    """Internal helper to encode unicode strings to utf8 version"""
+    # We run into all kind of nasty encoding problems if we mix
+    if not isinstance(val, unicode):
+        return val
+    return val.encode("utf8")
+
+def force_unicode(val):
+    """Internal helper to decode unicode strings from utf8 version"""
+    # We run into all kind of nasty encoding problems if we mix
+    if not isinstance(val, unicode):
+        return val.decode("utf8")
+    return val
+
 
 if __name__ == '__main__':
     orig_id = '/X=ab/Y=cdef ghi/Z=klmn'

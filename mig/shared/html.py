@@ -91,6 +91,9 @@ menu_items['vmrequest'] = {'class': 'vmrequest', 'url': 'vmrequest.py',
 menu_items['vmconnect'] = {'class': 'vmconnect', 'url': 'vmconnect.py',
                            'title': 'Connect to Virtual Machine', 
                            'hover': 'Connect to Virtual Machine'}
+menu_items['logout'] = {'class': 'logout', 'url': 'logout.py',
+                           'title': 'Logout', 
+                           'hover': 'Logout'}
 
 # Define all possible VGrid page columns
 vgrid_items = {}

@@ -87,10 +87,12 @@ def extract_client_cert(configuration, environ=os.environ):
     
     return unescape(environ.get(client_id_field, '')).strip()
 
-def extract_client_openid(configuration, environ=os.environ):
+def extract_client_openid(configuration, environ=os.environ, lookup_dn=True):
     """Extract unique user credentials from REMOTE_USER value.
     Optionally takes current environment instead of using os.environ from time
     of load.
+    If lookup_dn is set the resulting OpenID is translated to the corresponding
+    local account if any.
     """
 
     # We accept utf8 chars (e.g. '\xc3') in client_login_field but they get
@@ -99,8 +101,10 @@ def extract_client_openid(configuration, environ=os.environ):
     login = unescape(environ.get(client_login_field, '')).strip()
     if not login:
         return ""
-    # Let backend do user_check
-    return get_openid_user_dn(configuration, login, user_check=False)
+    if lookup_dn:
+        # Let backend do user_check
+        login = get_openid_user_dn(configuration, login, user_check=False)
+    return login
 
 def extract_client_id(configuration, environ=os.environ):
     """Extract unique user cert ID from HTTPS or fall back to try REMOTE_USER
