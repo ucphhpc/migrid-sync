@@ -109,19 +109,22 @@ def validate_input_and_cert(
     allow_rejects,
     require_user=True,
     filter_values=None,
+    environ=None,
     ):
     """A wrapper used by most back end functionality - redirects to sign up
     if client_id is missing.
     """
 
     logger = configuration.logger
+    if environ is None:
+        environ = os.environ
     creds_error = ''
     if not client_id:
         creds_error = "Invalid or missing user credentials"
     elif require_user and not is_user(client_id, configuration.user_home):
         creds_error = "No such user (%s)" % client_id
 
-    if creds_error and not requested_page().endswith('oidlogout.py'):
+    if creds_error and not requested_page().endswith('logout.py'):
         output_objects.append({'object_type': 'error_text', 'text'
                               : creds_error
                               })
@@ -147,11 +150,12 @@ browser.'''})
                 {'object_type': 'text', 'text': '''Apparently you already have
 suitable credentials and just need to sign up for an account on:'''
                  })
-            if extract_client_cert(configuration):
+            if extract_client_cert(configuration, environ):
                 signup_query = '?show=kitoid;show=extcert'
             else:
                 # Force logout/expire session cookie here to support signup
-                identity = extract_client_openid(configuration, lookup_dn=False)
+                identity = extract_client_openid(configuration, environ,
+                                                 lookup_dn=False)
                 if identity:
                     logger.info("expire openid user %s" % identity)
                     (success, _) = expire_oid_sessions(configuration, identity)

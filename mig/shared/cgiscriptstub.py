@@ -30,6 +30,7 @@
 import cgi
 import cgitb
 cgitb.enable()
+import os
 import time
 
 from shared.base import requested_page
@@ -38,14 +39,14 @@ from shared.httpsclient import extract_client_id
 from shared.output import format_output
 from shared.scriptinput import fieldstorage_to_dict
 
-def init_cgi_script(delayed_input=None):
+def init_cgi_script(environ, delayed_input=None):
     """Shared init"""
     configuration = get_configuration_object()
     logger = configuration.logger
 
     # get and log ID of user currently logged in
 
-    client_id = extract_client_id(configuration)
+    client_id = extract_client_id(configuration, environ)
     logger.info('script: %s cert: %s' % (requested_page(), client_id))
     if not delayed_input:
         fieldstorage = cgi.FieldStorage()
@@ -107,15 +108,18 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None):
     """
 
     before_time = time.time()
+    # Always rely on os.environ here since only called from cgi scripts
+    environ = os.environ
     (configuration, logger, client_id, user_arguments_dict) = \
-                    init_cgi_script(delayed_input)
+                    init_cgi_script(environ, delayed_input)
 
     # default to html output
 
     output_format = user_arguments_dict.get('output_format', ['html'])[-1]
 
-    (out_obj, (ret_code, ret_msg)) = main(client_id,
-            user_arguments_dict)
+    # TODO: add environ arg support to all main backends and use here
+
+    (out_obj, (ret_code, ret_msg)) = main(client_id, user_arguments_dict)
     after_time = time.time()
     out_obj.append({'object_type': 'timing_info', 'text':
                     "done in %.3fs" % (after_time - before_time)})

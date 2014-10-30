@@ -151,9 +151,11 @@ def handle_proxy(proxy_string, client_id, config):
                        'No proxy certificate to load: %s' % err.what()})
     return output
 
-def main(client_id, user_arguments_dict):
+def main(client_id, user_arguments_dict, environ=None):
     """Main function used by front end"""
 
+    if environ is None:
+        environ = os.environ
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
     logger = configuration.logger
@@ -163,10 +165,11 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text'
                           : 'Automatic %s sign up' % \
                             configuration.short_title })
-    if os.environ.get('SSL_CLIENT_S_DN', ''):
+    identity = extract_client_openid(configuration, environ, lookup_dn=False)
+    if client_id and client_id == identity:
         login_type = 'cert'
         base_url = configuration.migserver_https_cert_url
-    elif os.environ.get('REMOTE_USER', ''):
+    elif identity:
         login_type = 'oid'
         base_url = configuration.migserver_https_oid_url
         for name in ('openid.sreg.cn', 'openid.sreg.fullname',
@@ -254,15 +257,14 @@ def main(client_id, user_arguments_dict):
             org_unit = 'NA'
 
         # Stay on virtual host - extra useful while we test dual OpenID
-        base_url = os.environ.get('REQUEST_URI',
-                                  base_url).split('?')[0].replace('autocreate',
-                                                                  'fileman')
-        id_url = os.environ['REMOTE_USER'].strip()
+        base_url = environ.get('REQUEST_URI',
+                               base_url).split('?')[0].replace('autocreate',
+                                                               'fileman')
         raw_login = None
         for oid_provider in configuration.user_openid_providers:
             openid_prefix = oid_provider.rstrip('/') + '/'
-            if id_url.startswith(openid_prefix):
-                raw_login = id_url.replace(openid_prefix, '')
+            if identity.startswith(openid_prefix):
+                raw_login = identity.replace(openid_prefix, '')
                 break
 
     if raw_login:
@@ -302,14 +304,20 @@ def main(client_id, user_arguments_dict):
             {'object_type': 'error_text', 'text'
              : 'No ID information received!'})
         if accepted.get('openid.sreg.required', '') and \
-               extract_client_openid(configuration):
+               identity:
+            # Stay on virtual host - extra useful while we test dual OpenID
+            url = environ.get('REQUEST_URI',
+                              base_url).split('?')[0].replace('autocreate',
+                                                              'logout')
             output_objects.append(
                 {'object_type': 'text', 'text': '''Please note that sign-up
 for OpenID access does not work if you are already signed in with your OpenID
 provider - and that appears to be the case now.
-You probably have to either wait until your OpenID session expires or log out
-and remove any session cookies for %s before it will work.''' % \
-                 configuration.migserver_https_oid_url})
+You probably have to reload this page after you explicitly '''})
+            output_objects.append(        
+                {'object_type': 'link', 'destination': url,
+                 'target': '_blank', 'text': "Logout"
+                 })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if login_type == 'cert':

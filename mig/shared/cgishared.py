@@ -27,6 +27,8 @@
 
 """Common cgi functions"""
 
+import os
+
 from shared.base import requested_page
 from shared.cgioutput import CGIOutput
 from shared.conf import get_configuration_object
@@ -60,6 +62,9 @@ def init_cgiscript_possibly_with_cert(print_header=True,
     put. I.e. scripts where certs are not required due to use of sessionid.
     """
 
+    # Always rely on os.environ here since only called from cgi scripts
+    environ = os.environ
+
     if print_header:
         cgiscript_header(content_type=content_type)
 
@@ -69,7 +74,7 @@ def init_cgiscript_possibly_with_cert(print_header=True,
 
     # get DN of user currently logged in
 
-    client_id = extract_client_id(configuration)
+    client_id = extract_client_id(configuration, environ)
     if not client_id:
         logger.debug('(No client ID available in SSL session)')
 

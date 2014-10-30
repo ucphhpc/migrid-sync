@@ -42,7 +42,7 @@ def object_type_info(object_type):
 
     return get_object_type_info(object_type)
 
-def stub(function, configuration, client_id, user_arguments_dict):
+def stub(function, configuration, client_id, user_arguments_dict, environ):
     """Run backend function with supplied arguments"""
 
     before_time = time.time()
@@ -70,6 +70,8 @@ def stub(function, configuration, client_id, user_arguments_dict):
 
         # return (user_arguments_dict)
 
+        # TODO: add environ arg to all main backends and pass it here
+        
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                 user_arguments_dict)
     except Exception, err:
@@ -117,7 +119,7 @@ def application(environ, start_response):
     # tries to use pre-mangled environ for conf loading
     
     from shared.httpsclient import extract_client_id
-    client_id = extract_client_id(configuration, os.environ)
+    client_id = extract_client_id(configuration, environ)
 
     fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
                                     environ=environ)
@@ -139,7 +141,7 @@ def application(environ, start_response):
         backend = os.path.basename(script_path).replace('.py' , '')
         module_path = 'shared.functionality.%s' % backend
         (output_objs, ret_val) = stub(module_path, configuration,
-                                      client_id, user_arguments_dict)
+                                      client_id, user_arguments_dict, environ)
         status = '200 OK'
     except Exception, exc:
         status = '500 ERROR'

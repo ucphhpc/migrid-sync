@@ -76,10 +76,10 @@ def unescape(esc_str):
     except:
         return esc_str
 
-def extract_client_cert(configuration, environ=os.environ):
-    """Extract unique user cert ID from SSL cert value.
-    Optionally takes current environment instead of using os.environ from time
-    of load.
+def extract_client_cert(configuration, environ):
+    """Extract unique user cert ID from SSL cert value in environ.
+    NOTE: We must provide the environment as os.environ may be from the time
+    of load, which is not the right one for wsgi scripts.
     """
 
     # We accept utf8 chars (e.g. '\xc3') in client_id_field but they get
@@ -87,10 +87,11 @@ def extract_client_cert(configuration, environ=os.environ):
     
     return unescape(environ.get(client_id_field, '')).strip()
 
-def extract_client_openid(configuration, environ=os.environ, lookup_dn=True):
-    """Extract unique user credentials from REMOTE_USER value.
-    Optionally takes current environment instead of using os.environ from time
-    of load.
+def extract_client_openid(configuration, environ, lookup_dn=True):
+    """Extract unique user credentials from REMOTE_USER value in provided 
+    environment.
+    NOTE: We must provide the environment as os.environ may be from the time
+    of load, which is not the right one for wsgi scripts.
     If lookup_dn is set the resulting OpenID is translated to the corresponding
     local account if any.
     """
@@ -106,11 +107,11 @@ def extract_client_openid(configuration, environ=os.environ, lookup_dn=True):
         login = get_openid_user_dn(configuration, login, user_check=False)
     return login
 
-def extract_client_id(configuration, environ=os.environ):
+def extract_client_id(configuration, environ):
     """Extract unique user cert ID from HTTPS or fall back to try REMOTE_USER
     login environment set by OpenID.
-    Optionally takes current environment instead of using os.environ from time
-    of load.
+    NOTE: We must provide the environment as os.environ may be from the time
+    of load, which is not the right one for wsgi scripts.
     """
     distinguished_name = extract_client_cert(configuration, environ)
     if configuration.user_openid_providers and not distinguished_name:

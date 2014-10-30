@@ -404,7 +404,7 @@ ctime\t%(ctime)s
 def html_link(obj):
     """html format link"""
     
-    extra_fields = ['id', 'class', 'title']
+    extra_fields = ['id', 'class', 'title', 'target']
     extra_params = []
     # Set parameter in link
     for name in extra_fields:

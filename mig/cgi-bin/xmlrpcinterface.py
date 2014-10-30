@@ -25,6 +25,7 @@
 # -- END_HEADER ---
 #
 
+import os
 import time
 from SimpleXMLRPCServer import CGIXMLRPCRequestHandler
 
@@ -85,12 +86,13 @@ def stub(function, user_arguments_dict):
 
     before_time = time.time()
 
+    environ = os.environ
     configuration = get_configuration_object()
 
     # get ID of user currently logged in
 
     main = id
-    client_id = extract_client_id(configuration)
+    client_id = extract_client_id(configuration, environ)
     output_objects = []
     try:
         exec 'from %s import main' % function
@@ -108,10 +110,10 @@ def stub(function, user_arguments_dict):
 
     try:
 
-        # return (user_arguments_dict)
+        # TODO: add environ arg support to all main backends and use here
 
         (output_objects, (ret_code, ret_msg)) = main(client_id,
-                user_arguments_dict)
+                                                     user_arguments_dict)
     except Exception, err:
         return ('Error calling function: %s' % err, returnvalues.ERROR)
 
