@@ -501,7 +501,7 @@ class ServerHandler(BaseHTTPRequestHandler):
                 for alias in cert_field_aliases[field]:
                     sreg_data[alias] = val
         # print "DEBUG: addSRegResponse added data:\n%s\n%s\n%s" % \
-              (sreg_data, sreg_req.required, request)
+        #      (sreg_data, sreg_req.required, request)
         sreg_resp = sreg.SRegResponse.extractResponse(sreg_req, sreg_data)
         # print "DEBUG: addSRegResponse send response:\n%s" % sreg_resp.data
         response.addExtension(sreg_resp)
