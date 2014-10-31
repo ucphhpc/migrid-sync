@@ -439,6 +439,8 @@ def js_tmpl(entry_path='/'):
                                              expandSpeed: 0,
                                              collapseSpeed: 0,
                                              multiFolder: false,
+                                             filespacer: true,
+                                             uploadspace: true,
                                              subPath: "%s"
                                              }
             );

@@ -867,15 +867,20 @@ if (jQuery) (function($){
 
             /* UI stuff: contextmenu, drag'n'drop. */
             
-            // Create an element for the whitespace below the list of files in the file pane
-            // Always preserve a small space for pasting into the folder, etc
+            // Always preserve a small space for pasting into the folder, quick-uploading, etc
             var headerHeight = 20;
             var spacerHeight = 40;
-            if ($("#fm_filelisting").height() + spacerHeight < $(".fm_files").height() - headerHeight) {
-                spacerHeight = $(".fm_files").height() - $("#fm_filelisting").height() - headerHeight;
+            var uploaderHeight = 40;
+            var extraHeight = spacerHeight + uploaderHeight;
+            if ($("#fm_filelisting").height() + extraHeight < $(".fm_files").height() - headerHeight) {
+                extraHeight = $(".fm_files").height() - $("#fm_filelisting").height() - headerHeight;
             }
 
             if (options.filespacer) {
+                if (!options.uploadspace)
+                    spacerHeight = extraHeight;
+                else
+                    spacerHeight = extraHeight/2;
                 var rel_path = "";
                 /* add or update existing filespacer */
                 if ($(".fm_files div.filespacer").length == 0) {
@@ -898,6 +903,43 @@ if (jQuery) (function($){
                         (options['actions'][action])(action, el, pos);                                            
                     });
             }
+            if (options.uploadspace) {
+                if (!options.filespacer)
+                    uploaderHeight = extraHeight;
+                else
+                    uploaderHeight = extraHeight/2;
+                var rel_path = "";
+                /* add or update existing uploadspace */
+                if ($(".fm_files div.uploadspace").length == 0) {
+                    //console.log("add uploadspace");
+                    $(".fm_files").append('<div class="uploadspace centertext" style="border: 2px; border-style: dotted; border-color: lightgrey; height: '+spacerHeight+'px ;" rel_path="" title=""+><span class="uploadbutton">Click this area to open upload helper...</span></div>');
+                    function openFancyUploadHere() {
+                        //alert("upload here!");
+                        var open_dialog = mig_fancyuploadchunked_init("upload_dialog");
+                        var remote_path = $.fn.targetDir($(".fm_files div.filespacer"));
+                        $("#upload_form input[name='remotefilename_0']").val(remote_path);
+                        $("#upload_form input[name='fileupload_0_0_0']").val('');
+                        $("#upload_output").html('');
+                        open_dialog("Upload Files", 
+                                    function () {
+                                        $(".fm_files").parent().reload('');
+                                    }, remote_path, false);
+                        //alert("done upload!");
+                    }
+                    $("div.uploadspace").click(openFancyUploadHere);
+                }
+                
+                if (t != '/') { // Do not prepend the fake-root.
+                    rel_path = t;
+                }
+                console.log("update uploadspace with path: "+rel_path);
+                $(".fm_files div.uploadspace").css("height", uploaderHeight+"px")
+                                             .css("line-height", uploaderHeight+"px")
+                                             .css("color", "grey")
+                                             .attr("rel_path", rel_path)
+                                             .attr("title", rel_path);
+            }
+
             // Bind actions to entries in a non-blocking way to avoid 
             // unresponsive script warnings with many entries
 
@@ -1308,7 +1350,8 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
           subPath: (start_path || "/"),
           actions: {select: select_action},
           dragndrop: false,
-          filespacer: false
+          filespacer: false,
+          uploadspace: false
          },
          // doubleclick callback action
          function(el) { select_action("dclick", el, undefined); }
