@@ -58,13 +58,14 @@ Additional packaged Trac extensions can be installed with:
 sudo aptitude install trac-customfieldadmin trac-graphviz \
      trac-mastertickets trac-wikiprint trac-wikirename trac-wysiwyg
 
-and the unpackaged ones can be grabbed from pypi.python.org with:
-sudo aptitude install python-pip
-sudo pip install http://trac-hacks.org/svn/wikicssplugin/0.11
-sudo pip install http://trac-hacks.org/svn/fullblogplugin/0.11
-sudo pip install http://trac-hacks.org/svn/discussionplugin/0.11
-sudo pip install http://trac-hacks.org/svn/tracpasteplugin/0.11
-sudo pip install http://trac-hacks.org/svn/downloadsplugin/0.11
+and the unpackaged ones can be grabbed from trac-hacks.org with pip
+and easy_install:
+sudo aptitude install python-pip python-setuptools
+sudo easy_install http://trac-hacks.org/svn/wikicssplugin
+sudo easy_install http://trac-hacks.org/svn/fullblogplugin
+sudo easy_install http://trac-hacks.org/svn/discussionplugin/0.11
+sudo easy_install http://trac-hacks.org/svn/tracpasteplugin
+sudo easy_install http://trac-hacks.org/svn/downloadsplugin
 sudo pip install TracStats
 
 where 0.11 in the URLs may need to be changed to fit your particular version
