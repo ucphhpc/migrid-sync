@@ -294,10 +294,10 @@ or the same with OpenID and HSTS:
 
 and a storage-only setup with CentOS apache 2.x and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
-                   --public_fqdn=escistore01.hpc.ku.dk \
-                   --cert_fqdn=escistore01.hpc.ku.dk \
-                   --oid_fqdn=escistore02.hpc.ku.dk \
-                   --sid_fqdn=escistore03.hpc.ku.dk --user=mig --group=mig \
+                   --public_fqdn=erda.dk \
+                   --cert_fqdn=cert.erda.dk \
+                   --oid_fqdn=erda.dk \
+                   --sid_fqdn=sid.erda.dk --user=mig --group=mig \
                    --apache_etc=/etc/httpd \
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
@@ -308,7 +308,7 @@ and a storage-only setup with CentOS apache 2.x and OpenID login:
                    --hg_path='' --hgweb_scripts='' \
                    --trac_admin_path='' --trac_ini_path='' \
                    --public_port=80 --cert_port=443 --oid_port=443 --sid_port=443 \
-                   --openid_providers=https://escistore02.hpc.ku.dk:8000/openid/ \
+                   --openid_providers='https://topenid.ku.dk/ https://erda.dk:8000/openid/' \
                    --enable_openid=True --enable_wsgi=True --enable_sftp=True \
                    --enable_davs=True --enable_ftps=True --enable_hsts=True \
                    --enable_sandboxes=False --enable_vmachines=False \
