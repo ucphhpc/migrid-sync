@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # modified - entity modification mark manipulation
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -45,7 +45,7 @@ def mark_entity_modified(configuration, kind, name):
     """
     home_map = home_paths(configuration)
     modified_path = os.path.join(home_map[kind], "%s.modified" % kind)
-    lock_path = os.path.join(home_map[kind], "%s.lock" % kind)
+    lock_path = os.path.join(configuration.mig_system_files, "%s.lock" % kind)
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     try:
@@ -81,7 +81,7 @@ def check_entities_modified(configuration, kind):
     along with a time stamp for the latest modification"""
     home_map = home_paths(configuration)
     modified_path = os.path.join(home_map[kind], "%s.modified" % kind)
-    lock_path = os.path.join(home_map[kind], "%s.lock" % kind)
+    lock_path = os.path.join(configuration.mig_system_files, "%s.lock" % kind)
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     try:
@@ -110,7 +110,7 @@ def reset_entities_modified(configuration, kind):
     """Reset all modified entity marks of given kind"""
     home_map = home_paths(configuration)
     modified_path = os.path.join(home_map[kind], "%s.modified" % kind)
-    lock_path = os.path.join(home_map[kind], "%s.lock" % kind)
+    lock_path = os.path.join(configuration.mig_system_files, "%s.lock" % kind)
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     try:

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridaccess - user access in VGrids
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -70,8 +70,8 @@ def load_entity_map(configuration, kind, do_lock):
     Returns tuple with map and time stamp of last map modification.
     """
     home_map = home_paths(configuration)
-    map_path = os.path.join(home_map[kind], "%s.map" % kind)
-    lock_path = os.path.join(home_map[kind], "%s.lock" % kind)
+    map_path = os.path.join(configuration.mig_system_files, "%s.map" % kind)
+    lock_path = os.path.join(configuration.mig_system_files, "%s.lock" % kind)
     if do_lock:
         lock_handle = open(lock_path, 'a')
         fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
@@ -120,8 +120,8 @@ def refresh_user_map(configuration):
     Only update map for users that updated conf after last map save.
     """
     dirty = []
-    map_path = os.path.join(configuration.user_home, "user.map")
-    lock_path = os.path.join(configuration.user_home, "user.lock")
+    map_path = os.path.join(configuration.mig_system_files, "user.map")
+    lock_path = os.path.join(configuration.mig_system_files, "user.lock")
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     user_map, map_stamp = load_user_map(configuration, do_lock=False)
@@ -183,8 +183,8 @@ def refresh_resource_map(configuration):
     Only update map for resources that updated conf after last map save.
     """
     dirty = []
-    map_path = os.path.join(configuration.resource_home, "resource.map")
-    lock_path = os.path.join(configuration.resource_home, "resource.lock")
+    map_path = os.path.join(configuration.mig_system_files, "resource.map")
+    lock_path = os.path.join(configuration.mig_system_files, "resource.lock")
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     resource_map, map_stamp = load_resource_map(configuration, do_lock=False)
@@ -253,8 +253,8 @@ def refresh_vgrid_map(configuration):
     """
     dirty = {}
     vgrid_changes = {}
-    map_path = os.path.join(configuration.vgrid_home, "vgrid.map")
-    lock_path = os.path.join(configuration.vgrid_home, "vgrid.lock")
+    map_path = os.path.join(configuration.mig_system_files, "vgrid.map")
+    lock_path = os.path.join(configuration.mig_system_files, "vgrid.lock")
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     vgrid_map, map_stamp = load_vgrid_map(configuration, do_lock=False)
