@@ -503,6 +503,25 @@ script_ops_two_args.append(['stopallexes', 'unique_resource_name', 'all'
 script_ops_two_args.append(['restartallexes', 'unique_resource_name',
                            'all'])
 
+script_ops_two_args.append(['startstore', 'unique_resource_name',
+                           'store_name'])
+script_ops_two_args.append(['statusstore', 'unique_resource_name',
+                           'store_name'])
+script_ops_two_args.append(['stopstore', 'unique_resource_name',
+                           'store_name'])
+script_ops_two_args.append(['restartstore', 'unique_resource_name',
+                           'store_name'])
+script_ops_two_args.append(['cleanstore', 'unique_resource_name', 'store_name'])
+
+script_ops_two_args.append(['startallstores', 'unique_resource_name',
+                           'all'])
+script_ops_two_args.append(['statusallstores', 'unique_resource_name',
+                           'all'])
+script_ops_two_args.append(['stopallstores', 'unique_resource_name', 'all'
+                           ])
+script_ops_two_args.append(['restartallstores', 'unique_resource_name',
+                           'all'])
+
 script_ops_single_arg = []
 
 # Vgrid functions
