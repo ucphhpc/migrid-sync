@@ -58,7 +58,7 @@ def create_notify_message(
     jobid = jobdict['JOB_ID']
     job_retries = jobdict.get('RETRIES', configuration.job_retries)
 
-    var_dict = {'https_cert_url': configuration.migserver_https_cert_url,
+    var_dict = {'https_default_url': configuration.migserver_https_default_url,
                 'jobid': jobid, 'retries': job_retries,
                 'out_dir': job_output_dir,
                 'site' : configuration.short_title}
@@ -72,7 +72,7 @@ def create_notify_message(
         txt += \
             '''
 Your %(site)s job with JOB ID %(jobid)s has finished and full status is available at:
-%(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
+%(https_default_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
 
 The job commands and their exit codes:
 '''\
@@ -86,10 +86,10 @@ The job commands and their exit codes:
         txt += \
             '''
 Link to stdout file:
-%(https_cert_url)s/cert_redirect/%(out_dir)s/%(jobid)s/%(jobid)s.stdout (might not be available)
+%(https_default_url)s/cert_redirect/%(out_dir)s/%(jobid)s/%(jobid)s.stdout (might not be available)
 
 Link to stderr file:
-%(https_cert_url)s/cert_redirect/%(out_dir)s/%(jobid)s/%(jobid)s.stderr (might not be available)
+%(https_default_url)s/cert_redirect/%(out_dir)s/%(jobid)s/%(jobid)s.stderr (might not be available)
 
 Replies to this message will not be read!
 '''\
@@ -101,7 +101,7 @@ Replies to this message will not be read!
             '''
 The job with JOB ID %(jobid)s has failed after %(retries)s retries!
 This may be due to internal errors, but full status is available at:
-%(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
+%(https_default_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
 
 Please contact the %(site)s team if the problem occurs multiple times.
 
@@ -114,7 +114,7 @@ Replies to this message will not be read!!!
             '''
 Your %(site)s job with JOB ID %(jobid)s has expired, after remaining in the queue for too long.
 This may be due to internal errors, but full status is available at:
-%(https_cert_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
+%(https_default_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
 
 Please contact the %(site)s team for details about expire policies.
 
@@ -168,12 +168,12 @@ URL in a browser:
             if request_type.startswith('vgrid'):
                 txt += \
                     '%s/cgi-bin/adminvgrid.py?vgrid_name=%s'\
-                    % (configuration.migserver_https_cert_url,
+                    % (configuration.migserver_https_default_url,
                        quote(target_name))
             elif request_type.startswith('resource'):
                 txt += \
                     '%s/cgi-bin/resadmin.py?unique_resource_name=%s'\
-                    % (configuration.migserver_https_cert_url,
+                    % (configuration.migserver_https_default_url,
                        quote(target_name))
             txt += ' and add %s as %s.\n\n' % (from_id, entity)
         else:

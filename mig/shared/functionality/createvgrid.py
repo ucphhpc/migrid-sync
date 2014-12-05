@@ -64,11 +64,11 @@ def create_scm(
 
     kind = 'member'
     scm_alias = 'vgridscm'
-    server_url = configuration.migserver_https_cert_url
+    server_url = configuration.migserver_https_default_url
     if scm_dir.find('private') > -1:
         kind = 'owner'
         scm_alias = 'vgridownerscm'
-        server_url = configuration.migserver_https_cert_url
+        server_url = configuration.migserver_https_default_url
     elif scm_dir.find('public') > -1:
         kind = 'public'
         scm_alias = 'vgridpublicscm'
@@ -224,11 +224,11 @@ def create_tracker(
     admin_user = distinguished_name_to_user(client_id)
     admin_email = admin_user.get('email', 'unknown@migrid.org')
     admin_id = admin_user.get(configuration.trac_id_field, 'unknown_id')
-    server_url = configuration.migserver_https_cert_url
+    server_url = configuration.migserver_https_default_url
     if tracker_dir.find('private') > -1:
         kind = 'owner'
         tracker_alias = 'vgridownertracker'
-        server_url = configuration.migserver_https_cert_url
+        server_url = configuration.migserver_https_default_url
     elif tracker_dir.find('public') > -1:
         kind = 'public'
         tracker_alias = 'vgridpublictracker'
@@ -817,7 +817,7 @@ link to any other material in this folder or subfolders with relative
 addresses. So it is possible to create a full web site with multiple pages and
 rich content like on other web hosting services. However, there's no support
 for server side scripting with Python, ASP or PHP for security reasons.
-""" % (vgrid_name, configuration.migserver_https_cert_url, vgrid_name),
+""" % (vgrid_name, configuration.migserver_https_default_url, vgrid_name),
                        priv_readme, logger)
         priv_entry_page = os.path.join(private_base_dir, 'index.html')
         if not os.path.exists(priv_entry_page):

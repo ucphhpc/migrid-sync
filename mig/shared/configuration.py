@@ -279,7 +279,10 @@ class Configuration:
     migserver_https_cert_url = ''
     migserver_https_oid_url = ''
     migserver_https_sid_url = ''
+    # Default entry point for users: i.e. prefer cert or oid url for links
+    migserver_https_default_url = ''
     backup_https_urls = ''
+    migserver_https_default_url = ''
     sleep_period_for_empty_jobs = ''
     min_seconds_between_live_update_requests = 0
     cputime_for_empty_jobs = 0
@@ -533,6 +536,11 @@ class Configuration:
                                                        'migserver_https_sid_url')
         else:
             self.migserver_https_sid_url = self.migserver_https_url
+        if config.has_option('GLOBAL', 'migserver_https_default_url'):
+            self.migserver_https_default_url = config.get('GLOBAL',
+                                                       'migserver_https_default_url')
+        else:
+            self.migserver_https_default_url = self.migserver_https_cert_url
         if config.has_option('GLOBAL', 'rate_limit_db'):
             self.rate_limit_db = config.get('GLOBAL', 'rate_limit_db')
         else:

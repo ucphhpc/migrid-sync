@@ -103,8 +103,8 @@ if __name__ == "__main__":
     feed_raw = "%s.xml" % feed_base
     feed_css_style = "%s.css" % feed_base
     feed_page = "%s.html" % feed_base
-    dashboard_url = configuration.https_cert_url + '/cgi-bin/dashboard.py'
-    docs_url = configuration.https_cert_url + '/cgi-bin/docs.py'
+    dashboard_url = configuration.https_default_url + '/cgi-bin/dashboard.py'
+    docs_url = configuration.https_default_url + '/cgi-bin/docs.py'
     entries = [{'title': 'Dashboard page',
                 'link': dashboard_url,
                 'guid': dashboard_url,

@@ -191,7 +191,7 @@ sudo su - mig-ca
     user_dict['command_cert_create'] = command_cert_create
     user_dict['command_cert_revoke'] = command_cert_revoke
     user_dict['site'] = configuration.short_title
-    user_dict['https_cert_url'] = configuration.migserver_https_cert_url
+    user_dict['https_default_url'] = configuration.migserver_https_default_url
     email_header = '%s account request for %s' % \
                    (configuration.short_title, full_name)
     email_msg = \
@@ -214,13 +214,13 @@ Optional command to create matching certificate:
 Finally add the user
 %(distinguished_name)s
 to any relevant VGrids on:
-%(https_cert_url)s/cgi-bin/vgridadmin.py
+%(https_default_url)s/cgi-bin/vgridadmin.py
 
 
 --- If user must be denied access or deleted at some point ---
 
 Remove the user from any relevant VGrids on:
-%(https_cert_url)s/cgi-bin/vgridadmin.py
+%(https_default_url)s/cgi-bin/vgridadmin.py
 
 Optional command to revoke any user certificates:
 %(command_cert_revoke)s
