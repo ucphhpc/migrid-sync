@@ -36,14 +36,15 @@ import urlparse
 try:
     from wsgidav.wsgidav_app import DEFAULT_CONFIG, WsgiDAVApp
     from wsgidav.server import ext_wsgiutils_server
-    from wsgidav.fs_dav_provider import FilesystemProvider
+    from wsgidav.fs_dav_provider import FileResource, FolderResource, \
+         FilesystemProvider
 except ImportError:
     print "ERROR: the python wsgidav module is required for this daemon"
     sys.exit(1)
 
 from wsgiref.simple_server import make_server
         
-from shared.base import invisible_path
+from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, \
      acceptable_chmod, refresh_users, hit_rate_limit, update_rate_limit, \
@@ -55,43 +56,44 @@ configuration, logger = None, None
 
 
 
-def init_filesystem_handler(handler, directory, host, port, verbose):
-    """Setup up file system handler to take data from user home"""
+class MiGFileResource(FileResource):
+    """Hide invisible files from all access"""
+    def __init__(self, path, environ, filePath):
+        super(MiGFileResource, self).__init__(path, environ, filePath)
+        if invisible_path(path):
+            raise DAVError(HTTP_FORBIDDEN)
 
-    dav_conf_dict = handler.server_conf.dav_cfg
+    # TODO: override access on more methods?
+
+
+class MiGFolderResource(FolderResource):
+    """Hide invisible files from all access"""
+    def __init__(self, path, environ, filePath):
+        super(MiGFolderResource, self).__init__(path, environ, filePath)
+        if invisible_path(path):
+            raise DAVError(HTTP_FORBIDDEN)
+
+    # TODO: override access on more methods?
     
-    # dispatch directory and host to the filesystem handler
-    # This handler is responsible from where to take the data
-    handler.IFACE_CLASS = MiGFilesystemHandler(directory, 'http://%s:%s/' % \
-                                               (host, port),
-                                               handler.server_conf,
-                                               handler._config, verbose)
-
-    if not handler._config.DAV.getboolean('lockemulation'):
-        logger.info('Deactivated LOCK, UNLOCK (WebDAV level 2) support')
-
-    handler.IFACE_CLASS.mimecheck = True
-    if not handler._config.DAV.getboolean('mimecheck'):
-        handler.IFACE_CLASS.mimecheck = False
-        logger.info('Disabled mimetype sniffing (All files will have type '
-                    'application/octet-stream)')
-
-    if dav_conf_dict['baseurl']:
-        logger.info('Using %(baseurl)s as base url for PROPFIND requests' % \
-                     dav_conf_dict)
-    handler.IFACE_CLASS.baseurl = dav_conf_dict['baseurl']
+    def getMemberNames(self):
+        """Return list of direct collection member names (utf-8 encoded).
+        
+        See DAVCollection.getMemberNames()
+        """
+        return [i for i in super(MiGFolderResource, self).getMemberNames() if \
+                not invisible_path(i)]
 
 
-class MiGFilesystemHandler(FilesystemProvider):
+class MiGFilesystemProvider(FilesystemProvider):
     """
     Overrides the default FilesystemProvider to include chroot support and
     hidden files like in other MiG file interfaces.
     """
 
-    def __init__(self, directory, uri, server_conf, dav_conf, verbose=False):
+    def __init__(self, directory, server_conf, dav_conf):
         """Simply call parent constructor"""
-        FilesystemProvider.__init__(self, directory, uri, verbose)
-        self.root = directory
+        super(MiGFilesystemProvider, self).__init__(directory)
+        
         self.daemon_conf = server_conf.daemon_conf
         self.chroot_exceptions = self.daemon_conf['chroot_exceptions']
         self.chmod_exceptions = self.daemon_conf['chmod_exceptions']
@@ -101,7 +103,8 @@ class MiGFilesystemHandler(FilesystemProvider):
     def _get_fs_path(self, davs_path):
         """Wrap helper"""
         #logger.debug("get_fs_path: %s" % davs_path)
-        reply = get_fs_path(davs_path, self.root, self.chroot_exceptions)
+        reply = get_fs_path(davs_path, self.rootFolderPath,
+                            self.chroot_exceptions)
         logger.debug("get_fs_path returns: %s :: %s" % (davs_path, reply))
         return reply
 
@@ -119,50 +122,44 @@ class MiGFilesystemHandler(FilesystemProvider):
         logger.debug("acceptable_chmod returns: %s :: %s" % (davs_path, reply))
         return reply
 
-    def uri2local(self, uri):
-        """map uri in baseuri and local part"""
-
-        uparts = urlparse.urlparse(uri)
-        fileloc = uparts[2][1:]
-        rel_path = os.path.join(fileloc)
-        try:
-            filename = self._get_fs_path(rel_path)
-        except ValueError, vae:
-            logger.warning("illegal path requested: %s :: %s" % (rel_path,
-                                                                 vae))
-            raise DAV_NotFound
-        return filename
-
-    def get_childs(self, uri, filter=None):
-        """return the child objects as self.baseuris for the given URI.
-        We override the listing to hide invisible_path hits.
+    def _locToFilePath(self, path):
+        """Convert resource path to a unicode absolute file path with MiG file
+        system restrictions.
         """
+        assert self.rootFolderPath is not None
+        pathInfoParts = path.strip("/").split("/")
+        real_path = os.path.abspath(os.path.join(self.rootFolderPath,
+                                                 # TODO: insert user home here!
+                                                 #self.user_home,
+                                                 *pathInfoParts))
         
-        fileloc = self.uri2local(uri)
-        filelist = []        
-        if os.path.exists(fileloc):
-            if os.path.isdir(fileloc):
-                try:
-                    files = os.listdir(fileloc)
-                except:
-                    logger.warning("could not listfiles in %s" % uri)
-                    raise DAV_NotFound
-                
-                for filename in files:
-                    if invisible_path(filename):
-                        continue
-                    newloc = os.path.join(fileloc, filename)
-                    filelist.append(self.local2uri(newloc))
-                    
-        logger.info('get_childs: Childs %s' % filelist)
-        return filelist
-                
-    def get_data(self, uri, range=None):
-        """return the content of an object"""
-        reply = FilesystemHandler.get_data(self, uri, range)
-        logger.info("returning get_data reply: %s" % reply)
-        return reply
-                
+        try:
+            filename = self._get_fs_path(real_path)
+        except ValueError, vae:
+            logger.warning("illegal path requested: %s :: %s" % (real_path,
+                                                                 vae))
+            raise RuntimeError("Security exception: tried illegal access: %s" \
+                               % path)
+        real_path = force_unicode(real_path)
+        return real_path
+    
+    def getResourceInst(self, path, environ):
+        """Return info dictionary for path.
+
+        See DAVProvider.getResourceInst()
+
+        Override to filter MiG invisible paths from content.
+        """
+        self._count_getResourceInst += 1
+        real_path = self._locToFilePath(path)
+        if not os.path.exists(real_path):
+            return None
+        
+        if os.path.isdir(real_path):
+            return MiGFolderResource(path, environ, real_path)
+        return MiGFileResource(path, environ, real_path)
+                                                            
+                        
 
 def update_users(configuration, user_map):
     """Update dict with username password pairs"""
@@ -189,7 +186,9 @@ def run(configuration):
     #from tempfile import gettempdir
     #dav_conf['root_dir'] = gettempdir()
     config.update({
-        "provider_mapping": {"/": FilesystemProvider(dav_conf['root_dir'])},
+        "provider_mapping": {"/": MiGFilesystemProvider(dav_conf['root_dir'],
+                                                        configuration,
+                                                        dav_conf)},
         "user_mapping": user_map,
         "enable_loggers": [],
         "propsmanager": True,      # True: use property_manager.PropertyManager
@@ -200,7 +199,7 @@ def run(configuration):
     app = WsgiDAVApp(config)
 
     runner = make_server(config["host"], config["port"], app)
-    ## Or we could use default the server that is part of the WsgiDAV package:
+    ## Or we could use the default server that is part of the WsgiDAV package:
     #ext_wsgiutils_server.serve(config, app)
 
     print('Listening on %(host)s (%(port)s)' % config)
