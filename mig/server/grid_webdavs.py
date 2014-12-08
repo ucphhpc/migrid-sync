@@ -46,9 +46,8 @@ from wsgiref.simple_server import make_server
         
 from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
-from shared.griddaemons import get_fs_path, strip_root, \
-     acceptable_chmod, refresh_users, hit_rate_limit, update_rate_limit, \
-     expire_rate_limit
+from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
+     hit_rate_limit, update_rate_limit, expire_rate_limit
 from shared.useradm import check_password_hash
 
 
@@ -94,27 +93,22 @@ class MiGFilesystemProvider(FilesystemProvider):
         """Simply call parent constructor"""
         super(MiGFilesystemProvider, self).__init__(directory)
         
+        self.configuration = server_conf
         self.daemon_conf = server_conf.daemon_conf
         self.chroot_exceptions = self.daemon_conf['chroot_exceptions']
         self.chmod_exceptions = self.daemon_conf['chmod_exceptions']
 
     # Use shared daemon fs helper functions
     
-    def _get_fs_path(self, davs_path):
+    def _get_fs_path(self, davs_path, user_chroot):
         """Wrap helper"""
-        #logger.debug("get_fs_path: %s" % davs_path)
-        reply = get_fs_path(davs_path, self.rootFolderPath,
+        #logger.debug("get_fs_path: %s %s" % (davs_path, user_chroot))
+        reply = get_fs_path(davs_path, user_chroot,
                             self.chroot_exceptions)
-        logger.debug("get_fs_path returns: %s :: %s" % (davs_path, reply))
+        #logger.debug("get_fs_path returns: %s %s :: %s" % (davs_path, user_chroot,
+        #                                                reply))
         return reply
 
-    def _strip_root(self, davs_path):
-        """Wrap helper"""
-        #logger.debug("strip_root: %s" % davs_path)
-        reply = strip_root(davs_path, self.root, self.chroot_exceptions)
-        logger.debug("strip_root returns: %s :: %s" % (davs_path, reply))
-        return reply
-    
     def _acceptable_chmod(self, davs_path, mode):
         """Wrap helper"""
         #logger.debug("acceptable_chmod: %s" % davs_path)
@@ -123,21 +117,22 @@ class MiGFilesystemProvider(FilesystemProvider):
         return reply
 
     def _locToFilePath(self, path):
-        """Convert resource path to a unicode absolute file path with MiG file
-        system restrictions.
-        """
-        assert self.rootFolderPath is not None
-        pathInfoParts = path.strip("/").split("/")
-        real_path = os.path.abspath(os.path.join(self.rootFolderPath,
-                                                 # TODO: insert user home here!
-                                                 #self.user_home,
-                                                 *pathInfoParts))
+        """Make sure the original lookup without chroot fails"""
+        raise Exception("Not implemented!")
         
+
+    def _chroot_fs_path(self, environ, path):
+        """Convert resource path to a unicode file path with MiG chroot and
+        file operation restrictions.
+        Extract user credentials from environ dicionary to build chroot
+        directory path for user.
+        """
+        username =  environ["http_authenticator.username"]
+        user_chroot = os.path.join(configuration.user_home, username)
         try:
-            filename = self._get_fs_path(real_path)
+            real_path = self._get_fs_path(path, user_chroot)
         except ValueError, vae:
-            logger.warning("illegal path requested: %s :: %s" % (real_path,
-                                                                 vae))
+            logger.warning("illegal path requested: %s :: %s" % (path, vae))
             raise RuntimeError("Security exception: tried illegal access: %s" \
                                % path)
         real_path = force_unicode(real_path)
@@ -148,10 +143,10 @@ class MiGFilesystemProvider(FilesystemProvider):
 
         See DAVProvider.getResourceInst()
 
-        Override to filter MiG invisible paths from content.
+        Override to chroot and filter MiG invisible paths from content.
         """
         self._count_getResourceInst += 1
-        real_path = self._locToFilePath(path)
+        real_path = self._chroot_fs_path(environ, path)
         if not os.path.exists(real_path):
             return None
         
