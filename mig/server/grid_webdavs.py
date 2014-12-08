@@ -34,16 +34,22 @@ import time
 import urlparse
 
 try:
+    #from wsgiref.simple_server import make_server
     from wsgidav.wsgidav_app import DEFAULT_CONFIG, WsgiDAVApp
-    from wsgidav.server import ext_wsgiutils_server
+    #from wsgidav.server import ext_wsgiutils_server
+    # Use cherrypy bundled with wsgidav - needs module path mangling
+    from wsgidav.server import __file__ as server_init_path
+    sys.path.append(os.path.dirname(server_init_path))
+    from cherrypy import wsgiserver
+    from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter
     from wsgidav.fs_dav_provider import FileResource, FolderResource, \
          FilesystemProvider
-except ImportError:
+except ImportError, ierr:
     print "ERROR: the python wsgidav module is required for this daemon"
     sys.exit(1)
 
-from wsgiref.simple_server import make_server
-        
+
+                        
 from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
@@ -160,7 +166,7 @@ def update_users(configuration, user_map):
     """Update dict with username password pairs"""
     refresh_users(configuration, 'davs')
     domain_map = user_map.get('/', {})
-    # TODO: makecustom domaincontroller to support pw hashes instead of raw pw
+    # TODO: make custom domaincontroller to support pw hashes instead of raw pw
     for user_obj in configuration.daemon_conf['users']:
         if not domain_map.has_key(user_obj.username):
             domain_map[user_obj.username] = {'password': user_obj.password}
@@ -171,17 +177,16 @@ def update_users(configuration, user_map):
 def run(configuration):
     """SSL wrapped HTTP server for secure WebDAV access"""
 
-    dav_conf = configuration.daemon_conf
+    dav_conf = configuration.dav_cfg
+    daemon_conf = configuration.daemon_conf
     config = DEFAULT_CONFIG.copy()
     config.update(dav_conf)
+    config.update(daemon_conf)
     # TMP! should look up users on demand
     user_map = {}
     update_users(configuration, user_map)
-    ## TMP! until we get chrooting
-    #from tempfile import gettempdir
-    #dav_conf['root_dir'] = gettempdir()
     config.update({
-        "provider_mapping": {"/": MiGFilesystemProvider(dav_conf['root_dir'],
+        "provider_mapping": {"/": MiGFilesystemProvider(daemon_conf['root_dir'],
                                                         configuration,
                                                         dav_conf)},
         "user_mapping": user_map,
@@ -193,25 +198,46 @@ def run(configuration):
     print('User list: %s' % config['user_mapping'])
     app = WsgiDAVApp(config)
 
-    runner = make_server(config["host"], config["port"], app)
+    print('Config: %s' % config)
+
+    if not config.get('nossl', False):
+        config['ssl_certificate'] = configuration.user_davs_key
+        config['ssl_private_key'] = configuration.user_davs_key
+        config['ssl_certificate_chain'] = ''
+
+        wsgiserver.CherryPyWSGIServer.ssl_adapter = BuiltinSSLAdapter(
+            config['ssl_certificate'], config['ssl_private_key'],
+            config['ssl_certificate_chain'])
+
+    version = "%s WebDAV" % configuration.short_title
+    server = wsgiserver.CherryPyWSGIServer((config["host"], config["port"]),
+                                           app, server_name=version)
+    #runner = make_server(config["host"], config["port"], app)
     ## Or we could use the default server that is part of the WsgiDAV package:
     #ext_wsgiutils_server.serve(config, app)
 
     print('Listening on %(host)s (%(port)s)' % config)
 
+    '''
     min_expire_delay = 300
     last_expire = time.time()
+    '''
     try:
+        '''
         while True:
             runner.handle_request()
             if last_expire + min_expire_delay < time.time():
                 last_expire = time.time()
                 expired = expire_rate_limit(configuration, "davs")
                 logger.debug("Expired rate limit entries: %s" % expired)
+        '''
+        
+        server.start()
+
     except KeyboardInterrupt:
+        server.stop()
         # forward KeyboardInterrupt to main thread
         raise
-
 
 if __name__ == "__main__":
     configuration = get_configuration_object()
@@ -241,11 +267,6 @@ if __name__ == "__main__":
         logger.error(err_msg)
         print err_msg
         sys.exit(1)
-
-    if not nossl:
-        # TODO: switch to Cherrypy.wsgiserver to include ssl support
-        configuration.dav_cfg['ssl_certificate'] = configuration.user_davs_key
-        configuration.dav_cfg['ssl_private_key'] = configuration.user_davs_key
 
     chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
                          os.path.abspath(configuration.vgrid_public_base),
