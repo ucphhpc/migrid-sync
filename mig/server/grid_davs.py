@@ -236,7 +236,7 @@ class MiGDAVAuthHandler(DAVAuthHandler):
                                           True)
                         return True
         update_rate_limit(configuration, "davs", self.client_address[0],
-                          username, False)                    
+                          username, False)
         return False
 
 

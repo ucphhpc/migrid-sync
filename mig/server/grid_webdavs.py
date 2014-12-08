@@ -44,6 +44,8 @@ try:
     from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter
     from wsgidav.fs_dav_provider import FileResource, FolderResource, \
          FilesystemProvider
+    from wsgidav.domain_controller import WsgiDAVDomainController
+    from wsgidav.dav_error import DAVError, HTTP_FORBIDDEN
 except ImportError, ierr:
     print "ERROR: the python wsgidav module is required for this daemon"
     sys.exit(1)
@@ -60,7 +62,44 @@ from shared.useradm import check_password_hash
 configuration, logger = None, None
 
 
+class MiGWsgiDAVDomainController(WsgiDAVDomainController):
+    """Override auth database lookups to use username and password hash"""
 
+    def __init__(self, userMap):
+        self.userMap = userMap
+                           
+    def _check_auth_password(self, address, realm, username, password):
+        """Verify supplied username and password against user DB"""
+        offered = None
+        if hit_rate_limit(configuration, "davs", address,
+                          username):
+            logger.warning("Rate limiting login from %s" % address)
+        elif self.userMap[realm].has_key(username):
+            # list of User login objects for username
+            user = self.userMap[realm][username]
+            offered = password
+            if user.get('password', None) is not None:
+                    allowed = user['password']
+                    logger.debug("Password check for %s" % username)
+                    if check_password_hash(offered, allowed):
+                        update_rate_limit(configuration, "davs", address,
+                                          username, True)
+                        return True
+        update_rate_limit(configuration, "davs", address, username, False)
+        return False
+
+    def authDomainUser(self, realmname, username, password, environ):
+        """Returns True if this username/password pair is valid for the realm,
+        False otherwise. Used for basic authentication."""
+        print "DEBUG: in authDomainUser: %s / %s" % (realmname, username)
+        # TODO: load user DB on-demand here
+        user = self.userMap.get(realmname, {}).get(username)
+        #print "DEBUG: env in authDomainUser: %s" % environ
+        address = environ['REMOTE_ADDR']
+        return user and self._check_auth_password(address, realmname, username,
+                                                  password)
+
+    
 class MiGFileResource(FileResource):
     """Hide invisible files from all access"""
     def __init__(self, path, environ, filePath):
@@ -134,7 +173,9 @@ class MiGFilesystemProvider(FilesystemProvider):
         directory path for user.
         """
         username =  environ["http_authenticator.username"]
-        user_chroot = os.path.join(configuration.user_home, username)
+        # Expand symlinked homes for aliases
+        user_chroot = os.path.realpath(os.path.join(configuration.user_home,
+                                                    username))
         try:
             real_path = self._get_fs_path(path, user_chroot)
         except ValueError, vae:
@@ -152,7 +193,11 @@ class MiGFilesystemProvider(FilesystemProvider):
         Override to chroot and filter MiG invisible paths from content.
         """
         self._count_getResourceInst += 1
-        real_path = self._chroot_fs_path(environ, path)
+        try:
+            real_path = self._chroot_fs_path(environ, path)
+        except RuntimeError, rte:
+            raise DAVError(HTTP_FORBIDDEN)
+            
         if not os.path.exists(real_path):
             return None
         
@@ -166,12 +211,9 @@ def update_users(configuration, user_map):
     """Update dict with username password pairs"""
     refresh_users(configuration, 'davs')
     domain_map = user_map.get('/', {})
-    # TODO: make custom domaincontroller to support pw hashes instead of raw pw
     for user_obj in configuration.daemon_conf['users']:
         if not domain_map.has_key(user_obj.username):
             domain_map[user_obj.username] = {'password': user_obj.password}
-    # TMP!!
-    domain_map['test'] = {'password': 'tester'}
     user_map['/'] = domain_map
 
 def run(configuration):
@@ -193,7 +235,8 @@ def run(configuration):
         "enable_loggers": [],
         "propsmanager": True,      # True: use property_manager.PropertyManager
         "locksmanager": True,      # True: use lock_manager.LockManager
-        "domaincontroller": None,  # None: domain_controller.WsgiDAVDomainController(user_mapping)
+        #"domaincontroller": None,  # None: domain_controller.WsgiDAVDomainController(user_mapping)
+        "domaincontroller": MiGWsgiDAVDomainController(user_map),
         })
     print('User list: %s' % config['user_mapping'])
     app = WsgiDAVApp(config)
@@ -288,7 +331,8 @@ if __name__ == "__main__":
         'user_alias': configuration.user_davs_alias,
         'users': [],
         'acceptbasic': True,    # Allow basic authentication, True or False
-        'acceptdigest': True,   # Allow digest authentication, True or False
+        #'acceptdigest': True,   # Allow digest authentication, True or False
+        'acceptdigest': False,   # Allow digest authentication, True or False
         'defaultdigest': True,
         'time_stamp': 0,
         'logger': logger,
