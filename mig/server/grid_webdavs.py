@@ -45,6 +45,7 @@ try:
     from wsgidav.fs_dav_provider import FileResource, FolderResource, \
          FilesystemProvider
     from wsgidav.domain_controller import WsgiDAVDomainController
+    from wsgidav.http_authenticator import HTTPAuthenticator
     from wsgidav.dav_error import DAVError, HTTP_FORBIDDEN
 except ImportError, ierr:
     print "ERROR: the python wsgidav module is required for this daemon"
@@ -56,16 +57,31 @@ from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
      hit_rate_limit, update_rate_limit, expire_rate_limit
-from shared.useradm import check_password_hash
+from shared.useradm import check_password_hash, generate_password_hash
 
 
 configuration, logger = None, None
 
 
+# TODO: enable and verify rate limit
+
+
+def _user_chroot_path(environ):
+    """Extract user credentials from environ dicionary to build chroot
+    directory path for user.
+    """
+    username =  environ["http_authenticator.username"]
+    # Expand symlinked homes for aliases
+    user_chroot = os.path.realpath(os.path.join(configuration.user_home,
+                                                username))
+    return user_chroot
+
+    
 class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     """Override auth database lookups to use username and password hash"""
 
     def __init__(self, userMap):
+        super(WsgiDAVDomainController, self).__init__()
         self.userMap = userMap
                            
     def _check_auth_password(self, address, realm, username, password):
@@ -91,11 +107,12 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     def authDomainUser(self, realmname, username, password, environ):
         """Returns True if this username/password pair is valid for the realm,
         False otherwise. Used for basic authentication."""
-        print "DEBUG: in authDomainUser: %s / %s" % (realmname, username)
+        #print "DEBUG: in authDomainUser: %s / %s" % (realmname, username)
         # TODO: load user DB on-demand here
         user = self.userMap.get(realmname, {}).get(username)
         #print "DEBUG: env in authDomainUser: %s" % environ
         address = environ['REMOTE_ADDR']
+        logger.info("in authDomainUser from %s" % address)
         return user and self._check_auth_password(address, realmname, username,
                                                   password)
 
@@ -106,9 +123,18 @@ class MiGFileResource(FileResource):
         super(MiGFileResource, self).__init__(path, environ, filePath)
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
+        self._user_chroot = _user_chroot_path(environ)
+
+        # Replace native _locToFilePath method with our chrooted version
+        
+        def wrapLocToFilePath(path):
+            """Wrap native _locToFilePath method in chrooted version"""
+            return self.provider._chroot_locToFilePath(self._user_chroot, path)
+        self.provider._locToFilePath = wrapLocToFilePath
 
     # TODO: override access on more methods?
 
+    
 
 class MiGFolderResource(FolderResource):
     """Hide invisible files from all access"""
@@ -116,6 +142,14 @@ class MiGFolderResource(FolderResource):
         super(MiGFolderResource, self).__init__(path, environ, filePath)
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
+        self._user_chroot = _user_chroot_path(environ)
+
+        # Replace native _locToFilePath method with our chrooted version
+        
+        def wrapLocToFilePath(path):
+            """Wrap native _locToFilePathmethod in chrooted version"""
+            return self.provider._chroot_locToFilePath(self._user_chroot, path)
+        self.provider._locToFilePath = wrapLocToFilePath
 
     # TODO: override access on more methods?
     
@@ -138,22 +172,12 @@ class MiGFilesystemProvider(FilesystemProvider):
         """Simply call parent constructor"""
         super(MiGFilesystemProvider, self).__init__(directory)
         
-        self.configuration = server_conf
         self.daemon_conf = server_conf.daemon_conf
         self.chroot_exceptions = self.daemon_conf['chroot_exceptions']
         self.chmod_exceptions = self.daemon_conf['chmod_exceptions']
 
     # Use shared daemon fs helper functions
     
-    def _get_fs_path(self, davs_path, user_chroot):
-        """Wrap helper"""
-        #logger.debug("get_fs_path: %s %s" % (davs_path, user_chroot))
-        reply = get_fs_path(davs_path, user_chroot,
-                            self.chroot_exceptions)
-        #logger.debug("get_fs_path returns: %s %s :: %s" % (davs_path, user_chroot,
-        #                                                reply))
-        return reply
-
     def _acceptable_chmod(self, davs_path, mode):
         """Wrap helper"""
         #logger.debug("acceptable_chmod: %s" % davs_path)
@@ -162,29 +186,25 @@ class MiGFilesystemProvider(FilesystemProvider):
         return reply
 
     def _locToFilePath(self, path):
-        """Make sure the original lookup without chroot fails"""
-        raise Exception("Not implemented!")
-        
+        """Make sure any references to the original helper are caught"""
+        raise RuntimeError("Not allowed!")
 
-    def _chroot_fs_path(self, environ, path):
-        """Convert resource path to a unicode file path with MiG chroot and
-        file operation restrictions.
-        Extract user credentials from environ dicionary to build chroot
-        directory path for user.
+    def _chroot_locToFilePath(self, user_chroot, path):
+        """Convert resource path to a unicode absolute file path:
+        We already enforced chrooted absolute unicode path on user_chroot so
+        just make sure user_chroot+path is not outside user_chroot when used
+        for e.g. creating new files and directories.
         """
-        username =  environ["http_authenticator.username"]
-        # Expand symlinked homes for aliases
-        user_chroot = os.path.realpath(os.path.join(configuration.user_home,
-                                                    username))
+        pathInfoParts = path.strip("/").split("/")
+        real_path = os.path.abspath(os.path.join(user_chroot, *pathInfoParts))
         try:
-            real_path = self._get_fs_path(path, user_chroot)
+            real_path = get_fs_path(path, user_chroot, self.chroot_exceptions)
         except ValueError, vae:
-            logger.warning("illegal path requested: %s :: %s" % (path, vae))
-            raise RuntimeError("Security exception: tried illegal access: %s" \
-                               % path)
-        real_path = force_unicode(real_path)
+            raise RuntimeError("Security exception: access out of bounds: %s/%s"
+                               % (user_chroot, path))
+        real_path = force_unicode(real_path)                                               
         return real_path
-    
+
     def getResourceInst(self, path, environ):
         """Return info dictionary for path.
 
@@ -192,9 +212,13 @@ class MiGFilesystemProvider(FilesystemProvider):
 
         Override to chroot and filter MiG invisible paths from content.
         """
+
+        #print environ["HTTP_AUTHORIZATION"]
+
         self._count_getResourceInst += 1
+        user_chroot = _user_chroot_path(environ)
         try:
-            real_path = self._chroot_fs_path(environ, path)
+            real_path = self._chroot_locToFilePath(user_chroot, path)
         except RuntimeError, rte:
             raise DAVError(HTTP_FORBIDDEN)
             
@@ -222,11 +246,15 @@ def run(configuration):
     dav_conf = configuration.dav_cfg
     daemon_conf = configuration.daemon_conf
     config = DEFAULT_CONFIG.copy()
+    print('Config: %s' % DEFAULT_CONFIG)
     config.update(dav_conf)
     config.update(daemon_conf)
     # TMP! should look up users on demand
     user_map = {}
     update_users(configuration, user_map)
+    # TMP! for litmus test
+    user_map['/']['litmusbasic'] = {'password': generate_password_hash('test')}
+    user_map['/']['litmusdigest'] = {'password': 'test'}
     config.update({
         "provider_mapping": {"/": MiGFilesystemProvider(daemon_conf['root_dir'],
                                                         configuration,
@@ -235,13 +263,13 @@ def run(configuration):
         "enable_loggers": [],
         "propsmanager": True,      # True: use property_manager.PropertyManager
         "locksmanager": True,      # True: use lock_manager.LockManager
-        #"domaincontroller": None,  # None: domain_controller.WsgiDAVDomainController(user_mapping)
         "domaincontroller": MiGWsgiDAVDomainController(user_map),
         })
-    print('User list: %s' % config['user_mapping'])
+    
+    #print('User list: %s' % config['user_mapping'])
     app = WsgiDAVApp(config)
 
-    print('Config: %s' % config)
+    #print('Config: %s' % config)
 
     if not config.get('nossl', False):
         config['ssl_certificate'] = configuration.user_davs_key
@@ -331,9 +359,10 @@ if __name__ == "__main__":
         'user_alias': configuration.user_davs_alias,
         'users': [],
         'acceptbasic': True,    # Allow basic authentication, True or False
-        #'acceptdigest': True,   # Allow digest authentication, True or False
+        # TODO: can we fix digest auth? (required for windows 7 and older)
+        # ... we need to either save raw apsswords or save the digestfor that
         'acceptdigest': False,   # Allow digest authentication, True or False
-        'defaultdigest': True,
+        'defaultdigest': False,
         'time_stamp': 0,
         'logger': logger,
         }

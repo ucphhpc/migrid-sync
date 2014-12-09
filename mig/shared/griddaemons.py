@@ -45,6 +45,7 @@ from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
 
 default_max_hits, default_fail_cache = 5, 120
 
+
 class User(object):
     """User login class to hold a single valid login for a user"""
     def __init__(self, username, password, 
