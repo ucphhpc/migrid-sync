@@ -56,41 +56,66 @@ except ImportError, ierr:
 from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
-     hit_rate_limit, update_rate_limit, expire_rate_limit
+     refresh_user_creds, hit_rate_limit, update_rate_limit, expire_rate_limit
 from shared.useradm import check_password_hash, generate_password_hash
 
 
 configuration, logger = None, None
+default_domain = '/'
 
-
-# TODO: enable and verify rate limit
-
+# TODO: switch to in-memory rate limit dict or enforce connection reuse!
+#       dav clients currently hammer the login functions for every operation
 
 def _user_chroot_path(environ):
     """Extract user credentials from environ dicionary to build chroot
     directory path for user.
     """
-    username =  environ["http_authenticator.username"]
+    username = environ.get("http_authenticator.username", None)
+    if username is None:
+        raise Exception("No authenticated username!")
     # Expand symlinked homes for aliases
     user_chroot = os.path.realpath(os.path.join(configuration.user_home,
                                                 username))
     return user_chroot
 
+def _get_addr(environ):
+    """Extract client address from environ dict"""
+    return environ['REMOTE_ADDR']
+
+def _find_authenticator(application):
+    """Find and return handle to HTTPAuthenticator in application stack.
+    The application object nests application stack layers by repeatedly
+    calling constructors on application and saving the child in the
+    application._application attribute so we need to traverse until we find
+    the target.
+    """
+    if not getattr(application, '_application', None):
+        raise Exception("No HTTPAuthenticator found in wsgidav stack!")
+    elif isinstance(application, HTTPAuthenticator):
+        return application
+    else:
+        return _find_authenticator(application._application)
+    
     
 class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     """Override auth database lookups to use username and password hash"""
 
     def __init__(self, userMap):
-        super(WsgiDAVDomainController, self).__init__()
+        super(MiGWsgiDAVDomainController, self).__init__(userMap)
         self.userMap = userMap
-                           
+        self.last_expire = time.time()
+        self.min_expire_delay = 300        
+
+    def _expire_rate_limit(self):
+        if self.last_expire + self.min_expire_delay < time.time():
+            self.last_expire = time.time()
+            expired = expire_rate_limit(configuration, "davs")
+            logger.debug("Expired rate limit entries: %s" % expired)
+        
     def _check_auth_password(self, address, realm, username, password):
         """Verify supplied username and password against user DB"""
         offered = None
-        if hit_rate_limit(configuration, "davs", address,
-                          username):
-            logger.warning("Rate limiting login from %s" % address)
-        elif self.userMap[realm].has_key(username):
+        if self.userMap[realm].has_key(username):
             # list of User login objects for username
             user = self.userMap[realm][username]
             offered = password
@@ -98,23 +123,47 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                     allowed = user['password']
                     logger.debug("Password check for %s" % username)
                     if check_password_hash(offered, allowed):
-                        update_rate_limit(configuration, "davs", address,
-                                          username, True)
                         return True
-        update_rate_limit(configuration, "davs", address, username, False)
         return False
 
     def authDomainUser(self, realmname, username, password, environ):
         """Returns True if this username/password pair is valid for the realm,
         False otherwise. Used for basic authentication."""
-        #print "DEBUG: in authDomainUser: %s / %s" % (realmname, username)
-        # TODO: load user DB on-demand here
-        user = self.userMap.get(realmname, {}).get(username)
         #print "DEBUG: env in authDomainUser: %s" % environ
-        address = environ['REMOTE_ADDR']
-        logger.info("in authDomainUser from %s" % address)
-        return user and self._check_auth_password(address, realmname, username,
-                                                  password)
+        addr = _get_addr(environ)
+        self._expire_rate_limit()
+        #logger.info("refresh user %s" % username)
+        update_users(configuration, self.userMap, username)
+        #logger.info("in authDomainUser from %s" % addr)
+        if hit_rate_limit(configuration, "davs", addr, username):
+            logger.warning("Rate limiting login from %s" % addr)
+            success = False
+        else:
+            success = self._check_auth_password(addr, realmname, username,
+                                                password)
+        update_rate_limit(configuration, "davs", addr, username, success)
+        return success
+    
+
+    def getRealmUserPassword(self, realmname, username, environ):
+        """Return the password for the given username for the realm.
+        
+        Used for digest authentication.
+        """
+        #print "DEBUG: env in getRealmUserPassword: %s" % environ
+        addr = _get_addr(environ)
+        self._expire_rate_limit()
+        #logger.info("refresh user %s" % username)
+        update_users(configuration, self.userMap, username)
+        #logger.info("in getRealmUserPassword from %s" % addr)
+        if hit_rate_limit(configuration, "davs", addr, username):
+            logger.warning("Rate limiting login from %s" % addr)
+            success = False
+        else:
+            success = super(MiGWsgiDAVDomainController,
+                            self).getRealmUserPassword(realmname, username,
+                                                       environ)
+        update_rate_limit(configuration, "davs", addr, username, success)
 
     
 class MiGFileResource(FileResource):
@@ -171,7 +220,6 @@ class MiGFilesystemProvider(FilesystemProvider):
     def __init__(self, directory, server_conf, dav_conf):
         """Simply call parent constructor"""
         super(MiGFilesystemProvider, self).__init__(directory)
-        
         self.daemon_conf = server_conf.daemon_conf
         self.chroot_exceptions = self.daemon_conf['chroot_exceptions']
         self.chmod_exceptions = self.daemon_conf['chmod_exceptions']
@@ -195,7 +243,7 @@ class MiGFilesystemProvider(FilesystemProvider):
         just make sure user_chroot+path is not outside user_chroot when used
         for e.g. creating new files and directories.
         """
-        pathInfoParts = path.strip("/").split("/")
+        pathInfoParts = path.strip(os.sep).split(os.sep)
         real_path = os.path.abspath(os.path.join(user_chroot, *pathInfoParts))
         try:
             real_path = get_fs_path(path, user_chroot, self.chroot_exceptions)
@@ -229,16 +277,28 @@ class MiGFilesystemProvider(FilesystemProvider):
             return MiGFolderResource(path, environ, real_path)
         return MiGFileResource(path, environ, real_path)
                                                             
-                        
 
-def update_users(configuration, user_map):
-    """Update dict with username password pairs"""
-    refresh_users(configuration, 'davs')
-    domain_map = user_map.get('/', {})
+def update_users(configuration, user_map, username=None):
+    """Update dict with username password pairs. The optional username
+    argument limits the update to that particular user with aliases.
+    """
+    if username is not None:
+        refresh_user_creds(configuration, 'davs', username)
+    else:
+        refresh_users(configuration, 'davs')
+    domain_map = user_map.get(default_domain, {})
     for user_obj in configuration.daemon_conf['users']:
         if not domain_map.has_key(user_obj.username):
             domain_map[user_obj.username] = {'password': user_obj.password}
-    user_map['/'] = domain_map
+
+    # NOTE: enable these for litmus test (http://www.webdav.org/neon/litmus/)
+    #
+    # USAGE:
+    # TESTROOT=$PWD HTDOCS=$PWD/htdocs ./litmus -k $HTTPS_URL litmusbasic test
+    #domain_map['litmusbasic'] = {'password': generate_password_hash('test')}
+    #domain_map['litmusdigest'] = {'password': 'test'}
+
+    user_map[default_domain] = domain_map
 
 def run(configuration):
     """SSL wrapped HTTP server for secure WebDAV access"""
@@ -246,19 +306,16 @@ def run(configuration):
     dav_conf = configuration.dav_cfg
     daemon_conf = configuration.daemon_conf
     config = DEFAULT_CONFIG.copy()
-    print('Config: %s' % DEFAULT_CONFIG)
     config.update(dav_conf)
     config.update(daemon_conf)
-    # TMP! should look up users on demand
     user_map = {}
     update_users(configuration, user_map)
-    # TMP! for litmus test
-    user_map['/']['litmusbasic'] = {'password': generate_password_hash('test')}
-    user_map['/']['litmusdigest'] = {'password': 'test'}
     config.update({
-        "provider_mapping": {"/": MiGFilesystemProvider(daemon_conf['root_dir'],
-                                                        configuration,
-                                                        dav_conf)},
+        "provider_mapping": {
+            default_domain: MiGFilesystemProvider(daemon_conf['root_dir'],
+                                                  configuration,
+                                                  dav_conf)
+            },
         "user_mapping": user_map,
         "enable_loggers": [],
         "propsmanager": True,      # True: use property_manager.PropertyManager
@@ -269,7 +326,12 @@ def run(configuration):
     #print('User list: %s' % config['user_mapping'])
     app = WsgiDAVApp(config)
 
+    # Find and mangle HTTPAuthenticator in application stack
+    
+    #app_authenticator = _find_authenticator(app)
+
     #print('Config: %s' % config)
+    #print('app auth: %s' % app_authenticator)
 
     if not config.get('nossl', False):
         config['ssl_certificate'] = configuration.user_davs_key
@@ -289,22 +351,8 @@ def run(configuration):
 
     print('Listening on %(host)s (%(port)s)' % config)
 
-    '''
-    min_expire_delay = 300
-    last_expire = time.time()
-    '''
     try:
-        '''
-        while True:
-            runner.handle_request()
-            if last_expire + min_expire_delay < time.time():
-                last_expire = time.time()
-                expired = expire_rate_limit(configuration, "davs")
-                logger.debug("Expired rate limit entries: %s" % expired)
-        '''
-        
         server.start()
-
     except KeyboardInterrupt:
         server.stop()
         # forward KeyboardInterrupt to main thread
@@ -330,7 +378,7 @@ if __name__ == "__main__":
 
     configuration.dav_cfg = {
         'nossl': nossl,
-        'verbose': 1,
+        'verbose': 0,
         }
 
     if not configuration.site_enable_davs:
