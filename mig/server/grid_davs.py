@@ -503,6 +503,7 @@ if __name__ == "__main__":
         'chmod_exceptions': chmod_exceptions,
         'chroot_exceptions': chroot_exceptions,
         'allow_password': 'password' in configuration.user_davs_auth,
+        'allow_digest': False,
         'allow_publickey': 'publickey' in configuration.user_davs_auth,
         'user_alias': configuration.user_davs_alias,
         'users': [],

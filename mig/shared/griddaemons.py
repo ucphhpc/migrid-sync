@@ -40,7 +40,8 @@ from shared.base import client_dir_id, client_id_dir, client_alias, \
 from shared.fileio import unpickle, acquire_file_lock, release_file_lock
 from shared.ssh import parse_pub_key
 from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
-    get_authkeys, ssh_authpasswords, davs_authpasswords, ftps_authpasswords, \
+    get_authkeys, ssh_authpasswords, ssh_authdigests, davs_authpasswords, \
+    davs_authdigests, ftps_authpasswords, ftps_authdigests, \
     get_authpasswords, extract_field
 
 default_max_hits, default_fail_cache = 5, 120
@@ -50,10 +51,11 @@ persistant_rate_limits = None
 
 class User(object):
     """User login class to hold a single valid login for a user"""
-    def __init__(self, username, password, 
+    def __init__(self, username, password, digest=None,
                  chroot=True, home=None, public_key=None, ip_addr=None):
         self.username = username
         self.password = password
+        self.digest = digest
         self.chroot = chroot
         self.public_key = public_key
         self.last_update = time.time()
@@ -70,8 +72,9 @@ class User(object):
 
     def __str__(self):
         """String formater"""
-        return 'username: %s\nhome: %s\npassword: %s\npublic_key: %s' % \
-               (self.username, self.home, self.password, self.public_key)
+        return 'username: %s\nhome: %s\npassword: %s\ndigest: %s\npubkey: %s' \
+               % (self.username, self.home, self.password, self.digest,
+                  self.public_key)
 
 
 def get_fs_path(user_path, root, chroot_exceptions):
@@ -147,7 +150,8 @@ def acceptable_chmod(path, mode, chmod_exceptions):
     else:
         return False
 
-def get_creds_changes(conf, username, authkeys_path, authpasswords_path):
+def get_creds_changes(conf, username, authkeys_path, authpasswords_path,
+                      authdigests_path):
     """Check if creds changed for username using the provided auth files and
     the saved time stamp from users embedded in conf.
     Returns a list of changed auth files with the empty list if none changed.
@@ -155,6 +159,7 @@ def get_creds_changes(conf, username, authkeys_path, authpasswords_path):
     old_users = [i for i in conf['users'] if i.username == username]
     old_key_users = [i for i in old_users if i.public_key]
     old_pw_users = [i for i in old_users if i.password]
+    old_digest_users = [i for i in old_users if i.digest]
     changed_paths = []
     if old_key_users:
         if not os.path.exists(authkeys_path):
@@ -167,12 +172,137 @@ def get_creds_changes(conf, username, authkeys_path, authpasswords_path):
     if old_pw_users:
         if not os.path.exists(authpasswords_path):
             changed_paths.append(authpasswords_path)
-        elif os.path.getmtime(authpasswords_path) > old_pw_users[0].last_update:
+        elif os.path.getmtime(authpasswords_path) > \
+                 old_pw_users[0].last_update:
             changed_paths.append(authpasswords_path)
     elif os.path.exists(authpasswords_path):
         changed_paths.append(authpasswords_path)
 
+    if old_digest_users:
+        if not os.path.exists(authdigests_path):
+            changed_paths.append(authdigests_path)
+        elif os.path.getmtime(authdigests_path) > \
+                 old_digest_users[0].last_update:
+            changed_paths.append(authdigests_path)
+    elif os.path.exists(authdigests_path):
+        changed_paths.append(authdigests_path)
+
     return changed_paths
+
+def add_user_objects(conf, auth_file, path, user_vars, auth_protos):
+    """Add user objects for auth_file with path to conf users dict"""
+
+    logger = conf.get("logger", logging.getLogger())
+
+    proto_authkeys, proto_authpasswords, proto_authdigests = auth_protos
+    user_id, user_alias, user_dir, short_id, short_alias = user_vars
+
+    # Create user entry for each valid key and password 
+    if auth_file == proto_authkeys:
+        all_keys = get_authkeys(path)
+        all_passwords = []
+        all_digests = []
+        # Clean up all old key entries for this user
+        conf['users'] = [i for i in conf['users'] \
+                         if i.username != user_alias or \
+                         i.public_key is None]
+    elif auth_file == proto_authpasswords:
+        all_keys = []
+        all_passwords = get_authpasswords(path)
+        all_digests = []
+        # Clean up all old password entries for this user
+        conf['users'] = [i for i in conf['users'] \
+                         if i.username != user_alias or \
+                         i.password is None]
+    else:
+        all_keys = []
+        all_passwords = []
+        all_digests = get_authpasswords(path)
+        # Clean up all old digest entries for this user
+        conf['users'] = [i for i in conf['users'] \
+                         if i.username != user_alias or \
+                         i.digest is None]
+    for user_key in all_keys:
+        # Remove comments and blank lines
+        user_key = user_key.split('#', 1)[0].strip()
+        if not user_key:
+            continue
+        # Make sure pub key is valid
+        try:
+            _ = parse_pub_key(user_key)
+        except Exception, exc:
+            logger.warning("Skipping broken key %s for user %s (%s)" % \
+                           (user_key, user_id, exc))
+            continue
+        logger.debug(
+            "Adding user:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
+            (user_id, user_alias, user_dir, user_key))
+        conf['users'].append(
+            User(username=user_alias, home=user_dir, password=None,
+                 public_key=user_key, chroot=True),
+            )
+        # Add short alias copy if user aliasing is enabled
+        if short_id:
+            logger.debug(
+                "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
+                (user_id, short_id, user_dir, user_key))
+            conf['users'].append(
+                User(username=short_id, home=user_dir, password=None,
+                     public_key=user_key, chroot=True),
+                )
+            logger.debug(
+                "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
+                (user_id, short_alias, user_dir, user_key))
+            conf['users'].append(
+                User(username=short_alias, home=user_dir, password=None,
+                     public_key=user_key, chroot=True),
+                )
+    for user_password in all_passwords:
+        user_password = user_password.strip()
+        logger.debug("Adding user:\nname: %s\nalias: %s\nhome: %s\npw: %s"\
+                    % (user_id, user_alias, user_dir, user_password))
+        conf['users'].append(
+            User(username=user_alias, home=user_dir,
+                 password=user_password, public_key=None, chroot=True))
+        # Add short alias copy if user aliasing is enabled
+        if short_id:
+            logger.debug(
+                "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
+                (user_id, short_id, user_dir, user_password))
+            conf['users'].append(
+                User(username=short_id, home=user_dir,
+                     password=user_password, public_key=None, chroot=True),
+                )
+            logger.debug(
+                "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
+                (user_id, short_alias, user_dir, user_password))
+            conf['users'].append(
+                User(username=short_alias, home=user_dir,
+                     password=user_password, public_key=None, chroot=True),
+                )
+    for user_digest in all_digests:
+        user_digest = user_digest.strip()
+        logger.debug("Adding user:\nname: %s\nalias: %s\nhome: %s\ndigest: %s"\
+                    % (user_id, user_alias, user_dir, user_digest))
+        conf['users'].append(
+            User(username=user_alias, home=user_dir, password=None,
+                 digest=user_digest, public_key=None, chroot=True))
+        # Add short alias copy if user aliasing is enabled
+        if short_id:
+            logger.debug(
+                "Adding alias:\nname: %s\nalias: %s\nhome: %s\ndigest: %s" % \
+                (user_id, short_id, user_dir, user_digest))
+            conf['users'].append(
+                User(username=short_id, home=user_dir, password=None,
+                     digest=user_digest, public_key=None, chroot=True),
+                )
+            logger.debug(
+                "Adding alias:\nname: %s\nalias: %s\nhome: %s\ndigest: %s" % \
+                (user_id, short_alias, user_dir, user_digest))
+            conf['users'].append(
+                User(username=short_alias, home=user_dir, password=None,
+                     digest=user_digest, public_key=None, chroot=True),
+                )
     
     
 def refresh_user_creds(configuration, protocol, username):
@@ -192,15 +322,20 @@ def refresh_user_creds(configuration, protocol, username):
     if protocol in ('ssh', 'sftp', 'scp', 'rsync'):
         proto_authkeys = ssh_authkeys
         proto_authpasswords = ssh_authpasswords
+        proto_authdigests = ssh_authdigests
     elif protocol in ('dav', 'davs'):
         proto_authkeys = davs_authkeys
         proto_authpasswords = davs_authpasswords
+        proto_authdigests = davs_authdigests
     elif protocol in ('ftp', 'ftps'):
         proto_authkeys = ftps_authkeys
         proto_authpasswords = ftps_authpasswords
+        proto_authdigests = ftps_authdigests
     else:
         logger.error("invalid protocol: %s" % protocol)
         return conf
+
+    auth_protos = (proto_authkeys, proto_authpasswords, proto_authdigests)
 
     # We support direct and symlinked usernames for now
     # NOTE: entries are gracefully removed if user no longer exists
@@ -209,9 +344,12 @@ def refresh_user_creds(configuration, protocol, username):
     authpasswords_path = os.path.realpath(os.path.join(conf['root_dir'],
                                                        username,
                                                        proto_authpasswords))
+    authdigests_path = os.path.realpath(os.path.join(conf['root_dir'],
+                                                     username,
+                                                     proto_authdigests))
 
     changed_paths = get_creds_changes(conf, username, authkeys_path,
-                                      authpasswords_path)
+                                      authpasswords_path, authdigests_path)
     if not changed_paths:
         logger.debug("No creds changes for %s" % username)
         return conf
@@ -222,6 +360,8 @@ def refresh_user_creds(configuration, protocol, username):
         matches += [(proto_authkeys, authkeys_path)]
     if conf['allow_password']:
         matches += [(proto_authpasswords, authpasswords_path)]
+    if conf['allow_digest']:
+        matches += [(proto_authdigests, authdigests_path)]
     for (auth_file, path) in matches:
         if path not in changed_paths:
             logger.debug("Skipping %s without changes" % path)
@@ -236,79 +376,8 @@ def refresh_user_creds(configuration, protocol, username):
             # Allow both raw alias field value and asciified alias            
             logger.debug("find short_alias for %s" % short_alias)
             short_alias = client_alias(short_id)
-        # Create user entry for each valid key and password
-        if auth_file == proto_authkeys:
-            all_keys = get_authkeys(path)
-            all_passwords = []
-            # Clean up all old key entries for this user
-            conf['users'] = [i for i in conf['users'] \
-                             if i.username != user_alias or \
-                             i.public_key is None]
-        else:
-            all_keys = []
-            all_passwords = get_authpasswords(path)
-            # Clean up all old password entries for this user
-            conf['users'] = [i for i in conf['users'] \
-                             if i.username != user_alias or \
-                             i.password is None]
-        for user_key in all_keys:
-            # Remove comments and blank lines
-            user_key = user_key.split('#', 1)[0].strip()
-            if not user_key:
-                continue
-            # Make sure pub key is valid
-            try:
-                _ = parse_pub_key(user_key)
-            except Exception, exc:
-                logger.warning("Skipping broken key %s for user %s (%s)" % \
-                               (user_key, user_id, exc))
-                continue
-            logger.debug(
-                "Adding user:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
-                (user_id, user_alias, user_dir, user_key))
-            conf['users'].append(
-                User(username=user_alias, home=user_dir, password=None,
-                     public_key=user_key, chroot=True),
-                )
-            # Add short alias copy if user aliasing is enabled
-            if short_id:
-                logger.debug(
-                    "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
-                    (user_id, short_id, user_dir, user_key))
-                conf['users'].append(
-                    User(username=short_id, home=user_dir, password=None,
-                         public_key=user_key, chroot=True),
-                    )
-                logger.debug(
-                    "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
-                    (user_id, short_alias, user_dir, user_key))
-                conf['users'].append(
-                    User(username=short_alias, home=user_dir, password=None,
-                         public_key=user_key, chroot=True),
-                    )
-        for user_password in all_passwords:
-            user_password = user_password.strip()
-            logger.debug("Adding user:\nname: %s\nalias: %s\nhome: %s\npw: %s"\
-                        % (user_id, user_alias, user_dir, user_password))
-            conf['users'].append(
-                User(username=user_alias, home=user_dir,
-                     password=user_password, public_key=None, chroot=True))
-            # Add short alias copy if user aliasing is enabled
-            if short_id:
-                logger.debug(
-                    "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
-                    (user_id, short_id, user_dir, user_password))
-                conf['users'].append(
-                    User(username=short_id, home=user_dir,
-                         password=user_password, public_key=None, chroot=True),
-                    )
-                logger.debug(
-                    "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
-                    (user_id, short_alias, user_dir, user_password))
-                conf['users'].append(
-                    User(username=short_alias, home=user_dir,
-                         password=user_password, public_key=None, chroot=True),
-                    )
+        user_vars = (user_id, user_alias, user_dir, short_id, short_alias)
+        add_user_objects(conf, auth_file, path, user_vars, auth_protos)
     logger.info("Refreshed user %s from configuration" % username)
     return conf
 
@@ -328,19 +397,26 @@ def refresh_users(configuration, protocol):
     if protocol in ('ssh', 'sftp', 'scp', 'rsync'):
         proto_authkeys = ssh_authkeys
         proto_authpasswords = ssh_authpasswords
+        proto_authdigests = ssh_authdigests
     elif protocol in ('dav', 'davs'):
         proto_authkeys = davs_authkeys
         proto_authpasswords = davs_authpasswords
+        proto_authdigests = davs_authdigests
     elif protocol in ('ftp', 'ftps'):
         proto_authkeys = ftps_authkeys
         proto_authpasswords = ftps_authpasswords
+        proto_authdigests = ftps_authdigests
     else:
         logger.error("invalid protocol: %s" % protocol)
         return conf
 
+    auth_protos = (proto_authkeys, proto_authpasswords, proto_authdigests)
+
     authkeys_pattern = os.path.join(conf['root_dir'], '*', proto_authkeys)
     authpasswords_pattern = os.path.join(conf['root_dir'], '*',
                                          proto_authpasswords)
+    authdigests_pattern = os.path.join(conf['root_dir'], '*',
+                                       proto_authdigests)
     short_id, short_alias = None, None
     matches = []
     if conf['allow_publickey']:
@@ -348,6 +424,9 @@ def refresh_users(configuration, protocol):
     if conf['allow_password']:
         matches += [(proto_authpasswords, i) \
                     for i in glob.glob(authpasswords_pattern)] 
+    if conf['allow_digest']:
+        matches += [(proto_authdigests, i) \
+                    for i in glob.glob(authdigests_pattern)] 
     for (auth_file, path) in matches:
         logger.debug("Checking %s" % path)
         user_home = path.replace(os.sep + auth_file, '')
@@ -369,79 +448,8 @@ def refresh_users(configuration, protocol):
             cur_usernames.append(short_alias)
         if last_update >= os.path.getmtime(path):
             continue
-        # Create user entry for each valid key and password 
-        if auth_file == proto_authkeys:
-            all_keys = get_authkeys(path)
-            all_passwords = []
-            # Clean up all old key entries for this user
-            conf['users'] = [i for i in conf['users'] \
-                             if i.username != user_alias or \
-                             i.public_key is None]
-        else:
-            all_keys = []
-            all_passwords = get_authpasswords(path)
-            # Clean up all old password entries for this user
-            conf['users'] = [i for i in conf['users'] \
-                             if i.username != user_alias or \
-                             i.password is None]
-        for user_key in all_keys:
-            # Remove comments and blank lines
-            user_key = user_key.split('#', 1)[0].strip()
-            if not user_key:
-                continue
-            # Make sure pub key is valid
-            try:
-                _ = parse_pub_key(user_key)
-            except Exception, exc:
-                logger.warning("Skipping broken key %s for user %s (%s)" % \
-                               (user_key, user_id, exc))
-                continue
-            logger.debug(
-                "Adding user:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
-                (user_id, user_alias, user_dir, user_key))
-            conf['users'].append(
-                User(username=user_alias, home=user_dir, password=None,
-                     public_key=user_key, chroot=True),
-                )
-            # Add short alias copy if user aliasing is enabled
-            if short_id:
-                logger.debug(
-                    "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
-                    (user_id, short_id, user_dir, user_key))
-                conf['users'].append(
-                    User(username=short_id, home=user_dir, password=None,
-                         public_key=user_key, chroot=True),
-                    )
-                logger.debug(
-                    "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
-                    (user_id, short_alias, user_dir, user_key))
-                conf['users'].append(
-                    User(username=short_alias, home=user_dir, password=None,
-                         public_key=user_key, chroot=True),
-                    )
-        for user_password in all_passwords:
-            user_password = user_password.strip()
-            logger.debug("Adding user:\nname: %s\nalias: %s\nhome: %s\npw: %s"\
-                        % (user_id, user_alias, user_dir, user_password))
-            conf['users'].append(
-                User(username=user_alias, home=user_dir,
-                     password=user_password, public_key=None, chroot=True))
-            # Add short alias copy if user aliasing is enabled
-            if short_id:
-                logger.debug(
-                    "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
-                    (user_id, short_id, user_dir, user_password))
-                conf['users'].append(
-                    User(username=short_id, home=user_dir,
-                         password=user_password, public_key=None, chroot=True),
-                    )
-                logger.debug(
-                    "Adding alias:\nname: %s\nalias: %s\nhome: %s\nkey: %s" % \
-                    (user_id, short_alias, user_dir, user_password))
-                conf['users'].append(
-                    User(username=short_alias, home=user_dir,
-                         password=user_password, public_key=None, chroot=True),
-                    )
+        user_vars = (user_id, user_alias, user_dir, short_id, short_alias)
+        add_user_objects(conf, auth_file, path, user_vars, auth_protos)
     removed = [i for i in old_usernames if not i in cur_usernames]
     if removed:
         logger.info("Removing login for %d deleted users" % len(removed))

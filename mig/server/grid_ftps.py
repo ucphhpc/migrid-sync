@@ -330,6 +330,7 @@ unless it is available in mig/server/MiGserver.conf
         'chmod_exceptions': chmod_exceptions,
         'chroot_exceptions': chroot_exceptions,
         'allow_password': 'password' in configuration.user_ftps_auth,
+        'allow_digest': False,
         'allow_publickey': 'publickey' in configuration.user_ftps_auth,
         'user_alias': configuration.user_ftps_alias,
         'users': [],

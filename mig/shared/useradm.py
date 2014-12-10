@@ -43,7 +43,7 @@ from shared.configuration import Configuration
 from shared.defaults import keyword_auto, ssh_conf_dir, davs_conf_dir, \
      ftps_conf_dir, htaccess_filename, welcome_filename, settings_filename, \
      profile_filename, default_css_filename, widgets_filename, \
-     authkeys_filename, authpasswords_filename
+     authkeys_filename, authpasswords_filename, authdigests_filename
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, \
@@ -61,10 +61,13 @@ from shared.vgridaccess import get_resource_map, get_vgrid_map, \
 db_name = 'MiG-users.db'
 ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)
 ssh_authpasswords = os.path.join(ssh_conf_dir, authpasswords_filename)
+ssh_authdigests = os.path.join(ssh_conf_dir, authdigests_filename)
 davs_authkeys = os.path.join(davs_conf_dir, authkeys_filename)
 davs_authpasswords = os.path.join(davs_conf_dir, authpasswords_filename)
+davs_authdigests = os.path.join(davs_conf_dir, authdigests_filename)
 ftps_authkeys = os.path.join(ftps_conf_dir, authkeys_filename)
 ftps_authpasswords = os.path.join(ftps_conf_dir, authpasswords_filename)
+ftps_authdigests = os.path.join(ftps_conf_dir, authdigests_filename)
 cert_field_order = [
     ('country', 'C'),
     ('state', 'ST'),

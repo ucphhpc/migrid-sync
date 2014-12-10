@@ -56,13 +56,14 @@ from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
      refresh_user_creds, hit_rate_limit, update_rate_limit, expire_rate_limit
-from shared.useradm import check_password_hash, generate_password_hash
+from shared.useradm import check_password_hash, generate_password_hash, \
+     generate_password_digest
 
 
 configuration, logger = None, None
 default_domain = '/'
 
-# TODO: switch to in-memory rate limit dict or enforce connection reuse!
+# TODO: can we enforce enforce connection reuse?
 #       dav clients currently hammer the login functions for every operation
 
 def _user_chroot_path(environ):
@@ -97,7 +98,9 @@ def _find_authenticator(application):
     
     
 class MiGWsgiDAVDomainController(WsgiDAVDomainController):
-    """Override auth database lookups to use username and password hash"""
+    """Override auth database lookups to use username and password hash for
+    basic auth and digest otherwise.
+    """
 
     def __init__(self, userMap):
         super(MiGWsgiDAVDomainController, self).__init__(userMap)
@@ -131,7 +134,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         if user is not None:
             # list of User login objects for username
             offered = password
-            allowed = user.get('password', None)
+            allowed = user.get('password_hash', None)
             if allowed is not None:
                 #logger.debug("Password check for %s" % username)
                 if check_password_hash(offered, allowed, self.hash_cache):
@@ -140,22 +143,45 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
 
     def authDomainUser(self, realmname, username, password, environ):
         """Returns True if this username/password pair is valid for the realm,
-        False otherwise. Used for basic authentication."""
+        False otherwise. Used for basic authentication.
+        
+        We explicitly compare against saved hash rather than password value.
+        """
         #print "DEBUG: env in authDomainUser: %s" % environ
         addr = _get_addr(environ)
         self._expire_rate_limit()
         #logger.info("refresh user %s" % username)
         update_users(configuration, self.userMap, username)
         #logger.info("in authDomainUser from %s" % addr)
+        success = False
         if hit_rate_limit(configuration, "davs", addr, username):
             logger.warning("Rate limiting login from %s" % addr)
-            success = False
+        elif self._check_auth_password(addr, realmname, username, password):
+            logger.info("Accepted login for %s from %s" % (username, addr))
+            success = True
         else:
-            success = self._check_auth_password(addr, realmname, username,
-                                                password)            
+            logger.warning("Invalid login for %s from %s" % (username, addr))
         update_rate_limit(configuration, "davs", addr, username, success)
+        logger.info("valid digest user %s" % username)
         return success
-    
+
+    def isRealmUser(self, realmname, username, environ):
+        """Returns True if this username is valid for the realm, False otherwise.
+
+        Please not that this is only called for digest auth so we use it to
+        reject users without digest password set.
+        """
+        orig = super(MiGWsgiDAVDomainController, self).isRealmUser(realmname,
+                                                                   username,
+                                                                   environ)
+        if orig and self.userMap[realmname][username].get('password',
+                                                          None) is not None:
+            logger.info("valid digest user %s" % username)
+            return True
+        else:
+            logger.warning("invalid digest user %s" % username)
+            return False
+                    
 
     def getRealmUserPassword(self, realmname, username, environ):
         """Return the password for the given username for the realm.
@@ -301,26 +327,33 @@ def update_users(configuration, user_map, username=None):
         refresh_users(configuration, 'davs')
     domain_map = user_map.get(default_domain, {})
     for user_obj in configuration.daemon_conf['users']:
-        if not domain_map.has_key(user_obj.username):
-            domain_map[user_obj.username] = {'password': user_obj.password}
+        print "DEBUG: user %s : %s" % (user_obj.username, user_obj.digest)
+        user_dict = domain_map.get(user_obj.username, {})
+        if user_obj.password:
+            user_dict['password_hash'] = user_obj.password
+        if user_obj.digest:
+            user_dict['password'] = user_obj.digest
+        domain_map[user_obj.username] = user_dict
 
     daemon_conf = configuration.daemon_conf
     if username is None and daemon_conf.get('enable_litmus', False):
+        litmus_name = 'litmus'
+        litmus_user = {}
+        litmus_home = os.path.join(configuration.user_home, litmus_name)
+        try:
+            os.makedirs(litmus_home)
+        except: 
+            pass
         for auth in ('basic', 'digest'):
             if not daemon_conf.get('accept%s' % auth, False):
                 continue
             logger.info("enabling litmus %s test accounts" % auth)
-            litmus_user = 'litmus%s' % auth
-            litmus_home = os.path.join(configuration.user_home, litmus_user)
-            try:
-                os.makedirs(litmus_home)
-            except: 
-                pass
             if auth == 'basic':
-                litmus_pw = generate_password_hash('test')
+                litmus_user['password_hash'] = generate_password_hash('test')
             else:
-                litmus_pw = 'test'
-            domain_map[litmus_user] = {'password': litmus_pw}
+                litmus_user['password'] = generate_password_digest(
+                    default_domain, litmus_name, 'test')
+        domain_map[litmus_name] = litmus_user
 
     user_map[default_domain] = domain_map
 
@@ -366,12 +399,10 @@ def run(configuration):
             config['ssl_certificate'], config['ssl_private_key'],
             config['ssl_certificate_chain'])
 
+    # Use bundled CherryPy WSGI Server to support SSL
     version = "%s WebDAV" % configuration.short_title
     server = wsgiserver.CherryPyWSGIServer((config["host"], config["port"]),
                                            app, server_name=version)
-    #runner = make_server(config["host"], config["port"], app)
-    ## Or we could use the default server that is part of the WsgiDAV package:
-    #ext_wsgiutils_server.serve(config, app)
 
     print('Listening on %(host)s (%(port)s)' % config)
 
@@ -427,26 +458,23 @@ if __name__ == "__main__":
         'chmod_exceptions': chmod_exceptions,
         'chroot_exceptions': chroot_exceptions,
         'allow_password': 'password' in configuration.user_davs_auth,
+        'allow_digest': 'digest' in configuration.user_davs_auth,
         'allow_publickey': 'publickey' in configuration.user_davs_auth,
         'user_alias': configuration.user_davs_alias,
         'users': [],
-        'acceptbasic': True,    # Allow basic authentication, True or False
-        # TODO: can we fix digest auth? (required for windows 7 and older)
-        # ... we need to either save raw apsswords or save the digestfor that
-        'acceptdigest': True,   # Allow digest authentication, True or False
-        'defaultdigest': False,
         # NOTE: enable for litmus test (http://www.webdav.org/neon/litmus/)
         #
         # USAGE:
         # export TESTROOT=$PWD; export HTDOCS=$PWD/htdocs
-        #   for basic auth
-        # ./litmus -k $HTTPS_URL litmusbasic test
-        #   and for digest auth
-        # ./litmus -k $HTTPS_URL litmusdigest test
+        # ./litmus -k $HTTPS_URL litmus test
         'enable_litmus': True,
         'time_stamp': 0,
         'logger': logger,
         }
+    daemon_conf = configuration.daemon_conf
+    daemon_conf['acceptbasic'] = daemon_conf['allow_password']
+    daemon_conf['acceptdigest'] = daemon_conf['allow_digest']
+    daemon_conf['defaultdigest'] = daemon_conf['allow_digest']        
 
     print """
 Running grid davs server for user dav access to their MiG homes.

@@ -802,6 +802,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'chmod_exceptions': chmod_exceptions,
         'chroot_exceptions': chroot_exceptions,
         'allow_password': 'password' in configuration.user_sftp_auth,
+        'allow_digest': False,
         'allow_publickey': 'publickey' in configuration.user_sftp_auth,
         'user_alias': configuration.user_sftp_alias,
         'host_rsa_key': host_rsa_key,
