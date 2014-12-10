@@ -48,7 +48,7 @@ from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, \
      update_runtimeenv_owner
-from shared.pwhash import make_hash, check_hash
+from shared.pwhash import make_hash, check_hash, make_digest, check_digest
 from shared.resource import resource_add_owners, resource_remove_owners
 from shared.serial import load, dump
 from shared.settings import update_settings, update_profile, update_widgets
@@ -1363,7 +1363,7 @@ def generate_password_hash(password):
         print "ERROR: in generate_password_hash: %s" % exc
         return password
 
-def check_password_hash(password, stored_hash):
+def check_password_hash(password, stored_hash, hash_cache=None):
     """Return a boolean indicating if offered password matches stored_hash
     information. We use PBKDF2 to help with the hash comparison and store the
     data in a form close to the one recommended there:
@@ -1371,9 +1371,33 @@ def check_password_hash(password, stored_hash):
     
     More information about sane password handling is available at:
     https://exyr.org/2011/hashing-passwords/
+
+    The optional hash_cache dictionary argument can be used to cache lookups
+    and speed up repeated use.
     """
     try:
-        return check_hash(password, stored_hash)
+        return check_hash(password, stored_hash, hash_cache)
     except Exception, exc:
         print "ERROR: in check_password_hash: %s" % exc
+        return False
+
+def generate_password_digest(realm, username, password):
+    """Return a digest data string for saving provided password"""
+    try:
+        return make_digest(realm, username, password)
+    except Exception, exc:
+        print "ERROR: in generate_password_digest: %s" % exc
+        return password
+
+def check_password_digest(password, stored_digest, digest_cache=None):
+    """Return a boolean indicating if offered password matches stored_digest
+    information.
+
+    The optional digest_cache dictionary argument can be used to cache lookups
+    and speed up repeated use.
+    """
+    try:
+        return check_digest(password, stored_digest, digest_cache)
+    except Exception, exc:
+        print "ERROR: in check_password_digest: %s" % exc
         return False

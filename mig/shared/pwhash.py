@@ -49,10 +49,18 @@ def make_hash(password):
         b64encode(pbkdf2_bin(password, salt, COST_FACTOR, KEY_LENGTH,
                              getattr(hashlib, HASH_FUNCTION))))
 
-def check_hash(password, hash_):
-    """Check a password against an existing hash."""
+def check_hash(password, hash_, hash_cache=None):
+    """Check a password against an existing hash. The optional hash_cache
+    dictionary argument can be used to cache recent lookups to save time in
+    e.g. webdav where each operation triggers hash check.
+    """
     if isinstance(password, unicode):
         password = password.encode('utf-8')
+    pw_hash = hashlib.md5(password).hexdigest()
+    if isinstance(hash_cache, dict) and \
+           hash_cache.get(pw_hash, None) == hash_:
+        # print "found cached hash: %s" % hash_cache.get(pw_hash, None)
+        return True
     algorithm, hash_function, cost_factor, salt, hash_a = hash_.split('$')
     assert algorithm == 'PBKDF2'
     hash_a = b64decode(hash_a)
@@ -64,4 +72,31 @@ def check_hash(password, hash_):
     diff = 0
     for char_a, char_b in izip(hash_a, hash_b):
         diff |= ord(char_a) ^ ord(char_b)
-    return diff == 0
+    match = (diff == 0)
+    if isinstance(hash_cache, dict) and match:
+        hash_cache[pw_hash] = hash_
+        # print "cached hash: %s" % hash_cache.get(pw_hash, None)
+    return match
+
+def make_digest(realm, username, password):
+    """Generate a digest for the credentials."""
+    # TMP!
+    return password
+
+def check_digest(password, digest, digest_cache=None):
+    """Check a password against an existing digest. The optional digest_cache
+    dictionary argument can be used to cache recent lookups to save time in
+    e.g. webdav where each operation triggers digest check."""
+    if isinstance(password, unicode):
+        password = password.encode('utf-8')
+    pw_hash = hashlib.md5(password).hexdigest()
+    if isinstance(digest_cache, dict) and \
+           digest_cache.get(pw_hash, None) == digest:
+        # print "found cached digest: %s" % digest_cache.get(pw_hash, None)
+        return True
+    # TMP!
+    match = (password == digest) 
+    if isinstance(digest_cache, dict) and match:
+        digest_cache[pw_hash] = digest
+        # print "cached digest: %s" % digest_cache.get(pw_hash, None)
+    return match 

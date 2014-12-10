@@ -104,24 +104,37 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         self.userMap = userMap
         self.last_expire = time.time()
         self.min_expire_delay = 300        
+        self.hash_cache = {}
+        self.digest_cache = {}
 
     def _expire_rate_limit(self):
+        """Expire old entries in the rate limit dictionary"""
+        expired = expire_rate_limit(configuration, "davs")
+        logger.debug("Expired rate limit entries: %s" % expired)
+        
+    def _expire_caches(self):
+        """Expire old entries in the hash and digest caches"""
+        self.hash_cache.clear()
+        self.digest_cache.clear()
+        logger.debug("Expired hash and digest caches")
+        
+    def _expire_volatile(self):
+        """Expire old entries in the volatile helper dictionaries"""
         if self.last_expire + self.min_expire_delay < time.time():
             self.last_expire = time.time()
-            expired = expire_rate_limit(configuration, "davs")
-            logger.debug("Expired rate limit entries: %s" % expired)
-        
+            self._expire_rate_limit()
+            self._expire_caches()
+
     def _check_auth_password(self, address, realm, username, password):
         """Verify supplied username and password against user DB"""
-        offered = None
-        if self.userMap[realm].has_key(username):
+        user = self.userMap[realm].get(username, None)
+        if user is not None:
             # list of User login objects for username
-            user = self.userMap[realm][username]
             offered = password
-            if user.get('password', None) is not None:
-                allowed = user['password']
-                logger.debug("Password check for %s" % username)
-                if check_password_hash(offered, allowed):
+            allowed = user.get('password', None)
+            if allowed is not None:
+                #logger.debug("Password check for %s" % username)
+                if check_password_hash(offered, allowed, self.hash_cache):
                     return True
         return False
 
@@ -139,7 +152,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             success = False
         else:
             success = self._check_auth_password(addr, realmname, username,
-                                                password)
+                                                password)            
         update_rate_limit(configuration, "davs", addr, username, success)
         return success
     
