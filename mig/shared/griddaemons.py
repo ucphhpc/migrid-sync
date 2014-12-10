@@ -45,6 +45,8 @@ from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
 
 default_max_hits, default_fail_cache = 5, 120
 
+persistant_rate_limits = None
+
 
 class User(object):
     """User login class to hold a single valid login for a user"""
@@ -511,10 +513,29 @@ def refresh_jobs(configuration, protocol):
 
     return conf
 
+def load_rate_limits(path):
+    """Load rate_limits shelve"""
+    global persistant_rate_limits
+    persistant_rate_limits = shelve.open(path)
+    return persistant_rate_limits
+    
+def save_rate_limits():
+    """Save rate_limits shelve to disk"""
+    global persistant_rate_limits
+    persistant_rate_limits.close()
+    persistant_rate_limits = None
+    
+def get_rate_limits(path):
+    """Initialize rate_limits shelve if not already open"""
+    if persistant_rate_limits is None:
+        return load_rate_limits(path)
+    else:
+        return persistant_rate_limits
 
 def hit_rate_limit(configuration, proto, client_address, client_id,
                    max_fails=default_max_hits,
-                   fail_cache=default_fail_cache):
+                   fail_cache=default_fail_cache,
+                   force_sync=True):
     """Check if proto login from client_address with client_id should be
     filtered due to too many recently failed login attempts. Returns True if
     so and False otherwise based on a lookup in rate limit database defined in
@@ -532,7 +553,7 @@ def hit_rate_limit(configuration, proto, client_address, client_id,
     lock_handle = acquire_file_lock(lock_path, False)
 
     try:
-        rate_limits = shelve.open(configuration.rate_limit_db)
+        rate_limits = get_rate_limits(configuration.rate_limit_db)
         _cached = rate_limits.get(client_address, {})
         if _cached:
             _failed = _cached.get(proto, [])
@@ -542,7 +563,8 @@ def hit_rate_limit(configuration, proto, client_address, client_id,
                 hits += 1
             if hits >= max_fails:
                 refuse = True 
-        rate_limits.close()
+        if force_sync:
+            save_rate_limits()
     except Exception, exc:
         logger.error("hit rate limit failed: %s" % exc)
 
@@ -553,7 +575,7 @@ def hit_rate_limit(configuration, proto, client_address, client_id,
     return refuse
 
 def update_rate_limit(configuration, proto, client_address, client_id,
-                      success):
+                      success, force_sync=True):
     """Update rate limit database after proto login from client_address with
     client_id and login success status.
     The rate limit database is a shelve with client_address as key and
@@ -572,7 +594,7 @@ def update_rate_limit(configuration, proto, client_address, client_id,
     lock_handle = acquire_file_lock(lock_path, True)
 
     try:
-        rate_limits = shelve.open(configuration.rate_limit_db)
+        rate_limits = get_rate_limits(configuration.rate_limit_db)
         logger.debug("update rate limit db: %s" % rate_limits)
         _cached = rate_limits.get(client_address, {})
         cur.update(_cached)
@@ -583,7 +605,8 @@ def update_rate_limit(configuration, proto, client_address, client_id,
             _failed.append((time.time(), client_id))
             cur[proto] = _failed
         rate_limits[client_address] = cur
-        rate_limits.close()
+        if force_sync:
+            save_rate_limits()
     except Exception, exc:
         logger.error("update rate limit failed: %s" % exc)
 
@@ -593,7 +616,8 @@ def update_rate_limit(configuration, proto, client_address, client_id,
                 (status[success], client_id, client_address, proto, _failed))
         
 
-def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
+def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache,
+                      force_sync=True):
     """Remove rate limit database entries older than fail_cache seconds. Only
     entries with protocol matching proto pattern will be touched.
     Returns a list of expired entries.
@@ -609,7 +633,7 @@ def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
 
     logger.debug("expire entries older than %ds at %s" % (fail_cache, now))
     try:
-        rate_limits = shelve.open(configuration.rate_limit_db)
+        rate_limits = get_rate_limits(configuration.rate_limit_db)
         for _client_address in rate_limits.keys():
             cur = {}
             for _proto in rate_limits[_client_address]:
@@ -625,7 +649,8 @@ def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
                         _keep.append((time_stamp, client_id))
                 cur[proto] = _keep
             rate_limits[_client_address] = cur
-        rate_limits.close()
+        if force_sync:
+            save_rate_limits()
     except Exception, exc:
         logger.error("expire rate limit failed: %s" % exc)
         
