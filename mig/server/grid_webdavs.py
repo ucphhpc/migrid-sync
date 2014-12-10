@@ -31,7 +31,6 @@ import logging
 import os
 import sys
 import time
-import urlparse
 
 try:
     #from wsgiref.simple_server import make_server
@@ -120,10 +119,10 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             user = self.userMap[realm][username]
             offered = password
             if user.get('password', None) is not None:
-                    allowed = user['password']
-                    logger.debug("Password check for %s" % username)
-                    if check_password_hash(offered, allowed):
-                        return True
+                allowed = user['password']
+                logger.debug("Password check for %s" % username)
+                if check_password_hash(offered, allowed):
+                    return True
         return False
 
     def authDomainUser(self, realmname, username, password, environ):
@@ -158,12 +157,14 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         #logger.info("in getRealmUserPassword from %s" % addr)
         if hit_rate_limit(configuration, "davs", addr, username):
             logger.warning("Rate limiting login from %s" % addr)
-            success = False
+            password = None
         else:
-            success = super(MiGWsgiDAVDomainController,
+            password = super(MiGWsgiDAVDomainController,
                             self).getRealmUserPassword(realmname, username,
                                                        environ)
+        success = (password is not None)
         update_rate_limit(configuration, "davs", addr, username, success)
+        return password
 
     
 class MiGFileResource(FileResource):
@@ -250,7 +251,7 @@ class MiGFilesystemProvider(FilesystemProvider):
         except ValueError, vae:
             raise RuntimeError("Security exception: access out of bounds: %s/%s"
                                % (user_chroot, path))
-        real_path = force_unicode(real_path)                                               
+        real_path = force_unicode(real_path)           
         return real_path
 
     def getResourceInst(self, path, environ):
@@ -261,13 +262,12 @@ class MiGFilesystemProvider(FilesystemProvider):
         Override to chroot and filter MiG invisible paths from content.
         """
 
-        #print environ["HTTP_AUTHORIZATION"]
-
         self._count_getResourceInst += 1
         user_chroot = _user_chroot_path(environ)
         try:
             real_path = self._chroot_locToFilePath(user_chroot, path)
         except RuntimeError, rte:
+            logger.warning("getResourceInst: %s : %s" % (path, rte))
             raise DAVError(HTTP_FORBIDDEN)
             
         if not os.path.exists(real_path):
@@ -291,12 +291,23 @@ def update_users(configuration, user_map, username=None):
         if not domain_map.has_key(user_obj.username):
             domain_map[user_obj.username] = {'password': user_obj.password}
 
-    # NOTE: enable these for litmus test (http://www.webdav.org/neon/litmus/)
-    #
-    # USAGE:
-    # TESTROOT=$PWD HTDOCS=$PWD/htdocs ./litmus -k $HTTPS_URL litmusbasic test
-    #domain_map['litmusbasic'] = {'password': generate_password_hash('test')}
-    #domain_map['litmusdigest'] = {'password': 'test'}
+    daemon_conf = configuration.daemon_conf
+    if username is None and daemon_conf.get('enable_litmus', False):
+        for auth in ('basic', 'digest'):
+            if not daemon_conf.get('accept%s' % auth, False):
+                continue
+            logger.info("enabling litmus %s test accounts" % auth)
+            litmus_user = 'litmus%s' % auth
+            litmus_home = os.path.join(configuration.user_home, litmus_user)
+            try:
+                os.makedirs(litmus_home)
+            except: 
+                pass
+            if auth == 'basic':
+                litmus_pw = generate_password_hash('test')
+            else:
+                litmus_pw = 'test'
+            domain_map[litmus_user] = {'password': litmus_pw}
 
     user_map[default_domain] = domain_map
 
@@ -378,7 +389,7 @@ if __name__ == "__main__":
 
     configuration.dav_cfg = {
         'nossl': nossl,
-        'verbose': 0,
+        'verbose': 1,
         }
 
     if not configuration.site_enable_davs:
@@ -409,8 +420,17 @@ if __name__ == "__main__":
         'acceptbasic': True,    # Allow basic authentication, True or False
         # TODO: can we fix digest auth? (required for windows 7 and older)
         # ... we need to either save raw apsswords or save the digestfor that
-        'acceptdigest': False,   # Allow digest authentication, True or False
+        'acceptdigest': True,   # Allow digest authentication, True or False
         'defaultdigest': False,
+        # NOTE: enable for litmus test (http://www.webdav.org/neon/litmus/)
+        #
+        # USAGE:
+        # export TESTROOT=$PWD; export HTDOCS=$PWD/htdocs
+        #   for basic auth
+        # ./litmus -k $HTTPS_URL litmusbasic test
+        #   and for digest auth
+        # ./litmus -k $HTTPS_URL litmusdigest test
+        'enable_litmus': True,
         'time_stamp': 0,
         'logger': logger,
         }
