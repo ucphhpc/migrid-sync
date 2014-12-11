@@ -32,11 +32,12 @@ import shared.parser as parser
 from shared.base import client_id_dir
 from shared.defaults import settings_filename, profile_filename, \
      widgets_filename, ssh_conf_dir, davs_conf_dir, ftps_conf_dir, \
-     authkeys_filename, authpasswords_filename, keyword_unchanged
+     authkeys_filename, authpasswords_filename, authdigests_filename, \
+     keyword_unchanged, dav_domain
 from shared.fileio import pickle, unpickle
 from shared.modified import mark_user_modified
 from shared.profilekeywords import get_keywords_dict as get_profile_fields
-from shared.pwhash import make_hash
+from shared.pwhash import make_hash, make_digest
 from shared.safeinput import valid_password
 from shared.settingskeywords import get_keywords_dict as get_settings_fields
 from shared.ssh import parse_pub_key
@@ -163,6 +164,34 @@ def parse_and_save_passwords(passwords_path, passwords_content, client_id,
         msg = 'ERROR: writing %s passwords file: %s' % (client_id, exc)
     return (status, msg)
 
+def parse_and_save_digests(digests_path, passwords_content, client_id,
+                           configuration):
+    """Check password strength and write the digest content to passwords_path
+    using the credential digest helper.
+    """
+    # TODO: validate?
+    status, msg = True, ''
+    if passwords_content == keyword_unchanged:
+        return (status, msg)
+    try:
+        if not passwords_content:
+            password_digest = ''
+        else:
+            valid_password(passwords_content)
+        password_digest = make_digest(dav_domain, client_id, passwords_content,
+                                      configuration.site_digest_salt)
+        digests_fd = open(digests_path, 'wb')
+        digests_fd.write(password_digest)
+        digests_fd.close()
+    except Exception, exc:
+        status = False
+        msg = 'ERROR: writing %s digests file: %s' % (client_id, exc)
+        import traceback
+        msg += '\n%s' % traceback.format_exc()
+        msg += '\n%s %s %s %s' % (dav_domain, client_id, passwords_content,
+                                  configuration.site_digest_salt)
+    return (status, msg)
+
 def _parse_and_save_auth_pw_keys(publickeys, password, client_id,
                                  configuration, proto, proto_conf_dir):
     """Validate and write publickey and password settings for proto
@@ -182,7 +211,14 @@ def _parse_and_save_auth_pw_keys(publickeys, password, client_id,
     pw_path = os.path.join(proto_conf_path, authpasswords_filename)
     pw_status = parse_and_save_passwords(pw_path, password, client_id,
                                          configuration)
-    status = (key_status[0] and pw_status[0], key_status[1] + pw_status[1])
+    digest_path = os.path.join(proto_conf_path, authdigests_filename)
+    if proto == 'davs':
+        digest_status = parse_and_save_digests(digest_path, password, client_id,
+                                               configuration)
+    else:
+        digest_status = (True, '')
+    status = (key_status[0] and pw_status[0] and digest_status[0],
+              key_status[1] + pw_status[1] + digest_status[1])
     if status[0]:
         mark_user_modified(configuration, client_id)
     return status
@@ -254,6 +290,8 @@ def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir):
                              proto_conf_dir, authkeys_filename)
     pw_path = os.path.join(configuration.user_home, client_dir,
                            proto_conf_dir, authpasswords_filename)
+    digest_path = os.path.join(configuration.user_home, client_dir,
+                           proto_conf_dir, authdigests_filename)
     try:
         keys_fd = open(keys_path)
         section_dict['authkeys'] = keys_fd.read()
@@ -273,6 +311,18 @@ def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir):
     except Exception, exc:
         configuration.logger.error("load %s password failed: %s" % (proto,
                                                                     exc))
+    try:
+        digest = ''
+        if os.path.exists(digest_path):
+            digest_fd = open(digest_path)
+            password_digest = digest_fd.read()
+            if password_digest.strip():
+                digest = keyword_unchanged
+            digest_fd.close()
+        section_dict['authdigests'] = digest
+    except Exception, exc:
+        configuration.logger.error("load %s digest failed: %s" % (proto,
+                                                                  exc))
     return section_dict
 
 def load_ssh(client_id, configuration):

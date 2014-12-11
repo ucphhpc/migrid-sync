@@ -53,15 +53,16 @@ except ImportError, ierr:
 
                         
 from shared.base import invisible_path, force_unicode
+from shared.defaults import dav_domain
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
      refresh_user_creds, hit_rate_limit, update_rate_limit, expire_rate_limit
+from shared.pwhash import unscramble_digest
 from shared.useradm import check_password_hash, generate_password_hash, \
      generate_password_digest
 
 
 configuration, logger = None, None
-default_domain = '/'
 
 # TODO: can we enforce enforce connection reuse?
 #       dav clients currently hammer the login functions for every operation
@@ -171,6 +172,9 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         Please not that this is only called for digest auth so we use it to
         reject users without digest password set.
         """
+        #logger.info("refresh user %s" % username)
+        update_users(configuration, self.userMap, username)
+        #logger.info("in isRealmUser from %s" % addr)
         orig = super(MiGWsgiDAVDomainController, self).isRealmUser(realmname,
                                                                    username,
                                                                    environ)
@@ -198,9 +202,20 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             logger.warning("Rate limiting login from %s" % addr)
             password = None
         else:
-            password = super(MiGWsgiDAVDomainController,
+            digest = super(MiGWsgiDAVDomainController,
                             self).getRealmUserPassword(realmname, username,
                                                        environ)
+            #logger.info("found digest %s" % digest)
+            try:
+                _, _, _, payload = digest.split("$")
+                #logger.info("found payload %s" % payload)
+                unscrambled = unscramble_digest(configuration.site_digest_salt,
+                                                payload)
+                _, _, password = unscrambled.split(":")
+                #logger.info("found password")
+            except Exception, exc:
+                logger.error("failed to extract digest password: %s" % exc)
+                password = None
         success = (password is not None)
         update_rate_limit(configuration, "davs", addr, username, success)
         return password
@@ -325,9 +340,9 @@ def update_users(configuration, user_map, username=None):
         refresh_user_creds(configuration, 'davs', username)
     else:
         refresh_users(configuration, 'davs')
-    domain_map = user_map.get(default_domain, {})
+    domain_map = user_map.get(dav_domain, {})
     for user_obj in configuration.daemon_conf['users']:
-        print "DEBUG: user %s : %s" % (user_obj.username, user_obj.digest)
+        # print "DEBUG: user %s : %s" % (user_obj.username, user_obj.digest)
         user_dict = domain_map.get(user_obj.username, {})
         if user_obj.password:
             user_dict['password_hash'] = user_obj.password
@@ -352,10 +367,11 @@ def update_users(configuration, user_map, username=None):
                 litmus_user['password_hash'] = generate_password_hash('test')
             else:
                 litmus_user['password'] = generate_password_digest(
-                    default_domain, litmus_name, 'test')
+                    dav_domain, litmus_name, 'test',
+                    configuration.site_digest_salt)
         domain_map[litmus_name] = litmus_user
 
-    user_map[default_domain] = domain_map
+    user_map[dav_domain] = domain_map
 
 def run(configuration):
     """SSL wrapped HTTP server for secure WebDAV access"""
@@ -369,9 +385,9 @@ def run(configuration):
     update_users(configuration, user_map)
     config.update({
         "provider_mapping": {
-            default_domain: MiGFilesystemProvider(daemon_conf['root_dir'],
-                                                  configuration,
-                                                  dav_conf)
+            dav_domain: MiGFilesystemProvider(daemon_conf['root_dir'],
+                                              configuration,
+                                              dav_conf)
             },
         "user_mapping": user_map,
         "enable_loggers": [],

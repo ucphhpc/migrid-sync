@@ -33,6 +33,7 @@ Creates MiG server and Apache configurations to fit the provided settings.
 Create MiG developer account with dedicated web server and daemons.
 """
 
+import base64
 import crypt
 import datetime
 import os
@@ -248,6 +249,10 @@ cert, oid and sid based https!
     if str(sid_port) != str(default_https_port):
         print "adding explicit sid port (%s)" % [sid_port, default_https_port]
         user_dict['__SID_URL__'] += ':%(__SID_PORT__)s' % user_dict
+
+    # Generate random hex salt for scrambling saved digest credentials
+    digest_salt = base64.b16encode(os.urandom(16))
+    user_dict['__DIGEST_SALT__'] = digest_salt
         
     # modify this list when adding/removing template->target  
     replacement_list = \

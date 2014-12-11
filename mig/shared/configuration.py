@@ -27,10 +27,11 @@
 
 """Configuration class"""
 
-import sys
-import os
+import base64
 import pwd
+import os
 import socket
+import sys
 import time
 from ConfigParser import ConfigParser
 
@@ -903,6 +904,18 @@ class Configuration:
                                                            'permanent_freeze')
         else:
             self.site_permanent_freeze = True
+        # Fall back to a static 'random' salt string since we need it to
+        # remain constant
+        static_rand = 'w\xff\xcft\xaf/\x089 B\x1eG\x84i\x97a'
+        self.site_digest_salt = base64.b16encode(static_rand)
+        if config.has_option('SITE', 'digest_salt'):
+            # Salt must be upper case hex
+            salt = config.get('SITE', 'digest_salt').upper()
+            try:
+                _ = base64.b16decode(salt)                
+                self.site_digest_salt = salt
+            except:
+                raise ValueError("Invalid digest_salt value: %s" % salt)
 
         if config.has_option('SITE', 'swrepo_url'):
             self.site_swrepo_url = config.get('SITE', 'swrepo_url')

@@ -18,7 +18,7 @@
 
 import hashlib
 from os import urandom
-from base64 import b64encode, b64decode
+from base64 import b64encode, b64decode, b16encode, b16decode
 from itertools import izip
 
 # From https://github.com/mitsuhiko/python-pbkdf2
@@ -40,7 +40,7 @@ def make_hash(password):
     if isinstance(password, unicode):
         password = password.encode('utf-8')
     salt = b64encode(urandom(SALT_LENGTH))
-    # Python 2.6 fails to parse these implicit positional args (-Jonas)
+    # Python 2.6 fails to parse implicit positional args (-Jonas)
     #return 'PBKDF2${}${}${}${}'.format(
     return 'PBKDF2${0}${1}${2}${3}'.format(
         HASH_FUNCTION,
@@ -78,25 +78,48 @@ def check_hash(password, hash_, hash_cache=None):
         # print "cached hash: %s" % hash_cache.get(pw_hash, None)
     return match
 
-def make_digest(realm, username, password):
-    """Generate a digest for the credentials."""
-    # TMP!
-    return password
+def scramble_digest(salt, digest):
+    """Scramble digest for saving"""
+    b16_digest = b16encode(digest)
+    xor_int = int(salt, 16) ^ int(b16_digest, 16)
+    # Python 2.6 fails to parse implicit positional args (-Jonas)
+    #return '{:X}'.format(xor_int)
+    return '{0:X}'.format(xor_int)
 
-def check_digest(password, digest, digest_cache=None):
-    """Check a password against an existing digest. The optional digest_cache
+def unscramble_digest(salt, digest):
+    """Unscramble loaded digest"""
+    xor_int = int(salt, 16) ^ int(digest, 16)
+    # Python 2.6 fails to parse implicit positional args (-Jonas)
+    #b16_digest = '{:X}'.format(xor_int)
+    b16_digest = '{0:X}'.format(xor_int)
+    return b16decode(b16_digest)
+
+def make_digest(realm, username, password, salt):
+    """Generate a digest for the credentials"""
+    merged_creds = ':'.join([realm, username, password])
+    # TODO: can we switch to proper md5 hexdigest without breaking webdavs?
+    digest = 'DIGEST$custom$CONFSALT$%s' % scramble_digest(salt, merged_creds)
+    return digest
+
+def check_digest(realm, username, password, digest, salt, digest_cache=None):
+    """Check credentials against an existing digest. The optional digest_cache
     dictionary argument can be used to cache recent lookups to save time in
-    e.g. webdav where each operation triggers digest check."""
+    e.g. webdav where each operation triggers digest check.
+    """
+    if isinstance(realm, unicode):
+        realm = realm.encode('utf-8')
+    if isinstance(username, unicode):
+        username = username.encode('utf-8')
     if isinstance(password, unicode):
         password = password.encode('utf-8')
-    pw_hash = hashlib.md5(password).hexdigest()
+    merged_creds = ':'.join([realm, username, password])
+    creds_hash = hashlib.md5(merged_creds).hexdigest()
     if isinstance(digest_cache, dict) and \
-           digest_cache.get(pw_hash, None) == digest:
-        # print "found cached digest: %s" % digest_cache.get(pw_hash, None)
+           digest_cache.get(creds_hash, None) == digest:
+        # print "found cached digest: %s" % digest_cache.get(creds_hash, None)
         return True
-    # TMP!
-    match = (password == digest) 
+    match = (make_digest(realm, username, password, salt) == digest) 
     if isinstance(digest_cache, dict) and match:
-        digest_cache[pw_hash] = digest
-        # print "cached digest: %s" % digest_cache.get(pw_hash, None)
+        digest_cache[creds_hash] = digest
+        # print "cached digest: %s" % digest_cache.get(creds_hash, None)
     return match 

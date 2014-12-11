@@ -1384,15 +1384,16 @@ def check_password_hash(password, stored_hash, hash_cache=None):
         print "ERROR: in check_password_hash: %s" % exc
         return False
 
-def generate_password_digest(realm, username, password):
+def generate_password_digest(realm, username, password, salt):
     """Return a digest data string for saving provided password"""
     try:
-        return make_digest(realm, username, password)
+        return make_digest(realm, username, password, salt)
     except Exception, exc:
         print "ERROR: in generate_password_digest: %s" % exc
         return password
 
-def check_password_digest(password, stored_digest, digest_cache=None):
+def check_password_digest(realm, username, password, stored_digest, salt,
+                          digest_cache=None):
     """Return a boolean indicating if offered password matches stored_digest
     information.
 
@@ -1400,7 +1401,8 @@ def check_password_digest(password, stored_digest, digest_cache=None):
     and speed up repeated use.
     """
     try:
-        return check_digest(password, stored_digest, digest_cache)
+        return check_digest(realm, username, password, stored_digest, salt,
+                            digest_cache)
     except Exception, exc:
         print "ERROR: in check_password_digest: %s" % exc
         return False
