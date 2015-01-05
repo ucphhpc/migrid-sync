@@ -96,7 +96,7 @@ if not os.path.isfile(KEYCERTFILE):
 # CA cert is not currently used but we include it for future verification support
 
 CACERTFILE = user_conf_dict.get('cacertfile', None)
-if CACERTFILE and not os.path.isfile(CACERTFILE):
+if CACERTFILE and not CACERTFILE == 'AUTO' and not os.path.isfile(CACERTFILE):
     print 'specified cacertfile %s not found!' % CACERTFILE
     sys.exit(1)
 
