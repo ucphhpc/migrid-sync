@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # publicscriptgen - Basic script generator functions
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -497,8 +497,8 @@ arg_zero = sys.argv[0]
 args = sys.argv[1:]
 try:
     opts, args = getopt.getopt(args, opt_args)
-except getopt.GetoptError, e:
-    print \"Error: \", e.msg
+except getopt.GetoptError, goe:
+    print \"Error: %s\" %  goe
     usage()
     sys.exit(1)
 
@@ -597,6 +597,7 @@ if not mig_server:
     mig_server = read_conf(conf, 'migserver')
 
 def expand_path(path):
+    '''Expand user home'''
     return os.path.expanduser(os.path.expandvars(path))
 
 # Force tilde and variable expansion on path vars
@@ -702,7 +703,7 @@ def init_script(
     header = \
         """
 mig%s - a part of the MiG scripts
-Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 
 This file is part of MiG.
 

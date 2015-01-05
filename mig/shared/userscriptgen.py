@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userscriptgen - Generator backend for user scripts
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -122,6 +122,22 @@ def cat_usage_function(lang, extension):
     op = sys._getframe().f_code.co_name.replace('_usage_function', '')
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] FILE [FILE ...]'\
+         % (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
+def cp_usage_function(lang, extension):
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] SRC [SRC...] DST'\
          % (mig_prefix, op, extension)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
@@ -692,6 +708,45 @@ def cat_function(lang, curl_cmd, curl_flags='--compressed'):
         curl_flags,
         )
     s += end_function(lang, 'cat_file')
+    return s
+
+
+def cp_function(lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with the string 'src_list' as argument. Thus
+    the variable 'src_list' should be on the form
+    \"src=pattern1[;src=pattern2[ ... ]]\"
+    This may seem a bit awkward but it's difficult to do in a better way when
+    begin_function() doesn't support variable length or array args.
+    """
+
+    relative_url = '"cgi-bin/cp.py"'
+    query = '""'
+    if lang == 'sh':
+        post_data = \
+            '"output_format=txt;flags=$server_flags;dst=$dst;$src_list"'
+    elif lang == 'python':
+        post_data = \
+            "'output_format=txt;flags=%s;dst=%s;%s' % (server_flags, dst, src_list)"
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'cp_file', ['src_list', 'dst'],
+                        'Execute the corresponding server operation')
+    s += format_list(lang, 'src_list', 'src')
+    s += ca_check_init(lang)
+    s += password_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'cp_file')
     return s
 
 
@@ -1941,6 +1996,54 @@ cat_file $path_list
 # 'path="$1";path="$2";...;path=$N'
 path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
 (status, out) = cat_file(path_list)
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
+def cp_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    # cp cgi supports wild cards natively so no need to use
+    # expand here
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 2, None)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += \
+            """
+# Build the src string used directly:
+# 'src="$1";src="$2";...;src=$N'
+orig_args=("$@")
+src_list="src=$1"
+shift
+while [ $# -gt 1 ]; do
+    src_list="$src_list;src=$1"
+    shift
+done
+dst=$1
+cp_file $src_list $dst
+"""
+    elif lang == 'python':
+        s += \
+            """
+# Build the src string used directly:
+# 'src="$1";src="$2";...;src=$N'
+src_list = \"src=%s\" % \";src=\".join(sys.argv[1:-1])
+dst = sys.argv[-1]
+(status, out) = cp_file(src_list, dst)
 print ''.join(out),
 sys.exit(status)
 """
@@ -4083,9 +4186,13 @@ include_license = True
 
 # Supported MiG operations (don't add 'test' as it is optional)
 
+# TODO: add find, *freeze, *re, grep, jobfeasible, jobschedule, mrslview
+#           settings, vm*, 
+
 script_ops = [
     'cancel',
     'cat',
+    'cp',
     'doc',
     'get',
     'head',
@@ -4142,8 +4249,8 @@ if __name__ == '__main__':
     opts_str = 'c:d:hlp:s:tvV'
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opts_str)
-    except getopt.GetoptError, exc:
-        print 'Error: %s' % exc
+    except getopt.GetoptError, goe:
+        print 'Error: %s' % goe
         usage()
         sys.exit(1)
 

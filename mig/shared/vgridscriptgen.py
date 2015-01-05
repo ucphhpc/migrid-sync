@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridscriptgen - vgrid and resource script generator backend
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -48,6 +48,7 @@ from publicscriptgen import *
 
 
 def usage():
+    """Use help"""
     print 'Usage: vgridscriptgen.py OPTIONS [LANGUAGE ... ]'
     print 'Where OPTIONS include:'
     print ' -c CURL_CMD\t: Use curl from CURL_CMD'
@@ -59,10 +60,12 @@ def usage():
 
 
 def version():
+    """Version info"""
     print 'MiG VGrid Script Generator: %s' % __version__
 
 
 def version_function(lang):
+    """Version helper"""
     s = ''
     s += begin_function(lang, 'version', [], 'Show version details')
     if lang == 'sh':
@@ -85,6 +88,7 @@ def vgrid_single_argument_usage_function(
     op,
     first_arg,
     ):
+    """Usage functions for single argument scripts"""
 
     # Extract op from function name
     # op = sys._getframe().f_code.co_name.replace("_usage_function","")
@@ -106,12 +110,41 @@ def vgrid_two_arguments_usage_function(
     first_arg,
     second_arg,
     ):
+    """Usage functions for two argument scripts"""
 
     # Extract op from function name
     # op = sys._getframe().f_code.co_name.replace("_usage_function","")
 
     usage_str = 'Usage: %s%s.%s [OPTIONS] %s %s' % (mig_prefix, op,
             extension, first_arg, second_arg)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
+def vgrid_seven_arguments_usage_function(
+    lang,
+    extension,
+    op,
+    first_arg,
+    second_arg,
+    third_arg,
+    fourth_arg,
+    fifth_arg,
+    sixth_arg,
+    seventh_arg,
+    ):
+    """Usage functions for seven argument scripts"""
+
+    # Extract op from function name
+    # op = sys._getframe().f_code.co_name.replace("_usage_function","")
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] %s %s %s %s %s %s %s' % \
+                (mig_prefix, op, extension, first_arg, second_arg, third_arg,
+                 fourth_arg, fifth_arg, sixth_arg, seventh_arg)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -132,6 +165,7 @@ def vgrid_single_argument_function(
     first_arg,
     curl_flags='',
     ):
+    """Core function for single argument scripts"""
     relative_url = '"cgi-bin/%s.py"' % command
     query = '""'
     if lang == 'sh':
@@ -170,6 +204,7 @@ def vgrid_single_argument_upload_function(
     first_arg,
     curl_flags='',
     ):
+    """Core function for single argument upload scripts"""
     relative_url = '""'
     query = '""'
     post_data = '""'
@@ -210,6 +245,7 @@ def vgrid_two_arguments_function(
     second_arg,
     curl_flags='',
     ):
+    """Core function for two argument scripts"""
     relative_url = '"cgi-bin/%s.py"' % command
     query = '""'
     if lang == 'sh':
@@ -229,6 +265,61 @@ def vgrid_two_arguments_function(
 
     s = ''
     s += begin_function(lang, 'submit_command', [first_arg, second_arg],
+                        'Call corresponding server operation')
+    s += ca_check_init(lang)
+    s += password_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'submit_command')
+    return s
+
+
+def vgrid_seven_arguments_function(
+    lang,
+    curl_cmd,
+    command,
+    first_arg,
+    second_arg,
+    third_arg,
+    fourth_arg,
+    fifth_arg,
+    sixth_arg,
+    seventh_arg,
+    curl_flags='',
+    ):
+    """Core function for seven argument scripts"""
+    relative_url = '"cgi-bin/%s.py"' % command
+    query = '""'
+    if lang == 'sh':
+        post_data = \
+            '"output_format=txt;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s"' % \
+            (first_arg, first_arg, second_arg, second_arg, third_arg,
+             third_arg, fourth_arg, fourth_arg, fifth_arg, fifth_arg,
+             sixth_arg, sixth_arg, seventh_arg, seventh_arg)
+    elif lang == 'python':
+        post_data = \
+            ("'output_format=txt;%s=' + %s + ';%s=' + %s + ';%s=' + %s + " + \
+            "';%s=' + %s + ';%s=' + %s + ';%s=' + %s + ';%s=' + %s") % \
+            (first_arg, first_arg, second_arg, second_arg, third_arg,
+             third_arg, fourth_arg, fourth_arg, fifth_arg, fifth_arg,
+             sixth_arg, sixth_arg, seventh_arg, seventh_arg)
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+
+    s = ''
+    s += begin_function(lang, 'submit_command', [first_arg, second_arg,
+                                                 third_arg, fourth_arg,
+                                                 fifth_arg, sixth_arg,
+                                                 seventh_arg],
                         'Call corresponding server operation')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -322,6 +413,55 @@ sys.exit(status)
     return s
 
 
+def vgrid_seven_arguments_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 7, 7)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += \
+            """
+
+first_arg="$1"
+second_arg="$2"
+third_arg="$3"
+fourth_arg="$4"
+fifth_arg="$5"
+sixth_arg="$6"
+seventh_arg="$7"
+
+submit_command $first_arg $second_arg $third_arg $fourth_arg $fifth_arg $sixth_arg $seventh_arg
+"""
+    elif lang == 'python':
+        s += \
+            """
+first_arg = sys.argv[1]
+second_arg = sys.argv[2]
+third_arg = sys.argv[3]
+fourth_arg = sys.argv[4]
+fifth_arg = sys.argv[5]
+sixth_arg = sys.argv[6]
+seventh_arg = sys.argv[7]
+
+(status, out) = submit_command(first_arg, second_arg, third_arg, fourth_arg,
+                               fifth_arg, sixth_arg, seventh_arg)
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
 # ######################
 # Generator functions #
 # ######################
@@ -333,6 +473,7 @@ def generate_single_argument(
     scripts_languages,
     dest_dir='.',
     ):
+    """Generator for single argument scripts"""
 
     # Extract op from function name
     # op = sys._getframe().f_code.co_name.replace("generate_","")
@@ -370,6 +511,7 @@ def generate_single_argument_upload(
     scripts_languages,
     dest_dir='.',
     ):
+    """Generator for single argument upload scripts"""
 
     # Extract op from function name
     # op = sys._getframe().f_code.co_name.replace("generate_","")
@@ -413,6 +555,7 @@ def generate_two_arguments(
     scripts_languages,
     dest_dir='.',
     ):
+    """Generator for two argument scripts"""
 
     # Extract op from function name
     # op = sys._getframe().f_code.co_name.replace("generate_","")
@@ -449,6 +592,61 @@ def generate_two_arguments(
     return True
 
 
+def generate_seven_arguments(
+    op,
+    first_arg,
+    second_arg,
+    third_arg,
+    fourth_arg,
+    fifth_arg,
+    sixth_arg,
+    seventh_arg,
+    scripts_languages,
+    dest_dir='.',
+    ):
+    """Generator for seven argument scripts"""
+
+    # Extract op from function name
+    # op = sys._getframe().f_code.co_name.replace("generate_","")
+
+    curl_flags = ''
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+
+        script += vgrid_seven_arguments_usage_function(
+            lang, extension, op, first_arg, second_arg, third_arg, fourth_arg,
+            fifth_arg, sixth_arg, seventh_arg)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += vgrid_seven_arguments_function(
+            lang,
+            curl_cmd,
+            op,
+            first_arg,
+            second_arg,
+            third_arg,
+            fourth_arg,
+            fifth_arg,
+            sixth_arg,
+            seventh_arg,
+            curl_flags='',
+            )
+        script += vgrid_seven_arguments_main(lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
 # ###########
 # ## Main ###
 # ###########
@@ -457,25 +655,32 @@ def generate_two_arguments(
 
 verbose_mode = False
 test_script = False
-include_license= True
+include_license = True
 
 # Supported MiG operations (don't add 'test' as it is optional)
+
+script_ops_seven_args = []
+
+# Vgrid functions
+
+script_ops_seven_args.append(['addvgridtrigger', 'rule_id', 'vgrid_name',
+                              'path', 'changes', 'action', 'arguments',
+                              'rate_limit'])
 
 script_ops_two_args = []
 
 # Vgrid functions
 
-script_ops_two_args.append(['addvgridmember', 'new_member', 'vgrid_name'
-                           ])
-script_ops_two_args.append(['addvgridowner', 'new_owner', 'vgrid_name'])
-script_ops_two_args.append(['addvgridres', 'new_resource', 'vgrid_name'
-                           ])
-script_ops_two_args.append(['rmvgridmember', 'remove_member',
-                           'vgrid_name'])
-script_ops_two_args.append(['rmvgridowner', 'remove_owner', 'vgrid_name'
-                           ])
-script_ops_two_args.append(['rmvgridres', 'remove_resource',
-                           'vgrid_name'])
+script_ops_two_args.append(['addvgridmember', 'cert_id', 'vgrid_name'])
+script_ops_two_args.append(['addvgridowner', 'cert_id', 'vgrid_name'])
+script_ops_two_args.append(['addvgridres', 'unique_resource_name',
+                            'vgrid_name'])
+script_ops_two_args.append(['rmvgridmember', 'cert_id', 'vgrid_name'])
+script_ops_two_args.append(['rmvgridowner', 'cert_id', 'vgrid_name'])
+script_ops_two_args.append(['rmvgridres', 'unique_resource_name',
+                            'vgrid_name'])
+script_ops_two_args.append(['rmvgridtrigger', 'rule_id', 'vgrid_name'])
+
 
 # Res functions
 
@@ -580,8 +785,8 @@ if __name__ == '__main__':
     opts_str = 'c:d:hp:s:tvV'
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opts_str)
-    except getopt.GetoptError, e:
-        print 'Error: ', e.msg
+    except getopt.GetoptError, goe:
+        print 'Error: %s' % goe
         usage()
         sys.exit(1)
 
@@ -660,6 +865,10 @@ if __name__ == '__main__':
 
     for op in script_ops_two_args:
         generate_two_arguments(op[0], op[1], op[2], languages, dest_dir)
+
+    for op in script_ops_seven_args:
+        generate_seven_arguments(op[0], op[1], op[2], op[3], op[4], op[5],
+                               languages, dest_dir)
 
     # if test_script:
     #    generate_test(languages)

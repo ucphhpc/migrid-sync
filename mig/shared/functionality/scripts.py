@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# scripts - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# scripts - backend to generate user and resource scripts
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -243,6 +243,10 @@ def main(client_id, user_arguments_dict):
             for op in vgridgen.script_ops_two_args:
                 vgridgen.generate_two_arguments(op[0], op[1], op[2],
                         languages, dest_dir)
+            for op in vgridgen.script_ops_seven_args:
+                vgridgen.generate_seven_arguments(op[0], op[1], op[2], op[3],
+                                                  op[4], op[5], op[6], op[7],
+                                                  languages, dest_dir)
         else:
             output_objects.append({'object_type': 'warning_text', 'text'
                                   : 'Unknown flavor: %s' % flavor})
