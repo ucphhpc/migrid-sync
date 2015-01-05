@@ -59,6 +59,7 @@ from shared.vgrid import vgrid_is_owner_or_member
 
 all_rules = {}
 rule_hits = {}
+_default_period = 'm'
 _unit_periods = {'s': 1, 'm': 60, 'h': 60*60, 'd': 24 * 60 * 60,
                  'w': 7 * 24 * 60 * 60}
 _hits_lock = threading.Lock()
@@ -90,32 +91,36 @@ def extract_hit_limit(rule, field):
     rate limit field where the limit kicks in when more than max_hits happened
     within the last period_length seconds.
     """
-    limit_str = rule.get(field, None)
-    if limit_str is None:
-        return (-1, 1)
-    # NOTE: format is 3(/m) or 52/h: split on slash and default to m
-    number, unit = (limit_str.split("/", 1) + ['s'])[:2]
-    number, unit = int(number.strip()), unit.strip()
-    if not unit.isdigit():
-        number = -1
+    limit_str = rule.get(field, '')
+    # NOTE: format is 3(/m) or 52/h
+    # split string on slash and fall back to no limit and default unit
+    parts = (limit_str.split("/", 1)+[_default_period])[:2]
+    number, unit = parts
+    if not number.isdigit():
+        number = '-1'
     if unit not in _unit_periods.keys():
-        unit = 'm'
+        unit = _default_period
     return (int(number), _unit_periods[unit])
 
-def check_rate_limit(rule):
-    """Check rule history against rate limit"""
+def above_rate_limit(rule):
+    """Check rule history against rate limit and return boolean indicating if
+    the rate limit should kick in.
+    """
     now = time.time()
     hit_count, hit_period = extract_hit_limit(rule, 'rate_limit')
     logger.info("check rate limit at %s for %s" % (now, rule))
+    if hit_count <= 0:
+        logger.info("no rate limit set")
+        return False
     _hits_lock.acquire()
-    rule_history = rule_hits.get(rule['trigger'], [])
+    rule_history = rule_hits.get(rule['rule_id'], [])
     period_history = [i for i in rule_history if now - i[-1] <= hit_period]
     _hits_lock.release()
     logger.info("check rate limit found %s vs %d" % \
                 (period_history, hit_count))
     if len(period_history) >= hit_count:
-        return False
-    return True
+        return True
+    return False
 
 def update_rate_limit(rule, path, change, ref):
     """Update rule history with event and remove expired entries"""
@@ -124,19 +129,21 @@ def update_rate_limit(rule, path, change, ref):
     logger.info("update rate limit at %s for %s and %s %s %s" % \
                 (now, rule, path, change, ref))
     _hits_lock.acquire()
-    rule_history = rule_hits.get(rule['trigger'], [])
+    rule_history = rule_hits.get(rule['rule_id'], [])
     rule_history.append((path, change, ref, time.time()))
     period_history = [i for i in rule_history if now - i[-1] <= hit_period]
-    rule_hits['rule_history'] = period_history
+    rule_hits[rule['rule_id']] = period_history
     _hits_lock.release()
     logger.info("update rate limit left with %s" % period_history)
 
 def show_rate_limit(rule):
     """Return rate limit details for printing"""
     msg = ''
+    hit_count, hit_period = extract_hit_limit(rule, 'rate_limit')
     _hits_lock.acquire()
-    rule_history = rule_hits.get(rule['trigger'], [])
-    msg += 'found %d entries in history' % len(rule_history)
+    rule_history = rule_hits.get(rule['rule_id'], [])
+    msg += 'found %d entries in trigger history and limit is %d per %s s' % \
+           (len(rule_history), hit_count, hit_period)
     _hits_lock.release()
     return msg
 
@@ -258,12 +265,12 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         vgrid_prefix = os.path.join(base_dir, rule['vgrid_name'])
         self.__workflow_info(configuration, rule['vgrid_name'],
                              "handle %s for %s" % (rule['action'], rel_src))
-        if not check_rate_limit(rule):
+        if above_rate_limit(rule):
             logger.info("skipping %s due to rate limit: %s" % \
                         (target_path, show_rate_limit(rule)))
             self.__workflow_warn(configuration, rule['vgrid_name'],
                                  "skip %s trigger due to rate limit %s" % \
-                                 (rel_src))
+                                 (rel_src, show_rate_limit(rule)))
         elif rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
             change = rule['action'].replace('trigger-', '')
             FakeEvent = self.event_map[change]
