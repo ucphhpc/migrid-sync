@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminvgrid - administrate a vgrid
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -52,7 +52,8 @@ def vgrid_add_remove_table(client_id,
                            item_string, 
                            script_suffix, 
                            configuration,
-                           extra_fields=[]):
+                           extra_fields=[],
+                           optional_fields=[]):
     """Create a table of owners/members/resources/triggers (item_string),
     allowing to remove one item by selecting (radio button) and calling a
     script, and a form to add a new entry.
@@ -102,7 +103,7 @@ def vgrid_add_remove_table(client_id,
         return (False, out)
 
     extra_titles_html = ''
-    for (field, _) in extra_fields:
+    for (field, _) in extra_fields + optional_fields:
         extra_titles_html += '<th>%s</th>' % field.replace('_', ' ').title()
 
     # success, so direct and inherit are lists of unique user/res/trigger IDs
@@ -121,8 +122,8 @@ def vgrid_add_remove_table(client_id,
         for elem in extras:
             extra_fields_html = ''
             if isinstance(elem, dict) and elem.has_key(id_field):
-                for (field, _) in extra_fields:
-                    val = elem[field]
+                for (field, _) in extra_fields + optional_fields:
+                    val = elem.get(field, '')
                     if not isinstance(val, basestring):
                         val = ' '.join(val)
                     extra_fields_html += '<td>%s</td>' % val
@@ -153,8 +154,8 @@ def vgrid_add_remove_table(client_id,
         for elem in direct:
             extra_fields_html = ''
             if isinstance(elem, dict) and elem.has_key(id_field):
-                for (field, _) in extra_fields:
-                    val = elem[field]
+                for (field, _) in extra_fields + optional_fields:
+                    val = elem.get(field, '')
                     if not isinstance(val, basestring):
                         val = ' '.join(val)
                     extra_fields_html += '<td>%s</td>' % val
@@ -177,7 +178,7 @@ def vgrid_add_remove_table(client_id,
     # form to add a new item
 
     extra_fields_html = ''
-    for (field, limit) in extra_fields:
+    for (field, limit) in extra_fields + optional_fields:
         extra_fields_html += '<tr><td>%s</td><td>' % \
                              field.replace('_', ' ').title()
         if isinstance(limit, basestring):

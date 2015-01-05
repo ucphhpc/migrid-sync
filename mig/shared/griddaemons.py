@@ -34,6 +34,8 @@ import os
 import shelve
 import socket
 import time
+import time
+import threading
 
 from shared.base import client_dir_id, client_id_dir, client_alias, \
     invisible_path
@@ -46,7 +48,8 @@ from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
 
 default_max_hits, default_fail_cache = 5, 120
 
-persistant_rate_limits = None
+_rate_limits = {}
+_rate_limits_lock = threading.Lock()
 
 
 class User(object):
@@ -521,34 +524,14 @@ def refresh_jobs(configuration, protocol):
 
     return conf
 
-def load_rate_limits(path):
-    """Load rate_limits shelve"""
-    global persistant_rate_limits
-    persistant_rate_limits = shelve.open(path)
-    return persistant_rate_limits
-    
-def save_rate_limits():
-    """Save rate_limits shelve to disk"""
-    global persistant_rate_limits
-    persistant_rate_limits.close()
-    persistant_rate_limits = None
-    
-def get_rate_limits(path):
-    """Initialize rate_limits shelve if not already open"""
-    if persistant_rate_limits is None:
-        return load_rate_limits(path)
-    else:
-        return persistant_rate_limits
-
 def hit_rate_limit(configuration, proto, client_address, client_id,
                    max_fails=default_max_hits,
-                   fail_cache=default_fail_cache,
-                   force_sync=True):
+                   fail_cache=default_fail_cache):
     """Check if proto login from client_address with client_id should be
     filtered due to too many recently failed login attempts. Returns True if
     so and False otherwise based on a lookup in rate limit database defined in
     configuration.
-    The rate limit database is a shelve with client_address as key and
+    The rate limit database is a dictionary with client_address as key and
     dictionaries mapping proto to list of failed attempts.
     We allow up to max_fails failed logins within the last fail_cache seconds.
     """
@@ -556,13 +539,11 @@ def hit_rate_limit(configuration, proto, client_address, client_id,
     refuse = False
     hits = 0
     now = time.time()
-    lock_path = configuration.rate_limit_db + '.lock'
-    
-    lock_handle = acquire_file_lock(lock_path, False)
+
+    _rate_limits_lock.acquire()
 
     try:
-        rate_limits = get_rate_limits(configuration.rate_limit_db)
-        _cached = rate_limits.get(client_address, {})
+        _cached = _rate_limits.get(client_address, {})
         if _cached:
             _failed = _cached.get(proto, [])
             for (time_stamp, client_id) in _failed:
@@ -571,40 +552,33 @@ def hit_rate_limit(configuration, proto, client_address, client_id,
                 hits += 1
             if hits >= max_fails:
                 refuse = True 
-        if force_sync:
-            save_rate_limits()
     except Exception, exc:
         logger.error("hit rate limit failed: %s" % exc)
 
-    release_file_lock(lock_handle)
+    _rate_limits_lock.release()
 
     logger.info("hit rate limit found %d hit(s) for %s on %s from %s" % \
                 (hits, client_id, proto, client_address))
     return refuse
 
 def update_rate_limit(configuration, proto, client_address, client_id,
-                      success, force_sync=True):
+                      success):
     """Update rate limit database after proto login from client_address with
     client_id and login success status.
-    The rate limit database is a shelve with client_address as key and
+    The rate limit database is a dictionary with client_address as key and
     dictionaries mapping proto to list of failed attempts.
     We simply append failed attempts and success results in the list getting
     cleared for that proto and address combination.
-    Please note that we have to explicitly update root values because we use
-    shelves without writeback.
     """
     logger = configuration.logger
-    lock_path = configuration.rate_limit_db + '.lock'
     _failed = []
     cur = {}
     status = {True: "success", False: "failure"}
 
-    lock_handle = acquire_file_lock(lock_path, True)
-
+    _rate_limits_lock.acquire()
     try:
-        rate_limits = get_rate_limits(configuration.rate_limit_db)
-        logger.debug("update rate limit db: %s" % rate_limits)
-        _cached = rate_limits.get(client_address, {})
+        #logger.debug("update rate limit db: %s" % _rate_limits)
+        _cached = _rate_limits.get(client_address, {})
         cur.update(_cached)
         if not _cached or success:
             cur[proto] = []
@@ -612,42 +586,36 @@ def update_rate_limit(configuration, proto, client_address, client_id,
             _failed = _cached.get(proto, [])
             _failed.append((time.time(), client_id))
             cur[proto] = _failed
-        rate_limits[client_address] = cur
-        if force_sync:
-            save_rate_limits()
+        _rate_limits[client_address] = cur
     except Exception, exc:
         logger.error("update rate limit failed: %s" % exc)
 
-    release_file_lock(lock_handle)
-    
+    _rate_limits_lock.release()
+
     logger.info("update rate limit %s for %s from %s on %s to %s" % \
                 (status[success], client_id, client_address, proto, _failed))
         
 
-def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache,
-                      force_sync=True):
+def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
     """Remove rate limit database entries older than fail_cache seconds. Only
     entries with protocol matching proto pattern will be touched.
     Returns a list of expired entries.
-    Please note that we have to explicitly update root values because we use
-    shelves without writeback.
     """
     logger = configuration.logger
-    lock_path = configuration.rate_limit_db + '.lock'
     now = time.time()
     expired = []
     
-    lock_handle = acquire_file_lock(lock_path, True)
-
     logger.debug("expire entries older than %ds at %s" % (fail_cache, now))
+
+    _rate_limits_lock.acquire()
+
     try:
-        rate_limits = get_rate_limits(configuration.rate_limit_db)
-        for _client_address in rate_limits.keys():
+        for _client_address in _rate_limits.keys():
             cur = {}
-            for _proto in rate_limits[_client_address]:
+            for _proto in _rate_limits[_client_address]:
                 if not fnmatch.fnmatch(_proto, proto):
                     continue
-                _failed = rate_limits[_client_address][_proto]
+                _failed = _rate_limits[_client_address][_proto]
                 _keep = []
                 for (time_stamp, client_id) in _failed:
                     if time_stamp + fail_cache < now:
@@ -656,13 +624,11 @@ def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache,
                     else:
                         _keep.append((time_stamp, client_id))
                 cur[proto] = _keep
-            rate_limits[_client_address] = cur
-        if force_sync:
-            save_rate_limits()
+            _rate_limits[_client_address] = cur
     except Exception, exc:
         logger.error("expire rate limit failed: %s" % exc)
         
-    release_file_lock(lock_handle)
+    _rate_limits_lock.release()
 
     logger.info("expire rate limit on proto %s expired %s" % (proto, expired))
 

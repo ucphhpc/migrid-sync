@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridforum - Access VGrid private forum for owners and members
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -163,6 +163,7 @@ $(document).ready(function() {
                                    % add_msg})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    # TODO: consider showing triggered job list?
     #job_list = []
     #output_objects.append({'object_type': 'sectionheader', 'text'
     #                      : 'Trigger Jobs'})
@@ -190,9 +191,14 @@ $(document).ready(function() {
                     ('arguments', None),
                     ('run_as', client_id),
                     ]
+    
+    # NOTE: we do NOT show saved template contents - see addvgridtriggers
+    
+    optional_fields = [('rate_limit', None)]
+
     (status, oobjs) = vgrid_add_remove_table(client_id, vgrid_name, 'trigger',
                                              'vgridtrigger', configuration,
-                                             extra_fields)
+                                             extra_fields, optional_fields)
     output_objects.extend(oobjs)
     if not status:
         return (output_objects, returnvalues.SYSTEM_ERROR)

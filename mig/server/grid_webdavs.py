@@ -239,7 +239,6 @@ class MiGFileResource(FileResource):
     # TODO: override access on more methods?
 
     
-
 class MiGFolderResource(FolderResource):
     """Hide invisible files from all access"""
     def __init__(self, path, environ, filePath):

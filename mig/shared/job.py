@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # job - Core job helper functions
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -102,6 +102,7 @@ def get_job_id(configuration):
 
 
 def fill_mrsl_template(
+    job_template,
     mrsl_fd_or_path,
     trigger_path,
     state_change,
@@ -109,17 +110,15 @@ def fill_mrsl_template(
     expand_map,
     configuration,
     ):
-    """Generate a job description in mrsl_fd_or_path from a job template using
-    the trigger details in the rule dictionary and the actual (relative)
+    """Generate a job description in mrsl_fd_or_path from the job_template,
+    using the trigger details in the rule dictionary and the actual (relative)
     trigger_path of the file and what kind of change triggered the event.
     expand_map is a dictionary mapping variables to actual values.
     Please note that mrsl_fd_or_path may be a path or a file-like object.
     """
     logger = configuration.logger
-    logger.debug("fill template based on trigger for %s and rule %s" % \
-                (trigger_path, rule))
-    template_path = os.path.join(configuration.vgrid_files_home,
-                                 rule['vgrid_name'], rule['arguments'][-1])
+    logger.debug("fill template based on trigger for %s : %s and rule %s" % \
+                 (trigger_path, state_change, rule))
     if isinstance(mrsl_fd_or_path, basestring):
         mrsl_fd = open(mrsl_fd_or_path, 'w+b')
         do_close = True
@@ -129,23 +128,17 @@ def fill_mrsl_template(
 
     filled_template = ''
     try:
-        template_fd = open(template_path, 'r')
-        raw_template = template_fd.read()
-        template_fd.close()
-        filled_template = raw_template
+        filled_template = "%s" % job_template
         for (key, val) in expand_map.items():
             filled_template = filled_template.replace(key, val)
-
         logger.info("filled_template is:\n%s" % filled_template)
-
         mrsl_fd.write(filled_template)
         mrsl_fd.flush()
-
         if do_close:
             mrsl_fd.close()
     except Exception, exc:
-        logger.error("failed to read and fill template from %s: %s" % \
-                     (template_path, exc))
+        logger.error("failed to fill template %s:\n%s" % \
+                     (exc, job_template))
         return False
     return True
 

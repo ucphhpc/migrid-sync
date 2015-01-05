@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridtrigger - add vgrid trigger
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,11 +30,13 @@
 import os
 import time
 
+from shared.base import client_id_dir
 from shared.defaults import any_state, keyword_auto, valid_trigger_actions, \
-      valid_trigger_changes
+      valid_trigger_changes, keyword_all
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
+from shared.validstring import valid_user_path
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
      vgrid_list_subvgrids, vgrid_add_triggers
 import shared.returnvalues as returnvalues
@@ -49,6 +51,7 @@ def signature():
                 'changes': [any_state],
                 'action': [keyword_auto],
                 'arguments': [''],
+                'rate_limit': [''],
                 }
     return ['', defaults]
 
@@ -58,6 +61,7 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
+    client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     output_objects.append({'object_type': 'header', 'text'
                           : 'Add VGrid Trigger'})
@@ -87,6 +91,13 @@ def main(client_id, user_arguments_dict):
     changes = [i.strip() for i in ' '.join(accepted['changes']).split()]
     action = accepted['action'][-1]
     arguments = [i.strip() for i in ' '.join(accepted['arguments']).split()]
+    rate_limit = accepted['rate_limit'][-1]
+
+    # Please note that base_dir must end in slash to avoid access to other
+    # user dirs when own name is a prefix of another user name
+
+    base_dir = os.path.abspath(os.path.join(configuration.user_home,
+                               client_dir)) + os.sep
 
     # we just use a high res timestamp as automatic rule_id
     
@@ -148,11 +159,35 @@ Remove the trigger from the subvgrid and try again''' % \
                                : "invalid action value %s" % action})
         return (output_objects, returnvalues.CLIENT_ERROR)
     
+    if keyword_all in changes:
+        changes = valid_trigger_changes
     for change in changes:
         if not change in valid_trigger_changes:
             output_objects.append({'object_type': 'error_text', 'text'
                               : "found invalid change value %s" % change})
             return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # IMPORTANT: we save the job template contents to avoid potential abuse.
+    # Otherwise someone else in the VGrid could tamper with the template and
+    # make the next trigger execute arbitrary code on behalf of the rule owner.
+
+    templates = []
+    if action == "submit":
+        for rel_path in arguments:
+            real_path = os.path.join(base_dir, rel_path)
+            try:
+                if not valid_user_path(real_path, base_dir, True):
+                    logger.warning('%s tried to %s restricted path %s ! (%s)'
+                                   % (client_id, op_name, real_path, rel_path))
+                    raise ValueError('invalid submit path argument: %s' \
+                                     % rel_path)
+                temp_fd = open(real_path)
+                templates.append(temp_fd.read())
+                temp_fd.close()
+            except Exception, err:
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       '%s' % err})
+                return (output_objects, returnvalues.CLIENT_ERROR)
 
     rule_dict = {'rule_id': rule_id,
                  'vgrid_name': vgrid_name,
@@ -161,6 +196,8 @@ Remove the trigger from the subvgrid and try again''' % \
                  'run_as': client_id,
                  'action': action,
                  'arguments': arguments,
+                 'templates': templates,
+                 'rate_limit': rate_limit,
                  }
 
     # Add to list and pickle

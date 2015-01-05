@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_events - event handler to monitor files and trigger actions
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,6 +38,7 @@ import re
 import sys
 import tempfile
 import time
+import threading
 
 try:
     from watchdog.observers import Observer
@@ -57,6 +58,10 @@ from shared.vgrid import vgrid_is_owner_or_member
 # Global trigger rule dictionary with rules for all VGrids
 
 all_rules = {}
+rule_hits = {}
+_unit_periods = {'s': 1, 'm': 60, 'h': 60*60, 'd': 24 * 60 * 60,
+                 'w': 7 * 24 * 60 * 60}
+_hits_lock = threading.Lock()
 configuration, logger = None, None
 
 def get_expand_map(trigger_path, rule, state_change):
@@ -79,6 +84,61 @@ def get_expand_map(trigger_path, rule, state_change):
     # TODO: provide exact expanded wildcards?
 
     return expand_map    
+
+def extract_hit_limit(rule, field):
+    """Get rule rate limit as (max_hits, period_length)-tuple for provided
+    rate limit field where the limit kicks in when more than max_hits happened
+    within the last period_length seconds.
+    """
+    limit_str = rule.get(field, None)
+    if limit_str is None:
+        return (-1, 1)
+    # NOTE: format is 3(/m) or 52/h: split on slash and default to m
+    number, unit = (limit_str.split("/", 1) + ['s'])[:2]
+    number, unit = int(number.strip()), unit.strip()
+    if not unit.isdigit():
+        number = -1
+    if unit not in _unit_periods.keys():
+        unit = 'm'
+    return (int(number), _unit_periods[unit])
+
+def check_rate_limit(rule):
+    """Check rule history against rate limit"""
+    now = time.time()
+    hit_count, hit_period = extract_hit_limit(rule, 'rate_limit')
+    logger.info("check rate limit at %s for %s" % (now, rule))
+    _hits_lock.acquire()
+    rule_history = rule_hits.get(rule['trigger'], [])
+    period_history = [i for i in rule_history if now - i[-1] <= hit_period]
+    _hits_lock.release()
+    logger.info("check rate limit found %s vs %d" % \
+                (period_history, hit_count))
+    if len(period_history) >= hit_count:
+        return False
+    return True
+
+def update_rate_limit(rule, path, change, ref):
+    """Update rule history with event and remove expired entries"""
+    now = time.time()
+    _, hit_period = extract_hit_limit(rule, 'rate_limit')
+    logger.info("update rate limit at %s for %s and %s %s %s" % \
+                (now, rule, path, change, ref))
+    _hits_lock.acquire()
+    rule_history = rule_hits.get(rule['trigger'], [])
+    rule_history.append((path, change, ref, time.time()))
+    period_history = [i for i in rule_history if now - i[-1] <= hit_period]
+    rule_hits['rule_history'] = period_history
+    _hits_lock.release()
+    logger.info("update rate limit left with %s" % period_history)
+
+def show_rate_limit(rule):
+    """Return rate limit details for printing"""
+    msg = ''
+    _hits_lock.acquire()
+    rule_history = rule_hits.get(rule['trigger'], [])
+    msg += 'found %d entries in history' % len(rule_history)
+    _hits_lock.release()
+    return msg
 
 
 class MiGRuleEventHandler(PatternMatchingEventHandler):
@@ -198,7 +258,13 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         vgrid_prefix = os.path.join(base_dir, rule['vgrid_name'])
         self.__workflow_info(configuration, rule['vgrid_name'],
                              "handle %s for %s" % (rule['action'], rel_src))
-        if rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
+        if not check_rate_limit(rule):
+            logger.info("skipping %s due to rate limit: %s" % \
+                        (target_path, show_rate_limit(rule)))
+            self.__workflow_warn(configuration, rule['vgrid_name'],
+                                 "skip %s trigger due to rate limit %s" % \
+                                 (rel_src))
+        elif rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
             change = rule['action'].replace('trigger-', '')
             FakeEvent = self.event_map[change]
             for argument in rule['arguments']:
@@ -228,6 +294,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     fake = FakeEvent(path)
                     fake._chain = _chain
                     logger.info("trigger %s event on %s" % (change, path))
+                    update_rate_limit(rule, target_path, state, '')
                     self.__workflow_info(configuration, rule['vgrid_name'],
                                          "trigger %s event on %s" % (change,
                                                                      rel_path))
@@ -237,25 +304,28 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             mrsl_path = mrsl_fd.name
             expand_map = get_expand_map(rel_src, rule, state)
             try:
-                if not fill_mrsl_template(mrsl_fd, rel_src, state, rule,
-                                          expand_map, configuration):
-                    raise Exception("fill template failed")
-                            
-                logger.debug("filled template for %s in %s" % \
-                             (target_path, mrsl_path))
-                (success, msg) = new_job(mrsl_path, rule['run_as'],
-                                         configuration, False)
-                if success:
-                    logger.info("submitted job for %s: %s" % (target_path,
-                                                              msg))
-                    self.__workflow_info(configuration, rule['vgrid_name'],
-                                         "submitted job for %s: %s" % \
-                                         (rel_src, msg))
-                else:
-                    raise Exception(msg)
+                for job_template in rule['templates']:
+                    mrsl_fd.truncate(0)
+                    if not fill_mrsl_template(job_template, mrsl_fd, rel_src,
+                                              state, rule, expand_map,
+                                              configuration):
+                        raise Exception("fill template failed")
+                    logger.debug("filled template for %s in %s" % \
+                                 (target_path, mrsl_path))
+                    (success, msg) = new_job(mrsl_path, rule['run_as'],
+                                             configuration, False)
+                    if success:
+                        logger.info("submitted job for %s: %s" % (target_path,
+                                                                  msg))
+                        update_rate_limit(rule, target_path, state, msg)
+                        self.__workflow_info(configuration, rule['vgrid_name'],
+                                             "submitted job for %s: %s" % \
+                                             (rel_src, msg))
+                    else:
+                        raise Exception(msg)
             except Exception, exc:
-                logger.error("failed to submit job for %s: %s" % (target_path,
-                                                                  exc))
+                logger.error("failed to submit job(s) for %s: %s" % \
+                             (target_path, exc))
                 self.__workflow_err(configuration, rule['vgrid_name'],
                                     "failed to submit job for %s: %s" % \
                                     (rel_src, exc))
@@ -282,16 +352,16 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             if re.match(as_regexp, src_path):
                 logger.debug("matched %s for %s" % (src_path, as_regexp))
                 for rule in rule_list:
-                    if not state in rule['changes']:
-                        logger.info("skipping %s without change match (%s)" \
-                                    % (target_path, state))
-                        continue
                     # user may have been removed from vgrid - log and ignore
                     if not vgrid_is_owner_or_member(rule['vgrid_name'],
                                                     rule['run_as'],
                                                     configuration):
                         logger.warning("no such user in vgrid: %(run_as)s" \
                                        % rule)
+                        continue
+                    if not state in rule['changes']:
+                        logger.info("skipping %s without change match (%s)" \
+                                    % (target_path, state))
                         continue
                     
                     logger.info("trigger %s for %s: %s" % \
