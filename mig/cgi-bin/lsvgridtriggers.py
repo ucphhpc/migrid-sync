@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# lsvgridmembers - list vgrid members
+# lsvgridtriggers - list vgrid triggers
 # Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -29,7 +29,7 @@ import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.lsvgridmembers import main
+from shared.functionality.lsvgridtriggers import main
 from shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

@@ -129,6 +129,8 @@ def main(client_id, user_arguments_dict):
 
         output_objects.append({'object_type': 'warning', 'text': msg})
 
+    # if we get here user is either vgrid owner or allowed to add rule
+
     # don't add if already in vgrid or parent vgrid
 
     if vgrid_is_trigger(vgrid_name, rule_id, configuration):

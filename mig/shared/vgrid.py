@@ -141,6 +141,31 @@ def vgrid_is_trigger(vgrid_name, rule_id, configuration, recursive=True):
                                    configuration, recursive, 'rule_id')
 
 
+def vgrid_is_trigger_owner(vgrid_name, rule_id, client_id, configuration,
+                           recursive=True):
+    """Check if rule_id is a trigger in vgrid_name with client_id as rule
+    owner.
+    """
+
+    (status, entries) = vgrid_list(vgrid_name, 'triggers', configuration, recursive)
+
+    if not status:
+        configuration.logger.error(
+            'unexpected status in vgrid_is_trigger_owner: %s' % entries)
+        return False
+
+    for rule_dict in entries:
+        if rule_dict['rule_id'] == rule_id:
+            if rule_dict['run_as'] == client_id:
+                return True
+            else:
+                return False
+
+    # No such trigger
+
+    return False
+                
+
 def vgrid_list_subvgrids(vgrid_name, configuration):
     """Return list of subvgrids of vgrid_name"""
 
@@ -245,6 +270,14 @@ def init_vgrid_script_add_rem(
     if (subject_type == 'member') and (client_id == subject) \
         and (vgrid_is_member(vgrid_name, subject, configuration)):
 
+        return (True, msg, [])
+
+    # special case: members may remove own triggers and add new ones
+
+    if (subject_type == 'trigger') and \
+           (not vgrid_is_trigger(vgrid_name, subject, configuration) or \
+            vgrid_is_trigger_owner(vgrid_name, subject, client_id,
+                                   configuration)):
         return (True, msg, [])
 
     # otherwise: only owners may add or remove:

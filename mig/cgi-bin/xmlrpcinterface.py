@@ -412,6 +412,24 @@ def rmvgridres(user_arguments_dict):
     return stub('shared.functionality.rmvgridres', user_arguments_dict)
 
 
+def lsvgridtriggers(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.lsvgridtriggers', user_arguments_dict)
+
+
+def addvgridtrigger(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.addvgridtrigger', user_arguments_dict)
+
+
+def rmvgridtrigger(user_arguments_dict):
+    """Wrap backend of same name"""
+
+    return stub('shared.functionality.rmvgridtrigger', user_arguments_dict)
+
+
 def adminvgrid(user_arguments_dict):
     """Wrap backend of same name"""
 
@@ -615,6 +633,9 @@ if '__main__' == __name__:
     server.register_function(lsvgridres)
     server.register_function(addvgridres)
     server.register_function(rmvgridres)
+    server.register_function(lsvgridtriggers)
+    server.register_function(addvgridtrigger)
+    server.register_function(rmvgridtrigger)
     server.register_function(adminvgrid)
     server.register_function(updateresconfig)
     server.register_function(delres)

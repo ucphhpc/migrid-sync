@@ -735,6 +735,7 @@ script_ops_single_arg.append(['createvgrid', 'vgrid_name'])
 script_ops_single_arg.append(['lsvgridmembers', 'vgrid_name'])
 script_ops_single_arg.append(['lsvgridowners', 'vgrid_name'])
 script_ops_single_arg.append(['lsvgridres', 'vgrid_name'])
+script_ops_single_arg.append(['lsvgridtriggers', 'vgrid_name'])
 
 # Res functions
 

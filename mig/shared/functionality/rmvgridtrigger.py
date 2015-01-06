@@ -90,14 +90,9 @@ def main(client_id, user_arguments_dict):
 
         output_objects.append({'object_type': 'warning', 'text': msg})
 
-    if not vgrid_is_owner(vgrid_name, client_id, configuration):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '''You must be an owner of the vgrid to remove 
-a vgrid trigger!'''
-                              })
-        return (output_objects, returnvalues.CLIENT_ERROR)
+    # if we get here user is either vgrid owner or has rule ownership
 
-    # don't remove if not a participant
+    # can't remove if not a participant
 
     if not vgrid_is_trigger(vgrid_name, rule_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
