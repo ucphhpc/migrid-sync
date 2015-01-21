@@ -72,7 +72,7 @@ if '__main__' == __name__:
                                                'rate_limit': ['1/m']})
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print 'Error %s:%s ' % (returnval, returnmsg)
+        print 'Error %s:%s' % (returnval, returnmsg)
 
     for ele in inlist:
         if ele['object_type'] == 'text':
@@ -85,7 +85,7 @@ if '__main__' == __name__:
                                                'rule_id': ['xmlrpcdummytrigger']})
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print 'Error %s:%s ' % (returnval, returnmsg)
+        print 'Error %s:%s' % (returnval, returnmsg)
 
     for ele in inlist:
         if ele['object_type'] == 'text':
