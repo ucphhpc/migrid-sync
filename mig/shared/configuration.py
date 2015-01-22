@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # configuration - configuration wrapper
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,8 +28,9 @@
 """Configuration class"""
 
 import base64
-import pwd
+import datetime
 import os
+import pwd
 import socket
 import sys
 import time
@@ -948,7 +949,9 @@ class Configuration:
         if config.has_option('SITE', 'credits_text'):
             self.site_credits_text = config.get('SITE', 'credits_text')
         else:
-            self.site_credits_text = '2003-2014, <a href="http://www.migrid.org">The MiG Project</a>'
+            creds_text = '2003-%d, <a href="http://%s">The MiG Project</a>' % \
+                         (datetime.datetime.now().year, "www.migrid.org")
+            self.site_credits_text = creds_text
         if config.has_option('SITE', 'credits_image'):
             self.site_credits_image = config.get('SITE', 'credits_image')
         else:
