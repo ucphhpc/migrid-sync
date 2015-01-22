@@ -268,7 +268,7 @@ cert, oid and sid based https!
                       ("MiGserver-template.conf", "MiGserver.conf"),
                       ("index-template.html", "index.html"),
                       # service script for MiG daemons
-                      ("MiG-init.d-template", "MiG"),
+                      ("migrid-init.d-template", "migrid-init.d"),
                       ]
     for (in_name, out_name) in replacement_list:
         in_path = os.path.join(source, in_name)

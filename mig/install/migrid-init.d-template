@@ -58,6 +58,7 @@ if [ -n "$MIG_CONF" ]; then
     CUSTOMCONF="MIG_CONF=$MIG_CONF "
 fi
 # you probably do not want to modify these...
+PID_DIR="/var/run"
 MIG_LOG=${MIG_STATE}/log
 MIG_SCRIPT=${MIG_CODE}/server/grid_script.py
 MIG_MONITOR=${MIG_CODE}/server/grid_monitor.py
@@ -71,7 +72,8 @@ DELAY=5
 
 start_script() {
 	echo -n "Starting MiG server daemon: "
-	daemon --user ${MIG_USER} \
+        PID_FILE="$PID_DIR/grid_script.pid"
+	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	           "$CUSTOMCONF ${MIG_SCRIPT} >> ${MIG_LOG}/mig.out 2>&1 &"
 	RET=$?
 	if [ $RET -ne 0 ]; then 
@@ -86,7 +88,8 @@ start_script() {
 }
 start_monitor() {
 	echo -n "Starting MiG monitor daemon:"
-	daemon --user ${MIG_USER} \
+        PID_FILE="$PID_DIR/grid_monitor.pid"
+	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	           "$CUSTOMCONF ${MIG_MONITOR} >> ${MIG_LOG}/monitor.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
@@ -96,7 +99,8 @@ start_monitor() {
 }
 start_sshmux() {
 	echo -n "Starting MiG SSHMux daemon:"
-	daemon --user ${MIG_USER} \
+        PID_FILE="$PID_DIR/grid_sshmux.pid"
+	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	           "$CUSTOMCONF ${MIG_SSHMUX} >> ${MIG_LOG}/sshmux.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
@@ -106,7 +110,8 @@ start_sshmux() {
 }
 start_events() {
 	echo -n "Starting MiG events daemon:"
-	daemon --user ${MIG_USER} \
+        PID_FILE="$PID_DIR/grid_events.pid"
+	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	           "$CUSTOMCONF ${MIG_EVENTS} >> ${MIG_LOG}/events.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
@@ -116,7 +121,8 @@ start_events() {
 }
 start_openid() {
 	echo -n "Starting MiG OpenID daemon:"
-	daemon --user ${MIG_USER} \
+        PID_FILE="$PID_DIR/grid_openid.pid"
+	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	           "$CUSTOMCONF ${MIG_OPENID} >> ${MIG_LOG}/openid.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
@@ -126,7 +132,8 @@ start_openid() {
 }
 start_sftp() {
 	echo -n "Starting MiG SFTP daemon:"
-	daemon --user ${MIG_USER} \
+        PID_FILE="$PID_DIR/grid_sftp.pid"
+	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	           "$CUSTOMCONF ${MIG_SFTP} >> ${MIG_LOG}/sftp.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
@@ -136,7 +143,8 @@ start_sftp() {
 }
 start_davs() {
 	echo -n "Starting MiG DAVS daemon:"
-	daemon --user ${MIG_USER} \
+        PID_FILE="$PID_DIR/grid_davs.pid"
+	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	           "$CUSTOMCONF ${MIG_DAVS} >> ${MIG_LOG}/davs.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
@@ -146,7 +154,8 @@ start_davs() {
 }
 start_ftps() {
 	echo -n "Starting MiG FTPS daemon:"
-	daemon --user ${MIG_USER} \
+        PID_FILE="$PID_DIR/grid_ftps.pid"
+	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	           "$CUSTOMCONF ${MIG_FTPS} >> ${MIG_LOG}/ftps.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
