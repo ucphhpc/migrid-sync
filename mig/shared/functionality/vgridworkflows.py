@@ -115,6 +115,8 @@ access the workflows.''' % vgrid_name})
 <script type="text/javascript">
 $(document).ready(function() {
 
+          $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
+
           // table initially sorted by 0 (last update / date) 
           var sortOrder = [[0,1]];
 
@@ -176,7 +178,7 @@ $(document).ready(function() {
     output_objects.append({'object_type': 'html_form', 'text'
                           : '''
  <div class="form_container">
- <textarea rows=10 readonly="readonly">%s</textarea>
+ <textarea id="logarea" rows=10 readonly="readonly">%s</textarea>
  </div>
  ''' % log_content})
 

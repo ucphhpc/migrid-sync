@@ -47,10 +47,10 @@ def get_valid_topics(configuration):
         }
     return valid_topics
 
-def signature():
+def signature(configuration):
     """Signature of the main function"""
 
-    defaults = {'show': ['kitoid', 'migcert']}
+    defaults = {'show': configuration.site_signup_methods}
     return ['html_form', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -58,7 +58,7 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
-    defaults = signature()[1]
+    defaults = signature(configuration)[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
             defaults, output_objects, allow_rejects=False)
     if not validate_status:
