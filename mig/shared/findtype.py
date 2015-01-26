@@ -30,25 +30,30 @@
 import os
 from string import letters, digits
 
+from shared.defaults import user_db_filename
 from shared.base import client_id_dir, old_id_format
 from shared.listhandling import is_item_in_pickled_list
 from shared.validstring import valid_user_path
+from shared.serial import load
 
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
 MIG_SERVER_ID = 'MiG-Server'
 
 
-def is_user(entity_id, user_home):
-    """Check if if a matching user home directory exists"""
+def is_user(entity_id, configuration):
+    """Check if user exits in database""" 
 
-    # TODO: lookup in user DB instead?
+    result = False
 
-    if not entity_id:
-        return False
-    home_dir = os.path.join(user_home, client_id_dir(entity_id))
-    if os.path.isdir(home_dir):
-        return True
-    return False
+    db_path = os.path.join(configuration.mig_server_home, user_db_filename)
+    try:   
+        user_db = load(db_path)
+        if user_db.has_key(entity_id):
+            result = True
+    except:
+        pass
+
+    return result
 
 
 def is_server(entity_id, server_home, local=False):

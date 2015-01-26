@@ -85,7 +85,7 @@ def main(client_id, user_arguments_dict):
     # is_owner incorporates unique_resource_name verification - no need to
     # specifically check for illegal directory traversal
 
-    if not is_user(cert_id, configuration.user_home):
+    if not is_user(cert_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s is not a valid %s user!' % \
                                 (cert_id, configuration.short_title) })

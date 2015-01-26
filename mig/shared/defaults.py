@@ -31,6 +31,7 @@
 
 # IMPORTANT: do not import anything here - to avoid import loops
 
+user_db_filename = 'MiG-users.db'
 
 keyword_any = 'ANY'
 keyword_all = 'ALL'

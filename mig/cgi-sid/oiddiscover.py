@@ -1,1 +1,1 @@
-../cgi-bin/autocreate.py
+../cgi-bin/oiddiscover.py

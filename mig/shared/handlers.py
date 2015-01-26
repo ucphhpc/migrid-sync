@@ -82,7 +82,7 @@ def get_allowed_path(configuration, client_id, path):
              + path_slash_stripped[:path_slash_stripped.rfind('/')]
         target_file = path_slash_stripped[path_slash_stripped.rfind('/')
              + 1:]
-    elif is_user(client_id, configuration.user_home):
+    elif is_user(client_id, configuration):
         real_path = \
             os.path.normpath(os.path.join(configuration.user_home,
                              client_dir, path))

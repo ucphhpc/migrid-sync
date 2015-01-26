@@ -248,7 +248,7 @@ def init_vgrid_script_add_rem(
         return (False, msg, None)
 
     if subject_type == 'member' or subject_type == 'owner':
-        if not is_user(subject, configuration.user_home):
+        if not is_user(subject, configuration):
             msg += '%s is not a valid %s user!' % \
                     (subject, configuration.short_title)
             return (False, msg, None)
@@ -322,13 +322,25 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
     """
 
     if group == 'owners':
-        name = 'owners'
+        if configuration.has_key('vgrid_state_owners'):
+            name = configuration['vgrid_state_owners']
+        else:
+            name = 'owners'
     elif group == 'members':
-        name = 'members'
+        if configuration.has_key('vgrid_state_members'):
+            name =  configuration['vgrid_state_members']
+        else:
+            name = 'members'
     elif group == 'resources':
-        name = 'resources'
+        if configuration.has_key('vgrid_state_resources'):
+            name = configuration['vgrid_state_resources']
+        else:
+            name = 'resources'
     elif group == 'triggers':
-        name = 'triggers'
+        if configuration.has_key('vgrid_state_triggers'):
+            name = configuration['vgrid_state_triggers']
+        else:
+            name = 'triggers'
     else:
         return (False, "vgrid_list: unknown 'group'")
     if recursive:

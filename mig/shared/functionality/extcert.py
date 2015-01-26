@@ -91,6 +91,13 @@ def main(client_id, user_arguments_dict):
                             configuration.short_title }
     new_user = distinguished_name_to_user(client_id)
 
+    # If cert auto create is on, add user without admin interaction
+
+    if configuration.auto_add_cert_user == False:
+        extcertaction = 'extcertaction.py' 
+    else:
+        extcertaction = 'autocreate.py'
+
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 This page is used to sign up for %(site)s with an existing certificate from a Certificate Authority (CA) allowed for %(site)s.
@@ -103,7 +110,7 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
 <hr />
 <div class=form_container>
 <!-- use post here to avoid field contents in URL -->
-<form method=post action=extcertaction.py onSubmit='return validate_form();'>
+<form method=post action=%(extcertaction)s onSubmit='return validate_form();'>
 <table>
 <tr><td class='mandatory label'>Certificate DN</td><td><input id='cert_id_field' type=text size=%(dn_max_len)s maxlength=%(dn_max_len)s name=cert_id value='%(client_id)s' /></td><td class=fill_space></td></tr>
 <tr><td class='mandatory label'>Full name</td><td><input id='cert_name_field' type=text name=cert_name value='%(common_name)s' /></td><td class=fill_space></td></tr>
@@ -128,6 +135,7 @@ That is, if You're a student/employee at KU, please enter institute acronym (NBI
 </div>
 """
                            % {
+        'extcertaction': extcertaction,
         'valid_name_chars': valid_name_chars,
         'client_id': client_id,
         'dn_max_len': dn_max_len,

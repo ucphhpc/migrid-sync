@@ -39,14 +39,14 @@ import time
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, force_utf8, force_unicode
-from shared.defaults import cert_valid_days, oid_valid_days
+from shared.defaults import user_db_filename, cert_valid_days, oid_valid_days
 from shared.fileio import write_file
 from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables
 from shared.safeinput import filter_commonname
-from shared.useradm import db_name, distinguished_name_to_user, \
+from shared.useradm import distinguished_name_to_user, \
      create_user, fill_user, fill_distinguished_name
 try:
     import shared.arcwrapper as arc
@@ -179,7 +179,6 @@ def main(client_id, user_arguments_dict, environ=None):
         output_objects.append(
             {'object_type': 'error_text', 'text': 'Missing user credentials'})
         return (output_objects, returnvalues.CLIENT_ERROR)
-        
     defaults = signature(login_type)[1]
     (validate_status, accepted) = validate_input(
         user_arguments_dict, defaults, output_objects, allow_rejects=False,
@@ -203,7 +202,7 @@ def main(client_id, user_arguments_dict, environ=None):
     # Extract raw values
     if login_type == 'cert':
         uniq_id = accepted['cert_id'][-1].strip()
-        full_name = accepted['full_name'][-1].strip()
+        raw_name = accepted['cert_name'][-1].strip()
         country = accepted['country'][-1].strip()
         state = accepted['state'][-1].strip()
         org = accepted['org'][-1].strip()
@@ -324,7 +323,7 @@ You probably have to reload this page after you explicitly '''})
         user_dict['expire'] = int(time.time() + cert_valid_days * 24 * 60 * 60)
         try:
             distinguished_name_to_user(uniq_id)
-            user_dict['distinguished_name'] = uniq_id,
+            user_dict['distinguished_name'] = uniq_id
         except:
             output_objects.append({'object_type': 'error_text', 'text'
                                    : '''Illegal Distinguished name:
@@ -348,7 +347,7 @@ multiple "key=val" fields separated by "/".
         
         # Now all user fields are set and we can begin adding the user
 
-        db_path = os.path.join(configuration.mig_server_home, db_name)
+        db_path = os.path.join(configuration.mig_server_home, user_db_filename)
         try:
             create_user(user_dict, configuration.config_file, 
                         db_path, ask_renew=False, default_renew=True)

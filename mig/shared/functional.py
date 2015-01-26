@@ -121,7 +121,7 @@ def validate_input_and_cert(
     creds_error = ''
     if not client_id:
         creds_error = "Invalid or missing user credentials"
-    elif require_user and not is_user(client_id, configuration.user_home):
+    elif require_user and not is_user(client_id, configuration):
         creds_error = "No such user (%s)" % client_id
 
     if creds_error and not requested_page().endswith('logout.py'):
@@ -133,12 +133,13 @@ def validate_input_and_cert(
 
         signup_url = os.path.join(configuration.migserver_https_sid_url,
                                   'cgi-sid', 'signup.py')
+        signup_query = ''
+
         if not client_id:
             output_objects.append(
                 {'object_type': 'text', 'text': '''Apparently you do not
 already have access to %s, but you can sign up:''' % configuration.short_title
                  })
-            signup_query = '?show=kitoid;show=migoid;show=migcert;show=extcert'
             output_objects.append({'object_type': 'link', 'text': signup_url,
                                    'destination': signup_url + signup_query})
             output_objects.append(
@@ -148,11 +149,9 @@ browser.'''})
         else:
             output_objects.append(
                 {'object_type': 'text', 'text': '''Apparently you already have
-suitable credentials and just need to sign up for an account on:'''
-                 })
-            if extract_client_cert(configuration, environ):
-                signup_query = '?show=kitoid;show=extcert'
-            else:
+suitable credentials and just need to sign up for an account on:'''})
+
+            if extract_client_cert(configuration, environ) is None:
                 # Force logout/expire session cookie here to support signup
                 identity = extract_client_openid(configuration, environ,
                                                  lookup_dn=False)
@@ -161,12 +160,11 @@ suitable credentials and just need to sign up for an account on:'''
                     (success, _) = expire_oid_sessions(configuration, identity)
                 else:
                     logger.info("no openid user logged in")
-
-                signup_query = ''
+             
             output_objects.append({'object_type': 'link', 'text': signup_url,
                                    'destination': signup_url + signup_query})
-
         return (False, output_objects)
+
     (status, retval) = validate_input(user_arguments_dict, defaults,
             output_objects, allow_rejects, filter_values)
 

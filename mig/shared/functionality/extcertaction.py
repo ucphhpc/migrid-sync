@@ -33,13 +33,13 @@ import tempfile
 
 import shared.returnvalues as returnvalues
 from shared.base import force_utf8, force_unicode
-from shared.defaults import cert_valid_days
+from shared.defaults import user_db_filename, cert_valid_days
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.notification import send_email
 from shared.serial import dumps
-from shared.useradm import db_name, distinguished_name_to_user, \
+from shared.useradm import distinguished_name_to_user, \
      create_user, fill_user
 
 
@@ -170,7 +170,7 @@ multiple "key=val" fields separated by "/".
 
         # Now all user fields are set and we can begin adding the user
 
-        db_path = os.path.join(configuration.mig_server_home, db_name)
+        db_path = os.path.join(configuration.mig_server_home, user_db_filename)
         try:
             create_user(user_dict, configuration.config_file, db_path,
                         ask_renew=False)

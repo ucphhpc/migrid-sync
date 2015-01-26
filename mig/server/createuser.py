@@ -152,7 +152,7 @@ if '__main__' == __name__:
             usage()
             sys.exit(1)
     elif default_renew and user_id:
-        saved = load_user_dict(user_id, conf_path, db_path, verbose)
+        saved = load_user_dict(user_id, db_path, verbose)
         if not saved:
             print 'Error: no such user in user db: %s' % user_id
             usage()

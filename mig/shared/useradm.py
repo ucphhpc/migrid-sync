@@ -40,7 +40,7 @@ from shared.base import client_id_dir, client_dir_id, client_alias, \
      sandbox_resource
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
-from shared.defaults import keyword_auto, ssh_conf_dir, davs_conf_dir, \
+from shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, davs_conf_dir, \
      ftps_conf_dir, htaccess_filename, welcome_filename, settings_filename, \
      profile_filename, default_css_filename, widgets_filename, \
      authkeys_filename, authpasswords_filename, authdigests_filename
@@ -58,7 +58,6 @@ from shared.vgridaccess import get_resource_map, get_vgrid_map, \
      refresh_user_map, refresh_resource_map, refresh_vgrid_map, VGRIDS, \
      OWNERS, MEMBERS
 
-db_name = 'MiG-users.db'
 ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)
 ssh_authpasswords = os.path.join(ssh_conf_dir, authpasswords_filename)
 ssh_authdigests = os.path.join(ssh_conf_dir, authdigests_filename)
@@ -86,7 +85,7 @@ def init_user_adm():
     app_dir = os.path.dirname(sys.argv[0])
     if not app_dir:
         app_dir = '.'
-    db_path = os.path.join(app_dir, db_name)
+    db_path = os.path.join(app_dir, user_db_filename)
     return (args, app_dir, db_path)
 
 
@@ -154,13 +153,8 @@ def load_user_db(db_path):
     return load(db_path)
 
 
-def load_user_dict(user_id, conf_path, db_path, verbose=False):
+def load_user_dict(user_id, db_path, verbose=False):
     """Load user dictionary from user DB"""
-
-    if conf_path:
-        configuration = Configuration(conf_path)
-    else:
-        configuration = get_configuration_object()
 
     try:
         user_db = load_user_db(db_path)
@@ -774,8 +768,7 @@ def get_openid_user_map(configuration):
     pseudo certificate DN.
     """
     id_map = {}
-    db_path = os.path.join(configuration.mig_code_base, 'server',
-                           'MiG-users.db')
+    db_path = os.path.join(configuration.mig_server_home, user_db_filename)
     user_map = load_user_db(db_path)
     user_alias = configuration.user_openid_alias
     for cert_id in user_map.keys():
@@ -832,8 +825,7 @@ def get_openid_user_dn(configuration, login_url, user_check=True):
                                   (distinguished_name, login_url))
         return distinguished_name
     elif configuration.user_openid_alias:
-        db_path = os.path.join(configuration.mig_code_base, 'server',
-                               'MiG-users.db')
+        db_path = os.path.join(configuration.mig_server_home, user_db_filename)
         user_map = load_user_db(db_path)
         user_alias = configuration.user_openid_alias
         for (distinguished_name, user) in user_map.items():
@@ -864,8 +856,7 @@ def get_openid_user_dn(configuration, login_url, user_check=True):
 
 def get_full_user_map(configuration):
     """Load complete user map including any OpenID aliases"""
-    db_path = os.path.join(configuration.mig_code_base, 'server',
-                           'MiG-users.db')
+    db_path = os.path.join(configuration.mig_server_home, user_db_filename)
     user_map = load_user_db(db_path)
     oid_aliases = get_openid_user_map(configuration)
     for (alias, cert_id) in oid_aliases.items():
