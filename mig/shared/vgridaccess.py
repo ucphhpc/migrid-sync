@@ -275,15 +275,20 @@ def refresh_vgrid_map(configuration):
     (status, all_vgrids) = vgrid_list_vgrids(configuration)
     if not status:
         all_vgrids = []
-    conf_read = [(RESOURCES, "resources", vgrid_resources),
-                 (OWNERS, "owners", vgrid_owners),
-                 (MEMBERS, "members", vgrid_members)]
+
+    conf_read = [(RESOURCES, configuration.vgrid_resources, vgrid_resources),
+                 (OWNERS, configuration.vgrid_owners, vgrid_owners),
+                 (MEMBERS, configuration.vgrid_members, vgrid_members)]
+
     for vgrid in all_vgrids:
         for (field, name, list_call) in conf_read:
             conf_path = os.path.join(configuration.vgrid_home, vgrid, name)
             if not os.path.isfile(conf_path):
-                continue
-            if not vgrid_map[VGRIDS].has_key(vgrid) or \
+                configuration.logger.warning('missing file: %s' % (conf_path)) 
+                vgrid_map[VGRIDS][vgrid][field] = []
+                dirty[VGRIDS] = dirty.get(VGRIDS, []) + [vgrid]
+
+            elif not vgrid_map[VGRIDS].has_key(vgrid) or \
                    os.path.getmtime(conf_path) >= map_stamp:
                 (status, entries) = list_call(vgrid, configuration,
                                               recursive=False)
