@@ -320,27 +320,14 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
     If allow_missing is set a missing entity file results in success and an
     empty list.
     """
-
     if group == 'owners':
-        if configuration.has_key('vgrid_state_owners'):
-            name = configuration['vgrid_state_owners']
-        else:
-            name = 'owners'
+        name = configuration.vgrid_owners
     elif group == 'members':
-        if configuration.has_key('vgrid_state_members'):
-            name =  configuration['vgrid_state_members']
-        else:
-            name = 'members'
+        name = configuration.vgrid_members
     elif group == 'resources':
-        if configuration.has_key('vgrid_state_resources'):
-            name = configuration['vgrid_state_resources']
-        else:
-            name = 'resources'
+        name = configuration.vgrid_resources
     elif group == 'triggers':
-        if configuration.has_key('vgrid_state_triggers'):
-            name = configuration['vgrid_state_triggers']
-        else:
-            name = 'triggers'
+        name = configuration.vgrid_triggers
     else:
         return (False, "vgrid_list: unknown 'group'")
     if recursive:

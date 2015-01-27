@@ -72,6 +72,10 @@ def fix_missing(config_file, verbose=True):
         'vgrid_files_home': '~/state/vgrid_files_home/',
         'vgrid_public_base': '~/state/vgrid_public_base/',
         'vgrid_private_base': '~/state/vgrid_private_base/',
+        'vgrid_owners': 'owners',
+        'vgrid_members': 'members',
+        'vgrid_resources':'resources',
+        'vgrid_triggers': 'triggers',
         'user_home': '~/state/user_home/',
         'user_settings': '~/state/user_settings/',
         'user_cache': '~/state/user_cache/',
@@ -222,6 +226,10 @@ class Configuration:
     vgrid_public_base = ''
     vgrid_private_base = ''
     vgrid_files_home = ''
+    vgrid_owners = ''
+    vgrid_members = ''
+    vgrid_resources = ''
+    vgrid_triggers = ''
     resource_pending = ''
     user_pending = ''
     webserver_home = ''
