@@ -36,7 +36,7 @@ from tempfile import NamedTemporaryFile
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import default_vgrid, all_vgrids, any_vgrid
-from shared.fileio import write_file, make_symlink
+from shared.fileio import write_file, make_symlink, delete_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
@@ -1006,7 +1006,7 @@ for job input and output.
 
         if not make_symlink(public_base_dir,
                             os.path.join(configuration.wwwpublic,
-                            'vgrid', vgrid_name), logger):
+                            'vgrid', vgrid_name), logger, force=True):
             output_objects.append(
                 {'object_type': 'error_text', 'text'
                  : 'Could not create link in wwwpublic/vgrid/%s'

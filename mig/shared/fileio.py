@@ -123,14 +123,18 @@ def delete_file(path, logger):
             logger.error('could not delete %s %s' % (path, err))
             result = False
     else:
-        logger.info('%s does not exist.' % path)
+        logger.info('delete_file: %s does not exist.' % path)
         result = False
 
     return result
 
 
-def make_symlink(dest, src, logger):
+def make_symlink(dest, src, logger, force=False):
     """Wrapper to make src a symlink to dest path"""
+
+    if force == True and delete_file(src, logger) == True:
+        logger.debug('deleted existing symlink: %s' % (src))
+
     try:
         logger.debug('creating symlink: %s %s' % (dest, src))
         os.symlink(dest, src)

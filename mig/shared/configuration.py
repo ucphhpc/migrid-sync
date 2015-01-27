@@ -72,10 +72,6 @@ def fix_missing(config_file, verbose=True):
         'vgrid_files_home': '~/state/vgrid_files_home/',
         'vgrid_public_base': '~/state/vgrid_public_base/',
         'vgrid_private_base': '~/state/vgrid_private_base/',
-        'vgrid_owners': 'owners',
-        'vgrid_members': 'members',
-        'vgrid_resources':'resources',
-        'vgrid_triggers': 'triggers',
         'user_home': '~/state/user_home/',
         'user_settings': '~/state/user_settings/',
         'user_cache': '~/state/user_cache/',
@@ -226,10 +222,10 @@ class Configuration:
     vgrid_public_base = ''
     vgrid_private_base = ''
     vgrid_files_home = ''
-    vgrid_owners = ''
-    vgrid_members = ''
-    vgrid_resources = ''
-    vgrid_triggers = ''
+    vgrid_owners = 'owners'
+    vgrid_members = 'members'
+    vgrid_resources = 'resources'
+    vgrid_triggers = 'triggers'
     resource_pending = ''
     user_pending = ''
     webserver_home = ''
@@ -675,6 +671,15 @@ class Configuration:
             self.vm_client_port = config.getint('GLOBAL', 'vm_client_port')
         if config.has_option('GLOBAL', 'vm_applet_port'):
             self.vm_applet_port = config.getint('GLOBAL', 'vm_applet_port')
+
+        if config.has_option('GLOBAL', 'vgrid_owners'): 
+            self.vgrid_owners = config.get('GLOBAL', 'vgrid_owners')
+        if config.has_option('GLOBAL', 'vgrid_members'):
+            self.vgrid_members = config.get('GLOBAL', 'vgrid_members')
+        if config.has_option('GLOBAL', 'vgrid_resources'):
+            self.vgrid_resources = config.get('GLOBAL', 'vgrid_resources')
+        if config.has_option('GLOBAL', 'vgrid_triggers'):
+            self.vgrid_triggers = config.get('GLOBAL', 'vgrid_triggers')
 
         # vm_agent_port is just an alias for vm_proxy_port
 

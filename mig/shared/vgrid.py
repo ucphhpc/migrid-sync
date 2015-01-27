@@ -577,6 +577,7 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     argument cam be used to e.g. prevent empty owners lists.
     """
     entity_file = os.path.join(configuration.vgrid_home, vgrid_name, kind)
+
     try:
         if not id_list and not allow_empty:
             raise ValueError("not allowed to set empty list of %s" % kind)
@@ -588,23 +589,27 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
 
 def vgrid_set_owners(configuration, vgrid_name, id_list, allow_empty=False):
     """Set list of owners for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 'owners', id_list,
-                              allow_empty)
+    return vgrid_set_entities(configuration, vgrid_name, 
+                              configuration.vgrid_owners, 
+                              id_list, allow_empty)
 
 def vgrid_set_members(configuration, vgrid_name, id_list, allow_empty=True):
     """Set list of members for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 'members', id_list,
-                              allow_empty)
+    return vgrid_set_entities(configuration, vgrid_name, 
+                              configuration.vgrid_members, 
+                              id_list, allow_empty)
 
 def vgrid_set_resources(configuration, vgrid_name, id_list, allow_empty=True):
     """Set list of resources for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 'resources', id_list,
-                              allow_empty)
+    return vgrid_set_entities(configuration, vgrid_name, 
+                              configuration.vgrid_resources, 
+                              id_list, allow_empty)
 
 def vgrid_set_triggers(configuration, vgrid_name, id_list, allow_empty=True):
     """Set list of triggers for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 'triggers', id_list,
-                              allow_empty)
+    return vgrid_set_entities(configuration, vgrid_name, 
+                              configuration.vgrid_triggers, 
+                              id_list, allow_empty)
 
 def validated_vgrid_list(configuration, job_dict):
     """Grabs VGRID field value from job_dict if available and makes sure that
