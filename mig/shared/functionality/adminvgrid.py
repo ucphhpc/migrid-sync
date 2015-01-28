@@ -79,6 +79,7 @@ def vgrid_add_remove_table(client_id,
     
     if item_string == 'resource':
         id_field = 'unique_resource_name'
+        optional = True
     elif item_string == 'trigger':
         id_field = 'rule_id'
         optional = True

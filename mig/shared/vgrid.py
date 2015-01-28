@@ -329,7 +329,7 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
     elif group == 'triggers':
         name = configuration.vgrid_triggers
     else:
-        return (False, "vgrid_list: unknown 'group'")
+        return (False, "vgrid_list: unknown group: '%s'" % group)
     if recursive:
         vgrid_parts = vgrid_name.split('/')
     else:
@@ -496,11 +496,30 @@ def vgrid_access_match(configuration, job_owner, job, res_id, res):
 
 def vgrid_add_entities(configuration, vgrid_name, kind, id_list):
     """Append list of IDs to pickled list of kind for vgrid_name"""
-    entity_file = os.path.join(configuration.vgrid_home, vgrid_name, kind)
+
+    if kind == 'owners':
+        entity_filename = configuration.vgrid_owners
+    elif kind == 'members':
+        entity_filename = configuration.vgrid_members
+    elif kind == 'resources':
+        entity_filename = configuration.vgrid_resources
+    elif kind == 'triggers':
+        entity_filename = configuration.vgrid_triggers
+    else:
+        return (False, "vgrid_add_entities: unknown kind: '%s'" % kind)
+
+    entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name, 
+                                   entity_filename)
     try:
-        entities = load(entity_file)
+        if os.path.exists(entity_filepath):
+            entities = load(entity_filepath)
+        else:
+            entities = []
+            log_msg = "creating missing file: '%s'" % (entity_filepath)
+            configuration.logger.info(log_msg)
+
         entities += [i for i in id_list if not i in entities]
-        dump(entities, entity_file)
+        dump(entities, entity_filepath)
         mark_vgrid_modified(configuration, vgrid_name)
         return (True, '')
     except Exception, exc:
@@ -534,16 +553,29 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
     Use the dict_field if the entries are dictionaries and the id_list should
     be matched against dict_field in each of them. 
     """
-    entity_file = os.path.join(configuration.vgrid_home, vgrid_name, kind)
+
+    if kind == 'owners':
+        entity_filename = configuration.vgrid_owners
+    elif kind == 'members':
+        entity_filename = configuration.vgrid_members
+    elif kind == 'resources':
+        entity_filename = configuration.vgrid_resources
+    elif kind == 'triggers':
+        entity_filename = configuration.vgrid_triggers
+    else:
+        return (False, "vgrid_remov_entities: unknown kind: '%s'" % kind)
+    
+    entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name, 
+                                   entity_filename)
     try:
-        entities = load(entity_file)
+        entities = load(entity_filepath)
         if dict_field:
             entities = [i for i in entities if not i[dict_field] in id_list]
         else:
             entities = [i for i in entities if not i in id_list]
         if not entities and not allow_empty:
             raise ValueError("not allowed to remove last entry of %s" % kind)
-        dump(entities, entity_file)
+        dump(entities, entity_filepath)
         mark_vgrid_modified(configuration, vgrid_name)
         return (True, '')
     except Exception, exc:
@@ -576,12 +608,25 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     """Set kind list to provided id_list for given vgrid. The allow_empty
     argument cam be used to e.g. prevent empty owners lists.
     """
-    entity_file = os.path.join(configuration.vgrid_home, vgrid_name, kind)
+
+    if kind == 'owners':
+        entity_filename = configuration.vgrid_owners
+    elif kind == 'members':
+        entity_filename = configuration.vgrid_members
+    elif kind == 'resources':
+        entity_filename = configuration.vgrid_resources
+    elif kind == 'triggers':
+        entity_filename = configuration.vgrid_triggers
+    else:
+        return (False, "vgrid_set_entities: unknown kind: '%s'" % kind)
+
+    entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name, 
+                                   entity_filename)
 
     try:
         if not id_list and not allow_empty:
             raise ValueError("not allowed to set empty list of %s" % kind)
-        dump(id_list, entity_file)
+        dump(id_list, entity_filepath)
         mark_vgrid_modified(configuration, vgrid_name)
         return (True, '')
     except Exception, exc:
@@ -589,26 +634,22 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
 
 def vgrid_set_owners(configuration, vgrid_name, id_list, allow_empty=False):
     """Set list of owners for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 
-                              configuration.vgrid_owners, 
+    return vgrid_set_entities(configuration, vgrid_name, 'owners',
                               id_list, allow_empty)
 
 def vgrid_set_members(configuration, vgrid_name, id_list, allow_empty=True):
     """Set list of members for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 
-                              configuration.vgrid_members, 
+    return vgrid_set_entities(configuration, vgrid_name, 'members',
                               id_list, allow_empty)
 
 def vgrid_set_resources(configuration, vgrid_name, id_list, allow_empty=True):
     """Set list of resources for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 
-                              configuration.vgrid_resources, 
+    return vgrid_set_entities(configuration, vgrid_name, 'resources',
                               id_list, allow_empty)
 
 def vgrid_set_triggers(configuration, vgrid_name, id_list, allow_empty=True):
     """Set list of triggers for given vgrid"""
-    return vgrid_set_entities(configuration, vgrid_name, 
-                              configuration.vgrid_triggers, 
+    return vgrid_set_entities(configuration, vgrid_name, 'triggers',
                               id_list, allow_empty)
 
 def validated_vgrid_list(configuration, job_dict):
