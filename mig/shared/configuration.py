@@ -226,6 +226,7 @@ class Configuration:
     vgrid_members = 'members'
     vgrid_resources = 'resources'
     vgrid_triggers = 'triggers'
+    vgrid_monitor = 'monitor'
     resource_pending = ''
     user_pending = ''
     webserver_home = ''
@@ -680,6 +681,8 @@ class Configuration:
             self.vgrid_resources = config.get('GLOBAL', 'vgrid_resources')
         if config.has_option('GLOBAL', 'vgrid_triggers'):
             self.vgrid_triggers = config.get('GLOBAL', 'vgrid_triggers')
+        if config.has_option('GLOBAL', 'vgrid_monitor'):
+            self.vgrid_monitor = config.get('GLOBAL', 'vgrid_monitor')
 
         # vm_agent_port is just an alias for vm_proxy_port
 

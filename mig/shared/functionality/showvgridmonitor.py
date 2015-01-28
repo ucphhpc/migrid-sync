@@ -123,8 +123,8 @@ $(document).ready(function() {
                                    % vgrid_name})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        monitor_file = os.path.join(configuration.vgrid_home,
-                                    vgrid_name, 'monitor.html')
+        monitor_file = os.path.join(configuration.vgrid_home, vgrid_name, 
+                                    '%s.html' % configuration.vgrid_monitor)
         try:
             monitor_fd = open(monitor_file, 'r')
             past_header = False

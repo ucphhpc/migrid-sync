@@ -64,7 +64,7 @@ def create_monitor(vgrid_name):
     """Write monitor HTML file for vgrid_name"""
 
     html_file = os.path.join(configuration.vgrid_home, vgrid_name,
-                             'monitor.html')
+                             '%s.html' % configuration.vgrid_monitor)
 
     print 'collecting statistics for VGrid %s' % vgrid_name
     sleep_secs = configuration.sleep_secs
