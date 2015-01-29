@@ -145,7 +145,7 @@ You can sign up for an account with an associated x509 user certificate here.
 </p>
 <div class='form_container'>
 <form method='get' action='%(migcert_url)s'>
-<input id='reqcert_button' type='submit' value='Sign Up with a MiG User Certificate' />
+<input id='reqcert_button' type='submit' value='Sign Up for a User Certificate' />
 </form>
 </div>
 """
@@ -157,7 +157,7 @@ up with that instead of requesting a new one.
 </p>
 <div class='form_container'>
 <form method='get' action='%(extcert_url)s'>
-<input id='extcert_button' type='submit' value='Sign Up with External User Certificate' />
+<input id='extcert_button' type='submit' value='Sign Up with exsisting User Certificate' />
 </form>
 </div>
 """
