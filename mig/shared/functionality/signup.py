@@ -162,10 +162,6 @@ up with that instead of requesting a new one.
 </div>
 """
         html += """
-<p>
-When you click the Sign Up with User Certificate button you will be taken to a
-certificate web form where you need to provide your certificate details.
-</p>
 """
     var_map = {'kitoid_url': valid_show['kitoid']['url'],
                'migoid_url':valid_show['migoid']['url'],
