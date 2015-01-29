@@ -169,7 +169,7 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
         logger.debug("%s rule file: %s" % (state, src_path))
         rel_path = src_path.replace(os.path.join(configuration.vgrid_home, ""),
                                     '')
-        vgrid_name = rel_path.replace(os.sep + 'triggers', '')
+        vgrid_name = rel_path.replace(os.sep + configuration.vgrid_triggers, '')
         vgrid_prefix = os.path.join(configuration.vgrid_files_home,
                                     vgrid_name, '')
         logger.info("refresh %s rules from %s" % (vgrid_name, src_path))
@@ -420,7 +420,8 @@ unless it is available in mig/server/MiGserver.conf
     # Monitor rule configurations
 
     rule_monitor = Observer()
-    rule_patterns = [os.path.join(configuration.vgrid_home, "*", "triggers")]
+    rule_patterns = [os.path.join(configuration.vgrid_home, "*", 
+                                  configuration.vgrid_triggers)]
     rule_handler = MiGRuleEventHandler(patterns=rule_patterns,
                                        ignore_directories=False,
                                        case_sensitive=True)
