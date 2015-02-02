@@ -136,13 +136,13 @@ def copy_file_to_resource(
     if hostkey:
         options.append('-o UserKnownHostsFile=' + key_path)
 
-    command = 'scp %s %s %s@%s:%s >> /dev/null 2>> %s/last-scp.err' % (
+    command = 'scp %s %s %s@%s:%s >> /dev/null 2>> %s/scp.err' % (
         ' '.join(options),
         filename,
         user,
         host,
         os.path.join(resource_config['RESOURCEHOME'], dest_path),
-        os.environ['HOME'],
+        configuration.log_dir,
         )
 
     logger.debug(command)
