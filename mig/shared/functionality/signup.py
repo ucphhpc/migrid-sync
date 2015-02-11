@@ -157,7 +157,7 @@ up with that instead of requesting a new one.
 </p>
 <div class='form_container'>
 <form method='get' action='%(extcert_url)s'>
-<input id='extcert_button' type='submit' value='Sign Up with exsisting User Certificate' />
+<input id='extcert_button' type='submit' value='Sign Up with Existing User Certificate' />
 </form>
 </div>
 """
