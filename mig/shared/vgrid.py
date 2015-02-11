@@ -563,7 +563,7 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
     elif kind == 'triggers':
         entity_filename = configuration.vgrid_triggers
     else:
-        return (False, "vgrid_remov_entities: unknown kind: '%s'" % kind)
+        return (False, "vgrid_remove_entities: unknown kind: '%s'" % kind)
     
     entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name, 
                                    entity_filename)
