@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # httpsclient - Shared functions for all HTTPS clients
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -116,7 +116,7 @@ def extract_client_id(configuration, environ):
     distinguished_name = extract_client_cert(configuration, environ)
     if configuration.user_openid_providers and not distinguished_name:
         if environ["REQUEST_URI"].find('oidaccountaction.py') == -1 and \
-               environ["REQUEST_URI"].find('oiddiscover.py') == -1:
+               environ["REQUEST_URI"].find('autocreate.py') == -1:
             # Throw away any extra ID fields from environment
             pop_openid_query_fields(environ)
         distinguished_name = extract_client_openid(configuration, environ)

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # oiddiscover - discover valid openid relying party endpoints for this realm
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -93,7 +93,7 @@ def main(client_id, user_arguments_dict):
             'migoid_entry_url': os.path.join(sid_url),
             'migoid_signup_url': os.path.join(sid_url, 'cgi-sid', 'signup.py'),
             'migoid_create_url': os.path.join(sid_url, 'wsgi-bin',
-                                              'oiddiscover.py'),
+                                              'autocreate.py'),
             'migoid_dash_url': os.path.join(sid_url, 'wsgi-bin',
                                             'dashboard.py'),
             'migoid_files_url': os.path.join(sid_url, 'wsgi-bin',
@@ -101,7 +101,7 @@ def main(client_id, user_arguments_dict):
             'kitoid_entry_url': os.path.join(oid_url),
             'kitoid_signup_url': os.path.join(oid_url, 'cgi-sid', 'signup.py'),
             'kitoid_create_url': os.path.join(oid_url, 'cgi-sid',
-                                              'oiddiscover.py'),
+                                              'autocreate.py'),
             'kitoid_dash_url': os.path.join(oid_url, 'wsgi-bin',
                                             'dashboard.py'),
             'kitoid_files_url': os.path.join(oid_url, 'wsgi-bin',

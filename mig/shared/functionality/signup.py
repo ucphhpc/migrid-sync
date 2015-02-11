@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # signup - general sign up entry point backend
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,9 +37,9 @@ def get_valid_topics(configuration):
     """Get a map of valid show topics and their associated helper URLs"""
     valid_topics = {
         'kitoid': {'url': os.path.join(configuration.migserver_https_oid_url,
-                                       'wsgi-bin', 'oiddiscover.py')},
+                                       'wsgi-bin', 'autocreate.py')},
         'migoid': {'url': os.path.join(configuration.migserver_https_sid_url,
-                                       'wsgi-bin', 'oiddiscover.py')},
+                                       'wsgi-bin', 'autocreate.py')},
         'migcert': {'url': os.path.join(configuration.migserver_https_sid_url,
                                         'cgi-sid', 'reqcert.py')},
         'extcert': {'url': os.path.join(configuration.migserver_https_cert_url,
