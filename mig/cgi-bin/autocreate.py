@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# autocreate - front end for user auto create 
+# autocreate - front end for autocreate user
 # Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Front end to handle user auto create requests"""
+"""Front end to handle input from autocreate user"""
 
 import cgi
 import cgitb
