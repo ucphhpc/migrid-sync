@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createfreeze - back end for freezing archives
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -141,7 +141,7 @@ def main(client_id, user_arguments_dict):
              : 'Only accepting POST requests to prevent unintended use'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    flavor = accepted['flavor'][-1]
+    flavor = accepted['flavor'][-1].strip()
 
     if not flavor in freeze_flavors.keys():
         output_objects.append({'object_type': 'error_text', 'text':

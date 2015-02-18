@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createre - [insert a few words of module description on this line]
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -81,11 +81,11 @@ def main(client_id, user_arguments_dict):
              : 'Only accepting POST requests to prevent unintended updates'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    re_name = accepted['re_name'][-1].strip().upper()
+    re_name = accepted['re_name'][-1].strip().upper().strip()
     redescription = accepted['redescription'][-1].strip()
     testprocedure = accepted['testprocedure'][-1].strip()
-    software = accepted['software']
-    environment = accepted['environment']
+    software = accepted['software'].strip()
+    environment = accepted['environment'].strip()
     verifystdout = accepted['verifystdout'][-1].strip()
     verifystderr = accepted['verifystderr'][-1].strip()
     verifystatus = accepted['verifystatus'][-1].strip()

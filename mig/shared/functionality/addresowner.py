@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addresowner - add resource owner
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -75,8 +75,8 @@ def main(client_id, user_arguments_dict):
              : 'Only accepting POST requests to prevent unintended updates'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    unique_resource_name = accepted['unique_resource_name'][-1]
-    cert_id = accepted['cert_id'][-1]
+    unique_resource_name = accepted['unique_resource_name'][-1].strip()
+    cert_id = accepted['cert_id'][-1].strip()
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):

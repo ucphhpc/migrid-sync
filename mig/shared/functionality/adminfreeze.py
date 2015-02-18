@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -57,7 +57,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    flavor = accepted['flavor'][-1]
+    flavor = accepted['flavor'][-1].strip()
 
     if not flavor in freeze_flavors.keys():
         output_objects.append({'object_type': 'error_text', 'text':

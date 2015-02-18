@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminre - set up a runtime environment
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -68,7 +68,7 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-    re_template = accepted['re_template'][-1].upper()
+    re_template = accepted['re_template'][-1].upper().strip()
     software_entries = int(accepted['software_entries'][-1])
     environment_entries = int(accepted['environment_entries'][-1])
     testprocedure_entry = int(accepted['testprocedure_entry'][-1])

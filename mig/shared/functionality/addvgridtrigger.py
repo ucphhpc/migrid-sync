@@ -85,13 +85,13 @@ def main(client_id, user_arguments_dict):
     # strip leftmost slashes from all fields used in filenames to avoid
     # interference with os.path.join
     # merge multi args into one string and split again to get flat array
-    rule_id = accepted['rule_id'][-1]
-    vgrid_name = accepted['vgrid_name'][-1].lstrip(os.sep)
-    path = accepted['path'][-1].lstrip(os.sep)
+    rule_id = accepted['rule_id'][-1].strip()
+    vgrid_name = accepted['vgrid_name'][-1].lstrip(os.sep).strip()
+    path = accepted['path'][-1].lstrip(os.sep).strip()
     changes = [i.strip() for i in ' '.join(accepted['changes']).split()]
-    action = accepted['action'][-1]
+    action = accepted['action'][-1].strip()
     arguments = [i.strip() for i in ' '.join(accepted['arguments']).split()]
-    rate_limit = accepted['rate_limit'][-1]
+    rate_limit = accepted['rate_limit'][-1].strip()
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vmachines - virtual machine management
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -82,18 +82,18 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    machine_name = accepted['machine_name'][-1]
+    machine_name = accepted['machine_name'][-1].strip()
     memory = int(accepted['memory'][-1])
     disk = int(accepted['disk'][-1])
-    vgrid = accepted['vgrid']
-    architecture = accepted['architecture'][-1]
+    vgrid = accepted['vgrid'].strip()
+    architecture = accepted['architecture'][-1].strip()
     cpu_count = int(accepted['cpu_count'][-1])
     cpu_time = int(accepted['cpu_time'][-1])
-    os = accepted['os'][-1]
-    flavor = accepted['flavor'][-1]
-    hypervisor_re = accepted['hypervisor_re'][-1]
-    sys_re = accepted['sys_re'][-1]
-    action = accepted['action'][-1]
+    os = accepted['os'][-1].strip()
+    flavor = accepted['flavor'][-1].strip()
+    hypervisor_re = accepted['hypervisor_re'][-1].strip()
+    sys_re = accepted['sys_re'][-1].strip()
+    action = accepted['action'][-1].strip()
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Virtual Machines'

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createvgrid - create a vgrid with all the collaboration components
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -624,7 +624,7 @@ def main(client_id, user_arguments_dict):
              : 'Only accepting POST requests to prevent unintended updates'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    vgrid_name = accepted['vgrid_name'][-1]
+    vgrid_name = accepted['vgrid_name'][-1].strip()
 
     # No owner check here so we need to specifically check for illegal
     # directory access

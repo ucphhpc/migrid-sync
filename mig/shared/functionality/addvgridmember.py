@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridmember - add vgrid member
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -72,8 +72,8 @@ def main(client_id, user_arguments_dict):
              : 'Only accepting POST requests to prevent unintended updates'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    vgrid_name = accepted['vgrid_name'][-1]
-    cert_id = accepted['cert_id'][-1]
+    vgrid_name = accepted['vgrid_name'][-1].strip()
+    cert_id = accepted['cert_id'][-1].strip()
     cert_dir = client_id_dir(cert_id)
 
     # Validity of user and vgrid names is checked in this init function so
