@@ -402,8 +402,12 @@ Submit file as job after saving <input type=checkbox name="submitjob" />
 <input type="submit" value="Save" />
 ----------
 <input type="reset" value="Forget changes" />
+'''
+        
+    html += '''
 </form>
 '''
+    
     if 'discard' in includes:
         html += '''
 <form id="discard_form" method="post" action="rm.py">
