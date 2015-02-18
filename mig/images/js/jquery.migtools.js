@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jquery.migtools - jquery based helpers for e.g. portals
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1141,3 +1141,18 @@ function do_sweep_dialog(name, arch) {
 
     $( "#sweep_dialog").dialog("open");
 }
+
+/* Language selector to trigger dynamic change of language on pages */
+
+function switch_language(lang) {
+    /* Hide all before showing only selected - use the built-in lang selector 
+       to match all accented versions like 'en' -> 'en', 'en-US', 'en-GB'
+    */
+    /* TODO: optimize this and use list of lang values */
+    
+    $("div:lang(en)").hide();
+    $("div:lang(da)").hide();
+
+    $("div:lang("+lang+")").show();
+}
+    
