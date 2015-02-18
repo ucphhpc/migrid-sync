@@ -285,6 +285,8 @@ def refresh_vgrid_map(configuration):
             conf_path = os.path.join(configuration.vgrid_home, vgrid, name)
             if not os.path.isfile(conf_path):
                 configuration.logger.warning('missing file: %s' % (conf_path)) 
+                # Make sure vgrid dict exists before filling it
+                vgrid_map[VGRIDS][vgrid] = vgrid_map[VGRIDS].get(vgrid, {})
                 vgrid_map[VGRIDS][vgrid][field] = []
                 dirty[VGRIDS] = dirty.get(VGRIDS, []) + [vgrid]
 
