@@ -216,7 +216,8 @@ function add_copy(div_id) {
 
     $("#"+div_id).append(copy_entry);
     $("#"+field_id).click(function() {
-        open_file_chooser("Add file(s)", function(file) {
+        open_file_chooser("Add file or directory (right click to select)",
+            function(file) {
                 $("#"+field_id).val(file);
             });
     });

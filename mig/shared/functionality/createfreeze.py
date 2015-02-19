@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Creation of frozen archives fo write-once files"""
+"""Creation of frozen archives for write-once files"""
 
 import os
 
@@ -57,7 +57,9 @@ def signature():
     return ['text', defaults]
 
 def _parse_form_xfer(xfer, user_args, client_id, configuration):
-    """Parse xfer (i.e. copy or move) file/dir entries from user_args"""
+    """Parse xfer request (i.e. copy, move or upload) file/dir entries from
+    user_args.
+    """
     files, rejected = [], []
     i = 0
     client_dir = client_id_dir(client_id)
@@ -67,8 +69,8 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
     for i in xrange(max_freeze_files):
         if user_args.has_key(xfer_pattern % i):
             source_path = user_args[xfer_pattern % i][-1].strip()
-            configuration.logger.info('found %s entry: %s' % (xfer,
-                                                              source_path))
+            configuration.logger.debug('found %s entry: %s' % (xfer,
+                                                               source_path))
             if not source_path:
                 continue
             try:
@@ -83,7 +85,16 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                 rejected.append('invalid path: %s (%s)' % \
                                 (source_path, 'illegal path!'))
                 continue
-            files.append((real_path, source_path))
+            # expand any dirs recursively
+            if os.path.isdir(real_path):
+                for (root, dirnames, filenames) in os.walk(real_path):
+                    for subname in filenames:
+                        real_sub = os.path.join(root, subname)
+                        sub_base = root.replace(real_path, source_path)
+                        sub_path = os.path.join(sub_base, subname)
+                        files.append((real_sub, sub_path))
+            else:
+                files.append((real_path, source_path))
     return (files, rejected)
 
 def parse_form_copy(user_args, client_id, configuration):
