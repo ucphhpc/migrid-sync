@@ -752,6 +752,11 @@ sftp %(sftp_server)s
 <pre>
 sshfs %(sftp_server)s: mig-home -o uid=$(id -u) -o gid=$(id -g)
 </pre>
+You can also integrate with ordinary mounts by adding a line like:
+<pre>
+sshfs#%(username)s@%(sftp_server)s: /home/USER/mig-home fuse noauto,user,port=%(sftp_port)d 0 0
+</pre>
+to your /etc/fstab .
 </div>
 <div class="div-sftp-client-notes">
 <a href="javascript:toggleHidden('.div-sftp-client-notes');"
