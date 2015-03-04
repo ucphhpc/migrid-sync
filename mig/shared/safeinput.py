@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -833,7 +833,7 @@ def guess_type(name):
         for key in ('job_id', 'req_id', 'resource', 'search', 'name', ):
             __type_map[key] = valid_job_id_pattern
         for key in ('action', 're_name', 're_template', 'lang', 'machine_name',
-                    'freeze_id', ):
+                    'freeze_id', 'rule_id', ):
             __type_map[key] = valid_job_id
         for key in ('flags', 'country', 'state', 'desktopname', 'menu',
                     'group_in_time', 'display', ):

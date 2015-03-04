@@ -85,7 +85,7 @@ def main(client_id, user_arguments_dict):
     machine_name = accepted['machine_name'][-1].strip()
     memory = int(accepted['memory'][-1])
     disk = int(accepted['disk'][-1])
-    vgrid = accepted['vgrid'].strip()
+    vgrid = [name.strip() for name in accepted['vgrid']]
     architecture = accepted['architecture'][-1].strip()
     cpu_count = int(accepted['cpu_count'][-1])
     cpu_time = int(accepted['cpu_time'][-1])
