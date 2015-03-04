@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # handlers - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -82,7 +82,7 @@ def get_allowed_path(configuration, client_id, path):
              + path_slash_stripped[:path_slash_stripped.rfind('/')]
         target_file = path_slash_stripped[path_slash_stripped.rfind('/')
              + 1:]
-    elif is_user(client_id, configuration):
+    elif is_user(client_id, configuration.mig_server_home):
         real_path = \
             os.path.normpath(os.path.join(configuration.user_home,
                              client_dir, path))

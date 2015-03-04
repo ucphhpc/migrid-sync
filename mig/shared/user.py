@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # user - helper functions for user related tasks
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,6 @@ except ImportError:
     from md5 import new as hash_algo
 
 from shared.base import client_dir_id, client_id_dir
-from shared.findtype import is_user
 from shared.settings import load_settings, load_profile
 
 def anon_user_id(user_id):

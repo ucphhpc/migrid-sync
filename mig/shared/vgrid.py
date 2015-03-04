@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgrid - helper functions related to VGrid actions
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -248,7 +248,7 @@ def init_vgrid_script_add_rem(
         return (False, msg, None)
 
     if subject_type == 'member' or subject_type == 'owner':
-        if not is_user(subject, configuration):
+        if not is_user(subject, configuration.mig_server_home):
             msg += '%s is not a valid %s user!' % \
                     (subject, configuration.short_title)
             return (False, msg, None)

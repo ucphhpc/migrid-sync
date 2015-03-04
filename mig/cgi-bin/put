@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# put - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# put - HTTP PUT handler
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -325,7 +325,7 @@ if not client_id:
         notifier.join(900)
         o.reply_and_exit(out_status)
 
-elif is_user(client_id, configuration.user_home):
+elif is_user(client_id, configuration.mig_server_home):
 
     # logger.info("Certificate found as a user cert: " + client_id)
 

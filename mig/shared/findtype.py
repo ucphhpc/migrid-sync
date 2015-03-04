@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # findtype - Detect client entity type
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,12 +40,12 @@ VALID_FQDN_CHARACTERS = letters + digits + '.-'
 MIG_SERVER_ID = 'MiG-Server'
 
 
-def is_user(entity_id, configuration):
+def is_user(entity_id, mig_server_home):
     """Check if user exits in database""" 
 
     result = False
 
-    db_path = os.path.join(configuration.mig_server_home, user_db_filename)
+    db_path = os.path.join(mig_server_home, user_db_filename)
     try:   
         user_db = load(db_path)
         if user_db.has_key(entity_id):

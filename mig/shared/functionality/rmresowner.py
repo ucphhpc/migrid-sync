@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmresowner - remove resource owner
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -85,7 +85,7 @@ def main(client_id, user_arguments_dict):
     # is_owner incorporates unique_resource_name verification - no need to
     # specifically check for illegal directory traversal
 
-    if not is_user(cert_id, configuration):
+    if not is_user(cert_id, configuration.mig_server_home):
         output_objects.append({'object_type': 'error_text', 'text'
                               : '%s is not a valid %s user!' % \
                                 (cert_id, configuration.short_title) })
