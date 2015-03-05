@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extcertaction - handle external certificate sign up and send email to admins
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,7 +40,7 @@ from shared.init import initialize_main_variables
 from shared.notification import send_email
 from shared.serial import dumps
 from shared.useradm import distinguished_name_to_user, \
-     create_user, fill_user
+     fill_distinguished_name, create_user, fill_user
 
 
 def signature():
@@ -160,7 +160,14 @@ multiple "key=val" fields separated by "/".
         'password': '',
         'comment': '%s: %s' % ('Existing certificate', comment),
         'expire': int(time.time() + cert_valid_days * 24 * 60 * 60),
+        'openid_names': [],
         }
+    fill_distinguished_name(user_dict)
+    user_id = user_dict['distinguished_name']
+    if configuration.user_openid_providers and configuration.user_openid_alias:
+        user_dict['openid_names'] += \
+                                  [user_dict[configuration.user_openid_alias]]
+    logger.info('got extcert request: %s' % user_dict)
 
     # If server allows automatic addition of users with a CA validated cert
     # we create the user immediately and skip mail

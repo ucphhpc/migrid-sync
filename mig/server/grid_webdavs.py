@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_webdavs - secure WebDAV server providing access to MiG user homes
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -64,7 +64,7 @@ from shared.useradm import check_password_hash, generate_password_hash, \
 
 configuration, logger = None, None
 
-# TODO: can we enforce enforce connection reuse?
+# TODO: can we enforce connection reuse?
 #       dav clients currently hammer the login functions for every operation
 
 def _user_chroot_path(environ):

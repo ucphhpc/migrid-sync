@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # griddaemons - grid daemon helper functions
-# Copyright (C) 2010-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -351,6 +351,8 @@ def refresh_user_creds(configuration, protocol, username):
                                                      username,
                                                      proto_authdigests))
 
+    logger.info("updating creds for %s" % username)
+
     changed_paths = get_creds_changes(conf, username, authkeys_path,
                                       authpasswords_path, authdigests_path)
     if not changed_paths:
@@ -368,6 +370,10 @@ def refresh_user_creds(configuration, protocol, username):
     for (auth_file, path) in matches:
         if path not in changed_paths:
             logger.debug("Skipping %s without changes" % path)
+            continue
+        # Missing alias symlink - should be fixed for user instead
+        if not os.path.exists(path):
+            logger.warning("Skipping non-existant home %s" % path)
             continue
         logger.debug("Checking %s" % path)
         user_home = path.replace(os.sep + auth_file, '')
