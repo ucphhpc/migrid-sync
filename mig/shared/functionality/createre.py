@@ -84,8 +84,8 @@ def main(client_id, user_arguments_dict):
     re_name = accepted['re_name'][-1].strip().upper().strip()
     redescription = accepted['redescription'][-1].strip()
     testprocedure = accepted['testprocedure'][-1].strip()
-    software = accepted['software'].strip()
-    environment = accepted['environment'].strip()
+    software = [i.strip() for i in accepted['software']]
+    environment = [i.strip() for i in accepted['environment']]
     verifystdout = accepted['verifystdout'][-1].strip()
     verifystderr = accepted['verifystderr'][-1].strip()
     verifystatus = accepted['verifystatus'][-1].strip()
