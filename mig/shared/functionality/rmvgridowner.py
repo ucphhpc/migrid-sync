@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridowner - remove a vgrid owner
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,7 +37,7 @@ from shared.fileio import remove_rec
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.html import html_post_helper
-from shared.init import initialize_main_variables
+from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import force
 from shared.useradm import distinguished_name_to_user
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
@@ -59,8 +59,8 @@ def rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
     if not os.path.isdir(cgi_tracker_var):
         output_objects.append(
             {'object_type': 'text', 'text'
-             : 'No tracker (%s) for vgrid %s - skipping tracker admin rights' \
-             % (tracker_dir, vgrid_name)
+             : 'No tracker (%s) for %s %s - skipping tracker admin rights' \
+             % (tracker_dir, configuration.site_vgrid_label, vgrid_name)
              })
         return (output_objects, returnvalues.SYSTEM_ERROR)
     try:
@@ -155,7 +155,7 @@ def abandon_vgrid_files(vgrid, configuration):
     and the soft link (if it is a link, not a directory)
             configuration.wwwpublic/vgrid/<vgrid>
 
-    vgrid: The name of the Vgrid to delete
+    vgrid: The name of the VGrid to delete
     configuration: to determine the location of the directories 
 
 
@@ -164,7 +164,8 @@ def abandon_vgrid_files(vgrid, configuration):
     Returns: Success indicator and potential messages.
     """
 
-    configuration.logger.debug('Deleting all files for VGrid %s' % vgrid)
+    configuration.logger.debug('Deleting all files for %s %s' % \
+                               (configuration.site_vgrid_label, vgrid))
     success = True
     msg = ""
 
@@ -174,8 +175,8 @@ def abandon_vgrid_files(vgrid, configuration):
         os.remove(os.path.join(configuration.wwwpublic, 'vgrid', vgrid))
     except Exception, err:
         configuration.logger.debug(
-            'not removing soft link to public VGrid pages for %s: %s' % \
-            (vgrid, err))
+            'not removing soft link to public %s pages for %s: %s' % \
+            (configuration.site_vgrid_label, vgrid, err))
 
     for prefix in [configuration.vgrid_public_base, 
                    configuration.vgrid_private_base, 
@@ -204,7 +205,8 @@ def remove_vgrid_entry(vgrid, configuration):
     Returns: Success indicator and potential messages.
     """
 
-    configuration.logger.debug('Removing entry for VGrid %s' % vgrid)
+    configuration.logger.debug('Removing entry for %s %s' % \
+                               (configuration.site_vgrid_label, vgrid))
 
     msg = ''
     success = remove_rec(os.path.join(configuration.vgrid_home, vgrid),
@@ -240,8 +242,6 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Remove VGrid Owner'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -266,6 +266,12 @@ def main(client_id, user_arguments_dict):
     # inherited vgrid membership
     inherit_vgrid_member = False
 
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'Remove %s' % configuration.site_vgrid_label
+    output_objects.append({'object_type': 'header', 'text'
+                          : 'Remove %s Owner' % \
+                           configuration.site_vgrid_label})
+
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
 
@@ -281,8 +287,9 @@ def main(client_id, user_arguments_dict):
 
     if not vgrid_is_owner(vgrid_name, cert_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is not an owner of %s or a parent vgrid.'
-                               % (cert_id, vgrid_name)})
+                              : '%s is not an owner of %s or a parent %s.'
+                               % (cert_id, vgrid_name,
+                                  configuration.site_vgrid_label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # we need the local owners file to detect inherited ownerships
@@ -317,8 +324,9 @@ def main(client_id, user_arguments_dict):
                          '\n Owners: %s,\n Direct owners: %s.' 
                          % (owners, owners_direct))
             output_objects.append({'object_type': 'error_text', 'text'
-                                   : '''%s is owner of a parent vgrid. 
-Owner removal has to be performed at the topmost vgrid''' % cert_id})
+                                   : '''%s is owner of a parent %s. 
+Owner removal has to be performed at the topmost vgrid''' % \
+                                   (cert_id, configuration.site_vgrid_label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         else:
@@ -361,9 +369,10 @@ Owner removal has to be performed at the topmost vgrid''' % cert_id})
                         break
                 output_objects.append(
                     {'object_type': 'text', 'text'
-                     : '''NOTE: %s is still a member of parent vgrid %s.
-                     Preserving access to corresponding vgrid.''' % \
-                     (cert_id, inherit_vgrid_member)
+                     : '''NOTE: %s is still a member of parent %s %s.
+                     Preserving access to corresponding %s.''' % \
+                     (cert_id, configuration.site_vgrid_label,
+                      inherit_vgrid_member, configuration.site_vgrid_label)
                      })
             else:
                 (success, msg) = unlink_share(user_dir, vgrid_name)
@@ -414,9 +423,9 @@ Owner removal has to be performed at the topmost vgrid''' % cert_id})
 
         if not force(flags):
             output_objects.append({'object_type': 'text', 'text' : '''
-No more direct owners of %s - leaving will result in the vgrid getting
+No more direct owners of %s - leaving will result in the %s getting
 deleted. Please use either of the links below to confirm or cancel.
-''' % vgrid_name})
+''' % (vgrid_name, configuration.site_vgrid_label)})
             js_name = 'rmvgridowner%s' % hexlify(vgrid_name)
             helper = html_post_helper(js_name, 'rmvgridowner.py',
                                       {'vgrid_name': vgrid_name,
@@ -438,8 +447,8 @@ deleted. Please use either of the links below to confirm or cancel.
         (status, subs) = vgrid_list_subvgrids(vgrid_name, configuration)
 
         if not status:
-            logger.error('Error loading sub-vgrids for %s: %s)'
-                         % (vgrid_name, subs))
+            logger.error('Error loading sub-%ss for %s: %s)'
+                         % (configuration.site_vgrid_label, vgrid_name, subs))
             output_objects.append({'object_type': 'error_text', 'text' : '''
 An internal error occurred, error conditions have been logged.'''})
             output_objects.append({'object_type': 'text', 'text' : '''
@@ -449,8 +458,8 @@ via mail about what you wanted to do when the error happened.'''})
 
         if len(subs) > 0:
 
-            logger.debug('Cannot delete: still has sub-vgrids %s.'
-                         % subs)
+            logger.debug('Cannot delete: still has sub-%ss %s.'
+                         % (configuration.site_vgrid_label, subs))
             output_objects.append({'object_type': 'error_text', 'text' : \
     '%s has sub-structures and cannot be deleted.' % vgrid_name})
             output_objects.append({'object_type': 'text', 'text' : '''
@@ -471,7 +480,9 @@ To leave (and delete) %s, first remove its sub-structures: %s.'''
             logger.warning('failed to load %s members or resources: %s %s'
                            % (vgrid_name, members_direct, resources_direct))
             output_objects.append({'object_type': 'error_text', 'text' : \
-    'could not load vgrid members or resources for %s.' % vgrid_name})
+    'could not load %s members or resources for %s.' % \
+                                   (configuration.site_vgrid_label,
+                                    vgrid_name)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
         if len(resources_direct) > 0:
             logger.debug('Cannot delete: still has direct resources %s.'
@@ -504,8 +515,8 @@ To leave (and delete) %s, first remove all members.'''
 
             # owner owns this vgrid, direct ownership
 
-            logger.debug('%s looks like a top-level vgrid.'
-                         % vgrid_name)
+            logger.debug('%s looks like a top-level %s.' % \
+                         (configuration.site_vgrid_label, vgrid_name))
             logger.debug('Deleting all related files.')
 
             user_dir = os.path.abspath(os.path.join(configuration.user_home,
@@ -517,8 +528,8 @@ To leave (and delete) %s, first remove all members.'''
 
             # owner owns an upper vgrid, ownership is inherited
 
-            logger.debug('%s looks like a sub-vgrid, ownership inherited.'
-                         % vgrid_name)
+            logger.debug('%s looks like a sub-%s, ownership inherited.'
+                         % (vgrid_name, configuration.site_vgrid_label))
             logger.debug('Only removing entry, leaving files in place.')
             share_lnk = True
             web_lnk = True

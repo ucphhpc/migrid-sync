@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridforum - Access VGrid private forum for owners and members
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -107,8 +107,8 @@ def main(client_id, user_arguments_dict):
     if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                     configuration):
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''You must be an owner or member of %s vgrid to
-access the forum.''' % vgrid_name})
+                               '''You must be an owner or member of %s %s to
+access the forum.''' % (vgrid_name, configuration.site_vgrid_label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not action in valid_actions:
@@ -132,7 +132,7 @@ access the forum.''' % vgrid_name})
     forum_base = os.path.abspath(os.path.join(base_dir, '.vgridforum'))
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'VGrid Forum'
+    title_entry['text'] = '%s Forum' % configuration.site_vgrid_label
     title_entry['javascript'] = '''
 <link rel="stylesheet" href="/images/css/forum.css" type="text/css" />
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
@@ -210,7 +210,8 @@ $(document).ready(function() {
 '''                       })
                           
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'VGrid Forum for %s' % vgrid_name})
+                          : '%s Forum for %s' % \
+                           (configuration.site_vgrid_label, vgrid_name)})
 
     try:
         os.makedirs(forum_base)
@@ -275,8 +276,8 @@ $(document).ready(function() {
 
     if post_error:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error handling VGrid forum operation: %s'
-                               % post_error})
+                              : 'Error handling %s forum operation: %s'
+                               % (configuration.site_vgrid_label, post_error)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if thread:

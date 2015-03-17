@@ -64,7 +64,7 @@ def main(client_id, user_arguments_dict):
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Add VGrid Trigger'})
+                          : 'Add %s Trigger' % configuration.site_vgrid_label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -135,8 +135,8 @@ def main(client_id, user_arguments_dict):
 
     if vgrid_is_trigger(vgrid_name, rule_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is already a trigger in the vgrid'
-                               % rule_id})
+                              : '%s is already a trigger in the %s'
+                               % (rule_id, configuration.site_vgrid_label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't add if already in subvgrid
@@ -145,15 +145,17 @@ def main(client_id, user_arguments_dict):
             configuration)
     if not status:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error getting list of subvgrids: %s'
-                               % subvgrids})
+                              : 'Error getting list of sub%ss: %s'
+                               % (configuration.site_vgrid_label, subvgrids)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
     for subvgrid in subvgrids:
         if vgrid_is_trigger(subvgrid, rule_id, configuration):
             output_objects.append({'object_type': 'error_text', 'text'
-                                  : '''%s is already in a sub-vgrid (%s).
-Remove the trigger from the subvgrid and try again''' % \
-                                   (rule_id, subvgrid)})
+                                  : '''%(rule_id)s is already in a
+sub-%(_label)s (%(subvgrid)s).
+Remove the trigger from the sub-%(_label)s and try again''' % \
+                                   {'rule_id': rule_id, 'subvgrid': subvgrid,
+                                    '_label': configuration.site_vgrid_label}})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not action in valid_trigger_actions:
@@ -212,8 +214,9 @@ Remove the trigger from the subvgrid and try again''' % \
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : 'New trigger %s successfully added to %s vgrid!'
-                           % (rule_id, vgrid_name)})
+                          : 'New trigger %s successfully added to %s %s!'
+                           % (rule_id, vgrid_name,
+                              configuration.site_vgrid_label)})
     output_objects.append({'object_type': 'link', 'destination':
                            'vgridworkflows.py?vgrid_name=%s' % vgrid_name,
                            'text': 'Back to workflows for %s' % vgrid_name})

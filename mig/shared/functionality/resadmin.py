@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resadmin - Administrate a MiG Resource
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -297,17 +297,17 @@ from the certificate.<br />
 
     # create html to request vgrid resource access
 
-    html += '<h3>VGrid access</h3>'
+    html += '<h3>%s access</h3>' % configuration.site_vgrid_label
 
     html += \
-        """Request resource access to additional VGrids.
+        """Request resource access to additional %ss.
     <table class=resources>
     <tr><td>
     <form method="post" action="sendrequestaction.py">
     <input type="hidden" name="unique_resource_name" value="%s" />
     <input type="hidden" name="request_type" value="vgridresource" />
     <select name="vgrid_name">"""\
-         % resourcename
+         % (configuration.site_vgrid_label, resourcename)
 
     # list all vgrids without access
 

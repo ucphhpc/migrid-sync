@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # html - html helper functions
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -148,6 +148,14 @@ def render_menu(configuration, menu_class='navmenu',
         if not spec:
             menu_lines += '   <!-- No such menu item: "%s" !!! -->\n' % name
             continue
+        # Override VGrids label now we have configuration
+        if name == 'vgrids':
+            title = spec['title'].replace('VGrid',
+                                          configuration.site_vgrid_label)
+            hover = spec['hover'].replace('VGrid',
+                                          configuration.site_vgrid_label)
+            spec['title'] = title
+            spec['hover'] = hover
         selected = ''
         if spec['url'].find(current_element) > -1:
             selected = ' class="selected" '

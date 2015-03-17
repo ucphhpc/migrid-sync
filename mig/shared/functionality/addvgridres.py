@@ -52,7 +52,8 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Add VGrid Resource'})
+                          : 'Add %s Resource' % \
+                           configuration.site_vgrid_label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -95,8 +96,9 @@ def main(client_id, user_arguments_dict):
     if vgrid_is_resource(vgrid_name, unique_resource_name,
                          configuration):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is already a resource in the vgrid'
-                               % unique_resource_name})
+                              : '%s is already a resource in the %s'
+                               % (unique_resource_name,
+                                  configuration.site_vgrid_label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't add if already in subvgrid
@@ -105,16 +107,19 @@ def main(client_id, user_arguments_dict):
             configuration)
     if not status:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error getting list of subvgrids: %s'
-                               % subvgrids})
+                              : 'Error getting list of sub%ss: %s'
+                               % (configuration.site_vgrid_label, subvgrids)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
     for subvgrid in subvgrids:
         if vgrid_is_resource(subvgrid, unique_resource_name,
                              configuration):
             output_objects.append({'object_type': 'error_text', 'text':
-                                   '''%s is already in a sub-vgrid (%s).
-Remove the resource from the subvgrid and try again''' % (unique_resource_name,
-                                                          subvgrid)})
+                                   '''%(res_name)s is already in a
+sub-%(_label)s (%(subvgrid)s).
+Remove the resource from the sub-%(_label)s and try again''' % \
+                                   {'res_name': unique_resource_name,
+                                    'subvgrid': subvgrid,
+                                    '_label': configuration.site_vgrid_label}})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     base_dir = os.path.abspath(configuration.vgrid_home + os.sep
@@ -131,8 +136,9 @@ Remove the resource from the subvgrid and try again''' % (unique_resource_name,
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : 'New resource %s successfully added to %s vgrid!'
-                           % (unique_resource_name, vgrid_name)})
+                          : 'New resource %s successfully added to %s %s!'
+                           % (unique_resource_name, vgrid_name,
+                              configuration.site_vgrid_label)})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

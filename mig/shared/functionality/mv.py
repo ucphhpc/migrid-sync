@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# mv - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# mv - backend to move files/directories in user home
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -149,7 +149,8 @@ def main(client_id, user_arguments_dict):
             if os.path.islink(real_path):
                 output_objects.append(
                     {'object_type': 'warning', 'text'
-                     : "You're not allowed to move entire VGrid dirs!"})
+                     : "You're not allowed to move entire %s shared dirs!"
+                     % configuration.site_vgrid_label})
                 status = returnvalues.CLIENT_ERROR
                 continue
             

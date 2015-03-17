@@ -98,7 +98,7 @@ access the workflows.''' % vgrid_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'VGrid Workflows'
+    title_entry['text'] = '%s Workflows' % configuration.site_vgrid_label
     title_entry['javascript'] = '''
 <link rel="stylesheet" href="/images/css/forum.css" type="text/css" />
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
@@ -150,7 +150,8 @@ $(document).ready(function() {
 '''                       })
                           
     output_objects.append({'object_type': 'header', 'text'
-                          : 'VGrid Workflows for %s' % vgrid_name})
+                          : '%s Workflows for %s' % \
+                           (configuration.site_vgrid_label, vgrid_name)})
 
     logger.info("vgridworkflows %s" % vgrid_name)
 

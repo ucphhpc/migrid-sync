@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - back end for the settings page
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -608,6 +608,11 @@ so you may have to avoid blank lines in your text below.
 
         profile_entries = get_profile_specs()
         for (keyword, val) in profile_entries:
+            # Mask VGrid name if configured
+            mask_title = keyword.replace(
+                'VGRID', configuration.site_vgrid_label.upper())
+            mask_desc = val['Description'].replace(
+                'VGrid', configuration.site_vgrid_label)
             html += \
                 """
             <tr class=title><td>
@@ -617,8 +622,8 @@ so you may have to avoid blank lines in your text below.
             %s
             </td></tr>
             <tr><td>
-            """ % (keyword.replace('_', ' ').title(),
-                   html_escape(val['Description']))
+            """ % (mask_title.replace('_', ' ').title(),
+                   html_escape(mask_desc))
             if val['Type'] == 'multiplestrings':
                 try:
 

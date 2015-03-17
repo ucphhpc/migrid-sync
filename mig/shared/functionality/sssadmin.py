@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sssadmin - SSS sandbox generator and monitor for individual users
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -129,7 +129,7 @@ unsure, choose screensaver</td>
 """
     return html
 
-def print_expert_settings(display):
+def print_expert_settings(configuration, display):
     """Prints html section where a user chooses whether he wants
     the advanced settings like image format and vgrid"""
     if display:
@@ -142,13 +142,14 @@ def print_expert_settings(display):
         </select></td>
     </tr>
     <tr>
-        <td>Which VGrid do you want the sandbox to work for?
+        <td>Which %(_label)s do you want the sandbox to work for?
         </td>
         <td><select name='vgrid'>
         <option value='%(default_vgrid)s'>%(default_vgrid)s</option>
         </select></td>
     </tr>
-""" % {'default_vgrid': default_vgrid}
+""" % {'default_vgrid': default_vgrid,
+       '_label': configuration.site_vgrid_label}
     else:
         html = """
     <tr>
@@ -197,7 +198,7 @@ def show_download(configuration, userdb, user, passwd, expert):
     html += print_net_selection()
     html += print_os_selection()
     html += print_windows_solution_selection()
-    html += print_expert_settings(expert)
+    html += print_expert_settings(configuration, expert)
 
     html += """
         <tr>

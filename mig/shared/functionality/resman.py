@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resman - manage resources
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -256,8 +256,9 @@ All available resources are listed below with overall hardware specifications. A
                           : 'Resource Status'})
     output_objects.append({'object_type': 'text',
                            'text': '''
-Live resource status is available in the resource monitor page with all VGrids/resources you can access
-'''})
+Live resource status is available in the resource monitor page with all
+%s/resources you can access
+''' % configuration.site_vgrid_label})
     output_objects.append({'object_type': 'link',
                            'destination': 'showvgridmonitor.py?vgrid_name=ALL',
                            'class': 'monitorlink',

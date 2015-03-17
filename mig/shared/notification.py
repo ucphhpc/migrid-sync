@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notification - instant message and email notification helpers
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -202,8 +202,9 @@ user scripts tutorial online.
         vgrid_name = args_list[0]
         author = args_list[1]
         url = args_list[2]
-        header = "New post in %s VGrid forum on %s server" % \
-                 (vgrid_name, configuration.short_title)
+        header = "New post in %s %s forum on %s server" % \
+                 (vgrid_name, configuration.site_vgrid_label,
+                  configuration.short_title)
         txt += """This is an automated notification message from the %s server
 
 User %s

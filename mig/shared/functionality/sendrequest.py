@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sendrequest - let user send request to other user or vgrid/resource admin
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -71,23 +71,24 @@ logged together with the ID of the submitter. Spamming and other abuse
 will not be tolerated!'''})
 
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Request VGrid membership/ownership'})
+                          : 'Request %s membership/ownership' % \
+                           configuration.site_vgrid_label})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <form method='post' action='sendrequestaction.py'>
 <table align='center'>
 <tr><td>Request type</td><td><select name=request_type>
-<option value=vgridmember>VGrid membership</option>
-<option value=vgridowner>VGrid ownership</option>
+<option value=vgridmember>%(_label)s membership</option>
+<option value=vgridowner>%(_label)s ownership</option>
 </select></td></tr>
 <tr><td>
-VGrid name </td><td><input name=vgrid_name />
+%(_label)s name </td><td><input name=vgrid_name />
 </td></tr>
 <tr>
 <td>Reason (text to owners)</td><td><input name=request_text size=40 /></td>
 </tr>
 <tr><td><input type='submit' value='Submit' /></td><td></td></tr></table>
-</form>"""})
+</form>""" % {'_label': configuration.site_vgrid_label}})
 
     output_objects.append({'object_type': 'sectionheader', 'text'
                           : 'Request resource ownership'})

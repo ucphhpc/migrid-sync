@@ -54,7 +54,7 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Add VGrid Member'})
+                          : 'Add %s Member' % configuration.site_vgrid_label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -92,8 +92,8 @@ def main(client_id, user_arguments_dict):
     if vgrid_is_owner(vgrid_name, cert_id, configuration):
         output_objects.append(
             {'object_type': 'error_text', 'text'
-             : '%s is already an owner of %s or a parent vgrid.'
-             % (cert_id, vgrid_name)})
+             : '%s is already an owner of %s or a parent %s.'
+             % (cert_id, vgrid_name, configuration.site_vgrid_label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't add if already a member
@@ -101,8 +101,9 @@ def main(client_id, user_arguments_dict):
     if vgrid_is_member(vgrid_name, cert_id, configuration):
         output_objects.append(
             {'object_type': 'error_text', 'text'
-             : '''%s is already a member of %s or a parent vgrid. Please remove
-the person first and then try this operation again.''' % (cert_id, vgrid_name)
+             : '''%s is already a member of %s or a parent %s. Please remove
+the person first and then try this operation again.''' % \
+             (cert_id, vgrid_name, configuration.site_vgrid_label)
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -112,8 +113,8 @@ the person first and then try this operation again.''' % (cert_id, vgrid_name)
             configuration)
     if not status:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error getting list of subvgrids: %s'
-                               % subvgrids})
+                              : 'Error getting list of sub%ss: %s'
+                               % (configuration.site_vgrid_label, subvgrids)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # TODO: we DO allow ownership of sub vgrids with parent membership so we
@@ -124,18 +125,19 @@ the person first and then try this operation again.''' % (cert_id, vgrid_name)
         if vgrid_is_owner(subvgrid, cert_id, configuration, recursive=False):
             output_objects.append(
                 {'object_type': 'error_text', 'text'
-                 : """%s is already an owner of a sub vgrid ('%s'). While we
-we DO support members being owners of sub-vgrids, we do not support adding
-parent vgrid members at the moment. Please (temporarily) remove the person as
-owner of all sub vgrids first and then try this operation again.""" % \
-                 (cert_id, subvgrid)})
+                 : """%(cert_id)s is already an owner of a sub-%(_label)s
+('%(subvgrid)s'). While we DO support members being owners of sub-%(_label)ss,
+we do not support adding parent %(_label)s members at the moment. Please
+(temporarily) remove the person as owner of all sub-%(_label)ss first and then
+try this operation again.""" % {'cert_id': cert_id, 'subvgrid': subvgrid,
+                                '_label': configuration.site_vgrid_label}})
             return (output_objects, returnvalues.CLIENT_ERROR)
         if vgrid_is_member(subvgrid, cert_id, configuration, recursive=False):
             output_objects.append(
                 {'object_type': 'error_text', 'text'
-                 : """%s is already a member of a sub vgrid ('%s'). Please
-remove the person first and then try this operation again.""" % (cert_id,
-                                                                 subvgrid)})
+                 : """%s is already a member of a sub-%s ('%s'). Please
+remove the person first and then try this operation again.""" % \
+                 (cert_id, configuration.site_vgrid_label, subvgrid)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     # getting here means cert_id is neither owner or member of any parent or
@@ -213,31 +215,33 @@ directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
 
     if not make_symlink(link_src, link_dst, logger):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not create link to vgrid files!'
+                              : 'Could not create link to %s files!' % \
+                               configuration.site_vgrid_label
                               })
-        logger.error('Could not create link to vgrid files! (%s -> %s)'
-                      % (link_src, link_dst))
+        logger.error('Could not create link to %s files! (%s -> %s)'
+                      % (configuration.site_vgrid_label, link_src, link_dst))
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : 'New member %s successfully added to %s vgrid!'
-                           % (cert_id, vgrid_name)})
+                          : 'New member %s successfully added to %s %s!'
+                           % (cert_id, vgrid_name,
+                              configuration.site_vgrid_label)})
     output_objects.append({'object_type': 'html_form', 'text'
                           : """
 <form method='post' action='sendrequestaction.py'>
 <input type=hidden name=request_type value='vgridaccept' />
-<input type=hidden name=vgrid_name value='%s' />
-<input type=hidden name=cert_id value='%s' />
-<input type=hidden name=protocol value='%s' />
+<input type=hidden name=vgrid_name value='%(vgrid_name)s' />
+<input type=hidden name=cert_id value='%(cert_id)s' />
+<input type=hidden name=protocol value='%(protocol)s' />
 <table>
 <tr>
 <td class='title'>Custom message to user</td>
 </tr><tr>
 <td><textarea name=request_text cols=72 rows=10>
-We have granted you membership access to our %s VGrid.
-You can access the VGrid components from the VGrids page.
+We have granted you membership access to our %(vgrid_name)s %(_label)s.
+You can access the %(_label)s components from the %(_label)s page.
 
-Regards, the %s VGrid owners
+Regards, the %(vgrid_name)s %(_label)s owners
 </textarea></td>
 </tr>
 <tr>
@@ -246,7 +250,8 @@ Regards, the %s VGrid owners
 </table>
 </form>
 <br />
-""" % (vgrid_name, cert_id, any_protocol, vgrid_name, vgrid_name)})
+""" % {'vgrid_name': vgrid_name, 'cert_id': cert_id, 'protocol': any_protocol,
+       '_label': configuration.site_vgrid_label}})
     output_objects.append({'object_type': 'link', 'destination':
                            'adminvgrid.py?vgrid_name=%s' % vgrid_name, 'text':
                            'Back to administration for %s' % vgrid_name})

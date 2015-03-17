@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # updatevgrid - update or repair vgrid components
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -76,7 +76,8 @@ def main(client_id, user_arguments_dict):
     # prepare support for confirm dialog (by css/jquery)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = "Update VGrid: %s" % vgrid_name
+    title_entry['text'] = "Update %s: %s" % (configuration.site_vgrid_label,
+                                             vgrid_name)
 
     title_entry['style'] = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
@@ -180,7 +181,8 @@ $(document).ready(function() {
                         vgrid_name, '.vgridtracker')) + os.sep
 
     output_objects.append({'object_type': 'text', 'text'
-                           : 'Updating vgrid %s components ...' % vgrid_name})
+                           : 'Updating %s %s components ...' % \
+                           (configuration.site_vgrid_label, vgrid_name)})
     
     # Try to create all base directories used for vgrid files
 
@@ -193,7 +195,7 @@ $(document).ready(function() {
     # Try entity creation or repair
 
     output_objects.append({'object_type': 'text', 'text'
-                           : 'vgrid entity update warnings:'})
+                           : 'Participant update warnings:'})
     for kind in ['owners', 'members', 'resources', 'triggers']:
         (status, id_list) = vgrid_list(vgrid_name, kind, configuration,
                                       recursive=False, allow_missing = False)
@@ -220,7 +222,7 @@ $(document).ready(function() {
         # create participant scm repo in the vgrid shared dir
 
         output_objects.append({'object_type': 'text', 'text'
-                               : 'vgrid scm update warnings:'})
+                               : 'SCM update warnings:'})
         all_scm_dirs = [public_scm_dir, private_scm_dir, vgrid_scm_dir]
         for scm_dir in all_scm_dirs:
             tmp_output = []
@@ -234,7 +236,7 @@ $(document).ready(function() {
         # create participant tracker in the vgrid shared dir
 
         output_objects.append({'object_type': 'text', 'text'
-                               : 'vgrid tracker update warnings:'})
+                               : 'Tracker update warnings:'})
         all_tracker_dirs = [public_tracker_dir, private_tracker_dir,
                             vgrid_tracker_dir]
         for (tracker_dir, scm_dir) in zip(all_tracker_dirs, all_scm_dirs):
@@ -246,7 +248,7 @@ $(document).ready(function() {
     # create participant forum in the vgrid shared dir
         
     output_objects.append({'object_type': 'text', 'text'
-                           : 'vgrid forum update warnings:'})
+                           : 'Forum update warnings:'})
     for forum_dir in [private_forum_dir]:
         tmp_output = []
         create_forum(configuration, client_id, vgrid_name, forum_dir,
@@ -254,11 +256,13 @@ $(document).ready(function() {
         output_objects += tmp_output
 
     output_objects.append({'object_type': 'text', 'text'
-                          : 'vgrid %s updated!' % vgrid_name})
+                          : '%s %s updated!' % \
+                           (configuration.site_vgrid_label, vgrid_name)})
     output_objects.append({'object_type': 'link',
                            'destination': 'adminvgrid.py?vgrid_name=%s' % vgrid_name,
                            'class': 'adminlink',
-                           'title': 'Administrate your VGrid',
+                           'title': 'Administrate your %s' % \
+                           configuration.site_vgrid_label,
                            'text': 'Administration for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)
 
@@ -315,7 +319,7 @@ if __name__ == "__main__":
 
     (list_status, all_vgrids) = vgrid_list_vgrids(configuration)
     if not list_status:
-        print "Error: could not load vgrid list"
+        print "Error: could not load %s list" % configuration.site_vgrid_label
         sys.exit(1)
     for vgrid_name in all_vgrids:
         if vgrid_name == default_vgrid:

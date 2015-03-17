@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sendrequestaction - send request for e.g. member or ownership action handler
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -195,7 +195,7 @@ def main(client_id, user_arguments_dict):
         user_id = visible_user_name
         if not vgrid_name:
             output_objects.append({
-                'object_type': 'error_text', 'text': 'No VGrid specified!'})
+                'object_type': 'error_text', 'text': 'No vgrid_name specified!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         if vgrid_name.upper() == default_vgrid.upper():
             output_objects.append({
@@ -207,16 +207,17 @@ def main(client_id, user_arguments_dict):
         if not vgrid_is_owner(vgrid_name, client_id, configuration):
             output_objects.append({
                 'object_type': 'error_text', 'text'
-                : 'You are not an owner of %s or a parent vgrid!' % \
-                vgrid_name})
+                : 'You are not an owner of %s or a parent %s!' % \
+                (vgrid_name, configuration.site_vgrid_label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
         allow_vgrids = user_allowed_vgrids(configuration, client_id)
         if not vgrid_name in allow_vgrids:
             output_objects.append({
                 'object_type': 'error_text', 'text':
-                'Invalid vgrid accept message! (%s sv %s)' % (user_id, allow_vgrids)})
+                'Invalid %s message! (%s sv %s)' % (request_type, user_id,
+                                                    allow_vgrids)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-        target_id = '%s VGrid owners' % vgrid_name
+        target_id = '%s %s owners' % (vgrid_name, configuration.site_vgrid_label)
         target_name = vgrid_name
         target_list = [user_id]
     elif request_type == "resourceaccept":
@@ -275,7 +276,7 @@ def main(client_id, user_arguments_dict):
         unique_resource_name = visible_res_name
         if not vgrid_name:
             output_objects.append({
-                'object_type': 'error_text', 'text': 'No VGrid specified!'})
+                'object_type': 'error_text', 'text': 'No vgrid_name specified!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         # default vgrid is read-only
@@ -294,8 +295,8 @@ def main(client_id, user_arguments_dict):
             if vgrid_is_owner(vgrid_name, client_id, configuration):
                 output_objects.append({
                     'object_type': 'error_text', 'text'
-                    : 'You are already an owner of %s or a parent vgrid!' % \
-                    vgrid_name})
+                    : 'You are already an owner of %s or a parent %s!' % \
+                    (vgrid_name, configuration.site_vgrid_label)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
         # only ownership requests are allowed for existing members
@@ -304,8 +305,8 @@ def main(client_id, user_arguments_dict):
             if vgrid_is_member(vgrid_name, client_id, configuration):
                 output_objects.append({
                     'object_type': 'error_text', 'text'
-                    : 'You are already a member of %s or a parent vgrid.' % \
-                    vgrid_name})
+                    : 'You are already a member of %s or a parent %s.' % \
+                    (vgrid_name, configuration.site_vgrid_label)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
         # set target to resource and prevent repeated resource access requests
@@ -316,8 +317,8 @@ def main(client_id, user_arguments_dict):
                                  configuration):
                 output_objects.append({
                     'object_type': 'error_text', 'text'
-                    : 'You already have access to %s or a parent vgrid.' % \
-                    vgrid_name})
+                    : 'You already have access to %s or a parent %s.' % \
+                    (vgrid_name, configuration.site_vgrid_label)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
         # Find all VGrid owners
@@ -327,8 +328,8 @@ def main(client_id, user_arguments_dict):
         if not status:
             output_objects.append({
                 'object_type': 'error_text', 'text'
-                : 'Could not load list of current owners for %s vgrid!'
-                % vgrid_name})
+                : 'Could not load list of current owners for %s %s!'
+                % (vgrid_name, configuration.site_vgrid_label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     else:

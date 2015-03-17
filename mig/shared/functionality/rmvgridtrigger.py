@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridtrigger - remove vgrid trigger
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -50,7 +50,8 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Remove VGrid Trigger'})
+                          : 'Remove %s Trigger' % \
+                           configuration.site_vgrid_label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -96,8 +97,9 @@ def main(client_id, user_arguments_dict):
 
     if not vgrid_is_trigger(vgrid_name, rule_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is not a trigger in %s or a parent vgrid.'
-                               % (rule_id, vgrid_name)})
+                              : '%s is not a trigger in %s or a parent %s.'
+                               % (rule_id, vgrid_name,
+                                  configuration.site_vgrid_label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # remove
@@ -108,15 +110,17 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'error_text', 'text'
                               : rm_msg})
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '''%s might be listed as a trigger of this 
-VGrid because it is a trigger of a parent VGrid. Removal must be performed 
-from the most significant VGrid possible.'''
-                               % rule_id})
+                              : '''%(rule_id)s might be listed as a trigger of
+this %(_label)s because it is a trigger of a parent %(_label)s. Removal must
+be performed from the most significant %(_label)s possible.'''
+                               % {'rule_id': rule_id,
+                                  '_label': configuration.site_vgrid_label}})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text'
-                          : 'Trigger %s successfully removed from %s vgrid!'
-                           % (rule_id, vgrid_name)})
+                          : 'Trigger %s successfully removed from %s %s!'
+                           % (rule_id, vgrid_name,
+                              configuration.site_vgrid_label)})
     output_objects.append({'object_type': 'link', 'destination':
                            'vgridworkflows.py?vgrid_name=%s' % vgrid_name,
                            'text': 'Back to workflows for %s' % vgrid_name})

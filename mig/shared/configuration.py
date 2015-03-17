@@ -93,6 +93,7 @@ def fix_missing(config_file, verbose=True):
         'rate_limit_db': '~/mig/mig_system_files/daemon-rate-limit.db',
         'site_vgrid_links': 'files web tracker workflows monitor',
         'site_vgrid_creators': 'distinguished_name:.*',
+        'site_vgrid_label': 'VGrid',
         'site_signup_methods': '',
         'hg_path': '/usr/bin/hg',
         'hgweb_scripts': '/usr/share/doc/mercurial-common/examples/',
@@ -241,6 +242,7 @@ class Configuration:
     rate_limit_db = ''
     site_vgrid_links = []
     site_vgrid_creators = [('distinguished_name', '.*')]
+    site_vgrid_label = 'VGrid'
     site_signup_methods = ['extcert']
     hg_path = ''
     hgweb_scripts = ''
@@ -873,6 +875,8 @@ class Configuration:
         if config.has_option('SITE', 'vgrid_creators'):
             req = config.get('SITE', 'vgrid_creators').split()
             self.site_vgrid_creators = [i.split(':', 2) for i in req]
+        if config.has_option('SITE', 'vgrid_label'):
+            self.site_vgrid_label = config.get('SITE', 'vgrid_label').strip()
         if config.has_option('SITE', 'signup_methods'):
             self.site_signup_methods = config.get('SITE',
                                                   'signup_methods').split()

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ls - emulate ls command
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -169,6 +169,7 @@ def long_format(path):
 
 
 def handle_file(
+    configuration,
     listing,
     filename,
     file_with_dir,
@@ -203,6 +204,7 @@ def handle_file(
 
 
 def handle_dir(
+    configuration,
     listing,
     dirname,
     dirname_with_dir,
@@ -227,7 +229,8 @@ def handle_dir(
         elif parent_dir.find('private_base') >= 0:
             dir_type = 'private web page'
             extra_class = 'vgridprivateweb'
-        special = ' - VGrid %s directory' % dir_type
+        special = ' - %s %s directory' % (configuration.site_vgrid_label,
+                                          dir_type)
     dir_obj = {
         'object_type': 'direntry',
         'type': 'directory',
@@ -248,6 +251,7 @@ def handle_dir(
 
 
 def handle_ls(
+    configuration,
     output_objects,
     listing,
     base_dir,
@@ -279,7 +283,8 @@ def handle_ls(
         return
 
     if os.path.isfile(real_path):
-        handle_file(listing, base_name, relative_path, real_path, flags)
+        handle_file(configuration, listing, base_name, relative_path,
+                    real_path, flags)
     else:
         try:
             contents = os.listdir(real_path)
@@ -301,23 +306,26 @@ def handle_ls(
             # to ease navigation
 
             if all(flags):
-                handle_dir(listing, '.', relative_path, real_path,
-                           flags)
-                handle_dir(listing, '..',
+                handle_dir(configuration, listing, '.', relative_path,
+                           real_path, flags)
+                handle_dir(configuration, listing, '..',
                            os.path.dirname(relative_path),
                            os.path.dirname(real_path), flags)
             for name in contents:
                 path = real_path + os.sep + name
                 rel_path = path.replace(base_dir, '')
                 if os.path.isfile(path):
-                    handle_file(listing, name, rel_path, path, flags)
+                    handle_file(configuration, listing, name, rel_path, path,
+                                flags)
                 else:
-                    handle_dir(listing, name, rel_path, path, flags)
+                    handle_dir(configuration, listing, name, rel_path, path,
+                               flags)
         else:
 
             # Force pure content listing first by passing a negative depth
 
             handle_ls(
+                configuration,
                 output_objects,
                 listing,
                 base_dir,
@@ -331,6 +339,7 @@ def handle_ls(
                 rel_path = path.replace(base_dir, '')
                 if os.path.isdir(path):
                     handle_ls(
+                        configuration,
                         output_objects,
                         listing,
                         base_dir,
@@ -492,8 +501,8 @@ Action on paths selected below
                 'flags': flags,
                 }
 
-            handle_ls(output_objects, entries, base_dir, real_path,
-                      flags)
+            handle_ls(configuration, output_objects, entries, base_dir,
+                      real_path, flags)
             dir_listings.append(dir_listing)
 
     output_objects.append({'object_type': 'html_form', 'text'

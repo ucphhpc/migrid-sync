@@ -385,7 +385,8 @@ Please contact the Grid admins %s if you think they should be enabled.
                 if vgrid_name in machine_specs['vgrid']:
                     select = 'selected'
                 edit_specs += "<option %s>%s</option>" % (select, vgrid_name)
-            edit_specs += """</select> VGrid(s)</li>"""
+            edit_specs += """</select> %s(s)</li>""" % \
+                          configuration.site_vgrid_label
             if password != 'UNKNOWN':
                 edit_specs += """
 <li><input type="text" readonly value="%(password)s"> as VNC password</li>

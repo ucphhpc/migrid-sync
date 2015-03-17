@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showvgridprivatefile - View VGrid private files for owners and members
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -70,8 +70,8 @@ def main(client_id, user_arguments_dict):
     if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                     configuration):
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''You must be an owner or member of %s vgrid to
-access the private files.''' % vgrid_name})
+                               '''You must be an owner or member of %s %s to
+access the private files.''' % (vgrid_name, configuration.site_vgrid_label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -87,8 +87,8 @@ access the private files.''' % vgrid_name})
 
     if not valid_user_path(real_path, base_dir, True):
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''You are not allowed to use paths outside vgrid
-private files dir.'''})
+                               '''You are not allowed to use paths outside %s
+private files dir.''' % configuration.site_vgrid_label})
         return (output_objects, returnvalues.CLIENT_ERROR)
     
     try:
@@ -102,8 +102,8 @@ private files dir.'''})
         private_fd.close()
     except Exception, exc:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error reading VGrid private file (%s)'
-                               % exc})
+                              : 'Error reading %s private file (%s)'
+                               % (configuration.site_vgrid_label, exc)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     return (output_objects, returnvalues.OK)

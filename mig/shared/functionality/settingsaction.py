@@ -195,8 +195,10 @@ def main(client_id, user_arguments_dict):
 
     output_objects.append({'object_type': 'text', 'text'
                           : 'Saved %s settings:' % topic})
-    for line in topic_mrsl.split('\n'):
-        output_objects.append({'object_type': 'text', 'text': line})
+
+    # Enable next lines for debug
+    #for line in topic_mrsl.split('\n'):
+    #    output_objects.append({'object_type': 'text', 'text': line})
 
     output_objects.append({'object_type': 'link',
                            'destination': 'settings.py?topic=%s' % topic,

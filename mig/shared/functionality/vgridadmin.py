@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridadmin - manage vgrids
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -67,7 +67,8 @@ def main(client_id, user_arguments_dict):
     (stat, vgrid_list) = vgrid_list_vgrids(configuration)
     if not stat:
         output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error getting list of vgrids.'})
+                              : 'Error getting list of %s.' % \
+                               configuration.site_vgrid_label})
 
     # Iterate through vgrids and print details for each
 
@@ -93,14 +94,16 @@ def main(client_id, user_arguments_dict):
             vgrid_obj['memberlink'] = {'object_type': 'link',
                                        'destination':'',
                                        'class': 'infolink',
-                                       'title': 'Every user is member of the %s VGrid' \
-                                       % default_vgrid,
+                                       'title': 'Every user is member of the %s %s' \
+                                       % (default_vgrid,
+                                          configuration.site_vgrid_label),
                                        'text': ''}
             vgrid_obj['administratelink'] = {'object_type': 'link',
                                        'destination':'',
                                        'class': 'infolink',
-                                       'title': 'Nobody owns the %s VGrid' \
-                                       % default_vgrid,
+                                       'title': 'Nobody owns the %s %s' \
+                                       % (default_vgrid,
+                                          configuration.site_vgrid_label),
                                        'text': ''}
             member_list['vgrids'].append(vgrid_obj)
             continue
@@ -118,12 +121,14 @@ def main(client_id, user_arguments_dict):
             vgrid_obj['memberlink'] = {'object_type': 'link',
                                        'destination':'',
                                        'class': 'infolink',
-                                       'title': 'Not a real VGrid - only for global monitor',
+                                       'title': 'Not a real %s - only for global monitor' % \
+                                       configuration.site_vgrid_label,
                                        'text': ''}
             vgrid_obj['administratelink'] = {'object_type': 'link',
                                        'destination':'',
                                        'class': 'infolink',
-                                       'title': 'Not a real VGrid - only for global monitor',
+                                       'title': 'Not a real %s - only for global monitor' % \
+                                             configuration.site_vgrid_label,
                                        'text': ''}
             member_list['vgrids'].append(vgrid_obj)
             continue
@@ -329,7 +334,11 @@ def main(client_id, user_arguments_dict):
         member_list['vgrids'].append(vgrid_obj)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'VGrid administration'
+    label = configuration.site_vgrid_label
+    # Append VGrid note if custom
+    if label != 'VGrid':
+        label += ' (i.e. VGrids)'
+    title_entry['text'] = '%s administration' % label
 
     # jquery support for tablesorter and confirmation on "leave":
 
@@ -394,17 +403,24 @@ $(document).ready(function() {
  </div>
 '''                       })
 
-    output_objects.append({'object_type': 'header', 'text': 'VGrids'
-                          })
+    output_objects.append({'object_type': 'header', 'text': label})
     output_objects.append({'object_type': 'text', 'text'
                           : '''
-VGrids share files, a number of collaboration tools and resources. Members can access web pages, files, tools and resources. Owners can additionally edit pages, as well as add and remove members or resources.
-'''
+%ss share files, a number of collaboration tools and resources. Members can access web pages, files, tools and resources. Owners can additionally edit pages, as well as add and remove members or resources.
+''' % configuration.site_vgrid_label
                        })
 
+    if configuration.site_vgrid_label != 'VGrid':
+        output_objects.append({'object_type': 'text', 'text'
+                          : """Please note that for historical reasons %ss are
+also referred to as VGrids in some contexts.""" % \
+                               configuration.site_vgrid_label})
+
     output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'VGrids managed on this server'})
-    output_objects.append({'object_type': 'table_pager', 'entry_name': 'VGrids',
+                          : '%ss managed on this server' % \
+                           configuration.site_vgrid_label})
+    output_objects.append({'object_type': 'table_pager', 'entry_name': '%ss' % \
+                           configuration.site_vgrid_label,
                            'default_entries': default_pager_entries})
     output_objects.append(member_list)
 
@@ -413,19 +429,21 @@ VGrids share files, a number of collaboration tools and resources. Members can a
     # Optional limitation of create vgrid permission
     if user_dict and vgrid_create_allowed(configuration, user_dict):
         output_objects.append({'object_type': 'sectionheader', 'text'
-                               : 'Additional VGrids'})
+                               : 'Additional %ss' % \
+                               configuration.site_vgrid_label})
 
         output_objects.append(
             {'object_type': 'text', 'text':
-             '''Please enter a name for the new VGrid to add, using slashes to
- specify nesting. I.e. if you own a VGrid called ABC, you can create a
- sub-VGrid called DEF by entering ABC/DEF below.'''})
+             '''Please enter a name for the new %(label)s to add, using slashes to
+ specify nesting. I.e. if you own a %(label)s called ABC, you can create a
+ sub-%(label)s called DEF by entering ABC/DEF below.''' % \
+             {'label': configuration.site_vgrid_label}})
         output_objects.append({'object_type': 'html_form', 'text':
                                 '''<form method="post" action="createvgrid.py">
     <input type="text" size=40 name="vgrid_name" />
     <input type="hidden" name="output_format" value="html" />
-    <input type="submit" value="Create VGrid" />
+    <input type="submit" value="Create %s" />
     </form>
- '''})
+ ''' % configuration.site_vgrid_label})
 
     return (output_objects, status)

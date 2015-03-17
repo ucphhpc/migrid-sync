@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssscreateimg - Back end to SSS zip generator
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -125,8 +125,9 @@ Please contact the Grid admins %s if you think they should be enabled.
     for vgrid in vgrid_list:
         if not vg_status or not vgrid in all_vgrids:
             output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Failed to validate VGrid %s: %s'
-                               % (vgrid, all_vgrids)})
+                              : 'Failed to validate %s %s: %s'
+                               % (configuration.site_vgrid_label, vgrid,
+                                  all_vgrids)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Load the user file

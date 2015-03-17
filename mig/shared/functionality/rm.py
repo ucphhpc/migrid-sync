@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# rm - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# rm - backend to remove files/directories in user home
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -170,7 +170,8 @@ def main(client_id, user_arguments_dict):
                 continue
             if os.path.islink(real_path):
                 output_objects.append({'object_type': 'warning', 'text'
-                        : "You're not allowed to delete entire VGrid dirs!"
+                        : "You're not allowed to delete entire %s shared dirs!"
+                                       % configuration.site_vgrid_label
                         })
                 status = returnvalues.CLIENT_ERROR
                 continue

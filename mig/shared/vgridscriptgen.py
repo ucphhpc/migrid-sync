@@ -661,7 +661,7 @@ include_license = True
 
 script_ops_seven_args = []
 
-# Vgrid functions
+# VGrid functions
 
 script_ops_seven_args.append(['addvgridtrigger', 'rule_id', 'vgrid_name',
                               'path', 'changes', 'action', 'arguments',
@@ -669,7 +669,7 @@ script_ops_seven_args.append(['addvgridtrigger', 'rule_id', 'vgrid_name',
 
 script_ops_two_args = []
 
-# Vgrid functions
+# VGrid functions
 
 script_ops_two_args.append(['addvgridmember', 'cert_id', 'vgrid_name'])
 script_ops_two_args.append(['addvgridowner', 'cert_id', 'vgrid_name'])
@@ -729,7 +729,7 @@ script_ops_two_args.append(['restartallstores', 'unique_resource_name',
 
 script_ops_single_arg = []
 
-# Vgrid functions
+# VGrid functions
 
 script_ops_single_arg.append(['createvgrid', 'vgrid_name'])
 script_ops_single_arg.append(['lsvgridmembers', 'vgrid_name'])
@@ -869,7 +869,7 @@ if __name__ == '__main__':
 
     for op in script_ops_seven_args:
         generate_seven_arguments(op[0], op[1], op[2], op[3], op[4], op[5],
-                               languages, dest_dir)
+                                 op[6], op[7], languages, dest_dir)
 
     # if test_script:
     #    generate_test(languages)

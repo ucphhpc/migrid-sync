@@ -199,7 +199,7 @@ def vgrid_add_remove_table(client_id,
                 'text': '''
       <form method="post" action="add%(script)s.py">
       <fieldset>
-      <legend>Add vgrid %(item)s</legend>
+      <legend>Add %(_label)s %(item)s</legend>
       <input type="hidden" name="vgrid_name" value="%(vgrid)s" />
       <table>
       <tr>
@@ -214,7 +214,8 @@ def vgrid_add_remove_table(client_id,
       </form>
 ''' % {'vgrid': vgrid_name, 'item': item_string, 
        'script': script_suffix, 'id_field': id_field,
-       'extra_fields': extra_fields_html }
+       'extra_fields': extra_fields_html,
+       '_label': configuration.site_vgrid_label}
                })
     
     return (True, out)
@@ -241,7 +242,8 @@ def main(client_id, user_arguments_dict):
     # prepare support for confirm dialog and toggling the views (by css/jquery)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = "Administrate VGrid: %s" % vgrid_name
+    title_entry['text'] = "Administrate %s: %s" % \
+                          (configuration.site_vgrid_label, vgrid_name)
 
     title_entry['style'] = '''
 <link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>

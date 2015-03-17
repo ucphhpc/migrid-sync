@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # output - general formatting of backend output objects
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -257,8 +257,8 @@ ctime\t%(ctime)s
                         lines.append('Resource: %(resource)s\n'
                                  % obj)
                     if obj.has_key('vgrid'):
-                        lines.append('VGrid: %s'
-                                 % obj['vgrid'])
+                        lines.append('%s: %s'
+                                 % (configuration.site_vgrid_label, obj['vgrid']))
                     if obj.has_key('finished_timestamp'):
                         lines.append('Finished: %(finished_timestamp)s\n'
                                  % obj)
@@ -284,8 +284,9 @@ ctime\t%(ctime)s
                             lines.append('Resource %s: %s\n' % (count,
                                     single_history['resource']))
                         if single_history.has_key('vgrid'):
-                            lines.append('VGrid %s: %s' % (count,
-                                    single_history['vgrid']))
+                            lines.append('%s %s: %s' % \
+                                         (configuration.site_vgrid_label,
+                                          count, single_history['vgrid']))
                         if single_history.has_key('failed'):
                             lines.append('Failed %s: %s\n' % (count,
                                     single_history['failed']))
@@ -574,8 +575,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                         lines.append('<tr><td>Resource</td><td>%s</td></tr>'
                                  % obj['resource'])
                     if obj.has_key('vgrid'):
-                        lines.append('<tr><td>VGrid</td><td>%s</td></tr>'
-                                 % obj['vgrid'])
+                        lines.append('<tr><td>%s</td><td>%s</td></tr>'
+                                 % (configuration.site_vgrid_label,
+                                    obj['vgrid']))
                     if obj.has_key('finished_timestamp'):
                         lines.append('<tr><td>Finished</td><td>%s</td></tr>'
                                  % obj['finished_timestamp'])
@@ -605,8 +607,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                                 % (count, single_history['resource']))
                         if single_history.has_key('vgrid'):
                             lines.append(
-                                '<tr><td>VGrid %s</td><td>%s</td></tr>'
-                                % (count, single_history['vgrid']))
+                                '<tr><td>%s %s</td><td>%s</td></tr>'
+                                % (configuration.site_vgrid_label, count,
+                                   single_history['vgrid']))
                         if single_history.has_key('failed'):
                             lines.append(
                                 '<tr><td>Failed %s</td><td>%s</td></tr>'
@@ -1642,15 +1645,14 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                 lines.append('''
 <thead class="title">
 <tr>
-  <th title="VGrid name with slashes indicating nesting">Name</th>
+  <th title="%s name with slashes indicating nesting">Name</th>
   <th title="Ownership actions" class="icon"><!-- Owner --></th>
   <th title="Membership actions" class="icon"><!-- Member --></th>
   %s
 </tr>
 </thead>
 <tbody>
-''' % '\n'.join(titles)
-                             )
+''' % (configuration.site_vgrid_label, '\n'.join(titles)))
                 for obj in vgrids:
                     lines.append('<tr>')
                     lines.append('<td>%s</td>' % obj['name'])
@@ -1676,7 +1678,8 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                     lines.append('</tr>')
                 lines.append('</tbody></table>')
             else:
-                lines.append('No matching VGrids found')
+                lines.append('No matching %ss found' % \
+                             configuration.site_vgrid_label)
         elif i['object_type'] == 'user_stats':
             if i.get('disk', None):
                 disk_info = '<h2>Disk stats</h2>'
