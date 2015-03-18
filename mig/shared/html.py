@@ -332,16 +332,25 @@ def get_cgi_html_footer(configuration, footer='', html=True, widgets=True, user_
     out += footer
     out += '''
 <div id="bottomlogo">
+<div id="bottomlogoleft">
+<img src="%s" id="supportimage" alt=""/>
+<span id="support">
+%s
+</span>
+</div>
+<div id="bottomlogoright">
 <img src="%s" id="creditsimage" alt=""/>
 <span id="credits">
 %s
 </span>
 </div>
+</div>
 <div id="bottomspace">
 </div>
 </body>
 </html>
-''' % (configuration.site_credits_image, configuration.site_credits_text)
+''' % (configuration.site_support_image, configuration.site_support_text,
+       configuration.site_credits_image, configuration.site_credits_text)
     return out
 
 

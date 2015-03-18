@@ -971,6 +971,15 @@ class Configuration:
             self.site_logo_image = config.get('SITE', 'logo_image')
         else:
             self.site_logo_image = '%s/MiG-logo-small.png' % self.site_images
+        if config.has_option('SITE', 'support_text'):
+            self.site_support_text = config.get('SITE', 'support_text')
+        else:
+            self.site_support_text = '<a href="%s">Support & Questions</a>' % \
+                                     self.migserver_http_url
+        if config.has_option('SITE', 'support_image'):
+            self.site_support_image = config.get('SITE', 'support_image')
+        else:
+            self.site_support_image = '%s/icons/help.png' % self.site_images
         if config.has_option('SITE', 'credits_text'):
             self.site_credits_text = config.get('SITE', 'credits_text')
         else:
