@@ -207,7 +207,7 @@ def main(client_id, user_arguments_dict, environ=None):
         state = accepted['state'][-1].strip()
         org = accepted['org'][-1].strip()
         org_unit = ''
-        role = accepted['role'][-1].strip()
+        role = ','.join([i for i in accepted['role'] if i])
         locality = ''
         timezone = ''
         email = accepted['email'][-1].strip()
@@ -223,7 +223,8 @@ def main(client_id, user_arguments_dict, environ=None):
               accepted['openid.sreg.organization'][-1].strip()
         org_unit = accepted['openid.sreg.ou'][-1].strip() or \
                    accepted['openid.sreg.organizational_unit'][-1].strip()
-        role = accepted['openid.sreg.role'][-1].strip()
+        # We may receive multiple roles
+        role = ','.join([i for i in accepted['openid.sreg.role'] if i])
         locality = accepted['openid.sreg.locality'][-1].strip()
         timezone = accepted['openid.sreg.timezone'][-1].strip()
         email = accepted['openid.sreg.email'][-1].strip()
