@@ -31,8 +31,10 @@
 
 /* MiG site style sheet overrides - add your site specific changes here */
 #toplogo, #bottomlogo {
-    #background: #901a1e; 
-    #opacity: 0.9;
+    /* 
+    background: #901a1e; 
+    opacity: 0.9; 
+    */
     background: url("/images/erda-background.gif") repeat scroll left center #eee;
 }
 #logoimage {

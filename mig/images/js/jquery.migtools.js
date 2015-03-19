@@ -1149,7 +1149,7 @@ function switch_language(lang) {
        to match all accented versions like 'en' -> 'en', 'en-US', 'en-GB'
     */
     /* TODO: optimize this and use list of lang values */
-    
+
     $("div:lang(en)").hide();
     $("div:lang(da)").hide();
 
