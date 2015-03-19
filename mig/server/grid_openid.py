@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_openid - openid server authenticating users against user database
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -82,6 +82,7 @@ from shared.base import client_id_dir
 from shared.conf import get_configuration_object
 from shared.griddaemons import hit_rate_limit, update_rate_limit, \
      expire_rate_limit
+from shared.logger import daemon_logger
 from shared.safeinput import valid_distinguished_name, valid_password, \
      valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url
 from shared.useradm import load_user_db, cert_field_map, \
@@ -1104,11 +1105,7 @@ if __name__ == '__main__':
     expandusername = False
 
     # Use separate logger
-    logging.basicConfig(filename=configuration.user_openid_log,
-                        #level=logging.INFO,
-                        level=logging.DEBUG,
-                        format="%(asctime)s %(levelname)s %(message)s")
-    logger = logging
+    logger = daemon_logger("openid", configuration.user_openid_log, "debug")
 
     # Allow configuration overrides on command line
     if sys.argv[1:]:
@@ -1184,6 +1181,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'nossl': nossl,
         'expandusername': expandusername
         }
+    logger.info("Starting OpenID server")
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)
     print info_msg

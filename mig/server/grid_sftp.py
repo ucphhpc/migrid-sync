@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2010-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -80,6 +80,7 @@ from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
      acceptable_chmod, refresh_users, refresh_jobs, hit_rate_limit, \
      update_rate_limit, expire_rate_limit
+from shared.logger import daemon_logger
 from shared.useradm import check_password_hash
 
 configuration, logger = None, None
@@ -732,11 +733,9 @@ if __name__ == "__main__":
     configuration = get_configuration_object()
 
     # Use separate logger
-    logging.basicConfig(filename=configuration.user_sftp_log,
-                        level=logging.INFO,
-                        format="%(asctime)s %(levelname)s %(message)s")
-    logger = logging
 
+    logger = daemon_logger("sftp", configuration.user_sftp_log, "info")
+    
     if not configuration.site_enable_sftp:
         err_msg = "SFTP access to user homes is disabled in configuration!"
         logger.error(err_msg)
@@ -813,6 +812,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'auth_timeout': 60,
         'stop_running': threading.Event()
         }
+    logger.info("Starting SFTP server")
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)
     print info_msg

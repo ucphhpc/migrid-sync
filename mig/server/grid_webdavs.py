@@ -57,6 +57,7 @@ from shared.defaults import dav_domain
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
      refresh_user_creds, hit_rate_limit, update_rate_limit, expire_rate_limit
+from shared.logger import daemon_logger
 from shared.pwhash import unscramble_digest
 from shared.useradm import check_password_hash, generate_password_hash, \
      generate_password_digest
@@ -419,7 +420,7 @@ def run(configuration):
     server = wsgiserver.CherryPyWSGIServer((config["host"], config["port"]),
                                            app, server_name=version)
 
-    print('Listening on %(host)s (%(port)s)' % config)
+    logger.info('Listening on %(host)s (%(port)s)' % config)
 
     try:
         server.start()
@@ -432,11 +433,9 @@ if __name__ == "__main__":
     configuration = get_configuration_object()
     nossl = False
 
-    # Use separate logger
-    logging.basicConfig(filename=configuration.user_davs_log,
-                        level=logging.DEBUG,
-                        format="%(asctime)s %(levelname)s %(message)s")
-    logger = logging
+    # Use separate logger - cherrypy hijacks root logger
+
+    logger = daemon_logger("webdavs", configuration.user_davs_log, "DEBUG")
 
     # Allow configuration overrides on command line
     if sys.argv[1:]:
@@ -445,6 +444,10 @@ if __name__ == "__main__":
         configuration.user_davs_address = sys.argv[2]
     if sys.argv[3:]:
         configuration.user_davs_port = int(sys.argv[3])
+
+    # Web server doesn't allow empty string alias for all interfaces
+    if configuration.user_davs_address == '':
+        configuration.user_davs_address = '0.0.0.0'
 
     configuration.dav_cfg = {
         'nossl': nossl,
@@ -456,6 +459,14 @@ if __name__ == "__main__":
         logger.error(err_msg)
         print err_msg
         sys.exit(1)
+    print """
+Running grid webdavs server for user webdavs access to their MiG homes.
+
+Set the MIG_CONF environment to the server configuration path
+unless it is available in mig/server/MiGserver.conf
+"""
+    address = configuration.user_davs_address
+    port = configuration.user_davs_port
 
     chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
                          os.path.abspath(configuration.vgrid_public_base),
@@ -467,8 +478,8 @@ if __name__ == "__main__":
                          os.path.abspath(configuration.vgrid_public_base)]
 
     configuration.daemon_conf = {
-        'host': configuration.user_davs_address,
-        'port': configuration.user_davs_port,
+        'host': address,
+        'port': port,
         'root_dir': os.path.abspath(configuration.user_home),
         'chmod_exceptions': chmod_exceptions,
         'chroot_exceptions': chroot_exceptions,
@@ -491,13 +502,10 @@ if __name__ == "__main__":
     daemon_conf['acceptdigest'] = daemon_conf['allow_digest']
     daemon_conf['defaultdigest'] = daemon_conf['allow_digest']        
 
-    print """
-Running grid davs server for user dav access to their MiG homes.
-
-Set the MIG_CONF environment to the server configuration path
-unless it is available in mig/server/MiGserver.conf
-"""
-    logger.info("starting WebDAV server")
+    logger.info("Starting WebDAV server")
+    info_msg = "Listening on address '%s' and port %d" % (address, port)
+    logger.info(info_msg)
+    print info_msg
     try:
         run(configuration)
     except KeyboardInterrupt:

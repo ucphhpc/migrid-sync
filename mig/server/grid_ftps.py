@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_ftps - secure ftp server wrapping ftp in tls/ssl and mapping user home
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -86,6 +86,7 @@ from shared.base import invisible_path
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
      hit_rate_limit, update_rate_limit, expire_rate_limit
+from shared.logger import daemon_logger
 from shared.useradm import check_password_hash
 
 
@@ -286,10 +287,7 @@ if __name__ == '__main__':
     nossl = False
 
     # Use separate logger
-    logging.basicConfig(filename=configuration.user_ftps_log,
-                        level=logging.DEBUG,
-                        format="%(asctime)s %(levelname)s %(message)s")
-    logger = logging
+    logger = daemon_logger("ftps", configuration.user_ftps_log, "debug")
 
     # Allow configuration overrides on command line
     if sys.argv[1:]:
@@ -338,6 +336,7 @@ unless it is available in mig/server/MiGserver.conf
         'logger': logger,
         'nossl': nossl,
         }
+    logger.info("Starting FTPS server")
     info_msg = "Listening on address '%s' and port %d" % (address, ctrl_port)
     logger.info(info_msg)
     print info_msg

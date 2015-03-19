@@ -52,6 +52,7 @@ from shared.conf import get_configuration_object
 from shared.defaults import valid_trigger_changes, workflows_log_name, \
      workflows_log_size, workflows_log_cnt
 from shared.job import fill_mrsl_template, new_job
+from shared.logger import daemon_logger
 from shared.serial import load
 from shared.vgrid import vgrid_is_owner_or_member
 
@@ -408,14 +409,14 @@ unless it is available in mig/server/MiGserver.conf
     configuration = get_configuration_object()
 
     # Use separate logger
-    logging.basicConfig(filename=configuration.user_events_log,
-                        level=logging.INFO,
-                        format="%(asctime)s %(levelname)s %(message)s")
-    logger = logging
+
+    logger = daemon_logger("events", configuration.user_events_log, "info")
 
     keep_running = True
 
     print 'Starting Event handler daemon - Ctrl-C to quit'
+
+    logger.info("Starting Event handler daemon")
 
     # Monitor rule configurations
 
