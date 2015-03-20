@@ -27,6 +27,8 @@
 
 """Event handler to monitor vgrid files for creation, modification and removal
 and trigger any associated actions based on rule database.
+
+Requires watchdog module (https://pypi.python.org/pypi/watchdog).
 """
 
 import fnmatch

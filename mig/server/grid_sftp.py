@@ -57,7 +57,10 @@
 
 # = End of original copyright notice =
 
-"""Provide SFTP access to MiG user homes"""
+"""Provides SFTP access to MiG user homes
+
+Requires Paramiko module (http://pypi.python.org/pypi/paramiko).
+"""
 
 import logging
 import os
@@ -747,6 +750,7 @@ Running grid sftp server for user sftp access to their MiG homes.
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
 """
+    print __doc__
     address = configuration.user_sftp_address
     port = configuration.user_sftp_port
     default_host_key = """

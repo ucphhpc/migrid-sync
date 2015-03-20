@@ -51,6 +51,8 @@
 
 """OpenID server to let users authenticate with username and password from
 our local user DB.
+
+Requires OpenID module (https://github.com/openid/python-openid).
 """
 
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
@@ -1128,6 +1130,7 @@ Running grid openid server for user authentication against MiG user DB.
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
 """
+    print __doc__
     address = configuration.user_openid_address
     port = configuration.user_openid_port
     session_store = configuration.openid_store

@@ -25,7 +25,13 @@
 # -- END_HEADER ---
 #
 
-"""Provide secure WebDAV access to MiG user homes using wsgidav"""
+"""Provides secure WebDAV access to MiG user homes using wsgidav.
+
+Replaces the old pywebdav-based grid_davs daemon with similar functionality,
+but bad performance and limited platform support.
+
+Requires wsgidav module (https://github.com/mar10/wsgidav).
+"""
 
 import logging
 import os
@@ -465,6 +471,7 @@ Running grid webdavs server for user webdavs access to their MiG homes.
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
 """
+    print __doc__
     address = configuration.user_davs_address
     port = configuration.user_davs_port
 

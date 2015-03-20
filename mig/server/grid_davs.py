@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_davs - secure DAV server providing access to MiG user homes
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,15 @@
 # -- END_HEADER ---
 #
 
-"""Provide secure DAV access to MiG user homes"""
+"""Provides secure DAV access to MiG user homes using pywebdav.
+
+IMPORTANT: Please note that this daemon is now deprecated. We recommend moving
+to the wsgidav-based grid_webdavs daemon, because it delivers the same
+functionality only with better performance, in a standards-compliant way, and
+with support for all common platforms.
+
+Requires pywebdav module (https://pypi.python.org/pypi/PyWebDAV).
+"""
 
 import BaseHTTPServer
 import SocketServer
@@ -517,6 +525,7 @@ Running grid davs server for user dav access to their MiG homes.
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
 """
+    print __doc__
     logger.info("starting DAV server")
     try:
         run(configuration)

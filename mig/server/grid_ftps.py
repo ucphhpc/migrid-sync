@@ -308,6 +308,7 @@ Running grid ftps server for user ftps access to their MiG homes.
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
 """
+    print __doc__
     address = configuration.user_ftps_address
     ctrl_port = configuration.user_ftps_ctrl_port
     pasv_ports = configuration.user_ftps_pasv_ports

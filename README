@@ -96,8 +96,12 @@ The optional grid_ftps daemon requires the pyftpdlib module in a recent
 version, so it is easiest to install it with pip:
 sudo pip install pyftpdlib
 
-The optional grid_davs daemon requires the pywebdav module in a recent
+The optional grid_webdavs daemon requires the wsgidav module in a recent
 version, so it is easiest to install it with pip:
+sudo pip install wsgidav
+
+The now deprecated optional grid_davs daemon requires the pywebdav
+module in a recent version, so it is easiest to install it with pip:
 sudo pip install pywebdav
 
 The optional grid_events daemon requires the watchdog module which may
@@ -347,10 +351,13 @@ for the optional grid_ftps daemon to work and the python-pyftpdlib
 package provides all required components for it on recent
 Debian/Ubuntu. If no recent version is available, it can still easily be
 installed with pip instead.
-PyWebDAV is required for the optional grid_davs daemon to work and the 
-python-webdav package in a recent version may provide all required components
-for it on Debian/Ubuntu. If no recent version is available, it can still
-easily be installed with pip instead.
+WsgiDAV is required for the optional grid_webdavs daemon to work and a
+recent version is needed for full OSX client support. Thus it is
+recommended to install directly from github or with pip.
+PyWebDAV is required for the now deprecated optional grid_davs daemon to
+work and the python-webdav package in a recent version may provide all
+required components for it on Debian/Ubuntu. If no recent version is
+available, it can still easily be installed with pip instead.
 All optional file server services like sftp, ftps and davs rely on the
 python pbkdf2 module for password auth support and the python-pbkdf2
 package provides all required components for it on Debian/Ubuntu.

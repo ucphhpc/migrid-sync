@@ -309,7 +309,13 @@ Web interfaces are served with the Apache web server:"""})
     if configuration.site_enable_davs:
         password_dep = True
         output_objects.append({'object_type': 'text', 'text' :
-                               "WebDAVS access is delivered using pywebdav:"})
+                               "WebDAVS access is delivered using wsgidav or pywebdav:"})
+        output_objects.append({'object_type': 'link', 
+                               'destination' :
+                               'https://github.com/mar10/wsgidav',
+                               'class': 'urllink',
+                               'title': 'WsgiDAV Home Page',
+                               'text': 'WsgiDAV Server Module (MIT)'})
         output_objects.append({'object_type': 'link', 
                                'destination' :
                                'https://code.google.com/p/pywebdav/',
