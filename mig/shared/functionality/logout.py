@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # logout - force-expire local login session
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -106,19 +106,13 @@ locally - you may want to close your web browser to finish""" % \
                                    configuration.short_title})
             status = returnvalues.CLIENT_ERROR
     else:
-        oid_logout = os.path.join(os.path.dirname(os.path.dirname(identity)),
-                                  'logout')
         local_logout = '?logout=true;output_format=text'
-        output_objects.append(
-            {'object_type': 'text', 'text':
-             """You're accessing %s with an OpenID login, so to completely
-logout you need to first""" % configuration.short_title})
+        oid_logout = os.path.join(os.path.dirname(os.path.dirname(identity)),
+                                  'logout?return_to=%(SCRIPT_URI)s' % environ)
+        oid_logout += local_logout
         # Remove /id/username from identity and append logout
         output_objects.append(        
             {'object_type': 'link', 'destination': oid_logout,
-             'target': '_blank', 'text': "Logout from your OpenID provider"})
-        output_objects.append({'object_type': 'text', 'text': " and then "})
-        output_objects.append(
-            {'object_type': 'link', 'destination': local_logout,
-             'text': "Stop your %s session" % configuration.short_title})
+             'text': "Logout from OpenID provider and %s session" % \
+             configuration.short_title} )
     return (output_objects, status)
