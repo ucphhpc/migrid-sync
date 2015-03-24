@@ -26,7 +26,7 @@
 # processname: grid_events.py
 # processname: grid_openid.py
 # processname: grid_sftp.py
-# processname: grid_davs.py
+# processname: grid_webdavs.py
 # processname: grid_ftps.py
 # config: /etc/sysconfig/MiG
 # 
@@ -66,7 +66,7 @@ MIG_SSHMUX=${MIG_CODE}/server/grid_sshmux.py
 MIG_EVENTS=${MIG_CODE}/server/grid_events.py
 MIG_OPENID=${MIG_CODE}/server/grid_openid.py
 MIG_SFTP=${MIG_CODE}/server/grid_sftp.py
-MIG_DAVS=${MIG_CODE}/server/grid_davs.py
+MIG_DAVS=${MIG_CODE}/server/grid_webdavs.py
 MIG_FTPS=${MIG_CODE}/server/grid_ftps.py
 DELAY=5
 
@@ -141,11 +141,11 @@ start_sftp() {
 	[ $RET2 ] || echo "Warning: SFTP not started."
 	echo
 }
-start_davs() {
+start_webdavs() {
 	echo -n "Starting MiG DAVS daemon:"
-        PID_FILE="$PID_DIR/grid_davs.pid"
+        PID_FILE="$PID_DIR/grid_webdavs.pid"
 	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
-	           "$CUSTOMCONF ${MIG_DAVS} >> ${MIG_LOG}/davs.out 2>&1 &"
+	           "$CUSTOMCONF ${MIG_DAVS} >> ${MIG_LOG}/webdavs.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
@@ -173,7 +173,7 @@ start_all() {
     start_events
     start_openid
     start_sftp
-    start_davs
+    start_webdavs
     start_ftps
 }
 
@@ -228,8 +228,8 @@ stop_sftp() {
 	killproc ${MIG_SFTP}
 	echo
 }
-stop_davs() {
-	echo -n "Shutting down MiG davs: "
+stop_webdavs() {
+	echo -n "Shutting down MiG webdavs: "
 	killproc ${MIG_DAVS}
 	echo
 }
@@ -245,7 +245,7 @@ stop_all() {
     stop_events
     stop_openid
     stop_sftp
-    stop_davs
+    stop_webdavs
     stop_ftps
     stop_script
 }
@@ -268,7 +268,7 @@ status_openid() {
 status_sftp() {
     status ${MIG_SFTP}
 }
-status_davs() {
+status_webdavs() {
     status ${MIG_DAVS}
 }
 status_ftps() {
@@ -282,14 +282,14 @@ status_all() {
     status_events
     status_openid
     status_sftp
-    status_davs
+    status_webdavs
     status_ftps
 }
 
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|openid|sftp|davs|ftps)
+    script|monitor|sshmux|events|openid|sftp|webdavs|ftps)
         TARGET="$2"
 	;;
     *)
