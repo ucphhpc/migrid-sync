@@ -853,7 +853,8 @@ def guess_type(name):
                     'freeze_author', 'freeze_department', 'freeze_organization',
                     'openid.sreg.cn', 'openid.sreg.fullname',
                     'openid.sreg.full_name', 'openid.sreg.nickname',
-                    'openid.sreg.o', 'openid.sreg.ou', 'changes', ):
+                    'openid.sreg.o', 'openid.sreg.ou', 'openid.sreg.role',
+                    'changes', ):
             __type_map[key] = valid_commonname
         for key in ('cert_id', 'run_as', ):
             __type_map[key] = valid_distinguished_name
