@@ -197,6 +197,17 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             # O_TRUNCATE consistent with the simple mode strings.
             fake = os.open(real_path, flags, 0644)
             os.close(fake)
+            # Now fake our own chmod to set any requested mode
+            change_mode = getattr(attr, 'st_mode', None)
+            if change_mode is not None:
+                self.logger.debug("fake chmod on %s :: %s (%s %s)" % \
+                                  (path, real_path, repr(flags), repr(attr)))
+                self.chmod(path, change_mode)
+                self.logger.debug("chmod done on %s :: %s (%s %s)" % \
+                                  (path, real_path, repr(flags), repr(attr)))
+            else:
+                self.logger.debug("no chmod requested on %s :: %s (%s %s)" % \
+                                  (path, real_path, repr(flags), repr(attr)))                
             mode = flags_to_mode(flags)
             if flags == os.O_RDONLY:
                 # Read-only mode
@@ -739,6 +750,12 @@ if __name__ == "__main__":
 
     logger = daemon_logger("sftp", configuration.user_sftp_log, "info")
     
+    # Allow configuration overrides on command line
+    if sys.argv[1:]:
+        configuration.user_sftp_address = sys.argv[1]
+    if sys.argv[2:]:
+        configuration.user_sftp_port = int(sys.argv[2])
+
     if not configuration.site_enable_sftp:
         err_msg = "SFTP access to user homes is disabled in configuration!"
         logger.error(err_msg)
