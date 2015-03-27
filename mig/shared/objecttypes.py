@@ -219,6 +219,9 @@ user_stats = {'object_type': 'user_stats', 'required': ['disk', 'jobs',
                                                         'resources',
                                                         'certificate'],
               'optional': []}
+openid_status = {'object_type': 'openid_status', 'required': ['server', 'status', 
+                                                              'error'],
+              'optional': []}
 table_pager = {'object_type': 'table_pager', 'required': ['entry_name']}
 object_types = {'object_type': 'object_types',
                 'required_list': [('object_types', 'objects')]}
@@ -292,6 +295,7 @@ valid_types_list = [
     forum_thread_messages,
     vgrid_list,
     user_stats,
+    openid_status,
     table_pager,
     ]
 

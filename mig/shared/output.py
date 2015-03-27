@@ -1701,6 +1701,13 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                 for (key, val) in i['certificate'].items():
                     certificate_info += '%s: %s<br />' % (key, val)
                 lines.append(certificate_info)
+        elif i['object_type'] == 'openid_status':
+            if i.get('server', None):
+                lines.append('<h2>Server</h2><p>%s</p>' % i['server'])
+            if i.get('status', None):
+                lines.append('<h2>Status</h2><p>%s</p>' % i['status'])
+            if i.get('error', None):
+                lines.append('<h2>Error</h2><p>%s</p>' % i['error'])
         elif i['object_type'] == 'script_status':
             status_line = i.get('text')
         elif i['object_type'] == 'timing_info':
