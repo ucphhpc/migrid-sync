@@ -402,7 +402,7 @@ careful when filling in the details.
 <form enctype='multipart/form-data' method='post' action='createfreeze.py'>
 <b>Name:</b><br />
 <input type='hidden' name='flavor' value='freeze' />
-<input type='text' name='freeze_name' size=30 />
+<input type='text' name='freeze_name' size=30 autofocus />
 <input type='hidden' name='freeze_author' value='UNSET' />
 <input type='hidden' name='freeze_department' value='UNSET' />
 <input type='hidden' name='freeze_organization' value='UNSET' />

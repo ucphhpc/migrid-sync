@@ -71,7 +71,7 @@ def main(client_id, user_arguments_dict, environ=None):
     logger.info("%s from %s with identity %s" % (op_name, client_id, identity))
     if client_id and client_id == identity:
         output_objects.append(
-            {'object_type': 'error_text', 'text':
+            {'object_type': 'warning', 'text':
              """You're accessing %s with a user certificate so to completely
 logout you need to make sure it is protected by a password and then close the
 browser. Please refer to your browser and system documentation for details.
@@ -80,18 +80,14 @@ browser. Please refer to your browser and system documentation for details.
 
     # OpenID requires logout on provider and in local mod-auth-openid database.
     # IMPORTANT: some browsers like Firefox may inadvertently renew the local
-    # OpenID session while loading the components for this page (in parallel)
-    # so we keep the local logout step explicit and using plain text mode to
-    # avoid loading other resources.
-
-    # TODO: switch to ajax logout buttons and just show results in an overlay
+    # OpenID session while loading the resources for this page (in parallel).
+    # User clicks logout at OpenID provider, which sends her back here to
+    # finish the local logout.
 
     if do_logout:
-        #logger.info("checking active sessions for %s" % identity)
-        #(found, before) = find_oid_sessions(configuration, identity)
-        #logger.info("expiring active sessions for %s" % identity)
+        logger.info("expiring active sessions for %s" % identity)
         (success, _) = expire_oid_sessions(configuration, identity)
-        logger.info("verifying no active sessions for %s" % identity)
+        logger.info("verifying no active sessions left for %s" % identity)
         (found, remaining) = find_oid_sessions(configuration, identity)
         if success and found and not remaining:
             output_objects.append(
@@ -106,13 +102,16 @@ locally - you may want to close your web browser to finish""" % \
                                    configuration.short_title})
             status = returnvalues.CLIENT_ERROR
     else:
-        local_logout = '?logout=true;output_format=text'
+        local_logout = '?logout=true'
         oid_logout = os.path.join(os.path.dirname(os.path.dirname(identity)),
                                   'logout?return_to=%(SCRIPT_URI)s' % environ)
         oid_logout += local_logout
-        # Remove /id/username from identity and append logout
+        output_objects.append(
+            {'object_type': 'text', 'text': """You can log out from your OpenID
+identity provider and end the active %s session with the link below.""" % \
+             configuration.short_title})
+        # TODO: we could trigger this link automatically
         output_objects.append(        
             {'object_type': 'link', 'destination': oid_logout,
-             'text': "Logout from OpenID provider and %s session" % \
-             configuration.short_title} )
+             'text': "Logout"})
     return (output_objects, status)

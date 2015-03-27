@@ -334,7 +334,7 @@ def main(client_id, user_arguments_dict):
         member_list['vgrids'].append(vgrid_obj)
 
     title_entry = find_entry(output_objects, 'title')
-    label = configuration.site_vgrid_label
+    label = "%ss" % configuration.site_vgrid_label
     # Append VGrid note if custom
     if label != 'VGrid':
         label += ' (i.e. VGrids)'
