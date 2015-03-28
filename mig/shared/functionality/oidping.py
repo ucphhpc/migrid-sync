@@ -37,7 +37,7 @@ from shared.init import initialize_main_variables, find_entry
 def signature(configuration):
     """Signature of the main function"""
 
-    defaults = {}
+    defaults = {'url': ['']}
     return ['openid_status', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -51,11 +51,12 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    oid_url = accepted['url'][-1]
     openid_status = {'object_type': 'openid_status', 'server': None, 'status': None,
                      'error': ""} 
-    if configuration.user_openid_providers:
+    if oid_url in configuration.user_openid_providers:
         # TODO: build url from conf
-        ping_url = "https://openid.ku.dk/ping"
+        ping_url = oid_url.replace("/id/", "/ping")
         openid_status['server'] = ping_url
         ping_status = urllib.urlopen(ping_url)
         http_status = ping_status.getcode()
@@ -73,8 +74,8 @@ def main(client_id, user_arguments_dict):
                 openid_status['error'] = "server returned error code %s" % \
                                          http_status
     else:
-        openid_status['server'] = 'no server configured'
+        openid_status['server'] = 'no such server configured'
         openid_status['status'] = "unavailable"
-        openid_status['error'] = "OpenID login not enabled"
+        openid_status['error'] = "OpenID login from %s not enabled" % oid_url
     output_objects.append(openid_status)
     return (output_objects, returnvalues.OK)

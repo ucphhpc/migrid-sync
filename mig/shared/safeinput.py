@@ -880,7 +880,7 @@ def guess_type(name):
             __type_map[key] = valid_alphanumeric
         for key in ('proxy_upload', ):
             __type_map[key] = valid_printable
-        for key in ('openid.ns', 'openid.ns.sreg', ):
+        for key in ('openid.ns', 'openid.ns.sreg', 'url', ):
             __type_map[key] = valid_base_url
         
     # Return type checker from __type_map with fall back to alphanumeric

@@ -1,1 +1,1 @@
-../cgi-bin/signup.py
+../cgi-bin/oidping.py
