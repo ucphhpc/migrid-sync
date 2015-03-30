@@ -46,9 +46,7 @@ try:
     from wsgidav.server import __file__ as server_init_path
     sys.path.append(os.path.dirname(server_init_path))
     from cherrypy import wsgiserver
-    from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter
-    from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter
-    from OpenSSL import SSL
+    from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter, ssl
     from wsgidav.fs_dav_provider import FileResource, FolderResource, \
          FilesystemProvider
     from wsgidav.domain_controller import WsgiDAVDomainController
@@ -105,7 +103,74 @@ def _find_authenticator(application):
         return application
     else:
         return _find_authenticator(application._application)
-    
+
+
+class HardenedSSLAdapter(BuiltinSSLAdapter):
+    """Hardened version of the BuiltinSSLAdapter. It takes an optional custom
+    ssl_version and ciphers argument for use in setting up the socket security.
+    This is particularly important in relation to mitigating the series of
+    recent SSL attack vectors like POODLE.
+    The default is to try the most flexible security protocol negotiation but
+    with only the strong ciphers recommended by Mozilla:
+    https://wiki.mozilla.org/Security/Server_Side_TLS#Apache
+    just like we do in the apache conf.
+    Legacy versions of python (<2.7) don't support explicit ciphers so for those
+    a warning is issued and unless a custom ssl_version is supplied the result
+    is basically the original BuiltinSSLAdapter.
+    """
+
+    ssl_kwargs = {}
+    # Default is same as BuiltinSSLAdapter
+    ssl_version = ssl.PROTOCOL_SSLv23
+    # Mirror strong ciphers used in Apache
+    ciphers = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA"
+
+    def __init__(self, certificate, private_key, certificate_chain=None,
+                 ssl_version=None, ciphers=None):
+        """Save ssl_version and ciphers for use in wrap method"""
+        if ssl_version is not None:
+            self.ssl_version = ssl_version
+        if ciphers is not None:
+            self.ciphers = ciphers
+
+        self.ssl_kwargs.update({"ssl_version": self.ssl_version})
+        if sys.version_info[:2] >= (2, 7):
+            self.ssl_kwargs.update({"ciphers": self.ciphers})
+        else:
+            logger.warning("Unable to select explicit strong TLS ciphers")
+            logger.warning("Upgrade to python 2.7+ for maximum security")
+
+
+        super(HardenedSSLAdapter, self).__init__(certificate, private_key,
+                                                 certificate_chain)
+
+    def wrap(self, sock):
+        """Wrap and return the given socket, plus WSGI environ entries.
+        Extended to pass the provided ssl_version and ciphers arguments to the
+        wrap_socket call.
+        """
+        try:
+            s = ssl.wrap_socket(sock, do_handshake_on_connect=True,
+                                server_side=True, certfile=self.certificate,
+                                keyfile=self.private_key, **(self.ssl_kwargs))
+        except ssl.SSLError:
+            e = sys.exc_info()[1]
+            if e.errno == ssl.SSL_ERROR_EOF:
+                # This is almost certainly due to the cherrypy engine
+                # 'pinging' the socket to assert it's connectable;
+                # the 'ping' isn't SSL.
+                return None, {}
+            elif e.errno == ssl.SSL_ERROR_SSL:
+                if e.args[1].endswith('http request'):
+                    # The client is speaking HTTP to an HTTPS server.
+                    raise wsgiserver.NoSSLError
+                elif e.args[1].endswith('unknown protocol'):
+                    # The client is speaking some non-HTTP protocol.
+                    # Drop the conn.
+                    return None, {}
+            raise
+        return s, self.get_environ(s)
+
     
 class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     """Override auth database lookups to use username and password hash for
@@ -425,18 +490,8 @@ def run(configuration):
         cert = config['ssl_certificate']
         key = config['ssl_private_key']
         chain = config['ssl_certificate_chain']
-        wsgiserver.CherryPyWSGIServer.ssl_adapter = BuiltinSSLAdapter(cert, key, chain)
-        #wsgiserver.CherryPyWSGIServer.ssl_adapter = pyOpenSSLAdapter(cert, key, chain)
-        #wsgiserver.CherryPyWSGIServer.ssl_adapter.context = SSL.Context(SSL.SSLv23_METHOD)
-        #wsgiserver.CherryPyWSGIServer.ssl_adapter.context.set_options(SSL.OP_NO_SSLv2)
-        #wsgiserver.CherryPyWSGIServer.ssl_adapter.context.set_options(SSL.OP_NO_SSLv3)
-        #wsgiserver.CherryPyWSGIServer.ssl_adapter.context.use_certificate_file(cert)
-        #wsgiserver.CherryPyWSGIServer.ssl_adapter.context.use_privatekey_file(key)
-        #if chain:
-        #    wsgiserver.CherryPyWSGIServer.ssl_adapter.context.use_certificate_chain_file(chain)
-        ## Mirror Apache ciphers
-        #ciphers = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA"
-        #wsgiserver.CherryPyWSGIServer.ssl_adapter.context.set_cipher_list(ciphers)
+        #wsgiserver.CherryPyWSGIServer.ssl_adapter = BuiltinSSLAdapter(cert, key, chain)
+        wsgiserver.CherryPyWSGIServer.ssl_adapter = HardenedSSLAdapter(cert, key, chain)
 
     # Use bundled CherryPy WSGI Server to support SSL
     version = "%s WebDAV" % configuration.short_title
