@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# signup - general sign up entry point backend
+# login - general login method selection backend
 # Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Sign up for account with certificate or OpenID back end"""
+"""Back end to let users choose between login with certificate or OpenID"""
 
 import os
 
@@ -36,21 +36,17 @@ from shared.init import initialize_main_variables, find_entry
 def get_valid_topics(configuration):
     """Get a map of valid show topics and their associated helper URLs"""
     valid_topics = {
-        'kitoid': {'url': os.path.join(configuration.migserver_https_oid_url,
-                                       'wsgi-bin', 'autocreate.py')},
-        'migoid': {'url': os.path.join(configuration.migserver_https_sid_url,
-                                       'wsgi-bin', 'autocreate.py')},
-        'migcert': {'url': os.path.join(configuration.migserver_https_sid_url,
-                                        'cgi-sid', 'reqcert.py')},
-        'extcert': {'url': os.path.join(configuration.migserver_https_cert_url,
-                                        'cgi-bin', 'extcert.py')}
+        'kitoid': {'url': configuration.migserver_https_oid_url},
+        'migoid': {'url': configuration.migserver_https_oid_url},
+        'migcert': {'url': configuration.migserver_https_cert_url},
+        'extcert': {'url': configuration.migserver_https_cert_url}
         }
     return valid_topics
 
 def signature(configuration):
     """Signature of the main function"""
 
-    defaults = {'show': configuration.site_signup_methods}
+    defaults = {'show': configuration.site_login_methods}
     return ['html_form', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -71,7 +67,8 @@ def main(client_id, user_arguments_dict):
         show = defaults['show']
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s account sign up' % configuration.short_title
+    title_entry['text'] = '%s login selector' % configuration.short_title
+    # TODO: move ping to shared location for signup and login
     # TODO: wrap openid ping in function and split up for each oid
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
@@ -121,20 +118,19 @@ def main(client_id, user_arguments_dict):
 '''
     title_entry['skipmenu'] = True
     header_entry = {'object_type': 'header', 'text'
-                    : 'Welcome to the %s account sign up page' % \
+                    : 'Welcome to the %s login selector page' % \
                     configuration.short_title}
     output_objects.append(header_entry)
 
-    html = """<h2>Signup for %s</h2>
+    html = """<h2>Login to %s</h2>
 <p>
-Before you can use this site you need a user account. You can sign up for one
-here as described below.
+There are multiple login methods as described below.
 </p>
 """ % configuration.short_title
     if configuration.user_openid_providers and 'kitoid' in show or \
            'migoid' in show:
         html += """<h2>OpenID</h2>
-The simplest sign up method is to use an existing OpenID login if you have one.
+The simplest login method is to use an existing OpenID login if you have one.
 """
         if 'kitoid' in show:
             html += """
@@ -150,24 +146,18 @@ OpenID as well.
 </div>
 <div class='form_container'>
 <form method='post' action='%(kitoid_url)s'>
-<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
-<input id='kitoid_button' type='submit' value='Sign Up with KU OpenID' />
+<input id='kitoid_button' type='submit' value='Login with KU OpenID' />
 </form>
 </div>
 """
         if 'migoid' in show:
             html += """
 <p>
-If you already have a MiG user certificate and account here you can sign up for
-OpenID access to the account using the local MiG OpenID server.
+If you already have a MiG OpenID account here you can login to the account
+using the local MiG OpenID server.
 <div class='form_container'>
 <form method='post' action='%(migoid_url)s'>
-<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
-<input id='migoid_button' type='submit' value='Sign Up with MiG OpenID' />
+<input id='migoid_button' type='submit' value='Login with MiG OpenID' />
 </form>
 </p>
 </div>
@@ -175,9 +165,9 @@ OpenID access to the account using the local MiG OpenID server.
             
         html += """
 <p>
-When you click the Sign Up with OpenID button you will be taken to a login
-page where you need to enter your credentials and accept that your identity is
-used for login with this site as well.
+When you click the Login with OpenID button you will be taken to a login
+page, where you need to provide your credentials and accept that your identity
+is used for login with this site.
 </p>
 """
 
@@ -186,31 +176,31 @@ used for login with this site as well.
 <h2>Client Certificate</h2>
 <p>
 We provide high security access control with client certificates, like the ones
-you may know from digital signature providers. It is a bit cumbersome to get
-and install such a client certificate, so if you want to keep it simple and
-have other access options, you may want to use those instead.
+you may know from digital signature providers.
 </p>
 """
         if 'migcert' in show:
             html += """
 <p>
-You can sign up for an account with an associated x509 user certificate here.
+If you have an x509 user certificate associated with your account you can login
+using it here.
+Depending on your certificate installation you may be prompted for a password.
 </p>
 <div class='form_container'>
 <form method='get' action='%(migcert_url)s'>
-<input id='reqcert_button' type='submit' value='Sign Up for a User Certificate' />
+<input id='reqcert_button' type='submit' value='Login with Your User Certificate' />
 </form>
 </div>
 """
         if 'extcert' in show:
             html += """
 <p>
-If you already have an x509 user certificate that we trust, you can also sign
-up with that instead of requesting a new one.
+If you already have an x509 user certificate that we trust, you can also login
+with that here.
 </p>
 <div class='form_container'>
 <form method='get' action='%(extcert_url)s'>
-<input id='extcert_button' type='submit' value='Sign Up with Existing User Certificate' />
+<input id='extcert_button' type='submit' value='Login with Existing User Certificate' />
 </form>
 </div>
 """

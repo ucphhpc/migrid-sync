@@ -95,6 +95,7 @@ def fix_missing(config_file, verbose=True):
         'site_vgrid_creators': 'distinguished_name:.*',
         'site_vgrid_label': 'VGrid',
         'site_signup_methods': '',
+        'site_login_methods': '',
         'hg_path': '/usr/bin/hg',
         'hgweb_scripts': '/usr/share/doc/mercurial-common/examples/',
         'trac_admin_path': '/usr/bin/trac-admin',
@@ -244,6 +245,7 @@ class Configuration:
     site_vgrid_creators = [('distinguished_name', '.*')]
     site_vgrid_label = 'VGrid'
     site_signup_methods = ['extcert']
+    site_login_methods = ['extcert']
     hg_path = ''
     hgweb_scripts = ''
     trac_admin_path = ''
@@ -880,6 +882,11 @@ class Configuration:
         if config.has_option('SITE', 'signup_methods'):
             self.site_signup_methods = config.get('SITE',
                                                   'signup_methods').split()
+        if config.has_option('SITE', 'login_methods'):
+            self.site_login_methods = config.get('SITE',
+                                                  'login_methods').split()
+        else:
+            self.site_login_methods = self.site_signup_methods
         if config.has_option('SITE', 'script_deps'):
             self.site_script_deps = config.get('SITE', 'script_deps').split()
         else:
