@@ -106,32 +106,51 @@ def _find_authenticator(application):
 
 
 class HardenedSSLAdapter(BuiltinSSLAdapter):
-    """Hardened version of the BuiltinSSLAdapter. It takes an optional custom
-    ssl_version and ciphers argument for use in setting up the socket security.
+    """Hardened version of the BuiltinSSLAdapter. It takes optional custom
+    ssl_version, ciphers and options arguments for use in setting up the socket
+    security.
     This is particularly important in relation to mitigating the series of
-    recent SSL attack vectors like POODLE.
-    The default is to try the most flexible security protocol negotiation but
+    recent SSL attack vectors like POODLE and CRIME.
+    The default is to try the most flexible security protocol negotiation, but
     with only the strong ciphers recommended by Mozilla:
     https://wiki.mozilla.org/Security/Server_Side_TLS#Apache
     just like we do in the apache conf.
-    Legacy versions of python (<2.7) don't support explicit ciphers so for those
-    a warning is issued and unless a custom ssl_version is supplied the result
-    is basically the original BuiltinSSLAdapter.
+    Similarly the insecure protocols and compression is disabled if possible
+    (python 2.7.9+).
+
+    Legacy versions of python (<2.7) support neither ciphers nor options tuning,
+    so for those versions a warning is issued and unless a custom ssl_version
+    is supplied the result is basically the original BuiltinSSLAdapter.
     """
+
+    # Inherited args
+    certificate = None
+    private_key = None
 
     ssl_kwargs = {}
     # Default is same as BuiltinSSLAdapter
     ssl_version = ssl.PROTOCOL_SSLv23
+    # Hardened SSL context options: limit to TLS without compression if
+    #                               python is recent enough (2.7.9+)
+    options = 0
+    options |= getattr(ssl, 'OP_NO_SSLv2', 0x1000000)
+    options |= getattr(ssl, 'OP_NO_SSLv3', 0x2000000)
+    options |= getattr(ssl, 'OP_NO_COMPRESSION', 0x20000)
     # Mirror strong ciphers used in Apache
     ciphers = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA"
 
     def __init__(self, certificate, private_key, certificate_chain=None,
-                 ssl_version=None, ciphers=None):
+                 ssl_version=None, ciphers=None, options=None):
         """Save ssl_version and ciphers for use in wrap method"""
+        super(HardenedSSLAdapter, self).__init__(certificate, private_key,
+                                                 certificate_chain)
+
         if ssl_version is not None:
             self.ssl_version = ssl_version
         if ciphers is not None:
             self.ciphers = ciphers
+        if options is not None:
+            self.options = options
 
         self.ssl_kwargs.update({"ssl_version": self.ssl_version})
         if sys.version_info[:2] >= (2, 7):
@@ -141,13 +160,11 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
             logger.warning("Upgrade to python 2.7+ for maximum security")
 
 
-        super(HardenedSSLAdapter, self).__init__(certificate, private_key,
-                                                 certificate_chain)
-
     def wrap(self, sock):
         """Wrap and return the given socket, plus WSGI environ entries.
         Extended to pass the provided ssl_version and ciphers arguments to the
         wrap_socket call.
+        Limits protocols and disables compression for modern python versions.
         """
         try:
             s = ssl.wrap_socket(sock, do_handshake_on_connect=True,
@@ -169,6 +186,13 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                     # Drop the conn.
                     return None, {}
             raise
+
+        # Futher harden connections if python is recent enough (2.7.9+)
+        
+        ssl_ctx = getattr(s, 'context', None)
+        if ssl_ctx:
+            ssl_ctx.options |= self.options
+            
         return s, self.get_environ(s)
 
     
@@ -480,16 +504,9 @@ def run(configuration):
     #print('app auth: %s' % app_authenticator)
 
     if not config.get('nossl', False):
-        config['ssl_certificate'] = configuration.user_davs_key
-        config['ssl_private_key'] = configuration.user_davs_key
-        config['ssl_certificate_chain'] = ''
-
-        # TMP! reverted to basic SSL due to problems with OSX uploads otherwise
-        # Important: disable SSLv2/SSLv3 and weak ciphers like we do in Apache
-        # http://roadha.us/2014/10/disable-sslv3-avoid-poodle-attack-web-py/
-        cert = config['ssl_certificate']
-        key = config['ssl_private_key']
-        chain = config['ssl_certificate_chain']
+        cert = config['ssl_certificate'] = configuration.user_davs_key
+        key = config['ssl_private_key'] = configuration.user_davs_key
+        chain = config['ssl_certificate_chain'] = ''
         #wsgiserver.CherryPyWSGIServer.ssl_adapter = BuiltinSSLAdapter(cert, key, chain)
         wsgiserver.CherryPyWSGIServer.ssl_adapter = HardenedSSLAdapter(cert, key, chain)
 
