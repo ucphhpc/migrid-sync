@@ -38,15 +38,16 @@ def get_valid_topics(configuration):
     valid_topics = {
         'kitoid': {'url': configuration.migserver_https_oid_url},
         'migoid': {'url': configuration.migserver_https_oid_url},
-        'migcert': {'url': configuration.migserver_https_cert_url},
-        'extcert': {'url': configuration.migserver_https_cert_url}
+        'extcert': {'url': configuration.migserver_https_cert_url},
         }
     return valid_topics
 
 def signature(configuration):
     """Signature of the main function"""
 
-    defaults = {'show': configuration.site_login_methods}
+    defaults = {'show': configuration.site_login_methods,
+                'modauthopenid.error': [''],
+                'modauthopenid.referrer': ['']}
     return ['html_form', defaults]
 
 def main(client_id, user_arguments_dict):
@@ -65,6 +66,7 @@ def main(client_id, user_arguments_dict):
     if not show:
         logger.info('%s showing default topics' % op_name)
         show = defaults['show']
+    openid_error = ', '.join(accepted['modauthopenid.error'])
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s login selector' % configuration.short_title
@@ -122,7 +124,29 @@ def main(client_id, user_arguments_dict):
                     configuration.short_title}
     output_objects.append(header_entry)
 
-    html = """<h2>Login to %s</h2>
+    html = ""
+    if openid_error:
+        err_txt, report_txt = '', ''
+        if 'no_idp_found' in openid_error:
+            err_txt += "OpenID server did not respond!"
+            report_txt += """It appears the requested OpenID login service is
+offline"""
+        else:
+            err_txt += "OpenID server error!"
+            report_txt += """It appears there's a problem with the requested
+OpenID login service"""
+        report_txt += """, so you cannot currently use it for login to %s.<br />
+Please report the problem to your OpenID identity provider.
+""" % configuration.short_title
+        html += """<h2>OpenID Login to %s Failed!</h2>
+<div class='errortext'>
+%s (error code(s): %s)
+</div>
+<div class='warningtext'>
+%s
+</div>
+""" % (configuration.short_title, err_txt, openid_error, report_txt)
+    html += """<h2>Login to %s</h2>
 <p>
 There are multiple login methods as described below.
 </p>
@@ -171,7 +195,7 @@ is used for login with this site.
 </p>
 """
 
-    if 'migcert' in show or 'extcert' in show:
+    if 'extcert' in show:
         html += """
 <h2>Client Certificate</h2>
 <p>
@@ -179,28 +203,15 @@ We provide high security access control with client certificates, like the ones
 you may know from digital signature providers.
 </p>
 """
-        if 'migcert' in show:
-            html += """
+        html += """
 <p>
 If you have an x509 user certificate associated with your account you can login
 using it here.
 Depending on your certificate installation you may be prompted for a password.
 </p>
 <div class='form_container'>
-<form method='get' action='%(migcert_url)s'>
-<input id='reqcert_button' type='submit' value='Login with Your User Certificate' />
-</form>
-</div>
-"""
-        if 'extcert' in show:
-            html += """
-<p>
-If you already have an x509 user certificate that we trust, you can also login
-with that here.
-</p>
-<div class='form_container'>
 <form method='get' action='%(extcert_url)s'>
-<input id='extcert_button' type='submit' value='Login with Existing User Certificate' />
+<input id='reqcert_button' type='submit' value='Login with Your User Certificate' />
 </form>
 </div>
 """
@@ -208,7 +219,6 @@ with that here.
 """
     var_map = {'kitoid_url': valid_show['kitoid']['url'],
                'migoid_url':valid_show['migoid']['url'],
-               'migcert_url': valid_show['migcert']['url'],
                'extcert_url': valid_show['extcert']['url'],
                }
     output_objects.append({'object_type': 'html_form', 'text': html % var_map})

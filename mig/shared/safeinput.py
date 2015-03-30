@@ -83,16 +83,19 @@ name_extras = VALID_ACCENTED + ' -@.'
 dn_extras = name_extras + '/=@.:'
 
 integer_extras = '+-'
+float_extras = integer_extras + '.'
 password_extras = ' -_#.,:;!@%/()[]{}+=?<>'
 password_min_len = 4
 password_max_len = 64
 dn_max_len = 96
 
 valid_integer_chars = digits + integer_extras
+valid_float_chars = digits + float_extras
 valid_password_chars = letters + digits + password_extras
 valid_name_chars = letters + digits + name_extras
 valid_dn_chars = letters + digits + dn_extras
 VALID_INTEGER_CHARACTERS = valid_integer_chars
+VALID_FLOAT_CHARACTERS = valid_float_chars
 VALID_PASSWORD_CHARACTERS = valid_password_chars
 VALID_NAME_CHARACTERS = valid_name_chars
 VALID_DN_CHARACTERS = valid_dn_chars
@@ -318,6 +321,13 @@ def valid_integer(contents, min_length=0, max_length=-1, extra_chars=''):
     """Verify that supplied integer only contain valid characters"""
 
     valid_chars = VALID_INTEGER_CHARACTERS + extra_chars
+    __valid_contents(contents, valid_chars, min_length, max_length)
+
+
+def valid_float(contents, min_length=0, max_length=-1, extra_chars=''):
+    """Verify that supplied contents only contain float characters"""
+
+    valid_chars = VALID_FLOAT_CHARACTERS + extra_chars
     __valid_contents(contents, valid_chars, min_length, max_length)
 
 
@@ -871,7 +881,7 @@ def guess_type(name):
         for key in ('editarea', 'execute', 'premenu', 'postmenu', 'precontent',
                     'postcontent', 'publickeys', 'freeze_description', ):
             __type_map[key] = valid_free_text
-        for key in ('show', ):
+        for key in ('show', 'modauthopenid.error', ):
             __type_map[key] = valid_label_text
         # sreg required may have commas - reuse password
         for key in ('password', 'verifypassword', 'openid.sreg.required', ):
@@ -882,7 +892,22 @@ def guess_type(name):
             __type_map[key] = valid_printable
         for key in ('openid.ns', 'openid.ns.sreg', 'url', ):
             __type_map[key] = valid_base_url
+        for key in ('modauthopenid.referrer', ):
+            __type_map[key] = valid_url
+
+        # Image meta data (filemetaio.py)
         
+        for key in ('image_type', 'image_datatype',):
+            __type_map[key] = valid_alphanumeric
+
+        for key in ('image_offset', 'image_xdim', 'image_ydim',):
+            __type_map[key] = valid_numeric
+
+        for key in ('image_preview_cutoff_min', 
+                    'image_preview_cutoff_max',):
+            __type_map[key] = valid_float      
+            
+
     # Return type checker from __type_map with fall back to alphanumeric
     
     return __type_map.get(name.lower().strip(), valid_alphanumeric)

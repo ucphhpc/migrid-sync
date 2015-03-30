@@ -92,6 +92,7 @@ def main(client_id, user_arguments_dict):
         helper_urls = {
             'migoid_entry_url': os.path.join(sid_url),
             'migoid_signup_url': os.path.join(sid_url, 'cgi-sid', 'signup.py'),
+            'migoid_login_url': os.path.join(sid_url, 'cgi-sid', 'login.py'),
             'migoid_create_url': os.path.join(sid_url, 'wsgi-bin',
                                               'autocreate.py'),
             'migoid_dash_url': os.path.join(sid_url, 'wsgi-bin',
@@ -100,6 +101,7 @@ def main(client_id, user_arguments_dict):
                                              'fileman.py'),
             'kitoid_entry_url': os.path.join(oid_url),
             'kitoid_signup_url': os.path.join(oid_url, 'cgi-sid', 'signup.py'),
+            'kitoid_login_url': os.path.join(oid_url, 'cgi-sid', 'login.py'),
             'kitoid_create_url': os.path.join(oid_url, 'cgi-sid',
                                               'autocreate.py'),
             'kitoid_dash_url': os.path.join(oid_url, 'wsgi-bin',
@@ -108,11 +110,13 @@ def main(client_id, user_arguments_dict):
                                              'fileman.py')}
         discovery_uris = '''<URI>%(kitoid_entry_url)s</URI>
             <URI>%(kitoid_signup_url)s</URI>
+            <URI>%(kitoid_login_url)s</URI>
             <URI>%(kitoid_create_url)s</URI>
             <URI>%(kitoid_dash_url)s</URI>
             <URI>%(kitoid_files_url)s</URI>
             <URI>%(migoid_entry_url)s</URI>
             <URI>%(migoid_signup_url)s</URI>
+            <URI>%(migoid_login_url)s</URI>
             <URI>%(migoid_create_url)s</URI>
             <URI>%(migoid_dash_url)s</URI>
             <URI>%(migoid_files_url)s</URI>
