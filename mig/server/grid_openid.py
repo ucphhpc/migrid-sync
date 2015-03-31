@@ -295,6 +295,8 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             if path == '/':
                 self.showMainPage()
+            elif path.startswith('/ping'):
+                self.showPingPage()
             elif path == '/openidserver':
                 self.serverEndPoint(self.query)
 
@@ -657,6 +659,29 @@ class ServerHandler(BaseHTTPRequestHandler):
         %s
         </dl>
         """ % (link(endpoint_url), resource_markup,))
+
+    def showPingPage(self):
+        """Basic server availability test page provider"""
+
+        # TODO: consider simple user lookup test to set status
+
+        ready = True
+
+        def link(url):
+            url_attr = quoteattr(url)
+            url_text = cgi.escape(url)
+            return '<a href=%s><code>%s</code></a>' % (url_attr, url_text)
+
+        # IMPORTANT: This is the format availability checker looks for.
+        # Do not change unless you know what you're doing!
+
+        status = "<h1>%s</h1>" % ready
+
+        self.showPage(200, 'Ping', msg='''\
+        <h1>Ping</h1>
+        <p>This is a server availability page for %s.</p>
+        %s
+        ''' % (link(self.server.base_url), status,))
 
     def showErrorPage(self, error_message):
         """Error page provider"""

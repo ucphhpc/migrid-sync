@@ -1155,4 +1155,51 @@ function switch_language(lang) {
 
     $("div:lang("+lang+")").show();
 }
-    
+
+/* OpenID availability checker for use on signup and login pages */    
+function check_oid_available(action, oid_title, oid_url, tag_prefix) {
+    $("#"+tag_prefix+"status").removeClass();
+    $("#"+tag_prefix+"status").addClass("status_box");
+    $("#"+tag_prefix+"status").addClass("spinner").css("padding-left", "20px");
+    $("#"+tag_prefix+"status").append("<span>"+oid_title+" OpenID server status: </span>");
+    $("#"+tag_prefix+"status").append("<span id="+tag_prefix+"msg></span> <span id="+tag_prefix+"err></span>");
+    $("#"+tag_prefix+"msg").append("checking availability ...");
+    /* Run oidping check in the background and handle as soon as results come in */
+    $.ajax({
+        url: "oidping.py?output_format=json;url="+oid_url,
+        type: "GET",
+        dataType: "json",
+        cache: false,
+        success: function(jsonRes, textStatus) {
+            var i = 0;
+            var online = false;
+            var err = "";
+            // Grab results from json response and place them in resource status.
+            for (i=0; i<jsonRes.length; i++) {
+                //alert("debug: parsing entry "+i);
+                //alert("debug: parsing "+jsonRes[i]);
+                //$("#"+tag_prefix+"debug").append(jsonRes[i].toSource());
+                if (jsonRes[i].object_type == "openid_status") {    
+                    online = jsonRes[i].status;
+                    error = jsonRes[i].error;
+                    $("#"+tag_prefix+"status").removeClass("spinner").css("padding-left", "0px");
+                    $("#"+tag_prefix+"msg").empty();
+                    $("#"+tag_prefix+"msg").append(online);
+                    if (online == "online") {
+                         $("#"+tag_prefix+"status").addClass("ok").css("padding-left", "20px");
+                         $("#"+tag_prefix+"msg").addClass("status_online");
+                         $("#"+tag_prefix+"button").attr("disabled", false);
+                    } else {
+                         $("#"+tag_prefix+"err").append("("+error+")<br/>");
+                         $("#"+tag_prefix+"status").append("<span>Unable to "+action+" with this method until OpenID server comes back online. Please report the problem to the "+oid_title+" OpenID administrators.</span>");
+                         $("#"+tag_prefix+"status").addClass("error").css("padding-left", "20px");
+                         $("#"+tag_prefix+"msg").addClass("status_offline");
+                         $("#"+tag_prefix+"button").attr("disabled", true);
+                    }
+                   break;
+                }
+            }
+        }
+    });
+}
+

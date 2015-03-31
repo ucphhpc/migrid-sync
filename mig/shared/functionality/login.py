@@ -30,6 +30,7 @@
 import os
 
 import shared.returnvalues as returnvalues
+from shared.defaults import keyword_all
 from shared.functional import validate_input
 from shared.init import initialize_main_variables, find_entry
 
@@ -62,7 +63,10 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     valid_show = get_valid_topics(configuration)
-    show = [i.lower() for i in accepted['show'] if i.lower() in valid_show]
+    if keyword_all in accepted['show']:
+        show = valid_show.keys()
+    else:
+        show = [i.lower() for i in accepted['show'] if i.lower() in valid_show]
     if not show:
         logger.info('%s showing default topics' % op_name)
         show = defaults['show']
@@ -74,56 +78,22 @@ def main(client_id, user_arguments_dict):
     # TODO: wrap openid ping in function and split up for each oid
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
 <script type="text/javascript">
     $(document).ready(function() {
-        var action = "login";
-        var providers = "KIT";
-        $("#kitoid_status").removeClass();
-        $("#kitoid_status").addClass("status_box");
-        $("#kitoid_status").addClass("spinner").css("padding-left", "20px");
-        $("#kitoid_status").append("<span>"+providers+" OpenID server status: </span>");
-        $("#kitoid_status").append("<span id=kitoid_msg></span> <span id=kitoid_err></span>");
-        $("#kitoid_msg").append("checking availability ...");
-        /* Run oid check in the background and handle as soon as results come in */
-        $.ajax({
-            url: "oidping.py?output_format=json;url=https://openid.ku.dk/id/",
-            type: "GET",
-            dataType: "json",
-            cache: false,
-            success: function(jsonRes, textStatus) {
-                var i = 0;
-                var online = false;
-                var err = "";
-                // Grab results from json response and place them in resource status.
-                for (i=0; i<jsonRes.length; i++) {
-                    //alert("debug: parsing entry "+i);
-                    //alert("debug: parsing "+jsonRes[i]);
-                    //$("#kitoid_debug").append(jsonRes[i].toSource());
-                    if (jsonRes[i].object_type == "openid_status") {    
-                        online = jsonRes[i].status;
-                        error = jsonRes[i].error;
-                        $("#kitoid_status").removeClass("spinner").css("padding-left", "0px");
-                        $("#kitoid_msg").empty();
-                        $("#kitoid_msg").append(online);
-                        if (online == "online") {
-                             $("#kitoid_status").addClass("ok").css("padding-left", "20px");
-                             $("#kitoid_msg").addClass("status_online");
-                             $("#kitoid_button").attr("disabled", false);
-                        } else {
-                             $("#kitoid_err").append("("+error+")<br/>");
-                             $("#kitoid_status").append("<span>Unable to "+action+" with this method until OpenID server comes back online. Please report the problem to "+providers+".</span>");
-                             $("#kitoid_status").addClass("error").css("padding-left", "20px");
-                             $("#kitoid_msg").addClass("status_offline");
-                             $("#kitoid_button").attr("disabled", true);
-                        }
-                       break;
-                    }
-                }
-            }
-        });
+        var action = "login", oid_title, oid_url, tag_prefix;
+        oid_title = "KIT";
+        oid_url = "https://openid.ku.dk/id/";
+        tag_prefix = "kitoid_";
+        check_oid_available(action, oid_title, oid_url, tag_prefix);
+        oid_title = "%s";
+        var oid_url = "https://%s:%s/openid/id/";
+        tag_prefix = "migoid_";
+        check_oid_available(action, oid_title, oid_url, tag_prefix);
     });
 </script>
-'''
+''' % (configuration.short_title, configuration.user_openid_address,
+       configuration.user_openid_port)
     title_entry['skipmenu'] = True
     header_entry = {'object_type': 'header', 'text'
                     : 'Welcome to the %s login selector page' % \
