@@ -76,9 +76,12 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript">
     $(document).ready(function() {
-        $("#oid_status").addClass("spinner").css("padding-left", "20px");
-        $("#oid_status").append("<p>OpenID server status: <span id=oid_msg></span> <span id=oid_err></span></p>");
-        $("#oid_msg").append("checking availability ...");
+        $("#kitoid_status").addClass("status_box");
+        $("#kitoid_status").addClass("spinner").css("padding-left", "20px");
+        $("#kitoid_status").append("<span>KIT OpenID server status: </span>");
+        $("#kitoid_status").append("<span id=kitoid_msg></span> <span id=kitoid_err></span>");
+        $("#kitoid_status").addClass("info").css("padding-left", "20px");
+        $("#kitoid_msg").append("checking availability ...");
         /* Run oid check in the background and handle as soon as results come in */
         $.ajax({
             url: "oidping.py?output_format=json;url=https://openid.ku.dk/id/",
@@ -93,21 +96,21 @@ def main(client_id, user_arguments_dict):
                 for (i=0; i<jsonRes.length; i++) {
                     //alert("debug: parsing entry "+i);
                     //alert("debug: parsing "+jsonRes[i]);
-                    //$("#oid_debug").append(jsonRes[i].toSource());
+                    //$("#kitoid_debug").append(jsonRes[i].toSource());
                     if (jsonRes[i].object_type == "openid_status") {    
                         online = jsonRes[i].status;
                         error = jsonRes[i].error;
-                        $("#oid_status").removeClass("spinner").css("padding-left", "0px");
-                        $("#oid_msg").empty();
-                        $("#oid_msg").append(online);
+                        $("#kitoid_status").removeClass("spinner").css("padding-left", "0px");
+                        $("#kitoid_msg").empty();
+                        $("#kitoid_msg").append(online);
                         // TODO: Disable if okay when more tested?
                         if (online == "online") {
-                             $("#oid_status").addClass("info").css("padding-left", "20px");
+                             $("#kitoid_status").addClass("ok").css("padding-left", "20px");
                              $("#kitoid_button").attr("disabled", false);
                         } else {
-                             $("#oid_err").append("("+error+")");
-                             $("#oid_status").append("<p>Unable to sign up with this method until OpenID server comes back online. Please report the problem to KIT.</p>");
-                             $("#oid_status").addClass("error").css("padding-left", "20px");
+                             $("#kitoid_err").append("("+error+")");
+                             $("#kitoid_status").append("<span>Unable to sign up with this method until OpenID server comes back online. Please report the problem to KIT.</span>");
+                             $("#kitoid_status").addClass("error").css("padding-left", "20px");
                              $("#kitoid_button").attr("disabled", true);
                         }
                        break;
@@ -162,10 +165,10 @@ The simplest login method is to use an existing OpenID login if you have one.
 If you are a KU user, your usual login for KU Net and KU webmail works for
 OpenID as well.
 </p>
-<div id='oid_status'>
+<div id='kitoid_status'>
 <!-- OpenID status updated by AJAX call -->
 </div>
-<div id='oid_debug'>
+<div id='kitoid_debug'>
 <!-- OpenID debug updated by AJAX call -->
 </div>
 <div class='form_container'>
@@ -179,6 +182,12 @@ OpenID as well.
 <p>
 If you already have a MiG OpenID account here you can login to the account
 using the local MiG OpenID server.
+<div id='migoid_status'>
+<!-- OpenID status updated by AJAX call -->
+</div>
+<div id='migoid_debug'>
+<!-- OpenID debug updated by AJAX call -->
+</div>
 <div class='form_container'>
 <form method='post' action='%(migoid_url)s'>
 <input id='migoid_button' type='submit' value='Login with MiG OpenID' />
