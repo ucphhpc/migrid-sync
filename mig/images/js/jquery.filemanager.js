@@ -401,6 +401,7 @@ if (jQuery) (function($){
             },
             edit:   function (action, el, pos) {
                 $("#editor_dialog textarea[name='editarea']").val('');
+                $("#editor_output").removeClass()
                 $("#editor_output").html('');                
                 $("#editor_dialog").dialog(
                     { buttons: {
@@ -453,6 +454,7 @@ if (jQuery) (function($){
                 
             },
             create:    function (action, el, pos) {                
+                $("#editor_output").removeClass()
                 $("#editor_output").html('');
                 $("#editor_dialog").dialog(
                     { buttons: {
@@ -1252,11 +1254,16 @@ if (jQuery) (function($){
               var edit_out ='';
               var errors = $(this).renderError(responseObject);
               var warnings = $(this).renderWarning(responseObject);
+              // Reset any previous CSS
+              $("#editor_output").removeClass()
               if (errors.length > 0) {
+                  $("#editor_output").addClass("error").css("padding-left", "20px");;
                   edit_out += errors;
               } else if (warnings.length > 0) {
+                  $("#editor_output").addClass("warn").css("padding-left", "20px");;
                   edit_out += warnings;
               } else {
+                  $("#editor_output").addClass("info").css("padding-left", "20px");;
                   //$("#editor_dialog").dialog('close');
                   $(".fm_files").parent().reload('');
               }
@@ -1277,6 +1284,7 @@ if (jQuery) (function($){
                   }
               }
               $("#editor_output").html(edit_out);
+              $("#editor_output").addClass("status_box");
               $(".fm_files").parent().reload('');
           }
        });

@@ -637,8 +637,17 @@ table th.icon {
   color: blue;
 }
 
+.status_box {
+  border: 1px dashed black;
+  border-radius: 4px;
+  background-color: lightgrey;
+  background-position: 0% 50%;
+  clear: both;
+  display: block;
+}
+
 .hidden { 
-  display:none;
+  display: none;
 }
 
 .highlight_message {
@@ -671,10 +680,22 @@ table th.icon {
 }
 
 /* General helper icons */
-.error { background: url('/images/icons/exclamation.png') no-repeat; }
-.warn { background: url('/images/icons/error.png') no-repeat; }
-.info { background: url('/images/icons/information.png') no-repeat; }
-.ok { background: url('/images/icons/accept.png') no-repeat; }
+.error { 
+    background-image: url('/images/icons/exclamation.png');
+    background-repeat: no-repeat;
+ }
+.warn { 
+    background-image: url('/images/icons/error.png');
+    background-repeat: no-repeat;
+ }
+.info { 
+    background-image: url('/images/icons/information.png');
+    background-repeat: no-repeat;
+}
+.ok { 
+    background-image: url('/images/icons/accept.png');
+    background-repeat: no-repeat;
+}
 .urllink {
   background: url('/images/icons/html.png') no-repeat;
   padding-left: 18px;

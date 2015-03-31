@@ -291,7 +291,7 @@ def html_tmpl(configuration, title_entry):
     %s
 ''' % edit_file('', '', output_format='json', includes=edit_includes)
     html += '''
-    <div id="editor_output"></div>
+    <div id="editor_output" style="display: none;"></div>
     </div>
     '''
     return html
