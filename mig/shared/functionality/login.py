@@ -76,11 +76,13 @@ def main(client_id, user_arguments_dict):
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript">
     $(document).ready(function() {
+        var action = "login";
+        var providers = "KIT";
+        $("#kitoid_status").removeClass();
         $("#kitoid_status").addClass("status_box");
         $("#kitoid_status").addClass("spinner").css("padding-left", "20px");
-        $("#kitoid_status").append("<span>KIT OpenID server status: </span>");
+        $("#kitoid_status").append("<span>"+providers+" OpenID server status: </span>");
         $("#kitoid_status").append("<span id=kitoid_msg></span> <span id=kitoid_err></span>");
-        $("#kitoid_status").addClass("info").css("padding-left", "20px");
         $("#kitoid_msg").append("checking availability ...");
         /* Run oid check in the background and handle as soon as results come in */
         $.ajax({
@@ -103,14 +105,15 @@ def main(client_id, user_arguments_dict):
                         $("#kitoid_status").removeClass("spinner").css("padding-left", "0px");
                         $("#kitoid_msg").empty();
                         $("#kitoid_msg").append(online);
-                        // TODO: Disable if okay when more tested?
                         if (online == "online") {
                              $("#kitoid_status").addClass("ok").css("padding-left", "20px");
+                             $("#kitoid_msg").addClass("status_online");
                              $("#kitoid_button").attr("disabled", false);
                         } else {
-                             $("#kitoid_err").append("("+error+")");
-                             $("#kitoid_status").append("<span>Unable to sign up with this method until OpenID server comes back online. Please report the problem to KIT.</span>");
+                             $("#kitoid_err").append("("+error+")<br/>");
+                             $("#kitoid_status").append("<span>Unable to "+action+" with this method until OpenID server comes back online. Please report the problem to "+providers+".</span>");
                              $("#kitoid_status").addClass("error").css("padding-left", "20px");
+                             $("#kitoid_msg").addClass("status_offline");
                              $("#kitoid_button").attr("disabled", true);
                         }
                        break;

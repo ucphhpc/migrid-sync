@@ -246,7 +246,6 @@ UL.jqueryFileTree div:hover {
 /* Core Styles */
 #fm_filelisting .wait { background: url(/images/icons/spinner.gif) left center no-repeat; background-position: 2px 50%; }
 #jm_jobmanager .wait { background: url(/images/icons/spinner.gif) left center no-repeat; background-position: 2px 50%; }
-.spinner { background: url(/images/icons/spinner.gif) left center no-repeat; }
 .jqueryFileTree LI.wait { background: url(/images/icons/spinner.gif) left center no-repeat; }
 
 UL.jqueryFileList {

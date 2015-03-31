@@ -682,6 +682,11 @@ table th.icon {
 }
 
 /* General helper icons */
+.spinner { 
+    background-image: url(/images/icons/spinner.gif);
+    background-repeat: no-repeat;
+    background-position: left center;
+ }
 .error { 
     background-image: url('/images/icons/exclamation.png');
     background-repeat: no-repeat;
