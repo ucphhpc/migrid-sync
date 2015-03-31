@@ -545,6 +545,8 @@ table.liveio table {
 }
 
 .status_box {
+  padding: 2px;
+  margin: 2px;
   border: 1px dashed black;
   border-radius: 4px;
   background-color: lightgrey;

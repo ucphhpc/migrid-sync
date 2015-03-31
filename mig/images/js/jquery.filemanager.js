@@ -125,7 +125,7 @@ if (jQuery) (function($){
         
         for (var i=0; i<jsonRes.length; i++) {
             if (jsonRes[i]['object_type'] == 'error_text')
-                errors +='<p>'+jsonRes[i].text+'</p>';
+                errors +='<span class="errortext">'+jsonRes[i].text+'</span><br />';
         }
         return errors;
     }
@@ -136,7 +136,7 @@ if (jQuery) (function($){
         
         for (var i=0; i<jsonRes.length; i++) {
             if (jsonRes[i]['object_type'] == 'warning')
-                warnings +='<p>'+jsonRes[i].text+'</p>';
+                warnings +='<span class="warningtext">'+jsonRes[i].text+'</span><br />';
         }
         return warnings;
     }
@@ -402,6 +402,7 @@ if (jQuery) (function($){
             edit:   function (action, el, pos) {
                 $("#editor_dialog textarea[name='editarea']").val('');
                 $("#editor_output").removeClass()
+                $("#editor_output").addClass("hidden");
                 $("#editor_output").html('');                
                 $("#editor_dialog").dialog(
                     { buttons: {
@@ -1263,21 +1264,21 @@ if (jQuery) (function($){
                   $("#editor_output").addClass("warn").css("padding-left", "20px");;
                   edit_out += warnings;
               } else {
-                  $("#editor_output").addClass("info").css("padding-left", "20px");;
+                  $("#editor_output").addClass("ok").css("padding-left", "20px");;
                   //$("#editor_dialog").dialog('close');
                   $(".fm_files").parent().reload('');
               }
               for (var i=0; i<(responseObject.length); i++) {
                   switch(responseObject[i]['object_type']) {
                   case 'text':
-                      edit_out += '<p>'+responseObject[i]['text']+'</p>';    
+                      edit_out += '<span>'+responseObject[i]['text']+'</span>';
                       break;
                   case 'submitstatuslist':
                       for (var j=0; j<responseObject[i]['submitstatuslist'].length; j++) {
                           if (responseObject[i]['submitstatuslist'][j]['status']) {
-                              edit_out += '<p>Submitted as: '+responseObject[i]['submitstatuslist'][j]['job_id']+'</p>';
+                              edit_out += '<span>Submitted as: '+responseObject[i]['submitstatuslist'][j]['job_id']+'</span>';
                           } else {
-                              edit_out += '<p style="color: red;">'+responseObject[i]['submitstatuslist'][j]['message']+'</p>';
+                              edit_out += '<span class="errortext">'+responseObject[i]['submitstatuslist'][j]['message']+'</span>';
                           }
                       }
                       break;
