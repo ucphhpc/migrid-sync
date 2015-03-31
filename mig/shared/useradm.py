@@ -763,6 +763,17 @@ def delete_user(
     mark_user_modified(configuration, client_id)
 
 
+def expand_openid_alias(alias_id, configuration):
+    """Expand openid alias to full certificate DN from symlink"""
+    home_path = os.path.join(configuration.user_home, alias_id)
+    if os.path.islink(home_path):
+        real_home = os.path.realpath(home_path)
+        client_dir = os.path.basename(real_home)
+        client_id = client_dir_id(client_dir)
+    else:
+        client_id = alias_id
+    return client_id
+
 def get_openid_user_map(configuration):
     """Translate user DB to OpenID mapping between a verified login URL and a
     pseudo certificate DN.
