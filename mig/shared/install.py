@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # install - MiG server install helpers
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -97,6 +97,7 @@ def generate_confs(
     enable_vmachines='True',
     enable_freeze='True',
     enable_hsts='',
+    enable_vhost_certs='',
     enable_openid='True',
     openid_providers='',
     daemon_keycert='',
@@ -150,6 +151,7 @@ def generate_confs(
     user_dict['__ENABLE_VMACHINES__'] = enable_vmachines
     user_dict['__ENABLE_FREEZE__'] = enable_freeze
     user_dict['__ENABLE_HSTS__'] = enable_hsts
+    user_dict['__ENABLE_VHOST_CERTS__'] = enable_vhost_certs
     user_dict['__ENABLE_OPENID__'] = enable_openid
     # Default to first OpenID provider
     openid_provider_list = openid_providers.split() or ['']
@@ -203,6 +205,12 @@ cert, oid and sid based https!
         user_dict['__HSTS_COMMENTED__'] = ''
     else:
         user_dict['__HSTS_COMMENTED__'] = '#'
+
+    # Enable vhost-specific certificates only if explicitly requested
+    if user_dict['__ENABLE_VHOST_CERTS__']:
+        user_dict['__VHOSTCERTS_COMMENTED__'] = ''
+    else:
+        user_dict['__VHOSTCERTS_COMMENTED__'] = '#'
 
     # Enable OpenID auth module only if openid_providers is given
     if user_dict['__OPENID_PROVIDER_BASE__'].strip():
@@ -386,6 +394,7 @@ def create_user(
     enable_vmachines = 'True'
     enable_freeze = 'True'
     enable_hsts = 'False'
+    enable_vhost_certs = 'False',
     openid_providers = ''
     daemon_keycert = ''
     daemon_pubkey = ''
@@ -455,6 +464,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_vmachines,
         enable_freeze,
         enable_hsts,
+        enable_vhost_certs,
         enable_openid,
         openid_providers,
         daemon_keycert,

@@ -205,6 +205,8 @@ settings:
 --enable_sandboxes=ENABLE_SANDBOXES
 --enable_vmachines=ENABLE_VMACHINES
 --enable_freeze=ENABLE_FREEZE
+--enable_hsts=ENABLE_HSTS
+--enable_vhost_certs=ENABLE_VHOST_CERTS
 --enable_openid=ENABLE_OPENID
 --openid_providers=OPENID_PROVIDER
 --daemon_keycert=DAEMON_KEYCERT
@@ -268,7 +270,7 @@ or similarly with Debian apache 2.x without OpenID:
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias'
-or the same with OpenID and HSTS:
+or the same with OpenID, HSTS and vhost-specific certificates:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --public_fqdn=migrid.org \
                    --cert_fqdn=dk-cert.migrid.org \
@@ -292,6 +294,7 @@ or the same with OpenID and HSTS:
                    --enable_wsgi=True --enable_sftp=True \
                    --enable_davs=True --enable_ftps=True \
                    --enable_sandboxes=True --enable_vmachines=True \
+                   --enable_vhost_certs=True \
                    --enable_hsts=True --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias' --alias_field=email \
@@ -317,11 +320,11 @@ and a storage-only setup with CentOS apache 2.x and OpenID login:
                    --enable_openid=True --enable_wsgi=True --enable_sftp=True \
                    --enable_davs=True --enable_ftps=True --enable_hsts=True \
                    --enable_sandboxes=False --enable_vmachines=False \
-                   --enable_freeze=True --user_clause=User \
-                   --group_clause=Group --listen_clause='#Listen' \
-                   --serveralias_clause='#ServerAlias' --alias_field=email \
-                   --daemon_keycert=~/certs/combined.pem --distro=centos \
-                   --landing_page='/wsgi-bin/fileman.py'
+                   --enable_freeze=True --enable_vhost_certs=True \
+                   --user_clause=User --group_clause=Group  \
+                   --listen_clause='#Listen' --serveralias_clause='#ServerAlias' \
+                   --alias_field=email --daemon_keycert=~/certs/combined.pem \
+                   --distro=centos --landing_page='/wsgi-bin/fileman.py'
 
 
 Most of the arguments should be relatively straight forward, but you

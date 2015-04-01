@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # generateconfs - create custom MiG server configuration files
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -70,6 +70,7 @@ if '__main__' == __name__:
         'enable_vmachines',
         'enable_freeze',
         'enable_hsts',
+        'enable_vhost_certs',
         'enable_openid',
         'openid_providers',
         'daemon_keycert',
