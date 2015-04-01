@@ -1,20 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="X-XRDS-Location" content="https://sid.erda.dk/cgi-sid/oiddiscover.py" />
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
 <title>
 ERDA
 </title>
 <!-- site default style -->
-<link rel="stylesheet" type="text/css" href="/images/default.css"
-      media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/erda-default.css" media="screen"/>
 <!-- override with any site-specific styles -->
 <link rel="stylesheet" type="text/css" href="/images/site-custom.css"
       media="screen"/>
 
 <link rel="icon" type="image/vnd.microsoft.icon"
       href="/images/erda-favicon.ico"/>
+
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" >
+    $(document).ready(function() {
+        $("#langselect").on('change', function() { 
+                                          var lang = $(this).val();
+                                          //alert("switch_language: "+lang);
+                                          switch_language(lang);
+                                      }
+                            );
+        switch_language('en');
+    });
+</script>
+
 </head>
 <body>
 <div id="topspace">
@@ -33,19 +46,67 @@ University of Copenhagen - Electronic Research Data Archive
 <!-- end user supplied pre content widgets -->
 </div>
 <div id="migheader">
-
 </div>
-<div id="content"><h1>Welcome to ERDA!</h1>
+<div id="content">
+<div class="righttext">
+<select id="langselect">
+<option value="da">Dansk</option>
+<option value="en" selected="selected">English</option>
+</select>
+</div>
+<div id="english" lang="en">
+<h1>Welcome to ERDA!</h1>
 <p>
 If you're new here you need
 to <a href="https://sid.erda.dk/cgi-sid/signup.py">sign up for an account</a> 
-before you can continue.
+before you can continue.<br />
+You may also want to refer to the 
+<a href="https://erda.dk/public/ucph-erda-user-guide.pdf">ERDA User Guide</a>
+for an introduction and help on how to get the most out of your account. 
 </p>
 <p>In case you already did that you probably want
 to <a href="https://sid.erda.dk/cgi-sid/login.py">login to your account</a>
 directly.
 </p>
 </div>
+<div id="danish" lang="da">
+<h1>Velkommen til ERDA!</h1>
+<p>
+For nye brugere af ERDA er det n&oslash;dvendigt f&oslash;rst at 
+<a href="https://sid.erda.dk/cgi-sid/signup.py">oprette en konto</a>
+for at komme igang.<br />
+Det kan i den sammenhæng også anbefales at se nærmere på  
+<a href="https://erda.dk/public/ucph-erda-brugervejledning.pdf">ERDA Brugervejledningen</a>
+med introduktion og hjælp til at drage mest muligt nytte af kontoen. 
+</p>
+<p>Eksisterende brugere kan gå direkte til
+<a href="https://sid.erda.dk/cgi-sid/login.py">ERDA login</a> siden.
+</p>
+<p class="warningtext">
+Bemærk at ERDA siderne p.t. kun findes på engelsk. Den danske
+brugervejledning kan forhåbentlig afhjælpe eventuelle
+forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
+</p>
 </div>
+</div>
+</div>
+
+<div id="bottomlogo">
+<div id="bottomlogoleft">
+<img src="/images/icons/help.png" id="supportimage" alt=""/>
+<span id="support">
+<a href="mailto:support@erda.dk">Support & Questions</a>
+</span>
+</div>
+<div id="bottomlogoright">
+<img src="/images/copyright.png" id="creditsimage" alt=""/>
+<span id="credits">
+2003-2015, <a href="http://www.migrid.org">The MiG Project</a>
+</span>
+</div>
+</div>
+<div id="bottomspace">
+</div>
+
 </body>
 </html>
