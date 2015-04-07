@@ -446,4 +446,25 @@ also referred to as VGrids in some contexts.""" % \
     </form>
  ''' % configuration.site_vgrid_label})
 
+    output_objects.append({'object_type': 'sectionheader', 'text'
+                               : 'Request Access to %ss' % \
+                               configuration.site_vgrid_label})
+
+    output_objects.append(
+        {'object_type': 'text', 'text':
+         '''You can request access to %(label)ss using the individual plus-icons above directly or by entering the name of the %(label)s to request access to, what kind of access and an optional message to the admins below''' % \
+             {'label': configuration.site_vgrid_label}})
+    output_objects.append({'object_type': 'html_form', 'text':
+                           '''<form method="post" action="sendrequestaction.py">
+    <input type="text" size=40 name="vgrid_name" />
+    <select name="request_type">
+        <option value="vgridmember">membership</option> 
+        <option value="vgridowner">ownership</option>
+    </select>
+    <input type="text" size=50 name="request_text" />
+    <input type="hidden" name="output_format" value="html" />
+    <input type="submit" value="Request %s access" />
+    </form>
+ ''' % configuration.site_vgrid_label})
+
     return (output_objects, status)
