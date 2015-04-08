@@ -40,6 +40,7 @@ import threading
 from shared.base import client_dir_id, client_id_dir, client_alias, \
     invisible_path
 from shared.fileio import unpickle, acquire_file_lock, release_file_lock
+from shared.safeinput import valid_path
 from shared.ssh import parse_pub_key
 from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     get_authkeys, ssh_authpasswords, ssh_authdigests, davs_authpasswords, \
@@ -82,12 +83,17 @@ class User(object):
 
 def get_fs_path(user_path, root, chroot_exceptions):
     """Internal helper to translate path with chroot and invisible files
-    in mind"""
+    in mind. Also assures general path character restrictions are applied.
+    """
     # Make sure leading slashes in user_path don't throw away root
     real_path = os.path.normpath(os.path.join(root, user_path.strip(os.sep)))
     accept_roots = [root] + chroot_exceptions
 
     accepted = False
+    try:
+        valid_path(user_path)
+    except:
+        raise ValueError("Invalid path characters")
     for accept_path in accept_roots:
         expanded_path = os.path.realpath(real_path)
         if expanded_path.startswith(accept_path):

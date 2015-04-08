@@ -53,12 +53,14 @@ from shared.valuecheck import lines_value_checker, \
 
 VALID_ACCENTED = 'áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ'
 
+# We must be careful about characters that have special regex meaning
+
 VALID_PATH_CHARACTERS = letters + digits + '/.,_-+='\
      + ' :;+@%' + VALID_ACCENTED
 
 # Plain text here only - *no* html tags, i.e. no '<' or '>' !!
 
-VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + '?!#$%&()[]{}*'\
+VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + '?!#$&*()[]{}'\
      + '"' + "'`|^~" + '\\' + '\n\r\t'
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
 VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
