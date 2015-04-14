@@ -146,8 +146,8 @@ def acceptable_chmod(path, mode, chmod_exceptions):
     read+write+execute on dirs.
     Limitation to sane group/other access perms is left to the caller.
     """
-    if True in [os.path.realpath(path).startswith(i + os.sep) \
-                for i in chmod_exceptions]:
+    if True in [os.path.realpath(path).startswith(i) for i in \
+                chmod_exceptions]:
         return False
     # Never touch special leading bits (suid, sgid, etc.)
     if mode & 07000 != 00000:

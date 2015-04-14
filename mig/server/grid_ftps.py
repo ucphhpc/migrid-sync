@@ -84,6 +84,7 @@ except ImportError:
 
 from shared.base import invisible_path
 from shared.conf import get_configuration_object
+from shared.defaults import user_invisible_files
 from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
      hit_rate_limit, update_rate_limit, expire_rate_limit
 from shared.logger import daemon_logger
@@ -197,6 +198,21 @@ class MiGRestrictedFilesystem(AbstractedFS):
     chroot_exceptions. Prevent access to a few hidden files.
     """
     
+    # Use shared daemon fs helper functions
+    
+    def _acceptable_chmod(self, ftps_path, mode):
+        """Wrap helper"""
+        #self.logger.debug("acceptable_chmod: %s" % ftps_path)
+        reply = acceptable_chmod(ftps_path, mode, self.chmod_exceptions)
+        if not reply:
+            self.logger.warning("acceptable_chmod failed: %s %s %s" % \
+                                (ftps_path, mode, self.chmod_exceptions))
+        #self.logger.debug("acceptable_chmod returns: %s :: %s" % \
+        #                      (ftps_path, reply))
+        return reply
+
+    # Public interface functions
+
     def validpath(self, path):
         """Check that user is allowed inside path checking against configured
         chroot_exceptions and built-in hidden paths.
@@ -215,8 +231,9 @@ class MiGRestrictedFilesystem(AbstractedFS):
         """Change file/directory mode with MiG restrictions"""
         real_path = self.ftp2fs(path)
         daemon_conf = configuration.daemon_conf
+        self.chmod_exceptions = daemon_conf['chmod_exceptions']
         # Only allow change of mode on files and only outside chmod_exceptions
-        if acceptable_chmod(path, mode, daemon_conf['chmod_exceptions']):
+        if self._acceptable_chmod(path, mode):
             # Only allow permission changes that won't give excessive access
             # or remove own access.
             if os.path.isdir(path):
@@ -319,8 +336,11 @@ unless it is available in mig/server/MiGserver.conf
                          os.path.abspath(configuration.resource_home)]
     # Don't allow chmod in dirs with CGI access as it introduces arbitrary
     # code execution vulnerabilities
-    chmod_exceptions = [os.path.abspath(configuration.vgrid_private_base),
-                         os.path.abspath(configuration.vgrid_public_base)]
+    chmod_exceptions = []
+    for vgrid_base in [os.path.abspath(configuration.vgrid_private_base),
+                       os.path.abspath(configuration.vgrid_public_base)]:
+        for invisible in user_invisible_files:
+            chmod_exceptions.append(os.path.join(vgrid_base, invisible))
     configuration.daemon_conf = {
         'address': address,
         'ctrl_port': ctrl_port,

@@ -80,6 +80,7 @@ except ImportError:
 
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
+from shared.defaults import user_invisible_files
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
      acceptable_chmod, refresh_users, refresh_jobs, hit_rate_limit, \
      update_rate_limit, expire_rate_limit
@@ -157,18 +158,21 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def _strip_root(self, sftp_path):
         """Wrap helper"""
-        self.logger.debug("strip_root: %s" % sftp_path)
+        #self.logger.debug("strip_root: %s" % sftp_path)
         reply = strip_root(sftp_path, self.root, self.chroot_exceptions)
-        self.logger.debug("strip_root returns: %s :: %s" % (sftp_path,
-                                                             reply))
+        #self.logger.debug("strip_root returns: %s :: %s" % (sftp_path,
+        #                                                     reply))
         return reply
     
     def _acceptable_chmod(self, sftp_path, mode):
         """Wrap helper"""
-        self.logger.debug("acceptable_chmod: %s" % sftp_path)
+        #self.logger.debug("acceptable_chmod: %s" % sftp_path)
         reply = acceptable_chmod(sftp_path, mode, self.chmod_exceptions)
-        self.logger.debug("acceptable_chmod returns: %s :: %s" % (sftp_path,
-                                                                  reply))
+        if not reply:
+            self.logger.warning("acceptable_chmod failed: %s %s %s" % \
+                                (sftp_path, mode, self.chmod_exceptions))
+        #self.logger.debug("acceptable_chmod returns: %s :: %s" % \
+        #                      (sftp_path, reply))
         return reply
 
     # Public interface functions
@@ -822,8 +826,11 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
                          os.path.abspath(configuration.resource_home)]
     # Don't allow chmod in dirs with CGI access as it introduces arbitrary
     # code execution vulnerabilities
-    chmod_exceptions = [os.path.abspath(configuration.vgrid_private_base),
-                         os.path.abspath(configuration.vgrid_public_base)]
+    chmod_exceptions = []
+    for vgrid_base in [os.path.abspath(configuration.vgrid_private_base),
+                       os.path.abspath(configuration.vgrid_public_base)]:
+        for invisible in user_invisible_files:
+            chmod_exceptions.append(os.path.join(vgrid_base, invisible))
     configuration.daemon_conf = {
         'address': address,
         'port': port,

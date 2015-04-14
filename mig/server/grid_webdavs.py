@@ -39,9 +39,7 @@ import sys
 import time
 
 try:
-    #from wsgiref.simple_server import make_server
     from wsgidav.wsgidav_app import DEFAULT_CONFIG, WsgiDAVApp
-    #from wsgidav.server import ext_wsgiutils_server
     # Use cherrypy bundled with wsgidav - needs module path mangling
     from wsgidav.server import __file__ as server_init_path
     sys.path.append(os.path.dirname(server_init_path))
@@ -56,11 +54,10 @@ except ImportError, ierr:
     print "ERROR: the python wsgidav module is required for this daemon"
     sys.exit(1)
 
-
                         
 from shared.base import invisible_path, force_unicode
-from shared.defaults import dav_domain
 from shared.conf import get_configuration_object
+from shared.defaults import dav_domain, user_invisible_files
 from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
      refresh_user_creds, hit_rate_limit, update_rate_limit, expire_rate_limit
 from shared.logger import daemon_logger
@@ -382,7 +379,11 @@ class MiGFilesystemProvider(FilesystemProvider):
         """Wrap helper"""
         #logger.debug("acceptable_chmod: %s" % davs_path)
         reply = acceptable_chmod(davs_path, mode, self.chmod_exceptions)
-        logger.debug("acceptable_chmod returns: %s :: %s" % (davs_path, reply))
+        if not reply:
+            logger.warning("acceptable_chmod failed: %s %s %s" % \
+                           (davs_path, mode, self.chmod_exceptions))
+        #logger.debug("acceptable_chmod returns: %s :: %s" % (davs_path,
+        #                                                     reply))
         return reply
 
     def _locToFilePath(self, path):
@@ -570,8 +571,11 @@ unless it is available in mig/server/MiGserver.conf
                          os.path.abspath(configuration.resource_home)]
     # Don't allow chmod in dirs with CGI access as it introduces arbitrary
     # code execution vulnerabilities
-    chmod_exceptions = [os.path.abspath(configuration.vgrid_private_base),
-                         os.path.abspath(configuration.vgrid_public_base)]
+    chmod_exceptions = []
+    for vgrid_base in [os.path.abspath(configuration.vgrid_private_base),
+                       os.path.abspath(configuration.vgrid_public_base)]:
+        for invisible in user_invisible_files:
+            chmod_exceptions.append(os.path.join(vgrid_base, invisible))
 
     configuration.daemon_conf = {
         'host': address,
