@@ -270,8 +270,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         self.logger.debug("stat %s :: %s" % (path, real_path))
         # for consistency with lstat
         if not os.path.exists(real_path):
-            self.logger.error("stat on missing path %s :: %s" % (path,
-                                                                 real_path))
+            self.logger.warning("stat on missing path %s :: %s" % \
+                                (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         try:
             return paramiko.SFTPAttributes.from_stat(os.stat(real_path), path)
@@ -292,8 +292,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         self.logger.debug("lstat %s :: %s" % (path, real_path))
 
         if not os.path.lexists(real_path):
-            self.logger.error("lstat on missing path %s :: %s" % (path,
-                                                                real_path))
+            self.logger.warning("lstat on missing path %s :: %s" % \
+                                (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
         self.logger.debug('return lstat %s' % path)
         try:
