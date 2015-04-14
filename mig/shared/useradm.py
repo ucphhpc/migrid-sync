@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # useradm - user administration functions
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -214,6 +214,9 @@ def create_user(
     client_dir = client_id_dir(client_id)
 
     renew = default_renew
+    # Requested with existing valid certificate?
+    # Used in order to authorize password change
+    authorized = user.get('authorized', False)
 
     if verbose:
         print 'User ID: %s\n' % client_id
@@ -249,16 +252,25 @@ def create_user(
             else:
                 renew = default_renew
             if renew:
+                user['old_password'] = user_db[client_id]['password']
                 # OpenID users do not provide a password
                 if not user['password']:
-                    user['password'] = user_db[client_id]['password']
-                elif user_db[client_id]['password'] != user['password']:
-                    if verbose:
-                        print 'Renewal request supplied a different password: '
-                        print 'Please re-request with the original password '
-                        print 'to assure authenticity!'
-                    raise Exception(
-                        'Cannot renew certificate with a new password')
+                    user['password'] = user['old_password']
+                password_changed = (user['old_password'] != user['password'])
+                if password_changed:
+                    if authorized:
+                        del user['authorized']
+                        print "User authorized password update"
+                    else:
+                        if verbose:
+                            print """Renewal request supplied a different
+password:
+Please re-request with the original password or use existing cert to assure
+authenticity!"""
+                        err = """Cannot renew account using a new password!
+Please tell user to use the original password or request renewal using a
+certificate that is still valid."""
+                        raise Exception(err)
                 if verbose:
                     print 'Renewing existing user'
             elif not force:

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqcertaction - handle certificate requests and send email to admins
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -188,6 +188,7 @@ resources anyway.
         'email': email,
         'comment': comment,
         'password': base64.b64encode(password),
+        'authorized': client_id,
         'expire': int(time.time() + cert_valid_days * 24 * 60 * 60),
         'openid_names': [],
         }
