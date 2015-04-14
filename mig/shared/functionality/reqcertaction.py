@@ -188,12 +188,12 @@ resources anyway.
         'email': email,
         'comment': comment,
         'password': base64.b64encode(password),
-        'authorized': client_id,
         'expire': int(time.time() + cert_valid_days * 24 * 60 * 60),
         'openid_names': [],
         }
     fill_distinguished_name(user_dict)
     user_id = user_dict['distinguished_name']
+    user_dict['authorized'] = (user_id == client_id)
     if configuration.user_openid_providers and configuration.user_openid_alias:
         user_dict['openid_names'] += \
                                   [user_dict[configuration.user_openid_alias]]
