@@ -280,7 +280,7 @@ or similarly with Debian apache 2.x without OpenID:
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias'
-or the same with OpenID, HSTS and vhost-specific certificates:
+or the same with OpenID, HSTS, WSGI and vhost-specific certificates:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --public_fqdn=migrid.org \
                    --cert_fqdn=dk-cert.migrid.org \
@@ -309,7 +309,8 @@ or the same with OpenID, HSTS and vhost-specific certificates:
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias' --alias_field=email \
                    --daemon_keycert=~/certs/combined.pem \
-                   --daemon_pubkey=~/certs/combined.pub
+                   --daemon_pubkey=~/certs/combined.pub \
+		   --landing_page='/wsgi-bin/dashboard.py'
 
 and a storage-only setup with CentOS apache 2.x and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
