@@ -114,7 +114,7 @@ def fix_missing(config_file, verbose=True):
         'user_sftp_port': 2222,
         'user_sftp_key': '~/certs/combined.pem',
         'user_sftp_key_pub': '~/certs/server.pub',
-        'user_sftp_auth': ['publickey'],
+        'user_sftp_auth': ['publickey', 'password'],
         'user_sftp_alias': '',
         'user_sftp_log': 'sftp.log',
         'user_davs_address': fqdn,
@@ -257,7 +257,7 @@ class Configuration:
     user_sftp_port = 2222
     user_sftp_key = ''
     user_sftp_key_pub = ''
-    user_sftp_auth = ['publickey']
+    user_sftp_auth = ['publickey', 'password']
     user_sftp_alias = ''
     user_sftp_log = 'sftp.log'
     user_davs_address = ''

@@ -1,0 +1,25 @@
+= Notes =
+This dir holds (links to) the MiG SSL keys and certificates for grid_X 
+daemons (combined.{pem,pub}), apache (server.{key,crt}, cacert.pem, crl-pem in
+in vhost FQDN-subdirs) and the optional dist-server intercomm
+({MiGserver{key,cert}.pem)
+
+Please note that combined.pem used by the grid_X daemons is the concatenation
+of the unarmored key and certificate for the SID host apache certs:
+cat server.{key,crt} > combined.pem
+chown root:mig combined.pem
+Similarly the matching combined.pub used along with combined.pem only in the
+sftp server is extracted with:
+ssh-keygen -y -f combined.pem > combined.pub
+
+All keys should be kept protected with restrictive permissions:
+chown 0:0 *.key server.pem ca.pem
+chmod 400 *.key server.pem ca.pem
+chmod 440 combined.pem 
+
+Do not change keys unecessarily since it makes sftp clients fail with 
+possible MITM warning. It is even worse for sshfs which just fails with a
+vague error in that case. 
+This leaves us in a bit of a mess with the one-year startssl keys/certs. If 
+at all possible request the renewed certificate with the existing key to make 
+the key part and thus also the ssh host pub key remain unchanged. 
