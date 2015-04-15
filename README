@@ -32,13 +32,13 @@ Optional WSGI interface, OpenID login, instant messaging service,
 efficient file access services, event handler service, spell checking,
 Wiki, SCM and tracker VGrid features require: 
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
--Apache OpenID module (http://findingscience.com/mod_auth_openid/)
--Python OpenID module (https://pypi.python.org/pypi/python-openid/)
+-Apache OpenID auth module (http://findingscience.com/mod_auth_openid/)
+-Python OpenID module (https://github.com/openid/python-openid)
 -Python pbkdf2 module (https://pypi.python.org/pypi/pbkdf2)
 -Python irclib module (https://pypi.python.org/pypi/python-irclib/)
 -Python Paramiko module (https://pypi.python.org/pypi/paramiko/)
 -Python FTPD library (https://pypi.python.org/pypi/pyftpdlib)
--Python WebDAV module (https://pypi.python.org/pypi/PyWebDAV)
+-Python WSGI WebDAV module (http://wsgidav.readthedocs.org)
 -Python watchdog module (https://pypi.python.org/pypi/watchdog)
 -Python Enchant module (https://pypi.python.org/pypi/pyenchant). 
 -Mercurial (http://mercurial.selenic.com/)
@@ -47,12 +47,21 @@ Wiki, SCM and tracker VGrid features require:
 
 On Debian/Ubuntu servers the corresponding basic packages can be
 installed with:
-sudo aptitude install apache2-mpm-prefork openssh-client python
+sudo aptitude install apache2-mpm-prefork openssh-client python \
+     python-pip python-setuptools
 
 and most of the optional dependencies similarly with:
 sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
-     python-openid python-pbkdf2 python-irclib python-paramiko \
+     python-pbkdf2 python-irclib python-paramiko \
      python-enchant mercurial trac trac-mercurial
+
+We highly recommend installing the optional wsgidav and openid modules
+directly from upstream, because packaged versions are generally outdated
+even on pypi. The packaged openid module lacks some security fixes and
+the wsgidav one lacks a fix for upload/write access for OSX clients.
+They can easily be installed with pip:
+sudo pip install https://github.com/openid/python-openid/archive/master.zip
+sudo pip install https://github.com/mar10/wsgidav/archive/master.zip
 
 Additional packaged Trac extensions can be installed with:
 sudo aptitude install trac-customfieldadmin trac-graphviz \
@@ -60,7 +69,6 @@ sudo aptitude install trac-customfieldadmin trac-graphviz \
 
 and the unpackaged ones can be grabbed from trac-hacks.org with pip
 and easy_install:
-sudo aptitude install python-pip python-setuptools
 sudo easy_install http://trac-hacks.org/svn/wikicssplugin
 sudo easy_install http://trac-hacks.org/svn/fullblogplugin
 sudo easy_install http://trac-hacks.org/svn/discussionplugin/0.11
@@ -97,12 +105,14 @@ version, so it is easiest to install it with pip:
 sudo pip install pyftpdlib
 
 The optional grid_webdavs daemon requires the wsgidav module in a recent
-version, so it is easiest to install it with pip:
-sudo pip install wsgidav
+version, so it is easiest to install it with pip as mentioned above.
 
 The now deprecated optional grid_davs daemon requires the pywebdav
 module in a recent version, so it is easiest to install it with pip:
 sudo pip install pywebdav
+
+The optional grid_openid daemon requires the openid module in a recent
+version, so it is easiest to install it with pip as mentioned above.
 
 The optional grid_events daemon requires the watchdog module which may
 be installed with:
