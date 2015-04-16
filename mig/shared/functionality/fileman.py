@@ -287,7 +287,7 @@ def html_tmpl(configuration, title_entry):
     ''' % fill_entries
     html += '''
     <div id="editor_dialog" title="Editor" style="display: none;">
-    <div class="spinner" style="padding-left: 20px;">Loading file...</div>
+    <div class="spinner" style="padding-left: 20px;"></div>
     %s
 ''' % edit_file('', '', output_format='json', includes=edit_includes)
     html += '''

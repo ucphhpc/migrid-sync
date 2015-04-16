@@ -406,7 +406,8 @@ if (jQuery) (function($){
                 $("#editor_output").html('');                
                 $("#editor_dialog").dialog(
                     { buttons: {
-                          'Save Changes': function() { 
+                          'Save Changes': function() {
+                              $("#editor_dialog div.spinner").html("Saving file...").show();
                               $("#editor_form").submit(); },
                           Close: function() {
                               $(this).dialog('close');},
@@ -419,7 +420,7 @@ if (jQuery) (function($){
                       autoOpen: false, closeOnEscape: true,
                       modal: true, width: '800px'}
                                                                     );
-                $("#editor_dialog div.spinner").show();
+                $("#editor_dialog div.spinner").html("Loading file...").show();
                 $("#editor_dialog input[name='submitjob']").attr('checked', false);
                 $("#editor_dialog input[name='path']").val('./'+$(el).attr(pathAttribute));
                 $("#editor_dialog").dialog('open');             
@@ -443,7 +444,7 @@ if (jQuery) (function($){
                         // Force refresh on editor field truncating any unsaved contents
                         disable_editorarea_editor(lastEdit);
                         $("#editor_dialog textarea[name='editarea']").val(file_output);
-                        $("#editor_dialog div.spinner").hide();
+                        $("#editor_dialog div.spinner").html("").hide();
                         var activeEntry = $("#switcher .currentSet");
                         // activeEntry has currentSet and type class - extract type
                         activeEntry.removeClass("currentSet");
@@ -460,6 +461,7 @@ if (jQuery) (function($){
                 $("#editor_dialog").dialog(
                     { buttons: {
                           'Save Changes': function() {
+                              $("#editor_dialog div.spinner").html("Saving file...").show();
                               $("#editor_form").submit(); },
                           Close: function() {
                               $(this).dialog('close');} 
@@ -489,7 +491,7 @@ if (jQuery) (function($){
                 $("#editor_dialog input[name='submitjob']").attr('checked', false);
                 $("#editor_dialog input[name='path']").val('./'+new_file_name);
                 $("#editor_dialog textarea[name='editarea']").val('');
-                $("#editor_dialog div.spinner").hide();
+                $("#editor_dialog div.spinner").html("").hide();
                 $("#editor_dialog").dialog('open');             
                 
             },
@@ -1271,19 +1273,20 @@ if (jQuery) (function($){
               for (var i=0; i<(responseObject.length); i++) {
                   switch(responseObject[i]['object_type']) {
                   case 'text':
-                      edit_out += '<span>'+responseObject[i]['text']+'</span>';
+                      edit_out += '<span>'+responseObject[i]['text']+'</span><br />';
                       break;
                   case 'submitstatuslist':
                       for (var j=0; j<responseObject[i]['submitstatuslist'].length; j++) {
                           if (responseObject[i]['submitstatuslist'][j]['status']) {
-                              edit_out += '<span>Submitted as: '+responseObject[i]['submitstatuslist'][j]['job_id']+'</span>';
+                              edit_out += '<span>Submitted as: '+responseObject[i]['submitstatuslist'][j]['job_id']+'</span><br />';
                           } else {
-                              edit_out += '<span class="errortext">'+responseObject[i]['submitstatuslist'][j]['message']+'</span>';
+                              edit_out += '<span class="errortext">'+responseObject[i]['submitstatuslist'][j]['message']+'</span><br />';
                           }
                       }
                       break;
                   }
               }
+              $("#editor_dialog div.spinner").html("").hide();
               $("#editor_output").html(edit_out);
               $("#editor_output").addClass("status_box");
               $(".fm_files").parent().reload('');
