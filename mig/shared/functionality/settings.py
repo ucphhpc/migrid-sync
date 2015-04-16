@@ -42,7 +42,8 @@ from shared.profilekeywords import get_profile_specs
 from shared.safeinput import html_escape
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
-from shared.useradm import get_default_mrsl, get_default_css, extract_field
+from shared.useradm import get_default_mrsl, get_default_css, extract_field, \
+     create_alias_link
 from shared.vgrid import vgrid_list_vgrids
 
 try:
@@ -694,6 +695,7 @@ so you may have to avoid blank lines in your text below.
         username = client_alias(client_id)
         if configuration.user_sftp_alias:
             username = extract_field(client_id, configuration.user_sftp_alias)
+            create_alias_link(username, client_id, configuration.user_home)
         sftp_server = configuration.user_sftp_address
         # address may be empty to use all interfaces - then use FQDN
         if not sftp_server:
@@ -851,6 +853,7 @@ value="%(default_authpassword)s" />
         username = client_alias(client_id)
         if configuration.user_davs_alias:
             username = extract_field(client_id, configuration.user_davs_alias)
+            create_alias_link(username, client_id, configuration.user_home)
         davs_server = configuration.user_davs_address
         # address may be empty to use all interfaces - then use FQDN
         if not davs_server:
@@ -996,6 +999,7 @@ value="%(default_authpassword)s" />
         username = client_alias(client_id)
         if configuration.user_ftps_alias:
             username = extract_field(client_id, configuration.user_ftps_alias)
+            create_alias_link(username, client_id, configuration.user_home)
         ftps_server = configuration.user_ftps_address
         # address may be empty to use all interfaces - then use FQDN
         if not ftps_server:

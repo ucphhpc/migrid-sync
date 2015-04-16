@@ -188,7 +188,30 @@ def rename_dir(src, dst, verbose=False):
         print 'renaming: %s -> %s ' % (src, dst)
     shutil.move(src, dst)
 
+def remove_alias_link(username, user_home):
+    """Remove user alias if it exists"""
+    link_path = os.path.join(user_home, username)
+    if not os.path.islink(link_path):
+        return True
+    try:
+        os.remove(link_path)
+    except:
+        raise Exception('could not remove symlink: %s' % link_path)
+    return True
 
+def create_alias_link(username, client_id, user_home):
+    """Create alias link if missing"""
+    client_dir = client_id_dir(client_id)
+    home_dir = os.path.join(user_home, client_dir)
+    link_path = os.path.join(user_home, username)
+    if os.path.exists(link_path):
+        return True
+    try:
+        os.symlink(client_dir, link_path)
+    except:
+        raise Exception('could not symlink alias: %s' % link_path)
+    return True    
+    
 def create_user(
     user,
     conf_path,
@@ -347,13 +370,7 @@ certificate that is still valid."""
     # Always write/update any openid symlinks
 
     for name in user.get('openid_names', []):
-        link_path = os.path.join(configuration.user_home, name)
-        if not os.path.exists(link_path):
-            try:
-                os.symlink(client_dir, link_path)
-            except:
-                if not force:
-                    raise Exception('could not symlink home: %s' % link_path)
+        create_alias_link(name, client_id, configuration.user_home)
     
     # Always write htaccess to catch any updates
 
@@ -569,24 +586,11 @@ def edit_user(
     # Update any OpenID symlinks
 
     for name in old_user.get('openid_names', []):
-        link_path = os.path.join(configuration.user_home, name)
-        if os.path.islink(link_path):
-            try:
-                os.remove(link_path)
-            except:
-                if not force:
-                    raise Exception('could not remove symlink: %s' % link_path)
+        remove_alias_link(name, configuration.user_home)
+
     for name in user_dict.get('openid_names', []):
-        new_path = os.path.join(configuration.user_home, new_client_dir)
-        link_path = os.path.join(configuration.user_home, name)
-        if not os.path.exists(link_path):
-            try:
-                os.symlink(new_client_dir, link_path)
-            except:
-                if not force:
-                    raise Exception('could not symlink new home: %s' % \
-                                    link_path)
-                
+        create_alias_link(name, new_id, configuration.user_home)
+        
     # Loop through resource map and update user resource ownership
     
     res_map = get_resource_map(configuration)
@@ -746,13 +750,7 @@ def delete_user(
     # Remove any OpenID symlinks
 
     for name in user_dict.get('openid_names', []):
-        link_path = os.path.join(configuration.user_home, name)
-        if os.path.islink(link_path):
-            try:
-                os.remove(link_path)
-            except:
-                if not force:
-                    raise Exception('could not remove symlink: %s' % link_path)
+        remove_alias_link(name, configuration.user_home)
 
     # Remove user dirs recursively
 
