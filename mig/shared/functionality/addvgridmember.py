@@ -244,7 +244,7 @@ directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
 </tr><tr>
 <td><textarea name=request_text cols=72 rows=10>
 We have granted you membership access to our %(vgrid_name)s %(_label)s.
-You can access the %(_label)s components from the %(_label)s page.
+You can access the %(_label)s components from the %(_label)ss page.
 
 Regards, the %(vgrid_name)s %(_label)s owners
 </textarea></td>
