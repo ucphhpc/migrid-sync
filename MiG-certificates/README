@@ -7,15 +7,14 @@ in vhost FQDN-subdirs) and the optional dist-server intercomm
 Please note that combined.pem used by the grid_X daemons is the concatenation
 of the unarmored key and certificate for the SID host apache certs:
 cat server.{key,crt} > combined.pem
-chown root:mig combined.pem
+chown mig:mig combined.pem
 Similarly the matching combined.pub used along with combined.pem only in the
 sftp server is extracted with:
 ssh-keygen -y -f combined.pem > combined.pub
 
 All keys should be kept protected with restrictive permissions:
 chown 0:0 *.key server.pem ca.pem
-chmod 400 *.key server.pem ca.pem
-chmod 440 combined.pem 
+chmod 400 *.key server.pem ca.pem combined.pem
 
 Do not change keys unecessarily since it makes sftp clients fail with 
 possible MITM warning. It is even worse for sshfs which just fails with a
