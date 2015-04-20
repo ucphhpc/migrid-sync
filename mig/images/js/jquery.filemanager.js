@@ -759,7 +759,7 @@ if (jQuery) (function($){
           var icon = '';
           var dotfile = '';
           var entry_title = '';
-          var entry_html = '';
+          var entry_html = '', entries_html = '';
 
           var dir_prefix = '';
           var path = '';
@@ -814,7 +814,8 @@ if (jQuery) (function($){
 
               /* manually build entry to reduce risk of script timeout warnings
                  from excessive html DOM manipulation. Mark the entry as
-                 recent to ease targetted context menu and drag n' drop later
+                 recent to ease targetted context menu and drag n' drop later.
+		 Finally append it all in one go to save a lot of overhead.
               */
               entry_html = '<tr class="recent ' + base_css_style + ' ' + dotfile + 
                   '" title="' + entry_title + '" rel_path="' + path + '">' + 
@@ -828,9 +829,10 @@ if (jQuery) (function($){
                   '<td><div>' + listing[i]['file_info']['created'] + '</div>' +
                   pp_date(listing[i]['file_info']['created']) + '</td>' +
                   '</tr>';
-              $(".fm_files table tbody").append(entry_html);
+              entries_html += entry_html;
               emptyDir = false;
-          }
+            }
+            $(".fm_files table tbody").append(entries_html);
 
             folders += '</ul>\n';
 
@@ -845,7 +847,7 @@ if (jQuery) (function($){
             } else {
                 addressbar.find("input[name='fm_current_path']").val('/'+t);  
             }
-            
+
             folder_pane.removeClass('wait');
             folder_pane.append(folders);
             //$("#fm_debug").html("<textarea cols=200 rows=15>"+$.fn.dump($(".fm_folders [rel_path='/']"))+"\n"+$(".fm_folders").html()+"</textarea>").show();
