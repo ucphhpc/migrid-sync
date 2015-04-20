@@ -726,7 +726,7 @@ if (jQuery) (function($){
                 data: { path: t, output_format: 'json', flags: 'fa' },
                 cache: false,
                 success: function(jsonRes, textStatus) {
-          //console.log($.now()+' begin ajax handler');
+          //console.log($.now()+' begin ajax handler '+t);
 
           // Place ls.py output in listing array
           var cur_folder_names = new Array();
@@ -815,7 +815,7 @@ if (jQuery) (function($){
               /* manually build entry to reduce risk of script timeout warnings
                  from excessive html DOM manipulation. Mark the entry as
                  recent to ease targetted context menu and drag n' drop later.
-		 Finally append it all in one go to save a lot of overhead.
+                 Finally append it all in one go to save a lot of overhead.
               */
               entry_html = '<tr class="recent ' + base_css_style + ' ' + dotfile + 
                   '" title="' + entry_title + '" rel_path="' + path + '">' + 
@@ -849,6 +849,10 @@ if (jQuery) (function($){
             }
 
             folder_pane.removeClass('wait');
+
+            // Update statusbar
+            statusbar.html(file_count+' files in current folder of total '+pp_bytes(total_file_size)+' in size.');
+
             folder_pane.append(folders);
             //$("#fm_debug").html("<textarea cols=200 rows=15>"+$.fn.dump($(".fm_folders [rel_path='/']"))+"\n"+$(".fm_folders").html()+"</textarea>").show();
 
@@ -861,9 +865,6 @@ if (jQuery) (function($){
                     doSort = false;
                 }
             }
-            
-            // Update statusbar
-            statusbar.html(file_count+' files in current folder of total '+pp_bytes(total_file_size)+' in size.');
 
             if (options.root == t) {
                 //if (options.root == t+'/') {
@@ -952,7 +953,7 @@ if (jQuery) (function($){
             // Bind actions to entries in a non-blocking way to avoid 
             // unresponsive script warnings with many entries
 
-            // Associate context menus
+            // Associate context menus in the background for responsiveness
             $("tr.recent.directory, li.recent.directory div").each(function() { 
                 var t = $(this); 
                 setTimeout(function() {
@@ -968,6 +969,7 @@ if (jQuery) (function($){
                         })
                 }, 10);
             });
+
             $("tr.recent.file").each(function() { 
                 var t = $(this); 
                 setTimeout(function() {
@@ -981,14 +983,26 @@ if (jQuery) (function($){
             });
 
             // Doubleclick actions (including preventing text select on dclick)
+            /* TODO: can we migrate mousedown select prevention to .on() too? */
             $("tr.recent.file, tr.recent.directory").each(function() { 
                 var t = $(this); 
                 setTimeout(function() {
-                    t.mousedown(function(event) { event.preventDefault(); })
-                    t.dblclick(function(event) { doubleClickEvent(this); });
+                    t.mousedown(function(event) { event.preventDefault(); });
+                    //t.dblclick(function(event) { doubleClickEvent(this); });
                 }, 10);
             });
             
+            $("#fm_filemanager").on("dblclick", 
+                                    "tr.file, tr.directory",
+                                    function(event) {
+                                        doubleClickEvent(this);
+                                    }); 
+            /* 
+            $("#fm_filemanager").on("mousedown",  
+                                    "tr.file, tr.directory",
+                                    function(event) { event.preventDefault(); }); 
+            */
+
             // Associate drag'n'drop
             if (options.dragndrop) {
                 $("tr.recent.file, tr.recent.directory, li.recent.directory").each(function() { 
@@ -1086,7 +1100,7 @@ if (jQuery) (function($){
                 $(".fm_folders [rel_path='"+current_dir.slice(1)
                   +first_child+"/']").click();                       
             }
-	    //console.log($.now()+' end ajax handler');
+            //console.log($.now()+' end ajax handler '+t);
           }
        });
      }
