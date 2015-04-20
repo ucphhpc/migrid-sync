@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jquery.filemanager - jquery based file manager
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -717,7 +717,7 @@ if (jQuery) (function($){
          // Refix the root
                 
          $(folder_pane).addClass('wait');
-
+          
          statusbar.html('<span class="spinner" style="padding-left: 20px;">loading directory entries...</span>');
          $.ajax({
                 url: options.connector,
@@ -726,6 +726,8 @@ if (jQuery) (function($){
                 data: { path: t, output_format: 'json', flags: 'fa' },
                 cache: false,
                 success: function(jsonRes, textStatus) {
+          //console.log($.now()+' begin ajax handler');
+
           // Place ls.py output in listing array
           var cur_folder_names = new Array();
           var cur_file_names = new Array();
@@ -738,7 +740,7 @@ if (jQuery) (function($){
                   }
               }
           }
-                
+          
           statusbar.html('updating directory entries...');
           var folders = '';
 
@@ -835,8 +837,8 @@ if (jQuery) (function($){
             // End the root node
             if (t == '/') {
                 folders += '</li></ul>\n';
-            }
-            
+            } 
+
             // Prefix '/' for the visual presentation of the current path.
             if (t.substr(0, 1) == '/') {
                 addressbar.find("input[name='fm_current_path']").val(t);  
@@ -937,7 +939,7 @@ if (jQuery) (function($){
                 if (t != '/') { // Do not prepend the fake-root.
                     rel_path = t;
                 }
-                console.log("update uploadspace with path: "+rel_path);
+                //console.log("update uploadspace with path: "+rel_path);
                 $(".fm_files div.uploadspace").css("height", uploaderHeight+"px")
                                              .css("line-height", uploaderHeight+"px")
                                              .css("color", "grey")
@@ -1033,9 +1035,9 @@ if (jQuery) (function($){
                 }, 10);
             });
 
-            // bind reload to dotfiles checkbox
-            $("#fm_dotfiles[type='checkbox']").bind('click', 
-                function() { 
+            // bind reload to dotfiles checkbox - just use old bind style here
+            $("#fm_dotfiles[type='checkbox']").on('click',
+                function() {
                     refreshDotfiles();
                 });
 
@@ -1082,17 +1084,19 @@ if (jQuery) (function($){
                 $(".fm_folders [rel_path='"+current_dir.slice(1)
                   +first_child+"/']").click();                       
             }
-            
+	    //console.log($.now()+' end ajax handler');
           }
        });
      }
-
      
-      
+     
      function bindBranch(t) {
-         $(t).find('LI').bind(
+         $(t).off(options.folderEvent, 'li');
+         $(t).on(
              options.folderEvent,
-             function() {
+             'li',
+             null,
+             function(e) {
                  if ($(this).hasClass('directory')) {
                      if ($(this).hasClass('collapsed')) {
                          // Expand
@@ -1116,13 +1120,7 @@ if (jQuery) (function($){
                  }
                  return false;
              }
-         );
-         
-         // Prevent A from triggering the # on non-click events
-         if (options.folderEvent.toLowerCase != 'click') {
-             $(t).find('LI').bind('click', function() { return false; });
-         }
-         
+         );         
      };
                             
      // Base sorting on the content of the hidden <div> element
@@ -1785,8 +1783,8 @@ function mig_fancyuploadchunked_init(name, callback) {
                     showInfo("list of cached uploads loaded", 10, 3000);
                 });
 
-        /* Prevent duplicates in uploadfileslist */
-        $("#fancyfileupload").bind("fileuploadadd", function(e, data) {
+        /* Prevent duplicates in uploadfileslist - old style bind */
+        $("#fancyfileupload").on("fileuploadadd", function(e, data) {
             //console.log("in add handler");
             var current_files = [];
             var path;
