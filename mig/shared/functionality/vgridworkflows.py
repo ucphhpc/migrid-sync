@@ -155,17 +155,6 @@ $(document).ready(function() {
 
     logger.info("vgridworkflows %s" % vgrid_name)
 
-    # Create empty triggers if missing
-
-    (list_status, _) = vgrid_triggers(vgrid_name, configuration)
-    if not list_status:
-        (add_status, add_msg) = vgrid_set_triggers(configuration, vgrid_name,
-                                                   [])
-        if not add_status:
-            output_objects.append({'object_type': 'error_text', 'text': '%s'
-                                   % add_msg})
-            return (output_objects, returnvalues.SYSTEM_ERROR)
-
     # TODO: consider showing triggered job list?
     #job_list = []
     #output_objects.append({'object_type': 'sectionheader', 'text'
