@@ -95,9 +95,9 @@ def main(client_id, user_arguments_dict):
 
     # can't remove if not a participant
 
-    if not vgrid_is_trigger(vgrid_name, rule_id, configuration):
+    if not vgrid_is_trigger(vgrid_name, rule_id, configuration, recursive=False):
         output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is not a trigger in %s or a parent %s.'
+                              : '%s is not a trigger in %s %s.'
                                % (rule_id, vgrid_name,
                                   configuration.site_vgrid_label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -107,6 +107,7 @@ def main(client_id, user_arguments_dict):
     (rm_status, rm_msg) = vgrid_remove_triggers(configuration, vgrid_name,
                                                  rule_id)
     if not rm_status:
+        logger.error('%s failed to remove trigger: %s' % (client_id, rm_msg))
         output_objects.append({'object_type': 'error_text', 'text'
                               : rm_msg})
         output_objects.append({'object_type': 'error_text', 'text'
@@ -117,6 +118,7 @@ be performed from the most significant %(_label)s possible.'''
                                   '_label': configuration.site_vgrid_label}})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    logger.info('%s removed trigger: %s' % (client_id, rule_id))
     output_objects.append({'object_type': 'text', 'text'
                           : 'Trigger %s successfully removed from %s %s!'
                            % (rule_id, vgrid_name,

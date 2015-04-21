@@ -209,10 +209,12 @@ Remove the trigger from the sub-%(_label)s and try again''' % \
     (add_status, add_msg) = vgrid_add_triggers(configuration, vgrid_name,
                                                 [rule_dict])
     if not add_status:
+        logger.error('%s failed to add trigger: %s' % (client_id, add_msg))
         output_objects.append({'object_type': 'error_text', 'text': '%s'
                                % add_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    logger.info('%s added new trigger: %s' % (client_id, rule_dict))
     output_objects.append({'object_type': 'text', 'text'
                           : 'New trigger %s successfully added to %s %s!'
                            % (rule_id, vgrid_name,
