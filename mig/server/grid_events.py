@@ -150,7 +150,65 @@ def show_rate_limit(rule):
     _hits_lock.release()
     return msg
 
+def map_args_to_vars(var_list, arg_list):
+    """Map command args to backend var names - if more args than vars we
+    assume variable length on the first arg:
+       zip src1 src2 src3 dst -> src: [src1, src2, src3], dst: [dst]
+    """
+    args_dict = dict(zip(var_list, [[] for _ in var_list]))
+    remain_vars = [i for i in var_list]
+    remain_args = [i for i in arg_list]
+    while remain_args:
+        args_dict[remain_vars[0]].append(remain_args[0])
+        del remain_args[0]
+        if len(remain_args) < len(remain_vars):
+            del remain_vars[0]
+    return args_dict
 
+def run_command(command_list, target_path, rule, configuration):
+    """Run backend command built from command_list on behalf of user from
+    rule and with args mapped to the backend variables.
+    """
+    # TODO: add all ops with effect here!
+    command_map = {'zip': ['src', 'dst'], 'unzip': ['src', 'dst'],
+                   'cp': ['src', 'dst'], 'mv': ['src', 'dst'],
+                   'rm': ['path'], 'rmdir': ['path'], 'truncate': ['path'],
+                   'touch': ['path'], 'mkdir': ['path'], 'submit': ['path'],
+                   'canceljob': ['job_id'], 'resubmit': ['job_id'],
+                   'jobaction': ['job_id', 'action'], 
+                   'liveio': ['action', 'src', 'dst', 'job_id'],
+                   'mqueue': ['queue', 'action', 'msg_id', 'msg'],
+                   }
+    logger.info("run command for %s: %s" % (target_path, command_list))
+    if not command_list or not command_list[0] in command_map:
+        raise ValueError('unsupported command: %s' % command_list[0])
+    function = command_list[0]
+    args_form = command_map[function]
+    client_id = rule['run_as']
+    command_str = ' '.join(command_list)
+    logger.info("run %s on behalf of %s" % (command_str, client_id))
+    user_arguments_dict = map_args_to_vars(args_form, command_list[1:])
+    logger.info("import main from %s" % function)
+    main = id
+    txt_format = id
+    try:
+        exec 'from shared.functionality.%s import main' % function
+        exec 'from shared.output import txt_format'
+        logger.info("run %s on %s and %s" % (function, client_id,
+                                             user_arguments_dict))
+        # Fake HTTP POST
+        os.environ['REQUEST_METHOD'] = 'POST'
+        (output_objects, (ret_code, ret_msg)) = \
+                         main(client_id, user_arguments_dict)
+    except Exception, exc:
+        raise exc
+    txt_out = txt_format(configuration, ret_code, ret_msg, output_objects)
+    if ret_code != 0:
+        raise Exception('command error: %s' % txt_format)
+    logger.info("done running command for %s: %s" % (target_path, command_str))
+    logger.info("result was %s : %s:\n%s" % (ret_code, ret_msg, txt_out))
+
+        
 class MiGRuleEventHandler(PatternMatchingEventHandler):
     """Rule pattern-matching event handler to take care of VGrid rule changes
     and update the global rule database.
@@ -277,9 +335,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         elif rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
             change = rule['action'].replace('trigger-', '')
             FakeEvent = self.event_map[change]
+            # Expand dynamic variables in argument once and for all
+            expand_map = get_expand_map(rel_src, rule, state)
             for argument in rule['arguments']:
-                # Expand dynamic variables in argument
-                expand_map = get_expand_map(rel_src, rule, state)
                 filled_argument = argument
                 for (key, val) in expand_map.items():
                     filled_argument = filled_argument.replace(key, val)
@@ -312,6 +370,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         elif rule['action'] == 'submit':
             mrsl_fd = tempfile.NamedTemporaryFile(delete=False)
             mrsl_path = mrsl_fd.name
+            # Expand dynamic variables in argument once and for all
             expand_map = get_expand_map(rel_src, rule, state)
             try:
                 for job_template in rule['templates']:
@@ -343,6 +402,30 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                 os.remove(mrsl_path)
             except Exception, exc:
                 logger.warning("clean up after submit failed: %s" % exc)
+        elif rule['action'] == 'command':
+            # Expand dynamic variables in argument once and for all
+            expand_map = get_expand_map(rel_src, rule, state)
+            command_str = ''
+            command_list = rule['arguments'][:1]
+            for argument in rule['arguments'][1:]:
+                filled_argument = argument
+                for (key, val) in expand_map.items():
+                    filled_argument = filled_argument.replace(key, val)
+                self.__workflow_info(configuration, rule['vgrid_name'],
+                                     "expanded argument %s to %s" % \
+                                     (argument, filled_argument))
+                command_list.append(filled_argument)
+            try:
+                run_command(command_list, target_path, rule, configuration)
+                self.__workflow_info(configuration, rule['vgrid_name'],
+                                     "ran command: %s" % \
+                                     (' '.join(command_list)))
+            except Exception, exc:
+                logger.error("failed to run command for %s: %s (%s)" % \
+                             (target_path, command_str, exc))
+                self.__workflow_err(configuration, rule['vgrid_name'],
+                                    "failed to run command for %s: %s (%s)" % \
+                                    (rel_src, command_str, exc))
         else:
             logger.error("unsupported action: %(action)s" % rule)
 
@@ -420,6 +503,8 @@ unless it is available in mig/server/MiGserver.conf
 
     logger.info("Starting Event handler daemon")
 
+    logger.info("initializing rule listener")
+
     # Monitor rule configurations
 
     rule_monitor = Observer()
@@ -432,6 +517,8 @@ unless it is available in mig/server/MiGserver.conf
                           recursive=True)
     rule_monitor.start()
 
+    logger.info("initializing file listener - may take some time")
+
     # monitor actual files to handle events for
     
     file_monitor = Observer()
@@ -443,13 +530,27 @@ unless it is available in mig/server/MiGserver.conf
                           recursive=True)
     file_monitor.start()
 
+    logger.info("trigger rule refresh")
+
     # Fake touch event on all rule files to load initial rules
-    logger.info("trigger load on all rule files matching %s" % rule_patterns[0])
-    for rule_path in glob.glob(rule_patterns[0]):
+
+    logger.info("trigger load on all rule files (greedy) matching %s" % \
+                rule_patterns[0])
+
+    # We manually walk and test to get the greedy "*" directory match behaviour
+    # of the PatternMatchingEventHandler
+    all_trigger_rules = []
+    for root, _, files in os.walk(configuration.vgrid_home):
+        if configuration.vgrid_triggers in files:
+            rule_path = os.path.join(root, configuration.vgrid_triggers)
+            all_trigger_rules.append(rule_path)
+    for rule_path in all_trigger_rules:
         logger.debug("trigger load on rules in %s" % rule_path)
         rule_handler.dispatch(FileModifiedEvent(rule_path))
     logger.debug("loaded initial rules:\n%s" % all_rules)
-    
+
+    logger.info("ready to handle triggers")
+
     while keep_running:
         try:
             
