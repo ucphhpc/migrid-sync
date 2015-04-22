@@ -69,8 +69,9 @@ def handle_package_upload(
 
     # Handle .zip file
 
-    if real_path.upper().endswith('.ZIP'):
-        msg += """.ZIP file '%s' received, it was specified that it should be
+    real_path_lower = real_path.lower()
+    if real_path_lower.endswith('.zip'):
+        msg += """.zip file '%s' received, it was specified that it should be
 extracted!
 """ % relative_path
         try:
@@ -138,15 +139,15 @@ extracted!
                 # A .mrsl file was included in the package!
 
                 mrslfiles_to_parse.append(local_zip_entry_name)
-    elif real_path.upper().endswith('.TAR.GZ')\
-         or real_path.upper().endswith('.TGZ')\
-         or real_path.upper().endswith('.TAR.BZ2'):
+    elif real_path_lower.endswith('.tar.gz')\
+         or real_path_lower.endswith('.tgz')\
+         or real_path_lower.endswith('.tar.bz2'):
 
-    # Handle .tar.gz and tar.bz2 files
+        # Handle .tar.gz and tar.bz2 files
 
-        if real_path.upper().endswith('.TAR.GZ')\
-             or real_path.upper().endswith('.TGZ'):
-            msg += """.TAR.GZ file '%s' received, it was specified that it
+        if real_path_lower.endswith('.tar.gz')\
+             or real_path_lower.endswith('.tgz'):
+            msg += """.tar.gz file '%s' received, it was specified that it
 should be extracted!
 """ % relative_path
             try:
@@ -155,8 +156,8 @@ should be extracted!
             except Exception, exc:
                 msg += 'Could not open .tar.gz file! %s\n' % exc
                 return (False, msg)
-        elif real_path.upper().endswith('.TAR.BZ2'):
-            msg += """.TAR.BZ2 file '%s' received, it was specified that it
+        elif real_path_lower.endswith('.tar.bz2'):
+            msg += """.tar.bz2 file '%s' received, it was specified that it
 should be extracted!
 """ % relative_path
             try:
