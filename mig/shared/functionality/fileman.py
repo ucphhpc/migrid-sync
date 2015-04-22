@@ -108,8 +108,8 @@ def html_tmpl(configuration, title_entry):
         <li class="upload">
             <a href="#upload">Upload File</a>
         </li>
-        <li class="zip">
-            <a href="#zip">Zip</a>
+        <li class="pack">
+            <a href="#pack">Pack</a>
         </li>
         <li class="copy separator">
             <a href="#copy">Copy</a>
@@ -147,11 +147,11 @@ def html_tmpl(configuration, title_entry):
         <li class="rename separator">
             <a href="#rename">Rename</a>
         </li>
-        <li class="zip">
-            <a href="#zip">Zip</a>
+        <li class="pack">
+            <a href="#pack">Pack</a>
         </li>
-        <li class="unzip">
-            <a href="#unzip">Unzip</a>
+        <li class="unpack">
+            <a href="#unpack">Unpack</a>
         </li>
         <li class="cat separator">
             <a href="#cat">cat</a>
@@ -270,19 +270,22 @@ def html_tmpl(configuration, title_entry):
     <div id="rename_output"></div>
     </div>
 
-    <div id="zip_dialog" title="Zip" style="display: none;">
-    <form id="zip_form" method="post" action="zip.py">
+    <div id="pack_dialog" title="Pack" style="display: none;">
+    <form id="pack_form" method="post" action="pack.py">
     <fieldset>
         <input type="hidden" name="output_format" value="json" />
         <input type="hidden" name="flags" value="" />
         <input type="hidden" name="src" value="" />
         <input type="hidden" name="current_dir" value="" />
         
-        <label for="dst">Enter the zip file name:</label>
-        <input id="dst" type="text" name="dst" value="" />
+        <label for="dst">Enter the archive file name:</label>
+        <input id="dst" type="text" name="dst" size=50  value="" />
+        <p>The provided file extension decides the archive type.
+        Use .e.g. .zip for a zip archive or .tgz for compressed tarball.
+        </p>
     </fieldset>
     </form>
-    <div id="zip_output"></div>
+    <div id="pack_output"></div>
     </div>
     ''' % fill_entries
     html += '''

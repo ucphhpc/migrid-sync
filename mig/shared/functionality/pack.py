@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# zip - Pack one or more files/dirs into a zip archive
+# pack - Pack one or more files/dirs into a zip/tar archive
 # Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -26,7 +26,7 @@
 #
 
 """Archiver used to pack a one or more files and directories in
-the home directory of a MiG user into a zip file.
+the home directory of a user into a zip/tar file.
 """
 
 import os
@@ -53,10 +53,10 @@ def signature():
 def usage(output_objects):
     """Usage help"""
 
-    output_objects.append({'object_type': 'header', 'text': 'zip usage:'})
+    output_objects.append({'object_type': 'header', 'text': 'pack usage:'})
     output_objects.append(
         {'object_type': 'text', 'text'
-         : 'SERVER_URL/zip.py?[output_format=(html|txt|xmlrpc|..);]'
+         : 'SERVER_URL/pack.py?[output_format=(html|txt|xmlrpc|..);]'
          '[flags=h;][src=src_path;[...]]src=src_path;dst=dst_path'})
     output_objects.append(
         {'object_type': 'text', 'text'
@@ -72,7 +72,7 @@ def usage(output_objects):
          })
     output_objects.append(
         {'object_type': 'text', 'text'
-         : '- dst is the path where the generated zip archive will be stored'
+         : '- dst is the path where the generated zip/tar archive will be stored'
          })
     return (output_objects, returnvalues.OK)
 
@@ -174,7 +174,7 @@ def main(client_id, user_arguments_dict):
     status = returnvalues.OK
 
     # Force compression
-    zip_file = zipfile.ZipFile(real_dest, 'w', zipfile.ZIP_DEFLATED)
+    pack_file = zipfile.ZipFile(real_dest, 'w', zipfile.ZIP_DEFLATED)
     for pattern in pattern_list:
 
         # Check directory traversal attempts before actual handling to avoid
@@ -201,7 +201,7 @@ def main(client_id, user_arguments_dict):
 
         if not match:
             output_objects.append({'object_type': 'error_text', 'text'
-                                   : "%s: cannot zip '%s': no valid src paths"
+                                   : "%s: cannot pack '%s': no valid src paths"
                                    % (op_name, pattern)})
             status = returnvalues.CLIENT_ERROR
             continue
@@ -231,12 +231,12 @@ def main(client_id, user_arguments_dict):
                                      : 'skipping destination file %s'
                                      % relative_dest})
                                 continue
-                            zip_file.write(real_target, relative_target)
+                            pack_file.write(real_target, relative_target)
                         if not files:
                             dir_info = zipfile.ZipInfo(relative_root + os.sep)
-                            zip_file.writestr(dir_info, '')
+                            pack_file.writestr(dir_info, '')
                 else:
-                    zip_file.write(real_path, real_path.replace(real_dir, ''))
+                    pack_file.write(real_path, real_path.replace(real_dir, ''))
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text', 'text'
                                        : "%s: '%s': %s" % (op_name,
@@ -251,16 +251,16 @@ def main(client_id, user_arguments_dict):
                                    : 'Added %s to %s'
                                    % (relative_path, relative_dest)})
 
-    zip_file.close()
+    pack_file.close()
 
     # Verify CRC
 
     try:
-        zip_file = zipfile.ZipFile(real_dest, 'r')
-        err = zip_file.testzip()
-        zip_file.close()
+        pack_file = zipfile.ZipFile(real_dest, 'r')
+        err = pack_file.testzip()
+        pack_file.close()
     except Exception, exc:
-        err = "Could not open zip file: %s" % exc
+        err = "Could not open pack file: %s" % exc
     if err:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Zip file integrity check failed! (%s)'
@@ -271,7 +271,7 @@ def main(client_id, user_arguments_dict):
                               : 'Zip archive of %s is now available in %s'
                                % (', '.join(pattern_list), relative_dest)})
         output_objects.append({'object_type': 'link', 'text'
-                               : 'Download zip archive', 'destination'
+                               : 'Download archive', 'destination'
                                : os.path.join('..', client_dir,
                                               relative_dest)})
 

@@ -112,9 +112,9 @@ def main(client_id, user_arguments_dict):
                                client_dir)) + os.sep
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = 'Zip archive extractor'
+    title_entry['text'] = 'Zip/tar archive extractor'
     output_objects.append({'object_type': 'header', 'text'
-                          : 'Zip archive extractor'})
+                          : 'Zip/tar archive extractor'})
 
     if verbose(flags):
         for flag in flags:
@@ -184,7 +184,7 @@ def main(client_id, user_arguments_dict):
                 status = returnvalues.CLIENT_ERROR
                 continue
             output_objects.append({'object_type': 'text', 'text'
-                                   : 'Zip archive %s unpacked into %s'
+                                   : 'Zip/tar archive %s unpacked into %s'
                                    % (relative_path, relative_dest)})
 
     return (output_objects, status)
