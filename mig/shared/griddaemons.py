@@ -139,15 +139,17 @@ def flags_to_mode(flags):
 def acceptable_chmod(path, mode, chmod_exceptions):
     """Internal helper to check that a chmod request is safe. That is, it
     only changes permissions that does not lock out user. Furthermore anything
-    inside the dirs in chmod_exceptions should be left alone to avoid users
-    touching read-only files or enabling execution of custom cgi scripts with
-    potentially arbitrary code.
+    we deem invisible_path or inside the dirs in chmod_exceptions should be
+    left alone to avoid users touching read-only files or enabling execution
+    of custom cgi scripts with potentially arbitrary code.
     We require preservation of user read+write on files and user
     read+write+execute on dirs.
     Limitation to sane group/other access perms is left to the caller.
     """
-    if True in [os.path.realpath(path).startswith(i) for i in \
-                chmod_exceptions]:
+
+    if invisible_path(path) or \
+           True in [os.path.realpath(path).startswith(i) for i in \
+                    chmod_exceptions]:
         return False
     # Never touch special leading bits (suid, sgid, etc.)
     if mode & 07000 != 00000:

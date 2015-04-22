@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -84,11 +84,22 @@ settings_filename = 'settings'
 widgets_filename = 'widgets'
 profile_filename = 'userprofile'
 freeze_meta_filename = 'meta.pck'
+
+
 # The htaccess file prevents illegal http access to user files. We completely
 # hide it to not confuse users and to prevent all modification. It is 'only'
 # a matter of users not accidentally giving away file privacy, though.
+# The .vgrid* dirs contain wsgi/cgi dirs with executable code, etc. and we
+# can't let users edit them because it would result in arbitrary code execution
+# holes.
+#
+# IMPORTANT: please use the invisible_{path,file,dir} helpers from shared.base
+#            instead of using these variables directly.
 _dot_vgrid = ['.vgrid%s' % i for i in ['wiki', 'scm', 'tracker', 'forum']]
-user_invisible_files = [htaccess_filename] + _dot_vgrid
+_user_invisible_dirs = _dot_vgrid
+_user_invisible_files = [htaccess_filename]
+_user_invisible_paths = _user_invisible_files + _user_invisible_dirs
+
 
 profile_img_max_kb = 128
 profile_img_extensions = ['png', 'jpg']

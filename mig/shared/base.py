@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - shared base helper functions
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,8 @@ import base64
 import os
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
-from shared.defaults import sandbox_names, user_invisible_files
+from shared.defaults import sandbox_names, _user_invisible_files, \
+     _user_invisible_dirs
 
 id_dir_remap = {'/': '+', ' ': '_'}
 dir_id_remap = dict([(val, key) for (key, val) in id_dir_remap.items()])
@@ -93,18 +94,32 @@ def invisible_file(filename):
     by users and should only be changed through fixed interfaces.
     Provided filename is expected to be without directory prefix.
     """
-    return filename in user_invisible_files
+    return filename in _user_invisible_files
+
+def invisible_dir(dir_path):
+    """Returns boolean indicating if the directory with dir_path is among
+    restricted directories to completely hide. Such directories can not
+    safely be removed or modified by users and should only be changed
+    through fixed interfaces.
+    Provided dir_path can contain a directory prefix.
+    """
+    for dirname in dir_path.split(os.sep):
+        if dirname in _user_invisible_dirs:
+            return True
+    return False
 
 def invisible_path(path):
-    """Returns boolean indicating if the file with path is among restricted
-    files or directories to completely hide. Such items can not safely be
-    removed or modified by users and should only be changed through fixed
-    interfaces.
+    """Returns boolean indicating if the file or directory with path is among
+    restricted files or directories to completely hide. Such items can not
+    safely be removed or modified by users and should only be changed through
+    a few restricted interfaces.
     Provided path may be absolute or relative.
     """
-    for name in path.split(os.sep):
-        if invisible_file(name):
-            return True
+    filename = os.path.basename(path)
+    if invisible_file(filename):
+        return True
+    elif invisible_dir(path):
+        return True
     return False
 
 def requested_page(environ=None, fallback='dashboard.py'):
@@ -138,14 +153,22 @@ if __name__ == '__main__':
     client_dir = client_id_dir(orig_id)
     client_id = client_dir_id(client_dir)
     test_paths = ['simple.txt', 'somedir/somefile.txt']
-    sample = user_invisible_files[0]
-    illegal = ["%s%s%s" % (prefix, sample, suffix) for (prefix, suffix) in \
+    sample_file = _user_invisible_files[0]
+    sample_dir = _user_invisible_dirs[0]
+    illegal = ["%s%s%s" % (prefix, sample_dir, suffix) for (prefix, suffix) in \
                [('', ''), ('./', ''), ('/', ''), ('somedir/', ''),
                 ('/somedir/', ''), ('somedir/sub/', ''), ('/somedir/sub/', ''),
                 ('', '/sub'), ('', '/sub/sample.txt'),
                 ('somedir/', '/sample.txt'), ('/somedir/', '/sample.txt'),
-                ('/somedir/sub/', '/sample.txt')]]
-    legal = ["%s%s%s" % (prefix, sample, suffix) for (prefix, suffix) in \
+                ('/somedir/sub/', '/sample.txt')]] + \
+                ["%s%s" % (prefix, sample_file) for prefix, _ in \
+               [('', ''), ('./', ''), ('/', ''), ('somedir/', ''),
+                ('/somedir/', ''), ('somedir/sub/', ''), ('/somedir/sub/', ''),
+                ]]
+    legal = ["%s%s%s" % (prefix, sample_file, suffix) for (prefix, suffix) in \
+               [('prefix', ''), ('somedir/prefix', ''), ('', 'suffix'),
+                ('', 'suffix/somedir'), ('prefix', 'suffix')]] +\
+                ["%s%s%s" % (prefix, sample_dir, suffix) for (prefix, suffix) in \
                [('prefix', ''), ('somedir/prefix', ''), ('', 'suffix'),
                 ('', 'suffix/somedir'), ('prefix', 'suffix')]]
     legal += ['sample.txt', 'somedir/sample.txt', '/somedir/sample.txt']

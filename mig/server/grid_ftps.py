@@ -84,7 +84,6 @@ except ImportError:
 
 from shared.base import invisible_path
 from shared.conf import get_configuration_object
-from shared.defaults import user_invisible_files
 from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
      hit_rate_limit, update_rate_limit, expire_rate_limit
 from shared.logger import daemon_logger
@@ -202,12 +201,12 @@ class MiGRestrictedFilesystem(AbstractedFS):
     
     def _acceptable_chmod(self, ftps_path, mode):
         """Wrap helper"""
-        #self.logger.debug("acceptable_chmod: %s" % ftps_path)
+        #logger.debug("acceptable_chmod: %s" % ftps_path)
         reply = acceptable_chmod(ftps_path, mode, self.chmod_exceptions)
         if not reply:
-            self.logger.warning("acceptable_chmod failed: %s %s %s" % \
+            logger.warning("acceptable_chmod failed: %s %s %s" % \
                                 (ftps_path, mode, self.chmod_exceptions))
-        #self.logger.debug("acceptable_chmod returns: %s :: %s" % \
+        #logger.debug("acceptable_chmod returns: %s :: %s" % \
         #                      (ftps_path, reply))
         return reply
 
@@ -334,13 +333,9 @@ unless it is available in mig/server/MiGserver.conf
                          os.path.abspath(configuration.vgrid_public_base),
                          os.path.abspath(configuration.vgrid_files_home),
                          os.path.abspath(configuration.resource_home)]
-    # Don't allow chmod in dirs with CGI access as it introduces arbitrary
-    # code execution vulnerabilities
+    # Any extra chmod exceptions here - we already cover invisible_path check
+    # in acceptable_chmod helper.
     chmod_exceptions = []
-    for vgrid_base in [os.path.abspath(configuration.vgrid_private_base),
-                       os.path.abspath(configuration.vgrid_public_base)]:
-        for invisible in user_invisible_files:
-            chmod_exceptions.append(os.path.join(vgrid_base, invisible))
     configuration.daemon_conf = {
         'address': address,
         'ctrl_port': ctrl_port,

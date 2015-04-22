@@ -80,7 +80,6 @@ except ImportError:
 
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
-from shared.defaults import user_invisible_files
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
      acceptable_chmod, refresh_users, refresh_jobs, hit_rate_limit, \
      update_rate_limit, expire_rate_limit
@@ -824,13 +823,9 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
                          os.path.abspath(configuration.vgrid_public_base),
                          os.path.abspath(configuration.vgrid_files_home),
                          os.path.abspath(configuration.resource_home)]
-    # Don't allow chmod in dirs with CGI access as it introduces arbitrary
-    # code execution vulnerabilities
+    # Any extra chmod exceptions here - we already cover invisible_path check
+    # in acceptable_chmod helper.
     chmod_exceptions = []
-    for vgrid_base in [os.path.abspath(configuration.vgrid_private_base),
-                       os.path.abspath(configuration.vgrid_public_base)]:
-        for invisible in user_invisible_files:
-            chmod_exceptions.append(os.path.join(vgrid_base, invisible))
     configuration.daemon_conf = {
         'address': address,
         'port': port,
