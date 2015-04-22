@@ -312,7 +312,7 @@ or the same with OpenID, HSTS, WSGI and vhost-specific certificates:
                    --daemon_pubkey=~/certs/combined.pub \
 		   --landing_page='/wsgi-bin/dashboard.py'
 
-and a storage-only setup with CentOS apache 2.x and OpenID login:
+and a storage-only setup with CentOS 6.x, apache 2.x and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --public_fqdn=erda.dk \
                    --cert_fqdn=cert.erda.dk \
@@ -325,7 +325,8 @@ and a storage-only setup with CentOS apache 2.x and OpenID login:
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
-                   --hg_path='' --hgweb_scripts='' \
+                   --hg_path=/usr/bin/hg \
+                   --hgweb_scripts=/usr/share/doc/mercurial-1.4 \
                    --trac_admin_path='' --trac_ini_path='' \
                    --public_port=80 --cert_port=443 --oid_port=443 --sid_port=443 \
                    --openid_providers='https://openid.ku.dk/ https://erda.dk:8000/openid/' \
