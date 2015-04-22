@@ -203,8 +203,7 @@ the commands and work flows of this distributed SCM.
     except Exception, exc:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not create %s scm: %s' % \
-                               configuration.site_vgrid_label
-                               % exc})
+                               (configuration.site_vgrid_label, exc)})
         return False
 
 
