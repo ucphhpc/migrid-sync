@@ -34,6 +34,7 @@ from shared.defaults import default_vgrid, all_vgrids, default_pager_entries
 from shared.functional import validate_input_and_cert
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
+from shared.settings import load_settings
 from shared.useradm import get_full_user_map
 from shared.vgrid import vgrid_list_vgrids, vgrid_is_owner, \
     vgrid_is_member, vgrid_is_owner_or_member, vgrid_create_allowed
@@ -70,10 +71,21 @@ def main(client_id, user_arguments_dict):
                               : 'Error getting list of %s.' % \
                                configuration.site_vgrid_label})
 
+    # Check if user wants advanced VGrid component links
+
+    settings = load_settings(client_id, configuration)        
+    collaboration_links = settings.get('SITE_COLLABORATION_LINKS', 'default')
+    if not collaboration_links in configuration.site_collaboration_links or \
+           collaboration_links == 'default':
+        active_vgrid_links = configuration.site_default_vgrid_links
+    elif collaboration_links == 'advanced':
+        active_vgrid_links = configuration.site_advanced_vgrid_links
+
     # Iterate through vgrids and print details for each
 
-    member_list = {'object_type': 'vgrid_list', 'vgrids': []}
-    if 'monitor' in configuration.site_vgrid_links:
+    member_list = {'object_type': 'vgrid_list', 'vgrids': [],
+                   'components': active_vgrid_links}
+    if 'monitor' in active_vgrid_links:
         vgrid_list = [all_vgrids] + vgrid_list
     else:
         vgrid_list.remove(default_vgrid)

@@ -1614,6 +1614,7 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
         elif i['object_type'] == 'vgrid_list':
             if len(i['vgrids']) > 0:
                 vgrids = i['vgrids']
+                components = i['components']
                 titles = []
                 # hide links to public components which are disabled in apache
                 component_links = {
@@ -1635,7 +1636,7 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
 """)
                 # make vgrid component links optional, like it is in the
                 # configuration
-                for key in configuration.site_vgrid_links:
+                for key in components:
                     titles.append('''
   <th class="centertext %(class)s" title="%(hover)s" colspan="1">
       %(title)s
@@ -1667,7 +1668,7 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                         lines.append('%s'
                                  % html_link(obj['memberlink']))
                     lines.append('</td>')
-                    for key in configuration.site_vgrid_links:
+                    for key in components:
                         lines.append('<td class="centertext">')
                         for link in component_links[key]:
                             if obj.has_key(link):

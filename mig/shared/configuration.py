@@ -241,7 +241,10 @@ class Configuration:
     javabin_home = ''
     openid_store = ''
     rate_limit_db = ''
+    site_collaboration_links = ''
     site_vgrid_links = []
+    site_default_vgrid_links = []
+    site_advanced_vgrid_links = []
     site_vgrid_creators = [('distinguished_name', '.*')]
     site_vgrid_label = 'VGrid'
     site_signup_methods = ['extcert']
@@ -869,11 +872,29 @@ class Configuration:
             self.site_user_menu = [i for i in req if menu_items.has_key(i)]
         else:
             self.site_user_menu = []
+        if config.has_option('SITE', 'collaboration_links'):
+            valid = ['default', 'simple', 'advanced']
+            req = config.get('SITE', 'collaboration_links').split()
+            self.site_collaboration_links = [i for i in req if i in valid]
+        else:
+            self.site_collaboration_links = ['default']
+        # NOTE: site_vgrid_links is preserved for backwards compliance
+        #       use the default or advanced ones in the code now
         if config.has_option('SITE', 'vgrid_links'):
             self.site_vgrid_links = config.get('SITE', 'vgrid_links').split()
         else:
             self.site_vgrid_links = ['files', 'web', 'tracker', 'workflows',
                                      'monitor']
+        if config.has_option('SITE', 'default_vgrid_links'):
+            self.site_default_vgrid_links = config.get(
+                'SITE', 'default_vgrid_links').split()
+        else:
+            self.site_default_vgrid_links = self.site_vgrid_links
+        if config.has_option('SITE', 'advanced_vgrid_links'):
+            self.site_advanced_vgrid_links = config.get(
+                'SITE', 'advanced_vgrid_links').split()
+        else:
+            self.site_advanced_vgrid_links = self.site_vgrid_links
         if config.has_option('SITE', 'vgrid_creators'):
             req = config.get('SITE', 'vgrid_creators').split()
             self.site_vgrid_creators = [i.split(':', 2) for i in req]

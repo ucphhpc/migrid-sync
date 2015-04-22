@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settingskeywords - keywords for basic user settings
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -121,6 +121,15 @@ def get_settings_specs():
         'Example': '...choose from the list',
         'Type': 'multiplestrings',
         'Value': [],
+        'Context': 'appearance',
+        'Required': False,
+        }))
+    specs.append(('SITE_COLLABORATION_LINKS', {
+        'Title': 'Collaboration links',
+        'Description': 'Which group collaboration components to use.',
+        'Example': 'advanced',
+        'Type': 'string',
+        'Value': 'default',
         'Context': 'appearance',
         'Required': False,
         }))
