@@ -170,15 +170,18 @@ def run_command(command_list, target_path, rule, configuration):
     rule and with args mapped to the backend variables.
     """
     # TODO: add all ops with effect here!
-    command_map = {'zip': ['src', 'dst'], 'unzip': ['src', 'dst'],
-                   'cp': ['src', 'dst'], 'mv': ['src', 'dst'],
-                   'rm': ['path'], 'rmdir': ['path'], 'truncate': ['path'],
-                   'touch': ['path'], 'mkdir': ['path'], 'submit': ['path'],
-                   'canceljob': ['job_id'], 'resubmit': ['job_id'],
-                   'jobaction': ['job_id', 'action'], 
-                   'liveio': ['action', 'src', 'dst', 'job_id'],
-                   'mqueue': ['queue', 'action', 'msg_id', 'msg'],
-                   }
+    command_map = {
+        'pack': ['src', 'dst'], 'unpack': ['src', 'dst'],
+        'zip': ['src', 'dst'], 'unzip': ['src', 'dst'],
+        'tar': ['src', 'dst'], 'untar': ['src', 'dst'],
+        'cp': ['src', 'dst'], 'mv': ['src', 'dst'],
+        'rm': ['path'], 'rmdir': ['path'], 'truncate': ['path'],
+        'touch': ['path'], 'mkdir': ['path'], 'submit': ['path'],
+        'canceljob': ['job_id'], 'resubmit': ['job_id'],
+        'jobaction': ['job_id', 'action'], 
+        'liveio': ['action', 'src', 'dst', 'job_id'],
+        'mqueue': ['queue', 'action', 'msg_id', 'msg'],
+        }
     logger.info("run command for %s: %s" % (target_path, command_list))
     if not command_list or not command_list[0] in command_map:
         raise ValueError('unsupported command: %s' % command_list[0])
@@ -201,11 +204,14 @@ def run_command(command_list, target_path, rule, configuration):
         (output_objects, (ret_code, ret_msg)) = \
                          main(client_id, user_arguments_dict)
     except Exception, exc:
+        logger.error("failed to run %s on %s: %s" % \
+                     (function, user_arguments_dict, exc))
         raise exc
+    logger.info("done running command for %s: %s" % (target_path, command_str))
+    logger.info("raw output is: %s" % output_objects)
     txt_out = txt_format(configuration, ret_code, ret_msg, output_objects)
     if ret_code != 0:
         raise Exception('command error: %s' % txt_format)
-    logger.info("done running command for %s: %s" % (target_path, command_str))
     logger.info("result was %s : %s:\n%s" % (ret_code, ret_msg, txt_out))
 
         
