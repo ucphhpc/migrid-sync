@@ -149,10 +149,13 @@ the commands and work flows of this distributed SCM.
 
         # Create modified Mercurial Xgi scripts that use local scm repo.
         # In this way modification to one vgrid scm will not affect others.
-
-        for (template_path, target_path) in \
-                [(cgi_template_script, cgi_scm_script),
-                 (wsgi_template_script, wsgi_scm_script)]:
+        # WSGI script may or may not be included in hg installation.
+        
+        script_pairs = [(cgi_template_script, cgi_scm_script)]
+        
+        if os.path.exists(wsgi_template_script):
+            script_pairs.append((wsgi_template_script, wsgi_scm_script))
+        for (template_path, target_path) in script_pairs:
             if repair and os.path.isfile(target_path):
                 continue
             target_dir = os.path.dirname(target_path)
