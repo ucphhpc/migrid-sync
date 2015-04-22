@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # xmlrpcsslclient - XMLRPC client with HTTPS user certificate support
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -230,7 +230,17 @@ if '__main__' == __name__:
     print 'submit() help: %s' % server.system.methodHelp('submit')
     print 'please note that help is not yet available for all methods'
     print
-    
+
+    print "supported remote methods and their variable arguments:"
+    for method in methods:
+        signature = server.system.methodSignature(method)
+        if 'none' in signature or 'array' in signature:
+            continue
+        signature_list = eval(signature.replace('none', 'None'))
+        var_dict = signature_list[1]
+        var_list = var_dict.keys()
+        print '%s : %s' % (method, var_list)
+
     print 'Testing some action methods:'
     print 'checking job status for job(s) with IDs: %s'\
          % ' '.join(job_id_list)
