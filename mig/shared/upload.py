@@ -98,7 +98,7 @@ extracted!
             if not os.path.isdir(zip_entry_dir):
                 msg += 'creating dir %s\n' % zip_entry_dir
                 try:
-                    os.makedirs(zip_entry_dir, 0777)
+                    os.makedirs(zip_entry_dir, 0775)
                 except Exception, exc:
                     msg += 'error creating directory %s' % exc
                     return (False, msg)
@@ -139,21 +139,24 @@ extracted!
                 # A .mrsl file was included in the package!
 
                 mrslfiles_to_parse.append(local_zip_entry_name)
-    elif real_path_lower.endswith('.tar.gz')\
-         or real_path_lower.endswith('.tgz')\
-         or real_path_lower.endswith('.tar.bz2'):
+    elif real_path_lower.endswith('.tar') or \
+             real_path_lower.endswith('.tar.gz') or \
+             real_path_lower.endswith('.tgz') or \
+             real_path_lower.endswith('.tar.bz2'):
 
-        # Handle .tar.gz and tar.bz2 files
-
+        # Handle possibly compressed .tar files
+        configuration.logger.info("handle untar")
         if real_path_lower.endswith('.tar.gz')\
              or real_path_lower.endswith('.tgz'):
             msg += """.tar.gz file '%s' received, it was specified that it
 should be extracted!
 """ % relative_path
+            configuration.logger.info("open tar gz")
             try:
                 tar_object = tarfile.open(real_path, 'r:gz')
                 tar_file_content = tarfile.TarFile.gzopen(real_path)
             except Exception, exc:
+                configuration.logger.info("open tar gz failed: %s" % exc)
                 msg += 'Could not open .tar.gz file! %s\n' % exc
                 return (False, msg)
         elif real_path_lower.endswith('.tar.bz2'):
@@ -171,13 +174,14 @@ should be extracted!
                 'Internal error, should not be able to enter this else!!'
             return (False, msg)
 
+        configuration.logger.info("unpack entries of %s to %s" % \
+                                  (real_path, dest_path))
         for tar_entry in tar_object:
             msg += 'Extracting: %s\n' % tar_entry.name
 
             # write tar_entry to disk
 
-            local_tar_entry_name = os.path.abspath(base_dir
-                     + tar_entry.name)
+            local_tar_entry_name = os.path.join(dest_path, tar_entry.name)
 
             valid_status, valid_err = valid_user_path_name(
                 tar_entry.name, local_tar_entry_name, base_dir)
@@ -191,7 +195,7 @@ should be extracted!
             if not os.path.isdir(tar_entry_dir):
                 msg += 'creating dir %s\n' % tar_entry_dir
                 try:
-                    os.makedirs(tar_entry_dir, 0777)
+                    os.makedirs(tar_entry_dir, 0775)
                 except Exception, exc:
                     msg += 'error creating directory %s\n' % exc
                     return (False, msg)

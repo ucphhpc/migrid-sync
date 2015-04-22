@@ -101,8 +101,8 @@
 .contextMenu LI.copy A { background-image: url(/images/icons/page_white_copy.png); }
 .contextMenu LI.paste A { background-image: url(/images/icons/page_white_paste.png); }
 .contextMenu LI.delete A { background-image: url(/images/icons/page_white_delete.png); }
-.contextMenu LI.zip A { background-image: url(/images/icons/compress.png); }
-.contextMenu LI.unzip A { background-image: url(/images/icons/zip.png); }
+.contextMenu LI.pack A { background-image: url(/images/icons/compress.png); }
+.contextMenu LI.unpack A { background-image: url(/images/icons/zip.png); }
 .contextMenu LI.rename A { background-image: url(/images/icons/drive_rename.png); }
 .contextMenu LI.quit A { background-image: url(/images/icons/door.png); }
 .contextMenu LI.mrsl a { background-image: url('/images/icons/page_white_text.png'); }

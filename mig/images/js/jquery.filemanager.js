@@ -501,8 +501,8 @@ if (jQuery) (function($){
                 jsonWrapper(el, '#cmd_dialog', 'head.py'); },
             tail:   function (action, el, pos) { 
                 jsonWrapper(el, '#cmd_dialog', 'tail.py'); },
-            zip:    function (action, el, pos) { 
-                /* zip file or directory to user specified file */
+            pack:    function (action, el, pos) { 
+                /* pack file or directory to user specified file */
                 var current_dir = '';
                 var target = $(el).attr(pathAttribute);
                 var path_name = '';
@@ -515,28 +515,28 @@ if (jQuery) (function($){
                 }
                 current_dir = target.substring(0, target.lastIndexOf('/'));
             
-                // Initialize the form
-                $("#zip_form input[name='current_dir']").val(current_dir);
-                $("#zip_form input[name='src']").val(path_name);
-                $("#zip_form input[name='dst']").val(path_name + '.zip');
-                $("#zip_output").html('');
-                $("#zip_dialog").dialog(
+                // Initialize the form with default to zip file
+                $("#pack_form input[name='current_dir']").val(current_dir);
+                $("#pack_form input[name='src']").val(path_name);
+                $("#pack_form input[name='dst']").val(path_name + '.zip');
+                $("#pack_output").html('');
+                $("#pack_dialog").dialog(
                     { buttons: {
                           Ok: function() { 
-                              $("#zip_form").submit(); },
+                              $("#pack_form").submit(); },
                           Cancel: function() {
                               $(this).dialog('close');}
                       },
                       autoOpen: false, closeOnEscape: true,
-                      modal: true}
+                      modal: true, width: '500px'}
                 );
-                $("#zip_dialog").dialog('open');
+                $("#pack_dialog").dialog('open');
 
             },
-            unzip:   function (action, el, pos) { 
+            unpack:   function (action, el, pos) { 
                 var dst = $(".fm_addressbar input[name='fm_current_path']").val();
-                // unzip uses src instead of path parameter
-                jsonWrapper(el, '#cmd_dialog', 'unzip.py', {dst: dst, src: $(el).attr(pathAttribute), path: ''}); 
+                // unpack uses src instead of path parameter
+                jsonWrapper(el, '#cmd_dialog', 'unpack.py', {dst: dst, src: $(el).attr(pathAttribute), path: ''}); 
             },
             submit: function (action, el, pos) { 
                 jsonWrapper(el, '#cmd_dialog', 'submit.py'); },
@@ -992,12 +992,15 @@ if (jQuery) (function($){
                 }, 10);
             });
             
+            $("#fm_filemanager").off("dblclick", "tr.file, tr.directory");
             $("#fm_filemanager").on("dblclick", 
                                     "tr.file, tr.directory",
                                     function(event) {
                                         doubleClickEvent(this);
                                     }); 
             /* 
+            $("#fm_filemanager").off("mousedown",  
+                                    "tr.file, tr.directory");
             $("#fm_filemanager").on("mousedown",  
                                     "tr.file, tr.directory",
                                     function(event) { event.preventDefault(); }); 
@@ -1205,17 +1208,17 @@ if (jQuery) (function($){
           }
          });
  
-     $("#zip_form").ajaxForm(
-         {target: '#zip_output', dataType: 'json',
+     $("#pack_form").ajaxForm(
+         {target: '#pack_output', dataType: 'json',
           success: function(responseObject, statusText) {
               var errors = $(this).renderError(responseObject);
               var warnings = $(this).renderWarning(responseObject);
               if (errors.length > 0) {
-                  $("#zip_output").html(errors);
+                  $("#pack_output").html(errors);
               } else if (warnings.length > 0) {
-                  $("#zip_output").html(warnings);
+                  $("#pack_output").html(warnings);
               } else {
-                  $("#zip_dialog").dialog('close');
+                  $("#pack_dialog").dialog('close');
                   $(".fm_files").parent().reload('');
               }
           }
