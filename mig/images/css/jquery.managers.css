@@ -321,6 +321,7 @@ UL.jqueryFileList A:hover {
 .ext_avi { background: url(/images/icons/film.png) left center no-repeat; }
 .ext_bat { background: url(/images/icons/application.png) left center no-repeat; }
 .ext_bmp { background: url(/images/icons/picture.png) left center no-repeat; }
+.ext_bz2 { background: url(/images/icons/compress.png) left center no-repeat; }
 .ext_c { background: url(/images/icons/code.png) left center no-repeat; }
 .ext_cfm { background: url(/images/icons/code.png) left center no-repeat; }
 .ext_cgi { background: url(/images/icons/code.png) left center no-repeat; }
@@ -364,6 +365,7 @@ UL.jqueryFileList A:hover {
 .ext_sql { background: url(/images/icons/db.png) left center no-repeat; }
 .ext_swf { background: url(/images/icons/flash.png) left center no-repeat; }
 .ext_tar { background: url(/images/icons/compress.png) left center no-repeat; }
+.ext_tbz { background: url(/images/icons/compress.png) left center no-repeat; }
 .ext_tgz { background: url(/images/icons/compress.png) left center no-repeat; }
 .ext_tif { background: url(/images/icons/picture.png) left center no-repeat; }
 .ext_tiff { background: url(/images/icons/picture.png) left center no-repeat; }

@@ -29,11 +29,11 @@
 the home directory of a user into a zip/tar file.
 """
 
-import os
-import zipfile
 import glob
+import os
 
 import shared.returnvalues as returnvalues
+from shared.archives import pack_archive
 from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
@@ -72,7 +72,8 @@ def usage(output_objects):
          })
     output_objects.append(
         {'object_type': 'text', 'text'
-         : '- dst is the path where the generated zip/tar archive will be stored'
+         : '- dst is the path where the generated archive will be stored. ' + \
+         'The file extension decides the archive format (zip, tar, tar.gz)'
          })
     return (output_objects, returnvalues.OK)
 
@@ -173,8 +174,6 @@ def main(client_id, user_arguments_dict):
 
     status = returnvalues.OK
 
-    # Force compression
-    pack_file = zipfile.ZipFile(real_dest, 'w', zipfile.ZIP_DEFLATED)
     for pattern in pattern_list:
 
         # Check directory traversal attempts before actual handling to avoid
@@ -209,70 +208,31 @@ def main(client_id, user_arguments_dict):
         for real_path in match:
             relative_path = real_path.replace(base_dir, '')
             if real_dest == real_path:
-                    output_objects.append({'object_type': 'text', 'text'
-                                           : 'skipping destination file %s'
-                                           % relative_dest})
-                    continue
+                output_objects.append({'object_type': 'text', 'text'
+                                       : 'skipping destination file %s'
+                                       % relative_dest})
+                continue
             if verbose(flags):
                 output_objects.append({'object_type': 'file', 'name'
                                        : relative_path})
 
-            try:
-                if os.path.isdir(real_path):
-                    for root, dirs, files in os.walk(real_path):
-                        relative_root = root.replace(real_dir + os.sep, '')
-                        for entry in files:
-                            real_target = os.path.join(root, entry)
-                            relative_target = os.path.join(relative_root,
-                                                           entry)
-                            if real_dest == real_target:
-                                output_objects.append(
-                                    {'object_type': 'text', 'text'
-                                     : 'skipping destination file %s'
-                                     % relative_dest})
-                                continue
-                            pack_file.write(real_target, relative_target)
-                        if not files:
-                            dir_info = zipfile.ZipInfo(relative_root + os.sep)
-                            pack_file.writestr(dir_info, '')
-                else:
-                    pack_file.write(real_path, real_path.replace(real_dir, ''))
-            except Exception, exc:
-                output_objects.append({'object_type': 'error_text', 'text'
-                                       : "%s: '%s': %s" % (op_name,
-                                                           relative_path, exc)
-                                       })
-                logger.error("%s: failed on '%s': %s" % (op_name,
-                                                         relative_path, exc))
-                status = returnvalues.SYSTEM_ERROR
+            (pack_status, msg) = pack_archive(configuration, client_id,
+                                              relative_path, dst)
+            if not pack_status:
+                output_objects.append({'object_type': 'error_text',
+                                       'text': 'Error: %s' % msg})
+                status = returnvalues.CLIENT_ERROR
                 continue
-
             output_objects.append({'object_type': 'text', 'text'
                                    : 'Added %s to %s'
                                    % (relative_path, relative_dest)})
 
-    pack_file.close()
-
-    # Verify CRC
-
-    try:
-        pack_file = zipfile.ZipFile(real_dest, 'r')
-        err = pack_file.testzip()
-        pack_file.close()
-    except Exception, exc:
-        err = "Could not open pack file: %s" % exc
-    if err:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Zip file integrity check failed! (%s)'
-                               % err})
-        status = returnvalues.SYSTEM_ERROR
-    else:
-        output_objects.append({'object_type': 'text', 'text'
-                              : 'Zip archive of %s is now available in %s'
-                               % (', '.join(pattern_list), relative_dest)})
-        output_objects.append({'object_type': 'link', 'text'
-                               : 'Download archive', 'destination'
-                               : os.path.join('..', client_dir,
-                                              relative_dest)})
+    output_objects.append({'object_type': 'text', 'text'
+                          : 'Zip archive of %s is now available in %s'
+                           % (', '.join(pattern_list), relative_dest)})
+    output_objects.append({'object_type': 'link', 'text'
+                           : 'Download archive', 'destination'
+                           : os.path.join('..', client_dir,
+                                          relative_dest)})
 
     return (output_objects, status)

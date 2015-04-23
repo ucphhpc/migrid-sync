@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # textarea - combined text/mrsl writer and file upload
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,17 +25,15 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
 """
 This is the form handler called by html pages
 @todo detect and notify user if a filenumber is used twice
 @todo better user input validation
 """
 
+import base64
 import os
 import time
-import base64
 
 import shared.mrslkeywords as mrslkeywords
 import shared.returnvalues as returnvalues
@@ -47,7 +45,7 @@ from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.job import new_job
 from shared.safeinput import valid_user_path_name
-from shared.upload import handle_package_upload
+from shared.archives import handle_package_upload
 
 
 def signature():

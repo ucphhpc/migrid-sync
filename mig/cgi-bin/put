@@ -48,7 +48,7 @@ from shared.cgishared import init_cgiscript_possibly_with_cert
 from shared.fileio import pickle, unpickle
 from shared.job import new_job, finished_job, failed_restart
 from shared.findtype import is_user, is_server, is_owner
-from shared.upload import handle_package_upload
+from shared.archives import handle_package_upload
 from shared.settings import parse_and_save_settings
 
 

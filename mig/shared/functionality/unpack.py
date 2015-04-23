@@ -33,12 +33,12 @@ import os
 import glob
 
 import shared.returnvalues as returnvalues
+from shared.archives import unpack_archive
 from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import verbose
-from shared.upload import handle_package_upload
 from shared.validstring import valid_user_path
 
 
@@ -102,7 +102,7 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     flags = ''.join(accepted['flags'])
-    dst = accepted['dst'][-1]
+    dst = accepted['dst'][-1].lstrip(os.sep)
     pattern_list = accepted['src']
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -125,7 +125,8 @@ def main(client_id, user_arguments_dict):
     if 'h' in flags:
         usage(output_objects)
 
-    real_dest = os.path.join(base_dir, dst.lstrip(os.sep))
+    real_dest = os.path.join(base_dir, dst)
+    logger.info('unpack in %s' % real_dest)
 
     # Don't use real_path in output as it may expose underlying
     # fs layout.
@@ -135,11 +136,11 @@ def main(client_id, user_arguments_dict):
 
         # out of bounds
 
+        logger.error('%s tried to %s restricted path %s ! (%s)'
+                       % (client_id, op_name, real_dest, dst))
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : "Invalid path! (%s expands to an illegal path)" % dst})
-        logger.warning('%s tried to %s restricted path %s ! (%s)'
-                       % (client_id, op_name, real_dest, dst))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     status = returnvalues.OK
@@ -173,18 +174,18 @@ def main(client_id, user_arguments_dict):
             if verbose(flags):
                 output_objects.append({'object_type': 'file', 'name'
                                        : relative_path})
-            (unpack_status, msg) = handle_package_upload(real_path,
-                                                         relative_path,
-                                                         client_id,
-                                                         configuration,
-                                                         False, real_dest)
+            (unpack_status, msg) = unpack_archive(configuration,
+                                                  client_id,
+                                                  relative_path,
+                                                  dst)
             if not unpack_status:
                 output_objects.append({'object_type': 'error_text',
                                        'text': 'Error: %s' % msg})
                 status = returnvalues.CLIENT_ERROR
                 continue
-            output_objects.append({'object_type': 'text', 'text'
-                                   : 'Zip/tar archive %s unpacked into %s'
-                                   % (relative_path, relative_dest)})
+            output_objects.append(
+                {'object_type': 'text', 'text'
+                 : 'The zip/tar archive %s was unpacked in %s'
+                 % (relative_path, relative_dest)})
 
     return (output_objects, status)
