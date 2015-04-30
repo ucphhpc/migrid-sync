@@ -149,7 +149,8 @@ browser.'''})
         else:
             output_objects.append(
                 {'object_type': 'text', 'text': '''Apparently you already have
-suitable credentials and just need to sign up for an account on:'''})
+suitable credentials and just need to sign up for a local %s account on:''' % \
+                 configuration.short_title})
 
             if extract_client_cert(configuration, environ) is None:
                 # Force logout/expire session cookie here to support signup

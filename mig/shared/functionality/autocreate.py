@@ -310,7 +310,6 @@ def main(client_id, user_arguments_dict, environ=None):
             url = environ.get('REQUEST_URI',
                               base_url).split('?')[0].replace('autocreate',
                                                               'logout')
-            url += '?logout=true'
             output_objects.append(
                 {'object_type': 'text', 'text': '''Please note that sign-up
 for OpenID access does not work if you are already signed in with your OpenID
