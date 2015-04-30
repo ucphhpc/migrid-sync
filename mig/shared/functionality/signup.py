@@ -76,7 +76,6 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s account sign up' % configuration.short_title
-    # TODO: wrap openid ping in function and split up for each oid
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.migtools.js"></script>

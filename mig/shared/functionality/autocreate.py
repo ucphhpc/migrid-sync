@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # autocreate - auto create user from signed certificate or openid login
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,7 +27,8 @@
 
 """Automatic sign up back end for external certificates and OpenID logins
 
-   Also see req-/extcertaction.py. Differences: 
+   Also see req-/extcertaction.py
+   Differences: 
      - no e-mail sent: only auto-create functionality or nothing
      - automatic upload of a proxy certificate when provided
      - no special check for KU organisation
@@ -309,6 +310,7 @@ def main(client_id, user_arguments_dict, environ=None):
             url = environ.get('REQUEST_URI',
                               base_url).split('?')[0].replace('autocreate',
                                                               'logout')
+            url += '?logout=true'
             output_objects.append(
                 {'object_type': 'text', 'text': '''Please note that sign-up
 for OpenID access does not work if you are already signed in with your OpenID
