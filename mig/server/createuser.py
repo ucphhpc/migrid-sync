@@ -59,7 +59,7 @@ Usage:
 or
 %(name)s [OPTIONS] -u USER_FILE
 or
-%(name)s [OPTIONS]
+%(name)s [OPTIONS] -i CERT_DN
 Where OPTIONS may be one or more of:
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
