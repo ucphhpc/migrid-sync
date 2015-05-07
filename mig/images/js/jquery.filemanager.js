@@ -53,24 +53,44 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
+/* switch on/off console debug globally here */
+var enable_debug = false;
+
 /* 
-   Make sure we can always use console.log without scripts crashing. IE<=9
+   Make sure we can always use console.X without scripts crashing. IE<=9
    does not init it unless in developer mode and things thus randomly fail
    without a trace.
 */
-if (!window.console) {
-  var noOp = function(){}; // no-op function
+var noOp = function(){}; // no-op function
+if (!window.console || !enable_debug) {
   console = {
+    debug: noOp,
     log: noOp,
     warn: noOp,
     error: noOp
   }
 }
+/* 
+   Make sure we can use Date.now which was not available in IE<9
+*/
+if (!Date.now) {
+    Date.now = function now() {
+        return new Date().getTime();
+    };
+}
+
+if (!enable_debug) {
+    console.debug = noOp;
+} else {
+    console.debug = function(msg){ 
+        console.log(Date.now()+" DEBUG: "+msg); 
+    };
+}
 
 if (jQuery) (function($){
   
     var pathAttribute = 'rel_path';
-    var doSort = true;
+    var sorting = [[0, 0]]; 
 
     // Use touchscreen interface without need for right clicking
     function touchscreenChecker() {
@@ -84,6 +104,14 @@ if (jQuery) (function($){
         return showDotfiles;
     }
 
+    // refresh table sorting
+    function updateSorting() {
+        // make sure tablesorter style is applied
+        console.debug("force tablesorter update");
+        setTimeout(function() {
+            $(".fm_files table").trigger("update");
+        }, 10);
+    }
     // Show/hide dot files/dirs
     function refreshDotfiles() {
         var do_show = showDotfilesChecker();
@@ -97,10 +125,8 @@ if (jQuery) (function($){
                 }
             }, 10);
         });
-        // make sure tablesorter style is applied
-        setTimeout(function() {
-            $(".fm_files table").trigger("update");
-        }, 10);
+        /* seems like a waste but needed to get zebra coloring right */
+        updateSorting();
     }
 
     $.fn.dump = function(element) {
@@ -641,8 +667,8 @@ if (jQuery) (function($){
         connector: 'somewhere.py',
         param: 'path',
         folderEvent: 'click',  
-        expandSpeed: 500,
-        collapseSpeed: 500,
+        expandSpeed: 100,
+        collapseSpeed: 100,
         expandEasing: null,
         collapseEasing: null,
         multiFolder: true,
@@ -670,7 +696,9 @@ if (jQuery) (function($){
       // list of files on the right
       function showBranch(folder_pane, t) {
 
+         console.debug('in showBranch '+t);
          var file_pane = $(".fm_files", obj);        
+         var files_table = $(".fm_files table tbody");
          var statusbar = $(".fm_statusbar", obj);
          var path_breadcrumbs = $("#fm_xbreadcrumbs", obj);
          var addressbar = $(".fm_addressbar", obj);
@@ -716,9 +744,12 @@ if (jQuery) (function($){
 
          // Refix the root
                 
+         console.debug('refix root '+t);
+
          $(folder_pane).addClass('wait');
           
          statusbar.html('<span class="spinner" style="padding-left: 20px;">loading directory entries...</span>');
+         console.debug('refresh directory entries '+t);
          $.ajax({
                 url: options.connector,
                 type: "GET",
@@ -726,7 +757,7 @@ if (jQuery) (function($){
                 data: { path: t, output_format: 'json', flags: 'fa' },
                 cache: false,
                 success: function(jsonRes, textStatus) {
-          //console.log($.now()+' begin ajax handler '+t);
+          console.debug('begin ajax handler '+t);
 
           // Place ls.py output in listing array
           var cur_folder_names = new Array();
@@ -754,6 +785,7 @@ if (jQuery) (function($){
 
           var total_file_size = 0;
           var file_count = 0.0;          
+          var chunk_files = 500;
           var is_dir = false;
           var base_css_style = 'file';
           var icon = '';
@@ -764,7 +796,7 @@ if (jQuery) (function($){
           var dir_prefix = '';
           var path = '';
           
-          $(".fm_files table tbody").empty();
+          $(files_table).empty();
           $(".jqueryFileTree.start").remove();
           for (i = 0; i < listing.length; i++) {
             
@@ -822,17 +854,27 @@ if (jQuery) (function($){
                   '<td style="padding-left: 20px;" class="' + icon + ' ext_' + 
                   listing[i]['file_info']['ext'] + '"><div>' + dir_prefix +
                   listing[i]['name'] + '</div>' + listing[i]['name'] +
-                  '</td>' + '<td><div class="bytes">' + listing[i]['file_info']['size'] +
+                  '</td><td><div class="bytes">' + listing[i]['file_info']['size'] +
                   '</div>' + pp_bytes(listing[i]['file_info']['size']) +
-                  '</td>' + '<td><div>' + listing[i]['file_info']['ext'] +
-                  '</div>' + listing[i]['file_info']['ext'] + '</td>'+
-                  '<td><div>' + listing[i]['file_info']['created'] + '</div>' +
-                  pp_date(listing[i]['file_info']['created']) + '</td>' +
-                  '</tr>';
+                  '</td><td><div>' + listing[i]['file_info']['ext'] +
+                  '</div>' + listing[i]['file_info']['ext'] + 
+                  '</td><td><div>' + listing[i]['file_info']['created'] + '</div>' +
+                  pp_date(listing[i]['file_info']['created']) + '</td></tr>';
               entries_html += entry_html;
               emptyDir = false;
+
+              /* chunked updates - append after after every chunk_files entries */
+              if (file_count % chunk_files == 0) {
+                  console.debug('append chunk of ' + chunk_files + ' files in '+t);
+                  $(files_table).append(entries_html);
+                  entries_html = '';
+              }
             }
-            $(".fm_files table tbody").append(entries_html);
+
+            if (file_count % chunk_files != 0) {
+                  console.debug('append remaining ' + file_count % chunk_files + ' files in '+t);
+                  $(files_table).append(entries_html);
+            }
 
             folders += '</ul>\n';
 
@@ -841,6 +883,8 @@ if (jQuery) (function($){
                 folders += '</li></ul>\n';
             } 
 
+            console.debug('update status bar');
+
             // Prefix '/' for the visual presentation of the current path.
             if (t.substr(0, 1) == '/') {
                 addressbar.find("input[name='fm_current_path']").val(t);  
@@ -848,34 +892,37 @@ if (jQuery) (function($){
                 addressbar.find("input[name='fm_current_path']").val('/'+t);  
             }
 
-            folder_pane.removeClass('wait');
-
             // Update statusbar
             statusbar.html(file_count+' files in current folder of total '+pp_bytes(total_file_size)+' in size.');
 
+            console.debug('append folder html entries');
             folder_pane.append(folders);
             //$("#fm_debug").html("<textarea cols=200 rows=15>"+$.fn.dump($(".fm_folders [rel_path='/']"))+"\n"+$(".fm_folders").html()+"</textarea>").show();
 
-            // Inform tablesorter of new data
-            var sorting = [[0, 0]]; 
-            $(".fm_files table").trigger("update");
-            if (!emptyDir)  { // Don't try and sort an empty table, this causes error!
-                if (doSort)  { // only first time now that we use saveSort
-                    $(".fm_files table").trigger("sorton", [sorting]);
-                    doSort = false;
-                }
-            }
+            folder_pane.removeClass('wait');
 
+            console.debug('show active folder');
             if (options.root == t) {
+                console.debug('show root');
                 //if (options.root == t+'/') {
                 folder_pane.find('UL:hidden').show();
             } else {
-                folder_pane.find('UL:hidden').slideDown(
+                console.debug('locate other folder');
+                //folder_pane.find('UL:hidden').slideDown(
+                /* NOTE: this find is quite expensive for some reason (seconds!) 
+                   and does not appear to do anything useful.
+                   Replaced with cheap static select.
+                */
+                //var folder_elem = folder_pane.find('UL:hidden');
+                var folder_elem = folder_pane.children()[1];
+                console.debug('slide open folder'+$.fn.dump($(folder_elem)));
+                $(folder_elem).slideDown(
                     { duration: options.expandSpeed, 
                       easing: options.expandEasing });
             }
 
             /* UI stuff: contextmenu, drag'n'drop. */
+            console.debug('set up UI');
             
             // Always preserve a small space for pasting into the folder, quick-uploading, etc
             var headerHeight = 20;
@@ -894,14 +941,14 @@ if (jQuery) (function($){
                 var rel_path = "";
                 /* add or update existing filespacer */
                 if ($(".fm_files div.filespacer").length == 0) {
-                    //console.log("add filespacer");
+                    //console.debug("add filespacer");
                     $(".fm_files").append('<div class="filespacer" style="height: '+spacerHeight+'px ;" rel_path="" title=""+></div>');
                 }
                 
                 if (t != '/') { // Do not prepend the fake-root.
                     rel_path = t;
                 }
-                //console.log("update filespacer with path: "+rel_path);
+                //console.debug("update filespacer with path: "+rel_path);
                 $(".fm_files div.filespacer").css("height", spacerHeight+"px")
                                              .attr("rel_path", rel_path)
                                              .attr("title", rel_path);
@@ -921,7 +968,7 @@ if (jQuery) (function($){
                 var rel_path = "";
                 /* add or update existing uploadspace */
                 if ($(".fm_files div.uploadspace").length == 0) {
-                    //console.log("add uploadspace");
+                    //console.debug("add uploadspace");
                     $(".fm_files").append('<div class="uploadspace centertext" style="border: 2px; border-style: dotted; border-color: lightgrey; height: '+spacerHeight+'px ;" rel_path="" title=""+><span class="uploadbutton">Click this area to open upload helper...</span></div>');
                     function openFancyUploadHere() {
                         //alert("upload here!");
@@ -942,7 +989,7 @@ if (jQuery) (function($){
                 if (t != '/') { // Do not prepend the fake-root.
                     rel_path = t;
                 }
-                //console.log("update uploadspace with path: "+rel_path);
+                //console.debug("update uploadspace with path: "+rel_path);
                 $(".fm_files div.uploadspace").css("height", uploaderHeight+"px")
                                              .css("line-height", uploaderHeight+"px")
                                              .css("color", "grey")
@@ -953,7 +1000,10 @@ if (jQuery) (function($){
             // Bind actions to entries in a non-blocking way to avoid 
             // unresponsive script warnings with many entries
 
+            console.debug('bind action handlers');
+
             // Associate context menus in the background for responsiveness
+            console.debug("add contextmenu to dirs");
             $("tr.recent.directory, li.recent.directory div").each(function() { 
                 var t = $(this); 
                 setTimeout(function() {
@@ -970,6 +1020,7 @@ if (jQuery) (function($){
                 }, 10);
             });
 
+            console.debug("add contextmenu to files");
             $("tr.recent.file").each(function() { 
                 var t = $(this); 
                 setTimeout(function() {
@@ -984,30 +1035,34 @@ if (jQuery) (function($){
 
             // Doubleclick actions (including preventing text select on dclick)
             /* TODO: can we migrate mousedown select prevention to .on() too? */
+            console.debug("prevent text select");           
             $("tr.recent.file, tr.recent.directory").each(function() { 
                 var t = $(this); 
                 setTimeout(function() {
                     t.mousedown(function(event) { event.preventDefault(); });
-                    //t.dblclick(function(event) { doubleClickEvent(this); });
                 }, 10);
             });
-            
+            /*
+            console.debug("prevent text select");
+            $("#fm_filemanager").off("mousedown",  
+                                    "tr.file, tr.directory");
+            $("#fm_filemanager").on('mousedown', "tr.file, tr.directory", 
+                function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
+            */
+            console.debug("add dclick handler");
             $("#fm_filemanager").off("dblclick", "tr.file, tr.directory");
             $("#fm_filemanager").on("dblclick", 
                                     "tr.file, tr.directory",
                                     function(event) {
                                         doubleClickEvent(this);
                                     }); 
-            /* 
-            $("#fm_filemanager").off("mousedown",  
-                                    "tr.file, tr.directory");
-            $("#fm_filemanager").on("mousedown",  
-                                    "tr.file, tr.directory",
-                                    function(event) { event.preventDefault(); }); 
-            */
 
             // Associate drag'n'drop
             if (options.dragndrop) {
+                console.debug("add drag n drop");
                 $("tr.recent.file, tr.recent.directory, li.recent.directory").each(function() { 
                     var t = $(this);                     
                     setTimeout(function() {
@@ -1044,9 +1099,12 @@ if (jQuery) (function($){
             }
 
             // show/hide dotfiles
+            console.debug("refresh dotfiles");
             refreshDotfiles();
 
             // remove recent markers
+            // TODO: can we eliminate heavy recent markers completely?
+            console.debug("remove recent markers");
             $("tr.recent, li.recent").each(function() { 
                 var t = $(this); 
                 setTimeout(function() {
@@ -1055,6 +1113,7 @@ if (jQuery) (function($){
             });
 
             // bind reload to dotfiles checkbox - just use old bind style here
+            console.debug("bind reload to dotfile checkbox");
             $("#fm_dotfiles[type='checkbox']").on('click',
                 function() {
                     refreshDotfiles();
@@ -1063,9 +1122,11 @@ if (jQuery) (function($){
             // Binds: Expands and a call to showbranch
             // or
             // Binds: Collapse
+            console.debug("bindBranch");
             bindBranch(folder_pane);                    
 
             // Go to subPath                    
+            console.debug("navigate to destination path");
             var current_dir = addressbar.find('input[name=fm_current_path]').val();
             var first_child = options.subPath.slice(0, options.subPath.indexOf('/'));
             
@@ -1103,7 +1164,7 @@ if (jQuery) (function($){
                 $(".fm_folders [rel_path='"+current_dir.slice(1)
                   +first_child+"/']").click();                       
             }
-            //console.log($.now()+' end ajax handler '+t);
+            console.debug('end ajax handler '+t);
           }
        });
      }
@@ -1142,14 +1203,23 @@ if (jQuery) (function($){
          );         
      };
                             
-     // Base sorting on the content of the hidden <div> element
+     /* 
+        Base sorting on the content of the hidden <div> element inside all cells
+        ... should be faster than default extraction.
+     */
      var myTextExtraction = function(node) {  
-         return node.childNodes[0].innerHTML; 
+         return node.childNodes[0].textContent; 
      };
+     /* TODO: add filter like in example on
+        http://mottie.github.io/tablesorter/docs/example-option-show-processing.html 
+     */
+     // showProcessing should show spinner in column head but doesn't seem to work
      $(".fm_files table", obj).tablesorter(
-         {widgets: ['zebra', 'saveSort'],
+         {showProcessing: true,
+          widgets: ['zebra', 'saveSort'],
           textExtraction: myTextExtraction,
-          sortColumn: 'Name'});
+          sortColumn: 'Name',
+         });
 
      // Loading message
      $(".fm_folders", obj).html('<ul class="jqueryFileTree start"><li class="wait">' + options.loadMessage + '<li></ul>\n');
@@ -1439,7 +1509,7 @@ var delete_url = base_url+"delete";
 var move_url = base_url+"move";
 
 $.fn.delete_upload = function(name, dest_dir) {
-    console.log("delete upload: "+name+" "+dest_dir);
+    console.debug("delete upload: "+name+" "+dest_dir);
     var deleted = false;
     $.ajax({
         url: delete_url,
@@ -1449,19 +1519,19 @@ $.fn.delete_upload = function(name, dest_dir) {
         type: "POST",
         async: false,
         success: function(data, textStatus, jqXHR) {
-            //console.log("delete success handler: "+name);
-            //console.log("data: "+$.fn.dump(data));
+            //console.debug("delete success handler: "+name);
+            //console.debug("data: "+$.fn.dump(data));
             $.each(data, function (index, obj) {
-                //console.log("delete result obj: "+index+" "+$.fn.dump(obj));
+                //console.debug("delete result obj: "+index+" "+$.fn.dump(obj));
                 if (obj.object_type == "uploadfiles") {
-                    //console.log("found files in obj "+index);
+                    //console.debug("found files in obj "+index);
                     var files = obj.files;
                     $.each(files, function (index, file) {
-                        //console.log("found file entry in results: "+index);
+                        //console.debug("found file entry in results: "+index);
                         if (file.error != undefined) {
-                            console.log("found file error: "+file.error);
+                            console.debug("found file error: "+file.error);
                         } else if (file[name]) {
-                            //console.log("found success marker: "+file[name]);
+                            //console.debug("found success marker: "+file[name]);
                             deleted = true;
                         }
                         // Break upon first hit
@@ -1471,12 +1541,12 @@ $.fn.delete_upload = function(name, dest_dir) {
             });
         }
     });
-    //console.log("return deleted: "+deleted);
+    //console.debug("return deleted: "+deleted);
     return deleted;
 };
 
 $.fn.move_upload = function(name, dest_dir) {
-    console.log("move upload: "+name+" "+dest_dir);
+    console.debug("move upload: "+name+" "+dest_dir);
     var moved = false;
     $.ajax({
         url: move_url,
@@ -1486,19 +1556,19 @@ $.fn.move_upload = function(name, dest_dir) {
         type: "POST",
         async: false,
         success: function(data, textStatus, jqXHR) {
-            //console.log("move success handler: "+name);
-            //console.log("data: "+$.fn.dump(data));
+            //console.debug("move success handler: "+name);
+            //console.debug("data: "+$.fn.dump(data));
             $.each(data, function (index, obj) {
-                //console.log("move result obj: "+index+" "+$.fn.dump(obj));
+                //console.debug("move result obj: "+index+" "+$.fn.dump(obj));
                 if (obj.object_type == "uploadfiles") {
-                    //console.log("found files in obj "+index);
+                    //console.debug("found files in obj "+index);
                     var files = obj.files;
                     $.each(files, function (index, file) {
-                        //console.log("found file entry in results: "+index);
+                        //console.debug("found file entry in results: "+index);
                         if (file.error != undefined) {
-                            console.log("found file error: "+file.error);
+                            console.debug("found file error: "+file.error);
                         } else if (file[name]) {
-                            //console.log("found success marker: "+file[name]);
+                            //console.debug("found success marker: "+file[name]);
                             moved = true;
                         }
                         // Break upon first hit
@@ -1508,7 +1578,7 @@ $.fn.move_upload = function(name, dest_dir) {
             });
         }
     });
-    //console.log("return moved: "+moved);
+    //console.debug("return moved: "+moved);
     return moved;
 };
 
@@ -1520,7 +1590,7 @@ function mig_fancyuploadchunked_init(name, callback) {
        drag n drop to fileman drop zone with upload popup?
     */
 
-    console.log("mig_fancyuploadchunked_init: "+name, callback);
+    console.debug("mig_fancyuploadchunked_init: "+name, callback);
     $.fn.fancyfileupload = $.fn.fileupload;
 
     $("#" + name).dialog(
@@ -1576,47 +1646,47 @@ function mig_fancyuploadchunked_init(name, callback) {
     function parseReply(raw_data) {
         var data = {"files": []};
         var target = raw_data;
-        //console.log("parseReply raw data: "+$.fn.dump(raw_data));
+        //console.debug("parseReply raw data: "+$.fn.dump(raw_data));
         if (raw_data.result != undefined) {
-            //console.log("parseReply found result entry to parse: "+$.fn.dump(raw_data.result));
+            //console.debug("parseReply found result entry to parse: "+$.fn.dump(raw_data.result));
             target = raw_data.result;
         } else if (raw_data.files != undefined) {
-             //console.log("parseReply return direct files data: "+$.fn.dump(raw_data.files));
+             //console.debug("parseReply return direct files data: "+$.fn.dump(raw_data.files));
              //return raw_data;
              data.files = raw_data.files;
              return data;
         } else {
-            console.log("parseReply falling back to parsing all: "+$.fn.dump(raw_data));            
+            console.debug("parseReply falling back to parsing all: "+$.fn.dump(raw_data));            
         }
         try {
             $.each(target, function (index, obj) {
-                //console.log("result obj: "+index+" "+$.fn.dump(obj));
+                //console.debug("result obj: "+index+" "+$.fn.dump(obj));
                 if (obj.object_type == "uploadfiles") {
-                    //console.log("found files in obj "+index);
+                    //console.debug("found files in obj "+index);
                     var files = obj.files;
-                    //console.log("found files: "+index+" "+$.fn.dump(files));
+                    //console.debug("found files: "+index+" "+$.fn.dump(files));
                     $.each(files, function (index, file) {
-                        //console.log("found file entry in results: "+index);
+                        //console.debug("found file entry in results: "+index);
                         data["files"].push(file);
-                        //console.log("added upload file: "+$.fn.dump(file));
+                        //console.debug("added upload file: "+$.fn.dump(file));
                     });
                 }
             });
         } catch(err) {
             showError("parsing response from server: "+err);
         }
-        //console.log("parsed raw reply into files: "+$.fn.dump(data.files));
+        //console.debug("parsed raw reply into files: "+$.fn.dump(data.files));
         return data;
     }
     
     var do_d = function(text, action, dest_dir, automatic_dest) {
 
-        console.log("mig_fancyupload_init do_d: "+text+", "+action+", "+dest_dir);
+        console.debug("mig_fancyupload_init do_d: "+text+", "+action+", "+dest_dir);
 
         // save and restore original callback
         var c = callback;
 
-        //console.log("mig_fancyupload_init init dialog on: "+$("#"+name));
+        //console.debug("mig_fancyupload_init init dialog on: "+$("#"+name));
         $("#" + name).dialog("option", "title", text);
 
         if (action == undefined) {
@@ -1627,10 +1697,10 @@ function mig_fancyuploadchunked_init(name, callback) {
                                  callback = c;
                                };
 
-        //console.log("mig_fancyupload_init do_d open");
+        //console.debug("mig_fancyupload_init do_d open");
         $("#" + name).dialog("open");
 
-        //console.log("mig_fancyupload_init do_d fileupload pre-setup");
+        //console.debug("mig_fancyupload_init do_d fileupload pre-setup");
 
         if (automatic_dest) { 
             $("#fancyfileuploaddestbox").hide();
@@ -1638,11 +1708,11 @@ function mig_fancyuploadchunked_init(name, callback) {
             $("#fancyfileuploaddestbox").show();
         }
 
-        console.log("init_fancyupload");
+        console.debug("init_fancyupload");
         // Initialize the jQuery File Upload widget:
-        //console.log("mig_uploadchunked_init do_d fileupload setup: "+dest_dir);
+        //console.debug("mig_uploadchunked_init do_d fileupload setup: "+dest_dir);
         $("#fancyfileuploaddest").val(dest_dir);
-        console.log("init_fancyupload set dest to: "+$("#fancyfileuploaddest").val());
+        console.debug("init_fancyupload set dest to: "+$("#fancyfileuploaddest").val());
         $(".uploadfileslist").empty();
         $("#fancyfileupload").fancyfileupload({
             // Uncomment the following to send cross-domain cookies:
@@ -1658,14 +1728,14 @@ function mig_fancyuploadchunked_init(name, callback) {
             disableVideoPreview: true,
             disableValidation: true,
             add: function (e, data) {
-                console.log("add file");
+                console.debug("add file");
                 /* Add final destination for use in done */ 
                 var dest_dir = $("#fancyfileuploaddest").val();
                 /* empty dest is not allowed */
                 dest_dir = "./" + $.fn.normalizePath(dest_dir);
                 data.formData = {current_dir: dest_dir};
-                //console.log("add file with data: "+$.fn.dump(data));
-                console.log("add file with data files: "+$.fn.dump(data.files));
+                //console.debug("add file with data: "+$.fn.dump(data));
+                console.debug("add file with data files: "+$.fn.dump(data.files));
                 var that = this;
                 try {
                     $.blueimp.fileupload.prototype
@@ -1675,18 +1745,18 @@ function mig_fancyuploadchunked_init(name, callback) {
                 }
             },
             done: function (e, data) {
-                console.log("done file");
-                //console.log("done with data: "+$.fn.dump(data));
+                console.debug("done file");
+                //console.debug("done with data: "+$.fn.dump(data));
                 if (data.result.files == undefined) {
                     var parsed = parseReply(data);
-                    //console.log("done parsed result: "+$.fn.dump(parsed));
+                    //console.debug("done parsed result: "+$.fn.dump(parsed));
                     data.result = parsed;
                 }
-                //console.log("done with data result: "+$.fn.dump(data.result));
+                //console.debug("done with data result: "+$.fn.dump(data.result));
                 /* move files to final destination if so requested */
-                console.log("handle any pending move for done files");
+                console.debug("handle any pending move for done files");
                 $.each(data.result.files, function (index, file) {
-                    //console.log("found file entry in results: "+$.fn.dump(file));
+                    //console.debug("found file entry in results: "+$.fn.dump(file));
                     if (file.error != undefined) {
                         showError("found upload error: "+file.error);
                         // Continue to next iteration on errors
@@ -1697,7 +1767,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                         return true;
                     }
                     if ($.fn.move_upload(file.name, file.moveDest)) {
-                        console.log("fix path and strip move info: " + file.name);
+                        console.debug("fix path and strip move info: " + file.name);
                         var purename = file.name.substring(file.name.lastIndexOf("/") + 1);
                         var baseurl = file.url.substring(0, file.url.length - file.name.length);
                         file.name = file.moveDest + "/" + purename;
@@ -1705,7 +1775,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                         delete file.moveType;
                         delete file.moveDest;
                         delete file.moveUrl;
-                        console.log("updated file entry: "+$.fn.dump(file));
+                        console.debug("updated file entry: "+$.fn.dump(file));
                     } else {
                         showError("automatic move to destination failed!");
                     }
@@ -1720,7 +1790,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                 }
             },
             fail: function (e, data) {
-                console.log("fail file");
+                console.debug("fail file");
                 // jQuery Widget Factory uses "namespace-widgetname" since version 1.10.0:
                 var uploader = $(this).data('blueimp-fileupload') || $(this).data('fileupload');
                 var retries = data.context.data('retries') || 0;
@@ -1739,12 +1809,12 @@ function mig_fancyuploadchunked_init(name, callback) {
                     if (file.error != undefined) {
                         showError("uploading of "+file.name+" failed: "+file.error);
                     } else if (data.errorThrown != 'abort' && retries >= max_tries) {
-                        console.log("manually reporting network error for "+file.name);
+                        console.debug("manually reporting network error for "+file.name);
                         file.error = "gave up after "+retries+" tries (network error?)";
                     } else {
-                        console.log("cancelled file: "+file.name);
+                        console.debug("cancelled file: "+file.name);
                     }
-                    console.log("call clean up file: "+file.name);
+                    console.debug("call clean up file: "+file.name);
                     $.fn.delete_upload(file.name);
                 });
                 var that = this;
@@ -1765,14 +1835,14 @@ function mig_fancyuploadchunked_init(name, callback) {
                 dataType: "json",
                 type: "POST"
             }).fail(function () {
-                console.log("server status fail");
+                console.debug("server status fail");
                 $("<div class=\'alert alert-danger\'/>")
                     .text("Upload server currently unavailable - " + new Date())
                     .appendTo("#fancyfileupload");
             }).done(function (raw_result) {
-                        console.log("done checking server");
+                        console.debug("done checking server");
                         //var result = parseReply(raw_result);
-                        //console.log("done checking server parsed result: "+$.fn.dump(result));
+                        //console.debug("done checking server parsed result: "+$.fn.dump(result));
                         showInfo("server is ready", 10, 3000);
                     }
            );
@@ -1789,14 +1859,14 @@ function mig_fancyuploadchunked_init(name, callback) {
             type: "POST",            
             context: $("#fancyfileupload")[0]
         }).always(function () {
-            //console.log("load existing files always handler");
+            //console.debug("load existing files always handler");
             $(this).removeClass("fileupload-processing");
         }).fail(function () {
             showError("load existing files failed");
         }).done(function (raw_result) {
-                    //console.log("loaded existing files: "+$.fn.dump(raw_result));
+                    //console.debug("loaded existing files: "+$.fn.dump(raw_result));
                     var result = parseReply(raw_result);
-                    console.log("parsed existing files: "+$.fn.dump(result.files));
+                    console.debug("parsed existing files: "+$.fn.dump(result.files));
                     $(this).fileupload("option", "done")
                         .call(this, $.Event("done"), {result: result});
                     showInfo("list of cached uploads loaded", 10, 3000);
@@ -1804,16 +1874,16 @@ function mig_fancyuploadchunked_init(name, callback) {
 
         /* Prevent duplicates in uploadfileslist - old style bind */
         $("#fancyfileupload").on("fileuploadadd", function(e, data) {
-            //console.log("in add handler");
+            //console.debug("in add handler");
             var current_files = [];
             var path;
             $(this).fileupload("option").filesContainer.children().each(function() {
-                //console.log("in add handler loop");
+                //console.debug("in add handler loop");
                 if ($(this).data == undefined || $(this).data("data") == undefined) {
                     //showWarning("no this.data field in add handler loop");
                     return true;
                 }
-                //console.log("add file in add handler loop");
+                //console.debug("add file in add handler loop");
                 path = $(this).data("data").formData.current_dir + "/";
                 path += $(this).data("data").files[0].name;
                 path = $.fn.normalizePath(path);
@@ -1821,11 +1891,11 @@ function mig_fancyuploadchunked_init(name, callback) {
             });
             $(this).fileupload("option").filesContainer.find("td > p.name > a")
                 .each(function() {
-                    //console.log("add finished in add handler loop");
+                    //console.debug("add finished in add handler loop");
                     path = $.fn.normalizePath("./"+$(this).text());
                     current_files.push(path);
                 });
-            console.log("found existing uploads: "+current_files);
+            console.debug("found existing uploads: "+current_files);
             data.files = $.map(data.files, function(file, i) {
                     path = "./" + $("#fancyfileuploaddest").val() + "/" + file.name;
                     path = $.fn.normalizePath(path);
