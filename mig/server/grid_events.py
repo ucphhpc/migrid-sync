@@ -63,6 +63,7 @@ from shared.vgrid import vgrid_is_owner_or_member
 all_rules = {}
 rule_hits = {}
 _default_period = 'm'
+_default_time = '0'
 _unit_periods = {'s': 1, 'm': 60, 'h': 60*60, 'd': 24 * 60 * 60,
                  'w': 7 * 24 * 60 * 60}
 _hits_lock = threading.Lock()
@@ -88,6 +89,32 @@ def get_expand_map(trigger_path, rule, state_change):
     # TODO: provide exact expanded wildcards?
 
     return expand_map    
+
+def extract_time_in_secs(rule, field):
+    """Get time in seconds for provided free form period field. The value is a
+    integer or float string with optional unit letter appended. If no unit is
+    given the default period is used.
+    """
+    limit_str = rule.get(field, str(_default_time))
+    # NOTE: format is 3(s) or 52m
+    # extract unit suffix letter and fall back to a raw value with default unit
+    unit_key = _default_period
+    if not limit_str[-1].isdigit():
+        val_str = limit_str[:-1]
+        if limit_str[-1] in _unit_periods.keys():
+            unit_key = limit_str[-1]
+        else:
+            print "ERROR: invalid time value %s ... fall back to defaults" % \
+                  limit_str
+            unit_key, val_str = _default_period, _default_time
+    else:
+        val_str = limit_str
+    try:
+        secs = float(val_str) * _unit_periods[unit_key]
+    except Exception, exc:
+        print "ERROR: failed to parse time %s (%s)!" % (limit_str, exc)
+        secs = 0.0
+    return secs
 
 def extract_hit_limit(rule, field):
     """Get rule rate limit as (max_hits, period_length)-tuple for provided
@@ -245,8 +272,8 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
         except Exception, exc:
             new_rules = []
             if state != "deleted":
-                logger.error("failed to load event handler rules from %s" % \
-                             src_path)
+                logger.error("failed to load event handler rules from %s (%s)" \
+                             % (src_path, exc))
         logger.info("loaded new rules from %s:\n%s" % (src_path, new_rules))
         # Remove all old rules for this vgrid
         for target_path in all_rules.keys():
@@ -338,7 +365,13 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             self.__workflow_warn(configuration, rule['vgrid_name'],
                                  "skip %s trigger due to rate limit %s" % \
                                  (rel_src, show_rate_limit(rule)))
-        elif rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
+            return
+        settle_secs = extract_time_in_secs(rule, 'settle_time')
+        if settle_secs > 0:
+            time.sleep(settle_secs)
+            # TODO: keep sleeping here until no new recent events were recorded
+            # We can compare the rate limit history entries with settle_time.
+        if rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
             change = rule['action'].replace('trigger-', '')
             FakeEvent = self.event_map[change]
             # Expand dynamic variables in argument once and for all
