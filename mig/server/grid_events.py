@@ -177,6 +177,17 @@ def show_rate_limit(rule):
     _hits_lock.release()
     return msg
 
+def recently_modified(path, now=-1, slack=5.0):
+    """Check if path was actually recently modified and not just accessed.
+    If atime and mtime are the same or if mtime is within slack from now we
+    accept it as recently changed.
+    """
+    if now < 0:
+        now = time.time()
+    stat_res = os.stat(path)
+    return (stat_res.st_mtime == stat_res.st_atime) or \
+            (stat_res.st_mtime > now - slack)
+
 def map_args_to_vars(var_list, arg_list):
     """Map command args to backend var names - if more args than vars we
     assume variable length on the first arg:
@@ -357,20 +368,40 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         base_dir = configuration.vgrid_files_home
         rel_src = src_path.replace(base_dir, '').lstrip(os.sep)
         vgrid_prefix = os.path.join(base_dir, rule['vgrid_name'])
-        self.__workflow_info(configuration, rule['vgrid_name'],
-                             "handle %s for %s" % (rule['action'], rel_src))
+        logger.info("in handling of %s for %s %s" % \
+                   (rule['action'], state, rel_src))
         if above_rate_limit(rule):
-            logger.info("skipping %s due to rate limit: %s" % \
+            logger.warning("skipping %s due to rate limit: %s" % \
                         (target_path, show_rate_limit(rule)))
             self.__workflow_warn(configuration, rule['vgrid_name'],
                                  "skip %s trigger due to rate limit %s" % \
                                  (rel_src, show_rate_limit(rule)))
             return
+        # We receive modified events even when only atime changed - ignore them
+        if state == 'modified' and not recently_modified(src_path):
+            logger.info("skipping %s which only changed atime" % src_path)
+            self.__workflow_info(configuration, rule['vgrid_name'],
+                                 "skip %s modified access time only event" % \
+                                 rel_src)
+            return
+        logger.info("proceed with handling of %s for %s %s" % \
+                    (rule['action'], state, rel_src))
+        self.__workflow_info(configuration, rule['vgrid_name'],
+                             "handle %s for %s %s" % \
+                             (rule['action'], state, rel_src))
         settle_secs = extract_time_in_secs(rule, 'settle_time')
-        if settle_secs > 0:
-            time.sleep(settle_secs)
+        if settle_secs > 0.0:
+            logger.info("wait %.2fs for %s file events to settle down" % \
+                        (settle_secs, target_path))
+            self.__workflow_info(configuration, rule['vgrid_name'],
+                                 "wait %.2fs for events on %s to settle" % \
+                                 (settle_secs, rel_src))
+            # TODO: sleep settle_secs here but must allow concurrent handling!
+            # time.sleep(settle_secs)
             # TODO: keep sleeping here until no new recent events were recorded
             # We can compare the rate limit history entries with settle_time.
+        else:
+            logger.info("no settle time for %s (%s)" % (target_path, rule))
         if rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
             change = rule['action'].replace('trigger-', '')
             FakeEvent = self.event_map[change]

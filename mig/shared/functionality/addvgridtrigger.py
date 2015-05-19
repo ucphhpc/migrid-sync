@@ -52,6 +52,7 @@ def signature():
                 'action': [keyword_auto],
                 'arguments': [''],
                 'rate_limit': [''],
+                'settle_time': [''],
                 }
     return ['', defaults]
 
@@ -92,6 +93,7 @@ def main(client_id, user_arguments_dict):
     action = accepted['action'][-1].strip()
     arguments = [i.strip() for i in ' '.join(accepted['arguments']).split()]
     rate_limit = accepted['rate_limit'][-1].strip()
+    settle_time = accepted['settle_time'][-1].strip()
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -202,6 +204,7 @@ Remove the trigger from the sub-%(_label)s and try again''' % \
                  'arguments': arguments,
                  'templates': templates,
                  'rate_limit': rate_limit,
+                 'settle_time': settle_time,
                  }
 
     # Add to list and pickle

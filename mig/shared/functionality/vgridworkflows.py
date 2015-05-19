@@ -186,7 +186,7 @@ $(document).ready(function() {
     
     # NOTE: we do NOT show saved template contents - see addvgridtriggers
     
-    optional_fields = [('rate_limit', None)]
+    optional_fields = [('rate_limit', None), ('settle_time', None), ]
 
     (status, oobjs) = vgrid_add_remove_table(client_id, vgrid_name, 'trigger',
                                              'vgridtrigger', configuration,
