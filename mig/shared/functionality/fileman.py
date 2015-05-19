@@ -5,7 +5,7 @@
 #
 # fileman - File manager UI for browsing and manipulating files and folders
 #
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -43,18 +43,12 @@ def html_tmpl(configuration, title_entry):
     edit_includes = ['switcher']
     fill_entries = {}
     if 'submitjob' in extract_menu(configuration, title_entry):
-        fill_entries["menu_submit_entry"] = '''
-        <li class="submit separator">
-            <a href="#submit">submit</a>
-        </li>
-        '''
         fill_entries["upload_submit_entry"] = '''
             <label for="submitmrsl_0">Submit mRSL files (also .mRSL files included in packages):</label>
             <input id="submitmrsl_0" type="checkbox" checked="" name="submitmrsl_0"/>
             '''
         edit_includes.append('submit')
     else:
-        fill_entries["menu_submit_entry"] = ''
         fill_entries["upload_submit_entry"] = ''
         
     html = '''
@@ -98,73 +92,6 @@ def html_tmpl(configuration, title_entry):
         <input id="fm_dotfiles" type="checkbox">
         Show hidden files and dirs</div>
     
-    <ul id="folder_context" class="contextMenu">
-        <li class="mkdir separator">
-            <a href="#mkdir">Create Folder</a>
-        </li>
-        <li class="create">
-            <a href="#create">Create File</a>
-        </li>
-        <li class="upload">
-            <a href="#upload">Upload File</a>
-        </li>
-        <li class="pack">
-            <a href="#pack">Pack</a>
-        </li>
-        <li class="copy separator">
-            <a href="#copy">Copy</a>
-        </li>
-        <li class="paste">
-            <a href="#paste">Paste</a>
-        </li>
-        <li class="rmdir">
-            <a href="#rm">Delete Folder</a>
-        </li>
-        <li class="rename separator">
-            <a href="#rename">Rename...</a>
-        </li>
-    </ul>
-    
-    <ul id="file_context" class="contextMenu">                
-        <li class="show">
-            <a href="#show">Show</a>
-        </li>
-        <li class="download">
-            <a href="#download">Download</a>
-        </li>
-        <li class="edit">
-            <a href="#edit">Edit</a>
-        </li>
-        <li class="copy separator">
-            <a href="#copy">Copy</a>
-        </li>
-        <li class="paste">
-            <a href="#paste">Paste</a>
-        </li>
-        <li class="delete">
-            <a href="#rm">Delete</a>
-        </li>
-        <li class="rename separator">
-            <a href="#rename">Rename</a>
-        </li>
-        <li class="pack">
-            <a href="#pack">Pack</a>
-        </li>
-        <li class="unpack">
-            <a href="#unpack">Unpack</a>
-        </li>
-        <li class="cat separator">
-            <a href="#cat">cat</a>
-        </li>
-        <li class="head">
-            <a href="#head">head</a>
-        </li>
-        <li class="tail">
-            <a href="#tail">tail</a>
-        </li>
-        %(menu_submit_entry)s
-    </ul>
-
     <div id="cmd_dialog" title="Command output" style="display: none;"></div>
 
     <div id="upload_dialog" title="Upload File" style="display: none;">
@@ -316,7 +243,7 @@ def css_tmpl():
     css += advanced_editor_css_deps()
     return css
 
-def js_tmpl(entry_path='/'):
+def js_tmpl(entry_path='/', enable_submit='true'):
     """Javascript to include in the page header"""
     js = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
@@ -444,6 +371,7 @@ def js_tmpl(entry_path='/'):
                                              multiFolder: false,
                                              filespacer: true,
                                              uploadspace: true,
+                                             enableSubmit: %s,
                                              subPath: "%s"
                                              }
             );
@@ -458,7 +386,7 @@ def js_tmpl(entry_path='/'):
         $("#upload_tabs").tabs();
     });
 </script>
-    ''' % entry_path
+    ''' % (enable_submit.lower(), entry_path)
     return js
         
 def signature():
@@ -493,7 +421,11 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'File Manager'
     title_entry['style'] = css_tmpl()
-    title_entry['javascript'] = js_tmpl(entry_path)
+    if 'submitjob' in extract_menu(configuration, title_entry):
+        enable_submit = 'true'
+    else:
+        enable_submit = 'false'
+    title_entry['javascript'] = js_tmpl(entry_path, enable_submit)
     
     output_objects.append({'object_type': 'header', 'text': 'File Manager' })
     output_objects.append({'object_type': 'html_form', 'text':

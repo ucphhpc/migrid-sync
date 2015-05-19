@@ -183,6 +183,7 @@ def main(client_id, user_arguments_dict):
                     shutil.copytree(real_path, real_target)
                 else:
                     shutil.copy(real_path, real_target)
+                logger.info('%s %s %s done' % (op_name, real_path, real_target))
             except Exception, exc:
                 output_objects.append(
                     {'object_type': 'error_text',

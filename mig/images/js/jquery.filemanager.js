@@ -323,8 +323,8 @@ if (jQuery) (function($){
             
             $("#cmd_dialog").dialog(okDialog);
             $("#cmd_dialog").dialog('open');
-            $("#cmd_dialog").html('<p class="spinner" style="padding-left: 26px;">Copying... "'+src+'" <br />To: "'+dst+'"</p>');           
-            
+            $("#cmd_dialog").html('<p class="spinner" style="padding-left: 26px;">Copying... "'+src+'" <br />To: "'+dst+'"</p>');
+
             $.post('cp.py', { src: src,
                                  dst: dst,
                                  output_format: 'json',
@@ -405,8 +405,12 @@ if (jQuery) (function($){
       
         // Callback helpers for context menu
         var callbacks = {
-            
+
+            open:   function (action, el, pos) { 
+                  $(".fm_files").parent().reload($(el).attr(pathAttribute));
+            },
             show:   function (action, el, pos) { 
+                //console.debug("show "+action+" "+el+" "+pos);
                 window.open('/cert_redirect/'+$(el).attr(pathAttribute))
             },
             download:   function (action, el, pos) { 
@@ -569,9 +573,16 @@ if (jQuery) (function($){
             copy:   function (action, el, pos) {
                 clipboard['is_dir'] = $(el).hasClass('directory');
                 clipboard['path'] = $(el).attr(pathAttribute);
+                console.debug('copy '+clipboard['path']+":"+clipboard['is_dir']);
             },
             paste:  function (action, el, pos) {
-                copy(clipboard['path'], $(el).attr(pathAttribute));
+                var target_path = $(el).attr(pathAttribute);
+                if (target_path == undefined) {
+                    target_path = $.fn.targetDir();
+                    console.warning("paste falling back to dst "+target_path);
+                }
+                console.debug('copy '+clipboard['path']+":"+target_path);
+                copy(clipboard['path'], target_path);
             },
             rm:     function (action, el, pos) {
             
@@ -657,11 +668,6 @@ if (jQuery) (function($){
             }
         };
 
-    /* TODO: enable dragndrop after fixing issue with 
-       - single click on a file enables drag even after mouse up
-       - after double click any move of the cursor result in drag
-    */
-
     var defaults = {
         root: '/',      
         connector: 'somewhere.py',
@@ -675,8 +681,10 @@ if (jQuery) (function($){
         loadMessage: 'Loading...',
         actions: callbacks,
         subPath: '/',
-        dragndrop: false,
-        filespacer: true
+        dragndrop: true,
+        filespacer: true,
+        enableSubmit: true,
+        selectOnly: false
     };
     var options = $.extend(defaults, user_options);
     
@@ -777,7 +785,7 @@ if (jQuery) (function($){
 
           // Root node if not already created
           if (t == '/' && $(".fm_folders li.userhome").length == 0) {
-              folders += '<ul class="jqueryFileTree"><li class="directory expanded userhome recent" rel_path="/" title="Home"><div>/</div>\n';
+              folders += '<ul class="jqueryFileTree"><li class="directory expanded userhome" rel_path="/" title="Home"><div>/</div>\n';
           }
 
           // Regular nodes from here on after
@@ -791,6 +799,7 @@ if (jQuery) (function($){
           var icon = '';
           var dotfile = '';
           var entry_title = '';
+          var entry_menu = '';
           var entry_html = '', entries_html = '';
 
           var dir_prefix = '';
@@ -825,12 +834,14 @@ if (jQuery) (function($){
               }
 
               entry_title = path + ' ' + listing[i]['special'];
+              entry_menu = 'box ';
               if (is_dir) {
+                  entry_menu += 'menu-1';
                   base_css_style = 'directory';
                   icon = 'directoryicon ' + listing[i]['extra_class'];
 
                   path += '/';
-                  folders +=  '<li class="recent ' + icon + ' ' + dotfile + 
+                  folders +=  '<li class="' + entry_menu + ' ' + icon + ' ' + dotfile + 
                       ' ' + base_css_style + ' collapsed" rel_path="' + path +
                       '" title="' + entry_title + '"><div>' +
                       listing[i]['name'] + '</div></li>\n';
@@ -840,18 +851,18 @@ if (jQuery) (function($){
                   
               }
               else {
+                  entry_menu += 'menu-1';
                   icon = 'fileicon';
                   cur_file_names.push(listing[i]['name']);
               }
 
               /* manually build entry to reduce risk of script timeout warnings
-                 from excessive html DOM manipulation. Mark the entry as
-                 recent to ease targetted context menu and drag n' drop later.
+                 from excessive html DOM manipulation.
                  Finally append it all in one go to save a lot of overhead.
               */
-              entry_html = '<tr class="recent ' + base_css_style + ' ' + dotfile + 
+              entry_html = '<tr class="' + entry_menu + ' ' + base_css_style + ' ' + dotfile + 
                   '" title="' + entry_title + '" rel_path="' + path + '">' + 
-                  '<td style="padding-left: 20px;" class="' + icon + ' ext_' + 
+                  '<td style="padding-left: 20px;" class="'+ entry_menu + ' ' + icon + ' ext_' + 
                   listing[i]['file_info']['ext'] + '"><div>' + dir_prefix +
                   listing[i]['name'] + '</div>' + listing[i]['name'] +
                   '</td><td><div class="bytes">' + listing[i]['file_info']['size'] +
@@ -952,13 +963,6 @@ if (jQuery) (function($){
                 $(".fm_files div.filespacer").css("height", spacerHeight+"px")
                                              .attr("rel_path", rel_path)
                                              .attr("title", rel_path);
-
-                $("div.filespacer").contextMenu(
-                    { menu: 'folder_context',
-                    leftButtonChecker: touchscreenChecker},
-                    function(action, el, pos) {
-                        (options['actions'][action])(action, el, pos);                                            
-                    });
             }
             if (options.uploadspace) {
                 if (!options.filespacer)
@@ -1002,56 +1006,87 @@ if (jQuery) (function($){
 
             console.debug('bind action handlers');
 
-            // Associate context menus in the background for responsiveness
-            console.debug("add contextmenu to dirs");
-            $("tr.recent.directory, li.recent.directory div").each(function() { 
-                var t = $(this); 
-                setTimeout(function() {
-                    t.contextMenu(
-                        { menu: 'folder_context',
-                          leftButtonChecker: touchscreenChecker},
-                        function(action, el, pos) {
-                            if ($(el).tagName() == 'DIV') {
-                                (options['actions'][action])(action, el.parent(), pos);
-                            } else {
-                                (options['actions'][action])(action, el, pos);
-                            }                                                                                           
-                        })
-                }, 10);
-            });
-
-            console.debug("add contextmenu to files");
-            $("tr.recent.file").each(function() { 
-                var t = $(this); 
-                setTimeout(function() {
-                    t.contextMenu(
-                        { menu: 'file_context',
-                          leftButtonChecker: touchscreenChecker},
-                        function(action, el, pos) {
-                            (options['actions'][action])(action, el, pos);
-                        })
-                }, 10);
-            });
-
-            // Doubleclick actions (including preventing text select on dclick)
-            /* TODO: can we migrate mousedown select prevention to .on() too? */
-            console.debug("prevent text select");           
-            $("tr.recent.file, tr.recent.directory").each(function() { 
-                var t = $(this); 
-                setTimeout(function() {
-                    t.mousedown(function(event) { event.preventDefault(); });
-                }, 10);
-            });
-            /*
-            console.debug("prevent text select");
-            $("#fm_filemanager").off("mousedown",  
-                                    "tr.file, tr.directory");
-            $("#fm_filemanager").on('mousedown', "tr.file, tr.directory", 
-                function(event) {
-                    event.preventDefault();
-                    event.stopPropagation();
+            var file_menu, directory_menu;
+            directory_menu = {
+                                "open": {name: "Open Folder", icon: "open"},
+                                "mkdir": {name: "Create Folder", icon: "mkdir"},
+                                "create": {name: "Create File", icon: "create"},
+                                "upload": {name: "Upload File", icon: "upload"},
+                                "pack": {name: "Pack", icon: "pack"},
+                                "sep1": "---------",
+                                //"cut": {name: "Cut", icon: "cut"},
+                                "copy": {name: "Copy", icon: "copy"},
+                                "paste": {name: "Paste", icon: "paste"},
+                                "rm": {name: "Delete Folder", icon: "rmdir"},
+                                "sep2": "---------",
+                                "rename": {name: "Rename", icon: "rename"}
+                            };
+            file_menu = {
+                                "show": {name: "Show", icon: "show"},
+                                "download": {name: "Download", icon: "download"},
+                                "edit": {name: "Edit", icon: "edit"},
+                                "sep1": "---------",
+                                //"cut": {name: "Cut", icon: "cut"},
+                                "copy": {name: "Copy", icon: "copy"},
+                                "paste": {name: "Paste", icon: "paste"},
+                                "rm": {name: "Delete", icon: "rm"},
+                                "sep2": "---------",
+                                "rename": {name: "Rename", icon: "rename"},
+                                "pack": {name: "Pack", icon: "pack"},
+                                "unpack": {name: "Unpack", icon: "unpack"},
+                                "sep3": "---------",
+                                "cat": {name: "cat", icon: "cat"},
+                                "head": {name: "head", icon: "head"},
+                                "tail": {name: "tail", icon: "tail"},
+                                "sep4": "---------",
+                                "submit": {name: "Submit", icon: "submit"}
+                            };
+            if (!options["enableSubmit"]) {
+                delete file_menu["sep4"];
+                delete file_menu["submit"];
+            }
+            if (options["selectOnly"]) {
+                file_menu = {
+                    "select": {name: "Select", icon: "select"}
+                };
+                directory_menu = {
+                    "select": {name: "Select", icon: "select"}
+                };
+            }
+            var bind_click = 'right';
+            if (touchscreenChecker()) {
+                bind_click = 'left';
+            }
+            $.contextMenu({
+                    selector: 'tr.file', 
+                    trigger: bind_click,
+                    callback: function(key, call_opts) {
+                            var m = "file menu clicked: " + key;                                
+                            console.debug(m); 
+                            var action = key;
+                            var el = $(this);
+                            console.debug("handle " + action + " on file " + $.fn.dump(el));
+                            (options['actions'][action])(action, el, -1);
+                            console.debug("done " + action + " on file " + $.fn.dump(el));
+                        },
+                    items: file_menu
                 });
-            */
+    
+            $.contextMenu({
+                    selector: 'tr.directory, li.directory, div.filespacer, div.uploadspace', 
+                    trigger: bind_click,
+                    callback: function(key, call_opts) {
+                            var m = "directory menu clicked: " + key;
+                            console.debug(m); 
+                            var action = key;
+                            var el = $(this);
+                            console.debug("handle " + action + " on dir " + $.fn.dump(el));
+                            (options['actions'][action])(action, el, -1);
+                            console.debug("done " + action + " on dir " + $.fn.dump(el));
+                        },
+                    items: directory_menu
+                });
+
             console.debug("add dclick handler");
             $("#fm_filemanager").off("dblclick", "tr.file, tr.directory");
             $("#fm_filemanager").on("dblclick", 
@@ -1063,60 +1098,66 @@ if (jQuery) (function($){
             // Associate drag'n'drop
             if (options.dragndrop) {
                 console.debug("add drag n drop");
-                $("tr.recent.file, tr.recent.directory, li.recent.directory").each(function() { 
-                    var t = $(this);                     
-                    setTimeout(function() {
-                        t.draggable(
-                            {
-                            cursorAt: { cursor: 'move', top: 0, left: -10 },
-                             distance: 5,
-                             helper: function(event) {
-                                 return $("<div style='display: block;'>&nbsp;</div>")
-                                     .attr('rel_path', $(this).attr('rel_path'))
-                                     .attr('class', $(this).attr('class'))
-                                     .css('width', '20px');
-                             }
-                            }
-                        )
-                    }, 10);
+                /* We can not use .on() directly with draggable - apply
+                   recommended workaround from
+                   http://stackoverflow.com/questions/1805210/jquery-drag-and-drop-using-live-events
+                */
 
-                });
+                $("#fm_filemanager").on('mouseover',
+                                        "tr.file:not(.ui-draggable), tr.directory:not(.ui-draggable), li.directory:not(.ui-draggable)",
+                                        function() { 
+                                            //console.log("adding draggable to elem");
+                                            $(this).draggable(
+                                                              {
+                                                                  cursorAt: { cursor: 'move', left: -10 },
+                                                                      distance: 5,
+                                                                      delay: 10,
+                                                                      helper: function(event) {
+                                                                      //console.debug("drag src: "+$(this).html());
+                                                                      /* drag a clone of the first <td> which holds icon and name */
+                                                                      var drag_elem = $(this).find('td:first').clone();
+                                                                      drag_elem.attr('rel_path', $(this).attr('rel_path')).css('width', '20px');
+                                                                      //console.debug("drag elem: "+drag_elem.html());
+                                                                      return drag_elem;
+                                                                  }
+                                                              });
+                                            //console.log("added draggable to elem");
+                                        });
 
-                $("tr.recent.directory, li.recent.directory").each(function() { 
-                    var t = $(this); 
-                    setTimeout(function() {
-                        t.droppable(
-                            { greedy: true,
-                              drop: function(event, ui) {
-                                  clipboard['is_dir'] = $(ui.helper).hasClass('directory');
-                                  clipboard['path'] = $(ui.helper).attr(pathAttribute);
-                                  copy($(ui.helper).attr('rel_path'), 
-                                       $(this).attr('rel_path'));
-                              }
-                            })
-                    }, 10);
-                });
+                $("#fm_filemanager").on('mouseover',
+                                        "tr.directory:not(.ui-droppable), li.directory:not(.ui-droppable)",
+                                        function() { 
+                                            $(this).droppable(
+                                                              { greedy: true,
+                                                                      drop: function(event, ui) {
+                                                                      clipboard['is_dir'] = $(ui.helper).hasClass('directoryicon');
+                                                                      clipboard['path'] = $(ui.helper).attr(pathAttribute);
+                                                                      //console.debug("drop elem: "+clipboard['path']+" : "+clipboard['is_dir']);
+                                                                      copy($(ui.helper).attr('rel_path'), 
+                                                                           $(this).attr('rel_path'));
+                                                                  }
+                                                              });
+                                        });
             }
 
             // show/hide dotfiles
             console.debug("refresh dotfiles");
             refreshDotfiles();
 
-            // remove recent markers
-            // TODO: can we eliminate heavy recent markers completely?
-            console.debug("remove recent markers");
-            $("tr.recent, li.recent").each(function() { 
-                var t = $(this); 
-                setTimeout(function() {
-                    t.removeClass('recent');
-                }, 10);
-            });
-
-            // bind reload to dotfiles checkbox - just use old bind style here
+            // bind reload to dotfiles checkbox
             console.debug("bind reload to dotfile checkbox");
             $("#fm_dotfiles[type='checkbox']").on('click',
                 function() {
                     refreshDotfiles();
+                });
+
+            // bind reload to touchscreen checkbox
+            console.debug("bind reload to touchscreen checkbox");
+            $("#fm_touchscreen[type='checkbox']").on('click',
+                function() {
+		    /* Remove old context menu and reload */
+                    $.contextMenu('destroy');
+                    $(".fm_files").parent().reload('');
                 });
 
             // Binds: Expands and a call to showbranch
@@ -1450,7 +1491,8 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
           actions: {select: select_action},
           dragndrop: false,
           filespacer: false,
-          uploadspace: false
+          uploadspace: false,
+          selectOnly: true
          },
          // doubleclick callback action
          function(el) { select_action("dclick", el, undefined); }
@@ -1911,4 +1953,3 @@ function mig_fancyuploadchunked_init(name, callback) {
 
     return do_d;
 };
-

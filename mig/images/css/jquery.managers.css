@@ -379,8 +379,19 @@ UL.jqueryFileList A:hover {
 
 
 .ui-draggable-dragging {
-  background-color: red;
+  /*background-color: red;*/
 }
+
+/* prevent text select on dclick on files or dirs in fileman */
+#fm_filelisting tr {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 
 .cmd { display: inline-block; width: 18px; cursor: pointer; }
 

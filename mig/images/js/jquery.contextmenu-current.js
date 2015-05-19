@@ -1,1 +1,1 @@
-jquery.contextmenu-1.0.1-fixed.js
+jquery.contextmenu-1.6.6.js

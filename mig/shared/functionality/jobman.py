@@ -5,7 +5,7 @@
 #
 # jobman - Job manager UI for browsing and manipulating jobs
 #
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -82,65 +82,7 @@ def html_post():
     </div>
     <div id="jm_touchscreen"><input type="checkbox">Enable touch screen
     interface (all clicks trigger menu)</div>
-'''
-    # Close div from html_pre and add top level context menu
-    html += '''
   </div>
-  
-  <ul id="job_context" class="contextMenu">
-      <li class="resubmit single">
-          <a href="#resubmit">Resubmit</a>
-      </li>
-      <li class="freeze single">
-          <a href="#freeze">Freeze</a>
-      </li>
-      <li class="thaw single">
-          <a href="#thaw">Thaw</a>
-      </li>
-      <li class="cancel single">
-          <a href="#cancel">Cancel</a>
-      </li>
-      <li class="mrsl single separator">
-          <a href="#mrsl">Raw Description</a>
-      </li>
-      <li class="schedule single">
-          <a href="#schedule">Schedule Status</a>
-      </li>
-      <li class="feasible single">
-          <a href="#feasible">Feasibility Check</a>
-      </li>
-      <li class="verbosestatus single">
-          <a href="#verbosestatus">Verbose Status</a>
-      </li>
-      <li class="liveio single separator">
-          <a href="#liveio">Live I/O</a>
-      </li>
-      <li class="statusfiles single">
-          <a href="#statusfiles">Status Files</a>
-      </li>
-      <li class="outputfiles single">
-          <a href="#outputfiles">Output Files</a>
-      </li>
-      
-      <li class="schedule multi">
-          <a href="#schedule">Schedule Status All</a>
-      </li>
-      <li class="feasible multi">
-          <a href="#feasible">Feasibility Check All</a>
-      </li>
-      <li class="resubmit multi">
-          <a href="#resubmit">Resubmit All</a>
-      </li>
-      <li class="freeze multi">
-          <a href="#freeze">Freeze All</a>
-      </li>
-      <li class="thaw multi">
-          <a href="#thaw">Thaw All</a>
-      </li>
-      <li class="cancel multi separator">
-          <a href="#cancel">Cancel All</a>
-      </li>
-  </ul>
   
   <div id="cmd_helper" title="Command output" style="display: none;"></div>
 '''
