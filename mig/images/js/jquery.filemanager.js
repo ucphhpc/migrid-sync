@@ -1006,95 +1006,6 @@ if (jQuery) (function($){
 
             console.debug('bind action handlers');
 
-            var file_menu, directory_menu;
-            directory_menu = {
-                                "open": {name: "Open Folder", icon: "open"},
-                                "mkdir": {name: "Create Folder", icon: "mkdir"},
-                                "create": {name: "Create File", icon: "create"},
-                                "upload": {name: "Upload File", icon: "upload"},
-                                "pack": {name: "Pack", icon: "pack"},
-                                "sep1": "---------",
-                                //"cut": {name: "Cut", icon: "cut"},
-                                "copy": {name: "Copy", icon: "copy"},
-                                "paste": {name: "Paste", icon: "paste"},
-                                "rm": {name: "Delete Folder", icon: "rmdir"},
-                                "sep2": "---------",
-                                "rename": {name: "Rename", icon: "rename"}
-                            };
-            file_menu = {
-                                "show": {name: "Show", icon: "show"},
-                                "download": {name: "Download", icon: "download"},
-                                "edit": {name: "Edit", icon: "edit"},
-                                "sep1": "---------",
-                                //"cut": {name: "Cut", icon: "cut"},
-                                "copy": {name: "Copy", icon: "copy"},
-                                "paste": {name: "Paste", icon: "paste"},
-                                "rm": {name: "Delete", icon: "rm"},
-                                "sep2": "---------",
-                                "rename": {name: "Rename", icon: "rename"},
-                                "pack": {name: "Pack", icon: "pack"},
-                                "unpack": {name: "Unpack", icon: "unpack"},
-                                "sep3": "---------",
-                                "cat": {name: "cat", icon: "cat"},
-                                "head": {name: "head", icon: "head"},
-                                "tail": {name: "tail", icon: "tail"},
-                                "sep4": "---------",
-                                "submit": {name: "Submit", icon: "submit"}
-                            };
-            if (!options["enableSubmit"]) {
-                delete file_menu["sep4"];
-                delete file_menu["submit"];
-            }
-            if (options["selectOnly"]) {
-                file_menu = {
-                    "select": {name: "Select", icon: "select"}
-                };
-                directory_menu = {
-                    "select": {name: "Select", icon: "select"}
-                };
-            }
-            var bind_click = 'right';
-            if (touchscreenChecker()) {
-                bind_click = 'left';
-            }
-            $.contextMenu({
-                    selector: 'tr.file', 
-                    trigger: bind_click,
-                    callback: function(key, call_opts) {
-                            var m = "file menu clicked: " + key;                                
-                            console.debug(m); 
-                            var action = key;
-                            var el = $(this);
-                            console.debug("handle " + action + " on file " + $.fn.dump(el));
-                            (options['actions'][action])(action, el, -1);
-                            console.debug("done " + action + " on file " + $.fn.dump(el));
-                        },
-                    items: file_menu
-                });
-    
-            $.contextMenu({
-                    selector: 'tr.directory, li.directory, div.filespacer, div.uploadspace', 
-                    trigger: bind_click,
-                    callback: function(key, call_opts) {
-                            var m = "directory menu clicked: " + key;
-                            console.debug(m); 
-                            var action = key;
-                            var el = $(this);
-                            console.debug("handle " + action + " on dir " + $.fn.dump(el));
-                            (options['actions'][action])(action, el, -1);
-                            console.debug("done " + action + " on dir " + $.fn.dump(el));
-                        },
-                    items: directory_menu
-                });
-
-            console.debug("add dclick handler");
-            $("#fm_filemanager").off("dblclick", "tr.file, tr.directory");
-            $("#fm_filemanager").on("dblclick", 
-                                    "tr.file, tr.directory",
-                                    function(event) {
-                                        doubleClickEvent(this);
-                                    }); 
-
             // Associate drag'n'drop
             if (options.dragndrop) {
                 console.debug("add drag n drop");
@@ -1144,28 +1055,6 @@ if (jQuery) (function($){
             console.debug("refresh dotfiles");
             refreshDotfiles();
 
-            // bind reload to dotfiles checkbox
-            console.debug("bind reload to dotfile checkbox");
-            $("#fm_dotfiles[type='checkbox']").on('click',
-                function() {
-                    refreshDotfiles();
-                });
-
-            // bind reload to touchscreen checkbox
-            console.debug("bind reload to touchscreen checkbox");
-            $("#fm_touchscreen[type='checkbox']").on('click',
-                function() {
-		    /* Remove old context menu and reload */
-                    $.contextMenu('destroy');
-                    $(".fm_files").parent().reload('');
-                });
-
-            // Binds: Expands and a call to showbranch
-            // or
-            // Binds: Collapse
-            console.debug("bindBranch");
-            bindBranch(folder_pane);                    
-
             // Go to subPath                    
             console.debug("navigate to destination path");
             var current_dir = addressbar.find('input[name=fm_current_path]').val();
@@ -1211,9 +1100,123 @@ if (jQuery) (function($){
      }
      
      
-     function bindBranch(t) {
-         $(t).off(options.folderEvent, 'li');
-         $(t).on(
+     function bindContextMenus() {
+         var file_menu, directory_menu;
+         directory_menu = {
+                             "open": {name: "Open Folder", icon: "open"},
+                             "mkdir": {name: "Create Folder", icon: "mkdir"},
+                             "create": {name: "Create File", icon: "create"},
+                             "upload": {name: "Upload File", icon: "upload"},
+                             "pack": {name: "Pack", icon: "pack"},
+                             "sep1": "---------",
+                             //"cut": {name: "Cut", icon: "cut"},
+                             "copy": {name: "Copy", icon: "copy"},
+                             "paste": {name: "Paste", icon: "paste"},
+                             "rm": {name: "Delete Folder", icon: "rmdir"},
+                             "sep2": "---------",
+                             "rename": {name: "Rename", icon: "rename"}
+                         };
+         file_menu = {
+                             "show": {name: "Show", icon: "show"},
+                             "download": {name: "Download", icon: "download"},
+                             "edit": {name: "Edit", icon: "edit"},
+                             "sep1": "---------",
+                             //"cut": {name: "Cut", icon: "cut"},
+                             "copy": {name: "Copy", icon: "copy"},
+                             "paste": {name: "Paste", icon: "paste"},
+                             "rm": {name: "Delete", icon: "rm"},
+                             "sep2": "---------",
+                             "rename": {name: "Rename", icon: "rename"},
+                             "pack": {name: "Pack", icon: "pack"},
+                             "unpack": {name: "Unpack", icon: "unpack"},
+                             "sep3": "---------",
+                             "cat": {name: "cat", icon: "cat"},
+                             "head": {name: "head", icon: "head"},
+                             "tail": {name: "tail", icon: "tail"},
+                             "sep4": "---------",
+                             "submit": {name: "Submit", icon: "submit"}
+                         };
+         if (!options["enableSubmit"]) {
+             delete file_menu["sep4"];
+             delete file_menu["submit"];
+         }
+         if (options["selectOnly"]) {
+             file_menu = {
+                 "select": {name: "Select", icon: "select"}
+             };
+             directory_menu = {
+                 "select": {name: "Select", icon: "select"}
+             };
+         }
+         var bind_click = 'right';
+         if (touchscreenChecker()) {
+             bind_click = 'left';
+         }
+         $.contextMenu({
+                 selector: 'tr.file', 
+                 trigger: bind_click,
+                 callback: function(key, call_opts) {
+                         var m = "file menu clicked: " + key;                                
+                         console.debug(m); 
+                         var action = key;
+                         var el = $(this);
+                         console.debug("handle " + action + " on file " + $.fn.dump(el));
+                         (options['actions'][action])(action, el, -1);
+                         console.debug("done " + action + " on file " + $.fn.dump(el));
+                     },
+                 items: file_menu
+             });
+ 
+         $.contextMenu({
+                 selector: 'tr.directory, li.directory, div.filespacer, div.uploadspace', 
+                 trigger: bind_click,
+                 callback: function(key, call_opts) {
+                         var m = "directory menu clicked: " + key;
+                         console.debug(m); 
+                         var action = key;
+                         var el = $(this);
+                         console.debug("handle " + action + " on dir " + $.fn.dump(el));
+                         (options['actions'][action])(action, el, -1);
+                         console.debug("done " + action + " on dir " + $.fn.dump(el));
+                     },
+                 items: directory_menu
+             });
+     }
+
+     function bindHandlers(folder_pane) {
+	 bindContextMenus();
+
+         console.debug("add dclick handler");
+         //$("#fm_filemanager").off("dblclick", "tr.file, tr.directory");
+         $("#fm_filemanager").on("dblclick", 
+                                 "tr.file, tr.directory",
+                                 function(event) {
+                                     doubleClickEvent(this);
+                                 }); 
+
+         // bind reload to dotfiles checkbox
+         console.debug("bind reload to dotfile checkbox");
+         $("#fm_dotfiles[type='checkbox']").on('click',
+					       function() {
+						   refreshDotfiles();
+					       });
+
+         // bind reload to touchscreen checkbox
+         console.debug("bind reload to touchscreen checkbox");
+         $("#fm_touchscreen[type='checkbox']").on('click',
+						  function() {
+						      /* Remove old context menu and reload */
+						      console.debug('touch reload');
+						      $.contextMenu('destroy');
+						      bindContextMenus();
+						  });
+
+         // Binds: Expands and a call to showbranch
+         // or
+         // Binds: Collapse
+         console.debug("bindBranch");
+         //$(folder_pane).off(options.folderEvent, 'li');
+         $(folder_pane).on(
              options.folderEvent,
              'li',
              null,
@@ -1241,8 +1244,9 @@ if (jQuery) (function($){
                  }
                  return false;
              }
-         );         
-     };
+         );
+     }
+     
                             
      /* 
         Base sorting on the content of the hidden <div> element inside all cells
@@ -1271,8 +1275,15 @@ if (jQuery) (function($){
      if (options.subPath == '/') {
          options.subPath = '';
      }
+
+     /**
+      * Delegate handlers for file and dir elements.
+      *
+      */
+     var folder_pane = $(".fm_folders", obj);
+     bindHandlers(folder_pane);
      
-     showBranch($(".fm_folders", obj), escape(options.root));
+     showBranch(folder_pane, escape(options.root));
      
        
      /**

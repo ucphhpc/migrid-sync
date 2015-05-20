@@ -28,7 +28,7 @@
 */
 
 /* switch on/off console debug globally here */
-var enable_debug = true;
+var enable_debug = false;
 
 /* 
    Make sure we can always use console.X without scripts crashing. IE<=9
@@ -256,241 +256,235 @@ if (jQuery) (function($){
       
   }
 
-  $.fn.jobmanager = function() {
+  $.fn.jobmanager = function(user_options) {
 
-    $.tablesorter.addWidget({
-        id: "multiselect",
-        format: function(table) {
-            $("#jm_jobmanager").on("click", "tbody tr td input", 
-                                   function(event) {
-                                       var job_id = $(this).parent().parent().attr("id");
-                                       var is_checked = $("#"+job_id+" input").prop("checked");
+      var defaults = {};
+      console.debug("define actions");
+      defaults['actions'] = {
+          cancel: function (job_id) {
+              jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'cancel'})
+          },
+          freeze: function (job_id) {
+              jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'freeze'})
+          },
+          thaw: function (job_id) {
+              jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'thaw'})
+          },
+          mrsl: function (job_id) {
+              jsonWrapper(job_id, "#cmd_dialog", "mrslview.py", {job_id: job_id})
+          },
+          resubmit: function (job_id) {
+              jsonWrapper(job_id, "#cmd_dialog", "resubmit.py", {job_id: job_id})
+          },
+          statusfiles: function (job_id) {
+              url = "fileman.py?path=job_output/"+job_id+"/";
+              windowWrapper(job_id, "#cmd_dialog", url);
+          },
+          outputfiles: function (job_id, job_output) {
+              /* fall back to default fileman if job has no output files */
+              if (job_output == undefined) {
+                  url = "fileman.py";
+              } else {
+                  url = "fileman.py?"+job_output.match(/^ls.py\?(.*)$/)[1];
+              }
+              windowWrapper(job_id, "#cmd_dialog", url);
+          },
+          liveio: function (job_id) {
+              url = "liveio.py?job_id="+job_id;
+              windowWrapper(job_id, "#cmd_dialog", url);
+          },
+          schedule: function (job_id) {
+              jsonWrapper(job_id, "#cmd_dialog", "jobschedule.py", {job_id: job_id})
+          },
+          feasible: function (job_id) {
+              jsonWrapper(job_id, "#cmd_dialog", "jobfeasible.py", {job_id: job_id})
+          },
+          verbosestatus: function (job_id) {
+              url = "jobstatus.py?flags=v;job_id="+job_id;
+              windowWrapper(job_id, "#cmd_dialog", url);
+          },
+      };
+
+      var options = $.extend(defaults, user_options);
+
+      function bindContextMenus() {
+	  /* Bind context menu for job elements */
+	  var job_menu = {
+	      "resubmit": {name: "Resubmit", icon: "resubmit"},
+	      "freeze": {name: "Freeze", icon: "freeze"},
+	      "thaw": {name: "Thaw", icon: "thaw"},
+	      "cancel": {name: "Cancel", icon: "cancel"},
+	      "sep1": "---------",
+	      "mrsl": {name: "Raw Description", icon: "mrsl"},
+	      "schedule": {name: "Schedule Status", icon: "schedule"},
+	      "feasible": {name: "Feasibility Check", icon: "feasible"},
+	      "verbosestatus": {name: "Verbose Status", icon: "verbosestatus"},
+	      "sep2": "---------",
+	      "liveio": {name: "Live I/O", icon: "liveio"},
+	      "statusfiles": {name: "Status Files", icon: "statusfiles"},
+	      "outputfiles": {name: "Output Files", icon: "outputfiles"}
+	  };
+	  var bind_click = 'right';
+	  if (touchscreenChecker()) {
+	      bind_click = 'left';
+	  }
+	  $.contextMenu({
+		  selector: '#jm_jobmanager tbody tr td:not(.checkbox)', 
+		  trigger: bind_click,
+		  callback: function(key, call_opts) {
+		      var m = "job menu clicked: " + key;                         
+		      console.debug = console.log;
+		      console.debug(m); 
+		      var action = key;
+		      var el = $(this);
+		      
+		      var single_selection = !$(el).parent().hasClass("ui-selected");
+		      var job_id = "";
+		      
+		      $("#cmd_helper").dialog({buttons: {Close: function() {$(this).dialog("close");} }, width: "800px", autoOpen: false, closeOnEscape: true, modal: true, position: [300, 70]});
+		      $("#cmd_helper").dialog("open");
+		      $("#cmd_helper").html("");
+		      
+		      if (single_selection) {
+			  
+			  job_id = $("input[name='job_identifier']", $(el).parent()).val();
+			  
+			  $("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>JobId: "+job_id+"</p></div>");
+			  // Output files redirect to the filemanager with extra args.
+			  // All other actions are handled by the general case.
+			  if (action == "outputfiles") {
+			      options['actions'][action](job_id, $("input[name='job_output']", $(el).parent()).val());
+			  } else {
+			      options['actions'][action](job_id);
+			  }
+		      } else {
+			  var selected_rows = $("#jm_jobmanager tbody tr.ui-selected");
+			  $("#cmd_helper").append("<p>"+action+": "+selected_rows.length+" jobs, see individual status below:</p>");
+			  selected_rows.each(function(i) {
+				  job_id = $("input[name='job_identifier']", this).val();
+				  $("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>"+job_id+"</p></div>");
+				  options['actions'][action](job_id);
+			      });
+		      }
+		      
+		      $("#append").click();
+		      
+		  },
+		  items: job_menu
+	      });
+
+      }
+
+      console.debug("add tablesorter multiselect widget");
+      
+      $.tablesorter.addWidget({
+	      id: "multiselect",
+		  format: function(table) {
+		  $("#jm_jobmanager").on("click", "tbody tr td input", 
+					 function(event) {
+					     var job_id = $(this).parent().parent().attr("id");
+					     var is_checked = $("#"+job_id+" input").prop("checked");
                 
-                                       if (is_checked) {
-                                           $("#"+job_id).addClass("ui-selected");
-                                       } else {
-                                           $("#"+job_id).removeClass("ui-selected");
-                                       }
-                                       return true;
-                                   });            
-        }
-    });
+					     if (is_checked) {
+						 $("#"+job_id).addClass("ui-selected");
+					     } else {
+						 $("#"+job_id).removeClass("ui-selected");
+					     }
+					     return true;
+					 });            
+	      }
+	  });
     
-    $.tablesorter.addWidget({ 
-
-        id: "contextual", 
-        format: function(table) {
-
-            var actions = {
-                cancel: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'cancel'})
-                },
-                freeze: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'freeze'})
-                },
-                thaw: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "jobaction.py", {job_id: job_id, action: 'thaw'})
-                },
-                mrsl: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "mrslview.py", {job_id: job_id})
-                },
-                resubmit: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "resubmit.py", {job_id: job_id})
-                },
-                statusfiles: function (job_id) {
-                    url = "fileman.py?path=job_output/"+job_id+"/";
-                    windowWrapper(job_id, "#cmd_dialog", url);
-                },
-                outputfiles: function (job_id, job_output) {
-                    /* fall back to default fileman if job has no output files */
-                    if (job_output == undefined) {
-                        url = "fileman.py";
-                    } else {
-                        url = "fileman.py?"+job_output.match(/^ls.py\?(.*)$/)[1];
-                    }
-                    windowWrapper(job_id, "#cmd_dialog", url);
-                },
-                liveio: function (job_id) {
-                    url = "liveio.py?job_id="+job_id;
-                    windowWrapper(job_id, "#cmd_dialog", url);
-                },
-                schedule: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "jobschedule.py", {job_id: job_id})
-                },
-                feasible: function (job_id) {
-                    jsonWrapper(job_id, "#cmd_dialog", "jobfeasible.py", {job_id: job_id})
-                },
-                verbosestatus: function (job_id) {
-                    url = "jobstatus.py?flags=v;job_id="+job_id;
-                    windowWrapper(job_id, "#cmd_dialog", url);
-                },
-            };
-
-            /* Bind context menu for right click */
-            var job_menu = {
-                                "resubmit": {name: "Resubmit", icon: "resubmit"},
-                                "freeze": {name: "Freeze", icon: "freeze"},
-                                "thaw": {name: "Thaw", icon: "thaw"},
-                                "cancel": {name: "Cancel", icon: "cancel"},
-                                "sep1": "---------",
-                                "mrsl": {name: "Raw Description", icon: "mrsl"},
-                                "schedule": {name: "Schedule Status", icon: "schedule"},
-                                "feasible": {name: "Feasibility Check", icon: "feasible"},
-                                "verbosestatus": {name: "Verbose Status", icon: "verbosestatus"},
-                                "sep2": "---------",
-                                "liveio": {name: "Live I/O", icon: "liveio"},
-                                "statusfiles": {name: "Status Files", icon: "statusfiles"},
-                                "outputfiles": {name: "Output Files", icon: "outputfiles"}
-                            };
-            var bind_click = 'right';
-            if (touchscreenChecker()) {
-                bind_click = 'left';
-            }
-            $.contextMenu({
-                    selector: '#jm_jobmanager tbody tr td:not(.checkbox)', 
-                     trigger: bind_click,
-                     callback: function(key, call_opts) {
-                            var m = "job menu clicked: " + key;                         
-                            console.debug = console.log;
-                            console.debug(m); 
-                            var action = key;
-                            var el = $(this);
-                            console.debug("handle " + action + " on el "+el);
-
-                            var single_selection = !$(el).parent().hasClass("ui-selected");
-                            var job_id = "";
-                    
-                            $("#cmd_helper").dialog({buttons: {Close: function() {$(this).dialog("close");} }, width: "800px", autoOpen: false, closeOnEscape: true, modal: true, position: [300, 70]});
-                            $("#cmd_helper").dialog("open");
-                            $("#cmd_helper").html("");
-                    
-                            if (single_selection) {
-                    
-                                job_id = $("input[name='job_identifier']", $(el).parent()).val();
-                        
-                                $("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>JobId: "+job_id+"</p></div>");
-                                // Output files redirect to the filemanager with extra args.
-                                // All other actions are handled by the general case.
-                                if (action == "outputfiles") {
-                                    actions[action](job_id, $("input[name='job_output']", $(el).parent()).val());
-                                } else {
-                                    actions[action](job_id);
-                                }
-                            } else {
-                                var selected_rows = $("#jm_jobmanager tbody tr.ui-selected");
-                                $("#cmd_helper").append("<p>"+action+": "+selected_rows.length+" jobs, see individual status below:</p>");
-                                selected_rows.each(function(i) {
-                                        job_id = $("input[name='job_identifier']", this).val();
-                                        $("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>"+job_id+"</p></div>");
-                                        actions[action](job_id);
-                                    });
-                            }
-                    
-                            $("#append").click();
-
-                            console.debug("done " + action + " on job " + el);
-                    },
-                        items: job_menu
-                        });
-
-	    /* TODO: add dclick handler like this? */
-	    /*
-            console.debug("add dclick handler");
-            $("#jm_jobmanager").off("dblclick", "tbody tr td:not(.checkbox)");
-            $("#jm_jobmanager").on("dblclick", 
-                                    "tbody tr td:not(.checkbox)",
-                                    function(event) {
-				       console.debug("in dclick handler: "+($this));
-				       var job_id = $("input[name='job_identifier']", this).val();
-				       actions[action](job_id);
-				       console.debug("done dclick handler: "+($this));
-                                    }); 
-	    */
-
-            }
-        });
+      console.debug("add tablesorter contextual widget");
+      $.tablesorter.addWidget({ 
+	      id: "contextual", 
+		  format: function(table) {
+		  bindContextMenus();
+	      }
+	  });
     
-    var config = {container: $("#pager"), size: 300};
-    var doSort = true;
-    $("#jm_jobmanager")
-    .tablesorter({  widgets: ["zebra", "multiselect", "contextual", "saveSort"],
-                    textExtraction: function(node) {
-                                    var stuff = $("div", node).html();
-                                    if (stuff == null) {
-                                      stuff = "";
-                                    }
-                                    return stuff;
-                                  },
-                    sortColumn: 'Job ID',
-                    headers: {0: {sorter: false}}
-                  })
-    .tablesorterPager(config);
+      console.debug("init job manager");
+      var config = {container: $("#pager"), size: 300};
+      var doSort = true;
+      $("#jm_jobmanager")
+      .tablesorter({  widgets: ["zebra", "multiselect", "contextual", "saveSort"],
+		  textExtraction: function(node) {
+		  var stuff = $("div", node).html();
+		  if (stuff == null) {
+		      stuff = "";
+		  }
+		  return stuff;
+	      },
+		  sortColumn: 'Job ID',
+		  headers: {0: {sorter: false}}
+	  })
+      .tablesorterPager(config);
 
-    // Check CheckAll when read all
-    $("#jm_jobmanager").bind("sortEnd", function() { $("#checkAll").prop("checked", false); });
-    
-    
-    $("#append").click(function() {
+      console.debug("bind handlers");
+      // Check CheckAll when read all
+      $("#jm_jobmanager").bind("sortEnd", function() { $("#checkAll").prop("checked", false); });
 
-        // Busy marker while loading jobs from server
-        $("#jm_jobmanager tbody").html("<tr class='odd'><td class='wait'></td><td>Loading jobs...</td><td></td><td></td></tr>");
-        var job_count = 0;
-        var sched_hint = '';
-        var output_url = '';
-        var max_jobs = -1;
-        var filter_id = '';
-        var limit_opts = 'flags=i;';
+      $("#append").click(function() {
 
-        // Read out current max jobs and filter settings from fields
-        max_jobs = parseInt($(".maxjobs", config.container).val());
-        if (max_jobs > 0) {
-            limit_opts += "flags=s;max_jobs=" + max_jobs + ';';
-        }
-        filter_id = $(".filterid", config.container).val();
-        if (filter_id != '') {
-            limit_opts += "job_id=" + filter_id + ';';
-        }
-        // add some html
-        $.ajax({
-            url: "jobstatus.py?output_format=json;"+limit_opts, 
-            type: "GET",
-            dataType: "json",
-            cache: false, // Avoid IE caching
-            success: 
-            function(jsonRes, textStatus) {
-                var jobList = new Array();
-                var i = 0;
+	      // Busy marker while loading jobs from server
+	      $("#jm_jobmanager tbody").html("<tr class='odd'><td class='wait'></td><td>Loading jobs...</td><td></td><td></td></tr>");
+	      var job_count = 0;
+	      var sched_hint = '';
+	      var output_url = '';
+	      var max_jobs = -1;
+	      var filter_id = '';
+	      var limit_opts = 'flags=i;';
 
-                // Grab jobs from json response and place them in jobList.
-                for(i = 0; i < jsonRes.length; i++) {
-                    if ((jsonRes[i].object_type == "job_list") && (jsonRes[i].jobs.length > 0)) {
-                        jobList = jobList.concat(jsonRes[i].jobs);
-                        job_count++;
-                    }
-                }
-
-                // Remove busy marker
-                $("#jm_jobmanager tbody").html("");
-                // Wrap each json result into html
-                $.each(jobList, function(i, item) {
-                    if (item.schedule_hint != null) {
-                        sched_hint = " ("+item.schedule_hint+")";
-                    } else {
-                        sched_hint = "";
-                    }
-                    if (item.outputfileslink != null) {
-                        output_url = item.outputfileslink.destination;
-                    } else {
-                        /* dummy value of user home for jobs without output files */
-                        output_url = "ls.py?path=";
-                    }
-                    $("#jm_jobmanager tbody").append("<tr id='"+item.job_id.match(/^([0-9_]+)__/)[1]+"'>"+
-                  "<td class='checkbox'><div class='sortkey'></div><input type='checkbox' name='job_identifier' value='"+item.job_id+"' /></td>"+
-                  "<td><div class='sortkey'>"+item.job_id.match(/^([0-9]+)_/)[1]+"</div>"+item.job_id+"</td>"+
-                  "<input type='hidden' name='job_output' value='"+output_url+"' />"+
-                  "<td><div class='sortkey'>"+item.status+"</div><div class='jobstatus'>"+item.status+sched_hint+"</div></td>"+
-                  "<td><div class='sortkey'>"+toTimestamp(item.received_timestamp)+"</div>"+item.received_timestamp+"</td>"+
-                  "</tr>"
+	      // Read out current max jobs and filter settings from fields
+	      max_jobs = parseInt($(".maxjobs", config.container).val());
+	      if (max_jobs > 0) {
+		  limit_opts += "flags=s;max_jobs=" + max_jobs + ';';
+	      }
+	      filter_id = $(".filterid", config.container).val();
+	      if (filter_id != '') {
+		  limit_opts += "job_id=" + filter_id + ';';
+	      }
+	      // add some html
+	      $.ajax({
+		      url: "jobstatus.py?output_format=json;"+limit_opts, 
+			  type: "GET",
+			  dataType: "json",
+			  cache: false, // Avoid IE caching
+			  success: 
+		      function(jsonRes, textStatus) {
+			  var jobList = new Array();
+			  var i = 0;
+			  
+			  // Grab jobs from json response and place them in jobList.
+			  for(i = 0; i < jsonRes.length; i++) {
+			      if ((jsonRes[i].object_type == "job_list") && (jsonRes[i].jobs.length > 0)) {
+				  jobList = jobList.concat(jsonRes[i].jobs);
+				  job_count++;
+			      }
+			  }
+			  
+			  // Remove busy marker
+			  $("#jm_jobmanager tbody").html("");
+			  // Wrap each json result into html
+			  $.each(jobList, function(i, item) {
+				  if (item.schedule_hint != null) {
+				      sched_hint = " ("+item.schedule_hint+")";
+				  } else {
+				      sched_hint = "";
+				  }
+				  if (item.outputfileslink != null) {
+				      output_url = item.outputfileslink.destination;
+				  } else {
+				      /* dummy value of user home for jobs without output files */
+				      output_url = "ls.py?path=";
+				  }
+				  $("#jm_jobmanager tbody").append("<tr id='"+item.job_id.match(/^([0-9_]+)__/)[1]+"'>"+
+								   "<td class='checkbox'><div class='sortkey'></div><input type='checkbox' name='job_identifier' value='"+item.job_id+"' /></td>"+
+								   "<td><div class='sortkey'>"+item.job_id.match(/^([0-9]+)_/)[1]+"</div>"+item.job_id+"</td>"+
+								   "<input type='hidden' name='job_output' value='"+output_url+"' />"+
+								   "<td><div class='sortkey'>"+item.status+"</div><div class='jobstatus'>"+item.status+sched_hint+"</div></td>"+
+								   "<td><div class='sortkey'>"+toTimestamp(item.received_timestamp)+"</div>"+item.received_timestamp+"</td>"+
+								   "</tr>"
                     );
 
                 });
@@ -520,6 +514,21 @@ if (jQuery) (function($){
         }
     });
 
+    /* TODO: add dclick handler like this? */
+    /*
+    console.debug("add dclick handler");
+    //$("#jm_jobmanager").off("dblclick", "tbody tr td:not(.checkbox)");
+    $("#jm_jobmanager").on("dblclick", 
+                            "tbody tr td:not(.checkbox)",
+                            function(event) {
+			       console.debug("in dclick handler: "+($this));
+			       var job_id = $("input[name='job_identifier']", this).val();
+			       options['actions'][action](job_id);
+			       console.debug("done dclick handler: "+($this));
+                            }); 
+    */
+
+
     $("#checkAll").bind("click", function(event) {
         event.stopPropagation();
 
@@ -538,7 +547,7 @@ if (jQuery) (function($){
         function() {
             /* Remove old context menu and reload */
             $.contextMenu('destroy');
-            $("#append").click();
+	    bindContextMenus();
         });
 
   };
