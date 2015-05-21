@@ -196,9 +196,17 @@ Original license header follows...
 .context-menu-list LI.icon-upload { background-image: url(/images/icons/page_white_get.png); }
 .context-menu-list LI.icon-download { background-image: url(/images/icons/page_white_put.png); }
 .context-menu-list LI.icon-create { background-image: url(/images/icons/page_white_add.png); }
+.context-menu-list LI.icon-advanced { background-image: url(/images/icons/application.png); }
 .context-menu-list LI.icon-cat { background-image: url(/images/icons/application_osx_terminal.png); }
 .context-menu-list LI.icon-head { background-image: url(/images/icons/application_osx_terminal.png); }
 .context-menu-list LI.icon-tail { background-image: url(/images/icons/application_osx_terminal.png); }
+.context-menu-list LI.icon-wc { background-image: url(/images/icons/application_osx_terminal.png); }
+.context-menu-list LI.icon-touch { background-image: url(/images/icons/application_osx_terminal.png); }
+.context-menu-list LI.icon-stat { background-image: url(/images/icons/application_osx_terminal.png); }
+.context-menu-list LI.icon-truncate { background-image: url(/images/icons/application_osx_terminal.png); }
+.context-menu-list LI.icon-spell { background-image: url(/images/icons/script.png); }
+.context-menu-list LI.icon-find { background-image: url(/images/icons/folder_explore.png); }
+.context-menu-list LI.icon-grep { background-image: url(/images/icons/magnifier.png); }
 .context-menu-list LI.icon-submit { background-image: url(/images/icons/arrow_redo.png); }
 .context-menu-list LI.icon-copy { background-image: url(/images/icons/page_white_copy.png); }
 .context-menu-list LI.icon-paste { background-image: url(/images/icons/page_white_paste.png); }
@@ -208,7 +216,7 @@ Original license header follows...
 .context-menu-list LI.icon-unpack { background-image: url(/images/icons/zip.png); }
 .context-menu-list LI.icon-rename { background-image: url(/images/icons/drive_rename.png); }
 .context-menu-list LI.icon-quit { background-image: url(/images/icons/door.png); }
-.context-menu-list LI.icon-mrsl { background-image: url('/images/icons/page_white_text.png'); }
+.context-menu-list LI.icon-mrsl { background-image: url(/images/icons/page_white_text.png); }
 .context-menu-list LI.icon-statusfiles { background-image: url(/images/icons/drive.png); }
 .context-menu-list LI.icon-outputfiles { background-image: url(/images/icons/download.png); }
 .context-menu-list LI.icon-schedule { background-image: url(/images/icons/calendar.png); }

@@ -314,40 +314,57 @@ UL.jqueryFileList A:hover {
 }
 
 .ext_3gp { background: url(/images/icons/film.png) left center no-repeat; }
-.ext_afp { background: url(/images/icons/code.png) left center no-repeat; }
-.ext_afpa { background: url(/images/icons/code.png) left center no-repeat; }
-.ext_asp { background: url(/images/icons/code.png) left center no-repeat; }
-.ext_aspx { background: url(/images/icons/code.png) left center no-repeat; }
+.ext_afp, .ext_afpa { 
+background: url(/images/icons/code.png) left center no-repeat; 
+}
+.ext_asp, .ext_aspx { 
+background: url(/images/icons/code.png) left center no-repeat; 
+}
 .ext_avi { background: url(/images/icons/film.png) left center no-repeat; }
 .ext_bat { background: url(/images/icons/application.png) left center no-repeat; }
 .ext_bmp { background: url(/images/icons/picture.png) left center no-repeat; }
-.ext_bz2 { background: url(/images/icons/compress.png) left center no-repeat; }
-.ext_c { background: url(/images/icons/code.png) left center no-repeat; }
+.ext_c, .ext_h { background: url(/images/icons/code.png) left center no-repeat; }
 .ext_cfm { background: url(/images/icons/code.png) left center no-repeat; }
 .ext_cgi { background: url(/images/icons/code.png) left center no-repeat; }
 .ext_com { background: url(/images/icons/application.png) left center no-repeat; }
-.ext_cpp { background: url(/images/icons/code.png) left center no-repeat; }
+.ext_cpp, .ext_cxx, .ext_cc, .ext_hpp { 
+    background: url(/images/icons/code.png) left center no-repeat; 
+}
 .ext_css { background: url(/images/icons/css.png) left center no-repeat; }
 .ext_doc { background: url(/images/icons/doc.png) left center no-repeat; }
 .ext_exe { background: url(/images/icons/application.png) left center no-repeat; }
-.ext_gz { background: url(/images/icons/compress.png) left center no-repeat; }
 .ext_gif { background: url(/images/icons/picture.png) left center no-repeat; }
-.ext_fla { background: url(/images/icons/flash.png) left center no-repeat; }
-.ext_h { background: url(/images/icons/code.png) left center no-repeat; }
-.ext_htm { background: url(/images/icons/html.png) left center no-repeat; }
-.ext_html { background: url(/images/icons/html.png) left center no-repeat; }
-.ext_jar { background: url(/images/icons/java.png) left center no-repeat; }
-.ext_jpg { background: url(/images/icons/picture.png) left center no-repeat; }
-.ext_jpeg { background: url(/images/icons/picture.png) left center no-repeat; }
+.ext_fla, .ext_flv { 
+    background: url(/images/icons/flash.png) left center no-repeat;
+}
+.ext_flac { background: url(/images/icons/music.png) left center no-repeat; }
+.ext_h5 { background: url(/images/icons/db.png) left center no-repeat; }
+.ext_htm, .ext_html { 
+background: url(/images/icons/html.png) left center no-repeat; 
+}
+.ext_iso, .ext_img { background: url(/images/icons/drive.png) left center no-repeat; }
+.ext_jar, .ext_class, .ext_jnlp { 
+background: url(/images/icons/java.png) left center no-repeat; 
+}
+.ext_java { background: url(/images/icons/code.png) left center no-repeat; }
+.ext_jpg, .ext_jpeg { 
+background: url(/images/icons/picture.png) left center no-repeat; 
+}
 .ext_js { background: url(/images/icons/script.png) left center no-repeat; }
 .ext_lasso { background: url(/images/icons/code.png) left center no-repeat; }
-.ext_log { background: url(/images/icons/txt.png) left center no-repeat; }
+.ext_log, .ext_out, .ext_diff, .ext_conf, .ext_cfg, .ext_cnf { 
+    background: url(/images/icons/txt.png) left center no-repeat; 
+}
 .ext_m4p { background: url(/images/icons/music.png) left center no-repeat; }
 .ext_mov { background: url(/images/icons/film.png) left center no-repeat; }
 .ext_mp3 { background: url(/images/icons/music.png) left center no-repeat; }
-.ext_mp4 { background: url(/images/icons/film.png) left center no-repeat; }
-.ext_mpg { background: url(/images/icons/film.png) left center no-repeat; }
-.ext_mpeg { background: url(/images/icons/film.png) left center no-repeat; }
+.ext_mp4, .ext_m4v { 
+background: url(/images/icons/film.png) left center no-repeat;
+}
+.ext_mpg, .ext_mpeg { 
+background: url(/images/icons/film.png) left center no-repeat; 
+}
+.ext_mrsl { background: url(/images/icons/server_lightning.png) left center no-repeat; }
 .ext_ogg { background: url(/images/icons/music.png) left center no-repeat; }
 .ext_pcx { background: url(/images/icons/picture.png) left center no-repeat; }
 .ext_pdf { background: url(/images/icons/pdf.png) left center no-repeat; }
@@ -356,19 +373,33 @@ UL.jqueryFileList A:hover {
 .ext_ppt { background: url(/images/icons/ppt.png) left center no-repeat; }
 .ext_psd { background: url(/images/icons/psd.png) left center no-repeat; }
 .ext_pl { background: url(/images/icons/script.png) left center no-repeat; }
-.ext_py { background: url(/images/icons/script.png) left center no-repeat; }
+.ext_py, .ext_pyx { 
+background: url(/images/icons/script.png) left center no-repeat; 
+}
 .ext_rb { background: url(/images/icons/ruby.png) left center no-repeat; }
 .ext_rbx { background: url(/images/icons/ruby.png) left center no-repeat; }
 .ext_rhtml { background: url(/images/icons/ruby.png) left center no-repeat; }
 .ext_rpm { background: url(/images/icons/linux.png) left center no-repeat; }
 .ext_ruby { background: url(/images/icons/ruby.png) left center no-repeat; }
+.ext_sh { background: url(/images/icons/script.png) left center no-repeat; }
 .ext_sql { background: url(/images/icons/db.png) left center no-repeat; }
+.ext_stdout, .ext_stderr, .ext_status, .ext_io-status { 
+    background: url(/images/icons/txt.png) left center no-repeat; 
+}
 .ext_swf { background: url(/images/icons/flash.png) left center no-repeat; }
 .ext_tar { background: url(/images/icons/compress.png) left center no-repeat; }
-.ext_tbz { background: url(/images/icons/compress.png) left center no-repeat; }
-.ext_tgz { background: url(/images/icons/compress.png) left center no-repeat; }
-.ext_tif { background: url(/images/icons/picture.png) left center no-repeat; }
-.ext_tiff { background: url(/images/icons/picture.png) left center no-repeat; }
+.ext_tbz, .ext_tbz2, .ext_bz2, .ext_bz { 
+    background: url(/images/icons/compress.png) left center no-repeat; 
+}
+.ext_tgz, .ext_gz { 
+background: url(/images/icons/compress.png) left center no-repeat; 
+}
+.ext_txz, .ext_xz { 
+background: url(/images/icons/compress.png) left center no-repeat; 
+}
+.ext_tif, .ext_tiff { 
+background: url(/images/icons/picture.png) left center no-repeat;
+}
 .ext_txt { background: url(/images/icons/txt.png) left center no-repeat; }
 .ext_vb { background: url(/images/icons/code.png) left center no-repeat; }
 .ext_wav { background: url(/images/icons/music.png) left center no-repeat; }

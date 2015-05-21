@@ -323,7 +323,7 @@ if (jQuery) (function($){
                             width: "800px", 
                             autoOpen: false, 
                             closeOnEscape: true, 
-                            position: { my: "top", at: "top", of: window},
+                            position: { my: "top", at: "top+100px", of: window},
                             modal: true
                             });
                 $("#cmd_helper").dialog("open");

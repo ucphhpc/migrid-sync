@@ -347,11 +347,56 @@ if (jQuery) (function($){
 		    );
 
 	    }
+
+	    function parseWrapped(jsonRes, jsonSettings) {
+		var misc_output = '';
+		var j, field;
+		for (var i = 0; i < jsonRes.length; i++) {
+		    if (jsonRes[i]['object_type'] == 'submitstatuslist') {
+			field = 'submitstatuslist';
+			for (j = 0; j < jsonRes[i][field].length; j++) {
+			    if (jsonRes[i][field][j]['status']) {
+				misc_output += '<p>Submitted "'
+				    + jsonRes[i][field][j]['name']
+				    + '"</p><p>Job identfier: "'
+				    +jsonRes[i][field][j]['job_id']
+				    + '"</p>';
+			    } else {
+				misc_output +=  '<p>Failed submitting:</p><p>'
+				    + jsonRes[i][field][j]['name']
+				    + ' '+jsonRes[i][field][j]['message']
+				    + '</p>';
+			    }                                                   
+			}
+		    } else if (jsonRes[i]['object_type'] == 'stats') {
+			field = 'stats';
+			for (j = 0; j < jsonRes[i][field].length; j++) {
+			    misc_output += '<h4>Stat on ' + jsonSettings['path'] + '</h4>'
+				+ '<p>mode: ' + jsonRes[i][field][j]['mode']
+				+ '</p><p>size: ' + jsonRes[i][field][j]['size']
+				+ '</p><p>atime: ' + parseInt(jsonRes[i][field][j]['atime'])
+				+ '</p><p>mtime: ' + parseInt(jsonRes[i][field][j]['mtime'])
+				+ '</p><p>ctime: ' + parseInt(jsonRes[i][field][j]['ctime'])
+				+ '</p>';
+			}
+		    } else if (jsonRes[i]['object_type'] == 'filewcs') {
+			field = 'filewcs';
+			for (j = 0; j < jsonRes[i][field].length; j++) {
+			    misc_output += '<h4>Word count on ' + jsonRes[i][field]['name'] + '</h4>'
+				+ '<p>lines: ' + jsonRes[i][field][j]['lines']
+				+ '</p><p>words: ' + jsonRes[i][field][j]['words']
+				+ '</p><p>bytes: ' + jsonRes[i][field][j]['bytes']
+				+ '</p>';
+			}
+		    }
+		}
+		return misc_output;
+	    }
         
 	    function jsonWrapper(el, dialog, url, jsonOptions) {
             
-		var jsonSettings = { path: $(el).attr(pathAttribute),
-				     output_format: 'json' };
+		var jsonSettings = {path: $(el).attr(pathAttribute),
+				    output_format: 'json'};
             
 		$.fn.extend(jsonSettings, jsonOptions);
             
@@ -362,26 +407,7 @@ if (jQuery) (function($){
 			   var errors = $(this).renderError(jsonRes);
 			   var warnings = $(this).renderWarning(jsonRes);
 			   var file_output = $(this).renderFileoutput(jsonRes);
-			   var misc_output = '';
-                          
-			   for (var i = 0; i < jsonRes.length; i++) {
-			       if (jsonRes[i]['object_type'] == 'submitstatuslist') {
-				   for (j = 0; j < jsonRes[i]['submitstatuslist'].length; j++) {
-				       if (jsonRes[i]['submitstatuslist'][j]['status']) {
-					   misc_output +=  '<p>Submitted "'
-					       + jsonRes[i]['submitstatuslist'][j]['name']
-					       + '"</P>'
-					       + '<p>Job identfier: "'+jsonRes[i]['submitstatuslist'][j]['job_id']
-					       + '"</p>';
-				       } else {
-					   misc_output +=  '<p>Failed submitting:</p><p>'
-					       + jsonRes[i]['submitstatuslist'][j]['name']
-					       + ' '+jsonRes[i]['submitstatuslist'][j]['message']
-					       + '</p>';
-				       }                                                   
-				   }
-			       }
-			   }
+			   var misc_output = parseWrapped(jsonRes, jsonSettings);
                           
 			   if ((errors.length > 0) 
 			       || (warnings.length > 0) 
@@ -531,6 +557,37 @@ if (jQuery) (function($){
 		    jsonWrapper(el, '#cmd_dialog', 'head.py'); },
 		tail:   function (action, el, pos) { 
 		    jsonWrapper(el, '#cmd_dialog', 'tail.py'); },
+		wc:   function (action, el, pos) { 
+		    jsonWrapper(el, '#cmd_dialog', 'wc.py'); },
+		touch:   function (action, el, pos) { 
+		    jsonWrapper(el, '#cmd_dialog', 'touch.py'); },
+		stat:   function (action, el, pos) { 
+		    jsonWrapper(el, '#cmd_dialog', 'stat.py'); },
+		truncate:   function (action, el, pos) { 
+		    var truncate_path = $(el).attr(pathAttribute);
+		    var truncate_size = 0;
+		    /* TODO: add support for a truncate size field? */
+		    $("#cmd_dialog").html('<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>The contents of "'+truncate_path+'" will be permanently erased. Are you sure?</p></div>');
+		    $("#cmd_dialog").dialog({ 
+			    buttons: {
+				Ok: function() {
+				    truncate_size = $("#truncate_form input[name='size']").val();
+				    $(this).dialog('close');
+				    jsonWrapper(el, '#cmd_dialog', 'truncate.py', 
+						{path: $(el).attr(pathAttribute), 
+							truncate_size});
+				},
+				    Cancel: function() { 
+				    $(this).dialog('close'); 
+				}
+			    },
+				width: '800px', autoOpen: false,
+				closeOnEscape: true, modal: true
+				});
+		    $("#cmd_dialog").dialog('open');
+		},
+		spell:   function (action, el, pos) { 
+		    jsonWrapper(el, '#cmd_dialog', 'spell.py'); },
 		pack:    function (action, el, pos) { 
 		    /* pack file or directory to user specified file */
 		    var current_dir = '';
@@ -550,18 +607,19 @@ if (jQuery) (function($){
 		    $("#pack_form input[name='src']").val(path_name);
 		    $("#pack_form input[name='dst']").val(path_name + '.zip');
 		    $("#pack_output").html('');
-		    $("#pack_dialog").dialog(
-	    { buttons: {
-		    Ok: function() { 
-			$("#pack_form").submit(); },
-			Cancel: function() {
-			$(this).dialog('close');}
-		},
-		    autoOpen: false, closeOnEscape: true,
-		    modal: true, width: '500px'}
-					     );
+		    $("#pack_dialog").dialog({ 
+			    buttons: {
+				Ok: function() { 
+				    $("#pack_form").submit(); 
+				},
+				    Cancel: function() {
+				    $(this).dialog('close');
+				}
+			    },
+				autoOpen: false, closeOnEscape: true,
+				modal: true, width: '500px'
+				});
 		    $("#pack_dialog").dialog('open');
-
 		},
 		unpack:   function (action, el, pos) { 
 		    var dst = $(".fm_addressbar input[name='fm_current_path']").val();
@@ -569,7 +627,8 @@ if (jQuery) (function($){
 		    jsonWrapper(el, '#cmd_dialog', 'unpack.py', {dst: dst, src: $(el).attr(pathAttribute), path: ''}); 
 		},
 		submit: function (action, el, pos) { 
-		    jsonWrapper(el, '#cmd_dialog', 'submit.py'); },
+		    jsonWrapper(el, '#cmd_dialog', 'submit.py'); 
+		},
 		copy:   function (action, el, pos) {
 		    clipboard['is_dir'] = $(el).hasClass('directory');
 		    clipboard['path'] = $(el).attr(pathAttribute);
@@ -585,25 +644,25 @@ if (jQuery) (function($){
 		    copy(clipboard['path'], target_path);
 		},
 		rm:     function (action, el, pos) {
-            
 		    var flags = '';
 		    var rm_path = $(el).attr(pathAttribute);
 		    if ($(el).attr(pathAttribute).lastIndexOf('/') == $(el).attr(pathAttribute).length-1) {
 			flags = 'r';
 		    }
 		    $("#cmd_dialog").html('<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>"'+rm_path+'" will be permanently deleted. Are you sure?</p></div>');
-		    $("#cmd_dialog").dialog(
-	    { buttons: {
-		    Ok: function() { 
-			$(this).dialog('close');
-			jsonWrapper(el, '#cmd_dialog', 'rm.py', 
-				    {flags: flags});
-		    },
-			Cancel: function() { 
-			$(this).dialog('close'); }
-		},
-		    width: '800px', autoOpen: false,
-		    closeOnEscape: true, modal: true});
+		    $("#cmd_dialog").dialog({ 
+			    buttons: {
+				Ok: function() { 
+				    $(this).dialog('close');
+				    jsonWrapper(el, '#cmd_dialog', 'rm.py', {flags: flags});
+				},
+				    Cancel: function() { 
+				    $(this).dialog('close'); 
+				}
+			    },
+				width: '800px', autoOpen: false,
+				closeOnEscape: true, modal: true
+				});
 		    $("#cmd_dialog").dialog('open');
 		},
 		upload: function (action, el, pos) {
@@ -622,18 +681,19 @@ if (jQuery) (function($){
 		    $("#mkdir_form input[name='current_dir']").val($(el).attr(pathAttribute));
 		    $("#mkdir_form input[name='path']").val('');
 		    $("#mkdir_output").html('');
-		    $("#mkdir_dialog").dialog(
-	    { buttons: {
-		    Ok: function() { 
-			$("#mkdir_form").submit(); 
-			$(".fm_files").parent().reload('');
-		    },
-			Cancel: function() {
-			$(this).dialog('close');}
-		},
-		    autoOpen: false, closeOnEscape: true,
-		    modal: true}
-					      );
+		    $("#mkdir_dialog").dialog({ 
+			    buttons: {
+				Ok: function() { 
+				    $("#mkdir_form").submit(); 
+				    $(".fm_files").parent().reload('');
+				},
+				    Cancel: function() {
+				    $(this).dialog('close');
+				}
+			    },
+				autoOpen: false, closeOnEscape: true,
+				modal: true
+				});
 		    $("#mkdir_dialog").dialog('open');
 		},
                             
@@ -652,18 +712,19 @@ if (jQuery) (function($){
 		    $("#rename_form input[name='src']").val($(el).attr(pathAttribute));
 		    $("#rename_form input[name='name']").val(path_name);
 		    $("#rename_output").html('');
-		    $("#rename_dialog").dialog(
-	    { buttons: {
-		    Ok: function() { 
-			$("#rename_form").submit();
-			$(".fm_files").parent().reload('');
-		    },
-			Cancel: function() {
-			$(this).dialog('close');}
-		},
-		    autoOpen: false, closeOnEscape: true,
-		    modal: true}
-					       );
+		    $("#rename_dialog").dialog({ 
+			    buttons: {
+				Ok: function() { 
+				    $("#rename_form").submit();
+				    $(".fm_files").parent().reload('');
+				},
+				    Cancel: function() {
+				    $(this).dialog('close');
+				}
+			    },
+				autoOpen: false, closeOnEscape: true,
+				modal: true
+				});
 		    $("#rename_dialog").dialog('open');
 		}
 	    };
@@ -863,7 +924,7 @@ if (jQuery) (function($){
 					entry_html = '<tr class="' + entry_menu + ' ' + base_css_style + ' ' + dotfile + 
 					    '" title="' + entry_title + '" rel_path="' + path + '">' + 
 					    '<td style="padding-left: 20px;" class="'+ entry_menu + ' ' + icon + ' ext_' + 
-					    listing[i]['file_info']['ext'] + '"><div>' + dir_prefix +
+					    listing[i]['file_info']['ext'].toLowerCase() + '"><div>' + dir_prefix +
 					    listing[i]['name'] + '</div>' + listing[i]['name'] +
 					    '</td><td><div class="bytes">' + listing[i]['file_info']['size'] +
 					    '</div>' + pp_bytes(listing[i]['file_info']['size']) +
@@ -1114,7 +1175,19 @@ if (jQuery) (function($){
 			    "paste": {name: "Paste", icon: "paste"},
 			    "rm": {name: "Delete Folder", icon: "rmdir"},
 			    "sep2": "---------",
-			    "rename": {name: "Rename", icon: "rename"}
+			    "rename": {name: "Rename", icon: "rename"},
+			    "sep3": "---------",
+			    "advanced-sub": {
+				"name": "Advanced", 
+				icon: "advanced",
+				"items": {
+				    "touch": {name: "Update Timestamp (touch)", icon: "touch"},
+				    "stat": {name: "File Info (stat)", icon: "stat"},
+				    /* TODO: add find support */
+				    //"search-sep": "---------",
+				    //"find": {name: "Locate File/Folder (find)", icon: "find"},
+				}
+			    }
 			};
 			file_menu = {
 			    "show": {name: "Show", icon: "show"},
@@ -1129,16 +1202,40 @@ if (jQuery) (function($){
 			    "rename": {name: "Rename", icon: "rename"},
 			    "pack": {name: "Pack", icon: "pack"},
 			    "unpack": {name: "Unpack", icon: "unpack"},
+			    /* TODO: add list archive contents */
+			    //"listpack": {name: "Show Packed Contents", icon: "listpack"},
 			    "sep3": "---------",
-			    "cat": {name: "cat", icon: "cat"},
-			    "head": {name: "head", icon: "head"},
-			    "tail": {name: "tail", icon: "tail"},
-			    "sep4": "---------",
-			    "submit": {name: "Submit", icon: "submit"}
+			    "advanced-sub": {
+				"name": "Advanced", 
+				icon: "advanced",
+				"items": {
+				    "cat": {name: "Show All Lines (cat)", icon: "cat"},
+				    "head": {name: "Show First Lines (head)", icon: "head"},
+				    "tail": {name: "Show Last Lines (tail)", icon: "tail"},
+				    "wc": {name: "Word Count (wc)", icon: "wc"},
+				    "touch": {name: "Update Timestamp (touch)", icon: "touch"},
+				    "stat": {name: "File Info (stat)", icon: "stat"},
+				    "truncate": {name: "Clear File (truncate)", icon: "truncate"},
+				    /* TODO: add grep support */
+				    //"search-sep": "---------",
+				    //"grep": {name: "Text Search (grep)", icon: "grep"},
+				    "shell-sep": "---------",
+				    "spell": {name: "Spell Check", icon: "spell"},
+				    /* TODO: add md5sum (and sha1sum?) support */
+				    //"md5sum": {name: "MD5 Sum", icon: "md5sum"},
+				    //"sha1sum": {name: "SHA1 Sum", icon: "sha1sum"},
+				    /* TODO: add inline encrypt/decrypt support? */
+				    //"encrypt-sep": "---------",
+				    //"encrypt": {name: "Encrypt", icon: "encrypt"},
+				    //"decrypt": {name: "Decrypt", icon: "decrypt"},
+				    "submit-sep": "---------",
+				    "submit": {name: "Submit", icon: "submit"}
+				}
+			    }
 			};
 			if (!options["enableSubmit"]) {
-			    delete file_menu["sep4"];
-			    delete file_menu["submit"];
+			    delete file_menu["advanced-sub"]["items"]["submit-sep"];
+			    delete file_menu["advanced-sub"]["items"]["submit"];
 			}
 			if (options["selectOnly"]) {
 			    file_menu = {
@@ -1450,7 +1547,7 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
 			 // see http://jqueryui.com/docs/dialog/ for options
 			 {autoOpen: false,
 				 modal: true,
-				 width: 800, 
+				 width: '800px', 
 				 buttons: {"Cancel": function() { $("#" + name).dialog("close"); }
 			     }
 			 });
@@ -1527,7 +1624,7 @@ function local_filechooser_init(name, callback) {
 			 // see http://jqueryui.com/docs/dialog/ for options
 			 {autoOpen: false,
 				 modal: true,
-				 width: 800,
+				 width: '800px',
 				 buttons: {"OK": ok_action,
 				     "Close": function() { $("#" + name).dialog("close"); }
 			     }
@@ -1650,7 +1747,8 @@ function mig_fancyuploadchunked_init(name, callback) {
 			 // see http://jqueryui.com/docs/dialog/ for options
 			 {autoOpen: false,
 				 modal: true,
-				 width: 800,
+				 width: '800px',
+				 position: { my: "top", at: "top+100px", of: window},
 				 buttons: {
 				 "Close": function() {
 				     /* cancel active uploads if any */
