@@ -256,7 +256,7 @@ if (jQuery) (function($){
       
 	}
 
-	$.fn.jobmanager = function(user_options) {
+	$.fn.jobmanager = function(user_options, clickaction) {
 
 	    var defaults = {};
 	    console.debug("define actions");
@@ -307,6 +307,67 @@ if (jQuery) (function($){
 
 	    var options = $.extend(defaults, user_options);
 
+	    function menu_callback(key, call_opts, el) {
+		var m = "job menu clicked: " + key;                         
+		console.debug = console.log;
+		console.debug(m); 
+		var action = key;
+		if (el == undefined) {
+		    el = $(this);
+		}
+                
+		var single_selection = !$(el).parent().hasClass("ui-selected");
+		var job_id = "";
+		
+		$("#cmd_helper").dialog({buttons: {Close: function() {$(this).dialog("close");} }, 
+			    width: "800px", 
+			    autoOpen: false, 
+			    closeOnEscape: true, 
+			    position: { my: "top", at: "top", of: window},
+			    modal: true
+			    });
+		$("#cmd_helper").dialog("open");
+		$("#cmd_helper").html("");
+                
+		if (single_selection) {
+                          
+		    job_id = $("input[name='job_identifier']", $(el).parent()).val();
+                          
+		    $("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>JobId: "+job_id+"</p></div>");
+		    // Output files redirect to the filemanager with extra args.
+		    // All other actions are handled by the general case.
+		    console.debug("call "+action+" with job: "+job_id);
+		    if (action == "outputfiles") {
+			options['actions'][action](job_id, $("input[name='job_output']", $(el).parent()).val());
+		    } else {
+			options['actions'][action](job_id);
+		    }
+		} else {
+		    var selected_rows = $("#jm_jobmanager tbody tr.ui-selected");
+		    $("#cmd_helper").append("<p>"+action+": "+selected_rows.length+" jobs, see individual status below:</p>");
+		    selected_rows.each(function(i) {
+			    job_id = $("input[name='job_identifier']", this).val();
+			    $("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>"+job_id+"</p></div>");
+			    options['actions'][action](job_id);
+			});
+		}
+                
+		$("#append").click();
+                      
+	    }
+
+	    function doubleClickEvent(el) {
+		if (clickaction != undefined) {
+		    clickaction(event);
+		    return;
+		} 
+		// if no clickaction is provided, default to opening raw description
+		var job_id = $("input[name='job_identifier']", $(el).parent()).val();
+		console.debug("in dclick handler with job: "+job_id);
+		menu_callback("mrsl", null, $(el));
+		console.debug("done in dclick handler with job: "+job_id);
+	    }
+
 	    function bindContextMenus() {
 		/* Bind context menu for job elements */
 		var job_menu = {
@@ -330,48 +391,10 @@ if (jQuery) (function($){
 		}
 		$.contextMenu({
 			selector: '#jm_jobmanager tbody tr td:not(.checkbox)', 
-			    trigger: bind_click,
-			    callback: function(key, call_opts) {
-			    var m = "job menu clicked: " + key;                         
-			    console.debug = console.log;
-			    console.debug(m); 
-			    var action = key;
-			    var el = $(this);
-                      
-			    var single_selection = !$(el).parent().hasClass("ui-selected");
-			    var job_id = "";
-                      
-			    $("#cmd_helper").dialog({buttons: {Close: function() {$(this).dialog("close");} }, width: "800px", autoOpen: false, closeOnEscape: true, modal: true, position: [300, 70]});
-			    $("#cmd_helper").dialog("open");
-			    $("#cmd_helper").html("");
-                      
-			    if (single_selection) {
-                          
-				job_id = $("input[name='job_identifier']", $(el).parent()).val();
-                          
-				$("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>JobId: "+job_id+"</p></div>");
-				// Output files redirect to the filemanager with extra args.
-				// All other actions are handled by the general case.
-				if (action == "outputfiles") {
-				    options['actions'][action](job_id, $("input[name='job_output']", $(el).parent()).val());
-				} else {
-				    options['actions'][action](job_id);
-				}
-			    } else {
-				var selected_rows = $("#jm_jobmanager tbody tr.ui-selected");
-				$("#cmd_helper").append("<p>"+action+": "+selected_rows.length+" jobs, see individual status below:</p>");
-				selected_rows.each(function(i) {
-					job_id = $("input[name='job_identifier']", this).val();
-					$("#cmd_helper").append("<div class='spinner' title='"+job_id+"' style='padding-left: 20px;'><p>"+job_id+"</p></div>");
-					options['actions'][action](job_id);
-				    });
-			    }
-                      
-			    $("#append").click();
-                      
-			},
-			    items: job_menu
-			    });
+			trigger: bind_click,
+			callback: menu_callback,
+			items: job_menu
+		    });
 
 	    }
 
@@ -514,19 +537,15 @@ if (jQuery) (function($){
 		    }
 		});
 
-	    /* TODO: add dclick handler like this? */
-	    /*
-	      console.debug("add dclick handler");
-	      //$("#jm_jobmanager").off("dblclick", "tbody tr td:not(.checkbox)");
-	      $("#jm_jobmanager").on("dblclick", 
-	      "tbody tr td:not(.checkbox)",
-	      function(event) {
-	      console.debug("in dclick handler: "+($this));
-	      var job_id = $("input[name='job_identifier']", this).val();
-	      options['actions'][action](job_id);
-	      console.debug("done dclick handler: "+($this));
-	      }); 
-	    */
+	    console.debug("add dclick handler");
+	    //$("#jm_jobmanager").off("dblclick", "tbody tr td:not(.checkbox)");
+	    $("#jm_jobmanager").on("dblclick", 
+				   "tbody tr td:not(.checkbox)",
+				   function(event) {
+				       console.debug("in dclick handler: "+$(this));
+				       doubleClickEvent(this);
+				       console.debug("done dclick handler: "+$(this));
+				   }); 
 
 
 	    $("#checkAll").bind("click", function(event) {
