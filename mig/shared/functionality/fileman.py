@@ -85,7 +85,10 @@ def html_tmpl(configuration, title_entry):
             </table>
         
         </div>                
-        <div class="fm_statusbar">&nbsp;</div>
+        <div id="fm_statusbar">
+            <div id="fm_statusinfo">&nbsp;</div>
+            <div id="fm_statusprogress">&nbsp;</div>
+        </div>
     </div>
     <div id="fm_options"><input id="fm_touchscreen" type="checkbox">
         Enable touch screen interface (all clicks trigger menu)

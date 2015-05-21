@@ -207,19 +207,36 @@
   padding:2px 4px;
   width: 80%;
 }
-.fm_statusbar {
-  clear:both;
-  padding:5px 5px;
+/* statusbar with info left and progress right */
+#fm_statusbar {
+  clear: both;
+  padding: 5px 5px;
   border: 0;
   border-top: 1px solid #ccc;  
   background-color: #eee;
+  overflow: hidden;
 }
+#fm_statusinfo {
+    padding: 0;
+    float: left;
+    width: 25%;
+}
+#fm_statusprogress {
+    padding: 0;
+    margin: 0;
+    float: right;
+    width: 74%;
+    height: 16px;
+}
+
 .fm_dotfile {
   display: none;
 }
+/*
 * html #fm_statusbar {
   height:1px;
 }
+*/
 
 UL.jqueryFileTree {
   /*
@@ -244,8 +261,12 @@ UL.jqueryFileTree div:hover {
 }
 
 /* Core Styles */
-#fm_filelisting .wait { background: url(/images/icons/spinner.gif) left center no-repeat; background-position: 2px 50%; }
-#jm_jobmanager .wait { background: url(/images/icons/spinner.gif) left center no-repeat; background-position: 2px 50%; }
+#fm_filemanager .wait { 
+    background: url(/images/icons/spinner.gif) left center no-repeat; background-position: 2px 50%; 
+}
+#jm_jobmanager .wait { 
+    background: url(/images/icons/spinner.gif) left center no-repeat; background-position: 2px 50%; 
+}
 .jqueryFileTree LI.wait { background: url(/images/icons/spinner.gif) left center no-repeat; }
 
 UL.jqueryFileList {
@@ -509,4 +530,8 @@ background: url(/images/icons/picture.png) left center no-repeat;
 }
 #submit_button {
   width: auto;
+}
+
+.leftpad { 
+  padding-left: 20px;
 }

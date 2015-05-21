@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jquery-ui-theme.custom - style overrides for jquery-ui theme
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,4 +32,20 @@
 .ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active  {
     border: 1px solid #77D5F7;
     background: url('images/ui-bg_gloss-wave_75_2191c0_500x100.png') repeat-x scroll 50% 50% #147;
+}
+
+
+#fm_filemanager .ui-progressbar-value {
+    /* progres floats underneath frame if margin is not negative */
+    margin-top: -18px;
+    /* not sure this is needed */
+    vertical-align: middle;
+    /* look and feel */
+    padding: 0px;
+    border-radius: 4px;
+    transition: width 0.5s;
+    -webkit-transition: width 0.5s;
+    /* force touch default theme background for progressbars */
+    background: url('images/ui-bg_gloss-wave_75_2191c0_500x100.png') repeat-x scroll 50% 50% #2191C0;
+}
 }

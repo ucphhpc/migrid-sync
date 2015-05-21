@@ -271,6 +271,8 @@ if (jQuery) (function($){
 	 */
 	$.fn.filemanager = function(user_options, clickaction) {
     
+	    console.debug("init file manager");
+
 	    var clipboard = new Array({'is_dir':false, 'path':''});
         
 	    // Note: max-height is broken on autoHeight this is noted as a bug:
@@ -286,7 +288,33 @@ if (jQuery) (function($){
 					  {$(this).dialog('close');} }, 
 				width: '800px', autoOpen: false, 
 				closeOnEscape: true, modal: true};
-        
+
+	    var obj = $(this);
+    	    var statusinfo = $("#fm_statusinfo", obj);
+	    var statusprogress = $("#fm_statusprogress", obj);
+
+	    console.debug("define progress functions");
+	    function startProgress(msg) {
+		if (msg == undefined) {
+		    msg = "working in the background ... please wait";
+		}
+		console.debug("startProgress: "+ msg);
+		$(statusinfo).html(msg);
+		$(statusprogress).progressbar({status: false});
+		$(statusprogress).progressbar("option", "value", false);
+		console.debug("startProgress done");
+	    }
+	    function stopProgress(msg) {
+		if (msg == undefined) {
+		    msg = "";
+		}
+		console.debug("stopProgress: "+ msg);
+		$(statusinfo).html(msg);
+		$(statusprogress).progressbar("destroy");
+		console.debug("stopProgress done");
+	    }
+	    console.debug("past progress functions");
+
 	    function doubleClickEvent(el) {
 		if (clickaction != undefined) {
 		    clickaction(el);
@@ -331,6 +359,7 @@ if (jQuery) (function($){
 			    flags: flag
 			    },
 		    function(jsonRes, textStatus) {
+			stopProgress();
 			var errors = $(this).renderError(jsonRes);
 			var warnings = $(this).renderWarning(jsonRes);
 			if (errors.length > 0) {
@@ -339,8 +368,9 @@ if (jQuery) (function($){
 			    $($("#cmd_dialog").html('<p>Warning:</p>'+warnings));
 			} else {
 			    // Only reload if destination is current folder
-			    if ($(".fm_addressbar input[name='fm_current_path']").val().substr(1) == dst.substring(0, dst.lastIndexOf('/'))+'/')
+			    if ($(".fm_addressbar input[name='fm_current_path']").val().substr(1) == dst.substring(0, dst.lastIndexOf('/'))+'/') {
 				$(".fm_files").parent().reload($(".fm_addressbar input[name='fm_current_path']").val().substr(1));
+			    }
 			    $("#cmd_dialog").dialog('close');
 			}
 		    }, "json"
@@ -397,8 +427,11 @@ if (jQuery) (function($){
             
 		var jsonSettings = {path: $(el).attr(pathAttribute),
 				    output_format: 'json'};
-            
+		var lastinfo = $(statusinfo).html();
+
 		$.fn.extend(jsonSettings, jsonOptions);
+
+		startProgress();
             
 		/* We used to use $.getJSON() here but now some back ends require POST */
 		$.post(url, jsonSettings,
@@ -409,6 +442,7 @@ if (jQuery) (function($){
 			   var file_output = $(this).renderFileoutput(jsonRes);
 			   var misc_output = parseWrapped(jsonRes, jsonSettings);
                           
+			   stopProgress(lastinfo);
 			   if ((errors.length > 0) 
 			       || (warnings.length > 0) 
 			       || (file_output.length > 0) 
@@ -460,22 +494,22 @@ if (jQuery) (function($){
 		    $("#editor_output").removeClass()
 		    $("#editor_output").addClass("hidden");
 		    $("#editor_output").html('');                
-		    $("#editor_dialog").dialog(
-	    { buttons: {
-		    'Save Changes': function() {
-			$("#editor_dialog div.spinner").html("Saving file...").show();
-			$("#editor_form").submit(); },
-			Close: function() {
-			$(this).dialog('close');},
-			Download: function() { 
-			document.location = 
-			    'cat.py?path='
-			    +$(el).attr(pathAttribute)
-			    +'&output_format=file'; }
-		},
-		    autoOpen: false, closeOnEscape: true,
-		    modal: true, width: '800px'}
-					       );
+		    $("#editor_dialog").dialog({
+			    buttons: {
+				'Save Changes': function() {
+				    startProgress("Saving file...");
+				    $("#editor_dialog div.spinner").html("Saving file...").show();
+				    $("#editor_form").submit(); },
+				    Close: function() {
+				    $(this).dialog('close');},
+				    Download: function() { 
+				    document.location = 
+					'cat.py?path='
+					+$(el).attr(pathAttribute)
+					+'&output_format=file'; }
+			    },
+				autoOpen: false, closeOnEscape: true,
+				modal: true, width: '800px'});
 		    $("#editor_dialog div.spinner").html("Loading file...").show();
 		    $("#editor_dialog input[name='submitjob']").attr('checked', false);
 		    $("#editor_dialog input[name='path']").val('./'+$(el).attr(pathAttribute));
@@ -514,18 +548,18 @@ if (jQuery) (function($){
 		create:    function (action, el, pos) {                
 		    $("#editor_output").removeClass()
 		    $("#editor_output").html('');
-		    $("#editor_dialog").dialog(
-	    { buttons: {
-		    'Save Changes': function() {
-			$("#editor_dialog div.spinner").html("Saving file...").show();
-			$("#editor_form").submit(); },
-			Close: function() {
-			$(this).dialog('close');} 
-		},
-		    autoOpen: false, closeOnEscape: true,
-		    modal: true, width: '800px'}
-            
-					       );
+		    $("#editor_dialog").dialog({
+			    buttons: {
+				'Save Changes': function() {
+				    startProgress("Saving file ...");
+				    $("#editor_dialog div.spinner").html("Saving file...").show();
+				    $("#editor_form").submit(); },
+				    Close: function() {
+				    $(this).dialog('close');
+				} 
+			    },
+				autoOpen: false, closeOnEscape: true,
+				modal: true, width: '800px'});
             
 		    // determine file-name of new file with fallback to default in
 		    // current dir if dir is empty
@@ -609,7 +643,8 @@ if (jQuery) (function($){
 		    $("#pack_output").html('');
 		    $("#pack_dialog").dialog({ 
 			    buttons: {
-				Ok: function() { 
+				Ok: function() {
+				    startProgress("Packing folder...");
 				    $("#pack_form").submit(); 
 				},
 				    Cancel: function() {
@@ -624,7 +659,9 @@ if (jQuery) (function($){
 		unpack:   function (action, el, pos) { 
 		    var dst = $(".fm_addressbar input[name='fm_current_path']").val();
 		    // unpack uses src instead of path parameter
+		    console.debug("starting unpack");
 		    jsonWrapper(el, '#cmd_dialog', 'unpack.py', {dst: dst, src: $(el).attr(pathAttribute), path: ''}); 
+		    console.debug("done in unpack");
 		},
 		submit: function (action, el, pos) { 
 		    jsonWrapper(el, '#cmd_dialog', 'submit.py'); 
@@ -641,6 +678,7 @@ if (jQuery) (function($){
 			console.warning("paste falling back to dst "+target_path);
 		    }
 		    console.debug('copy '+clipboard['path']+":"+target_path);
+		    startProgress("Copying...");
 		    copy(clipboard['path'], target_path);
 		},
 		rm:     function (action, el, pos) {
@@ -684,6 +722,7 @@ if (jQuery) (function($){
 		    $("#mkdir_dialog").dialog({ 
 			    buttons: {
 				Ok: function() { 
+				    startProgress("Creating folder...");
 				    $("#mkdir_form").submit(); 
 				    $(".fm_files").parent().reload('');
 				},
@@ -715,6 +754,7 @@ if (jQuery) (function($){
 		    $("#rename_dialog").dialog({ 
 			    buttons: {
 				Ok: function() { 
+				    startProgress("Renaming...");
 				    $("#rename_form").submit();
 				    $(".fm_files").parent().reload('');
 				},
@@ -768,8 +808,9 @@ if (jQuery) (function($){
 			console.debug('in showBranch '+t);
 			var file_pane = $(".fm_files", obj);        
 			var files_table = $(".fm_files table tbody");
-			var statusbar = $(".fm_statusbar", obj);
-			var path_breadcrumbs = $("#fm_xbreadcrumbs", obj);
+			var statusinfo = $("#fm_statusinfo", obj);
+			var statusprogress = $("#fm_statusprogress", obj);
+ 			var path_breadcrumbs = $("#fm_xbreadcrumbs", obj);
 			var addressbar = $(".fm_addressbar", obj);
 			var timestamp = 0;
 			var emptyDir = true;
@@ -815,9 +856,7 @@ if (jQuery) (function($){
                 
 			console.debug('refix root '+t);
 
-			$(folder_pane).addClass('wait');
-          
-			statusbar.html('<span class="spinner" style="padding-left: 20px;">loading directory entries...</span>');
+			startProgress('Loading directory entries...');
 			console.debug('refresh directory entries '+t);
 			$.ajax({
 				url: options.connector,
@@ -841,7 +880,9 @@ if (jQuery) (function($){
 					}
 				    }
           
-				    statusbar.html('updating directory entries...');
+				    stopProgress();
+				    startProgress('Updating directory entries...');
+
 				    var folders = '';
 
 				    // Root node if not already created
@@ -965,13 +1006,13 @@ if (jQuery) (function($){
 				    }
 
 				    // Update statusbar
-				    statusbar.html(file_count+' files in current folder of total '+pp_bytes(total_file_size)+' in size.');
+				    stopProgress(file_count+' files in current folder of total '+pp_bytes(total_file_size)+' in size.');
 
 				    console.debug('append folder html entries');
 				    folder_pane.append(folders);
 				    //$("#fm_debug").html("<textarea cols=200 rows=15>"+$.fn.dump($(".fm_folders [rel_path='/']"))+"\n"+$(".fm_folders").html()+"</textarea>").show();
 
-				    folder_pane.removeClass('wait');
+				    folder_pane.removeClass('wait').removeClass("leftpad");
 
 				    console.debug('show active folder');
 				    if (options.root == t) {
@@ -1105,6 +1146,7 @@ if (jQuery) (function($){
 											      clipboard['is_dir'] = $(ui.helper).hasClass('directoryicon');
 											      clipboard['path'] = $(ui.helper).attr(pathAttribute);
 											      //console.debug("drop elem: "+clipboard['path']+" : "+clipboard['is_dir']);
+											      startProgress("Copying...");
 											      copy($(ui.helper).attr('rel_path'), 
 												   $(this).attr('rel_path'));
 											  }
@@ -1363,6 +1405,17 @@ if (jQuery) (function($){
 								  sortColumn: 'Name',
 								  });
 
+		    //TODO: can we catch big sorts and show progress?
+		    /*
+		    $(".fm_files table", obj).bind("sortStart", function() { 
+			    console.debug("start table sort")
+			    startProgress("Sorting entries...");
+			}).bind("sortEnd",function() { 
+				console.debug("done table sort")
+				stopProgress();
+			    });
+		    */
+
 		    // Loading message
 		    $(".fm_folders", obj).html('<ul class="jqueryFileTree start"><li class="wait">' + options.loadMessage + '<li></ul>\n');
             
@@ -1496,13 +1549,13 @@ if (jQuery) (function($){
 						       // Reset any previous CSS
 						       $("#editor_output").removeClass()
 							   if (errors.length > 0) {
-							       $("#editor_output").addClass("error").css("padding-left", "20px");;
+							       $("#editor_output").addClass("error leftpad");
 							       edit_out += errors;
 							   } else if (warnings.length > 0) {
-							       $("#editor_output").addClass("warn").css("padding-left", "20px");;
+							       $("#editor_output").addClass("warn leftpad");
 							       edit_out += warnings;
 							   } else {
-							       $("#editor_output").addClass("ok").css("padding-left", "20px");;
+							       $("#editor_output").addClass("ok leftpad");
 							       //$("#editor_dialog").dialog('close');
 							       $(".fm_files").parent().reload('');
 							   }
