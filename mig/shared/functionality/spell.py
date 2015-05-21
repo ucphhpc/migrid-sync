@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # spell - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -147,7 +147,13 @@ def main(client_id, user_arguments_dict):
         'en',
         'en_gb',
         'en_us',
+        'es',
+        'fi',
+        'fr',
+        'it',
+        'nl',
         'no',
+        'se',
         ]
 
     # TODO: use path from settings file
@@ -215,7 +221,7 @@ def main(client_id, user_arguments_dict):
                             'text': err})
 
                 for line in out:
-                    output_lines.append(line)
+                    output_lines.append(line + '\n')
             except Exception, err:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s': %s" % (op_name,

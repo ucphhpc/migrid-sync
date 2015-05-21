@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# touch - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# touch - touch backend
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -123,8 +123,9 @@ def main(client_id, user_arguments_dict):
                         : relative_path})
 
             try:
-                fd = os.open(real_path, os.O_WRONLY | os.O_CREAT, 0666)
-                os.close(fd)
+                # Create file if missing
+                if not os.path.exists(real_path):
+                    os.close(os.open(real_path, os.O_WRONLY|os.O_CREAT, 0666))
                 os.utime(real_path, None)
             except Exception, exc:
                 output_objects.append({'object_type': 'error_text',
