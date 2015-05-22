@@ -106,8 +106,9 @@ profile_img_extensions = ['png', 'jpg']
 
 max_software_entries = 40
 max_environment_entries = 40
-max_freeze_files = 100
-max_upload_files = 100
+# This is an arbitrarily selected cap to prevent exhausting resources
+max_freeze_files = 65535
+max_upload_files = 65535
 max_upload_chunks = 10
 
 upload_block_size = 64 * 1024 * 1024
