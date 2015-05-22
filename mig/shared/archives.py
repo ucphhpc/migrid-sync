@@ -277,6 +277,10 @@ def handle_package_upload(
                 # A .mrsl file was included in the package!
 
                 mrslfiles_to_parse.append(local_tar_entry_name)
+    else:
+        logger.error("Unpack called on unsupported archive: %s" % real_src)
+        msg += "Unknown/unsupported archive format: %s" % relative_src
+        return (False, msg)        
 
     # submit mrsl files to the parser. It should be done from within this
     # function to keep the right order if multiple files are created in the
@@ -522,6 +526,10 @@ def pack_archive(
                     continue
                     
         pack_file.close()
+    else:
+        logger.error("Pack called with unsupported archive format: %s" % dst)
+        msg += "Unknown/unsupported archive format: %s" % dst
+        return (False, msg)
 
     if status:
         msg += 'Wrote archive in file %s . ' % dst
