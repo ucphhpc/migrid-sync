@@ -111,7 +111,8 @@ max_freeze_files = 65535
 max_upload_files = 65535
 max_upload_chunks = 10
 
-upload_block_size = 64 * 1024 * 1024
+# 64M = 67108864
+upload_block_size = 67108864
 upload_tmp_dir = '.upload-cache'
 wwwpublic_alias = 'public'
 public_archive_dir = 'archives'
@@ -127,7 +128,8 @@ valid_trigger_actions = ['submit', 'command'] + ['trigger-%s' % i for i in \
                                                  valid_trigger_changes]
 
 workflows_log_name = 'workflow-triggers.log'
-workflows_log_size = 1024*1024
+# 64M = 67108864
+workflows_log_size = 67108864
 workflows_log_cnt = 2
 
 dav_domain = "/"
