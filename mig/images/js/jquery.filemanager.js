@@ -605,11 +605,11 @@ if (jQuery) (function($){
 		    $("#cmd_dialog").dialog({ 
 			    buttons: {
 				Ok: function() {
-				    truncate_size = $("#truncate_form input[name='size']").val();
+				    var truncate_size = $("#truncate_form input[name='size']").val();
 				    $(this).dialog('close');
 				    jsonWrapper(el, '#cmd_dialog', 'truncate.py', 
 						{path: $(el).attr(pathAttribute), 
-							truncate_size});
+							size: truncate_size});
 				},
 				    Cancel: function() { 
 				    $(this).dialog('close'); 

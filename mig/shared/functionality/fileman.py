@@ -86,8 +86,8 @@ def html_tmpl(configuration, title_entry):
         
         </div>                
         <div id="fm_statusbar">
-            <div id="fm_statusinfo">&nbsp;</div>
             <div id="fm_statusprogress">&nbsp;</div>
+            <div id="fm_statusinfo">&nbsp;</div>
         </div>
     </div>
     <div id="fm_options"><input id="fm_touchscreen" type="checkbox">
