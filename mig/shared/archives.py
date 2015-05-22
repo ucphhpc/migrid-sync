@@ -50,6 +50,8 @@ def handle_package_upload(
     """
     logger = configuration.logger
     msg = ''
+    status = True
+
     logger.info("handle_package_upload %s %s %s" % \
                 (real_src, relative_src, dst))
 
@@ -77,20 +79,18 @@ def handle_package_upload(
 
         # Handle .zip file
 
-        msg += """.zip file '%s' received, it was specified that it should be
-extracted!
-""" % relative_src
+        msg += "Received '%s' for unpacking. " % relative_src
         try:
             zip_object = zipfile.ZipFile(real_src, 'r')
         except Exception, exc:
             logger.error("open zip failed: %s" % exc)
-            msg += 'Could not open zipfile! %s' % exc
+            msg += 'Could not open zipfile: %s! ' % exc
             return (False, msg)
 
         logger.info("unpack entries of %s to %s" % \
                                   (real_src, real_dst))
         for zip_entry in zip_object.infolist():
-            msg += 'Extracting: %s\n' % zip_entry.filename
+            msg += 'Extracting: %s . ' % zip_entry.filename
 
             # write zip_entry to disk
 
@@ -98,20 +98,23 @@ extracted!
             valid_status, valid_err = valid_user_path_name(
                 zip_entry.filename, local_zip_entry_name, base_dir)
             if not valid_status:
-                return (valid_status, valid_err)
+                status = False
+                msg += "Filename validation error: %s! " % valid_err
+                continue
 
             # create sub dir(s) if missing
 
             zip_entry_dir = os.path.dirname(local_zip_entry_name)
 
             if not os.path.isdir(zip_entry_dir):
-                msg += 'creating dir %s\n' % zip_entry_dir
+                msg += 'Creating dir %s . ' % zip_entry.filename
                 try:
                     os.makedirs(zip_entry_dir, 0775)
                 except Exception, exc:
                     logger.error("create directory failed: %s" % exc)
-                    msg += 'error creating directory %s' % exc
-                    return (False, msg)
+                    msg += 'Error creating directory: %s! ' % exc
+                    status = False
+                    continue
 
             if os.path.isdir(local_zip_entry_name):
                 logger.info("nothing more to do for dir entry: %s" % \
@@ -128,25 +131,25 @@ extracted!
             # write file - symbolic links are written as files! (good for
             # security)
 
-            if not not write_file(zip_object.read(zip_entry.filename),
+            if not write_file(zip_object.read(zip_entry.filename),
                               local_zip_entry_name,
-                              logger)\
-                 and not os.path.exists(zip_object.filename):
-                msg += 'error writing file in memory to disk: %s'\
-                     % zip_entry.filename
-                return (False, msg)
+                              logger) and \
+                              not os.path.exists(local_zip_entry_name):
+                msg += 'Error unpacking %s to disk! ' % zip_entry.filename
+                status = False
+                continue
 
             # get the size as the OS sees it
 
             try:
-                msg += 'Size: %s\n'\
-                     % os.path.getsize(local_zip_entry_name)
+                __ = os.path.getsize(local_zip_entry_name)
             except Exception, exc:
                 logger.warning("unpack may have failed: %s" % exc)
                 msg += \
-                    'File seems to be saved, but could not get file size %s\n'\
-                     % exc
-                return (False, msg)
+                    'File %s unpacked, but could not get file size %s! '\
+                     % (zip_entry.filename, exc)
+                status = False
+                continue
 
             # Check if the extension is .mRSL
 
@@ -162,30 +165,26 @@ extracted!
              real_src_lower.endswith('.tbz'):
 
         # Handle possibly compressed .tar files
-        
+
         if real_src_lower.endswith('.tar.gz') or \
                real_src_lower.endswith('.tgz'):
-            msg += """.tar.gz file '%s' received, it was specified that it
-should be extracted!
-""" % relative_src
+            msg += "Received '%s' for unpacking. " % relative_src
             try:
                 tar_object = tarfile.open(real_src, 'r:gz')
                 tar_file_content = tarfile.TarFile.gzopen(real_src)
             except Exception, exc:
                 logger.error("open tar gz failed: %s" % exc)
-                msg += 'Could not open .tar.gz file! %s\n' % exc
+                msg += 'Could not open .tar.gz file: %s! ' % exc
                 return (False, msg)
         elif real_src_lower.endswith('.tar.bz2') or \
                  real_src_lower.endswith('.tbz'):
-            msg += """.tar.bz2 file '%s' received, it was specified that it
-should be extracted!
-""" % relative_src
+            msg += "Received '%s' for unpacking. " % relative_src
             try:
                 tar_object = tarfile.open(real_src, 'r:bz2')
                 tar_file_content = tarfile.TarFile.bz2open(real_src)
             except Exception, exc:
                 logger.error("open tar bz failed: %s" % exc)
-                msg += 'Could not open .tar.bz2 file! %s\n' % exc
+                msg += 'Could not open .tar.bz2 file: %s! ' % exc
                 return (False, msg)
         else:
             try:
@@ -193,13 +192,13 @@ should be extracted!
                 tar_file_content = tarfile.TarFile.open(real_src)
             except Exception, exc:
                 logger.error("open tar failed: %s" % exc)
-                msg += 'Could not open .tar file! %s\n' % exc
+                msg += 'Could not open .tar file: %s! ' % exc
                 return (False, msg)
 
         logger.info("unpack entries of %s to %s" % \
                                   (real_src, real_dst))
         for tar_entry in tar_object:
-            msg += 'Extracting: %s\n' % tar_entry.name
+            msg += 'Extracting: %s . ' % tar_entry.name
 
             # write tar_entry to disk
 
@@ -208,7 +207,9 @@ should be extracted!
             valid_status, valid_err = valid_user_path_name(
                 tar_entry.name, local_tar_entry_name, base_dir)
             if not valid_status:
-                return (valid_status, valid_err)
+                status = False
+                msg += "Filename validation error: %s! " % valid_err
+                continue
 
             # Found empty dir - make sure  dirname doesn't strip to parent
 
@@ -223,20 +224,29 @@ should be extracted!
 
             if not os.path.isdir(tar_entry_dir):
                 logger.info("make tar parent dir: %s" % tar_entry_dir)
-                msg += 'creating dir %s\n' % tar_entry_dir
+                msg += 'Creating dir %s . ' % tar_entry.name
                 try:
                     os.makedirs(tar_entry_dir, 0775)
                 except Exception, exc:
                     logger.error("create directory failed: %s" % exc)
-                    msg += 'error creating directory %s\n' % exc
-                    return (False, msg)
-            if not tar_entry.isfile():
+                    msg += 'Error creating directory %s! ' % exc
+                    status = False
+                    continue
+
+            if tar_entry.isdir():
+
+                # directory created above - nothing more to do
+
+                continue
+
+            elif not tar_entry.isfile():
 
                 # not a regular file - symlinks are ignored to avoid illegal
                 # access
 
-                msg += 'skipping %s: not a file or directory!\n'\
-                     % tar_entry.name
+                msg += 'Skipping %s: not a regular file or directory! ' % \
+                       tar_entry.name
+                status = False
                 continue
 
             # write file!
@@ -244,20 +254,21 @@ should be extracted!
             if not write_file(tar_file_content.extractfile(tar_entry).read(),
                               local_tar_entry_name,
                               logger):
-                msg += 'error writing file in memory to disk\n'
-                return (False, msg)
+                msg += 'Error unpacking file %s to disk! ' % tar_entry.name
+                status = False
+                continue
 
             # get the size as the OS sees it
 
             try:
-                msg += 'Size: %s\n'\
-                     % os.path.getsize(local_tar_entry_name)
+                __ = os.path.getsize(local_tar_entry_name)
             except Exception, exc:
                 logger.warning("file save may have failed: %s" % exc)
                 msg += \
-                    'File seems to be saved, but could not get file size %s\n'\
-                     % exc
-                return (False, msg)
+                    'File %s unpacked, but could not get file size %s! ' % \
+                    (tar_entry.name, exc)
+                status = False
+                continue
 
             # Check if the extension is .mRSL
 
@@ -303,7 +314,12 @@ should be extracted!
             # msg += parse_msg
 
             submitstatuslist.append(submitstatus)
-    return (True, submitstatuslist)
+        return (status, submitstatuslist)
+    else:
+        if not status:
+            msg = """Unpacked archive with one or more errors:
+ %s""" % msg
+        return (status, msg)
 
 
 def unpack_archive(
@@ -344,6 +360,7 @@ def pack_archive(
     """
     logger = configuration.logger
     msg = ''
+    status = True
     client_dir = client_id_dir(client_id)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -355,7 +372,7 @@ def pack_archive(
     real_dst = os.path.join(base_dir, dst.lstrip(os.sep))
 
     # Pack in same path with zip extension unless dst is given
-    
+
     if not dst:
         real_dst = real_src + '.zip'
 
@@ -364,27 +381,27 @@ def pack_archive(
     zip_entry_dir = os.path.dirname(real_dst)
     if not os.path.isdir(zip_entry_dir):
         logger.info("make zip parent dir: %s" % zip_entry_dir)
-        msg += 'creating dir %s\n' % zip_entry_dir
+        msg += 'Creating dir %s . ' % zip_entry_dir
         try:
             os.makedirs(zip_entry_dir, 0775)
         except Exception, exc:
             logger.error("create directory failed: %s" % exc)
-            msg += 'error creating directory %s' % exc
+            msg += 'Error creating parent directory %s! ' % exc
             return (False, msg)
-    
+
     real_dst_lower = real_dst.lower()
     real_src_dir = os.path.dirname(real_src)
     if real_dst_lower.endswith('.zip'):
 
         # Handle .zip file
 
-        msg += ".zip file '%s' requested" % dst
+        msg += "Requested packing of %s in %s . " % (src, dst)
         try:
             # Force compression
             pack_file = zipfile.ZipFile(real_dst, 'w', zipfile.ZIP_DEFLATED)
         except Exception, exc:
             logger.error("create zip failed: %s" % exc)
-            msg += 'Could not create zipfile! %s' % exc
+            msg += 'Could not create zipfile: %s! ' % exc
             return (False, msg)
 
         if os.path.isdir(real_src):
@@ -403,14 +420,29 @@ def pack_archive(
                                                  % real_target)
                     continue
                 elif real_dst == real_target:
-                    msg += 'skipping destination file %s' % dst
+                    msg += 'Skipping destination file %s . ' % dst
                     continue
                 logger.info("pack file %s" % relative_target)
-                pack_file.write(real_target, relative_target)
+                try:
+                    pack_file.write(real_target, relative_target)
+                except Exception, exc:
+                    logger.error('write of %s failed: %s' % \
+                                 (real_target, exc))
+                    msg += 'Failed to write file %s . ' % relative_target
+                    status = False
+                    continue
+                    
             if not files and not invisible_path(relative_root):
                 logger.info("pack dir %s" % relative_root)
-                dir_info = zipfile.ZipInfo(relative_root + os.sep)
-                pack_file.writestr(dir_info, '')
+                try:
+                    dir_info = zipfile.ZipInfo(relative_root + os.sep)
+                    pack_file.writestr(dir_info, '')
+                except Exception, exc:
+                    logger.error('write of %s failed: %s' % \
+                                 (real_target, exc))
+                    msg += 'Failed to write dir %s . ' % relative_root
+                    status = False
+                    continue
         pack_file.close()
 
         # Verify CRC
@@ -421,7 +453,8 @@ def pack_archive(
             pack_file.close()
         except Exception, exc:
             logger.error("verify zip failed: %s" % exc)
-            msg += "Could not open and verify zip file: %s" % exc
+            msg += "Could not open and verify zip file: %s! " % exc
+            status = False
     elif real_dst_lower.endswith('.tar') or \
              real_dst_lower.endswith('.tar.gz') or \
              real_dst_lower.endswith('.tgz') or \
@@ -444,7 +477,7 @@ def pack_archive(
             pack_file = tarfile.open(real_dst, open_mode)
         except Exception, exc:
             logger.error("create tar (%s) failed: %s" % (open_mode, exc))
-            msg += 'Could not open .tar file! %s\n' % exc
+            msg += 'Could not open .tar file: %s! ' % exc
             return (False, msg)
 
         logger.info("pack entries of %s to %s" % \
@@ -465,14 +498,35 @@ def pack_archive(
                                                  % real_target)
                     continue
                 elif real_dst == real_target:
-                    msg += 'skipping destination file %s' % dst
+                    msg += 'Skipping destination file %s . ' % dst
                     continue
                 logger.info("pack file %s" % entry)
-                pack_file.add(real_target, relative_target, recursive=False)
+                try:
+                    pack_file.add(real_target, relative_target, recursive=False)
+                except Exception, exc:
+                    logger.error('write of %s failed: %s' % \
+                                 (real_target, exc))
+                    msg += 'Failed to write file %s . ' % relative_target
+                    status = False
+                    continue
+                    
             if not files and not invisible_path(relative_root):
                 logger.info("pack dir %s" % relative_root)
-                pack_file.add(root, relative_root, recursive=False)
+                try:
+                    pack_file.add(root, relative_root, recursive=False)
+                except Exception, exc:
+                    logger.error('write of %s failed: %s' % \
+                                 (real_target, exc))
+                    msg += 'Failed to write dir %s . ' % relative_root
+                    status = False
+                    continue
+                    
         pack_file.close()
 
-    msg += 'wrote archive in file %s' % dst
-    return (True, msg)
+    if status:
+        msg += 'Wrote archive in file %s . ' % dst
+    else:
+        msg = """Packed archive with one or more errors:
+ %s""" % msg
+
+    return (status, msg)

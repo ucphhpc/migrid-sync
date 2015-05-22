@@ -474,9 +474,10 @@ if (jQuery) (function($){
 			       }
                               
 			       $(dialog).html(errors+warnings+file_output+misc_output);
-			   } else {
-			       $(".fm_files").parent().reload($(this).parentPath($(el).attr(pathAttribute))); 
 			   }
+			   
+			   /* Always refresh to show any partial results upon error */
+			   $(".fm_files").parent().reload($(this).parentPath($(el).attr(pathAttribute))); 
 		       }, "json"
 		       );
 	    }
