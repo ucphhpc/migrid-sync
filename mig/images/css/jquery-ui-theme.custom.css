@@ -36,8 +36,8 @@
 
 
 #fm_filemanager .ui-progressbar-value {
-    /* progres floats underneath frame if margin is not negative */
-    margin-top: -18px;
+    /* progres floats underneath frame if margin is not negative - value depends on font size */
+    margin-top: -16px;
     /* not sure this is needed */
     vertical-align: middle;
     /* look and feel */

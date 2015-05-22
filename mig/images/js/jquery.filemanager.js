@@ -290,26 +290,44 @@ if (jQuery) (function($){
 				closeOnEscape: true, modal: true};
 
 	    var obj = $(this);
-    	    var statusinfo = $("#fm_statusinfo", obj);
 	    var statusprogress = $("#fm_statusprogress", obj);
+    	    var statusinfo = $("#fm_statusinfo", obj);
 
 	    console.debug("define progress functions");
+	    function showDirinfo(msg) {
+		if (msg == undefined) {
+		    msg = "";
+		}
+		console.debug("showDirinfo: "+ msg);
+		$(statusinfo).html(msg);
+	    }
 	    function startProgress(msg) {
 		if (msg == undefined) {
 		    msg = "working in the background ... please wait";
 		}
+		var progressLabel = $(".progress-label");
 		console.debug("startProgress: "+ msg);
-		$(statusinfo).html(msg);
-		$(statusprogress).progressbar({status: false});
+		$(statusprogress).progressbar({
+			status: false,
+			    change: function() {
+			    progressLabel.text(msg);
+			},
+			    complete: function() {
+			    progressLabel.text("Done!");
+			}
+		    });
+		/* now animate */
 		$(statusprogress).progressbar("option", "value", false);
+		progressLabel.text(msg);
 		console.debug("startProgress done");
 	    }
 	    function stopProgress(msg) {
 		if (msg == undefined) {
 		    msg = "";
 		}
+		var progressLabel = $(".progress-label");
 		console.debug("stopProgress: "+ msg);
-		$(statusinfo).html(msg);
+		progressLabel.text(msg);
 		$(statusprogress).progressbar("destroy");
 		console.debug("stopProgress done");
 	    }
@@ -856,6 +874,7 @@ if (jQuery) (function($){
                 
 			console.debug('refix root '+t);
 
+			showDirinfo();
 			startProgress('Loading directory entries...');
 			console.debug('refresh directory entries '+t);
 			$.ajax({
@@ -1006,7 +1025,8 @@ if (jQuery) (function($){
 				    }
 
 				    // Update statusbar
-				    stopProgress(file_count+' files in current folder of total '+pp_bytes(total_file_size)+' in size.');
+				    showDirinfo(file_count+' files in current folder of total '+pp_bytes(total_file_size)+' in size.');
+				    stopProgress();
 
 				    console.debug('append folder html entries');
 				    folder_pane.append(folders);

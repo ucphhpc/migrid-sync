@@ -86,7 +86,7 @@ def html_tmpl(configuration, title_entry):
         
         </div>                
         <div id="fm_statusbar">
-            <div id="fm_statusprogress">&nbsp;</div>
+            <div id="fm_statusprogress"><div class="progress-label">Loading...</div></div>
             <div id="fm_statusinfo">&nbsp;</div>
         </div>
     </div>
