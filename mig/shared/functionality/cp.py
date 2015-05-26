@@ -157,6 +157,7 @@ def main(client_id, user_arguments_dict):
             # src must be a file unless recursive is specified
 
             if not recursive(flags) and os.path.isdir(real_path):
+                logger.warning('skipping directory source %s' % real_path)
                 output_objects.append({'object_type': 'warning', 'text'
                         : 'skipping directory src %s!' % relative_path})
                 continue
@@ -168,23 +169,23 @@ def main(client_id, user_arguments_dict):
                 real_target = os.path.join(real_target,
                                            os.path.basename(real_path))
 
-            if os.path.samefile(real_path, real_target):
-                    logger.warning('%s tried to %s %s to itself! (%s)'
-                                   % (client_id, op_name, real_path, pattern))
-                    output_objects.append(
-                        {'object_type': 'warning', 'text'
-                         : "Cannot copy '%s' to self!" % relative_path})
-                    status = returnvalues.CLIENT_ERROR
-                    continue
+            if os.path.abspath(real_path) == os.path.abspath(real_target):
+                logger.warning('%s tried to %s %s to itself! (%s)' % \
+                               (client_id, op_name, real_path, pattern))
+                output_objects.append(
+                    {'object_type': 'warning', 'text'
+                     : "Cannot copy '%s' to self!" % relative_path})
+                status = returnvalues.CLIENT_ERROR
+                continue
             if os.path.isdir(real_path) and \
                    real_target.startswith(real_path + os.sep):
-                    logger.warning('%s tried to %s %s to itself! (%s)'
-                                   % (client_id, op_name, real_path, pattern))
-                    output_objects.append(
-                        {'object_type': 'warning', 'text'
-                         : "Cannot copy '%s' to (sub) self!" % relative_path})
-                    status = returnvalues.CLIENT_ERROR
-                    continue
+                logger.warning('%s tried to %s %s to itself! (%s)'
+                               % (client_id, op_name, real_path, pattern))
+                output_objects.append(
+                    {'object_type': 'warning', 'text'
+                     : "Cannot copy '%s' to (sub) self!" % relative_path})
+                status = returnvalues.CLIENT_ERROR
+                continue
             
             try:
                 if os.path.isdir(real_path):
