@@ -641,6 +641,10 @@ if (jQuery) (function($){
 		},
 		spell:   function (action, el, pos) { 
 		    jsonWrapper(el, '#cmd_dialog', 'spell.py'); },
+		md5sum:   function (action, el, pos) { 
+		    jsonWrapper(el, '#cmd_dialog', 'chksum.py', {path: $(el).attr(pathAttribute), hash_algo: "md5"}); },
+		sha1sum:   function (action, el, pos) { 
+		    jsonWrapper(el, '#cmd_dialog', 'chksum.py', {path: $(el).attr(pathAttribute), hash_algo: "sha1"}); },
 		pack:    function (action, el, pos) { 
 		    /* pack file or directory to user specified file */
 		    var current_dir = '';
@@ -1284,9 +1288,8 @@ if (jQuery) (function($){
 				    //"grep": {name: "Text Search (grep)", icon: "grep"},
 				    "shell-sep": "---------",
 				    "spell": {name: "Spell Check", icon: "spell"},
-				    /* TODO: add md5sum (and sha1sum?) support */
-				    //"md5sum": {name: "MD5 Sum", icon: "md5sum"},
-				    //"sha1sum": {name: "SHA1 Sum", icon: "sha1sum"},
+				    "md5sum": {name: "MD5 Sum", icon: "md5sum"},
+				    "sha1sum": {name: "SHA1 Sum", icon: "sha1sum"},
 				    /* TODO: add inline encrypt/decrypt support? */
 				    //"encrypt-sep": "---------",
 				    //"encrypt": {name: "Encrypt", icon: "encrypt"},

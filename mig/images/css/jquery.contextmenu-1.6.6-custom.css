@@ -205,6 +205,8 @@ Original license header follows...
 .context-menu-list LI.icon-stat { background-image: url(/images/icons/application_osx_terminal.png); }
 .context-menu-list LI.icon-truncate { background-image: url(/images/icons/application_osx_terminal.png); }
 .context-menu-list LI.icon-spell { background-image: url(/images/icons/script.png); }
+.context-menu-list LI.icon-md5sum { background-image: url(/images/icons/page.png); }
+.context-menu-list LI.icon-sha1sum { background-image: url(/images/icons/page.png); }
 .context-menu-list LI.icon-find { background-image: url(/images/icons/folder_explore.png); }
 .context-menu-list LI.icon-grep { background-image: url(/images/icons/magnifier.png); }
 .context-menu-list LI.icon-submit { background-image: url(/images/icons/arrow_redo.png); }

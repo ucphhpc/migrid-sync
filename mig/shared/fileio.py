@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileio - wrappers to keep file I/O in a single replaceable module
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,7 +27,7 @@
 
 """IO operations"""
 
-from hashlib import md5
+from hashlib import md5, sha1, sha256, sha512
 import errno
 import fcntl
 import os
@@ -37,6 +37,11 @@ import time
 import zipfile
 
 from shared.serial import dump, load
+
+__valid_hash_algos = {'md5': md5, 'sha1': sha1, 'sha256': sha256,
+                      'sha512': sha512}
+# Checksum in 32kb blocks
+__checksum_chunk_size = 32768
 
 def write_chunk(path, chunk, offset, logger, mode='r+b'):
     """Wrapper to handle writing of chunks with offset to path.
@@ -410,18 +415,21 @@ def make_temp_dir(suffix='', prefix='tmp', dir=None):
     """Expose tempfile.mkdtemp functionality"""
     return tempfile.mkdtemp(suffix, prefix, dir)
 
-def md5sum_file(path, chunk_size, max_chunks=-1):
-    """Simple md5 hashing for checksumming of files inspired by  
+def __checksum_file(path, hash_algo, chunk_size=__checksum_chunk_size,
+                    max_chunks=-1):
+    """Simple block hashing for checksumming of files inspired by  
     http://stackoverflow.com/questions/16799088/file-checksums-in-python
     Read at most max_chunks blocks of chunk_size (to avoid DoS) and checksum
-    using md5.
+    using hash_algo (md5, sha1, ...).
     Any non-positive max_chunks value removes the size limit.  
-    If max_chunks is positive the checksum will match that of the md5sum
+    If max_chunks is positive the checksum will match that of the Xsum
     command for files smaller than max_chunks * chunk_size and for bigger
     files a partial checksum of the first chunk_size * max_chunks bytes will
     be returned.
     """
-    checksum = md5()
+    
+    
+    checksum = __valid_hash_algos.get(hash_algo, __valid_hash_algos['md5'])()
     chunks_read = 0
     msg = ''
     try:
@@ -437,6 +445,22 @@ def md5sum_file(path, chunk_size, max_chunks=-1):
         return "%s%s" % (checksum.hexdigest(), msg)
     except Exception, exc:
         return "checksum failed: %s" % exc
+
+def md5sum_file(path, chunk_size=__checksum_chunk_size, max_chunks=-1):
+    """Simple md5 hashing for checksumming of files"""
+    return __checksum_file(path, "md5", chunk_size, max_chunks)
+
+def sha1sum_file(path, chunk_size=__checksum_chunk_size, max_chunks=-1):
+    """Simple sha1 hashing for checksumming of files"""
+    return __checksum_file(path, "sha1", chunk_size, max_chunks)
+
+def sha256sum_file(path, chunk_size=__checksum_chunk_size, max_chunks=-1):
+    """Simple sha256 hashing for checksumming of files"""
+    return __checksum_file(path, "sha256", chunk_size, max_chunks)
+
+def sha512sum_file(path, chunk_size=__checksum_chunk_size, max_chunks=-1):
+    """Simple sha512 hashing for checksumming of files"""
+    return __checksum_file(path, "sha512", chunk_size, max_chunks)
 
 def acquire_file_lock(lock_path, exclusive=True):
     """Uses fcntl to acquire the lock in lock_path in exclusive mode unless
