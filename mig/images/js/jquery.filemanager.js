@@ -696,6 +696,10 @@ if (jQuery) (function($){
 		},
 		paste:  function (action, el, pos) {
 		    var target_path = $(el).attr(pathAttribute);
+		    if (!clipboard['path']) {
+			console.error("nothing previously copied - nothing to paste");
+			return;
+		    }
 		    if (target_path == undefined) {
 			target_path = $.fn.targetDir();
 			console.warning("paste falling back to dst "+target_path);
@@ -1239,7 +1243,11 @@ if (jQuery) (function($){
 			    "sep1": "---------",
 			    //"cut": {name: "Cut", icon: "cut"},
 			    "copy": {name: "Copy", icon: "copy"},
-			    "paste": {name: "Paste", icon: "paste"},
+			    "paste": {name: "Paste", icon: "paste",
+				      disabled: function(key, opt) { 
+					  return (!clipboard['path']);
+				      }
+			    },
 			    "rm": {name: "Delete Folder", icon: "rmdir"},
 			    "sep2": "---------",
 			    "rename": {name: "Rename", icon: "rename"},
@@ -1263,7 +1271,11 @@ if (jQuery) (function($){
 			    "sep1": "---------",
 			    //"cut": {name: "Cut", icon: "cut"},
 			    "copy": {name: "Copy", icon: "copy"},
-			    "paste": {name: "Paste", icon: "paste"},
+			    "paste": {name: "Paste", icon: "paste",
+				      disabled: function(key, opt) { 
+					  return (!clipboard['path']);
+				      }
+			    },
 			    "rm": {name: "Delete", icon: "rm"},
 			    "sep2": "---------",
 			    "rename": {name: "Rename", icon: "rename"},
