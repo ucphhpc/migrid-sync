@@ -164,8 +164,8 @@ def get_frozen_files(freeze_id, configuration):
             files.append({'name': rel_path,
                           'timestamp': os.path.getctime(frozen_path),
                           'size': os.path.getsize(frozen_path),
-                          # Checksum 1024 first 32k-blocks of files (i.e. 32MB)
-                          'md5sum': md5sum_file(frozen_path, max_chunks=1024)})
+                          # Checksum first 32 MB of files
+                          'md5sum': md5sum_file(frozen_path)})
     return (True, files)
 
 def get_frozen_archive(freeze_id, configuration):

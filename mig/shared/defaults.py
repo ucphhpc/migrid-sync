@@ -110,6 +110,9 @@ max_environment_entries = 40
 max_freeze_files = 65535
 max_upload_files = 65535
 max_upload_chunks = 10
+# Checksum in 32kb blocks and default to first 32 MB
+default_chunk_size = 32768
+default_max_chunks = 1024
 
 # 64M = 67108864
 upload_block_size = 67108864

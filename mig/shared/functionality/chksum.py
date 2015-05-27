@@ -32,6 +32,7 @@ import glob
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
+from shared.defaults import default_max_chunks
 from shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
      sha512sum_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -45,7 +46,7 @@ _algo_map = {'md5': md5sum_file, 'sha1': sha1sum_file,
 def signature():
     """Signature of the main function"""
 
-    defaults = {'flags': [''], 'hash_algo': ['md5'], 'max_chunks': ['-1'],
+    defaults = {'flags': [''], 'hash_algo': ['md5'], 'max_chunks': [default_max_chunks],
                 'path': REJECT_UNSET}
     return ['file_output', defaults]
 

@@ -36,12 +36,11 @@ import tempfile
 import time
 import zipfile
 
+from shared.defaults import default_chunk_size, default_max_chunks
 from shared.serial import dump, load
 
 __valid_hash_algos = {'md5': md5, 'sha1': sha1, 'sha256': sha256,
                       'sha512': sha512}
-# Checksum in 32kb blocks
-__checksum_chunk_size = 32768
 
 def write_chunk(path, chunk, offset, logger, mode='r+b'):
     """Wrapper to handle writing of chunks with offset to path.
@@ -415,8 +414,8 @@ def make_temp_dir(suffix='', prefix='tmp', dir=None):
     """Expose tempfile.mkdtemp functionality"""
     return tempfile.mkdtemp(suffix, prefix, dir)
 
-def __checksum_file(path, hash_algo, chunk_size=__checksum_chunk_size,
-                    max_chunks=-1):
+def __checksum_file(path, hash_algo, chunk_size=default_chunk_size,
+                    max_chunks=default_max_chunks):
     """Simple block hashing for checksumming of files inspired by  
     http://stackoverflow.com/questions/16799088/file-checksums-in-python
     Read at most max_chunks blocks of chunk_size (to avoid DoS) and checksum
@@ -446,19 +445,23 @@ def __checksum_file(path, hash_algo, chunk_size=__checksum_chunk_size,
     except Exception, exc:
         return "checksum failed: %s" % exc
 
-def md5sum_file(path, chunk_size=__checksum_chunk_size, max_chunks=-1):
+def md5sum_file(path, chunk_size=default_chunk_size,
+                max_chunks=default_max_chunks):
     """Simple md5 hashing for checksumming of files"""
     return __checksum_file(path, "md5", chunk_size, max_chunks)
 
-def sha1sum_file(path, chunk_size=__checksum_chunk_size, max_chunks=-1):
+def sha1sum_file(path, chunk_size=default_chunk_size,
+                 max_chunks=default_max_chunks):
     """Simple sha1 hashing for checksumming of files"""
     return __checksum_file(path, "sha1", chunk_size, max_chunks)
 
-def sha256sum_file(path, chunk_size=__checksum_chunk_size, max_chunks=-1):
+def sha256sum_file(path, chunk_size=default_chunk_size,
+                   max_chunks=default_max_chunks):
     """Simple sha256 hashing for checksumming of files"""
     return __checksum_file(path, "sha256", chunk_size, max_chunks)
 
-def sha512sum_file(path, chunk_size=__checksum_chunk_size, max_chunks=-1):
+def sha512sum_file(path, chunk_size=default_chunk_size,
+                   max_chunks=default_max_chunks):
     """Simple sha512 hashing for checksumming of files"""
     return __checksum_file(path, "sha512", chunk_size, max_chunks)
 
