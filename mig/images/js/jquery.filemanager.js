@@ -1070,7 +1070,8 @@ if (jQuery) (function($){
 					/* scroll to active folder - slightly cumbersome calculation */
 					var scrollPos = $(folder_elem).offset().top - 
 					    $(".fm_folders").offset().top + 
-					    $(".fm_folders").scrollTop();
+					    $(".fm_folders").scrollTop() -
+					    $(".fm_folders").height()/2;
 					$(".fm_folders").animate({
 						scrollTop: scrollPos
 						    }, options.expandSpeed);
