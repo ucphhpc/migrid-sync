@@ -263,7 +263,7 @@ Web interfaces are served with the Apache web server:"""})
                            "and icons from the following sources:"})
 
     output_objects.append({'object_type': 'link', 
-                           'destination' : 'http://pixel-mixer.com/',
+                           'destination' : 'http://www.iconarchive.com/artist/pixelmixer.html',
                            'class': 'urllink',
                            'title': 'PixelMixer Home Page',
                            'text': 'pixel-mixer.com icons (free to use, '
