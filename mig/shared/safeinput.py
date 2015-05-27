@@ -235,7 +235,7 @@ def valid_free_text(
 def valid_path(
     path,
     min_length=1,
-    max_length=255,
+    max_length=4096,
     extra_chars='',
     ):
     """Verify that supplied path only contains characters that we consider
@@ -396,7 +396,7 @@ def valid_job_name(
 def valid_path_pattern(
     pattern,
     min_length=1,
-    max_length=255,
+    max_length=4096,
     extra_chars='.*?',
     ):
     """Verify that supplied pattern only contains characters that
@@ -410,7 +410,7 @@ def valid_path_pattern(
 def valid_path_patterns(
     pattern_list,
     min_length=1,
-    max_length=255,
+    max_length=4096,
     extra_chars='.*?',
     ):
     """Verify that supplied pattern_list only contains characters that
