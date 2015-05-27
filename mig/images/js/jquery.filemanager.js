@@ -979,11 +979,16 @@ if (jQuery) (function($){
                   
 					    cur_folder_names.push(listing[i]['name']);
                   
-					}
-					else {
+					} else {
 					    entry_menu += 'menu-1';
 					    icon = 'fileicon';
 					    cur_file_names.push(listing[i]['name']);
+					}
+
+					/* Optimize rendering of intermediate dirs */
+					if (options.subPath) {
+					    console.log("skip subpath rendering for "+path);
+					    continue;
 					}
 
 					/* manually build entry to reduce risk of script timeout warnings
@@ -1012,7 +1017,8 @@ if (jQuery) (function($){
 					}
 				    }
 
-				    if (file_count % chunk_files != 0) {
+				    /* Optimize rendering of intermediate dirs */
+				    if (!options.subPath && file_count % chunk_files != 0) {
 					console.debug('append remaining ' + file_count % chunk_files + ' files in '+t);
 					$(files_table).append(entries_html);
 				    }
@@ -1049,18 +1055,33 @@ if (jQuery) (function($){
 					//if (options.root == t+'/') {
 					folder_pane.find('UL:hidden').show();
 				    } else {
-					console.debug('locate other folder');
+					console.debug('locate other folder: '+t);
 					//folder_pane.find('UL:hidden').slideDown(
 					/* NOTE: this find is quite expensive for some reason (seconds!) 
 					   and does not appear to do anything useful.
-					   Replaced with cheap static select.
+					   Replaced with cheaper static select.
 					*/
 					//var folder_elem = folder_pane.find('UL:hidden');
-					var folder_elem = folder_pane.children()[1];
-					console.debug('slide open folder'+$.fn.dump($(folder_elem)));
+					//var folder_elem = folder_pane.children()[1];
+					var folder_elem = $(".fm_folders li.expanded").last();
+
+					/* Scroll to element in folder pane */
+					//console.debug('scroll to folder '+$.fn.dump($(folder_elem)));
+					/* scroll to active folder - slightly cumbersome calculation */
+					var scrollPos = $(folder_elem).offset().top - 
+					    $(".fm_folders").offset().top + 
+					    $(".fm_folders").scrollTop();
+					$(".fm_folders").animate({
+						scrollTop: scrollPos
+						    }, options.expandSpeed);
+					//$(".fm_folders").scrollTop(scrollPos);
+					/*
+					console.debug('slide down to open folder'+$.fn.dump($(folder_elem)));
 					$(folder_elem).slideDown(
 								 { duration: options.expandSpeed, 
 									 easing: options.expandEasing });
+					*/
+					//console.debug('scrolled to folder pos');
 				    }
 
 				    /* UI stuff: contextmenu, drag'n'drop. */
