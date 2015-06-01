@@ -133,21 +133,21 @@ def extract_hit_limit(rule, field):
         unit = _default_period
     return (int(number), _unit_periods[unit])
 
-def update_rule_hits(rule, path, change, ref):
+def update_rule_hits(rule, path, change, ref, time_stamp):
     """Update rule hits history with event and remove expired entries. Makes
     sure to neither expire events needed for rate limit nor settle time
     checking.
-    """
-    now = time.time()
+    """    
     _, hit_period = extract_hit_limit(rule, _rate_limit_field)
     settle_period = extract_time_in_secs(rule, _settle_time_field)
     logger.debug("update rule hits at %s for %s and %s %s %s" % \
-                (now, rule, path, change, ref))
+                (time_stamp, rule, path, change, ref))
     _hits_lock.acquire()
     rule_history = rule_hits.get(rule['rule_id'], [])
-    rule_history.append((path, change, ref, time.time()))
+    rule_history.append((path, change, ref, time_stamp))
     max_period = max(hit_period, settle_period)
-    period_history = [i for i in rule_history if now - i[3] <= max_period]
+    period_history = [i for i in rule_history if \
+                      time_stamp - i[3] <= max_period]
     rule_hits[rule['rule_id']] = period_history
     _hits_lock.release()
     logger.debug("updated rule hits for %s to %s" % (rule['rule_id'],
@@ -172,17 +172,17 @@ def get_path_hits(rule, path, limit_field):
     path_history = [i for i in rule_history if i[0] == path]
     return (path_history, hit_count, hit_period)
 
-def above_path_limit(rule, path, limit_field):
+def above_path_limit(rule, path, limit_field, time_stamp):
     """Check path trigger history against limit field and return boolean
     indicating if the rate limit or settle time should kick in.
     """
-    now = time.time()
     (path_history, hit_count, hit_period) = get_path_hits(rule, path,
                                                           limit_field)
     if hit_count <= 0 or hit_period <= 0:
         logger.debug("no %s limit set" % limit_field)
         return False
-    period_history = [i for i in path_history if now - i[3] <= hit_period]
+    period_history = [i for i in path_history if \
+                      time_stamp - i[3] <= hit_period]
     logger.debug("above path %s test found %s vs %d" % \
                 (limit_field, period_history, hit_count))
     if len(period_history) >= hit_count:
@@ -198,39 +198,39 @@ def show_path_hits(rule, path, limit_field):
            (len(path_history), hit_count, hit_period)
     return msg
 
-def wait_settled(rule, path, change, settle_secs):
+def wait_settled(rule, path, change, settle_secs, time_stamp):
     """Lookup recent change events on path and check if settle_secs passed
     since last one. Returns the number of seconds needed without further
     events for changes to be considered settled.
     """
-    now = time.time()
     limit_field = _settle_time_field
     (path_history, _, hit_period) = get_path_hits(rule, path,
                                                           limit_field)
-    period_history = [i for i in path_history if now - i[3] <= hit_period]
+    period_history = [i for i in path_history if \
+                      time_stamp - i[3] <= hit_period]
     logger.debug("wait_settled: path %s, change %s, settle_secs %s" % \
                 (path, change, settle_secs))
     if not period_history:
         remain = 0.0
     else:
-        # NOTE: the now - i[3] values are positive here (hit_period >= 0)
+        # NOTE: the time_stamp - i[3] values are non-negative here
+        # since hit_period >= 0.
         # Thus we can just take the smallest and subtract from settle_secs
         # to always wait the remaining part of settle_secs.
-        remain = (settle_secs - min([now - i[3] for i in period_history]))
+        remain = (settle_secs - \
+                  min([time_stamp - i[3] for i in period_history]))
     logger.debug("wait_settled: remain %.1f , period_history %s" % \
                 (remain, period_history))
     return remain
 
-def recently_modified(path, now=-1, slack=5.0):
+def recently_modified(path, time_stamp, slack=2.0):
     """Check if path was actually recently modified and not just accessed.
-    If atime and mtime are the same or if mtime is within slack from now we
-    accept it as recently changed.
+    If atime and mtime are the same or if mtime is within slack from time_stamp
+    we accept it as recently changed.
     """
-    if now < 0:
-        now = time.time()
     stat_res = os.stat(path)
     return (stat_res.st_mtime == stat_res.st_atime) or \
-            (stat_res.st_mtime > now - slack)
+            (stat_res.st_mtime > time_stamp - slack)
 
 def map_args_to_vars(var_list, arg_list):
     """Map command args to backend var names - if more args than vars we
@@ -413,6 +413,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         """
         state = event.event_type
         src_path = event.src_path
+        time_stamp = event.time_stamp
         _chain = getattr(event, '_chain', [(src_path, state)])
         base_dir = configuration.vgrid_files_home
         rel_src = src_path.replace(base_dir, '').lstrip(os.sep)
@@ -423,7 +424,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         # Run settle time check first to only trigger rate limit if settled
         for (name, field) in [("settle time", _settle_time_field),
                               ("rate limit", _rate_limit_field)]:
-            if above_path_limit(rule, src_path, field):
+            if above_path_limit(rule, src_path, field, time_stamp):
                 above_limit = True
                 logger.warning("skipping %s due to %s: %s" % \
                                (src_path, name,
@@ -436,7 +437,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         # TODO: consider if we should skip modified when just created
         # We receive modified events even when only atime changed - ignore them
-        if state == 'modified' and not recently_modified(src_path):
+        if state == 'modified' and not recently_modified(src_path, time_stamp):
             logger.info("skipping %s which only changed atime" % src_path)
             self.__workflow_info(configuration, rule['vgrid_name'],
                                  "skip %s modified access time only event" % \
@@ -444,7 +445,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             return
 
         # Always update here to get trigger hits even for limited events
-        update_rule_hits(rule, src_path, state, '')
+        update_rule_hits(rule, src_path, state, '', time_stamp)
         if above_limit:
             return
         logger.info("proceed with handling of %s for %s %s" % \
@@ -467,7 +468,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             time.sleep(wait_secs)
             logger.debug("slept %.1fs for %s file events to settle down" % \
                         (wait_secs, src_path))
-            wait_secs = wait_settled(rule, src_path, state, settle_secs)
+            time_stamp += wait_secs
+            wait_secs = wait_settled(rule, src_path, state, settle_secs,
+                                     time_stamp)
             
         if rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
             change = rule['action'].replace('trigger-', '')
@@ -602,7 +605,11 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
     def handle_event(self, event):
         """Handle an event in the background so that it can block without
         stopping further event handling.
+        We add a time stamp to have a sort of precise time for when the event
+        was received. Still not perfect but better than comparing with 'now'
+        values obtained deeply in handling calls.
         """
+        event.time_stamp = time.time()
         worker = threading.Thread(target=self.run_handler, args=(event, ))
         worker.daemon = True
         worker.start()
@@ -638,7 +645,8 @@ unless it is available in mig/server/MiGserver.conf
 
     # Use separate logger
 
-    logger = daemon_logger("events", configuration.user_events_log, "info")
+    logger = daemon_logger("events", configuration.user_events_log,
+                           configuration.loglevel)
 
     keep_running = True
 
