@@ -247,9 +247,14 @@ def run_command(command_list, target_path, rule, configuration):
         raise exc
     logger.info("done running command for %s: %s" % (target_path, command_str))
     logger.info("raw output is: %s" % output_objects)
-    txt_out = txt_format(configuration, ret_code, ret_msg, output_objects)
+    try:
+        txt_out = txt_format(configuration, ret_code, ret_msg, output_objects)
+    except Exception, exc:
+        txt_out = "internal command output text formatting failed"
+        logger.error("text formating failed: %s\nraw output is: %s %s %s" % \
+                     (exc, ret_code, ret_msg, output_objects))
     if ret_code != 0:
-        raise Exception('command error: %s' % txt_format)
+        raise Exception('command error: %s' % txt_out)
     logger.info("result was %s : %s:\n%s" % (ret_code, ret_msg, txt_out))
 
         
@@ -396,8 +401,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             self.__workflow_info(configuration, rule['vgrid_name'],
                                  "wait %.2fs for events on %s to settle" % \
                                  (settle_secs, rel_src))
-            # TODO: sleep settle_secs here but must allow concurrent handling!
-            # time.sleep(settle_secs)
+            time.sleep(settle_secs)
             # TODO: keep sleeping here until no new recent events were recorded
             # We can compare the rate limit history entries with settle_time.
         else:
@@ -499,7 +503,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         else:
             logger.error("unsupported action: %(action)s" % rule)
 
-    def handle_event(self, event):
+    def run_handler(self, event):
         """Trigger any rule actions bound to file state change"""
         state = event.event_type
         src_path = event.src_path
@@ -533,6 +537,14 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             else:
                 logger.debug("skipping %s with no matching rules" % \
                              target_path)
+
+    def handle_event(self, event):
+        """Handle an event in the background so that it can block without
+        stopping further event handling.
+        """
+        worker = threading.Thread(target=self.run_handler, args=(event, ))
+        worker.daemon = True
+        worker.start()
 
     def on_modified(self, event):
         """Handle modified files"""
