@@ -567,6 +567,13 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
     
     entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name, 
                                    entity_filename)
+
+    # Force raw string to list to avoid nasty silent substring matching below
+    # I.e. removing abc.def.0 would also remove def.0
+    
+    if isinstance(id_list, basestring):
+        id_list = [id_list]
+        
     try:
         entities = load(entity_filepath)
         if dict_field:

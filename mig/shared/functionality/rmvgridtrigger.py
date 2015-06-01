@@ -72,7 +72,7 @@ def main(client_id, user_arguments_dict):
     vgrid_name = accepted['vgrid_name'][-1]
     rule_id = accepted['rule_id'][-1]
 
-    logger.info("rmvgridtrigger %s" % vgrid_name)
+    logger.info("rmvgridtrigger %s %s" % (vgrid_name, rule_id))
 
     # Validity of user and vgrid names is checked in this init function so
     # no need to worry about illegal directory traversal through variables
@@ -105,7 +105,7 @@ def main(client_id, user_arguments_dict):
     # remove
 
     (rm_status, rm_msg) = vgrid_remove_triggers(configuration, vgrid_name,
-                                                 rule_id)
+                                                 [rule_id])
     if not rm_status:
         logger.error('%s failed to remove trigger: %s' % (client_id, rm_msg))
         output_objects.append({'object_type': 'error_text', 'text'

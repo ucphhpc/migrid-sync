@@ -108,7 +108,7 @@ remove a resource!''' % configuration.site_vgrid_label
     # remove
 
     (rm_status, rm_msg) = vgrid_remove_resources(configuration, vgrid_name,
-                                                 unique_resource_name)
+                                                 [unique_resource_name])
     if not rm_status:
         output_objects.append({'object_type': 'error_text', 'text'
                               : rm_msg})

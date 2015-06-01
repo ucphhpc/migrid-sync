@@ -61,11 +61,11 @@ def read_trigger_log(configuration, vgrid_name):
         if i > 0:
             log_name += '.%d' % i
         log_path = os.path.join(configuration.vgrid_home, vgrid_name, log_name)
-        configuration.logger.info('read from %s' % log_path)
+        configuration.logger.debug('read from %s' % log_path)
         try:
             log_fd = open(log_path)
             log_content += log_fd.read()
-            configuration.logger.info('read\n%s' % log_content)
+            configuration.logger.debug('read\n%s' % log_content)
             log_fd.close()
         except IOError:
             pass
