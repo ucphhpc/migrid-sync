@@ -254,7 +254,7 @@ provide access to e.g. managing the grid job queues.
     if configuration.site_enable_sftp:
         daemon_names.append('grid_sftp.py')
     if configuration.site_enable_davs:
-        daemon_names.append('grid_davs.py')
+        daemon_names.append('grid_webdavs.py')
     if configuration.site_enable_ftps:
         daemon_names.append('grid_ftps.py')
     if configuration.site_enable_openid:
@@ -329,9 +329,8 @@ provide access to e.g. managing the grid job queues.
     if os.path.isabs(configuration.logfile):
         log_path_list.append(configuration.logfile)
     else:
-        for name in ['server', 'cgi-bin', 'cgi-sid']:
-            log_path_list.append(os.path.join(configuration.mig_code_base,
-                                              name, configuration.logfile))
+        log_path_list.append(os.path.join(configuration.log_dir,
+                                          configuration.logfile))
     for log_path in log_path_list:
         html += '''
 <h1>%s</h1>
