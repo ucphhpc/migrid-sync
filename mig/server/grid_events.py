@@ -62,6 +62,7 @@ from shared.vgrid import vgrid_is_owner_or_member
 
 all_rules = {}
 rule_hits = {}
+_rate_limit_field, _settle_time_field = 'rate_limit', 'settle_time'
 _default_period = 'm'
 _default_time = '0'
 _unit_periods = {'s': 1, 'm': 60, 'h': 60*60, 'd': 24 * 60 * 60,
@@ -132,50 +133,90 @@ def extract_hit_limit(rule, field):
         unit = _default_period
     return (int(number), _unit_periods[unit])
 
-def above_rate_limit(rule):
-    """Check rule history against rate limit and return boolean indicating if
-    the rate limit should kick in.
+def update_rule_hits(rule, path, change, ref):
+    """Update rule hits history with event and remove expired entries. Makes
+    sure to neither expire events needed for rate limit nor settle time
+    checking.
     """
     now = time.time()
-    hit_count, hit_period = extract_hit_limit(rule, 'rate_limit')
-    logger.info("check rate limit at %s for %s" % (now, rule))
-    if hit_count <= 0:
-        logger.info("no rate limit set")
-        return False
-    _hits_lock.acquire()
-    rule_history = rule_hits.get(rule['rule_id'], [])
-    period_history = [i for i in rule_history if now - i[-1] <= hit_period]
-    _hits_lock.release()
-    logger.info("check rate limit found %s vs %d" % \
-                (period_history, hit_count))
-    if len(period_history) >= hit_count:
-        return True
-    return False
-
-def update_rate_limit(rule, path, change, ref):
-    """Update rule history with event and remove expired entries"""
-    now = time.time()
-    _, hit_period = extract_hit_limit(rule, 'rate_limit')
-    logger.info("update rate limit at %s for %s and %s %s %s" % \
+    _, hit_period = extract_hit_limit(rule, _rate_limit_field)
+    settle_period = extract_time_in_secs(rule, _settle_time_field)
+    logger.debug("update rule hits at %s for %s and %s %s %s" % \
                 (now, rule, path, change, ref))
     _hits_lock.acquire()
     rule_history = rule_hits.get(rule['rule_id'], [])
     rule_history.append((path, change, ref, time.time()))
-    period_history = [i for i in rule_history if now - i[-1] <= hit_period]
+    max_period = max(hit_period, settle_period)
+    period_history = [i for i in rule_history if now - i[3] <= max_period]
     rule_hits[rule['rule_id']] = period_history
     _hits_lock.release()
-    logger.info("update rate limit left with %s" % period_history)
+    logger.debug("updated rule hits for %s to %s" % (rule['rule_id'],
+                                                    period_history))
 
-def show_rate_limit(rule):
-    """Return rate limit details for printing"""
-    msg = ''
-    hit_count, hit_period = extract_hit_limit(rule, 'rate_limit')
+def get_rule_hits(rule, limit_field):
+    """find rule hit details"""
+    if limit_field == _rate_limit_field:
+        hit_count, hit_period = extract_hit_limit(rule, limit_field)
+    elif limit_field == _settle_time_field:
+        hit_count, hit_period = 1, extract_time_in_secs(rule, limit_field)
     _hits_lock.acquire()
     rule_history = rule_hits.get(rule['rule_id'], [])
-    msg += 'found %d entries in trigger history and limit is %d per %s s' % \
-           (len(rule_history), hit_count, hit_period)
+    res = (rule_history, hit_count, hit_period)
     _hits_lock.release()
+    logger.debug("get_rule_hits found %s" % (res, ))
+    return res
+
+def get_path_hits(rule, path, limit_field):
+    """find path hit details"""
+    (rule_history, hit_count, hit_period) = get_rule_hits(rule, limit_field)
+    path_history = [i for i in rule_history if i[0] == path]
+    return (path_history, hit_count, hit_period)
+
+def above_path_limit(rule, path, limit_field):
+    """Check path trigger history against limit field and return boolean
+    indicating if the rate limit or settle time should kick in.
+    """
+    now = time.time()
+    (path_history, hit_count, hit_period) = get_path_hits(rule, path,
+                                                          limit_field)
+    if hit_count <= 0 or hit_period <= 0:
+        logger.debug("no %s limit set" % limit_field)
+        return False
+    period_history = [i for i in path_history if now - i[3] <= hit_period]
+    logger.debug("above path %s test found %s vs %d" % \
+                (limit_field, period_history, hit_count))
+    if len(period_history) >= hit_count:
+        return True
+    return False
+
+def show_path_hits(rule, path, limit_field):
+    """Return path hit details for printing"""
+    msg = ''
+    (path_history, hit_count, hit_period) = get_path_hits(rule, path,
+                                                          limit_field)
+    msg += 'found %d entries in trigger history and limit is %d per %s s' % \
+           (len(path_history), hit_count, hit_period)
     return msg
+
+def wait_settled(rule, path, change, settle_secs):
+    """Lookup recent change events on path and check if settle_secs passed
+    since last one. Returns the number of seconds needed without further
+    events for changes to be considered settled.
+    """
+    now = time.time()
+    limit_field = _settle_time_field
+    (path_history, _, hit_period) = get_path_hits(rule, path,
+                                                          limit_field)
+    period_history = [i for i in path_history if now - i[3] <= hit_period]
+    logger.debug("wait_settled: path %s, change %s, settle_secs %s" % \
+                (path, change, settle_secs))
+    if not period_history:
+        remain = 0.0
+    else:
+        remain = (settle_secs - max([now - i[3] for i in period_history]))
+    logger.debug("wait_settled: remain %.1f , period_history %s" % \
+                (remain, period_history))
+    return remain
 
 def recently_modified(path, now=-1, slack=5.0):
     """Check if path was actually recently modified and not just accessed.
@@ -227,15 +268,15 @@ def run_command(command_list, target_path, rule, configuration):
     args_form = command_map[function]
     client_id = rule['run_as']
     command_str = ' '.join(command_list)
-    logger.info("run %s on behalf of %s" % (command_str, client_id))
+    logger.debug("run %s on behalf of %s" % (command_str, client_id))
     user_arguments_dict = map_args_to_vars(args_form, command_list[1:])
-    logger.info("import main from %s" % function)
+    logger.debug("import main from %s" % function)
     main = id
     txt_format = id
     try:
         exec 'from shared.functionality.%s import main' % function
         exec 'from shared.output import txt_format'
-        logger.info("run %s on %s and %s" % (function, client_id,
+        logger.debug("run %s on %s and %s" % (function, client_id,
                                              user_arguments_dict))
         # Fake HTTP POST
         os.environ['REQUEST_METHOD'] = 'POST'
@@ -246,7 +287,7 @@ def run_command(command_list, target_path, rule, configuration):
                      (function, user_arguments_dict, exc))
         raise exc
     logger.info("done running command for %s: %s" % (target_path, command_str))
-    logger.info("raw output is: %s" % output_objects)
+    logger.debug("raw output is: %s" % output_objects)
     try:
         txt_out = txt_format(configuration, ret_code, ret_msg, output_objects)
     except Exception, exc:
@@ -375,13 +416,22 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         vgrid_prefix = os.path.join(base_dir, rule['vgrid_name'])
         logger.info("in handling of %s for %s %s" % \
                    (rule['action'], state, rel_src))
-        if above_rate_limit(rule):
-            logger.warning("skipping %s due to rate limit: %s" % \
-                        (target_path, show_rate_limit(rule)))
-            self.__workflow_warn(configuration, rule['vgrid_name'],
-                                 "skip %s trigger due to rate limit %s" % \
-                                 (rel_src, show_rate_limit(rule)))
-            return
+        above_limit = False
+        # Run settle time check first to only trigger rate limit if settled
+        for (name, field) in [("settle time", _settle_time_field),
+                              ("rate limit", _rate_limit_field)]:
+            if above_path_limit(rule, src_path, field):
+                above_limit = True
+                logger.warning("skipping %s due to %s: %s" % \
+                               (src_path, name,
+                                show_path_hits(rule, src_path, field)))
+                self.__workflow_warn(configuration, rule['vgrid_name'],
+                                     "skip %s trigger due to %s: %s" % \
+                                     (rel_src, name,
+                                      show_path_hits(rule, src_path, field)))
+                break
+
+        # TODO: consider if we should skip modified when just created
         # We receive modified events even when only atime changed - ignore them
         if state == 'modified' and not recently_modified(src_path):
             logger.info("skipping %s which only changed atime" % src_path)
@@ -389,23 +439,33 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                  "skip %s modified access time only event" % \
                                  rel_src)
             return
+
+        # Always update here to get trigger hits even for limited events
+        update_rule_hits(rule, src_path, state, '')
+        if above_limit:
+            return
         logger.info("proceed with handling of %s for %s %s" % \
                     (rule['action'], state, rel_src))
         self.__workflow_info(configuration, rule['vgrid_name'],
                              "handle %s for %s %s" % \
                              (rule['action'], state, rel_src))
-        settle_secs = extract_time_in_secs(rule, 'settle_time')
+        settle_secs = extract_time_in_secs(rule, _settle_time_field)
         if settle_secs > 0.0:
-            logger.info("wait %.2fs for %s file events to settle down" % \
-                        (settle_secs, target_path))
-            self.__workflow_info(configuration, rule['vgrid_name'],
-                                 "wait %.2fs for events on %s to settle" % \
-                                 (settle_secs, rel_src))
-            time.sleep(settle_secs)
-            # TODO: keep sleeping here until no new recent events were recorded
-            # We can compare the rate limit history entries with settle_time.
+            wait_secs = settle_secs
         else:
-            logger.info("no settle time for %s (%s)" % (target_path, rule))
+            wait_secs = 0.0
+            logger.debug("no settle time for %s (%s)" % (target_path, rule))
+        while wait_secs > 0.0:
+            logger.info("wait %.1fs for %s file events to settle down" % \
+                        (wait_secs, src_path))
+            self.__workflow_info(configuration, rule['vgrid_name'],
+                                 "wait %.1fs for events on %s to settle" % \
+                                 (wait_secs, rel_src))
+            time.sleep(wait_secs)
+            logger.debug("slept %.1fs for %s file events to settle down" % \
+                        (wait_secs, src_path))
+            wait_secs = wait_settled(rule, src_path, state, settle_secs)
+            
         if rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
             change = rule['action'].replace('trigger-', '')
             FakeEvent = self.event_map[change]
@@ -436,7 +496,6 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     fake = FakeEvent(path)
                     fake._chain = _chain
                     logger.info("trigger %s event on %s" % (change, path))
-                    update_rate_limit(rule, target_path, state, '')
                     self.__workflow_info(configuration, rule['vgrid_name'],
                                          "trigger %s event on %s" % (change,
                                                                      rel_path))
@@ -460,7 +519,6 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     if success:
                         logger.info("submitted job for %s: %s" % (target_path,
                                                                   msg))
-                        update_rate_limit(rule, target_path, state, msg)
                         self.__workflow_info(configuration, rule['vgrid_name'],
                                              "submitted job for %s: %s" % \
                                              (rel_src, msg))
