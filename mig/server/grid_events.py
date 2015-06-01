@@ -213,7 +213,10 @@ def wait_settled(rule, path, change, settle_secs):
     if not period_history:
         remain = 0.0
     else:
-        remain = (settle_secs - max([now - i[3] for i in period_history]))
+        # NOTE: the now - i[3] values are positive here (hit_period >= 0)
+        # Thus we can just take the smallest and subtract from settle_secs
+        # to always wait the remaining part of settle_secs.
+        remain = (settle_secs - min([now - i[3] for i in period_history]))
     logger.debug("wait_settled: remain %.1f , period_history %s" % \
                 (remain, period_history))
     return remain
