@@ -109,7 +109,7 @@ def fix_missing(config_file, verbose=True):
         'mig_server_id': '%s.0' % fqdn,
         'empty_job_name': 'no_suitable_job-',
         'smtp_server': fqdn,
-        'smtp_sender': 'MiG Server <No-Reply@%s>' % fqdn,
+        'smtp_sender': 'MiG Server <%s@%s>' % (user, fqdn),
         'user_sftp_address': fqdn,
         'user_sftp_port': 2222,
         'user_sftp_key': '~/certs/combined.pem',
@@ -661,7 +661,10 @@ class Configuration:
         if config.has_option('GLOBAL', 'smtp_sender'):
             self.smtp_sender = config.get('GLOBAL', 'smtp_sender')
         else:
-            self.smtp_sender = 'MiG Server <No-Reply@%s>' % self.server_fqdn
+            # TODO: switch to no-reply address as sender but make sure reqcert works!
+            #       mail server may reject mail if sender cannot be routed
+            self.smtp_sender = 'MiG Server <%s@%s>'\
+                 % (os.environ.get('USER', 'mig'), self.server_fqdn)
         if config.has_option('GLOBAL', 'notify_protocols'):
             self.notify_protocols = config.get('GLOBAL', 'notify_protocols').split()
         else:
