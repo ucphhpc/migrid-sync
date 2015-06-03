@@ -94,7 +94,7 @@ class SFTPHandle(paramiko.SFTPHandle):
     def __init__(self, flags=0, conf={}):
         paramiko.SFTPHandle.__init__(self, flags)
         self.logger = conf.get("logger", logging.getLogger())
-        self.logger.debug("SFTPHandle init")
+        self.logger.debug("SFTPHandle init: %s" % repr(flags))
 
     def stat(self):
         """Handle operations of same name"""
@@ -108,9 +108,20 @@ class SFTPHandle(paramiko.SFTPHandle):
 
     def chattr(self, attr):
         """Handle operations of same name"""
-        self.logger.debug("SFTPHandle chattr on %s: %s" % \
-                          (getattr(self, "path", "unknown"), attr))
-        # Silently ignore to allow e.g. truncate operations to succeed
+        path = getattr(self, "path", "unknown")
+        self.logger.debug("SFTPHandle chattr %s on path %s" % \
+                          (repr(attr), path))
+        active = getattr(self, 'active')
+        file_obj = getattr(self, active)
+        if hasattr(attr, 'st_size'):
+            self.logger.info("SFTPHandle chattr %s on path %s" % \
+                                (repr(attr), path))
+            file_obj.truncate(attr.st_size)
+            self.logger.debug("truncated file: %s to size: %s" % \
+                                (path, attr.st_size))
+        else:
+            self.logger.warning("SFTPHandle chattr %s ignored on path %s" % \
+                                (repr(attr), getattr(self, "path", "unknown")))
         return paramiko.SFTP_OK
         
 
@@ -210,13 +221,19 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             if flags == os.O_RDONLY:
                 # Read-only mode
                 readfile = open(real_path, mode)
-                setattr(handle, 'readfile', readfile)
+                writefile = None
                 active = 'readfile'
-            else:
-                # All other modes are handled as writes
+            elif flags == os.O_WRONLY:
+                # Write-only mode
+                readfile = None
                 writefile = open(real_path, mode)
-                setattr(handle, 'writefile', writefile)
                 active = 'writefile'
+            else:
+                # All other modes are handled as read+write
+                readfile = writefile = open(real_path, mode)
+                active = 'writefile'
+            setattr(handle, 'readfile', readfile)
+            setattr(handle, 'writefile', writefile)
             setattr(handle, 'active', active)
             self.logger.debug("open done %s :: %s (%s %s)" % \
                               (path, real_path, str(handle), mode))
@@ -279,7 +296,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         try:
             return paramiko.SFTPAttributes.from_stat(os.stat(real_path), path)
         except Exception, err:
-            self.logger.error("lstat on %s :: %s failed: %s" % \
+            self.logger.error("stat on %s :: %s failed: %s" % \
                               (path, real_path, err))
             return paramiko.SFTP_FAILURE            
 
@@ -446,7 +463,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.info("changed times %s %s for path %s :: %s" % \
                                 (change_atime, change_mtime, path, real_path))
         if ignored:
-            self.logger.error("chattr %s ignored on path %s :: %s" % \
+            self.logger.warning("chattr %s ignored on path %s :: %s" % \
                                 (repr(attr), path, real_path))
         return paramiko.SFTP_OK
 
