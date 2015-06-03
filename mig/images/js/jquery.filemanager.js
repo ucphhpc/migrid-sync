@@ -615,7 +615,7 @@ if (jQuery) (function($){
 		touch:   function (action, el, pos) { 
 		    jsonWrapper(el, '#cmd_dialog', 'touch.py'); },
 		stat:   function (action, el, pos) { 
-		    jsonWrapper(el, '#cmd_dialog', 'stat.py'); },
+		    jsonWrapper(el, '#cmd_dialog', 'statpath.py'); },
 		truncate:   function (action, el, pos) { 
 		    var truncate_path = $(el).attr(pathAttribute);
 		    var truncate_size = 0;
