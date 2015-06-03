@@ -1,0 +1,51 @@
+/*
+
+#
+# --- BEGIN_HEADER ---
+#
+# jquery-ui-theme.custom - style overrides for jquery-ui theme
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+*/
+
+
+/* Get rid of eye-burning-green background for active elements */
+.ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active  {
+    border: 1px solid #8FD182;
+    background: url('images/ui-bg_glass_0_679c5b_1x400.png') repeat-x scroll 50% 50% #8FD182;
+}
+
+
+#fm_filemanager .ui-progressbar-value {
+    /* progres floats underneath frame if margin is not negative - value depends on font size */
+    margin-top: -16px;
+    /* not sure this is needed */
+    vertical-align: middle;
+    /* look and feel */
+    padding: 0px;
+    border-radius: 4px;
+    transition: width 0.5s;
+    -webkit-transition: width 0.5s;
+    /* force touch default theme background for progressbars */
+    background: url('images/ui-bg_glass_0_679c5b_1x400.png') repeat-x scroll 50% 50% #8FD182;
+
+}
