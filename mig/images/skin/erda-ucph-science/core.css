@@ -28,29 +28,29 @@
 */
 
 body {
-  background: #ccc;
-  background: transparent /*url('/images/pattern.png')*/;
   color: #000;
-  font-family: Verdana, Arial, Helvetica, sans-serif; /* ÆNDRET I FONT */
+  /* Fonts in line with UCPH style guidelines */
+  font-family: Verdana, Arial, Helvetica, sans-serif;
   margin: 0;
   padding: 0;
   font-size: 13px;
 }
 
+/* Fixed width layout in line with UCPH style guidelines */
 body.fixedwidth {
-  margin: 0 auto; /*TILFØJET AUTO */
-  width: 984px; /* TILFØJET */
-  border-right: 1px solid #CCC; /* TILFØJET */
-  border-left: 1px solid #CCC; /* TILFØJET */
+  margin: 0 auto;
+  width: 984px;
+  border-right: 1px solid #CCC;
+  border-left: 1px solid #CCC;
 }
 
 a {
-  color: #165AAD; /* ÆNDRET FARVEKODE */
+  color: #165AAD;
   text-decoration: none;
 }
 
 a:hover, a:active {
-  color: #165AAD; /* ÆNDRET FARVEKODE */
+  color: #165AAD;
   text-decoration: underline;
 }
 
@@ -63,7 +63,6 @@ h1 {
   border-radius: 4px;
   margin-top: 0;
   color: #fff;
-  /* background: #eee url('/images/background.png'); */
   background: #46743c;
   padding: 2px 4px;
 }
@@ -74,21 +73,19 @@ h1.fixedwidth {
   margin-top: 0;
   color: #000;
   background: none;
-  font-size: 18px; /* ÆNDRET */ 
+  font-size: 18px;
   padding: 4px;
 }
 
 h2 {
-  /* border-bottom: 1px solid darkgrey; */ /* SKAL SLETTES */
   font-size: 14px;  
 }
 
 h2.fixedwidth {
-  padding: 10px 2px 2px 2px; /* ÆNDRET */
+  padding: 10px 2px 2px 2px;
 }
 
 h3 {
-/*  border-bottom: 1px solid darkgrey; */ /* SKAL SLETTES */
   font-size: 16px;  
 }
 
@@ -124,7 +121,6 @@ tfoot {
 
 
 table {
-  /* background: #eef;*/
   color: #000;
   margin-right: auto;
   margin-left: auto;
@@ -280,9 +276,9 @@ table th.icon {
 
 /* Navigational menu... */
 .navmenu {
-  background: white /*url('/images/background_greypattern.png')*/; /* URL KAN SLETTES OG FARVEN ER ÆNDRET */
+  background: white;
   border-radius: 5px;
-  border: none; /* ÆNDRET */
+  border: none;
   padding: 0;
   margin: 0;
 }
@@ -355,12 +351,12 @@ table th.icon {
 }
 
 .navmenu ul li a:hover, .navsubmenu ul li a:hover {
-  background-color: #46743c; /* ÆNDRET */
+  background-color: #46743c;
   color: white;
 }
 
 .navmenu ul li a.selected {
-  background-color: #46743c; /* ÆNDRET */
+  background-color: #46743c;
   color: white;
 }
 
@@ -372,13 +368,13 @@ table th.icon {
   background-image: url('/images/icons/bullet_black.png');
   background-position: 5px 50%;
   
-  border: 1px solid #666; /* ÆNDRET */
-  color: #46743c; /* ÆNDRET */
+  border: 1px solid #666;
+  color: #46743c;
   font-size: 13px;
-  font-weight: normal; /* ÆNDRET */
+  font-weight: normal;
   padding: 3px 5px 3px 24px;
   text-decoration: none;
-  background-color: #eee; /* ÆNDRET */
+  background-color: #eee;
 }
 
 .navsubmenu ul li a {
@@ -387,12 +383,12 @@ table th.icon {
 }
 
 .styled_button:hover {
-  background-color: #46743c; /* ÆNDRET */
+  background-color: #46743c;
   color: white;
 }
 
 .styled_button.selected {
-  background-color: #46743c; /* ÆNDRET */
+  background-color: #46743c;
   color: white;
 }
 
@@ -438,7 +434,6 @@ table th.icon {
   border: 1px inset grey;
   padding: 3px;
   background: white;
-  /*max-width: 1280px;*/
 }
 
 .editortoolbar {
@@ -463,9 +458,6 @@ table th.icon {
 }
 #toplogo {
   border: 0;
-  /*background: #eee url('/images/background.png');
-  background-position: left;
-  padding: 0px 10px;*/ /*SKAL SLETTES */
   font-size: 22px;
   font-weight: bold;
   color: #333;
@@ -476,7 +468,7 @@ table th.icon {
   min-height: 88px;
 }
 #logoimage {
-  opacity: 1; /* ÆNDRET TIL 1 */
+  opacity: 1;
   z-index: 1;
   margin-left: auto;
   margin-right: auto;
@@ -514,27 +506,27 @@ table th.icon {
   color: #333;
 }
 #bottomspace {
-  padding: 0px; /* ÆNDRET */
+  padding: 0px;
 }
 #bottomlogo {
   border: 0;
-  background: #eee /*url('/images/background.png')*/; /* URL KAN VIST GODT SLETTES */
-  padding: 2px 10px; /* ÆNDRET x 2 */
+  background: #eee;
+  padding: 2px 10px;
   font-size: 10px;
   font-weight: normal;
-  color: #666; /* ÆNDRET */
+  color: #666;
   border-spacing: 0;
-  height: 64px; /* ÆNDRET x 2 */
-  border-bottom: 1px solid #CCC; /* TILFØJET */
+  height: 64px;
+  border-bottom: 1px solid #CCC;
 }
 
-#bottomlogo p { /* TILFØJET */
+#bottomlogo p {
 	font-size: 11px;
 	font-weight: normal;
 	line-height: 1.35em;
 	padding: 0px 4px;
 }
-#bottomlogo h2 { /* TILFØJET */
+#bottomlogo h2 {
 	font-size: 11px;
 	font-weight: bold;
 	line-height: 1.15em;
@@ -544,7 +536,6 @@ table th.icon {
   padding: 0px;
   vertical-align: middle;
   float: left;
-  /*background-color: white;*/ /*SKAL SLETTES*/
   border-radius: 4px;
 }
 #bottomlogoright {
@@ -552,7 +543,6 @@ table th.icon {
   text-align: right;
   vertical-align: middle;
   float: right;
-  /*background-color: white;*/ /*SKAL SLETTES*/
   border-radius: 4px;
 }
 #supportimage {
@@ -564,17 +554,14 @@ table th.icon {
   vertical-align: middle;
 }
 #support {
-  /*font-family: Small Fonts, VT100, Arial, Helvetica;*/
   padding: 2px;
   margin-left: auto;
   margin-right: auto;
-  /* color: black; */
   vertical-align: middle;
   font-size: 12px;
   font-weight: bold;
 }
 #creditsimage {
-  /* opacity: 0.7; */
   z-index: 1;
   margin-left: auto;
   margin-right: auto;
@@ -583,7 +570,6 @@ table th.icon {
   vertical-align: middle;
 }
 #credits {
-  /*font-family: Small Fonts, VT100, Arial, Helvetica;*/
   padding: 2px;
   margin-left: auto;
   margin-right: auto;
@@ -592,13 +578,11 @@ table th.icon {
 }
 
 #credits a {
-  /* color: white; */
 }
 
 #content, .content {
   background: white;
-  border: none; /* ÆNDRET */
-  /* border-radius: 4px; */ /* SKAL SLETTES */
+  border: none;
   padding: 4px 0; 
 }
 
@@ -655,11 +639,11 @@ table th.icon {
 }
 
 .even_row {
-  background: #eef;
+  background: #679c5b;
 }
 
 .odd_row {
-  background: #ddf;
+  background: #8FD182;
 }
 
 .status_unavailable {
@@ -871,19 +855,19 @@ table th.icon {
 }
 .settingsbutton {
   padding: 8px;
-  border: 1px solid #666; /* ÆNDRET */
+  border: 1px solid #666;
   border-radius: 4px;
   background-repeat: no-repeat;
   background-position: 1px center;
-  background-color: #fff; /* ÆNDRET */
-    color: #46743c; /* TILFØJET */
+  background-color: #fff;
+    color: #46743c;
 }
 a.settingsbutton {
   text-decoration: none;
-  font-weight: normal; /* ÆNDRET */
+  font-weight: normal;
 }
 
-a:hover.settingsbutton { /* TILFØJET */
+a:hover.settingsbutton {
   text-decoration: none;
   font-weight: normal;
   border: 1px solid #46743c; 
@@ -892,9 +876,9 @@ a:hover.settingsbutton { /* TILFØJET */
 }
 
 .activebutton {
-  border: 1px solid #46743c; /* ÆNDRET */
-  background-color: #46743c; /* ÆNDRET */
-    color: #fff; /* TILFØJET */
+  border: 1px solid #46743c;
+  background-color: #46743c;
+  color: #fff;
 }
 .generalsettingslink {
   background-image: url('/images/icons/table.png');

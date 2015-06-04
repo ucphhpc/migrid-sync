@@ -30,7 +30,6 @@
 /* MiG default style sheet */
 
 body {
-  /* background: transparent url('/images/pattern.png'); */
   color: #000;
   font-family: verdana, helvetica, serif, times;
   margin: 0;
@@ -39,12 +38,10 @@ body {
 }
 
 a {
-  /* color: #0b76AE;*/
   text-decoration: none;
 }
 
 a:hover, a:active {
-  /* color: #000; */
   text-decoration: underline;
 }
 
@@ -55,12 +52,8 @@ img {
 h1 {
   border: 1px solid darkgrey;
   border-radius: 4px;
-  margin-top: 0;
-  
-  /* color: #eee; */
-  /* background: #eee url('/images/background.png'); */
+  margin-top: 0;  
   font-size: 16px;  
-
   padding: 4px;
 }
 
@@ -99,8 +92,6 @@ tfoot {
 
 
 table {
-  /* background: #eef; */
-  /* color: #000; */
   margin-right: auto;
   margin-left: auto;
   text-align: left;
@@ -250,7 +241,6 @@ table th.icon {
 
 /* Navigational menu... */
 .navmenu {
-  /* background: #aaa url('/images/background_greypattern.png'); */
   border-radius: 5px;
   border: 1px solid grey;
   padding: 0;
@@ -408,7 +398,6 @@ table th.icon {
   border: 1px inset grey;
   padding: 3px;
   background: white;
-  /*max-width: 1280px;*/
 }
 
 .editortoolbar {
@@ -430,14 +419,12 @@ table th.icon {
 /* MiG logo */
 #topspace {
   /* no top space */
-  /* padding: 2px 0px; */
   padding: 0px;
 }
 #toplogo {
   padding: 0px;
   margin: 0px;
   border: 1px solid black;
-  /* background: #eee url('/images/background.png'); */
   background-position: left;
   font-size: 22px;
   font-weight: bold;
@@ -504,9 +491,7 @@ table th.icon {
   padding: 10px;
 }
 #bottomlogo {
-  /*font-family: Small Fonts, VT100, Arial, Helvetica;*/
   border: 1px solid black;
-  /* background: #eee url('/images/background.png'); */
   padding: 8px 4px;
   font-size: 12px;
   font-weight: normal;
@@ -530,7 +515,6 @@ table th.icon {
   margin: 0;
   vertical-align: middle;
   float: left;
-  /* background-color: #999; */
   border-radius: 4px;
 }
 #bottomlogoright {
@@ -539,7 +523,6 @@ table th.icon {
   text-align: right;
   vertical-align: middle;
   float: right;
-  /* background-color: #999; */
   border-radius: 4px;
 }
 #supportimage {
@@ -559,7 +542,6 @@ table th.icon {
   font-weight: bold;
 }
 #creditsimage {
-  /* opacity: 0.7; */
   z-index: 1;
   margin-left: auto;
   margin-right: auto;
@@ -596,19 +578,6 @@ table th.icon {
   font-size: 10px;
 }
 
-/* TODO: is subsection unused? */
-/*
-.subsection{
-  background: #ccc;
-  padding: 5px;
-  border: 0;
-  font-size: 17px;
-  font-weight: bold;
-  color: red;
-  border-radius: 4px;
-}
-*/
-
 .lefttext {
   text-align: left;
 }
@@ -639,11 +608,11 @@ table th.icon {
 }
 
 .even_row {
-  background: #eef;
+  background: #eee;
 }
 
 .odd_row {
-  background: #ddf;
+  background: #ddd;
 }
 
 .status_unavailable {
@@ -675,7 +644,6 @@ table th.icon {
   margin: 2px;
   border: 1px dashed black;
   border-radius: 4px;
-  /* background-color: lightgrey; */
   background-position: 0% 50%;
   clear: both;
   display: block;
@@ -865,7 +833,7 @@ a.settingsbutton {
   font-weight: bold;
 }
 .activebutton {
-  border: 2px solid #369;
+  border: 2px solid #333;
   background-color: #fff;
 }
 .generalsettingslink {
