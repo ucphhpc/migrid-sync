@@ -267,6 +267,10 @@ table th.icon {
   /* Prevent footer overlap with menu */
   min-height: 500px;
 }
+.contentblock.fixedwidth {
+  /* Make sure to have some gap between text and footer */
+  min-height: 600px;
+}
 
 /* override block layout for maximized areas like wshell */
 #nomenu {
@@ -467,6 +471,9 @@ table th.icon {
   color: #333;
   border-spacing: 0;
   text-align: left;
+}
+#toplogo.fixedwidth {
+  min-height: 88px;
 }
 #logoimage {
   opacity: 1; /* ÆNDRET TIL 1 */
