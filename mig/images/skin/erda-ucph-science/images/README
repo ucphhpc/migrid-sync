@@ -1,0 +1,4 @@
+= jQuery UI images =
+This dir holds the images used by the jQuery UI css file. Thus after upgrading
+to a new jQuery UI version it may be necessary to copy any new images included
+in the themes/base/css/images foldes here.
