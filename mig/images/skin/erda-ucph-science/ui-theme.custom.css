@@ -28,7 +28,7 @@
 */
 
 
-/* Get rid of eye-burning-green background for active elements */
+/* Override default background for active elements */
 .ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active  {
     border: 1px solid #8FD182;
     background: url('images/ui-bg_glass_0_679c5b_1x400.png') repeat-x scroll 50% 50% #8FD182;
