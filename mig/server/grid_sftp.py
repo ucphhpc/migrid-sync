@@ -91,10 +91,13 @@ configuration, logger = None, None
 
 class SFTPHandle(paramiko.SFTPHandle):
     """Override default SFTPHandle"""
-    def __init__(self, flags=0, conf={}):
+    def __init__(self, flags=0, sftpserver=None):
         paramiko.SFTPHandle.__init__(self, flags)
-        self.logger = conf.get("logger", logging.getLogger())
-        self.logger.debug("SFTPHandle init: %s" % repr(flags))
+        self.sftpserver = None
+        if sftpserver is not None:
+            self.sftpserver = sftpserver
+            self.logger = sftpserver.conf.get("logger", logging.getLogger())
+            self.logger.debug("SFTPHandle init: %s" % repr(flags))
 
     def stat(self):
         """Handle operations of same name"""
@@ -111,18 +114,7 @@ class SFTPHandle(paramiko.SFTPHandle):
         path = getattr(self, "path", "unknown")
         self.logger.debug("SFTPHandle chattr %s on path %s" % \
                           (repr(attr), path))
-        active = getattr(self, 'active')
-        file_obj = getattr(self, active)
-        if hasattr(attr, 'st_size'):
-            self.logger.info("SFTPHandle chattr %s on path %s" % \
-                                (repr(attr), path))
-            file_obj.truncate(attr.st_size)
-            self.logger.debug("truncated file: %s to size: %s" % \
-                                (path, attr.st_size))
-        else:
-            self.logger.warning("SFTPHandle chattr %s ignored on path %s" % \
-                                (repr(attr), getattr(self, "path", "unknown")))
-        return paramiko.SFTP_OK
+        return self.sftpserver._chattr(path, attr, self)
         
 
 class SimpleSftpServer(paramiko.SFTPServerInterface):
@@ -185,6 +177,108 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         #                      (sftp_path, reply))
         return reply
 
+    def _chattr(self, path, attr, sftphandle=None):
+        """Handle chattr for SimpleSftpServer and SFTPHandle"""
+        file_obj = None
+        path = force_utf8(path)
+        self.logger.debug("_chattr %s" % path)
+        try:
+            real_path = self._get_fs_path(path)
+        except ValueError, err:
+            self.logger.warning('chattr %s: %s' % (path, err))
+            return paramiko.SFTP_PERMISSION_DENIED
+        if not os.path.exists(real_path):
+            self.logger.error("chattr on missing path %s :: %s" % (path,
+                                                                   real_path))
+            return paramiko.SFTP_NO_SUCH_FILE
+        if sftphandle is not None:
+            active = getattr(sftphandle, 'active')
+            file_obj = getattr(sftphandle, active)            
+        # Prevent users from messing with most attributes as such.
+        # We end here on chmod too, so pass any mode change requests there and
+        # silently ignore them otherwise. It turns out to have caused problems
+        # if we rejected those other attribute changes in the past but it may
+        # not be a problem anymore. If it ain't broken...
+        self.logger.info("chattr %s for path %s :: %s" % \
+                                (repr(attr), path, real_path))
+        ignored = True
+        if hasattr(attr, 'st_mode') and \
+                attr.st_mode is not None and attr.st_mode > 0:
+            self.logger.debug('_chattr st_mode: %s' % str(attr.st_mode))
+            ignored = False
+            self.logger.info("chattr %s forwarding for path %s :: %s" % \
+                                (repr(attr), path, real_path))
+            return self._chmod(path, attr.st_mode, sftphandle)
+        if hasattr(attr, 'st_atime') and attr.st_atime is not None or \
+                 hasattr(attr, 'st_mtime') and attr.st_mtime is not None:
+            self.logger.debug('_chattr st_atime: %s, st_mtime: %s' % \
+                                str(attr.st_atime), str(attr.st_mtime))
+            ignored = False
+            change_atime = getattr(attr, 'st_atime',
+                                   os.path.getatime(real_path))
+            change_mtime = getattr(attr, 'st_mtime',
+                                   os.path.getmtime(real_path))
+            os.utime(real_path, (change_atime, change_mtime))
+            self.logger.info("changed times %s %s for path %s :: %s" % \
+                                (change_atime, change_mtime, path, real_path))
+        if hasattr(attr, 'st_size') and attr.st_size is not None:
+            self.logger.debug('_chattr st_size: %s' % str(attr.st_size))
+            ignored = False
+            if file_obj is None:
+                os.truncate(real_path, attr.st_size)
+                self.logger.info("truncated file: %s to size: %s" % \
+                                (real_path, attr.st_size))
+            else:
+                os.ftruncate(file_obj.fileno(), attr.st_size)
+                self.logger.info("truncated file: %s to size: %s" % \
+                                (file_obj.name, attr.st_size))
+        if ignored:
+            self.logger.warning("chattr %s ignored on path %s :: %s" % \
+                                (repr(attr), path, real_path))
+        return paramiko.SFTP_OK
+
+    def _chmod(self, path, mode, sftphandle=None):
+        """Handle chmod for SimpleSftpServer and SFTPHandle"""
+        file_obj = None
+        path = force_utf8(path)
+        self.logger.debug("_chmod %s" % path)
+        try:
+            real_path = self._get_fs_path(path)
+        except ValueError, err:
+            self.logger.warning('chmod %s: %s' % (path, err))
+            return paramiko.SFTP_PERMISSION_DENIED
+        if not os.path.exists(real_path):
+            self.logger.error("chmod on missing path %s :: %s" % (path,
+                                                                  real_path))
+            return paramiko.SFTP_NO_SUCH_FILE
+        if sftphandle is not None:
+            active = getattr(sftphandle, 'active')
+            file_obj = getattr(sftphandle, active)     
+        # Only allow change of mode on files and only outside chmod_exceptions
+        if self._acceptable_chmod(real_path, mode):
+            # Only allow permission changes that won't give excessive access
+            # or remove own access.
+            if os.path.isdir(path):
+                new_mode = (mode & 0775) | 0750
+            else:
+                new_mode = (mode & 0775) | 0640
+            self.logger.info("chmod %s (%s) without damage on %s :: %s" % \
+                                (new_mode, mode, path, real_path))
+            try:
+                if file_obj is None:
+                    os.chmod(real_path, new_mode)
+                else:
+                    os.fchmod(file_obj.fileno(), new_mode)
+            except Exception, err:
+                self.logger.error("chmod %s (%s) failed on path %s :: %s %s" % \
+                                  (new_mode, mode, path, real_path, err))
+                return paramiko.SFTP_PERMISSION_DENIED
+            return paramiko.SFTP_OK
+        # Prevent users from messing up access modes
+        self.logger.error("chmod %s rejected on path %s :: %s" % (mode, path,
+                                                                  real_path))
+        return paramiko.SFTP_OP_UNSUPPORTED
+
     # Public interface functions
 
     def open(self, path, flags, attr):
@@ -202,7 +296,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("open existing file on missing path %s :: %s" % \
                               (path, real_path))
             return paramiko.SFTP_NO_SUCH_FILE
-        handle = SFTPHandle(flags, conf=self.conf)
+        handle = SFTPHandle(flags, sftpserver=self)
         setattr(handle, 'real_path', real_path)
         setattr(handle, 'path', path)
         try:
@@ -427,80 +521,11 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def chattr(self, path, attr):
         """Handle operations of same name"""
-        path = force_utf8(path)
-        self.logger.debug("chattr %s" % path)
-        try:
-            real_path = self._get_fs_path(path)
-        except ValueError, err:
-            self.logger.warning('chattr %s: %s' % (path, err))
-            return paramiko.SFTP_PERMISSION_DENIED
-        if not os.path.exists(real_path):
-            self.logger.error("chattr on missing path %s :: %s" % (path,
-                                                                   real_path))
-            return paramiko.SFTP_NO_SUCH_FILE
-
-        # Prevent users from messing with most attributes as such.
-        # We end here on chmod too, so pass any mode change requests there and
-        # silently ignore them otherwise. It turns out to have caused problems
-        # if we rejected those other attribute changes in the past but it may
-        # not be a problem anymore. If it ain't broken...
-        ignored = True
-        if hasattr(attr, 'st_mode') and attr.st_mode:
-            ignored = False
-            self.logger.info("chattr %s forwarding for path %s :: %s" % \
-                                (repr(attr), path, real_path))
-            return self.chmod(path, attr.st_mode)
-        if hasattr(attr, 'st_atime') and attr.st_atime or \
-                 hasattr(attr, 'st_mtime') and attr.st_mtime:
-            ignored = False
-            self.logger.info("chattr %s for path %s :: %s" % \
-                                (repr(attr), path, real_path))
-            change_atime = getattr(attr, 'st_atime',
-                                   os.path.getatime(real_path))
-            change_mtime = getattr(attr, 'st_mtime',
-                                   os.path.getmtime(real_path))
-            os.utime(real_path, (change_atime, change_mtime))
-            self.logger.info("changed times %s %s for path %s :: %s" % \
-                                (change_atime, change_mtime, path, real_path))
-        if ignored:
-            self.logger.warning("chattr %s ignored on path %s :: %s" % \
-                                (repr(attr), path, real_path))
-        return paramiko.SFTP_OK
+        return self._chattr(path, attr)
 
     def chmod(self, path, mode):
         """Handle operations of same name"""
-        path = force_utf8(path)
-        self.logger.debug("chmod %s" % path)
-        try:
-            real_path = self._get_fs_path(path)
-        except ValueError, err:
-            self.logger.warning('chmod %s: %s' % (path, err))
-            return paramiko.SFTP_PERMISSION_DENIED
-        if not os.path.exists(real_path):
-            self.logger.error("chmod on missing path %s :: %s" % (path,
-                                                                  real_path))
-            return paramiko.SFTP_NO_SUCH_FILE
-        # Only allow change of mode on files and only outside chmod_exceptions
-        if self._acceptable_chmod(real_path, mode):
-            # Only allow permission changes that won't give excessive access
-            # or remove own access.
-            if os.path.isdir(path):
-                new_mode = (mode & 0775) | 0750
-            else:
-                new_mode = (mode & 0775) | 0640
-            self.logger.info("chmod %s (%s) without damage on %s :: %s" % \
-                                (new_mode, mode, path, real_path))
-            try:
-                os.chmod(real_path, new_mode)
-            except Exception, err:
-                self.logger.error("chmod %s (%s) failed on path %s :: %s %s" % \
-                                  (new_mode, mode, path, real_path, err))
-                return paramiko.SFTP_PERMISSION_DENIED
-            return paramiko.SFTP_OK
-        # Prevent users from messing up access modes
-        self.logger.error("chmod %s rejected on path %s :: %s" % (mode, path,
-                                                                  real_path))
-        return paramiko.SFTP_OP_UNSUPPORTED
+        return self._chmod(path, mode)
          
     def readlink(self, path):
         """Handle operations of same name"""
