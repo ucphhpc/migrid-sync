@@ -32,6 +32,7 @@ from shared.defaults import upload_tmp_dir
 from shared.freezefunctions import freeze_flavors
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
+from shared.html import themed_styles
 
 def signature():
     """Signature of the main function"""
@@ -78,18 +79,13 @@ Please contact the Grid admins %s if you think it should be enabled.
 
     # jquery support for dynamic addition of copy/upload fields
 
-    title_entry['style'] = '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.contextmenu.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.xbreadcrumbs.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.fmbreadcrumbs.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.custom.css" media="screen"/>
-'''
+    title_entry['style'] = themed_styles(configuration,
+                                         base=['jquery.contextmenu.css',
+                                               'jquery.xbreadcrumbs.css',
+                                               'jquery.fmbreadcrumbs.css',
+                                               'jquery.fileupload.css',
+                                               'jquery.fileupload-ui.css'],
+                                         skin=['fileupload-ui.custom.css'])
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
@@ -332,17 +328,6 @@ $(document).ready(function() {
     </div>
     <div class='fm_statusbar'>&nbsp;</div>
 </div>
-<!-- very limited menus here - maybe we should add select all entry? -->
-<ul id='folder_context' class='contextMenu' style='display:none'>
-    <li class='select'>
-        <a href='#select'>Select</a>
-    </li>
-</ul>
-<ul id='file_context' class='contextMenu' style='display:none'>
-    <li class='select'>
-        <a href='#select'>Select</a>
-    </li>
-</ul>
 <div id='cmd_dialog' title='Command output' style='display: none;'></div>
 
 <div id='fancyuploadchunked_dialog' title='Upload File' style='display: none;'>

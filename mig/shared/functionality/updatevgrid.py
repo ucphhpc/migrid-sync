@@ -35,7 +35,7 @@ from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.html import html_post_helper
-from shared.init import initialize_main_variables, find_entry
+from shared.init import initialize_main_variables
 from shared.vgrid import vgrid_is_owner, vgrid_list, vgrid_set_entities
 from shared.functionality.createvgrid import create_scm, create_tracker, \
      create_forum
@@ -72,50 +72,6 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     vgrid_name = accepted['vgrid_name'][-1]
-
-    # prepare support for confirm dialog (by css/jquery)
-
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = "Update %s: %s" % (configuration.site_vgrid_label,
-                                             vgrid_name)
-
-    title_entry['style'] = '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-'''
-    title_entry['javascript'] = '''
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
-
-<script type="text/javascript" >
-
-$(document).ready(function() {
-
-          // init confirmation dialog
-          $( "#confirm_dialog" ).dialog(
-              // see http://jqueryui.com/docs/dialog/ for options
-              { autoOpen: false,
-                modal: true, closeOnEscape: true,
-                width: 500,
-                buttons: {
-                   "Cancel": function() { $( "#" + name ).dialog("close"); }
-                }
-              });
-     }
-);
-</script>
-'''
-
-    output_objects.append({'object_type': 'html_form',
-                           'text':'''
- <div id="confirm_dialog" title="Confirm" style="background:#fff;">
-  <div id="confirm_text"><!-- filled by js --></div>
-   <textarea cols="40" rows="4" id="confirm_input" style="display:none;"></textarea>
- </div>
-'''                       })
 
     output_objects.append({'object_type': 'header', 'text'
                           : "Update '%s'" % vgrid_name })

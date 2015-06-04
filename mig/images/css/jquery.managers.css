@@ -82,25 +82,6 @@
 #fm_filelisting td, th { padding: 6px; background-position: 2px 50%; }
 #jm_jobmanager td, th { padding: 4px; background-position: 2px 50%; }
 
-#fm_filelisting .tablesorter-header, #jm_jobmanager .tablesorter-header { 
-  background-image: url('/images/icons/desc.gif'); 
-  background-image: url('/images/icons/small.gif');
-  cursor: pointer; 
-  font-weight: bold; 
-  background-repeat: no-repeat; 
-  background-position: center left; 
-  padding-left: 20px; 
-  border-right: 1px solid #dad9c7; 
-  margin-left: -1px;
-} 
-#fm_filelisting .tablesorter-headerAsc, #jm_jobmanager .tablesorter-headerAsc { 
-  background-image: url('/images/icons/asc.gif'); 
-  background-color: #3399FF; 
-}
-#fm_filelisting .tablesorter-headerDesc, #jm_jobmanager .tablesorter-headerDesc { 
-  background-image: url('/images/icons/desc.gif'); 
-  background-color: #3399FF; 
-}
 #fm_debug {
   display: none;
   width: 100%;
@@ -169,11 +150,11 @@
   display: inline;
 }
 .fm_toolbar ul li a:hover {
-  background-color: #369;
+  background-color: 999;
   color: white;
 }
 .fm_toolbar ul li a.selected {
-  background-color: #147;
+  background-color: #666;
   color: white;
 }
 .fm_toolbar ul li a {
@@ -460,7 +441,7 @@ background: url(/images/icons/picture.png) left center no-repeat;
 .cmd { display: inline-block; width: 18px; cursor: pointer; }
 
 
-.columnsort .tablesorter-header { 
+.tablesorter-header { 
   background-image: url('/images/icons/desc.gif'); 
   background-image: url('/images/icons/small.gif');
   cursor: pointer; 
@@ -471,29 +452,29 @@ background: url(/images/icons/picture.png) left center no-repeat;
   border-right: 1px solid #dad9c7; 
   margin-left: -1px;
 } 
-.columnsort .tablesorter-headerAsc { 
+.tablesorter-headerAsc { 
   background-image: url('/images/icons/asc.gif'); 
-  background-color: #3399FF; 
+  background-color: #999; 
 }
-.columnsort .tablesorter-headerDesc { 
+.tablesorter-headerDesc { 
   background-image: url('/images/icons/desc.gif'); 
-  background-color: #3399FF; 
+  background-color: #999; 
 }
 
 /* use similar colors in tabs as in navmenu */
 /*
 .vm-tabs li.ui-state-default { 
-  background: #6699bb;
+  background: #999;
   color: white;
 }
 */
 .vm-tabs li.ui-tabs-selected { 
-  background: #114477;
+  background: #111;
   color: white;
   font-weight: bold; 
 }
 .vm-tabs li.ui-state-hover a:hover { 
-  background: #336699;
+  background: #666;
   color: white;
 }
 .vm-tabs ul.no-bullets {

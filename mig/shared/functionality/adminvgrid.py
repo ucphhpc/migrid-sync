@@ -35,7 +35,7 @@ import shared.returnvalues as returnvalues
 from shared.defaults import keyword_all, keyword_auto, valid_trigger_changes, \
      valid_trigger_actions
 from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.html import html_post_helper
+from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_list, vgrid_is_owner
 
@@ -245,12 +245,7 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = "Administrate %s: %s" % \
                           (configuration.site_vgrid_label, vgrid_name)
 
-    title_entry['style'] = '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-'''
+    title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>

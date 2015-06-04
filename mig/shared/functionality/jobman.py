@@ -34,6 +34,7 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import default_pager_entries
 from shared.functional import validate_input_and_cert
+from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 
 def pager_append():
@@ -88,15 +89,9 @@ def html_post():
 '''
     return html
 
-def css_tmpl():
+def css_tmpl(configuration):
     """Stylesheets to include in the page header"""
-    css = '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.contextmenu.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-'''
+    css = themed_styles(configuration, base=['jquery.contextmenu.css'])
     return css
 
 def js_tmpl():
@@ -166,7 +161,7 @@ def main(client_id, user_arguments_dict):
   
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Job Manager'
-    title_entry['style'] = css_tmpl()
+    title_entry['style'] = css_tmpl(configuration)
     title_entry['javascript'] = js_tmpl()
   
     output_objects.append({'object_type': 'header', 'text': 'Job Manager'})

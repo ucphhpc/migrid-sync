@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # default - default style settings for all pages
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,8 +30,7 @@
 /* MiG default style sheet */
 
 body {
-  background: #ccc;
-  background: transparent url('/images/pattern.png');
+  /* background: transparent url('/images/pattern.png'); */
   color: #000;
   font-family: verdana, helvetica, serif, times;
   margin: 0;
@@ -40,12 +39,12 @@ body {
 }
 
 a {
-  color: #0b76AE;
+  /* color: #0b76AE;*/
   text-decoration: none;
 }
 
 a:hover, a:active {
-  color: #000;
+  /* color: #000; */
   text-decoration: underline;
 }
 
@@ -58,8 +57,8 @@ h1 {
   border-radius: 4px;
   margin-top: 0;
   
-  color: #eee;
-  background: #eee url('/images/background.png');
+  /* color: #eee; */
+  /* background: #eee url('/images/background.png'); */
   font-size: 16px;  
 
   padding: 4px;
@@ -100,8 +99,8 @@ tfoot {
 
 
 table {
-  background: #eef;
-  color: #000;
+  /* background: #eef; */
+  /* color: #000; */
   margin-right: auto;
   margin-left: auto;
   text-align: left;
@@ -251,7 +250,7 @@ table th.icon {
 
 /* Navigational menu... */
 .navmenu {
-  background: #aaa url('/images/background_greypattern.png');
+  /* background: #aaa url('/images/background_greypattern.png'); */
   border-radius: 5px;
   border: 1px solid grey;
   padding: 0;
@@ -326,12 +325,12 @@ table th.icon {
 }
 
 .navmenu ul li a:hover, .navsubmenu ul li a:hover {
-  background-color: #369;
+  background-color: #444;
   color: white;
 }
 
 .navmenu ul li a.selected {
-  background-color: #147;
+  background-color: #111;
   color: white;
 }
 
@@ -358,12 +357,12 @@ table th.icon {
 }
 
 .styled_button:hover {
-  background-color: #369;
+  background-color: #444;
   color: white;
 }
 
 .styled_button.selected {
-  background-color: #147;
+  background-color: #111;
   color: white;
 }
 
@@ -424,38 +423,59 @@ table th.icon {
   font-size: 28px;
   border: 0;
   border-radius: 4px;
-  color: #eee;
-  background: #eee url('/images/background.png');
+  color: #111;
+  background: #fff;
 }
 
 /* MiG logo */
 #topspace {
+  /* no top space */
+  /* padding: 2px 0px; */
   padding: 0px;
 }
 #toplogo {
-  border: 0;
-  background: #eee url('/images/background.png');
+  padding: 0px;
+  margin: 0px;
+  border: 1px solid black;
+  /* background: #eee url('/images/background.png'); */
   background-position: left;
-  padding: 0px 10px;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: bold;
-  color: white;
+  color: black;
   border-spacing: 0;
-  text-align: left;
+  /* IMPORTANT: height must match at least logoimage height plus vertical padding */
+  height: 30px;
+  width: 100%;
+}
+/* keep toplogo bar elements in check */
+#toplogoleft {
+  /* align with menu block */
+  width: 160px;
+  padding: 0px 4px;
+  margin: 0;
+  float: left;
+  height: 30px;
+  vertical-align: middle;
+}
+#toplogoright {
+  /* just right of toplogoleft */
+  padding: 0px 0px;
+  margin: 0;
+  float: left;
+  height: 30px;
+  vertical-align: middle;
 }
 #logoimage {
   opacity: 0.7;
   z-index: 1;
   margin-left: auto;
   margin-right: auto;
-  padding: 0px;
-  display: inline;
+  display: block;
   vertical-align: middle;
 }
 #logotitle {
-  margin-left: auto;
-  margin-right: auto;
-  padding: 20px;
+  padding: 0;
+  margin: 0;
   vertical-align: middle;
 }
 
@@ -477,33 +497,49 @@ table th.icon {
   font-family: Small Fonts, VT100, Arial, Helvetica;
   font-size: 8px;
   color: #333;
+  padding: 0 8px;
+  float: right;
 }
 #bottomspace {
   padding: 10px;
 }
 #bottomlogo {
-  border: 0;
-  background: #eee url('/images/background.png');
-  padding: 8px 10px;
-  font-size: 10px;
+  /*font-family: Small Fonts, VT100, Arial, Helvetica;*/
+  border: 1px solid black;
+  /* background: #eee url('/images/background.png'); */
+  padding: 8px 4px;
+  font-size: 12px;
   font-weight: normal;
-  color: white;
+  color: black;
   border-spacing: 0;
   min-height: 16px;
 }
+/* keep bottomlogo bar elements in check */
+#bottomlogo div {
+  padding: 0 2px;
+  margin: 0;
+  vertical-align: middle;
+}
+#bottomlogo p, #bottomlogo span {
+  padding: 0px 2px;
+  margin: 0;
+  vertical-align: middle;
+}
 #bottomlogoleft {
   padding: 0px;
+  margin: 0;
   vertical-align: middle;
   float: left;
-  background-color: white;
+  /* background-color: #999; */
   border-radius: 4px;
 }
 #bottomlogoright {
   padding: 0px;
+  margin: 0;
   text-align: right;
   vertical-align: middle;
   float: right;
-  background-color: white;
+  /* background-color: #999; */
   border-radius: 4px;
 }
 #supportimage {
@@ -515,11 +551,9 @@ table th.icon {
   vertical-align: middle;
 }
 #support {
-  /*font-family: Small Fonts, VT100, Arial, Helvetica;*/
   padding: 2px;
   margin-left: auto;
   margin-right: auto;
-  /* color: black; */
   vertical-align: middle;
   font-size: 12px;
   font-weight: bold;
@@ -534,16 +568,12 @@ table th.icon {
   vertical-align: middle;
 }
 #credits {
-  /*font-family: Small Fonts, VT100, Arial, Helvetica;*/
   padding: 2px;
   margin-left: auto;
   margin-right: auto;
-  color: black;
   vertical-align: middle;
 }
-
 #credits a {
-  /* color: white; */
 }
 
 #content, .content {
@@ -566,6 +596,8 @@ table th.icon {
   font-size: 10px;
 }
 
+/* TODO: is subsection unused? */
+/*
 .subsection{
   background: #ccc;
   padding: 5px;
@@ -575,6 +607,7 @@ table th.icon {
   color: red;
   border-radius: 4px;
 }
+*/
 
 .lefttext {
   text-align: left;
@@ -642,7 +675,7 @@ table th.icon {
   margin: 2px;
   border: 1px dashed black;
   border-radius: 4px;
-  background-color: lightgrey;
+  /* background-color: lightgrey; */
   background-position: 0% 50%;
   clear: both;
   display: block;
@@ -825,7 +858,7 @@ table th.icon {
   border-radius: 4px;
   background-repeat: no-repeat;
   background-position: 1px center;
-  background-color: #eef;
+  background-color: #eee;
 }
 a.settingsbutton {
   text-decoration: none;

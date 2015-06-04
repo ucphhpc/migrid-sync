@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # submitjob - Job submission interfaces
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,6 +33,7 @@ import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import any_vgrid, default_mrsl_filename
 from shared.functional import validate_input_and_cert
+from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.mrslkeywords import get_job_specs
 from shared.parser import parse_lines
@@ -122,15 +123,12 @@ def main(client_id, user_arguments_dict):
     # (means: by "eval" from configuration). We stick to hard-coding.
     submit_options = ['fields_form', 'textarea_form', 'files_form']
 
-    title_entry['style'] = '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.custom.css" media="screen"/>
-'''
+    css_helpers = {'css_base': os.path.join(configuration.site_images, 'css'),
+                   'skin_base': configuration.site_skin_base}
+    title_entry['style'] = themed_styles(configuration,
+                                         base=['jquery.fileupload.css',
+                                               'jquery.fileupload-ui.css'],
+                                         skin=['fileupload-ui.custom.css'])
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>

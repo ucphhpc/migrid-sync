@@ -34,7 +34,7 @@ from shared.defaults import default_pager_entries
 from shared.freezefunctions import build_freezeitem_object, \
      list_frozen_archives, get_frozen_archive
 from shared.functional import validate_input_and_cert
-from shared.html import html_post_helper
+from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 
 
@@ -67,12 +67,7 @@ def main(client_id, user_arguments_dict):
 
     # jquery support for tablesorter and confirmation on "leave":
 
-    title_entry['style'] = '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-'''
+    title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>

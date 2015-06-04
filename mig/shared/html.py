@@ -169,37 +169,79 @@ def render_menu(configuration, menu_class='navmenu',
     return menu_lines
 
 
+def get_css_helpers(configuration):
+    """Returns a dictionary of string expansion helpers for css"""
+    return {'base_prefix': os.path.join(configuration.site_images, 'css'),
+            'advanced_prefix': os.path.join(configuration.site_images, 'css'),
+            'skin_prefix': configuration.site_skin_base}
 
-def get_cgi_html_header(
+def extend_styles(configuration, styles, base=[], advanced=[], skin=[]):
+    """Appends any stylesheets specified in the base, advanced and skin lists
+    in the corresponding sections of the styles dictionary.
+    """
+    css_helpers = get_css_helpers(configuration)
+    for name in base:
+        css_helpers['name'] = name
+        styles['base'] += '''
+<link rel="stylesheet" type="text/css" href="%(base_prefix)s/%(name)s" media="screen"/>
+''' % css_helpers
+    for name in advanced:
+        css_helpers['name'] = name
+        styles['advanced'] += '''
+<link rel="stylesheet" type="text/css" href="%(advanced_prefix)s/%(name)s" media="screen"/>
+''' % css_helpers
+    for name in skin:
+        css_helpers['name'] = name
+        styles['skin'] += '''
+<link rel="stylesheet" type="text/css" href="%(skin_prefix)s/%(name)s" media="screen"/>
+''' % css_helpers
+
+def base_styles(configuration, base=[], advanced=[], skin=[]):
+    """Returns a dictionary of basic stylesheets for unthemed pages"""
+    css_helpers = get_css_helpers(configuration)
+    styles = {'base': '', 'advanced': '', 'skin': ''}
+    extend_styles(configuration, styles, base, advanced, skin)
+    return styles
+
+def themed_styles(configuration, base=[], advanced=[], skin=[]):
+    """Returns a dictionary of basic stylesheets for themed JQuery UI pages.
+    Appends any stylesheets specified in the base, advanced and skin lists.
+    """
+    css_helpers = get_css_helpers(configuration)
+    styles = {'base': '''
+<link rel="stylesheet" type="text/css" href="%(base_prefix)s/jquery-ui.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="%(base_prefix)s/jquery.managers.css" media="screen"/>
+''' % css_helpers,
+              'advanced': '',
+              'skin': '''
+<link rel="stylesheet" type="text/css" href="%(skin_prefix)s/core.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="%(skin_prefix)s/managers.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-theme.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-theme.custom.css" media="screen"/>
+''' % css_helpers
+              }
+    extend_styles(configuration, styles, base, advanced, skin)
+    return styles
+
+
+def get_cgi_html_preamble(
     configuration,
     title,
     header,
-    html=True,
     meta='',
-    styles='',
+    base_styles='',
+    advanced_styles='',
+    skin_styles='',
     scripts='',
-    bodyfunctions='',
-    menu=True,
     widgets=True,
-    base_menu=[],
-    user_menu=[],
     user_widgets={},
     ):
     """Return the html tags to mark the beginning of a page."""
     
-    if not html:
-        return ''
-
     user_styles = ''
     user_scripts = ''
-    user_pre_menu = ''
-    user_post_menu = ''
-    user_pre_content = ''
     if widgets:
         script_deps = user_widgets.get('SITE_SCRIPT_DEPS', [''])
-        pre_menu = '\n'.join(user_widgets.get('PREMENU', ['<!-- empty -->']))
-        post_menu = '\n'.join(user_widgets.get('POSTMENU', ['<!-- empty -->']))
-        pre_content = '\n'.join(user_widgets.get('PRECONTENT', ['<!-- empty -->']))
         for dep in script_deps:
             # Avoid reloading already included scripts
             if dep and scripts.find(dep) == -1:
@@ -211,21 +253,6 @@ def get_cgi_html_header(
                     user_styles += '''
 <link rel="stylesheet" type="text/css" href="/images/css/%s" media="screen"/>
 ''' % dep
-        user_pre_menu = '''<div class="premenuwidgets">
-<!-- begin user supplied pre menu widgets -->
-%s
-<!-- end user supplied pre menu widgets -->
-</div>''' % pre_menu
-        user_post_menu = '''<div class="postmenuwidgets">
-<!-- begin user supplied post menu widgets -->
-%s
-<!-- end user supplied post menu widgets -->
-</div>''' % post_menu
-        user_pre_content = '''<div class="precontentwidgets">
-<!-- begin user supplied pre content widgets -->
-%s
-<!-- end user supplied pre content widgets -->
-</div>''' % pre_content
         
     # Please note that we insert user widget styles after our own styles even
     # though it means that dependencies may override defaults (e.g. zss* and
@@ -242,7 +269,14 @@ def get_cgi_html_header(
 <!-- site default style -->
 <link rel="stylesheet" type="text/css" href="%s" media="screen"/>
 
-<!-- specific page styles -->
+<!-- site static skin style -->
+<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+
+<!-- base page styles -->
+%s
+<!-- advanced page styles -->
+%s
+<!-- skin page styles -->
 %s
 
 <!-- begin user supplied style dependencies -->
@@ -266,19 +300,83 @@ def get_cgi_html_header(
 %s
 </title>
 </head>
+''' % (meta, configuration.site_default_css, configuration.site_static_css,
+       base_styles, advanced_styles, skin_styles, user_styles,
+       configuration.site_custom_css, configuration.site_user_css,
+       configuration.site_fav_icon, scripts, user_scripts, title)
+    return out
+
+def get_cgi_html_header(
+    configuration,
+    title,
+    header,
+    html=True,
+    meta='',
+    base_styles='',
+    advanced_styles='',
+    skin_styles='',
+    scripts='',
+    bodyfunctions='',
+    menu=True,
+    widgets=True,
+    base_menu=[],
+    user_menu=[],
+    user_widgets={},
+    ):
+    """Return the html tags to mark the beginning of a page."""
+    
+    if not html:
+        return ''
+
+    user_pre_menu = ''
+    user_post_menu = ''
+    user_pre_content = ''
+    if widgets:
+        pre_menu = '\n'.join(user_widgets.get('PREMENU', ['<!-- empty -->']))
+        post_menu = '\n'.join(user_widgets.get('POSTMENU', ['<!-- empty -->']))
+        pre_content = '\n'.join(user_widgets.get('PRECONTENT', ['<!-- empty -->']))
+        user_pre_menu = '''<div class="premenuwidgets">
+<!-- begin user supplied pre menu widgets -->
+%s
+<!-- end user supplied pre menu widgets -->
+</div>''' % pre_menu
+        user_post_menu = '''<div class="postmenuwidgets">
+<!-- begin user supplied post menu widgets -->
+%s
+<!-- end user supplied post menu widgets -->
+</div>''' % post_menu
+        user_pre_content = '''<div class="precontentwidgets">
+<!-- begin user supplied pre content widgets -->
+%s
+<!-- end user supplied pre content widgets -->
+</div>''' % pre_content
+        
+    out = get_cgi_html_preamble(configuration,
+                                title,
+                                header,
+                                meta,
+                                base_styles,
+                                advanced_styles,
+                                skin_styles,
+                                scripts,
+                                widgets,
+                                user_widgets,
+                                )
+    out += '''
 <body %s>
 <div id="topspace">
 </div>
 <div id="toplogo">
+<div id="toplogoleft">
 <img src="%s" id="logoimage" alt="site logo"/>
+</div>
+<div id="toplogoright">
 <span id="logotitle">
 %s
 </span>
 </div>
-''' % (meta, configuration.site_default_css, styles, user_styles,
-       configuration.site_custom_css, configuration.site_user_css,
-       configuration.site_fav_icon, scripts, user_scripts, title,
-       bodyfunctions, configuration.site_logo_image,
+</div>
+''' % (bodyfunctions, configuration.site_logo_image,
        configuration.site_logo_text)
     menu_lines = ''
     if menu:
@@ -333,16 +431,20 @@ def get_cgi_html_footer(configuration, footer='', html=True, widgets=True, user_
     out += '''
 <div id="bottomlogo">
 <div id="bottomlogoleft">
+<p id="support" lang="en">
 <img src="%s" id="supportimage" alt=""/>
-<span id="support">
+<span id="supporttext">
 %s
 </span>
+</p>
 </div>
 <div id="bottomlogoright">
+<p id="credits">
 <img src="%s" id="creditsimage" alt=""/>
-<span id="credits">
+<span id="creditstext">
 %s
 </span>
+</p>
 </div>
 </div>
 <div id="bottomspace">

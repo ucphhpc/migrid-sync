@@ -31,22 +31,13 @@ handlers"""
 import os
 import time
 
-from fileio import delete_file
+from shared.fileio import delete_file
+from shared.html import themed_styles
 # Expose some helper variables for functionality backends
-from safeinput import name_extras, password_extras, password_min_len, \
+from shared.safeinput import name_extras, password_extras, password_min_len, \
     password_max_len, valid_password_chars, valid_name_chars, dn_max_len
 from shared.serial import load, dump
 
-
-def cert_css_helpers():
-    """Stylesheets to include in the cert/ext req page header"""
-    css = '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-'''
-    return css
 
 def cert_js_helpers(fields):
     """Javascript to include in the cert/ext req page header"""

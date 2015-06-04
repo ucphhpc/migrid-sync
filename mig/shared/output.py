@@ -493,7 +493,15 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
             lines.append('<h3>%s</h3>' % html_escape(i['text']))
         elif i['object_type'] == 'title':
             meta = i.get('meta', '')
-            style = i.get('style', '')
+            style_entry = i.get('style', '')
+            if isinstance(style_entry, dict):
+                base_style = style_entry.get("base", "")
+                advanced_style = style_entry.get("advanced", "")
+                skin_style = style_entry.get("skin", "")
+            else:
+                base_style = style_entry
+                advanced_style = ''
+                skin_style = ''
             javascript = i.get('javascript', '')
             bodyfunctions = i.get('bodyfunctions', '')
             include_menu = not i.get('skipmenu', False)
@@ -514,7 +522,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 '',
                 True,
                 meta,
-                style,
+                base_style,
+                advanced_style,
+                skin_style,
                 javascript,
                 bodyfunctions,
                 include_menu,

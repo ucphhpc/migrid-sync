@@ -35,6 +35,7 @@ from shared.base import client_id_dir
 from shared.functional import validate_input_and_cert
 from shared.functionality.editor import advanced_editor_css_deps, \
      advanced_editor_js_deps, lock_info, edit_file
+from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry, extract_menu
 
 def html_tmpl(configuration, title_entry):
@@ -229,21 +230,15 @@ def html_tmpl(configuration, title_entry):
     '''
     return html
 
-def css_tmpl():
+def css_tmpl(configuration):
     """Stylesheets to include in the page header"""
-    css = '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.contextmenu.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.xbreadcrumbs.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.fmbreadcrumbs.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.fileupload-ui.custom.css" media="screen"/>
-'''
-    css += advanced_editor_css_deps()
+    css = themed_styles(configuration, base=['jquery.contextmenu.css',
+                                             'jquery.xbreadcrumbs.css',
+                                             'jquery.fmbreadcrumbs.css',
+                                             'jquery.fileupload.css',
+                                             'jquery.fileupload-ui.css'],
+                        skin=['fileupload-ui.custom.css'])
+    css['advanced'] += advanced_editor_css_deps()
     return css
 
 def js_tmpl(entry_path='/', enable_submit='true'):
@@ -423,7 +418,7 @@ def main(client_id, user_arguments_dict):
     entry_path = all_paths[-1]
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'File Manager'
-    title_entry['style'] = css_tmpl()
+    title_entry['style'] = css_tmpl(configuration)
     if 'submitjob' in extract_menu(configuration, title_entry):
         enable_submit = 'true'
     else:

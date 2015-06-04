@@ -34,8 +34,9 @@ import time
 
 from shared.defaults import freeze_meta_filename, wwwpublic_alias, \
      public_archive_dir, public_archive_index
-from fileio import md5sum_file, write_file, copy_file, copy_rec, move_file, \
+from shared.fileio import md5sum_file, write_file, copy_file, copy_rec, move_file, \
      move_rec, remove_rec, makedirs_rec, make_symlink, make_temp_dir
+from shared.html import get_cgi_html_preamble, get_cgi_html_footer
 from shared.serial import load, dump
 
 freeze_flavors = {
@@ -269,24 +270,28 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
         public_meta = [('CREATOR', 'Owner'), ('NAME', 'Name'),
                        ('DESCRIPTION', 'Description'),
                        ('CREATED_TIMESTAMP', 'Date')]
-        contents = """<html>
-<head>
-<meta http-equiv='Content-Type' content='text/html;charset=utf-8'/>
-<!-- site default style -->
-<link rel='stylesheet' type='text/css' href='%s' media='screen'/>
-<!-- override with any site-specific styles -->
-<link rel='stylesheet' type='text/css' href='%s' media='screen'/>
-<title>Public Archive: %s</title>
-</head>
-<body>
-<div class='content'>
-<h1>Public Archive</h1>
+        contents = get_cgi_html_preamble(configuration, "Public Archive: %s" % \
+                                         published_id, "", widgets=False)
+        contents += """
+<body class='fixedwidth'>
+<div id='topspace'>
+</div>
+<div class='fixedwidth' id='toplogo'>
+<img src='%s/banner-logo.jpg' id='logoimage'
+     class='fixedwidth' alt='site logo'/>
+</div>
+
+<div class='contentblock fixedwidth' id='nomenu'>
+<div id='migheader'>
+</div>
+<div class='fixedwidth' id='content'>
+<div>
+<h1 class='fixedwidth'>Public Archive</h1>
 This is the public archive with unique ID %s .<br/>
 The user supplied meta data and files are available below.
 
 <h2>Archive Meta Data</h2>
-        """ % (configuration.site_default_css, configuration.site_custom_css,
-        published_id, published_id)
+        """ % (configuration.site_skin_base, published_id)
         for (meta_key, meta_label) in public_meta:
             meta_value = freeze_dict.get(meta_key, '')
             if meta_value:
@@ -300,9 +305,8 @@ The user supplied meta data and files are available below.
 """ % (rel_path, rel_path)
         contents += """
 </div>
-</body>
-</html>
-        """
+%s
+        """ % get_cgi_html_footer(configuration, widgets=False)
         if not make_symlink(frozen_dir, real_pub_dir, logger) or \
                not write_file(contents, real_pub_index, configuration.logger):
             logger.error("create_frozen_archive: publish failed")

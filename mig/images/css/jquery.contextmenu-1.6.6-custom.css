@@ -230,3 +230,8 @@ Original license header follows...
 .context-menu-list LI.icon-liveio { background-image: url(/images/icons/page_white_go.png); }
 .context-menu-list LI.icon-verbosestatus { background-image: url(/images/icons/information.png); }
 .context-menu-list LI.icon-select { background-image: url(/images/icons/hourglass_add.png); }
+
+/* don't color hightlighted entry blue */
+.context-menu-item.hover {
+    background-color: white;
+}

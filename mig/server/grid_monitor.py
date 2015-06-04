@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_monitor - Monitor page generator
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,7 @@ from shared.conf import get_configuration_object
 from shared.defaults import default_vgrid
 from shared.fileio import unpickle
 from shared.gridstat import GridStat
-from shared.html import get_cgi_html_header, get_cgi_html_footer
+from shared.html import get_cgi_html_header, get_cgi_html_footer, themed_styles
 from shared.output import format_timedelta
 from shared.resource import anon_resource_id
 from shared.vgrid import vgrid_list_vgrids
@@ -86,9 +86,7 @@ def create_monitor(vgrid_name):
         True,
         '''<meta http-equiv="refresh" content="%(sleep_secs)s" />
         ''' % html_vars,
-        '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-        ''',                       
+        themed_styles(configuration),                       
         '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migadmin - admin control panel with daemon status monitor
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,7 +37,7 @@ from shared.defaults import default_pager_entries
 from shared.fileio import send_message_to_grid_script
 from shared.findtype import is_admin
 from shared.functional import validate_input_and_cert
-from shared.html import html_post_helper
+from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 
 grid_actions = {'reloadconfig': 'RELOADCONFIG',
@@ -81,12 +81,7 @@ def main(client_id, user_arguments_dict):
 
     meta = '''<meta http-equiv="refresh" content="%s" />
 ''' % configuration.sleep_secs
-    style = '''    
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-'''
+    style = themed_styles(configuration)
     script = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>

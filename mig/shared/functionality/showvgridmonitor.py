@@ -33,6 +33,7 @@ import os
 import shared.returnvalues as returnvalues
 from shared.defaults import all_vgrids
 from shared.functional import validate_input_and_cert
+from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_is_owner_or_member, user_allowed_vgrids
 
@@ -63,9 +64,7 @@ def main(client_id, user_arguments_dict):
 
     meta = '''<meta http-equiv="refresh" content="%s" />
 ''' % configuration.sleep_secs
-    style = '''    
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-'''
+    style = themed_styles(configuration)
     script = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>

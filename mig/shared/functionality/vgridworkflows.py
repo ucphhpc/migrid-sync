@@ -39,6 +39,7 @@ from shared.defaults import keyword_all, keyword_auto, valid_trigger_changes, \
      valid_trigger_actions, workflows_log_name, workflows_log_cnt
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.functionality.adminvgrid import vgrid_add_remove_table
+from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_is_owner_or_member, vgrid_triggers, \
      vgrid_set_triggers
@@ -99,13 +100,8 @@ access the workflows.''' % vgrid_name})
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s Workflows' % configuration.site_vgrid_label
+    title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = '''
-<link rel="stylesheet" href="/images/css/forum.css" type="text/css" />
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>

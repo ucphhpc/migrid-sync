@@ -241,6 +241,7 @@ class Configuration:
     javabin_home = ''
     openid_store = ''
     rate_limit_db = ''
+    site_skin = 'migrid-basic'
     site_collaboration_links = ''
     site_vgrid_links = []
     site_default_vgrid_links = []
@@ -828,6 +829,13 @@ class Configuration:
             self.site_styles = config.get('SITE', 'styles')
         else:
             self.site_styles = self.site_images
+        if config.has_option('SITE', 'skin'):
+            self.site_skin = config.get('SITE', 'skin')
+        else:
+            self.site_skin = 'migrid-basic'
+        # Used in skin urls
+        self.site_skin_base = os.path.join(self.site_images, 'skin',
+                                           self.site_skin)
         if config.has_option('SITE', 'user_redirect'):
             self.site_user_redirect = config.get('SITE', 'user_redirect')
         else:
@@ -981,6 +989,10 @@ class Configuration:
             self.site_default_css = config.get('SITE', 'default_css')
         else:
             self.site_default_css = '%s/default.css' % self.site_styles
+        if config.has_option('SITE', 'static_css'):
+            self.site_static_css = config.get('SITE', 'static_css')
+        else:
+            self.site_static_css = '%s/static-skin.css' % self.site_styles
         if config.has_option('SITE', 'custom_css'):
             self.site_custom_css = config.get('SITE', 'custom_css')
         else:

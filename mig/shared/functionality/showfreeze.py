@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,11 +27,14 @@
 
 """Show summary contents of frozen archive"""
 
+import os
+
 import shared.returnvalues as returnvalues
 from shared.defaults import default_pager_entries
 from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
      build_freezeitem_object, freeze_flavors
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 
 
@@ -81,12 +84,9 @@ Please contact the Grid admins %s if you think it should be enabled.
 
     # jquery support for tablesorter
 
-    title_entry['style'] = '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-'''
+    css_helpers = {'css_base': os.path.join(configuration.site_images, 'css'),
+                   'skin_base': configuration.site_skin_base}
+    title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>

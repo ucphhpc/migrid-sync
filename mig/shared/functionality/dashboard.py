@@ -34,6 +34,7 @@ import os
 
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
+from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.useradm import extract_field
 
@@ -66,9 +67,7 @@ def main(client_id, user_arguments_dict):
 
     # jquery support for tablesorter and confirmation on "leave":
 
-    title_entry['style'] = '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-'''
+    title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 

@@ -27,6 +27,7 @@
 
 """Virtual machine administration back end functionality"""
 
+import os
 import time
 from binascii import hexlify
 
@@ -34,7 +35,7 @@ import shared.returnvalues as returnvalues
 from shared import vms
 from shared.defaults import any_vgrid
 from shared.functional import validate_input_and_cert
-from shared.html import render_menu, html_post_helper
+from shared.html import render_menu, html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import user_allowed_vgrids
 
@@ -89,7 +90,7 @@ def main(client_id, user_arguments_dict):
     architecture = accepted['architecture'][-1].strip()
     cpu_count = int(accepted['cpu_count'][-1])
     cpu_time = int(accepted['cpu_time'][-1])
-    os = accepted['os'][-1].strip()
+    op_sys = accepted['os'][-1].strip()
     flavor = accepted['flavor'][-1].strip()
     hypervisor_re = accepted['hypervisor_re'][-1].strip()
     sys_re = accepted['sys_re'][-1].strip()
@@ -100,12 +101,9 @@ def main(client_id, user_arguments_dict):
 
     # jquery support for tablesorter and confirmation on "leave":
 
-    title_entry['style'] = '''
-<link rel="stylesheet" type="text/css" href="/images/css/jquery.managers.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui-theme.custom.css" media="screen"/>
-'''
+    css_helpers = {'css_base': os.path.join(configuration.site_images, 'css'),
+                   'skin_base': configuration.site_skin_base}
+    title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
@@ -141,7 +139,7 @@ Please contact the Grid admins %s if you think they should be enabled.
 
     machine_req = {'memory': memory, 'disk': disk, 'cpu_count': cpu_count,
                    'cpu_time': cpu_time, 'architecture': architecture,
-                   'vgrid': vgrid, 'os': os, 'flavor': flavor,
+                   'vgrid': vgrid, 'os': op_sys, 'flavor': flavor,
                    'hypervisor_re': hypervisor_re, 'sys_re': sys_re}
     
     menu_items = ['vmrequest']
