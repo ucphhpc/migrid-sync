@@ -696,11 +696,8 @@ so you may have to avoid blank lines in your text below.
         if configuration.user_sftp_alias:
             username = extract_field(client_id, configuration.user_sftp_alias)
             create_alias_link(username, client_id, configuration.user_home)
-        sftp_server = configuration.user_sftp_address
-        # address may be empty to use all interfaces - then use FQDN
-        if not sftp_server:
-            sftp_server = configuration.server_fqdn
-        sftp_port = configuration.user_sftp_port
+        sftp_server = configuration.user_sftp_show_address
+        sftp_port = configuration.user_sftp_show_port
         html = \
         '''
 <div id="sshaccess">
@@ -854,11 +851,8 @@ value="%(default_authpassword)s" />
         if configuration.user_davs_alias:
             username = extract_field(client_id, configuration.user_davs_alias)
             create_alias_link(username, client_id, configuration.user_home)
-        davs_server = configuration.user_davs_address
-        # address may be empty to use all interfaces - then use FQDN
-        if not davs_server:
-            davs_server = configuration.server_fqdn
-        davs_port = configuration.user_davs_port
+        davs_server = configuration.user_davs_show_address
+        davs_port = configuration.user_davs_show_port
         html = \
         '''
 <div id="davsaccess">
@@ -1000,11 +994,8 @@ value="%(default_authpassword)s" />
         if configuration.user_ftps_alias:
             username = extract_field(client_id, configuration.user_ftps_alias)
             create_alias_link(username, client_id, configuration.user_home)
-        ftps_server = configuration.user_ftps_address
-        # address may be empty to use all interfaces - then use FQDN
-        if not ftps_server:
-            ftps_server = configuration.server_fqdn
-        ftps_ctrl_port = configuration.user_ftps_ctrl_port
+        ftps_server = configuration.user_ftps_show_address
+        ftps_ctrl_port = configuration.user_ftps_show_ctrl_port
         html = \
         '''
 <div id="ftpsaccess">

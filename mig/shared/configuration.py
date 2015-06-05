@@ -259,6 +259,8 @@ class Configuration:
     smtp_sender = ''
     user_sftp_address = ''
     user_sftp_port = 2222
+    user_sftp_show_address = ''
+    user_sftp_show_port = 2222
     user_sftp_key = ''
     user_sftp_key_pub = ''
     user_sftp_auth = ['publickey', 'password']
@@ -266,6 +268,8 @@ class Configuration:
     user_sftp_log = 'sftp.log'
     user_davs_address = ''
     user_davs_port = 4443
+    user_davs_show_address = ''
+    user_davs_show_port = 4443
     user_davs_key = ''
     user_davs_auth = ['password']
     user_davs_alias = ''
@@ -273,12 +277,16 @@ class Configuration:
     user_ftps_address = ''
     user_ftps_ctrl_port = 8021
     user_ftps_pasv_ports = range(8100, 8500)
+    user_ftps_show_address = ''
+    user_ftps_show_ctrl_port = 8021
     user_ftps_key = ''
     user_ftps_auth = ['password']
     user_ftps_alias = ''
     user_ftps_log = 'ftps.log'
     user_openid_address = ''
     user_openid_port = 8443
+    user_openid_show_address = ''
+    user_openid_show_port = 8443
     user_openid_key = ''
     user_openid_auth = ['password']
     user_openid_alias = ''
@@ -575,6 +583,19 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_sftp_port'):
             self.user_sftp_port = config.getint('GLOBAL', 
                                                 'user_sftp_port')
+        if config.has_option('GLOBAL', 'user_sftp_show_address'):
+            self.user_sftp_show_address = config.get('GLOBAL', 
+                                                'user_sftp_show_address')
+        elif self.user_sftp_address:
+            self.user_sftp_show_address = self.user_sftp_address
+        else:
+            # address may be empty to use all interfaces - then use FQDN
+            self.user_sftp_show_address = self.server_fqdn
+        if config.has_option('GLOBAL', 'user_sftp_show_port'):
+            self.user_sftp_show_port = config.getint('GLOBAL', 
+                                                'user_sftp_show_port')
+        else:
+            self.user_sftp_show_port = self.user_sftp_port
         if config.has_option('GLOBAL', 'user_sftp_key'):
             self.user_sftp_key = config.get('GLOBAL', 
                                             'user_sftp_key')
@@ -595,6 +616,19 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_davs_port'):
             self.user_davs_port = config.getint('GLOBAL', 
                                                 'user_davs_port')
+        if config.has_option('GLOBAL', 'user_davs_show_address'):
+            self.user_davs_show_address = config.get('GLOBAL', 
+                                                'user_davs_show_address')
+        elif self.user_davs_address:
+            self.user_davs_show_address = self.user_davs_address
+        else:
+            # address may be empty to use all interfaces - then use FQDN
+            self.user_davs_show_address = self.server_fqdn
+        if config.has_option('GLOBAL', 'user_davs_show_port'):
+            self.user_davs_show_port = config.getint('GLOBAL', 
+                                                'user_davs_show_port')
+        else:
+            self.user_davs_show_port = self.user_davs_port
         if config.has_option('GLOBAL', 'user_davs_key'):
             self.user_davs_key = config.get('GLOBAL', 
                                             'user_davs_key')
@@ -616,6 +650,19 @@ class Configuration:
             text_range = config.get('GLOBAL', 'user_ftps_pasv_ports')
             first, last = text_range.split(':')[:2]
             self.user_ftps_pasv_ports = range(int(first), int(last))
+        if config.has_option('GLOBAL', 'user_ftps_show_address'):
+            self.user_ftps_show_address = config.get('GLOBAL', 
+                                                'user_ftps_show_address')
+        elif self.user_ftps_address:
+            self.user_ftps_show_address = self.user_ftps_address
+        else:
+            # address may be empty to use all interfaces - then use FQDN
+            self.user_ftps_show_address = self.server_fqdn
+        if config.has_option('GLOBAL', 'user_ftps_show_ctrl_port'):
+            self.user_ftps_show_ctrl_port = config.getint('GLOBAL', 
+                                                'user_ftps_show_ctrl_port')
+        else:
+            self.user_ftps_show_ctrl_port = self.user_ftps_ctrl_port
         if config.has_option('GLOBAL', 'user_ftps_key'):
             self.user_ftps_key = config.get('GLOBAL', 
                                             'user_ftps_key')
@@ -633,6 +680,19 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_openid_port'):
             self.user_openid_port = config.getint('GLOBAL', 
                                                  'user_openid_port')
+        if config.has_option('GLOBAL', 'user_openid_show_address'):
+            self.user_openid_show_address = config.get('GLOBAL', 
+                                                'user_openid_show_address')
+        elif self.user_openid_address:
+            self.user_openid_show_address = self.user_openid_address
+        else:
+            # address may be empty to use all interfaces - then use FQDN
+            self.user_openid_show_address = self.server_fqdn
+        if config.has_option('GLOBAL', 'user_openid_show_port'):
+            self.user_openid_show_port = config.getint('GLOBAL', 
+                                                'user_openid_show_port')
+        else:
+            self.user_openid_show_port = self.user_openid_port
         if config.has_option('GLOBAL', 'user_openid_key'):
             self.user_openid_key = config.get('GLOBAL', 
                                                  'user_openid_key')

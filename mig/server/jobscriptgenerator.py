@@ -211,13 +211,10 @@ def create_job_script(
             logger.error(msg)
             return (None, msg)
 
-        sftp_address = configuration.user_sftp_address
-        if sftp_address == '':
-            sftp_address = configuration.server_fqdn
-
+        sftp_address = configuration.user_sftp_show_address
         sftp_addresses = socket.gethostbyname_ex(sftp_address or \
                                                  socket.getfqdn())
-        sftp_port = configuration.user_sftp_port
+        sftp_port = configuration.user_sftp_show_port
         
         mount_known_hosts = "[%s]:%s" % (sftp_addresses[0], sftp_port)
         for list_idx in xrange(1, len(sftp_addresses)):
@@ -708,8 +705,8 @@ def gen_job_script(
     if job_dictionary.get('MOUNT', []) != []:
         job_array.append(generator.comment('Mount job home'))
         job_array.append(generator.mount(job_dictionary['SESSIONID'], 
-                                         configuration.server_fqdn, 
-                                         configuration.user_sftp_port, 
+                                         configuration.user_sftp_show_address, 
+                                         configuration.user_sftp_show_port, 
                                          'mount_status'))
         job_array.append(generator.print_on_error('mount_status', '0',
                                                   'failded to mount job home'))

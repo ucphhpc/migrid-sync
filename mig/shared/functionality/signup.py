@@ -92,8 +92,8 @@ def main(client_id, user_arguments_dict):
         check_oid_available(action, oid_title, oid_url, tag_prefix);
     });
 </script>
-''' % (configuration.short_title, configuration.user_openid_address,
-       configuration.user_openid_port)
+''' % (configuration.short_title, configuration.user_openid_show_address,
+       configuration.user_openid_show_port)
     title_entry['skipmenu'] = True
     header_entry = {'object_type': 'header', 'text'
                     : 'Welcome to the %s account sign up page' % \
