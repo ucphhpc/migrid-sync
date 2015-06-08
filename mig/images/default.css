@@ -39,10 +39,12 @@ body {
 
 a {
   text-decoration: none;
+  color: #666;
 }
 
 a:hover, a:active {
   text-decoration: underline;
+  color: #999;
 }
 
 img {
@@ -97,6 +99,12 @@ table {
   text-align: left;
   border: 1px solid #000;
   width: 100%;
+}
+
+table.columnsort {
+  /* rounded border on sortable tables */
+  border: 1px solid #999;
+  border-radius: 5px;
 }
 
 table.submitstatus {}
@@ -820,6 +828,7 @@ table th.icon {
   background: url('/images/icons/page_white_get.png') no-repeat;
   padding-left: 18px;
 }
+
 .settingsbutton {
   padding: 8px;
   border: 2px solid grey;
@@ -832,10 +841,19 @@ a.settingsbutton {
   text-decoration: none;
   font-weight: bold;
 }
+
+a:hover.settingsbutton {
+  font-weight: bold;
+  border: 2px solid #333; 
+  background-color: #999; 
+  color: #fff; 
+}
+
 .activebutton {
   border: 2px solid #333;
   background-color: #fff;
 }
+
 .generalsettingslink {
   background-image: url('/images/icons/table.png');
   padding-left: 18px;

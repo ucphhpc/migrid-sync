@@ -27,11 +27,10 @@
 
 */
 
-/* ERDA site style sheet */
+/* ERDA Basic skin style sheet */
 
 body {
   background: url("/images/skin/erda-basic/pattern.png") repeat scroll left center transparent;
-  color: #000;
 }
 
 a {
@@ -43,18 +42,10 @@ a:hover, a:active {
 }
 
 h1 {
-  border: 1px solid darkgrey;
   color: #eee;
   background: url("/images/skin/erda-basic/background.png") repeat scroll left center #eee;
 }
 
-h2 {
-  border-bottom: 1px solid darkgrey;
-}
-
-h3 {
-  border-bottom: 1px solid darkgrey;
-}
 
 
 table {
@@ -66,46 +57,22 @@ table {
 /* Navigational menu... */
 .navmenu {
   background: url("/images/skin/erda-basic/background_greypattern.png") repeat scroll left center #aaa;
-  border: 1px solid grey;
 }
 
 .navmenu ul li a:hover, .navsubmenu ul li a:hover {
   background-color: #369;
-  color: white;
 }
 
 .navmenu ul li a.selected {
   background-color: #147;
-  color: white;
-}
-
-.navmenu ul li a, .navsubmenu ul li a {
-  background-repeat: no-repeat;
-  background-image: url('/images/icons/bullet_black.png');
-  background-position: 5px 50%;
-  border: 1px solid darkgrey;
-  color: white;
-  background-color: rgb(100,100,100);
 }
 
 .styled_button:hover {
   background-color: #369;
-  color: white;
 }
 
 .styled_button.selected {
   background-color: #147;
-  color: white;
-}
-
-.styled_button {
-  background-repeat: no-repeat;
-  background-image: url('/images/icons/bullet_black.png');
-  background-position: 5px 50%;
-  
-  border: 1px solid darkgrey;
-  color: white;
-  background-color: rgb(100,100,100);
 }
 
 
@@ -119,36 +86,12 @@ table {
 #toplogo {
   border: 0;
   background: url("/images/skin/erda-basic/background.gif") repeat scroll left center #eee;
-  background-position: left;
-  font-size: 22px;
   color: white;
-  /* IMPORTANT: height must match at least logoimage height plus vertical padding */
-  height: 30px;
-  width: 100%;
-}
-/* keep toplogo bar elements in check */
-#toplogoleft {
-  /* align with menu block */
-  width: 160px;
-  padding: 0px 4px;
-  height: 30px;
-}
-#toplogoright {
-  /* just right of toplogoleft */
-  height: 30px;
 }
 #logoimage {
   opacity: 1.0;
 }
 
-
-.odd {
-  background-color: white;
-}
-
-.even {
-  background-color: #ccc;
-}
 
 #bottomlogo {
   background: url("/images/skin/erda-basic/background.gif") repeat scroll left center #eee;
@@ -164,15 +107,6 @@ table {
   color: black;
 }
 
-#content, .content {
-  background: white;
-  border: 1px solid black;
-}
-
-.rawtext {
-  background: #fff;
-}
-
 
 
 .even_row {
@@ -185,18 +119,14 @@ table {
 
 
 .settingsbutton {
-  border: 2px solid grey;
   background-color: #eef;
+}
+
+a:hover.settingsbutton {
+  background-color: #369; 
 }
 .activebutton {
   border: 2px solid #369;
-  background-color: #fff;
-}
-.public_profile{
-  border: 1px inset blue;
-}
-.public_image{
-  border: 1px inset grey;
 }
 
 /* IMPORTANT: these overrides must come after .*link settings to work */

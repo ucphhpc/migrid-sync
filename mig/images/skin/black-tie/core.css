@@ -26,15 +26,32 @@
 #
 
 */
+/* Black Tie skin style sheet */
+
+a:hover, a:active {
+  color: #000;
+}
+
+h1 {
+  color: #aaa;
+}
 
 #toplogo {
   border: 0;
   background: #666;
   color: white;
 }
-
 #bottomlogo {
   border: 0;
   background: #666;
   color: white;
+}
+#bottomlogoleft {
+  background-color: white;
+}
+#bottomlogoright {
+  background-color: white;
+}
+#credits {
+  color: black;
 }
