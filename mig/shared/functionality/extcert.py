@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extcert - External certificate sign up backend
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,8 +30,8 @@
 import os
 
 import shared.returnvalues as returnvalues
-from shared.certreq import valid_name_chars, dn_max_len, cert_css_helpers, \
-     cert_js_helpers
+from shared.certreq import valid_name_chars, dn_max_len, cert_js_helpers
+from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.functional import validate_input_and_cert
 from shared.useradm import distinguished_name_to_user
@@ -67,7 +67,7 @@ def main(client_id, user_arguments_dict):
     title_entry['skipmenu'] = True
     form_fields = ['cert_id', 'cert_name', 'organization', 'email', 'country', 'state',
                    'comment']
-    title_entry['style'] = cert_css_helpers()
+    title_entry['style'] = themed_styles(configuration)
     title_entry['javascript'] = cert_js_helpers(form_fields)
     output_objects.append({'object_type': 'html_form',
                            'text':'''
