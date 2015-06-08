@@ -133,7 +133,8 @@ def flags_to_mode(flags):
         mode = mode.replace('w', 'a', 1)
     # Disable truncation unless explicitly requested
     if not (flags & os.O_TRUNC):
-        mode = mode.replace('w', 'r', 1)
+        mode = mode.replace('w+', 'r+', 1)
+        mode = mode.replace('w', 'r+', 1)
     return mode
 
 def acceptable_chmod(path, mode, chmod_exceptions):
