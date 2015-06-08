@@ -113,13 +113,16 @@ table {
 }
 
 .settingsbutton {
-  background-color: #eef;
+  background-color: #fff;
 }
 a:hover.settingsbutton {
-  background-color: #369;
+  background-color: #eef;
+  color: #147;
 }
 .activebutton {
   border: 2px solid #369;
+  background-color: #acf;
+  color: white;
 }
 
 /* IMPORTANT: these overrides must come after .*link settings to work */
