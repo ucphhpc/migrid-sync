@@ -38,7 +38,7 @@ class Whitelist:
   def verify_request(self, request, client_address):
     print request
     print client_address
-    return false
+    return False
     
   def peerAllowed(self, peer):
     return peer[0] in self.peers
@@ -47,7 +47,7 @@ class Whitelist:
   Callback for certificate verification
 """
 def verify_cb(conn, cert, errnum, depth, ok):
-  logging.debug("%s Got certificate: %s" % (self, cert.get_subject()))
+  logging.debug("%s Got certificate: %s" % (conn, cert.get_subject()))
   return ok
 
 """

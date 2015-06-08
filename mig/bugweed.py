@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # bugweed - a simple helper to locate simple error in the project code.
-# Copyright (C) 2009  Jonas Bardino
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,7 @@
 import os
 import sys
 
-from codegrep import code_files
+from codegrep import py_code_files
 
 if '__main__' == __name__:
     if len(sys.argv) != 1:
@@ -33,7 +33,7 @@ if '__main__' == __name__:
         print 'Grep for obvious errors in all code files'
         sys.exit(1)
 
-    command = "pylint -E %s" % (' '.join(code_files))
+    command = "pylint -E %s" % (' '.join(py_code_files))
     print "Bug weeding command: %s" % command
     print "*** Not all lines reported are necessarily errors ***"
     print

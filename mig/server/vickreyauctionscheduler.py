@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vickreyauctionscheduler - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,6 +30,7 @@
 import random
 
 from scheduler import Scheduler
+from shared.conf import get_configuration_object
 
 
 class VickreyAuctionScheduler(Scheduler):
@@ -191,5 +192,7 @@ if __name__ == '__main__':
 
     job_queue = [job1, job2, job3]
 
-    auction = VickreyAuctionScheduler()
+    configuration = get_configuration_object()
+    logger = configuration.logger
+    auction = VickreyAuctionScheduler(logger, configuration)
     auction.schedule(res)

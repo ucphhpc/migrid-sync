@@ -113,7 +113,7 @@ Please contact the Grid admins %s if you think they should be enabled.
             logger.warning('%s tried to %s restricted path %s ! (%s)'
                            % (client_id, op_name, real_path, path))
             output_objects.append({'object_type': 'file_not_found',
-                                  'name': pattern})
+                                  'name': path})
             status = returnvalues.FILE_NOT_FOUND
             continue
         if not os.path.isfile(real_path):

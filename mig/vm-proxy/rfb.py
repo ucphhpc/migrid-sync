@@ -318,7 +318,7 @@ def clientCutText(text):
 def framebufferUpdate(rectangles):
   
   return pack("!BBH", 0, 0, len(rectangles)) +\
-        (pack('!HHHHi', r.x, r.y, r.width, r.height, RAW, r.pixelData) for r in rectangles)
+        (pack('!HHHHi', r.x, r.y, r.width, r.height, 'RAW', r.pixelData) for r in rectangles)
 
 # Set colour map entries
 #

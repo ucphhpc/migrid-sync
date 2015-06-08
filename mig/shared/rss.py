@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rss - RSS feed generator functions
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -98,7 +98,7 @@ def write_rss_feed(rss_feed, destination, insert_header=''):
 
 if __name__ == "__main__":
     from shared.conf import get_configuration_object
-    conf = get_configuration_object()
+    configuration = get_configuration_object()
     feed_base = "demofeed"
     feed_raw = "%s.xml" % feed_base
     feed_css_style = "%s.css" % feed_base

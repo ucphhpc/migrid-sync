@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codegrep - a simple helper to locate strings in the project code.
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,7 +27,7 @@ import sys
 
 # Ignore backup and dot files in wild card match
 plain = '[a-zA-Z0-9]*.py'
-code_files = [
+py_code_files = [
     '%s' % plain,
     'cgi-bin/%s' % plain,
     'cgi-sid/%s' % plain,
@@ -39,18 +39,14 @@ code_files = [
     'shared/functionality/%s' % plain,
     'shared/distos/%s' % plain,
     'simulation/%s' % plain,
-    'resource/frontend_script.sh',
-    'resource/master_node_script.sh',
-    'resource/leader_node_script.sh',
-    'resource/dummy_node_script.sh',
     'user/%s' % plain,
     'vm-proxy/%s' % plain,
     'webserver/%s' % plain,
     ]
-code_files += ['cgi-sid/%s' % name for name in ['requestnewjob',
+py_code_files += ['cgi-sid/%s' % name for name in ['requestnewjob',
                'putrespgid']]
 
-code_files += ['cgi-bin/%s' % name for name in [
+py_code_files += ['cgi-bin/%s' % name for name in [
     'listdir',
     'mkdir',
     'put',
@@ -61,6 +57,13 @@ code_files += ['cgi-bin/%s' % name for name in [
     'walk',
     'getrespgid',
     ]]
+sh_code_files = [
+    'resource/frontend_script.sh',
+    'resource/master_node_script.sh',
+    'resource/leader_node_script.sh',
+    'resource/dummy_node_script.sh',
+    ]
+code_files = py_code_files + sh_code_files
 
 if '__main__' == __name__:
     if len(sys.argv) < 2:

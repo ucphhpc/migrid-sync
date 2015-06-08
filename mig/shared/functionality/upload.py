@@ -67,7 +67,7 @@ def write_chunks(path, file_obj, restrict):
             os.chmod(path, 0600)
         return True
     except Exception, exc:
-        os.remove(real_path)
+        os.remove(path)
         raise exc
 
 def main(client_id, user_arguments_dict):
