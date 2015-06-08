@@ -76,6 +76,7 @@ def fill_template(template_file, output_file, settings):
 def generate_confs(
     source=os.path.dirname(sys.argv[0]),
     destination=os.path.dirname(sys.argv[0]),
+    base_fqdn='localhost',
     public_fqdn='localhost',
     cert_fqdn='localhost',
     oid_fqdn='localhost',
@@ -126,6 +127,7 @@ def generate_confs(
     expanded = locals()
 
     user_dict = {}
+    user_dict['__BASE_FQDN__'] = base_fqdn
     user_dict['__PUBLIC_FQDN__'] = public_fqdn
     user_dict['__CERT_FQDN__'] = cert_fqdn
     user_dict['__OID_FQDN__'] = oid_fqdn
@@ -297,6 +299,7 @@ def create_user(
     group,
     ssh_login_group='remotelogin',
     debug=False,
+    base_fqdn=socket.getfqdn(),
     public_fqdn=socket.getfqdn(),
     cert_fqdn=socket.getfqdn(),
     oid_fqdn=socket.getfqdn(),    
@@ -446,6 +449,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     generate_confs(
         src,
         dst,
+        base_fqdn,
         public_fqdn,
         cert_fqdn,
         oid_fqdn,
@@ -497,7 +501,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
 
     settings = {'user': user, 'group': group, 'server_conf': server_conf,
                 'trac_ini': trac_ini, 'home': home, 'server_dir': server_dir,
-                'public_fqdn': public_fqdn}
+                'base_fqdn': base_fqdn, 'public_fqdn': public_fqdn}
     settings['sudo_cmd'] = 'sudo su - %(user)s -c' % settings
 
     print '# Clone %s to %s and put config files there:' % (apache_etc,
@@ -528,7 +532,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
 %(sudo_cmd)s 'cp -f -x \\
     %(home)s/.ssh/{id_rsa.pub,authorized_keys}'
 %(sudo_cmd)s 'ssh -o StrictHostKeyChecking=no \\
-    %(user)s@%(public_fqdn)s pwd >/dev/null'
+    %(user)s@%(base_fqdn)s pwd >/dev/null'
 %(sudo_cmd)s 'svn checkout http://migrid.googlecode.com/svn/trunk/ %(home)s'
 sudo chown %(user)s:%(group)s %(server_conf)s %(trac_ini)s
 sudo cp -f -p %(server_conf)s %(trac_ini)s %(server_dir)s/

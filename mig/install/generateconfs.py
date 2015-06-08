@@ -49,6 +49,7 @@ if '__main__' == __name__:
     names = (
         'source',
         'destination',
+        'base_fqdn',
         'public_fqdn',
         'cert_fqdn',
         'oid_fqdn',
