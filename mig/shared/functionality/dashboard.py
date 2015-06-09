@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # dashboard - Dashboard entry page backend
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -80,13 +80,13 @@ $(document).ready(function() {
               return result;
           }
 
-          $("#jobs_stats").addClass("spinner").css("padding-left", "20px");
+          $("#jobs_stats").addClass("spinner iconspace");
           $("#jobs_stats").html("Loading job stats...");
-          $("#res_stats").addClass("spinner").css("padding-left", "20px");
+          $("#res_stats").addClass("spinner iconspace");
           $("#res_stats").html("Loading resource stats...");
-          $("#disk_stats").addClass("spinner").css("padding-left", "20px");
+          $("#disk_stats").addClass("spinner iconspace");
           $("#disk_stats").html("Loading disk stats...");
-          $("#cert_stats").addClass("spinner").css("padding-left", "20px");
+          $("#cert_stats").addClass("spinner iconspace");
           $("#cert_stats").html("Loading certificate information...");
           /* Run certificate request in the background and handle as soon as results come in */
           $.ajax({
@@ -103,7 +103,7 @@ $(document).ready(function() {
                   for(i=0; i<jsonRes.length; i++) {
                       if (jsonRes[i].object_type == "user_stats") {    
                           certificate = jsonRes[i].certificate;
-                          $("#cert_stats").removeClass("spinner").css("padding-left", "0px");
+                          $("#cert_stats").removeClass("spinner iconspace");
                           $("#cert_stats").empty();
                           if (certificate.expire == -1) {
                               break;
@@ -136,7 +136,7 @@ $(document).ready(function() {
                       if (jsonRes[i].object_type == "user_stats") {    
                           jobs = jsonRes[i].jobs;
                           //alert("inspect stats result: " + jobs);
-                          $("#jobs_stats").removeClass("spinner").css("padding-left", "0px");
+                          $("#jobs_stats").removeClass("spinner iconspace");
                           $("#jobs_stats").empty();
                           $("#jobs_stats").append("You have submitted a total of " + jobs.total +
                               " jobs: " + jobs.parse + " parse, " + jobs.queued + " queued, " +
@@ -163,7 +163,7 @@ $(document).ready(function() {
                       if (jsonRes[i].object_type == "user_stats") {    
                           resources = jsonRes[i].resources;
                           //alert("inspect resources stats result: " + resources);
-                          $("#res_stats").removeClass("spinner").css("padding-left", "0px");
+                          $("#res_stats").removeClass("spinner iconspace");
                           $("#res_stats").empty();
                           $("#res_stats").append(resources.resources + " resources providing " +
                           resources.exes + " execution units in total allow execution of your jobs.");
@@ -186,7 +186,7 @@ $(document).ready(function() {
                       if (jsonRes[i].object_type == "user_stats") {    
                           disk = jsonRes[i].disk;
                           //alert("inspect disk stats result: " + disk);
-                          $("#disk_stats").removeClass("spinner").css("padding-left", "0px");
+                          $("#disk_stats").removeClass("spinner iconspace");
                           $("#disk_stats").empty();
                           $("#disk_stats").append("Your own " + disk.own_files +" files and " +
                               disk.own_directories + " directories take up " + roundNumber(disk.own_megabytes, 2) +

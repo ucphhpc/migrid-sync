@@ -696,19 +696,22 @@ table th.icon {
     background-repeat: no-repeat;
     background-position: left center;
  }
-.error { 
+.iconspace {
+  padding-left: 20px;
+}
+.error {
     background-image: url('/images/icons/exclamation.png');
     background-repeat: no-repeat;
  }
-.warn { 
+.warn {
     background-image: url('/images/icons/error.png');
     background-repeat: no-repeat;
  }
-.info { 
+.info {
     background-image: url('/images/icons/information.png');
     background-repeat: no-repeat;
 }
-.ok { 
+.ok {
     background-image: url('/images/icons/accept.png');
     background-repeat: no-repeat;
 }

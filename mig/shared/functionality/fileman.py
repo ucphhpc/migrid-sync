@@ -165,7 +165,7 @@ def html_tmpl(configuration, title_entry):
             
                     <label for="fileupload_0_0_0">File:</label>
                     <input id="fileupload_0_0_0" type="file" name="fileupload_0_0_0"/>
-                    <input type="submit" value="Upload" onClick="$(\'#upload_output\').html(\'<div><span style=\\\'margin-left: 20px;\\\'>uploading ... please wait</span></div>\').addClass(\'info\').addClass(\'spinner\');" />
+                    <input type="submit" value="Upload" onClick="$(\'#upload_output\').html(\'<div><span class=\\\'iconspace info spinner\\\'>uploading ... please wait</span></div>\')" />
                 </fieldset>
             </form>
             <div id="upload_output"></div>
@@ -221,7 +221,7 @@ def html_tmpl(configuration, title_entry):
     ''' % fill_entries
     html += '''
     <div id="editor_dialog" title="Editor" style="display: none;">
-    <div class="spinner" style="padding-left: 20px;"></div>
+    <div class="iconspace spinner"></div>
     %s
 ''' % edit_file('', '', output_format='json', includes=edit_includes)
     html += '''

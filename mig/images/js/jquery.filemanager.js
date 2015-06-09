@@ -151,7 +151,7 @@ if (jQuery) (function($){
         
 	    for (var i=0; i<jsonRes.length; i++) {
 		if (jsonRes[i]['object_type'] == 'error_text')
-		    errors +='<span class="errortext">'+jsonRes[i].text+'</span><br />';
+		    errors +='<span class="errortext error iconspace">'+jsonRes[i].text+'</span><br />';
 	    }
 	    return errors;
 	}
@@ -162,7 +162,7 @@ if (jQuery) (function($){
         
 	    for (var i=0; i<jsonRes.length; i++) {
 		if (jsonRes[i]['object_type'] == 'warning')
-		    warnings +='<span class="warningtext">'+jsonRes[i].text+'</span><br />';
+		    warnings +='<span class="warningtext warning iconspace">'+jsonRes[i].text+'</span><br />';
 	    }
 	    return warnings;
 	}
@@ -369,7 +369,7 @@ if (jQuery) (function($){
             
 		$("#cmd_dialog").dialog(okDialog);
 		$("#cmd_dialog").dialog('open');
-		$("#cmd_dialog").html('<p class="spinner" style="padding-left: 26px;">Copying... "'+src+'" <br />To: "'+dst+'"</p>');
+		$("#cmd_dialog").html('<p class="spinner iconspace">Copying... "'+src+'" <br />To: "'+dst+'"</p>');
 
 		$.post('cp.py', { src: src,
 			    dst: dst,
@@ -1501,6 +1501,7 @@ if (jQuery) (function($){
 		    $("#upload_form").ajaxForm(
 					       {target: '#upload_output', dataType: 'json',
 						       success: function(responseObject, statusText) {
+						       $("#upload_output").removeClass("info spinner iconspace");
 						       var errors = $(this).renderError(responseObject);
 						       var warnings = $(this).renderWarning(responseObject);
 						       if (errors.length > 0) {
@@ -1512,13 +1513,6 @@ if (jQuery) (function($){
 							   $(".fm_files").parent().reload($("#upload_form input[name='remotefilename_0']").val().substr(2));
 						       }
 						   }
-						   /*
-						     ,
-						     error: function(responseObject, status, err){
-						     var errors = 'upload error: '+responseObject.status+' ; '+status+' ; '+err;
-						     $("#upload_output").html(errors);
-						     }
-						   */
 					       });
             
 
@@ -1886,22 +1880,22 @@ function mig_fancyuploadchunked_init(name, callback) {
     }
     function showWaitInfo(msg, fadein_ms, fadeout_ms) {
         var html_msg = "<div class='spinner' style='margin: 20px;'>";
-        html_msg += "<span style='margin-left: 20px;'>"+msg+"</span></div>";
+        html_msg += "<span class='iconspace'>"+msg+"</span></div>";
         showMessage("Info: "+msg, html_msg, fadein_ms, fadeout_ms);
     }
     function showInfo(msg, fadein_ms, fadeout_ms) {
         var html_msg = "<div class='info' style='margin: 20px;'>";
-        html_msg += "<span style='margin-left: 20px;'>"+msg+"</span></div>";
+        html_msg += "<span class='iconspace'>"+msg+"</span></div>";
         showMessage("Info: "+msg, html_msg, fadein_ms, fadeout_ms);
     }
     function showWarning(msg, fadein_ms, fadeout_ms) {
         var html_msg = "<div class='warn' style='margin: 20px;'>";
-        html_msg += "<span style='margin-left: 20px;'>"+msg+"</span></div>";
+        html_msg += "<span class='iconspace'>"+msg+"</span></div>";
         showMessage("Warning: "+msg, html_msg, fadein_ms, fadeout_ms);
     }
     function showError(msg, fadein_ms, fadeout_ms) {
         var html_msg = "<div class='error' style='margin: 20px;'>";
-        html_msg += "<span style='margin-left: 20px;'>"+msg+"</span></div>";
+        html_msg += "<span class='iconspace'>"+msg+"</span></div>";
         showMessage("Error: "+msg, html_msg, fadein_ms, fadeout_ms);
     }
 
