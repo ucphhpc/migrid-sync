@@ -270,35 +270,47 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
         public_meta = [('CREATOR', 'Owner'), ('NAME', 'Name'),
                        ('DESCRIPTION', 'Description'),
                        ('CREATED_TIMESTAMP', 'Date')]
+
+        # Use the default preamle to get style, skin and so on right
+        
         contents = get_cgi_html_preamble(configuration, "Public Archive: %s" % \
                                          published_id, "", widgets=False)
+
+        # Manually create modified page start like get_cgi_html_header but
+        # using staticpage class for flexible skinning
+
         contents += """
-<body class='fixedwidth'>
+<body class='staticpage'>
 <div id='topspace'>
 </div>
-<div class='fixedwidth' id='toplogo'>
+<div class='staticpage' id='toplogo'>
 <img src='%s/banner-logo.jpg' id='logoimage'
-     class='fixedwidth' alt='site logo'/>
+     class='staticpage' alt='site logo'/>
 </div>
 
-<div class='contentblock fixedwidth' id='nomenu'>
+<div class='contentblock staticpage' id='nomenu'>
 <div id='migheader'>
 </div>
-<div class='fixedwidth' id='content'>
+<div class='staticpage' id='content'>
+""" % configuration.site_skin_base
+
+        # Then fill actual archive page
+    
+        contents += """
 <div>
-<h1 class='fixedwidth'>Public Archive</h1>
+<h1 class='staticpage'>Public Archive</h1>
 This is the public archive with unique ID %s .<br/>
 The user supplied meta data and files are available below.
 
-<h2>Archive Meta Data</h2>
-        """ % (configuration.site_skin_base, published_id)
+<h2 class='staticpage'>Archive Meta Data</h2>
+""" % published_id
         for (meta_key, meta_label) in public_meta:
             meta_value = freeze_dict.get(meta_key, '')
             if meta_value:
                 contents += """%s: %s<br/>
 """ % (meta_label, meta_value)
         contents += """
-<h2>Archive Files</h2>
+<h2 class='staticpage'>Archive Files</h2>
         """
         for rel_path in frozen_files:
             contents += """<a href='%s'>%s</a><br/>
