@@ -282,6 +282,11 @@ def handle_package_upload(
         msg += "Unknown/unsupported archive format: %s" % relative_src
         return (False, msg)        
 
+    if not status:
+        msg = """Unpacked archive with one or more errors: 
+%s""" % msg
+        return (status, msg)
+    
     # submit mrsl files to the parser. It should be done from within this
     # function to keep the right order if multiple files are created in the
     # html form.
@@ -296,12 +301,12 @@ def handle_package_upload(
             os.path.abspath(os.path.join(configuration.user_home,
                             client_dir)) + os.sep
         for mrslfile in mrslfiles_to_parse:
-            (status, parse_msg, job_id) = new_job(mrslfile, client_id,
+            (job_status, parse_msg, job_id) = new_job(mrslfile, client_id,
                     configuration, False, True)
             relative_filename = os.sep + mrslfile.replace(base_dir, '')
             submitstatus = {'object_type': 'submitstatus',
                             'name': relative_filename}
-            if not status:
+            if not job_status:
                 submitstatus['status'] = False
                 submitstatus['job_id'] = job_id
                 submitstatus['message'] = parse_msg
@@ -318,12 +323,7 @@ def handle_package_upload(
             # msg += parse_msg
 
             submitstatuslist.append(submitstatus)
-        return (status, submitstatuslist)
-    else:
-        if not status:
-            msg = """Unpacked archive with one or more errors:
- %s""" % msg
-        return (status, msg)
+    return (status, submitstatuslist)
 
 
 def unpack_archive(

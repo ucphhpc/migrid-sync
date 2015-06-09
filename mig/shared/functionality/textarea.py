@@ -394,11 +394,28 @@ def main(client_id, user_arguments_dict):
                 (status, msg) = handle_package_upload(local_filename,
                         remote_filename, client_id, configuration,
                         submit_mrslfiles, os.path.dirname(local_filename))
-                if not status:
-                    output_objects.append({'object_type': 'error_text',
-                            'text': 'Error: %s' % msg})
-                    return (output_objects, returnvalues.CLIENT_ERROR)
-                submitstatuslist = msg
+                if status:
+                    if submit_mrslfiles:
+                        if isinstance(msg, basestring):
+                            output_objects.append(
+                                {'object_type': 'error_text',
+                                 'text': 'Error in submit: %s' % msg})
+                        else:
+                            submitstatuslist = msg
+                    else:
+                        output_objects.append({'object_type': 'text',
+                                               'text': msg})
+                else:
+                    if submit_mrslfiles:
+                        if isinstance(msg, basestring):
+                            output_objects.append(
+                                {'object_type': 'error_text',
+                                 'text': 'Error in unpack: %s' % msg})
+                        else:
+                            submitstatuslist = msg
+                    else:
+                        output_objects.append({'object_type': 'error_text',
+                                               'text': 'Problems unpacking: %s' % msg})
             else:
 
                 # output_objects.append({"object_type":"text", "text":msg})

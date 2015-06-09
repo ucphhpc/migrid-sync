@@ -50,7 +50,9 @@ def html_tmpl(configuration, title_entry):
             '''
         edit_includes.append('submit')
     else:
-        fill_entries["upload_submit_entry"] = ''
+        fill_entries["upload_submit_entry"] = '''
+            <input id="submitmrsl_0" type="hidden" value="0" name="submitmrsl_0"/>
+        '''
         
     html = '''
     <div id="fm_debug"></div>

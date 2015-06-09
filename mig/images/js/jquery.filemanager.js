@@ -404,13 +404,13 @@ if (jQuery) (function($){
 			field = 'submitstatuslist';
 			for (j = 0; j < jsonRes[i][field].length; j++) {
 			    if (jsonRes[i][field][j]['status']) {
-				misc_output += '<p>Submitted "'
+				misc_output += '<p class="info iconspace">Submitted "'
 				    + jsonRes[i][field][j]['name']
 				    + '"</p><p>Job identfier: "'
 				    +jsonRes[i][field][j]['job_id']
 				    + '"</p>';
 			    } else {
-				misc_output +=  '<p>Failed submitting:</p><p>'
+				misc_output +=  '<p class="errortext error iconspace">Failed submitting:</p><p>'
 				    + jsonRes[i][field][j]['name']
 				    + ' '+jsonRes[i][field][j]['message']
 				    + '</p>';
@@ -1504,13 +1504,13 @@ if (jQuery) (function($){
 						       $("#upload_output").removeClass("info spinner iconspace");
 						       var errors = $(this).renderError(responseObject);
 						       var warnings = $(this).renderWarning(responseObject);
+						       var misc_output = parseWrapped(responseObject, {});
 						       if (errors.length > 0) {
 							   $("#upload_output").html(errors);
 						       } else if (warnings.length > 0) {
 							   $("#upload_output").html(warnings);
 						       } else {
-							   $("#upload_dialog").dialog('close');
-							   $(".fm_files").parent().reload($("#upload_form input[name='remotefilename_0']").val().substr(2));
+							   $("#upload_output").html("<p class='info iconspace'>Upload: "+statusText+"</p>" + misc_output);
 						       }
 						   }
 					       });
