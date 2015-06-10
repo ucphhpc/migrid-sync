@@ -9,7 +9,7 @@ ERDA
 <link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
 
 <!-- site basic skin style -->
-<!--<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>-->
+<!-- <link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/> -->
 <link rel="stylesheet" type="text/css" href="/images/skin/erda-basic/core.css" media="screen"/>
 
 <!-- override with any site-specific styles -->
@@ -55,7 +55,7 @@ ERDA
 <div class="staticpage" id="toplogo">
 <div id="toplogoleft">
 <img src="/images/skin/erda-basic/logo-small.png" id="logoimage"
-     alt="site logo"/>
+     class="staticpage" alt="site logo"/>
 </div>
 <div id="toplogoright">
 <span id="logotitle" class="staticpage">
@@ -239,15 +239,15 @@ forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
 
 <div id="bottomlogo">
 <div id="bottomlogoleft">
-<p id="support">
+<div id="support">
 <img src="/images/icons/help.png" id="supportimage" alt=""/>
-<span class="supporttext staticpage i18n" lang="en">
-<a href="mailto:support@erda.dk">Contact and Support</a></p>
-</span>
-<span class="supporttext staticpage i18n" lang="da">
-<a href="mailto:support@erda.dk">Kontakt og hjælp</a></p>
-</span>
-</p>
+<div class="supporttext staticpage i18n" lang="en">
+<a href="mailto:support@erda.dk">Contact & Help</a>
+</div>
+<div class="supporttext staticpage i18n" lang="da">
+<a href="mailto:support@erda.dk">Kontakt & Hjælp</a>
+</div>
+</div>
 </div>
 <div id="bottomlogoright">
 <p><img src="/images/copyright.png" id="creditsimage" alt=""/>
