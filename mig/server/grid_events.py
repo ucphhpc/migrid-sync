@@ -94,19 +94,21 @@ def get_expand_map(trigger_path, rule, state_change):
 def extract_time_in_secs(rule, field):
     """Get time in seconds for provided free form period field. The value is a
     integer or float string with optional unit letter appended. If no unit is
-    given the default period is used.
+    given the default period is used and if all empty the default time is used.
     """
-    limit_str = rule.get(field, str(_default_time))
+    limit_str = rule.get(field, '')
+    if not limit_str:
+        limit_str = str(_default_time)
     # NOTE: format is 3(s) or 52m
     # extract unit suffix letter and fall back to a raw value with default unit
     unit_key = _default_period
-    if not limit_str[-1].isdigit():
+    if not limit_str[-1:].isdigit():
         val_str = limit_str[:-1]
         if limit_str[-1] in _unit_periods.keys():
             unit_key = limit_str[-1]
         else:
-            print "ERROR: invalid time value %s ... fall back to defaults" % \
-                  limit_str
+            #print "ERROR: invalid time value %s ... fall back to defaults" % \
+            #      limit_str
             unit_key, val_str = _default_period, _default_time
     else:
         val_str = limit_str
@@ -115,6 +117,7 @@ def extract_time_in_secs(rule, field):
     except Exception, exc:
         print "ERROR: failed to parse time %s (%s)!" % (limit_str, exc)
         secs = 0.0
+    secs = max(secs, 0.0)
     return secs
 
 def extract_hit_limit(rule, field):
