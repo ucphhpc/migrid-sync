@@ -291,7 +291,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
 <div class='contentblock staticpage' id='nomenu'>
 <div id='migheader'>
 </div>
-<div class='staticpage' id='content'>
+<div class='staticpage' id='content' lang='en'>
 """ % configuration.site_skin_base
 
         # Then fill actual archive page
@@ -300,7 +300,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
 <div>
 <h1 class='staticpage'>Public Archive</h1>
 This is the public archive with unique ID %s .<br/>
-The user supplied meta data and files are available below.
+The user-supplied meta data and files are available below.
 
 <h2 class='staticpage'>Archive Meta Data</h2>
 """ % published_id

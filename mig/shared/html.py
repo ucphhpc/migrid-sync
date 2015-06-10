@@ -399,7 +399,7 @@ def get_cgi_html_header(
 <div id="migheader">
 %s
 </div>
-<div id="content">
+<div id="content" lang="en">
 ''' % (maximize, user_pre_content, header)
 
     return out
@@ -431,15 +431,15 @@ def get_cgi_html_footer(configuration, footer='', html=True, widgets=True, user_
     out += '''
 <div id="bottomlogo">
 <div id="bottomlogoleft">
-<p id="support" lang="en">
+<div id="support" lang="en">
 <img src="%s" id="supportimage" alt=""/>
 <span id="supporttext">
 %s
 </span>
-</p>
+</div>
 </div>
 <div id="bottomlogoright">
-<p id="credits">
+<p id="credits" lang="en">
 <img src="%s" id="creditsimage" alt=""/>
 <span id="creditstext">
 %s
