@@ -500,33 +500,27 @@ table th.icon {
 }
 #bottomlogo {
   border: 1px solid black;
-  padding: 8px 4px;
+  padding: 6px 8px;
   font-size: 12px;
   font-weight: normal;
   color: black;
   border-spacing: 0;
-  min-height: 16px;
+  min-height: 20px;
 }
 /* keep bottomlogo bar elements in check */
-#bottomlogo div {
-  padding: 0 2px;
-  margin: 0;
+#bottomlogo div, #bottomlogo p, #bottomlogo span {
   vertical-align: middle;
-}
-#bottomlogo p, #bottomlogo span {
-  padding: 0px 2px;
   margin: 0;
-  vertical-align: middle;
 }
 #bottomlogoleft {
-  padding: 0px;
+  padding: 0px 2px;
   margin: 0;
   vertical-align: middle;
   float: left;
   border-radius: 4px;
 }
 #bottomlogoright {
-  padding: 0px;
+  padding: 0px 2px;
   margin: 0;
   text-align: right;
   vertical-align: middle;
@@ -540,6 +534,9 @@ table th.icon {
   padding: 0px;
   display: inline;
   vertical-align: middle;
+}
+.supporttext {
+  display: inline;
 }
 #support {
   padding: 2px;
@@ -564,6 +561,9 @@ table th.icon {
   vertical-align: middle;
 }
 #credits a {
+}
+.creditstext {
+  display: inline;
 }
 
 #content, .content {

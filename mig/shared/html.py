@@ -433,18 +433,18 @@ def get_cgi_html_footer(configuration, footer='', html=True, widgets=True, user_
 <div id="bottomlogoleft">
 <div id="support">
 <img src="%s" id="supportimage" alt=""/>
-<span class="supporttext i18n" lang="en">
+<div class="supporttext i18n" lang="en">
 %s
-</span>
+</div>
 </div>
 </div>
 <div id="bottomlogoright">
-<p id="credits">
+<div id="credits">
 <img src="%s" id="creditsimage" alt=""/>
-<span class="creditstext i18n" lang="en">
+<div class="creditstext i18n" lang="en">
 %s
-</span>
-</p>
+</div>
+</div>
 </div>
 </div>
 <div id="bottomspace">
