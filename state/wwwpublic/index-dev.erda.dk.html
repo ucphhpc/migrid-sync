@@ -10,6 +10,7 @@ ERDA
 
 <!-- site basic skin style -->
 <link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>
+<!--<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/core.css" media="screen"/>-->
 
 <!-- override with any site-specific styles -->
 <link rel="stylesheet" type="text/css" href="/images/site-custom.css"
@@ -21,7 +22,7 @@ ERDA
 
 <link rel="icon" type="image/vnd.microsoft.icon"
       href="/images/erda-favicon.ico"/>
-<link href="default.css" rel="stylesheet" type="text/css">
+
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
@@ -54,6 +55,9 @@ ERDA
 <div class="staticpage" id="toplogo">
 <img src="/images/skin/erda-ucph-science/banner-logo.jpg" id="logoimage"
      class="staticpage" alt="site logo"/>
+<span id="logotitle" class="staticpage">
+University of Copenhagen - Electronic Research Data Archive
+</span>
 </div>
 
 <div class="contentblock staticpage" id="nomenu">
@@ -71,8 +75,10 @@ ERDA
 <option value="en" selected="selected">English</option>
 </select>
 </div>
-<div class="english" lang="en">
+<div class="english i18n" lang="en">
 <h1 class="staticpage">Welcome to UCPH ERDA</h1>
+
+<h2>About UCPH ERDA</h2>
 <p>
 University of Copenhagen - Electronic Research Data Archive (UCPH ERDA or just ERDA) is a 
 storage and archiving facility provided by University of Copenhagen to
@@ -142,8 +148,10 @@ free to contact us using the <em>Contact & Help</em> link below in case you
 have any questions or comments (in English or Danish).
 </p>
 </div>
-<div class="danish" lang="da">
+<div class="danish i18n" lang="da">
 <h1 class="staticpage">Velkommen til UCPH ERDA!</h1>
+
+<h2>Om UCPH ERDA</h2>
 <p>
 University of Copenhagen - Electronic Research Data Archive (UCPH ERDA eller blot ERDA) er 
 et lager- og arkiveringssystem leveret af Københavns Universitet til
@@ -226,28 +234,30 @@ forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
 </div>
 
 <div id="bottomlogo">
-  <div id="bottomlogoleft">
-    <img src="/images/icons/help.png" id="supportimage" alt=""/>
-    <div id="support" lang="en">
-      <span id="supporttext" class="staticpage">
-	<p class="supporttitle">Support</p>
-	<p><a href="https://erda.dk/public/ucph-erda-user-guide.pdf">ERDA
-	User Guide</a><br />Questions about ERDA? <br />Please contact
-	us at <a href="mailto:support@erda.dk">support@erda.dk</a></p>
-	</span>
-    </div>
-    <div lang="da">
-      <span class="staticpage">
-	<p><b>Support</b></p><br/>
-	<p><a href="https://erda.dk/public/ucph-erda-brugervejledning.pdf">ERDA Brugervejledning</a><br />Spørgsmål om ERDA? <br />Skriv til os på <a href="mailto:support@erda.dk">support@erda.dk</a></p>
-      </span>
-    </div>
-  </div>
-  <div id="bottomlogoright">
-    <p><img src="/images/copyright.png" id="creditsimage" alt=""/>
-      2003-2015, <a href="http://www.migrid.org">The MiG Project</a>
-    </p>
-  </div>
+<div id="bottomlogoleft">
+<p id="support">
+<img src="/images/icons/help.png" id="supportimage" alt=""/>
+<span class="supporttext staticpage i18n" lang="en">
+<p class="supporttitle i18n" lang="en">Support</p>
+<p class="i18n" lang="en"><a href="https://erda.dk/public/ucph-erda-user-guide.pdf">ERDA
+User Guide</a><br />Questions about ERDA? <br />Please contact
+us at <a href="mailto:support@erda.dk">support@erda.dk</a></p>
+</span>
+<span class="supporttext staticpage i18n" lang="da">
+<p class="supporttitle i18n" lang="da">Vejledning</p>
+<p class="i18n" lang="da"><a href="https://erda.dk/public/ucph-erda-brugervejledning.pdf">ERDA 
+Brugervejledning</a><br />Spørgsmål om ERDA? <br />Skriv til os på 
+<a href="mailto:support@erda.dk">support@erda.dk</a></p>
+</span>
+</p>
+</div>
+<div id="bottomlogoright">
+<p><img src="/images/copyright.png" id="creditsimage" alt=""/>
+<span id="credits">
+2003-2015, <a href="http://www.migrid.org">The MiG Project</a>
+</span>
+</p>
+</div>
 </div>
 <div id="bottomspace">
 </div>

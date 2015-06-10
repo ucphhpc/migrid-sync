@@ -6,40 +6,61 @@
 ERDA
 </title>
 <!-- site default style -->
-<link rel="stylesheet" type="text/css" href="/images/erda-default.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
+
+<!-- site basic skin style -->
+<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>
+<!--<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/core.css" media="screen"/>-->
+
 <!-- override with any site-specific styles -->
 <link rel="stylesheet" type="text/css" href="/images/site-custom.css"
       media="screen"/>
+
+<!-- site skin style -->
+<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.custom.css" media="screen"/>
 
 <link rel="icon" type="image/vnd.microsoft.icon"
       href="/images/erda-favicon.ico"/>
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
 <script type="text/javascript" >
     $(document).ready(function() {
+        /* Init FAQ as foldable but closed and with indivdual heights */
+        $(".faq-accordion").accordion({
+                                       collapsible: true,
+                                       active: false,
+                                       heightStyle: "content"
+                                      });
+        /* fix and reduce accordion spacing */
+        $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
         $("#langselect").on('change', function() { 
                                           var lang = $(this).val();
                                           //alert("switch_language: "+lang);
                                           switch_language(lang);
                                       }
                             );
-        switch_language('en');
+        var default_lang = 'en';
+        $("#langselect").val(default_lang);
+        switch_language(default_lang);
     });
 </script>
 
 </head>
-<body>
+<body class="staticpage">
 <div id="topspace">
 </div>
-<div id="toplogo">
-<img src="/images/erda-logo-small.png" id="logoimage" alt="site logo"/>
-<span id="logotitle">
+<div class="staticpage" id="toplogo">
+<img src="/images/skin/erda-ucph-science/banner-logo.jpg" id="logoimage"
+     class="staticpage" alt="site logo"/>
+<span id="logotitle" class="staticpage">
 University of Copenhagen - Electronic Research Data Archive
 </span>
 </div>
 
-<div class="contentblock" id="nomenu">
+<div class="contentblock staticpage" id="nomenu">
 <div class="precontentwidgets">
 <!-- begin user supplied pre content widgets -->
 <!-- empty -->
@@ -47,19 +68,31 @@ University of Copenhagen - Electronic Research Data Archive
 </div>
 <div id="migheader">
 </div>
-<div id="content">
+<div class="staticpage" id="content">
 <div class="righttext">
 <select id="langselect">
 <option value="da">Dansk</option>
 <option value="en" selected="selected">English</option>
 </select>
 </div>
-<div id="english" lang="en">
-<h1>Welcome to ERDA!</h1>
+<div class="english i18n" lang="en">
+<h1 class="staticpage">Welcome to UCPH ERDA</h1>
+
+<h2>About UCPH ERDA</h2>
+<p>
+University of Copenhagen - Electronic Research Data Archive (UCPH ERDA or just ERDA) is a 
+storage and archiving facility provided by University of Copenhagen to
+employees and students. For now it is limited to the faculty of Science,
+but it may be extended to all of UCPH in the future.
+ERDA delivers centralized storage space for private and shared files in
+addition to archiving of e.g. PhD theses and research data for
+publishing.
+</p>
+<h2 class="staticpage">Sign up and use ERDA</h2>
 <p>
 If you're new here you need
 to <a href="https://sid.erda.dk/cgi-sid/signup.py">sign up for an account</a> 
-before you can continue.<br />
+before you can continue using ERDA.<br />
 You may also want to refer to the 
 <a href="https://erda.dk/public/ucph-erda-user-guide.pdf">ERDA User Guide</a>
 for an introduction and help on how to get the most out of your account. 
@@ -68,11 +101,69 @@ for an introduction and help on how to get the most out of your account.
 to <a href="https://sid.erda.dk/cgi-sid/login.py">login to your account</a>
 directly.
 </p>
-</div>
-<div id="danish" lang="da">
-<h1>Velkommen til ERDA!</h1>
+<h2 class="staticpage">Frequently Asked Questions (FAQ)</h2>
+<div class="faq-accordion">
+<h4 class="staticpage">How much storage space do I have on ERDA?</h4>
 <p>
-For nye brugere af ERDA er det n&oslash;dvendigt f&oslash;rst at 
+There's no space quota as such on ERDA, but the huge data sets known
+from high energy physics and bioinformatic databases are examples of data
+contents not considered suitable for ERDA. Anything within tens of
+terabytes should be fine, and we suggest that you just have a word with
+us if you want to store more than that.
+</p>
+<h4 class="staticpage">Is My ERDA Data Replicated and Backed Up?</h4>
+<p>
+All data on ERDA is automatically replicated over multiple disks with
+RAID technology. We do <em>not</em> currently guarantee automatic and complete backup of
+ordinary data in your ERDA home folder or in the Workgroup shares. Only files
+explicitly duplicated with the Archive feature get backed up to
+tape. Eventually this will include off-site tape backup for extra safety.
+</p>
+<h4 class="staticpage">Can I Publish and Share Data in e.g. a Read-only Fashion on ERDA?</h4>
+<p>
+Yes, depending on the audience and dynamics of the data to share you can
+use one of three methods.<br/> 
+For permanent read-only publishing use the Archives and mark it for public availability.
+For more dynamic data you can either share in a read-write manner using
+the Workgroup shares or do read-only sharing with the associated web
+pages. The latter come in a public and in a group-wide flavor and the
+  publishing is done by Workgroup owners storing data in the public_base and
+  private_base workgroup subdirs respectively on ERDA. 
+</p>
+<h4 class="staticpage">How Are Workgroups Managed?</h4>
+<p>
+Workgroups can be created by VIP and TAP employees and the creator of a
+workgroup automatically becomes owner. All user management is left to
+the owner(s) without interaction from the ERDA system owners. Co-owners
+and members can be added either directly using the <em>Swedish numberplate</em>
+alias of the user, or indirectly if the user requests owner-/membership on the
+Workgroups page, and the owner(s) follow the instructions then sent
+on email about adding the user with the full user ID format. 
+</p>
+</div>
+<h2 class="staticpage">Questions and Support</h2>
+<p>
+The user guide provides basic information about using ERDA, but feel
+free to contact us using the <em>Contact & Help</em> link below in case you
+have any questions or comments (in English or Danish).
+</p>
+</div>
+<div class="danish i18n" lang="da">
+<h1 class="staticpage">Velkommen til UCPH ERDA!</h1>
+
+<h2>Om UCPH ERDA</h2>
+<p>
+University of Copenhagen - Electronic Research Data Archive (UCPH ERDA eller blot ERDA) er 
+et lager- og arkiveringssystem leveret af Københavns Universitet til
+ansatte og studerende. I første omgang er det begrænset til Det natur-
+og biovidenskabelige fakultet (Science), men på længere sigt vil det
+muligvis blive udbredt til hele KU.
+ERDA leverer centraliseret lagerplads for private - og delte filer samt
+arkiveringsfaciliteter til f.eks. Ph.D. afhandlinger og forskningsdata til publicering
+</p>
+<h2 class="staticpage">Tilmelding og brug af ERDA</h2>
+<p>
+For nye brugere af ERDA er det nødvendigt først at 
 <a href="https://sid.erda.dk/cgi-sid/signup.py">oprette en konto</a>
 for at komme igang.<br />
 Det kan i den sammenhæng også anbefales at se nærmere på  
@@ -81,6 +172,57 @@ med introduktion og hjælp til at drage mest muligt nytte af kontoen.
 </p>
 <p>Eksisterende brugere kan gå direkte til
 <a href="https://sid.erda.dk/cgi-sid/login.py">ERDA login</a> siden.
+</p>
+<h2 class="staticpage">Ofte stillede spørgsmål (OSS)</h2>
+<div class="faq-accordion">
+<h4 class="staticpage">Hvor meget plads har jeg på ERDA?</h4>
+<p>
+Vi håndhæver ikke som sådan pladskvoter på ERDA, men kæmpe datasæt,
+  som dem man kender fra højenergi-fysik eller bioinformatik-databaser,
+  er eksempler på indhold, som ikke regnes for egnede til lagring på
+  ERDA. Så længe vi taler datamængder op til 40-50 terabytes, skulle der
+  ikke være nogen problemer. Hvis du gerne vil gemme mere end det, kan
+  det sikkert også lade sig gøre - bare tag en snak med os om det.
+</p>
+<h4 class="staticpage">Er mine ERDA data replikerede og med backup?</h4>
+<p>
+Al data på ERDA er automatisk replikeret over flere diske v.h.a.
+RAID-teknologi. Vi garanterer <em>ikke</em> i øjeblikket automatisk og
+  fuldstændig backup af almindelige data i din ERDA brugerfolder eller i
+  Workgroup shares. Kun filer som eksplicit er gemt som Archive bliver
+  der gemt backup af på bånd. Med tiden vil det også inkludere
+  bånd-backup på en fjernlokation for ekstra sikkerhed.
+</p>
+<h4 class="staticpage">Kan jeg publicere og dele ERDA data f.eks. så der kun er læse-adgang?</h4>
+<p>
+Ja, der er lidt forskellige måder at gøre det på afhængigt af hvor dynamiske data
+  er og hvem du vil dele med.<br/> 
+Permanent skrive-beskyttet publicering gøres bedst med Archives og
+  markering af at der skal arkiveres offentligt.
+Når det drejer sig om dynamiske data er det muligt at dele med læse- og
+  skrive-adgang via de almindelige Workgroup shares eller ar lave
+  skrivebeskyttet deling via de tilknyttede Workgroup web sider. Sidstnævnte
+  findes i en udgave med offentlig adgang og en kun for gruppens
+  deltagere. Publicering den vej foregår ved at Workgroup ejere gemmer data i de
+  tilhørende public_base hhv private_base workgroup undermapper på ERDA. 
+</p>
+<h4 class="staticpage">Hvordan styres Workgroups?</h4>
+<p>
+VIP- og TAP-ansatte kan oprette workgroups og de bliver derved
+automatisk ejere af den nye workgroup. Al brugerstyring er ejernes
+ansvar og foregår uden indblanding fra ERDA systemejerne. Medejere og
+medlemmer kan enten tilføjes direkte ved at indtaste
+brugerens <em>svenske nummerplade</em> på Workgroup Management siden
+eller ved at brugere anmoder om owner-/membership på Workgroups-siden,
+og ejerne følger de derved emailede instruktioner om at tilføje brugeren
+vha det komplette bruger-ID.
+</p>
+</div>
+<h2 class="staticpage">Spørgsmål og hjælp</h2>
+<p>
+Brugervejledningen indeholder basal information om brugen af ERDA, men
+kontakt os gerne (på dansk eller engelsk) med spørgsmål og kommentarer
+v.h.a. <em>Contact & Help</em> linket nederst på siden.
 </p>
 <p class="warningtext">
 Bemærk at ERDA siderne p.t. kun findes på engelsk. Den danske
@@ -93,16 +235,28 @@ forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
 
 <div id="bottomlogo">
 <div id="bottomlogoleft">
+<p id="support">
 <img src="/images/icons/help.png" id="supportimage" alt=""/>
-<span id="support">
-<a href="mailto:support@erda.dk">Support & Questions</a>
+<span class="supporttext staticpage i18n" lang="en">
+<p class="supporttitle i18n" lang="en">Support</p>
+<p class="i18n" lang="en"><a href="https://erda.dk/public/ucph-erda-user-guide.pdf">ERDA
+User Guide</a><br />Questions about ERDA? <br />Please contact
+us at <a href="mailto:support@erda.dk">support@erda.dk</a></p>
 </span>
+<span class="supporttext staticpage i18n" lang="da">
+<p class="supporttitle i18n" lang="da">Vejledning</p>
+<p class="i18n" lang="da"><a href="https://erda.dk/public/ucph-erda-brugervejledning.pdf">ERDA 
+Brugervejledning</a><br />Spørgsmål om ERDA? <br />Skriv til os på 
+<a href="mailto:support@erda.dk">support@erda.dk</a></p>
+</span>
+</p>
 </div>
 <div id="bottomlogoright">
-<img src="/images/copyright.png" id="creditsimage" alt=""/>
+<p><img src="/images/copyright.png" id="creditsimage" alt=""/>
 <span id="credits">
 2003-2015, <a href="http://www.migrid.org">The MiG Project</a>
 </span>
+</p>
 </div>
 </div>
 <div id="bottomspace">
