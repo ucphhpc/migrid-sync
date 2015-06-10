@@ -322,7 +322,7 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
         state = event.event_type
         src_path = event.src_path
         if event.is_directory:
-            logger.debug("skipping rule update for directory: %s" % src_path)
+            logger.debug("skip rule update for directory: %s" % src_path)
         logger.debug("%s rule file: %s" % (state, src_path))
         rel_path = src_path.replace(os.path.join(configuration.vgrid_home, ""),
                                     '')
@@ -429,7 +429,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                               ("rate limit", _rate_limit_field)]:
             if above_path_limit(rule, src_path, field, time_stamp):
                 above_limit = True
-                logger.warning("skipping %s due to %s: %s" % \
+                logger.warning("skip %s due to %s: %s" % \
                                (src_path, name,
                                 show_path_hits(rule, src_path, field)))
                 self.__workflow_warn(configuration, rule['vgrid_name'],
@@ -439,9 +439,10 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                 break
 
         # TODO: consider if we should skip modified when just created
+        
         # We receive modified events even when only atime changed - ignore them
         if state == 'modified' and not recently_modified(src_path, time_stamp):
-            logger.info("skipping %s which only changed atime" % src_path)
+            logger.info("skip %s which only changed atime" % src_path)
             self.__workflow_info(configuration, rule['vgrid_name'],
                                  "skip %s modified access time only event" % \
                                  rel_src)
@@ -574,17 +575,20 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         """Trigger any rule actions bound to file state change"""
         state = event.event_type
         src_path = event.src_path
-        if event.is_directory:
-            logger.debug("skipping event handling for directory: %s" % \
-                         src_path)
-        logger.info("got %s event for file: %s" % (state, src_path))
+        is_directory = event.is_directory
+        logger.info("got %s event for path: %s" % (state, src_path))
         logger.debug("filter %s against %s" % (all_rules.keys(), src_path))
+        # Each target_path pattern has one or more rules associated
         for (target_path, rule_list) in all_rules.items():
             # Do not use ordinary fnmatch as it lets '*' match anything
             # including '/' which leads to greedy matching in subdirs
-            as_regexp = fnmatch.translate(target_path).replace('.*', '[^/]*')
-            if re.match(as_regexp, src_path):
-                logger.debug("matched %s for %s" % (src_path, as_regexp))
+            recursive_regexp = fnmatch.translate(target_path)
+            direct_regexp = recursive_regexp.replace('.*', '[^/]*')
+            recursive_hit = re.match(recursive_regexp, src_path)
+            direct_hit = re.match(direct_regexp, src_path)
+            if direct_hit or recursive_hit:
+                logger.debug("matched %s for %s and/or %s" % \
+                             (src_path, direct_regexp, recursive_regexp))
                 for rule in rule_list:
                     # user may have been removed from vgrid - log and ignore
                     if not vgrid_is_owner_or_member(rule['vgrid_name'],
@@ -593,16 +597,30 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         logger.warning("no such user in vgrid: %(run_as)s" \
                                        % rule)
                         continue
+                    # Rules may listen for only file or dir events and with
+                    # recursive directory search
+                    if is_directory and not rule.get('match_dirs', False):
+                        logger.debug("skip event %s handling for dir: %s" % \
+                                     (rule['rule_id'], src_path))
+                        continue
+                    if not is_directory and not rule.get('match_files', True):
+                        logger.debug("skip %s event handling for file: %s" % \
+                                     (rule['rule_id'], src_path))
+                        continue
+                    if not direct_hit and not rule.get('match_recursive', False):
+                        logger.debug("skip %s recurse event handling for: %s" \
+                                     % (rule['rule_id'], src_path))
+                        continue
                     if not state in rule['changes']:
-                        logger.info("skipping %s without change match (%s)" \
-                                    % (target_path, state))
+                        logger.info("skip %s %s event handling for: %s" \
+                                    % (rule['rule_id'], state, src_path))
                         continue
                     
                     logger.info("trigger %s for %s: %s" % \
                                 (rule['action'], src_path, rule))
                     self.__handle_trigger(event, target_path, rule)
             else:
-                logger.debug("skipping %s with no matching rules" % \
+                logger.debug("skip %s with no matching rules" % \
                              target_path)
 
     def handle_event(self, event):

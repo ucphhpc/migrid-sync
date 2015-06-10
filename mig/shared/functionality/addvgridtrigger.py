@@ -53,6 +53,9 @@ def signature():
                 'arguments': [''],
                 'rate_limit': [''],
                 'settle_time': [''],
+                'match_files': ['True'],
+                'match_dirs': ['False'],
+                'match_recursive': ['False'],
                 }
     return ['', defaults]
 
@@ -94,6 +97,9 @@ def main(client_id, user_arguments_dict):
     arguments = [i.strip() for i in ' '.join(accepted['arguments']).split()]
     rate_limit = accepted['rate_limit'][-1].strip()
     settle_time = accepted['settle_time'][-1].strip()
+    match_files = accepted['match_files'][-1].strip() == 'True'
+    match_dirs = accepted['match_dirs'][-1].strip() == 'True'
+    match_recursive = accepted['match_recursive'][-1].strip() == 'True'
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -205,6 +211,9 @@ Remove the trigger from the sub-%(_label)s and try again''' % \
                  'templates': templates,
                  'rate_limit': rate_limit,
                  'settle_time': settle_time,
+                 'match_files': match_files,
+                 'match_dirs': match_dirs,
+                 'match_recursive': match_recursive,
                  }
 
     # Add to list and pickle
