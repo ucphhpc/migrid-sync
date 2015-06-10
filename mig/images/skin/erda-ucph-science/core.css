@@ -147,6 +147,9 @@ table {
 #logoimage.staticpage {
   padding: 0px 0px;
 }
+#logotitle.staticpage {
+  display: none;
+}
 
 #bottomspace {
   padding: 0px;

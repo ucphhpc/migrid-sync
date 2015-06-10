@@ -1150,10 +1150,15 @@ function switch_language(lang) {
     */
     /* TODO: optimize this and use list of lang values */
 
+    /* TODO: switch away from div-only lang and use i18n class instead */
+
     $("div:lang(en)").hide();
-    $("div:lang(da)").hide();
+    $("div:lang(da)").hide();    
+    $(".i18n:lang(en)").hide();
+    $(".i18n:lang(da)").hide();
 
     $("div:lang("+lang+")").show();
+    $(".i18n:lang("+lang+")").show();
 }
 
 /* OpenID availability checker for use on signup and login pages */    
