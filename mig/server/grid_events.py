@@ -477,6 +477,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             wait_secs = wait_settled(rule, src_path, state, settle_secs,
                                      time_stamp)
             
+        # TODO: perhaps we should discriminate on files and dirs here?
+
         if rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
             change = rule['action'].replace('trigger-', '')
             FakeEvent = self.event_map[change]
@@ -649,8 +651,18 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         self.handle_event(event)
 
     def on_moved(self, event):
-        """Handle moved files"""
-        self.handle_event(event)
+        """Handle moved files: we translate a move to a created and a deleted
+        event since the single event with src and dst does not really fit our
+        model all that well.
+        """
+        
+        # TODO: perhaps we should discriminate on files and dirs here?
+
+        for (kind, path) in [('created', event.dest_path),
+                             ('deleted', event.src_path)]:
+            FakeEvent = self.event_map[kind]
+            fake = FakeEvent(path)
+            self.handle_event(fake)
 
 
 if __name__ == "__main__":
