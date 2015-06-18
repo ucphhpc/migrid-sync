@@ -44,8 +44,9 @@ import threading
 
 try:
     from watchdog.observers import Observer
-    from watchdog.events import PatternMatchingEventHandler, FileMovedEvent, \
-         FileModifiedEvent, FileCreatedEvent, FileDeletedEvent
+    from watchdog.events import PatternMatchingEventHandler, \
+         FileModifiedEvent, FileCreatedEvent, FileDeletedEvent, \
+         DirModifiedEvent, DirCreatedEvent, DirDeletedEvent
 except ImportError:
     print "ERROR: the python watchdog module is required for this daemon"
     sys.exit(1)
@@ -90,6 +91,19 @@ def get_expand_map(trigger_path, rule, state_change):
     # TODO: provide exact expanded wildcards?
 
     return expand_map    
+
+def make_fake_event(path, state):
+    """Create a fake state change event for path. Looks up path to see if the
+    change is a directory or file.
+    """
+    file_map = {'modified': FileModifiedEvent, 'created': FileCreatedEvent,
+                'deleted': FileDeletedEvent}
+    dir_map = {'modified': DirModifiedEvent, 'created': DirCreatedEvent,
+               'deleted': DirDeletedEvent}
+    if os.path.isdir(path):
+        return dir_map[state](path)
+    else:
+        return file_map[state](path)
 
 def extract_time_in_secs(rule, field):
     """Get time in seconds for provided free form period field. The value is a
@@ -367,9 +381,6 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
     and the corresponding action triggers.
     """
 
-    event_map = {'modified': FileModifiedEvent, 'created': FileCreatedEvent,
-                 'deleted': FileDeletedEvent, 'moved': FileMovedEvent}
-
     def __init__(self, patterns=None, ignore_patterns=None,
                  ignore_directories=False, case_sensitive=False):
         """Constructor"""
@@ -481,7 +492,6 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         if rule['action'] in ['trigger-%s' % i for i in valid_trigger_changes]:
             change = rule['action'].replace('trigger-', '')
-            FakeEvent = self.event_map[change]
             # Expand dynamic variables in argument once and for all
             expand_map = get_expand_map(rel_src, rule, state)
             for argument in rule['arguments']:
@@ -506,7 +516,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                              "breaking trigger cycle %s" % \
                                              rel_chain_str)
                         continue
-                    fake = FakeEvent(path)
+                    fake = make_fake_event(path, change)
                     fake._chain = _chain
                     logger.info("trigger %s event on %s" % (change, path))
                     self.__workflow_info(configuration, rule['vgrid_name'],
@@ -655,13 +665,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         event since the single event with src and dst does not really fit our
         model all that well.
         """
-        
-        # TODO: perhaps we should discriminate on files and dirs here?
-
-        for (kind, path) in [('created', event.dest_path),
-                             ('deleted', event.src_path)]:
-            FakeEvent = self.event_map[kind]
-            fake = FakeEvent(path)
+        for (change, path) in [('created', event.dest_path),
+                               ('deleted', event.src_path)]:
+            fake = make_fake_event(path, change)
             self.handle_event(fake)
 
 
@@ -709,7 +715,7 @@ unless it is available in mig/server/MiGserver.conf
     file_monitor = Observer()
     file_patterns = [os.path.join(configuration.vgrid_files_home, "*")]
     file_handler = MiGFileEventHandler(patterns=file_patterns,
-                                       ignore_directories=True,
+                                       ignore_directories=False,
                                        case_sensitive=True)
     file_monitor.schedule(file_handler, configuration.vgrid_files_home,
                           recursive=True)

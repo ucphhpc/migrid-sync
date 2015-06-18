@@ -126,7 +126,7 @@ edit_lock_timeout = 600
 
 # Valid trigger actions - with the first one as default action
 
-valid_trigger_changes = ['created', 'modified', 'deleted', 'moved']
+valid_trigger_changes = ['created', 'modified', 'deleted']
 valid_trigger_actions = ['submit', 'command'] + ['trigger-%s' % i for i in \
                                                  valid_trigger_changes]
 
