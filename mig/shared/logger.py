@@ -31,6 +31,7 @@ import logging
 
 _default_level = "info"
 _default_format = "%(asctime)s %(levelname)s %(message)s"
+_debug_format = "%(asctime)s %(module)s:%(funcName)s:%(lineno)s %(levelname)s %(message)s"
 
 def _name_to_level(name):
     """Translate log level name to internal logging value"""
@@ -43,6 +44,15 @@ def _name_to_level(name):
         name = _default_level
     return levels[name]
 
+def _name_to_format(name):
+    formats = {"debug": _debug_format, "info": _default_format, 
+              "warning": _default_format, "error": _default_format,
+              "critical": _default_format}
+    name = name.lower()
+    if not name in formats:
+        print 'Unknown logging format %s, using %s!' % (name, _default_format)
+        name = _default_format
+    return formats[name]
 
 class Logger:
 
@@ -54,7 +64,7 @@ class Logger:
     logginglevel = None
     hdlr = None
     logfile = None
-    logginglevel = None
+    loggingformat = None
 
     def __init__(self, logfile, level, app='mig_main_logger'):
         self.logfile = logfile
@@ -64,16 +74,18 @@ class Logger:
         # in log files if a second handler is added to the existing
         # logger!
 
+        self.logginglevel = _name_to_level(level)
+        self.loggingformat = _name_to_format(level)
+
         if not self.logger.handlers:
             self.init_handler()
         else:
             self.hdlr = self.logger.handlers[0]
 
-        self.logginglevel = _name_to_level(level)
         self.logger.setLevel(self.logginglevel)
 
     def init_handler(self, stderr=False):
-        formatter = logging.Formatter(_default_format)
+        formatter = logging.Formatter(self.loggingformat)
         if stderr:
 
             # Add stderr handler
@@ -128,7 +140,7 @@ def daemon_logger(name, path=None, level="INFO", log_format=None):
     """Simple logger for daemons to get separate logging in standard format"""
     log_level = _name_to_level(level)
     if not log_format:
-        log_format = _default_format
+        log_format = _name_to_format(level)
     formatter = logging.Formatter(log_format)
     if path:
         handler = logging.FileHandler(path)
