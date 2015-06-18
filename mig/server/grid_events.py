@@ -396,6 +396,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         else:
             workflows_logger.info(msg)
         handler.flush()
+        handler.close()
         workflows_logger.removeHandler(handler)
 
     def __workflow_err(self, configuration, vgrid_name, msg):
