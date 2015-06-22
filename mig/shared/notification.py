@@ -30,8 +30,10 @@
 import os
 import smtplib
 import threading
+from email.mime.text import MIMEText
 from urllib import quote
 
+from shared.base import force_utf8
 from shared.defaults import email_keyword_list, job_output_dir
 from shared.settings import load_settings
 from shared.validstring import is_valid_email_address
@@ -269,22 +271,21 @@ def send_email(
     logger,
     configuration,
     ):
-    """Send message to recipients by email"""
-
-    txt = '''From: %s
-To: %s
-Subject: %s
-
-%s
-''' % (configuration.smtp_sender, recipients, subject, message)
+    """Send message to recipients by email:
+    Force utf8 encoding to avoid accented characters appearing garbled
+    """
 
     recipients_list = recipients.split(', ')
 
     try:
+        mime_msg = MIMEText(force_utf8(message), "plain", "utf8")
+        mime_msg['Subject'] = subject
+        mime_msg['From'] = configuration.smtp_sender
+        mime_msg['To'] = recipients
         server = smtplib.SMTP(configuration.smtp_server)
         server.set_debuglevel(0)
         errors = server.sendmail(configuration.smtp_sender,
-                                 recipients_list, txt)
+                                 recipients_list, mime_msg.as_string())
         server.quit()
         if errors:
             logger.warning('Partial error(s) sending email: %s'
