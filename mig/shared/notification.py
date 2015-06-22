@@ -54,6 +54,7 @@ def create_notify_message(
     statusfile,
     configuration,
     ):
+    """Helper to create notifications"""
 
     header = ''
     txt = ''
@@ -69,6 +70,15 @@ def create_notify_message(
                      'vgridresource': 'resource', 'resourceowner': 'owner'}
     accept_mapper = {'vgridaccept': 'vgrid', 'resourceaccept': 'resource'}
 
+    frame_template = """---
+
+%s
+
+---
+"""
+    txt += """*** IMPORTANT: replies to this message will NOT be read! ***
+
+"""
     if status == 'SUCCESS':
         header = '%s JOB finished' % configuration.short_title
         txt += \
@@ -77,8 +87,7 @@ Your %(site)s job with JOB ID %(jobid)s has finished and full status is availabl
 %(https_default_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
 
 The job commands and their exit codes:
-'''\
-             % var_dict
+''' % var_dict
         try:
             status_fd = open(statusfile, 'r')
             txt += str(status_fd.read())
@@ -92,10 +101,7 @@ Link to stdout file:
 
 Link to stderr file:
 %(https_default_url)s/cert_redirect/%(out_dir)s/%(jobid)s/%(jobid)s.stderr (might not be available)
-
-Replies to this message will not be read!
-'''\
-             % var_dict
+''' % var_dict
     elif status == 'FAILED':
 
         header = '%s JOB Failed' % configuration.short_title
@@ -106,10 +112,7 @@ This may be due to internal errors, but full status is available at:
 %(https_default_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
 
 Please contact the %(site)s team if the problem occurs multiple times.
-
-Replies to this message will not be read!!!
-'''\
-             % var_dict
+''' % var_dict
     elif status == 'EXPIRED':
         header = '%s JOB Expired' % configuration.short_title
         txt += \
@@ -119,39 +122,22 @@ This may be due to internal errors, but full status is available at:
 %(https_default_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
 
 Please contact the %(site)s team for details about expire policies.
-
-Replies to this message will not be read!!!
-'''\
-             % var_dict
+''' % var_dict
     elif status == 'SENDREQUEST':
         from_id = args_list[0]
         target_name = args_list[1]
         request_type = args_list[2]
         request_text = args_list[3]
         reply_to = args_list[4]
+        txt += """This is a message sent on behalf of %s:
+""" % from_id
         if request_type == "plain":
             header = '%s user message' % configuration.short_title
-            txt += """This is a message sent on behalf of %s:
-
----
-
-%s
-
----
-
-""" % (from_id, request_text)
+            txt += frame_template % request_text
         elif request_type in accept_mapper.keys():
             kind = accept_mapper[request_type]
             header = '%s %s accept message' % (configuration.short_title, kind)
-            txt += """This is a message sent on behalf of %s:
-
----
-
-%s
-
----
-
-""" % (from_id, request_text)
+            txt += frame_template % request_text
         elif request_type in entity_mapper.keys():
             entity = entity_mapper[request_type]
             header = '%s %s request' % (configuration.short_title, request_type)
@@ -180,13 +166,13 @@ URL in a browser:
             txt += ' and add %s as %s.\n\n' % (from_id, entity)
         else:
             txt += 'INVALID REQUEST TYPE: %s\n\n' % request_type
-        txt += """IMPORTANT: direct replies to this message will not be read!!
-        
+        txt += """
 If the message didn't include any contact information you may still be able to
-reply using one of the message links for the user
+reply using one of the message links on the profile page for the sender:
 %s
-on your People page.
-        """ % reply_to
+        """ % '%s/cgi-bin/viewuser.py?cert_id=%s'\
+                    % (configuration.migserver_https_default_url,
+                       quote(reply_to))
     elif status == 'PASSWORDREMINDER':
         from_id = args_list[0]
         password = args_list[1]
@@ -199,7 +185,6 @@ on your People page.
             """Feel free to locally change the password as described in the
 user scripts tutorial online.
 """
-        txt += """Replies to this message will not be read!!!"""
     elif status == 'FORUMUPDATE':
         vgrid_name = args_list[0]
         author = args_list[1]
@@ -215,9 +200,6 @@ posted a new message in the private %s forum. You may see the details at
 The main forum page includes a button to change your subscription state in
 case you don't want to receive these notifications in the future.
 """ % (configuration.short_title, author, vgrid_name, url)
-
-
-        txt += """Replies to this message will not be read!!!"""
     else:
         header = '%s Unknown message type' % configuration.short_title
         txt += 'unknown status'

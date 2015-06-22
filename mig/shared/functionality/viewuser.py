@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewuser - Display public details about a user
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,12 +29,15 @@
 
 import base64
 import os
+from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import any_vgrid
 from shared.functional import validate_input_and_cert, REJECT_UNSET
+from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
+from shared.output import html_link
 from shared.profilekeywords import get_profile_specs
 from shared.settingskeywords import get_settings_specs
 from shared.vgrid import vgrid_request_and_job_match
@@ -54,18 +57,18 @@ def inline_image(path):
     data += base64.b64encode(open(path).read())
     return data
 
-def build_useritem_object_from_user_dict(configuration, user_id, user_home,
-                                         user_dict, allow_vgrids):
+def build_useritem_object_from_user_dict(configuration, visible_user_id,
+                                         user_home, user_dict, allow_vgrids):
     """Build a user object based on input user_dict"""
 
     profile_specs = get_profile_specs()
     user_specs = get_settings_specs()
     user_item = {
         'object_type': 'user_info',
-        'user_id': user_id,
+        'user_id': visible_user_id,
         'fields': [],
         }
-    user_item['fields'].append(('Public user ID', user_id))
+    user_item['fields'].append(('Public user ID', visible_user_id))
     user_image = True
     public_image = user_dict[CONF].get('PUBLIC_IMAGE', [])
     if not public_image:
@@ -107,16 +110,39 @@ def build_useritem_object_from_user_dict(configuration, user_id, user_home,
         im_vgrids = set(vgrids_allow_im).intersection(allow_vgrids)
     show_contexts = ['notify']
     for (key, val) in user_specs:
+        proto = key.lower()
         if not val['Context'] in show_contexts:
             continue
+        saved = user_dict[CONF].get(key, None)
+        if val['Type'] != 'multiplestrings':
+            saved = [saved]
+        entry = ''
         if not email_vgrids and key == 'EMAIL':
-            entry = 'User settings prevent display of email address'
+            show_address = '(email address hidden)'
         elif not im_vgrids and key != 'EMAIL':
-            entry = 'User settings prevent display of IM address'
+            show_address = '(IM address hidden)'
         else:
-            entry = user_dict[CONF].get(key, None)
-            if val['Type'] == 'multiplestrings':
-                entry = ' '.join(entry)
+            show_address = ', '.join(saved)
+        if saved:
+            js_name = 'send%s%s' % (proto, hexlify(visible_user_id))
+            helper = html_post_helper(js_name, 'sendrequestaction.py',
+                                      {'cert_id': visible_user_id,
+                                       'request_type': 'plain',
+                                       'protocol': proto,
+                                       'request_text': ''})
+            entry += helper            
+            link = 'send%slink' % proto
+            link_obj = {'object_type': 'link',
+                        'destination':
+                        "javascript: confirmDialog(%s, '%s', '%s');"\
+                        % (js_name, 'Send %s message to %s'\
+                           % (proto, visible_user_id),
+                           'request_text'),
+                        'class': link,
+                        'title': 'Send %s message to %s' % \
+                        (proto, visible_user_id), 
+                        'text': show_address}
+            entry += "%s " % html_link(link_obj)
         user_item['fields'].append((val['Title'], entry))
     return user_item
 
@@ -138,6 +164,45 @@ def main(client_id, user_arguments_dict):
         )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = 'People'
+
+    # jquery support for confirmation-style popup:
+
+    title_entry['style'] = themed_styles(configuration)
+    title_entry['javascript'] = '''
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.confirm.js"></script>
+
+<script type="text/javascript" >
+
+$(document).ready(function() {
+
+          // init confirmation dialog
+          $( "#confirm_dialog" ).dialog(
+              // see http://jqueryui.com/docs/dialog/ for options
+              { autoOpen: false,
+                modal: true, closeOnEscape: true,
+                width: 640,
+                buttons: {
+                   "Cancel": function() { $( "#" + name ).dialog("close"); }
+                }
+              });
+     }
+);
+</script>
+'''
+
+    output_objects.append({'object_type': 'html_form',
+                           'text':'''
+ <div id="confirm_dialog" title="Confirm" style="background:#fff;">
+  <div id="confirm_text"><!-- filled by js --></div>
+   <textarea cols="72" rows="10" id="confirm_input" style="display:none;"></textarea>
+ </div>
+'''                       })
+
     user_list = accepted['cert_id']
 
     # Please note that base_dir must end in slash to avoid access to other
