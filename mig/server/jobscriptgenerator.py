@@ -216,11 +216,13 @@ def create_job_script(
                                                  socket.getfqdn())
         sftp_port = configuration.user_sftp_show_port
         
-        mount_known_hosts = "[%s]:%s" % (sftp_addresses[0], sftp_port)
+        mount_known_hosts = "%s,[%s]:%s" % (sftp_addresses[0],
+                                            sftp_addresses[0], sftp_port)
         for list_idx in xrange(1, len(sftp_addresses)):
             for sftp_address in sftp_addresses[list_idx]:
-                mount_known_hosts = "%s,[%s]:%s" % (mount_known_hosts,
-                                              sftp_address, sftp_port)
+                mount_known_hosts += ",%s,[%s]:%s" % (sftp_address,
+                                                     sftp_address,
+                                                     sftp_port)
         
         fd = open(configuration.user_sftp_key_pub, 'r')        
         mount_known_hosts = "%s %s" % (mount_known_hosts, fd.read())
