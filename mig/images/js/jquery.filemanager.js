@@ -474,7 +474,7 @@ if (jQuery) (function($){
                             var left_html_out = '';
                             var image_filepath;
                             for (i = 0; i < jsonRes.length; i++) {
-                                if (jsonRes[i].object_type == 'image') {
+                                if (jsonRes[i].object_type == 'image_meta') {
                                     $(".fm_previews input[name=fm_preview_base_path]").val(jsonRes[i].base_path);
                                     $(".fm_previews input[name=fm_preview_path]").val(jsonRes[i].path);
                                     $(".fm_previews input[name=fm_preview_filename]").val(jsonRes[i].name);
