@@ -53,7 +53,6 @@ def html_tmpl(configuration, title_entry):
         fill_entries["upload_submit_entry"] = '''
             <input id="submitmrsl_0" type="hidden" value="0" name="submitmrsl_0"/>
         '''
-        
     html = '''
     <div id="fm_debug"></div>
     <div id="fm_filemanager">
@@ -64,6 +63,49 @@ def html_tmpl(configuration, title_entry):
         <div class="fm_addressbar">
             <input type="hidden" value="/" name="fm_current_path" />
         </div>
+        <div class="fm_previews">       
+            <input type="hidden" value="" name="fm_preview_base_path" />
+            <input type="hidden" value="" name="fm_preview_path" />
+            <input type="hidden" value="" name="fm_preview_filename" />
+            <input type="hidden" value="" name="fm_preview_extension" />
+            <div id="fm_preview_menubar" class="fm_preview_menubar">
+                <div id="fm_preview_menubar_refresh" class="fm_preview_menubar_entry" title="Refresh Preview">
+                    <img src="/images/icons/arrow_refresh.png">
+                </div>
+                <div id="fm_preview_menubar_zoom_in" class="fm_preview_menubar_entry" title="Zoom In">
+                    <img src="/images/icons/add.png">
+                </div>
+                <div id="fm_preview_menubar_zoom_out" class="fm_preview_menubar_entry" title="Zoom Out">
+                    <img src="/images/icons/delete.png">
+                </div>                  
+            </div>
+            <div id="fm_preview_left_tile" class="fm_preview_left_tile">
+                <div id="fm_preview_left_tile_histogram">
+                    <canvas id="fm_preview_histogram_image"></canvas>
+                </div>
+                <div id="fm_preview_left_tile_histogram_actions">
+                    <input type="hidden" value="" name="fm_preview_histogram_scale" />
+                    <input type="hidden" value="" name="fm_preview_histogram_scale" />
+                    <div id="fm_preview_histogram_min_max_slider"></div>   
+                    <br>
+                    <button id="preview_histogram_reset_button" title="Reset sliders">Reset</button>
+                    <button id="preview_histogram_set_cutoff_button" title="Set preview cutoff based on sliders">Set Cutoff</button>
+                    <!-- <button id="preview_histogram_auto_button">Auto</button> -->
+                </div>
+                <div id="fm_preview_left_output">
+                <!-- this is a placeholder for contents: do not remove! -->
+                </div>
+            </div>
+            <div id="fm_preview_center_tile" class="fm_preview_center_tile">
+                <canvas id="fm_preview_image"></canvas>
+            </div>
+            <div id="fm_preview_right_tile" class="fm_preview_right_tile"> 
+                <div id="fm_preview_right_output">
+                <!-- this is a placeholder for contents: do not remove! -->
+                </div>
+            </div>
+        </div>
+
         <div class="fm_folders">
             <ul class="jqueryFileTree">
                 <li class="directory expanded">
@@ -71,6 +113,7 @@ def html_tmpl(configuration, title_entry):
                 </li>
             </ul>
         </div>
+        
         <div class="fm_files">
         
             <table id="fm_filelisting" style="border-spacing=0;" >
@@ -220,6 +263,73 @@ def html_tmpl(configuration, title_entry):
     </form>
     <div id="pack_output"></div>
     </div>
+
+    <div id="imagesettings_dialog" title="Image Settings" style="display: none;">
+    <form id="imagesettings_form" method="post" action="filemetaio.py">
+    <fieldset>
+        <input type="hidden" name="output_format" value="json" />
+        <input type="hidden" name="flags" value="" />
+        <input type="hidden" name="action" value="" />
+        <input type="hidden" name="path" value="" />
+        <input type="hidden" name="settings_status" value="" />
+        <div id="imagesettings_list" class="fm_metaio_list"></div>
+        <div id="imagesettings_edit">
+            <label for="extension">Image extension:</label>
+            <br>
+            <input type="text" name="extension" value="" />
+            <br>
+            <label for="setting_recursive">Apply to sub-folders:</label>
+            <br>
+            <input type="checkbox" name="settings_recursive" value="False" />
+            <br>
+            <label for="image_type">Image type:</label>
+            <br>
+            <select name="image_type">
+                <option value="raw">Raw</option>
+                <option value="tiff">Tiff</option>
+            </select>
+            <br>
+            <div id="imagesettings_edit_image_type_raw">
+                <label for="data_type">Image data type:</label>
+                <br>
+                <select name="data_type">
+                    <option value="float32">float32</option>
+                    <option value="float64">float64</option>
+                    <option value="uint8">uint8</option>
+                    <option value="uint16">uint16</option>
+                    <option value="uint32">uint32</option>
+                    <option value="uint64">uint64</option>
+                    <option value="int8">int8</option>
+                    <option value="int16">int16</option>
+                    <option value="int32">int32</option>
+                    <option value="int64">int64</option>
+                </select>
+                <br>
+                <label for="offset">Image offset:</label>
+                <br>
+                <input type="text" name="offset" value="" />
+                <br>
+                <label for="x_dimension">Image width:</label>
+                <br>
+                <input type="text" name="x_dimension" value="" />
+                <br>
+                <label for="y_dimension">Image height:</label>
+                <br>
+                <input type="text" name="y_dimension" value="" />
+                <br>
+            </div>
+            <label for="preview_cutoff_min">Preview image cutoff min value:</label>
+            <br>
+            <input type="text" name="preview_cutoff_min" value="" />
+            <br>
+            <label for="preview_cutoff_max">Preview image cutoff max value:</label>
+            <br>
+            <input type="text" name="preview_cutoff_max" value="" />
+        </div>    
+    </fieldset>
+    </form>                
+    <div id="imagesettings_output"></div>
+    </div>
     ''' % fill_entries
     html += '''
     <div id="editor_dialog" title="Editor" style="display: none;">
@@ -275,6 +385,16 @@ def js_tmpl(entry_path='/', enable_submit='true'):
 <script type="text/javascript" src="/images/js/jquery.fileupload-ui.js"></script>
 <!-- The File Upload jQuery UI plugin -->
 <script type="text/javascript" src="/images/js/jquery.fileupload-jquery-ui.js"></script>
+<!-- The preview image plugin -->
+<script type="text/javascript" src="/images/js/preview.js"></script>
+<!-- The image manipulation CamanJS plugin used by the preview image plugin -->
+<script type="text/javascript" src="/images/lib/CamanJS/dist/caman.full.js"></script>
+<script type="text/javascript">
+       Caman.DEBUG = false
+</script>
+<!-- The nouislider plugin used by the preview image plugin -->
+<script type="text/javascript" src="/images/lib/noUiSlider/jquery.nouislider.all.js"></script>
+<link href="/images/lib/noUiSlider/jquery.nouislider.css"  rel="stylesheet" type="text/css" />   
 
 <!-- The template to display files available for upload -->
 <script id="template-upload" type="text/x-tmpl">
@@ -366,8 +486,6 @@ def js_tmpl(entry_path='/', enable_submit='true'):
                                              root: "/",
                                              connector: "ls.py",
                                              params: "path",
-                                             expandSpeed: 0,
-                                             collapseSpeed: 0,
                                              multiFolder: false,
                                              filespacer: true,
                                              uploadspace: true,

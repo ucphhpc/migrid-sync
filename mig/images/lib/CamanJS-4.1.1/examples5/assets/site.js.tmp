@@ -1,0 +1,20 @@
+function selectText() {
+	var a;
+
+	if(document.selection) {
+		a = document.body.createTextRange();
+		a.moveToElementText(this);
+		a.select()
+	} else { 
+		if (window.getSelection) {
+			a = document.createRange();
+			a.selectNode(this);
+			window.getSelection().addRange(a)
+		}
+	}
+}
+
+$(document).ready(function() {
+	$("body").on("click", ".CopyCommand", selectText)
+});
+

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>  
+  
+    <title>CamanJS Examples</title>
+  
+    <script type="text/javascript" src="../../dist/caman.full.js"></script>
+  
+    <link href='../assets/site.css' rel='stylesheet' type='text/css' />
+  
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro|Raleway:400,200,700' rel='stylesheet' type='text/css'>
+  
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    
+    <script src='../assets/site.js' type='text/javascript'></script>
+
+    <script type="text/javascript">
+       Caman.DEBUG = true
+    </script>
+</head>
+
+<body>
+<div id="Content">
+    <h3>Interactive Example</h3>
+    <img id="pv_image"
+         src="https://idmc.dk/cert_redirect/IDMC/data/.image/previews/h8_nos_1020.rec.DMP.png" />
+    <div class="pv_filter_name">
+        <p>Minimum:</p>
+    </div>
+    <div class="pv_filter_setting">
+        <input
+            id="pv_filter_min_slider"
+            type="range" 
+            min="0"
+            max="255"
+            step="1"
+            value="0"
+        >
+        <span id="pv_filter_min_value">0</span>
+    </div>
+</div>
+</body>
+</html>

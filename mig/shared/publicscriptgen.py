@@ -598,7 +598,10 @@ if not mig_server:
 
 def expand_path(path):
     '''Expand user home'''
-    return os.path.expanduser(os.path.expandvars(path))
+    result = None
+    if path is not None:
+        result = os.path.expanduser(os.path.expandvars(path))
+    return result
 
 # Force tilde and variable expansion on path vars
 cert_file = expand_path(read_conf(conf, 'certfile'))

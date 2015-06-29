@@ -297,6 +297,14 @@ def move(src, dst):
     """
     return shutil.move(src, dst)
 
+def listdirs_rec(dir_path, topdown=True, onerror=None, followlinks=False):
+    """Recursively iterate over all sub directories in dir_path"""
+
+    for (dirpath, _, _) in os.walk(dir_path, topdown=topdown, onerror=onerror, followlinks=followlinks):
+        if dirpath != dir_path:
+            yield dirpath
+
+
 def makedirs_rec(dir_path, configuration):
     """Make sure dir_path is created if it doesn't already exist"""
     try:

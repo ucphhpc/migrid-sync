@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 #
 # --- BEGIN_HEADER ---
 #
@@ -51,17 +52,18 @@ from shared.valuecheck import lines_value_checker, \
 # ./getglyphs.py http://practicaltypography.com/common-accented-characters.html
 # found glyphs: áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ
 
-VALID_ACCENTED = 'áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ'
+VALID_ACCENTED = \
+    'áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ'
 
 # We must be careful about characters that have special regex meaning
 
-VALID_PATH_CHARACTERS = letters + digits + '/.,_-+='\
-     + ' :;+@%' + VALID_ACCENTED
+VALID_PATH_CHARACTERS = letters + digits + '/.,_-+=' + ' :;+@%' \
+    + VALID_ACCENTED
 
 # Plain text here only - *no* html tags, i.e. no '<' or '>' !!
 
-VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + '?!#$&*()[]{}'\
-     + '"' + "'`|^~" + '\\' + '\n\r\t'
+VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + '?!#$&*()[]{}' + '"' \
+    + "'`|^~" + '\\' + '\n\r\t'
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
 VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
 VALID_URL_CHARACTERS = VALID_BASEURL_CHARACTERS + '?;&%='
@@ -79,7 +81,7 @@ name_extras = VALID_ACCENTED + ' -@.'
 ############################################################################
 # IMPORTANT: never allow '+' and '_' in DN: reserved for path translation! #
 ############################################################################
-# We allow ':' in DN, however, as it is used by e.g. DanID: 
+# We allow ':' in DN, however, as it is used by e.g. DanID:
 # /C=DK/O=Ingen organisatorisk tilknytning/CN=$name/serialNumber=PID:$serial
 
 dn_extras = name_extras + '/=@.:'
@@ -109,6 +111,7 @@ VALID_DN_CHARACTERS = valid_dn_chars
 __type_map = {}
 __value_map = {}
 
+
 def __valid_contents(
     contents,
     valid_chars,
@@ -128,13 +131,14 @@ def __valid_contents(
     valid_chars = force_unicode(str(valid_chars))
     if len(contents) < min_length:
         raise InputException('shorter than minimum length (%d)'
-                              % min_length)
+                             % min_length)
     if max_length > 0 and len(contents) > max_length:
         raise InputException('maximum length (%d) exceeded'
-                              % max_length)
+                             % max_length)
     for char in contents:
         if not char in valid_chars:
             raise InputException('found invalid character: %s' % char)
+
 
 def __filter_contents(contents, valid_chars):
     """This is a general function to filter out any illegal characters
@@ -161,11 +165,13 @@ def html_escape(contents):
 
     return cgi.escape(contents)
 
+
 def valid_printable(contents, min_length=0, max_length=-1):
     """Verify that supplied contents only contain ascii characters
     (where "ascii characters" means printable ASCII, not just letters)"""
 
     __valid_contents(contents, printable, min_length, max_length)
+
 
 def valid_ascii(contents, min_length=0, max_length=-1):
     """Verify that supplied contents only contain ascii characters"""
@@ -300,8 +306,7 @@ def valid_base_url(
     """
 
     valid_chars = VALID_BASEURL_CHARACTERS + extra_chars
-    __valid_contents(base_url, valid_chars, min_length,
-                     max_length)
+    __valid_contents(base_url, valid_chars, min_length, max_length)
 
 
 def valid_url(
@@ -315,18 +320,27 @@ def valid_url(
     """
 
     valid_chars = VALID_URL_CHARACTERS + extra_chars
-    __valid_contents(url, valid_chars, min_length,
-                     max_length)
+    __valid_contents(url, valid_chars, min_length, max_length)
 
 
-def valid_integer(contents, min_length=0, max_length=-1, extra_chars=''):
+def valid_integer(
+    contents,
+    min_length=0,
+    max_length=-1,
+    extra_chars='',
+    ):
     """Verify that supplied integer only contain valid characters"""
 
     valid_chars = VALID_INTEGER_CHARACTERS + extra_chars
     __valid_contents(contents, valid_chars, min_length, max_length)
 
 
-def valid_float(contents, min_length=0, max_length=-1, extra_chars=''):
+def valid_float(
+    contents,
+    min_length=0,
+    max_length=-1,
+    extra_chars='',
+    ):
     """Verify that supplied contents only contain float characters"""
 
     valid_chars = VALID_FLOAT_CHARACTERS + extra_chars
@@ -451,22 +465,28 @@ def valid_job_id_patterns(
         valid_job_id(pattern, min_length, max_length, extra_chars)
 
 
-def valid_user_path_name(safe_path, path, home_dir, allow_equal=False):
+def valid_user_path_name(
+    safe_path,
+    path,
+    home_dir,
+    allow_equal=False,
+    ):
     """Wrap valid_user_path and valid_path name checks in one to check both
     destination dir and filename characters. Returns error using safe_path if
     validation fails.
     """
-    status, msg = True, ''
+
+    (status, msg) = (True, '')
     try:
         valid_path(path)
     except InputException, iex:
         status = False
-        msg = "Invalid path! (%s: %s)" % (safe_path, iex)
+        msg = 'Invalid path! (%s: %s)' % (safe_path, iex)
     if not valid_user_path(path, home_dir, allow_equal):
         status = False
         msg = 'Invalid path! (%s expands to illegal path)' % safe_path
     return (status, html_escape(msg))
-        
+
 
 def valid_email_address(addr):
     """Email check from
@@ -480,7 +500,7 @@ def valid_email_address(addr):
     c = 0
     while c < len(addr):
         if addr[c] == '"' and (not c or addr[c - 1] == '.' or addr[c
-                                - 1] == '"'):
+                               - 1] == '"'):
             c += 1
             while c < len(addr):
                 if addr[c] == '"':
@@ -836,82 +856,177 @@ def guess_type(name):
 
         # TODO: extend to include all used variables here
 
-        for key in ('path', 'src', 'dst', 'current_dir', 'cmd', 'pattern',
-                    'arguments', ):
+        for key in (
+            'path',
+            'src',
+            'dst',
+            'current_dir',
+            'cmd',
+            'pattern',
+            'arguments',
+            ):
             __type_map[key] = valid_path_pattern
-        for key in ('vgrid_name', 'fileupload', 'public_image',
-                    'site_script_deps', 'jobname', 'rate_limit', ):
+        for key in (
+            'vgrid_name',
+            'fileupload',
+            'public_image',
+            'site_script_deps',
+            'jobname',
+            'rate_limit',
+            ):
             __type_map[key] = valid_path
-        for key in ('job_id', 'req_id', 'resource', 'search', 'name', ):
+        for key in ('job_id', 'req_id', 'resource', 'search', 'name'):
             __type_map[key] = valid_job_id_pattern
-        for key in ('action', 're_name', 're_template', 'lang', 'machine_name',
-                    'freeze_id', 'rule_id', ):
+        for key in (
+            'action',
+            're_name',
+            're_template',
+            'lang',
+            'machine_name',
+            'freeze_id',
+            'rule_id',
+            ):
             __type_map[key] = valid_job_id
-        for key in ('flags', 'country', 'state', 'desktopname', 'menu',
-                    'group_in_time', 'display', ):
+        for key in (
+            'flags',
+            'country',
+            'state',
+            'desktopname',
+            'menu',
+            'group_in_time',
+            'display',
+            ):
             __type_map[key] = valid_ascii
-        for key in ('max_jobs', 'lines', 'cputime', 'size', 'software_entries',
-                'environment_entries', 'testprocedure_entry', 'width',
-                'height', 'depth', 'hd_size', 'memory', ' net_bw', 'cpu_count',
-                'cpu_time', 'field_count', ):
+        for key in (
+            'max_jobs',
+            'lines',
+            'cputime',
+            'size',
+            'software_entries',
+            'environment_entries',
+            'testprocedure_entry',
+            'width',
+            'height',
+            'depth',
+            'hd_size',
+            'memory',
+            ' net_bw',
+            'cpu_count',
+            'cpu_time',
+            'field_count',
+            ):
             __type_map[key] = valid_numeric
         for key in ('offset', ):
             __type_map[key] = valid_integer
-        for key in ('unique_resource_name', 'hosturl', 'exe_name', 'os',
-                    'flavor', 'hypervisor_re', 'sys_re', 'time_start',
-                    'time_end', ):
+        for key in (
+            'unique_resource_name',
+            'hosturl',
+            'exe_name',
+            'os',
+            'flavor',
+            'hypervisor_re',
+            'sys_re',
+            'time_start',
+            'time_end',
+            ):
             __type_map[key] = valid_fqdn
-        for key in ('cert_name', 'org', 'machine_software', 'freeze_name',
-                    'freeze_author', 'freeze_department', 'freeze_organization',
-                    'openid.sreg.cn', 'openid.sreg.fullname',
-                    'openid.sreg.full_name', 'openid.sreg.nickname',
-                    'openid.sreg.o', 'openid.sreg.ou', 'openid.sreg.role',
-                    'changes', ):
+        for key in (
+            'cert_name',
+            'org',
+            'machine_software',
+            'freeze_name',
+            'freeze_author',
+            'freeze_department',
+            'freeze_organization',
+            'openid.sreg.cn',
+            'openid.sreg.fullname',
+            'openid.sreg.full_name',
+            'openid.sreg.nickname',
+            'openid.sreg.o',
+            'openid.sreg.ou',
+            'openid.sreg.role',
+            'changes',
+            ):
             __type_map[key] = valid_commonname
-        for key in ('cert_id', 'run_as', ):
+        for key in ('cert_id', 'run_as'):
             __type_map[key] = valid_distinguished_name
-        for key in ('request_text', 'public_profile', 'resconfig',
-                    'redescription', 'testprocedure', 'environment',
-                    'software', 'verifystdout', 'verifystderr', 'verifystatus',
-                    'msg_subject', 'msg_body', 'comment', 'msg', 'executables',
-                    'inputfiles', 'outputfiles', 'verifyfiles', 'notify',
-                    'vgrid', 'runtimeenvironment','mount', ):
+        for key in (
+            'request_text',
+            'public_profile',
+            'resconfig',
+            'redescription',
+            'testprocedure',
+            'environment',
+            'software',
+            'verifystdout',
+            'verifystderr',
+            'verifystatus',
+            'msg_subject',
+            'msg_body',
+            'comment',
+            'msg',
+            'executables',
+            'inputfiles',
+            'outputfiles',
+            'verifyfiles',
+            'notify',
+            'vgrid',
+            'runtimeenvironment',
+            'mount',
+            ):
             __type_map[key] = valid_plain_text
-        for key in ('aol', 'yahoo', 'msn', 'icq', 'jabber', 'email',
-                    'openid.sreg.email', 'openid.sreg.mail', ):
+        for key in (
+            'aol',
+            'yahoo',
+            'msn',
+            'icq',
+            'jabber',
+            'email',
+            'openid.sreg.email',
+            'openid.sreg.mail',
+            ):
             __type_map[key] = valid_email_address
-        for key in ('editarea', 'execute', 'premenu', 'postmenu', 'precontent',
-                    'postcontent', 'publickeys', 'freeze_description', ):
+        for key in (
+            'editarea',
+            'execute',
+            'premenu',
+            'postmenu',
+            'precontent',
+            'postcontent',
+            'publickeys',
+            'freeze_description',
+            ):
             __type_map[key] = valid_free_text
-        for key in ('show', 'modauthopenid.error', ):
+        for key in ('show', 'modauthopenid.error'):
             __type_map[key] = valid_label_text
+
         # sreg required may have commas - reuse password
-        for key in ('password', 'verifypassword', 'openid.sreg.required', ):
+
+        for key in ('password', 'verifypassword', 'openid.sreg.required'
+                    ):
             __type_map[key] = valid_password
-        for key in ('architecture', 'hostidentifier', ):
+        for key in ('architecture', 'hostidentifier'):
             __type_map[key] = valid_alphanumeric
         for key in ('proxy_upload', ):
             __type_map[key] = valid_printable
-        for key in ('openid.ns', 'openid.ns.sreg', 'url', ):
+        for key in ('openid.ns', 'openid.ns.sreg', 'url'):
             __type_map[key] = valid_base_url
         for key in ('modauthopenid.referrer', ):
             __type_map[key] = valid_url
 
         # Image meta data (filemetaio.py)
-        
-        for key in ('image_type', 'image_datatype',):
+
+        for key in ('image_type', 'data_type'):
             __type_map[key] = valid_alphanumeric
 
-        for key in ('image_offset', 'image_xdim', 'image_ydim',):
+        for key in ('offset', 'x_dimension', 'y_dimension'):
             __type_map[key] = valid_numeric
 
-        for key in ('image_preview_cutoff_min', 
-                    'image_preview_cutoff_max',):
-            __type_map[key] = valid_float      
-            
+        for key in ('preview_cutoff_min', 'preview_cutoff_max'):
+            __type_map[key] = valid_float
 
     # Return type checker from __type_map with fall back to alphanumeric
-    
+
     return __type_map.get(name.lower().strip(), valid_alphanumeric)
 
 
@@ -925,7 +1040,7 @@ def guess_value(name):
             __value_map[key] = max_jobs_value_checker
 
     # Return value checker from __value_map with fall back to id function
-    
+
     return __value_map.get(name.lower().strip(), id)
 
 
@@ -1057,10 +1172,11 @@ if __name__ == '__main__':
     for test_cn in ('Firstname Lastname', 'Test Æøå', 'Test Überh4x0r',
                     'Test Maybe Invalid Źacãŕ', 'Test Invalid /!$'):
         try:
-            print "Testing valid_commonname: %s" % test_cn
-            print "DEBUG %s only in %s" % ([test_cn], [VALID_NAME_CHARACTERS])
+            print 'Testing valid_commonname: %s' % test_cn
+            print 'DEBUG %s only in %s' % ([test_cn],
+                    [VALID_NAME_CHARACTERS])
             valid_commonname(test_cn)
-            print "Accepted commonname!"
+            print 'Accepted commonname!'
         except Exception, exc:
-            print "Rejected %s : %s" % (test_cn, exc)
-            
+            print 'Rejected %s : %s' % (test_cn, exc)
+

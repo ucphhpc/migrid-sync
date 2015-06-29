@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 #
 # --- BEGIN_HEADER ---
 #
@@ -27,18 +28,19 @@
 
 """ Defines valid objecttypes and provides a method to verify if an object is correct """
 
-start = {'object_type': 'start', 'required': [], 'optional': ['headers']}
+start = {'object_type': 'start', 'required': [], 'optional': ['headers'
+         ]}
 end = {'object_type': 'end', 'required': [], 'optional': []}
-timing_info = {'object_type': 'timing_info', 'required': [], 'optional': []}
+timing_info = {'object_type': 'timing_info', 'required': [],
+               'optional': []}
 title = {'object_type': 'title', 'required': ['text'],
          'optional': ['meta', 'style', 'javascript', 'bodyfunctions']}
 text = {'object_type': 'text', 'required': ['text'], 'optional': []}
 verbatim = {'object_type': 'verbatim', 'required': ['text'],
             'optional': []}
-binary = {'object_type': 'binary', 'required': ['data'],
-            'optional': []}
+binary = {'object_type': 'binary', 'required': ['data'], 'optional': []}
 script_status = {'object_type': 'script_status', 'required': [],
-            'optional': ['text']}
+                 'optional': ['text']}
 header = {'object_type': 'header', 'required': ['text'], 'optional': []}
 sectionheader = {'object_type': 'sectionheader', 'required': ['text'],
                  'optional': []}
@@ -53,11 +55,16 @@ warning = {'object_type': 'warning', 'required': ['text'],
 direntry = {'object_type': 'direntry', 'required': ['name', 'type'],
             'optional': []}
 file = {'object_type': 'file', 'required': ['name'], 'optional': []}
-progress = {'object_type': 'progress', 'required':
-            ['progress_type', 'path', 'cur_size', 'total_size', 'percent',
-             'done'], 'optional': []}
-progress_list = {'object_type': 'progress_list', 'required_list':
-                   [('progress_list', 'progress')]}
+progress = {'object_type': 'progress', 'required': [
+    'progress_type',
+    'path',
+    'cur_size',
+    'total_size',
+    'percent',
+    'done',
+    ], 'optional': []}
+progress_list = {'object_type': 'progress_list',
+                 'required_list': [('progress_list', 'progress')]}
 stat = {'object_type': 'stat', 'required': [
     'device',
     'inode',
@@ -104,29 +111,32 @@ runtimeenvironment = {
                       'environment')],
     'optional': [],
     }
-frozenfile = {'object_type': 'frozenfile', 'required': ['name',
-               'size', 'checksum', 'timestamp'], 'optional': []}
+frozenfile = {'object_type': 'frozenfile', 'required': ['name', 'size',
+              'checksum', 'timestamp'], 'optional': []}
 frozenarchive = {
     'object_type': 'frozenarchive',
-    'required': ['id', 'name', 'description', 'creator', 'created', ],
-    'required_list': [('frozenfiles', 'frozenfile'), ],
+    'required': ['id', 'name', 'description', 'creator', 'created'],
+    'required_list': [('frozenfiles', 'frozenfile')],
     'optional': [],
     }
-uploadfile = {'object_type': 'uploadfile', 'required': ['name',
-               'size', 'url'], 'optional': ['error']}
-uploadfiles = {
+uploadfile = {'object_type': 'uploadfile', 'required': ['name', 'size',
+              'url'], 'optional': ['error']}
+uploadfiles = {  # list entry must be called 'files' for jquery fileupload plugin to work
     'object_type': 'uploadfiles',
     'required': [],
-    # list entry must be called 'files' for jquery fileupload plugin to work
-    'required_list': [('files', 'uploadfile'), ],
+    'required_list': [('files', 'uploadfile')],
     'optional': [],
     }
-certreq = {
-    'object_type': 'certreq',
-    'required': ['id', 'full_name', 'email', 'organization', 'country',
-                 'state', 'comment', 'created', ],
-    'optional': [],
-    }
+certreq = {'object_type': 'certreq', 'required': [
+    'id',
+    'full_name',
+    'email',
+    'organization',
+    'country',
+    'state',
+    'comment',
+    'created',
+    ], 'optional': []}
 changedstatusjob = {'object_type': 'changedstatusjob',
                     'required': ['job_id'], 'optional': []}
 saveschedulejob = {'object_type': 'saveschedulejob',
@@ -175,10 +185,10 @@ runtimeenvironments = {'object_type': 'runtimeenvironments',
                        'required_list': [('runtimeenvironments',
                        'runtimeenvironment')]}
 frozenarchives = {'object_type': 'frozenarchives',
-                       'required_list': [('frozenarchives',
-                       'frozenarchive')]}
-certreqs = {'object_type': 'certreqs', 
-            'required_list': [('certreqs', 'certreq')]}
+                  'required_list': [('frozenarchives', 'frozenarchive'
+                  )]}
+certreqs = {'object_type': 'certreqs', 'required_list': [('certreqs',
+            'certreq')]}
 changedstatusjobs = {'object_type': 'changedstatusjobs',
                      'required_list': [('changedstatusjobs',
                      'changedstatusjob')]}
@@ -186,7 +196,7 @@ saveschedulejobs = {'object_type': 'saveschedulejobs',
                     'required_list': [('saveschedulejobs',
                     'saveschedulejob')]}
 checkcondjobs = {'object_type': 'checkcondjobs',
-                    'required_list': [('checkcondjobs', 'checkcondjob')]}
+                 'required_list': [('checkcondjobs', 'checkcondjob')]}
 submitstatuslist = {'object_type': 'submitstatuslist',
                     'required_list': [('submitstatuslist',
                     'submitstatus')]}
@@ -201,31 +211,69 @@ linklist = {'object_type': 'linklist', 'required_list': [('links',
             'link')]}
 multilinkline = {'object_type': 'multilinkline',
                  'required_list': [('links', 'link')]}
-resource_list = {'object_type': 'resource_list', 'required_list': [('resources',
-              'resource')]}
+resource_list = {'object_type': 'resource_list',
+                 'required_list': [('resources', 'resource')]}
 resource_info = {'object_type': 'resource_info',
                  'required': ['unique_resource_name', 'fields', 'exes']}
 user_list = {'object_type': 'user_list', 'required_list': [('users',
-              'user')]}
-user_info = {'object_type': 'user_info',
-                 'required': ['user_id', 'fields']}
-forum_threads = {'object_type': 'forum_threads', 'required':
-                 ['threads', 'status', 'vgrid_name']}
+             'user')]}
+user_info = {'object_type': 'user_info', 'required': ['user_id',
+             'fields']}
+forum_threads = {'object_type': 'forum_threads', 'required': ['threads'
+                 , 'status', 'vgrid_name']}
 forum_thread_messages = {'object_type': 'forum_thread_messages',
-                 'required': ['messages', 'status', 'vgrid_name']}
+                         'required': ['messages', 'status', 'vgrid_name'
+                         ]}
 vgrid_list = {'object_type': 'vgrid_list', 'required_list': [('vgrids',
               'vgrid')]}
 user_stats = {'object_type': 'user_stats', 'required': ['disk', 'jobs',
-                                                        'resources',
-                                                        'certificate'],
-              'optional': []}
-openid_status = {'object_type': 'openid_status', 'required': ['server', 'status', 
-                                                              'error'],
-              'optional': []}
+              'resources', 'certificate'], 'optional': []}
+openid_status = {'object_type': 'openid_status', 'required': ['server',
+                 'status', 'error'], 'optional': []}
 table_pager = {'object_type': 'table_pager', 'required': ['entry_name']}
 object_types = {'object_type': 'object_types',
                 'required_list': [('object_types', 'objects')]}
-
+image_meta = {'object_type': 'image_meta', 'required': [
+    'image_type',
+    'preview_image_url',
+    'preview_histogram',
+    'base_path',
+    'path',
+    'name',
+    'extension',
+    'offset',
+    'x_dimension',
+    'y_dimension',
+    'preview_x_dimension',
+    'preview_y_dimension',
+    'preview_cutoff_min',
+    'preview_cutoff_max',
+    'preview_image_scale',
+    'mean_value',
+    'median_value',
+    'file_md5sum',
+    'data_type',
+    ], 'optional': []}
+image_settings_list = {'object_type': 'image_settings_list',
+                       'required': ['extension_list',
+                       'settings_status_list', 'settings_progress_list'
+                       , 'image_count_list'], 'optional': []}
+image_setting = {'object_type': 'image_setting', 'required': [
+    'image_type',
+    'extension',
+    'settings_status',
+    'settings_update_progress',
+    'settings_recursive',
+    'image_count',
+    'offset',
+    'x_dimension',
+    'y_dimension',
+    'preview_x_dimension',
+    'preview_y_dimension',
+    'preview_cutoff_min',
+    'preview_cutoff_max',
+    'data_type',
+    ], 'optional': []}
 valid_types_list = [
     start,
     end,
@@ -297,6 +345,9 @@ valid_types_list = [
     user_stats,
     openid_status,
     table_pager,
+    image_meta,
+    image_setting,
+    image_settings_list,
     ]
 
 # valid_types_dict = {"title":title, "link":link, "header":header}

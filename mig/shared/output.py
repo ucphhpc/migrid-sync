@@ -387,6 +387,11 @@ ctime\t%(ctime)s
                 for (key, val) in i['certificate'].items():
                     certificate_info += '%s: %s\n' % (key, val)
                 lines.append(certificate_info)
+        elif i['object_type'] == 'image_settings_list' or \
+             i['object_type'] == 'image_setting' or \
+             i['object_type'] == 'image_meta':
+            for elm in i:
+                lines.append('%s: %s\n' % (str(elm), str(i[elm])))
         elif i['object_type'] == 'script_status':
             status_line = i.get('text')
         elif i['object_type'] == 'timing_info':

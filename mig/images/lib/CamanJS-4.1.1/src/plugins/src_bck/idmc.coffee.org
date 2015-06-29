@@ -1,0 +1,14 @@
+###
+IDMC plugins
+###
+
+
+Filter.register "test", (adjust) ->
+  adjust = Math.floor 255 * (adjust / 100)
+  
+  @process "test", (rgba) ->
+    rgba.r += adjust
+    rgba.g += adjust
+    rgba.b += adjust
+    rgba
+

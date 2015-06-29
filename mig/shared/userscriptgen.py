@@ -163,6 +163,40 @@ def doc_usage_function(lang, extension):
     return s
 
 
+def filemetaio_usage_function(lang, extension):
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION PATH [ARG ...]' % (mig_prefix,
+            op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    action_usage_string = 'ACTION\t\tlist : List PATH directory meta-data entries'
+    action_usage_string2 = '\t\tget_dir : Get PATH directory meta-data for extension=EXT'
+    action_usage_string3 = '\t\tget_file : Get meta-data for file PATH'
+    action_usage_string4 = '\t\tput_dir : Set PATH directory meta-data for extension=EXT'
+    action_usage_string5 = '\t\tput_file : Set meta-data for file PATH'
+    image_usage_string = '-i\t\tDisplay image meta-data'
+    if lang == 'sh':
+        s += '\n    echo "%s"' % action_usage_string
+        s += '\n    echo "%s"' % action_usage_string2
+        s += '\n    echo "%s"' % action_usage_string3
+        s += '\n    echo "%s"' % action_usage_string4
+        s += '\n    echo "%s"' % action_usage_string5
+    elif lang == 'python':
+        s += '\n    print "%s"' % action_usage_string
+        s += '\n    print "%s"' % action_usage_string2
+        s += '\n    print "%s"' % action_usage_string3
+        s += '\n    print "%s"' % action_usage_string4
+        s += '\n    print "%s"' % action_usage_string5
+    s += end_function(lang, 'usage')
+
+    return s
+
+
 def get_usage_function(lang, extension):
 
     # Extract op from function name
@@ -818,6 +852,38 @@ def expand_function(lang, curl_cmd, curl_flags='--compressed'):
         curl_flags,
         )
     s += end_function(lang, 'expand_name')
+    return s
+
+
+def filemetaio_function(lang, curl_cmd, curl_flags='--compressed'):
+   
+    relative_url = '"cgi-bin/filemetaio.py"'
+    query = '""'
+    if lang == 'sh':
+        post_data = \
+            '"output_format=txt;flags=$server_flags;action=$action;path=$path;$arg_list"'
+    elif lang == 'python':
+        post_data = \
+            "'output_format=txt;flags=%s;action=%s;path=%s;%s' % (server_flags, action, path, arg_list)"
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'filemetaio', ['action', 'path', 'arg_list'],
+                        'Execute the corresponding server operation')
+    s += ca_check_init(lang)
+    s += password_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        query,
+        curl_cmd,
+        curl_flags,
+        )
+    s += end_function(lang, 'filemetaio')
     return s
 
 
@@ -2101,6 +2167,64 @@ for Search in SearchList:
 for Topic in TopicList:
     (status, topic_out) = show_doc("", Topic)
     out += topic_out
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
+def filemetaio_main(lang):
+    """
+    Generate main part of corresponding scripts.
+    
+    lang specifies which script language to generate in.
+    Currently 'sh' and 'python' are supported.
+    
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    if lang == 'sh':
+        s += parse_options(lang, 'i',
+                           '        i)  server_flags="${server_flags}i";;'
+                          )
+    elif lang == 'python':
+        s += parse_options(lang, 'i',
+                           '''    elif opt == "-i":
+        server_flags += "i"''')
+    s += arg_count_check(lang, 2, None)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += \
+            """
+# Build the action and argument strings used directly:
+# action="$1" path="$2";arg="$3";...;arg="$N"
+orig_args=("$@")
+action=\"$1\"
+shift
+path=\"$1\"
+shift
+arg_list=\"$1\"
+shift
+while [ \"$#\" -gt \"0\" ]; do
+    arg_list=\"$arg_list;$1\"
+    shift
+done
+filemetaio $action $path $arg_list
+"""
+    elif lang == 'python':
+        s += \
+            """
+# Build the action and arg strings used directly:
+# action=$1 "$2";"$3";...;"$N"
+action = \"%s\" % sys.argv[1]
+path = \"%s\" % sys.argv[2]
+arg_list = \"%s\" % \";\".join(sys.argv[3:])
+(status, out) = filemetaio(action, path, arg_list)
 print ''.join(out),
 sys.exit(status)
 """
@@ -3518,6 +3642,31 @@ def generate_doc(scripts_languages, dest_dir='.'):
     return True
 
 
+def generate_filemetaio(scripts_languages, dest_dir='.'):
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+
 def generate_get(scripts_languages, dest_dir='.'):
 
     # Extract op from function name
@@ -4221,6 +4370,7 @@ script_ops = [
     'cat',
     'cp',
     'doc',
+    'filemetaio',
     'get',
     'head',
     'jobaction',
