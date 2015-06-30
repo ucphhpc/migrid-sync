@@ -2879,7 +2879,7 @@ function mig_imagesettings_init(name, path, options) {
                     if (jsonRes[i].object_type == 'image_setting') {
                         edit_form_values['extension'] = jsonRes[i]['extension'];
                         edit_form_values['settings_recursive'] = jsonRes[i]['settings_recursive'];
-                        edit_form_values['type'] = jsonRes[i]['image_type'];
+                        edit_form_values['image_type'] = jsonRes[i]['image_type'];
                         edit_form_values['data_type'] = jsonRes[i]['data_type'];
                         edit_form_values['offset'] = jsonRes[i]['offset'];
                         edit_form_values['x_dimension'] = jsonRes[i]['x_dimension'];
