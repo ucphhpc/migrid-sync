@@ -32,7 +32,7 @@ import os
 import cv2
 import traceback
 
-from imagemetaio import allowed_data_types, add_image_file, \
+from shared.imagemetaio import allowed_data_types, add_image_file, \
     get_image_file_setting, get_image_file_settings, \
     get_image_preview_path, add_image_file_preview_data, \
     add_image_file_preview_histogram, get_image_files, \
@@ -368,7 +368,8 @@ def cleanup_previews(logger, base_path):
                                  % filepath)
             else:
                 logger.error('Multiple settings #%s found for extension: %s'
-                              % (len(image_settings_index_list), extension))
+                              % (len(image_settings_index_list),
+                             extension))
                 status = False
 
             if not status:
@@ -449,11 +450,13 @@ def update_previews(logger, base_path, extension):
             if image_setting['settings_recursive']:
                 for (root, _, files) in os.walk(base_path):
                     for name in files:
-                        if name.endswith('.%s' % extension):
+                        if not name.startswith('.') \
+                            and name.endswith('.%s' % extension):
                             total_filecount += 1
             else:
                 for name in os.listdir(base_path):
-                    if name.endswith('.%s' % extension):
+                    if not name.startswith('.') and name.endswith('.%s'
+                            % extension):
                         total_filecount += 1
 
             image_setting['settings_update_progress'] = '%s/%s' \
@@ -469,7 +472,8 @@ def update_previews(logger, base_path, extension):
             if image_setting['settings_recursive']:
                 for (root, _, files) in os.walk(base_path):
                     for name in files:
-                        if name.endswith('.%s' % extension):
+                        if not name.startswith('.') \
+                            and name.endswith('.%s' % extension):
                             path = root.replace(base_path, '',
                                     1).strip('/')
                             filepath = os.path.join(path, name)
@@ -494,7 +498,8 @@ def update_previews(logger, base_path, extension):
             else:
                 for name in os.listdir(base_path):
                     logger.debug('check entry: %s' % name)
-                    if name.endswith('.%s' % extension):
+                    if not name.startswith('.') and name.endswith('.%s'
+                            % extension):
                         filepath = os.path.join(base_path, name)
                         if os.path.isfile(filepath):
                             if update_preview(logger, base_path, name):
