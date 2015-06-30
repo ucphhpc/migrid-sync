@@ -179,6 +179,7 @@ def filemetaio_usage_function(lang, extension):
     action_usage_string3 = '\t\tget_file : Get meta-data for file PATH'
     action_usage_string4 = '\t\tput_dir : Set PATH directory meta-data for extension=EXT'
     action_usage_string5 = '\t\tput_file : Set meta-data for file PATH'
+    action_usage_string6 = '\t\tremove_dir : Remove PATH directory meta-data for extension=[EXT]'
     image_usage_string = '-i\t\tDisplay image meta-data'
     if lang == 'sh':
         s += '\n    echo "%s"' % action_usage_string
@@ -186,12 +187,14 @@ def filemetaio_usage_function(lang, extension):
         s += '\n    echo "%s"' % action_usage_string3
         s += '\n    echo "%s"' % action_usage_string4
         s += '\n    echo "%s"' % action_usage_string5
+        s += '\n    echo "%s"' % action_usage_string6
     elif lang == 'python':
         s += '\n    print "%s"' % action_usage_string
         s += '\n    print "%s"' % action_usage_string2
         s += '\n    print "%s"' % action_usage_string3
         s += '\n    print "%s"' % action_usage_string4
         s += '\n    print "%s"' % action_usage_string5
+        s += '\n    print "%s"' % action_usage_string6
     s += end_function(lang, 'usage')
 
     return s
