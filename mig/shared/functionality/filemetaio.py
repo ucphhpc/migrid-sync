@@ -26,8 +26,8 @@
 # -- END_HEADER ---
 #
 
-"""Script to provide users with a means of listing file meta data from 
-their home directories. 
+"""Script to provide users with a means of listing file meta data from
+their home directories.
 """
 
 import os
@@ -45,7 +45,7 @@ from shared.imagemetaio import get_image_file, add_image_file_setting, \
     allowed_settings_status, get_image_file_count, __metapath, \
     __image_metapath
 from shared.vgrid import vgrid_add_triggers, vgrid_remove_triggers, \
-    vgrid_list_vgrids
+    vgrid_list_vgrids, vgrid_is_trigger
 from shared.fileio import touch, makedirs_rec, listdirs_rec, delete_file
 
 
@@ -94,10 +94,10 @@ echo "datapath: %(datapath)s"
 echo "extension: %(extension)s"
 # DEBUG
 ls -la
+ls -la shared/*
 ls -la %(datapath)s/
 ls -la %(datapath)s/.meta
 # end DEBUG
-#python idmc_create_previews.py %(datapath)s %(extension)s
 python idmc_update_previews.py +TRIGGERCHANGE+ %(datapath)s %(extension)s
 
 ::MOUNT::
@@ -106,12 +106,12 @@ python idmc_update_previews.py +TRIGGERCHANGE+ %(datapath)s %(extension)s
 ::EXECUTABLES::
 
 ::INPUTFILES::
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/imagemetaio.py imagemetaio.py
 http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/imagepreview.py imagepreview.py
 http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/idmc_update_previews.py idmc_update_previews.py
 http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/__init__.py shared/__init__.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/defaults.py shared/defaults.py  
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/fileio.py shared/fileio.py    
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/defaults.py shared/defaults.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/fileio.py shared/fileio.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/imagemetaio.py shared/imagemetaio.py
 http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/serial.py shared/serial.py
 """ \
         % {'datapath': datapath, 'extension': extension} \
@@ -153,8 +153,8 @@ http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/imagemeta
 http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/imagepreview.py imagepreview.py
 http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/idmc_update_preview.py idmc_update_preview.py
 http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/__init__.py shared/__init__.py
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/defaults.py shared/defaults.py  
-http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/fileio.py shared/fileio.py    
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/defaults.py shared/defaults.py
+http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/fileio.py shared/fileio.py
 http://www.migrid.org/vgrid/eScience/Projects/NBI/IDMC/trigger_scripts/shared/serial.py shared/serial.py
 """ \
         % {'datapath': datapath} + __get_mrsl_template()
@@ -306,8 +306,10 @@ def __remove_image_file_trigger(
     """Remove vgrid submit trigger for image files"""
 
     logger = configuration.logger
-
-    try:
+    trigger_exists = vgrid_is_trigger(vgrid_name, rule_id,
+            configuration, recursive=False)
+    status = returnvalues.OK
+    if trigger_exists:
         (remove_status, remove_msg) = \
             vgrid_remove_triggers(configuration, vgrid_name, [rule_id])
         if remove_status:
@@ -327,9 +329,9 @@ def __remove_image_file_trigger(
             logger.error('%s' % ERROR_MSG)
             logger.error('vgrid_remove_triggers returned: %s'
                          % remove_msg)
-    except Exception, ex:
-        logger.debug(str(traceback.format_exc()))
-
+    else:
+        logger.debug('No trigger: %s for vgrid: %s' % (rule_id,
+                     vgrid_name))
     return status
 
 
@@ -344,23 +346,33 @@ def __remove_image_settings_trigger(
     """Remove vgrid submit trigger for image settings"""
 
     logger = configuration.logger
-    (remove_status, remove_msg) = vgrid_remove_triggers(configuration,
-            vgrid_name, [rule_id])
-    if remove_status:
-        status = returnvalues.OK
-        OK_MSG = \
-            "Removed old image setting trigger for extension: '%s', path '%s'" \
-            % (extension, path)
-        output_objects.append({'object_type': 'text', 'text': OK_MSG})
+
+    trigger_exists = vgrid_is_trigger(vgrid_name, rule_id,
+            configuration, recursive=False)
+    status = returnvalues.OK
+    if trigger_exists:
+        (remove_status, remove_msg) = \
+            vgrid_remove_triggers(configuration, vgrid_name, [rule_id])
+        if remove_status:
+            status = returnvalues.OK
+            OK_MSG = \
+                "Removed old image setting trigger for extension: '%s', path '%s'" \
+                % (extension, path)
+            output_objects.append({'object_type': 'text',
+                                  'text': OK_MSG})
+        else:
+            status = returnvalues.ERROR
+            ERROR_MSG = \
+                "Failed to remove old image setting trigger for extension: '%s', path '%s'" \
+                % (extension, path)
+            output_objects.append({'object_type': 'error_text',
+                                  'text': ERROR_MSG})
+            logger.error('%s' % ERROR_MSG)
+            logger.error('vgrid_remove_triggers returned: %s'
+                         % remove_msg)
     else:
-        status = returnvalues.ERROR
-        ERROR_MSG = \
-            "Failed to remove old image setting trigger for extension: '%s', path '%s'" \
-            % (extension, path)
-        output_objects.append({'object_type': 'error_text',
-                              'text': ERROR_MSG})
-        logger.error('%s' % ERROR_MSG)
-        logger.error('vgrid_remove_triggers returned: %s' % remove_msg)
+        logger.debug('No trigger: %s for vgrid: %s' % (rule_id,
+                     vgrid_name))
     return status
 
 
