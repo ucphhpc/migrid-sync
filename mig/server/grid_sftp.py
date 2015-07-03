@@ -202,26 +202,25 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         self.logger.info("chattr %s for path %s :: %s" % \
                                 (repr(attr), path, real_path))
         ignored = True
-        if hasattr(attr, 'st_mode') and \
-                attr.st_mode is not None and attr.st_mode > 0:
-            self.logger.debug('_chattr st_mode: %s' % str(attr.st_mode))
+        if getattr(attr, 'st_mode', None) is not None and attr.st_mode > 0:
+            self.logger.debug('_chattr st_mode: %s' % attr.st_mode)
             ignored = False
             self.logger.info("chattr %s forwarding for path %s :: %s" % \
                                 (repr(attr), path, real_path))
             return self._chmod(path, attr.st_mode, sftphandle)
-        if hasattr(attr, 'st_atime') and attr.st_atime is not None or \
-                 hasattr(attr, 'st_mtime') and attr.st_mtime is not None:
-            self.logger.debug('_chattr st_atime: %s, st_mtime: %s' % \
-                                str(attr.st_atime), str(attr.st_mtime))
+        if getattr(attr, 'st_atime', None) is not None or \
+                 getattr(attr, 'st_mtime', None) is not None:
             ignored = False
             change_atime = getattr(attr, 'st_atime',
                                    os.path.getatime(real_path))
             change_mtime = getattr(attr, 'st_mtime',
                                    os.path.getmtime(real_path))
+            self.logger.debug('_chattr st_atime: %s, st_mtime: %s' % \
+                                (change_atime, change_mtime))
             os.utime(real_path, (change_atime, change_mtime))
             self.logger.info("changed times %s %s for path %s :: %s" % \
                                 (change_atime, change_mtime, path, real_path))
-        if hasattr(attr, 'st_size') and attr.st_size is not None:
+        if getattr(attr, 'st_size', None) is not None:
             self.logger.debug('_chattr st_size: %s' % str(attr.st_size))
             ignored = False
             if file_obj is None:
