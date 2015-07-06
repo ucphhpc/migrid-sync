@@ -174,6 +174,8 @@ $(document).ready(function() {
     # Always run as rule creator to avoid users being able to act on behalf
     # of ANY other user using triggers (=exploit)
     extra_fields = [('path', None),
+                    ('match_dirs', ['False', 'True']),                    
+                    ('match_recursive', ['False', 'True']),                    
                     ('changes', [keyword_all] + valid_trigger_changes),
                     ('action', [keyword_auto] + valid_trigger_actions),
                     ('arguments', None),
