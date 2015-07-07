@@ -67,7 +67,6 @@ table {
   background-color: #147;
 }
 
-
 .styled_button:hover {
   background-color: #369;
 }
@@ -89,6 +88,10 @@ table {
   background: url("/images/skin/migrid-basic/background.png") repeat scroll left center #eee;
   color: white;
 }
+#logoimage {
+  opacity: 1.0;
+}
+
 
 #bottomlogo {
   background: url("/images/skin/migrid-basic/background.png") repeat scroll left center #eee;

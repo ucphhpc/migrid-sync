@@ -33,6 +33,7 @@
     border: 1px solid #8FD182;
     background: url('images/ui-bg_glass_0_679c5b_1x400.png') repeat-x scroll 50% 50% #8FD182;
 }
+
 /* lighter border on accordion widgets - should probably be fixed in theme roller instead */
 .ui-state-default {
     border: 1px solid #679c5b; 
@@ -48,7 +49,4 @@
     border-radius: 4px;
     transition: width 0.5s;
     -webkit-transition: width 0.5s;
-    /* force touch default theme background for progressbars */
-    background: url('images/ui-bg_glass_0_679c5b_1x400.png') repeat-x scroll 50% 50% #8FD182;
-
 }

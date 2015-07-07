@@ -94,6 +94,9 @@
   float:left;
   padding-bottom: 4px;
 }
+.fm_path_breadcrumbs a:hover {
+  color: #679c5b;
+}
 .fm_addressbar {
   padding-bottom: 2px;
   border: 0;
@@ -114,6 +117,9 @@
   height: 500px;
   
 }
+#fm_preview_histogram_min_max_slider .noUi-connect {
+  background: #679c5b;
+} 
 .fm_files {
   float: right;
   width: 74%;
@@ -150,11 +156,11 @@
   display: inline;
 }
 .fm_toolbar ul li a:hover {
-  background-color: #369;
+  background-color: #679c5b;
   color: white;
 }
 .fm_toolbar ul li a.selected {
-  background-color: #147;
+  background-color: #46743c;
   color: white;
 }
 .fm_toolbar ul li a {
@@ -470,17 +476,17 @@ background: url(/images/icons/picture.png) left center no-repeat;
 /* use similar colors in tabs as in navmenu */
 /*
 .vm-tabs li.ui-state-default { 
-  background: #6699bb;
-  color: white;
+  background: lightgrey;
+  color: #679c5b;
 }
 */
 .vm-tabs li.ui-tabs-selected { 
-  background: #114477;
+  background: #46743c;
   color: white;
   font-weight: bold; 
 }
 .vm-tabs li.ui-state-hover a:hover { 
-  background: #336699;
+  background: #679c5b;
   color: white;
 }
 .vm-tabs ul.no-bullets {

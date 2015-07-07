@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# jquery.fileupload-ui.custom - style overrides for fileupload-ui
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# fileupload-ui.custom - style overrides for fileupload-ui
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -81,14 +81,6 @@
 /* avoid overlap of text and error icon in upload dialog */
 .uploadfileslist span.error {
     padding-left: 20px;
-}
-
-/* force touch default theme background for progressbars */
-.fileupload-buttonbar .ui-progressbar-value {
-    background: url('images/ui-bg_gloss-wave_75_2191c0_500x100.png') repeat-x scroll 50% 50% #2191C0;
-}
-.uploadfileslist .ui-progressbar-value {
-    background: url('images/ui-bg_gloss-wave_75_2191c0_500x100.png') repeat-x scroll 50% 50% #2191C0;
 }
 
 .uploadfileslist .fade {

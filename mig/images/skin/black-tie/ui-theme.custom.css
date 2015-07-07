@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# ui-theme.custom - style overrides for jquery-ui theme
+# ui-theme.custom - jquery ui theme overrides
 # Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -27,3 +27,19 @@
 
 */
 
+
+#fm_filemanager .ui-progressbar-value {
+    /* progres floats underneath frame if margin is not negative - value depends on font size */
+    margin-top: -16px;
+    /* not sure this is needed */
+    vertical-align: middle;
+    /* look and feel */
+    padding: 0px;
+    border-radius: 4px;
+    transition: width 0.5s;
+    -webkit-transition: width 0.5s;
+}
+/* avoid dark on black */
+#fm_filemanager .progress-label {
+    color: lightgrey;
+}

@@ -181,9 +181,6 @@
     margin-right: 5%; 
     background-color: #FFF; 
 }
-#fm_preview_left_tile .noUi-base {
-     background: red;
-}
 #fm_preview_left_tile .noUi-target {
     border-radius: 4px;
     border: 1px solid #D3D3D3;
@@ -231,11 +228,14 @@
 }
 #fm_preview_histogram_min_max_slider .noUi-handle-upper {
 }
+#fm_preview_left_tile .noUi-base {
+     background: lightgrey;
+}
 #fm_preview_histogram_min_max_slider .noUi-connect {
-  background: green;
+  background: black;
 } 
 #fm_preview_histogram_min_max_slider .noUi-background{
-  background: red;
+  background: lightgrey;
 }
 #fm_preview_histogram_min_max_slider .noUi-state-tap {
 }
