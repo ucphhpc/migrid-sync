@@ -350,6 +350,9 @@ def css_tmpl(configuration):
                                              'jquery.fileupload.css',
                                              'jquery.fileupload-ui.css'],
                         skin=['fileupload-ui.custom.css'])
+    css['advanced'] += '''
+<link href="/images/lib/noUiSlider/jquery.nouislider.css"  rel="stylesheet" type="text/css" />   
+'''
     css['advanced'] += advanced_editor_css_deps()
     return css
 
@@ -358,6 +361,7 @@ def js_tmpl(entry_path='/', enable_submit='true'):
     js = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<!-- Filemanager and dependencies -->
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
 <script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>
 <script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
@@ -366,6 +370,17 @@ def js_tmpl(entry_path='/', enable_submit='true'):
 <script type="text/javascript" src="/images/js/jquery.tablesorter.widgets.js"></script>
 <script type="text/javascript" src="/images/js/jquery.contextmenu.js"></script>
 <script type="text/javascript" src="/images/js/jquery.xbreadcrumbs.js"></script>
+<!-- The preview image plugin -->
+<script type="text/javascript" src="/images/js/preview.js"></script>
+<!-- The image manipulation CamanJS plugin used by the preview image plugin -->
+<script type="text/javascript" src="/images/lib/CamanJS/dist/caman.full.js"></script>
+<script type="text/javascript">
+       Caman.DEBUG = false
+</script>
+<!-- The nouislider plugin used by the preview image plugin -->
+<script type="text/javascript" src="/images/lib/noUiSlider/jquery.nouislider.all.js"></script>
+
+<!-- Fancy file uploader and dependencies -->
 <!-- The Templates plugin is included to render the upload/download listings -->
 <script type="text/javascript" src="/images/js/tmpl.min.js"></script>
 <!-- The Load Image plugin is included for the preview images and image resizing functionality -->
@@ -385,16 +400,6 @@ def js_tmpl(entry_path='/', enable_submit='true'):
 <script type="text/javascript" src="/images/js/jquery.fileupload-ui.js"></script>
 <!-- The File Upload jQuery UI plugin -->
 <script type="text/javascript" src="/images/js/jquery.fileupload-jquery-ui.js"></script>
-<!-- The preview image plugin -->
-<script type="text/javascript" src="/images/js/preview.js"></script>
-<!-- The image manipulation CamanJS plugin used by the preview image plugin -->
-<script type="text/javascript" src="/images/lib/CamanJS/dist/caman.full.js"></script>
-<script type="text/javascript">
-       Caman.DEBUG = false
-</script>
-<!-- The nouislider plugin used by the preview image plugin -->
-<script type="text/javascript" src="/images/lib/noUiSlider/jquery.nouislider.all.js"></script>
-<link href="/images/lib/noUiSlider/jquery.nouislider.css"  rel="stylesheet" type="text/css" />   
 
 <!-- The template to display files available for upload -->
 <script id="template-upload" type="text/x-tmpl">
