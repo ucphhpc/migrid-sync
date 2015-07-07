@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# logger - [insert a few words of module description on this line]
+# logger - logging helpers
 # Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Logger class"""
+"""Logging helpers"""
 
 import logging
 
@@ -54,12 +54,11 @@ def _name_to_format(name):
         name = _default_format
     return formats[name]
 
-class Logger:
 
+class Logger:
     """ MiG code should use an instance of this class to handle
     writing to log-files.
     """
-
     logger = None
     logginglevel = None
     hdlr = None
@@ -85,6 +84,7 @@ class Logger:
         self.logger.setLevel(self.logginglevel)
 
     def init_handler(self, stderr=False):
+        """Init handler"""
         formatter = logging.Formatter(self.loggingformat)
         if stderr:
 
@@ -102,6 +102,7 @@ class Logger:
             self.logger.addHandler(self.hdlr)
 
     def remove_handler(self, stderr=False):
+        """Remove handler"""
         if stderr:
 
             # Remove stderr handler
@@ -114,6 +115,7 @@ class Logger:
             self.logger.removeHandler(self.hdlr)
 
     def loglevel(self):
+        """Return active log level"""
         return logging.getLevelName(self.logginglevel)
 
     def hangup(self):
