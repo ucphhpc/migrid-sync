@@ -85,7 +85,8 @@ Please contact the Grid admins %s if you think it should be enabled.
                                                'jquery.fmbreadcrumbs.css',
                                                'jquery.fileupload.css',
                                                'jquery.fileupload-ui.css'],
-                                         skin=['fileupload-ui.custom.css'])
+                                         skin=['fileupload-ui.custom.css',
+                                               'xbreadcrumbs.custom.css'])
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>

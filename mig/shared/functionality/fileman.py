@@ -349,14 +349,16 @@ def css_tmpl(configuration):
                                              'jquery.fmbreadcrumbs.css',
                                              'jquery.fileupload.css',
                                              'jquery.fileupload-ui.css'],
-                        skin=['fileupload-ui.custom.css'])
+                        skin=['fileupload-ui.custom.css',
+                              'xbreadcrumbs.custom.css'])
     css['advanced'] += '''
-<link href="/images/lib/noUiSlider/jquery.nouislider.css"  rel="stylesheet" type="text/css" />   
+<link href="/images/lib/noUiSlider/jquery.nouislider.css"  rel="stylesheet"
+    type="text/css" />   
 '''
     css['advanced'] += advanced_editor_css_deps()
     return css
 
-def js_tmpl(entry_path='/', enable_submit='true'):
+def js_tmpl(entry_path='/', enable_submit='true', preview='true'):
     """Javascript to include in the page header"""
     js = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
@@ -495,7 +497,8 @@ def js_tmpl(entry_path='/', enable_submit='true'):
                                              filespacer: true,
                                              uploadspace: true,
                                              enableSubmit: %s,
-                                             subPath: "%s"
+                                             subPath: "%s",
+                                             imagesettings: %s
                                              }
             );
 
@@ -509,7 +512,7 @@ def js_tmpl(entry_path='/', enable_submit='true'):
         $("#upload_tabs").tabs();
     });
 </script>
-    ''' % (enable_submit.lower(), entry_path)
+    ''' % (enable_submit.lower(), entry_path, preview.lower())
     return js
         
 def signature():
@@ -548,7 +551,8 @@ def main(client_id, user_arguments_dict):
         enable_submit = 'true'
     else:
         enable_submit = 'false'
-    title_entry['javascript'] = js_tmpl(entry_path, enable_submit)
+    title_entry['javascript'] = js_tmpl(entry_path, enable_submit,
+                                        str(configuration.site_enable_preview))
     
     output_objects.append({'object_type': 'header', 'text': 'File Manager' })
     output_objects.append({'object_type': 'html_form', 'text':
