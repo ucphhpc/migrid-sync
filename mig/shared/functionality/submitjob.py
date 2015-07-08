@@ -530,7 +530,7 @@ Upload other files efficiently (using chunking).
             <strong class="error"></strong>
         </td>
         <td>
-            <p class="size">Processing...</p>
+            <div class="size pending">Processing...</div>
             <div class="progress"></div>
         </td>
         <td>
@@ -568,7 +568,7 @@ Upload other files efficiently (using chunking).
             {% } %}
         </td>
         <td>
-            <span class="size">{%=o.formatFileSize(file.size)%}</span>
+            <div class="size">{%=o.formatFileSize(file.size)%}</div>
         </td>
         <td>
             <button class="delete" data-type="{%=file.deleteType%}" data-url="{%=file.deleteUrl%}"{% if (file.deleteWithCredentials) { %} data-xhr-fields=\'{"withCredentials":true}\'{% } %}>{% if (file.deleteUrl) { %}Delete{% } else { %}Dismiss{% } %}</button>

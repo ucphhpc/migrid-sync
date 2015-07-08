@@ -148,7 +148,7 @@ Please contact the Grid admins %s if you think it should be enabled.
             <strong class="error"></strong>
         </td>
         <td>
-            <p class="size">Processing...</p>
+            <div class="size pending">Processing...</div>
             <div class="progress"></div>
         </td>
         <td>
@@ -186,7 +186,7 @@ Please contact the Grid admins %s if you think it should be enabled.
             {% } %}
         </td>
         <td>
-            <span class="size">{%=o.formatFileSize(file.size)%}</span>
+            <div class="size">{%=o.formatFileSize(file.size)%}</div>
         </td>
         <td>
             <button class="delete" data-type="{%=file.deleteType%}" data-url="{%=file.deleteUrl%}"{% if (file.deleteWithCredentials) { %} data-xhr-fields=\'{"withCredentials":true}\'{% } %}>{% if (file.deleteUrl) { %}Delete{% } else { %}Dismiss{% } %}</button>
