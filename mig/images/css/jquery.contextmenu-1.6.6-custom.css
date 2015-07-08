@@ -176,7 +176,7 @@ Original license header follows...
 
 
 
-/*** The rest are our own overrides to replace epscially icons ***/
+/*** The rest are our own overrides to layout entries and set icons ***/
 
 /*
   Adding Icons
@@ -231,7 +231,22 @@ Original license header follows...
 .context-menu-list LI.icon-verbosestatus { background-image: url(/images/icons/information.png); }
 .context-menu-list LI.icon-select { background-image: url(/images/icons/hourglass_add.png); }
 
-/* don't color hightlighted entry blue */
+/* don't color hightlighted entry blue by default - override in skins */
 .context-menu-item.hover {
     background-color: white;
+}
+
+/* increase font size */
+.context-menu-item {
+    font-size: 12px;
+}
+
+/* vertically center entries */
+.context-menu-item > span, .context-menu-item.icon {
+    vertical-align: middle;
+    min-height: 16px;
+}
+/* vertically center submenu marker */
+.context-menu-submenu:after {
+    top: inherit;
 }
