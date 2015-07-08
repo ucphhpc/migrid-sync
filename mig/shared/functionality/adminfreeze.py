@@ -339,7 +339,15 @@ $(document).ready(function() {
             </tbody>
          </table>     
     </div>
-    <div class='fm_statusbar'>&nbsp;</div>
+    <div id='fm_statusbar'>
+        <div id='fm_statusprogress'><div class='progress-label'>Loading...</div></div>
+        <div id='fm_statusinfo'>&nbsp;</div>
+    </div>
+    <div id='fm_options'><input id='fm_touchscreen' type='checkbox'>
+    Enable touch screen interface (all clicks trigger menu)
+    <input id='fm_dotfiles' type='checkbox'>
+    Show hidden files and dirs
+    </div>
 </div>
 <div id='cmd_dialog' title='Command output' style='display: none;'></div>
 

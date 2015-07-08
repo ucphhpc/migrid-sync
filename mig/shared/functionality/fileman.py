@@ -139,7 +139,8 @@ def html_tmpl(configuration, title_entry):
     <div id="fm_options"><input id="fm_touchscreen" type="checkbox">
         Enable touch screen interface (all clicks trigger menu)
         <input id="fm_dotfiles" type="checkbox">
-        Show hidden files and dirs</div>
+        Show hidden files and dirs
+    </div>
     
     <div id="cmd_dialog" title="Command output" style="display: none;"></div>
 

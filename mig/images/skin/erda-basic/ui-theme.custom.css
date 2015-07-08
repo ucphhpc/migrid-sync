@@ -34,7 +34,7 @@
     background: url('images/ui-bg_gloss-wave_75_2191c0_500x100.png') repeat-x scroll 50% 50% #147;
 }
 
-#fm_filemanager .ui-progressbar-value {
+#fm_filemanager .ui-progressbar-value, #fm_filechooser .ui-progressbar-value {
     /* progres floats underneath frame if margin is not negative - value depends on font size */
     margin-top: -16px;
     /* not sure this is needed */

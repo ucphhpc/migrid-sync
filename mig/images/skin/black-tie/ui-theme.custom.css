@@ -28,7 +28,7 @@
 */
 
 
-#fm_filemanager .ui-progressbar-value {
+#fm_filemanager .ui-progressbar-value, #fm_filechooser .ui-progressbar-value {
     /* progres floats underneath frame if margin is not negative - value depends on font size */
     margin-top: -16px;
     /* not sure this is needed */
@@ -39,7 +39,8 @@
     transition: width 0.5s;
     -webkit-transition: width 0.5s;
 }
+
 /* avoid dark on black */
-#fm_filemanager .progress-label {
+#fm_filemanager .progress-label, #fm_filechooser .progress-label {
     color: lightgrey;
 }

@@ -1734,7 +1734,7 @@ if (jQuery) (function($){
             
             // Ignore the root
             if (options.subPath == '/') {
-            options.subPath = '';
+                options.subPath = '';
             }
 
             /**
@@ -2043,9 +2043,11 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
         callback = function(i) { action(i); 
                                  files_only = f; 
                                  callback = c; 
-    };
+                               };
 
         $("#" + name).dialog("open");
+        /* force reload to get zebra-coloring right (ignored unless visible) */
+        $.fn.reload(start_path);
     };
     // code entangled with specific filemanager naming
     var pathAttribute = "rel_path";
@@ -2073,6 +2075,7 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
                       dragndrop: false,
                       filespacer: false,
                       uploadspace: false,
+                      imagesettings: false,
                       selectOnly: true
                       },
                   // doubleclick callback action
