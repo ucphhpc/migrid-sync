@@ -245,9 +245,16 @@ def recently_modified(path, time_stamp, slack=2.0):
     If atime and mtime are the same or if mtime is within slack from time_stamp
     we accept it as recently changed.
     """
-    stat_res = os.stat(path)
-    return (stat_res.st_mtime == stat_res.st_atime) or \
+    try:
+        stat_res = os.stat(path)
+        result = (stat_res.st_mtime == stat_res.st_atime) or \
             (stat_res.st_mtime > time_stamp - slack)
+    except OSError, ex:
+        # If we get an OSError, *path* is most likely deleted
+        result = True
+        logger.debug("OSError: %s" % (str(ex)))
+
+    return result
 
 def map_args_to_vars(var_list, arg_list):
     """Map command args to backend var names - if more args than vars we
@@ -351,14 +358,24 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
             if state != "deleted":
                 logger.error("failed to load event handler rules from %s (%s)" \
                              % (src_path, exc))
-        logger.info("loaded new rules from %s:\n%s" % (src_path, new_rules))
-        # Remove all old rules for this vgrid
+        logger.info("loaded new rules from '%s':\n%s" % (src_path, new_rules))
+        # Remove all old rules for this vgrid and 
+        # leave rules for parent and sub-vgrids
         for target_path in all_rules.keys():
             all_rules[target_path] = [i for i in all_rules[target_path] if \
                                       i['vgrid_name'] != vgrid_name] 
+            remain_rules = [i for i in all_rules[target_path] if \
+                                      i['vgrid_name'] != vgrid_name]
+            if remain_rules:
+                all_rules[target_path] = remain_rules
+                logger.debug("remain_rules for: %s \n%s" % (target_path, remain_rules))
+            else:
+                logger.debug("removing rules for: %s " % target_path)
+                del all_rules[target_path]
         for entry in new_rules:
-            logger.info("updating rule entry:\n%s" % entry)
+            rule_id = entry['rule_id']
             path = entry['path']
+            logger.info("updating rule: %s, path: %s, entry:\n%s" % (rule_id, path, entry))
             abs_path = os.path.join(vgrid_prefix, path)
             all_rules[abs_path] = all_rules.get(abs_path, []) + [entry]
         logger.info("all rules:\n%s" % all_rules)
