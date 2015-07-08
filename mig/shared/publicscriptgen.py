@@ -76,7 +76,7 @@ def begin_function(lang, name, arguments, doc=''):
     if lang == 'sh':
         i = 1
         for arg in arguments:
-            s += '    %s=$%d\n' % (arg, i)
+            s += '    %s=${%d}\n' % (arg, i)
             i += 1
 
     return s

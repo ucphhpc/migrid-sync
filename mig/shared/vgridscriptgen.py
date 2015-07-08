@@ -125,7 +125,7 @@ def vgrid_two_arguments_usage_function(
     return s
 
 
-def vgrid_seven_arguments_usage_function(
+def vgrid_ten_arguments_usage_function(
     lang,
     extension,
     op,
@@ -136,15 +136,18 @@ def vgrid_seven_arguments_usage_function(
     fifth_arg,
     sixth_arg,
     seventh_arg,
+    eighth_arg,
+    ninth_arg,
+    tenth_arg,
     ):
-    """Usage functions for seven argument scripts"""
+    """Usage functions for ten argument scripts"""
 
     # Extract op from function name
     # op = sys._getframe().f_code.co_name.replace("_usage_function","")
 
-    usage_str = 'Usage: %s%s.%s [OPTIONS] %s %s %s %s %s %s %s' % \
+    usage_str = 'Usage: %s%s.%s [OPTIONS] %s %s %s %s %s %s %s %s %s %s' % \
                 (mig_prefix, op, extension, first_arg, second_arg, third_arg,
-                 fourth_arg, fifth_arg, sixth_arg, seventh_arg)
+                 fourth_arg, fifth_arg, sixth_arg, seventh_arg, eighth_arg, ninth_arg, tenth_arg)
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
@@ -281,7 +284,7 @@ def vgrid_two_arguments_function(
     return s
 
 
-def vgrid_seven_arguments_function(
+def vgrid_ten_arguments_function(
     lang,
     curl_cmd,
     command,
@@ -292,24 +295,32 @@ def vgrid_seven_arguments_function(
     fifth_arg,
     sixth_arg,
     seventh_arg,
+    eighth_arg,
+    ninth_arg,
+    tenth_arg,
     curl_flags='',
     ):
-    """Core function for seven argument scripts"""
+    """Core function for ten argument scripts"""
     relative_url = '"cgi-bin/%s.py"' % command
     query = '""'
     if lang == 'sh':
         post_data = \
-            '"output_format=txt;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s"' % \
+            '"output_format=txt;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s"' % \
             (first_arg, first_arg, second_arg, second_arg, third_arg,
              third_arg, fourth_arg, fourth_arg, fifth_arg, fifth_arg,
-             sixth_arg, sixth_arg, seventh_arg, seventh_arg)
+             sixth_arg, sixth_arg, seventh_arg, seventh_arg,
+             eighth_arg, eighth_arg, ninth_arg, ninth_arg, 
+             tenth_arg, tenth_arg)
     elif lang == 'python':
         post_data = \
             ("'output_format=txt;%s=' + %s + ';%s=' + %s + ';%s=' + %s + " + \
-            "';%s=' + %s + ';%s=' + %s + ';%s=' + %s + ';%s=' + %s") % \
+            "';%s=' + %s + ';%s=' + %s + ';%s=' + %s + ';%s=' + %s + " + \
+            "';%s=' + %s + ';%s=' + %s + ';%s=' + %s") % \
             (first_arg, first_arg, second_arg, second_arg, third_arg,
              third_arg, fourth_arg, fourth_arg, fifth_arg, fifth_arg,
-             sixth_arg, sixth_arg, seventh_arg, seventh_arg)
+             sixth_arg, sixth_arg, seventh_arg, seventh_arg,
+             eighth_arg, eighth_arg, ninth_arg, ninth_arg, 
+             tenth_arg, tenth_arg)
     else:
         print 'Error: %s not supported!' % lang
         return ''
@@ -319,7 +330,8 @@ def vgrid_seven_arguments_function(
     s += begin_function(lang, 'submit_command', [first_arg, second_arg,
                                                  third_arg, fourth_arg,
                                                  fifth_arg, sixth_arg,
-                                                 seventh_arg],
+                                                 seventh_arg, eighth_arg,
+                                                 ninth_arg, tenth_arg],
                         'Call corresponding server operation')
     s += ca_check_init(lang)
     s += password_check_init(lang)
@@ -413,7 +425,7 @@ sys.exit(status)
     return s
 
 
-def vgrid_seven_arguments_main(lang):
+def vgrid_ten_arguments_main(lang):
     """
     Generate main part of corresponding scripts.
 
@@ -423,22 +435,25 @@ def vgrid_seven_arguments_main(lang):
     s = ''
     s += basic_main_init(lang)
     s += parse_options(lang, None, None)
-    s += arg_count_check(lang, 7, 7)
+    s += arg_count_check(lang, 10, 10)
     s += check_conf_readable(lang)
     s += configure(lang)
     if lang == 'sh':
         s += \
             """
 
-first_arg="$1"
-second_arg="$2"
-third_arg="$3"
-fourth_arg="$4"
-fifth_arg="$5"
-sixth_arg="$6"
-seventh_arg="$7"
+first_arg="${1}"
+second_arg="${2}"
+third_arg="${3}"
+fourth_arg="${4}"
+fifth_arg="${5}"
+sixth_arg="${6}"
+seventh_arg="${7}"
+eighth_arg="${8}"
+ninth_arg="${9}"
+tenth_arg="${10}"
 
-submit_command $first_arg $second_arg $third_arg $fourth_arg $fifth_arg $sixth_arg $seventh_arg
+submit_command $first_arg $second_arg $third_arg $fourth_arg $fifth_arg $sixth_arg $seventh_arg $eighth_arg $ninth_arg $tenth_arg
 """
     elif lang == 'python':
         s += \
@@ -450,9 +465,13 @@ fourth_arg = sys.argv[4]
 fifth_arg = sys.argv[5]
 sixth_arg = sys.argv[6]
 seventh_arg = sys.argv[7]
+eighth_arg = sys.argv[8]
+ninth_arg = sys.argv[9]
+tenth_arg = sys.argv[10]
 
 (status, out) = submit_command(first_arg, second_arg, third_arg, fourth_arg,
-                               fifth_arg, sixth_arg, seventh_arg)
+                               fifth_arg, sixth_arg, seventh_arg, eighth_arg,
+                               ninth_arg, tenth_arg)
 print ''.join(out),
 sys.exit(status)
 """
@@ -592,7 +611,7 @@ def generate_two_arguments(
     return True
 
 
-def generate_seven_arguments(
+def generate_ten_arguments(
     op,
     first_arg,
     second_arg,
@@ -601,6 +620,9 @@ def generate_seven_arguments(
     fifth_arg,
     sixth_arg,
     seventh_arg,
+    eighth_arg,
+    ninth_arg,
+    tenth_arg,
     scripts_languages,
     dest_dir='.',
     ):
@@ -622,12 +644,12 @@ def generate_seven_arguments(
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
 
-        script += vgrid_seven_arguments_usage_function(
+        script += vgrid_ten_arguments_usage_function(
             lang, extension, op, first_arg, second_arg, third_arg, fourth_arg,
-            fifth_arg, sixth_arg, seventh_arg)
+            fifth_arg, sixth_arg, seventh_arg, eighth_arg, ninth_arg, tenth_arg)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += vgrid_seven_arguments_function(
+        script += vgrid_ten_arguments_function(
             lang,
             curl_cmd,
             op,
@@ -638,9 +660,12 @@ def generate_seven_arguments(
             fifth_arg,
             sixth_arg,
             seventh_arg,
+            eighth_arg,
+            ninth_arg,
+            tenth_arg,
             curl_flags='',
             )
-        script += vgrid_seven_arguments_main(lang)
+        script += vgrid_ten_arguments_main(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -659,13 +684,14 @@ include_license = True
 
 # Supported MiG operations (don't add 'test' as it is optional)
 
-script_ops_seven_args = []
+script_ops_ten_args = []
 
 # VGrid functions
 
-script_ops_seven_args.append(['addvgridtrigger', 'rule_id', 'vgrid_name',
-                              'path', 'changes', 'action', 'arguments',
-                              'rate_limit'])
+script_ops_ten_args.append(['addvgridtrigger', 'rule_id', 'vgrid_name',
+                              'path', 'match_dirs', 'match_recursive', 
+                              'changes', 'action', 'arguments',
+                              'rate_limit', 'settle_time'])
 
 script_ops_two_args = []
 
@@ -867,9 +893,9 @@ if __name__ == '__main__':
     for op in script_ops_two_args:
         generate_two_arguments(op[0], op[1], op[2], languages, dest_dir)
 
-    for op in script_ops_seven_args:
-        generate_seven_arguments(op[0], op[1], op[2], op[3], op[4], op[5],
-                                 op[6], op[7], languages, dest_dir)
+    for op in script_ops_ten_args:
+        generate_ten_arguments(op[0], op[1], op[2], op[3], op[4], op[5],
+                               op[6], op[7], op[8], op[9], op[10], languages, dest_dir)
 
     # if test_script:
     #    generate_test(languages)
