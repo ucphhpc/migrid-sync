@@ -83,6 +83,16 @@
     padding-left: 20px;
 }
 
+.uploadfileslist div.size {
+    text-align: center;
+}
+.uploadfileslist div.size.pending {
+    font-size: 10px;
+}
+.uploadfileslist div.progress {
+    height: 12px;
+}
+
 .uploadfileslist .fade {
     display: none;
 }
