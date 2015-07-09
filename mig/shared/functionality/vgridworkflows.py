@@ -40,14 +40,14 @@ from shared.base import client_id_dir
 import shared.returnvalues as returnvalues
 from shared.defaults import keyword_all, keyword_auto, \
     valid_trigger_changes, valid_trigger_actions, workflows_log_name, \
-    workflows_log_cnt
+    workflows_log_cnt, pending_states, final_states
+from shared.fileio import unpickle, makedirs_rec, move_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.functionality.adminvgrid import vgrid_add_remove_table
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_is_owner_or_member, vgrid_triggers, \
     vgrid_set_triggers
-from shared.fileio import unpickle
 
 default_pager_entries = 20
 
@@ -179,34 +179,54 @@ $(document).ready(function() {
     html += '<th>Status</th>'
     html += '</tr></thead>'
     html += '<tbody>'
+
     trigger_job_dir = os.path.join(configuration.vgrid_home,
                                    os.path.join(vgrid_name, '.%s.jobs'
                                    % configuration.vgrid_triggers))
-    if os.path.exists(trigger_job_dir):
+    trigger_job_pending_dir = os.path.join(trigger_job_dir,
+            'pending_states')
+    trigger_job_final_dir = os.path.join(trigger_job_dir, 'final_states'
+            )
+
+    if makedirs_rec(trigger_job_pending_dir, logger) \
+        and makedirs_rec(trigger_job_final_dir, logger):
         abs_vgrid_dir = '%s/' \
             % os.path.abspath(os.path.join(configuration.vgrid_files_home,
                               vgrid_name))
-        for name in os.listdir(trigger_job_dir):
-            trigger_job_filepath = os.path.join(trigger_job_dir, name)
+        for filename in os.listdir(trigger_job_pending_dir):
+            trigger_job_filepath = \
+                os.path.join(trigger_job_pending_dir, filename)
             trigger_job = unpickle(trigger_job_filepath, logger)
             serverjob_filepath = \
                 os.path.join(configuration.mrsl_files_dir,
                              os.path.join(client_id_dir(trigger_job['owner'
                              ]), '%s.mRSL' % trigger_job['jobid']))
             serverjob = unpickle(serverjob_filepath, logger)
-            if serverjob and serverjob['STATUS'] == 'QUEUED' \
-                or serverjob['STATUS'] == 'EXECUTING':
-                trigger_event = trigger_job['event']
-                trigger_rule = trigger_job['rule']
-                trigger_time = time.ctime(trigger_event['time_stamp'])
-                trigger_path = '%s %s' % (trigger_event['src_path'
-                        ].replace(abs_vgrid_dir, ''),
-                        trigger_event['dest_path'
-                        ].replace(abs_vgrid_dir, ''))
-                html += \
-                    '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></td>' \
-                    % (trigger_job['jobid'], trigger_rule['rule_id'],
-                       trigger_path, trigger_time, serverjob['STATUS'])
+            if serverjob:
+                if serverjob['STATUS'] in pending_states:
+                    trigger_event = trigger_job['event']
+                    trigger_rule = trigger_job['rule']
+                    trigger_time = time.ctime(trigger_event['time_stamp'
+                            ])
+                    trigger_path = '%s %s' % (trigger_event['src_path'
+                            ].replace(abs_vgrid_dir, ''),
+                            trigger_event['dest_path'
+                            ].replace(abs_vgrid_dir, ''))
+                    html += \
+                        '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></td>' \
+                        % (trigger_job['jobid'], trigger_rule['rule_id'
+                           ], trigger_path, trigger_time,
+                           serverjob['STATUS'])
+                elif serverjob['STATUS'] in final_states:
+                    src_path = os.path.join(trigger_job_pending_dir,
+                            filename)
+                    dest_path = os.path.join(trigger_job_final_dir,
+                            filename)
+                    move_file(src_path, dest_path, configuration)
+                else:
+                    logger.error('Trigger job: %s, unknown state: %s'
+                                 % (trigger_job['jobid'],
+                                 serverjob['STATUS']))
     html += '</tbody>'
     html += '</table>'
     output_objects.append({'object_type': 'html_form', 'text': html})

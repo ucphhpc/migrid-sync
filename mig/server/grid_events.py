@@ -587,8 +587,9 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         vgrid_name = rule['vgrid_name']
         trigger_job_dir = os.path.join(configuration.vgrid_home,
-                os.path.join(vgrid_name, '.%s.jobs'
-                % configuration.vgrid_triggers))
+                os.path.join(vgrid_name, os.path.join('.%s.jobs'
+                % configuration.vgrid_triggers, 'pending_states')))
+
         trigger_job_filepath = os.path.join(trigger_job_dir, jobid)
 
         if makedirs_rec(trigger_job_dir, configuration):
