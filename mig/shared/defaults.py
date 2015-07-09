@@ -130,7 +130,7 @@ valid_trigger_changes = ['created', 'modified', 'deleted']
 valid_trigger_actions = ['submit', 'command'] + ['trigger-%s' % i for i in \
                                                  valid_trigger_changes]
 
-workflows_log_name = 'workflow-triggers.log'
+workflows_log_name = 'workflow.log'
 # 64M = 67108864
 workflows_log_size = 67108864
 workflows_log_cnt = 2

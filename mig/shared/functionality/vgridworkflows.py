@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 #
 # --- BEGIN_HEADER ---
 #
@@ -33,18 +34,23 @@ status and so on to ease workflow collaboration.
 """
 
 import os
+import time
 
+from shared.base import client_id_dir
 import shared.returnvalues as returnvalues
-from shared.defaults import keyword_all, keyword_auto, valid_trigger_changes, \
-     valid_trigger_actions, workflows_log_name, workflows_log_cnt
+from shared.defaults import keyword_all, keyword_auto, \
+    valid_trigger_changes, valid_trigger_actions, workflows_log_name, \
+    workflows_log_cnt
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.functionality.adminvgrid import vgrid_add_remove_table
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import vgrid_is_owner_or_member, vgrid_triggers, \
-     vgrid_set_triggers
+    vgrid_set_triggers
+from shared.fileio import unpickle
 
 default_pager_entries = 20
+
 
 def signature():
     """Signature of the main function"""
@@ -52,16 +58,20 @@ def signature():
     defaults = {'vgrid_name': REJECT_UNSET}
     return ['html_form', defaults]
 
+
 def read_trigger_log(configuration, vgrid_name):
     """Read in saved trigger logs for vgrid workflows page. We read in all
     rotated logs.
     """
+
     log_content = ''
-    for i in xrange(workflows_log_cnt-1, -1, -1):
-        log_name = workflows_log_name
+    for i in xrange(workflows_log_cnt - 1, -1, -1):
+        log_name = '%s.%s' % (configuration.vgrid_triggers,
+                              workflows_log_name)
         if i > 0:
             log_name += '.%d' % i
-        log_path = os.path.join(configuration.vgrid_home, vgrid_name, log_name)
+        log_path = os.path.join(configuration.vgrid_home, vgrid_name,
+                                log_name)
         configuration.logger.debug('read from %s' % log_path)
         try:
             log_fd = open(log_path)
@@ -71,6 +81,7 @@ def read_trigger_log(configuration, vgrid_name):
         except IOError:
             pass
     return log_content
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -90,18 +101,21 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     vgrid_name = accepted['vgrid_name'][-1]
-        
+
     if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                     configuration):
-        output_objects.append({'object_type': 'error_text', 'text':
-                               '''You must be an owner or member of %s vgrid to
-access the workflows.''' % vgrid_name})
+        output_objects.append({'object_type': 'error_text',
+                              'text': '''You must be an owner or member of %s vgrid to
+access the workflows.'''
+                               % vgrid_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s Workflows' % configuration.site_vgrid_label
+    title_entry['text'] = '%s Workflows' \
+        % configuration.site_vgrid_label
     title_entry['style'] = themed_styles(configuration)
-    title_entry['javascript'] = '''
+    title_entry['javascript'] = \
+        '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/images/js/jquery.tablesorter.pager.js"></script>
@@ -135,62 +149,115 @@ $(document).ready(function() {
      }
 );
 </script>
-''' % default_pager_entries
+''' \
+        % default_pager_entries
 
     output_objects.append({'object_type': 'html_form',
-                           'text':'''
+                          'text': '''
  <div id="confirm_dialog" title="Confirm" style="background:#fff;">
   <div id="confirm_text"><!-- filled by js --></div>
    <textarea cols="72" rows="10" id="confirm_input" style="display:none;"></textarea>
  </div>
-'''                       })
-                          
-    output_objects.append({'object_type': 'header', 'text'
-                          : '%s Workflows for %s' % \
-                           (configuration.site_vgrid_label, vgrid_name)})
+'''})
 
-    logger.info("vgridworkflows %s" % vgrid_name)
+    output_objects.append({'object_type': 'header',
+                          'text': '%s Workflows for %s'
+                          % (configuration.site_vgrid_label,
+                          vgrid_name)})
 
-    # TODO: consider showing triggered job list?
-    #job_list = []
-    #output_objects.append({'object_type': 'sectionheader', 'text'
-    #                      : 'Trigger Jobs'})
-    #output_objects.append({'object_type': 'html_form', 'text'
-    #                      : 'Job table here!'})
+    logger.info('vgridworkflows %s' % vgrid_name)
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Trigger Log'})
+    # Display active trigger jobs for this vgrid
+
+    output_objects.append({'object_type': 'sectionheader',
+                          'text': 'Active Trigger Jobs'})
+    html = '<table><thead><tr>'
+    html += '<th>Job ID</th>'
+    html += '<th>Trigger Rule</th>'
+    html += '<th>Trigger Path</th>'
+    html += '<th>Trigger Time</th>'
+    html += '<th>Status</th>'
+    html += '</tr></thead>'
+    html += '<tbody>'
+    trigger_job_dir = os.path.join(configuration.vgrid_home,
+                                   os.path.join(vgrid_name, '.%s.jobs'
+                                   % configuration.vgrid_triggers))
+    if os.path.exists(trigger_job_dir):
+        abs_vgrid_dir = '%s/' \
+            % os.path.abspath(os.path.join(configuration.vgrid_files_home,
+                              vgrid_name))
+        for name in os.listdir(trigger_job_dir):
+            trigger_job_filepath = os.path.join(trigger_job_dir, name)
+            trigger_job = unpickle(trigger_job_filepath, logger)
+            serverjob_filepath = \
+                os.path.join(configuration.mrsl_files_dir,
+                             os.path.join(client_id_dir(trigger_job['owner'
+                             ]), '%s.mRSL' % trigger_job['jobid']))
+            serverjob = unpickle(serverjob_filepath, logger)
+            if serverjob and serverjob['STATUS'] == 'QUEUED' \
+                or serverjob['STATUS'] == 'EXECUTING':
+                trigger_event = trigger_job['event']
+                trigger_rule = trigger_job['rule']
+                trigger_time = time.ctime(trigger_event['time_stamp'])
+                trigger_path = '%s %s' % (trigger_event['src_path'
+                        ].replace(abs_vgrid_dir, ''),
+                        trigger_event['dest_path'
+                        ].replace(abs_vgrid_dir, ''))
+                html += \
+                    '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></td>' \
+                    % (trigger_job['jobid'], trigger_rule['rule_id'],
+                       trigger_path, trigger_time, serverjob['STATUS'])
+    html += '</tbody>'
+    html += '</table>'
+    output_objects.append({'object_type': 'html_form', 'text': html})
+
+    # Display active trigger jobs for this vgrid
+
+    output_objects.append({'object_type': 'sectionheader',
+                          'text': 'Trigger Log'})
     log_content = read_trigger_log(configuration, vgrid_name)
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : '''
+    output_objects.append({'object_type': 'html_form',
+                          'text': '''
  <div class="form_container">
  <textarea id="logarea" rows=10 readonly="readonly">%s</textarea>
  </div>
- ''' % log_content})
+ '''
+                          % log_content})
 
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Manage Triggers'})
+    output_objects.append({'object_type': 'sectionheader',
+                          'text': 'Manage Triggers'})
 
     # Always run as rule creator to avoid users being able to act on behalf
     # of ANY other user using triggers (=exploit)
-    extra_fields = [('path', None),
-                    ('match_dirs', ['False', 'True']),                    
-                    ('match_recursive', ['False', 'True']),                    
-                    ('changes', [keyword_all] + valid_trigger_changes),
-                    ('action', [keyword_auto] + valid_trigger_actions),
-                    ('arguments', None),
-                    ('run_as', client_id),
-                    ]
-    
-    # NOTE: we do NOT show saved template contents - see addvgridtriggers
-    
-    optional_fields = [('rate_limit', None), ('settle_time', None), ]
 
-    (status, oobjs) = vgrid_add_remove_table(client_id, vgrid_name, 'trigger',
-                                             'vgridtrigger', configuration,
-                                             extra_fields, optional_fields)
+    extra_fields = [
+        ('path', None),
+        ('match_dirs', ['False', 'True']),
+        ('match_recursive', ['False', 'True']),
+        ('changes', [keyword_all] + valid_trigger_changes),
+        ('action', [keyword_auto] + valid_trigger_actions),
+        ('arguments', None),
+        ('run_as', client_id),
+        ]
+
+    # NOTE: we do NOT show saved template contents - see addvgridtriggers
+
+    optional_fields = [('rate_limit', None), ('settle_time', None)]
+
+    (status, oobjs) = vgrid_add_remove_table(
+        client_id,
+        vgrid_name,
+        'trigger',
+        'vgridtrigger',
+        configuration,
+        extra_fields,
+        optional_fields,
+        )
     output_objects.extend(oobjs)
+
     if not status:
         return (output_objects, returnvalues.SYSTEM_ERROR)
-    
+
     return (output_objects, returnvalues.OK)
+
+
