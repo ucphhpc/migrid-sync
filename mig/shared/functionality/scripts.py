@@ -243,9 +243,10 @@ def main(client_id, user_arguments_dict):
             for op in vgridgen.script_ops_two_args:
                 vgridgen.generate_two_arguments(op[0], op[1], op[2],
                         languages, dest_dir)
-            for op in vgridgen.script_ops_seven_args:
-                vgridgen.generate_seven_arguments(op[0], op[1], op[2], op[3],
+            for op in vgridgen.script_ops_ten_args:
+                vgridgen.generate_ten_arguments(op[0], op[1], op[2], op[3],
                                                   op[4], op[5], op[6], op[7],
+                                                  op[8], op[9], op[10],
                                                   languages, dest_dir)
         else:
             output_objects.append({'object_type': 'warning_text', 'text'
