@@ -29,7 +29,7 @@ import cgi
 import cgitb
 cgitb.enable()
 
-# call startexe!
+# call startstore!
 
 from shared.functionality.startstore import main
 from shared.cgiscriptstub import run_cgi_script
