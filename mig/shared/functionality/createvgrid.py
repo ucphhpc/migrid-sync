@@ -259,6 +259,10 @@ def create_tracker(
     project_name = '%s %s project tracker' % (vgrid_name, kind)
     create_cmd = None
     create_status = True
+    # Trac requires this for certain versions of setuptools
+    # http://trac.edgewall.org/wiki/setuptools
+    admin_env = os.environ.copy()
+    admin_env["PKG_RESOURCES_CACHE_ZIP_MANIFESTS"] = "1"    
     try:
 
         # Create tracker directory
@@ -288,7 +292,7 @@ def create_tracker(
             # if the stdout/err is not handled (Popen vs call)
             logger.info('create tracker project: %s' % create_cmd)
             proc = subprocess.Popen(create_cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
+                                    stderr=subprocess.STDOUT, env=admin_env)
             proc.wait()
             if proc.returncode != 0:
                 raise Exception("tracker creation %s failed: %s (%d)" % \
@@ -344,13 +348,27 @@ def create_tracker(
             project_conf.close()
 
         if not repair or not os.path.isdir(target_tracker_deploy):
+            # Some plugins require DB changes so we always force DB update here
+            # Upgrade environment using trac-admin command:
+            # trac-admin tracker_dir upgrade
+            upgrade_cmd = [configuration.trac_admin_path, target_tracker_var,
+                           'upgrade']
+            logger.info('upgrade project tracker database: %s' % upgrade_cmd)
+            proc = subprocess.Popen(upgrade_cmd, stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT, env=admin_env)
+            proc.wait()
+            if proc.returncode != 0:
+                raise Exception("tracker 1st upgrade db %s failed: %s (%d)" % \
+                                (upgrade_cmd, proc.stdout.read(),
+                                 proc.returncode))
+
             # Create cgi-bin with scripts using trac-admin command:
             # trac-admin tracker_dir deploy target_tracker_bin
             deploy_cmd = [configuration.trac_admin_path, target_tracker_var,
                           'deploy', target_tracker_deploy]
             logger.info('deploy tracker project: %s' % deploy_cmd)
             proc = subprocess.Popen(deploy_cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
+                                    stderr=subprocess.STDOUT, env=admin_env)
             proc.wait()
             if proc.returncode != 0:
                 raise Exception("tracker deployment %s failed: %s (%d)" % \
@@ -526,10 +544,10 @@ body {
                        'upgrade']
         logger.info('upgrade project tracker database: %s' % upgrade_cmd)
         proc = subprocess.Popen(upgrade_cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
+                                stderr=subprocess.STDOUT, env=admin_env)
         proc.wait()
         if proc.returncode != 0:
-            raise Exception("tracker upgrade db %s failed: %s (%d)" % \
+            raise Exception("tracker 2nd upgrade db %s failed: %s (%d)" % \
                             (upgrade_cmd, proc.stdout.read(),
                              proc.returncode))
 
