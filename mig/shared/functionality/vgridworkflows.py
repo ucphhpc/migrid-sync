@@ -173,9 +173,10 @@ $(document).ready(function() {
                           'text': 'Active Trigger Jobs'})
     html = '<table><thead><tr>'
     html += '<th>Job ID</th>'
-    html += '<th>Trigger Rule</th>'
-    html += '<th>Trigger Path</th>'
-    html += '<th>Trigger Time</th>'
+    html += '<th>Rule</th>'
+    html += '<th>Path</th>'
+    html += '<th>Change</th>'
+    html += '<th>Time</th>'
     html += '<th>Status</th>'
     html += '</tr></thead>'
     html += '<tbody>'
@@ -206,6 +207,7 @@ $(document).ready(function() {
                 if serverjob['STATUS'] in pending_states:
                     trigger_event = trigger_job['event']
                     trigger_rule = trigger_job['rule']
+                    trigger_action = trigger_event['event_type']
                     trigger_time = time.ctime(trigger_event['time_stamp'
                             ])
                     trigger_path = '%s %s' % (trigger_event['src_path'
@@ -213,9 +215,9 @@ $(document).ready(function() {
                             trigger_event['dest_path'
                             ].replace(abs_vgrid_dir, ''))
                     html += \
-                        '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></td>' \
+                        '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></td><td>%s</td>' \
                         % (trigger_job['jobid'], trigger_rule['rule_id'
-                           ], trigger_path, trigger_time,
+                           ], trigger_path, trigger_action, trigger_time,
                            serverjob['STATUS'])
                 elif serverjob['STATUS'] in final_states:
                     src_path = os.path.join(trigger_job_pending_dir,
