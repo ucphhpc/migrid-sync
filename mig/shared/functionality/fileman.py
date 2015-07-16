@@ -265,6 +265,24 @@ def html_tmpl(configuration, title_entry):
     <div id="pack_output"></div>
     </div>
 
+    <div id="grep_dialog" title="Text search in file" style="display: none;">
+    
+        <form id="grep_form" method="post" action="grep.py">
+        <fieldset>
+            <input type="hidden" name="output_format" value="json" />
+            <p>
+            <label for="path">Path to search:</label>
+            <input id="path" type="text" name="path"/>
+            </p>
+            <p>
+            <label for="pattern">Search word or pattern:</label>
+            <input id="pattern" type="text" name="pattern"/>
+            </p>
+        </fieldset>
+        </form>
+        <div id="grep_output"></div>
+    </div>
+    
     <div id="imagesettings_dialog" title="Image Settings" style="display: none;">
     <form id="imagesettings_form" method="post" action="filemetaio.py">
     <fieldset>

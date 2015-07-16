@@ -1025,6 +1025,30 @@ if (jQuery) (function($){
                 });
             $("#rename_dialog").dialog('open');
         },
+        grep:  function (action, el, pos) {
+            // Initialize the form
+            $("#grep_form input[name='path']").val($(el).attr(pathAttribute));
+            $("#grep_form input[name='pattern']").val('');
+            $("#grep_dialog").dialog({ 
+                buttons: {
+                Ok: function() {
+                    startProgress("Searching for text...");
+		    /* user may specify path pattern so don't use implict elem path */
+		    var path = $("#grep_form input[name='path']").val();
+		    var pattern = $("#grep_form input[name='pattern']").val();
+                    $(this).dialog('close');
+                    jsonWrapper(el, '#cmd_dialog', 'grep.py', {path: path, pattern: pattern});
+                },
+                    Cancel: function() {
+                    $(this).dialog('close');
+                }
+                },
+                autoOpen: false, closeOnEscape: true,
+		modal: true
+                });
+            $("#grep_dialog").dialog('open');
+            $("#grep_form input[name='pattern']").focus();
+        },
 
         imagesettings: function(action, el, pos) {
                 var rel_path = $(el).attr(pathAttribute);
@@ -1051,7 +1075,7 @@ if (jQuery) (function($){
         filespacer: true,
         enableSubmit: true,
         selectOnly: false,
-        imagesettings: false,
+        imagesettings: false
         };
 
         var options = $.extend(defaults, user_options);
@@ -1559,9 +1583,8 @@ if (jQuery) (function($){
                     "touch": {name: "Update Timestamp (touch)", icon: "touch"},
                     "stat": {name: "File Info (stat)", icon: "stat"},
                     "truncate": {name: "Clear File (truncate)", icon: "truncate"},
-                    /* TODO: add grep support */
-                    //"search-sep": "---------",
-                    //"grep": {name: "Text Search (grep)", icon: "grep"},
+                    "search-sep": "---------",
+                    "grep": {name: "Text Search (grep)", icon: "grep"},
                     "shell-sep": "---------",
                     "spell": {name: "Spell Check", icon: "spell"},
                     "md5sum": {name: "MD5 Sum", icon: "md5sum"},
@@ -1958,7 +1981,7 @@ if (jQuery) (function($){
                                return true;
                            }
                            });
-                        
+
             // This is the only form not matching the stuff above
             $("#editor_form").ajaxForm(
                            {target: '#editor_output', dataType: 'json',

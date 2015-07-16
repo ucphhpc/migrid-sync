@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# grep - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# grep - text search
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -64,7 +64,7 @@ def pattern_match_file(pattern, filename, allowed_time=5.0):
 
             break
 
-        if re.match(pattern, line.strip()):
+        if re.search(pattern, line.strip()):
             fit.append(line)
     file_fd.close()
 
