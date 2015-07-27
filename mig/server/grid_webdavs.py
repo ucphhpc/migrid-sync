@@ -491,6 +491,8 @@ def run(configuration):
         "enable_loggers": [],
         "propsmanager": True,      # True: use property_manager.PropertyManager
         "locksmanager": True,      # True: use lock_manager.LockManager
+        # Allow last modified timestamp updates from client to support rsync -a
+        "mutable_live_props": ["{DAV:}getlastmodified"],
         "domaincontroller": MiGWsgiDAVDomainController(user_map),
         })
     
@@ -540,7 +542,7 @@ if __name__ == "__main__":
         configuration.user_davs_address = sys.argv[2]
     if sys.argv[3:]:
         configuration.user_davs_port = int(sys.argv[3])
-
+        
     # Web server doesn't allow empty string alias for all interfaces
     if configuration.user_davs_address == '':
         configuration.user_davs_address = '0.0.0.0'
