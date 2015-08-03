@@ -533,7 +533,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     %(home)s/.ssh/{id_rsa.pub,authorized_keys}'
 %(sudo_cmd)s 'ssh -o StrictHostKeyChecking=no \\
     %(user)s@%(base_fqdn)s pwd >/dev/null'
-%(sudo_cmd)s 'svn checkout http://migrid.googlecode.com/svn/trunk/ %(home)s'
+%(sudo_cmd)s 'svn checkout https://svn.code.sf.net/p/migrid/code/trunk/ %(home)s'
 sudo chown %(user)s:%(group)s %(server_conf)s %(trac_ini)s
 sudo cp -f -p %(server_conf)s %(trac_ini)s %(server_dir)s/
 """ % settings

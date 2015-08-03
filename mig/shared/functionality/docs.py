@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # docs - online documentation generator
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -171,7 +171,7 @@ def license_information(configuration, output_objects):
                           : """
 %s is based on the Minimum intrusion Grid (MiG) middleware. You can read about
 MiG at the
-<a class='urllink' href='http://code.google.com/p/migrid/'>project web site</a>
+<a class='urllink' href='https://sourceforge.net/projects/migrid/'>project web site</a>
 .<br />
 The MiG software license follows below:<br />
 """ % configuration.site_title})

@@ -1,7 +1,11 @@
 = Introduction =
 This is the full MiG project code released at the MiGrid project at
-Google Code:
+SourceForge:
 
+https://sourceforge.net/projects/migrid/
+
+We previously used Google Code so history is avilable at:
+ 
 http://code.google.com/p/migrid/
 
 MiG is Free Software and it is developed by the MiG Project lead by
@@ -15,7 +19,7 @@ about the GPL v2 license under which MiG is distributed.
 Please refer to the information available at the aforementioned URL
 especially the wiki pages including:
 
-https://code.google.com/p/migrid/wiki/GettingStarted
+https://sourceforge.net/p/migrid/wiki/GettingStarted/
 
 
 = Requirements =
@@ -173,7 +177,8 @@ If you run MiG with different apache and mig users, you will most likely
 need to provide both users write access to the mig user home, though.
 
 Download and unpack the MiG source or make a checkout from svn as described on:
-https://code.google.com/p/migrid/source/checkout
+
+https://sourceforge.net/p/migrid/code/HEAD/tree/trunk/
 
 At this point it may be comfortable to copy some of the basic
 account configuration files from mig/install/mig-user to ~/ but this is
