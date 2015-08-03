@@ -156,9 +156,19 @@ for other users.
 == Changelogs ==
 More detailed changelogs for the public releases.
 The full changelog is available from the repository:
-http://code.google.com/p/migrid/source/list
+https://sourceforge.net/p/migrid/code/commit_browser
 
-== 1.5.0 ==
+== 1.5.0 (yet to be released) ==
+- Additional file manager operations
+- Daemon port aliasing for firewall-friendly remote access to user homes
+- Fixes for chmod/chattr in daemons
+- Security hardening
+- Generic skin support for custom web site look and feel
+- Support for image previews and basic visualization
+- Polished file manager for usability with progress bars, etc.
+- Implemented MOUNT support in jobs for easy live access to user home files
+- Optimized file manager speed with many files/dirs
+- VGrid workflows for data-driven automation of tasks
 - Full OpenID integration: OpenID login service and user login support
 - WebDAV service for file access and mount support
 - FTPS service for file access and mount support
