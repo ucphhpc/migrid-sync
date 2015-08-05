@@ -56,6 +56,7 @@ if '__main__' == __name__:
         'sid_fqdn',
         'user',
         'group',
+        'apache_version',
         'apache_etc',
         'apache_run',
         'apache_lock',
@@ -142,7 +143,7 @@ cp %(destination)s/index.html %(mig_state)s/user_home/
 
 If you are running apache 2.x on Debian/Ubuntu you can use the sites-available
 and sites-enabled structure with:
-sudo cp %(destination)s/MiG.conf %(apache_etc)s/sites-available/MiG
+sudo cp %(destination)s/MiG.conf %(apache_etc)s/sites-available/
 sudo a2ensite MiG
 
 On other distro and apache combinations you will likely want to rely on the

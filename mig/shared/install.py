@@ -83,6 +83,7 @@ def generate_confs(
     sid_fqdn='localhost',
     user='mig',
     group='mig',
+    apache_version='2.2',
     apache_etc='/etc/apache2',
     apache_run='/var/run',
     apache_lock='/var/lock',
@@ -142,6 +143,7 @@ def generate_confs(
     user_dict['__MIG_CODE__'] = mig_code
     user_dict['__MIG_STATE__'] = mig_state
     user_dict['__MIG_CERTS__'] = mig_certs
+    user_dict['__APACHE_VERSION__'] = apache_version
     user_dict['__APACHE_ETC__'] = apache_etc
     user_dict['__APACHE_RUN__'] = apache_run
     user_dict['__APACHE_LOCK__'] = apache_lock
@@ -192,6 +194,17 @@ cert, oid and sid based https!
 """
 
     user_dict['__IF_SEPARATE_PORTS__'] = '#'
+
+    # Switch between apache 2.2 and 2.4 directives to match requested version
+    user_dict['__APACHE_RECENT_ONLY__'] = 'Only for apache>=2.4'
+    user_dict['__APACHE_PRE2.4_ONLY__'] = 'Only for apache<2.4'
+    # We use raw string comparison here which seems to work alright for X.Y.Z
+    if user_dict['__APACHE_VERSION__'] >= "2.4":
+        user_dict['__APACHE_RECENT__'] = ''
+        user_dict['__APACHE_PRE2.4__'] = '#'
+    else:
+        user_dict['__APACHE_PRE2.4__'] = ''
+        user_dict['__APACHE_RECENT__'] = '#'
 
     # Enable mercurial module in trackers if Trac is available
     user_dict['__HG_COMMENTED__'] = '#'
@@ -384,6 +397,7 @@ def create_user(
     mig_dir = os.path.join(home, 'mig')
     server_dir = os.path.join(mig_dir, 'server')
     state_dir = os.path.join(home, 'state')
+    apache_version = '2.2'
     apache_etc = '/etc/apache2'
     apache_dir = '%s-%s' % (apache_etc, user)
     apache_run = '%s/run' % apache_dir
@@ -456,6 +470,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         sid_fqdn,
         user,
         group,
+        apache_version,
         apache_dir,
         apache_run,
         apache_lock,
