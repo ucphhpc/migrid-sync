@@ -38,7 +38,7 @@ from shared.functional import validate_input_and_cert
 from shared.html import themed_styles
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
-     load_ssh, load_davs, load_ftps
+     load_ssh, load_davs, load_ftps, load_seafile
 from shared.profilekeywords import get_profile_specs
 from shared.safeinput import html_escape
 from shared.settingskeywords import get_settings_specs
@@ -58,6 +58,7 @@ general_edit = cm_options.copy()
 ssh_edit = cm_options.copy()
 davs_edit = cm_options.copy()
 ftps_edit = cm_options.copy()
+seafile_edit = cm_options.copy()
 style_edit = cm_options.copy()
 style_edit['mode'] = 'css'
 widgets_edit = cm_options.copy()
@@ -140,6 +141,8 @@ $(document).ready(function() {
         valid_topics.append('webdavs')
     if configuration.site_enable_ftps:
         valid_topics.append('ftps')
+    if configuration.site_enable_seafile:
+        valid_topics.append('seafile')
     topics = accepted['topic']
     # Backwards compatibility
     if topics and topics[0] == 'ssh':
@@ -150,7 +153,7 @@ $(document).ready(function() {
         topics.append(valid_topics[0])
     topic_titles = dict([(i, i.title()) for i in valid_topics])
     for (key, val) in [('sftp', 'SFTP'), ('webdavs', 'WebDAVS'),
-                       ('ftps', 'FTPS')]:
+                       ('ftps', 'FTPS'), ('seafile', 'Seafile')]:
         if key in valid_topics:
             topic_titles[key] = val
     output_objects.append({'object_type': 'header', 'text'
@@ -1130,6 +1133,139 @@ value="%(default_authpassword)s" />
             'ftps_server': ftps_server,
             'ftps_ctrl_port': ftps_ctrl_port,
             'auth_methods': ' / '.join(configuration.user_ftps_auth).title(),
+            }
+
+        output_objects.append({'object_type': 'html_form', 'text': html})
+
+    if 'seafile' in topics:
+
+        # load current seafile
+
+        current_seafile_dict = load_seafile(client_id, configuration)
+        if not current_seafile_dict:
+            
+            # no current seafile found
+            
+            current_seafile_dict = {}
+
+        default_authkeys = current_seafile_dict.get('authkeys', '')
+        default_authpassword = current_seafile_dict.get('authpassword', '')
+        username = client_alias(client_id)
+        if configuration.user_seafile_alias:
+            username = extract_field(client_id, configuration.user_seafile_alias)
+            create_alias_link(username, client_id, configuration.user_home)
+        seafile_url = configuration.user_seafile_url
+        html = \
+        '''
+<div id="seafileaccess">
+<form method="post" action="settingsaction.py">
+<table class="seafilesettings fixedlayout">
+<tr class="title"><td class="centertext">
+Seafile integration with your %(site)s account
+</td></tr>
+<tr><td>
+
+</td></tr>
+<tr><td>
+You can configure Seafile integration with your %(site)s account for
+synchronization and sharing features like those known from e.g. Dropbox and
+Spideroak.<br/>
+This enables you to keep one or more folders synchronized between
+all your computers and mobile devices and to share those folders with other
+people.<br/>
+You currently need to register with your email address first at our
+<a href="%(seafile_url)s">Seafile</a> page before saving the chosen password
+here for integration.<br/>
+The integration is still work-in-progress but you can use your Seafile account
+as a standalone synchronization and sharing solution for now.
+<h3>Login Details</h3>
+<ul>
+<li>Server <em>%(seafile_url)s</em></li>
+<li>Username <em>%(username)s</em></li>
+<li>%(auth_methods)s <em>as you choose below</em></li>
+</ul>
+</td></tr>
+<tr><td>
+<input type="hidden" name="topic" value="seafile" />
+<div class="div-seafile-client-notes hidden">
+<a href="javascript:toggleHidden('.div-seafile-client-notes');"
+    class="removeitemlink" title="Toggle view">
+    Show less Seafile client details...</a>
+<h3>Graphical Seafile access</h3>
+Free and open source clients for most platforms are available from the
+<a href="https://www.seafile.com/en/download/">Seafile Download</a> page.
+<br />
+Enter the address %(seafile_url)s and when fill in the
+login details:
+<pre>
+Username %(username)s
+Password YOUR_PASSWORD_HERE
+</pre>
+</div>
+<div class="div-seafile-client-notes">
+<a href="javascript:toggleHidden('.div-seafile-client-notes');"
+    class="additemlink" title="Toggle view">
+    Show more Seafile client details...</a>
+</div>
+'''
+        
+        keyword_keys = "authkeys"
+        if 'publickey' in configuration.user_seafile_auth:
+            html += '''
+</td></tr>
+<tr><td>
+<h3>Authorized Public Keys</h3>
+You can use any existing RSA key, including the key.pem you received along with
+your user certificate, or create a new one. In any case you need to save the
+contents of the corresponding public key (X.pub) in the text area below, to be
+able to connect with username and key as described in the Login Details.
+<br/>'''
+            area = '''
+<textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
+%(default_authkeys)s
+</textarea>
+'''
+            html += wrap_edit_area(keyword_keys, area, seafile_edit, 'BASIC')
+            html += '''
+(leave empty to disable seafile access with public keys)
+</td></tr>
+'''
+            
+        keyword_password = "authpassword"
+        if 'password' in configuration.user_seafile_auth:
+            # We only want a single password and a masked input field
+            html += '''
+<tr><td>
+<h3>Authorized Password</h3>
+Please enter and save your desired password in the text field below, to be able
+to connect with username and password as described in the Login Details.
+<br/>
+<input type=password id="%(keyword_password)s" size=40 name="password"
+value="%(default_authpassword)s" />
+(leave empty to disable seafile access with password)
+</td></tr>
+'''
+        
+        html += '''
+<tr><td>
+<input type="submit" value="Save Seafile Settings" />
+</td></tr>
+'''
+        
+        html += '''
+</table>
+</form>
+</div>
+'''
+        html = html % {
+            'default_authkeys': default_authkeys,
+            'default_authpassword': default_authpassword,
+            'site': configuration.short_title,
+            'keyword_keys': keyword_keys,
+            'keyword_password': keyword_password,
+            'username': username,
+            'seafile_url': seafile_url,
+            'auth_methods': ' / '.join(configuration.user_seafile_auth).title(),
             }
 
         output_objects.append({'object_type': 'html_form', 'text': html})

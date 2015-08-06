@@ -73,6 +73,7 @@ if '__main__' == __name__:
         'enable_freeze',
         'enable_hsts',
         'enable_vhost_certs',
+        'enable_seafile',
         'enable_openid',
         'openid_providers',
         'daemon_keycert',

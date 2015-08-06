@@ -130,6 +130,8 @@ def fix_missing(config_file, verbose=True):
         'user_ftps_auth': ['password'],
         'user_ftps_alias': '',
         'user_ftps_log': 'ftps.log',
+        'user_seafile_url': '',
+        'user_seafile_auth': ['password'],
         'user_openid_address': fqdn,
         'user_openid_port': 8443,
         'user_openid_key': '~/certs/combined.pem',
@@ -283,6 +285,9 @@ class Configuration:
     user_ftps_auth = ['password']
     user_ftps_alias = ''
     user_ftps_log = 'ftps.log'
+    user_seafile_url = ''
+    user_seafile_auth = ['password']
+    user_seafile_alias = ''
     user_openid_address = ''
     user_openid_port = 8443
     user_openid_show_address = ''
@@ -674,6 +679,18 @@ class Configuration:
                                               'user_ftps_alias')
         if config.has_option('GLOBAL', 'user_ftps_log'):
             self.user_ftps_log = config.get('GLOBAL', 'user_ftps_log')
+        if config.has_option('GLOBAL', 'user_seafile_url'):
+            self.user_seafile_url = config.get('GLOBAL', 
+                                               'user_seafile_url')
+        else:
+            self.user_seafile_url = os.path.join(self.migserver_https_sid_url,
+                                                 'seafile')
+        if config.has_option('GLOBAL', 'user_seafile_auth'):
+            self.user_seafile_auth = config.get('GLOBAL', 
+                                                'user_seafile_auth').split()
+        if config.has_option('GLOBAL', 'user_seafile_alias'):
+            self.user_seafile_alias = config.get('GLOBAL', 
+                                                 'user_seafile_alias')
         if config.has_option('GLOBAL', 'user_openid_address'):
             self.user_openid_address = config.get('GLOBAL', 
                                                  'user_openid_address')
@@ -1010,6 +1027,10 @@ class Configuration:
             self.site_enable_ftps = config.getboolean('SITE', 'enable_ftps')
         else:
             self.site_enable_ftps = False
+        if config.has_option('SITE', 'enable_seafile'):
+            self.site_enable_seafile = config.getboolean('SITE', 'enable_seafile')
+        else:
+            self.site_enable_seafile = False
         if config.has_option('SITE', 'enable_openid'):
             self.site_enable_openid = config.getboolean('SITE', 'enable_openid')
         else:

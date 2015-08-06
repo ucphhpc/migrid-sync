@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# settings - [insert a few words of module description on this line]
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# settings - helpers for handling user settings
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,8 +32,8 @@ import shared.parser as parser
 from shared.base import client_id_dir
 from shared.defaults import settings_filename, profile_filename, \
      widgets_filename, ssh_conf_dir, davs_conf_dir, ftps_conf_dir, \
-     authkeys_filename, authpasswords_filename, authdigests_filename, \
-     keyword_unchanged, dav_domain
+     seafile_conf_dir, authkeys_filename, authpasswords_filename, \
+     authdigests_filename, keyword_unchanged, dav_domain
 from shared.fileio import pickle, unpickle
 from shared.modified import mark_user_modified
 from shared.profilekeywords import get_keywords_dict as get_profile_fields
@@ -195,7 +195,7 @@ def parse_and_save_digests(digests_path, passwords_content, client_id,
 def _parse_and_save_auth_pw_keys(publickeys, password, client_id,
                                  configuration, proto, proto_conf_dir):
     """Validate and write publickey and password settings for proto
-    (ssh/davs/ftps) in proto_conf_dir.
+    (ssh/davs/ftps/seafile) in proto_conf_dir.
     """
     client_dir = client_id_dir(client_id)
     proto_conf_path = os.path.join(configuration.user_home, client_dir,
@@ -237,6 +237,12 @@ def parse_and_save_ftps(publickeys, password, client_id, configuration):
     """Validate and write ftps entries"""
     return _parse_and_save_auth_pw_keys(publickeys, password, client_id,
                                         configuration, 'ftps', ftps_conf_dir)
+
+def parse_and_save_seafile(publickeys, password, client_id, configuration):
+    """Validate and write seafile entries"""
+    return _parse_and_save_auth_pw_keys(publickeys, password, client_id,
+                                        configuration, 'seafile',
+                                        seafile_conf_dir)
 
 def load_section_helper(client_id, configuration, section_filename,
                         section_keys, include_meta=False):
@@ -281,8 +287,8 @@ def load_profile(client_id, configuration, include_meta=False):
                                get_profile_fields().keys(), include_meta)
 
 def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir):
-    """Helper to load  keys and password for proto (ssh/davs/ftps) from user
-    proto_conf_dir.
+    """Helper to load  keys and password for proto (ssh/davs/ftps/seafile)
+    from user proto_conf_dir.
     """
     section_dict = {}
     client_dir = client_id_dir(client_id)
@@ -336,6 +342,10 @@ def load_davs(client_id, configuration):
 def load_ftps(client_id, configuration):
     """Load ftps keys and password from user ftps_conf_dir"""
     return _load_auth_pw_keys(client_id, configuration, 'ftps', ftps_conf_dir)
+
+def load_seafile(client_id, configuration):
+    """Load seafile keys and password from user seafile_conf_dir"""
+    return _load_auth_pw_keys(client_id, configuration, 'seafile', seafile_conf_dir)
 
 def update_section_helper(client_id, configuration, section_filename, changes,
                           defaults, create_missing=True):

@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# settingsaction - [insert a few words of module description on this line]
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# settingsaction - handle user settings updates
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,7 @@ from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.settings import parse_and_save_settings, parse_and_save_widgets, \
      parse_and_save_profile, parse_and_save_ssh, parse_and_save_davs, \
-     parse_and_save_ftps
+     parse_and_save_ftps, parse_and_save_seafile
 from shared.profilekeywords import get_keywords_dict as profile_keywords
 from shared.settingskeywords import get_keywords_dict as settings_keywords
 from shared.widgetskeywords import get_keywords_dict as widgets_keywords
@@ -58,6 +58,8 @@ def extend_defaults(defaults, user_args):
     elif topic == 'webdavs':
         keywords_dict = {'publickeys': '', 'password': ''}
     elif topic == 'ftps':
+        keywords_dict = {'publickeys': '', 'password': ''}
+    elif topic == 'seafile':
         keywords_dict = {'publickeys': '', 'password': ''}
     else:
         # should never get here
@@ -109,7 +111,7 @@ def main(client_id, user_arguments_dict):
         keywords_dict = widgets_keywords()
     elif topic == 'profile':
         keywords_dict = profile_keywords()
-    elif topic in ('sftp', 'webdavs', 'ftps'):
+    elif topic in ('sftp', 'webdavs', 'ftps', 'seafile'):
         # We don't use mRSL parser here
         keywords_dict = {}
     else:
@@ -169,6 +171,12 @@ def main(client_id, user_arguments_dict):
         (parse_status, parse_msg) = \
                        parse_and_save_ftps(publickeys, password, client_id,
                                            configuration)
+    elif topic == 'seafile':
+        publickeys = '\n'.join(accepted.get('publickeys', ['']))
+        password = accepted.get('password', [''])[-1].strip()
+        (parse_status, parse_msg) = \
+                       parse_and_save_seafile(publickeys, password, client_id,
+                                              configuration)
     else:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'No such settings topic: %s' % topic

@@ -889,6 +889,10 @@ a:hover.settingsbutton {
   background-image: url('/images/icons/computer_link.png');
   padding-left: 18px;
 }
+.seafilesettingslink {
+  background-image: url('/images/icons/seafile.png');
+  padding-left: 18px;
+}
 .arcsettingslink {
   background-image: url('/images/icons/ng-arc.png');
   padding-left: 18px;
