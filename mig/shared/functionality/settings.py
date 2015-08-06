@@ -32,7 +32,8 @@ import os
 import shared.returnvalues as returnvalues
 from shared.base import client_alias, client_id_dir
 from shared.defaults import any_vgrid, default_mrsl_filename, \
-     default_css_filename, profile_img_max_kb, profile_img_extensions
+     default_css_filename, profile_img_max_kb, profile_img_extensions, \
+     seafile_ro_dirname
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.functional import validate_input_and_cert
 from shared.html import themed_styles
@@ -1181,13 +1182,13 @@ and Spideroak.<br/>
 This enables you to keep one or more folders synchronized between
 all your computers and mobile devices and to share those folders with other
 people.<br/>
-You currently need to register first at our before saving the chosen password
+You currently need to register above first before saving the chosen password
 here for integration. You will receive an email once the registration gets
 accepted and after saving here the libraries will show up in read-only mode as
-the seafile-readonly folder in your user home.<br/>
+the %(seafile_ro_dirname)s folder in your user home.<br/>
 The integration is still work-in-progress, but you can use your Seafile account
 fully as a standalone synchronization and sharing solution for now.<br/>
-In principle yo can also use the command-line client to sync your Seafile
+In principle you can also use the command-line client to sync your Seafile
 library to your WebDAVS/SFTP/SSHFS-mounted user home.
 <h3>Login Details</h3>
 <ul>
@@ -1275,6 +1276,7 @@ value="%(default_authpassword)s" />
             'keyword_keys': keyword_keys,
             'keyword_password': keyword_password,
             'username': username,
+            'seafile_ro_dirname': seafile_ro_dirname,
             'seafile_url': seafile_url,
             'register_html': register_html,
             'auth_methods': ' / '.join(configuration.user_seafile_auth).title(),

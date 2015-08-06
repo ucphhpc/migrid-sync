@@ -36,6 +36,7 @@ import stat
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, invisible_path
+from shared.defaults import seafile_ro_dirname
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import all, long_list, recursive, file_info
@@ -229,6 +230,9 @@ def handle_dir(
         elif parent_dir.find('private_base') >= 0:
             dir_type = 'private web page'
             extra_class = 'vgridprivateweb'
+        elif actual_dir.find(seafile_ro_dirname) >= 0:
+            dir_type = 'seafile read-only access'
+            extra_class = 'seafilereadonly'
         special = ' - %s %s directory' % (configuration.site_vgrid_label,
                                           dir_type)
     dir_obj = {

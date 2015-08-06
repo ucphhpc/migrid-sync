@@ -40,10 +40,11 @@ from shared.base import client_id_dir, client_dir_id, client_alias, \
      sandbox_resource
 from shared.conf import get_configuration_object
 from shared.configuration import Configuration
-from shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, davs_conf_dir, \
-     ftps_conf_dir, htaccess_filename, welcome_filename, settings_filename, \
-     profile_filename, default_css_filename, widgets_filename, \
-     authkeys_filename, authpasswords_filename, authdigests_filename
+from shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
+     davs_conf_dir, ftps_conf_dir, htaccess_filename, welcome_filename, \
+     settings_filename, profile_filename, default_css_filename, \
+     widgets_filename, seafile_ro_dirname, authkeys_filename, \
+     authpasswords_filename, authdigests_filename
 from shared.fileio import filter_pickled_list, filter_pickled_dict
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, \
@@ -216,7 +217,7 @@ def create_alias_link(username, client_id, user_home):
 def create_seafile_mount_link(client_id, configuration):
     """Create link to fuse mounted seafile library for client_id"""
     client_dir = client_id_dir(client_id)
-    mount_link = os.path.join(configuration.user_home, client_dir, 'seafile-readonly')
+    mount_link = os.path.join(configuration.user_home, client_dir, seafile_ro_dirname)
     user_alias = configuration.user_seafile_alias
     short_id = extract_field(client_id, user_alias)
     seafile_home = os.path.join(configuration.seafile_mount, short_id)
@@ -232,7 +233,7 @@ def create_seafile_mount_link(client_id, configuration):
 def remove_seafile_mount_link(client_id, configuration):
     """Remove link to fuse mounted seafile library for client_id"""
     client_dir = client_id_dir(client_id)
-    mount_link = os.path.join(configuration.user_home, client_dir, 'seafile-readonly')
+    mount_link = os.path.join(configuration.user_home, client_dir, seafile_ro_dirname)
     logger = configuration.logger
     if os.path.islink(mount_link):
         try:

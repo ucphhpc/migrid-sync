@@ -85,6 +85,7 @@ settings_filename = 'settings'
 widgets_filename = 'widgets'
 profile_filename = 'userprofile'
 freeze_meta_filename = 'meta.pck'
+seafile_ro_dirname = 'seafile_readonly'
 
 
 # The htaccess file prevents illegal http access to user files. We completely

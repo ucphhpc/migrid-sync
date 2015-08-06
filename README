@@ -37,9 +37,9 @@ Optional WSGI interface, OpenID login, instant messaging service,
 efficient file access services, event handler service, spell checking,
 Wiki, SCM and tracker VGrid features require: 
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
+-Apache proxy FCGI module (https://github.com/ceph/mod-proxy-fcgi)
 -Apache OpenID auth module (http://findingscience.com/mod_auth_openid/)
 -Python OpenID module (https://github.com/openid/python-openid)
--Python pbkdf2 module (https://pypi.python.org/pypi/pbkdf2)
 -Python irclib module (https://pypi.python.org/pypi/python-irclib/)
 -Python Paramiko module (https://pypi.python.org/pypi/paramiko/)
 -Python FTPD library (https://pypi.python.org/pypi/pyftpdlib)
@@ -57,10 +57,13 @@ sudo aptitude install apache2-mpm-prefork openssh-client python \
 
 and most of the optional dependencies similarly with:
 sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
-     python-pbkdf2 python-irclib python-paramiko \
-     python-enchant mercurial trac trac-mercurial
+     python-irclib python-paramiko python-enchant mercurial trac trac-mercurial
 
-We highly recommend installing the optional wsgidav and openid modules
+Apache comes with a number of modules included, so it is usually not
+necessary to explicitly install e.g. mod-ssl, mod-proxy, mod-rewrite and
+mod-proxy-fcgi.
+
+We highly recommend installing the optional python wsgidav and openid modules
 directly from upstream, because packaged versions are generally outdated
 even on pypi. The packaged openid module lacks some security fixes and
 the wsgidav one lacks a fix for upload/write access for OSX clients.
@@ -264,7 +267,7 @@ defaults, this could be:
                    --listen_clause='Listen' \
                    --serveralias_clause='#ServerAlias'
 
-or similarly with Debian apache 2.x without OpenID:
+or similarly with Debian apache 2.4 without OpenID:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
@@ -286,7 +289,9 @@ or similarly with Debian apache 2.x without OpenID:
                    --enable_sandboxes=True --enable_vmachines=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
-                   --serveralias_clause='ServerAlias'
+                   --serveralias_clause='ServerAlias' \
+                   --skin=migrid-basic \
+                   --apache_version=2.4
 or the same with OpenID, HSTS, WSGI and vhost-specific certificates:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=migrid.org \
@@ -318,10 +323,11 @@ or the same with OpenID, HSTS, WSGI and vhost-specific certificates:
                    --serveralias_clause='ServerAlias' --alias_field=email \
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
-		   --landing_page='/wsgi-bin/dashboard.py' \
-                   --skin=migrid-basic
+                   --landing_page='/wsgi-bin/dashboard.py' \
+                   --skin=migrid-basic \
+                   --apache_version=2.4
 
-and a storage-only setup with CentOS 6.x, apache 2.x and OpenID login:
+and a storage-only setup with CentOS 6.x, apache 2.2, Seafile integration and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=erda.dk \
                    --public_fqdn=www.erda.dk \
@@ -341,15 +347,16 @@ and a storage-only setup with CentOS 6.x, apache 2.x and OpenID login:
                    --public_port=80 --cert_port=443 --oid_port=443 --sid_port=443 \
                    --openid_providers='https://openid.ku.dk/ https://erda.dk:8000/openid/' \
                    --enable_openid=True --enable_wsgi=True --enable_sftp=True \
-                   --enable_davs=True --enable_ftps=True --enable_hsts=True \
-                   --enable_sandboxes=False --enable_vmachines=False \
+                   --enable_davs=True --enable_ftps=True --enable_seafile=True \
+                   --enable_hsts=True --enable_sandboxes=False --enable_vmachines=False \
                    --enable_freeze=True --enable_vhost_certs=True \
                    --user_clause=User --group_clause=Group  \
                    --listen_clause='#Listen' --serveralias_clause='#ServerAlias' \
                    --alias_field=email --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
-                   --skin=erda-basic
+                   --skin=erda-basic \
+                   --apache_version=2.2
 
 
 Most of the arguments should be relatively straight forward, but you
@@ -387,8 +394,8 @@ work and the python-webdav package in a recent version may provide all
 required components for it on Debian/Ubuntu. If no recent version is
 available, it can still easily be installed with pip instead.
 All optional file server services like sftp, ftps and davs rely on the
-python pbkdf2 module for password auth support and the python-pbkdf2
-package provides all required components for it on Debian/Ubuntu.
+one of the python pbkdf2 modules for password auth support and it is
+distributed with the MiG code base.
 
 The four CLAUSE arguments can be used to comment out the explicit
 setting of user, group, serveralias and ports in the apache conf by
