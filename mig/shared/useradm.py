@@ -238,8 +238,8 @@ def remove_seafile_mount_link(client_id, configuration):
         try:
             os.remove(mount_link)
         except Exception, exc:
-            logger.error("failed to unlink seafile mount %s from %s: %s" \
-                         % (seafile_home, mount_link, exc))
+            logger.error("failed to unlink seafile mount from %s: %s" \
+                         % (mount_link, exc))
             raise
 
     
