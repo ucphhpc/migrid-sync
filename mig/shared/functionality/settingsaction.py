@@ -39,6 +39,7 @@ from shared.settings import parse_and_save_settings, parse_and_save_widgets, \
      parse_and_save_ftps, parse_and_save_seafile
 from shared.profilekeywords import get_keywords_dict as profile_keywords
 from shared.settingskeywords import get_keywords_dict as settings_keywords
+from shared.useradm import create_seafile_mount_link, remove_seafile_mount_link
 from shared.widgetskeywords import get_keywords_dict as widgets_keywords
 
 
@@ -177,6 +178,10 @@ def main(client_id, user_arguments_dict):
         (parse_status, parse_msg) = \
                        parse_and_save_seafile(publickeys, password, client_id,
                                               configuration)
+        if publickeys or password:
+            create_seafile_mount_link(client_id, configuration)
+        else:
+            remove_seafile_mount_link(client_id, configuration)
     else:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'No such settings topic: %s' % topic

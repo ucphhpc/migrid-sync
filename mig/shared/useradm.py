@@ -211,6 +211,37 @@ def create_alias_link(username, client_id, user_home):
     except:
         raise Exception('could not symlink alias: %s' % link_path)
     return True    
+
+
+def create_seafile_mount_link(client_id, configuration):
+    """Create link to fuse mounted seafile library for client_id"""
+    client_dir = client_id_dir(client_id)
+    mount_link = os.path.join(configuration.user_home, client_dir, 'seafile-readonly')
+    user_alias = configuration.user_seafile_alias
+    short_id = extract_field(client_id, user_alias)
+    seafile_home = os.path.join(configuration.seafile_mount, short_id)
+    logger = configuration.logger
+    if os.path.isdir(seafile_home) and not os.path.islink(mount_link):
+        try:
+            os.symlink(seafile_home, mount_link)
+        except Exception, exc:
+            logger.error("failed to link seafile mount %s to %s: %s" \
+                         % (seafile_home, mount_link, exc))
+            raise
+
+def remove_seafile_mount_link(client_id, configuration):
+    """Remove link to fuse mounted seafile library for client_id"""
+    client_dir = client_id_dir(client_id)
+    mount_link = os.path.join(configuration.user_home, client_dir, 'seafile-readonly')
+    logger = configuration.logger
+    if os.path.islink(mount_link):
+        try:
+            os.remove(mount_link)
+        except Exception, exc:
+            logger.error("failed to unlink seafile mount %s from %s: %s" \
+                         % (seafile_home, mount_link, exc))
+            raise
+
     
 def create_user(
     user,

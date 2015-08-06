@@ -87,6 +87,7 @@ def fix_missing(config_file, verbose=True):
         'sss_home': '~/state/sss_home/',
         'sandbox_home': '~/state/sandbox_home',
         'freeze_home': '~/state/freeze_home',
+        'seafile_mount': '~/state/seafile_mount',
         'openid_store': '~/state/openid_store/',
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
@@ -241,6 +242,7 @@ class Configuration:
     sandbox_home = ''
     freeze_home = ''
     javabin_home = ''
+    seafile_mount = ''
     openid_store = ''
     rate_limit_db = ''
     site_skin = 'migrid-basic'
@@ -580,6 +582,8 @@ class Configuration:
             self.freeze_home = config.get('GLOBAL', 'freeze_home')
         else:
             self.freeze_home = ''
+        if config.has_option('GLOBAL', 'seafile_mount'):
+            self.seafile_mount = config.get('GLOBAL', 'seafile_mount')
         if config.has_option('GLOBAL', 'openid_store'):
             self.openid_store = config.get('GLOBAL', 'openid_store')
         if config.has_option('GLOBAL', 'user_sftp_address'):

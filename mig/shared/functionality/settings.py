@@ -41,6 +41,7 @@ from shared.settings import load_settings, load_widgets, load_profile, \
      load_ssh, load_davs, load_ftps, load_seafile
 from shared.profilekeywords import get_profile_specs
 from shared.safeinput import html_escape
+from shared.seafilemisc import seafile_register_html
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
 from shared.useradm import get_default_mrsl, get_default_css, extract_field, \
@@ -162,7 +163,7 @@ $(document).ready(function() {
     links = []
     for name in valid_topics:
         active_menu = ''
-        if topics[0]  == name:
+        if topics[0] == name:
             active_menu = 'activebutton'
         links.append({'object_type': 'link', 
                       'destination': "settings.py?topic=%s" % name,
@@ -1155,9 +1156,15 @@ value="%(default_authpassword)s" />
             username = extract_field(client_id, configuration.user_seafile_alias)
             create_alias_link(username, client_id, configuration.user_home)
         seafile_url = configuration.user_seafile_url
+        # TMP!
+        #register_html = seafile_register_html(seafile_url, username,
+        #                                      configuration)
+        register_html = ''
         html = \
         '''
 <div id="seafileaccess">
+%(register_html)s
+<br/>
 <form method="post" action="settingsaction.py">
 <table class="seafilesettings fixedlayout">
 <tr class="title"><td class="centertext">
@@ -1167,17 +1174,21 @@ Seafile integration with your %(site)s account
 
 </td></tr>
 <tr><td>
-You can configure Seafile integration with your %(site)s account for
-synchronization and sharing features like those known from e.g. Dropbox and
-Spideroak.<br/>
+You can <a href="%(seafile_url)s/accounts/register/">register</a> with your
+username %(username)s for Seafile integration with your %(site)s account to
+get synchronization and sharing features like those known from e.g. Dropbox
+and Spideroak.<br/>
 This enables you to keep one or more folders synchronized between
 all your computers and mobile devices and to share those folders with other
 people.<br/>
-You currently need to register with your email address first at our
-<a href="%(seafile_url)s">Seafile</a> page before saving the chosen password
-here for integration.<br/>
-The integration is still work-in-progress but you can use your Seafile account
-as a standalone synchronization and sharing solution for now.
+You currently need to register first at our before saving the chosen password
+here for integration. You will receive an email once the registration gets
+accepted and after saving here the libraries will show up in read-only mode as
+the seafile-readonly folder in your user home.<br/>
+The integration is still work-in-progress, but you can use your Seafile account
+fully as a standalone synchronization and sharing solution for now.<br/>
+In principle yo can also use the command-line client to sync your Seafile
+library to your WebDAVS/SFTP/SSHFS-mounted user home.
 <h3>Login Details</h3>
 <ul>
 <li>Server <em>%(seafile_url)s</em></li>
@@ -1265,6 +1276,7 @@ value="%(default_authpassword)s" />
             'keyword_password': keyword_password,
             'username': username,
             'seafile_url': seafile_url,
+            'register_html': register_html,
             'auth_methods': ' / '.join(configuration.user_seafile_auth).title(),
             }
 
