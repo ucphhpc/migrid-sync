@@ -292,7 +292,7 @@ or similarly with Debian apache 2.4 without OpenID:
                    --serveralias_clause='ServerAlias' \
                    --skin=migrid-basic \
                    --apache_version=2.4
-or the same with OpenID, HSTS, WSGI and vhost-specific certificates:
+or the same with OpenID, HSTS, WSGI, Seafile and vhost-specific certificates:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
@@ -315,7 +315,7 @@ or the same with OpenID, HSTS, WSGI and vhost-specific certificates:
                    --enable_openid=True \
                    --openid_providers='https://openid.ku.dk/ https://dk-oid.migrid.org:8443/openid/' \
                    --enable_wsgi=True --enable_sftp=True \
-                   --enable_davs=True --enable_ftps=True \
+                   --enable_davs=True --enable_ftps=True --enable_seafile=True \
                    --enable_sandboxes=True --enable_vmachines=True \
                    --enable_vhost_certs=True \
                    --enable_hsts=True --user_clause=User --group_clause=Group \
