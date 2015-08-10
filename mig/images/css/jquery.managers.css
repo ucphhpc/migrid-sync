@@ -680,6 +680,14 @@ background: url(/images/icons/code.png) left center no-repeat;
     width: auto;
 }
 
+fieldset > label {
+    float: left;
+    width: 15%;
+    margin-right: 0.5em;
+    padding-top: 0.2em;
+    font-weight: bold;
+}
+
 .leftpad { 
     padding-left: 20px;
 }

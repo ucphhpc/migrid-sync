@@ -131,6 +131,7 @@ def fix_missing(config_file, verbose=True):
         'user_ftps_auth': ['password'],
         'user_ftps_alias': '',
         'user_ftps_log': 'ftps.log',
+        'user_seahub_url': '',
         'user_seafile_url': '',
         'user_seafile_auth': ['password'],
         'user_openid_address': fqdn,
@@ -287,6 +288,7 @@ class Configuration:
     user_ftps_auth = ['password']
     user_ftps_alias = ''
     user_ftps_log = 'ftps.log'
+    user_seahub_url = ''
     user_seafile_url = ''
     user_seafile_auth = ['password']
     user_seafile_alias = ''
@@ -683,6 +685,14 @@ class Configuration:
                                               'user_ftps_alias')
         if config.has_option('GLOBAL', 'user_ftps_log'):
             self.user_ftps_log = config.get('GLOBAL', 'user_ftps_log')
+        if config.has_option('GLOBAL', 'user_seahub_url'):
+            self.user_seahub_url = config.get('GLOBAL', 
+                                               'user_seahub_url')
+        else:
+            # Default to /seafile on same https base address
+            self.user_seahub_url = '/seafile'
+        self.user_seareg_url = os.path.join(self.user_seahub_url, 'accounts',
+                                            'register', '')
         if config.has_option('GLOBAL', 'user_seafile_url'):
             self.user_seafile_url = config.get('GLOBAL', 
                                                'user_seafile_url')

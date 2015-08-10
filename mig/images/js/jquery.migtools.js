@@ -1208,3 +1208,87 @@ function check_oid_available(action, oid_title, oid_url, tag_prefix) {
     });
 }
 
+/* Seafile settings helper used to switch between register and save sections */
+function select_seafile_section(section_prefix) {
+    var reg_prefix="seafilereg";
+    var save_prefix="seafilesave";
+    if (section_prefix == reg_prefix) {
+        //alert("show reg section");
+	$("#"+reg_prefix+"button").attr("disabled", false);
+	$("#"+save_prefix+"button").attr("disabled", true);
+	$("#"+reg_prefix+"access").show();
+	$("#"+save_prefix+"access").hide();
+    } else if (section_prefix == save_prefix) {
+        //alert("show save section");
+	$("#"+reg_prefix+"button").attr("disabled", true);
+	$("#"+save_prefix+"button").attr("disabled", false);
+	$("#"+reg_prefix+"access").hide();
+	$("#"+save_prefix+"access").show();
+    } else {
+        alert("invalid section prefix: "+section_prefix);
+        return false;
+    }
+    return true;
+}
+/* Seafile registration helper to get the CSRF tag from the signup form and
+switch to the save form if registration url shows that user registered and
+logged in already */
+function prepare_seafile_settings(reg_url, username, status_prefix, reg_prefix, save_prefix) {
+    $("#"+status_prefix+"status").removeClass();
+    $("#"+status_prefix+"status").addClass("status_box");
+    $("#"+status_prefix+"status").addClass("spinner").css("padding-left", "20px");
+    $("#"+status_prefix+"status").append("<span>Seafile server status: </span>");
+    $("#"+status_prefix+"status").append("<span id="+status_prefix+"msg></span>");
+    $("#"+status_prefix+"msg").append("checking availability ...");
+    /* Run CSRF tag grabber in the background and handle as soon as results come in */
+    //alert("DEBUG: run csrf token grabber: "+reg_url);
+    $.ajax({
+	    url: reg_url,
+	    dataType: "html",
+	    cache: false,
+	    success: function(output, status, xhr) {
+		/* Parse output for hidden form input with csrf token */
+		//alert("DEBUG: got csrf output: "+output);
+		//alert("DEBUG: got csrf status: "+status);
+		$("#"+status_prefix+"msg").empty();
+		var csrf_token = $("input[name=csrfmiddlewaretoken]", output).val();
+		var id_user = $("#account", output).find("div.txt:contains("+username+")").text();
+		var logged_in = "";
+		$("#"+status_prefix+"msg").append('online');
+		if (id_user) {
+		    logged_in = "you are already registered and logged in as "+username;
+		    //alert("DEBUG: "+logged_in+" ("+id_user+")");
+		    $("#"+status_prefix+"status").addClass("ok").css("padding-left", "20px");
+		    $("#"+status_prefix+"msg").addClass("status_online");
+		    select_seafile_section(save_prefix);
+		} else if (csrf_token != undefined) {
+		    //alert("DEBUG: got csrf token: "+csrf_token);
+		    logged_in = "your are either not registered yet or not currently logged in";
+		    $("#"+status_prefix+"status").addClass("ok").css("padding-left", "20px");
+		    $("#"+status_prefix+"msg").addClass("status_online");
+		    $("input[name=csrfmiddlewaretoken]").val(csrf_token);
+		    select_seafile_section(reg_prefix);
+		} else {
+		    //alert("Warning: unknown state");
+		    logged_in = "unexpected response from server";
+		    $("#"+status_prefix+"status").append(" <span>("+logged_in+")</span>");
+		    $("#"+status_prefix+"status").addClass("warn").css("padding-left", "20px");
+		    $("#"+status_prefix+"msg").addClass("status_slack");
+		    $("#"+reg_prefix+"button").attr("disabled", false);
+		    $("#"+save_prefix+"button").attr("disabled", false);
+		}
+		$("#"+status_prefix+"status").append(" <span>("+logged_in+")</span>");
+
+	    },
+	    error: function(xhr, status, error) {
+		//alert("DEBUG: ajax failed! server probably unavailable");
+		$("#"+status_prefix+"msg").empty();
+		$("#"+status_prefix+"msg").append('offline');
+		$("#"+status_prefix+"status").append(" <span>(Error: "+error+")</span>");
+		$("#"+status_prefix+"status").addClass("error").css("padding-left", "20px");
+		$("#"+status_prefix+"msg").addClass("status_offline");
+		select_seafile_section(save_prefix);
+	    }
+	});
+}
+

@@ -42,7 +42,6 @@ from shared.settings import load_settings, load_widgets, load_profile, \
      load_ssh, load_davs, load_ftps, load_seafile
 from shared.profilekeywords import get_profile_specs
 from shared.safeinput import html_escape
-from shared.seafilemisc import seafile_register_html
 from shared.settingskeywords import get_settings_specs
 from shared.widgetskeywords import get_widgets_specs
 from shared.useradm import get_default_mrsl, get_default_css, extract_field, \
@@ -111,6 +110,7 @@ def main(client_id, user_arguments_dict):
     title_entry['javascript'] = '''
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
 
 %s
 
@@ -252,7 +252,7 @@ $(document).ready(function() {
                             (keyword, selected, choice, choice)
                         entry += '</div>'
                     else:
-                        entry = ''
+                        entry += ''
                 except:
                     # failed on evaluating configuration.%s
 
@@ -284,7 +284,7 @@ $(document).ready(function() {
                              % (selected, choice, choice)
                     entry += '</select><br />'
                 else:
-                    entry = ''
+                    entry += ''
             elif val['Type'] == 'boolean':
                 current_choice = ''
                 if current_settings_dict.has_key(keyword):
@@ -1150,46 +1150,74 @@ value="%(default_authpassword)s" />
             
             current_seafile_dict = {}
 
+        keyword_keys = "authkeys"
+        keyword_password = "authpassword"
         default_authkeys = current_seafile_dict.get('authkeys', '')
         default_authpassword = current_seafile_dict.get('authpassword', '')
         username = client_alias(client_id)
         if configuration.user_seafile_alias:
             username = extract_field(client_id, configuration.user_seafile_alias)
             create_alias_link(username, client_id, configuration.user_home)
-        seafile_url = configuration.user_seafile_url
-        # TMP!
-        #register_html = seafile_register_html(seafile_url, username,
-        #                                      configuration)
-        register_html = ''
-        html = \
-        '''
-<div id="seafileaccess">
-%(register_html)s
+        
+        html = '''<div id="seafileaccess">
+<div id="seafileregaccess">
+<form method="post" action="%(seareg_url)s">
+<table class="seafilesettings fixedlayout">
+<tr class="title"><td class="centertext">
+Seafile synchronization on %(site)s
+</td></tr>
+<tr><td>
+You can register for an %(site)s Seafile account to get synchronization and
+sharing features like those known from e.g. Dropbox and Spideroak.<br/>
+This enables you to keep one or more folders synchronized between
+all your computers and mobile devices and to share those folders with other
+people.
+</td></tr>
+<tr><td>
+<fieldset>
+<legend>Register Seafile Account</legend>
+<input type="hidden" name="csrfmiddlewaretoken" value="" />
+<!-- prevent user changing email but show it as read-only input field -->
+<input class="input" id="id_email" name="email" type="hidden"
+    value="%(username)s" />
+<label for="dummy_email">Seafile Username</label>
+<input class="input" id="dummy_email" type="text" value="%(username)s"
+    readonly />
 <br/>
+<label for="id_password1">Choose Password</label>
+<input class="input" id="id_password1" name="password1"
+    type="password" />
+<br/>
+<label for="id_password2">Confirm Password</label>
+<input class="input" id="id_password2" name="password2" type="password" />
+<br/>
+<input id="seafileregbutton" type="submit" value="Register" class="submit" />
+</fieldset>
+</td></tr>
+</table>
+</form>
+In case you already registered for Seafile and received the resulting account
+email you can <input id="seafileloginbutton" type="submit"
+    value="Login to Seafile" onClick="location.href=\'%(seahub_url)s\'" /> and
+then return here to finish the integration. Otherwise you can still <input
+    id="seafilenextbutton" type="submit" value="Proceed without Login"
+    onClick="select_seafile_section(\'seafilesave\')" /> so that integration
+is in place when you get your Seafile account.
+</div>
+<div id="seafilesaveaccess">
 <form method="post" action="settingsaction.py">
 <table class="seafilesettings fixedlayout">
 <tr class="title"><td class="centertext">
 Seafile integration with your %(site)s account
 </td></tr>
 <tr><td>
-
-</td></tr>
-<tr><td>
-You can <a href="%(seafile_url)s/accounts/register/">register</a> with your
-username %(username)s for Seafile integration with your %(site)s account to
-get synchronization and sharing features like those known from e.g. Dropbox
-and Spideroak.<br/>
-This enables you to keep one or more folders synchronized between
-all your computers and mobile devices and to share those folders with other
-people.<br/>
-You currently need to register above first before saving the chosen password
-here for integration. You will receive an email once the registration gets
-accepted and after saving here the libraries will show up in read-only mode as
-the %(seafile_ro_dirname)s folder in your user home.<br/>
+After you have registered you can save your chosen password here for
+integration in your Files interface. You will receive an email once the
+registration gets accepted and after saving here the libraries will show up in
+read-only mode as the <a " href="fileman.py?path=%(seafile_ro_dirname)s/">
+%(seafile_ro_dirname)s</a> folder in your user home.<br/>
 The integration is still work-in-progress, but you can use your Seafile account
 fully as a standalone synchronization and sharing solution for now.<br/>
-In principle you can also use the command-line client to sync your Seafile
-library to your WebDAVS/SFTP/SSHFS-mounted user home.
 <h3>Login Details</h3>
 <ul>
 <li>Server <em>%(seafile_url)s</em></li>
@@ -1221,7 +1249,6 @@ Password YOUR_PASSWORD_HERE
 </div>
 '''
         
-        keyword_keys = "authkeys"
         if 'publickey' in configuration.user_seafile_auth:
             html += '''
 </td></tr>
@@ -1237,13 +1264,13 @@ able to connect with username and key as described in the Login Details.
 %(default_authkeys)s
 </textarea>
 '''
-            html += wrap_edit_area(keyword_keys, area, seafile_edit, 'BASIC')
+            html += wrap_edit_area(keyword_keys, area, seafile_edit,
+                                       'BASIC')
             html += '''
 (leave empty to disable seafile access with public keys)
 </td></tr>
 '''
             
-        keyword_password = "authpassword"
         if 'password' in configuration.user_seafile_auth:
             # We only want a single password and a masked input field
             html += '''
@@ -1260,13 +1287,17 @@ value="%(default_authpassword)s" />
         
         html += '''
 <tr><td>
-<input type="submit" value="Save Seafile Settings" />
+<input id="seafilesavebutton" type="submit" value="Save Seafile Settings" />
 </td></tr>
-'''
-        
-        html += '''
 </table>
 </form>
+</div>
+<div id="seafileserverstatus"></div>
+<!-- Dynamically fill CSRF token above and select active div if possible -->
+<script type="text/javascript" >
+    prepare_seafile_settings("%(seareg_url)s", "%(username)s", "seafileserver",
+                             "seafilereg", "seafilesave");
+</script>
 </div>
 '''
         html = html % {
@@ -1277,8 +1308,9 @@ value="%(default_authpassword)s" />
             'keyword_password': keyword_password,
             'username': username,
             'seafile_ro_dirname': seafile_ro_dirname,
-            'seafile_url': seafile_url,
-            'register_html': register_html,
+            'seahub_url': configuration.user_seahub_url,
+            'seareg_url': configuration.user_seareg_url,
+            'seafile_url': configuration.user_seafile_url,
             'auth_methods': ' / '.join(configuration.user_seafile_auth).title(),
             }
 
