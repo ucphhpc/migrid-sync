@@ -1170,7 +1170,7 @@ value="%(default_authpassword)s" />
         
         html = '''<div id="seafileaccess">
 <div id="seafileregaccess">
-<form method="post" action="%(seareg_url)s">
+<form method="post" action="%(seareg_url)s" target="_blank">
 <table class="seafilesettings fixedlayout">
 <tr class="title"><td class="centertext">
 Seafile synchronization on %(site)s
@@ -1246,7 +1246,7 @@ function open_login_window(url, username) {
     console.info("open login window "+url+" as "+username);
     user = username;
     login_window = window.open(url, "Seafile for "+username,
-                               "width=1000, height=700, top=100, left=100");
+                               "width=1080, height=700, top=100, left=100");
     console.debug("call set_username");
     set_username();
 }
@@ -1263,7 +1263,7 @@ Otherwise you can still <input id="seafilenextbutton" type="submit"
 is in place when you get your Seafile account.
 </p>
 </div>
-<div id="seafilesaveaccess">
+<div id="seafilesaveaccess" style="display: none;">
 <form method="post" action="settingsaction.py">
 <table class="seafilesettings fixedlayout">
 <tr class="title"><td class="centertext">
