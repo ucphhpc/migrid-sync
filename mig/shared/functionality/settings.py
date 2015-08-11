@@ -36,7 +36,7 @@ from shared.defaults import any_vgrid, default_mrsl_filename, \
      seafile_ro_dirname
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.functional import validate_input_and_cert
-from shared.html import themed_styles
+from shared.html import themed_styles, console_log_javascript
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
      load_ssh, load_davs, load_ftps, load_seafile
@@ -114,7 +114,16 @@ def main(client_id, user_arguments_dict):
 
 %s
 
+%s
+
 <script type="text/javascript" >
+    /* prepare global logging from console_log_javascript */
+    try {
+        log_level = "info";
+        init_log();
+    } catch(err) {
+        alert("error: "+err);
+    }
 
     var toggleHidden = function(classname) {
         // classname supposed to have a leading dot 
@@ -125,7 +134,7 @@ $(document).ready(function() {
      }
 );
 </script>
-''' % cm_javascript
+''' % (cm_javascript, console_log_javascript())
 
     valid_topics = ['general', 'style']
     active_menu = extract_menu(configuration, title_entry)
@@ -1196,13 +1205,63 @@ people.
 </td></tr>
 </table>
 </form>
+<p>
+<script type="text/javascript" >
+/* Helper function to open Seafile login window and fill username. Gives up
+after max_tries * sleep_secs seconds if still not found.
+*/
+var login_window = null;
+var user = '';
+var try_count = 1;
+var max_tries = 60;
+var sleep_secs = 1;
+function set_username() {
+    var account_elem = login_window.document.getElementById("account");
+    if (account_elem) {
+        console.info("already logged in - no need to set user name");
+        return true;
+    }
+    console.debug("set username "+user);
+    var elems = login_window.document.getElementsByName("username");
+    var i;
+    for (i = 0; i < elems.length; i++) {
+        console.debug("check elem "+i);
+        if (elems[i].type == "text") {
+            console.debug("found username elem "+i);
+            elems[i].value = user;
+            elems[i].readOnly = "readonly";
+            console.info("done setting username in login form");
+            return true;
+        }
+    }
+    if (try_count >= max_tries) {
+        console.warn("giving up after "+try_count+" tries to set username");
+        return false;
+    }
+    console.debug("keep trying... ("+try_count+" of "+max_tries+")");
+    try_count = try_count+1;
+    setTimeout("set_username();", sleep_secs * 1000);
+}
+function open_login_window(url, username) {
+    console.info("open login window "+url+" as "+username);
+    user = username;
+    login_window = window.open(url, "Seafile for "+username,
+                               "width=1000, height=700, top=100, left=100");
+    console.debug("call set_username");
+    set_username();
+}
+</script>
 In case you already registered for Seafile and received the resulting account
 email you can <input id="seafileloginbutton" type="submit"
-    value="Login to Seafile" onClick="location.href=\'%(seahub_url)s\'" /> and
-then return here to finish the integration. Otherwise you can still <input
-    id="seafilenextbutton" type="submit" value="Proceed without Login"
+    value="Login to Seafile" onClick="open_login_window(\'%(seahub_url)s\', \'%(username)s\');" />
+and then return here to finish the integration.
+</p>
+<p>
+Otherwise you can still <input id="seafilenextbutton" type="submit"
+    value="Proceed without Login"
     onClick="select_seafile_section(\'seafilesave\')" /> so that integration
 is in place when you get your Seafile account.
+</p>
 </div>
 <div id="seafilesaveaccess">
 <form method="post" action="settingsaction.py">
@@ -1216,7 +1275,9 @@ integration in your Files interface. You will receive an email once the
 registration gets accepted and after saving here the libraries will show up in
 read-only mode as the <a " href="fileman.py?path=%(seafile_ro_dirname)s/">
 %(seafile_ro_dirname)s</a> folder in your user home.<br/>
-The integration is still work-in-progress, but you can use your Seafile account
+The integration is still work-in-progress, but you can use
+<a href="javascript:open_login_window(\'%(seahub_url)s\', \'%(username)s\');">
+your Seafile account</a>
 fully as a standalone synchronization and sharing solution for now.<br/>
 <h3>Login Details</h3>
 <ul>

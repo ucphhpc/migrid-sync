@@ -486,3 +486,72 @@ def html_post_helper(function_name, destination, fields):
                 % (function_name, key, key, val)
     html += '</form>\n'
     return html
+
+def console_log_javascript():
+    """Javascript console logging: just include this and set cur_log_level before
+    calling init_log() to get console.debug/info/warn/error helpers.
+    """
+    return '''
+<script type="text/javascript" >
+/* default console log verbosity defined here - change before calling init_log
+to override. */
+var log_level = "info";
+var all_log_levels = {"none": 0, "error": 1, "warn": 2, "info": 3, "debug": 4};
+/* 
+   Make sure we can always use console.X without scripts crashing. IE<=9
+   does not init it unless in developer mode and things thus randomly fail
+   without a trace.
+*/
+var noOp = function(){}; // no-op function
+if (!window.console) {
+    console = {
+	debug: noOp,
+	log: noOp,
+	info: noOp,
+	warn: noOp,
+	error: noOp
+    }
+}
+/* 
+   Make sure we can use Date.now which was not available in IE<9
+*/
+if (!Date.now) {
+    Date.now = function now() {
+        return new Date().getTime();
+    };
+}
+
+/* call this function to set up console logging after log_level is set */
+var init_log = function() {
+    if (all_log_levels[log_level] >= all_log_levels["debug"]) {
+        console.debug = function(msg) { 
+            console.log(Date.now()+" DEBUG: "+msg)
+            }; 
+    } else {
+	console.debug = noOp;
+    }
+    if (all_log_levels[log_level] >= all_log_levels["info"]) {
+	console.info = function(msg){ 
+            console.log(Date.now()+" INFO: "+msg)
+            };
+    } else {
+	console.info = noOp;
+    }
+    if (all_log_levels[log_level] >= all_log_levels["warn"]) {
+	console.warn = function(msg){ 
+            console.log(Date.now()+" WARN: "+msg)
+            };
+    } else {
+	console.warn = noOp;
+    }
+    if (all_log_levels[log_level] >= all_log_levels["error"]) {
+	console.error = function(msg){ 
+            console.log(Date.now()+" ERROR: "+msg)
+            };
+    } else {
+	console.error = noOp;
+    }
+    console.debug("log ready");
+}
+</script>
+'''    
