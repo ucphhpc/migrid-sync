@@ -136,16 +136,29 @@ table {
 #toplogo {
   border: 0;
   color: #333;
+  border-top: 0px solid #46743c;
+  border-bottom: 1px solid #46743c;
+}
+#toplogoright {
+  height: 20px;
+  margin: 4px 0px;
 }
 #toplogo.staticpage {
   min-height: 92px;
+  border-bottom: 0;
 }
 #logoimage {
   opacity: 1;
-  padding: 2px 0px;
+  padding: 5px 0px;
 }
 #logoimage.staticpage {
   padding: 0px 0px;
+}
+#logotitle {
+  font-weight: normal;
+  vertical-align: middle;
+  color: #666;
+  font-size: 16px;
 }
 #logotitle.staticpage {
   display: none;
