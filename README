@@ -25,13 +25,12 @@ https://sourceforge.net/p/migrid/wiki/GettingStarted/
 = Requirements =
 A MiG server basically requires an Apache web server, the OpenSSH client
 tools and a Python interpreter with a few external modules.
--Apache 1.3.x or 2.x (http://httpd.apache.org/)
+-Apache 2.x (http://httpd.apache.org/)
 -Apache SSL module (http://httpd.apache.org/docs/current/mod/mod_ssl.html)
 -Apache proxy module (http://httpd.apache.org/docs/current/mod/mod_proxy.html)
 -Apache Rewrite module (http://httpd.apache.org/docs/current/mod/mod_rewrite.html)
 -OpenSSH clients (http://www.openssh.org/)
 -Python 2.6 or later but not 3.x (https://www.python.org/)
--Python Enchant module (https://pypi.python.org/pypi/pyenchant). 
 
 Optional WSGI interface, OpenID login, instant messaging service,
 efficient file access services, event handler service, spell checking,
@@ -52,8 +51,8 @@ Wiki, SCM and tracker VGrid features require:
 
 On Debian/Ubuntu servers the corresponding basic packages can be
 installed with:
-sudo aptitude install apache2-mpm-prefork openssh-client python \
-     python-pip python-setuptools
+sudo aptitude install apache2 openssh-client python python-pip \
+     python-setuptools
 
 and most of the optional dependencies similarly with:
 sudo aptitude install libapache2-mod-wsgi libapache2-mod-auth-openid  \
@@ -380,7 +379,9 @@ VGrid SCMs on Debian/Ubuntu. The same applies for the trac + trac-mercurial
 packages.
 Paramiko is required for the optional grid_sftp daemon to work and the
 python-paramiko package provides all required components for it on
-Debian/Ubuntu.
+recent Debian/Ubuntu. You want to use 1.15+ because it added significant
+performance improvements. Just pull it in from pip if your distribution
+only provides an older version.
 Python FTP server library (pyftpdlib) in a recent version (1.x) is required
 for the optional grid_ftps daemon to work and the python-pyftpdlib
 package provides all required components for it on recent
