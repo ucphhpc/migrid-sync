@@ -1104,14 +1104,22 @@ class Configuration:
             self.site_fav_icon = config.get('SITE', 'fav_icon')
         else:
             self.site_fav_icon = '%s/MiG-favicon.ico' % self.site_images
-        if config.has_option('SITE', 'logo_text'):
-            self.site_logo_text = config.get('SITE', 'logo_text')
+        if config.has_option('SITE', 'logo_left'):
+            self.site_logo_left = config.get('SITE', 'logo_left')
+        elif config.has_option('SITE', 'logo_image'):
+            self.site_logo_left = config.get('SITE', 'logo_image')
         else:
-            self.site_logo_text = "Minimum intrusion Grid"
-        if config.has_option('SITE', 'logo_image'):
-            self.site_logo_image = config.get('SITE', 'logo_image')
+            self.site_logo_left = '%s/MiG-logo-small.png' % self.site_images
+        if config.has_option('SITE', 'logo_center'):
+            self.site_logo_center = config.get('SITE', 'logo_center')
+        elif config.has_option('SITE', 'logo_text'):
+            self.site_logo_center = config.get('SITE', 'logo_text')
         else:
-            self.site_logo_image = '%s/MiG-logo-small.png' % self.site_images
+            self.site_logo_center = "Minimum intrusion Grid"
+        if config.has_option('SITE', 'logo_right'):
+            self.site_logo_right = config.get('SITE', 'logo_right')
+        else:
+            self.site_logo_right = ""
         if config.has_option('SITE', 'support_text'):
             self.site_support_text = config.get('SITE', 'support_text')
         else:

@@ -139,20 +139,58 @@ table {
   border-top: 0px solid #46743c;
   border-bottom: 1px solid #46743c;
 }
-#toplogoright {
-  height: 20px;
-  margin: 4px 0px;
-}
 #toplogo.staticpage {
   min-height: 92px;
   border-bottom: 0;
 }
-#logoimage {
+/*
+#toplogoleft {
+}
+*/
+#toplogoleft.staticpage {
+  display: none;
+}
+#toplogocenter {
+  height: 20px;
+  margin: 4px 0px;
+  float: left;
+}
+#toplogocenter.staticpage {
+  float: none;
+  margin: 0;
+}
+#toplogoright {
+  /* use right side logo, too */
+  display: block;
+}
+#toplogoright.staticpage {
+  display: none;
+}
+#logoimageleft {
   opacity: 1;
   padding: 5px 0px;
 }
-#logoimage.staticpage {
+#logoimageleft.staticpage {
+  display: none;
+}
+#logoimagecenter {
+  opacity: 1;
+  padding: 5px 0px;
+}
+#logoimagecenter.staticpage {
+  padding: 0;
+  margin-left: auto;
+  margin-right: auto;
+  z-index: 1;
+  display: block;
+  vertical-align: middle;
+}
+#logoimageright {
+  opacity: 1;
   padding: 0px 0px;
+}
+#logoimageright.staticpage {
+  display: none;
 }
 #logotitle {
   font-weight: normal;

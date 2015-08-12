@@ -284,8 +284,15 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
 <div id='topspace'>
 </div>
 <div class='staticpage' id='toplogo'>
-<img src='%s/banner-logo.jpg' id='logoimage'
-     class='staticpage' alt='site logo'/>
+
+<div class='staticpage' id='toplogoleft'>
+</div>
+<div class='staticpage' id='toplogocenter'>
+<img src='%s/banner-logo.jpg' id='logoimagecenter'
+     class='staticpage' alt='site logo center'/>
+</div>
+<div class='staticpage' id='toplogoright'>
+</div>
 </div>
 
 <div class='contentblock staticpage' id='nomenu'>

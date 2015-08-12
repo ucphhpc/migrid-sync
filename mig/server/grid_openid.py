@@ -1006,8 +1006,10 @@ class ServerHandler(BaseHTTPRequestHandler):
                                   configuration.site_custom_css.lstrip('/'))
         fav_icon = os.path.join(configuration.migserver_https_sid_url,
                                 configuration.site_fav_icon.lstrip('/'))
-        site_logo = os.path.join(configuration.migserver_https_sid_url,
-                                 configuration.site_logo_image.lstrip('/'))
+        site_logo_left = os.path.join(configuration.migserver_https_sid_url,
+                                      configuration.site_logo_left.lstrip('/'))
+        site_logo_right = os.path.join(configuration.migserver_https_sid_url,
+                                       configuration.site_logo_right.lstrip('/'))
         creds_logo = os.path.join(configuration.migserver_https_sid_url,
                                   configuration.site_credits_image.lstrip('/'))
         contents = {
@@ -1020,7 +1022,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             'site_default_css': default_css,
             'site_custom_css': custom_css,
             'site_fav_icon': fav_icon,
-            'site_logo': site_logo,
+            'site_logo_left': site_logo_left,
+            'site_logo_right': site_logo_right,
             'credits_logo': creds_logo,
             'credits_text': configuration.site_credits_text,
             }
@@ -1047,11 +1050,19 @@ class ServerHandler(BaseHTTPRequestHandler):
 <div id="topspace">
 </div>
 <div id="toplogo">
-<a href="%(root_url)s"><img src="%(site_logo)s" id="logoimage" alt="site logo"/>
+<div class="staticpage" id="toplogoleft">
+<a href="%(root_url)s"><img src="%(site_logo_left)s" id="logoimageleft"
+    alt="site logo left"/>
 </a>
+</div>
+<div class="staticpage" id="toplogocenter">
 <span id="logotitle">
 %(short_title)s OpenID Server
 </span>
+</div>
+<div class="staticpage" id="toplogoright">
+<img src="%(site_logo_right)s" id="logoimageright" alt="site logo right"/>
+</div>
 </div>
 
 <div class="contentblock" id="nomenu">

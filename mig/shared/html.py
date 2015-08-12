@@ -368,16 +368,19 @@ def get_cgi_html_header(
 </div>
 <div id="toplogo">
 <div id="toplogoleft">
-<img src="%s" id="logoimage" alt="site logo"/>
+<img src="%s" id="logoimageleft" alt="site logo left"/>
 </div>
-<div id="toplogoright">
+<div id="toplogocenter">
 <span id="logotitle">
 %s
 </span>
 </div>
+<div id="toplogoright">
+<img src="%s" id="logoimageright" alt="site logo right"/>
 </div>
-''' % (bodyfunctions, configuration.site_logo_image,
-       configuration.site_logo_text)
+</div>
+''' % (bodyfunctions, configuration.site_logo_left,
+       configuration.site_logo_center, configuration.site_logo_right)
     menu_lines = ''
     if menu:
         maximize = ''
