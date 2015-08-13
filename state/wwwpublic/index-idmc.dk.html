@@ -12,6 +12,10 @@ IDMC
 <!-- <link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/> -->
 <link rel="stylesheet" type="text/css" href="/images/skin/idmc-basic/core.css" media="screen"/>
 
+<!-- country-dropdown -->
+<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
+<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
+
 <!-- override with any site-specific styles -->
 <link rel="stylesheet" type="text/css" href="/images/site-custom.css"
       media="screen"/>
@@ -21,11 +25,12 @@ IDMC
 <link rel="stylesheet" type="text/css" href="/images/skin/idmc-basic/ui-theme.custom.css" media="screen"/>
 
 <link rel="icon" type="image/vnd.microsoft.icon"
-      href="/images/MiG-favicon.ico"/>
+      href="/images/skin/idmc-basic/favicon.ico"/>
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
 <script type="text/javascript" >
     $(document).ready(function() {
         /* Init FAQ as foldable but closed and with indivdual heights */
@@ -45,6 +50,7 @@ IDMC
         var default_lang = 'en';
         $("#langselect").val(default_lang);
         switch_language(default_lang);
+	$("#langselect").msDropdown();
     });
 </script>
 
@@ -75,10 +81,13 @@ Imaging Data Management Center
 <div id="migheader">
 </div>
 <div class="staticpage" id="content">
-<div class="righttext">
-<select id="langselect">
-<!-- <option value="da">Dansk</option> -->
-<option value="en" selected="selected">English</option>
+<div class="righttext langselect">
+<!-- Please refer to /images/lib/country-dropdown/index.html for more choices -->
+<select name="languages" id="langselect">
+<!--
+  <option value='da' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag dk" data-title="Denmark">Dansk</option>
+-->
+  <option value='en' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag us" data-title="United States" selected="selected">English</option>
 </select>
 </div>
 <div class="english i18n" lang="en">

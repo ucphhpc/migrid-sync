@@ -9,8 +9,12 @@ ERDA
 <link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
 
 <!-- site basic skin style -->
-<!-- <link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/> -->
+<!--<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>-->
 <link rel="stylesheet" type="text/css" href="/images/skin/erda-basic/core.css" media="screen"/>
+
+<!-- country-dropdown -->
+<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
+<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
 
 <!-- override with any site-specific styles -->
 <link rel="stylesheet" type="text/css" href="/images/site-custom.css"
@@ -21,11 +25,12 @@ ERDA
 <link rel="stylesheet" type="text/css" href="/images/skin/erda-basic/ui-theme.custom.css" media="screen"/>
 
 <link rel="icon" type="image/vnd.microsoft.icon"
-      href="/images/erda-favicon.ico"/>
+      href="/images/skin/erda-basic/favicon.ico"/>
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
 <script type="text/javascript" >
     $(document).ready(function() {
         /* Init FAQ as foldable but closed and with indivdual heights */
@@ -45,6 +50,7 @@ ERDA
         var default_lang = 'en';
         $("#langselect").val(default_lang);
         switch_language(default_lang);
+	$("#langselect").msDropdown();
     });
 </script>
 
@@ -75,22 +81,23 @@ University of Copenhagen - Electronic Research Data Archive
 <div id="migheader">
 </div>
 <div class="staticpage" id="content">
-<div class="righttext">
-<select id="langselect">
-<option value="da">Dansk</option>
-<option value="en" selected="selected">English</option>
+<div class="righttext langselect">
+<!-- Please refer to /images/lib/country-dropdown/index.html for more choices -->
+<select name="languages" id="langselect">
+  <option value='da' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag dk" data-title="Denmark">Dansk</option>
+  <option value='en' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag us" data-title="United States" selected="selected">English</option>
 </select>
 </div>
 <div class="english i18n" lang="en">
 <h1 class="staticpage">Welcome to UCPH ERDA</h1>
 
-<h2>About UCPH ERDA</h2>
+<h2 class="staticpage">About UCPH ERDA</h2>
 <p>
 University of Copenhagen - Electronic Research Data Archive (UCPH ERDA or just ERDA) is a 
 storage and archiving facility provided by University of Copenhagen to
 employees and students. For now it is limited to the faculty of Science,
 but it may be extended to all of UCPH in the future.
-ERDA delivers centralized storage space for private and shared files in
+ERDA delivers centralized storage space for personal and shared files in
 addition to archiving of e.g. PhD theses and research data for
 publishing.
 </p>
@@ -150,22 +157,22 @@ on email about adding the user with the full user ID format.
 <h2 class="staticpage">Questions and Support</h2>
 <p>
 The user guide provides basic information about using ERDA, but feel
-free to contact us using the <em>Contact & Help</em> link below in case you
-have any questions or comments (in English or Danish).
+free to contact us using the <em>Contact & Help</em> link at the bottom of the page in
+case you have any questions or comments (in English or Danish).
 </p>
 </div>
 <div class="danish i18n" lang="da">
 <h1 class="staticpage">Velkommen til UCPH ERDA!</h1>
 
-<h2>Om UCPH ERDA</h2>
+<h2 class="staticpage">Om UCPH ERDA</h2>
 <p>
 University of Copenhagen - Electronic Research Data Archive (UCPH ERDA eller blot ERDA) er 
 et lager- og arkiveringssystem leveret af Københavns Universitet til
 ansatte og studerende. I første omgang er det begrænset til Det natur-
 og biovidenskabelige fakultet (Science), men på længere sigt vil det
 muligvis blive udbredt til hele KU.
-ERDA leverer centraliseret lagerplads for private - og delte filer samt
-arkiveringsfaciliteter til f.eks. Ph.D. afhandlinger og forskningsdata til publicering
+ERDA leverer centraliseret lagerplads for personlige - og delte filer samt
+arkiveringsfaciliteter til f.eks. Ph.D.-afhandlinger og forskningsdata til publicering
 </p>
 <h2 class="staticpage">Tilmelding og brug af ERDA</h2>
 <p>

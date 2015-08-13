@@ -707,6 +707,17 @@ table th.icon {
   margin-top: -15px; 
 }
 
+/* language/country dropdown modification */
+.langselect {
+  margin-bottom: 8px; 
+}
+.langselect select {
+  width: 120px;
+}
+.langselect div {
+  text-align: left;
+}
+
 /* General helper icons */
 .spinner { 
     background-image: url(/images/icons/spinner.gif);
