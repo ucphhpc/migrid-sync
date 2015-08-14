@@ -1,0 +1,255 @@
+/*
+
+#
+# --- BEGIN_HEADER ---
+#
+# seahub - site style overrides for all seafile pages
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+*/
+
+/* ERDA UCPH Science skin style sheet for Seafile pages */
+
+
+/* Replace the different orange colors in the original css specs */
+
+a { 
+    /* color:#eb8205; */
+    color:#46743c;
+}
+a:hover {
+    /* color: #ff9933; */
+    color: #8FD182;
+}
+
+.op-target {
+    /* color:#ee8204; */
+    color:#46743c;
+}
+
+.left-right-tabs-nav a:hover {
+    /* background:#feefb8; */
+    color :#fff;
+    background:#8FD182;
+}
+.left-right-tabs-nav .ui-state-active a,
+.left-right-tabs-nav .ui-state-active a:hover {
+    /*background:#feac74;*/
+    background:#679c5b;
+}
+
+.side-tabnav h3.hd,
+.side-tabnav .hd h3 {
+/*    color:#f7941d; */
+    color:#46743c;
+}
+
+.side-tabnav-tabs .tab a:hover {
+    /* background-color:#feefb8;*/
+    background-color:#8FD182;
+}
+
+.side-tabnav-tabs .tab-cur a,
+.side-tabnav-tabs .tab-cur a:hover {
+    /* background-color:#feac74; */
+    background-color: #679c5b;
+}
+
+.side-textnav-tabs .tab-cur a,
+.side-textnav-tabs .tab a:hover {
+    /* color:#de3f1c; */
+    color:#46743c;
+}
+
+.messages .info {
+    /* background:#f9edbe; */
+    background:#8FD182;
+}
+
+.new-narrow-panel .hd {
+    /* background:#feab79; */
+    background:#679c5b;
+}
+
+.tab-tabs-nav .ui-state-active .a {
+    /* color:#DD4B39;
+    border-bottom:2px solid #DD4B39; */
+    color:#46743c;
+    border-bottom:2px solid #46743c;
+}
+.tab-tabs-nav .tab .a:hover {
+    /* color:#DD4B39; */
+    color:#46743c;
+}
+
+.tab-popup-tabs-nav .ui-state-active .a,
+.tab-popup-tabs-nav .tab .a:hover {
+    /* color:#eb8205;
+    border-bottom-color:#eb8205; */
+    color:#46743c;
+    border-bottom-color:#46743c;
+}
+
+.ui-menu .ui-menu-item a.ui-state-hover {
+    /* border-color:#fbcb09;
+    background: #fdf5ce;
+    color: #c77405; */
+    border-color:#679c5b;
+    background:#8FD182;
+    color: #46743c;
+}
+
+.tabnav-tab-cur a,
+.tabnav-tab a:hover,
+.wiki-nav .cur-item .link,
+.wiki-nav .link:hover,
+#right-panel .hd .ui-state-active .a,
+#right-panel .hd .a:hover {
+    /*color:#eb8205;
+    border-bottom-color: #eb8205; */
+    color:#46743c;
+    border-bottom-color: #46743c;
+}
+
+#info-bar {
+    color: #1f0600;
+    /* background: #fddaa4; */
+    background: #8FD182;
+}
+
+#info-bar-info a {
+    /* color:#a68558; */
+    color: #679c5b;
+}
+
+#msg-count .num {
+    /* background:#feac74;
+    border:1px solid #cb8a5d; */
+    background:#679c5b;
+    border:1px solid #46743c;
+}
+
+#notice-popup .unread {
+    /* border-left:2px solid #feac74; */
+    border-left:2px solid #679c5b;
+}
+
+#header .nav .a,
+#header .nav .a:visited {
+    color:#679c5b;
+}
+
+#ls-ch a {
+    /* color:#e83; */
+    color: #46743c;
+}
+
+.template-upload .btn {
+    /* color:#e83; */
+    color: #46743c;
+}
+
+.ui-progressbar-value,
+.progress .bar {
+    /* background:#e83; */
+    background: #46743c;
+}
+
+.upload-progress-bar .ui-progressbar-value {/*for progress*/
+    /* background:#e83; */
+    background:#46743c;
+}
+
+#plans th {
+    /* color:#eb8205; */
+    color:#46743c;
+}
+
+.wiki-index a:hover {
+    /* color:#f93; */
+    color:#679c5b;
+}
+
+.go-back:hover {
+    /* color:#f93; */
+    color:#679c5b;
+}
+
+#top-browser-tip {
+    /* background:#fff1a8; */
+    background:#8FD182;
+}
+
+#guide-for-new .icon-lightbulb {
+    /* color:#feac74; */
+    color:#679c5b;
+}
+
+/* Replace orange icons otherwise hard-coded:
+   We use the hack from
+   https://css-tricks.com/replace-the-image-in-an-img-with-css/
+   to push the original icons out of view and insert our own custom colored
+   ones instead.
+ */
+div.op-container img.repo-share-btn, div.displayed-op a.share img {
+    background: url('../custom/img/share-green.png');
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    width: 16px; /* Width of new image */
+    height: 16px; /* Height of new image */
+    padding-left: 16px; /* Equal to width of new image */
+}
+div.op-container img.repo-download-btn, div.displayed-op a.download img {
+    background: url('../custom/img/download-green.png');
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    width: 16px; /* Width of new image */
+    height: 16px; /* Height of new image */
+    padding-left: 16px; /* Equal to width of new image */
+}
+div.op-container img.repo-delete-btn, div.displayed-op a.delete img {
+    background: url('../custom/img/delete-green.png');
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    width: 16px; /* Width of new image */
+    height: 16px; /* Height of new image */
+    padding-left: 16px; /* Equal to width of new image */
+}
+/* This is a multi-icon image with dynamic subsampling to get the normal and
+ highlighted version of the icon */
+.repo-setting-icon,
+.repo-trash-icon,
+.repo-history-icon {
+    width:30px;
+    height:30px;
+    background-image: url('../custom/img/multi-repo-op.png');
+    background-repeat: no-repeat;
+    display:inline-block;
+    margin-right:10px;
+    outline:none; /* removing the dotted outline for FireFox */
+}
+
+
+/* Override some coloring from backbone.css as well */
+.hidden-op a:hover {
+    background:#679c5b;
+}
