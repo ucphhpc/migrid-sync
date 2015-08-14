@@ -155,6 +155,12 @@ a:hover {
 
 #header .nav .a,
 #header .nav .a:visited {
+    /* color:#8A948F; */
+    color:#8FD182;
+}
+
+#header .nav .a:hover {
+    /* color: #ff9933; */
     color:#679c5b;
 }
 

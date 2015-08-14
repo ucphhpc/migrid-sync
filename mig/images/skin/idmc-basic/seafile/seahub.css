@@ -155,7 +155,13 @@ a:hover {
 
 #header .nav .a,
 #header .nav .a:visited {
+    /* color:#8A948F; */
     color:#acf;
+}
+
+#header .nav .a:hover {
+    /* color: #ff9933; */
+    color:#369;
 }
 
 #ls-ch a {
@@ -203,7 +209,6 @@ a:hover {
     /* color:#feac74; */
     color:#369;
 }
-
 
 /* Replace orange icons otherwise hard-coded:
    We use the hack from
