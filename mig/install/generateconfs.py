@@ -78,6 +78,7 @@ if '__main__' == __name__:
         'openid_providers',
         'daemon_keycert',
         'daemon_pubkey',
+        'daemon_show_address',
         'alias_field',
         'hg_path',
         'hgweb_scripts',

@@ -44,7 +44,7 @@ import sys
 
 from shared.defaults import default_http_port, default_https_port
 
-def fill_template(template_file, output_file, settings):
+def fill_template(template_file, output_file, settings, eat_trailing_space=[]):
     """Fill a configuration template using provided settings dictionary"""
     try:
         template = open(template_file, 'r')
@@ -58,7 +58,10 @@ def fill_template(template_file, output_file, settings):
     # print "template read:\n", output
 
     for (variable, value) in settings.items():
-        contents = re.sub(variable, value, contents)
+        suffix = ''
+        if variable in eat_trailing_space:
+            suffix = '\s{0,1}'
+        contents = re.sub(variable + suffix, value, contents)
 
     # print "output:\n", contents
 
@@ -105,6 +108,7 @@ def generate_confs(
     openid_providers='',
     daemon_keycert='',
     daemon_pubkey='',
+    daemon_show_address='',
     alias_field='',
     hg_path='',
     hgweb_scripts='',
@@ -167,6 +171,7 @@ def generate_confs(
     user_dict['__OPENID_ALL_PROVIDER_IDS__'] = openid_providers
     user_dict['__DAEMON_KEYCERT__'] = daemon_keycert
     user_dict['__DAEMON_PUBKEY__'] = daemon_pubkey
+    user_dict['__DAEMON_SHOW_ADDRESS__'] = daemon_show_address
     user_dict['__ALIAS_FIELD__'] = alias_field
     user_dict['__HG_PATH__'] = hg_path
     user_dict['__HGWEB_SCRIPTS__'] = hgweb_scripts
@@ -243,6 +248,12 @@ cert, oid and sid based https!
     else:
         user_dict['__OPENID_COMMENTED__'] = '#'
 
+    # Enable alternativ daemon show address only if explicitly requested
+    if user_dict['__DAEMON_SHOW_ADDRESS__']:
+        user_dict['__SHOW_ADDRESS_COMMENTED__'] = ''
+    else:
+        user_dict['__SHOW_ADDRESS_COMMENTED__'] = '#'
+
     # Enable Debian/Ubuntu specific lines only there
     if user_dict['__DISTRO__'].lower() in ('ubuntu', 'debian'):
         user_dict['__NOT_DEB_COMMENTED__'] = ''
@@ -286,6 +297,13 @@ cert, oid and sid based https!
     # Generate random hex salt for scrambling saved digest credentials
     digest_salt = base64.b16encode(os.urandom(16))
     user_dict['__DIGEST_SALT__'] = digest_salt
+
+    # Greedy match trailing space for all the values to uncomment stuff
+    strip_trailing_space = ['__IF_SEPARATE_PORTS__', '__APACHE_PRE2.4__',
+                            '__APACHE_RECENT__']
+    for key in user_dict.keys():
+        if key.endswith('_COMMENTED__'):
+            strip_trailing_space.append(key)
         
     # modify this list when adding/removing template->target  
     replacement_list = \
@@ -308,7 +326,7 @@ cert, oid and sid based https!
         in_path = os.path.join(source, in_name)
         out_path = os.path.join(destination, out_name)
         if os.path.exists(in_path):
-            fill_template(in_path, out_path, user_dict)
+            fill_template(in_path, out_path, user_dict, strip_trailing_space)
             # Sync permissions
             os.chmod(out_path, os.stat(in_path).st_mode)
         else:
@@ -427,6 +445,7 @@ def create_user(
     openid_providers = ''
     daemon_keycert = ''
     daemon_pubkey = ''
+    daemon_show_address = ''
     alias_field = 'email'
     hg_path = '/usr/bin/hg'
     hgweb_scripts = '/usr/share/doc/mercurial-common/examples/'
@@ -501,6 +520,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         openid_providers,
         daemon_keycert,
         daemon_pubkey,
+        daemon_show_address,
         alias_field,
         hg_path,
         hgweb_scripts,
