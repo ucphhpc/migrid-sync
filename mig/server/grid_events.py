@@ -407,8 +407,8 @@ def run_command(
                       % (exc, ret_code, ret_msg, output_objects))
     if ret_code != 0:
         raise Exception('command error: %s' % txt_out)
-    logger.info('result was %s : %s:\n%s' % (ret_code, ret_msg,
-                txt_out))
+    logger.debug('result was %s : %s:\n%s' % (ret_code, ret_msg,
+               	 txt_out))
 
 
 class MiGRuleEventHandler(PatternMatchingEventHandler):
@@ -453,8 +453,8 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
             if state != 'deleted':
                 logger.error('failed to load event handler rules from %s (%s)'
                               % (src_path, exc))
-        logger.info("loaded new rules from '%s':\n%s" % (src_path,
-                    new_rules))
+        logger.debug("loaded new rules from '%s':\n%s" % (src_path,
+                     new_rules))
 
         # Remove all old rules for this vgrid and
         # leave rules for parent and sub-vgrids
@@ -478,7 +478,7 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
                         % (rule_id, path, entry))
             abs_path = os.path.join(vgrid_prefix, path)
             all_rules[abs_path] = all_rules.get(abs_path, []) + [entry]
-        logger.info('all rules:\n%s' % all_rules)
+        logger.debug('all rules:\n%s' % all_rules)
 
     def on_modified(self, event):
         """Handle modified rule file"""
