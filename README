@@ -298,6 +298,7 @@ or the same with OpenID, HSTS, WSGI, Seafile and vhost-specific certificates:
                    --cert_fqdn=dk-cert.migrid.org \
                    --sid_fqdn=dk-sid.migrid.org \
                    --oid_fqdn=dk-oid.migrid.org \
+                   --daemon_show_address=dk-sid.migrid.org \
                    --user=mig --group=mig \
                    --apache_etc=/etc/apache2 \
                    --apache_run=/var/run/apache2 \
