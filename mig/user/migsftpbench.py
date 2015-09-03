@@ -50,8 +50,9 @@ import time
 
 import paramiko
 
-hostname = 'migrid.org'
+migsftp_host = 'dk-sid.migrid.org'
 migsftp_port = 2222
+openssh_host = 'migrid.org'
 openssh_port = 22
 enable_compression = False
 bench_sizes = [1, 1024, 16*1024, 256*1024, 1024*1024, 16*1024*1024, 256*1024*1024]
@@ -233,7 +234,7 @@ if __name__ == '__main__':
     paramiko.util.log_to_file('bench-sftp.log')
     bench_hosts = {}
     if sys.argv[1:]:
-        hostname = sys.argv[1]
+        migsftp_host = sys.argv[1]
     if sys.argv[2:]:
         migsftp_user = sys.argv[2]
     else:
@@ -241,7 +242,7 @@ if __name__ == '__main__':
 
     bench_hosts['paramiko=paramiko'] = {
         'client': 'paramiko',
-        'hostname': hostname,
+        'hostname': migsftp_host,
         'port': migsftp_port,
         'username': migsftp_user,
         #'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'), 
@@ -251,7 +252,7 @@ if __name__ == '__main__':
         }
     bench_hosts['openssh=paramiko'] = {
         'client': 'openssh',
-        'hostname': hostname,
+        'hostname': migsftp_host,
         'port': migsftp_port,
         'username': migsftp_user,
         #'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'), 
@@ -259,11 +260,12 @@ if __name__ == '__main__':
         'key_path' : None,
         'user_key' : None,
         }
-    if sys.argv[3:]:
-        openssh_user = sys.argv[3]
+    if sys.argv[4:]:
+        openssh_host = sys.argv[3]
+        openssh_user = sys.argv[4]
         bench_hosts['paramiko=openssh'] = {
         'client': 'paramiko',
-        'hostname': hostname,
+        'hostname': openssh_host,
         'port': openssh_port,
         'username': openssh_user,
         #'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'), 
@@ -273,7 +275,7 @@ if __name__ == '__main__':
         }
         bench_hosts['openssh=openssh'] = {
         'client': 'openssh',
-        'hostname': hostname,
+        'hostname': openssh_host,
         'port': openssh_port,
         'username': openssh_user,
         #'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'), 
