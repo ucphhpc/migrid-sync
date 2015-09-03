@@ -92,7 +92,7 @@ def show_results(times, bench_sizes):
             for name in target.keys():
                 try:
                     ratio = target[name][size] / \
-                            target['openssh|openssh'][size]
+                            target['openssh=openssh'][size]
                 except KeyError:
                     ratio = 0.0
                 output[name] += '\t%.3fs' % target[name][size]
@@ -144,8 +144,12 @@ def run_bench(conf, bench_specs):
         times['get'][name] = {}
         times['put'][name] = {}
         if target['key_path']:
-            target['user_key'] = paramiko.DSSKey.from_private_key_file(
-                target['key_path'])
+            if target['key_path'].find('dsa') != -1:
+                target['user_key'] = paramiko.DSSKey.from_private_key_file(
+                    target['key_path'])
+            else:
+                target['user_key'] = paramiko.RSAKey.from_private_key_file(
+                    target['key_path'])
         create_missing_dirs(target)
         for size in bench_sizes:
             bench_path = os.path.join(bench_dir, bench_pattern % (name, size))
@@ -235,40 +239,44 @@ if __name__ == '__main__':
     else:
         migsftp_user = raw_input('MiG SFTP Username: ')
 
-    bench_hosts['paramiko|paramiko'] = {
+    bench_hosts['paramiko=paramiko'] = {
         'client': 'paramiko',
         'hostname': hostname,
         'port': migsftp_port,
         'username': migsftp_user,
+        #'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'), 
         #'key_path': os.path.expanduser('~/.mig/id_rsa'), 
         'key_path' : None,
         'user_key' : None,
         }
-    bench_hosts['openssh|paramiko'] = {
+    bench_hosts['openssh=paramiko'] = {
         'client': 'openssh',
         'hostname': hostname,
         'port': migsftp_port,
         'username': migsftp_user,
+        #'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'), 
         #'key_path': os.path.expanduser('~/.mig/id_rsa'), 
         'key_path' : None,
         'user_key' : None,
         }
     if sys.argv[3:]:
         openssh_user = sys.argv[3]
-        bench_hosts['paramiko|openssh'] = {
+        bench_hosts['paramiko=openssh'] = {
         'client': 'paramiko',
         'hostname': hostname,
         'port': openssh_port,
         'username': openssh_user,
+        #'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'), 
         #'key_path': os.path.expanduser('~/.ssh/id_rsa'),
         'key_path' : None,
         'user_key' : None,
         }
-        bench_hosts['openssh|openssh'] = {
+        bench_hosts['openssh=openssh'] = {
         'client': 'openssh',
         'hostname': hostname,
         'port': openssh_port,
         'username': openssh_user,
+        #'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'), 
         #'key_path': os.path.expanduser('~/.ssh/id_rsa'),
         'key_path' : None,
         'user_key' : None,
