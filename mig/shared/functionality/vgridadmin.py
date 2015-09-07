@@ -347,8 +347,8 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     label = "%ss" % configuration.site_vgrid_label
-    # Append VGrid note if custom
-    if label != 'VGrid':
+    # Append VGrid alias note if custom
+    if configuration.site_vgrid_label != 'VGrid':
         label += ' (i.e. VGrids)'
     title_entry['text'] = '%s administration' % label
 
