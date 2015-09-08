@@ -221,6 +221,7 @@ def handle_dir(
     special = ''
     extra_class = ''
     if os.path.islink(actual_dir):
+        access_type = configuration.site_vgrid_label
         dir_type = 'shared files'
         extra_class = 'vgridshared'
         parent_dir = os.path.basename(os.path.dirname(actual_dir))
@@ -231,10 +232,10 @@ def handle_dir(
             dir_type = 'private web page'
             extra_class = 'vgridprivateweb'
         elif actual_dir.find(seafile_ro_dirname) >= 0:
-            dir_type = 'seafile read-only access'
+            access_type = 'read-only'
+            dir_type = 'Seafile library access'
             extra_class = 'seafilereadonly'
-        special = ' - %s %s directory' % (configuration.site_vgrid_label,
-                                          dir_type)
+        special = ' - %s %s directory' % (access_type, dir_type)
     dir_obj = {
         'object_type': 'direntry',
         'type': 'directory',
