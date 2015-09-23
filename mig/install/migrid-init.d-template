@@ -27,6 +27,7 @@
 # processname: grid_openid.py
 # processname: grid_sftp.py
 # processname: grid_webdavs.py
+## processname: grid_davs.py
 # processname: grid_ftps.py
 # config: /etc/sysconfig/MiG
 # 
@@ -66,9 +67,16 @@ MIG_SSHMUX=${MIG_CODE}/server/grid_sshmux.py
 MIG_EVENTS=${MIG_CODE}/server/grid_events.py
 MIG_OPENID=${MIG_CODE}/server/grid_openid.py
 MIG_SFTP=${MIG_CODE}/server/grid_sftp.py
-MIG_DAVS=${MIG_CODE}/server/grid_webdavs.py
+MIG_WEBDAVS=${MIG_CODE}/server/grid_webdavs.py
+MIG_DAVS=${MIG_CODE}/server/grid_davs.py
 MIG_FTPS=${MIG_CODE}/server/grid_ftps.py
 DELAY=5
+
+show_usage() {
+    echo "Usage: migrid {start|stop|status|restart} [daemon]"
+    echo "where daemon is left empty for all or given as one of the following"
+    echo "(script|monitor|sshmux|events|openid|sftp|webdavs|davs|ftps|all)"
+}
 
 start_script() {
 	echo -n "Starting MiG server daemon: "
@@ -94,18 +102,18 @@ start_monitor() {
 	RET2=$?
 	[ $RET2 ] && success
 	echo
-	[ $RET2 ] || echo "Warning: Monitor not started."
+	[ $RET2 ] || echo "Warning: monitor not started."
 	echo
 }
 start_sshmux() {
-	echo -n "Starting MiG SSHMux daemon:"
+	echo -n "Starting MiG sshmux daemon:"
         PID_FILE="$PID_DIR/grid_sshmux.pid"
 	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	           "$CUSTOMCONF ${MIG_SSHMUX} >> ${MIG_LOG}/sshmux.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
-	[ $RET2 ] || echo "Warning: SSHMux not started."
+	[ $RET2 ] || echo "Warning: sshmux not started."
 	echo
 }
 start_events() {
@@ -116,51 +124,62 @@ start_events() {
 	RET2=$?
 	[ $RET2 ] && success
 	echo
-	[ $RET2 ] || echo "Warning: Events not started."
+	[ $RET2 ] || echo "Warning: events not started."
 	echo
 }
 start_openid() {
-	echo -n "Starting MiG OpenID daemon:"
+	echo -n "Starting MiG openid daemon:"
         PID_FILE="$PID_DIR/grid_openid.pid"
 	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	           "$CUSTOMCONF ${MIG_OPENID} >> ${MIG_LOG}/openid.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
-	[ $RET2 ] || echo "Warning: OpenID not started."
+	[ $RET2 ] || echo "Warning: openid not started."
 	echo
 }
 start_sftp() {
-	echo -n "Starting MiG SFTP daemon:"
+	echo -n "Starting MiG sftp daemon:"
         PID_FILE="$PID_DIR/grid_sftp.pid"
 	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	           "$CUSTOMCONF ${MIG_SFTP} >> ${MIG_LOG}/sftp.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
-	[ $RET2 ] || echo "Warning: SFTP not started."
+	[ $RET2 ] || echo "Warning: sftp not started."
 	echo
 }
 start_webdavs() {
-	echo -n "Starting MiG DAVS daemon:"
+	echo -n "Starting MiG webdavs daemon:"
         PID_FILE="$PID_DIR/grid_webdavs.pid"
 	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
-	           "$CUSTOMCONF ${MIG_DAVS} >> ${MIG_LOG}/webdavs.out 2>&1 &"
+	           "$CUSTOMCONF ${MIG_WEBDAVS} >> ${MIG_LOG}/webdavs.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
-	[ $RET2 ] || echo "Warning: DAVS not started."
+	[ $RET2 ] || echo "Warning: webdavs not started."
+	echo
+}
+start_davs() {
+	echo -n "Starting MiG davs daemon:"
+        PID_FILE="$PID_DIR/grid_davs.pid"
+	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+	           "$CUSTOMCONF ${MIG_DAVS} >> ${MIG_LOG}/davs.out 2>&1 &"
+	RET2=$?
+	[ $RET2 ] && success
+	echo
+	[ $RET2 ] || echo "Warning: davs not started."
 	echo
 }
 start_ftps() {
-	echo -n "Starting MiG FTPS daemon:"
+	echo -n "Starting MiG ftps daemon:"
         PID_FILE="$PID_DIR/grid_ftps.pid"
 	daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
 	           "$CUSTOMCONF ${MIG_FTPS} >> ${MIG_LOG}/ftps.out 2>&1 &"
 	RET2=$?
 	[ $RET2 ] && success
 	echo
-	[ $RET2 ] || echo "Warning: FTPS not started."
+	[ $RET2 ] || echo "Warning: ftps not started."
 
 	touch /var/lock/subsys/MiG
 	return $RET
@@ -174,6 +193,7 @@ start_all() {
     start_openid
     start_sftp
     start_webdavs
+    #start_davs
     start_ftps
 }
 
@@ -230,6 +250,11 @@ stop_sftp() {
 }
 stop_webdavs() {
 	echo -n "Shutting down MiG webdavs: "
+	killproc ${MIG_WEBDAVS}
+	echo
+}
+stop_davs() {
+	echo -n "Shutting down MiG davs: "
 	killproc ${MIG_DAVS}
 	echo
 }
@@ -246,6 +271,7 @@ stop_all() {
     stop_openid
     stop_sftp
     stop_webdavs
+    #stop_davs
     stop_ftps
     stop_script
 }
@@ -269,6 +295,9 @@ status_sftp() {
     status ${MIG_SFTP}
 }
 status_webdavs() {
+    status ${MIG_WEBDAVS}
+}
+status_davs() {
     status ${MIG_DAVS}
 }
 status_ftps() {
@@ -283,17 +312,27 @@ status_all() {
     status_openid
     status_sftp
     status_webdavs
+    status_davs
     status_ftps
 }
 
 
+### Main ###
+
+# Exit cleanly if main daemon is missing
+test -f ${MIG_SCRIPT} || exit 0
+
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|openid|sftp|webdavs|ftps)
+    script|monitor|sshmux|events|openid|sftp|webdavs|davs|ftps|all)
         TARGET="$2"
 	;;
-    *)
+    '')
         TARGET="all"
+	;;
+    *)
+	show_usage
+	exit 1
 	;;
 esac
 
@@ -327,8 +366,7 @@ case "$1" in
 #	$0; see the description under the probe tag below.>
 #	;;
     *)
-#	echo "Usage: <servicename> {start|stop|status|reload|restart[|probe]"
-	echo "Usage: MiG {start|stop|status|restart} [daemon]"
+	show_usage
 	exit 1
 	;;
 esac

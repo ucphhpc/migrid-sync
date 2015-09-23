@@ -24,3 +24,13 @@ GNUPGHOME=~/mnt/mig@dk-sid.migrid.org/.gnupg dpkg-buildpackage -rfakeroot
 
 Finally login as mig on dk.migrid.org and run the updaterep.sh script from
 ~mig/state/wwwpublic/deb/ .
+
+
+= Slack messenger client for Debian =
+We build and sign the unofficial Slack (slack.com) client for debian as well.
+cd ~/build
+[git clone or pull scudcloud]
+cd scudcloud/scudcloud-1.0
+GNUPGHOME=~/mnt/mig@dk-sid.migrid.org/.gnupg dpkg-buildpackage -rfakeroot
+[copy package files to ~/mnt/mig@dk-sid.migrid.org/state/wwwpublic/deb/pool/main/]
+run updaterepo.sh script as above. 
