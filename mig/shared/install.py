@@ -313,14 +313,15 @@ cert, oid and sid based https!
                       ("apache-ports-template.conf", "ports.conf"),
                       ("apache-MiG-template.conf", "MiG.conf"),
                       ("apache-mimic-deb-template.conf", "mimic-deb.conf"),
-                      ("apache-init.d-template", "apache-%s" % user),
+                      ("apache-init.d-deb-template", "apache-%s" % user),
                       ("apache-MiG-template.conf", "MiG.conf"),
                       ("trac-MiG-template.ini", "trac.ini"),
                       ("MiGserver-template.conf", "MiGserver.conf"),
                       ("static-skin-template.css", "static-skin.css"),
                       ("index-template.html", "index.html"),
                       # service script for MiG daemons
-                      ("migrid-init.d-template", "migrid-init.d"),
+                      ("migrid-init.d-rh-template", "migrid-init.d-rh"),
+                      ("migrid-init.d-deb-template", "migrid-init.d-deb"),
                       ]
     for (in_name, out_name) in replacement_list:
         in_path = os.path.join(source, in_name)

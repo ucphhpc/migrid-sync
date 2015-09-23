@@ -71,7 +71,8 @@ start_script() {
 start_monitor() {
     log_daemon_msg "Starting MiG monitor daemon" "migrid" || true
     PID_FILE="$PID_DIR/grid_monitor.pid"
-    if start-stop-daemon --start --quiet --oknodo --pidfile $PID_FILE --user ${MIG_USER} --exec "$CUSTOMCONF ${MIG_MONITOR} >> ${MIG_LOG}/monitor.out 2>&1 &"; then
+    echo start-stop-daemon --start --oknodo --pidfile ${PID_FILE} --user ${MIG_USER} --exec "$CUSTOMCONF ${MIG_MONITOR} >> ${MIG_LOG}/monitor.out 2>&1 &"
+    if start-stop-daemon --start --oknodo --pidfile ${PID_FILE} --user ${MIG_USER} --exec "$CUSTOMCONF ${MIG_MONITOR} >> ${MIG_LOG}/monitor.out 2>&1 &"; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true

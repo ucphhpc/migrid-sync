@@ -165,17 +165,24 @@ sudo cp %(destination)s/envvars %(apache_etc)s/
 and if Trac is enabled, the generated trac.ini to %(mig_code)s/server/:
 cp %(destination)s/trac.ini %(mig_code)s/server/
 
-On a MiG developer server the dedicated apache init script is added with:
+On a Debian/Ubuntu MiG developer server the dedicated apache init script is
+added with:
 sudo cp %(destination)s/apache-%(user)s /etc/init.d/apache-%(user)s
 
 Please reload or restart your apache daemons afterwards to catch the
 configuration changes.
 
-The migrid-init.d contains a standard SysV init style helper script to
-launch all MiG daemons. It was written for CentOS but may work
+The migrid-init.d-rh contains a standard SysV init style helper script to
+launch all MiG daemons. It was written for RHEL/CentOS but may work
 on other platforms, too.
 You can install it with:
-sudo cp %(destination)s/migrid-init.d /etc/init.d/migrid
+sudo cp %(destination)s/migrid-init.d-rh /etc/init.d/migrid
+
+The migrid-init.d-deb contains a standard SysV init style helper script to
+launch all MiG daemons. It was written for Debian/Ubuntu but may work
+on other platforms, too.
+You can install it with:
+sudo cp %(destination)s/migrid-init.d-deb /etc/init.d/migrid
 
 The logrotate-mig contains a logrotate configuration to automatically
 rotate and compress log files for all MiG daemons.
