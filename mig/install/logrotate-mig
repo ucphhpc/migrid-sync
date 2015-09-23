@@ -1,4 +1,4 @@
-/home/mig/state/log/*.log /home/mig/state/log/*.out /home/mig/last-scp.err {
+/home/mig/state/log/*.log /home/mig/state/log/*.out /home/mig/state/log/*.err {
 	weekly
 	missingok
 	rotate 52
@@ -8,10 +8,10 @@
 	create 640 mig mig
 	sharedscripts
 	postrotate
-           if [ -p /home/mig/mig/server/server.stdin ]; then \
+           if [ -x /etc/init.d/migrid ]; then \
+                /etc/init.d/migrid restart ; \
+           elif [ -p /home/mig/mig/server/server.stdin ]; then \
                echo RELOADCONFIG >> /home/mig/mig/server/server.stdin; \
-           elif [ -p /home/mig/mig/server/grid_stdin ]; then \
-               echo RELOADCONFIG >> /home/mig/mig/server/grid_stdin; \
 	   fi;
 	endscript
 }
