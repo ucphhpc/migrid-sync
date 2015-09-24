@@ -291,6 +291,10 @@ def start_service(conf):
     handler.certfile = conf.user_ftps_key
     handler.authorizer = authorizer
     handler.abstracted_fs = MiGRestrictedFilesystem
+    # TODO: masqueraded ftps fails from fireftp - maybe this would help?
+    #if configuration.user_ftps_show_address != configuration.user_ftps_address:
+    #    handler.masquerade_address = socket.gethostbyname(
+    #        configuration.user_ftps_show_address)
     handler.passive_ports = conf.user_ftps_pasv_ports
     
     server = FTPServer((conf.user_ftps_address, conf.user_ftps_ctrl_port),
