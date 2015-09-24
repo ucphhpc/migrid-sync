@@ -70,6 +70,7 @@ Requires PyOpenSSL module (http://pypi.python.org/pypi/pyOpenSSL).
 
 import logging
 import os
+import socket
 import sys
 import time
 
@@ -290,8 +291,7 @@ def start_service(conf):
     handler.certfile = conf.user_ftps_key
     handler.authorizer = authorizer
     handler.abstracted_fs = MiGRestrictedFilesystem
-    handler.passive_ports = range(conf.user_ftps_pasv_ports[0],
-                                  conf.user_ftps_pasv_ports[1])
+    handler.passive_ports = conf.user_ftps_pasv_ports
     
     server = FTPServer((conf.user_ftps_address, conf.user_ftps_ctrl_port),
                        handler)
