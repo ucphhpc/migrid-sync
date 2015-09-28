@@ -828,7 +828,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         state = event.event_type
         src_path = event.src_path
         is_directory = event.is_directory
-        logger.info('got %s event for path: %s' % (state, src_path))
+        logger.debug('got %s event for path: %s' % (state, src_path))
         logger.debug('filter %s against %s' % (all_rules.keys(),
                      src_path))
 
@@ -875,7 +875,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                  % (rule['rule_id'], src_path))
                         continue
                     if not state in rule['changes']:
-                        logger.info('skip %s %s event handling for: %s'
+                        logger.debug('skip %s %s event handling for: %s'
                                     % (rule['rule_id'], state,
                                     src_path))
                         continue

@@ -533,7 +533,7 @@ if __name__ == "__main__":
 
     # Use separate logger - cherrypy hijacks root logger
 
-    logger = daemon_logger("webdavs", configuration.user_davs_log, "DEBUG")
+    logger = daemon_logger("webdavs", configuration.user_davs_log, "info")
 
     # Allow configuration overrides on command line
     if sys.argv[1:]:
