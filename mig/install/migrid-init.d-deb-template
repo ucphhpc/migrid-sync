@@ -65,7 +65,7 @@ start_script() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Starting MiG server daemon" ${SHORT_NAME} || true
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	# some input to kick the server into gear ...
 	echo "" >> ${MIG_CODE}/server/server.stdin
 	log_end_msg 0 || true
@@ -78,7 +78,7 @@ start_monitor() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Starting MiG monitor daemon" ${SHORT_NAME} || true
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -89,7 +89,7 @@ start_sshmux() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Starting MiG sshmux daemon" ${SHORT_NAME} || true
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -100,7 +100,7 @@ start_events() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Starting MiG events daemon" ${SHORT_NAME} || true
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --chuid ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -111,7 +111,7 @@ start_openid() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Starting MiG openid daemon" ${SHORT_NAME} || true
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -122,7 +122,7 @@ start_sftp() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Starting MiG sftp daemon" ${SHORT_NAME} || true
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -133,7 +133,7 @@ start_webdavs() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Starting MiG webdavs daemon" ${SHORT_NAME} || true
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -144,7 +144,7 @@ start_davs() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Starting MiG davs daemon" ${SHORT_NAME} || true
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -155,7 +155,7 @@ start_ftps() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Starting MiG ftps daemon" ${MIG_FTPS} || true
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
