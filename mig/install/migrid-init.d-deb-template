@@ -178,30 +178,12 @@ stop_script() {
     DAEMON_PATH=${MIG_SCRIPT}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    pid=`pidofproc ${MIG_SCRIPT}`
-    if [ -z "$pid" ]; then
-	echo -n "MiG server is not running..."
-	failure
-	echo
+    log_daemon_msg "Stopping MiG server" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+	log_end_msg 0 || true
     else
-        # try a shutdown before killing it
-	echo -n "SHUTDOWN MiG server (pid $pid)"
-	echo SHUTDOWN >> $MIG_PATH/mig/server/server.stdin
-	sleep ${DELAY}
-	checkpid $pid
-	KILLED=$?
-	if [ $KILLED ]; then 
-	    success;
-	else 
-	    failure
-	    echo
-	    echo -n "Killing MiG server"
-	    killproc ${MIG_SCRIPT} -KILL;
-	fi
-	echo
-    fi	
-    rm -f /var/lock/subsys/MiG
-    return $RET
+	log_end_msg 1 || true
+    fi
 }
 stop_monitor() {
     DAEMON_PATH=${MIG_MONITOR}
