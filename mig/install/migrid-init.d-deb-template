@@ -61,9 +61,11 @@ show_usage() {
 #       and we do not need to explicitly forward MIG_CONF value.
 
 start_script() {
-    log_daemon_msg "Starting MiG server daemon" "migrid" || true
-    PID_FILE="$PID_DIR/grid_script.pid"
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${MIG_SCRIPT} ; then
+    DAEMON_PATH=${MIG_SCRIPT}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG server daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
 	# some input to kick the server into gear ...
 	echo "" >> ${MIG_CODE}/server/server.stdin
 	log_end_msg 0 || true
@@ -72,72 +74,88 @@ start_script() {
     fi
 }
 start_monitor() {
-    log_daemon_msg "Starting MiG monitor daemon" "migrid" || true
-    PID_FILE="$PID_DIR/grid_monitor.pid"
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${MIG_MONITOR} ; then
+    DAEMON_PATH=${MIG_MONITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG monitor daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
     fi
 }
 start_sshmux() {
-    log_daemon_msg "Starting MiG sshmux daemon" "migrid" || true
-    PID_FILE="$PID_DIR/grid_sshmux.pid"
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${MIG_SSHMUX} ; then
+    DAEMON_PATH=${MIG_SSHMUX}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG sshmux daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
     fi
 }
 start_events() {
-    log_daemon_msg "Starting MiG events daemon" "migrid" || true
-    PID_FILE="$PID_DIR/grid_events.pid"
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${MIG_EVENTS} ; then
+    DAEMON_PATH=${MIG_EVENTS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG events daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
     fi
 }
 start_openid() {
-    log_daemon_msg "Starting MiG openid daemon" "migrid" || true
-    PID_FILE="$PID_DIR/grid_openid.pid"
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${MIG_OPENID} ; then
+    DAEMON_PATH=${MIG_OPENID}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG openid daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
     fi
 }
 start_sftp() {
-    log_daemon_msg "Starting MiG sftp daemon" "migrid" || true
-    PID_FILE="$PID_DIR/grid_sftp.pid"
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${MIG_SFTP} ; then
+    DAEMON_PATH=${MIG_SFTP}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG sftp daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
     fi
 }
 start_webdavs() {
-    log_daemon_msg "Starting MiG webdavs daemon" "migrid" || true
-    PID_FILE="$PID_DIR/grid_webdavs.pid"
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${MIG_WEBDAVS} ; then
+    DAEMON_PATH=${MIG_WEBDAVS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG webdavs daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
     fi
 }
 start_davs() {
-    log_daemon_msg "Starting MiG davs daemon" "migrid" || true
-    PID_FILE="$PID_DIR/grid_davs.pid"
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${MIG_DAVS} ; then
+    DAEMON_PATH=${MIG_DAVS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG davs daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
     fi
 }
 start_ftps() {
-    log_daemon_msg "Starting MiG ftps daemon" "migrid" || true
-    PID_FILE="$PID_DIR/grid_ftps.pid"
-    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${MIG_FTPS} ; then
+    DAEMON_PATH=${MIG_FTPS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG ftps daemon" ${MIG_FTPS} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER} --background --exec ${DAEMON_PATH} ; then
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -157,34 +175,39 @@ start_all() {
 }
 
 stop_script() {
-	pid=`pidofproc ${MIG_SCRIPT}`
-	if [ -z "$pid" ]; then
-	    echo -n "MiG server is not running..."
+    DAEMON_PATH=${MIG_SCRIPT}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    pid=`pidofproc ${MIG_SCRIPT}`
+    if [ -z "$pid" ]; then
+	echo -n "MiG server is not running..."
+	failure
+	echo
+    else
+        # try a shutdown before killing it
+	echo -n "SHUTDOWN MiG server (pid $pid)"
+	echo SHUTDOWN >> $MIG_PATH/mig/server/server.stdin
+	sleep ${DELAY}
+	checkpid $pid
+	KILLED=$?
+	if [ $KILLED ]; then 
+	    success;
+	else 
 	    failure
 	    echo
-	else
-            # try a shutdown before killing it
-	    echo -n "SHUTDOWN MiG server (pid $pid)"
-	    echo SHUTDOWN >> $MIG_PATH/mig/server/server.stdin
-	    sleep ${DELAY}
-	    checkpid $pid
-	    KILLED=$?
-	    if [ $KILLED ]; then 
-		success;
-	    else 
-		failure
-		echo
-		echo -n "Killing MiG server"
-		killproc ${MIG_SCRIPT} -KILL;
-	    fi
-	    echo
-	fi	
-	rm -f /var/lock/subsys/MiG
-	return $RET
+	    echo -n "Killing MiG server"
+	    killproc ${MIG_SCRIPT} -KILL;
+	fi
+	echo
+    fi	
+    rm -f /var/lock/subsys/MiG
+    return $RET
 }
 stop_monitor() {
-    log_daemon_msg "Stopping MiG monitor" "migrid" || true
-    PID_FILE="$PID_DIR/grid_monitor.pid"
+    DAEMON_PATH=${MIG_MONITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG monitor" ${SHORT_NAME} || true
     if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
 	log_end_msg 0 || true
     else
@@ -192,8 +215,10 @@ stop_monitor() {
     fi
 }
 stop_sshmux() {
-    log_daemon_msg "Stopping MiG sshmux" "migrid" || true
-    PID_FILE="$PID_DIR/grid_sshmux.pid"
+    DAEMON_PATH=${MIG_SSHMUX}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG sshmux" ${SHORT_NAME} || true
     if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
 	log_end_msg 0 || true
     else
@@ -201,8 +226,10 @@ stop_sshmux() {
     fi
 }
 stop_events() {
-    log_daemon_msg "Stopping MiG events" "migrid" || true
-    PID_FILE="$PID_DIR/grid_events.pid"
+    DAEMON_PATH=${MIG_EVENTS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG events" ${SHORT_NAME} || true
     if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
 	log_end_msg 0 || true
     else
@@ -210,8 +237,10 @@ stop_events() {
     fi
 }
 stop_openid() {
-    log_daemon_msg "Stopping MiG openid" "migrid" || true
-    PID_FILE="$PID_DIR/grid_openid.pid"
+    DAEMON_PATH=${MIG_OPENID}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG openid" ${SHORT_NAME} || true
     if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
 	log_end_msg 0 || true
     else
@@ -219,8 +248,10 @@ stop_openid() {
     fi
 }
 stop_sftp() {
-    log_daemon_msg "Stopping MiG sftp" "migrid" || true
-    PID_FILE="$PID_DIR/grid_sftp.pid"
+    DAEMON_PATH=${MIG_SFTP}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG sftp" ${SHORT_NAME} || true
     if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
 	log_end_msg 0 || true
     else
@@ -228,8 +259,10 @@ stop_sftp() {
     fi
 }
 stop_webdavs() {
-    log_daemon_msg "Stopping MiG webdavs" "migrid" || true
-    PID_FILE="$PID_DIR/grid_webdavs.pid"
+    DAEMON_PATH=${MIG_WEBDAVS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG webdavs" ${SHORT_NAME} || true
     if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
 	log_end_msg 0 || true
     else
@@ -237,8 +270,10 @@ stop_webdavs() {
     fi
 }
 stop_davs() {
-    log_daemon_msg "Stopping MiG davs" "migrid" || true
-    PID_FILE="$PID_DIR/grid_davs.pid"
+    DAEMON_PATH=${MIG_DAVS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG davs" ${SHORT_NAME} || true
     if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
 	log_end_msg 0 || true
     else
@@ -246,8 +281,10 @@ stop_davs() {
     fi
 }
 stop_ftps() {
-    log_daemon_msg "Stopping MiG ftps" "migrid" || true
-    PID_FILE="$PID_DIR/grid_ftps.pid"
+    DAEMON_PATH=${MIG_FTPS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG ftps" ${SHORT_NAME} || true
     if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
 	log_end_msg 0 || true
     else
@@ -268,57 +305,57 @@ stop_all() {
 }
 
 status_script() {
-    PID_FILE="$PID_DIR/grid_script.pid"
     DAEMON_PATH=${MIG_SCRIPT}
     SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
 }
 status_monitor() {
-    PID_FILE="$PID_DIR/grid_monitor.pid"
     DAEMON_PATH=${MIG_MONITOR}
     SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
 }
 status_sshmux() {
-    PID_FILE="$PID_DIR/grid_sshmux.pid"
     DAEMON_PATH=${MIG_SSHMUX}
     SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
 }
 status_events() {
-    PID_FILE="$PID_DIR/grid_events.pid"
     DAEMON_PATH=${MIG_EVENTS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
 }
 status_openid() {
-    PID_FILE="$PID_DIR/grid_openid.pid"
     DAEMON_PATH=${MIG_OPENID}
     SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
 }
 status_sftp() {
-    PID_FILE="$PID_DIR/grid_sftp.pid"
     DAEMON_PATH=${MIG_SFTP}
     SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
 }
 status_webdavs() {
-    PID_FILE="$PID_DIR/grid_webdavs.pid"
     DAEMON_PATH=${MIG_WEBDAVS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
 }
 status_davs() {
-    PID_FILE="$PID_DIR/grid_davs.pid"
     DAEMON_PATH=${MIG_DAVS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
 }
 status_ftps() {
-    PID_FILE="$PID_DIR/grid_ftps.pid"
     DAEMON_PATH=${MIG_FTPS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
 }
 
