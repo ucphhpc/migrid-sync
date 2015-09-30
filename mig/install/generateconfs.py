@@ -187,6 +187,6 @@ sudo cp %(destination)s/migrid-init.d-deb /etc/init.d/migrid
 The logrotate-mig contains a logrotate configuration to automatically
 rotate and compress log files for all MiG daemons.
 You can install it with:
-sudo cp %(destination)s/logrotate-mig /etc/logrotate.d/migrid
+sudo cp %(destination)s/logrotate-migrid /etc/logrotate.d/migrid
 ''' % conf
     sys.exit(0)

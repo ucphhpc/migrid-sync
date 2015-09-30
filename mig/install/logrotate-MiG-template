@@ -1,0 +1,17 @@
+__MIG_STATE__/log/*.log __MIG_STATE__/log/*.out __MIG_STATE__/log/*.err {
+	weekly
+	missingok
+	rotate 52
+	compress
+	delaycompress
+	notifempty
+	create 640 __USER__ __GROUP__
+	sharedscripts
+	postrotate
+           if [ -x /etc/init.d/migrid ]; then \
+                /etc/init.d/migrid restart ; \
+           elif [ -p __MIG_CODE__/server/server.stdin ]; then \
+               echo RELOADCONFIG >> __MIG_CODE__/server/server.stdin; \
+	   fi;
+	endscript
+}
