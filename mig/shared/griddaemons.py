@@ -173,49 +173,37 @@ def get_creds_changes(conf, username, authkeys_path, authpasswords_path,
     old_pw_users = [i for i in old_users if i.password]
     old_digest_users = [i for i in old_users if i.digest]
     changed_paths = []
-    new_stamp = -1
     if old_key_users:
         if not os.path.exists(authkeys_path):
             changed_paths.append(authkeys_path)
         elif os.path.getmtime(authkeys_path) > old_key_users[0].last_update:
-            new_stamp = os.path.getmtime(authkeys_path) 
+            old_key_users[0].last_update = os.path.getmtime(authkeys_path) 
             changed_paths.append(authkeys_path)
     elif os.path.exists(authkeys_path) and \
              os.path.getsize(authkeys_path) > 0:
-        new_stamp = os.path.getmtime(authkeys_path) 
         changed_paths.append(authkeys_path)
-    if new_stamp != -1:
-        old_key_users[0].last_update = new_stamp
 
-    new_stamp = -1
     if old_pw_users:
         if not os.path.exists(authpasswords_path):
             changed_paths.append(authpasswords_path)
         elif os.path.getmtime(authpasswords_path) > \
                  old_pw_users[0].last_update:
-            new_stamp = os.path.getmtime(authpasswords_path) 
+            old_pw_users[0].last_update = os.path.getmtime(authpasswords_path)
             changed_paths.append(authpasswords_path)
     elif os.path.exists(authpasswords_path) and \
              os.path.getsize(authpasswords_path) > 0:
-        new_stamp = os.path.getmtime(authpasswords_path) 
         changed_paths.append(authpasswords_path)
-    if new_stamp != -1:
-        old_pw_users[0].last_update = new_stamp
 
-    new_stamp = -1
     if old_digest_users:
         if not os.path.exists(authdigests_path):
             changed_paths.append(authdigests_path)
         elif os.path.getmtime(authdigests_path) > \
                  old_digest_users[0].last_update:
-            new_stamp = os.path.getmtime(authdigests_path)
+            old_digest_users[0].last_update = os.path.getmtime(authdigests_path)
             changed_paths.append(authdigests_path)
     elif os.path.exists(authdigests_path) and \
              os.path.getsize(authdigests_path) > 0:
-        new_stamp = os.path.getmtime(authdigests_path)
         changed_paths.append(authdigests_path)
-    if new_stamp != -1:
-        old_digest_users[0].last_update = new_stamp
 
     return changed_paths
 

@@ -316,6 +316,7 @@ cert, oid and sid based https!
                       ("apache-init.d-deb-template", "apache-%s" % user),
                       ("apache-MiG-template.conf", "MiG.conf"),
                       ("trac-MiG-template.ini", "trac.ini"),
+                      ("logrotate-MiG-template", "logrotate-migrid"),
                       ("MiGserver-template.conf", "MiGserver.conf"),
                       ("static-skin-template.css", "static-skin.css"),
                       ("index-template.html", "index.html"),
