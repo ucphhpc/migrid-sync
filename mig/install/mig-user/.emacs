@@ -121,6 +121,8 @@
 
 (setq auto-mode-alist
 	(append '(("\\.c$"  . c-mode)
+	("\\.cu$"  . c-mode)
+	("\\.cl$"  . c-mode)
 	("\\.h$"  . c-mode)
 	("\\.html$" . html-mode)
 	) auto-mode-alist))
@@ -128,3 +130,12 @@
 ;;; add these lines if you like color-based syntax highlighting
 (global-font-lock-mode t)
 (setq font-lock-maximum-decoration t)
+
+;; Save all tempfiles in $TMPDIR/emacs$UID/ to avoid e.g. slow backup saves on network shares
+(defconst emacs-tmp-dir (format "%s/%s%s/" temporary-file-directory "emacs" (user-uid)))
+(setq backup-directory-alist
+        `((".*" . ,emacs-tmp-dir)))
+(setq auto-save-file-name-transforms
+        `((".*" ,emacs-tmp-dir t)))
+(setq auto-save-list-file-prefix
+        emacs-tmp-dir)

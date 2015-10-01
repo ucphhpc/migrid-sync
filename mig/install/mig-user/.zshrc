@@ -22,6 +22,9 @@ alias ls='ls --color=auto'
 alias ll='ls -l'
 alias la='ls -al'
 
+alias emacs='emacs -nw'
+alias vdo='vimdiff -o'
+
 # Shell functions
 setenv() { typeset -x "${1}${1:+=}${(@)argv[2,$#]}" }  # csh compatibility
 freload() { while (( $# )); do; unfunction $1; autoload -U $1; shift; done }
@@ -52,7 +55,8 @@ RPROMPT="%S%n@%m%s"
 # Set/unset shell options
 setopt autolist	no_clobber no_flowcontrol hash_cmds\
 	hist_ignore_dups no_ignore_eof list_ambiguous no_list_beep\
-	list_types pushd_silent rm_star_silent glob_dots
+	list_types pushd_silent rm_star_silent glob_dots \
+	transient_rprompt
 
 # Autoload zsh modules when they are referenced
 zmodload -a zsh/stat stat
@@ -71,6 +75,14 @@ bindkey '^Z' accept-and-hold
 #bindkey -s '\M-/' \\\\
 #bindkey -s '\M-=' \|
 
+# The home/end/del/ins keys are not always bound and then results in a tilde
+bindkey "\e[1~" beginning-of-line
+bindkey "\e[2~" quoted-insert
+bindkey "\e[3~" delete-char
+bindkey "\e[4~" end-of-line
+bindkey "\eOH" beginning-of-line
+bindkey "\eOF" end-of-line
+
 # bindkey -v               # vi key bindings
 
 bindkey -e                 # emacs key bindings
@@ -87,13 +99,41 @@ autoload -U compinit
 compinit
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin:/usr/local/bin:/usr/local/sbin:.
+# Include admin commands
+PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin:$HOME/bin:$HOME/scripts
 export PATH
 
-HISTFILE=~/.zsh_history
-HISTSIZE=8000
-SAVEHIST=4000
-export HISTFILE
-export HISTSIZE
-export SAVEHIST
+HISTSIZE=4000
+if [ -z "$SILENT" ]; then
+	HISTFILE=~/.zsh_history
+	SAVEHIST=32000
+	export HISTFILE
+	export HISTSIZE
+	export SAVEHIST
+
+	setopt SHARE_HISTORY
+	setopt HIST_EXPIRE_DUPS_FIRST
+	# add time stamps
+	setopt EXTENDED_HISTORY
+else
+	unset HISTFILE
+fi
 
 setopt nobeep
+
+if [ -d $HOME/.zsh.d ]; then
+    for i in $HOME/.zsh.d/[a-zA-Z0-9]*; do
+	#echo "loading general settings from $i"
+        if [ -f $i ]; then 
+	    . $i
+        fi
+    done
+    if [ -d $HOME/.zsh.d/$(hostname) ]; then
+        for i in `ls $HOME/.zsh.d/$(hostname)/[a-zA-Z0-9]* 2>/dev/null`; do
+	    #echo "loading local settings from $i"
+            if [ -f $i ]; then 
+	        . $i
+            fi
+        done
+    fi
+fi
