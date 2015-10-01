@@ -134,6 +134,12 @@ def fix_missing(config_file, verbose=True):
         'user_seahub_url': '',
         'user_seafile_url': '',
         'user_seafile_auth': ['password'],
+        'user_imnotify_address': '',
+        'user_imnotify_port': 6667,
+        'user_imnotify_nickname': '',
+        'user_imnotify_target': '',
+        'user_imnotify_password': '',
+        'user_imnotify_log': 'imnotify.log',
         'user_openid_address': fqdn,
         'user_openid_port': 8443,
         'user_openid_key': '~/certs/combined.pem',
@@ -302,6 +308,12 @@ class Configuration:
     user_openid_log = 'openid.log'
     user_openid_providers = []
     user_events_log = 'events.log'
+    user_imnotify_address = ''
+    user_imnotify_port = 6667
+    user_imnotify_channel = ''
+    user_imnotify_username = ''
+    user_imnotify_password = ''
+    user_imnotify_log = 'imnotify.log'
     server_home = ''
     vms_builder_home = ''
     sessid_to_mrsl_link_home = ''
@@ -705,6 +717,23 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_seafile_alias'):
             self.user_seafile_alias = config.get('GLOBAL', 
                                                  'user_seafile_alias')
+        if config.has_option('GLOBAL', 'user_imnotify_address'):
+            self.user_imnotify_address = config.get('GLOBAL', 
+                                                    'user_imnotify_address')
+        if config.has_option('GLOBAL', 'user_imnotify_port'):
+            self.user_imnotify_port = config.getint('GLOBAL', 
+                                                    'user_imnotify_port')
+        if config.has_option('GLOBAL', 'user_imnotify_channel'):
+            self.user_imnotify_channel = config.get('GLOBAL', 
+                                                    'user_imnotify_channel')
+        if config.has_option('GLOBAL', 'user_imnotify_username'):
+            self.user_imnotify_username = config.get('GLOBAL', 
+                                                     'user_imnotify_username')
+        if config.has_option('GLOBAL', 'user_imnotify_alias'):
+            self.user_imnotify_password = config.get('GLOBAL', 
+                                                     'user_imnotify_password')
+        if config.has_option('GLOBAL', 'user_imnotify_log'):
+            self.user_imnotify_log = config.get('GLOBAL', 'user_imnotify_log')
         if config.has_option('GLOBAL', 'user_openid_address'):
             self.user_openid_address = config.get('GLOBAL', 
                                                  'user_openid_address')
@@ -1045,6 +1074,10 @@ class Configuration:
             self.site_enable_seafile = config.getboolean('SITE', 'enable_seafile')
         else:
             self.site_enable_seafile = False
+        if config.has_option('SITE', 'enable_imnotify'):
+            self.site_enable_imnotify = config.getboolean('SITE', 'enable_imnotify')
+        else:
+            self.site_enable_imnotify = False
         if config.has_option('SITE', 'enable_openid'):
             self.site_enable_openid = config.getboolean('SITE', 'enable_openid')
         else:
@@ -1189,7 +1222,8 @@ class Configuration:
         # Force absolute log paths
 
         for log_var in ('user_sftp_log', 'user_davs_log', 'user_ftps_log',
-                        'user_openid_log', 'user_events_log'):
+                        'user_openid_log', 'user_events_log',
+                        'user_imnotify_log', ):
             log_path = getattr(self, log_var)
             if not os.path.isabs(log_path):
                 setattr(self, log_var, os.path.join(self.log_dir, log_path))

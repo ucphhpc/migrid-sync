@@ -107,6 +107,13 @@ if __name__ == '__main__':
     configuration = get_configuration_object()
     logger = configuration.logger
 
+    print """
+Running grid ssh multiplexing server for resource ssh connection reuse.
+
+Set the MIG_CONF environment to the server configuration path
+unless it is available in mig/server/MiGserver.conf
+"""
+
     persistent_hosts = {}
     resource_path = configuration.resource_home
     for unique_resource_name in os.listdir(configuration.resource_home):

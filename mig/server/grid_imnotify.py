@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_imnotify - IM notifier daemon
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -292,35 +292,41 @@ def irc_process_forever(*args):
 
 
 if __name__ == '__main__':
-    print '''This script should only be started by MiG admins and only on the main
-    MiG server. Multiple running instances - even on separate servers - results in
-    conflicts!
+    configuration = get_configuration_object()
+    logger = configuration.logger
 
-    Please use dummy IM deamon in grid_imnotify_stdout.py instead if *not*
-    running on main MiG server!
-    '''
-    if len(sys.argv) < 2 or sys.argv[1]\
-         != 'i_am_admin_and_on_main_mig_server':
-        print '''
-    To start dummy deamon run:
-    python grid_imnotify_stdout.py
-
-    To really start this daemon run:
-    python grid_imnotify.py i_am_admin_and_on_main_mig_server
-
-    Set the MIG_CONF environment to the server configuration path
-    unless it is available in mig/server/MiGserver.conf
-    '''
+    if not configuration.site_enable_imnotify:
+        err_msg = "IM notify helper is disabled in configuration!"
+        logger.error(err_msg)
+        print err_msg
         sys.exit(1)
 
-    port = 6667
-    server = 'im.bitlbee.org'
-    nickname = 'migdaemon'
-    target = '#bitlbee'
-    bitlbee_password = 'klapHaT1'
-    if len(sys.argv) > 2:
-        os.environ['MIG_CONF'] = sys.argv[2]
-    configuration = get_configuration_object()
+    print """
+Running grid IM notify server for instant messenger notifications.
+
+IMPORTANT: This daemon should only be enabled on servers with a dedicated IRC
+helper setup. Multiple running instances with the same IRC helper *even on
+separate servers* will conflict!
+
+Please leave enable_imnotify disabled in server configuration if *not*
+running with a dedicated IRC helper account!
+
+Set the MIG_CONF environment to the server configuration path
+unless it is available in mig/server/MiGserver.conf
+"""
+
+    server = configuration.user_imnotify_address
+    port = configuration.user_imnotify_port
+    target = '#%s' % configuration.user_imnotify_channel
+    nickname = configuration.user_imnotify_username
+    bitlbee_password = configuration.user_imnotify_password
+
+    if not server or not port or not target or not nickname:
+        err_msg = "IM notify helper setup is incomplete in configuration!"
+        logger.error(err_msg)
+        print err_msg
+        sys.exit(1)
+
     stdin_path = configuration.im_notify_stdin
     irc = None
     line = None

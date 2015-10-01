@@ -7,7 +7,7 @@
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Minimum intrusion Grid daemons
-# Description:       MiG is a Grid middleware with minimal installation requirements
+# Description:       MiG is a Grid middleware with minimal user and resource requirements
 ### END INIT INFO
 
 set -e 
@@ -34,9 +34,6 @@ fi
 if [ -z "$MIG_CODE" ]; then 
     MIG_CODE=${MIG_PATH}/mig
 fi
-if [ -n "$MIG_CONF" ]; then 
-    CUSTOMCONF="MIG_CONF=\"$MIG_CONF\""
-fi
 # you probably do not want to modify these...
 PID_DIR=${PID_DIR:-/var/run}
 MIG_LOG=${MIG_STATE}/log
@@ -49,12 +46,13 @@ MIG_SFTP=${MIG_CODE}/server/grid_sftp.py
 MIG_WEBDAVS=${MIG_CODE}/server/grid_webdavs.py
 MIG_DAVS=${MIG_CODE}/server/grid_davs.py
 MIG_FTPS=${MIG_CODE}/server/grid_ftps.py
-DELAY=5
+MIG_IMNOTIFY=${MIG_CODE}/server/grid_imnotify.py
+MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
 
 show_usage() {
     echo "Usage: migrid {start|stop|status|restart} [daemon]"
     echo "where daemon is left empty for all or given as one of the following"
-    echo "(script|monitor|sshmux|events|openid|sftp|webdavs|davs|ftps|all)"
+    echo "(script|monitor|sshmux|events|openid|sftp|webdavs|davs|ftps|imnotify|vmproxy|all)"
 }
 
 # NOTE: we cannot easily pass daemon std output to a x.out log file on Debian
@@ -161,6 +159,28 @@ start_ftps() {
 	log_end_msg 1 || true
     fi
 }
+start_imnotify() {
+    DAEMON_PATH=${MIG_IMNOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG IM notify daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER}  --chuid ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+start_vmproxy() {
+    DAEMON_PATH=${MIG_VMPROXY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Starting MiG VM proxy daemon" ${SHORT_NAME} || true
+    if start-stop-daemon --start --quiet --oknodo --pidfile ${PID_FILE} --make-pidfile --user ${MIG_USER}  --chuid ${MIG_USER} --background --name ${SHORT_NAME} --startas ${DAEMON_PATH} ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
 
 start_all() {
     start_script
@@ -169,9 +189,12 @@ start_all() {
     start_events
     start_openid
     start_sftp
+    # Use wsgidav implementation instead of outdated PyWebDav one
     start_webdavs
     #start_davs
     start_ftps
+    start_imnotify
+    start_vmproxy
 }
 
 stop_script() {
@@ -273,17 +296,43 @@ stop_ftps() {
 	log_end_msg 1 || true
     fi
 }
+stop_imnotify() {
+    DAEMON_PATH=${MIG_IMNOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG IM notify" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
+stop_vmproxy() {
+    DAEMON_PATH=${MIG_VMPROXY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    log_daemon_msg "Stopping MiG VM proxy" ${SHORT_NAME} || true
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+	log_end_msg 0 || true
+    else
+	log_end_msg 1 || true
+    fi
+}
 
 stop_all() {
+    # Stop script first to leave it some time to save state
+    stop_script
     stop_monitor
     stop_sshmux
     stop_events
     stop_openid
     stop_sftp
+    # Use wsgidav implementation instead of outdated PyWebDav one
     stop_webdavs
     #stop_davs
     stop_ftps
-    stop_script
+    stop_imnotify
+    stop_vmproxy
 }
 
 status_script() {
@@ -340,6 +389,18 @@ status_ftps() {
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
 }
+status_imnotify() {
+    DAEMON_PATH=${MIG_IMNOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
+}
+status_vmproxy() {
+    DAEMON_PATH=${MIG_VMPROXY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
+}
 
 status_all() {
     status_script
@@ -348,9 +409,12 @@ status_all() {
     status_events
     status_openid
     status_sftp
+    # Use wsgidav implementation instead of outdated PyWebDav one
     status_webdavs
     #status_davs
     status_ftps
+    status_imnotify
+    status_vmproxy
 }
 
 
@@ -361,7 +425,7 @@ test -f ${MIG_SCRIPT} || exit 0
 
 # Force valid target
 case "$2" in
-    script|monitor|sshmux|events|openid|sftp|webdavs|davs|ftps|all)
+    script|monitor|sshmux|events|openid|sftp|webdavs|davs|ftps|imnotify|vmproxy|all)
         TARGET="$2"
 	;;
     '')

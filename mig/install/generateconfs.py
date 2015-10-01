@@ -74,6 +74,7 @@ if '__main__' == __name__:
         'enable_hsts',
         'enable_vhost_certs',
         'enable_seafile',
+        'enable_imnotify',
         'enable_openid',
         'openid_providers',
         'daemon_keycert',
