@@ -49,8 +49,7 @@ import thread
 try:
     import irclib
 except ImportError:
-    print "ERROR: the python irclib module is required for this daemon"
-    sys.exit(1)
+    irclib = None
 
 from shared.conf import get_configuration_object
 
@@ -323,6 +322,12 @@ unless it is available in mig/server/MiGserver.conf
 
     if not server or not port or not target or not nickname:
         err_msg = "IM notify helper setup is incomplete in configuration!"
+        logger.error(err_msg)
+        print err_msg
+        sys.exit(1)
+
+    if not irclib:
+        err_msg = "IM notify helper requires irclib to run!"
         logger.error(err_msg)
         print err_msg
         sys.exit(1)

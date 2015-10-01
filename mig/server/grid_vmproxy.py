@@ -25,7 +25,10 @@
 # -- END_HEADER ---
 #
 
+"""Wraps the vm-proxy daemon in a way suitable for use in the init script"""
+
 import os
+import subprocess
 import sys
 import time
 
@@ -65,7 +68,9 @@ unless it is available in mig/server/MiGserver.conf
     daemon_proc = None
     while keep_running:
         try:
-            daemon_proc = subprocess.Popen([daemon_path]).wait()
+            # Run vm-proxy helper in the foreground from corresponding dir
+            daemon_proc = subprocess.Popen([daemon_path, '-n'],
+                                           cwd=vm_proxy_base).wait()
 
             # Throttle down
 
@@ -74,8 +79,6 @@ unless it is available in mig/server/MiGserver.conf
             keep_running = False
         except Exception, exc:
             print 'Caught unexpected exception: %s' % exc
-            irc = None
-            attempt += 1
 
     print 'VM proxy daemon shutting down'
     sys.exit(0)

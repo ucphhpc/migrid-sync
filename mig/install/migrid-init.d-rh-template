@@ -424,7 +424,6 @@ status_all() {
     # Use wsgidav implementation instead of outdated PyWebDav one
     status_webdavs
     #status_davs
-    status_davs
     status_ftps
     status_imnotify
     status_vmproxy
