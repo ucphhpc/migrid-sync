@@ -136,8 +136,8 @@ def fix_missing(config_file, verbose=True):
         'user_seafile_auth': ['password'],
         'user_imnotify_address': '',
         'user_imnotify_port': 6667,
-        'user_imnotify_nickname': '',
-        'user_imnotify_target': '',
+        'user_imnotify_channel': '',
+        'user_imnotify_username': '',
         'user_imnotify_password': '',
         'user_imnotify_log': 'imnotify.log',
         'user_openid_address': fqdn,
@@ -729,7 +729,7 @@ class Configuration:
         if config.has_option('GLOBAL', 'user_imnotify_username'):
             self.user_imnotify_username = config.get('GLOBAL', 
                                                      'user_imnotify_username')
-        if config.has_option('GLOBAL', 'user_imnotify_alias'):
+        if config.has_option('GLOBAL', 'user_imnotify_password'):
             self.user_imnotify_password = config.get('GLOBAL', 
                                                      'user_imnotify_password')
         if config.has_option('GLOBAL', 'user_imnotify_log'):

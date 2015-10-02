@@ -320,7 +320,9 @@ unless it is available in mig/server/MiGserver.conf
     nickname = configuration.user_imnotify_username
     bitlbee_password = configuration.user_imnotify_password
 
-    if not server or not port or not target or not nickname:
+    if not server or not port or not target or not nickname or \
+           not bitlbee_password:
+        print server, port, target, nickname
         err_msg = "IM notify helper setup is incomplete in configuration!"
         logger.error(err_msg)
         print err_msg
