@@ -992,6 +992,7 @@ a:hover.settingsbutton {
 }
 
 .genericbutton {
+  margin: 2px;
   padding: 8px;
   border: 2px solid grey;
   border-radius: 4px;
