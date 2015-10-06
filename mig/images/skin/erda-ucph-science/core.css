@@ -280,6 +280,22 @@ a:hover.settingsbutton {
   color: #fff;
 }
 
+.genericbutton {
+  border: 1px solid #666;
+  background-color: #fff;
+  color: #46743c;
+}
+a.genericbutton {
+  font-weight: normal;
+}
+
+a:hover.genericbutton {
+  font-weight: normal;
+  border: 1px solid #46743c; 
+  background-color: #679c5b; 
+  color: #fff; 
+}
+
 /* IMPORTANT: these overrides must come after .*link settings to work */
 .owner {
   border: 1px solid gold;

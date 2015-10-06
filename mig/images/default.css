@@ -991,6 +991,26 @@ a:hover.settingsbutton {
   width: 90%;
 }
 
+.genericbutton {
+  padding: 8px;
+  border: 2px solid grey;
+  border-radius: 4px;
+  background-repeat: no-repeat;
+  background-position: 1px center;
+  background-color: #eee;
+}
+a.genericbutton {
+  text-decoration: none;
+  font-weight: bold;
+}
+
+a:hover.genericbutton {
+  font-weight: bold;
+  border: 2px solid #333; 
+  background-color: #999; 
+  color: #fff; 
+}
+
 /* IMPORTANT: these overrides must come after .*link settings to work */
 .owner {
   border: 1px solid gold;

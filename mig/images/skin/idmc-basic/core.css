@@ -128,6 +128,14 @@ a:hover.settingsbutton {
   color: white;
 }
 
+.genericbutton {
+  background-color: #fff;
+}
+a:hover.genericbutton {
+  background-color: #eef;
+  color: #147;
+}
+
 /* IMPORTANT: these overrides must come after .*link settings to work */
 .owner {
   border: 1px solid gold;

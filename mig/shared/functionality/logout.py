@@ -107,11 +107,12 @@ locally - you may want to close your web browser to finish""" % \
                                   'logout?return_to=%(SCRIPT_URI)s' % environ)
         oid_logout += local_logout
         output_objects.append(
-            {'object_type': 'text', 'text': """You can log out from your OpenID
-identity provider and end the active %s session with the link below.""" % \
-             configuration.short_title})
-        # TODO: we could trigger this link automatically
-        output_objects.append(        
+            {'object_type': 'text', 'text': """Are you sure you want to
+log out of %s?""" % configuration.short_title})
+        output_objects.append(
             {'object_type': 'link', 'destination': oid_logout,
-             'text': "Logout"})
+             'class': 'genericbutton', 'text': "Yes"})
+        output_objects.append(
+            {'object_type': 'link', 'destination': 'javascript:history.back();',
+             'class': 'genericbutton', 'text': "No, go back"})
     return (output_objects, status)
