@@ -1168,44 +1168,7 @@ value="%(default_authpassword)s" />
             username = extract_field(client_id, configuration.user_seafile_alias)
             create_alias_link(username, client_id, configuration.user_home)
         
-        html = '''<div id="seafileaccess">
-<div id="seafileregaccess">
-<form method="post" action="%(seareg_url)s" target="_blank">
-<table class="seafilesettings fixedlayout">
-<tr class="title"><td class="centertext">
-Seafile synchronization on %(site)s
-</td></tr>
-<tr><td>
-You can register for an %(site)s Seafile account to get synchronization and
-sharing features like those known from e.g. Dropbox and Spideroak.<br/>
-This enables you to keep one or more folders synchronized between
-all your computers and mobile devices and to share those folders with other
-people.
-</td></tr>
-<tr><td>
-<fieldset>
-<legend>Register Seafile Account</legend>
-<input type="hidden" name="csrfmiddlewaretoken" value="" />
-<!-- prevent user changing email but show it as read-only input field -->
-<input class="input" id="id_email" name="email" type="hidden"
-    value="%(username)s" />
-<label for="dummy_email">Seafile Username</label>
-<input class="input" id="dummy_email" type="text" value="%(username)s"
-    readonly />
-<br/>
-<label for="id_password1">Choose Password</label>
-<input class="input" id="id_password1" name="password1"
-    type="password" />
-<br/>
-<label for="id_password2">Confirm Password</label>
-<input class="input" id="id_password2" name="password2" type="password" />
-<br/>
-<input id="seafileregbutton" type="submit" value="Register" class="submit" />
-</fieldset>
-</td></tr>
-</table>
-</form>
-<p>
+        html = '''
 <script type="text/javascript" >
 /* Helper function to open Seafile login window and fill username. Gives up
 after max_tries * sleep_secs seconds if still not found.
@@ -1251,68 +1214,105 @@ function open_login_window(url, username) {
     set_username();
 }
 </script>
-In case you already registered for Seafile and received the resulting account
-email you can <input id="seafileloginbutton" type="submit"
-    value="Login to Seafile" onClick="open_login_window(\'%(seahub_url)s\', \'%(username)s\');" />
-and then return here to finish the integration.
-</p>
-<p>
-Otherwise you can still <input id="seafilenextbutton" type="submit"
-    value="Proceed without Login"
-    onClick="select_seafile_section(\'seafilesave\')" /> so that integration
-is in place when you get your Seafile account.
-</p>
+<div id="seafileaccess">
+<div id="seafileregaccess">
+<form method="post" action="%(seareg_url)s" target="_blank">
+<table class="seafilesettings fixedlayout">
+<tr class="title"><td class="centertext">
+Seafile synchronization on %(site)s
+</td></tr>
+<tr><td>
+You can register for a Seafile account on  %(site)s to get synchronization and
+sharing features like those known from e.g. Dropbox.<br/>
+This enables you to keep one or more folders synchronized between
+all your computers and to share those files and folders with other people.<br/>
+</td></tr>
+<tr><td>
+<fieldset>
+<legend>Register %(site)s Seafile Account</legend>
+<input type="hidden" name="csrfmiddlewaretoken" value="" />
+<!-- prevent user changing email but show it as read-only input field -->
+<input class="input" id="id_email" name="email" type="hidden"
+    value="%(username)s" />
+<label for="dummy_email">Seafile Username</label>
+<input class="input" id="dummy_email" type="text" value="%(username)s"
+    readonly />
+<br/>
+<label for="id_password1">Choose Password</label>
+<input class="input" id="id_password1" name="password1"
+    type="password" />
+<br/>
+<label for="id_password2">Confirm Password</label>
+<input class="input" id="id_password2" name="password2" type="password" />
+<br/>
+<input id="seafileregbutton" type="submit" value="Register" class="submit" />
+and wait for email confirmation before continuing below.
+</fieldset>
+</td></tr>
+</table>
+</form>
+</table>
+<tr><td>
+<fieldset>
+<legend>I already registered my %(site)s Seafile account</legend>
+Now <input id="seafileloginbutton" type="submit" value="log in"
+onClick="open_login_window(\'%(seahub_url)s\', \'%(username)s\'); return false"
+/> and install the Seafile client available there on any computers where you
+want folder synchronization and maybe on your mobile device(s) if you want easy
+access from there.<br/>
+Then return here and <input id="seafilenextbutton" type="submit" value="proceed"
+onClick="select_seafile_section(\'seafilesave\'); return false" /> with the
+client set up and %(site)s integration.
+</fieldset>
+</td></tr>
+</table>
 </div>
 <div id="seafilesaveaccess" style="display: none;">
 <form method="post" action="settingsaction.py">
 <table class="seafilesettings fixedlayout">
 <tr class="title"><td class="centertext">
-Seafile integration with your %(site)s account
+Seafile client setup
 </td></tr>
 <tr><td>
-After you have registered you can save your chosen password here for
-integration in your Files interface. You will receive an email once the
-registration gets accepted and after saving here the libraries will show up in
-read-only mode as the <a " href="fileman.py?path=%(seafile_ro_dirname)s/">
-%(seafile_ro_dirname)s</a> folder in your user home.<br/>
-The integration is still work-in-progress, but you can use
-<a href="javascript:open_login_window(\'%(seahub_url)s\', \'%(username)s\');">
-your Seafile account</a>
-fully as a standalone synchronization and sharing solution for now.<br/>
-<h3>Login Details</h3>
+You will need the client login details below to actually configure the Seafile
+client(s) you installed in the previous step.<br/>
+</td></tr>
+<tr><td>
+<h3>Client Login Details</h3>
 <ul>
 <li>Server <em>%(seafile_url)s</em></li>
 <li>Username <em>%(username)s</em></li>
-<li>%(auth_methods)s <em>as you choose below</em></li>
+<li>%(auth_methods)s <em>the one you chose during registration</em></li>
 </ul>
+You can always 
+<input id="seafilepreviousbutton" type="submit"
+    value="go back"
+    onClick="select_seafile_section(\'seafilereg\'); return false" />
+to that registration and install step if you skipped a part of it or just want
+to install more clients.<br/>
+You can also directly open your  
+<input id="seafileloginbutton" type="submit" value="Seafile account"
+onClick="open_login_window(\'%(seahub_url)s\', \'%(username)s\'); return false"
+/> web page.
 </td></tr>
 <tr><td>
-<input type="hidden" name="topic" value="seafile" />
-<div class="div-seafile-client-notes hidden">
-<a href="javascript:toggleHidden('.div-seafile-client-notes');"
-    class="removeitemlink" title="Toggle view">
-    Show less Seafile client details...</a>
-<h3>Graphical Seafile access</h3>
-Free and open source clients for most platforms are available from the
-<a href="https://www.seafile.com/en/download/">Seafile Download</a> page.
-<br />
-Enter the address %(seafile_url)s and when fill in the
-login details:
-<pre>
-Username %(username)s
-Password YOUR_PASSWORD_HERE
-</pre>
-</div>
-<div class="div-seafile-client-notes">
-<a href="javascript:toggleHidden('.div-seafile-client-notes');"
-    class="additemlink" title="Toggle view">
-    Show more Seafile client details...</a>
-</div>
+<hr />
+</td></tr>
+<tr class="title"><td class="centertext">
+Seafile %(site)s integration
+</td></tr>
+<tr><td>
+Additionally you can save your chosen password here for Seafile integration in
+your user home. Then the Seafile libraries will show up in a read-only mode
+under the new <a " href="fileman.py?path=%(seafile_ro_dirname)s/">
+%(seafile_ro_dirname)s</a> folder e.g. on the Files page.<br/>
+The integration is completely optional, and it is not required to use your
+Seafile account as a standalone synchronization and sharing solution.<br/>
+</td></tr>
 '''
         
         if 'publickey' in configuration.user_seafile_auth:
             html += '''
-</td></tr>
 <tr><td>
 <h3>Authorized Public Keys</h3>
 You can use any existing RSA key, including the key.pem you received along with
@@ -1328,21 +1328,22 @@ able to connect with username and key as described in the Login Details.
             html += wrap_edit_area(keyword_keys, area, seafile_edit,
                                        'BASIC')
             html += '''
-(leave empty to disable seafile access with public keys)
+(leave empty to disable seafile integration using public keys)
 </td></tr>
 '''
             
         if 'password' in configuration.user_seafile_auth:
+
             # We only want a single password and a masked input field
             html += '''
 <tr><td>
 <h3>Authorized Password</h3>
-Please enter and save your desired password in the text field below, to be able
-to connect with username and password as described in the Login Details.
+Please enter and save your chosen Seafile password again in the text field
+below, to enable the read-only Seafile integration in your user home.
 <br/>
 <input type=password id="%(keyword_password)s" size=40 name="password"
 value="%(default_authpassword)s" />
-(leave empty to disable seafile access with password)
+(leave empty to disable seafile integration)
 </td></tr>
 '''
         
