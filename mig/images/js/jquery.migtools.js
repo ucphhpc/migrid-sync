@@ -1233,7 +1233,8 @@ function select_seafile_section(section_prefix) {
 /* Seafile registration helper to get the CSRF tag from the signup form and
 switch to the save form if registration url shows that user registered and
 logged in already */
-function prepare_seafile_settings(reg_url, username, status_prefix, reg_prefix, save_prefix) {
+function prepare_seafile_settings(reg_url, username, integration, 
+	 		status_prefix, reg_prefix, save_prefix) {
     $("#"+status_prefix+"status").removeClass();
     $("#"+status_prefix+"status").addClass("status_box");
     $("#"+status_prefix+"status").addClass("spinner").css("padding-left", "20px");
@@ -1263,11 +1264,17 @@ function prepare_seafile_settings(reg_url, username, status_prefix, reg_prefix, 
 		    select_seafile_section(save_prefix);
 		} else if (csrf_token != undefined) {
 		    //alert("DEBUG: got csrf token: "+csrf_token);
-		    logged_in = "your are either not registered yet or not currently logged in";
+		    if (integration) {
+		        logged_in = "apparently you already registered and integrated as "+username;
+		        select_seafile_section(save_prefix);
+		    } else {
+		        logged_in = "your are either not registered yet or not currently logged in";
+    			select_seafile_section(reg_prefix);
+		    }
+		    //alert("DEBUG: "+logged_in+" ("+id_user+")");
 		    $("#"+status_prefix+"status").addClass("ok").css("padding-left", "20px");
 		    $("#"+status_prefix+"msg").addClass("status_online");
 		    $("input[name=csrfmiddlewaretoken]").val(csrf_token);
-		    select_seafile_section(reg_prefix);
 		} else {
 		    //alert("Warning: unknown state");
 		    logged_in = "unexpected response from server";

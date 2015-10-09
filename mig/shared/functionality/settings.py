@@ -1159,9 +1159,7 @@ value="%(default_authpassword)s" />
             
             current_seafile_dict = {}
 
-        keyword_keys = "authkeys"
         keyword_password = "authpassword"
-        default_authkeys = current_seafile_dict.get('authkeys', '')
         default_authpassword = current_seafile_dict.get('authpassword', '')
         username = client_alias(client_id)
         if configuration.user_seafile_alias:
@@ -1337,16 +1335,15 @@ value="%(default_authpassword)s" />
 <div id="seafileserverstatus"></div>
 <!-- Dynamically fill CSRF token above and select active div if possible -->
 <script type="text/javascript" >
-    prepare_seafile_settings("%(seareg_url)s", "%(username)s", "seafileserver",
+    prepare_seafile_settings("%(seareg_url)s", "%(username)s",
+                             "%(default_authpassword)s", "seafileserver",
                              "seafilereg", "seafilesave");
 </script>
 </div>
 '''
         html = html % {
-            'default_authkeys': default_authkeys,
             'default_authpassword': default_authpassword,
             'site': configuration.short_title,
-            'keyword_keys': keyword_keys,
             'keyword_password': keyword_password,
             'username': username,
             'seafile_ro_dirname': seafile_ro_dirname,
