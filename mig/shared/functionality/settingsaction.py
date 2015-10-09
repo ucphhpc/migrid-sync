@@ -61,7 +61,7 @@ def extend_defaults(defaults, user_args):
     elif topic == 'ftps':
         keywords_dict = {'publickeys': '', 'password': ''}
     elif topic == 'seafile':
-        keywords_dict = {'publickeys': '', 'password': ''}
+        keywords_dict = {'password': ''}
     else:
         # should never get here
         keywords_dict = {}
@@ -173,12 +173,11 @@ def main(client_id, user_arguments_dict):
                        parse_and_save_ftps(publickeys, password, client_id,
                                            configuration)
     elif topic == 'seafile':
-        publickeys = '\n'.join(accepted.get('publickeys', ['']))
         password = accepted.get('password', [''])[-1].strip()
         (parse_status, parse_msg) = \
-                       parse_and_save_seafile(publickeys, password, client_id,
+                       parse_and_save_seafile(password, client_id,
                                               configuration)
-        if publickeys or password:
+        if password:
             create_seafile_mount_link(client_id, configuration)
         else:
             remove_seafile_mount_link(client_id, configuration)

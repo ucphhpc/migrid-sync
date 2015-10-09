@@ -1219,10 +1219,10 @@ function open_login_window(url, username) {
 <form method="post" action="%(seareg_url)s" target="_blank">
 <table class="seafilesettings fixedlayout">
 <tr class="title"><td class="centertext">
-Seafile synchronization on %(site)s
+Seafile Synchronization on %(site)s
 </td></tr>
 <tr><td>
-You can register for a Seafile account on  %(site)s to get synchronization and
+You can register a Seafile account on %(site)s to get synchronization and
 sharing features like those known from e.g. Dropbox.<br/>
 This enables you to keep one or more folders synchronized between
 all your computers and to share those files and folders with other people.<br/>
@@ -1254,12 +1254,14 @@ and wait for email confirmation before continuing below.
 </table>
 <tr><td>
 <fieldset>
-<legend>I already registered my %(site)s Seafile account</legend>
-Now <input id="seafileloginbutton" type="submit" value="log in"
+<legend>Login and Install Clients</legend>
+Once your %(site)s Seafile account is in place
+<input id="seafileloginbutton" type="submit" value="log in"
 onClick="open_login_window(\'%(seahub_url)s\', \'%(username)s\'); return false"
-/> and install the Seafile client available there on any computers where you
-want folder synchronization and maybe on your mobile device(s) if you want easy
-access from there.<br/>
+/> to it and install the client available there on any computers where you want
+folder synchronization.<br/>
+Optionally also install it on any mobile device(s) from which you want easy
+access.<br/>
 Then return here and <input id="seafilenextbutton" type="submit" value="proceed"
 onClick="select_seafile_section(\'seafilesave\'); return false" /> with the
 client set up and %(site)s integration.
@@ -1268,22 +1270,25 @@ client set up and %(site)s integration.
 </table>
 </div>
 <div id="seafilesaveaccess" style="display: none;">
-<form method="post" action="settingsaction.py">
 <table class="seafilesettings fixedlayout">
 <tr class="title"><td class="centertext">
-Seafile client setup
+Seafile Client Setup and %(site)s Integration
 </td></tr>
 <tr><td>
-You will need the client login details below to actually configure the Seafile
-client(s) you installed in the previous step.<br/>
-</td></tr>
-<tr><td>
-<h3>Client Login Details</h3>
-<ul>
-<li>Server <em>%(seafile_url)s</em></li>
-<li>Username <em>%(username)s</em></li>
-<li>%(auth_methods)s <em>the one you chose during registration</em></li>
-</ul>
+<fieldset>
+<legend>Seafile Client Setup Details</legend>
+You need to enter the following details to actually configure the Seafile
+client(s) you installed in the previous step.
+<br/>
+<br/>
+<label for="id_server">Server</label>
+<input id=id_server type=text value="%(seafile_url)s" %(size)s %(ro)s /><br/>
+<label for="id_username">Username</label>
+<input id="id_username" type=text value="%(username)s" %(size)s %(ro)s /><br/>
+<label for="id_password">Password</label>
+<input id="id_password" type=text value="...the Seafile password you chose..."
+%(size)s %(ro)s/><br/>
+<br/>
 You can always 
 <input id="seafilepreviousbutton" type="submit"
     value="go back"
@@ -1293,66 +1298,41 @@ to install more clients.<br/>
 You can also directly open your  
 <input id="seafileloginbutton" type="submit" value="Seafile account"
 onClick="open_login_window(\'%(seahub_url)s\', \'%(username)s\'); return false"
-/> web page.
+/> web page.<br/>
+After the setup you can use your Seafile account as a standalone synchronization
+and sharing solution.<br/>
+</fieldset>
 </td></tr>
 <tr><td>
-<hr />
-</td></tr>
-<tr class="title"><td class="centertext">
-Seafile %(site)s integration
-</td></tr>
-<tr><td>
-Additionally you can save your chosen password here for Seafile integration in
-your user home. Then the Seafile libraries will show up in a read-only mode
-under the new <a " href="fileman.py?path=%(seafile_ro_dirname)s/">
-%(seafile_ro_dirname)s</a> folder e.g. on the Files page.<br/>
-The integration is completely optional, and it is not required to use your
-Seafile account as a standalone synchronization and sharing solution.<br/>
-</td></tr>
+<form method="post" action="settingsaction.py">
+<input type="hidden" name="topic" value="seafile" />
+<fieldset>
+<legend>%(site)s Seafile Integration</legend>
+If you wish you can additionally save your chosen password here for Seafile
+integration in your %(site)s user home.<br/>
+Then your Seafile libraries will show up in a read-only mode under a new
+<em>%(seafile_ro_dirname)s</em> folder e.g. on the Files page.<br/>
+<br/>
 '''
-        
-        if 'publickey' in configuration.user_seafile_auth:
-            html += '''
-<tr><td>
-<h3>Authorized Public Keys</h3>
-You can use any existing RSA key, including the key.pem you received along with
-your user certificate, or create a new one. In any case you need to save the
-contents of the corresponding public key (X.pub) in the text area below, to be
-able to connect with username and key as described in the Login Details.
-<br/>'''
-            area = '''
-<textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
-%(default_authkeys)s
-</textarea>
-'''
-            html += wrap_edit_area(keyword_keys, area, seafile_edit,
-                                       'BASIC')
-            html += '''
-(leave empty to disable seafile integration using public keys)
-</td></tr>
-'''
-            
+
         if 'password' in configuration.user_seafile_auth:
 
             # We only want a single password and a masked input field
             html += '''
-<tr><td>
-<h3>Authorized Password</h3>
 Please enter and save your chosen Seafile password again in the text field
 below, to enable the read-only Seafile integration in your user home.
 <br/>
 <input type=password id="%(keyword_password)s" size=40 name="password"
 value="%(default_authpassword)s" />
 (leave empty to disable seafile integration)
-</td></tr>
-'''
+<br/>'''
         
         html += '''
-<tr><td>
-<input id="seafilesavebutton" type="submit" value="Save Seafile Settings" />
+<input id="seafilesavebutton" type="submit" value="Save Seafile Password" />
+</fieldset>
+</form>
 </td></tr>
 </table>
-</form>
 </div>
 <div id="seafileserverstatus"></div>
 <!-- Dynamically fill CSRF token above and select active div if possible -->
@@ -1374,6 +1354,8 @@ value="%(default_authpassword)s" />
             'seareg_url': configuration.user_seareg_url,
             'seafile_url': configuration.user_seafile_url,
             'auth_methods': ' / '.join(configuration.user_seafile_auth).title(),
+            'ro': 'readonly=readonly',
+            'size': 'size=50',
             }
 
         output_objects.append({'object_type': 'html_form', 'text': html})

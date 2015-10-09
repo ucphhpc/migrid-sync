@@ -238,9 +238,9 @@ def parse_and_save_ftps(publickeys, password, client_id, configuration):
     return _parse_and_save_auth_pw_keys(publickeys, password, client_id,
                                         configuration, 'ftps', ftps_conf_dir)
 
-def parse_and_save_seafile(publickeys, password, client_id, configuration):
+def parse_and_save_seafile(password, client_id, configuration):
     """Validate and write seafile entries"""
-    return _parse_and_save_auth_pw_keys(publickeys, password, client_id,
+    return _parse_and_save_auth_pw_keys('', password, client_id,
                                         configuration, 'seafile',
                                         seafile_conf_dir)
 
