@@ -1204,6 +1204,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                           % i['creator'])
             lines.append('<tr><td class="title">Created</td><td>%s</td></tr>'
                           % i['created'])
+            for (location, store_date) in i.get('location', []):
+                lines.append('<tr><td class="title">On %s</td><td>%s</td></tr>'
+                          % (location, store_date))
             lines.append('</table>')
         elif i['object_type'] == 'certreqs':
             certreqs = i['certreqs']

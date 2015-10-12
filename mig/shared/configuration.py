@@ -1096,6 +1096,10 @@ class Configuration:
                                                            'permanent_freeze')
         else:
             self.site_permanent_freeze = True
+        if config.has_option('SITE', 'freeze_to_tape'):
+            self.site_freeze_to_tape = config.get('SITE', 'freeze_to_tape')
+        else:
+            self.site_freeze_to_tape = ''
         if config.has_option('SITE', 'enable_preview'):
             self.site_enable_preview = config.getboolean('SITE', 'enable_preview')
         else:

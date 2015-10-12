@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezefunctions - freeze archive helper functions
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -90,10 +90,32 @@ def build_freezeitem_object(configuration, freeze_dict):
         'frozenfiles': freeze_files,
         }
     for field in ('author', 'department', 'organization', 'publish',
-                  'publish_url', 'flavor'):
+                  'publish_url', 'flavor', 'location'):
         if not freeze_dict.get(field.upper(), None) is None:
             freeze_obj[field] = freeze_dict[field.upper()]
     return freeze_obj
+
+def parse_time_delta(str_value):
+    """Translate a time string into a datetime.timedelta object. If the
+    str_value is an integer without unit it is interpreted as a number of
+    minutes. Otherwise a value and one of the common time units like m(inute),
+    h(our), d(ay) and w(eek) is expected.
+    """
+    default_unit = 'm'
+    if str_value.isdigit():
+        count, unit = int(str_value), default_unit
+    else:
+        count, unit = int(str_value[:-1]), str_value[-1]
+    if unit == 'm':
+        multiplier = 1
+    elif unit == 'h':
+        multiplier = 60
+    elif unit == 'd':
+        multiplier = 24*60
+    elif unit == 'w':
+        multiplier = 7*24*60
+    minutes =  multiplier * count
+    return datetime.timedelta(minutes=minutes)
 
 def list_frozen_archives(configuration, client_id):
     """Find all frozen_archives owned by user"""
@@ -331,6 +353,25 @@ The user-supplied meta data and files are available below.
             logger.error("create_frozen_archive: publish failed")
             remove_rec(frozen_dir, configuration)
             return (False, 'Error publishing frozen archive')
+    # Mark as saved on disk and hint about any tape archiving schedule
+    now = datetime.datetime.now()
+    slack = 2
+    # Skip microseconds
+    on_disk_date = datetime.datetime.now().replace(microsecond=0)
+    archive_locations = [('disk', on_disk_date)]
+    on_tape_date = None
+    if configuration.site_freeze_to_tape:
+        delay = parse_time_delta(configuration.site_freeze_to_tape)
+        on_tape_date = on_disk_date + delay
+        archive_locations.append( ('tape', on_tape_date))
+    freeze_dict['LOCATION'] = archive_locations
+    logger.info("create_frozen_archive: update meta for %s" % freeze_id)
+    try:
+        dump(freeze_dict, os.path.join(frozen_dir, freeze_meta_filename))
+    except Exception, err:
+        logger.error("create_frozen_archive: failed: %s" % err)
+        remove_rec(frozen_dir, configuration)
+        return (False, 'Error updating frozen archive info: %s' % err)
     return (True, freeze_id)
 
 def delete_frozen_archive(freeze_id, configuration):
