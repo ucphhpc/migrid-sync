@@ -1214,14 +1214,10 @@ function select_seafile_section(section_prefix) {
     var save_prefix="seafilesave";
     if (section_prefix == reg_prefix) {
         //alert("show reg section");
-	$("#"+reg_prefix+"button").attr("disabled", false);
-	$("#"+save_prefix+"button").attr("disabled", true);
 	$("#"+reg_prefix+"access").show();
 	$("#"+save_prefix+"access").hide();
     } else if (section_prefix == save_prefix) {
         //alert("show save section");
-	$("#"+reg_prefix+"button").attr("disabled", true);
-	$("#"+save_prefix+"button").attr("disabled", false);
 	$("#"+reg_prefix+"access").hide();
 	$("#"+save_prefix+"access").show();
     } else {
@@ -1235,6 +1231,8 @@ switch to the save form if registration url shows that user registered and
 logged in already */
 function prepare_seafile_settings(reg_url, username, integration, 
 	 		status_prefix, reg_prefix, save_prefix) {
+    $("#"+reg_prefix+"button").attr("disabled", false);
+    $("#"+save_prefix+"button").attr("disabled", false);
     $("#"+status_prefix+"status").removeClass();
     $("#"+status_prefix+"status").addClass("status_box");
     $("#"+status_prefix+"status").addClass("spinner").css("padding-left", "20px");
@@ -1259,6 +1257,8 @@ function prepare_seafile_settings(reg_url, username, integration,
 		if (id_user) {
 		    logged_in = "you are already registered and logged in as "+username;
 		    //alert("DEBUG: "+logged_in+" ("+id_user+")");
+		    // Try to avoid confusion if user is already registered
+		    $("#"+reg_prefix+"button").attr("disabled", true);
 		    $("#"+status_prefix+"status").addClass("ok").css("padding-left", "20px");
 		    $("#"+status_prefix+"msg").addClass("status_online");
 		    select_seafile_section(save_prefix);
@@ -1266,6 +1266,8 @@ function prepare_seafile_settings(reg_url, username, integration,
 		    //alert("DEBUG: got csrf token: "+csrf_token);
 		    if (integration) {
 		        logged_in = "apparently you already registered and integrated as "+username;
+			// Try to avoid confusion if user already registered
+			$("#"+reg_prefix+"button").attr("disabled", true);
 		        select_seafile_section(save_prefix);
 		    } else {
 		        logged_in = "your are either not registered yet or not currently logged in";
@@ -1281,8 +1283,6 @@ function prepare_seafile_settings(reg_url, username, integration,
 		    $("#"+status_prefix+"status").append(" <span>("+logged_in+")</span>");
 		    $("#"+status_prefix+"status").addClass("warn").css("padding-left", "20px");
 		    $("#"+status_prefix+"msg").addClass("status_slack");
-		    $("#"+reg_prefix+"button").attr("disabled", false);
-		    $("#"+save_prefix+"button").attr("disabled", false);
 		}
 		$("#"+status_prefix+"status").append(" <span>("+logged_in+")</span>");
 
@@ -1298,4 +1298,3 @@ function prepare_seafile_settings(reg_url, username, integration,
 	    }
 	});
 }
-
