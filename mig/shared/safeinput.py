@@ -38,11 +38,20 @@ basis.
 
 import cgi
 from string import letters, digits, printable
+from unicodedata import category
 
 from shared.base import force_unicode
 from shared.validstring import valid_user_path
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
+
+
+# Accented character constant helpers
+NO_ACCENTED, COMMON_ACCENTED, ANY_ACCENTED = range(3)
+
+# Unicode letter categories as defined on
+# http://www.unicode.org/reports/tr44/#GC_Values_Table
+_ACCENT_CATS = frozenset( ('Lu', 'Ll', 'Lt', 'Lm', 'Lo', ))
 
 ### Use utf8 byte string representation here ("something" and not u"something")
 ### We explicitly translate to the unicode representation in the functions
@@ -57,13 +66,12 @@ VALID_ACCENTED = \
 
 # We must be careful about characters that have special regex meaning
 
-VALID_PATH_CHARACTERS = letters + digits + '/.,_-+=' + ' :;+@%()~' \
-    + VALID_ACCENTED
+VALID_PATH_CHARACTERS = letters + digits + "/.,_-+=" + " :;+@%" + "()~!&€£¶'"
 
 # Plain text here only - *no* html tags, i.e. no '<' or '>' !!
 
-VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + '?!#$&*[]{}' + '"' \
-    + "'`|^" + '\\' + '\n\r\t'
+VALID_TEXT_CHARACTERS = VALID_PATH_CHARACTERS + '?#$*[]{}' + '"' \
+    + "`|^" + '\\' + '\n\r\t'
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
 VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
 VALID_URL_CHARACTERS = VALID_BASEURL_CHARACTERS + '?;&%='
@@ -76,7 +84,7 @@ ALLOW_UNSAFE = \
 # Allow these chars in addition to plain letters and digits
 # We explicitly allow email chars in CN to work around broken DNs
 
-name_extras = VALID_ACCENTED + ' -@.'
+name_extras = ' -@.'
 
 ############################################################################
 # IMPORTANT: never allow '+' and '_' in DN: reserved for path translation! #
@@ -84,7 +92,7 @@ name_extras = VALID_ACCENTED + ' -@.'
 # We allow ':' in DN, however, as it is used by e.g. DanID:
 # /C=DK/O=Ingen organisatorisk tilknytning/CN=$name/serialNumber=PID:$serial
 
-dn_extras = name_extras + '/=@.:'
+dn_extras = '/=@.:'
 
 integer_extras = '+-'
 float_extras = integer_extras + '.'
@@ -112,11 +120,21 @@ __type_map = {}
 __value_map = {}
 
 
+# TODO: consider switching to a re.match with a precompiled expression
+# Should be more efficient and would ease any-unicode-word character matching
+# >>> extras="/.,_-+= :;+@%()~¶!"
+# >>> name_regex = re.compile(r'('+extras+r'|\w)+$', re.U)
+# >>> print name_regex.match(u"ab$c")
+# None
+# >>> print name_regex.match(u"áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕø")
+# <_sre.SRE_Match object at 0x7f671ad53d78>
+
 def __valid_contents(
     contents,
     valid_chars,
     min_length=0,
     max_length=-1,
+    include_accented=NO_ACCENTED,
     ):
     """This is a general function to verify that the supplied contents string
     only contains characters from the supplied valid_chars string. Both input
@@ -125,10 +143,17 @@ def __valid_contents(
     bytes from multibyte characters.
     Additionally a check for valid length is supported by use of the
     min_length and max_length parameters.
+    The optional include_accented argument can be set to COMMON_ACCENTED to
+    automatically add the most common accented unicode characters to
+    valid_chars or to ANY_ACCENTED to do a more loose check against all
+    characters considered unicode word letters before giving up. This adds a
+    wider acceptance of exotic accented characters without letting through any
+    control characters.
     """
 
     contents = force_unicode(str(contents))
     valid_chars = force_unicode(str(valid_chars))
+    accented_chars = force_unicode(str(VALID_ACCENTED))
     if len(contents) < min_length:
         raise InputException('shorter than minimum length (%d)'
                              % min_length)
@@ -136,18 +161,28 @@ def __valid_contents(
         raise InputException('maximum length (%d) exceeded'
                              % max_length)
     for char in contents:
-        if not char in valid_chars:
-            raise InputException('found invalid character: %s' % char)
+        if char in valid_chars or \
+           include_accented == COMMON_ACCENTED and char in accented_chars or \
+           include_accented == ANY_ACCENTED and category(char) in _ACCENT_CATS:
+            continue
+        raise InputException('found invalid character: %s' % char)
 
 
-def __filter_contents(contents, valid_chars):
+def __filter_contents(contents, valid_chars, include_accented=NO_ACCENTED):
     """This is a general function to filter out any illegal characters
     from the supplied contents.
+    Please see the documentation for __valid_contents for information about
+    the optional include_accented argument.
     """
 
+    contents = force_unicode(str(contents))
+    valid_chars = force_unicode(str(valid_chars))
+    accented_chars = force_unicode(str(VALID_ACCENTED))
     result = ''
-    for char in str(contents):
-        if char in valid_chars:
+    for char in contents:
+        if char in valid_chars or \
+           include_accented == COMMON_ACCENTED and char in accented_chars or \
+           include_accented == ANY_ACCENTED and category(char) in _ACCENT_CATS:
             result += char
     return result
 
@@ -223,7 +258,8 @@ def valid_label_text(
     valid"""
 
     valid_chars = VALID_PATH_CHARACTERS + extra_chars
-    __valid_contents(text, valid_chars, min_length, max_length)
+    __valid_contents(text, valid_chars, min_length, max_length,
+                     COMMON_ACCENTED)
 
 
 def valid_free_text(
@@ -248,7 +284,7 @@ def valid_path(
     valid"""
 
     valid_chars = VALID_PATH_CHARACTERS + extra_chars
-    __valid_contents(path, valid_chars, min_length, max_length)
+    __valid_contents(path, valid_chars, min_length, max_length, ANY_ACCENTED)
 
 
 def valid_fqdn(
@@ -277,7 +313,8 @@ def valid_commonname(
     """
 
     valid_chars = VALID_NAME_CHARACTERS + '_' + extra_chars
-    __valid_contents(commonname, valid_chars, min_length, max_length)
+    __valid_contents(commonname, valid_chars, min_length, max_length,
+                     COMMON_ACCENTED)
 
 
 def valid_distinguished_name(
@@ -292,7 +329,7 @@ def valid_distinguished_name(
 
     valid_chars = VALID_DN_CHARACTERS + extra_chars
     __valid_contents(distinguished_name, valid_chars, min_length,
-                     max_length)
+                     max_length, COMMON_ACCENTED)
 
 
 def valid_base_url(
@@ -575,7 +612,7 @@ def filter_alphanumeric_and_spaces(contents):
 def filter_commonname(contents):
     """Filter supplied contents to only contain valid commonname characters"""
 
-    return __filter_contents(contents, VALID_NAME_CHARACTERS)
+    return __filter_contents(contents, VALID_NAME_CHARACTERS, COMMON_ACCENTED)
 
 
 def filter_password(contents):
@@ -593,7 +630,7 @@ def filter_plain_text(contents):
 def filter_path(contents):
     """Filter supplied contents to only contain valid path characters"""
 
-    return __filter_contents(contents, VALID_PATH_CHARACTERS)
+    return __filter_contents(contents, VALID_PATH_CHARACTERS, ANY_ACCENTED)
 
 
 def filter_fqdn(contents):
@@ -1173,10 +1210,26 @@ if __name__ == '__main__':
                     'Test Maybe Invalid Źacãŕ', 'Test Invalid /!$'):
         try:
             print 'Testing valid_commonname: %s' % test_cn
-            print 'DEBUG %s only in %s' % ([test_cn],
-                    [VALID_NAME_CHARACTERS])
+            print 'Filtered commonname: %s' % filter_commonname(test_cn)
+            #print 'DEBUG %s only in %s' % ([test_cn],
+            #        [VALID_NAME_CHARACTERS])
             valid_commonname(test_cn)
-            print 'Accepted commonname!'
+            print 'Accepted raw commonname!'
         except Exception, exc:
-            print 'Rejected %s : %s' % (test_cn, exc)
+            print 'Rejected raw commonname %s : %s' % (test_cn, exc)
 
+    for test_path in ('test.txt', 'Test Æøå', 'Test Überh4x0r',
+                      'Test valid Jean-Luc Géraud', 'Test valid Źacãŕ', 
+                      'Test valid special%&()!¶â€', 'Test exotic لرحيم',
+                      'Test Invalid $', 'Test Invalid ?',
+                      'Test invalid <', 'Test Invalid >',
+                      'Test Invalid *', 'Test Invalid "'):
+        try:
+            print 'Testing valid_path: %s' % test_path
+            print 'Filtered path: %s' % filter_path(test_path)
+            #print 'DEBUG %s only in %s' % ([test_path],
+            #                               [VALID_PATH_CHARACTERS])
+            valid_path(test_path)
+            print 'Accepted raw path!'
+        except Exception, exc:
+            print 'Rejected raw path %s : %s' % (test_path, exc)            
