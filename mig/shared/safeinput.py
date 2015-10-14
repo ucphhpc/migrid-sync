@@ -51,7 +51,9 @@ NO_ACCENTED, COMMON_ACCENTED, ANY_ACCENTED = range(3)
 
 # Unicode letter categories as defined on
 # http://www.unicode.org/reports/tr44/#GC_Values_Table
-_ACCENT_CATS = frozenset( ('Lu', 'Ll', 'Lt', 'Lm', 'Lo', ))
+# TODO: should we go all in and allow even these very exotic modifiers?
+#_ACCENT_CATS = frozenset( ('Lu', 'Ll', 'Lt', 'Lm', 'Lo', ))
+_ACCENT_CATS = frozenset( ('Lu', 'Ll', 'Lt', ))
 
 ### Use utf8 byte string representation here ("something" and not u"something")
 ### We explicitly translate to the unicode representation in the functions
@@ -66,7 +68,7 @@ VALID_ACCENTED = \
 
 # We must be careful about characters that have special regex meaning
 
-VALID_PATH_CHARACTERS = letters + digits + "/.,_-+=" + " :;+@%" + "()~!&€£¶'"
+VALID_PATH_CHARACTERS = letters + digits + "/.,_-+=" + " :;+@%" + "()~!¤&€£¶'"
 
 # Plain text here only - *no* html tags, i.e. no '<' or '>' !!
 
