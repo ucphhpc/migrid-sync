@@ -69,7 +69,7 @@ def display_resource(
     frontend = None
     hosturl = None
     html = ''
-    row_name = ('even_row', 'odd_row')
+    row_name = ('even', 'odd')
 
     if resource_config:
         if resource_config.has_key('EXECONFIG'):
@@ -134,6 +134,7 @@ Resource configuration docs
 </table>
 </form>
 <p>
+<h3>Control Resource Units</h3>
 <table class=resources>
 <tr class=title><td colspan="5">Front End</td></tr>
 '''
@@ -262,23 +263,9 @@ Resource configuration docs
     html += '<h3>Owners</h3>'
     html += \
         '''
-Owners are specified with the Distinguished Name (DN)
-from the certificate.<br /> 
+Current owners of %s.<br />
 <table class=resources>
-'''
-
-    html += \
-        '''<tr><td>
-<form method="post" action="addresowner.py">
-<input type="hidden" name="unique_resource_name" value="%s" />
-<input type="hidden" name="output_format" value="html" />
-<input type="text" name="cert_id" size="72" />
-<input type="submit" value=" Add " />
-</form>
-</td></tr></table><br />
-<table class=resources>
-'''\
-         % resourcename
+''' % resourcename
 
     for owner_id in owners:
         html += \
@@ -295,15 +282,34 @@ from the certificate.<br />
         html += '<td>' + owner_id + '</td></tr>'
     html += '</table>'
 
+    html += \
+        '''<table class=resources>
+<tr><td>
+<form method="post" action="addresowner.py">
+<fieldset>
+<legend>Add resource owner</legend>
+Note: owners are specified with the Distinguished Name (DN) from the
+certificate.<br /> 
+<input type="hidden" name="unique_resource_name" value="%s" />
+<input type="hidden" name="output_format" value="html" />
+<input type="text" name="cert_id" size="72" />
+<input type="submit" value=" Add " />
+</fieldset>
+</form>
+</td></tr></table><br />
+'''\
+         % resourcename
+
     # create html to request vgrid resource access
 
     html += '<h3>%s access</h3>' % configuration.site_vgrid_label
 
     html += \
-        """Request resource access to additional %ss.
-    <table class=resources>
+        """<table class=resources>
     <tr><td>
     <form method="post" action="sendrequestaction.py">
+    <fieldset>
+    <legend>Request resource access to additional %ss</legend>
     <input type="hidden" name="unique_resource_name" value="%s" />
     <input type="hidden" name="request_type" value="vgridresource" />
     <select name="vgrid_name">"""\
@@ -323,6 +329,7 @@ from the certificate.<br />
     html += '''&nbsp; Message to owners:
 <input type="text" name="request_text" size=50 value="" />
 <input type="submit" value="send" />
+</fieldset>
 '''
     html += '</form></tr></table><p>'
 
@@ -331,10 +338,12 @@ from the certificate.<br />
     html += '<h3>Runtime environments</h3>'
 
     html += \
-        """Verify that resource supports the selected runtime environment.
-    <table class=resources>
+        """<table class=resources>
     <tr><td>
     <form method="post" action="testresupport.py">
+    <fieldset>
+    <legend>Verify that resource supports the selected runtime environment
+    </legend>
     <input type="hidden" name="unique_resource_name" value="%s" />
     <select name="re_name">"""\
          % resourcename
@@ -349,7 +358,7 @@ from the certificate.<br />
                     html += '<option value=%s>%s' % (env, env)
 
     html += """</select>"""
-    html += '<input type="submit" value="verify" />'
+    html += '<input type="submit" value="verify" /></fieldset>'
     html += '</form></tr></table><p>'
 
     # create html to select and call script to display testprocedure history

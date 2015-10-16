@@ -1350,7 +1350,7 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
                 lines.append('No matching Resources found')
         elif i['object_type'] == 'resource_info':
             resource_html = ''
-            resource_html += '<h3>%s</h3>' % i['unique_resource_name']
+            resource_html += '<h3>Details for %s</h3>' % i['unique_resource_name']
             resource_html += '''
 <table class="resource"><tr>
 <td colspan=2><h3>General</h3></td>
@@ -1377,6 +1377,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
 <td>%s</td><td>%s</td>
 </tr>
 ''' % (key, val)
+            if not i['exes']:
+                resource_html += '<tr><td coslpan=2>None</td></tr>'
+
             resource_html += '''
 <tr>
 <td colspan=2><h3>Stores</h3></td>
@@ -1393,6 +1396,9 @@ Exit code: %s Description: %s (TIMING_INFO)<br />
 <td>%s</td><td>%s</td>
 </tr>
 ''' % (key, val)
+            if not i['stores']:
+                resource_html += '<tr><td coslpan=2>None</td></tr>'
+                    
             resource_html += '''
 </table>
 '''

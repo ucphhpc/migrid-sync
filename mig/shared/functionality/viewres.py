@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewres - Display public details about a resource
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,8 +33,9 @@ from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.resconfkeywords import get_resource_keywords, \
      get_exenode_keywords, get_storenode_keywords
+from shared.resource import anon_to_real_res_map
 from shared.vgridaccess import user_visible_res_confs, user_allowed_vgrids, \
-     CONF
+     user_visible_res_confs, get_resource_map, OWNERS, CONF
 
 
 def signature():
@@ -128,8 +129,13 @@ def main(client_id, user_arguments_dict):
     status = returnvalues.OK
     visible_res = user_visible_res_confs(configuration, client_id)
     allowed_vgrids = user_allowed_vgrids(configuration, client_id)
+    res_map = get_resource_map(configuration)
+    anon_map = anon_to_real_res_map(configuration.resource_home)
 
     for visible_res_name in resource_list:
+        unique_resource_name = visible_res_name
+        if visible_res_name in anon_map.keys():
+            unique_resource_name = anon_map[visible_res_name]
         if not visible_res_name in visible_res.keys():
             logger.warning('User %s not allowed to view %s (%s)' % \
                            (client_id, visible_res_name, visible_res.keys()))
@@ -143,5 +149,19 @@ def main(client_id, user_arguments_dict):
                                                       res_dict,
                                                       allowed_vgrids)
         output_objects.append(res_item)
+
+    
+        if client_id in res_map[unique_resource_name][OWNERS]:
+            output_objects.append({'object_type': 'sectionheader',
+                                   'text': 'Administrate'})
+            output_objects.append({'object_type': 'link',
+                                     'destination':
+                                     'resadmin.py?unique_resource_name=%s'\
+                                     % unique_resource_name,
+                                     'class': 'adminlink',
+                                     'title': 'Administrate %s' % unique_resource_name, 
+                                     'text': 'Administrate %s' % unique_resource_name,
+                                   })
+
         
     return (output_objects, status)
