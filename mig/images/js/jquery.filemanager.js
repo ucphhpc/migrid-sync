@@ -241,9 +241,9 @@ if (jQuery) (function($){
         }
 
         // Trigger the click-event twice for obtaining the original state (collapse+expand).
-        $(".fm_folders [rel_path='"+reloadPath+"']").click();
-        $(".fm_folders [rel_path='"+reloadPath+"']").click();
-
+        /* NOTE: Careful to avoid breakage with paths containing single quote */
+        $('.fm_folders [rel_path="'+reloadPath+'"]').click();
+        $('.fm_folders [rel_path="'+reloadPath+'"]').click();
     }
 
     $.fn.targetDir = function(elem) {
@@ -262,6 +262,8 @@ if (jQuery) (function($){
     }
 
     $.fn.openDir = function(path) {
+        /* NOTE: Careful to avoid breakage with paths containing single quote */
+        path = path.replace(/%27/g, "'");
         $(".fm_addressbar input[name='fm_current_path']").val(path);
         $.fn.reload(path);
     }
@@ -733,9 +735,9 @@ if (jQuery) (function($){
                 if (file_size > max_stream_size) {
                     window.open('/cert_redirect/'+$(el).attr(pathAttribute))
                 } else {
-                    document.location =
-                        'cat.py?path='
-                        +$(el).attr(pathAttribute)+'&output_format=file';
+                    /* Path may contain URL-unfriendly characters */
+                    document.location = 'cat.py?path='
+                        +encodeURIComponent($(el).attr(pathAttribute))+'&output_format=file';
                 }
             },
             edit:   function (action, el, pos) {
@@ -754,8 +756,9 @@ if (jQuery) (function($){
                             $(this).dialog('close');
                         },
                         'Download': function() {
+                            /* Path may contain URL-unfriendly characters */
                             document.location = 'cat.py?path='
-                                +$(el).attr(pathAttribute)
+                                +encodeURIComponent($(el).attr(pathAttribute))
                                 +'&output_format=file';
                         }
                     },
@@ -1112,6 +1115,7 @@ if (jQuery) (function($){
                 var entry_html = '';
                 var onclick_action = '';
                 var subdir_path = t;
+                var subdir_path_esc;
                 var subdir_name = '';
                 var a_class = '';
                 var li_class = 'class="current"';
@@ -1128,9 +1132,12 @@ if (jQuery) (function($){
                         subdir_name = subdir_path.substring(0, subdir_path.length-1);
                         subdir_name = subdir_name.substring(subdir_name.lastIndexOf('/')+1, subdir_name.length);
                     }
-                    onclick_action = "$.fn.openDir('"+subdir_path+"');return false;";
+                    /* NOTE: Careful to avoid breakage with paths containing single quote */
+                    subdir_path_esc = subdir_path.replace(/'/g, "%27");
+                    onclick_action = "$.fn.openDir('"+subdir_path_esc+"'); return false;";
                     entry_html = '  <li '+li_class+'>';
-                    entry_html += '    <a href="?path='+subdir_path+'" '+a_class;
+                    /* Path may contain URL-unfriendly characters */
+                    entry_html += '    <a href="?path='+encodeURIComponent(subdir_path)+'" '+a_class;
                     entry_html += ' onclick="'+onclick_action+'">'+subdir_name+'</a>';
                     entry_html += '    <ul>';
                     entry_html += '    </ul>';
@@ -1319,7 +1326,6 @@ if (jQuery) (function($){
                         console.debug('show active folder');
                         if (options.root == t) {
                             console.debug('show root');
-                            //if (options.root == t+'/') {
                             folder_pane.find('UL:hidden').show();
                         } else {
                             console.debug('locate other folder: '+t);
@@ -1438,20 +1444,19 @@ if (jQuery) (function($){
                                                     "tr.file:not(.ui-draggable), tr.directory:not(.ui-draggable), li.directory:not(.ui-draggable)",
                                                     function() {
                                                         //console.log("adding draggable to elem");
-                                                        $(this).draggable(
-                                                            {
-                                                                cursorAt: { cursor: 'move', left: -10 },
-                                                                distance: 5,
-                                                                delay: 10,
-                                                                helper: function(event) {
-                                                                    //console.debug("drag src: "+$(this).html());
-                                                                    /* drag a clone of the first <td> which holds icon and name */
-                                                                    var drag_elem = $(this).find('td:first').clone();
-                                                                    drag_elem.attr('rel_path', $(this).attr('rel_path')).css('width', '20px');
-                                                                    //console.debug("drag elem: "+drag_elem.html());
-                                                                    return drag_elem;
-                                                                }
-                                                            });
+                                                        $(this).draggable({
+                                                            cursorAt: { cursor: 'move', left: -10 },
+                                                            distance: 5,
+                                                            delay: 10,
+                                                            helper: function(event) {
+                                                                //console.debug("drag src: "+$(this).html());
+                                                                /* drag a clone of the first <td> which holds icon and name */
+                                                                var drag_elem = $(this).find('td:first').clone();
+                                                                drag_elem.attr('rel_path', $(this).attr('rel_path')).css('width', '20px');
+                                                                //console.debug("drag elem: "+drag_elem.html());
+                                                                return drag_elem;
+                                                            }
+                                                        });
                                                         //console.log("added draggable to elem");
                                                     });
 
@@ -1512,8 +1517,9 @@ if (jQuery) (function($){
                         }
                         if (descend) {
                             options.subPath = options.subPath.slice(first_child.length+1);
-                            $(".fm_folders [rel_path='"+current_dir.slice(1)
-                              +first_child+"/']").click();
+                            /* NOTE: careful to avoid breakage with single quote in paths */
+                            $('.fm_folders [rel_path="'+current_dir.slice(1)
+                              +first_child+'/"]').click();
                         }
                         console.debug('end ajax handler '+t);
                     }
