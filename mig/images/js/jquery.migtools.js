@@ -47,7 +47,7 @@ var todo="TODO:\n"
   # (C) 2010 Jost Berthold (berthold at diku.dk), grid.dk
   #          E-science Center, Copenhagen University
   # This file is part of MatLab Grid Service.
-  # 
+  #
   # MatLab Grid Service is free software: you can redistribute it and/or modify
   # it under the terms of the GNU General Public License as published by
   # the Free Software Foundation; either version 2 of the License, or
@@ -56,7 +56,7 @@ var todo="TODO:\n"
   # but WITHOUT ANY WARRANTY; without even the implied warranty of
   # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   # GNU General Public License for more details.
-  # 
+  #
   # You should have received a copy of the GNU General Public License
   # along with this program; if not, write to the Free Software
   # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -78,7 +78,7 @@ var priority_classes = []; // one class (unlimited) in default
  *
  * Arguments: job dictionary, callbacks for success and error case
  * Returns: nothing.
- */ 
+ */
 function mig_submit_dict(dict, callback_ok, callback_error) {
     /* take the result of a job submission, extract the job-ID if
      * successful, all error messages otherwise. Only one job
@@ -105,8 +105,8 @@ function mig_submit_dict(dict, callback_ok, callback_error) {
                 if (jsonRes[i]["submitstatuslist"][0]["status"]) {
                     job_id = jsonRes[i]["submitstatuslist"][0]["job_id"];
                 } else {
-                    errors += "<p>" 
-                        + jsonRes[i]["submitstatuslist"][0]["message"] 
+                    errors += "<p>"
+                        + jsonRes[i]["submitstatuslist"][0]["message"]
                         + "</p>";
                 }
                 break;
@@ -136,7 +136,7 @@ function mig_submit_dict(dict, callback_ok, callback_error) {
     }
 
     // do the job submission
-    $.post("submitfields.py", dict, 
+    $.post("submitfields.py", dict,
            function(reply, statusText) {
                var res = extract_result(reply);
                var success = res[0];
@@ -152,7 +152,7 @@ function mig_submit_dict(dict, callback_ok, callback_error) {
 
 /* *********************************************/
 /* submission of a compilation job
- * 
+ *
  * Uses fixed naming scheme for fields in the web form:
  *   #file_name    - path to main Matlab file, checked to match "*.m"
  *   #output_name  - name for executable, default: basename of main file
@@ -163,7 +163,7 @@ function mig_submit_dict(dict, callback_ok, callback_error) {
  *   the_vgrid, for file input and output
  *   matlab_c, name of runtime env providing MCC (MatLab compiler)
  */
-function compile_submit() { 
+function compile_submit() {
 
     var abort = false;
 
@@ -173,7 +173,7 @@ function compile_submit() {
     }
 
     var file_name = $( "#file_name" )[0].value;
-    
+
     // check and truncate file name
     if (file_name == "") {
         alert("Error: No file to compile given.");
@@ -187,7 +187,7 @@ function compile_submit() {
     } else {
         base_name = match[2];
     }
-    
+
     // use explicit output destination if given
     var output_name = base_name;
     match = $( "#output_name" )[0].value;
@@ -217,7 +217,7 @@ function compile_submit() {
     }
 
     var arch=$( "#target_arch" )[0].value || "X86"; // just in case...
-    
+
     var files_raw   = ($( "#other_names" )[0].value || "").split("\n");
     var extra_files = [];
     var extra_names = "";
@@ -226,7 +226,7 @@ function compile_submit() {
             return true;
         }
         if (str.match(/[\t ]/)) {
-            alert("Warning: Ignoring file name with space (\"" 
+            alert("Warning: Ignoring file name with space (\""
                   + str + "\")");
             return true;
         }
@@ -243,18 +243,18 @@ function compile_submit() {
 
 extra_names = extra_names.replace(/^, /,"");
 
-var in_files = file_name + " " + base_name + ".m\n" 
+var in_files = file_name + " " + base_name + ".m\n"
     + extra_files.join("\n");
 
 // compilation only, did not work..
 //     var exec = "$MCC -c -W main " + base_name + ".m " + extra_names + "\n"
 //        + "(echo \"<html><head/><body><pre>\"; cat run_" + base_name +".sh; echo \"</pre></body></html>\") > " + base_name + ".html\n";
 // compilation, linking, and writing a json info file
-var exec = "$MCC -o " + output_name + " -m " 
-    + base_name + ".m " 
+var exec = "$MCC -o " + output_name + " -m "
+    + base_name + ".m "
     + extra_names.replace(/[",]/g,"") + "\n"
     + "echo '{ \"arch\": \"" + arch + "\",' "
-    + "> " + output_name + ".info\n" 
+    + "> " + output_name + ".info\n"
     + "[ -f \"run_" + output_name + "\" ] || "
     + "echo '  \"comment\": \"Compilation +JOBID+ failed\",' "
     + ">> " + output_name + ".info\n"
@@ -277,7 +277,7 @@ var dict = {"output_format":"json",
             "ARCHITECTURE": arch,
            };
 
-/* DEBUG 
+/* DEBUG
    var msg = "Job will be this:\n";
    var keys = ["output_format", "RUNTIMEENVIRONMENT", "JOBNAME", "OUTPUTFILES", "INPUTFILES", "EXECUTE", "ARCHITECTURE" ];
    $.each (keys, function(i,k) {
@@ -287,16 +287,16 @@ var dict = {"output_format":"json",
    return;
    /* */
 
-mig_submit_dict(dict, 
+mig_submit_dict(dict,
                 // callback for success:
                 function(job_id) {
                     // write a temp json file to the compiled directory
                     var json = "{ \"arch\": \"" + arch
-                        + "\", \"name\": \"" + output_name 
-                        + "\", \"source\": \"" + file_name 
+                        + "\", \"name\": \"" + output_name
+                        + "\", \"source\": \"" + file_name
                         + "\", \"other_files\": [" + extra_names + "]"
                         + ", \"comment\": \"Pending Job: " + job_id +"\"}\n";
-                    // if writing it out goes wrong, we cannot do much. 
+                    // if writing it out goes wrong, we cannot do much.
                     $.post("editfile.py", {
                         "path": compiled_dir + output_name + ".info",
                         "editarea": json,
@@ -310,7 +310,7 @@ mig_submit_dict(dict,
                         files += " and " + extra_names.replace(/"/g,"");
                     }
                     $( "#result" ).append("Compilation of " + files
-                                          + ". Job is: " 
+                                          + ". Job is: "
                                           + job_id + "<br/>");
                 },
                 // callback for errors
@@ -318,7 +318,7 @@ mig_submit_dict(dict,
                     $( "#result" ).append("<div class='errortext'>"
                                           + "Submission failed for compiling "
                                           + base_name + ".m<br/>"
-                                          + "Errors: " 
+                                          + "Errors: "
                                           + errors + "</div><br/>");
                 });
 
@@ -326,15 +326,15 @@ return;
 }
 
 /* list_refresh reads directory contents from the compiled directory,
- * then, for each file *.info, reads that file as json and 
+ * then, for each file *.info, reads that file as json and
  * turns its information into a table row appended to the ID tbody.
- * 
- * compiled_dir is assumed to be an accessible directory on the MiG server, 
+ *
+ * compiled_dir is assumed to be an accessible directory on the MiG server,
  * the *.info files in it are assumed to contain information generated
  * by the compilation (see above): arch, name, source, other_files.
  */
 
-function list_refresh() { 
+function list_refresh() {
 
     if ( (app_list_body && compiled_dir) == undefined ) {
         alert("Setup error: list of executables not defined.");
@@ -363,7 +363,7 @@ function list_refresh() {
                 errors += "<p>Path not found!</p>";
                 break;
             case "dir_listings":
-                
+
                 var list = jsonRes[i]["dir_listings"];
                 if (list == []) {
                     errors += "<p>Empty result received.</p>";
@@ -371,7 +371,7 @@ function list_refresh() {
                 } else {
                     // use first listing only, select entries
                     list = list[0]["entries"];
-                    
+
                     for (var j=0; j < list.length; j++) {
                         if (list[j]["type"] == "file"
                             && list[j]["name"].match(/.*\.info$/)) {
@@ -385,7 +385,7 @@ function list_refresh() {
             case "text":
                 errors += "<p>" + jsonRes[i]["text"] + "</p>";
                 break;
-                
+
             default:
                 break;
                 // skip
@@ -400,7 +400,7 @@ function list_refresh() {
 
         // this is not used; invalid json is filtered out before.
         if (!infos) {
-            $( app_list_body ).append("<tr><td colspan=\"5\">(file invalid)"); 
+            $( app_list_body ).append("<tr><td colspan=\"5\">(file invalid)");
             return true;
         }
         row += "<td>" + infos["name"];
@@ -409,19 +409,19 @@ function list_refresh() {
             row += " (and " + infos["other_files"] + ")";
         }
         row += "<td>" + infos["arch"];
-        
+
         row += "<td><input type=\"submit\" " + "value=\"Delete\" "
-            + "onclick=\"rm_compiled('" + infos["name"] + "\')\">" 
+            + "onclick=\"rm_compiled('" + infos["name"] + "\')\">"
             + "</input>";
         if (infos["comment"] == undefined) {
             row += "<td><input type=\"submit\" "
                 + "value=\"Submit job\" "
-                + "onclick=\"do_run_dialog('" 
+                + "onclick=\"do_run_dialog('"
                 + infos["name"] + "\', \'" + infos["arch"] + "\')\">"
                 + "</input>&nbsp;&nbsp;";
             row += "<input type=\"submit\" "
                 + "value=\"Do a parameter sweep\" "
-                + "onclick=\"do_sweep_dialog('" 
+                + "onclick=\"do_sweep_dialog('"
                 + infos["name"] + "\', \'" + infos["arch"] + "\')\">"
                 + "</input>";
         } else {
@@ -443,7 +443,7 @@ function list_refresh() {
                               }, "json");
                    });
                } else {
-                   $( app_list_body ).append("<tr><td colspan=\"5\">" 
+                   $( app_list_body ).append("<tr><td colspan=\"5\">"
                                              + res[1][0]);
                    return;
                }
@@ -453,17 +453,17 @@ function list_refresh() {
 
 
 /* Running a precompiled application.
- * 
+ *
  * This function expects an initialised dialog "run_dialog" on the page,
  * which contains a run_text div and a run_args field to read out.
  * list_refresh creates buttons calling this function for every entry.
- * When valid data is supplied, it submits a job to run the file with 
+ * When valid data is supplied, it submits a job to run the file with
  * given arguments (in a subdirectory) and retrieve produced output.
- * 
- * Arguments: 
+ *
+ * Arguments:
  *   name - Name of the compiled Matlab code (in "compiled/")
  *   arch - Architecture for which the code was compiled
- * 
+ *
  * Uses fixed naming scheme for a pre-initialised dialog on the page:
  *   #run_dialog  - the dialog, containing the following
  *   #run_text    - text (should mention name and architecture for executable)
@@ -471,11 +471,11 @@ function list_refresh() {
  *   #run_args    - input line for arguments
  *   #run_infiles - text area with input files
  *   #run_result  - section on page where the results should go
- * 
+ *
  * Global variables assumed:
  *   the_vgrid, for file input and output
  *   matlab_e, name of runtime env providing MCR (MatLab Compiler Runtime)
- */ 
+ */
 
 function do_run_dialog(name, arch) {
 
@@ -484,7 +484,7 @@ function do_run_dialog(name, arch) {
         return;
     }
 
-    $( "#run_text").html("Run the compiled application " 
+    $( "#run_text").html("Run the compiled application "
                          + name + "(on " + arch + " architecture):<br>");
 
     var output_zip   = "+JOBNAME+-+JOBID+.zip";
@@ -502,11 +502,11 @@ function do_run_dialog(name, arch) {
                 + "+JOBID+/" + name + ".sh\n" +
                 compiled_dir + name + " "
                 + "+JOBID+/" + name + "\n",
-                "EXECUTE": [ "cd +JOBID+", 
+                "EXECUTE": [ "cd +JOBID+",
                              "./" + name + ".sh $MCR ARGUMENTS",
                              "cd ..",
                              "cp +JOBID+.std* +JOBID+",
-                             "rm -f  +JOBID+/" + name 
+                             "rm -f  +JOBID+/" + name
                              + " +JOBID+/" + name + ".sh"
                              + " +JOBID+/+JOBID+.status"
                              + " +JOBID+/joblog",
@@ -516,7 +516,7 @@ function do_run_dialog(name, arch) {
                };
 
     function make_extra_files(files_raw) {
-        
+
         // add input files, if any given. Return a multiline string.
         var extra_files = [];
         $.each(files_raw, function(i,str) {
@@ -524,7 +524,7 @@ function do_run_dialog(name, arch) {
                 return true;
             }
             if (str.match(/[\t ]/)) {
-                alert("Warning: Ignoring file name with space (\"" 
+                alert("Warning: Ignoring file name with space (\""
                       + str + "\")");
                 return true;
             }
@@ -548,12 +548,12 @@ function clear_close() {
 }
 
 $( "#run_dialog").dialog("option", "buttons", {
-    "Cancel": function() { 
+    "Cancel": function() {
         clear_close();
     },
-    "Run": function() { 
+    "Run": function() {
         var args = $("#run_args")[0].value || "";
-        var files_raw 
+        var files_raw
             = ($( "#run_infiles" )[0].value || "").split("\n");
 
         // time_limit is max.time for the job, in minutes
@@ -564,8 +564,8 @@ $( "#run_dialog").dialog("option", "buttons", {
         if (time_limit > 0) {
             dict["CPUTIME"] = 60 * time_limit;
             // classify the job (for priority queues)
-            while (prio_class < priority_classes.length 
-                   && dict["CPUTIME"] <= 
+            while (prio_class < priority_classes.length
+                   && dict["CPUTIME"] <=
                    60 * priority_classes[ prio_class ] ) {
                 prio_class++;
             }
@@ -573,11 +573,11 @@ $( "#run_dialog").dialog("option", "buttons", {
             // classification somewhere with the job dictionary
         }
 
-        dict["EXECUTE"] = 
+        dict["EXECUTE"] =
             dict["EXECUTE"].replace(/ARGUMENTS/,args);
         dict["INPUTFILES"] = make_extra_files(files_raw);
-        
-        /* DEBUG 
+
+        /* DEBUG
            var msg = "Job will be this:\n";
            var keys = ["output_format", "RUNTIMEENVIRONMENT", "JOBNAME", "OUTPUTFILES", "INPUTFILES", "EXECUTABLES", "EXECUTE", "ARCHITECTURE" ];
            $.each (keys, function(i,k) {
@@ -587,16 +587,16 @@ $( "#run_dialog").dialog("option", "buttons", {
            /* */
 
         // mig_submit_dict(the_job,...)
-        mig_submit_dict(dict, 
+        mig_submit_dict(dict,
                         function(job_id) {
-                            output_zip = "run-" + name + "-" 
+                            output_zip = "run-" + name + "-"
                                 + job_id + ".zip";
-                            $( "#run_result" ).append("Running " 
+                            $( "#run_result" ).append("Running "
                                                       + name + ". Job ID is " + job_id
-                                                      + ". Output file: " 
+                                                      + ". Output file: "
                                                       + "<a href='/cert_redirect/"
                                                       + run_output_dir + output_zip
-                                                      + "' target='_blank'>" 
+                                                      + "' target='_blank'>"
                                                       + output_zip + "</a><br/>");
                         },
                         function(errors) {
@@ -614,12 +614,12 @@ $( "#run_dialog").dialog("open");
 }
 
 /* Deleting items from the list of compiled applications
- *  
- * This is done using the mig rm.py handler. Since we generate the 
+ *
+ * This is done using the mig rm.py handler. Since we generate the
  * calls ourselves, no attempts to restrict or check for failures.
  */
 function rm_compiled(name) {
-    
+
     if ( compiled_dir == undefined) {
         alert("Setup error: directory not configured.");
         return;
@@ -628,23 +628,23 @@ function rm_compiled(name) {
     var yes = confirm("Delete " + name + " from compiled applications?");
 
     if (yes) {
-        var files = [compiled_dir + name, 
-                     compiled_dir + name + ".sh", 
+        var files = [compiled_dir + name,
+                     compiled_dir + name + ".sh",
                      compiled_dir + name + ".info"];
         // weird hack: cannot pass several "path" to one call with jquery
         $.each(files, function(i,path) {
-            $.post("rm.py", { 
-                "output_format" : "json", 
+            $.post("rm.py", {
+                "output_format" : "json",
                 "path" : path,
-            }, 
-                   function(a,b) { 
+            },
+                   function(a,b) {
                        if (path.match(/.*info$/)) {
-                           list_refresh( ); 
+                           list_refresh( );
                        }
                    }, "json");
         });
-    } 
-    
+    }
+
     return;
 }
 
@@ -654,7 +654,7 @@ function rm_compiled(name) {
  * into a table row appended to the out_list_body.
  */
 
-function out_refresh() { 
+function out_refresh() {
 
     if ( (out_list_body && run_output_dir) == undefined ) {
         alert("Setup error: output directory not configured.");
@@ -666,7 +666,7 @@ function out_refresh() {
         return;
     }
 
-    // delete all entries created by 
+    // delete all entries created by
     $( out_list_body ).empty();
 
     // read directory using mig "ls" and extract info files
@@ -684,7 +684,7 @@ function out_refresh() {
                 errors += "<p>Path not found!</p>";
                 break;
             case "dir_listings":
-                
+
                 var list = jsonRes[i]["dir_listings"];
                 if (list == undefined || list.length == 0) {
                     errors += "<p>Empty</p>";
@@ -692,7 +692,7 @@ function out_refresh() {
                 } else {
                     // use first listing only, select entries
                     list = list[0]["entries"];
-                    
+
                     for (var j=0; j < list.length; j++) {
                         if (list[j]["type"] == "file"
                             && list[j]["name"].match(/.*\.zip$/)) {
@@ -706,7 +706,7 @@ function out_refresh() {
             case "text":
                 errors += "<p>" + jsonRes[i]["text"] + "</p>";
                 break;
-                
+
             default:
                 break;
                 // skip
@@ -723,18 +723,18 @@ function out_refresh() {
 
         if (match == undefined ) {
             row += "<td style=\"font-size:x-small\" colspan=\"4\">"
-                + "<a href=\"/cert_redirect/" + run_output_dir + filename 
-                + "\" target=\"_blank\">" 
+                + "<a href=\"/cert_redirect/" + run_output_dir + filename
+                + "\" target=\"_blank\">"
                 + filename + "</a>  (filename unexpected)";
         } else {
             row += "<td>" + match[1]; // name of application
             row += "<td>" + match[2]; // Job ID
-            
+
             row += "<td><input type=\"submit\" " + "value=\"Delete\" "
-                + "onclick=\"rm_output('" + match[0] + "\')\">" 
+                + "onclick=\"rm_output('" + match[0] + "\')\">"
                 + "</input>";
-            row += "<td style=\"font-size:x-small\">" 
-                + "<a href=\"/cert_redirect/" + run_output_dir + match[0] 
+            row += "<td style=\"font-size:x-small\">"
+                + "<a href=\"/cert_redirect/" + run_output_dir + match[0]
                 + "\" target=\"_blank\">" + filename + "</a>";
         }
 
@@ -748,7 +748,7 @@ function out_refresh() {
                if (res[0]) { // success
                    $.each(res[1], appendRow );
                } else {
-                   $( out_list_body ).append("<tr><td colspan=\"4\">" 
+                   $( out_list_body ).append("<tr><td colspan=\"4\">"
                                              + res[1][0]);
                    return;
                }
@@ -757,11 +757,11 @@ function out_refresh() {
 }
 
 /* Deleting files from the output directory
- *  
+ *
  * Again done using the mig rm.py handler. Won't be called unless file exists.
  */
 function rm_output(name) {
-    
+
     if ( run_output_dir == undefined) {
         alert("Setup error: directory not configured.");
         return;
@@ -770,40 +770,40 @@ function rm_output(name) {
     var yes = confirm("Delete " + name + " from output directory?");
 
     if (yes) {
-        $.post("rm.py", { "output_format" : "json", 
+        $.post("rm.py", { "output_format" : "json",
                           "path" : run_output_dir + name,
-                        }, 
-               function(a,b) { 
-                   out_refresh( ); 
+                        },
+               function(a,b) {
+                   out_refresh( );
                },"json");
-    } 
+    }
     return;
 }
 
 
 /* do_sweep_dialog: Running a parameter sweep for a precompiled application.
- * 
+ *
  * Differs from do_run_dialog by a parse of the arguments and an input
  * for the job count. See regexp and comments below for the syntax.
  * Arguments can be either plain or an "enum range".
- * Job count determines how many jobs to create. Each job will have its 
+ * Job count determines how many jobs to create. Each job will have its
  * own output file.
- * 
+ *
  * The maximum runtime is specified in minutes for one call, CPUTIME will
  * be computed as the sum of calls in one job (overhead is ignored!).
- * For the priority classification, we make sure that all jobs get the 
+ * For the priority classification, we make sure that all jobs get the
  * same class.
- * 
+ *
  *  * This function expects an initialised dialog "sweep_dialog" on the page,
  * which contains a run_text div and a run_args field to read out.
  * list_refresh creates buttons calling this function for every entry.
- * When valid data is supplied, it submits a job to run the file with 
+ * When valid data is supplied, it submits a job to run the file with
  * given arguments (in a subdirectory) and retrieve produced output.
- * 
- * Arguments: 
+ *
+ * Arguments:
  *   name - Name of the compiled Matlab code (in "compiled/")
  *   arch - Architecture for which the code was compiled
- * 
+ *
  * Uses fixed naming scheme for a pre-initialised dialog on the page:
  *   #sweep_dialog  - the dialog, containing the following
  *   #sweep_text    - text in dialog
@@ -812,33 +812,33 @@ function rm_output(name) {
  *   #sweep_jobs    - desired job count (default is 1)
  *   #sweep_infiles - text area with input files
  *   #run_result  - section on page where the results should go
- * 
+ *
  * Global variables assumed:
  *   the_vgrid, for file input and output
  *   matlab_e, name of runtime env providing MCR (MatLab Compiler Runtime)
- * 
+ *
  */
 
 function do_sweep_dialog(name, arch) {
-    
+
     if ( (matlab_e && run_output_dir && compiled_dir) == undefined) {
         alert("Setup error: not configured.");
         return;
     }
 
-    $( "#sweep_text" ).html("Run a parameter sweep for the application " 
+    $( "#sweep_text" ).html("Run a parameter sweep for the application "
                             + name + "(on " + arch + " architecture):<br>");
     $( "#sweep_jobs" )[0].value="1";
 
     /* ARGUMENT SYNTAX
      * Arguments can be "plain" or "enum ranges", otherwise they are ignored.
-     * 
-     *  plain either does not contain squared brackets or is a (single or 
+     *
+     *  plain either does not contain squared brackets or is a (single or
      * double) quoted region:
      */
     var plain = "([^\\[\\]\\s]+|\"[^\"]*\"|'[^']*')";
-    /* 
-     * An enum range specifies a range of whole numbers by a starting value, 
+    /*
+     * An enum range specifies a range of whole numbers by a starting value,
      * optionally followed by comma and a next value (default is start +- 1),
      * and two dots followed by an end value, enclosed in squared brackets.
      * Whole numbers can be zero, or else may have a sign, then start by 1-9
@@ -848,7 +848,7 @@ function do_sweep_dialog(name, arch) {
     var range = "\\[" + num + "(," + num + ")?" + "\\.\\." + num + "\\]";
     // portioning argument line into arguments. Global repeated match ("g")
     var matchArgs = new RegExp( plain + "|" + range, "g");
-    // matching enum ranges to tell them apart from plain arguments 
+    // matching enum ranges to tell them apart from plain arguments
     var matchRange = new RegExp ( range ,"");
 
     function make_sweep_args(jobs, arg_line) {
@@ -858,7 +858,7 @@ function do_sweep_dialog(name, arch) {
          *  outer.length == jobs
          *  inner.length == ceil(product of range_extension / jobs)
          */
-        
+
         // list of all arguments that are valid "plain" or "enum range"s
         var args_matched = arg_line.match(matchArgs);
 
@@ -879,7 +879,7 @@ function do_sweep_dialog(name, arch) {
             if ( is_range == undefined ) {
                 // plain, so only one variant
                 for (j = 0; j < args_all.length; j++ ) {
-                    tmp.push( args_all[j] + " " + args_matched[i] ); 
+                    tmp.push( args_all[j] + " " + args_matched[i] );
                 }
             } else {
                 from = new Number(is_range[1]);
@@ -888,7 +888,7 @@ function do_sweep_dialog(name, arch) {
                     if (from > to) {
                         inc = -1;
                     } else {
-                        inc = 1; 
+                        inc = 1;
                     }
                 } else {
                     inc = new Number(is_range[3]) - new Number(is_range[1]);
@@ -954,7 +954,7 @@ function do_sweep_dialog(name, arch) {
     var preprocess = "cd +JOBID+\n";
     var postprocess= [ "cd ..",
                        "cp +JOBID+.std* +JOBID+",
-                       "rm -f  +JOBID+/" + name 
+                       "rm -f  +JOBID+/" + name
                        + " +JOBID+/" + name + ".sh"
                        + " +JOBID+/+JOBID+.status"
                        + " +JOBID+/joblog",
@@ -978,7 +978,7 @@ function do_sweep_dialog(name, arch) {
                 return true;
             }
             if (str.match(/[\t ]/)) {
-                alert("Warning: Ignoring file name with space (\"" 
+                alert("Warning: Ignoring file name with space (\""
                       + str + "\")");
                 return true;
             }
@@ -1015,16 +1015,16 @@ function submit_part(args) {
     }
     dict["EXECUTE"] += postprocess;
 
-    mig_submit_dict(dict, 
+    mig_submit_dict(dict,
                     function(job_id) {
-                        output_zip = "run-" + name + "-" 
+                        output_zip = "run-" + name + "-"
                             + job_id + ".zip";
-                        $( "#run_result" ).append("Running " 
+                        $( "#run_result" ).append("Running "
                                                   + name + ". Job ID is " + job_id
-                                                  + ". Output file: " 
+                                                  + ". Output file: "
                                                   + "<a href='/cert_redirect/"
                                                   + run_output_dir + output_zip
-                                                  + "' target='_blank'>" 
+                                                  + "' target='_blank'>"
                                                   + output_zip + "</a><br/>");
                     },
                     function(errors) {
@@ -1057,18 +1057,18 @@ function pretty_args(argss) {
     }
 
     switch (argss.length) {
-    case 0: 
+    case 0:
         // should not happen (caught by caller)
         msg += "None!\n";
         break;
-    case 1: 
+    case 1:
         msg += join_head_tail(argss[0], 20, "\n") + "\n";
         break;
-    case 2: 
+    case 2:
         msg += "Job 1:\n   " + join_head_tail(argss[0], 9, "\n   ") + "\n"
             +"Job 2:\n   " + join_head_tail(argss[1], 9, "\n   ") + "\n";
         break;
-    case 3: 
+    case 3:
         msg += "Job 1:\n   " + join_head_tail(argss[0], 6, "\n   ") + "\n"
             +"Job 2:\n   " + join_head_tail(argss[1], 6, "\n   ") + "\n"
             +"Job 3:\n   " + join_head_tail(argss[2], 6, "\n   ") + "\n";
@@ -1078,7 +1078,7 @@ function pretty_args(argss) {
             +"Job 2:\n   " + join_head_tail(argss[1], 5, "\n   ") + "\n"
             + "...   ...\n(" + argss.length + " jobs in total)\n"
             + "...   ...\n"
-            +"Last :\n   " 
+            +"Last :\n   "
             + join_head_tail(argss[argss.length-1], 5, "\n   ") + "\n";
         break;
     }
@@ -1087,11 +1087,11 @@ function pretty_args(argss) {
 }
 
 $( "#sweep_dialog").dialog("option", "buttons", {
-    "Cancel": function() { 
-        clear_close(); 
+    "Cancel": function() {
+        clear_close();
     },
-    "Run": function() { 
-        var files_raw 
+    "Run": function() {
+        var files_raw
             = ($("#sweep_infiles")[0].value || "").split("\n");
         add_extra_files(files_raw);
 
@@ -1110,15 +1110,15 @@ $( "#sweep_dialog").dialog("option", "buttons", {
             // jobs get low priority and default limit.
             if (limit > 0) {
                 max_time = 60 * limit * argss[0].length;
-                while (prio_class < priority_classes.length 
+                while (prio_class < priority_classes.length
                        && max_time <= 60*priority_classes[prio_class] ) {
                     prio_class++;
                 }
                 // would be nice to have MiG consider this
                 // classification as a job priority into the dictionary
-                msg += "\nJob time limit: " + (max_time / 60) 
+                msg += "\nJob time limit: " + (max_time / 60)
                     + " min.\nJob priority class: " + (prio_class+1)
-                    + " (of " + (1+priority_classes.length) 
+                    + " (of " + (1+priority_classes.length)
                     + ", 1 = lowest)\n";
             } else {
                 msg += "\nNo maximum time given,\n"
@@ -1129,8 +1129,8 @@ $( "#sweep_dialog").dialog("option", "buttons", {
             var yes = confirm(msg);
 
             if (yes) {
-                $.each(argss, function(i,args) { 
-                    submit_part(args, limit); 
+                $.each(argss, function(i,args) {
+                    submit_part(args, limit);
                 });
             }
         }
@@ -1145,7 +1145,7 @@ $( "#sweep_dialog").dialog("open");
 /* Language selector to trigger dynamic change of language on pages */
 
 function switch_language(lang) {
-    /* Hide all before showing only selected - use the built-in lang selector 
+    /* Hide all before showing only selected - use the built-in lang selector
        to match all accented versions like 'en' -> 'en', 'en-US', 'en-GB'
     */
     /* TODO: optimize this and use list of lang values */
@@ -1153,7 +1153,7 @@ function switch_language(lang) {
     /* TODO: switch away from div-only lang and use i18n class instead */
 
     $("div:lang(en)").hide();
-    $("div:lang(da)").hide();    
+    $("div:lang(da)").hide();
     $(".i18n:lang(en)").hide();
     $(".i18n:lang(da)").hide();
 
@@ -1161,7 +1161,7 @@ function switch_language(lang) {
     $(".i18n:lang("+lang+")").show();
 }
 
-/* OpenID availability checker for use on signup and login pages */    
+/* OpenID availability checker for use on signup and login pages */
 function check_oid_available(action, oid_title, oid_url, tag_prefix) {
     $("#"+tag_prefix+"status").removeClass();
     $("#"+tag_prefix+"status").addClass("status_box");
@@ -1184,7 +1184,7 @@ function check_oid_available(action, oid_title, oid_url, tag_prefix) {
                 //alert("debug: parsing entry "+i);
                 //alert("debug: parsing "+jsonRes[i]);
                 //$("#"+tag_prefix+"debug").append(jsonRes[i].toSource());
-                if (jsonRes[i].object_type == "openid_status") {    
+                if (jsonRes[i].object_type == "openid_status") {
                     online = jsonRes[i].status;
                     error = jsonRes[i].error;
                     $("#"+tag_prefix+"status").removeClass("spinner").css("padding-left", "0px");
@@ -1229,7 +1229,7 @@ function select_seafile_section(section_prefix) {
 /* Seafile registration helper to get the CSRF tag from the signup form and
    switch to the save form if registration url shows that user registered and
    logged in already */
-function prepare_seafile_settings(reg_url, username, integration, 
+function prepare_seafile_settings(reg_url, username, integration,
                                   status_prefix, reg_prefix, save_prefix) {
     $("#"+reg_prefix+"button").attr("disabled", false);
     $("#"+save_prefix+"button").attr("disabled", false);
