@@ -98,10 +98,16 @@
 ;;default to text mode
 (setq default-major-mode 'text-mode)
 
+;; No tabs-- use spaces when indenting (doesn't affect Makefiles, 
+;; does affect text files and code, doesn't affect existing tabs).
+;; The use of setq-default means this only affects modes that don't
+;; overwrite this setting.
+(setq-default indent-tabs-mode nil)
+
 ;; always use auto-fill mode in text buffers to automatically wrap lines
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 
-(setq load-path (cons "~/.emacs.d/" load-path))
+(setq load-path (cons "~/.emacs.d/site-lisp/" load-path))
 (setq auto-mode-alist
             (cons '("\\.py$" . python-mode) auto-mode-alist))
 (setq interpreter-mode-alist
@@ -109,15 +115,17 @@
 		              interpreter-mode-alist))
 (autoload 'python-mode "python-mode" "Python editing mode." t)
 
-;; javascript mode from http://www.brgeight.se/downloads/emacs/javascript.el
-;; with fall back to built-in generic-x mode if javascript mode is unavailable
+;; Prefer espresso mode from  
+;; http://download.savannah.gnu.org/releases-noredirect/espresso/espresso.el
+;; but fall back to built-in generic-x mode if javascript mode is unavailable
 (require 'generic-x)
-(when (locate-library "javascript")
-	(setq auto-mode-alist
-		(append '(("\\.js$"  . javascript-mode)
-		) auto-mode-alist))
-	(autoload 'javascript-mode "javascript" "JavaScript editing mode." t)
-	)
+(when (locate-library "espresso")
+        (setq auto-mode-alist
+                (append '(("\\.js$"  . espresso-mode)
+                ("\\.json$"  . espresso-mode)
+                ) auto-mode-alist))
+        (autoload 'espresso-mode "espresso" "JavaScript editing mode" t)
+        )
 
 (setq auto-mode-alist
 	(append '(("\\.c$"  . c-mode)
