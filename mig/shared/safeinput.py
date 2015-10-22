@@ -94,7 +94,7 @@ name_extras = ' -@.'
 # We allow ':' in DN, however, as it is used by e.g. DanID:
 # /C=DK/O=Ingen organisatorisk tilknytning/CN=$name/serialNumber=PID:$serial
 
-dn_extras = '/=@.:'
+dn_extras = name_extras + '/=:'
 
 integer_extras = '+-'
 float_extras = integer_extras + '.'
