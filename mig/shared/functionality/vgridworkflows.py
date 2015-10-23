@@ -41,6 +41,7 @@ import shared.returnvalues as returnvalues
 from shared.defaults import keyword_all, keyword_auto, \
     valid_trigger_changes, valid_trigger_actions, workflows_log_name, \
     workflows_log_cnt, pending_states, final_states
+from shared.events import get_expand_map, get_command_map
 from shared.fileio import unpickle, makedirs_rec, move_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.functionality.adminvgrid import vgrid_add_remove_table
@@ -146,6 +147,15 @@ $(document).ready(function() {
                                .tablesorterPager({ container: $("#pager"),
                                         size: %s
                                         });
+
+        /* Init variables helper as foldable but closed and with individual heights */
+        $(".variables-accordion").accordion({
+                                       collapsible: true,
+                                       active: false,
+                                       heightStyle: "content"
+                                      });
+        /* fix and reduce accordion spacing */
+        $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
      }
 );
 </script>
@@ -279,6 +289,43 @@ $(document).ready(function() {
 
     if not status:
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    # Generate variable helper values for a few concrete samples for help text 
+    vars_html = ''
+    dummy_rule = {'run_as': client_id, 'vgrid_name': vgrid_name}
+    samples = [('input.txt', 'modified'), ('input/image42.raw', 'changed')]
+    for (path, change) in samples:
+        vars_html += "<b>Expanded variables when %s is %s:</b><br/>" % \
+                        (path, change)
+        expanded = get_expand_map(path, dummy_rule, change)
+        for (key, val) in expanded.items():
+            vars_html += "    %s: %s<br/>" % (key, val)
+    commands_html = ''
+    commands = get_command_map(configuration)
+    for (cmd, cmd_args) in commands.items():
+        commands_html += "    %s %s<br/>" % (cmd, (' '.join(cmd_args)).upper())
+
+    helper_html = """
+<div class='variables-accordion'>
+<h4>Help on available trigger variable names and values</h4>
+<p>
+Triggers can use a number of helper variables on the form +TRIGGERXYZ+ to
+dynamically act on targets. Some of the values are bound to the rule owner the
+%s while the remaining ones are automatically expanded for the particular
+trigger target as shown in the following examples:<br/>
+%s
+</p>
+<h4>Help on available trigger commands and arguments</h4>
+<p>
+It is possible to set up trigger rules that basically run any operation with a
+side effect you could manually do on the grid. I.e. like submitting/cancelling
+a job, creating/moving/deleting a file or directory and so on. When you select
+'command' as the action for a trigger rule, you have the following commands at
+your disposal:<br/>
+%s
+</p>
+""" % (configuration.site_vgrid_label, vars_html, commands_html)
+    output_objects.append({'object_type': 'html_form', 'text': helper_html})
 
     return (output_objects, returnvalues.OK)
 
