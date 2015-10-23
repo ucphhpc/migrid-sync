@@ -56,6 +56,7 @@ except ImportError:
 from shared.conf import get_configuration_object
 from shared.defaults import valid_trigger_changes, workflows_log_name, \
     workflows_log_size, workflows_log_cnt
+from shared.events import get_expand_map, map_args_to_vars, get_command_map
 from shared.job import fill_mrsl_template, new_job
 from shared.logger import daemon_logger
 from shared.serial import load
@@ -77,30 +78,6 @@ _unit_periods = {
     }
 _hits_lock = threading.Lock()
 (configuration, logger) = (None, None)
-
-
-def get_expand_map(trigger_path, rule, state_change):
-    """Generate a dictionary with the supported variables to be expanded and
-    the actual expanded values based on trigger_path and rule dictionary.
-    """
-
-    trigger_filename = os.path.basename(trigger_path)
-    trigger_dirname = os.path.dirname(trigger_path)
-    (prefix, extension) = os.path.splitext(trigger_filename)
-    expand_map = {
-        '+TRIGGERPATH+': trigger_path,
-        '+TRIGGERDIRNAME+': trigger_dirname,
-        '+TRIGGERFILENAME+': trigger_filename,
-        '+TRIGGERPREFIX+': prefix,
-        '+TRIGGEREXTENSION+': extension,
-        '+TRIGGERCHANGE+': state_change,
-        '+TRIGGERVGRIDNAME+': rule['vgrid_name'],
-        '+TRIGGERRUNAS+': rule['run_as'],
-        }
-
-    # TODO: provide exact expanded wildcards?
-
-    return expand_map
 
 
 def make_fake_event(path, state):
@@ -318,23 +295,6 @@ def recently_modified(path, time_stamp, slack=2.0):
     return result
 
 
-def map_args_to_vars(var_list, arg_list):
-    """Map command args to backend var names - if more args than vars we
-    assume variable length on the first arg:
-       zip src1 src2 src3 dst -> src: [src1, src2, src3], dst: [dst]
-    """
-
-    args_dict = dict(zip(var_list, [[] for _ in var_list]))
-    remain_vars = [i for i in var_list]
-    remain_args = [i for i in arg_list]
-    while remain_args:
-        args_dict[remain_vars[0]].append(remain_args[0])
-        del remain_args[0]
-        if len(remain_args) < len(remain_vars):
-            del remain_vars[0]
-    return args_dict
-
-
 def run_command(
     command_list,
     target_path,
@@ -345,29 +305,8 @@ def run_command(
     rule and with args mapped to the backend variables.
     """
 
-    # TODO: add all ops with effect here!
+    command_map = get_command_map(configuration)
 
-    command_map = {
-        'pack': ['src', 'dst'],
-        'unpack': ['src', 'dst'],
-        'zip': ['src', 'dst'],
-        'unzip': ['src', 'dst'],
-        'tar': ['src', 'dst'],
-        'untar': ['src', 'dst'],
-        'cp': ['src', 'dst'],
-        'mv': ['src', 'dst'],
-        'rm': ['path'],
-        'rmdir': ['path'],
-        'truncate': ['path'],
-        'touch': ['path'],
-        'mkdir': ['path'],
-        'submit': ['path'],
-        'canceljob': ['job_id'],
-        'resubmit': ['job_id'],
-        'jobaction': ['job_id', 'action'],
-        'liveio': ['action', 'src', 'dst', 'job_id'],
-        'mqueue': ['queue', 'action', 'msg_id', 'msg'],
-        }
     logger.info('run command for %s: %s' % (target_path, command_list))
     if not command_list or not command_list[0] in command_map:
         raise ValueError('unsupported command: %s' % command_list[0])
