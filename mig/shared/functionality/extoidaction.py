@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extoidaction - handle sign up with external openid credentials
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -191,7 +191,8 @@ sudo su - mig-ca
     user_dict['command_cert_create'] = command_cert_create
     user_dict['command_cert_revoke'] = command_cert_revoke
     user_dict['site'] = configuration.short_title
-    user_dict['https_default_url'] = configuration.migserver_https_default_url
+    # NOTE: we only expect cert access for now
+    user_dict['https_default_url'] = configuration.migserver_https_cert_url
     email_header = '%s account request for %s' % \
                    (configuration.short_title, full_name)
     email_msg = \

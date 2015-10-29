@@ -234,7 +234,8 @@ cd ~/mig/server
     user_dict['command_user_create'] = command_user_create
     user_dict['command_user_delete'] = command_user_delete
     user_dict['site'] = configuration.short_title
-    user_dict['https_default_url'] = configuration.migserver_https_default_url
+    # NOTE: we only expect cert access for now
+    user_dict['https_default_url'] = configuration.migserver_https_cert_url
     email_header = '%s sign up request for %s' % \
                    (configuration.short_title, cert_id)
     email_msg = \

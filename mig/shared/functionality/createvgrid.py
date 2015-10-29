@@ -34,7 +34,7 @@ from email.utils import parseaddr
 from tempfile import NamedTemporaryFile
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir
+from shared.base import client_id_dir, generate_https_urls
 from shared.defaults import default_vgrid, all_vgrids, any_vgrid
 from shared.fileio import write_file, make_symlink, delete_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -64,11 +64,11 @@ def create_scm(
 
     kind = 'member'
     scm_alias = 'vgridscm'
-    server_url = configuration.migserver_https_default_url
+    # TODO: we only support scm cert access for now
+    server_url = configuration.migserver_https_cert_url
     if scm_dir.find('private') > -1:
         kind = 'owner'
         scm_alias = 'vgridownerscm'
-        server_url = configuration.migserver_https_default_url
     elif scm_dir.find('public') > -1:
         kind = 'public'
         scm_alias = 'vgridpublicscm'
@@ -227,11 +227,11 @@ def create_tracker(
     admin_user = distinguished_name_to_user(client_id)
     admin_email = admin_user.get('email', 'unknown@migrid.org')
     admin_id = admin_user.get(configuration.trac_id_field, 'unknown_id')
-    server_url = configuration.migserver_https_default_url
+    # TODO: we only support scm cert access for now
+    server_url = configuration.migserver_https_cert_url
     if tracker_dir.find('private') > -1:
         kind = 'owner'
         tracker_alias = 'vgridownertracker'
-        server_url = configuration.migserver_https_default_url
     elif tracker_dir.find('public') > -1:
         kind = 'public'
         tracker_alias = 'vgridpublictracker'
@@ -788,6 +788,7 @@ name, please try again with a new name!""" % configuration.site_vgrid_label
     try:
         os.mkdir(base_dir)
     except Exception, exc:
+        
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : """Could not create %(_label)s directory, remember to create
@@ -802,10 +803,14 @@ parent %(_label)s before creating a sub-%(_label)s.""" % \
         os.mkdir(public_base_dir)
         pub_readme = os.path.join(public_base_dir, 'README')
         if not os.path.exists(pub_readme):
+            https_links = generate_https_urls(
+                configuration,
+                '%(auto_base)s/vgrid/%(vgrid_name)s/',
+                {'vgrid_name': vgrid_name})
             write_file("""= Public Web Page =
 This directory is used for hosting the public web page for the %s %s.
 It is accessible by the public from the %ss page or directly using the URL
-%s/vgrid/%s/
+%s
 
 Just update the index.html file to suit your wishes for an entry page. It can
 link to any other material in this folder or subfolders with relative
@@ -813,8 +818,7 @@ addresses. So it is possible to create a full web site with multiple pages and
 rich content like on other web hosting services. However, there's no support
 for server side scripting with Python, ASP or PHP for security reasons.
 """ % (vgrid_name, configuration.site_vgrid_label,
-       configuration.site_vgrid_label, configuration.migserver_http_url,
-       vgrid_name),
+       configuration.site_vgrid_label, https_links),
                        pub_readme, logger)
         pub_entry_page = os.path.join(public_base_dir, 'index.html')
         if not os.path.exists(pub_entry_page):
@@ -831,6 +835,7 @@ public_base/%s/index.html to place it here)
 </html>""" % (vgrid_name, configuration.site_vgrid_label),
                        pub_entry_page, logger)
     except Exception, exc:
+        logger.error('Could not create vgrid public_base directory: %s' % exc)
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : """Could not create %(_label)s public_base directory, remember to
@@ -845,11 +850,15 @@ create parent %(_label)s before creating a sub-%(_label)s.""" % \
         os.mkdir(private_base_dir)
         priv_readme = os.path.join(private_base_dir, 'README')
         if not os.path.exists(priv_readme):
+            https_links = generate_https_urls(
+                configuration,
+                '%(auto_base)s/vgrid/%(vgrid_name)s/path/index.html',
+                {'vgrid_name': vgrid_name})
             write_file("""= Private Web Page =
 This directory is used for hosting the private web page for the %s %s.
 It is only accessible for members and owners either from the %ss page or
 directly using the URL
-%s/vgrid/%s/path/index.html
+%s
 
 Just update the index.html file to suit your wishes for an entry page. It can
 link to any other material in this folder or subfolders with relative
@@ -857,8 +866,7 @@ addresses. So it is possible to create a full web site with multiple pages and
 rich content like on other web hosting services. However, there's no support
 for server side scripting with Python, ASP or PHP for security reasons.
 """ % (vgrid_name, configuration.site_vgrid_label,
-       configuration.site_vgrid_label,
-       configuration.migserver_https_default_url, vgrid_name),
+       configuration.site_vgrid_label, https_links),
                        priv_readme, logger)
         priv_entry_page = os.path.join(private_base_dir, 'index.html')
         if not os.path.exists(priv_entry_page):
@@ -875,6 +883,7 @@ private_base/%s/index.html to place it here)<br>
 </html>""" % (vgrid_name, configuration.site_vgrid_label),
                        priv_entry_page, logger)
     except Exception, exc:
+        logger.error('Could not create vgrid private_base directory: %s' % exc)
         output_objects.append(
             {'object_type': 'error_text', 'text'
              : """Could not create %(_label)s private_base directory, remember to
@@ -898,13 +907,11 @@ for job input and output.
 """ % (vgrid_name, configuration.site_vgrid_label, vgrid_name),
                        share_readme, logger)
     except Exception, exc:
+        logger.error('Could not create vgrid files directory: %s' % exc)
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not create %s files directory.' % \
                                configuration.site_vgrid_label
                               })
-        logger.error('Could not create %s files directory.' % \
-                     configuration.site_vgrid_label,
-                     str(exc))
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     all_scm_dirs = ['', '', '']

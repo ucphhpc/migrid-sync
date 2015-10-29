@@ -110,6 +110,8 @@ def generate_confs(
     daemon_pubkey='',
     daemon_show_address='',
     alias_field='',
+    signup_methods='extcert',
+    login_methods='extcert',
     hg_path='',
     hgweb_scripts='',
     trac_admin_path='',
@@ -173,6 +175,8 @@ def generate_confs(
     user_dict['__DAEMON_PUBKEY__'] = daemon_pubkey
     user_dict['__DAEMON_SHOW_ADDRESS__'] = daemon_show_address
     user_dict['__ALIAS_FIELD__'] = alias_field
+    user_dict['__SIGNUP_METHODS__'] = signup_methods
+    user_dict['__LOGIN_METHODS__'] = login_methods
     user_dict['__HG_PATH__'] = hg_path
     user_dict['__HGWEB_SCRIPTS__'] = hgweb_scripts
     user_dict['__TRAC_ADMIN_PATH__'] = trac_admin_path

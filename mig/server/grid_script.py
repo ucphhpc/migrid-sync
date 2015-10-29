@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_script - the core job handling daemon on a MiG server
-# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,7 +38,7 @@ import copy
 
 import jobscriptgenerator
 from jobqueue import JobQueue
-from shared.base import client_id_dir
+from shared.base import client_id_dir, generate_https_urls
 from shared.conf import get_configuration_object, get_resource_exe
 from shared.defaults import default_vgrid
 from shared.fileio import pickle, unpickle, unpickle_and_change_status, \
@@ -875,7 +875,9 @@ while True:
 
                 notify_user_thread(
                     expired,
-                    configuration.myfiles_py_location,
+                    generate_https_urls(configuration,
+                                        '%(auto_base)s/%(auto_bin)s/ls,py',
+                                        {}),
                     'EXPIRED',
                     logger,
                     False,

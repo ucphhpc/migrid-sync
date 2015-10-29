@@ -147,6 +147,31 @@ def force_unicode(val):
         return val.decode("utf8")
     return val
 
+def generate_https_urls(configuration, url_template, helper_dict):
+    """Generate a string with one or more URLS for enabled https login
+    methods. The url_template is filled with helper_dict, the best available
+    auto_bin web provider method and in turn with the auto_base parameter set
+    to the HTTPS URL of enabled login method in prioritized order.
+    """
+    local_helper = {}
+    local_helper.update(helper_dict)
+    local_helper['auto_bin'] = 'cgi-bin'
+    if configuration.site_enable_wsgi:
+        local_helper['auto_bin'] = 'wsgi-bin'
+    cert_url = configuration.migserver_https_cert_url
+    oid_url = configuration.migserver_https_oid_url
+    locations = []
+    for i in configuration.site_login_methods:
+        if i.endswith('cert') and not cert_url in locations:
+            locations.append(cert_url)
+        elif i.endswith('oid') and not oid_url in locations:
+            locations.append(oid_url)
+    filled_list = []
+    for https_base in locations:
+        local_helper['auto_base'] = https_base
+        filled_list.append(url_template % local_helper)
+    return '\nor\n'.join(filled_list)
+
 
 if __name__ == '__main__':
     orig_id = '/X=ab/Y=cdef ghi/Z=klmn'

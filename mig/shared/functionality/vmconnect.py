@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # vmconnect - connect to virtual machine
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +27,8 @@
 #
 
 """Virtual machine connection back end functionality"""
+
+import os
 
 import shared.returnvalues as returnvalues
 from shared import vms
@@ -85,7 +87,16 @@ Please contact the Grid admins %s if you think they should be enabled.
     vnc_menu_height = 24
     vnc_display_height += vnc_menu_height
     password = vms.vnc_jobid(accepted['job_id'][0])
-
+    cert_base = configuration.migserver_https_cert_url
+    oid_base = configuration.migserver_https_oid_url
+    if os.environ['REQUEST_URI'].startswith(cert_base):
+        https_base = cert_base
+    elif os.environ['REQUEST_URI'].startswith(oid_base):
+        https_base = oid_base
+    else:
+        logger.warning("unexpected REQUEST_URI: %(REQUEST_URI)s" % os.environ)
+        https_base = cert_base
+        
     # Do an "intoN" then map to acsii
 
     output_objects.append({'object_type': 'html_form', 'text'
@@ -94,8 +105,7 @@ Please contact the Grid admins %s if you think they should be enabled.
                                vnc_display_width,
                                vnc_display_height,
                                password,
+                               https_base,
                                )})
 
     return (output_objects, status)
-
-

@@ -33,7 +33,7 @@ import threading
 from email.mime.text import MIMEText
 from urllib import quote
 
-from shared.base import force_utf8
+from shared.base import force_utf8, generate_https_urls
 from shared.defaults import email_keyword_list, job_output_dir
 from shared.settings import load_settings
 from shared.validstring import is_valid_email_address
@@ -45,7 +45,6 @@ try:
     from shared.usagerecord import UsageRecord
 except Exception, err:
     pass
-
 
 def create_notify_message(
     jobdict,
@@ -60,9 +59,7 @@ def create_notify_message(
     txt = ''
     jobid = jobdict['JOB_ID']
     job_retries = jobdict.get('RETRIES', configuration.job_retries)
-
-    var_dict = {'https_default_url': configuration.migserver_https_default_url,
-                'jobid': jobid, 'retries': job_retries,
+    var_dict = {'jobid': jobid, 'retries': job_retries,
                 'out_dir': job_output_dir,
                 'site' : configuration.short_title}
 
@@ -81,10 +78,14 @@ def create_notify_message(
 """
     if status == 'SUCCESS':
         header = '%s JOB finished' % configuration.short_title
+        var_dict['generated_links'] = generate_https_urls(
+            configuration,
+            '%(auto_base)s/%(auto_bin)s/jobstatus.py?job_id=%(jobid)s;flags=i',
+            var_dict)
         txt += \
             '''
 Your %(site)s job with JOB ID %(jobid)s has finished and full status is available at:
-%(https_default_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
+%(generated_links)s
 
 The job commands and their exit codes:
 ''' % var_dict
@@ -94,32 +95,48 @@ The job commands and their exit codes:
             status_fd.close()
         except Exception, err:
             txt += 'Could not be read (Internal error?): %s' % err
+        var_dict['generated_stdout'] = generate_https_urls(
+            configuration,
+            '%(auto_base)s/cert_redirect/%(out_dir)s/%(jobid)s/%(jobid)s.stdout',
+            var_dict)
+        var_dict['generated_stderr'] = generate_https_urls(
+            configuration,
+            '%(auto_base)s/cert_redirect/%(out_dir)s/%(jobid)s/%(jobid)s.stderr',
+            var_dict)
         txt += \
             '''
-Link to stdout file:
-%(https_default_url)s/cert_redirect/%(out_dir)s/%(jobid)s/%(jobid)s.stdout (might not be available)
+Link to stdout file (might not be available):
+%(generated_stdout)s
 
-Link to stderr file:
-%(https_default_url)s/cert_redirect/%(out_dir)s/%(jobid)s/%(jobid)s.stderr (might not be available)
+Link to stderr file (might not be available):
+%(generated_stderr)s
 ''' % var_dict
     elif status == 'FAILED':
 
         header = '%s JOB Failed' % configuration.short_title
+        var_dict['generated_links'] = generate_https_urls(
+            configuration,
+            '%(auto_base)s/%(auto_bin)s/jobstatus.py?job_id=%(jobid)s;flags=i',
+            var_dict)
         txt += \
             '''
 The job with JOB ID %(jobid)s has failed after %(retries)s retries!
 This may be due to internal errors, but full status is available at:
-%(https_default_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
+%(generated_links)s
 
 Please contact the %(site)s team if the problem occurs multiple times.
 ''' % var_dict
     elif status == 'EXPIRED':
         header = '%s JOB Expired' % configuration.short_title
+        var_dict['generated_links'] = generate_https_urls(
+            configuration,
+            '%(auto_base)s/%(auto_bin)s/jobstatus.py?job_id=%(jobid)s;flags=i',
+            var_dict)
         txt += \
             '''
 Your %(site)s job with JOB ID %(jobid)s has expired, after remaining in the queue for too long.
 This may be due to internal errors, but full status is available at:
-%(https_default_url)s/cgi-bin/jobstatus.py?job_id=%(jobid)s;flags=i
+%(generated_links)s
 
 Please contact the %(site)s team for details about expire policies.
 ''' % var_dict
@@ -154,25 +171,30 @@ Please contact the %(site)s team for details about expire policies.
 URL in a browser:
 '''
             if request_type.startswith('vgrid'):
-                txt += \
-                    '%s/cgi-bin/adminvgrid.py?vgrid_name=%s'\
-                    % (configuration.migserver_https_default_url,
-                       quote(target_name))
+                txt += generate_https_urls(
+                    configuration,
+                    '%(auto_base)s/%(auto_bin)s/adminvgrid.py?vgrid_name=' + \
+                    quote(target_name),
+                    var_dict)
             elif request_type.startswith('resource'):
-                txt += \
-                    '%s/cgi-bin/resadmin.py?unique_resource_name=%s'\
-                    % (configuration.migserver_https_default_url,
-                       quote(target_name))
+                txt += generate_https_urls(
+                    configuration,
+                    '%(auto_base)s/%(auto_bin)s/resadmin.py?unique_resource_name=' + \
+                    quote(target_name),
+                    var_dict)
             txt += ' and add %s as %s.\n\n' % (from_id, entity)
         else:
             txt += 'INVALID REQUEST TYPE: %s\n\n' % request_type
+
         txt += """
 If the message didn't include any contact information you may still be able to
 reply using one of the message links on the profile page for the sender:
-%s
-        """ % '%s/cgi-bin/viewuser.py?cert_id=%s'\
-                    % (configuration.migserver_https_default_url,
-                       quote(reply_to))
+"""
+        txt += generate_https_urls(
+            configuration,
+            '%(auto_base)s/%(auto_bin)s/viewuser.py?cert_id=' + \
+            quote(reply_to),
+            var_dict)
     elif status == 'PASSWORDREMINDER':
         from_id = args_list[0]
         password = args_list[1]
@@ -264,6 +286,8 @@ def send_email(
         mime_msg['Subject'] = subject
         mime_msg['From'] = configuration.smtp_sender
         mime_msg['To'] = recipients
+        logger.debug('sending email to %s:\n%s' % (recipients,
+                                                   mime_msg.as_string()))
         server = smtplib.SMTP(configuration.smtp_server)
         server.set_debuglevel(0)
         errors = server.sendmail(configuration.smtp_sender,

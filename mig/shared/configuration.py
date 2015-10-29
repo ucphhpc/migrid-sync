@@ -104,9 +104,10 @@ def fix_missing(config_file, verbose=True):
         'trac_id_field': 'email',
         'migserver_http_url': 'http://%%(server_fqdn)s',
         'backup_http_urls': '',
-        'migserver_https_url': 'https://%%(server_fqdn)s',
-        'backup_https_urls': '',
-        'myfiles_py_location': 'https://%%(server_fqdn)s/cgi-bin/ls.py',
+        'backup_https_cert_urls': '',
+        'backup_https_oid_urls': '',
+        'backup_https_sid_urls': '',
+        'myfiles_py_location': '',
         'mig_server_id': '%s.0' % fqdn,
         'empty_job_name': 'no_suitable_job-',
         'smtp_server': fqdn,
@@ -259,6 +260,7 @@ class Configuration:
     site_advanced_vgrid_links = []
     site_vgrid_creators = [('distinguished_name', '.*')]
     site_vgrid_label = 'VGrid'
+    # Allowed signup and login methods in prioritized order
     site_signup_methods = ['extcert']
     site_login_methods = ['extcert']
     hg_path = ''
@@ -320,15 +322,13 @@ class Configuration:
     mig_system_files = ''
     empty_job_name = ''
     migserver_http_url = ''
-    backup_http_urls = ''
-    migserver_https_url = ''
     migserver_https_cert_url = ''
     migserver_https_oid_url = ''
     migserver_https_sid_url = ''
-    # Default entry point for users: i.e. prefer cert or oid url for links
-    migserver_https_default_url = ''
-    backup_https_urls = ''
-    migserver_https_default_url = ''
+    backup_http_urls = ''
+    backup_https_cert_urls = ''
+    backup_https_oid_urls = ''
+    backup_https_sid_urls = ''
     sleep_period_for_empty_jobs = ''
     min_seconds_between_live_update_requests = 0
     cputime_for_empty_jobs = 0
@@ -521,15 +521,7 @@ class Configuration:
             self.migserver_http_url = config.get('GLOBAL',
                     'migserver_http_url')
             self.backup_http_urls = config.get('GLOBAL',
-                    'backup_http_urls')
-            self.migserver_https_url = config.get('GLOBAL',
-                    'migserver_https_url')
-            self.backup_https_urls = config.get('GLOBAL',
-                    'backup_https_urls')
-            self.failover_http_urls = [self.migserver_http_url]\
-                 + self.backup_http_urls.split()
-            self.failover_https_urls = [self.migserver_https_url]\
-                 + self.backup_https_urls.split()
+                                               'backup_http_urls')
             self.sleep_period_for_empty_jobs = config.get('GLOBAL',
                     'sleep_period_for_empty_jobs')
             self.min_seconds_between_live_update_requests = \
@@ -537,8 +529,6 @@ class Configuration:
                            'min_seconds_between_live_update_requests')
             self.cputime_for_empty_jobs = config.get('GLOBAL',
                     'cputime_for_empty_jobs')
-            self.myfiles_py_location = config.get('GLOBAL',
-                    'myfiles_py_location')
             self.sleep_secs = config.get('MONITOR', 'sleep_secs')
             self.sleep_update_totals = config.get('MONITOR',
                     'sleep_update_totals')
@@ -570,23 +560,31 @@ class Configuration:
         if config.has_option('GLOBAL', 'migserver_https_cert_url'):
             self.migserver_https_cert_url = config.get('GLOBAL',
                                                        'migserver_https_cert_url')
-        else:
-            self.migserver_https_cert_url = self.migserver_https_url
         if config.has_option('GLOBAL', 'migserver_https_oid_url'):
             self.migserver_https_oid_url = config.get('GLOBAL',
                                                        'migserver_https_oid_url')
-        else:
-            self.migserver_https_oid_url = self.migserver_https_url
         if config.has_option('GLOBAL', 'migserver_https_sid_url'):
             self.migserver_https_sid_url = config.get('GLOBAL',
                                                        'migserver_https_sid_url')
-        else:
-            self.migserver_https_sid_url = self.migserver_https_url
-        if config.has_option('GLOBAL', 'migserver_https_default_url'):
-            self.migserver_https_default_url = config.get('GLOBAL',
-                                                       'migserver_https_default_url')
-        else:
-            self.migserver_https_default_url = self.migserver_https_cert_url
+
+        if config.has_option('GLOBAL', 'backup_https_cert_urls'):
+            self.backup_https_cert_urls = config.get('GLOBAL',
+                                                     'backup_https_cert_urls')
+        if config.has_option('GLOBAL', 'backup_https_oid_urls'):
+            self.backup_https_oid_urls = config.get('GLOBAL',
+                                                    'backup_https_oid_urls', '')
+        if config.has_option('GLOBAL', 'backup_https_sid_urls'):
+            self.backup_https_sid_urls = config.get('GLOBAL',
+                                                    'backup_https_sid_urls', '')
+        self.failover_http_urls = [self.migserver_http_url]\
+                                  + self.backup_http_urls.split()
+        self.failover_https_cert_urls = [self.migserver_https_cert_url]\
+                                        + self.backup_https_cert_urls.split()
+        self.failover_https_oid_urls = [self.migserver_https_oid_url]\
+                                       + self.backup_https_oid_urls.split()
+        self.failover_https_sid_urls = [self.migserver_https_sid_url]\
+                                       + self.backup_https_sid_urls.split()
+
         if config.has_option('GLOBAL', 'rate_limit_db'):
             self.rate_limit_db = config.get('GLOBAL', 'rate_limit_db')
         else:
@@ -1176,6 +1174,24 @@ class Configuration:
             self.site_credits_image = config.get('SITE', 'credits_image')
         else:
             self.site_credits_image = '%s/copyright.png' % self.site_images
+
+        if config.has_option('SITE', 'myfiles_py_location'):
+            self.myfiles_py_location = config.get('GLOBAL',
+                    'myfiles_py_location')
+        else:
+            web_bin = 'cgi-bin'
+            if self.site_enable_wsgi:
+                web_bin = 'wsgi-bin'
+            rel_url = os.path.join(web_bin, 'ls.py')
+            cert_url = os.path.join(self.migserver_https_cert_url, rel_url)
+            oid_url = os.path.join(self.migserver_https_oid_url, rel_url)
+            locations = []
+            for i in self.site_login_methods:
+                if i.endswith('cert') and not cert_url in locations:
+                    locations.append(cert_url)
+                elif i.endswith('oid') and not oid_url in locations:
+                    locations.append(oid_url)
+            self.myfiles_py_location = ' '.join(locations)
 
         # set test modes if requested
 

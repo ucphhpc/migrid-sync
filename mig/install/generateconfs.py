@@ -81,6 +81,8 @@ if '__main__' == __name__:
         'daemon_pubkey',
         'daemon_show_address',
         'alias_field',
+        'signup_methods',
+        'login_methods',
         'hg_path',
         'hgweb_scripts',
         'trac_admin_path',

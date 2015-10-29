@@ -6,7 +6,7 @@
 #
 # vms - shared virtual machine functions
 #
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -234,6 +234,7 @@ def vnc_applet(
     width,
     height,
     password,
+    https_base,
     ):
     """Generates the html tag needed for loading the vnc applet.
     Takes care of fixing representation of the password.
@@ -263,8 +264,7 @@ def vnc_applet(
                                   configuration.vm_applet_port)
         
     applet = '<APPLET CODE="%s" ARCHIVE="%s" ' % (code_hook, jar_name)
-    applet += ' CODEBASE="%s/public/%s/"' % (configuration.migserver_https_url,
-                                             vnc_dir)
+    applet += ' CODEBASE="%s/public/%s/"' % (https_base, vnc_dir)
     applet += ' WIDTH="%d" HEIGHT="%d">' % (width, height)
     applet += '<PARAM NAME="PORT" VALUE="%d">' % configuration.vm_client_port
     applet += '<PARAM NAME="PASSWORD" VALUE="%s">' % password
