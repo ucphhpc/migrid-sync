@@ -572,7 +572,8 @@ if (jQuery) (function($){
             }
             // if no clickaction is provided, default to opening and showing
             if ($(el).hasClass('directory')) {
-                $(".fm_folders [rel_path='"+$(el).attr(pathAttribute)+"']").click();
+                /* NOTE: careful to avoid breakage with single quote in paths */
+                $('.fm_folders [rel_path="'+$(el).attr(pathAttribute)+'"]').click();
             } else {
                 // Do stuff with files.
                 callbacks['show']('action', el, null);
@@ -1319,8 +1320,6 @@ if (jQuery) (function($){
 
                         console.debug('append folder html entries');
                         folder_pane.append(folders);
-                        //$("#fm_debug").html("<textarea cols=200 rows=15>"+$.fn.dump($(".fm_folders [rel_path='/']"))+"\n"+$(".fm_folders").html()+"</textarea>").show();
-
                         folder_pane.removeClass('wait').removeClass("leftpad");
 
                         console.debug('show active folder');
@@ -1995,7 +1994,7 @@ if (jQuery) (function($){
             $("#editor_form").ajaxForm(
                 {target: '#editor_output', dataType: 'json',
                  success: function(responseObject, statusText) {
-                     var edit_out ='';
+                     var edit_out = '';
                      var errors = $(this).renderError(responseObject);
                      var warnings = $(this).renderWarning(responseObject);
                      // Reset any previous CSS
@@ -2091,7 +2090,8 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
         }
         if (open_dirs && $(el).hasClass("directory")) {
             // mimic click on folder pane item if dir is not selectable
-            $(".fm_folders [rel_path='"+$(el).attr(pathAttribute)+"']").click();
+            /* NOTE: careful to avoid breakage with single quote in paths */
+            $('.fm_folders [rel_path="'+$(el).attr(pathAttribute)+'"]').click();
             return;
         }
         callback(p);
