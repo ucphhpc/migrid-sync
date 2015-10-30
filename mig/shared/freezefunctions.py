@@ -31,6 +31,7 @@ import base64
 import datetime
 import os
 import time
+from urllib import quote
 
 from shared.defaults import freeze_meta_filename, wwwpublic_alias, \
      public_archive_dir, public_archive_index
@@ -342,8 +343,10 @@ The user-supplied meta data and files are available below.
 <h2 class='staticpage'>Archive Files</h2>
         """
         for rel_path in frozen_files:
-            contents += """<a href='%s'>%s</a><br/>
-""" % (rel_path, rel_path)
+            # Careful to avoid problems with filenames containing single quotes
+            # and encode e.g. percent signs that would otherwise interfere
+            contents += '''<a href="%s">%s</a><br/>
+''' % (quote(rel_path), rel_path)
         contents += """
 </div>
 %s
