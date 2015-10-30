@@ -551,6 +551,10 @@ Upload other files efficiently (using chunking).
 {% for (var i=0, file; file=o.files[i]; i++) { %}
     {% var rel_path = $.fn.normalizePath("./"+file.name); %}
     {% console.log("using download rel_path: "+rel_path); %}
+    {% console.log("original delete URL: "+file.deleteUrl); %}
+    {% function encodeName(str, match) { return "filename="+encodeURIComponent(match)+";files"; }  %}
+    {% file.deleteUrl = file.deleteUrl.replace(/filename\=(.+)\;files/, encodeName);  %}
+    {% console.log("updated delete URL: "+file.deleteUrl); %}    
     <tr class="template-download fade">
         <td>
             <span class="preview">
