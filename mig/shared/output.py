@@ -37,7 +37,7 @@ from shared.objecttypes import validate
 from shared.prettyprinttable import pprint_table
 from shared.safeinput import html_escape
 
-row_name = ('even_row', 'odd_row')
+row_name = ('even', 'odd')
 
 
 def txt_table_if_have_keys(header, input_dict, keywordlist):
