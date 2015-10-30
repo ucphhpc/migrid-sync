@@ -289,6 +289,8 @@ or similarly with Debian apache 2.4 without OpenID:
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias' \
+                   --signin_methods="migcert" \
+                   --login_methods="migcert extcert" \
                    --skin=migrid-basic \
                    --apache_version=2.4
 or the same with OpenID, HSTS, WSGI, Seafile and vhost-specific certificates:
@@ -321,6 +323,8 @@ or the same with OpenID, HSTS, WSGI, Seafile and vhost-specific certificates:
                    --enable_hsts=True --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias' --alias_field=email \
+                   --signin_methods="kitoid migcert" \
+                   --login_methods="kitoid migoid migcert extcert" \
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
                    --landing_page='/wsgi-bin/dashboard.py' \
@@ -354,6 +358,8 @@ and a storage-only setup with CentOS 6.x, apache 2.2, Seafile integration and Op
                    --user_clause=User --group_clause=Group  \
                    --listen_clause='#Listen' --serveralias_clause='#ServerAlias' \
                    --alias_field=email --daemon_keycert=~/certs/combined.pem \
+                   --signin_methods="kitoid extcert" \
+                   --login_methods="kitoid extcert" \
                    --daemon_pubkey=~/certs/combined.pub \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
                    --skin=erda-ucph-science \
