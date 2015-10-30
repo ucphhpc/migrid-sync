@@ -722,7 +722,7 @@ if (jQuery) (function($){
             },
             show:   function (action, el, pos) {
                 //console.debug("show "+action+" "+el+" "+pos);
-                window.open('/cert_redirect/'+$(el).attr(pathAttribute))
+                window.open('/cert_redirect/'+$(el).attr(pathAttribute));
             },
             download:   function (action, el, pos) {
                 /*
