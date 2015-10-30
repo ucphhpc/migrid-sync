@@ -222,9 +222,11 @@ $(document).ready(function() {
 
     for visible_user_name in user_list:
         if not visible_user_name in visible_user.keys():
+            logger.error("invalid user %s (%s)" % (visible_user_name,
+                                                   visible_user))
             output_objects.append({'object_type': 'error_text',
-                                   'text': 'invalid user %s (%s)' % \
-                                   (visible_user_name, visible_user)})
+                                   'text': 'invalid user %s' % \
+                                   visible_user_name})
             continue
         user_dict = visible_user[visible_user_name]
         user_item = build_useritem_object_from_user_dict(configuration,
