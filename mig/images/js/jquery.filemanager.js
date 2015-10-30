@@ -723,7 +723,8 @@ if (jQuery) (function($){
             },
             show:   function (action, el, pos) {
                 //console.debug("show "+action+" "+el+" "+pos);
-                window.open('/cert_redirect/'+$(el).attr(pathAttribute));
+                var path_enc = encodeURI($(el).attr(pathAttribute));
+                window.open('/cert_redirect/'+path_enc);
             },
             download:   function (action, el, pos) {
                 /*
@@ -734,7 +735,8 @@ if (jQuery) (function($){
                 var file_size = $("div.bytes", el).text();
                 var max_stream_size = 64*1024*1024;
                 if (file_size > max_stream_size) {
-                    window.open('/cert_redirect/'+$(el).attr(pathAttribute))
+                    var path_enc = encodeURI($(el).attr(pathAttribute));
+                    window.open('/cert_redirect/'+path_enc);
                 } else {
                     /* Path may contain URL-unfriendly characters */
                     document.location = 'cat.py?path='
