@@ -258,7 +258,7 @@ function add_upload(div_id) {
                     field_id = "freeze_move_"+upload_fields;
                     field_name = "freeze_move_"+upload_fields;
                     wrap_id = field_id+"_wrap";
-                    if ($("#"+div_id+" > span > input[value=\'"+path+"\']").length) {
+                    if ($("#"+div_id+" > span > input[value=\\""+path+"\\"]").length) {
                         console.log("skipping duplicate path: "+path);
                         // Continue to next iteration on errors
                         return true;
@@ -273,7 +273,7 @@ function add_upload(div_id) {
                     upload_entry += " onClick=\'"+on_remove+"\'/>";
                     upload_entry += "<input type=\'text\' id=\'"+field_id+"\' ";
                     upload_entry += " name=\'" + field_name + "\' size=50 ";
-                    upload_entry += "value=\'"+path+"\' /><br / >";
+                    upload_entry += "value=\\""+path+"\\" /><br / >";
                     upload_entry += "</span>";
                     $("#"+div_id).append(upload_entry);
                     console.log("callback added upload: "+upload_entry);
