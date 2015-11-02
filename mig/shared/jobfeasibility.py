@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobfeasibility - capability of the submitted job to be executed
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -24,8 +24,6 @@
 #
 # -- END_HEADER ---
 #
-
-
 
 """Validation of job specifications against available resources - Returns a
 'Job Readiness Condition' and a dictionary containing error descriptions.
@@ -677,17 +675,34 @@ def validate_files(configuration, job, errors, mrsl_attribute,
                 missing_files.append(filename)
         else:
             dest_file = '/dev/null'
-            # We use curl since it supports all our protocols including sftp
-            # Check only first byte to limit overhead for big files
-            curl_cmd = 'curl --location --fail --silent --range 0-0 ' + \
-                       '--insecure %s -o %s' % (filename, dest_file)
-            configuration.logger.info('checking remote file with %s' % \
-                                      curl_cmd)
-            curl_result = subprocess.call(curl_cmd, stderr=subprocess.PIPE,
-                                          shell=True)
+            # We rely on (py)curl since it supports all our protocols including
+            # sftp. Check only first byte to limit overhead for big files.
+            configuration.logger.info('checking remote file with pycurl')
+            try:
+                import pycurl
+                curl = pycurl.Curl()
+                curl.setopt(pycurl.URL, filename)
+                curl.setopt(pycurl.RANGE, '0-0')
+                curl.setopt(pycurl.NOBODY, True)
+                curl.setopt(pycurl.FOLLOWLOCATION, True)
+                curl.setopt(pycurl.MAXREDIRS, 5)
+                curl.setopt(pycurl.HEADERFUNCTION, lambda x: None)
+                curl.setopt(pycurl.WRITEFUNCTION, lambda x: None)
+                curl.perform()
+                curl.getinfo(pycurl.RESPONSE_CODE)
+                curl_result = curl.getinfo(pycurl.RESPONSE_CODE)
+                curl.close()
+            except Exception, exc:
+                configuration.logger.error('failed to curl check %s : %s' % \
+                                           (filename, exc))
+                curl_result = -1
             configuration.logger.debug('got curl result %d' % curl_result)
-
-            if curl_result != 0:
+            if 200 <= curl_result and curl_result < 300:
+                configuration.logger.debug('curl success result %d' % \
+                                           curl_result)
+            else:
+                configuration.logger.warning('curl error result %d' % \
+                                             curl_result)
                 missing_files.append(filename)
 
     if missing_files:
