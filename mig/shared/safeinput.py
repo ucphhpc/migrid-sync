@@ -153,9 +153,9 @@ def __valid_contents(
     control characters.
     """
 
-    contents = force_unicode(str(contents))
-    valid_chars = force_unicode(str(valid_chars))
-    accented_chars = force_unicode(str(VALID_ACCENTED))
+    contents = force_unicode(contents)
+    valid_chars = force_unicode(valid_chars)
+    accented_chars = force_unicode(VALID_ACCENTED)
     if len(contents) < min_length:
         raise InputException('shorter than minimum length (%d)'
                              % min_length)
@@ -177,9 +177,9 @@ def __filter_contents(contents, valid_chars, include_accented=NO_ACCENTED):
     the optional include_accented argument.
     """
 
-    contents = force_unicode(str(contents))
-    valid_chars = force_unicode(str(valid_chars))
-    accented_chars = force_unicode(str(VALID_ACCENTED))
+    contents = force_unicode(contents)
+    valid_chars = force_unicode(valid_chars)
+    accented_chars = force_unicode(VALID_ACCENTED)
     result = ''
     for char in contents:
         if char in valid_chars or \
@@ -1209,7 +1209,7 @@ class InputException(Exception):
 
 if __name__ == '__main__':
     for test_cn in ('Firstname Lastname', 'Test Æøå', 'Test Überh4x0r',
-                    'Test Maybe Invalid Źacãŕ', 'Test Invalid /!$'):
+                    u'Unicode æøå', 'Test Maybe Invalid Źacãŕ', 'Test Invalid $'):
         try:
             print 'Testing valid_commonname: %s' % test_cn
             print 'Filtered commonname: %s' % filter_commonname(test_cn)
@@ -1235,3 +1235,46 @@ if __name__ == '__main__':
             print 'Accepted raw path!'
         except Exception, exc:
             print 'Rejected raw path %s : %s' % (test_path, exc)            
+
+    autocreate_defaults = {
+                    'openid.ns.sreg': [''],
+            'openid.sreg.nickname': [''],
+            'openid.sreg.fullname': [''],
+            'openid.sreg.o': [''],
+            'openid.sreg.ou': [''],
+            'openid.sreg.timezone': [''],
+            'openid.sreg.short_id': [''],
+            'openid.sreg.full_name': [''],
+            'openid.sreg.organization': [''],
+            'openid.sreg.organizational_unit': [''],
+            'openid.sreg.email': [''],
+            'openid.sreg.country': ['DK'],
+            'openid.sreg.state': [''],
+            'openid.sreg.locality': [''],
+            'openid.sreg.role': [''],
+            # Please note that we only get sreg.required here if user is
+            # already logged in at OpenID provider when signing up so
+            # that we do not get the required attributes
+            'openid.sreg.required': [''],
+            'openid.ns': [''],
+            'password': [''],
+            'comment': ['(Created through autocreate)'],
+            'proxy_upload': [''],
+            'proxy_uploadfilename': [''],
+        }
+    user_arguments_dict = {'openid.ns.sreg': ['http://openid.net/extensions/sreg/1.1'], 'openid.sreg.ou': ['nbi'], 'openid.sreg.nickname': ['brs278@ku.dk'], 'openid.sreg.fullname': ['Jonas Bardino'], 'openid.sreg.role': ['tap'], 'openid.sreg.o': ['science'], 'openid.sreg.email': ['bardino@nbi.ku.dk']}
+    (accepted, rejected) = validated_input(user_arguments_dict, autocreate_defaults)
+    print "Accepted:"
+    for (key, val) in accepted.items():
+        print "\t%s: %s" % (key, val)
+    print "Rejected:"
+    for (key, val) in rejected.items():
+        print "\t%s: %s" % (key, val)
+    user_arguments_dict['openid.sreg.fullname'] = [force_unicode('Jonas Æøå Bardino')]
+    (accepted, rejected) = validated_input(user_arguments_dict, autocreate_defaults)
+    print "Accepted:"
+    for (key, val) in accepted.items():
+        print "\t%s: %s" % (key, val)
+    print "Rejected:"
+    for (key, val) in rejected.items():
+        print "\t%s: %s" % (key, val)

@@ -33,7 +33,7 @@ import os
 
 # REJECT_UNSET is not used directly but exposed to functionality
 
-from shared.base import requested_page
+from shared.base import requested_page, force_utf8
 from shared.findtype import is_user
 from shared.httpsclient import extract_client_cert, extract_client_openid
 from shared.safeinput import validated_input, REJECT_UNSET
@@ -46,7 +46,7 @@ def warn_on_rejects(rejects, output_objects):
             for err in err_list:
                 output_objects.append({'object_type': 'error_text',
                         'text': 'input parsing error: %s: %s: %s'
-                         % (key, err[0], err[1])})
+                         % (key, force_utf8(err[0]), force_utf8(err[1]))})
 
 
 def merge_defaults(user_input, defaults):
