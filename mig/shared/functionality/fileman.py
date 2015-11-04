@@ -424,13 +424,13 @@ def js_tmpl(entry_path='/', enable_submit='true', preview='true'):
 
 <!-- The template to display files available for upload -->
 <script id="template-upload" type="text/x-tmpl">
-{% console.log("using upload template"); %}
-{% console.log("... with upload files: "+$.fn.dump(o)); %}
+{% console.debug("using upload template"); %}
+{% console.debug("... with upload files: "+$.fn.dump(o)); %}
 {% var dest_dir = "./" + $("#fancyfileuploaddest").val(); %}
-{% console.log("using upload dest: "+dest_dir); %}
+{% console.debug("using upload dest: "+dest_dir); %}
 {% for (var i=0, file; file=o.files[i]; i++) { %}
     {% var rel_path = $.fn.normalizePath(dest_dir+"/"+file.name); %}
-    {% console.log("using upload rel_path: "+rel_path); %}
+    {% console.debug("using upload rel_path: "+rel_path); %}
     <tr class="template-upload fade">
         <td>
             <span class="preview"></span>
@@ -456,15 +456,14 @@ def js_tmpl(entry_path='/', enable_submit='true', preview='true'):
 </script>
 <!-- The template to display files available for download -->
 <script id="template-download" type="text/x-tmpl">
-{% console.log("using download template"); %}
-{% console.log("... with download files: "+$.fn.dump(o)); %}
+{% console.debug("using download template"); %}
+{% console.debug("... with download files: "+$.fn.dump(o)); %}
 {% for (var i=0, file; file=o.files[i]; i++) { %}
     {% var rel_path = $.fn.normalizePath("./"+file.name); %}
-    {% console.log("using download rel_path: "+rel_path); %}
-    {% console.log("original delete URL: "+file.deleteUrl); %}
+    {% console.debug("using download rel_path: "+rel_path); %}
+    {% console.debug("original delete URL: "+file.deleteUrl); %}
     {% function encodeName(str, match) { return "filename="+encodeURIComponent(match)+";files"; }  %}
-    {% file.deleteUrl = file.deleteUrl.replace(/filename\=(.+)\;files/, encodeName);  %}
-    {% console.log("updated delete URL: "+file.deleteUrl); %}    
+    {% if (file.deleteUrl != undefined) { file.deleteUrl = file.deleteUrl.replace(/filename\=(.+)\;files/, encodeName); console.debug("updated delete URL: "+file.deleteUrl); } %}    
     <tr class="template-download fade">
         <td>
             <span class="preview">

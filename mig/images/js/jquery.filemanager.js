@@ -53,7 +53,8 @@
 
 */
 
-/* switch on/off console debug globally here */
+/* switch on/off console log and debug log globally here */
+var enable_log = true;
 var enable_debug = false;
 
 /*
@@ -62,7 +63,7 @@ var enable_debug = false;
    without a trace.
 */
 var noOp = function(){}; // no-op function
-if (!window.console || !enable_debug) {
+if (!window.console || !enable_log) {
     console = {
         debug: noOp,
         log: noOp,
@@ -88,7 +89,8 @@ if (!enable_debug) {
 }
 
 if (jQuery) (function($){
-
+    console.info("console log enabled")
+    console.debug("console debug log enabled")
     var pathAttribute = 'rel_path';
     var sorting = [[0, 0]];
 
@@ -527,9 +529,9 @@ if (jQuery) (function($){
                                                 var errors = $(this).renderError(jsonRes);
                                                 var warnings = $(this).renderWarning(jsonRes);
                                                 if (errors.length > 0) {
-                                                    console.debug(errors);
+                                                    console.error(errors);
                                                 } else if (warnings.length > 0) {
-                                                    console.debug(warnings);
+                                                    console.warn(warnings);
                                                 }
                                                 for (i = 0; i < jsonRes.length; i++) {
                                                     if (jsonRes[i].object_type == 'image_setting') {
@@ -545,11 +547,11 @@ if (jQuery) (function($){
                             if (errors.length > 0) {
                                 $("#fm_preview_right_output").html(errors);
                                 $("#fm_preview_left_output").html('');
-                                console.debug(errors);
+                                console.error(errors);
                             } else if (warnings.length > 0) {
                                 $("#fm_preview_right_output").html(warnings);
                                 $("#fm_preview_left_output").html('');
-                                console.debug(warnings);
+                                console.warn(warnings);
                             } else {
                                 $("#fm_preview_right_output").html(right_html_out);
                                 $("#fm_preview_left_output").html(left_html_out);
@@ -799,6 +801,9 @@ if (jQuery) (function($){
                         var activeSet = activeEntry.attr("class");
                         activeEntry.addClass("currentSet");
                         enable_editorarea_editor(activeSet)
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.error("editor load error: "+textStatus);
                     }
                 });
 
@@ -1094,7 +1099,7 @@ if (jQuery) (function($){
             if (options['actions'][name] == undefined) {
                 options['actions'][name] = callbacks[name];
             } else {
-                //console.log(name + " overloaded");
+                //console.debug(name + " overloaded");
             }
         });
 
@@ -1264,7 +1269,7 @@ if (jQuery) (function($){
 
                             /* Optimize rendering of intermediate dirs */
                             if (options.subPath) {
-                                console.log("skip subpath rendering for "+path);
+                                console.debug("skip subpath rendering for "+path);
                                 continue;
                             }
 
@@ -1444,7 +1449,7 @@ if (jQuery) (function($){
                             $("#fm_filemanager").on('mouseover',
                                                     "tr.file:not(.ui-draggable), tr.directory:not(.ui-draggable), li.directory:not(.ui-draggable)",
                                                     function() {
-                                                        //console.log("adding draggable to elem");
+                                                        //console.debug("adding draggable to elem");
                                                         $(this).draggable({
                                                             cursorAt: { cursor: 'move', left: -10 },
                                                             distance: 5,
@@ -1458,7 +1463,7 @@ if (jQuery) (function($){
                                                                 return drag_elem;
                                                             }
                                                         });
-                                                        //console.log("added draggable to elem");
+                                                        //console.debug("added draggable to elem");
                                                     });
 
                             $("#fm_filemanager").on('mouseover',
@@ -2189,16 +2194,21 @@ $.fn.delete_upload = function(name, dest_dir) {
                     $.each(files, function (index, file) {
                         //console.debug("found file entry in results: "+index);
                         if (file.error != undefined) {
-                            console.debug("found file error: "+file.error);
+                            console.error("delete_upload file error: "+file.error);
                         } else if (file[name]) {
                             //console.debug("found success marker: "+file[name]);
                             deleted = true;
+                        } else {
+                            console.error("delete_upload unexpected: "+$.fn.dump(file));
                         }
                         // Break upon first hit
                         return false;
                     });
                 }
             });
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("delete_upload error: "+textStatus);
         }
     });
     //console.debug("return deleted: "+deleted);
@@ -2226,16 +2236,21 @@ $.fn.move_upload = function(name, dest_dir) {
                     $.each(files, function (index, file) {
                         //console.debug("found file entry in results: "+index);
                         if (file.error != undefined) {
-                            console.debug("found file error: "+file.error);
+                            console.error("move_upload file error: "+file.error);
                         } else if (file[name]) {
                             //console.debug("found success marker: "+file[name]);
                             moved = true;
+                        } else {
+                            console.error("move_upload unexpected: "+$.fn.dump(file));
                         }
                         // Break upon first hit
                         return false;
                     });
                 }
             });
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("move_upload error: "+textStatus);
         }
     });
     //console.debug("return moved: "+moved);
@@ -2279,7 +2294,9 @@ function mig_fancyuploadchunked_init(name, callback) {
         $("#fancyuploadchunked_output").html(html_msg).fadeIn(fadein_ms,
                                                               function() {
                                                                   $(this).stop();
-                                                                  $(this).fadeOut(fadeout_ms);
+                                                                  if (fadeout_ms > 0) {
+                                                                      $(this).fadeOut(fadeout_ms);
+                                                                  }
                                                               }
                                                              );
     }
@@ -2299,6 +2316,8 @@ function mig_fancyuploadchunked_init(name, callback) {
         showMessage("Warning: "+msg, html_msg, fadein_ms, fadeout_ms);
     }
     function showError(msg, fadein_ms, fadeout_ms) {
+        /* Do not auto fade out error messages by default */
+        if (fadeout_ms == undefined) fadeout_ms = -1;
         var html_msg = "<div class='error' style='margin: 20px;'>";
         html_msg += "<span class='iconspace'>"+msg+"</span></div>";
         showMessage("Error: "+msg, html_msg, fadein_ms, fadeout_ms);
@@ -2438,7 +2457,7 @@ function mig_fancyuploadchunked_init(name, callback) {
                         delete file.moveUrl;
                         console.debug("updated file entry: "+$.fn.dump(file));
                     } else {
-                        showError("automatic move to destination failed!");
+                        showError("automatic move of "+file.name+" to "+file.moveDest+" failed!");
                     }
                 });
                 /* Finally pass control over to native done handler */
@@ -2761,7 +2780,7 @@ function mig_imagesettings_init(name, path, options) {
                 }
                 else if (settings_status_list[i].toLowerCase() === 'updating') {
                     html_out += '<ul class="updating">';
-                    console.log('mig_imagesettings_init: extension_list[' +i+ ']: ' + extension_list[i] + ' <- updating');
+                    console.debug('mig_imagesettings_init: extension_list[' +i+ ']: ' + extension_list[i] + ' <- updating');
                     html_out += '<li title="Updating" ';
                 }
                 html_out += 'extension="' + extension_list[i] + '">';
@@ -2814,7 +2833,7 @@ function mig_imagesettings_init(name, path, options) {
             dataType: "json",
             cache: false,
         }).success(function (jsonRes) {
-            console.log('imagesettings edit jsonRes.length: ' + jsonRes.length);
+            console.debug('imagesettings edit jsonRes.length: ' + jsonRes.length);
             var i;
             var errors = $(this).renderError(jsonRes);
             var warnings = $(this).renderWarning(jsonRes);
@@ -2899,7 +2918,7 @@ function mig_imagesettings_init(name, path, options) {
                 dataType: "json",
                 cache: false,
             }).success(function (jsonRes) {
-                console.log('imagesettings edit jsonRes.length: ' + jsonRes.length);
+                console.debug('imagesettings edit jsonRes.length: ' + jsonRes.length);
                 var i;
                 var errors = $(this).renderError(jsonRes);
                 var warnings = $(this).renderWarning(jsonRes);
@@ -2988,7 +3007,7 @@ function mig_imagesettings_init(name, path, options) {
 
     var do_d = function(text) {
 
-        console.log('mig_imagesettings dialog: ' + name + ', ' + text + ', ' + path);
+        console.debug('mig_imagesettings dialog: ' + name + ', ' + text + ', ' + path);
         $("#" + name).dialog("open");
 
         show_list();

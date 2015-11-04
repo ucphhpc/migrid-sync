@@ -62,7 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 Preview = function (selfname, debug) {
-	console.log('Preview: constructor');
+	console.debug('Preview: constructor');
     this.selfname = selfname;
     this.image = this.init_image();
     this.histogram = this.init_histogram();
