@@ -493,12 +493,12 @@ def run(configuration):
         #"verbose": 2,
         #"enable_loggers": ["lock_manager", "property_manager", "http_authenticator", ...]
         #"debug_methods": ["COPY", "DELETE", "GET", "HEAD", "LOCK", "MOVE", "OPTIONS", "PROPFIND", "PROPPATCH", "PUT", "UNLOCK"],
-        #"verbose": 2,
-        #"enable_loggers": ["http_authenticator"],
-        #"debug_methods": ["PROPFIND", "PUT"],
-        "verbose": 1,
-        "enable_loggers": [],
-        "debug_methods": [],
+        "verbose": 2,
+        "enable_loggers": ["http_authenticator"],
+        "debug_methods": ["PROPFIND", "PUT"],
+        #"verbose": 1,
+        #"enable_loggers": [],
+        #"debug_methods": [],
         "propsmanager": True,      # True: use property_manager.PropertyManager
         "locksmanager": True,      # True: use lock_manager.LockManager
         # Allow last modified timestamp updates from client to support rsync -a
