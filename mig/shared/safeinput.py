@@ -66,9 +66,14 @@ _ACCENT_CATS = frozenset( ('Lu', 'Ll', 'Lt', ))
 VALID_ACCENTED = \
     'áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ'
 
+# IMPORTANT: do not add '$' - it is dangerous in paths
+
+SAFE_CURRENCY = '¤€£¢¥₣₤'
+
 # We must be careful about characters that have special regex meaning
 
-VALID_PATH_CHARACTERS = letters + digits + "/.,_-+=" + " :;+@%" + "()~!¤&€£¶'"
+VALID_PATH_CHARACTERS = letters + digits + SAFE_CURRENCY + "/.,_-+±×÷=½¾" + \
+                        " " + "'" + ":;@§%‰()~!&¶"
 
 # Plain text here only - *no* html tags, i.e. no '<' or '>' !!
 
