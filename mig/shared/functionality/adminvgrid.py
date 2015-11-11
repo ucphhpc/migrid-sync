@@ -139,6 +139,8 @@ def vgrid_add_remove_table(client_id,
         </tbody></table>
 '''
         out.append({'object_type': 'html_form', 'text': table})
+
+    # TODO: add remove vgrid button if only inherited owners
     if direct:
         form = '''
       <form method="post" action="rm%(scriptname)s.py">
@@ -170,6 +172,7 @@ def vgrid_add_remove_table(client_id,
                 form += \
 """          <tr><td><input type=radio name='%s' value='%s' /></td>
                  <td>%s</td></tr>""" % (id_field, elem, elem)
+
         form += '''
         </tbody></table>
         <input type="submit" value="Remove %s" />

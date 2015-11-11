@@ -651,6 +651,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                 filled_argument = argument
                 for (key, val) in expand_map.items():
                     filled_argument = filled_argument.replace(key, val)
+                logger.debug('expanded argument %s to %s' % (argument,
+                        filled_argument))
                 self.__workflow_info(configuration, rule['vgrid_name'],
                         'expanded argument %s to %s' % (argument,
                         filled_argument))
