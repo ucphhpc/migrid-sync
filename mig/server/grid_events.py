@@ -77,6 +77,7 @@ _unit_periods = {
     'w': 7 * 24 * 60 * 60,
     }
 _hits_lock = threading.Lock()
+_trigger_event = '_trigger_event'
 (configuration, logger) = (None, None)
 
 
@@ -91,9 +92,19 @@ def make_fake_event(path, state):
     dir_map = {'modified': DirModifiedEvent,
                'created': DirCreatedEvent, 'deleted': DirDeletedEvent}
     if os.path.isdir(path):
-        return dir_map[state](path)
+        fake = dir_map[state](path)
     else:
-        return file_map[state](path)
+        fake= file_map[state](path)
+    # mark it a trigger event
+    setattr(fake, _trigger_event, True)
+    return fake
+
+
+def is_fake_event(event):
+    """Check if event came from our trigger-X rules rather than a real file
+    system change.
+    """
+    return getattr(event, _trigger_event, False)
 
 
 def extract_time_in_secs(rule, field):
@@ -599,9 +610,10 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         # TODO: consider if we should skip modified when just created
 
         # We receive modified events even when only atime changed - ignore them
+        # but make sure we handle our fake trigger-modified events
 
-        if state == 'modified' and not recently_modified(src_path,
-                time_stamp):
+        if state == 'modified' and not is_fake_event(event) and not \
+               recently_modified(src_path, time_stamp):
             logger.info('skip %s which only changed atime' % src_path)
             self.__workflow_info(configuration, rule['vgrid_name'],
                                  'skip %s modified access time only event'
