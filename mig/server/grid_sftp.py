@@ -74,6 +74,7 @@ from StringIO import StringIO
 try:
     import paramiko
     import paramiko.util
+    from paramiko.common import DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
 except ImportError:
     print "ERROR: the python paramiko module is required for this daemon"
     sys.exit(1)
@@ -686,13 +687,18 @@ def accept_client(client, addr, root_dir, users, jobs, host_rsa_key, conf={}):
         if not usermap.has_key(user_obj.username):
             usermap[user_obj.username] = []
         usermap[user_obj.username].append(user_obj)
-    
+
+    window_size = conf.get('window_size', DEFAULT_WINDOW_SIZE)
+    max_packet_size = conf.get('max_packet_size', DEFAULT_MAX_PACKET_SIZE)
     host_key_file = StringIO(host_rsa_key)
     host_key = paramiko.RSAKey(file_obj=host_key_file)
-    transport = paramiko.Transport(client)
+    transport = paramiko.Transport(client, default_window_size=window_size,
+                                   default_max_packet_size=max_packet_size)
     transport.logger = logger
     transport.load_server_moduli()
     transport.add_server_key(host_key)
+    logger.info("using transport window_size %d and max_packet_size %d" % \
+                 (window_size, max_packet_size))
 
     if conf.has_key("sftp_implementation"):
         mod_name, class_name = conf['sftp_implementation'].split(':')
@@ -883,7 +889,9 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'time_stamp': 0,
         'logger': logger,
         'auth_timeout': 60,
-        'stop_running': threading.Event()
+        'stop_running': threading.Event(),
+        'window_size': configuration.user_sftp_window_size,
+        'max_packet_size': configuration.user_sftp_max_packet_size,
         }
     logger.info("Starting SFTP server")
     info_msg = "Listening on address '%s' and port %d" % (address, port)

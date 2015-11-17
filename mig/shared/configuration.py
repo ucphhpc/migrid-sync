@@ -279,6 +279,8 @@ class Configuration:
     user_sftp_auth = ['publickey', 'password']
     user_sftp_alias = ''
     user_sftp_log = 'sftp.log'
+    user_sftp_window_size = 0
+    user_sftp_max_packet_size = 0
     user_davs_address = ''
     user_davs_port = 4443
     user_davs_show_address = ''
@@ -631,6 +633,22 @@ class Configuration:
                                               'user_sftp_alias')
         if config.has_option('GLOBAL', 'user_sftp_log'):
             self.user_sftp_log = config.get('GLOBAL', 'user_sftp_log')
+        # Use any configured packet size values or fall back to emperically
+        # decided values from a fast network.
+        if config.has_option('GLOBAL', 'user_sftp_window_size'):
+            self.user_sftp_window_size = config.getint('GLOBAL',
+                                                       'user_sftp_window_size')
+        if not (16 * 1024 < self.user_sftp_window_size < 128 * 2**20):
+            # Default to 16M if unset or too high
+            self.user_sftp_window_size = 16 * 2**20
+        if config.has_option('GLOBAL', 'user_sftp_max_packet_size'):
+            self.user_sftp_max_packet_size = config.getint(
+                'GLOBAL', 'user_sftp_max_packet_size')
+        if not (1024 < self.user_sftp_max_packet_size < 2**19):
+            # Default to 512K if unset or above valid max
+            self.user_sftp_max_packet_size = 512 * 2**10
+        print "window_size %d , max_packet_size %d" % \
+              (self.user_sftp_window_size, self.user_sftp_max_packet_size)
         if config.has_option('GLOBAL', 'user_davs_address'):
             self.user_davs_address = config.get('GLOBAL', 
                                                 'user_davs_address')
