@@ -29,9 +29,14 @@
 
 import base64
 import os
-import paramiko
 import tempfile
 import StringIO
+
+try:
+    import paramiko
+except ImportError:
+    # Paramiko not available - imported fom griddaemons so fail gracefully
+    paramiko = None
 
 from shared.conf import get_resource_exe, get_configuration_object
 
@@ -40,6 +45,8 @@ def parse_pub_key(public_key):
     """Parse public_key string to paramiko key.
     Throws exception if key is broken.
     """
+    if paramiko is None:
+        raise Exception("You need paramiko to use ssh with public keys")
     public_key_elms = public_key.split(' ')
     
     # Either we have 'from' or 'ssh-' as first element
@@ -440,6 +447,8 @@ def execute_remote_ssh(
 def generate_ssh_rsa_key_pair(size=2048, public_key_prefix='', public_key_postfix=''):
     """Generates ssh rsa key pair"""
 
+    if paramiko is None:
+        raise Exception("You need paramiko to provide the ssh/sftp service")
     rsa_key = paramiko.RSAKey.generate(size)
 
     string_io_obj = StringIO.StringIO()
