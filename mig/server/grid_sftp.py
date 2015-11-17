@@ -225,6 +225,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.debug('_chattr st_size: %s' % str(attr.st_size))
             ignored = False
             if file_obj is None:
+                # TODO: there is no such os.truncate function! (never used?)
                 os.truncate(real_path, attr.st_size)
                 self.logger.info("truncated file: %s to size: %s" % \
                                 (real_path, attr.st_size))
