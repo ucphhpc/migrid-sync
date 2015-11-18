@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # requestnewjob - handle job requests from resources
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,8 +33,8 @@ import sys
 import fcntl
 import time
 
-from shared.conf import get_resource_configuration
 from shared.cgishared import init_cgiscript_possibly_with_cert
+from shared.conf import get_resource_configuration
 from shared.fileio import send_message_to_grid_script
 from shared.findtype import is_resource
 from shared.httpsclient import check_source_ip
@@ -66,7 +66,7 @@ localjobname = fieldstorage.getfirst('localjobname', '')
 sandboxkey = fieldstorage.getfirst('sandboxkey', '')
 execution_delay = fieldstorage.getfirst('execution_delay', '0')
 exe_pgid = fieldstorage.getfirst('exe_pgid', '0')
-o.out("job request from '%s;%s;%s;%s;%s;%s;%s;%s" % (
+o.out("job request from '%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
     remote_ip,
     exe,
     unique_resource_name,
@@ -75,6 +75,7 @@ o.out("job request from '%s;%s;%s;%s;%s;%s;%s;%s" % (
     localjobname,
     execution_delay,
     exe_pgid,
+    sandboxkey,
     ))
 
 # if the server is under heavy usage, requestjobs might come
@@ -224,7 +225,7 @@ if not is_resource(unique_resource_name, configuration.resource_home):
     get_resource_configuration(configuration.resource_home,
                                unique_resource_name, logger)
 if not status:
-    o.out("No resouce_config for: '" + unique_resource_name + "'\n")
+    o.out("No resouce_conf for: '" + unique_resource_name + "'\n")
     o.reply_and_exit(o.ERROR)
 
 if resource_conf.get('SANDBOX', False):
