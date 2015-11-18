@@ -298,7 +298,7 @@ def main(client_id, user_arguments_dict):
     html = """Opening embedded vnc applet here:<br />
 <b>This will only work if your browser includes a java plugin!</b><br />
 <object type='application/x-java-applet' width='%s' height='%s'>
-<param name='codebase' value='%s/vnc/' />
+<param name='codebase' value='%s/public/vnc/' />
 <param name='code' value='vncviewer' />
 <param name='archive' value='vncviewer.jar' />
 <param name='port' value='%s'>
@@ -310,7 +310,7 @@ VNC port: %s
 <br />
 Display number: %s
 """ % (repr(int(width) + 50), repr(int(height) + 50),
-       configuration.migserver_http_url, repr(vnc_port), password, vnc_port,
+       configuration.migserver_https_url, repr(vnc_port), password, vnc_port,
        display_number)
     output_objects.append({'object_type': 'html_form', 'text': html})
         
