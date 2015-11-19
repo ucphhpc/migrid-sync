@@ -138,3 +138,8 @@ workflows_log_size = 67108864
 workflows_log_cnt = 2
 
 dav_domain = "/"
+
+# Interactive jobs use a password which should at least be hard to brute-force
+# Yet the VNC server ignores all but the first 8 chars so it is no use with
+# longer password unfortunately.
+vnc_pw_len = 8

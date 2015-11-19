@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# vncfunctions - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# vncfunctions - vnc helper functions for interactive jobs
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,6 +33,8 @@ import random
 import base64
 import popen2
 
+from shared.defaults import vnc_pw_len
+
 
 def create_vnc_password():
     """Create vnc password"""
@@ -40,12 +42,11 @@ def create_vnc_password():
     password = ''
     try:
         rand = random.Random()
-        for i in range(8):
+        for i in range(vnc_pw_len):
             index = rand.randint(32, 255)
             password += chr(index)
-        password = base64.encodestring(password)[:8]
-        (filehandle, passwdfile) = tempfile.mkstemp(dir='/tmp',
-                text=False)
+        password = base64.urlsafe_b64encode(password)[:vnc_pw_len]
+        (filehandle, passwdfile) = tempfile.mkstemp(dir='/tmp', text=False)
         os.close(filehandle)
         (sdout, sdin) = popen2.popen2('vncpasswd %s' % passwdfile)
         sdin.write(password + '\n')

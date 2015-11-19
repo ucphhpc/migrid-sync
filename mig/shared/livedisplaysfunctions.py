@@ -34,8 +34,7 @@ from shared.conf import get_configuration_object
 
 
 def initialize_and_get_display_dict_filename(configuration, logger):
-    filename = configuration.mig_server_home + os.sep\
-         + 'livedisplaysdict'
+    filename = os.path.join(configuration.mig_server_home, 'livedisplaysdict')
     if os.path.isfile(filename):
         return (True, filename)
     logger.info('display dict file %s not found, pickling a new with {} as only content'
@@ -57,8 +56,6 @@ def get_users_display_number(client_id, configuration, logger):
 
     (key, value) = get_users_display_dict(client_id, configuration,
             logger)
-    logger.error('karlsen debug: %s' % key)
-    logger.error('karlsen debug: %s' % value)
 
     if not key:
         logger.error(value)

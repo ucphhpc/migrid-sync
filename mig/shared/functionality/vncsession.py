@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vncsession - Start a new VNC session
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -145,10 +145,9 @@ def main(client_id, user_arguments_dict):
     error = ''
 
     # Find available port/display.
-    # TODO: Seperate port and display no... Check /tmp/.X11-lock/ for available dispays
+    # TODO: Separate port and display no... Check /tmp/.X11-lock/ for available displays
     # ....and make bind check for available ports! Display might be in use without
     # ....using a port and vice-versa!
-    # TODO: baseVNCport and VNC_port_count should be read from configuration
 
     passwdfile = ''
     password = ''
@@ -163,9 +162,9 @@ def main(client_id, user_arguments_dict):
         status = returnvalues.CLIENT_ERROR
         return (output_objects, status)
     if stat == -1:
-        logger.info('did not find a display number for %s' % client_id)
-        baseVNCport = 8087
-        VNC_port_count = 15
+        logger.info('no existing display number for %s - creating' % client_id)
+        baseVNCport = configuration.job_vnc_ports[0]
+        VNC_port_count = len(configuration.job_vnc_ports)
         display_number = 1
         start_display = 5
 
@@ -253,29 +252,33 @@ def main(client_id, user_arguments_dict):
 
     # Run launch and record the process ID.
 
-    vnclogfile = base_dir + '.vncserver.log'
-    launch = \
-        'Xvnc -rfbport %i -SecurityTypes VncAuth -AlwaysShared -DisconnectClients=0 -BlacklistTimeout=0'\
-         % vnc_port
-
-    # launch = "Xvnc4 -rfbport %i -SecurityTypes VncAuth -NeverShared -DisconnectClients=0" % (vnc_port)
-
+    vnc_out = '.vncserver.out'
+    vnc_err = '.vncserver.err'
+    vnc_out_path = os.path.join(base_dir, vnc_out)
+    vnc_err_path = os.path.join(base_dir, vnc_err)
+    pidfile = os.path.join(base_dir, '.Xvnc4.pid')
+    # TODO: this is a bad idea to launch the process from cgi
+    #       apache will clean it up when cgi finishes and it only sort of works
+    #       because the double ampersands leave the cgi hanging as a zombie
+    launch = 'Xvnc -rfbport %i -SecurityTypes VncAuth -AlwaysShared' % vnc_port
+    launch += ' -DisconnectClients=0 -BlacklistTimeout=0'
     launch += ' -geometry %sx%s -depth %s' % (width, height, depth)
     launch += ' -PasswordFile %s' % passwdfile
     launch += ' -desktop "%s" %s' % (desktopname, display)
-
-    launch += ' & >>%s 2>>%s.stderr' % (vnclogfile, vnclogfile)
-
-    pidfile = '%s.vnc_port%s.Xvnc4.pid' % (base_dir, vnc_port)
+    # Note this ampersand is bogus but seems to be needed as a hack
+    launch += ' & >>%s 2>>%s' % (vnc_out_path, vnc_err_path)
     launch += ' & echo $! > %s' % pidfile
 
     logger.info('VNC Launch: %s' % launch)
     result = os.system(launch) >> 8
+    logger.info('VNC Launch returned: %d' % result)
 
     if result != 0:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'VNC-server could not start. Read ".vncserver.log" log file in your home dir for specifications.'
-                              })
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'VNC-server could not start. See %s in your home dir for details' \
+             % vnc_out
+             })
         status = returnvalues.CLIENT_ERROR
         logger.error('VNC-server could not start! Result = %d' % result)
         (stat, ret) = set_user_display_inactive(client_id,
@@ -306,17 +309,19 @@ def main(client_id, user_arguments_dict):
 Java plugin not installed or disabled.
 </object>
 <br />
+VNC server: %s
+<br />
 VNC port: %s
+<br />
+VNC password: %s
 <br />
 Display number: %s
 """ % (repr(int(width) + 50), repr(int(height) + 50),
-       configuration.migserver_https_url, repr(vnc_port), password, vnc_port,
-       display_number)
+       configuration.migserver_https_url, repr(vnc_port), password,
+       configuration.server_fqdn, vnc_port, password, display_number)
     output_objects.append({'object_type': 'html_form', 'text': html})
         
     # TODO: remove temp passwdfile. This should be done when the display has been left.
     # It can't be removed now, since Xvnc reads the password when clients connects again.
 
     return (output_objects, status)
-
-

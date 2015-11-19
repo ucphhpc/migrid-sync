@@ -185,14 +185,15 @@ class GenJobScriptSh:
     def __curl_cmd_request_interactive(self):
         """CGI request for interactive job"""
 
+        unique_resource_name = "%(HOSTURL)s.%(HOSTIDENTIFIER)s" % self.resource_conf
         int_command = \
             "curl --location --connect-timeout 30 --max-time 3600 --fail --silent --insecure '"\
                 + self.https_sid_url_arg\
                 + '/cgi-sid/requestinteractivejob.py?sessionid='\
                 + self.job_dict['SESSIONID'] + '&jobid=' + self.job_dict['JOB_ID']\
                 + '&exe=' + self.exe + '&unique_resource_name='\
-                + self.resource_conf['RESOURCE_ID'] + '&localjobname='\
-                + self.localjobname + "'\n"
+                + unique_resource_name + '&localjobname=' + self.localjobname\
+                + "'\n"
         int_command += '# wait until interactive command is done\n'
         int_command += 'while [ 1 ]; do\n'
         int_command += '   if [ -f .interactivejobfinished ]; then\n'
