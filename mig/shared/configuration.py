@@ -337,11 +337,14 @@ class Configuration:
     myfiles_py_location = ''
     public_key_file = ''
     wwwpublic = ''
+    # Virtual machine VNC proxy helpers
     vm_home = ''
     vm_proxy_host = ''
     vm_proxy_port = vm_agent_port = 8112
     vm_client_port = 8111
     vm_applet_port = 8114
+    # Interactive job VNC port
+    job_vnc_ports = range(8080, 8099)
     enable_server_dist = False
     sleep_secs = 0
     sleep_update_totals = 0
@@ -818,6 +821,10 @@ class Configuration:
             self.vm_client_port = config.getint('GLOBAL', 'vm_client_port')
         if config.has_option('GLOBAL', 'vm_applet_port'):
             self.vm_applet_port = config.getint('GLOBAL', 'vm_applet_port')
+        if config.has_option('GLOBAL', 'job_vnc_ports'):
+            text_range = config.get('GLOBAL', 'job_vnc_ports')
+            first, last = text_range.split(':')[:2]
+            self.job_vnc_ports = range(int(first), int(last))
 
         if config.has_option('GLOBAL', 'vgrid_owners'): 
             self.vgrid_owners = config.get('GLOBAL', 'vgrid_owners')
