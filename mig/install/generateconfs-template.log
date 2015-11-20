@@ -1,0 +1,6 @@
+= The most recent generator command =
+__GENERATECONFS_COMMAND__
+
+
+= Expanded generator variables =
+__GENERATECONFS_VARIABLES__

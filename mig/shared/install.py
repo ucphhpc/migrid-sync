@@ -77,6 +77,7 @@ def fill_template(template_file, output_file, settings, eat_trailing_space=[]):
     return True
 
 def generate_confs(
+    generateconfs_command=' '.join(sys.argv),
     source=os.path.dirname(sys.argv[0]),
     destination=os.path.dirname(sys.argv[0]),
     base_fqdn='localhost',
@@ -135,6 +136,7 @@ def generate_confs(
     expanded = locals()
 
     user_dict = {}
+    user_dict['__GENERATECONFS_COMMAND__'] = generateconfs_command
     user_dict['__BASE_FQDN__'] = base_fqdn
     user_dict['__PUBLIC_FQDN__'] = public_fqdn
     user_dict['__CERT_FQDN__'] = cert_fqdn
@@ -308,26 +310,34 @@ cert, oid and sid based https!
     for key in user_dict.keys():
         if key.endswith('_COMMENTED__'):
             strip_trailing_space.append(key)
+
+    # Collect final variable values for log
+    sorted_keys = user_dict.keys()
+    sorted_keys.sort()
+    variable_lines = '\n'.join(["%s : %s" % (i.strip('_'), user_dict[i]) \
+                                for i in sorted_keys])
+    user_dict['__GENERATECONFS_VARIABLES__'] = variable_lines
         
     # modify this list when adding/removing template->target  
-    replacement_list = \
-                     [("apache-envs-template.conf", "envvars"),
-                      ("apache-apache2-template.conf", "apache2.conf"),
-                      ("apache-httpd-template.conf", "httpd.conf"),
-                      ("apache-ports-template.conf", "ports.conf"),
-                      ("apache-MiG-template.conf", "MiG.conf"),
-                      ("apache-mimic-deb-template.conf", "mimic-deb.conf"),
-                      ("apache-init.d-deb-template", "apache-%s" % user),
-                      ("apache-MiG-template.conf", "MiG.conf"),
-                      ("trac-MiG-template.ini", "trac.ini"),
-                      ("logrotate-MiG-template", "logrotate-migrid"),
-                      ("MiGserver-template.conf", "MiGserver.conf"),
-                      ("static-skin-template.css", "static-skin.css"),
-                      ("index-template.html", "index.html"),
-                      # service script for MiG daemons
-                      ("migrid-init.d-rh-template", "migrid-init.d-rh"),
-                      ("migrid-init.d-deb-template", "migrid-init.d-deb"),
-                      ]
+    replacement_list = [
+        ("generateconfs-template.log", "generateconfs.log"),
+        ("apache-envs-template.conf", "envvars"),
+        ("apache-apache2-template.conf", "apache2.conf"),
+        ("apache-httpd-template.conf", "httpd.conf"),
+        ("apache-ports-template.conf", "ports.conf"),
+        ("apache-MiG-template.conf", "MiG.conf"),
+        ("apache-mimic-deb-template.conf", "mimic-deb.conf"),
+        ("apache-init.d-deb-template", "apache-%s" % user),
+        ("apache-MiG-template.conf", "MiG.conf"),
+        ("trac-MiG-template.ini", "trac.ini"),
+        ("logrotate-MiG-template", "logrotate-migrid"),
+        ("MiGserver-template.conf", "MiGserver.conf"),
+        ("static-skin-template.css", "static-skin.css"),
+        ("index-template.html", "index.html"),
+        # service script for MiG daemons
+        ("migrid-init.d-rh-template", "migrid-init.d-rh"),
+        ("migrid-init.d-deb-template", "migrid-init.d-deb"),
+        ]
     for (in_name, out_name) in replacement_list:
         in_path = os.path.join(source, in_name)
         out_path = os.path.join(destination, out_name)
@@ -495,6 +505,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         sid_port = oid_port = cert_port
         server_alias = 'ServerAlias'
     generate_confs(
+        ' '.join(sys.argv),
         src,
         dst,
         base_fqdn,
