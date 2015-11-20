@@ -352,67 +352,67 @@ status_script() {
     DAEMON_PATH=${MIG_SCRIPT}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_monitor() {
     DAEMON_PATH=${MIG_MONITOR}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_sshmux() {
     DAEMON_PATH=${MIG_SSHMUX}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_events() {
     DAEMON_PATH=${MIG_EVENTS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_openid() {
     DAEMON_PATH=${MIG_OPENID}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_sftp() {
     DAEMON_PATH=${MIG_SFTP}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_webdavs() {
     DAEMON_PATH=${MIG_WEBDAVS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_davs() {
     DAEMON_PATH=${MIG_DAVS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_ftps() {
     DAEMON_PATH=${MIG_FTPS}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_imnotify() {
     DAEMON_PATH=${MIG_IMNOTIFY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 status_vmproxy() {
     DAEMON_PATH=${MIG_VMPROXY}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
-    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME} && exit 0 || exit $?
+    status_of_proc -p ${PID_FILE} ${DAEMON_PATH} ${SHORT_NAME}
 }
 
 status_all() {
@@ -458,7 +458,7 @@ case "$1" in
         eval "stop_$TARGET"
 	;;
     status)
-        eval "status_$TARGET"
+        eval "status_$TARGET" && exit 0 || exit $?
 	;;
     restart|reload|force-reload)
         eval "stop_$TARGET"
