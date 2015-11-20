@@ -197,12 +197,15 @@ start_all() {
     start_vmproxy
 }
 
+# NOTE: We always manualy remove pid files as only the Debian start-stop-daemon
+# supports the --remove-pidfile flag
 stop_script() {
     DAEMON_PATH=${MIG_SCRIPT}
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG server" ${SHORT_NAME} || true
-    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
+        rm -f ${PID_FILE}
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -213,7 +216,8 @@ stop_monitor() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG monitor" ${SHORT_NAME} || true
-    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
+        rm -f ${PID_FILE}
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -224,7 +228,8 @@ stop_sshmux() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG sshmux" ${SHORT_NAME} || true
-    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
+        rm -f ${PID_FILE}
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -235,7 +240,8 @@ stop_events() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG events" ${SHORT_NAME} || true
-    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
+        rm -f ${PID_FILE}
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -246,7 +252,8 @@ stop_openid() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG openid" ${SHORT_NAME} || true
-    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
+        rm -f ${PID_FILE}
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -257,7 +264,8 @@ stop_sftp() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG sftp" ${SHORT_NAME} || true
-    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
+        rm -f ${PID_FILE}
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -268,7 +276,8 @@ stop_webdavs() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG webdavs" ${SHORT_NAME} || true
-    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
+        rm -f ${PID_FILE}
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -279,7 +288,8 @@ stop_davs() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG davs" ${SHORT_NAME} || true
-    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
+        rm -f ${PID_FILE}
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -290,7 +300,8 @@ stop_ftps() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG ftps" ${SHORT_NAME} || true
-    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
+        rm -f ${PID_FILE}
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -301,7 +312,8 @@ stop_imnotify() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG IM notify" ${SHORT_NAME} || true
-    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
+        rm -f ${PID_FILE}
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
@@ -312,7 +324,8 @@ stop_vmproxy() {
     SHORT_NAME=$(basename ${DAEMON_PATH})
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     log_daemon_msg "Stopping MiG VM proxy" ${SHORT_NAME} || true
-    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} --remove-pidfile ; then
+    if start-stop-daemon --stop --quiet --oknodo --pidfile ${PID_FILE} ; then
+        rm -f ${PID_FILE}
 	log_end_msg 0 || true
     else
 	log_end_msg 1 || true
