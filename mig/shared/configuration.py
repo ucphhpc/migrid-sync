@@ -650,8 +650,6 @@ class Configuration:
         if not (1024 < self.user_sftp_max_packet_size < 2**19):
             # Default to 512K if unset or above valid max
             self.user_sftp_max_packet_size = 512 * 2**10
-        print "window_size %d , max_packet_size %d" % \
-              (self.user_sftp_window_size, self.user_sftp_max_packet_size)
         if config.has_option('GLOBAL', 'user_davs_address'):
             self.user_davs_address = config.get('GLOBAL', 
                                                 'user_davs_address')

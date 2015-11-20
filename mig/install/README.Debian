@@ -70,6 +70,10 @@ Enable the apache actions module:
 # a2enmod actions
 Enable the apache rewrite module:
 # a2enmod rewrite
+Enable the apache cgi module (may be implicit on some platforms):
+# a2enmod cgi
+You may also need to disable the mpm_event module and enable the mpm_prefork
+one instead to get cgi rather than cgid.
 Enable the apache wsgi module:
 # a2enmod wsgi
 Enable the apache openid module (optional, for OpenID login):
