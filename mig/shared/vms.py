@@ -533,12 +533,16 @@ def mig_vbox_deploy_job(client_id, configuration, name, machine_req):
     else:
         # default NIC is not supported on all 64-bit OSes
         specs['arch_opts'] = '--nictype1 82543GC'
-    job = """::EXECUTE::
+    job = '''::EXECUTE::
+# vboxmanage unregister does not always properly remove machine settings file
+# and existance prevents next run so make sure we delete it
+rm -f "%(user_conf)s/../VirtualBox VMs/%(name)s/%(name)s.vbox"
+# Clean environment
 rm -rf %(user_conf)s
 mkdir %(user_conf)s
 mkdir %(user_conf)s/Machines
 mkdir %(user_conf)s/HardDisks
-"""
+'''
     if specs['sys_base']:
         job += "cp %(sys_base)s/%(sys_disk)s %(user_conf)s/HardDisks/%(sys_disk)s"
     # VM requires static MAC to avoid NIC renaming and ioapic for multi-cpu
