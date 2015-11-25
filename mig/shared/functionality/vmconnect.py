@@ -107,5 +107,27 @@ Please contact the Grid admins %s if you think they should be enabled.
                                password,
                                https_base,
                                )})
+    output_objects.append({'object_type': 'html_form', 'text':
+        """<p>You can access your virtual machine with the Java applet above if
+your browser supports it, or by using a stand-alone VNC client and the following
+connection details:<br />
+VNC server: %s<br />
+VNC port: %s<br />
+VNC password: %s<br/>
+as an example if you use the xtightvnc client the command line would be
+<br/>
+<tt>
+xtightvncviewer %s::%d
+</tt>
+<br/>
+using the password above when prompted.<br/>
+VNC does not use encryption so please be careful where you use it from and
+preferably use an SSH tunnel to at least encrypt the connection if accessing
+this site over the Internet.<br/>
+Please refer to the documentation on the <em>-via</em> VNC option for details.
+</p>
+""" % (configuration.server_fqdn, configuration.vm_client_port, password,
+       configuration.server_fqdn, configuration.vm_client_port)
+                           })
 
     return (output_objects, status)
