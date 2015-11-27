@@ -83,7 +83,7 @@ from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, flags_to_mode, \
      acceptable_chmod, refresh_users, refresh_jobs, hit_rate_limit, \
-     update_rate_limit, expire_rate_limit
+     update_rate_limit, expire_rate_limit, penalize_rate_limit
 from shared.logger import daemon_logger
 from shared.useradm import check_password_hash
 
@@ -613,8 +613,10 @@ class SimpleSSHServer(paramiko.ServerInterface):
         err_msg = "Password authentication failed for %s" % username
         self.logger.error(err_msg)
         print err_msg
-        update_rate_limit(configuration, "sftp-pw", self.client_addr[0],
-                          username, False)
+        failed_count = update_rate_limit(configuration, "sftp-pw",
+                                         self.client_addr[0], username, False)
+        penalize_rate_limit(configuration, "sftp-pw", self.client_addr[0],
+                            username, failed_count)
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
@@ -648,8 +650,10 @@ class SimpleSSHServer(paramiko.ServerInterface):
                   (username, offered)
         self.logger.error(err_msg)
         print err_msg
-        update_rate_limit(configuration, "sftp-key", self.client_addr[0],
-                          username, False)
+        failed_count = update_rate_limit(configuration, "sftp-key",
+                                         self.client_addr[0], username, False)
+        penalize_rate_limit(configuration, "sftp-key", self.client_addr[0],
+                            username, failed_count)
         return paramiko.AUTH_FAILED
 
     def get_allowed_auths(self, username):
@@ -809,6 +813,7 @@ if __name__ == "__main__":
     # Use separate logger
 
     logger = daemon_logger("sftp", configuration.user_sftp_log, "info")
+    configuration.logger = logger
     
     # Allow configuration overrides on command line
     if sys.argv[1:]:

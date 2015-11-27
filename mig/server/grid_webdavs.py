@@ -59,7 +59,8 @@ from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.defaults import dav_domain
 from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
-     refresh_user_creds, hit_rate_limit, update_rate_limit, expire_rate_limit
+     refresh_user_creds, hit_rate_limit, update_rate_limit, \
+     expire_rate_limit, penalize_rate_limit
 from shared.logger import daemon_logger
 from shared.pwhash import unscramble_digest
 from shared.useradm import check_password_hash, generate_password_hash, \
@@ -257,7 +258,10 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             success = True
         else:
             logger.warning("Invalid login for %s from %s" % (username, addr))
-        update_rate_limit(configuration, "davs", addr, username, success)
+        failed_count = update_rate_limit(configuration, "davs", addr, username,
+                                         success)
+        penalize_rate_limit(configuration, "davs", addr, username,
+                            failed_count)
         logger.info("valid digest user %s" % username)
         return success
 
@@ -312,7 +316,10 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                 logger.error("failed to extract digest password: %s" % exc)
                 password = None
         success = (password is not None)
-        update_rate_limit(configuration, "davs", addr, username, success)
+        failed_count = update_rate_limit(configuration, "davs", addr, username,
+                                         success)
+        penalize_rate_limit(configuration, "davs", addr, username,
+                            failed_count)
         return password
 
     
@@ -544,6 +551,7 @@ if __name__ == "__main__":
     # Use separate logger - cherrypy hijacks root logger
 
     logger = daemon_logger("webdavs", configuration.user_davs_log, "info")
+    configuration.logger = logger
 
     # Allow configuration overrides on command line
     if sys.argv[1:]:

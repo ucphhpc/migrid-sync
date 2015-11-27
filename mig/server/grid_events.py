@@ -897,6 +897,7 @@ unless it is available in mig/server/MiGserver.conf
 
     logger = daemon_logger('events', configuration.user_events_log,
                            configuration.loglevel)
+    configuration.logger = logger
 
     keep_running = True
 

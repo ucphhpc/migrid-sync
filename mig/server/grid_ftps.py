@@ -86,7 +86,7 @@ except ImportError:
 from shared.base import invisible_path
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, acceptable_chmod, refresh_users, \
-     hit_rate_limit, update_rate_limit, expire_rate_limit
+     hit_rate_limit, update_rate_limit, expire_rate_limit, penalize_rate_limit
 from shared.logger import daemon_logger
 from shared.useradm import check_password_hash
 
@@ -186,8 +186,11 @@ class MiGUserAuthorizer(DummyAuthorizer):
         logger.error(err_msg)
         print err_msg
         self.authenticated_user = None
-        update_rate_limit(configuration, "ftps", handler.remote_ip, username,
-                          False)
+        failed_count = update_rate_limit(configuration, "ftps",
+                                         handler.remote_ip, username,
+                                         False)
+        penalize_rate_limit(configuration, "ftps", handler.remote_ip, username,
+                            failed_count)
         # Must raise AuthenticationFailed exception since version 1.0.0 instead
         # of returning bool
         raise AuthenticationFailed(err_msg)
@@ -308,6 +311,7 @@ if __name__ == '__main__':
 
     # Use separate logger
     logger = daemon_logger("ftps", configuration.user_ftps_log, "debug")
+    configuration.logger = logger
 
     # Allow configuration overrides on command line
     if sys.argv[1:]:

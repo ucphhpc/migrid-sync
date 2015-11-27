@@ -83,7 +83,7 @@ from openid.consumer import discover
 from shared.base import client_id_dir
 from shared.conf import get_configuration_object
 from shared.griddaemons import hit_rate_limit, update_rate_limit, \
-     expire_rate_limit
+     expire_rate_limit, penalize_rate_limit
 from shared.logger import daemon_logger
 from shared.safeinput import valid_distinguished_name, valid_password, \
      valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url
@@ -426,8 +426,13 @@ class ServerHandler(BaseHTTPRequestHandler):
                 print "handleAllow rejected login %s" % identity
                 self.clearUser()
                 response = self.rejected(request, identity)    
-                update_rate_limit(configuration, "openid",
-                                  self.client_address[0], self.user, False)
+                failed_count = update_rate_limit(configuration, "openid",
+                                                 self.client_address[0],
+                                                 self.user, False)
+                penalize_rate_limit(configuration, "openid",
+                                    self.client_address[0], self.user,
+                                    failed_count)
+
         elif 'no' in query:
             response = request.answer(False)
 
@@ -606,8 +611,12 @@ class ServerHandler(BaseHTTPRequestHandler):
                 # print "doLogin full query: %s" % self.query
                 self.clearUser()
                 self.redirect(self.query['success_to'])
-                update_rate_limit(configuration, "openid",
-                                  self.client_address[0], self.user, False)
+                failed_count = update_rate_limit(configuration, "openid",
+                                                 self.client_address[0],
+                                                 self.user, False)
+                penalize_rate_limit(configuration, "openid",
+                                    self.client_address[0], self.user,
+                                    failed_count)
         elif 'cancel' in self.query:
             self.redirect(self.query['fail_to'])
         else:
@@ -1144,6 +1153,7 @@ if __name__ == '__main__':
 
     # Use separate logger
     logger = daemon_logger("openid", configuration.user_openid_log, "debug")
+    configuration.logger = logger
 
     # Allow configuration overrides on command line
     if sys.argv[1:]:
