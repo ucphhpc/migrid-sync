@@ -34,7 +34,6 @@ import os
 import shelve
 import socket
 import time
-import time
 import threading
 
 from shared.base import client_dir_id, client_id_dir, client_alias, \
@@ -596,6 +595,7 @@ def update_rate_limit(configuration, proto, client_address, client_id,
     logger = configuration.logger
     _failed = []
     cur = {}
+    failed_count = 0
     status = {True: "success", False: "failure"}
 
     _rate_limits_lock.acquire()
@@ -608,6 +608,7 @@ def update_rate_limit(configuration, proto, client_address, client_id,
         else:
             _failed = _cached.get(proto, [])
             _failed.append((time.time(), client_id))
+            failed_count = len(_failed)
             cur[proto] = _failed
         _rate_limits[client_address] = cur
     except Exception, exc:
@@ -617,7 +618,7 @@ def update_rate_limit(configuration, proto, client_address, client_id,
 
     logger.info("update rate limit %s for %s from %s on %s to %s" % \
                 (status[success], client_id, client_address, proto, _failed))
-        
+    return failed_count
 
 def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
     """Remove rate limit database entries older than fail_cache seconds. Only
@@ -656,6 +657,21 @@ def expire_rate_limit(configuration, proto='*', fail_cache=default_fail_cache):
     logger.info("expire rate limit on proto %s expired %s" % (proto, expired))
 
     return expired
+
+def penalize_rate_limit(configuration, proto, client_address, client_id, hits,
+                        max_fails=default_max_hits):
+    """Stall client for a while based on the number of rate limit failures to
+    make sure dictionary attackers don't really load the server with their
+    repeated force-failed requests. The stall penalty is a linear function of
+    the number of failed attempts.
+    """
+    logger = configuration.logger
+    sleep_secs = 3 * (hits - max_fails)
+    if sleep_secs > 0:
+        logger.info("stall rate limited %s user %s from %s for %ds" % \
+                    (proto, client_id, client_address, sleep_secs))
+        time.sleep(sleep_secs)
+    return sleep_secs
 
 if __name__ == "__main__":
     from shared.conf import get_configuration_object
