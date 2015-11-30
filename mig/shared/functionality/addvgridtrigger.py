@@ -38,7 +38,7 @@ from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.validstring import valid_user_path
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
-     vgrid_list_subvgrids, vgrid_add_triggers
+     vgrid_is_trigger_owner, vgrid_list_subvgrids, vgrid_add_triggers
 import shared.returnvalues as returnvalues
 
 
@@ -67,8 +67,9 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Add %s Trigger' % configuration.site_vgrid_label})
+    output_objects.append(
+        {'object_type': 'header', 'text'
+         : 'Add/update %s Trigger' % configuration.site_vgrid_label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -139,13 +140,19 @@ def main(client_id, user_arguments_dict):
 
     # if we get here user is either vgrid owner or allowed to add rule
 
-    # don't add if already in vgrid or parent vgrid
+    # don't add if already in vgrid or parent vgrid - but update if owner
 
+    update_id = None
     if vgrid_is_trigger(vgrid_name, rule_id, configuration):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is already a trigger in the %s'
-                               % (rule_id, configuration.site_vgrid_label)})
-        return (output_objects, returnvalues.CLIENT_ERROR)
+        if vgrid_is_trigger_owner(vgrid_name, rule_id, client_id,
+                                  configuration):
+            update_id = 'rule_id'
+        else:
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : '%s is already a trigger owned by somebody else in the %s'
+                 % (rule_id, configuration.site_vgrid_label)})
+            return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't add if already in subvgrid
 
@@ -157,7 +164,7 @@ def main(client_id, user_arguments_dict):
                                % (configuration.site_vgrid_label, subvgrids)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
     for subvgrid in subvgrids:
-        if vgrid_is_trigger(subvgrid, rule_id, configuration):
+        if vgrid_is_trigger(subvgrid, rule_id, configuration, recursive=False):
             output_objects.append({'object_type': 'error_text', 'text'
                                   : '''%(rule_id)s is already in a
 sub-%(_label)s (%(subvgrid)s).
@@ -219,18 +226,28 @@ Remove the trigger from the sub-%(_label)s and try again''' % \
     # Add to list and pickle
 
     (add_status, add_msg) = vgrid_add_triggers(configuration, vgrid_name,
-                                                [rule_dict])
+                                                [rule_dict], update_id)
     if not add_status:
-        logger.error('%s failed to add trigger: %s' % (client_id, add_msg))
+        logger.error('%s failed to add/update trigger: %s' % (client_id,
+                                                              add_msg))
         output_objects.append({'object_type': 'error_text', 'text': '%s'
                                % add_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    logger.info('%s added new trigger: %s' % (client_id, rule_dict))
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'New trigger %s successfully added to %s %s!'
-                           % (rule_id, vgrid_name,
-                              configuration.site_vgrid_label)})
+    if update_id:
+        logger.info('%s updated trigger: %s' % (client_id, rule_dict))
+        output_objects.append(
+            {'object_type': 'text', 'text'
+             : 'Existing trigger %s successfully updated in %s %s!'
+             % (rule_id, vgrid_name, configuration.site_vgrid_label)})
+
+    else:
+        logger.info('%s added new trigger: %s' % (client_id, rule_dict))
+        output_objects.append(
+            {'object_type': 'text', 'text'
+             : 'New trigger %s successfully added to %s %s!'
+             % (rule_id, vgrid_name, configuration.site_vgrid_label)})
+
     output_objects.append({'object_type': 'link', 'destination':
                            'vgridworkflows.py?vgrid_name=%s' % vgrid_name,
                            'text': 'Back to workflows for %s' % vgrid_name})

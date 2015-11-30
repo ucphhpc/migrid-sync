@@ -494,7 +494,7 @@ def vgrid_access_match(configuration, job_owner, job, res_id, res):
             break
     return answer
 
-def vgrid_add_entities(configuration, vgrid_name, kind, id_list):
+def vgrid_add_entities(configuration, vgrid_name, kind, id_list, update_id=None):
     """Append list of IDs to pickled list of kind for vgrid_name"""
 
     if kind == 'owners':
@@ -518,7 +518,16 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list):
             log_msg = "creating missing file: '%s'" % (entity_filepath)
             configuration.logger.info(log_msg)
 
-        entities += [i for i in id_list if not i in entities]
+        if update_id is None:
+            configuration.logger.info("adding new %s: %s" % (kind, id_list))
+            entities += [i for i in id_list if not i in entities]
+        else:
+            # A trigger with same id exists and needs to be updated
+            updating = [i[update_id] for i in id_list]
+            entities = [i for i in entities if not i[update_id] in updating]
+            configuration.logger.info("adding updated %s: %s (%s)" % \
+                                      (kind, id_list, entities))
+            entities += id_list
         dump(entities, entity_filepath)
         mark_vgrid_modified(configuration, vgrid_name)
         return (True, '')
@@ -540,10 +549,10 @@ def vgrid_add_resources(configuration, vgrid_name, id_list):
     return vgrid_add_entities(configuration, vgrid_name, 'resources',
                               id_list)
 
-def vgrid_add_triggers(configuration, vgrid_name, id_list):
+def vgrid_add_triggers(configuration, vgrid_name, id_list, update_id=None):
     """Append id_list to pickled list of triggers for vgrid_name"""
     return vgrid_add_entities(configuration, vgrid_name, 'triggers',
-                              id_list)
+                              id_list, update_id)
 
 def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
                           allow_empty, dict_field=False):
