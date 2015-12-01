@@ -875,7 +875,8 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
     chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
                          os.path.abspath(configuration.vgrid_public_base),
                          os.path.abspath(configuration.vgrid_files_home),
-                         os.path.abspath(configuration.resource_home)]
+                         os.path.abspath(configuration.resource_home),
+                         os.path.abspath(configuration.seafile_mount)]
     # Any extra chmod exceptions here - we already cover invisible_path check
     # in acceptable_chmod helper.
     chmod_exceptions = []

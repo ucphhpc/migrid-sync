@@ -57,7 +57,7 @@ from shared.base import invisible_path
 from shared.conf import get_configuration_object
 from shared.griddaemons import get_fs_path, strip_root, \
      acceptable_chmod, refresh_users, hit_rate_limit, update_rate_limit, \
-     expire_rate_limit
+     penalize_rate_limit, expire_rate_limit
 from shared.useradm import check_password_hash
 
 
@@ -243,8 +243,12 @@ class MiGDAVAuthHandler(DAVAuthHandler):
                                           self.client_address[0], username,
                                           True)
                         return True
-        update_rate_limit(configuration, "davs", self.client_address[0],
-                          username, False)
+        failed_count = update_rate_limit(configuration, "davs",
+                                         self.client_address[0], username,
+                                         False)
+        penalize_rate_limit(configuration, "davs", self.client_address[0],
+                            username, failed_count)
+
         return False
 
 
@@ -270,8 +274,11 @@ class MiGDAVAuthHandler(DAVAuthHandler):
                                           self.client_address[0], username,
                                           True)
                         return True
-        update_rate_limit(configuration, "davs", self.client_address[0],
-                          username, False)                    
+        failed_count = update_rate_limit(configuration, "davs",
+                                         self.client_address[0], username,
+                                         False)
+        penalize_rate_limit(configuration, "davs", self.client_address[0],
+                            username, failed_count)
         return False
 
     def _chroot_user(self, username, host, port, verbose):
@@ -498,7 +505,8 @@ if __name__ == "__main__":
     chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
                          os.path.abspath(configuration.vgrid_public_base),
                          os.path.abspath(configuration.vgrid_files_home),
-                         os.path.abspath(configuration.resource_home)]
+                         os.path.abspath(configuration.resource_home),
+                         os.path.abspath(configuration.seafile_mount)]
     # Don't allow chmod in dirs with CGI access as it introduces arbitrary
     # code execution vulnerabilities
     chmod_exceptions = [os.path.abspath(configuration.vgrid_private_base),
@@ -520,6 +528,10 @@ if __name__ == "__main__":
         }
 
     print """
+*** DEPRECATION WARNING: grid_webdavs replaces grid_davs ***
+The pywebdav-based grid_davs has a number of serious issues that are solved in
+the wsgidav-based grid_webdavs, so we recommend switching to the latter ASAP.
+
 Running grid davs server for user dav access to their MiG homes.
 
 Set the MIG_CONF environment to the server configuration path

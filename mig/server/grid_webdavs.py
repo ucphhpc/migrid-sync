@@ -588,7 +588,8 @@ unless it is available in mig/server/MiGserver.conf
     chroot_exceptions = [os.path.abspath(configuration.vgrid_private_base),
                          os.path.abspath(configuration.vgrid_public_base),
                          os.path.abspath(configuration.vgrid_files_home),
-                         os.path.abspath(configuration.resource_home)]
+                         os.path.abspath(configuration.resource_home),
+                         os.path.abspath(configuration.seafile_mount)]
     # Any extra chmod exceptions here - we already cover invisible_path check
     # in acceptable_chmod helper.
     chmod_exceptions = []
