@@ -151,8 +151,13 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
             self.options = options
 
         self.ssl_kwargs.update({"ssl_version": self.ssl_version})
+        logger.debug("using SSL/TLS version: %s (default %s)" % \
+                    (self.ssl_version, ssl.PROTOCOL_SSLv23))
+        logger.debug("using SSL/TLS options: %s" % self.options)
         if sys.version_info[:2] >= (2, 7):
             self.ssl_kwargs.update({"ciphers": self.ciphers})
+            logger.info("using strong SSL/TLS ciphers")
+            logger.debug("SSL/TLS ciphers: %s" % self.ciphers)
         else:
             logger.warning("Unable to select explicit strong TLS ciphers")
             logger.warning("Upgrade to python 2.7+ for maximum security")
@@ -165,6 +170,8 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         Limits protocols and disables compression for modern python versions.
         """
         try:
+            logger.debug("Wrapping socket in SSL/TLS with args: %s" % \
+                         self.ssl_kwargs)
             s = ssl.wrap_socket(sock, do_handshake_on_connect=True,
                                 server_side=True, certfile=self.certificate,
                                 keyfile=self.private_key, **(self.ssl_kwargs))
@@ -616,7 +623,8 @@ unless it is available in mig/server/MiGserver.conf
     daemon_conf = configuration.daemon_conf
     daemon_conf['acceptbasic'] = daemon_conf['allow_password']
     daemon_conf['acceptdigest'] = daemon_conf['allow_digest']
-    daemon_conf['defaultdigest'] = daemon_conf['allow_digest']        
+    # Keep order of auth methods (please note the 2GB+ upload bug with digest)
+    daemon_conf['defaultdigest'] = 'digest' in configuration.user_davs_auth[:1]
 
     logger.info("Starting WebDAV server")
     info_msg = "Listening on address '%s' and port %d" % (address, port)
