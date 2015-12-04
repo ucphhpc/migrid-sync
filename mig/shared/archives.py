@@ -401,8 +401,8 @@ def pack_archive(
 
         msg += "Requested packing of %s in %s . " % (src, dst)
         try:
-            # Force compression
-            pack_file = zipfile.ZipFile(real_dst, 'w', zipfile.ZIP_DEFLATED)
+            # Force compression and allow files bigger than 2GB
+            pack_file = zipfile.ZipFile(real_dst, 'w', zipfile.ZIP_DEFLATED, True)
         except Exception, exc:
             logger.error("create zip failed: %s" % exc)
             msg += 'Could not create zipfile: %s! ' % exc
