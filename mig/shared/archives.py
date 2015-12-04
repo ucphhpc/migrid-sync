@@ -395,6 +395,7 @@ def pack_archive(
 
     real_dst_lower = real_dst.lower()
     real_src_dir = os.path.dirname(real_src)
+    open_mode = "w"
     if real_dst_lower.endswith('.zip'):
 
         # Handle .zip file
@@ -402,7 +403,8 @@ def pack_archive(
         msg += "Requested packing of %s in %s . " % (src, dst)
         try:
             # Force compression and allow files bigger than 2GB
-            pack_file = zipfile.ZipFile(real_dst, 'w', zipfile.ZIP_DEFLATED, True)
+            pack_file = zipfile.ZipFile(real_dst, open_mode,
+                                        zipfile.ZIP_DEFLATED, True)
         except Exception, exc:
             logger.error("create zip failed: %s" % exc)
             msg += 'Could not create zipfile: %s! ' % exc
@@ -466,7 +468,6 @@ def pack_archive(
              real_dst_lower.endswith('.tbz'):
 
         # Handle possibly compressed .tar files
-        open_mode = "w"
         if real_dst_lower.endswith('.tar.gz') or \
                real_dst_lower.endswith('.tgz'):
             open_mode += ':gz'
