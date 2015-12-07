@@ -105,6 +105,8 @@ def generate_confs(
     enable_hsts='',
     enable_vhost_certs='',
     enable_seafile='False',
+    enable_imnotify='False',
+    enable_dev_accounts='False',
     enable_openid='True',
     openid_providers='',
     daemon_keycert='',
@@ -167,6 +169,8 @@ def generate_confs(
     user_dict['__ENABLE_HSTS__'] = enable_hsts
     user_dict['__ENABLE_VHOST_CERTS__'] = enable_vhost_certs
     user_dict['__ENABLE_SEAFILE__'] = enable_seafile
+    user_dict['__ENABLE_IMNOTIFY__'] = enable_imnotify
+    user_dict['__ENABLE_DEV_ACCOUNTS__'] = enable_dev_accounts
     user_dict['__ENABLE_OPENID__'] = enable_openid
     # Default to first OpenID provider
     openid_provider_list = openid_providers.split() or ['']
@@ -248,6 +252,12 @@ cert, oid and sid based https!
     else:
         user_dict['__SEAFILE_COMMENTED__'] = '#'
 
+    dev_suffix = '$(echo ${APACHE_CONFDIR} | sed "s@/etc/${APACHE_DAEMON}@@")'
+    if user_dict['__ENABLE_DEV_ACCOUNTS__'].lower() == "true":
+        user_dict['__APACHE_SUFFIX__'] = dev_suffix
+    else:
+        user_dict['__APACHE_SUFFIX__'] = ""
+
     # Enable OpenID auth module only if openid_providers is given
     if user_dict['__OPENID_PROVIDER_BASE__'].strip():
         user_dict['__OPENID_COMMENTED__'] = ''
@@ -264,9 +274,12 @@ cert, oid and sid based https!
     if user_dict['__DISTRO__'].lower() in ('ubuntu', 'debian'):
         user_dict['__NOT_DEB_COMMENTED__'] = ''
         user_dict['__IS_DEB_COMMENTED__'] = '#'
+        user_dict['__APACHE_DAEMON__'] = 'apache2'
     else:
         user_dict['__NOT_DEB_COMMENTED__'] = '#'
         user_dict['__IS_DEB_COMMENTED__'] = ''
+        user_dict['__APACHE_DAEMON__'] = 'httpd'
+        
 
     # Only set ID sub url if openid_providers is set - trailing slash matters
     if user_dict['__OPENID_PROVIDER_BASE__']:
@@ -456,8 +469,10 @@ def create_user(
     enable_vmachines = 'True'
     enable_freeze = 'True'
     enable_hsts = 'False'
-    enable_vhost_certs = 'False',
+    enable_vhost_certs = 'False'
     enable_seafile = 'False'
+    enable_imnotify = 'False'
+    enable_dev_accounts = 'False'
     openid_providers = ''
     daemon_keycert = ''
     daemon_pubkey = ''
@@ -533,6 +548,8 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_hsts,
         enable_vhost_certs,
         enable_seafile,
+        enable_imnotify,
+        enable_dev_accounts,
         enable_openid,
         openid_providers,
         daemon_keycert,
