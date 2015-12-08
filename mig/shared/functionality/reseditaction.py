@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reseditaction - Resource editor action handler back end
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -80,8 +80,9 @@ def handle_update(configuration, client_id, resource_id, user_vars,
                                                user_vars["HOSTIDENTIFIER"],
                                                pending_file)
         if not update_status:
-            output_objects.append({'object_type': 'text', 'error_text':
-                               'Resource update failed: %s' % msg})
+            output_objects.append({'object_type': 'error_text', 'text':
+                               'Resource update failed:'})
+            output_objects.append({'object_type': 'html_form', 'text': msg})
             return False
         unique_resource_name = '%(HOSTURL)s.%(HOSTIDENTIFIER)s' % user_vars
         output_objects.append({'object_type': 'text', 'text':
