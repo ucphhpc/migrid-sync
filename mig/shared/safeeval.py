@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# safeeval - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# safeeval - Safe evaluation of expressions and commands
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,11 +25,27 @@
 # -- END_HEADER ---
 #
 
-# Safe evaluation of user supplied price function.
-# Based on example from:
-# http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/286134
+"""Safe evaluation of user supplied price function expressions and of local
+commands with or without shell interpretation.
+
+The safe expression-evaluation is based on example from:
+http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/286134
+
+The commands rely on the subprocess functions with shell=False if the command
+line arguments may contain user-provided variables with control characters in
+them. For the cases where we explicitly sanitize all command line arguments
+we can additionally use the version with shell=True.
+
+Please ALWAYS only use the command line calls from this function in server side
+code. I.e. NO direct os.system, os.execX, os.spawnX, os.popen, subprocess.X or
+`cmd` calls!
+Also try hard not to use the shell invocation if at all possible.
+"""
 
 import dis
+import subprocess
+# expose STDOUT and PIPE as vars
+subprocess_stdout, subprocess_pipe = subprocess.STDOUT, subprocess.PIPE
 
 _const_codes = map(dis.opmap.__getitem__, [
     'POP_TOP',
@@ -217,9 +233,6 @@ def const_eval(expr):
     return eval(c)
 
 
-# end const_eval
-
-
 def expr_eval(expr):
     """expr_eval(expression) -> value
     
@@ -241,9 +254,6 @@ def expr_eval(expr):
 
     c = test_expr(expr, _expr_codes)
     return eval(c)
-
-
-# end expr_eval
 
 
 def math_expr_eval(expr):
@@ -273,4 +283,28 @@ def math_expr_eval(expr):
     return eval(c)
 
 
-# end expr_eval
+def subprocess_call(command, stdin=None, stdout=None, stderr=None, env=None,
+                    cwd=None, only_sanitized_variables=False):
+    """Safe execution of command.
+    The optional only_sanitized_variables option is used to override the
+    default execution without shell interpretation of control characters.
+    Please be really careful when using it especially if any parts of your
+    command comes from user-provided variables or file names that may contain
+    control characters.
+    """
+    return subprocess.call(command, stdin=stdin, stdout=stdout, stderr=stderr,
+                           env=env, cwd=cwd, shell=only_sanitized_variables)
+
+def subprocess_popen(command, stdin=None, stdout=None, stderr=None, env=None,
+                     cwd=None, only_sanitized_variables=False):
+    """Safe execution of command with full process control.
+    The optional only_sanitized_variables option is used to override the
+    default execution without shell interpretation of control characters.
+    Please be really careful when using it especially if any parts of your
+    command comes from user-provided variables or file names that may contain
+    control characters.
+    Returns a subprocess Popen object with wait method, returncode and so on.
+    """
+    return subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=stderr,
+                            env=env, cwd=cwd, shell=only_sanitized_variables)
+

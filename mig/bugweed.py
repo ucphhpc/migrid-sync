@@ -22,10 +22,11 @@
 
 """Grep for obvious errors in pylint output for all code"""
 
-import os
+import glob
 import sys
 
 from codegrep import py_code_files
+from shared.safeeval import subprocess_call
 
 if '__main__' == __name__:
     if len(sys.argv) != 1:
@@ -33,8 +34,14 @@ if '__main__' == __name__:
         print 'Grep for obvious errors in all code files'
         sys.exit(1)
 
-    command = "pylint -E %s" % (' '.join(py_code_files))
+    expanded_paths = []
+    for code_path in py_code_files:
+        expanded_paths += glob.glob(code_path)
+    command_list = ["pylint", "-E"] + expanded_paths
+    command = ' '.join(command_list)
     print "Bug weeding command: %s" % command
     print "*** Not all lines reported are necessarily errors ***"
     print
-    os.system(command)
+    #subprocess_call(command, only_sanitized_variables=True)
+    # NOTE: we use command list to avoid shell requirement    
+    subprocess_call(command_list)

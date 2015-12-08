@@ -1,14 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
+# --- BEGIN_HEADER ---
+#
 # arcwrapper: main ARC middleware wrapper module
-#
-# Original:
-# Copyright (C) 2006-2009 Jonas Lindemann
-#
-# this version:
-# (C) 2009 Jost Berthold, grid.dk
-#  adapted to usage inside a MiG framework
+# Copyright (C) 2009-2015  The MiG Project lead by Brian Vinter
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +20,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
+# -- END_HEADER ---
+#
+
+# Original copyright notice follows:
+# Copyright (C) 2006-2009 Jonas Lindemann
+#
+# this version:
+# (C) 2009 Jost Berthold, grid.dk
+#  adapted to usage inside a MiG framework
+#
+
 
 """ARC middleware interface module."""
 
@@ -33,8 +40,8 @@ import string
 import commands
 import threading
 import tempfile
-import subprocess
 
+from shared.safeeval import subprocess_popen, subprocess_pipe
 
 # MiG utilities:
 from shared.conf import get_configuration_object
@@ -172,21 +179,6 @@ def getstatusoutput(cmd, env=None, startDir=""):
     
     return resultVal, resultLines
 
-def popen(cmd, env=None):
-    
-    variableDefs = ""
-    
-    if env!=None:
-        for variableName in env.keys():
-            variableDefs = variableDefs + "%s=%s " \
-                           % (variableName, env[variableName])
-
-    execCmd = variableDefs + cmd
-    logger.debug("popen: Starting %s" % (execCmd))
-
-    f = os.popen(execCmd)
-
-    return f
 
 # asking the user for a proxy. This will be called from many places, 
 # thus centralised here (though too specific ).
@@ -219,18 +211,19 @@ def create_grid_proxy(cert_path, key_path, proxy_path):
     Create a default proxy cert. Uses grid-proxy-init. 
     In this way no additional voms information is added.  
     
-    Returns the absolute path of the generated proxy. By standard placed in the /tmp/ folder.
+    Returns the absolute path of the generated proxy. By standard placed in
+    the /tmp/ folder.
     """
     try:
-        
-              
-        shell_cmd = "../java-bin/generate_proxy %s %s %s" % (cert_path, key_path, proxy_path)
-        proc = subprocess.Popen(shell_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (out,_) = proc.communicate()
+        command_list = ["../java-bin/generate_proxy", cert_path, key_path,
+                        proxy_path]
+        # NOTE: we use command list to avoid the need for shell
+        proc = subprocess_popen(command_list, stdout=subprocess_pipe,
+                                stderr=subprocess_pipe)
+        (out, _) = proc.communicate()
         logger.info(out.replace("\n", "."))
-
-    except Exception, e: 
-        logger.error("Could not generate a proxy certificate: \n"+str(e))
+    except Exception, exc: 
+        logger.error("Could not generate a proxy certificate: \n%s" % exc)
         raise
     
 class Ui:
@@ -974,9 +967,15 @@ class Ui:
         @type  source: string
         @param source: URL to open"""
 
-        f = popen('ngcp %s /dev/stdout' % source, self._env)
-
-        return f
+        # NOTE: I replaced a possibly unsafe call
+        # f = popen('ngcp %s /dev/stdout' % source, self._env)
+        # and haven't tested afterwards
+        # -Jonas
+        
+        command_list = ['ngcp', source, '/dev/stdout']
+        # NOTE: we use command list to avoid the need for shell
+        return subprocess_popen(command_list, stdout=subprocess_pipe,
+                                env=self._env).stdout
 
     def sync(self):
         """Query grid for jobs and update job list.

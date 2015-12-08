@@ -28,7 +28,6 @@
 """Remove an owner from a given vgrid"""
 
 import os
-import subprocess
 from binascii import hexlify
 
 import shared.returnvalues as returnvalues
@@ -39,6 +38,8 @@ from shared.handlers import correct_handler
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.parseflags import force
+from shared.safeeval import subprocess_popen, subprocess_pipe, \
+     subprocess_stdout
 from shared.useradm import distinguished_name_to_user
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
      vgrid_is_member, vgrid_owners, vgrid_members, vgrid_resources, \
@@ -72,8 +73,9 @@ def rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
                      'permission', 'remove', admin_id, 'TRAC_ADMIN']
         configuration.logger.info('remove admin rights from owner: %s' % \
                                   perms_cmd)
-        proc = subprocess.Popen(perms_cmd, stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
+        # NOTE: we use command list here to avoid shell requirement
+        proc = subprocess_popen(perms_cmd, stdout=subprocess_pipe,
+                         stderr=subprocess_stdout)
         proc.wait()
         if proc.returncode != 0:
             raise Exception("tracker permissions %s failed: %s (%d)" % \

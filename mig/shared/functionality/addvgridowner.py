@@ -28,7 +28,6 @@
 """Add owner to a vgrid"""
 
 import os
-import subprocess
 
 from shared.base import client_id_dir
 from shared.defaults import any_protocol
@@ -36,6 +35,8 @@ from shared.fileio import make_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
+from shared.safeeval import subprocess_popen, subprocess_pipe, \
+     subprocess_stdout
 from shared.useradm import distinguished_name_to_user, expand_openid_alias
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
     vgrid_is_member, vgrid_list_subvgrids, vgrid_add_owners, vgrid_list_parents
@@ -68,8 +69,9 @@ def add_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
                      'permission', 'add', admin_id, 'TRAC_ADMIN']
         configuration.logger.info('provide admin rights to owner: %s' % \
                                   perms_cmd)
-        proc = subprocess.Popen(perms_cmd, stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
+        # NOTE: We already verified command variables to be shell-safe
+        proc = subprocess_popen(perms_cmd, stdout=subprocess_pipe,
+                         stderr=subprocess_stdout)
         proc.wait()
         if proc.returncode != 0:
             raise Exception("tracker permissions %s failed: %s (%d)" % \

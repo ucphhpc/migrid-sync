@@ -28,7 +28,6 @@
 """MiG administrators page with daemon status and configuration"""
 
 import os
-import subprocess
 
 import shared.returnvalues as returnvalues
 from shared.certreq import build_certreqitem_object, list_cert_reqs, \
@@ -39,6 +38,8 @@ from shared.findtype import is_admin
 from shared.functional import validate_input_and_cert
 from shared.html import html_post_helper, themed_styles
 from shared.init import initialize_main_variables, find_entry
+from shared.safeeval import subprocess_popen, subprocess_pipe, \
+     subprocess_stdout
 
 grid_actions = {'reloadconfig': 'RELOADCONFIG',
                 'showqueued': 'JOBQUEUEINFO',
@@ -255,9 +256,10 @@ provide access to e.g. managing the grid job queues.
     if configuration.site_enable_openid:
         daemon_names.append('grid_openid.py')
     for proc in daemon_names:
-        pgrep_proc = subprocess.Popen(['pgrep', '-f', proc],
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.STDOUT)
+        # NOTE: we use command list here to avoid shell requirement
+        pgrep_proc = subprocess_popen(['pgrep', '-f', proc],
+                                      stdout=subprocess_pipe,
+                                      stderr=subprocess_stdout)
         pgrep_proc.wait()
         ps_out = pgrep_proc.stdout.read().strip()
         if pgrep_proc.returncode == 0:

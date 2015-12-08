@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # genjobscriptpython - helpers for python jobs
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -162,6 +162,7 @@ Please use Sh as SCRIPTLANGUAGE on your resources if this fails!"""
 
 import os
 import stat
+import subprocess
 from os.path import join, getsize
 '''
 
@@ -235,11 +236,13 @@ io_log.flush()'''\
             except:
                 resource_filename = mig_server_filename
 
-            # Source may be external in which case implicit destination needs attention
+            # Source may be external in which case implicit destination needs
+            # attention
 
             if resource_filename.find('://') != -1:
 
-                # Strip any protocol prefixes in destination for external sources
+                # Strip any protocol prefixes in destination for external
+                # sources
 
                 resource_filename = resource_filename.split('://', 1)[1]
 
@@ -247,8 +250,8 @@ io_log.flush()'''\
 
             resource_filename = resource_filename.lstrip('/')
 
-            cmd += 'os.popen("%s", "r")\n' % self.__curl_cmd_get(mig_server_filename,
-                                                            resource_filename)
+            cmd += 'subprocess.call("%s")\n' % \
+                   self.__curl_cmd_get(mig_server_filename, resource_filename)
         return cmd
 
     def get_special_input_files(self, result='get_special_status'):
@@ -289,11 +292,13 @@ io_log.flush()'''\
             except:
                 resource_filename = mig_server_filename
 
-            # Source may be external in which case implicit destination needs attention
+            # Source may be external in which case implicit destination needs
+            # attention
 
             if resource_filename.find('://') != -1:
 
-                # Strip any protocol prefixes in destination for external sources
+                # Strip any protocol prefixes in destination for external
+                # sources
 
                 resource_filename = resource_filename.split('://', 1)[1]
 
@@ -301,8 +306,9 @@ io_log.flush()'''\
 
             resource_filename = resource_filename.lstrip('/')
 
-            cmd += 'os.popen("%s", "r")\n' % self.__curl_cmd_get(mig_server_filename,
-                                                          resource_filename)
+            # NOTE: for security we do not invoke shell here
+            cmd += 'subprocess.call("%s")\n' % \
+                   self.__curl_cmd_get(mig_server_filename, resource_filename)
         return cmd
 
     def get_io_files(self, result='get_io_status'):
@@ -312,8 +318,9 @@ io_log.flush()'''\
         cmd += 'dst = sys.argv[-1]\n'
         cmd += 'for name in sys.argv[1:-1]:\n'
         cmd += '  name_on_resource = os.path.join(dst, os.path.basename(name))\n'
-        cmd += '  os.popen("' + self.__curl_cmd_get('name', 'name_on_resource')\
-                                             + '")\n'
+        # NOTE: for security we do not invoke shell here
+        cmd += '  subprocess.call("%s")\n' % \
+               self.__curl_cmd_get('name', 'name_on_resource')
         return cmd
 
     def generate_input_filelist(self, result='generate_input_filelist'):
@@ -593,11 +600,11 @@ if not os.environ.get("MIG_JOBDIR", ""):
             cmd += 'print "' + pretext + exe + '"\n'
 
             cmd += 'if "' + exe + '".find(" >> ") != -1:\n'
-            cmd += '   filehandle = os.popen("' + exe + ' 2>> ' + stdout\
-                 + '", "r")\n'
+            cmd += '   filehandle = subprocess.Popen("' + exe + ' 2>> ' + stdout\
+                 + '", stdout=subprocess.PIPE).stdout\n'
             cmd += 'else:\n'
-            cmd += '   filehandle = os.popen("' + exe + ' >> ' + stdout\
-                 + ' 2>> ' + stderr + '", "r")\n'
+            cmd += '   filehandle = subprocess.Popen("' + exe + ' >> ' + stdout\
+                 + ' 2>> ' + stderr + '", stdout=subprocess.PIPE).stdout\n'
             cmd += 'status = filehandle.close()\n'
             cmd += 'if status == None:\n'
             cmd += '  status = "0"\n'
@@ -653,8 +660,9 @@ if not os.environ.get("MIG_JOBDIR", ""):
             cmd += 'if (os.path.isfile("' + resource_filename\
                  + '") and os.path.getsize("' + resource_filename\
                  + '") > 0):\n'
-            cmd += '  os.popen("%s")\n' % self.__curl_cmd_send(resource_filename,
-                                                        mig_server_filename)
+            # NOTE: for security we do not invoke shell here
+            cmd += '  subprocess.call("%s")\n' %\
+                   self.__curl_cmd_send(resource_filename, mig_server_filename)
         return cmd
 
     def send_io_files(self, result='send_io_status'):
@@ -672,9 +680,9 @@ if not os.environ.get("MIG_JOBDIR", ""):
         cmd += '  name = os.path.basename(src)\n'
         cmd += '  name_on_mig_server = os.path.join(dst, name)\n'
         cmd += '  if (os.path.isfile(name) and os.path.getsize(name) > 0):\n'
-        cmd += '    os.popen("' + self.__curl_cmd_send('name',
-                                                'name_on_mig_server')\
-                 + '")\n'
+        # NOTE: for security we do not invoke shell here
+        cmd += '    subprocess.call("%s")\n' % \
+               self.__curl_cmd_send('name', 'name_on_mig_server')
         return cmd
 
     def send_status_files(self, files, result='send_status_status'):
@@ -687,11 +695,9 @@ if not os.environ.get("MIG_JOBDIR", ""):
             name_on_mig_server = os.path.join(job_output_dir,
                                               self.job_dict['JOB_ID'], name)
 
-            # cmd += "os.popen(\"%s\")\n" % curl_cmd_send(name)
-
-            cmd += 'os.popen("' + self.__curl_cmd_send(name,
-                    name_on_mig_server)\
-                 + '")\n'
+            # NOTE: for security we do not invoke shell here
+            cmd += 'subprocess.call("%s")\n' % \
+                   self.__curl_cmd_send(name, name_on_mig_server)
         return cmd
 
     def request_interactive(self):

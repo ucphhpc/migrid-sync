@@ -28,7 +28,6 @@
 """Create a new VGrid"""
 
 import os
-import subprocess
 import ConfigParser
 from email.utils import parseaddr
 from tempfile import NamedTemporaryFile
@@ -40,6 +39,8 @@ from shared.fileio import write_file, make_symlink, delete_file
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
 from shared.init import initialize_main_variables, find_entry
+from shared.safeeval import subprocess_call, subprocess_popen, \
+     subprocess_stdout, subprocess_pipe
 from shared.useradm import distinguished_name_to_user, get_full_user_map
 from shared.validstring import valid_dir_input
 from shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
@@ -188,9 +189,10 @@ the commands and work flows of this distributed SCM.
             readme_fd = open(repo_readme, 'w')
             readme_fd.write(readme_text)
             readme_fd.close()
-            subprocess.call([configuration.hg_path, 'init', target_scm_repo])
-            subprocess.call([configuration.hg_path, 'add', repo_readme])
-            subprocess.call([configuration.hg_path, 'commit', '-m"init"',
+            # NOTE: we use command list here to avoid shell requirement
+            subprocess_call([configuration.hg_path, 'init', target_scm_repo])
+            subprocess_call([configuration.hg_path, 'add', repo_readme])
+            subprocess_call([configuration.hg_path, 'commit', '-m"init"',
                              repo_readme])
         if not os.path.exists(repo_rc):
             open(repo_rc, 'w').close()
@@ -291,8 +293,9 @@ def create_tracker(
             # IMPORTANT: trac commands are quite verbose and will cause trouble
             # if the stdout/err is not handled (Popen vs call)
             logger.info('create tracker project: %s' % create_cmd)
-            proc = subprocess.Popen(create_cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT, env=admin_env)
+            # NOTE: we use command list here to avoid shell requirement
+            proc = subprocess_popen(create_cmd, stdout=subprocess_pipe,
+                                    stderr=subprocess_stdout, env=admin_env)
             proc.wait()
             if proc.returncode != 0:
                 raise Exception("tracker creation %s failed: %s (%d)" % \
@@ -354,8 +357,9 @@ def create_tracker(
             upgrade_cmd = [configuration.trac_admin_path, target_tracker_var,
                            'upgrade']
             logger.info('upgrade project tracker database: %s' % upgrade_cmd)
-            proc = subprocess.Popen(upgrade_cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT, env=admin_env)
+            # NOTE: we use command list here to avoid shell requirement
+            proc = subprocess_popen(upgrade_cmd, stdout=subprocess_pipe,
+                                    stderr=subprocess_stdout, env=admin_env)
             proc.wait()
             if proc.returncode != 0:
                 raise Exception("tracker 1st upgrade db %s failed: %s (%d)" % \
@@ -367,8 +371,9 @@ def create_tracker(
             deploy_cmd = [configuration.trac_admin_path, target_tracker_var,
                           'deploy', target_tracker_deploy]
             logger.info('deploy tracker project: %s' % deploy_cmd)
-            proc = subprocess.Popen(deploy_cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT, env=admin_env)
+            # NOTE: we use command list here to avoid shell requirement
+            proc = subprocess_popen(deploy_cmd, stdout=subprocess_pipe,
+                                    stderr=subprocess_stdout, env=admin_env)
             proc.wait()
             if proc.returncode != 0:
                 raise Exception("tracker deployment %s failed: %s (%d)" % \
@@ -397,8 +402,9 @@ def create_tracker(
             perms_cmd = [configuration.trac_admin_path, target_tracker_var,
                          'permission', 'add', admin_id, 'TRAC_ADMIN']
             logger.info('provide admin rights to creator: %s' % perms_cmd)
-            proc = subprocess.Popen(perms_cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
+            # NOTE: we use command list here to avoid shell requirement
+            proc = subprocess_popen(perms_cmd, stdout=subprocess_pipe,
+                                    stderr=subprocess_stdout, env=admin_env)
             proc.wait()
             if proc.returncode != 0:
                 raise Exception("tracker permissions %s failed: %s (%d)" % \
@@ -527,8 +533,10 @@ body {
                 wiki_cmd = [configuration.trac_admin_path, target_tracker_var,
                             'wiki', act, page, path]
                 logger.info('wiki %s %s: %s' % (act, page, wiki_cmd))
-                proc = subprocess.Popen(wiki_cmd, stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT)
+                # NOTE: we use command list here to avoid shell requirement
+                proc = subprocess_popen(wiki_cmd, stdout=subprocess_pipe,
+                                        stderr=subprocess_stdout,
+                                        env=admin_env)
                 proc.wait()
                 if proc.returncode != 0:
                     raise Exception("tracker wiki %s failed: %s (%d)" % \
@@ -543,8 +551,9 @@ body {
         upgrade_cmd = [configuration.trac_admin_path, target_tracker_var,
                        'upgrade']
         logger.info('upgrade project tracker database: %s' % upgrade_cmd)
-        proc = subprocess.Popen(upgrade_cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, env=admin_env)
+        # NOTE: we use command list here to avoid shell requirement
+        proc = subprocess_popen(upgrade_cmd, stdout=subprocess_pipe,
+                                stderr=subprocess_stdout, env=admin_env)
         proc.wait()
         if proc.returncode != 0:
             raise Exception("tracker 2nd upgrade db %s failed: %s (%d)" % \

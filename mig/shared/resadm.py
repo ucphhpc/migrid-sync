@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resadm - Resource administration functions mostly for remote command execution
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,7 +28,6 @@
 """Resource administration - mostly remote command execution"""
 
 import os
-import subprocess
 import tempfile
 import fcntl
 import time
@@ -40,6 +39,8 @@ from shared.conf import get_resource_configuration, get_resource_exe, \
     get_resource_store, get_configuration_object
 from shared.fileio import unpickle, pickle
 from shared.resource import anon_resource_id
+from shared.safeeval import subprocess_popen, subprocess_pipe, \
+     subprocess_stdout
 from shared.ssh import execute_on_resource, execute_on_exe, execute_on_store, \
     copy_file_to_exe, copy_file_to_resource
 
@@ -826,9 +827,9 @@ def start_resource_store(
         setup.update(store)
         if store.get('shared_fs', False):
             sshfs_options.append('-o Port=%(SSHPORT)s' % setup)
-            setup['options'] = ' '.join(sshfs_options)
-            command = 'sshfs %(MIGUSER)s@%(HOSTURL)s:%(storage_dir)s %(mount_point)s %(options)s' % \
-                  setup
+            src = '%(MIGUSER)s@%(HOSTURL)s:%(storage_dir)s' % setup
+            dst = '%(mount_point)s' %setup
+            command_list = ['sshfs', src, dst] + sshfs_options
         else:
             # write and use ssh jump helper script
 
@@ -851,17 +852,19 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
 
             sshfs_options.append("-o ssh_command='%(jump_path)s'" % setup)
             sshfs_options.append("-o Port=%(storage_port)s" % setup)
-            setup['options'] = ' '.join(sshfs_options)
-            command = 'sshfs %(storage_user)s@%(storage_node)s:%(storage_dir)s %(mount_point)s %(options)s' % \
-                      setup
+            src = '%(storage_user)s@%(storage_node)s:%(storage_dir)s' % setup
+            dst = '%(mount_point)s' % setup
+            command_list = ['sshfs', src, dst] + sshfs_options
+        command = ' '.join(command_list)
         logger.info('running mount command on server: %s' % command)
         msg += 'mounting with %s. ' % command
-        proc = subprocess.Popen(command, shell=True, bufsize=0, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
+        # NOTE: we use command on list form to avoid the need for shell
+        proc = subprocess_popen(command_list, stdout=subprocess_pipe,
+                                stderr=subprocess_stdout)
         exit_code = proc.wait()
         output =  proc.stdout.read()
         msg += '%s returned %s ' % (command, exit_code)
-        if exit_code > 0:
+        if exit_code != 0:
             status = False
             msg += '(non-zero indicates error during mount). %s . ' % output
         else:
@@ -1436,18 +1439,21 @@ def resource_store_action(
         setup = {'mount_point': mount_point}
         if os.path.ismount(mount_point):
             if action in ['stop', 'clean']:
-                command = 'fusermount -u %(mount_point)s' % setup
-                parts = command.split()
+                flags = '-u'
+                if action == 'clean':
+                    flags += 'z'
+                command_list = ['fusermount', flags, '%(mount_point)s' % setup]
+                command = ' '.join(command_list)
                 msg += 'unmounting with %s. ' % command
-                proc = subprocess.Popen(command, shell=True, bufsize=0,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT)
+                # NOTE: we use command on list form to avoid the need for shell
+                proc = subprocess_popen(command_list, stdout=subprocess_pipe,
+                                        stderr=subprocess_stdout)
                 exit_code = proc.wait()
                 output =  proc.stdout.read()
 
                 msg += '%s returned %s ' % (command, exit_code)
 
-                if exit_code > 0:
+                if exit_code != 0:
                     status = False
                     msg += '(non-zero indicates unmount problems). %s. ' % output
                 else:

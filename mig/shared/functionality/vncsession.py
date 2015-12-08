@@ -37,6 +37,7 @@ from shared.init import initialize_main_variables, find_entry
 from shared.livedisplaysfunctions import get_users_display_dict, \
     get_dict_from_display_number, set_user_display_active, \
     set_user_display_inactive
+from shared.safeeval import subprocess_call
 from shared.vncfunctions import create_vnc_password
 
 
@@ -270,9 +271,9 @@ def main(client_id, user_arguments_dict):
     launch += ' & echo $! > %s' % pidfile
 
     logger.info('VNC Launch: %s' % launch)
-    result = os.system(launch) >> 8
+    # NOTE: We already verified command variables to be shell-safe
+    result = subprocess_call(launch, only_sanitized_variables=True)
     logger.info('VNC Launch returned: %d' % result)
-
     if result != 0:
         output_objects.append(
             {'object_type': 'error_text', 'text':
@@ -301,7 +302,7 @@ def main(client_id, user_arguments_dict):
     html = """Opening embedded vnc applet here:<br />
 <b>This will only work if your browser includes a java plugin!</b><br />
 <object type='application/x-java-applet' width='%s' height='%s'>
-<param name='codebase' value='%s/public/vnc/' />
+<param name='codebase' value='/public/vnc/' />
 <param name='code' value='vncviewer' />
 <param name='archive' value='vncviewer.jar' />
 <param name='port' value='%s'>
@@ -316,8 +317,7 @@ VNC port: %s
 VNC password: %s
 <br />
 Display number: %s
-""" % (repr(int(width) + 50), repr(int(height) + 50),
-       configuration.migserver_https_url, repr(vnc_port), password,
+""" % (repr(int(width) + 50), repr(int(height) + 50), repr(vnc_port), password,
        configuration.server_fqdn, vnc_port, password, display_number)
     output_objects.append({'object_type': 'html_form', 'text': html})
         

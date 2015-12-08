@@ -20,10 +20,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-"""Grep for a regular expression in all code"""
+"""Grep for a regular expression in all code files"""
 
-import os
+import glob
 import sys
+
+from shared.safeeval import subprocess_call
 
 # Ignore backup and dot files in wild card match
 plain = '[a-zA-Z0-9]*.py'
@@ -72,4 +74,9 @@ if '__main__' == __name__:
         sys.exit(1)
     
     pattern = sys.argv[1]
-    os.system("grep -E '%s' %s" % (pattern, ' '.join(code_files)))
+    expanded_paths = []
+    for code_path in code_files:
+        expanded_paths += glob.glob(code_path)
+    command_list = ["grep", "-E", "%s" % pattern] + expanded_paths
+    # NOTE: we use command list to avoid shell requirement
+    subprocess_call(command_list)

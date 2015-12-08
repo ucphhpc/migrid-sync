@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fakecgi - fake a cgi request
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,8 +36,8 @@ to exist for actions to work.
 
 import os
 import sys
-import subprocess
 
+from shared.safeeval import subprocess_call
 from shared.useradm import distinguished_name_to_user
 
 
@@ -94,4 +94,4 @@ os.environ.update(extra_environment)
 if not os.path.isabs(script):
     script = os.path.abspath(script)
 print "Running %s with environment:\n%s" % (script, os.environ)
-subprocess.call(script, stdin=open('/dev/null', 'r'))
+subprocess_call(script, stdin=open('/dev/null', 'r'))

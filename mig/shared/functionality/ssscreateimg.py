@@ -44,6 +44,7 @@ from shared.handlers import correct_handler
 from shared.init import initialize_main_variables
 from shared.sandbox import load_sandbox_db, save_sandbox_db, \
     create_sss_resource
+from shared.safeeval import subprocess_call
 from shared.vgrid import vgrid_list_vgrids
 
 # sandbox db has the format: {username: (password, [list_of_resources])}
@@ -292,9 +293,10 @@ Please contact the Grid admins %s if you think they should be enabled.
 
     if os.path.ismount(mnt_path):
         logger.warning('unmounting leftover mount point')
-        os.system('sync')
-        os.system('umount %s' % mnt_path)
-        os.system('sync')
+        # NOTE: we don't need explicit shell here
+        subprocess_call('sync')
+        subprocess_call(['umount', mnt_path])
+        subprocess_call('sync')
 
     # create individual key files
 
@@ -323,7 +325,8 @@ Please contact the Grid admins %s if you think they should be enabled.
     # mount hda and copy scripts to it
 
     logger.info('calling mount %s' % mnt_path)
-    os.system('mount %s' % mnt_path)
+    # NOTE: we don't need explicit shell here
+    subprocess_call(['mount', mnt_path])
 
     for i in range(60):
         if not os.path.ismount(mnt_path):
@@ -366,9 +369,10 @@ Please contact the Grid admins %s if you think they should be enabled.
 
     # unmount disk image
 
-    os.system('sync')
-    os.system('umount %s' % mnt_path)
-    os.system('sync')    
+    # NOTE: we don't need explicit shell here
+    subprocess_call('sync')
+    subprocess_call(['umount', mnt_path])
+    subprocess_call('sync')    
 
     for i in range(60):
         if os.path.ismount(mnt_path):
@@ -387,9 +391,11 @@ Please contact the Grid admins %s if you think they should be enabled.
         logger.debug('Converting disk image to %s format' % image_format)
         image_path = os.path.join(configuration.sss_home, 'MiG-SSS', 'hda.img')
         tmp_path = image_path + '.' + image_format
-        command = 'qemu-img convert -f raw ' + image_path + ' -O '\
-                  + image_format + ' ' + tmp_path
-        os.system(command)
+        command_list = ['qemu-img', 'convert', '-f raw', image_path, '-O',
+                        image_format, tmp_path]
+        command = ' '.join(command_list)
+        # NOTE: we use command list to avoid shell requirement here
+        subprocess_call(command_list)
         os.remove(image_path)
         os.rename(tmp_path, image_path)
         logger.debug('converted hda image to %s format' % image_format)

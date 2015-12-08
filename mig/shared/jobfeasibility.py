@@ -36,7 +36,6 @@ i.e. job_cond orange is a subset of job_cond yellow.
 """
 
 import os
-import subprocess
 from time import time
 
 from shared.base import client_id_dir

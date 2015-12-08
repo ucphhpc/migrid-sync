@@ -6,7 +6,7 @@
 #
 # vmbuilder - shared virtual machine builder functions and script
 #
-# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,12 +33,11 @@ simple handler for invocation as a command line vm build script.
 
 import getopt
 import os
-import subprocess
 import sys
 from tempfile import mkdtemp
 
 from shared.conf import get_configuration_object
-
+from shared.safeeval import subprocess_call
 
 configuration = get_configuration_object()
 logger = configuration.logger
@@ -73,6 +72,8 @@ def fill_template(src, dst, vm_specs):
 def build_vm(vm_specs):
     """Use vmbuilder to build an OS image with settings from the vm_specs
     dictionary.
+    NOTE: this is only used by MiG admins as a command line tool!
+    Otherwise the subprocess (sudo) call would have to be much more paranoid
     """
     build_specs = {}
     build_specs.update(default_specs)
@@ -125,10 +126,12 @@ def build_vm(vm_specs):
         cmd_string = "%s %s" % (cmd_base, cmd_args)
         cmd = cmd_string.split()
         logger.info("building vm with: %s" % cmd_string)
-        subprocess.check_call(cmd)
+        build_res = subprocess_call(cmd)
+        if build_res != 0:
+            raise Exception("vmbuilder run failed: %s" % build_res)
         logger.info("built vm in %(working_dir)s" % build_specs)
     except Exception, exc:
-        logger.error("vm built failed: %s" % exc)
+        logger.error("vm build failed: %s" % exc)
     finally:
         os.remove(conf_path)
         os.remove(bundle_path)

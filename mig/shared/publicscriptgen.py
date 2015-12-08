@@ -382,8 +382,9 @@ def curl_perform(
     command = \"%%s %%s --cert %%s --key %%s %%s %%s %%s %%s %%s --url '%%s/%%s%%s'\" %% \\
         (curl, curl_opts, cert_file, key_file, data, ca_check, password_check,
         timeout, target, mig_server, location, query)
-    proc = subprocess.Popen(command, shell=True, bufsize=0,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
+    # NOTE: for security we do not invoke shell here
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
     out_buffer = StringIO.StringIO(proc.communicate()[0])
     proc.stdout.close()
     out = out_buffer.readlines()

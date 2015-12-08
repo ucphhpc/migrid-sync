@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssh - remote command wrappers using ssh/scp
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,7 @@
 
 import base64
 import os
+import sys
 import tempfile
 import StringIO
 
@@ -39,6 +40,7 @@ except ImportError:
     paramiko = None
 
 from shared.conf import get_resource_exe, get_configuration_object
+from shared.safeeval import subprocess_popen, subprocess_pipe
 
 
 def parse_pub_key(public_key):
@@ -143,19 +145,22 @@ def copy_file_to_resource(
     if hostkey:
         options.append('-o UserKnownHostsFile=' + key_path)
 
-    command = 'scp %s %s %s@%s:%s >> /dev/null 2>> %s/scp.err' % (
-        ' '.join(options),
-        filename,
-        user,
-        host,
-        os.path.join(resource_config['RESOURCEHOME'], dest_path),
-        configuration.log_dir,
-        )
-
-    logger.debug(command)
-    status = os.system(command) >> 8
-
-    # Remove temp file no matter what command returned
+    abs_dest_path = os.path.join(resource_config['RESOURCEHOME'], dest_path)
+    # TODO: double check entire variable chain for risky control chars
+    scp_command_list = ['scp'] + options + [filename] + \
+                       ['%s@%s:%s' % (user, host, abs_dest_path)]        
+    scp_command = ' '.join(scp_command_list)
+    logger.debug(scp_command)
+    # NOTE: we need to use scp command list here to avoid shell requirement
+    scp_proc = subprocess_popen(scp_command_list,
+                                stdin=open("/dev/null", "r"),
+                                stdout=open("/dev/null", "w"),
+                                stderr=subprocess_pipe,
+                                )
+    status = scp_proc.wait()
+    _ , err_msg = scp_proc.communicate()
+    
+    # Remove temp file no matter what scp_command returned
 
     try:
         os.remove(key_path)
@@ -165,9 +170,16 @@ def copy_file_to_resource(
     if status != 0:
 
         # File was not sent!! Take action
-
-        logger.error(command)
-        logger.error('scp return code: %s %s' % (status, host))
+        
+        logger.error('%s returned %s: %s' % (scp_command, status, err_msg))
+        err_path = '%s/scp.err' % configuration.log_dir
+        try:
+            err_fd = open(err_path, 'a')
+            err_fd.write(err_msg)
+            err_fd.close()
+        except Exception, exc:
+            logger.error("failed to write scp err log: %s" % exc)
+            
         return False
 
     logger.info('scp ok %s' % host)
@@ -341,17 +353,26 @@ def execute_on_resource(
 
     batch = []
     batch.append('1> /dev/null')
-    batch.append('2> /dev/null')
+    #batch.append('2> /dev/null')
     if background:
         batch.append('&')
 
     # IMPORTANT: careful with the ssh_command line!
     # removing explicit bash or changing quotes breaks resource management
     
-    ssh_command = 'ssh %s %s@%s "bash -c \'%s %s\'"'\
-         % (' '.join(options), user, host, command, ' '.join(batch))
+    # TODO: double check entire variable chain for risky control chars
+    ssh_command_list = ['ssh'] + options + ['%s@%s' % (user, host)] + \
+                       ["bash -c \'%s %s\'" % (command, ' '.join(batch))]
+    ssh_command = ' '.join(ssh_command_list)
     logger.debug('running command: %s' % ssh_command)
-    status = os.system(ssh_command) >> 8
+    ssh_proc = subprocess_popen(ssh_command_list,
+                                stdin=open("/dev/null", "r"),
+                                stdout=open("/dev/null", "w"),
+                                stderr=subprocess_pipe,
+                                )
+    status = ssh_proc.wait()
+    _ , err_msg = ssh_proc.communicate()
+
     logger.debug('cleaning up after command')
 
     # Remove temp file no matter what ssh command returned
@@ -366,8 +387,7 @@ def execute_on_resource(
 
         # Command was not executed with return code 0!! Take action
 
-        logger.error('%s EXITED WITH STATUS: %s' % (ssh_command,
-                     status))
+        logger.error('%s returned %s: %s' % (ssh_command, status, err_msg))
         return (status, ssh_command)
 
     logger.debug('Remote execution ok: %s' % ssh_command)
@@ -458,3 +478,57 @@ def generate_ssh_rsa_key_pair(size=2048, public_key_prefix='', public_key_postfi
     public_key = ("%s ssh-rsa %s %s" % (public_key_prefix, rsa_key.get_base64(), public_key_postfix)).strip()
    
     return (private_key, public_key)
+
+
+if __name__ == "__main__":
+    from shared.conf import get_resource_configuration
+    unique_resource_name = 'localhost.0'
+    exe_name = 'localhost'
+    if sys.argv[1:]:
+        unique_resource_name = sys.argv[1]
+    if sys.argv[2:]:
+        exe_name = sys.argv[2]
+    print "running ssh unit tests against %s" % unique_resource_name
+    configuration = get_configuration_object()
+    logger = configuration.logger
+    filename = '/tmp/localdummy'
+    dummy_fd = open(filename, "w")
+    dummy_fd.write("sample text\n")
+    dummy_fd.close()
+    res_path = 'res-' + os.path.basename(filename)
+    exe_path = 'exe-' + os.path.basename(filename)
+    (res_status, resource_config) = \
+             get_resource_configuration(configuration.resource_home,
+                                        unique_resource_name, logger)
+    (exe_status, exe_config) = get_resource_exe(resource_config, exe_name, logger)
+    if not res_status:
+        print "Failed to extract resource config for %s: %s" % \
+              (unique_resource_name, resource_config)
+        sys.exit(1)
+    if not exe_status:
+        print "Failed to extract exe config for %s: %s" % \
+              (exe_name, exe_config)
+        sys.exit(1)
+    copy_res = copy_file_to_resource(filename, res_path, resource_config,
+                                     logger)
+    print "copy %s to %s on %s success: %s" % (filename, res_path,
+                                               unique_resource_name, copy_res)
+    command = "ls"
+    (exec_res, exec_msg) = execute_on_resource(command, False, resource_config,
+                                               logger)
+    print "exec %s on %s success: %s\n%s" % \
+          (command, unique_resource_name, exec_res, exec_msg)
+    command = "uname -a && sleep 2"
+    (exec_res, exec_msg) = execute_on_resource(command, True, resource_config,
+                                               logger)
+    print "bg exec %s on %s success: %s\n%s" % \
+          (command, unique_resource_name, exec_res, exec_msg)
+    copy_res = copy_file_to_exe(filename, exe_path, resource_config, exe_name,
+                                logger)
+    print "copy %s to %s on %s success: %s" % (filename, exe_path,
+                                               unique_resource_name, copy_res)
+    command = "ls"
+    (exec_res, exec_msg) = execute_on_exe(command, False, resource_config,
+                                          exe_config, logger)
+    print "bg exec %s on %s_%s success: %s\n%s" % \
+          (command, unique_resource_name, exe_name, exec_res, exec_msg)

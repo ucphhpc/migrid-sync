@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # unit - some simple unit tests against migfs
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 """Unit test migfs"""
 
 import os
+import subprocess
 import sys
 import traceback
 
@@ -231,7 +232,7 @@ if not os.path.isdir(mount_point):
 print '--- Starting unit tests ---'
 print
 if do_mount:
-    os.system('./mount.migfs none %s' % mount_point)
+    subprocess.call(['./mount.migfs', 'none', mount_point])
 try:
     prepare_test(test_path)
     write_test(test_path)
@@ -246,4 +247,4 @@ print
 print '--- End of unit tests ---'
 
 if do_mount:
-    os.system('fusermount -u -z %s' % mount_point)
+    subprocess.call(['fusermount', '-u', '-z', mount_point])
