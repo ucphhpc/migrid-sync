@@ -104,8 +104,9 @@ def handle_update(configuration, client_id, resource_id, user_vars,
         (create_status, msg) = create_resource(configuration, client_id,
                                                resource_name, pending_file)
         if not create_status:
-            output_objects.append({'object_type': 'text', 'error_text':
-                               'Resource creation failed: %s' % msg})
+            output_objects.append({'object_type': 'error_text', 'text':
+                               'Resource creation failed:'})
+            output_objects.append({'object_type': 'html_form', 'text': msg})
             return False
         output += '''Your resource was added as %s.%s
 <hr />''' % (resource_name, msg)
@@ -115,7 +116,8 @@ def handle_update(configuration, client_id, resource_id, user_vars,
         if not status:
             logger.error(msg)
             output_objects.append({'object_type': 'error_text', 'text':
-                               'Failed to parse new configuration: %s' % msg})
+                               'Failed to parse new configuration:'})
+            output_objects.append({'object_type': 'html_form', 'text': msg})
             try:
                 os.remove(pending_file)
             except:
