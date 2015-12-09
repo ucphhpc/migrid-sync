@@ -38,7 +38,7 @@ basis.
 
 import cgi
 from string import letters, digits, printable
-from unicodedata import category
+from unicodedata import category, name as unicode_name
 
 from shared.base import force_unicode
 from shared.validstring import valid_user_path
@@ -46,19 +46,21 @@ from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
 
 
-# Accented character constant helpers
+# Accented character constant helpers - the allowed set of accented characters
+# is chosen based which of these constants is used as the include_accented
+# option to some of the validator functions.
 NO_ACCENTED, COMMON_ACCENTED, ANY_ACCENTED = range(3)
 
 # Unicode letter categories as defined on
 # http://www.unicode.org/reports/tr44/#GC_Values_Table
 # TODO: should we go all in and allow even these very exotic modifiers?
-#_ACCENT_CATS = frozenset( ('Lu', 'Ll', 'Lt', 'Lm', 'Lo', ))
-_ACCENT_CATS = frozenset( ('Lu', 'Ll', 'Lt', ))
+#_ACCENT_CATS = frozenset(('Lu', 'Ll', 'Lt', 'Lm', 'Lo', ))
+_ACCENT_CATS = frozenset(('Lu', 'Ll', 'Lt', ))
 
 ### Use utf8 byte string representation here ("something" and not u"something")
 ### We explicitly translate to the unicode representation in the functions
 
-# We allow ascii plus the most common accented letters in utf8 for names.
+# These are the ascii plus most common accented letters in utf8 for names:
 # http://practicaltypography.com/common-accented-characters.html
 # ./getglyphs.py http://practicaltypography.com/common-accented-characters.html
 # found glyphs: áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ
@@ -72,6 +74,7 @@ SAFE_CURRENCY = '¤€£¢¥₣₤'
 
 # We must be careful about characters that have special regex meaning
 
+VALID_SAFE_PATH_CHARACTERS = letters + digits + "/.,_-+="
 VALID_PATH_CHARACTERS = letters + digits + SAFE_CURRENCY + "/.,_-+±×÷=½¾" + \
                         " " + "'" + ":;@§%‰()~!&¶"
 
@@ -97,7 +100,7 @@ name_extras = ' -@.'
 # IMPORTANT: never allow '+' and '_' in DN: reserved for path translation! #
 ############################################################################
 # We allow ':' in DN, however, as it is used by e.g. DanID:
-# /C=DK/O=Ingen organisatorisk tilknytning/CN=$name/serialNumber=PID:$serial
+# /C=DK/O=Ingen organisatorisk tilknytning/CN=${NAME}/serialNumber=PID:${SERIAL}
 
 dn_extras = name_extras + '/=:'
 
@@ -175,11 +178,15 @@ def __valid_contents(
         raise InputException('found invalid character: %s' % char)
 
 
-def __filter_contents(contents, valid_chars, include_accented=NO_ACCENTED):
+def __filter_contents(contents, valid_chars, include_accented=NO_ACCENTED,
+                      illegal_handler=None):
     """This is a general function to filter out any illegal characters
     from the supplied contents.
     Please see the documentation for __valid_contents for information about
     the optional include_accented argument.
+    The optional illegal_handler option can be used to replace any illegal
+    characters with the output of the call illegal_handler(char). The default
+    None value results in simply skipping illegal characters.
     """
 
     contents = force_unicode(contents)
@@ -191,7 +198,19 @@ def __filter_contents(contents, valid_chars, include_accented=NO_ACCENTED):
            include_accented == COMMON_ACCENTED and char in accented_chars or \
            include_accented == ANY_ACCENTED and category(char) in _ACCENT_CATS:
             result += char
+        elif illegal_handler:
+            result += illegal_handler(char)
     return result
+
+
+def __wrap_unicode_name(char):
+    """Build __NAME__ where NAME is the unicodedata name for the char"""
+    return '__%s__' % unicode_name(force_unicode(char))
+
+
+def __wrap_unicode_val(char):
+    """Build __uVAL__ where VAL is the unicode code point for the char"""
+    return '__u%s__' % ord(force_unicode(char))
 
 
 # Public functions
@@ -292,6 +311,19 @@ def valid_path(
 
     valid_chars = VALID_PATH_CHARACTERS + extra_chars
     __valid_contents(path, valid_chars, min_length, max_length, ANY_ACCENTED)
+
+
+def valid_safe_path(
+    path,
+    min_length=1,
+    max_length=256,
+    extra_chars='',
+    ):
+    """Verify that supplied path only contains characters that we consider
+    valid and shell safe"""
+
+    valid_chars = VALID_SAFE_PATH_CHARACTERS + extra_chars
+    __valid_contents(path, valid_chars, min_length, max_length, NO_ACCENTED)
 
 
 def valid_fqdn(
@@ -640,6 +672,13 @@ def filter_path(contents):
     return __filter_contents(contents, VALID_PATH_CHARACTERS, ANY_ACCENTED)
 
 
+def filter_safe_path(contents):
+    """Filter supplied contents to only contain valid safe path characters"""
+
+    return __filter_contents(contents, VALID_SAFE_PATH_CHARACTERS, NO_ACCENTED,
+                             illegal_handler=__wrap_unicode_val)
+
+
 def filter_fqdn(contents):
     """Filter supplied contents to only contain valid fqdn characters"""
 
@@ -908,6 +947,7 @@ def guess_type(name):
             'cmd',
             'pattern',
             'arguments',
+            'hostkey',
             ):
             __type_map[key] = valid_path_pattern
         for key in (
@@ -919,6 +959,16 @@ def guess_type(name):
             'rate_limit',
             ):
             __type_map[key] = valid_path
+        # NOTE: verifies that resource conf values are safe for ssh calls
+        for key in (
+            'resourcehome',
+            'frontendlog',
+            'exehostlog',
+            'joblog',
+            'execution_dir',
+            'storage_dir',
+            ):
+            __type_map[key] = valid_safe_path
         for key in ('job_id', 'req_id', 'resource', 'search', 'name'):
             __type_map[key] = valid_job_id_pattern
         for key in (
@@ -958,6 +1008,9 @@ def guess_type(name):
             'cpu_count',
             'cpu_time',
             'field_count',
+            'nodecount',
+            'storage_disk',
+            'storage_port',
             ):
             __type_map[key] = valid_numeric
         for key in ('offset', ):
@@ -972,6 +1025,7 @@ def guess_type(name):
             'sys_re',
             'time_start',
             'time_end',
+            'execution_node',
             ):
             __type_map[key] = valid_fqdn
         for key in (
@@ -1017,6 +1071,11 @@ def guess_type(name):
             'vgrid',
             'runtimeenvironment',
             'mount',
+            'publicinfo',            
+            'start_command',
+            'stop_command',
+            'status_command',
+            'clean_command',
             ):
             __type_map[key] = valid_plain_text
         for key in (
@@ -1039,6 +1098,10 @@ def guess_type(name):
             'postcontent',
             'publickeys',
             'freeze_description',
+            # NOTE: we accept free text on overall EXECONFIG and STORECONFIG
+            # because the sub level variables are parsed individually
+            'execonfig',
+            'storeconfig',
             ):
             __type_map[key] = valid_free_text
         for key in ('show', 'modauthopenid.error'):
