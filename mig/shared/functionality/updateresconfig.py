@@ -111,7 +111,8 @@ def main(client_id, user_arguments_dict):
                                            pending_file)
     if not update_status:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Resource update failed: %s' % msg})
+                               'Resource update failed:'})
+        output_objects.append({'object_type': 'html_form', 'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     output_objects.append({'object_type': 'text', 'text':

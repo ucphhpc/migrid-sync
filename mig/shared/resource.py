@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resource - resource configuration functions
-# Copyright (C) 2003-2013  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -670,7 +670,7 @@ def prepare_conf(configuration, input_args, resource_id):
     execution_nodes = conf['EXECONFIG']
     storage_nodes = conf['STORECONFIG']
     nodes = 0
-    if execution_nodes:
+    if execution_nodes and execution_nodes[-1]['nodecount'].isdigit():
         nodes = int(execution_nodes[-1]['nodecount'])
     exe_count = len([i for i in exe_names if i])
     store_count = len([i for i in store_names if i])

@@ -348,7 +348,7 @@ to %s''' % configuration.grid_stdin)
         resource_config = unpickle(resource_config_filename, logger)
         if not resource_config:
             logger.error('error unpickling resource config')
-            return False
+            return (False, 'error unpickling resource config')
 
         dict_entry = (job_id, client_id)
 
