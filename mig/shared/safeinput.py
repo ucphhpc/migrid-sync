@@ -40,7 +40,7 @@ import cgi
 from string import letters, digits, printable
 from unicodedata import category, name as unicode_name
 
-from shared.base import force_unicode
+from shared.base import force_unicode, force_utf8
 from shared.validstring import valid_user_path
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
@@ -87,6 +87,7 @@ VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
 VALID_URL_CHARACTERS = VALID_BASEURL_CHARACTERS + '?;&%='
 VALID_JOB_ID_CHARACTERS = VALID_FQDN_CHARACTERS + '_'
 VALID_JOB_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_+@$%'
+VALID_VGRID_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_/'
 REJECT_UNSET = 'MUST_BE_SET_AND_NO_DEFAULT_VALUE'
 ALLOW_UNSAFE = \
     'THIS INPUT IS NOT VERIFIED: DO NOT EVER PRINT IT UNESCAPED! '
@@ -175,7 +176,8 @@ def __valid_contents(
            include_accented == COMMON_ACCENTED and char in accented_chars or \
            include_accented == ANY_ACCENTED and category(char) in _ACCENT_CATS:
             continue
-        raise InputException('found invalid character: %s' % char)
+        raise InputException('found invalid character: "%s" (allowed: %s)' % \
+                             (char, valid_chars))
 
 
 def __filter_contents(contents, valid_chars, include_accented=NO_ACCENTED,
@@ -481,6 +483,21 @@ def valid_job_name(
 
     valid_chars = VALID_JOB_NAME_CHARACTERS + extra_chars
     __valid_contents(job_name, valid_chars, min_length, max_length)
+
+
+def valid_vgrid_name(
+    vgrid_name,
+    min_length=1,
+    max_length=255,
+    extra_chars='',
+    ):
+    """Verify that supplied VGrid name, only contains characters that we
+    consider valid. VGrid names are user provided names possibly with common
+    special characters.
+    """
+
+    valid_chars = VALID_VGRID_NAME_CHARACTERS + extra_chars
+    __valid_contents(vgrid_name, valid_chars, min_length, max_length)
 
 
 def valid_path_pattern(
@@ -944,19 +961,14 @@ def guess_type(name):
             'src',
             'dst',
             'current_dir',
-            'cmd',
             'pattern',
             'arguments',
             'hostkey',
             ):
             __type_map[key] = valid_path_pattern
         for key in (
-            'vgrid_name',
             'fileupload',
             'public_image',
-            'site_script_deps',
-            'jobname',
-            'rate_limit',
             ):
             __type_map[key] = valid_path
         # NOTE: verifies that resource conf values are safe for ssh calls
@@ -965,11 +977,19 @@ def guess_type(name):
             'frontendlog',
             'exehostlog',
             'joblog',
+            'curllog',
             'execution_dir',
             'storage_dir',
+            'cmd',
+            'site_script_deps',
             ):
             __type_map[key] = valid_safe_path
-        for key in ('job_id', 'req_id', 'resource', 'search', 'name'):
+        # We include vgrid_name and a few more here to enforce sane name policy
+        for key in ('vgrid_name', 'rate_limit', ):
+            __type_map[key] = valid_vgrid_name
+        for key in ('jobname', ):
+            __type_map[key] = valid_job_name
+        for key in ('job_id', 'req_id', 'resource', 'search', ):
             __type_map[key] = valid_job_id_pattern
         for key in (
             'action',
@@ -1004,11 +1024,16 @@ def guess_type(name):
             'depth',
             'hd_size',
             'memory',
-            ' net_bw',
+            'disk',
+            'net_bw',
             'cpu_count',
             'cpu_time',
             'field_count',
             'nodecount',
+            'cpucount',
+            'sshport',
+            'maxdownloadbandwidth',
+            'maxuploadbandwidth',
             'storage_disk',
             'storage_port',
             ):
@@ -1026,10 +1051,22 @@ def guess_type(name):
             'time_start',
             'time_end',
             'frontendnode',
-            'execution_node',
-            'storage_node',
+            'lrmstype',
+            'platform',
+            'architecture',
             ):
             __type_map[key] = valid_fqdn
+        # NOTE: we need to allow some empty STORECONFIG and EXECONFIG fields
+        for key in ('name', ):
+            __type_map[key] = lambda x: valid_job_id_pattern(x, min_length=0)
+        for key in ('execution_node', 'storage_node', ):
+            __type_map[key] = lambda x: valid_fqdn(x, min_length=0)
+        for key in ('execution_user', 'storage_user', ):
+            __type_map[key] = lambda x: valid_commonname(x, min_length=0)
+        # EXECONFIG vgrid field which may be empty or a comma-separated list
+        for key in ('vgrid', ):
+            __type_map[key] = lambda x: valid_vgrid_name(x, min_length=0,
+                                                         extra_chars=",")
         for key in (
             'cert_name',
             'org',
@@ -1047,8 +1084,6 @@ def guess_type(name):
             'openid.sreg.role',
             'changes',
             'miguser',
-            'execution_user',
-            'storage_user',
             ):
             __type_map[key] = valid_commonname
         for key in ('cert_id', 'run_as'):
@@ -1073,21 +1108,21 @@ def guess_type(name):
             'outputfiles',
             'verifyfiles',
             'notify',
-            'vgrid',
             'runtimeenvironment',
             'mount',
-            'publicinfo',
             'publicname',
+            'publicinfo',
             'start_command',
             'stop_command',
             'status_command',
             'clean_command',
             'lrmsdelaycommand',
             'lrmssubmitcommand',
-            'lrmsdonecommand',
             'lrmsremovecommand',
-            'lrmsquerycommand',
+            'lrmsdonecommand',
+            'execution_precondition',
             'prepend_execute',
+            'minprice',
             ):
             __type_map[key] = valid_plain_text
         for key in (
@@ -1099,6 +1134,7 @@ def guess_type(name):
             'email',
             'openid.sreg.email',
             'openid.sreg.mail',
+            'adminemail',
             ):
             __type_map[key] = valid_email_address
         for key in (
@@ -1124,7 +1160,7 @@ def guess_type(name):
         for key in ('password', 'verifypassword', 'openid.sreg.required'
                     ):
             __type_map[key] = valid_password
-        for key in ('architecture', 'hostidentifier'):
+        for key in ('hostidentifier'):
             __type_map[key] = valid_alphanumeric
         for key in ('proxy_upload', ):
             __type_map[key] = valid_printable
@@ -1273,7 +1309,7 @@ def validate_helper(
 
 class InputException(Exception):
 
-    """Shared input validation exception"""
+    """Shared input validation exception - forced back to UTF-8"""
 
     def __init__(self, value):
         """Init InputException"""
@@ -1284,7 +1320,7 @@ class InputException(Exception):
     def __str__(self):
         """Return string representation"""
 
-        return repr(self.value)
+        return force_utf8(str(self.value))
 
 
 if __name__ == '__main__':

@@ -305,12 +305,14 @@ def check_types(parse_output, external_keyword_dict, configuration):
                 
                 status = False
                 key = job_keyword
+                val = keyword_data
                 if sub_key:
                     key += ' -> %s' % sub_key
+                    val = [sub_val]
                 msg += format_type_error(
                     key,
-                    'invalid data value (%s)' % exc,
-                    keyword_dict, keyword_data)
+                    'invalid data value: %s' % exc,
+                    keyword_dict, val)
 
             if keyword_type == 'int':
                 if not len(keyword_data) == 1:
