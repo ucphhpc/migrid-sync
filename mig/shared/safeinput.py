@@ -86,7 +86,7 @@ VALID_FQDN_CHARACTERS = letters + digits + '.-'
 VALID_BASEURL_CHARACTERS = VALID_FQDN_CHARACTERS + ':/_'
 VALID_URL_CHARACTERS = VALID_BASEURL_CHARACTERS + '?;&%='
 VALID_JOB_ID_CHARACTERS = VALID_FQDN_CHARACTERS + '_'
-VALID_JOB_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_+@$%'
+VALID_JOB_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_+@%'
 VALID_VGRID_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_/'
 REJECT_UNSET = 'MUST_BE_SET_AND_NO_DEFAULT_VALUE'
 ALLOW_UNSAFE = \
@@ -686,6 +686,7 @@ def filter_plain_text(contents):
 def filter_path(contents):
     """Filter supplied contents to only contain valid path characters"""
 
+    # TODO: consider switching to illegal_handler=__wrap_unicode_val here
     return __filter_contents(contents, VALID_PATH_CHARACTERS, ANY_ACCENTED)
 
 
@@ -1320,7 +1321,7 @@ class InputException(Exception):
     def __str__(self):
         """Return string representation"""
 
-        return force_utf8(str(self.value))
+        return force_utf8(force_unicode(self.value))
 
 
 if __name__ == '__main__':

@@ -377,13 +377,14 @@ def curl_perform(
     query = %s
     data = ''
     if post_data:
-        data = '--data "%%s"' %% post_data
-    curl_opts = \"--location --fail --silent --show-error\"
-    command = \"%%s %%s --cert %%s --key %%s %%s %%s %%s %%s %%s --url '%%s/%%s%%s'\" %% \\
+        data = '--data %%s' %% post_data
+    curl_opts = '--location --fail --silent --show-error'
+    command = '%%s %%s --cert %%s --key %%s %%s %%s %%s %%s %%s --url %%s/%%s%%s' %% \\
         (curl, curl_opts, cert_file, key_file, data, ca_check, password_check,
         timeout, target, mig_server, location, query)
+    command_list = [i for i in command.split(' ') if i]
     # NOTE: for security we do not invoke shell here
-    proc = subprocess.Popen(command, stdout=subprocess.PIPE,
+    proc = subprocess.Popen(command_list, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
     out_buffer = StringIO.StringIO(proc.communicate()[0])
     proc.stdout.close()
