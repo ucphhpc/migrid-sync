@@ -1025,7 +1025,9 @@ def guess_type(name):
             'sys_re',
             'time_start',
             'time_end',
+            'frontendnode',
             'execution_node',
+            'storage_node',
             ):
             __type_map[key] = valid_fqdn
         for key in (
@@ -1044,6 +1046,9 @@ def guess_type(name):
             'openid.sreg.ou',
             'openid.sreg.role',
             'changes',
+            'miguser',
+            'execution_user',
+            'storage_user',
             ):
             __type_map[key] = valid_commonname
         for key in ('cert_id', 'run_as'):
@@ -1071,11 +1076,18 @@ def guess_type(name):
             'vgrid',
             'runtimeenvironment',
             'mount',
-            'publicinfo',            
+            'publicinfo',
+            'publicname',
             'start_command',
             'stop_command',
             'status_command',
             'clean_command',
+            'lrmsdelaycommand',
+            'lrmssubmitcommand',
+            'lrmsdonecommand',
+            'lrmsremovecommand',
+            'lrmsquerycommand',
+            'prepend_execute',
             ):
             __type_map[key] = valid_plain_text
         for key in (
