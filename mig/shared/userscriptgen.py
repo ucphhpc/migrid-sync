@@ -1379,7 +1379,7 @@ def stat_function(lang, curl_cmd, curl_flags='--compressed'):
     begin_function() doesn't support variable length or array args.
     """
 
-    relative_url = '"cgi-bin/stat.py"'
+    relative_url = '"cgi-bin/statpath.py"'
     query = '""'
     if lang == 'sh':
         post_data = '"output_format=txt;flags=$server_flags;$path_list"'
@@ -1489,10 +1489,14 @@ def test_function(lang, curl_cmd, curl_flags=''):
     s += begin_function(lang, 'test_op', ['op'],
                         'Execute simple function tests')
     if lang == 'sh':
+        s += """
+    valid_ops=(%(valid_ops)s)
+    mig_prefix='%(mig_prefix)s'
+    script_ext='sh'
+""" % {'valid_ops': ' '.join(script_ops), 'mig_prefix': mig_prefix}
         s += \
             """
     valid=0
-    valid_ops=(%s)
     for valid_op in ${valid_ops[*]}; do
         if [ $op = $valid_op ]; then
             valid=1
@@ -1507,94 +1511,107 @@ def test_function(lang, curl_cmd, curl_flags=''):
        
     path_prefix=`dirname $0`
     echo \"running $op test(s)\"
-    cmd=\"$path_prefix/%s${op}.%s\"
+    cmd=\"${path_prefix}/${mig_prefix}${op}.${script_ext}\"
+    put_cmd=\"${path_prefix}/${mig_prefix}put.${script_ext}\"
+    submit_cmd=\"${path_prefix}/${mig_prefix}submit.${script_ext}\"
+    ls_cmd=\"${path_prefix}/${mig_prefix}ls.${script_ext}\"
+    zip_cmd=\"${path_prefix}/${mig_prefix}zip.${script_ext}\"
+    rm_cmd=\"${path_prefix}/${mig_prefix}rm.${script_ext}\"
     declare -a cmd_args
-    declare -a verify_cmd
+    declare -a verify_cmds
     case $op in
         'cancel')
-            pre_cmd=\"$path_prefix/migsubmit.sh mig-test.mRSL\"
+            pre_cmds[1]=\"${submit_cmd} mig-test.mRSL\"
             cmd_args[1]='DUMMY_JOB_ID'
             ;;
         'cat')
-            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
             cmd_args[1]='mig-test.txt'
-            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
+            ;;
+        'cp')
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
+            cmd_args[1]='mig-test.txt mig-test-new.txt'
+            post_cmds[1]=\"${rm_cmd} mig-test.txt mig-test-new.txt\"
             ;;
         'doc')
             cmd_args[1]=''
             ;;
         'get')
-            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
             cmd_args[1]='mig-test.txt .'
-            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
             ;;
         'head')
-            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
             cmd_args[1]='mig-test.txt'
-            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
             ;;
         'jobaction')
-            pre_cmd=\"$path_prefix/migsubmit.sh mig-test.mRSL\"
+            pre_cmds[1]=\"${submit_cmd} mig-test.mRSL\"
             cmd_args[1]='cancel DUMMY_JOB_ID'
             ;;
         'ls')
-            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
             cmd_args[1]='mig-test.txt'
-            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
             ;;
         'mkdir')
-            pre_cmd=\"$path_prefix/migrm.sh -r mig-test-dir\"
+            pre_cmds[1]=\"${rm_cmd} -r mig-test-dir\"
             cmd_args[1]='mig-test-dir'
-            verify_cmd[1]=\"$path_prefix/migls.sh mig-test-dir\"
-            post_cmd=\"$path_prefix/migrm.sh -r mig-test-dir\"
+            verify_cmds[1]=\"$path_prefix/migls.sh mig-test-dir\"
+            post_cmds[1]=\"${rm_cmd} mig-test-dir\"
             ;;
         'mv')
-            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
             cmd_args[1]='mig-test.txt mig-test-new.txt'
-            post_cmd=\"$path_prefix/migrm.sh mig-test-new.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test-new.txt\"
+            ;;
+        'mqueue')
+            cmd_args[1]='show default'
             ;;
         'put')
-            pre_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
+            pre_cmds[1]=\"${rm_cmd} mig-test.txt\"
             cmd_args[1]='mig-test.txt .'
-            verify_cmd[1]=\"$path_prefix/migls.sh mig-test.txt\"
-            post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
+            verify_cmds[1]=\"$path_prefix/migls.sh mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
             cmd_args[2]='mig-test.t*t mig-test.txt'
-            verify_cmd[2]=\"$path_prefix/migrm.sh mig-test.txt\"
+            verify_cmds[2]=\"${rm_cmd} mig-test.txt\"
             cmd_args[3]='mig-test.txt mig-test.txt'
-            verify_cmd[3]=\"$path_prefix/migrm.sh mig-test.txt\"
+            verify_cmds[3]=\"${rm_cmd} mig-test.txt\"
             cmd_args[4]='mig-test.txt mig-remote-test.txt'
-            verify_cmd[4]=\"$path_prefix/migrm.sh mig-remote-test.txt\"
+            verify_cmds[4]=\"${rm_cmd} mig-remote-test.txt\"
             cmd_args[5]='mig-test.txt mig-test-dir/'
-            verify_cmd[5]=\"$path_prefix/migrm.sh mig-test-dir/mig-test.txt\"
+            verify_cmds[5]=\"${rm_cmd} mig-test-dir/mig-test.txt\"
             cmd_args[6]='mig-test.txt mig-test-dir/mig-remote-test.txt'
-            verify_cmd[6]=\"$path_prefix/migrm.sh mig-test-dir/mig-remote-test.txt\"
+            verify_cmds[6]=\"${rm_cmd} mig-test-dir/mig-remote-test.txt\"
 
             # Disabled since put doesn't support wildcards in destination (yet?)
-            # cmd_args[]='mig-test.txt 'mig-test-d*/''
-            # cmd_args[]='mig-test.txt 'mig-test-d*/mig-remote-test.txt''
-            # verify_cmd[]=\"$path_prefix/migrm.sh mig-test-dir/mig-remote-test.txt\"
-            # verify_cmd[]=\"$path_prefix/migrm.sh mig-test-dir/mig-remote-test.txt\"
+            # cmd_args[7]='mig-test.txt 'mig-test-d*/''
+            # cmd_args[8]='mig-test.txt 'mig-test-d*/mig-remote-test.txt''
+            # verify_cmds[7]=\"${rm_cmd} mig-test-dir/mig-remote-test.txt\"
+            # verify_cmds[8]=\"${rm_cmd} mig-test-dir/mig-remote-test.txt\"
             ;;
         'read')
-            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
             cmd_args[1]='0 16 mig-test.txt -'
-            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
             ;;
         'rm')
-            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
             cmd_args[1]='mig-test.txt'
-            verify_cmd[1]=\"$path_prefix/migls.sh mig-test.txt\"
+            verify_cmds[1]=\"$path_prefix/migls.sh mig-test.txt\"
             ;;
         'rmdir')
-            pre_cmd=\"$path_prefix/migmkdir.sh mig-test-dir\"
+            pre_cmds=[1]\"$path_prefix/migmkdir.sh mig-test-dir\"
             cmd_args[1]='mig-test-dir'
-            verify_cmd[1]=\"$path_prefix/migls.sh mig-test-dir\"
-            post_cmd=\"$path_prefix/migrm.sh -r mig-test-dir\"
+            verify_cmds[1]=\"$path_prefix/migls.sh mig-test-dir\"
+            post_cmds=[1]\"${rm_cmd} -r mig-test-dir\"
             ;;
         'stat')
-            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
             cmd_args[1]='mig-test.txt'
-            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
             ;;
         'status')
             cmd_args[1]=''
@@ -1603,30 +1620,42 @@ def test_function(lang, curl_cmd, curl_flags=''):
             cmd_args[1]='mig-test.mRSL'
             ;;
         'tail')
-            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
             cmd_args[1]='mig-test.txt'
-            post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
             ;;
         'touch')
-            pre_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
+            pre_cmds[1]=\"${rm_cmd} mig-test.txt\"
             cmd_args[1]='mig-test.txt'
-            verify_cmd[1]=\"$path_prefix/migls.sh mig-test.txt\"
-            post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
+            verify_cmds[1]=\"$path_prefix/migls.sh mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
             ;;
         'truncate')
-            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
             cmd_args[1]='mig-test.txt'
-            post_cmd[1]=\"$path_prefix/migrm.sh mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
+            ;;
+        'unzip')
+            pre_cmds[1]=\"${zip_cmd} welcome.txt mig-test.zip\"
+            cmd_args[1]='mig-test.zip mig-test.txt'
+            verify_cmds[1]=\"$path_prefix/migls.sh mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt mig-test.zip\"
             ;;
         'wc')
-            pre_cmd=\"$path_prefix/migput.sh mig-test.txt\"
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
             cmd_args[1]='mig-test.txt'
-            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
             ;;
         'write')
-            pre_cmd=\"$path_prefix/migput.sh mig-test.txt .\"
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
             cmd_args[1]='4 8 mig-test.txt mig-test.txt'
-            post_cmd=\"$path_prefix/migrm.sh -r mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
+            ;;
+        'zip')
+            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
+            cmd_args[1]='mig-test.txt mig-test.zip'
+            verify_cmds[1]=\"$path_prefix/migls.sh mig-test.zip\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt mig-test.zip\"
             ;;
         *)
             echo \"No test available for $op!\"
@@ -1637,25 +1666,25 @@ def test_function(lang, curl_cmd, curl_flags=''):
 
     index=1
     for args in \"${cmd_args[@]}\"; do
-        echo \"test $index: $cmd $test_flags $args\"
-        pre=\"${pre_cmd[index]}\"
+        echo \"test $index: $cmd $args\"
+        pre=\"${pre_cmds[index]}\"
         if [ -n \"$pre\" ]; then
             echo \"setting up with: $pre\"
             $pre >& /dev/null
         fi
-        ./$cmd $test_flags $args >& /dev/null
+        ./$cmd $args >& /dev/null
         ret=$?
         if [ $ret -eq 0 ]; then
             echo \"   $op test $index SUCCEEDED\"
         else
             echo \"   $op test $index FAILED!\"
         fi
-        verify=\"${verify_cmd[index]}\"
+        verify=\"${verify_cmds[index]}\"
         if [ -n \"$verify\" ]; then
             echo \"verifying with: $verify\"
             $verify
         fi
-        post=\"${post_cmd[index]}\"
+        post=\"${post_cmds[index]}\"
         if [ -n \"$post\" ]; then
             echo \"cleaning up with: $post\"
             $post >& /dev/null
@@ -1663,11 +1692,150 @@ def test_function(lang, curl_cmd, curl_flags=''):
         index=$((index+1))
     done
     return $ret
-"""\
-             % (' '.join(script_ops), mig_prefix, 'sh')
+"""
     elif lang == 'python':
         s += """
-    print \"running %s test\" % (op)
+    valid_ops = %(valid_ops)s
+    mig_prefix = '%(mig_prefix)s'
+    script_ext = 'py'
+""" % {'valid_ops': script_ops, 'mig_prefix': mig_prefix}
+        s += """
+    if not op in valid_ops:
+        print 'Ignoring test of invalid operation: %s' % op
+        return 1
+       
+    path_prefix = os.path.dirname(sys.argv[0])
+    print 'running %s test' % op
+    cmd = os.path.join(path_prefix, mig_prefix + op + '.' + script_ext)
+    pre_cmds = []
+    cmd_args = []
+    post_cmds = []
+    verify_cmds = []
+    submit_cmd = os.path.join(path_prefix, mig_prefix + 'submit.' + script_ext) 
+    put_cmd = os.path.join(path_prefix, mig_prefix + 'put.' + script_ext) 
+    ls_cmd = os.path.join(path_prefix, mig_prefix + 'ls.' + script_ext) 
+    zip_cmd = os.path.join(path_prefix, mig_prefix + 'zip.' + script_ext) 
+    rm_cmd = os.path.join(path_prefix, mig_prefix + 'rm.' + script_ext) 
+    if op in ('cat', 'head', 'ls', 'stat', 'tail', 'wc'):
+            pre_cmds.append('%s mig-test.txt .' % put_cmd)
+            cmd_args.append('mig-test.txt')
+            post_cmds.append('%s mig-test.txt' % rm_cmd)
+    elif op == 'cp':
+            pre_cmds.append('%s mig-test.txt .' % put_cmd)
+            cmd_args.append('mig-test.txt mig-test-new.txt')
+            post_cmds.append('%s mig-test.txt mig-test-new.txt' % rm_cmd)
+    elif op == 'get':
+            pre_cmds.append('%s mig-test.txt .' % put_cmd)
+            cmd_args.append('mig-test.txt .')
+            post_cmds.append('%s mig-test.txt' % rm_cmd)
+    elif op == 'cancel':
+            pre_cmds.append('%s mig-test.mRSL' % submit_cmd)
+            cmd_args.append('DUMMY_JOB_ID')
+    elif op in ('doc', 'status'):
+            cmd_args.append('')
+    elif op == 'jobaction':
+            pre_cmds.append('%s mig-test.mRSL' % submit_cmd)
+            cmd_args.append('cancel DUMMY_JOB_ID')
+    elif op == 'mkdir':
+            pre_cmds.append('%s -r mig-test-dir' % rm_cmd)
+            cmd_args.append('mig-test-dir')
+            verify_cmds.append('%s mig-test-dir' % ls_cmd)
+            post_cmds.append('%s -r mig-test-dir' % rm_cmd)
+    elif op == 'mv':
+            pre_cmds.append('%s mig-test.txt .' % put_cmd)
+            cmd_args.append('mig-test.txt mig-test-new.txt')
+            post_cmds.append('%s mig-test-new.txt' % rm_cmd)
+    elif op == 'mqueue':
+            cmd_args.append('show default')
+    elif op == 'put':
+            pre_cmds.append('%s mig-test.txt' % rm_cmd)
+            cmd_args.append('mig-test.txt .')
+            verify_cmds.append('%s mig-test.txt' % ls_cmd)
+            post_cmds.append('%s mig-test.txt' % rm_cmd)
+            cmd_args.append('mig-test.t*t mig-test.txt')
+            verify_cmds.append('%s mig-test.txt' % rm_cmd)
+            cmd_args.append('mig-test.txt mig-test.txt')
+            verify_cmds.append('%s mig-test.txt' % rm_cmd)
+            cmd_args.append('mig-test.txt mig-test.txt')
+            verify_cmds.append('%s mig-test.txt' % rm_cmd)
+            cmd_args.append('mig-test.txt mig-remote-test.txt')
+            verify_cmds.append('%s mig-remote-test.txt' % rm_cmd)
+            cmd_args.append('mig-test.txt mig-test-dir/')
+            verify_cmds.append('%s mig-test-dir/mig-test.txt' % rm_cmd)
+            cmd_args.append('mig-test.txt mig-test-dir/mig-remote-test.txt')
+            verify_cmds.append('%s mig-test-dir/mig-remote-test.txt' % rm_cmd)
+
+            # Disabled since put doesn't support wildcards in destination (yet?)
+            # cmd_args.append('mig-test.txt \'mig-test-d*'\')
+            # cmd_args.append('mig-test.txt \'mig-test-d*/mig-remote-test.txt\'')
+            # verify_cmds.append('%s mig-test-dir/mig-remote-test.txt' % rm_cmd)
+            # verify_cmds.append('%s mig-test-dir/mig-remote-test.txt' % rm_cmd)
+    elif op == 'read':
+            pre_cmds.append('%s mig-test.txt .' % put_cmd)
+            cmd_args.append('0 16 mig-test.txt -')
+            post_cmds.append('%s mig-test.txt' % rm_cmd)
+    elif op == 'rm':
+            pre_cmds.append('%s mig-test.txt .' % put_cmd)
+            cmd_args.append('mig-test.txt mig-test-new.txt')
+            verify_cmds.append('%s mig-test.txt' % ls_cmd)
+    elif op == 'rmdir':
+            pre_cmds.append('%s -r mig-test-dir' % rm_cmd)
+            cmd_args.append('mig-test-dir')
+            verify_cmds.append('%s mig-test-dir' % ls_cmd)
+            post_cmds.append('%s -r mig-test-dir' % rm_cmd)
+    elif op == 'submit':
+            cmd_args.append('mig-test.mRSL')
+    elif op == 'touch':
+            pre_cmds.append('%s mig-test.txt .' % rm_cmd)
+            cmd_args.append('mig-test.txt')
+            verify_cmds.append('%s mig-test.txt' % ls_cmd)
+            post_cmds.append('%s mig-test.txt' % rm_cmd)
+    elif op == 'truncate':
+            pre_cmds.append('%s mig-test.txt .' % put_cmd)
+            cmd_args.append('mig-test.txt')
+            verify_cmds.append('%s mig-test.txt' % ls_cmd)
+            post_cmds.append('%s mig-test.txt' % rm_cmd)
+    elif op == 'unzip':
+            pre_cmds.append('%s welcome.txt mig-test.zip' % zip_cmd)
+            cmd_args.append('mig-test.zip mig-test.txt')
+            verify_cmds.append('%s mig-test.txt' % ls_cmd)
+            post_cmds.append('%s mig-test.txt mig-test.zip' % rm_cmd)
+    elif op == 'write':
+            pre_cmds.append('%s mig-test.txt .' % put_cmd)
+            cmd_args.append('4 8 mig-test.txt mig-test.txt')
+            post_cmds.append('%s mig-test.txt' % rm_cmd)
+    elif op == 'zip':
+            pre_cmds.append('%s mig-test.txt .' % put_cmd)
+            cmd_args.append('mig-test.txt mig-test.zip')
+            verify_cmds.append('%s mig-test.zip' % ls_cmd)
+            post_cmds.append('%s mig-test.txt mig-test.zip' % rm_cmd)
+    else:
+            print 'No test available for %s!' % op
+            return False
+
+    index = 0
+    for args in cmd_args:
+        print 'test %d: %s %s' % (index, cmd, args)
+        if pre_cmds[index:]:
+            pre = pre_cmds[index]
+            print 'setting up with: %s' % pre
+            subprocess.call(pre.split(' '), stdout=subprocess.PIPE)
+        ret = subprocess.call(('%s %s' % (cmd, args)).split(),
+                              stdout=subprocess.PIPE)
+        if ret == 0:
+            print '   %s test %d SUCCEEDED' % (op, index)
+        else:
+            print '   %s test %d FAILED!' % (op, index)
+        if verify_cmds[index:]:
+            verify = verify_cmds[index]
+            print 'verifying with: %s' % verify
+            subprocess.call(verify.split(' '), stdout=subprocess.PIPE)
+        if post_cmds[index:]:
+            post = post_cmds[index]
+            print 'cleaning up with: %s' % post
+            subprocess.call(post.split(' '), stdout=subprocess.PIPE)
+        index += 1
+    return ret
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -3204,7 +3372,7 @@ echo '::EXECUTE::' > mig-test.mRSL
 echo 'pwd' >> mig-test.mRSL
 
 echo 'Upload test file used in other tests'
-put_file mig-test.txt .  0 0 >& /dev/null
+put_file mig-test.txt . 0 0 >& /dev/null
 if [ $? -ne 0 ]; then
     echo 'Upload failed!'
     exit 1
@@ -3226,10 +3394,29 @@ done
     elif lang == 'python':
         s += \
             """
-if len(sys.argv) - 1 == 0:
-    op_list = %s
-else:   
+# Prepare for file operations
+txt_fd = open('mig-test.txt', 'w')
+txt_fd.write('''this is a test file used by the MiG self test
+''')
+txt_fd.close()
+job_fd = open('mig-test.mRSL', 'w')
+job_fd.write('''::EXECUTE::
+pwd
+''')
+job_fd.close()
+
+print 'Upload test file used in other tests'
+(ret, out) = put_file('mig-test.txt', '.', False, False)
+if ret != 0:
+    print 'Upload failed!'
+    sys.exit(1)
+else:
+    print 'Upload succeeded'
+
+if sys.argv[1:]:
     op_list = sys.argv[1:]
+else:   
+    op_list = %s
 
 for op in op_list:
     test_op(op)
