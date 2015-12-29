@@ -1587,29 +1587,30 @@ if (jQuery) (function($){
                     /* TODO: add list archive contents */
                     //"listpack": {name: "Show Packed Contents", icon: "listpack"},
                     "sep3": "---------",
+                    "submit": {name: "Submit", icon: "submit"},
+                    "submit-sep": "---------",
                     "advanced-sub": {
                         "name": "Advanced",
                         icon: "advanced",
                         "items": {
+                            "md5sum": {name: "MD5 Sum", icon: "md5sum"},
+                            "sha1sum": {name: "SHA1 Sum", icon: "sha1sum"},
+                            "spell-sep": "---------",
+                            "spell": {name: "Spell Check", icon: "spell"},
+                            "search-sep": "---------",
+                            "grep": {name: "Text Search (grep)", icon: "grep"},
+                            /* TODO: add inline encrypt/decrypt support? */
+                            //"encrypt-sep": "---------",
+                            //"encrypt": {name: "Encrypt", icon: "encrypt"},
+                            //"decrypt": {name: "Decrypt", icon: "decrypt"},
+                            "shell-sep": "---------",
                             "cat": {name: "Show All Lines (cat)", icon: "cat"},
                             "head": {name: "Show First Lines (head)", icon: "head"},
                             "tail": {name: "Show Last Lines (tail)", icon: "tail"},
                             "wc": {name: "Word Count (wc)", icon: "wc"},
                             "touch": {name: "Update Timestamp (touch)", icon: "touch"},
                             "stat": {name: "File Info (stat)", icon: "stat"},
-                            "truncate": {name: "Clear File (truncate)", icon: "truncate"},
-                            "search-sep": "---------",
-                            "grep": {name: "Text Search (grep)", icon: "grep"},
-                            "shell-sep": "---------",
-                            "spell": {name: "Spell Check", icon: "spell"},
-                            "md5sum": {name: "MD5 Sum", icon: "md5sum"},
-                            "sha1sum": {name: "SHA1 Sum", icon: "sha1sum"},
-                            /* TODO: add inline encrypt/decrypt support? */
-                            //"encrypt-sep": "---------",
-                            //"encrypt": {name: "Encrypt", icon: "encrypt"},
-                            //"decrypt": {name: "Decrypt", icon: "decrypt"},
-                            "submit-sep": "---------",
-                            "submit": {name: "Submit", icon: "submit"}
+                            "truncate": {name: "Clear File (truncate)", icon: "truncate"}
                         }
                     }
                 };
@@ -1618,8 +1619,8 @@ if (jQuery) (function($){
                     delete directory_menu["sep4"];
                 }
                 if (!options["enableSubmit"]) {
-                    delete file_menu["advanced-sub"]["items"]["submit-sep"];
-                    delete file_menu["advanced-sub"]["items"]["submit"];
+                    delete file_menu["submit-sep"];
+                    delete file_menu["submit"];
                 }
                 if (options["selectOnly"]) {
                     file_menu = {
