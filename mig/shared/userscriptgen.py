@@ -1662,42 +1662,37 @@ def test_function(lang, curl_cmd, curl_flags=''):
     mkdir_cmd=\"${path_prefix}/${mig_prefix}mkdir.${script_ext}\"
     put_cmd=\"${path_prefix}/${mig_prefix}put.${script_ext}\"
     rm_cmd=\"${path_prefix}/${mig_prefix}rm.${script_ext}\"
-    rmdir_cmd=\"${path_prefix}/${mig_prefix}rmdir.${script_ext}\"
-    submit_cmd=\"${path_prefix}/${mig_prefix}submit.${script_ext}\"
+    #submit_cmd=\"${path_prefix}/${mig_prefix}submit.${script_ext}\"
     zip_cmd=\"${path_prefix}/${mig_prefix}zip.${script_ext}\"
     declare -a cmd_args
     declare -a verify_cmds
     case $op in
         'cat' | 'head' | 'ls' | 'md5sum' | 'sha1sum' | 'stat' | 'tail' | 'wc')
-            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
-            cmd_args[1]='mig-test.txt'
-            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
+            cmd_args[1]='mig-test-helper.txt'
             ;;
         'cancel')
-            pre_cmds[1]=\"${submit_cmd} mig-test.mRSL\"
+            # TODO: submit and cancel real job?
+            #pre_cmds[1]=\"${submit_cmd} mig-test.mRSL\"
             cmd_args[1]='DUMMY_JOB_ID'
             ;;
         'cp')
-            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
-            cmd_args[1]='mig-test.txt mig-test-new.txt'
-            verify_cmds[1]=\"${ls_cmd} -l mig-test-new.txt\"
-            post_cmds[1]=\"${rm_cmd} mig-test.txt mig-test-new.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
+            cmd_args[1]='mig-test-helper.txt mig-test.txt'
+            verify_cmds[1]=\"${ls_cmd} -l mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
             ;;
         'doc')
             cmd_args[1]=''
             ;;
         'get')
-            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
-            cmd_args[1]='mig-test.txt .'
-            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
+            cmd_args[1]='mig-test-helper.txt .'
             ;;
         'grep')
-            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
-            cmd_args[1]='test mig-test.txt'
-            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
+            cmd_args[1]='test mig-test-helper.txt'
             ;;
         'jobaction')
-            pre_cmds[1]=\"${submit_cmd} mig-test.mRSL\"
+            # TODO: submit and cancel real job?
+            #pre_cmds[1]=\"${submit_cmd} mig-test.mRSL\"
             cmd_args[1]='cancel DUMMY_JOB_ID'
             ;;
         'mkdir')
@@ -1742,14 +1737,13 @@ def test_function(lang, curl_cmd, curl_flags=''):
             post_cmds[6]=\"${rm_cmd} -r mig-test-dir\"
             ;;
         'read')
-            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
-            cmd_args[1]='0 16 mig-test.txt -'
-            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
+            cmd_args[1]='0 16 mig-test-helper.txt -'
             ;;
         'rm')
             pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
             cmd_args[1]='mig-test.txt'
             verify_cmds[1]=\"${ls_cmd} -l mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} -r mig-test.txt\"
             ;;
         'rmdir')
             pre_cmds=[1]\"${mkdir_cmd} mig-test-dir\"
@@ -1781,9 +1775,9 @@ def test_function(lang, curl_cmd, curl_flags=''):
             post_cmds[1]=\"${rm_cmd} mig-test.txt\"
             ;;
         'unzip')
-            pre_cmds[1]=\"${zip_cmd} welcome.txt mig-test.zip\"
+            pre_cmds[1]=\"${zip_cmd} mig-test-helper.txt mig-test.zip\"
             cmd_args[1]='mig-test.zip ./'
-            verify_cmds[1]=\"${ls_cmd} -l welcome.txt\"
+            verify_cmds[1]=\"${ls_cmd} -l mig-test-helper.txt\"
             post_cmds[1]=\"${rm_cmd} mig-test.zip\"
             ;;
         'write')
@@ -1793,10 +1787,10 @@ def test_function(lang, curl_cmd, curl_flags=''):
             post_cmds[1]=\"${rm_cmd} mig-test.txt\"
             ;;
         'zip')
-            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
-            cmd_args[1]='mig-test.txt mig-test.zip'
+            pre_cmds[1]=\"${rm_cmd} mig-test.zip .\"
+            cmd_args[1]='mig-test-helper.txt mig-test.zip'
             verify_cmds[1]=\"${ls_cmd} -l mig-test.zip\"
-            post_cmds[1]=\"${rm_cmd} mig-test.txt mig-test.zip\"
+            post_cmds[1]=\"${rm_cmd} mig-test.zip\"
             ;;
         *)
             echo \"No test available for $op!\"
@@ -1856,33 +1850,28 @@ def test_function(lang, curl_cmd, curl_flags=''):
     mkdir_cmd = os.path.join(path_prefix, mig_prefix + 'mkdir.' + script_ext) 
     put_cmd = os.path.join(path_prefix, mig_prefix + 'put.' + script_ext) 
     rm_cmd = os.path.join(path_prefix, mig_prefix + 'rm.' + script_ext) 
-    rmdir_cmd = os.path.join(path_prefix, mig_prefix + 'rmdir.' + script_ext) 
-    submit_cmd = os.path.join(path_prefix, mig_prefix + 'submit.' + script_ext) 
+    #submit_cmd = os.path.join(path_prefix, mig_prefix + 'submit.' + script_ext) 
     zip_cmd = os.path.join(path_prefix, mig_prefix + 'zip.' + script_ext) 
     if op in ('cat', 'head', 'ls', 'md5sum', 'sha1sum', 'stat', 'tail', 'wc'):
-            pre_cmds.append('%s mig-test.txt .' % put_cmd)
-            cmd_args.append('mig-test.txt')
-            post_cmds.append('%s mig-test.txt' % rm_cmd)
-    elif op == 'cp':
-            pre_cmds.append('%s mig-test.txt .' % put_cmd)
-            cmd_args.append('mig-test.txt mig-test-new.txt')
-            verify_cmds.append('%s -l mig-test-new.txt' % ls_cmd)
-            post_cmds.append('%s mig-test.txt mig-test-new.txt' % rm_cmd)
-    elif op == 'get':
-            pre_cmds.append('%s mig-test.txt .' % put_cmd)
-            cmd_args.append('mig-test.txt .')
-            post_cmds.append('%s mig-test.txt' % rm_cmd)
-    elif op == 'grep':
-            pre_cmds.append('%s mig-test.txt .' % put_cmd)
-            cmd_args.append('test mig-test.txt')
-            post_cmds.append('%s mig-test.txt' % rm_cmd)
+            cmd_args.append('mig-test-helper.txt')
     elif op == 'cancel':
-            pre_cmds.append('%s mig-test.mRSL' % submit_cmd)
+            # TODO: submit and cancel real job?
+            #pre_cmds.append('%s mig-test.mRSL' % submit_cmd)
             cmd_args.append('DUMMY_JOB_ID')
+    elif op == 'cp':
+            pre_cmds.append('%s mig-test.txt .' % rm_cmd)
+            cmd_args.append('mig-test-helper.txt mig-test.txt')
+            verify_cmds.append('%s -l mig-test.txt' % ls_cmd)
+            post_cmds.append('%s mig-test.txt' % rm_cmd)
     elif op in ('doc', 'status'):
             cmd_args.append('')
+    elif op == 'get':
+            cmd_args.append('mig-test-helper.txt .')
+    elif op == 'grep':
+            cmd_args.append('test mig-test-helper.txt')
     elif op == 'jobaction':
-            pre_cmds.append('%s mig-test.mRSL' % submit_cmd)
+            # TODO: submit and cancel real job?
+            #pre_cmds.append('%s mig-test.mRSL' % submit_cmd)
             cmd_args.append('cancel DUMMY_JOB_ID')
     elif op == 'mkdir':
             pre_cmds.append('%s -r mig-test-dir' % rm_cmd)
@@ -1922,9 +1911,7 @@ def test_function(lang, curl_cmd, curl_flags=''):
             verify_cmds.append('%s -l mig-test-dir/mig-test.*' % ls_cmd)
             post_cmds.append('%s -r mig-test-dir' % rm_cmd)
     elif op == 'read':
-            pre_cmds.append('%s mig-test.txt .' % put_cmd)
-            cmd_args.append('0 16 mig-test.txt -')
-            post_cmds.append('%s mig-test.txt' % rm_cmd)
+            cmd_args.append('0 16 mig-test-helper.txt -')
     elif op == 'rm':
             pre_cmds.append('%s mig-test.txt .' % put_cmd)
             cmd_args.append('mig-test.txt')
@@ -1952,9 +1939,9 @@ def test_function(lang, curl_cmd, curl_flags=''):
             verify_cmds.append('%s -l mig-test.txt' % ls_cmd)
             post_cmds.append('%s mig-test.txt' % rm_cmd)
     elif op == 'unzip':
-            pre_cmds.append('%s welcome.txt mig-test.zip' % zip_cmd)
+            pre_cmds.append('%s mig-test-helper.txt mig-test.zip' % zip_cmd)
             cmd_args.append('mig-test.zip ./')
-            verify_cmds.append('%s -l welcome.txt' % ls_cmd)
+            verify_cmds.append('%s -l mig-test-helper.txt' % ls_cmd)
             post_cmds.append('%s mig-test.zip' % rm_cmd)
     elif op == 'write':
             pre_cmds.append('%s mig-test.txt .' % put_cmd)
@@ -1962,10 +1949,9 @@ def test_function(lang, curl_cmd, curl_flags=''):
             verify_cmds.append('%s -l mig-test.txt' % ls_cmd)
             post_cmds.append('%s mig-test.txt' % rm_cmd)
     elif op == 'zip':
-            pre_cmds.append('%s mig-test.txt .' % put_cmd)
-            cmd_args.append('mig-test.txt mig-test.zip')
+            cmd_args.append('mig-test-helper.txt mig-test.zip')
             verify_cmds.append('%s -l mig-test.zip' % ls_cmd)
-            post_cmds.append('%s mig-test.txt mig-test.zip' % rm_cmd)
+            post_cmds.append('%s mig-test.zip' % rm_cmd)
     else:
             print 'No test available for %s!' % op
             return False
@@ -3659,7 +3645,7 @@ echo '::EXECUTE::' > mig-test.mRSL
 echo 'pwd' >> mig-test.mRSL
 
 echo 'Upload test file used in other tests'
-put_file mig-test.txt . 0 0 >& /dev/null
+put_file mig-test.txt mig-test-helper.txt 0 0 >& /dev/null
 if [ $? -ne 0 ]; then
     echo 'Upload failed!'
     exit 1
@@ -3676,8 +3662,12 @@ fi
 for op in \"${op_list[@]}\"; do
     test_op \"$op\"
 done
-"""\
-             % ' '.join(script_ops)
+
+# Clean up (one file at a time required here)
+echo 'Remove test files used in other tests'
+rm_file \"mig-test-helper.txt\"
+rm_file \"mig-test.mRSL\"
+""" % ' '.join(script_ops)
     elif lang == 'python':
         s += \
             """
@@ -3693,7 +3683,7 @@ pwd
 job_fd.close()
 
 print 'Upload test file used in other tests'
-(ret, out) = put_file('mig-test.txt', '.', False, False)
+(ret, out) = put_file('mig-test.txt', 'mig-test-helper.txt', False, False)
 if ret != 0:
     print 'Upload failed!'
     sys.exit(1)
@@ -3707,8 +3697,11 @@ else:
 
 for op in op_list:
     test_op(op)
-"""\
-             % script_ops
+    
+# Clean up
+print 'Remove test files used in other tests'
+rm_file(['mig-test-helper.txt', 'mig-test.mRSL'])
+""" % script_ops
     else:
         print 'Error: %s not supported!' % lang
 
@@ -4738,9 +4731,10 @@ def generate_test(scripts_languages, dest_dir='.'):
         script += check_var_function(lang)
         script += read_conf_function(lang)
 
-        # use put function for preparation
+        # use put function for preparation and rm function for clean up
 
         script += shared_op_function('put', lang, curl_cmd)
+        script += shared_op_function('rm', lang, curl_cmd)
         script += shared_op_function(op, lang, curl_cmd)
         script += shared_main(op, lang)
 

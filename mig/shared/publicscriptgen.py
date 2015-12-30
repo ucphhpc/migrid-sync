@@ -170,7 +170,7 @@ def format_list(lang, target_arg, var_name):
         s += \
           """
     # Build the %(target)s string used in wild card expansion:
-    # '%(var)s="$1";%(var)s="$2";...;%(var)s=$N'
+    # '%(var)s=$1;...;%(var)s=$N'
     # %(target)s may be a string or array
     tmp_var=''
     for i in ${%(target)s[*]}; do
@@ -183,7 +183,7 @@ def format_list(lang, target_arg, var_name):
         s += \
           """
     # Build the %(target)s string used in wild card expansion:
-    # '%(var)s="$1";%(var)s="$2";...;%(var)s=$N'
+    # '%(var)s=$1;...;%(var)s=$N'
     # %(target)s may be a string or array
     if not isinstance(%(target)s, basestring):
         %(target)s = \";%(var)s=%%s\" %% \";%(var)s=\".join(%(target)s)
