@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sandbox - shared sandbox helpers
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,7 +32,7 @@ import tempfile
 from binascii import hexlify
 
 from conf import get_configuration_object
-from shared.defaults import default_vgrid
+from shared.defaults import default_vgrid, keyword_auto
 from shared.fileio import make_symlink
 from shared.resource import create_resource
 from shared.serial import load, dump
@@ -103,7 +103,7 @@ N/A
 oneclick
 
 ::HOSTIDENTIFIER::
-$HOSTIDENTIFIER
+%s
 
 ::RESOURCEHOME::
 N/A
@@ -165,8 +165,7 @@ clean_command=N/A
 continuous=False
 shared_fs=False
 vgrid=%s
-    """\
-         % (sandboxkey, exe_name, cputime, default_vgrid)
+    """% (keyword_auto, sandboxkey, exe_name, cputime, default_vgrid)
 
     # write the conf string to a temporary conf file
     # create_resource removes the tempfile automatically
@@ -209,7 +208,7 @@ def create_sss_resource(
     ):
 
     resource_name = 'sandbox'
-    unique_host_name = "%s.%s" % (resource_name, "$HOSTIDENTIFIER")
+    unique_host_name = "%s.%s" % (resource_name, keyword_auto)
 
     # create a resource configuration string that we can write to a file
 
@@ -223,7 +222,7 @@ mig
 %s
 
 ::HOSTIDENTIFIER::
-$HOSTIDENTIFIER
+%s
 
 ::RESOURCEHOME::
 /opt/mig/MiG/mig_frontend/
@@ -295,6 +294,7 @@ vgrid=%s
 """\
     % (
         resource_name,
+        keyword_auto,
         memory,
         int(hd_size) / 1000,
         net_bw,

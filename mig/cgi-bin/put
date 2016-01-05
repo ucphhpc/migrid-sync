@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # put - HTTP PUT handler
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,18 +37,19 @@ import fcntl
 import time
 
 import shared.confparser as confparser
+from shared.archives import handle_package_upload
 from shared.base import client_id_dir, invisible_path
-from shared.putfuncs import verify_results, migrated_job
-from shared.resadm import start_resource_exe_if_continuous
-from shared.refunctions import create_runtimeenv
+from shared.cgishared import init_cgiscript_possibly_with_cert
+from shared.defaults import keyword_auto
+from shared.fileio import pickle, unpickle
+from shared.findtype import is_user, is_server, is_owner
+from shared.job import new_job, finished_job, failed_restart
 from shared.notification import notify_user_thread, \
      parse_im_relay, send_resource_create_request_mail, \
      send_instant_message
-from shared.cgishared import init_cgiscript_possibly_with_cert
-from shared.fileio import pickle, unpickle
-from shared.job import new_job, finished_job, failed_restart
-from shared.findtype import is_user, is_server, is_owner
-from shared.archives import handle_package_upload
+from shared.putfuncs import verify_results, migrated_job
+from shared.resadm import start_resource_exe_if_continuous
+from shared.refunctions import create_runtimeenv
 from shared.settings import parse_and_save_settings
 
 
@@ -364,7 +365,7 @@ elif is_user(client_id, configuration.mig_server_home):
                 o.out('Failure: You (%s) must be an owner of %s to submit a new configuration!'
                        % (client_id, resource_hostname))
                 o.reply_and_exit(o.CLIENT_ERROR)
-        elif '$HOSTIDENTIFIER' == str(config_dict['HOSTIDENTIFIER']):
+        elif keyword_auto == str(config_dict['HOSTIDENTIFIER']):
             (status, msg) = \
                 send_resource_create_request_mail(client_id,
                     config_dict['HOSTURL'], pending_file, logger,
@@ -384,7 +385,7 @@ Please contact the server administrator.""")
                           % config_dict['HOSTURL'])
                 o.reply_and_exit(o.OK)
         else:
-            o.out("Failure: '%s' with identifier: '%s' does'nt exist!"
+            o.out("Failure: '%s' with identifier: '%s' doesn't exist!"
                    % (config_dict['HOSTURL'],
                   config_dict['HOSTIDENTIFIER']))
             o.reply_and_exit(o.CLIENT_ERROR)

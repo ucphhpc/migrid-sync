@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resource - resource configuration functions
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,7 +39,7 @@ except ImportError:
 import shared.resconfkeywords as resconfkeywords
 from shared.base import client_id_dir
 from shared.confparser import get_resource_config_dict, run
-from shared.defaults import exe_leader_name
+from shared.defaults import exe_leader_name, keyword_auto
 from shared.fileio import pickle, move
 from shared.modified import mark_resource_modified, mark_vgrid_modified
 from shared.serial import load, dump
@@ -1069,7 +1069,7 @@ Failure:
         fw = open(tmpfile, 'w')
         readline = fr.readline()
         while len(readline) > 0:
-            fw.write(readline.replace('$HOSTIDENTIFIER',
+            fw.write(readline.replace(keyword_auto,
                      str(resource_identifier)))
             readline = fr.readline()
         fw.close()

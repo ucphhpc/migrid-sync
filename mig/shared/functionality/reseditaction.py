@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reseditaction - Resource editor action handler back end
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,6 +35,7 @@ import time
 import shared.confparser as confparser
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
+from shared.defaults import keyword_auto
 from shared.fileio import unpickle
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import correct_handler
@@ -227,7 +228,7 @@ def main(client_id, user_arguments_dict):
         action = 'update'
     else:
         action = 'create'
-        hostidentifier = '$HOSTIDENTIFIER'
+        hostidentifier = keyword_auto
         accepted['HOSTIDENTIFIER'] = [hostidentifier]
     resource_id = "%s.%s" % (hosturl, hostidentifier)
 
