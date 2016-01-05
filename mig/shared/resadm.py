@@ -818,18 +818,17 @@ def start_resource_store(
         msg += ssh_status_msg
 
     if 'sftp' == store['storage_protocol']:
-        sshfs_options = ['-o reconnect', '-C', '-o uid=%d' % os.getuid(),
-                         '-o gid=%d' % os.getgid()]
+        sshfs_options = ['-o', 'reconnect', '-C', '-o', 'uid=%d' % os.getuid(),
+                         '-o', 'gid=%d' % os.getgid()]
         jump_path = os.path.join(resource_home, unique_resource_name,
                                  store_name + '-jump.sh')
         setup = {'mount_point': mount_point, 'jump_path': jump_path}
         setup.update(resource_config)
         setup.update(store)
         if store.get('shared_fs', False):
-            sshfs_options.append('-o Port=%(SSHPORT)s' % setup)
+            sshfs_options += ['-o', 'Port=%(SSHPORT)s' % setup]
             src = '%(MIGUSER)s@%(HOSTURL)s:%(storage_dir)s' % setup
             dst = '%(mount_point)s' %setup
-            command_list = ['sshfs', src, dst] + sshfs_options
         else:
             # write and use ssh jump helper script
 
@@ -850,11 +849,12 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
                 status = False
                 msg += ' failed to write jump helper script %s: %s. ' % (jump_path, exc)
 
-            sshfs_options.append("-o ssh_command='%(jump_path)s'" % setup)
-            sshfs_options.append("-o Port=%(storage_port)s" % setup)
+            sshfs_options += ["-o", "ssh_command=%(jump_path)s" % setup,
+                              "-o", "Port=%(storage_port)s" % setup]
             src = '%(storage_user)s@%(storage_node)s:%(storage_dir)s' % setup
             dst = '%(mount_point)s' % setup
-            command_list = ['sshfs', src, dst] + sshfs_options
+
+        command_list = ['sshfs', src, dst] + sshfs_options
         command = ' '.join(command_list)
         logger.info('running mount command on server: %s' % command)
         msg += 'mounting with %s. ' % command
@@ -1439,10 +1439,11 @@ def resource_store_action(
         setup = {'mount_point': mount_point}
         if os.path.ismount(mount_point):
             if action in ['stop', 'clean']:
-                flags = '-u'
+                flags = ['-u']
                 if action == 'clean':
-                    flags += 'z'
-                command_list = ['fusermount', flags, '%(mount_point)s' % setup]
+                    flags.append('-z')
+                command_list = ['fusermount'] + flags + ['%(mount_point)s' % \
+                                                         setup]
                 command = ' '.join(command_list)
                 msg += 'unmounting with %s. ' % command
                 # NOTE: we use command on list form to avoid the need for shell
