@@ -154,46 +154,59 @@ def run(localfile_spaces, unique_resource_name, outfile='AUTOMATIC'
                             "You have not specified an environment named '%s' which is required by the '%s' runtime environment. Details about the runtime environment <a href=showre.py?re_name=%s>here.</a>"
                              % (n, name, name))
 
-    for exe in conf['EXECONFIG']:
+    # check VGrid access
+    
+    vgrid_label = configuration.site_vgrid_label
+    for (unit_config, unit_name) in (('EXECONFIG', '+EXENAME+'),
+                                     ('STORECONFIG', '+STORENAME+')):
+        for res_unit in conf[unit_config]:
 
-        # replace +EXENAME+ with specified exe name
+            # replace unit_name with specified res_unit name
 
-        for exe_key in exe.keys():
-            if type(exe[exe_key]) == type(''):
-                exe[exe_key] = exe[exe_key].replace('+EXENAME+',
-                        exe['name'])
+            for res_unit_key in res_unit.keys():
+                if type(res_unit[res_unit_key]) == type(''):
+                    res_unit[res_unit_key] = res_unit[res_unit_key].replace(
+                        unit_name, res_unit['name'])
 
-        # verify resource is in specified vgrid
+            # verify resource is in specified vgrid
 
-        vgrid_name = exe['vgrid']
+            vgrid_name = res_unit['vgrid']
 
-        # print "vgrid_name in exe" + vgrid_name
+            # print "vgrid_name in res_unit" + vgrid_name
 
-        if vgrid_name == '':
+            if vgrid_name == '':
 
-            # ok
+                # ok
 
-            pass
-        else:
-            if type(vgrid_name) == type([]):
+                pass
+            else:
+                if type(vgrid_name) == type([]):
 
-                # list
+                    # list
 
-                for vgrid in vgrid_name:
-                    if not vgrid_is_default(vgrid) and not vgrid_is_resource(vgrid,
+                    for vgrid in vgrid_name:
+                        if not vgrid_is_default(vgrid) and not \
+                               vgrid_is_resource(vgrid, unique_resource_name,
+                                                 configuration):
+                            return (False,
+                                    """Your resource is not allowed in the %s
+'%s' specified in the configuation for the '%s' resource unit. Please contact
+the %s owner and ask if you can be included in the %s.""" % \
+                                    (vgrid_label, vgrid, res_unit['name'],
+                                     vgrid_label, vgrid_label))
+                else:
+
+                    # string
+
+                    if not vgrid_is_default(vgrid) and not vgrid_is_resource(vgrid_name,
                             unique_resource_name, configuration):
                         return (False,
-                                "Your resource is not allowed in the vgrid '%s' specified in the configuation for the '%s' execution unit. Please contact the vgrid owner and ask if you can be included in the vgrid."
-                                 % (vgrid, exe['name']))
-            else:
+                                """Your resource is not allowed in the %s '%s'
+specified in the configuation for the '%s' resource unit. Please contact the %s
+owner and ask if you can be included in the %s.""" % \
+                                (vgrid_label, vgrid_name, res_unit['name'],
+                                 vgrid_label, vgrid_label))
 
-                # string
-
-                if not vgrid_is_default(vgrid) and not vgrid_is_resource(vgrid_name,
-                        unique_resource_name, configuration):
-                    return (False,
-                            "Your resource is not allowed in the vgrid '%s' specified in the configuation for the '%s' execution unit. Please contact the vgrid owner and ask if you can be included in the vgrid."
-                             % (vgrid_name, exe['name']))
 
     # save dictionary to a file
 
