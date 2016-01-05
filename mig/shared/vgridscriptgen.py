@@ -171,6 +171,7 @@ def vgrid_single_argument_function(
     """Core function for single argument scripts"""
     relative_url = '"cgi-bin/%s.py"' % command
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;%s=$%s"' % (first_arg, first_arg)
@@ -191,6 +192,7 @@ def vgrid_single_argument_function(
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -210,6 +212,7 @@ def vgrid_single_argument_upload_function(
     """Core function for single argument upload scripts"""
     relative_url = '""'
     query = '""'
+    urlenc_data = '""'
     post_data = '""'
     if lang == 'sh':
         curl_target = '"--header Content-Type:%s --upload-file $%s"' % \
@@ -231,6 +234,7 @@ def vgrid_single_argument_upload_function(
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -251,6 +255,7 @@ def vgrid_two_arguments_function(
     """Core function for two argument scripts"""
     relative_url = '"cgi-bin/%s.py"' % command
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;%s=$%s;%s=$%s"' % (first_arg, first_arg,
@@ -276,6 +281,7 @@ def vgrid_two_arguments_function(
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -303,6 +309,7 @@ def vgrid_ten_arguments_function(
     """Core function for ten argument scripts"""
     relative_url = '"cgi-bin/%s.py"' % command
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s;%s=$%s"' % \
@@ -340,6 +347,7 @@ def vgrid_ten_arguments_function(
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,

@@ -321,6 +321,7 @@ def curl_perform(
     lang,
     relative_url="''",
     post_data="''",
+    urlenc_data="''",
     query="''",
     curl_cmd='curl',
     curl_flags='',
@@ -339,10 +340,15 @@ def curl_perform(
     target=%s
     location=%s
     post_data=%s
+    urlenc_data=%s
     query=%s
     data=""
+    urlenc=""
     if [ ! -z "$post_data" ]; then
             data="--data \"$post_data\""
+    fi
+    if [ ! -z "$urlenc_data" ]; then
+            urlenc="--data-urlencode \"$urlenc_data\""
     fi
     $curl \\
             --location \\
@@ -352,6 +358,7 @@ def curl_perform(
             --cert $cert_file \\
             --key $key_file \\
             $data \\
+            $urlenc \\
             $ca_check \\
             $password_check \\
             $timeout \\
@@ -364,6 +371,7 @@ def curl_perform(
             curl_target,
             relative_url,
             post_data,
+            urlenc_data,
             query,
             )
     elif lang == 'python':
@@ -374,13 +382,17 @@ def curl_perform(
     target = %s
     location = %s
     post_data = %s
+    urlenc_data = %s
     query = %s
     data = ''
+    urlenc = ''
     if post_data:
         data = '--data %%s' %% post_data
+    if urlenc_data:
+        urlenc = '--data-urlencode %%s' %% urlenc_data
     curl_opts = '--location --fail --silent --show-error'
-    command = '%%s %%s --cert %%s --key %%s %%s %%s %%s %%s %%s --url %%s/%%s%%s' %% \\
-        (curl, curl_opts, cert_file, key_file, data, ca_check, password_check,
+    command = '%%s %%s --cert %%s --key %%s %%s %%s %%s %%s %%s %%s --url %%s/%%s%%s' %% \\
+        (curl, curl_opts, cert_file, key_file, data, urlenc, ca_check, password_check,
         timeout, target, mig_server, location, query)
     command_list = [i for i in command.split(' ') if i]
     # NOTE: for security we do not invoke shell here
@@ -399,6 +411,7 @@ def curl_perform(
             curl_target,
             relative_url,
             post_data,
+            urlenc_data,
             query,
             )
     else:

@@ -599,6 +599,11 @@ def test_usage_function(lang, extension):
     s = ''
     s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
     s += basic_usage_options(usage_str, lang)
+    prefix_usage_string = '-p PREFIX\tUse PREFIX for file and dir names'
+    if lang == 'sh':
+        s += '\n    echo "%s"' % prefix_usage_string
+    elif lang == 'python':
+        s += '\n    print "%s"' % prefix_usage_string
     s += end_function(lang, 'usage')
 
     return s
@@ -736,6 +741,7 @@ def shared_op_function(op, lang, curl_cmd):
 def cancel_function(lang, curl_cmd, curl_flags=''):
     relative_url = '"cgi-bin/jobaction.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;action=cancel;$job_list"'
@@ -757,6 +763,7 @@ def cancel_function(lang, curl_cmd, curl_flags=''):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -768,6 +775,7 @@ def cancel_function(lang, curl_cmd, curl_flags=''):
 def cat_function(lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"cgi-bin/cat.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = '"output_format=txt;flags=$server_flags;$path_list"'
     elif lang == 'python':
@@ -788,6 +796,7 @@ def cat_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -806,6 +815,7 @@ def cp_function(lang, curl_cmd, curl_flags='--compressed'):
 
     relative_url = '"cgi-bin/cp.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;dst=$dst;$src_list"'
@@ -827,6 +837,7 @@ def cp_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -838,6 +849,7 @@ def cp_function(lang, curl_cmd, curl_flags='--compressed'):
 def doc_function(lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"cgi-bin/docs.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;search=$search;show=$show"'
@@ -858,6 +870,7 @@ def doc_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -876,6 +889,7 @@ def expand_function(lang, curl_cmd, curl_flags='--compressed'):
 
     relative_url = '"cgi-bin/expand.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;$path_list;with_dest=$destinations"'
@@ -898,6 +912,7 @@ def expand_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -910,6 +925,7 @@ def filemetaio_function(lang, curl_cmd, curl_flags='--compressed'):
    
     relative_url = '"cgi-bin/filemetaio.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;action=$action;path=$path;$arg_list"'
@@ -930,6 +946,7 @@ def filemetaio_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -942,6 +959,7 @@ def get_function(lang, curl_cmd, curl_flags='--compressed --create-dirs'
                  ):
     post_data = '""'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
 
         # TODO: should we handle below double slash problem here, too?
@@ -969,6 +987,7 @@ def get_function(lang, curl_cmd, curl_flags='--compressed --create-dirs'
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -981,6 +1000,7 @@ def get_function(lang, curl_cmd, curl_flags='--compressed --create-dirs'
 def grep_function(lang, curl_cmd, curl_flags=''):
     relative_url = '"cgi-bin/grep.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;pattern=$pattern;$path_list"'
@@ -1002,6 +1022,7 @@ def grep_function(lang, curl_cmd, curl_flags=''):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1013,6 +1034,7 @@ def grep_function(lang, curl_cmd, curl_flags=''):
 def head_function(lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"cgi-bin/head.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;$path_list;lines=$lines"'
@@ -1034,6 +1056,7 @@ def head_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1045,6 +1068,7 @@ def head_function(lang, curl_cmd, curl_flags='--compressed'):
 def jobaction_function(lang, curl_cmd, curl_flags=''):
     relative_url = '"cgi-bin/jobaction.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;action=$action;$job_list"'
@@ -1066,6 +1090,7 @@ def jobaction_function(lang, curl_cmd, curl_flags=''):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1077,6 +1102,7 @@ def jobaction_function(lang, curl_cmd, curl_flags=''):
 def liveio_function(lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"cgi-bin/liveio.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = '"output_format=txt;flags=$server_flags;action=$action;job_id=$job_id;$src_list;dst=$dst"'
     elif lang == 'python':
@@ -1097,6 +1123,7 @@ def liveio_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1115,6 +1142,7 @@ def ls_function(lang, curl_cmd, curl_flags='--compressed'):
 
     relative_url = '"cgi-bin/ls.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = '"output_format=txt;flags=$server_flags;$path_list"'
     elif lang == 'python':
@@ -1135,6 +1163,7 @@ def ls_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1148,6 +1177,7 @@ def md5sum_function(lang, curl_cmd, curl_flags=''):
 
     relative_url = '"cgi-bin/chksum.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = '"output_format=txt;flags=$server_flags;hash_algo=md5;$path_list"'
     elif lang == 'python':
@@ -1168,6 +1198,7 @@ def md5sum_function(lang, curl_cmd, curl_flags=''):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1181,6 +1212,7 @@ def mkdir_function(lang, curl_cmd, curl_flags=''):
 
     relative_url = '"cgi-bin/mkdir.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = '"output_format=txt;flags=$server_flags;$path_list"'
     elif lang == 'python':
@@ -1201,6 +1233,7 @@ def mkdir_function(lang, curl_cmd, curl_flags=''):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1212,6 +1245,7 @@ def mkdir_function(lang, curl_cmd, curl_flags=''):
 def mqueue_function(lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"cgi-bin/mqueue.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = '"output_format=txt;flags=$server_flags;action=$action;queue=$queue;msg=$msg"'
     elif lang == 'python':
@@ -1231,6 +1265,7 @@ def mqueue_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1249,6 +1284,7 @@ def mv_function(lang, curl_cmd, curl_flags='--compressed'):
 
     relative_url = '"cgi-bin/mv.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;dst=$dst;$src_list"'
@@ -1270,6 +1306,7 @@ def mv_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1281,6 +1318,7 @@ def mv_function(lang, curl_cmd, curl_flags='--compressed'):
 def put_function(lang, curl_cmd, curl_flags='--compressed'):
     post_data = '""'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
 
         # TODO: should we handle below double slash problem here, too?
@@ -1337,6 +1375,7 @@ def put_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1372,6 +1411,7 @@ def read_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1384,6 +1424,7 @@ def read_function(lang, curl_cmd, curl_flags='--compressed'):
 def resubmit_function(lang, curl_cmd, curl_flags=''):
     relative_url = '"cgi-bin/resubmit.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;$job_list"'
@@ -1405,6 +1446,7 @@ def resubmit_function(lang, curl_cmd, curl_flags=''):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1423,6 +1465,7 @@ def rm_function(lang, curl_cmd, curl_flags=''):
 
     relative_url = '"cgi-bin/rm.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = '"output_format=txt;flags=$server_flags;$path_list"'
     elif lang == 'python':
@@ -1443,6 +1486,7 @@ def rm_function(lang, curl_cmd, curl_flags=''):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1456,6 +1500,7 @@ def rmdir_function(lang, curl_cmd, curl_flags=''):
 
     relative_url = '"cgi-bin/rmdir.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = '"output_format=txt;flags=$server_flags;$path_list"'
     elif lang == 'python':
@@ -1476,6 +1521,7 @@ def rmdir_function(lang, curl_cmd, curl_flags=''):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1489,6 +1535,7 @@ def sha1sum_function(lang, curl_cmd, curl_flags=''):
 
     relative_url = '"cgi-bin/chksum.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = '"output_format=txt;flags=$server_flags;hash_algo=md5;$path_list"'
     elif lang == 'python':
@@ -1509,6 +1556,7 @@ def sha1sum_function(lang, curl_cmd, curl_flags=''):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1527,6 +1575,7 @@ def stat_function(lang, curl_cmd, curl_flags='--compressed'):
 
     relative_url = '"cgi-bin/statpath.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = '"output_format=txt;flags=$server_flags;$path_list"'
     elif lang == 'python':
@@ -1547,6 +1596,7 @@ def stat_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1558,6 +1608,7 @@ def stat_function(lang, curl_cmd, curl_flags='--compressed'):
 def status_function(lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"cgi-bin/jobstatus.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;max_jobs=$max_job_count;$job_list"'
@@ -1579,6 +1630,7 @@ def status_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1598,6 +1650,7 @@ def submit_function(lang, curl_cmd, curl_flags=''):
 def tail_function(lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"cgi-bin/tail.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;lines=$lines;$path_list"'
@@ -1619,6 +1672,7 @@ def tail_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -1632,7 +1686,7 @@ def test_function(lang, curl_cmd, curl_flags=''):
     # TODO: pass original -c and -s options on to tested scripts
 
     s = ''
-    s += begin_function(lang, 'test_op', ['op'],
+    s += begin_function(lang, 'test_op', ['op', 'test_prefix'],
                         'Execute simple function tests')
     if lang == 'sh':
         s += """
@@ -1656,6 +1710,12 @@ def test_function(lang, curl_cmd, curl_flags=''):
     fi
        
     path_prefix=`dirname $0`
+    dir_test=\"${test_prefix}-dir\"
+    mrsl_test=\"${test_prefix}.mRSL\"
+    txt_test=\"${test_prefix}.txt\"
+    zip_test=\"${test_prefix}.zip\"
+    txt_helper=\"${test_prefix}-helper.txt\"
+    txt_tmp=\"${test_prefix}-tmp.txt\"
     echo \"=== running $op test(s) ===\"
     cmd=\"${path_prefix}/${mig_prefix}${op}.${script_ext}\"
     ls_cmd=\"${path_prefix}/${mig_prefix}ls.${script_ext}\"
@@ -1668,129 +1728,129 @@ def test_function(lang, curl_cmd, curl_flags=''):
     declare -a verify_cmds
     case $op in
         'cat' | 'head' | 'ls' | 'md5sum' | 'sha1sum' | 'stat' | 'tail' | 'wc')
-            cmd_args[1]='mig-test-helper.txt'
+            cmd_args[1]=\"${txt_helper}\"
             ;;
         'cancel')
             # TODO: submit and cancel real job?
-            #pre_cmds[1]=\"${submit_cmd} mig-test.mRSL\"
+            #pre_cmds[1]=\"${submit_cmd} ${mrsl_test}\"
             cmd_args[1]='DUMMY_JOB_ID'
             ;;
         'cp')
-            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
-            cmd_args[1]='mig-test-helper.txt mig-test.txt'
-            verify_cmds[1]=\"${ls_cmd} -l mig-test.txt\"
-            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
+            post_cmds[1]=\"${rm_cmd} ${txt_test}\"
+            cmd_args[1]=\"${txt_helper} ${txt_test}\"
+            verify_cmds[1]=\"${ls_cmd} -l ${txt_test}\"
+            post_cmds[1]=\"${rm_cmd} ${txt_test}\"
             ;;
         'doc')
             cmd_args[1]=''
             ;;
         'get')
-            cmd_args[1]='mig-test-helper.txt .'
+            cmd_args[1]=\"${txt_helper} .\"
             ;;
         'grep')
-            cmd_args[1]='test mig-test-helper.txt'
+            cmd_args[1]=\"test ${txt_helper}\"
             ;;
         'jobaction')
             # TODO: submit and cancel real job?
-            #pre_cmds[1]=\"${submit_cmd} mig-test.mRSL\"
-            cmd_args[1]='cancel DUMMY_JOB_ID'
+            #pre_cmds[1]=\"${submit_cmd} ${mrsl_test}\"
+            cmd_args[1]=\"cancel DUMMY_JOB_ID\"
             ;;
         'mkdir')
-            pre_cmds[1]=\"${rm_cmd} -r mig-test-dir\"
-            cmd_args[1]='mig-test-dir'
-            verify_cmds[1]=\"${ls_cmd} -la mig-test-dir\"
-            post_cmds[1]=\"${rm_cmd} -r mig-test-dir\"
+            pre_cmds[1]=\"${rm_cmd} -r ${dir_test}\"
+            cmd_args[1]=\"${dir_test}\"
+            verify_cmds[1]=\"${ls_cmd} -la ${dir_test}\"
+            post_cmds[1]=\"${rm_cmd} -r ${dir_test}\"
             ;;
         'mv')
-            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
-            cmd_args[1]='mig-test.txt mig-test-new.txt'
-            verify_cmds[1]=\"${ls_cmd} -l mig-test-new.txt\"
-            post_cmds[1]=\"${rm_cmd} mig-test-new.txt\"
+            pre_cmds[1]=\"${put_cmd} ${txt_test} .\"
+            cmd_args[1]=\"${txt_test} ${txt_tmp}\"
+            verify_cmds[1]=\"${ls_cmd} -l ${txt_tmp}\"
+            post_cmds[1]=\"${rm_cmd} ${txt_tmp}\"
             ;;
         'mqueue')
-            cmd_args[1]='show default'
+            cmd_args[1]=\"show default\"
             ;;
         'put')
-            pre_cmds[1]=\"${rm_cmd} mig-test.txt\"
-            cmd_args[1]='mig-test.txt .'
-            verify_cmds[1]=\"${ls_cmd} -l mig-test.txt\"
-            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
+            pre_cmds[1]=\"${rm_cmd} ${txt_test}\"
+            cmd_args[1]=\"${txt_test} .\"
+            verify_cmds[1]=\"${ls_cmd} -l ${txt_test}\"
+            post_cmds[1]=\"${rm_cmd} ${txt_test}\"
             pre_cmds[2]=\"\"
-            cmd_args[2]='mig-test.txt mig-test.txt'
-            verify_cmds[2]=\"${ls_cmd} -l mig-test.txt\"
-            post_cmds[2]=\"${rm_cmd} mig-test.txt\"
+            cmd_args[2]=\"${txt_test} ${txt_test}\"
+            verify_cmds[2]=\"${ls_cmd} -l ${txt_test}\"
+            post_cmds[2]=\"${rm_cmd} ${txt_test}\"
             pre_cmds[3]=\"\"
-            cmd_args[3]='mig-test.txt mig-remote-test.txt'
-            verify_cmds[3]=\"${ls_cmd} -l mig-remote-test.txt\"
-            post_cmds[3]=\"${rm_cmd} mig-remote-test.txt\"
-            pre_cmds[4]=\"${mkdir_cmd} mig-test-dir\"
-            cmd_args[4]='mig-test.txt mig-test-dir/'
-            verify_cmds[4]=\"${ls_cmd} -l mig-test-dir/mig-test.txt\"
-            post_cmds[4]=\"${rm_cmd} -r mig-test-dir\"
-            pre_cmds[5]=\"${mkdir_cmd} mig-test-dir\"
-            cmd_args[5]='mig-test.txt mig-test-dir/mig-remote-test.txt'
-            verify_cmds[5]=\"${ls_cmd} -l mig-test-dir/mig-remote-test.txt\"
-            post_cmds[5]=\"${rm_cmd} -r mig-test-dir\"
-            pre_cmds[6]=\"${mkdir_cmd} mig-test-dir\"
-            cmd_args[6]='mig-test.* mig-test-dir/'
-            verify_cmds[6]=\"${ls_cmd} -l mig-test-dir/mig-test.*\"
-            post_cmds[6]=\"${rm_cmd} -r mig-test-dir\"
+            cmd_args[3]=\"${txt_test} ${txt_tmp}\"
+            verify_cmds[3]=\"${ls_cmd} -l ${txt_tmp}\"
+            post_cmds[3]=\"${rm_cmd} ${txt_tmp}\"
+            pre_cmds[4]=\"${mkdir_cmd} ${dir_test}\"
+            cmd_args[4]=\"${txt_test} ${dir_test}/\"
+            verify_cmds[4]=\"${ls_cmd} -l ${dir_test}/${txt_test}\"
+            post_cmds[4]=\"${rm_cmd} -r ${dir_test}\"
+            pre_cmds[5]=\"${mkdir_cmd} ${dir_test}\"
+            cmd_args[5]=\"${txt_test} ${dir_test}/${txt_tmp}\"
+            verify_cmds[5]=\"${ls_cmd} -l ${dir_test}/${txt_tmp}\"
+            post_cmds[5]=\"${rm_cmd} -r ${dir_test}\"
+            pre_cmds[6]=\"${mkdir_cmd} ${dir_test}\"
+            cmd_args[6]=\"${test_prefix}.* ${dir_test}/\"
+            verify_cmds[6]=\"${ls_cmd} -l ${dir_test}/${test_prefix}.*\"
+            post_cmds[6]=\"${rm_cmd} -r ${dir_test}\"
             ;;
         'read')
-            cmd_args[1]='0 16 mig-test-helper.txt -'
+            cmd_args[1]=\"0 16 ${txt_helper} -\"
             ;;
         'rm')
-            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
-            cmd_args[1]='mig-test.txt'
-            verify_cmds[1]=\"${ls_cmd} -l mig-test.txt\"
-            post_cmds[1]=\"${rm_cmd} -r mig-test.txt\"
+            pre_cmds[1]=\"${put_cmd} ${txt_test} .\"
+            cmd_args[1]=\"${txt_test}\"
+            verify_cmds[1]=\"${ls_cmd} -l ${txt_test}\"
+            post_cmds[1]=\"${rm_cmd} -r ${txt_test}\"
             ;;
         'rmdir')
-            pre_cmds=[1]\"${mkdir_cmd} mig-test-dir\"
-            cmd_args[1]='mig-test-dir'
-            verify_cmds[1]=\"${ls_cmd} -la mig-test-dir\"
-            post_cmds[1]=\"${rm_cmd} -r mig-test-dir\"
+            pre_cmds=[1]\"${mkdir_cmd} ${dir_test}\"
+            cmd_args[1]=\"${dir_test}\"
+            verify_cmds[1]=\"${ls_cmd} -la ${dir_test}\"
+            post_cmds[1]=\"${rm_cmd} -r ${dir_test}\"
             ;;
         'status')
             cmd_args[1]=''
             ;;
         'submit')
-            cmd_args[1]='mig-test.mRSL'
+            cmd_args[1]=\"${mrsl_test}\"
             # TODO: cancel test job
             ;;
         'touch')
-            pre_cmds[1]=\"${rm_cmd} mig-test.txt\"
-            cmd_args[1]='mig-test.txt'
-            verify_cmds[1]=\"${ls_cmd} -l mig-test.txt\"
-            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
-            pre_cmds[2]=\"${put_cmd} mig-test.txt .\"
-            cmd_args[2]='mig-test.txt'
-            verify_cmds[2]=\"${ls_cmd} -l mig-test.txt\"
-            post_cmds[2]=\"${rm_cmd} mig-test.txt\"
+            pre_cmds[1]=\"${rm_cmd} ${txt_test}\"
+            cmd_args[1]=\"${txt_test}\"
+            verify_cmds[1]=\"${ls_cmd} -l ${txt_test}\"
+            post_cmds[1]=\"${rm_cmd} ${txt_test}\"
+            pre_cmds[2]=\"${put_cmd} ${txt_test} .\"
+            cmd_args[2]=\"${txt_test}\"
+            verify_cmds[2]=\"${ls_cmd} -l ${txt_test}\"
+            post_cmds[2]=\"${rm_cmd} ${txt_test}\"
             ;;
         'truncate')
-            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
-            cmd_args[1]='mig-test.txt'
-            verify_cmds[1]=\"${ls_cmd} -l mig-test.txt\"
-            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
+            pre_cmds[1]=\"${put_cmd} ${txt_test} .\"
+            cmd_args[1]=\"${txt_test}\"
+            verify_cmds[1]=\"${ls_cmd} -l ${txt_test}\"
+            post_cmds[1]=\"${rm_cmd} ${txt_test}\"
             ;;
         'unzip')
-            pre_cmds[1]=\"${zip_cmd} mig-test-helper.txt mig-test.zip\"
-            cmd_args[1]='mig-test.zip ./'
-            verify_cmds[1]=\"${ls_cmd} -l mig-test-helper.txt\"
-            post_cmds[1]=\"${rm_cmd} mig-test.zip\"
+            pre_cmds[1]=\"${zip_cmd} ${txt_helper} ${zip_test}\"
+            cmd_args[1]=\"${zip_test} ./\"
+            verify_cmds[1]=\"${ls_cmd} -l ${txt_helper}\"
+            post_cmds[1]=\"${rm_cmd} ${zip_test}\"
             ;;
         'write')
-            pre_cmds[1]=\"${put_cmd} mig-test.txt .\"
-            cmd_args[1]='4 8 mig-test.txt mig-test.txt'
-            verify_cmds[1]=\"${ls_cmd} -l mig-test.txt\"
-            post_cmds[1]=\"${rm_cmd} mig-test.txt\"
+            pre_cmds[1]=\"${put_cmd} ${txt_test} .\"
+            cmd_args[1]=\"4 8 ${txt_test} ${txt_test}\"
+            verify_cmds[1]=\"${ls_cmd} -l ${txt_test}\"
+            post_cmds[1]=\"${rm_cmd} ${txt_test}\"
             ;;
         'zip')
-            pre_cmds[1]=\"${rm_cmd} mig-test.zip .\"
-            cmd_args[1]='mig-test-helper.txt mig-test.zip'
-            verify_cmds[1]=\"${ls_cmd} -l mig-test.zip\"
-            post_cmds[1]=\"${rm_cmd} mig-test.zip\"
+            pre_cmds[1]=\"${rm_cmd} ${zip_test} .\"
+            cmd_args[1]=\"${txt_helper} ${zip_test}\"
+            verify_cmds[1]=\"${ls_cmd} -l ${zip_test}\"
+            post_cmds[1]=\"${rm_cmd} ${zip_test}\"
             ;;
         *)
             echo \"No test available for $op!\"
@@ -1846,6 +1906,12 @@ def test_function(lang, curl_cmd, curl_flags=''):
     cmd_args = []
     post_cmds = []
     verify_cmds = []
+    dir_test = test_prefix + '-dir'
+    mrsl_test = test_prefix + '.mRSL'
+    txt_test = test_prefix + '.txt'
+    zip_test = test_prefix + '.zip'
+    txt_helper = test_prefix + '-helper.txt'
+    txt_tmp = test_prefix + '-tmp.txt'
     ls_cmd = os.path.join(path_prefix, mig_prefix + 'ls.' + script_ext) 
     mkdir_cmd = os.path.join(path_prefix, mig_prefix + 'mkdir.' + script_ext) 
     put_cmd = os.path.join(path_prefix, mig_prefix + 'put.' + script_ext) 
@@ -1853,105 +1919,105 @@ def test_function(lang, curl_cmd, curl_flags=''):
     #submit_cmd = os.path.join(path_prefix, mig_prefix + 'submit.' + script_ext) 
     zip_cmd = os.path.join(path_prefix, mig_prefix + 'zip.' + script_ext) 
     if op in ('cat', 'head', 'ls', 'md5sum', 'sha1sum', 'stat', 'tail', 'wc'):
-            cmd_args.append('mig-test-helper.txt')
+            cmd_args.append(txt_helper)
     elif op == 'cancel':
             # TODO: submit and cancel real job?
-            #pre_cmds.append('%s mig-test.mRSL' % submit_cmd)
+            #pre_cmds.append('%s %s' % (submit_cmd, mrsl_test))
             cmd_args.append('DUMMY_JOB_ID')
     elif op == 'cp':
-            pre_cmds.append('%s mig-test.txt .' % rm_cmd)
-            cmd_args.append('mig-test-helper.txt mig-test.txt')
-            verify_cmds.append('%s -l mig-test.txt' % ls_cmd)
-            post_cmds.append('%s mig-test.txt' % rm_cmd)
+            pre_cmds.append('%s %s .' % (rm_cmd, txt_test))
+            cmd_args.append('%s %s' % (txt_helper, txt_test))
+            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
+            post_cmds.append('%s %s' % (rm_cmd, txt_test))
     elif op in ('doc', 'status'):
             cmd_args.append('')
     elif op == 'get':
-            cmd_args.append('mig-test-helper.txt .')
+            cmd_args.append('%s .' % txt_helper)
     elif op == 'grep':
-            cmd_args.append('test mig-test-helper.txt')
+            cmd_args.append('test %s' % txt_helper)
     elif op == 'jobaction':
             # TODO: submit and cancel real job?
-            #pre_cmds.append('%s mig-test.mRSL' % submit_cmd)
+            #pre_cmds.append('%s %s' % (submit_cmd, mrsl_test))
             cmd_args.append('cancel DUMMY_JOB_ID')
     elif op == 'mkdir':
-            pre_cmds.append('%s -r mig-test-dir' % rm_cmd)
-            cmd_args.append('mig-test-dir')
-            verify_cmds.append('%s -la mig-test-dir' % ls_cmd)
-            post_cmds.append('%s -r mig-test-dir' % rm_cmd)
+            pre_cmds.append('%s -r %s' % (rm_cmd, dir_test))
+            cmd_args.append(dir_test)
+            verify_cmds.append('%s -la %s' % (ls_cmd, dir_test))
+            post_cmds.append('%s -r %s' % (rm_cmd, dir_test))
     elif op == 'mv':
-            pre_cmds.append('%s mig-test.txt .' % put_cmd)
-            cmd_args.append('mig-test.txt mig-test-new.txt')
-            verify_cmds.append('%s -l mig-test-new.txt' % ls_cmd)
-            post_cmds.append('%s mig-test-new.txt' % rm_cmd)
+            pre_cmds.append('%s %s .' % (put_cmd, txt_test))
+            cmd_args.append('%s %s' % (txt_test, txt_tmp))
+            verify_cmds.append('%s -l %s' % (ls_cmd, txt_tmp))
+            post_cmds.append('%s %s' % (rm_cmd, txt_tmp))
     elif op == 'mqueue':
             cmd_args.append('show default')
     elif op == 'put':
-            pre_cmds.append('%s mig-test.txt' % rm_cmd)
-            cmd_args.append('mig-test.txt .')
-            verify_cmds.append('%s -l mig-test.txt' % ls_cmd)
-            post_cmds.append('%s mig-test.txt' % rm_cmd)
+            pre_cmds.append('%s %s' % (rm_cmd, txt_test))
+            cmd_args.append('%s .' % txt_test)
+            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
+            post_cmds.append('%s %s' % (rm_cmd, txt_test))
             pre_cmds.append('')
-            cmd_args.append('mig-test.txt mig-test.txt')
-            verify_cmds.append('%s -l mig-test.txt' % ls_cmd)
-            post_cmds.append('%s mig-test.txt' % rm_cmd)
+            cmd_args.append('%s %s' % (txt_test, txt_test))
+            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
+            post_cmds.append('%s %s' % (rm_cmd, txt_test))
             pre_cmds.append('')
-            cmd_args.append('mig-test.txt mig-remote-test.txt')
-            verify_cmds.append('%s -l mig-remote-test.txt' % ls_cmd)
-            post_cmds.append('%s mig-remote-test.txt' % rm_cmd)
-            pre_cmds.append('%s mig-test-dir' % mkdir_cmd)
-            cmd_args.append('mig-test.txt mig-test-dir/')
-            verify_cmds.append('%s -l mig-test-dir/mig-test.txt' % ls_cmd)
-            post_cmds.append('%s -r mig-test-dir' % rm_cmd)
-            pre_cmds.append('%s mig-test-dir' % mkdir_cmd)
-            cmd_args.append('mig-test.txt mig-test-dir/mig-remote-test.txt')
-            verify_cmds.append('%s -l mig-test-dir/mig-remote-test.txt' % ls_cmd)
-            post_cmds.append('%s -r mig-test-dir' % rm_cmd)
-            pre_cmds.append('%s mig-test-dir' % mkdir_cmd)
-            cmd_args.append('mig-test.* mig-test-dir/')
-            verify_cmds.append('%s -l mig-test-dir/mig-test.*' % ls_cmd)
-            post_cmds.append('%s -r mig-test-dir' % rm_cmd)
+            cmd_args.append('%s %s' % (txt_test, txt_tmp))
+            verify_cmds.append('%s -l %s' % (ls_cmd, txt_tmp))
+            post_cmds.append('%s %s' % (rm_cmd, txt_tmp))
+            pre_cmds.append('%s %s' % (mkdir_cmd, dir_test))
+            cmd_args.append('%s %s/' % (txt_test, dir_test))
+            verify_cmds.append('%s -l %s/%s' % (ls_cmd, dir_test, txt_test))
+            post_cmds.append('%s -r %s' % (rm_cmd, dir_test))
+            pre_cmds.append('%s %s' % (mkdir_cmd, dir_test))
+            cmd_args.append('%s %s/%s' % (txt_test, dir_test, txt_tmp))
+            verify_cmds.append('%s -l %s/%s' % (ls_cmd, dir_test, txt_tmp))
+            post_cmds.append('%s -r %s' % (rm_cmd, dir_test))
+            pre_cmds.append('%s %s' % (mkdir_cmd, dir_test))
+            cmd_args.append('%s.* %s/' % (test_prefix, dir_test))
+            verify_cmds.append('%s -l %s/%s.*' % (ls_cmd, dir_test, test_prefix))
+            post_cmds.append('%s -r %s' % (rm_cmd, dir_test))
     elif op == 'read':
-            cmd_args.append('0 16 mig-test-helper.txt -')
+            cmd_args.append('0 16 %s -' % txt_helper)
     elif op == 'rm':
-            pre_cmds.append('%s mig-test.txt .' % put_cmd)
-            cmd_args.append('mig-test.txt')
-            verify_cmds.append('%s -l mig-test.txt' % ls_cmd)
+            pre_cmds.append('%s %s .' % (put_cmd, txt_test))
+            cmd_args.append(txt_test)
+            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
     elif op == 'rmdir':
-            pre_cmds.append('%s mig-test-dir' % mkdir_cmd)
-            cmd_args.append('mig-test-dir')
-            verify_cmds.append('%s -la mig-test-dir' % ls_cmd)
-            post_cmds.append('%s -r mig-test-dir' % rm_cmd)
+            pre_cmds.append('%s %s' % (mkdir_cmd, dir_test))
+            cmd_args.append(dir_test)
+            verify_cmds.append('%s -la %s' % (ls_cmd, dir_test))
+            post_cmds.append('%s -r %s' % (rm_cmd, dir_test))
     elif op == 'submit':
-            cmd_args.append('mig-test.mRSL')
+            cmd_args.append(mrsl_test)
             # TODO: cancel test job
     elif op == 'touch':
-            pre_cmds.append('%s mig-test.txt' % rm_cmd)
-            cmd_args.append('mig-test.txt')
-            verify_cmds.append('%s -l mig-test.txt' % ls_cmd)
-            post_cmds.append('%s mig-test.txt' % rm_cmd)
-            pre_cmds.append('%s mig-test.txt .' % put_cmd)
-            cmd_args.append('mig-test.txt')
-            verify_cmds.append('%s -l mig-test.txt' % ls_cmd)
-            post_cmds.append('%s mig-test.txt' % rm_cmd)
+            pre_cmds.append('%s %s' % (rm_cmd, txt_test))
+            cmd_args.append(txt_test)
+            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
+            post_cmds.append('%s %s' % (rm_cmd, txt_test))
+            pre_cmds.append('%s %s .' % (put_cmd, txt_test))
+            cmd_args.append(txt_test)
+            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
+            post_cmds.append('%s %s' % (rm_cmd, txt_test))
     elif op == 'truncate':
-            pre_cmds.append('%s mig-test.txt .' % put_cmd)
-            cmd_args.append('mig-test.txt')
-            verify_cmds.append('%s -l mig-test.txt' % ls_cmd)
-            post_cmds.append('%s mig-test.txt' % rm_cmd)
+            pre_cmds.append('%s %s .' % (put_cmd, txt_test))
+            cmd_args.append(txt_test)
+            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
+            post_cmds.append('%s %s' % (rm_cmd, txt_test))
     elif op == 'unzip':
-            pre_cmds.append('%s mig-test-helper.txt mig-test.zip' % zip_cmd)
-            cmd_args.append('mig-test.zip ./')
-            verify_cmds.append('%s -l mig-test-helper.txt' % ls_cmd)
-            post_cmds.append('%s mig-test.zip' % rm_cmd)
+            pre_cmds.append('%s %s %s' % (zip_cmd, txt_helper, zip_test))
+            cmd_args.append('%s ./' % zip_test)
+            verify_cmds.append('%s -l %s' % (ls_cmd, txt_helper))
+            post_cmds.append('%s %s' % (rm_cmd, zip_test))
     elif op == 'write':
-            pre_cmds.append('%s mig-test.txt .' % put_cmd)
-            cmd_args.append('4 8 mig-test.txt mig-test.txt')
-            verify_cmds.append('%s -l mig-test.txt' % ls_cmd)
-            post_cmds.append('%s mig-test.txt' % rm_cmd)
+            pre_cmds.append('%s %s .' % (put_cmd, txt_test))
+            cmd_args.append('4 8 %s %s' % (txt_test, txt_test))
+            verify_cmds.append('%s -l %s' % (ls_cmd, txt_test))
+            post_cmds.append('%s %s' % (rm_cmd, txt_test))
     elif op == 'zip':
-            cmd_args.append('mig-test-helper.txt mig-test.zip')
-            verify_cmds.append('%s -l mig-test.zip' % ls_cmd)
-            post_cmds.append('%s mig-test.zip' % rm_cmd)
+            cmd_args.append('%s %s' % (txt_helper, zip_test))
+            verify_cmds.append('%s -l %s' % (ls_cmd, zip_test))
+            post_cmds.append('%s %s' % (rm_cmd, zip_test))
     else:
             print 'No test available for %s!' % op
             return False
@@ -1993,6 +2059,7 @@ def touch_function(lang, curl_cmd, curl_flags=''):
 
     relative_url = '"cgi-bin/touch.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = '"output_format=txt;flags=$server_flags;$path_list"'
     elif lang == 'python':
@@ -2013,6 +2080,7 @@ def touch_function(lang, curl_cmd, curl_flags=''):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -2024,6 +2092,7 @@ def touch_function(lang, curl_cmd, curl_flags=''):
 def truncate_function(lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"cgi-bin/truncate.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;size=$size;$path_list"'
@@ -2045,6 +2114,7 @@ def truncate_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -2063,6 +2133,7 @@ def unzip_function(lang, curl_cmd, curl_flags='--compressed'):
 
     relative_url = '"cgi-bin/unzip.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;dst=$dst;$src_list"'
@@ -2084,6 +2155,7 @@ def unzip_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -2095,6 +2167,7 @@ def unzip_function(lang, curl_cmd, curl_flags='--compressed'):
 def wc_function(lang, curl_cmd, curl_flags=''):
     relative_url = '"cgi-bin/wc.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = '"output_format=txt;flags=$server_flags;$path_list"'
     elif lang == 'python':
@@ -2115,6 +2188,7 @@ def wc_function(lang, curl_cmd, curl_flags=''):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -2149,6 +2223,7 @@ def write_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -2168,6 +2243,7 @@ def zip_function(lang, curl_cmd, curl_flags='--compressed'):
 
     relative_url = '"cgi-bin/zip.py"'
     query = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         post_data = \
             '"output_format=txt;flags=$server_flags;current_dir=$current_dir;dst=$dst;$src_list"'
@@ -2189,6 +2265,7 @@ def zip_function(lang, curl_cmd, curl_flags='--compressed'):
         lang,
         relative_url,
         post_data,
+        urlenc_data,
         query,
         curl_cmd,
         curl_flags,
@@ -3632,7 +3709,15 @@ def test_main(lang):
 
     s = ''
     s += basic_main_init(lang)
-    s += parse_options(lang, None, None)
+    if lang == 'sh':
+        s += 'test_prefix="mig-test"\n'
+        s += parse_options(lang, 'p:', '        p)  test_prefix="$OPTARG";;')
+    elif lang == 'python':
+        s += 'test_prefix = "mig-test"\n'
+        s += parse_options(lang, 'p:',
+                           '''    elif opt == "-p":
+        test_prefix = val
+''')
     s += arg_count_check(lang, None, None)
     s += check_conf_readable(lang)
     s += configure(lang)
@@ -3640,12 +3725,12 @@ def test_main(lang):
         s += \
             """
 # Prepare for file operations
-echo 'this is a test file used by the MiG self test' > mig-test.txt
-echo '::EXECUTE::' > mig-test.mRSL
-echo 'pwd' >> mig-test.mRSL
+echo 'this is a test file used by the MiG self test' > ${test_prefix}.txt
+echo '::EXECUTE::' > ${test_prefix}.mRSL
+echo 'pwd' >> ${test_prefix}.mRSL
 
 echo 'Upload test file used in other tests'
-put_file mig-test.txt mig-test-helper.txt 0 0 >& /dev/null
+put_file ${test_prefix}.txt ${test_prefix}-helper.txt 0 0 >& /dev/null
 if [ $? -ne 0 ]; then
     echo 'Upload failed!'
     exit 1
@@ -3660,30 +3745,31 @@ else
 fi
 
 for op in \"${op_list[@]}\"; do
-    test_op \"$op\"
+    test_op \"$op\" \"${test_prefix}\"
 done
 
 # Clean up (one file at a time required here)
 echo 'Remove test files used in other tests'
-rm_file \"mig-test-helper.txt\"
-rm_file \"mig-test.mRSL\"
+rm_file \"${test_prefix}-helper.txt\"
+rm_file \"${test_prefix}.mRSL\"
 """ % ' '.join(script_ops)
     elif lang == 'python':
         s += \
             """
 # Prepare for file operations
-txt_fd = open('mig-test.txt', 'w')
+txt_fd = open(test_prefix + '.txt', 'w')
 txt_fd.write('''this is a test file used by the MiG self test
 ''')
 txt_fd.close()
-job_fd = open('mig-test.mRSL', 'w')
+job_fd = open(test_prefix + '.mRSL', 'w')
 job_fd.write('''::EXECUTE::
 pwd
 ''')
 job_fd.close()
 
 print 'Upload test file used in other tests'
-(ret, out) = put_file('mig-test.txt', 'mig-test-helper.txt', False, False)
+(ret, out) = put_file(test_prefix + '.txt', test_prefix + '-helper.txt',
+                      False, False)
 if ret != 0:
     print 'Upload failed!'
     sys.exit(1)
@@ -3696,11 +3782,11 @@ else:
     op_list = %s
 
 for op in op_list:
-    test_op(op)
+    test_op(op, test_prefix)
     
 # Clean up
 print 'Remove test files used in other tests'
-rm_file(['mig-test-helper.txt', 'mig-test.mRSL'])
+rm_file([test_prefix + '-helper.txt', test_prefix + '.mRSL'])
 """ % script_ops
     else:
         print 'Error: %s not supported!' % lang
