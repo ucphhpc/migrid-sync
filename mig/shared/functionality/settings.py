@@ -765,10 +765,10 @@ IdentityFile ~/.mig/key.pem
 </pre>
 From then on you can use sftp and sshfs to access your %(site)s home:
 <pre>
-sftp %(sftp_server)s
+sftp -B 258048 %(sftp_server)s
 </pre>
 <pre>
-sshfs %(sftp_server)s: mig-home -o uid=$(id -u) -o gid=$(id -g)
+sshfs %(sftp_server)s: mig-home -o uid=$(id -u) -o gid=$(id -g) -o big_writes -o reconnect
 </pre>
 You can also integrate with ordinary mounts by adding a line like:
 <pre>
