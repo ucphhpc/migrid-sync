@@ -656,8 +656,6 @@ while [ 1 ]; do
             sleep 2
             continue
         fi
-        # TMP! do we need this sync?
-        #sync_disk $frontendlog
         
         # job has arrived: $localjobname.getinputfiles file is available
         #echo "making directory job-dir_$localjobname" 1>> $frontendlog 2>> $frontendlog

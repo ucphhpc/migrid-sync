@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # genjobscriptsh - helpers for sh jobs
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -65,8 +65,11 @@ class GenJobScriptSh:
         self.io_log = '%s.io-status' % (self.job_dict['JOB_ID'])
  
 
-    def __curl_cmd_send(self, resource_filename, mig_server_filename):
-        """Upload files"""
+    def __curl_cmd_send(self, resource_filename, mig_server_filename, expand):
+        """Upload files with optional shell expansion of file names. Live
+        output requires variables in path to be expanded, ordinary job output
+        must escape to support exotic characters.
+        """
 
         upload_bw_limit = ''
         if self.resource_conf.has_key('MAXUPLOADBANDWIDTH')\
@@ -91,12 +94,16 @@ class GenJobScriptSh:
 
             sid_put_marker = '-X SIDPUT'
 
-            # Live output requires variable expansion in filenames (double quotes)
+        # Single or double quotes depending on shell expand option
 
-            return 'curl --location --connect-timeout 30 --max-time 3600 '\
-                + upload_bw_limit + ' --fail --silent --insecure '\
-                + '--upload-file "' + resource_filename + '" '\
-                + sid_put_marker + ' "' + dst_url + '"'
+        cmd = 'curl --location --connect-timeout 30 --max-time 3600 ' + \
+              upload_bw_limit + ' --fail --silent --insecure ' + \
+              sid_put_marker + ' --upload-file '
+        if expand:
+            cmd += '"' + resource_filename + '" "' + dst_url + '"'
+        else:
+            cmd += "'" + resource_filename + "' '" + dst_url + "'"
+        return cmd
 
 
     def __curl_cmd_send_mqueue(self, resource_filename, queue):
@@ -116,9 +123,12 @@ class GenJobScriptSh:
             + '/cgi-sid/mqueue.py'
 
 
-    def __curl_cmd_get(self, mig_server_filename, resource_filename):
-        """Download files"""
-
+    def __curl_cmd_get(self, mig_server_filename, resource_filename, expand):
+        """Download files with optional shell expansion of file names. Live
+        input requires variables in path to be expanded, ordinary job input
+        must escape to support exotic characters.
+        """
+        
         download_bw_limit = ''
         if self.resource_conf.has_key('MAXDOWNLOADBANDWIDTH')\
              and self.resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
@@ -138,11 +148,14 @@ class GenJobScriptSh:
             src_url = self.https_sid_url_arg + '/sid_redirect/'\
                  + self.job_dict['SESSIONID'] + '/' + mig_server_filename
 
-        # Live input requires variable expansion in filenames (double quotes)
+        # Single or double quotes depending on shell expand option
 
-        cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
-            + download_bw_limit + ' --fail --silent --insecure --create-dirs '\
-            + '-o "' + resource_filename + '" "' + src_url + '"'
+        cmd = 'curl --location --connect-timeout 30 --max-time 3600 ' + \
+              download_bw_limit + ' --fail --silent --insecure --create-dirs '
+        if expand:
+            cmd += '-o "' + resource_filename + '" "' + src_url + '"'
+        else:
+            cmd += "-o '" + resource_filename + "' '" + src_url + "'"
         return cmd
 
 
@@ -234,7 +247,7 @@ class GenJobScriptSh:
 # --- BEGIN_HEADER ---
 #
 # ??? - one of the shell scripts running on resources
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -346,7 +359,7 @@ class GenJobScriptSh:
             resource_filename = resource_filename.lstrip('/')
 
             cmd += '%s\n' % self.__curl_cmd_get(mig_server_filename,
-                    resource_filename)
+                    resource_filename, False)
             cmd += 'last_get_status=$?\n'
             cmd += 'if [ $last_get_status -ne 0 ]; then\n'
             cmd += '    %s=$last_get_status\n' % result
@@ -410,7 +423,7 @@ class GenJobScriptSh:
             resource_filename = resource_filename.lstrip('/')
 
             cmd += '%s\n' % self.__curl_cmd_get(mig_server_filename,
-                    resource_filename)
+                    resource_filename, False)
             cmd += 'last_get_status=$?\n'
             cmd += 'if [ $last_get_status -ne 0 ]; then\n'
             cmd += '    %s=$last_get_status\n' % result
@@ -442,9 +455,11 @@ class GenJobScriptSh:
         cmd += 'for name in ${src[@]}; do\n'
         cmd += '    name_on_resource=$dst/`basename $name`\n'
         cmd += '    if [ "$target" = "mqueue" ]; then\n'
-        cmd += '        %s\n' % self.__curl_cmd_get_mqueue('$name', '$name_on_resource')
+        cmd += '        %s\n' % self.__curl_cmd_get_mqueue('$name',
+                                                           '$name_on_resource')
         cmd += '    else\n'
-        cmd += '        %s\n' % self.__curl_cmd_get('$name', '$name_on_resource')
+        cmd += '        %s\n' % self.__curl_cmd_get('$name',
+                                                    '$name_on_resource', True)
         cmd += '    fi\n'
         cmd += '    last_get_status=$?\n'
         cmd += '    if [ $last_get_status -ne 0 ]; then\n'
@@ -527,10 +542,12 @@ class GenJobScriptSh:
             if not fe_move_dict.has_key(fe_move):
                 fe_move_dict[fe_move] = True
 
+        # Quote file names to protect against exotic characters
+        
         cmd += 'echo -n "" > %s.inputfiles\\\n' % self.localjobname
         for file in fe_move_dict.keys():
             cmd += \
-                '&& if [ -e %s ]; then echo -n "%s " >> %s.inputfiles; fi\\\n'\
+                "&& if [ -e '%s' ]; then echo -n '%s ' >> %s.inputfiles; fi\\\n"\
                  % (file, file, self.localjobname)
 
         # Systemfiles
@@ -559,7 +576,6 @@ class GenJobScriptSh:
             '# Create files used by master_node_script to determine which output files to transfer to FE\n'
         cmd += '%s=0\n' % result
 
-        cmd += 'echo -n "" > %s.user.outputfiles\\\n' % self.localjobname
         for outputfile in self.job_dict['OUTPUTFILES']:
 
             # "filename" or "resource_filename mig_server_filename"
@@ -580,8 +596,11 @@ class GenJobScriptSh:
             if not exe_move_dict.has_key(exe_move):
                 exe_move_dict[exe_move] = True
 
+        # Quote file names to protect against exotic characters
+        
+        cmd += 'echo -n "" > %s.user.outputfiles\\\n' % self.localjobname
         for file in exe_move_dict.keys():
-            cmd += '&& echo -n "%s " >> %s.user.outputfiles\\\n'\
+            cmd += "&& echo -n '%s ' >> %s.user.outputfiles\\\n"\
                  % (file, self.localjobname)
 
         cmd += '&& echo -n "" > %s.system.outputfiles\\\n'\
@@ -937,7 +956,9 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
             except:
                 mig_server_filename = resource_filename
 
-            cmd += '[ -e "%s" ] || %s=$((%s+1))\n'\
+            # Quote file names to protect against exotic characters
+        
+            cmd += "[ -e '%s' ] || %s=$((%s+1))\n"\
                  % (resource_filename, result, result)
 
         cmd += """# Now 'return' status is available in %s
@@ -973,9 +994,11 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
 
             mig_server_filename = mig_server_filename.lstrip('/')
 
-            cmd += '[ ! -e "%s" ] || ' % resource_filename
+            # Quote file names to protect against exotic characters
+        
+            cmd += "[ ! -e '%s' ] || " % resource_filename
             cmd += '%s\n' % self.__curl_cmd_send(resource_filename,
-                    mig_server_filename)
+                    mig_server_filename, False)
             cmd += 'last_send_status=$?\n'
             cmd += 'if [ $last_send_status -ne 0 ]; then\n'
             cmd += '    %s=$last_send_status\n' % result
@@ -1017,7 +1040,8 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
         cmd += '    else\n'
 
         cmd += '        [ ! -e "$name" ] || '
-        cmd += '%s\n' % self.__curl_cmd_send('$name', '$name_on_mig_server')
+        cmd += '%s\n' % self.__curl_cmd_send('$name', '$name_on_mig_server',
+                                             True)
         cmd += '    fi\n'
         cmd += '    last_send_status=$?\n'
         cmd += '    if [ $last_send_status -ne 0 ]; then\n'
@@ -1043,7 +1067,8 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
             name_on_mig_server = os.path.join(job_output_dir,
                                               self.job_dict['JOB_ID'], name)
             cmd += '[ -e "%s" ] && ' % name
-            cmd += '%s\n' % self.__curl_cmd_send(name, name_on_mig_server)
+            cmd += '%s\n' % self.__curl_cmd_send(name, name_on_mig_server,
+                                                 False)
             cmd += 'last_send_status=$?\n'
             cmd += 'if [ $last_send_status -ne 0 ]; then\n'
             cmd += '    %s=$last_send_status\n' % result
