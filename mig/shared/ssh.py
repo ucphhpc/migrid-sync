@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssh - remote command wrappers using ssh/scp
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -146,12 +146,11 @@ def copy_file_to_resource(
         options.append('-o UserKnownHostsFile=' + key_path)
 
     abs_dest_path = os.path.join(resource_config['RESOURCEHOME'], dest_path)
-    # TODO: double check entire variable chain for risky control chars
     scp_command_list = ['scp'] + options + [filename] + \
                        ['%s@%s:%s' % (user, host, abs_dest_path)]        
     scp_command = ' '.join(scp_command_list)
-    logger.debug(scp_command)
-    # NOTE: we need to use scp command list here to avoid shell requirement
+    logger.debug('running command: %s' % scp_command)
+    # NOTE: we use scp command list here to avoid shell requirement
     scp_proc = subprocess_popen(scp_command_list,
                                 stdin=open("/dev/null", "r"),
                                 stdout=open("/dev/null", "w"),
@@ -282,7 +281,12 @@ def execute_on_resource(
     resource_config,
     logger,
     ):
-    """Execute command on resource"""
+    """Execute command on resource.
+    IMPORTANT: we expect command to be trusted here. I.e. it must contain
+    *only* hard-coded strings and variables we already parsed and sanitized,
+    like resource conf values and strictly verified user input. This was
+    verified to be the case on January 8, 2016. Please keep it so!
+    """
 
     configuration = get_configuration_object()
     hostkey = resource_config['HOSTKEY']
@@ -360,11 +364,11 @@ def execute_on_resource(
     # IMPORTANT: careful with the ssh_command line!
     # removing explicit bash or changing quotes breaks resource management
     
-    # TODO: double check entire variable chain for risky control chars
     ssh_command_list = ['ssh'] + options + ['%s@%s' % (user, host)] + \
                        ["bash -c \'%s %s\'" % (command, ' '.join(batch))]
     ssh_command = ' '.join(ssh_command_list)
     logger.debug('running command: %s' % ssh_command)
+    # NOTE: we use ssh command list here to avoid shell requirement
     ssh_proc = subprocess_popen(ssh_command_list,
                                 stdin=open("/dev/null", "r"),
                                 stdout=open("/dev/null", "w"),
@@ -401,7 +405,9 @@ def execute_on_exe(
     exe_config,
     logger,
     ):
-    """Execute command (through resource) on exe"""
+    """Execute command (through resource) on exe.
+    Please see the note in execute_on_resource!
+    """
 
     node = exe_config['execution_node']
     user = exe_config['execution_user']
@@ -425,7 +431,9 @@ def execute_on_store(
     store_config,
     logger,
     ):
-    """Execute command (through resource) on store"""
+    """Execute command (through resource) on store.
+    Please see the note in execute_on_resource!
+    """
 
     node = store_config['storage_node']
     user = store_config['storage_user']
@@ -439,28 +447,6 @@ def execute_on_store(
             node, command)
     logger.debug(ssh_command)
     return execute_on_resource(ssh_command, background,
-                               resource_config, logger)
-
-
-def execute_remote_ssh(
-    remote_port,
-    remote_hostkey,
-    remote_username,
-    remote_hostname,
-    ssh_command,
-    logger,
-    ssh_background,
-    resource_dir='/tmp',
-    ):
-    """Wrap old style ssh calls to use new version"""
-
-    resource_config = {
-        'SSHPORT': remote_port,
-        'HOSTKEY': remote_hostkey,
-        'MIGUSER': remote_username,
-        'HOSTURL': remote_hostname,
-        }
-    return execute_on_resource(ssh_command, ssh_background,
                                resource_config, logger)
 
 
