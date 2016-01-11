@@ -821,6 +821,7 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
             resource_mount_point = resource_mount_point.lstrip('/')
 
             cmd += 'mkdir -p %s\n' % (resource_mount_point)
+            # Auto-reconnect and use big_writes for far better write performance
             cmd += '${SSHFS_MOUNT} -oPort=%s' % (port) + \
                         ' -oIdentityFile=${PWD}/%s.mount.key' % \
                             (self.localjobname) + \
@@ -828,7 +829,8 @@ ulimit -f $((%(DISK)d*%(GIGS)d))
                             (self.localjobname) + \
                         ' %s@%s:%s %s ' % \
                             (login, host, mig_home_path, resource_mount_point) + \
-                        ' -o uid=$(id -u) -o gid=$(id -g)\n'
+                        ' -o uid=$(id -u) -o gid=$(id -g) -o reconnect' + \
+                        ' -o big_writes\n'
             cmd += 'last_mount_status=$?\n'
             cmd += 'if [ $last_mount_status -ne 0 ]; then\n'
             cmd += '    %s=$last_mount_status\n' % result
