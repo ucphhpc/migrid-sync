@@ -1388,6 +1388,7 @@ def put_function(lang, curl_cmd, curl_flags='--compressed'):
 def read_function(lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"cgi-bin/rangefileaccess.py"'
     post_data = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         query = \
             '"?output_format=txt;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$src_path"'
@@ -2200,6 +2201,7 @@ def wc_function(lang, curl_cmd, curl_flags=''):
 def write_function(lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"cgi-bin/rangefileaccess.py"'
     post_data = '""'
+    urlenc_data = '""'
     if lang == 'sh':
         query = \
             '"?output_format=txt;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$dst_path"'
