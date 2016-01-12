@@ -1816,8 +1816,8 @@ if (jQuery) (function($){
                                                              var histogram_scale = $("#fm_preview_left_tile_histogram_actions input[name=fm_preview_histogram_scale]").val();
                                                              var path = $(".fm_previews input[name=fm_preview_base_path]").val();
                                                              var extension = $(".fm_previews input[name=fm_preview_extension]").val();
-                                                             var min_value = $("#fm_preview_left_output input[name='fm_preview_left_output_current_min_value']").val();
-                                                             var max_value = $("#fm_preview_left_output input[name='fm_preview_left_output_current_max_value']").val();
+                                                             var min_value = $("#fm_preview_left_output input[name='current_min_value']").val();
+                                                             var max_value = $("#fm_preview_left_output input[name='current_max_value']").val();
                                                              var data;
 
                                                              // Grey out button as default
