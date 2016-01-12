@@ -84,8 +84,6 @@ def html_tmpl(configuration, title_entry):
                     <canvas id="fm_preview_histogram_image"></canvas>
                 </div>
                 <div id="fm_preview_left_tile_histogram_actions">
-                    <input type="hidden" value="" name="fm_preview_histogram_scale" />
-                    <input type="hidden" value="" name="fm_preview_histogram_scale" />
                     <div id="fm_preview_histogram_min_max_slider"></div>   
                     <br>
                     <button id="preview_histogram_reset_button" title="Reset sliders">Reset</button>

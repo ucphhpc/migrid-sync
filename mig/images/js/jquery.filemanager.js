@@ -505,12 +505,14 @@ if (jQuery) (function($){
 
                                     // TODO: Move input fields HTML to fileman.py ?
 
-                                    left_html_out += '<input type="hidden" value="' + jsonRes[i].preview_cutoff_min + '" name="min_value" />' +
-                                        '<p><span id="fm_preview_left_output_min_value_show"></span></p>' +
-                                        '<input type="hidden" value="' + jsonRes[i].preview_cutoff_max + '" name="max_value" />' +
-                                        '<p><span id="fm_preview_left_output_max_value_show"></span></p>' +
-                                        '<input type="hidden" value="' + jsonRes[i].preview_image_scale + '" name="scale_value" />' +
-                                        '<p><span id="fm_preview_left_output_preview_image_scale_value_show"></span></p>'
+                                    left_html_out += '<input type="hidden" value="' + jsonRes[i].preview_cutoff_min + '" name="cutoff_min_value" />' 
+                                        + '<input type="hidden" value="' + jsonRes[i].preview_cutoff_max + '" name="cutoff_max_value" />' 
+                                        + '<input type="hidden" value="' + jsonRes[i].preview_cutoff_min + '" name="current_min_value" />' 
+                                        + '<input type="hidden" value="' + jsonRes[i].preview_cutoff_max + '" name="current_max_value" />' 
+                                        + '<input type="hidden" value="' + jsonRes[i].preview_image_scale + '" name="scale_value" />' 
+                                        + '<p><span id="fm_preview_left_output_min_value_show"></span></p>' 
+                                        + '<p><span id="fm_preview_left_output_max_value_show"></span></p>' 
+                                        + '<p><span id="fm_preview_left_output_preview_image_scale_value_show"></span></p>'
 
                                     // Check for preview settings status, and mark cutoff butten active if folder ready
 

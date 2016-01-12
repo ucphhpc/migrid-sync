@@ -294,33 +294,35 @@ Preview.prototype.image_data_load = function(preview_struct) {
 Preview.prototype.update_preview_min_max_values = function() {
     var max_decimals = this.get_format_decimals();
     var slider_min_value = $("#fm_preview_histogram_min_slider_value").html();
-    var slider_max_value = $("#fm_preview_histogram_max_slider_value").html();
-    var min_value = $("#fm_preview_left_output input[name='min_value']").val();
-    var max_value = $("#fm_preview_left_output input[name='max_value']").val();
+    var slider_max_value = $("#fm_preview_histogram_max_slider_value").html(); 
+    var cutoff_min_value = $("#fm_preview_left_output input[name='cutoff_min_value']").val();
+    var current_min_value = $("#fm_preview_left_output input[name='current_min_value']").val();
+    var current_max_value = $("#fm_preview_left_output input[name='current_max_value']").val();
     var scale_value = $("#fm_preview_left_output input[name='scale_value']").val();
 
-    var current_min_value;
-    var current_max_value;
+    var new_min_value;
+    var new_max_value;
 
     if (slider_min_value !== undefined &&
         slider_max_value !== undefined &&
-        min_value !== undefined && 
-        max_value !== undefined &&
+        current_min_value !== undefined && 
+        current_max_value !== undefined &&
         scale_value !== undefined) {
 
         slider_min_value = Number(slider_min_value);
         slider_max_value = Number(slider_max_value);
-        min_value = Number(min_value);
-        max_value = Number(max_value);
+        cutoff_min_value = Number(cutoff_min_value);
+        current_min_value = Number(current_min_value);
+        current_max_value = Number(current_max_value);
         scale_value = Number(scale_value);
         
-        current_min_value = min_value + (slider_min_value / scale_value);
-        current_max_value = min_value + (slider_max_value / scale_value);
-    
-        $("#fm_preview_left_output input[name='fm_preview_left_output_current_min_value']").val(current_min_value);
-        $("#fm_preview_left_output input[name='fm_preview_left_output_current_max_value']").val(current_max_value);
-        $("#fm_preview_left_output_min_value_show").html("Preview Min: " + Number(current_min_value).toExponential(max_decimals));
-        $("#fm_preview_left_output_max_value_show").html("Preview Max: " + Number(current_max_value).toExponential(max_decimals));
+        new_min_value = cutoff_min_value + (slider_min_value / scale_value);
+        new_max_value = cutoff_min_value + (slider_max_value / scale_value);
+
+        $("#fm_preview_left_output input[name='current_min_value']").val(new_min_value);
+        $("#fm_preview_left_output input[name='current_max_value']").val(new_max_value);
+        $("#fm_preview_left_output_min_value_show").html("Preview Min: " + Number(new_min_value).toExponential(max_decimals));
+        $("#fm_preview_left_output_max_value_show").html("Preview Max: " + Number(new_max_value).toExponential(max_decimals));
         $("#fm_preview_left_output_preview_image_scale_value_show").html("Slider scale: " + Number(scale_value).toExponential(max_decimals));
     }
 }
