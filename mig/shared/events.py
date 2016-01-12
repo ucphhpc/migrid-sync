@@ -64,12 +64,14 @@ def get_expand_map(trigger_path, rule, state_change):
 
     trigger_filename = os.path.basename(trigger_path)
     trigger_dirname = os.path.dirname(trigger_path)
+    trigger_relpath = os.path.relpath(trigger_path, rule['vgrid_name'])
+    trigger_reldirname = os.path.dirname(trigger_relpath)
     (prefix, extension) = os.path.splitext(trigger_filename)
     expand_map = {
-        '+TRIGGERRELPATH+': os.path.relpath(trigger_path, rule['vgrid_name']),
         '+TRIGGERPATH+': trigger_path,
+        '+TRIGGERRELPATH+': trigger_relpath,
         '+TRIGGERDIRNAME+': trigger_dirname,
-        '+TRIGGERRELDIRNAME+': os.path.relpath(trigger_dirname, rule['vgrid_name']),
+        '+TRIGGERRELDIRNAME+': trigger_reldirname,
         '+TRIGGERFILENAME+': trigger_filename,
         '+TRIGGERPREFIX+': prefix,
         '+TRIGGEREXTENSION+': extension,

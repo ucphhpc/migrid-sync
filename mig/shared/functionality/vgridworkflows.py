@@ -295,9 +295,10 @@ $(document).ready(function() {
     dummy_rule = {'run_as': client_id, 'vgrid_name': vgrid_name}
     samples = [('input.txt', 'modified'), ('input/image42.raw', 'changed')]
     for (path, change) in samples:
+        vgrid_path = os.path.join(vgrid_name, path)
         vars_html += "<b>Expanded variables when %s is %s:</b><br/>" % \
-                        (path, change)
-        expanded = get_expand_map(path, dummy_rule, change)
+                        (vgrid_path, change)
+        expanded = get_expand_map(vgrid_path, dummy_rule, change)
         for (key, val) in expanded.items():
             vars_html += "    %s: %s<br/>" % (key, val)
     commands_html = ''
