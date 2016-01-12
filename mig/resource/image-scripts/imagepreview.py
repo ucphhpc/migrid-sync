@@ -155,15 +155,19 @@ def fill_preview(logger, image):
         cmin = image['setting']['preview_cutoff_min']
         cmax = image['setting']['preview_cutoff_max']
 
+    # Set image threshold to cutoff min and cutoff max
+
+    data[data<cmin] = cmin
+    data[data>cmax] = cmax
+
+    # TODO: Check if the NOTE below is still valid now that we 
+    #       set the image threshold to cmin and cmax
     # NOTE: Using reszied data for rescaling doesn't fare well
     # cmin and cmax for rescaled data doesn't
     # match cmin and cmax of original data, and
     # thereby we get inconsinstency between user settings
     # and the settings used for rescaling.
     # Use original data so far for rescaling.
-    #
-    # It might work to cut off values in original data,
-    # then resize + rescale
 
     # Rescale using cuttoff min and max and convert to uint8 data
 
