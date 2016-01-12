@@ -925,7 +925,17 @@ def add_image_file(
 
     if metafile is not None:
         image_file_table = __get_image_file_meta_node(logger, metafile)
-        condition = 'name == b"%s"' % name
+        
+        condition = ''
+        if path is not None:
+            condition = '%s & (path == b"%s")' % (condition, path)
+        if name is not None:
+            condition = '%s & (name == b"%s")' % (condition, name)
+        if extension is not None:
+            condition = '%s & (extension == b"%s")' % (condition,
+                    extension)
+        condition = condition.replace(' & ', '', 1)
+
         row_list = __get_row_idx_list(logger, image_file_table,
                 condition)
 
@@ -1142,6 +1152,7 @@ def get_image_files(
     metafile = __open_image_settings_file(logger, base_path)
     if metafile is not None:
         image_file_table = __get_image_file_meta_node(logger, metafile)
+
         condition = ''
         if path is not None:
             condition = '%s & (path == b"%s")' % (condition, path)
@@ -1151,6 +1162,7 @@ def get_image_files(
             condition = '%s & (extension == b"%s")' % (condition,
                     extension)
         condition = condition.replace(' & ', '', 1)
+        
         row_list = __get_row_idx_list(logger, image_file_table,
                 condition)
         logger.debug('#rows: %s' % len(row_list))
