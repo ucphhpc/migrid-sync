@@ -1374,6 +1374,9 @@ while True:
                 job_dict = job_queue.dequeue_job_by_id(job_id)
             else:
                 job_dict = job_queue.get_job_by_id(job_id)
+                if not job_dict:
+                    logger.warning("Couldn't find job in queue: %s" % job_id)
+                    continue
                 scheduler.clear_schedule(job_dict)
                 job_dict['STATUS'] = new_status
         elif original_status in executing_status_list:
